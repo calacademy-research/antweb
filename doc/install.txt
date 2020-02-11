@@ -1,0 +1,324 @@
+Antweb Install Notes.
+  Consider viewing antweb/doc/installOld.txt.
+  This documents the new installation of Antweb Oct 25, 2019 on Ubuntu (w/Joe Russack).
+
+Login in:
+ssh mark@10.2.22.30
+
+lsb_release -a
+No LSB modules are available.
+Distributor ID:	Ubuntu
+Description:	Ubuntu 18.04.3 LTS
+Release:	18.04
+Codename:	bionic
+
+antweb-prod is 10.2.22.20
+antweb-cvs is 10.1.10.98
+
+Installed by user Mark (with sudo priv).
+
+These instructions are to make a fully functional antweb server on Centos.  Installation includes:
+  Emacs
+  Java
+  MySQL
+  Tomcat
+  Ant. Comes by default.
+    Apache Ant(TM) version 1.10.5
+  Perl - no longer necessary. Comes by default.
+    This is perl 5, version 26, subversion 1 (v5.26.1)
+  Php - still necessary? Comes by default.
+    PHP 7.2.19-0ubuntu0.18.04.2  
+  CVS
+  Antweb  
+
+Groups and Users
+----------------
+sudo groupadd antweb
+
+# Not sure these are accomplishing anything useful
+sudo usermod -g antweb mark
+sudo useradd antweb -g antweb  
+
+sudo mkdir /antweb
+sudo chown antweb:antweb /antweb
+
+sudo su antweb
+mkdir /antweb/antweb_deploy
+
+sudo passwd antweb
+  f0rm1c6
+
+Antweb
+------
+Should be done with a cvs checkout. For now, from local antweb directory...
+
+# This works but is very slow...
+scp -r * antweb@10.2.22.30:/antweb/antweb_deploy
+
+# From Mark's dev machine (laptop) dev/calacademy directory:
+tar -pczf antweb8.9.1.tar.gz antweb
+scp antweb8.9.1.tar.gz mark@10.2.22.30:/home/mark/
+# Then, as antweb in the /antweb directory:
+tar -xvf antweb8.9.1.tar.tz
+cd /home/mark/antweb
+cp -r -n * /antweb/antweb_deploy/
+#mv antweb antweb_deploy
+#or cp -r antweb /antweb/antweb_deploy/
+or:
+   sudo cp -r -p antweb /antweb/antweb_deploy
+   cd /antweb/antweb_deploy/
+   sh etc/configProd.sh
+   ant deploy
+   
+sudo chmod 775 antweb_deploy/
+
+Ant
+---
+sudo apt  install ant  
+
+Emacs
+-----
+sudo apt-get install emacs
+
+Java
+----
+java -version
+openjdk version "11.0.4" 2019-07-16
+OpenJDK Runtime Environment (build 11.0.4+11-post-Ubuntu-1ubuntu218.04.3)
+OpenJDK 64-Bit Server VM (build 11.0.4+11-post-Ubuntu-1ubuntu218.04.3, mixed mode, sharing)
+
+OpenJDK is good enough? TBD.
+
+MySQL
+-----
+sudo apt update
+
+sudo apt install mysql-server 
+
+sudo mysql_secure_installation
+  Validate Password Plugin: N
+  Medium strength pwd: f0rm1c6 strength 25
+  Remove anonymous login: Y
+  Disallow remote root loging: Y 
+  Remove test database:Y
+  Remove privileges tables: Y
+
+sudo mysql
+  ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'f0rm1c6';
+    #NO longer: Note new pwd with capital F and !.
+  FLUSH PRIVILEGES;
+  CREATE USER 'antweb'@'localhost' IDENTIFIED BY 'f0rm1c6';
+  
+To start: sudo systemctl start mysql.
+For status: systemctl status mysql.service    
+For version: sudo mysqladmin -p -u root version
+  Server version 5.7.27-0ubuntu0.18.04.1
+
+GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'localhost' IDENTIFIED BY 'f0rm1c6' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'%' IDENTIFIED BY 'f0rm1c6' WITH GRANT OPTION;
+
+Log in to mysql as antweb
+
+create database ant;
+  scp mjohnson@10.2.22.20:/home/antweb/links/currentDump.sql.gz ./20191025.sql.gz
+  gunzip < 20191025.sql.gz | mysql -u antweb -p ant
+
+
+CVS
+---
+sudo apt install cvs
+
+
+Apache
+------
+sudo apt install apache2
+
+  replace /var/www/html/index.html
+  Ubuntu document root is /var/www/html
+  started/stopped with /etc/init.d/apache2 or apache2ctl
+  Conf
+    /etc/apache2/
+    |-- apache2.conf
+    |       `--  ports.conf
+    |-- mods-enabled
+    |       |-- *.load
+    |       `-- *.conf
+    |-- conf-enabled
+    |       `-- *.conf
+    |-- sites-enabled
+    |       `-- *.conf    
+        
+Tomcat
+------
+Tomcat installation - with connector information below.
+Follow guide here: https://www.digitalocean.com/community/tutorials/install-tomcat-9-ubuntu-1804
+
+In /opt/tomcat/latest/conf:
+/usr/lib/jvm/java-11-openjdk-amd64/bin/keytool -genkey -alias tomcat -keyalg RSA -keystore keystore
+
+
+Tomcat failing on launch. Replaced keystone entry:
+    <Resource name="UserDatabase" auth="Container"
+              type="org.apache.catalina.UserDatabase"
+              description="User database that can be updated and saved"
+              factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+              pathname="conf/tomcat-users.xml" />
+  </GlobalNamingResources>
+
+From /opt/tomcat/latest”
+Chown -r tomcat:tomcat webapps/ work/ temp/ logs/ conf
+
+
+
+Installing apache mod_jk:
+https://www.digitalocean.com/community/tutorials/how-to-encrypt-tomcat-8-connections-with-apache-or-nginx-on-ubuntu-16-04
+Make cert:
+https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-apache-in-ubuntu-16-04
+
+When complete, this is the only valid site:
+/etc/apache2/sites-enabled/default-ssl.conf
+
+Python/API setup (Joe's notes)
+----------------
+sudo apt install default-jdk
+
+apt-get install python3-pip
+hash -d pip3
+apt-get install libssl-dev
+pip3 install phpmysql
+Pip3 install Flask-SQLAlchemy
+pip3 install Flask-Restful
+pip3 install mysqlclient
+
+
+Sudo Apt-get install apache2-dev
+Sudo Pip3 install mod-wsgi 
+
+
+API
+---
+Follow documentation under doc/apiV3.txt
+
+--uWSGI python for tomcat
+
+apt-get install build-essential python-dev
+
+cd /home/mark/  # wrong?
+sudo -H pip install --upgrade pip
+sudo -H  pip install uwsgi
+
+launch uwsgi:
+cd /antweb/antweb_deploy/api/v3.1
+uwsgi --http :9090 --wsgi-file /antweb/antweb_deploy/api/v3.1/api.py
+
+works: http://10.2.22.30:9090/specimens?specimenCode=casent0922626&up=1
+
+
+
+Antweb
+------
+sudo chmod  755 /usr/local/tomcat/lib -R
+sudo chmod 775 /antweb/antweb_deploy -R
+
+sudo sudo chmod 777 /usr/local/tomcat/webapps/   # needed for "ant build". Must be a better way.
+
+# This is a custom step.
+# configX.sh, appResX.properties, and buildX.properties required for each platform instance.
+cd /antweb/antweb_deploy
+sh etc/configProd.sh
+
+sudo mkdir /data
+sudo chmod 775 /data
+sudo chown antweb:antweb /data
+
+# These are necessary if running from tomcat container (as tomcat:tomcat).
+sudo chmod 777 /data/antweb/web
+# When did we create /data/antweb? Maybe in the "ant deploy" below?
+
+mkdir /data/antweb/web/log
+sudo chmod 777 /data/antweb/web/log
+
+-- For image upload
+* Is images mapped? This may be unnecessary. Needs to be a temp directory and ability
+  to create new directories in images/
+cd /data/antweb/images
+sudo chmod 777 .
+mkdir temp
+chmod 777 temp
+
+
+mkdir /data/antweb/web/genInc
+sudo chmod 777 /data/antweb/web/genInc
+echo "" > /data/antweb/web/genInc/statistics.jsp
+
+cd /antweb/antweb_deploy
+ant deploy
+
+# make the convenience links:
+cd /antweb
+sudo mkdir links
+sudo chown antweb:antweb links
+cd links
+sudo sh ../antweb_deploy/etc/makeLinks.sh
+sudo chmod 775 tomcat/logs -R
+
+sudo systemctl restart tomcat
+http://10.2.22.30:8080/manager/html
+
+Add:
+org.apache.catalina.core.ContainerBase.[Catalina].level=INFO
+org.apache.catalina.core.ContainerBase.[Catalina].handlers=java.util.logging.ConsoleHandler
+Into: 
+emacs /antweb/antweb_deploy/WEB-INF/classes/logging.properties
+
+           
+Apache
+------           
+sudo systemctl stop apache2           
+           
+
+Antblog
+-------
+
+
+
+
+
+To Do
+-----
+Hostnames. This machine is? Access antweb-prod, antweb-stg, antweb-dev, antweb-cvs.
+
+Search on tapirlink in antweb/doc/installOld.txt
+
+Copy these jars into tomcat/lib dir:
+  jaxp_parser_impl.jar jsp-api.jar serializer.jar xalan.jar xercesImpl.jar xml-apis.jar xml-commons-apis.jar xsltc.jar
+  
+edit /usr/local/tomcat/conf/context.xml to disable session persistence.
+
+https and ssl
+
+Create /data/antweb/
+image directory mounted.
+
+my.cnf configurations.
+
+
+Move the jar files to enable the ant build...
+scp mjohnson@10.2.22.20:/usr/local/tomcat/lib/jaxp_parser_impl.jar . 
+serializer.jar 
+xalan.jar 
+scp mjohnson@10.2.22.20:/usr/local/tomcat/lib/xercesImpl.jar /antweb/antweb_deploy/WEB-INF/lib
+xml-apis.jar 
+xml-commons-apis.jar 
+xsltc.jar 
+mark@10.2.22.28:/antweb/links/tomcat/lib/ 
+
+
+
+
+
+
+
+    
+
+ 

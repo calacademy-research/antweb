@@ -1,0 +1,17 @@
+
+    Occasionally in the logs there is a "zonageek" exception.  I have isolated and reproduced the error.  Some of the images on our site are not viewable on our site.  Click on the thumbnail label image on casent0102515 and you will replicate the error.
+
+    I have manually downloaded the image and am able to view it on my mac.  It may be that some part of our imaging process, for some images, does not properly encode some metadata.  To resolve this error we might be able to upgrade the zonageek software that is incorporated into our source tree.
+
+    It is possible that this error could be related to other site problems, but we have no evidence of this now.  It would be possible via various means to find the list of images which are problematic.
+
+Mark
+
+
+URL:  http://antweb.org/specimen.do?name=casent0102515
+
+Error:
+ 2011-09-23 17:35:02,475 ERROR ajp-bio-8009-exec-53 org.calacademy.antweb.util.AntwebUtil - WSS. bigPicture-body.jsp exception:com.zonageek.jpeg.JpegException: Unexpected data, missing 8BIM on /data/antweb//images/casent0102515/casent0102515_l_1_high.jpg
+
+File on disk:
+ls /data/antweb/images/casent0102515 -al -rwxrwxrwx     1 antweb antweb  136447 Oct 14  2009 casent0102515_l_1_high.jpg

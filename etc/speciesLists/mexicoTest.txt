@@ -1,0 +1,14 @@
+Subfamily	Tribe	Genus	Species	subspecies	Author	year	author year
+Dolichoderinae	Dolichoderini	Azteca	forelii		Emery	1893	Emery, 1893
+Dolichoderinae	Dolichoderini	Azteca	velox		Forel	1899	Forel, 1899
+Dolichoderinae	Dolichoderini	Dorymyrmex	pyramicus		Roger	1863	(Roger, 1863)
+Dolichoderinae	Dolichoderini	Linepithema	humile		Mayr	1868	(Mayr, 1868)
+Dolichoderinae	Dolichoderini	Tapinoma	litorale		Wheeler	1905	Wheeler, 1905
+Dolichoderinae	Dolichoderini	Tapinoma	melanocephalum		Fabricius	1793	(Fabricus, 1793)
+Formicinae	Camponotini	Camponotus	andrei		Forel	1885	Forel, 1885
+Dolichoderinae	Dolichoderini	Tapinoma	ramulorum	inrectum	Forel	1908	Forel, 1908
+Dolichoderinae	Dolichoderini	Tapinoma	ramulorum satullum		Wheeler	1934	Wheeler, 1934
+Dolichoderinae	Dolichoderini	Tapinoma	ramulorum	toltecum	Wheeler	1934	Wheeler, 1934
+Dolichoderinae	Dolichoderini	Tapinoma	sessile		Say	1836	(Say, 1836)
+
+

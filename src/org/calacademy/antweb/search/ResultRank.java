@@ -1,0 +1,38 @@
+package org.calacademy.antweb.search;
+
+import java.util.*;
+import java.io.Serializable;
+import java.sql.*;
+
+import org.calacademy.antweb.util.*;
+
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+        
+import org.calacademy.antweb.util.*;
+
+public final class ResultRank {
+
+    private static Log s_log = LogFactory.getLog(ResultRank.class);
+
+    public static String SUBFAMILY = "subfamily";
+    public static String GENUS = "genus";
+    public static String SPECIES = "species";
+    public static String SPECIMEN = "specimen";    
+
+    // older...
+    public static String SPECIES_SPECIFIC = "speciesSpecific";
+    public static String BAY_AREA = "bayArea";
+
+    public static boolean isTaxonRank(String resultRank) {
+      if (SPECIES.equals(resultRank) || GENUS.equals(resultRank) || SUBFAMILY.equals(resultRank)) {
+        return true;
+      }
+      return false;
+    }
+
+ 
+    public ResultRank() {
+    }
+    
+}

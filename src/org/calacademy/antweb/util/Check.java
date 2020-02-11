@@ -1,0 +1,160 @@
+package org.calacademy.antweb.util;
+
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.io.*;
+
+import javax.sql.DataSource;
+import java.sql.*;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+import org.apache.struts.action.*;
+
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+
+import org.calacademy.antweb.upload.*;
+import org.calacademy.antweb.*;
+
+public class Check {
+
+    private static final Log s_log = LogFactory.getLog(Check.class);
+
+    public Check() {
+    }
+
+    // ActionForward a = Check.initLogin(request, mapping); if (a != null) return a;
+    public static ActionForward initLogin(HttpServletRequest request, ActionMapping mapping) {
+        ActionForward a = null;
+        a = Check.init(request, mapping); if (a != null) return a;
+        a = Check.login(request, mapping); if (a != null) return a;
+        return null;
+    }
+
+    // ActionForward a = Check.loginValid(request, mapping); if (a != null) return a;
+    public static ActionForward loginValid(HttpServletRequest request, ActionMapping mapping) {
+        ActionForward a = null;
+        a = Check.login(request, mapping); if (a != null) return a;
+        a = Check.valid(request, mapping); if (a != null) return a;
+        return null;
+    }
+
+    // ActionForward a = Check.initLoginValid(request, mapping); if (a != null) return a;
+    public static ActionForward initLoginValid(HttpServletRequest request, ActionMapping mapping) {
+        ActionForward a = null;
+        a = Check.initLogin(request, mapping); if (a != null) return a;
+        a = Check.valid(request, mapping); if (a != null) return a;   
+        return null;
+    }
+
+    // ActionForward a = Check.initLoginValidbusy(getDataSource(request, "conPool"), request, mapping); if (a != null) return a;
+    public static ActionForward initLoginValidBusy(DataSource dataSource, HttpServletRequest request, ActionMapping mapping) {
+        ActionForward a = Check.initLoginValid(request, mapping); if (a != null) return a;
+        if (a != null) return a;
+        a = Check.busy(dataSource, request, mapping); if (a != null) return a;
+        if (a != null) return a;
+        return null;
+    }
+
+    // --------------------------------------------------------------------------------------
+
+    /*
+      If multiple checks in an action class, include them in the order presented here.
+      So that if not initialized, that is the first response, if not logged in, etc...
+    */
+
+
+    // ActionForward a = Check.init(request, mapping); if (a != null) return a;
+    public static ActionForward init(HttpServletRequest request, ActionMapping mapping) {
+      return AntwebMgr.isInitializing(request, mapping);
+    }
+
+    // ActionForward a = Check.init(Check.GEOLOCALE, request, mapping); if (a != null) return a;
+    public static final String LOGIN = "login";
+    public static final String PROJECT = "project";
+    public static final String BIOREGION = "bioregion";
+    public static final String GEOLOCALE = "geolocale";
+    public static final String MUSEUM = "museum";
+    public static final String TAXON = "taxon";
+    public static final String TAXONPROP = "taxonProp";
+    public static final String ARTIST = "artist";
+    public static final String UPLOAD = "upload";
+    public static final String ADMINALERT = "adminAlert";
+    
+    public static ActionForward init(String manager, HttpServletRequest request, ActionMapping mapping) {
+      if (AntwebMgr.isServerInitializing(manager)) {
+          request.setAttribute("message", "Server is initializing the " + Formatter.initCap(manager) + " Manager.");
+          return mapping.findForward("message");       
+      }
+      return null;
+    }
+
+    // ActionForward b = Check.busy(getDataSource(request, "conPool"), request, mapping); if (b != null) return b; 
+    public static ActionForward busy(DataSource dataSource, HttpServletRequest request, ActionMapping mapping) {
+      try {
+        if (DBUtil.isServerBusy(dataSource, request)) {
+          return mapping.findForward("message");            
+        }	
+      } catch (SQLException e) {
+          request.setAttribute("message", e.toString());
+          return mapping.findForward("message");                  
+      }
+      return null;
+    }
+
+    // ActionForward c = Check.login(request, mapping); if (c != null) return c;
+    public static ActionForward login(HttpServletRequest request, ActionMapping mapping) {
+      return LoginMgr.mustLogIn(request, mapping);
+    }
+
+    // ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+    public static ActionForward admin(HttpServletRequest request, ActionMapping mapping) {
+      return LoginMgr.mustBeAdmin(request, mapping);
+    }
+
+
+    // ActionForward d = Check.valid(request, mapping); if (d != null) return d;
+    public static ActionForward valid(HttpServletRequest request, ActionMapping mapping) {
+      return HttpUtil.invalidRequest(request, mapping);
+    }       
+
+    // e is sometimes used for exceptions. We will skip.
+
+    // ActionForward f = Check.upload(request, mapping); if (f != null) return f;
+    public static ActionForward upload(HttpServletRequest request, ActionMapping mapping) {
+        if (UploadAction.isInUploadProcess()) {
+            // An upload is currently in process.  Request that this process be re-attempted shortly.
+            String message = "A curator is currently in the process of an Upload.  Please try again shortly.";
+            request.setAttribute("message", message);
+            return mapping.findForward("message");
+        }
+        return null;
+    }
+
+    // ActionForward g = Check.compute(request, mapping); if (g != null) return g;
+    public static ActionForward compute(HttpServletRequest request, ActionMapping mapping) {
+        if (UtilDataAction.isInComputeProcess()) {
+            String message = "Antweb is currently in it's re-computation process.  Please try again shortly.";
+            request.setAttribute("message", message);
+            return (mapping.findForward("message"));
+        }
+        return null;
+    }    
+}
+
+/*
+For convenience:
+
+    ActionForward a = Check.init(request, mapping); if (a != null) return a;
+    ActionForward b = Check.busy(getDataSource(request, "conPool"), request, mapping); if (b != null) return b; 
+    ActionForward c = Check.login(request, mapping); if (c != null) return c;
+    ActionForward d = Check.valid(request, mapping); if (d != null) return d;        
+
+    Login accessLogin = LoginMgr.getAccessLogin(request);
+    Group accessGroup = GroupMgr.getAccessGroup(request);
+
+*/
+

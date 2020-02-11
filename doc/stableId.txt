@@ -1,0 +1,126 @@
+Stable ID 
+
+
+
+<!--  http://www.antweb.org/specimen/casent1  will return
+      http://www.antweb.org/specimen.do?code=casent1  -->
+  <servlet>
+    <servlet-name>SpecimenFetch</servlet-name>
+    <servlet-class>org.calacademy.antweb.util.SpecimenFetch</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-nameSpecimenFetch</servlet-name>
+    <url-pattern>/specimen/*</url-pattern>
+  </servlet-mapping>
+
+
+---------------
+
+Luke Knowland <lgknowland@gmail.com>
+Jul 30
+
+to Mark, Brian 
+Well, now that I think about it, since we're not running Apache in front of Tomcat, we can't use htaccess (which is a shame, as it makes it super easy). In doing a couple of web searches, the solution seems to be using UrlRewriteFilter:
+
+http://www.tuckey.org/urlrewrite/
+
+Some examples (specifically, look at the 301 Redirection stuff):
+http://devtidbits.com/2011/11/28/tuckey-urlrewrite-how-to/
+
+---
+
+great to hear that you are supporting the stable ID / Linked Open Data efforts as well!
+
+http://data.antweb.org/specimen/CASENT0905050
+
+Technically that is a good pattern. However, I have a social issue with it that I consider important.
+What we want to achieve is having identifiers for specimens AND information resources. Using 
+http://data.antweb.org/specimen/CASENT0905050
+for the RDF returned makes sense to a human. However, the sentence
+"The DNA from http://data.antweb.org/specimen/1 and http://data.antweb.org/specimen/2 proved to be identical" will appear, to the human, non-programmer-type, to be illogical. That is, prefixing your physical specimens with a "data" domain will mislead unaware users that they are taking about data/information resources, rather than the non-data physical object.
+
+I recommend to choose some pattern where the data domain is used only for the rdf, and another, perpahs objects domain (or path) for the actual objects. 
+
+Perhaps see the examples here:
+http://wiki.pro-ibiosphere.eu/wiki/Best_practices_for_stable_URIs
+
+-------------------
+
+From: Roderic Page <r.page@bio.gla.ac.uk>
+Date: Mon, Jul 8, 2013 at 10:26 AM
+Subject: Re: AntWeb
+To: "Brian L. Fisher" <bfisher@calacademy.org>
+
+
+Hi Brian,
+
+Great to hear that AntWeb is going from strength to strength.
+
+Regarding data mining, I tend to try and grab complete data sets then mess about with them. So having an easy way to grab all the data is handy (e.g., all the references in a database). There seems to be a move towards Darwin Core Archive as a standard way to share data. It's a bit of an ugly format, but is probably usable by most people (I've used it to load GBIF data into BioNames http://bionames.org for example). It's usability depends in part on how what level of granularity people use when the publish their data (for example, with bibliographic data splitting references down to journal, volume, pages, etc. makes life a little easier).
+
+Regarding identifiers, there seem to be two paths people are going down. One is the "Cool URI" approach which Roger Hyam has been championing, on the grounds it's fairly simple. I would avoid trying to build too much semantics into the URL, so something like 
+
+http://data.antweb.org/specimen/CASENT0905050 
+
+looks fine (in other words, having distinct subdomains such as "data" and "object" seems likely to only cause confusion). The RDF and HTML URLs don't actually need to be seen by anyone, so if you paste http://data.antweb.org/specimen/CASENT0905050  into a web browser you get HTML, and if you use a linked data client you get RDF.
+
+The other approach is to use DOIs, which I've been pushing for, and which some collection are exploring (e.g., http://iphylo.blogspot.co.uk/2013/05/dois-for-specimens-are-here-but-we-not.html ). There's a tradeoff here between getting things done now (HTTP URIs) and maybe taking a little longer but being able to handle changes in Internet domains (e.g., if specimens move, if institution web sites get reorganised, etc.). DOIs help shield the identifier from these changes. The same can be done for HTTP URIs (e.g., by using PURLs). DOIs also look a lot more citable to most people, and now that we have DOIs for figures and tables in articles, supplementary data, and data sets from places like Dryad and Figshare, personally I think there's an opportunity to build on that and get people into the habit of citing DOIs for specimens in the same way.
+
+But I'm conscious that this may be a step too far initially, and I'm all in favour of people getting their data online in machine-readable ways. My concern (as voiced in the blog post above) is that having stuff online won't automatically mean that the cool stuff we want will happen. For example, having DOIs (or URLs) for articles doesn't automatically give us cross-linked papers where the literature cited section of an article is now linked using DOIs. Those links have to get built by services that take a citation and find the corresponding DOI. We will need an equivalent for specimens...
+
+Hope this rather rambling email helps,
+
+Regards
+
+Rod
+
+
+
+
+
+On 5 Jul 2013, at 22:25, Brian L. Fisher wrote:
+
+Rod,
+
+Over the last few years I've been working at imaging all Ant Types from the worlds collections. We have been imaging about 10,000 specimens/year and  we should have 80% of the world's ant types imaged by the end of the year.  Combined with the up to date catalog, references, and a growing specimen database,  I am hoping that the growing number of ant taxonomist, especially from developing countries, will use these resources to improve the quality of their taxonomic works.  My hope is that once we have digitized our taxonomic history, these digital resources will drive an acceleration in ant taxonomy without having to resort to any of the "turbo" taxonomy shortcuts.  Ant Taxonomy will accelerate because more people will be doing taxonomy, not because we are doing "turbo" taxonomy. 
+
+At the same time, I am recognizing that AntWeb is a data silo and I would like your advice on how to open AntWeb (including AntCat)  resources to the broader informatics community.  For example, how could you better mine AntWeb or AntCat in your projects.    I am currently working on the best way to improve the structure of identifiers (see suggestion below). I would like you to keep AntWeb in mind with your project and if you find a way that AntWeb or AntCat could be included, it would be great to get your advice.  In particular, if you agree with the suggestion below. 
+
+Cheers, Brian 
+
+
+
+---------- Forwarded message ----------
+From: Guentsch, Anton <a.guentsch@bgbm.org>
+Date: Tue, Jun 25, 2013 at 1:49 AM
+Subject: AW: antweb, pilot, treatments, etc
+To: Donat Agosti <agosti@amnh.org>, "Fisher, Brian" <BFisher@calacademy.org>
+Cc: Roger Hyam <R.Hyam@rbge.ac.uk>
+
+
+Dear Donat and Brian,
+ 
+The opinions on how to structure the identifiers are rather diverse. For a summary of the present discussion see http://wiki.pro-ibiosphere.eu/wiki/Best_practices_for_stable_URIs. The good message is that it doesn’t really matter and I don’t see any problems with your uri structure. May be one minor change: I would only use “image”  (singular).
+ 
+The more important consideration is the question what the IDs really identify. An important aspect would be to organise the identifiers in a way that physical objects can be clearly distinguished from metadata-records describing the objects. With this one can always make transparent whether a statement is referring to the object itself or the data about the object. You could do this for example with the following structure
+ 
+http://object.antweb.org/specimen/CASENT0905050                                    for the physical object (no data associated with it)
+http://data.antweb.org/specimen /rdf/CASENT0905050                               for a metadata record (including the link to the physical object
+http://data.antweb.org/specimen /html/CASENT0905050                            for a webpage with human readable information about the specimen
+ 
+Or the other way round:
+ 
+http://specimen.antweb.org/object/CASENT0905050
+http://specimen.antweb.org/data/rdf/CASENT0905050
+http://specimen.antweb.org/data/html/CASENT0905050
+ 
+ 
+A client “clicking” on http://specimen.antweb.org/object/CASENT0905050 would then be redirected to the html representation or the machine-readable (rdf, json, …) representation depending on whether he/she is a person using a browser or a machine.
+ 
+Regarding the image uri: is this really referring to an image? Or is this an html web-page with an image and some meta information about the specimen? In this case I would rather use a URI saying “I’m, a web page” (like in the examples I gave).
+ 
+With best wishes,
+Anton
+ 
+---------
+ 

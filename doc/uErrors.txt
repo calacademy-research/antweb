@@ -1,0 +1,118 @@
+Unique Errors - uErrors.txt
+=============
+
+File created by mark at Nov 8, 2010.
+By design, this file should store a single instance of each error type.
+Currently there is no order.
+When resolved, should be moved to the end of the file to the Archived section.
+  Include a note as to how the problem occured, and was resolved.
+Stack traces should be recorded from the antweb file (not include Tomcat portions of stacktrace).
+WSS indicates that a stacktrace has been trapped but not handled or resolved.
+Sometimes debugging information or result is included.  Timestamp should be nearly identical.
+Exceptions are separated by "---"
+
+
+Exceptions
+==========
+
+ 2010-11-08 14:50:21,458 ERROR TP-Processor3 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.lang.NullPointerException java.lang.NullPointerException
+	at org.apache.jsp.bigPicture_jsp._jspService(bigPicture_jsp.java:186)
+---
+ 2010-11-08 13:44:36,788 ERROR TP-Processor16 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: javax.servlet.jsp.JspException: Exception thrown by getter for property prettyName of bean showTaxon javax.servlet.jsp.JspException: Exception thrown by getter for property prettyName of bean showTaxon
+	at org.apache.struts.util.RequestUtils.lookup(RequestUtils.java:964)
+	at org.apache.struts.taglib.bean.WriteTag.doStartTag(WriteTag.java:286)
+	at org.apache.jsp.slideShow_jsp._jspx_meth_bean_005fwrite_005f5(slideShow_jsp.java:772)
+	at org.apache.jsp.slideShow_jsp._jspService(slideShow_jsp.java:483)
+ 2010-11-08 13:37:51,061 ERROR TP-Processor22 org.calacademy.antweb.util.AntwebUtil - WSS. largePicture-body.jsp exception:com.zonageek.jpeg.JpegException: Unexpected data, missing 8BIM on /data/antweb//images/casent0102357/casent0102357_l_1_high.jpg
+---
+ 2010-11-08 13:13:12,556 WARN TP-Processor12 org.calacademy.antweb.Locality - !!! - investigate: Locality RecordSet next not found for locality:Glen Canyon in query:select distinct sp.country,sp.county, sp.province, sp.localitycode   , sp.localityname, sp.other, sp.biogeographicregion  , sp.decimal_longitude, sp.decimal_latitude  from specimen as sp  where sp.localitycode = 'Glen Canyon'
+ 2010-11-08 13:13:12,559 ERROR TP-Processor12 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: stale session
+---
+ 2010-11-08 13:03:56,281 ERROR TP-Processor8 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.lang.NullPointerException java.lang.NullPointerException
+	at org.apache.jsp.specimen_jsp._jspService(specimen_jsp.java:188)
+---
+ 2010-11-08 11:45:59,145 ERROR TP-Processor2 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.lang.NullPointerException java.lang.NullPointerException
+	at org.apache.jsp.comparison_002dbody_jsp._jspService(comparison_002dbody_jsp.java:172)
+---
+* Could be related to above stacktrace.
+
+ 2010-11-08 11:46:53,824 ERROR TP-Processor12 org.calacademy.antweb.Specimen - Problem setting specimen description java.lang.NullPointerExceptionnullcode:lacment142084 name:lacment142084
+ 2010-11-08 11:46:53,828 ERROR TP-Processor12 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.io.FileNotFoundException: /data/antweb/images/lacment142084/lacment142084_p_1_high.jpg (No such file or directory) GgUtil.RequestInfo() - url:http://www.antweb.org/largePicture.jsp queryString:name=lacment142084&shot=p&number=1 referer:null user-agent:ICC-Crawler/2.0 (Mozilla-compatible; ; http://kc.nict.go.jp/project1/crawl.html)
+---
+ 2010-11-08 10:11:02,064 ERROR TP-Processor17 org.calacademy.antweb.Specimen - Problem setting specimen description java.lang.NullPointerExceptionnullcode:casent0135614 name:casent0135614
+---
+ 2010-11-08 09:49:39,808 ERROR TP-Processor16 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.util.ConcurrentModificationException java.util.ConcurrentModificationException
+	at java.util.ArrayList$Itr.checkForComodification(ArrayList.java:782)
+	at java.util.ArrayList$Itr.next(ArrayList.java:754)
+	at org.apache.jsp.taxonPage_002dbody_jsp._jspService(taxonPage_002dbody_jsp.java:475)
+	at org.apache.jasper.runtime.HttpJspBase.service(HttpJspBase.java:98)
+---
+ 2010-11-08 05:41:51,049 ERROR TP-Processor12 org.calacademy.antweb.FieldGuideAction - error in fieldGuide action: java.util.ConcurrentModificationException
+ 2010-11-08 05:41:51,075 ERROR TP-Processor12 org.calacademy.antweb.util.AntwebUtil - java.util.ConcurrentModificationException
+	at java.util.ArrayList$Itr.checkForComodification(ArrayList.java:782)
+	at java.util.ArrayList$Itr.next(ArrayList.java:754)
+	at org.calacademy.antweb.FieldGuide.getMaps(FieldGuide.java:330)
+	at org.calacademy.antweb.FieldGuideAction.execute(FieldGuideAction.java:126)
+---
+ 2010-11-08 07:49:01,414 WARN TP-Processor16 org.calacademy.antweb.CollectionEvent -  !!! investigate: CollectionEvent RecordSet next not found for collection:KW00-Y70 in query: select sp.collectioncode, sp.habitat, sp.method, sp.collectedby , sp.code, sp.country, sp.county, sp.province, sp.localitycode, sp.caste, sp.type , sp.localityname, sp.species, sp.genus, sp.decimal_longitude, sp.decimal_latitude , count(image.image_of_id) as images  from specimen as sp  left join image on sp.code = image.image_of_id  where sp.collectionCode like '%KW00-Y70%'  group by sp.code,sp.type, sp.country, sp.province, sp.localitycode, sp.collectioncode  , sp.caste, sp.species, sp.genus, sp.localityname, sp.habitat, sp.method  , sp.collectedBy, sp.county, sp.decimal_longitude, sp.decimal_latitude 
+ 2010-11-08 07:49:01,416 ERROR TP-Processor16 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: stale session
+---
+2010-11-08 05:59:59,612 WARN TP-Processor8 org.apache.struts.action.RequestProcessor - Unhandled Exception thrown: class java.lang.IllegalStateException
+ 2010-11-08 05:59:59,612 ERROR TP-Processor8 org.apache.catalina.core.ContainerBase.[Catalina].[localhost].[/].[action] - Servlet.service() for servlet action threw exception
+ java.lang.IllegalStateException: setAttribute: Session already invalidated
+	at org.apache.catalina.session.StandardSession.setAttribute(StandardSession.java:1266)
+	at org.apache.catalina.session.StandardSession.setAttribute(StandardSession.java:1248)
+	at org.apache.catalina.session.StandardSessionFacade.setAttribute(StandardSessionFacade.java:130)
+	at org.calacademy.antweb.SearchAction.advancedSearch(SearchAction.java:84)
+---
+ 2010-11-08 04:34:22,539 ERROR TP-Processor10 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.lang.IllegalArgumentException: Null property value for 'locality' java.lang.IllegalArgumentException: Null property value for 'locality'
+	at org.apache.commons.beanutils.PropertyUtils.getNestedProperty(PropertyUtils.java:755)
+	at org.apache.commons.beanutils.PropertyUtils.getProperty(PropertyUtils.java:801)
+	at org.apache.struts.util.RequestUtils.lookup(RequestUtils.java:952)
+	at org.apache.struts.taglib.logic.EmptyTag.condition(EmptyTag.java:123)
+	at org.apache.struts.taglib.logic.NotEmptyTag.condition(NotEmptyTag.java:94)
+	at org.apache.struts.taglib.logic.ConditionalTagBase.doStartTag(ConditionalTagBase.java:218)
+	at org.apache.jsp.collection_002dbody_jsp._jspx_meth_logic_005fnotEmpty_005f3(collection_002dbody_jsp.java:892)
+	at org.apache.jsp.collection_002dbody_jsp._jspService(collection_002dbody_jsp.java:309)
+---
+ 2010-11-08 02:59:20,314 ERROR TP-Processor5 org.calacademy.antweb.BrowseAction - Bad rank:species name=humile GgUtil.RequestInfo() - url:http://www.antweb.org/description.do queryString:project=&rank=species%20name=humile referer:null user-agent:Mozilla/5.0 (compatible; discobot/1.1; +http://discoveryengine.com/discobot.html
+
+---
+ 2010-11-08 00:21:35,435 ERROR TP-Processor15 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.lang.InstantiationException: bean project not found within scope java.lang.InstantiationException: bean project not found within scope
+	at org.apache.jsp.taxonPage_jsp._jspService(taxonPage_jsp.java:264)
+
+  This exception can happen with a request like this: http://www.antweb.org/taxonPage.jsp?rank=species&genus=tatuidris&name=tatusia&project=
+  if the user does not have a project in the session.  Going to an arizona page for instance, and then
+  returning will allow the page to display successfully.  Should not access jsp pages directly.
+
+---
+ 2010-11-07 18:44:42,039 ERROR TP-Processor18 org.calacademy.antweb.Specimen - Problem setting specimen description java.lang.NullPointerExceptionnullcode:psw9576-15 name:psw9576-15
+---
+ 2010-11-07 19:33:38,571 ERROR TP-Processor12 org.apache.struts.action.RequestProcessor - Invalid path /index.jspslideShow was requested
+---
+2010-11-07 19:35:26,921 ERROR TP-Processor18 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.io.FileNotFoundException: /data/antweb/null (No such file or directory) GgUtil.RequestInfo() - url:http://www.antweb.org/error.jsp queryString:code%20CASENT0100367%20name%20Proceratium%20google%20picture%20/images/casent0100367/casent0100367_p_1_high.jpg referer:null user-agent:Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)
+---
+ 2010-11-07 15:51:25,210 ERROR TP-Processor5 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.io.FileNotFoundException: /data/antweb/images/CASENT0101033/CASENT0101033_p_1_high.jpg (No such file or directory) GgUtil.RequestInfo() - url:http://www.antweb.org/largePicture.jsp queryString:name=CASENT0101033&shot=p&number=1 referer:null user-agent:Mozilla/5.0 (compatible; Yahoo! Slurp/3.0; http://help.yahoo.com/help/us/ysearch/slurp)
+---
+
+
+
+
+
+Archived
+========
+---
+ 2010-11-08 02:21:47,216 ERROR TP-Processor10 org.calacademy.antweb.FieldGuideAction - error in fieldGuide action: java.lang.NumberFormatException: For input string: "175.85,"
+ 2010-11-08 02:21:47,217 ERROR TP-Processor10 org.calacademy.antweb.util.AntwebUtil - java.lang.NumberFormatException: For input string: "175.85,"
+	at sun.misc.FloatingDecimal.readJavaFormatString(FloatingDecimal.java:1242)
+	at java.lang.Float.valueOf(Float.java:405)
+	at java.lang.Float.<init>(Float.java:506)
+	at org.calacademy.antweb.Extent.fitProject(Extent.java:106)
+	at org.calacademy.antweb.FieldGuide.setExtent(FieldGuide.java:681)
+	at org.calacademy.antweb.FieldGuideAction.execute(FieldGuideAction.java:85)
+
+  ProjectResources.properties contained impropper extents.  Commas removed.  Code modified to handle
+    and log this error should it re-appear.
+---
+
+

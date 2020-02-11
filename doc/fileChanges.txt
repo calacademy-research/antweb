@@ -1,0 +1,41 @@
+File Changes
+------------
+
+Removed project info from ApplicationResources.properties for live site.
+
+Release 3.0.5
+  LargePictureAction.java:43
+
+Release 3.0.4
+  Re-integrate changes to 3.0.3
+  Change ProjectResource System.out to s_log
+  Upgraded commons-logging jar.  Removed 2 old ones.
+  LargePictureAction.java:43
+  largePicture.jsp:11 // check for null session and request.
+  error.jsp:50
+  fieldGuide.jsp:47 doc changes
+
+Release 3.0.3
+  Revert to original Thau code
+
+Release: 3.0.2
+  remove log4j, servlet.jar and servletapi-2.3.jar
+  GenericSearchResults:224
+  fieldGuid.jsp: 46
+  All includes of Log4j Logging
+  largePicture-body.jsp:35
+  BigMapAction.java:50
+  site_nav.jsp:189, 277
+  AppContextListener.java
+  web.xml:22
+  projectResource.java:38,232
+  SpecimenImages.java:62 // log exceptions
+  
+Release: 3.0.1
+  BrowseAction.java:101   // handle null project
+  SpecimenImages.java:111 // avert NPE
+  Specimen.java:251      // diagnostic data
+  error.jsp               // fix NPE.  Log error data.
+
+
+

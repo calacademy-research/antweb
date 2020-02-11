@@ -1,0 +1,277 @@
+To Do List:
+
+    
+Slide show should not show a synonym like cerapachynae 
+Cross site scripting white list
+   
+Hide implementation of taxon_name
+  inae or incertae_setis    
+  Capitalize Genus and up.  
+  In See Also.  Modify on upload reports.  Orphan reports.
+Geogarphical Distribution in Search
+  (In Decimal Degrees)  Latitude:  Longitude:  Radius: (in Kilometers)
+Minor bug fixes 
+  Why a comma after See Also here: http://localhost/antweb/description.do?genus=pheidole&species=pulchella_nr&rank=species&project=allantwebants
+  Why not display author correctly here: http://localhost/antweb/description.do?genus=leptogenys&species=peuqueti&rank=species&project=worldants    
+  
+  
+Priority
+  1. Validate names
+    Status.  
+    Manage Quadrinomial
+      Add an icon to taxa page.  
+      q icon
+  2. Countries and Species list tool 
+
+Plazi - Darwin Core
+Advanced Search with lat long proximity search (perhaps using API)
+Species List UI Tool
+Create a separate DB for read-only
+Homonyms inserted into homoynym table instead of taxon table.
+Change taxonname.  Space in between subfmamily and genus, capitalaization.
+  Test valid in search.  See ~/dev/calAcademy/antweb/src/org/calacademy/antweb/search/GenericSearchResults.java:81
+Fix Description Edit Orphan Manager
+Make sure Compare Images and Field Guides is accessible where appropriate on project pages
+RDF redirect for antweb stable identifiers. Apr 1 bfisher email.
+donation to Antweb not working. Move to Amazon donation or Google - https://payments.amazon.com/business/asp
+figured out the business with fossils and introducedants
+change the species list upload report copy.
+Statuses to advanced search
+Make download species list have subspecies
+upload species list time - comoros
+See Also: taxon link list
+  Include hyperlinks to subspecies of a species, sibling subspecies to a subspecies, [taxon_name]_cf and [taxon_name]_nr
+  on Overview page for a taxon, below taxonomic info
+add author date html as a tool tip or link to antcat page.
+fix countInsertedSpecies <- search on, in UploadDetails.
+Similar_species is defunct.  Remove.
+Should we handle multiple access means such as:
+  http://localhost/antweb/description.do?genus=pheidole&species=pubiventris&subspecies=foederalis&rank=subspecies  
+  http://localhost/antweb/description.do?genus=pheidole&species=pubiventris foederalis&rank=species
+specimen1 inserted: diaspidinaemorganella conspicua but no genera:morganella 
+   select taxon_name, source, created from taxon where genus = "morganella";
+India list, elmesi has a non ascii space at the end.  To fix.
+Test Steve's upload to have proper species name without quotes for specimen code: jdm32-004941
+  Block single quote upload.
+http://antweb-dev/browse.do?rank=species&name=grandidieri&genus=anochetus&project=madants&sortBy=collection&t=
+  Sorted by image counts, does not  
+Do we realiably create indets if fields are null?
+  
+Throw error on fields that won't parse.  Try to parse as is done in specimen.xml at
+  upload time to catch error early (in SpecimenUpload).  Line 259 specimenUpload.
+  See Peter Hawkes upload circa Dec 11
+Check all input values for extra quotes.  Strip.  Especially taxonname in species list.
+RDF work.
+Antcat
+  AuthorAndDate and authorAndDateCitation fields.  Display in list view tacked on to the taxonname (not bold)  
+  if Taxon is invalid (valid, invalid, null) then have a valid_taxon_name field with the proper name  
+GenAll does not seem to generate recent images.  Also, if workingdir doesn't have speciesLists, not reloaded?
+small jpegs issue (Sep 9 emails) updating reuploaded images small jpegs
+Specimen List Tool 
+  (3) For all list of species (eg:  http://www.antweb.org/browse.do?name=tanipone&rank=genus&project=allantwebants)  did you ever notice why there is a large blank space after the species name?  Because that is where we want the Author and Date of the species. 
+Is there anyway to have for all species lists, the author and date to show up after the species name.
+* See: ~/dev/calAcademy/antweb/web/taxonReport.jsp
+  (4)  Have you looked at a recent CAS specimen data upload log: http://www.antweb.org/web/log/upload/20131023-15:27:59-CASSpecimenUpload.html
+We have a growing problem of taxon names that are not valid.  The list is huge and growing.  FMNH has the same problem. The only way we can deal with this is to (a) start importing all names from AntCat (b) and use the status fields in the AntCat upload to figure out the current valid name of those taxa on the upload log.  Thus, we need the upload report to return the current valid name for taxa (when possible) so the user can then update their records.
+If we can do (4) - it will be a MAJOR breakthrough in curation management for AntWeb and is really the only way we can expand antweb without go crazy updating names by hand.  If my lab can't keep up with the names, how can we expect a small lab like in India to keep up to date.  
+
+Check for Stale database handles
+  find . -name \*.java | xargs grep "Taxon.setConnection"
+./src/org/calacademy/antweb/curate/orphans/OrphanDescEditsAction.java:                taxon.setConnection(null);  //Mark added July 4, 2013
+./src/org/calacademy/antweb/curate/orphans/OrphanFavImgsAction.java:                taxon.setConnection(null);  //Mark added July 4, 2013
+./src/org/calacademy/antweb/DummyTaxon.java:        taxon.setConnection(connection);
+./src/org/calacademy/antweb/EOL.java:              theTaxon.setConnection(myConnection);
+./src/org/calacademy/antweb/EOL.java:              theTaxon.setConnection(null);
+./src/org/calacademy/antweb/search/CompareResultsAction.java:                        theTaxon.setConnection(connection);
+./src/org/calacademy/antweb/search/CompareResultsAction.java:                        theTaxon.setConnection(null);
+./src/org/calacademy/antweb/search/FieldGuideAction.java:				taxon.setConnection(connection);
+./src/org/calacademy/antweb/search/PrepareCompareResultsAction.java:            fetchTaxon.setConnection(connection);
+./src/org/calacademy/antweb/search/TaxaFromSearchAction.java:                        theTaxon.setConnection(myConnection);
+./src/org/calacademy/antweb/search/TaxaFromSearchAction.java:                        theTaxon.setConnection(null);  // Mark added July 4, 2013
+./src/org/calacademy/antweb/SlideShowAction.java:        taxon.setConnection(connection);
+./src/org/calacademy/antweb/SlideShowAction.java:        taxon.setConnection(null);
+./src/org/calacademy/antweb/Taxon.java:        taxon.setConnection(connection);
+./src/org/calacademy/antweb/Taxon.java:        taxon.setConnection(null);
+./src/org/calacademy/antweb/Taxon.java:                taxon.setConnection(connection);
+
+
+
+
+
+Older:
+
+  Have region pages have a published flag
+  Caching work.  Make sure that field guides, taxons with spaces are fetched correctly.  Echo changes (getCache and bots) through other cache types.
+  Look into Download, compare, map and field guide on browse page
+  Favorites functionality (pagination, site integration, counts, ordering)  
+  Collection locality page.  
+    Luke, can we put specimen related data above the line and collection based data below the line?  And turn off the collection data if on the collection page?
+  Advanced Search.  Add params in url.
+  Image counts.
+    Labels should not be counted as images.
+    (for instance: Haidomyrmodes  on this page: 
+       http://antweb.org/browse.do?rank=subfamily&name=sphecomyrminae&project=allantwebants 
+    ) pending work on the view (image_count) underlying the materialize images process.
+  Find out better search specimen limit.
+  Get project reupload working correctly.
+  Look into country/species database structure
+  Eclipse / NetBeans
+  Search possible on date collected and elevation fields.  Valid names only?
+  Google Maps V3
+  Brian's plan for upload process for different countries
+  Verify, work subspecies
+  Who calls specimen.setDescription?  Is the connection not closed?  It is set as a member of specimen.
+     2013-01-19 13:20:04,927 WARN ajp-bio-8009-exec-476 org.calacademy.antweb.Specimen - setDescription() WSS.  Why is there no XML description for code:casent0103277
+  Add specimen and project upload statistics to the log files. Before after.
+  Jan 4 email thread - Map Species within this genus is not working
+  Throw exception from Species.setImages(), map.setPoints()
+  Finish switching specimen search results to searchResults.jsp - UI changes.  Add collection to report in case of advancedSearch.
+  Fix images.  Don't display only label for genitalia.  http://www.antweb.org/description.do?name=phasmomyrmex&rank=genus&project=worldants
+  Fix Sonoma species field guide direct call not supported isStaticCallCheck.
+  Get the taxon table value of valid_name into specimen for display on the specimen-body.jsp
+  Collection page show image counts.
+  Page for scanners in Europe.
+  Specimen data.  Sort.  What headers.  Search can.  Others, like browse, can't.
+    Date.  Country and collector.  Want to sort on caste.
+  Uptime service completion
+  Investigate donate options
+  Performance - extend caching system to record all requests, so as to find ones which do not return.
+  Raise app quality - remove errors from logs.  Some are tough nuts.
+  Upload Process
+    Block upload of extra carriageReturnCheck records and subsequent record.  Maybe if easy.  Already logged.
+    Check in upload.  Upload should fail on records that do not have all higher taxonomic positions filled.  Also, do not create new relationships (secondary ones)
+    On upload of biota information, delete any taxons without description edits that do not have specimens in that upload file set.
+    Disallow invalid subfamily uploads.  Done, yes?  *verify.
+  Add Ivory Coast and country names without special characters.  Still need to correctly handle special chars in upload files.  
+  Taxonomic image pages (all species or genera for a project) - be able to toggle among images and list.  Add breadcrumb trail to taxonomicPage.do.  Perhaps not do this for allantweb and bolton due to performance.
+  EOL subjects stuff
+  Verify that there are not other problems that arise with projects california and madagascar having shortened
+    project names.  Probably best to have an explicit directory field?
+  Investigate taxanomicnotes in description_edit.  Turn into taxonomic?
+  March 28th email - antweb search mapping issues
+  Handle Description_edit orphans.  Could be lots.  Currently 72. mostly fossil.
+    Clear form properties for Description Edit Orphans tool
+    To be run by admin.  Accessible by curators.
+    Options:
+      Transfer to: Subfamily, genus drop downs.  Hand type species.  Until fancy javascript option.
+      Delete
+    Add functionality to show description edits for orphaned taxons that do not have specimens.
+    Do by login
+    Do not show taxonomic history.  Or should we just delete those.
+  Handle Favorite_images orphans.  Follow through with report creation.
+  Change specimen rank to "specimen" instead of null.  In siteNav lead to view and browse for the specimen's species. 
+  Create UI mechanism to set group abbrev (low priority)
+  Convert Dates.  Biota will use old format.  Convert.
+    Finish partial date formats
+  Add "change current..." to slide show.
+  Follow up on query about Arizono compares from Jan 30th.
+  Specimen page should display species group consistly - deferred to coincide with AntCat work.   
+  Species file upload.  Make sure first column is < 15characters.  Equal to line count.
+  Consistentenly handle polishing of project names across BrowseAction, FieldGuide, MapComparison
+    lowercase and tranform (gynandromorphants to anomalousants)
+  Why does GoogleMaps show up only on some taxon pages?
+  Why does production server start twice on /etc/init.d/priv_tomcat and shutdown once?  Not on stage.
+  Generate biogeographic regions according to lists
+  Reload ProjectResources on Project Add
+  Comments on specimen page?  When Brian says so.
+  Find why mapComparison is not showing on species page.  
+    Phase 2: Where ever there are PDFs, replace with the new mapComparison template in place (Luke).
+  On getComparison.do.  Use medium size images.  And link to bigImage.  
+    Open a new window or tab to see bigImage.  Add this to mapComparison as well.
+    See if I can fix that tool of levels and views.  Add compare Selection button to top of page.
+    OneView.jsp?  Can we get rid of Compare Selected and have all functionality be on the one page.
+      Could we have an All option in the header  
+  The following items have been added to my task list due to ESA Reno antweb workshop
+    How are partial dates handled?
+    Come back to Dates issue.  Collection start and end date.  Included into specimen upload process.
+      Collection start/end date.  Date info added to collection page.
+    Collection, location and specimen notes. (expand contract)
+    Help Luke integrate the new Field Guide template.
+    TAPIR / GBIF
+    Date or at least year added to advanced search
+  Reload regions at region creation. 		
+  Get the taxonomic browser and description pages to display grandchildren.    
+  Follow up:  Remove taxons with numbers, quotes.  First find where they come from.  Allantweb - genera list.
+  Data cleanup
+      select proj_name, count(*) from description where proj_name = "australiantants" group by proj_name;  // 11K!  Description depricated?
+      Orphaned specimens
+    Project data needed to be cleaned up?  There are records from "austrailiantants" but the region is "austrailianants".
+     There are 209 "none" proj_taxon records.  "australiantants" exists in the country_bioregion table.
+    Is it possible to show specimens only of a certain bioregion, but coordinating through country?  Would seem useful.
+      
+  Bug fix
+  Why does field guide not display properly the first time after a server restart?  
+  2011-09-22 19:43:55,514 ERROR ajp-bio-8009-exec-17 org.calacademy.antweb.Taxon - e:java.lang.StringIndexOutOfBoundsException: String index out of range: -1 Problem?  start:0end:10 rank:genus fullName:(ponerinae) for taxon:(ponerinae)
+    here: (ponerenae) http://www.antweb.org/browse.do?rank=subfamily&name=ponerinae&project=worldants
+  BOLD script
+  Fix error messages to not claim session expiration when not true
+  Eli's Invasive Species project
+  Resolve taxon_country issues in Bolton upload.  Why primary key on taxon???
+  Brian Email "Fwd: Regarding AntWeb page" from Sep 15th regarding biota fields and specimen info
+    add Locality Notes, and Collection Notes.   
+  Apache Portable Runtime (APR) based Native library for Tomcat
+  To do: add to locality, collection pages.  ... data uploaded by "Cal Academy of Sciences   (example)
+  updating the project list on project add
+  Upload Zip.  Automate.
+  Anonymous comments
+  Date range or just date for specimen
+  Upper cased CASENTs.  See: http://antweb.org/specimen.do?name=CASENT0103345
+  Security revue.  Change passwords.
+  AntCat integrations.  Clickable links in Taxonomic History.  Bolton summary.  Forminicae stats.  Add an extant field to taxon.
+  Vincent's fossil, description edit issues.  Design.
+  Login and group should be recorded for upload actions.
+  Bonnie's Anc file issue  
+    Track ancillary pages.  Display on home page.
+  Eli Agbayani eagbayani@eol.org.  updates to support our eol services.
+    Characters at beginning.  ConcurrentExceptions.  EOL data
+  Resolve image picker problem with fiji - Monomorium destructor
+  Allow flexibility to image naming, to make equal with the allowed specimen codes?  See: blf0976%2840%29-2
+  Finish curators page redesign.
+  Login Cookie usage to enable auto-login (remember me functionality).
+  Investigate - What to do with staff and documentation page.  They can be dynamically modifed, but 
+    they can require code modifications.  Put in cvs and they will overwrite dynamic changes.  Hmm.
+  Indicate that GoogleEarth results are fractional if they are.  Performance?  Log.
+  Maps are stored in the session.  If a user where to have a locality page open in one tab, refresh a taxon page in another tab, then click the "Enlarge Map" on the locality page, they would seem the map for the taxon.
+  Clean up project resources.  Use db as master of project data.
+    An unidentified bug (probably in UploadAction.java) has been miswriting the ProjectResources.properties file creating SQL exceptions that would keep maps from displaying on certain pages.  I have modified the file by hand to fix the error but not found the root cause.
+  Compare results?
+  Fwd: Antweb from Feb 19 from John Longino
+    Comments, Notes and Taxonomic Notes.  See email from Feb 19.
+  Write all dynamic jsp files to a separate homePage directory
+  Check on the plazi bit in ApplicationProperties
+  Image picker to support male ants
+
+ Assorted random little things
+  verify province upload.    
+  Check Map:277 for allantweb criterion
+  Uploading a biota file - use of access_login flaky.  Could cause problems if another user ever uploaded.
+  Test Jack's upload.  http://www.antweb.org/locality.do?name=Rio%20Amarillo for special chars.
+  Pending:
+    It is viridis not viride
+      Get Rid of: http://www.antweb.org/description.do?rank=species&genus=monomorium&name=viride&project=floridaants
+      right link: http://www.antweb.org/description.do?name=viridis&genus=monomorium&rank=species&project=floridaants
+    query: select * from taxon where taxon_name = 'myrmicinaemonomorium viride';        
+  Worldants Summary
+    Why do undet's get included in bolton?
+     Emphasis on broken favorite images picker.
+       description.do?genus=nomamyrmex&name=undet&rank=species
+       http://www.antweb.org/imagePick.do   Nomamyrmex undet   is available under default.  Not worldants.
+     Why is Ecitoninae listed as a species in the taxon table?
+      It's image was listed for Bolton undet favorites: http://www.antweb.org/images/casent0104124/casent0104124_h_1_med.jpg
+  To do?
+    2. Fix Erin's problem with spaces in names.  Depends on 3.
+    3. mod_jk - configure apache to answer php calls.  Enables 2, 4.
+
+Data anomalies
+  Subfamily not displayed here (it is cerapachyinae): http://localhost/antweb/browse.do?subfamily=cerapachyinae&name=cerapachys_f01&rank=genus&project=worldants
+  Parenthesis item: http://localhost/antweb/description.do?subfamily=ponerinae&name=(ponerinae)&rank=genus&project=worldants
+
+Questions:
+  Parenthesis in names?  Sep 24th email.  See Ponerinae subfamily
+    
+Prospective
+  Post a comment function to all pages (specimen, etc...).  So that any (registered?) user can...  To be emailed.
+  Allow upload tool to upload photos of localities
+    
+
+

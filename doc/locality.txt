@@ -1,0 +1,55 @@
+
+
+
+--- In Database ---
+
+mysql> select * from bioregion;
++-------------+-----------------------------------+---------------------+
+| name        | description                       | created             |
++-------------+-----------------------------------+---------------------+
+| Afrotropic  | including Sub-Saharan Africa      | 2012-04-10 16:10:23 
+
+
+mysql> select * from project where project_name = "kenyaants";
++--------------+---------------+------------------------+---------------------+---------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| project_name | project_title | extent                 | biogeographicregion | last_changed        | contents     | specimenImage1       | specimenImage2       | specimenImage3       | authorImage               | map  | authorbio                      | root  | locality                            | specimenImage1Link                                                                          | specimenImage2Link                                                                           | specimenImage3Link                                                                     | author                                | created             |
++--------------+---------------+------------------------+---------------------+---------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| kenyaants    | Kenya         | 31.79 -5.05 43.69 5.19 | africanants         | 2013-01-30 15:06:00 | ....         | CASENT0007073_Hw.jpg | CASENT0415562_Hw.jpg | CASENT0172662_Hw.jpg | Antweb curators image.jpg |      | (shown from left to right) ... | kenya |  biogeographicregion='afrotropical' | http://www.antweb.org/description.do?rank=species&genus=plectroctena&name=cristata&project= | http://www.antweb.org/description.do?rank=species&genus=atopomyrmex&name=mocquerysi&project= | http://www.antweb.org/description.do?rank=species&genus=dorylus&name=molestus&project= | Francisco Hita Garcia & Georg Fischer | 0000-00-00 00:00:00 |
+
+
+
+--- In ProjectResources.properties file ---
+
+navigation.biogeographicregions=nearcticants,malagasyants,globalants,australianants,eurasianants,neotropicalants,pacificislandsants,africanants,southeastasiaants,projectsants
+...
+africanants.title=African
+africanants.root=african
+africanants.locality=biogeographicregion='Afrotropic'
+africanants.extent=-29.56 -38.08 67.60 43.02
+...
+navigation.africanants=macaronesiaants,kenyaants
+...
+kenyaants.title=Kenya
+kenyaants.root=kenya
+kenyaants.locality= biogeographicregion='afrotropic'
+kenyaants.extent=31.79 -5.05 43.69 5.19
+kenyaants.biogeographicregion=africanants
+
+
+-- ProjectResources object --
+
+getProjectInfo() 
+ ..., africanants=[kenyaants, macaronesiaants],  ...
+
+getResources(): 
+   ... africanants.locality=biogeographicregion='Afrotropic', africanants.title=African, ...
+   ... macaronesiaants.biogeographicregion=africanants, ...
+   ... kenyaants.biogeographicregion=africanants,  ...
+   ... kenyaants.root=kenya, ...
+   ... kenyaants.locality=biogeographicregion='afrotropic',  ...
+   ... kenyaants.extent=31.79 -5.05 43.69 5.19, ...
+   ... africanants.root=african, ...
+   ... navigation.biogeographicregions=nearcticants,malagasyants,globalants,australianants,eurasianants,neotropicalants,pacificislandsants,africanants, ...
+   ... navigation.africanants=macaronesiaants,kenyaants,  ...
+   ... africanants.extent=-29.56 -38.08 67.60 43.02, ...
+

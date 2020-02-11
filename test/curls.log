@@ -1,0 +1,2431 @@
+{
+  "metaData": {
+    "count": 5, 
+    "limit": 5, 
+    "offset": "0", 
+    "parameters": [
+      {
+        "genus": "Tetramorium", 
+        "limit": "5", 
+        "maxDate": "1979-12-31", 
+        "minDate": "1970-01-01"
+      }
+    ]
+  }, 
+  "specimens": [
+    {
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Australasia", 
+      "bioregion": "Australasia", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "anic32-013568", 
+      "collectedby": "Room,P.M.", 
+      "collectionCode": "ANTWEB", 
+      "country": "Papua New Guinea", 
+      "dateCollected": "1973-02-22", 
+      "dateIdentified": null, 
+      "dctermsModified": "Thu, 12 Apr 2018 12:54:29 GMT", 
+      "decimalLatitude": -2.01667, 
+      "decimalLongitude": 147.267, 
+      "family": "formicidae", 
+      "fieldNotes": null, 
+      "fieldNumber": null, 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": -2.01667, 
+          "lon": 147.267
+        }
+      }, 
+      "georeferenceRemarks": "10km", 
+      "habitat": null, 
+      "habitats": null, 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "Lorengau", 
+      "locatedat": "ANIC", 
+      "locationRemark": null, 
+      "microhabitat": null, 
+      "minimumElevationInMeters": null, 
+      "museum": null, 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:anic32-013568", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "arthropoda", 
+      "preparations": "Carded/pointed", 
+      "recordedBy": "Room,P.M.", 
+      "samplingProtocol": null, 
+      "scientificName": "tetramorium (indet)", 
+      "sex": null, 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "Manus", 
+      "status": "indetermined", 
+      "subfamily": "myrmicinae", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "1973-02-22"
+    }, 
+    {
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Australasia", 
+      "bioregion": "Australasia", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "anic32-013581", 
+      "collectedby": "Room,P.M.", 
+      "collectionCode": "ANTWEB", 
+      "country": "Papua New Guinea", 
+      "dateCollected": "1973-05-30", 
+      "dateIdentified": null, 
+      "dctermsModified": "Thu, 12 Apr 2018 12:54:29 GMT", 
+      "decimalLatitude": -8.81667, 
+      "decimalLongitude": 148.233, 
+      "family": "formicidae", 
+      "fieldNotes": null, 
+      "fieldNumber": null, 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": -8.81667, 
+          "lon": 148.233
+        }
+      }, 
+      "georeferenceRemarks": "10km", 
+      "habitat": null, 
+      "habitats": null, 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "Sangara", 
+      "locatedat": "ANIC", 
+      "locationRemark": null, 
+      "microhabitat": null, 
+      "minimumElevationInMeters": null, 
+      "museum": null, 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:anic32-013581", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "arthropoda", 
+      "preparations": "Carded/pointed", 
+      "recordedBy": "Room,P.M.", 
+      "samplingProtocol": null, 
+      "scientificName": "tetramorium (indet)", 
+      "sex": null, 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "Northern", 
+      "status": "indetermined", 
+      "subfamily": "myrmicinae", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "1973-05-30"
+    }, 
+    {
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Australasia", 
+      "bioregion": "Australasia", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "anic32-013606", 
+      "collectedby": "Room,P.M.", 
+      "collectionCode": "ANTWEB", 
+      "country": "Papua New Guinea", 
+      "dateCollected": "1973-02-06", 
+      "dateIdentified": null, 
+      "dctermsModified": "Thu, 12 Apr 2018 12:54:29 GMT", 
+      "decimalLatitude": -2.21667, 
+      "decimalLongitude": 147.233, 
+      "family": "formicidae", 
+      "fieldNotes": null, 
+      "fieldNumber": null, 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": -2.21667, 
+          "lon": 147.233
+        }
+      }, 
+      "georeferenceRemarks": "10km", 
+      "habitat": null, 
+      "habitats": null, 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "Little Ndrova Is.", 
+      "locatedat": "ANIC", 
+      "locationRemark": null, 
+      "microhabitat": null, 
+      "minimumElevationInMeters": null, 
+      "museum": null, 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:anic32-013606", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "arthropoda", 
+      "preparations": "Carded/pointed", 
+      "recordedBy": "Room,P.M.", 
+      "samplingProtocol": null, 
+      "scientificName": "tetramorium (indet)", 
+      "sex": null, 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "Manus", 
+      "status": "indetermined", 
+      "subfamily": "myrmicinae", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "1973-02-06"
+    }, 
+    {
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Oceania", 
+      "bioregion": "Oceania", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "anic32-013804", 
+      "collectedby": "Kuschel,G.", 
+      "collectionCode": "ANTWEB", 
+      "country": "Cook Islands", 
+      "dateCollected": "1975-09-15", 
+      "dateIdentified": null, 
+      "dctermsModified": "Thu, 12 Apr 2018 12:54:31 GMT", 
+      "decimalLatitude": null, 
+      "decimalLongitude": null, 
+      "family": "formicidae", 
+      "fieldNotes": null, 
+      "fieldNumber": "75/169", 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": null, 
+          "lon": null
+        }
+      }, 
+      "georeferenceRemarks": null, 
+      "habitat": "Forest", 
+      "habitats": "Forest; sifted litter 3", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "Liku Forest", 
+      "locatedat": "ANIC", 
+      "locationRemark": null, 
+      "microhabitat": "sifted litter 3", 
+      "minimumElevationInMeters": null, 
+      "museum": null, 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:anic32-013804", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "arthropoda", 
+      "preparations": "Pinned", 
+      "recordedBy": "Kuschel,G.", 
+      "samplingProtocol": null, 
+      "scientificName": "tetramorium (indet)", 
+      "sex": null, 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "Niue Is.", 
+      "status": "indetermined", 
+      "subfamily": "myrmicinae", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "1975-09-15"
+    }, 
+    {
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Australasia", 
+      "bioregion": "Australasia", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "anic32-026938", 
+      "collectedby": "Room,P.M.", 
+      "collectionCode": "ANTWEB", 
+      "country": "Papua New Guinea", 
+      "dateCollected": "1972-12-14", 
+      "dateIdentified": null, 
+      "dctermsModified": "Thu, 12 Apr 2018 12:55:13 GMT", 
+      "decimalLatitude": -8.76667, 
+      "decimalLongitude": 148.367, 
+      "family": "formicidae", 
+      "fieldNotes": null, 
+      "fieldNumber": "P.M. Room Collection Sp. 416", 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": -8.76667, 
+          "lon": 148.367
+        }
+      }, 
+      "georeferenceRemarks": "10km", 
+      "habitat": null, 
+      "habitats": null, 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "Dobuduru, Popondetta", 
+      "locatedat": "ANIC", 
+      "locationRemark": null, 
+      "microhabitat": null, 
+      "minimumElevationInMeters": null, 
+      "museum": null, 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:anic32-026938", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "arthropoda", 
+      "preparations": "Carded/pointed", 
+      "recordedBy": "Room,P.M.", 
+      "samplingProtocol": null, 
+      "scientificName": "tetramorium (indet)", 
+      "sex": null, 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "Northern", 
+      "status": "indetermined", 
+      "subfamily": "myrmicinae", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "1972-12-14"
+    }
+  ]
+}
+{
+  "metaData": {
+    "count": 5, 
+    "limit": 5, 
+    "parameters": [
+      {
+        "coords": "37, -122", 
+        "limit": "5", 
+        "radius": "2"
+      }
+    ]
+  }, 
+  "specimens": [
+    {
+      "antwebTaxonName": "(apidae)(apidae) (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Nearctic", 
+      "bioregion": "Nearctic", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "casent0270750", 
+      "collectedby": "R.L. Zuparko", 
+      "collectionCode": "ANTWEB", 
+      "country": "United States", 
+      "dateCollected": "2011-08-31", 
+      "dateIdentified": null, 
+      "dctermsModified": "Tue, 19 Jun 2018 12:43:36 GMT", 
+      "decimalLatitude": 37.95207, 
+      "decimalLongitude": -122.63303, 
+      "family": "apidae", 
+      "fieldNotes": null, 
+      "fieldNumber": "CASBZ22", 
+      "fossil": false, 
+      "genus": "(Apidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 37.95207, 
+          "lon": -122.63303
+        }
+      }, 
+      "georeferenceRemarks": null, 
+      "habitat": "roadside grassland", 
+      "habitats": "roadside grassland", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;apidae;(apidae)", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "Bolinas Road, 3.1 road miles SW of Meadow View Golf Course", 
+      "locatedat": "UCSF virus study voucher, CASC", 
+      "locationRemark": "coordinates obtained from GPS", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": 250, 
+      "museum": "CASC", 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:casent0270750", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "CASC, San Francisco, CA, USA", 
+      "ownerInstitutionCode": "CASC, San Francisco, CA, USA", 
+      "phylum": "arthropoda", 
+      "preparations": "pin", 
+      "recordedBy": "R.L. Zuparko", 
+      "samplingProtocol": "sweeping grass & flowers", 
+      "scientificName": "(apidae) (indet)", 
+      "sex": "worker", 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "California", 
+      "status": "indetermined", 
+      "subfamily": "(apidae)", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "31 Aug 2011"
+    }, 
+    {
+      "antwebTaxonName": "(cynipidae)(cynipidae) (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Nearctic", 
+      "bioregion": "Nearctic", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "casent0270740", 
+      "collectedby": "R.L. Zuparko", 
+      "collectionCode": "ANTWEB", 
+      "country": "United States", 
+      "dateCollected": "2011-08-29", 
+      "dateIdentified": null, 
+      "dctermsModified": "Tue, 19 Jun 2018 12:43:36 GMT", 
+      "decimalLatitude": 37.90525, 
+      "decimalLongitude": -122.10067, 
+      "family": "cynipidae", 
+      "fieldNotes": null, 
+      "fieldNumber": "CASBZ10", 
+      "fossil": false, 
+      "genus": "(Cynipidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 37.90525, 
+          "lon": -122.10067
+        }
+      }, 
+      "georeferenceRemarks": null, 
+      "habitat": "grassland Quercus agrifolia", 
+      "habitats": "grassland Quercus agrifolia", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;cynipidae;(cynipidae)", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "Briones Regional Park, Lafayette Ridge Staging Area", 
+      "locatedat": "UCSF virus study voucher, CASC", 
+      "locationRemark": "coordinates obtained from GPS", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": 130, 
+      "museum": "CASC", 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:casent0270740", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "CASC, San Francisco, CA, USA", 
+      "ownerInstitutionCode": "CASC, San Francisco, CA, USA", 
+      "phylum": "arthropoda", 
+      "preparations": "pin", 
+      "recordedBy": "R.L. Zuparko", 
+      "samplingProtocol": "sweeping", 
+      "scientificName": "(cynipidae) (indet)", 
+      "sex": "worker", 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "California", 
+      "status": "indetermined", 
+      "subfamily": "(cynipidae)", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "29 Aug 2011"
+    }, 
+    {
+      "antwebTaxonName": "(diapriidae)(diapriidae) (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Nearctic", 
+      "bioregion": "Nearctic", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "casent0270751", 
+      "collectedby": "R.L. Zuparko", 
+      "collectionCode": "ANTWEB", 
+      "country": "United States", 
+      "dateCollected": "2011-08-31", 
+      "dateIdentified": "2011-12-15", 
+      "dctermsModified": "Tue, 19 Jun 2018 12:43:36 GMT", 
+      "decimalLatitude": 37.94833, 
+      "decimalLongitude": -122.63408, 
+      "family": "diapriidae", 
+      "fieldNotes": null, 
+      "fieldNumber": "CASBZ23", 
+      "fossil": false, 
+      "genus": "(Diapriidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 37.94833, 
+          "lon": -122.63408
+        }
+      }, 
+      "georeferenceRemarks": null, 
+      "habitat": "meadow", 
+      "habitats": "meadow", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;diapriidae;(diapriidae)", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "Marin Watershed District, Lily Lake", 
+      "locatedat": "UCSF virus study voucher, CASC", 
+      "locationRemark": "coordinates obtained from GPS", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": 230, 
+      "museum": "CASC", 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:casent0270751", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "CASC, San Francisco, CA, USA", 
+      "ownerInstitutionCode": "CASC, San Francisco, CA, USA", 
+      "phylum": "arthropoda", 
+      "preparations": "pin", 
+      "recordedBy": "R.L. Zuparko", 
+      "samplingProtocol": "sweeping Equisetum sp.", 
+      "scientificName": "(diapriidae) (indet)", 
+      "sex": "worker", 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "California", 
+      "status": "indetermined", 
+      "subfamily": "(diapriidae)", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "31 Aug 2011"
+    }, 
+    {
+      "antwebTaxonName": "(formicidae)(formicidae) (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Nearctic", 
+      "bioregion": "Nearctic", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "jtlc-vial-000243", 
+      "collectedby": "J. Longino", 
+      "collectionCode": "ANTWEB", 
+      "country": "United States", 
+      "dateCollected": "1983-03-15", 
+      "dateIdentified": null, 
+      "dctermsModified": "Mon, 04 Jun 2018 18:52:50 GMT", 
+      "decimalLatitude": 38.833332, 
+      "decimalLongitude": -122.7, 
+      "family": "formicidae", 
+      "fieldNotes": "NOTEBY J.Longino: pine/oak forest. 1600: Two ant colonies beneath a loose chunk of a large rock. Solenopsis (-1), Camponotus (-2).", 
+      "fieldNumber": "JTL15Mar83/1600", 
+      "fossil": false, 
+      "genus": "(Formicidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 38.833332, 
+          "lon": -122.7
+        }
+      }, 
+      "georeferenceRemarks": "unknown", 
+      "habitat": "pine/oak forest", 
+      "habitats": "pine/oak forest; under stone", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;(formicidae)", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "Boggs Mt. SF", 
+      "locatedat": "JTLC", 
+      "locationRemark": null, 
+      "microhabitat": "under stone", 
+      "minimumElevationInMeters": 950, 
+      "museum": null, 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:jtlc-vial-000243", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "JTLC", 
+      "ownerInstitutionCode": "JTLC", 
+      "phylum": "arthropoda", 
+      "preparations": "Ethanol", 
+      "recordedBy": "J. Longino", 
+      "samplingProtocol": null, 
+      "scientificName": "(formicidae) (indet)", 
+      "sex": "worker", 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "California", 
+      "status": "indetermined", 
+      "subfamily": "(formicidae)", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "15 Mar 1983"
+    }, 
+    {
+      "antwebTaxonName": "(formicidae)(formicidae) (indet)", 
+      "basisOfRecord": "preserved specimen", 
+      "biogeographicregion": "Nearctic", 
+      "bioregion": "Nearctic", 
+      "caste": "", 
+      "classVal": "insecta", 
+      "code": "jtlc-vial-000377", 
+      "collectedby": "J. Longino", 
+      "collectionCode": "ANTWEB", 
+      "country": "United States", 
+      "dateCollected": "1985-11-16", 
+      "dateIdentified": null, 
+      "dctermsModified": "Mon, 04 Jun 2018 18:52:50 GMT", 
+      "decimalLatitude": 35.35, 
+      "decimalLongitude": -120.3, 
+      "family": "formicidae", 
+      "fieldNotes": "NOTEBY J.Longino: chaparral in base of dead Ceanothus", 
+      "fieldNumber": "JTL1131", 
+      "fossil": false, 
+      "genus": "(Formicidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 35.35, 
+          "lon": -120.3
+        }
+      }, 
+      "georeferenceRemarks": "minutes", 
+      "habitat": "chaparral", 
+      "habitats": "chaparral; in base of dead Ceanothus", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;(formicidae)", 
+      "identifiedBy": null, 
+      "institutionCode": "CAS", 
+      "intraspecificEpithet": null, 
+      "kingdom": "animalia", 
+      "locality": "SLObispo32ENE,760m", 
+      "locatedat": "JTLC", 
+      "locationRemark": null, 
+      "microhabitat": "in base of dead Ceanothus", 
+      "minimumElevationInMeters": 760, 
+      "museum": null, 
+      "nomenclaturalCode": "ICZN", 
+      "occurrenceId": "CAS:ANTWEB:jtlc-vial-000377", 
+      "occurrenceRemarks": null, 
+      "order": "hymenoptera", 
+      "ownedby": "JTLC", 
+      "ownerInstitutionCode": "JTLC", 
+      "phylum": "arthropoda", 
+      "preparations": "Ethanol", 
+      "recordedBy": "J. Longino", 
+      "samplingProtocol": null, 
+      "scientificName": "(formicidae) (indet)", 
+      "sex": "worker", 
+      "specificEpithet": "(indet)", 
+      "stateProvince": "California", 
+      "status": "indetermined", 
+      "subfamily": "(formicidae)", 
+      "subgenus": null, 
+      "type": null, 
+      "verbatimEventDate": "16 Nov 1985"
+    }
+  ]
+}
+{
+  "genera": [
+    "(Basicerotini)", 
+    "(Apidae)", 
+    "(Braconidae)", 
+    "(Cynipidae)", 
+    "(Diapriidae)"
+  ], 
+  "metaData": {
+    "count": 5, 
+    "limit": 5, 
+    "parameters": [
+      {
+        "limit": "5", 
+        "rank": "genus"
+      }
+    ]
+  }
+}
+{
+  "images": [
+    {
+      "code": "antweb1032396", 
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252945, 
+          "shotNumber": 4, 
+          "shotType": "p", 
+          "uploadDate": "Sat, 21 Apr 2018 22:08:16 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/antweb1032396/antweb1032396_p_4_low.jpg", 
+            "https://www.antweb.org/images/antweb1032396/antweb1032396_p_4_med.jpg", 
+            "https://www.antweb.org/images/antweb1032396/antweb1032396_p_4_high.jpg", 
+            "https://www.antweb.org/images/antweb1032396/antweb1032396_p_4_thumbview.jpg"
+          ]
+        }
+      ], 
+      "url": "http://localhost:5000/specimens?code=antweb1032396"
+    }, 
+    {
+      "code": "antweb1032460", 
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252946, 
+          "shotNumber": 11, 
+          "shotType": "p", 
+          "uploadDate": "Mon, 23 Apr 2018 01:10:53 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/antweb1032460/antweb1032460_p_11_low.jpg", 
+            "https://www.antweb.org/images/antweb1032460/antweb1032460_p_11_med.jpg", 
+            "https://www.antweb.org/images/antweb1032460/antweb1032460_p_11_high.jpg", 
+            "https://www.antweb.org/images/antweb1032460/antweb1032460_p_11_thumbview.jpg"
+          ]
+        }
+      ], 
+      "url": "http://localhost:5000/specimens?code=antweb1032460"
+    }, 
+    {
+      "code": "casent0487718", 
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252952, 
+          "shotNumber": 1, 
+          "shotType": "p", 
+          "uploadDate": "Tue, 24 Apr 2018 09:15:17 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/casent0487718/casent0487718_p_1_low.jpg", 
+            "https://www.antweb.org/images/casent0487718/casent0487718_p_1_med.jpg", 
+            "https://www.antweb.org/images/casent0487718/casent0487718_p_1_high.jpg", 
+            "https://www.antweb.org/images/casent0487718/casent0487718_p_1_thumbview.jpg"
+          ]
+        }
+      ], 
+      "url": "http://localhost:5000/specimens?code=casent0487718"
+    }, 
+    {
+      "code": "casent0161103", 
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252953, 
+          "shotNumber": 1, 
+          "shotType": "p", 
+          "uploadDate": "Tue, 24 Apr 2018 09:15:17 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/casent0161103/casent0161103_p_1_low.jpg", 
+            "https://www.antweb.org/images/casent0161103/casent0161103_p_1_med.jpg", 
+            "https://www.antweb.org/images/casent0161103/casent0161103_p_1_high.jpg", 
+            "https://www.antweb.org/images/casent0161103/casent0161103_p_1_thumbview.jpg"
+          ]
+        }
+      ], 
+      "url": "http://localhost:5000/specimens?code=casent0161103"
+    }, 
+    {
+      "code": "casent0922898", 
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252955, 
+          "shotNumber": 1, 
+          "shotType": "p", 
+          "uploadDate": "Tue, 24 Apr 2018 09:15:17 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/casent0922898/casent0922898_p_1_low.jpg", 
+            "https://www.antweb.org/images/casent0922898/casent0922898_p_1_med.jpg", 
+            "https://www.antweb.org/images/casent0922898/casent0922898_p_1_high.jpg", 
+            "https://www.antweb.org/images/casent0922898/casent0922898_p_1_thumbview.jpg"
+          ]
+        }
+      ], 
+      "url": "http://localhost:5000/specimens?code=casent0922898"
+    }
+  ], 
+  "metaData": {
+    "count": 5, 
+    "limit": 5, 
+    "parameters": [
+      {
+        "limit": "5", 
+        "shotType": "p", 
+        "since": "60"
+      }
+    ], 
+    "specimenCount": 5
+  }
+}
+{
+  "metaData": {
+    "parameters": [
+      {
+        "limit": "5", 
+        "taxonName": "myrmicinaecrematogaster modiglianii"
+      }
+    ], 
+    "taxonCount": 1
+  }, 
+  "taxa": [
+    {
+      "antcat": 1, 
+      "antcatId": 435750, 
+      "authorDate": "Emery, 1900", 
+      "authors": "Emery", 
+      "bioregion": null, 
+      "className": "insecta", 
+      "created": "Tue, 19 Jun 2018 20:08:57 GMT", 
+      "currentValidName": null, 
+      "currentValidParent": "crematogaster", 
+      "family": "formicidae", 
+      "fossil": false, 
+      "genus": "crematogaster", 
+      "genusCount": 0, 
+      "imageCount": 36, 
+      "kingdomName": "animalia", 
+      "orderName": "hymenoptera", 
+      "parent": null, 
+      "parentTaxonName": "myrmicinaecrematogaster", 
+      "phylumName": "arthropoda", 
+      "rank": "species", 
+      "source": "worldants", 
+      "species": "modiglianii", 
+      "speciesCount": 0, 
+      "specimenCount": 0, 
+      "status": "valid", 
+      "subfamily": "myrmicinae", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "myrmicinaecrematogaster modiglianii", 
+      "typed": true, 
+      "year": "1900"
+    }
+  ]
+}
+{
+  "metaData": {
+    "imageCount": 5, 
+    "limit": 5, 
+    "parameters": [
+      {
+        "limit": "5", 
+        "taxonName": "myrmicinaecataulacus oberthueri"
+      }
+    ], 
+    "specimenCount": 2, 
+    "taxonCount": 1
+  }, 
+  "taxaImages": [
+    {
+      "genus": "cataulacus", 
+      "species": "oberthueri", 
+      "specimen": [
+        {
+          "code": "casent0101987", 
+          "images": [
+            {
+              "hasTiff": 1, 
+              "imageId": 16249, 
+              "shotNumber": 1, 
+              "shotType": "l", 
+              "uploadDate": null, 
+              "urls:": [
+                "https://www.antweb.org/images/casent0101987/casent0101987_l_1_low.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_l_1_med.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_l_1_high.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_l_1_thumbview.jpg"
+              ]
+            }, 
+            {
+              "hasTiff": 1, 
+              "imageId": 23763, 
+              "shotNumber": 1, 
+              "shotType": "p", 
+              "uploadDate": "Mon, 19 Dec 2005 15:04:36 GMT", 
+              "urls:": [
+                "https://www.antweb.org/images/casent0101987/casent0101987_p_1_low.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_p_1_med.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_p_1_high.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_p_1_thumbview.jpg"
+              ]
+            }, 
+            {
+              "hasTiff": 1, 
+              "imageId": 23764, 
+              "shotNumber": 1, 
+              "shotType": "h", 
+              "uploadDate": "Mon, 19 Dec 2005 15:04:36 GMT", 
+              "urls:": [
+                "https://www.antweb.org/images/casent0101987/casent0101987_h_1_low.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_h_1_med.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_h_1_high.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_h_1_thumbview.jpg"
+              ]
+            }, 
+            {
+              "hasTiff": 1, 
+              "imageId": 23765, 
+              "shotNumber": 1, 
+              "shotType": "d", 
+              "uploadDate": "Mon, 19 Dec 2005 15:04:36 GMT", 
+              "urls:": [
+                "https://www.antweb.org/images/casent0101987/casent0101987_d_1_low.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_d_1_med.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_d_1_high.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_d_1_thumbview.jpg"
+              ]
+            }
+          ]
+        }, 
+        {
+          "code": "casent0102068", 
+          "images": [
+            {
+              "hasTiff": 1, 
+              "imageId": 14697, 
+              "shotNumber": 1, 
+              "shotType": "l", 
+              "uploadDate": null, 
+              "urls:": [
+                "https://www.antweb.org/images/casent0102068/casent0102068_l_1_low.jpg", 
+                "https://www.antweb.org/images/casent0102068/casent0102068_l_1_med.jpg", 
+                "https://www.antweb.org/images/casent0102068/casent0102068_l_1_high.jpg", 
+                "https://www.antweb.org/images/casent0102068/casent0102068_l_1_thumbview.jpg"
+              ]
+            }
+          ]
+        }
+      ], 
+      "subfamily": "myrmicinae", 
+      "subspecies": null, 
+      "taxonName": "myrmicinaecataulacus oberthueri"
+    }
+  ]
+}
+{
+  "geolocales": [
+    {
+      "bioregion": "Nearctic", 
+      "country": "United States", 
+      "endemicSpeciesCount": 35, 
+      "genusCount": 47, 
+      "georank": "adm1", 
+      "id": 392, 
+      "imageCount": 9361, 
+      "imagedSpecimenCount": 597, 
+      "introducedSpeciesCount": 35, 
+      "name": "California", 
+      "parent": "United States", 
+      "region": "Americas", 
+      "speciesCount": 334, 
+      "specimenCount": 64844, 
+      "subfamilyCount": 8, 
+      "subregion": "North America"
+    }
+  ], 
+  "metaData": {
+    "geolocaleCount": 1, 
+    "parameters": [
+      {
+        "limit": "5", 
+        "name": "California", 
+        "parent": "United States"
+      }
+    ]
+  }
+}
+{
+  "geolocaleTaxa": [
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "mystrium", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 119, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "mysticum", 
+      "speciesCount": 0, 
+      "specimenCount": 610, 
+      "status": "valid", 
+      "subfamily": "amblyoponinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "amblyoponinaemystrium mysticum"
+    }, 
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "mystrium", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 152, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "rogeri", 
+      "speciesCount": 0, 
+      "specimenCount": 895, 
+      "status": "valid", 
+      "subfamily": "amblyoponinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "amblyoponinaemystrium rogeri"
+    }, 
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "tapinoma", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 156, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "melanocephalum", 
+      "speciesCount": 0, 
+      "specimenCount": 852, 
+      "status": "valid", 
+      "subfamily": "dolichoderinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "dolichoderinaetapinoma melanocephalum"
+    }, 
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "tapinoma", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 85, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "subtile", 
+      "speciesCount": 0, 
+      "specimenCount": 318, 
+      "status": "valid", 
+      "subfamily": "dolichoderinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "dolichoderinaetapinoma subtile"
+    }, 
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "technomyrmex", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 27, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "docens", 
+      "speciesCount": 0, 
+      "specimenCount": 63, 
+      "status": "valid", 
+      "subfamily": "dolichoderinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "dolichoderinaetechnomyrmex docens"
+    }
+  ], 
+  "metaData": {
+    "geolocaleCount": 5, 
+    "parameters": [
+      {
+        "country": "Comoros", 
+        "limit": "5", 
+        "rank": "species", 
+        "status": "valid"
+      }
+    ]
+  }
+}
+{
+  "bioregions": [
+    {
+      "description": "including most of North America", 
+      "genusCount": 107, 
+      "imageCount": 14946, 
+      "imagedSpecimenCount": 3507, 
+      "name": "Nearctic", 
+      "speciesCount": 1401, 
+      "specimenCount": 60668, 
+      "subfamilyCount": 15
+    }
+  ], 
+  "metaData": {
+    "bioregionCount": 1, 
+    "parameters": [
+      {
+        "limit": "5", 
+        "name": "Nearctic"
+      }
+    ]
+  }
+}
+{
+  "bioregionTaxa": [
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(apidae)", 
+      "genusCount": 0, 
+      "imageCount": 0, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 1, 
+      "status": "indetermined", 
+      "subfamily": "(apidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(apidae)(apidae) (indet)"
+    }, 
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(cynipidae)", 
+      "genusCount": 0, 
+      "imageCount": 5, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 1, 
+      "status": "indetermined", 
+      "subfamily": "(cynipidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(cynipidae)(cynipidae) (indet)"
+    }, 
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(diapriidae)", 
+      "genusCount": 0, 
+      "imageCount": 5, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 1, 
+      "status": "indetermined", 
+      "subfamily": "(diapriidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(diapriidae)(diapriidae) (indet)"
+    }, 
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(formicidae)", 
+      "genusCount": 0, 
+      "imageCount": 0, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 7844, 
+      "status": "indetermined", 
+      "subfamily": "(formicidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(formicidae)(formicidae) (indet)"
+    }, 
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(pompilidae)", 
+      "genusCount": 0, 
+      "imageCount": 0, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 1, 
+      "status": "indetermined", 
+      "subfamily": "(pompilidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(pompilidae)(pompilidae) (indet)"
+    }
+  ], 
+  "metaData": {
+    "bioregionCount": 5, 
+    "parameters": [
+      {
+        "bioregionName": "nearctic", 
+        "limit": "5", 
+        "rank": "species"
+      }
+    ]
+  }
+}
+{
+  "metaData": {
+    "count": 1, 
+    "limit": "10000", 
+    "offset": "0", 
+    "parameters": [
+      {
+        "specimenCode": "casent0922626"
+      }
+    ], 
+    "queryTime": "00:00:00", 
+    "request": "<Request 'http://api.antweb.org/v3.1/specimens?specimenCode=casent0922626' [GET]>"
+  }, 
+  "specimens": [
+    {
+      "adm1": "Aragua", 
+      "antwebTaxonName": "myrmicinaeprocryptocerus regularis_cf", 
+      "bioregion": "Neotropical", 
+      "caste": "worker", 
+      "class": "Insecta", 
+      "collectedBy": "P.S. Ward", 
+      "collectionCode": "PSW16150", 
+      "collectionNotes": null, 
+      "country": "Venezuela", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "2008-08-12", 
+      "dateDetermined": "2011-12-31", 
+      "decimalLatitude": 10.34833, 
+      "decimalLongitude": -67.68167, 
+      "determinedBy": "P.S. Ward", 
+      "family": "Formicidae", 
+      "fossil": false, 
+      "genus": "Procryptocerus", 
+      "geo": {
+        "coordinates": {
+          "lat": 10.34833, 
+          "lon": -67.68167
+        }
+      }, 
+      "habitat": "montane rainforest", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "imageCount": 4, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": null, 
+      "lifeStageSex": "1 worker", 
+      "localityName": "coordinates obtained from Label", 
+      "localityNotes": "coordinates obtained from Label", 
+      "locatedAt": "PSWC", 
+      "medium": "pin", 
+      "microhabitat": "ex dead twig", 
+      "minimumElevationInMeters": 1150, 
+      "occurrenceId": "CAS:ANTWEB:casent0922626", 
+      "order": "Hymenoptera", 
+      "ownedBy": "PSWC, Davis, CA, USA", 
+      "ownerInstitutionCode": "PSWC, Davis, CA, USA", 
+      "phylum": "Arthropoda", 
+      "region": "Americas", 
+      "samplingMethod": null, 
+      "scientificName": "procryptocerus regularis_cf", 
+      "species": "regularis_cf", 
+      "specimenCode": "casent0922626", 
+      "specimenNotes": "pin: 1 dealate queen, 2 workers", 
+      "status": "morphotaxon", 
+      "subcaste": "normal", 
+      "subfamily": "Myrmicinae", 
+      "subgenus": null, 
+      "subregion": "South America", 
+      "subspecies": null, 
+      "type": null
+    }
+  ]
+}
+{
+  "metaData": {
+    "count": 5, 
+    "limit": 5, 
+    "offset": "0", 
+    "parameters": [
+      {
+        "genus": "Tetramorium", 
+        "limit": "5", 
+        "maxDate": "1979-12-31", 
+        "minDate": "1970-01-01"
+      }
+    ], 
+    "queryTime": "00:00:00", 
+    "request": "<Request 'http://api.antweb.org/v3.1/specimens?minDate=1970-01-01&maxDate=1979-12-31&genus=Tetramorium&limit=5' [GET]>"
+  }, 
+  "specimens": [
+    {
+      "adm1": "Manus", 
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "bioregion": "Australasia", 
+      "caste": null, 
+      "class": "Insecta", 
+      "collectedBy": "Room,P.M.", 
+      "collectionCode": null, 
+      "collectionNotes": null, 
+      "country": "Papua New Guinea", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "1973-02-22", 
+      "dateDetermined": null, 
+      "decimalLatitude": -2.01667, 
+      "decimalLongitude": 147.267, 
+      "determinedBy": null, 
+      "family": "Formicidae", 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": -2.01667, 
+          "lon": 147.267
+        }
+      }, 
+      "habitat": null, 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "imageCount": 0, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": "10km", 
+      "lifeStageSex": "3", 
+      "localityName": null, 
+      "localityNotes": null, 
+      "locatedAt": "ANIC", 
+      "medium": "Carded/pointed", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": null, 
+      "occurrenceId": "CAS:ANTWEB:anic32-013568", 
+      "order": "Hymenoptera", 
+      "ownedBy": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "Arthropoda", 
+      "region": null, 
+      "samplingMethod": null, 
+      "scientificName": "tetramorium (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "anic32-013568", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": null, 
+      "subfamily": "Myrmicinae", 
+      "subgenus": null, 
+      "subregion": null, 
+      "subspecies": null, 
+      "type": null
+    }, 
+    {
+      "adm1": "Northern", 
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "bioregion": "Australasia", 
+      "caste": null, 
+      "class": "Insecta", 
+      "collectedBy": "Room,P.M.", 
+      "collectionCode": null, 
+      "collectionNotes": null, 
+      "country": "Papua New Guinea", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "1973-05-30", 
+      "dateDetermined": null, 
+      "decimalLatitude": -8.81667, 
+      "decimalLongitude": 148.233, 
+      "determinedBy": null, 
+      "family": "Formicidae", 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": -8.81667, 
+          "lon": 148.233
+        }
+      }, 
+      "habitat": null, 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "imageCount": 0, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": "10km", 
+      "lifeStageSex": "2", 
+      "localityName": null, 
+      "localityNotes": null, 
+      "locatedAt": "ANIC", 
+      "medium": "Carded/pointed", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": null, 
+      "occurrenceId": "CAS:ANTWEB:anic32-013581", 
+      "order": "Hymenoptera", 
+      "ownedBy": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "Arthropoda", 
+      "region": null, 
+      "samplingMethod": null, 
+      "scientificName": "tetramorium (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "anic32-013581", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": null, 
+      "subfamily": "Myrmicinae", 
+      "subgenus": null, 
+      "subregion": null, 
+      "subspecies": null, 
+      "type": null
+    }, 
+    {
+      "adm1": "Manus", 
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "bioregion": "Australasia", 
+      "caste": null, 
+      "class": "Insecta", 
+      "collectedBy": "Room,P.M.", 
+      "collectionCode": null, 
+      "collectionNotes": null, 
+      "country": "Papua New Guinea", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "1973-02-06", 
+      "dateDetermined": null, 
+      "decimalLatitude": -2.21667, 
+      "decimalLongitude": 147.233, 
+      "determinedBy": null, 
+      "family": "Formicidae", 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": -2.21667, 
+          "lon": 147.233
+        }
+      }, 
+      "habitat": null, 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "imageCount": 0, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": "10km", 
+      "lifeStageSex": "3", 
+      "localityName": null, 
+      "localityNotes": null, 
+      "locatedAt": "ANIC", 
+      "medium": "Carded/pointed", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": null, 
+      "occurrenceId": "CAS:ANTWEB:anic32-013606", 
+      "order": "Hymenoptera", 
+      "ownedBy": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "Arthropoda", 
+      "region": null, 
+      "samplingMethod": null, 
+      "scientificName": "tetramorium (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "anic32-013606", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": null, 
+      "subfamily": "Myrmicinae", 
+      "subgenus": null, 
+      "subregion": null, 
+      "subspecies": null, 
+      "type": null
+    }, 
+    {
+      "adm1": "Niue Is.", 
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "bioregion": "Oceania", 
+      "caste": null, 
+      "class": "Insecta", 
+      "collectedBy": "Kuschel,G.", 
+      "collectionCode": "75/169", 
+      "collectionNotes": null, 
+      "country": "Cook Islands", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "1975-09-15", 
+      "dateDetermined": null, 
+      "decimalLatitude": null, 
+      "decimalLongitude": null, 
+      "determinedBy": null, 
+      "family": "Formicidae", 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": "", 
+          "lon": ""
+        }
+      }, 
+      "habitat": "Forest", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "imageCount": 0, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": null, 
+      "lifeStageSex": "1", 
+      "localityName": null, 
+      "localityNotes": null, 
+      "locatedAt": "ANIC", 
+      "medium": "Pinned", 
+      "microhabitat": "sifted litter 3", 
+      "minimumElevationInMeters": null, 
+      "occurrenceId": "CAS:ANTWEB:anic32-013804", 
+      "order": "Hymenoptera", 
+      "ownedBy": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "Arthropoda", 
+      "region": null, 
+      "samplingMethod": null, 
+      "scientificName": "tetramorium (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "anic32-013804", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": null, 
+      "subfamily": "Myrmicinae", 
+      "subgenus": null, 
+      "subregion": null, 
+      "subspecies": null, 
+      "type": null
+    }, 
+    {
+      "adm1": "Northern", 
+      "antwebTaxonName": "myrmicinaetetramorium (indet)", 
+      "bioregion": "Australasia", 
+      "caste": null, 
+      "class": "Insecta", 
+      "collectedBy": "Room,P.M.", 
+      "collectionCode": "P.M. Room Collection Sp. 416", 
+      "collectionNotes": null, 
+      "country": "Papua New Guinea", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "1972-12-14", 
+      "dateDetermined": null, 
+      "decimalLatitude": -8.76667, 
+      "decimalLongitude": 148.367, 
+      "determinedBy": null, 
+      "family": "Formicidae", 
+      "fossil": false, 
+      "genus": "Tetramorium", 
+      "geo": {
+        "coordinates": {
+          "lat": -8.76667, 
+          "lon": 148.367
+        }
+      }, 
+      "habitat": null, 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;myrmicinae", 
+      "imageCount": 0, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": "10km", 
+      "lifeStageSex": "1", 
+      "localityName": null, 
+      "localityNotes": null, 
+      "locatedAt": "ANIC", 
+      "medium": "Carded/pointed", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": null, 
+      "occurrenceId": "CAS:ANTWEB:anic32-026938", 
+      "order": "Hymenoptera", 
+      "ownedBy": "ANIC", 
+      "ownerInstitutionCode": "ANIC", 
+      "phylum": "Arthropoda", 
+      "region": null, 
+      "samplingMethod": null, 
+      "scientificName": "tetramorium (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "anic32-026938", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": null, 
+      "subfamily": "Myrmicinae", 
+      "subgenus": null, 
+      "subregion": null, 
+      "subspecies": null, 
+      "type": null
+    }
+  ]
+}
+{
+  "metaData": {
+    "count": 5, 
+    "limit": 5, 
+    "parameters": [
+      {
+        "coords": "37, -122", 
+        "limit": "5", 
+        "radius": "2"
+      }
+    ], 
+    "request": "<Request 'http://api.antweb.org/v3.1/geoSpecimens?coords=37, -122&radius=2&limit=5' [GET]>"
+  }, 
+  "specimens": [
+    {
+      "adm1": "California", 
+      "antwebTaxonName": "(apidae)(apidae) (indet)", 
+      "bioregion": "Nearctic", 
+      "caste": "worker", 
+      "class": "Insecta", 
+      "collectedBy": "R.L. Zuparko", 
+      "collectionCode": "CASBZ22", 
+      "collectionNotes": null, 
+      "country": "United States", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "2011-08-31", 
+      "dateDetermined": null, 
+      "decimalLatitude": 37.95207, 
+      "decimalLongitude": -122.63303, 
+      "determinedBy": null, 
+      "family": "Apidae", 
+      "fossil": false, 
+      "genus": "(Apidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 37.95207, 
+          "lon": -122.63303
+        }
+      }, 
+      "habitat": "roadside grassland", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;apidae;(apidae)", 
+      "imageCount": 0, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": null, 
+      "lifeStageSex": "1 worker", 
+      "localityName": "coordinates obtained from GPS", 
+      "localityNotes": "coordinates obtained from GPS", 
+      "locatedAt": "UCSF virus study voucher, CASC", 
+      "medium": "pin", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": 250, 
+      "occurrenceId": "CAS:ANTWEB:casent0270750", 
+      "order": "Hymenoptera", 
+      "ownedBy": "CASC, San Francisco, CA, USA", 
+      "ownerInstitutionCode": "CASC, San Francisco, CA, USA", 
+      "phylum": "Arthropoda", 
+      "region": "Americas", 
+      "samplingMethod": "sweeping grass & flowers", 
+      "scientificName": "(apidae) (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "casent0270750", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": "normal", 
+      "subfamily": "(apidae)", 
+      "subgenus": null, 
+      "subregion": "North America", 
+      "subspecies": null, 
+      "type": null
+    }, 
+    {
+      "adm1": "California", 
+      "antwebTaxonName": "(cynipidae)(cynipidae) (indet)", 
+      "bioregion": "Nearctic", 
+      "caste": "worker", 
+      "class": "Insecta", 
+      "collectedBy": "R.L. Zuparko", 
+      "collectionCode": "CASBZ10", 
+      "collectionNotes": null, 
+      "country": "United States", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "2011-08-29", 
+      "dateDetermined": null, 
+      "decimalLatitude": 37.90525, 
+      "decimalLongitude": -122.10067, 
+      "determinedBy": null, 
+      "family": "Cynipidae", 
+      "fossil": false, 
+      "genus": "(Cynipidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 37.90525, 
+          "lon": -122.10067
+        }
+      }, 
+      "habitat": "grassland Quercus agrifolia", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;cynipidae;(cynipidae)", 
+      "imageCount": 5, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": null, 
+      "lifeStageSex": "1 worker", 
+      "localityName": "coordinates obtained from GPS", 
+      "localityNotes": "coordinates obtained from GPS", 
+      "locatedAt": "UCSF virus study voucher, CASC", 
+      "medium": "pin", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": 130, 
+      "occurrenceId": "CAS:ANTWEB:casent0270740", 
+      "order": "Hymenoptera", 
+      "ownedBy": "CASC, San Francisco, CA, USA", 
+      "ownerInstitutionCode": "CASC, San Francisco, CA, USA", 
+      "phylum": "Arthropoda", 
+      "region": "Americas", 
+      "samplingMethod": "sweeping", 
+      "scientificName": "(cynipidae) (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "casent0270740", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": "normal", 
+      "subfamily": "(cynipidae)", 
+      "subgenus": null, 
+      "subregion": "North America", 
+      "subspecies": null, 
+      "type": null
+    }, 
+    {
+      "adm1": "California", 
+      "antwebTaxonName": "(diapriidae)(diapriidae) (indet)", 
+      "bioregion": "Nearctic", 
+      "caste": "worker", 
+      "class": "Insecta", 
+      "collectedBy": "R.L. Zuparko", 
+      "collectionCode": "CASBZ23", 
+      "collectionNotes": null, 
+      "country": "United States", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "2011-08-31", 
+      "dateDetermined": "2011-12-15", 
+      "decimalLatitude": 37.94833, 
+      "decimalLongitude": -122.63408, 
+      "determinedBy": null, 
+      "family": "Diapriidae", 
+      "fossil": false, 
+      "genus": "(Diapriidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 37.94833, 
+          "lon": -122.63408
+        }
+      }, 
+      "habitat": "meadow", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;diapriidae;(diapriidae)", 
+      "imageCount": 5, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": null, 
+      "lifeStageSex": "1 worker", 
+      "localityName": "coordinates obtained from GPS", 
+      "localityNotes": "coordinates obtained from GPS", 
+      "locatedAt": "UCSF virus study voucher, CASC", 
+      "medium": "pin", 
+      "microhabitat": null, 
+      "minimumElevationInMeters": 230, 
+      "occurrenceId": "CAS:ANTWEB:casent0270751", 
+      "order": "Hymenoptera", 
+      "ownedBy": "CASC, San Francisco, CA, USA", 
+      "ownerInstitutionCode": "CASC, San Francisco, CA, USA", 
+      "phylum": "Arthropoda", 
+      "region": "Americas", 
+      "samplingMethod": "sweeping Equisetum sp.", 
+      "scientificName": "(diapriidae) (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "casent0270751", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": "normal", 
+      "subfamily": "(diapriidae)", 
+      "subgenus": null, 
+      "subregion": "North America", 
+      "subspecies": null, 
+      "type": null
+    }, 
+    {
+      "adm1": "California", 
+      "antwebTaxonName": "(formicidae)(formicidae) (indet)", 
+      "bioregion": "Nearctic", 
+      "caste": "worker", 
+      "class": "Insecta", 
+      "collectedBy": "J. Longino", 
+      "collectionCode": "JTL15Mar83/1600", 
+      "collectionNotes": "NOTEBY J.Longino: pine/oak forest. 1600: Two ant colonies beneath a loose chunk of a large rock. Solenopsis (-1), Camponotus (-2).", 
+      "country": "United States", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "1983-03-15", 
+      "dateDetermined": null, 
+      "decimalLatitude": 38.833332, 
+      "decimalLongitude": -122.7, 
+      "determinedBy": null, 
+      "family": "Formicidae", 
+      "fossil": false, 
+      "genus": "(Formicidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 38.833332, 
+          "lon": -122.7
+        }
+      }, 
+      "habitat": "pine/oak forest", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;(formicidae)", 
+      "imageCount": 0, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": "unknown", 
+      "lifeStageSex": "Adult worker", 
+      "localityName": null, 
+      "localityNotes": null, 
+      "locatedAt": "JTLC", 
+      "medium": "Ethanol", 
+      "microhabitat": "under stone", 
+      "minimumElevationInMeters": 950, 
+      "occurrenceId": "CAS:ANTWEB:jtlc-vial-000243", 
+      "order": "Hymenoptera", 
+      "ownedBy": "JTLC", 
+      "ownerInstitutionCode": "JTLC", 
+      "phylum": "Arthropoda", 
+      "region": "Americas", 
+      "samplingMethod": null, 
+      "scientificName": "(formicidae) (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "jtlc-vial-000243", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": "normal", 
+      "subfamily": "(formicidae)", 
+      "subgenus": null, 
+      "subregion": "North America", 
+      "subspecies": null, 
+      "type": null
+    }, 
+    {
+      "adm1": "California", 
+      "antwebTaxonName": "(formicidae)(formicidae) (indet)", 
+      "bioregion": "Nearctic", 
+      "caste": "worker", 
+      "class": "Insecta", 
+      "collectedBy": "J. Longino", 
+      "collectionCode": "JTL1131", 
+      "collectionNotes": "NOTEBY J.Longino: chaparral in base of dead Ceanothus", 
+      "country": "United States", 
+      "dateCollectedEnd": null, 
+      "dateCollectedStart": "1985-11-16", 
+      "dateDetermined": null, 
+      "decimalLatitude": 35.35, 
+      "decimalLongitude": -120.3, 
+      "determinedBy": null, 
+      "family": "Formicidae", 
+      "fossil": false, 
+      "genus": "(Formicidae)", 
+      "geo": {
+        "coordinates": {
+          "lat": 35.35, 
+          "lon": -120.3
+        }
+      }, 
+      "habitat": "chaparral", 
+      "higherClassification": "animalia;arthropoda;insecta;hymenoptera;hymenoptera;formicidae;(formicidae)", 
+      "imageCount": 0, 
+      "institutionCode": "CAS", 
+      "kingdom": "Animalia", 
+      "latLonMaxError": "minutes", 
+      "lifeStageSex": "worker, alate queen", 
+      "localityName": null, 
+      "localityNotes": null, 
+      "locatedAt": "JTLC", 
+      "medium": "Ethanol", 
+      "microhabitat": "in base of dead Ceanothus", 
+      "minimumElevationInMeters": 760, 
+      "occurrenceId": "CAS:ANTWEB:jtlc-vial-000377", 
+      "order": "Hymenoptera", 
+      "ownedBy": "JTLC", 
+      "ownerInstitutionCode": "JTLC", 
+      "phylum": "Arthropoda", 
+      "region": "Americas", 
+      "samplingMethod": null, 
+      "scientificName": "(formicidae) (indet)", 
+      "species": "(indet)", 
+      "specimenCode": "jtlc-vial-000377", 
+      "specimenNotes": null, 
+      "status": "indetermined", 
+      "subcaste": "normal", 
+      "subfamily": "(formicidae)", 
+      "subgenus": null, 
+      "subregion": "North America", 
+      "subspecies": null, 
+      "type": null
+    }
+  ]
+}
+{
+  "metaData": {
+    "parameters": [
+      {
+        "limit": "5", 
+        "taxonName": "myrmicinaecrematogaster modiglianii"
+      }
+    ], 
+    "request": "<Request 'http://api.antweb.org/v3.1/taxa?taxonName=myrmicinaecrematogaster modiglianii&limit=5' [GET]>", 
+    "taxonCount": 1
+  }, 
+  "taxa": [
+    {
+      "antcat": 1, 
+      "antcatId": 435750, 
+      "authorDate": "Emery, 1900", 
+      "authors": "Emery", 
+      "bioregion": null, 
+      "className": "Insecta", 
+      "created": "Tue, 19 Jun 2018 20:08:57 GMT", 
+      "currentValidName": null, 
+      "currentValidParent": "crematogaster", 
+      "family": "Formicidae", 
+      "fossil": false, 
+      "genus": "Crematogaster", 
+      "genusCount": 0, 
+      "imageCount": 36, 
+      "kingdomName": "Animalia", 
+      "orderName": "Hymenoptera", 
+      "parentTaxonName": "myrmicinaecrematogaster", 
+      "phylumName": "Arthropoda", 
+      "rank": "species", 
+      "source": "worldants", 
+      "species": "modiglianii", 
+      "speciesCount": 0, 
+      "specimenCount": 0, 
+      "status": "valid", 
+      "subfamily": "myrmicinae", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "myrmicinaecrematogaster modiglianii", 
+      "typed": true, 
+      "year": "1900"
+    }
+  ]
+}
+{
+  "genera": [
+    "(Basicerotini)", 
+    "(Apidae)", 
+    "(Braconidae)", 
+    "(Cynipidae)", 
+    "(Diapriidae)"
+  ], 
+  "metaData": {
+    "count": 5, 
+    "limit": 5, 
+    "parameters": [
+      {
+        "limit": "5", 
+        "rank": "genus"
+      }
+    ], 
+    "request": "<Request 'http://api.antweb.org/v3.1/distinctTaxa?rank=genus&limit=5' [GET]>"
+  }
+}
+{
+  "images": [
+    {
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252945, 
+          "shotNumber": 4, 
+          "shotType": "p", 
+          "uploadDate": "Sat, 21 Apr 2018 22:08:16 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/antweb1032396/antweb1032396_p_4_low.jpg", 
+            "https://www.antweb.org/images/antweb1032396/antweb1032396_p_4_med.jpg", 
+            "https://www.antweb.org/images/antweb1032396/antweb1032396_p_4_high.jpg", 
+            "https://www.antweb.org/images/antweb1032396/antweb1032396_p_4_thumbview.jpg"
+          ]
+        }
+      ], 
+      "spefimenCode": "antweb1032396", 
+      "url": "http://localhost:5000/specimens?code=antweb1032396"
+    }, 
+    {
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252946, 
+          "shotNumber": 11, 
+          "shotType": "p", 
+          "uploadDate": "Mon, 23 Apr 2018 01:10:53 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/antweb1032460/antweb1032460_p_11_low.jpg", 
+            "https://www.antweb.org/images/antweb1032460/antweb1032460_p_11_med.jpg", 
+            "https://www.antweb.org/images/antweb1032460/antweb1032460_p_11_high.jpg", 
+            "https://www.antweb.org/images/antweb1032460/antweb1032460_p_11_thumbview.jpg"
+          ]
+        }
+      ], 
+      "spefimenCode": "antweb1032460", 
+      "url": "http://localhost:5000/specimens?code=antweb1032460"
+    }, 
+    {
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252952, 
+          "shotNumber": 1, 
+          "shotType": "p", 
+          "uploadDate": "Tue, 24 Apr 2018 09:15:17 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/casent0487718/casent0487718_p_1_low.jpg", 
+            "https://www.antweb.org/images/casent0487718/casent0487718_p_1_med.jpg", 
+            "https://www.antweb.org/images/casent0487718/casent0487718_p_1_high.jpg", 
+            "https://www.antweb.org/images/casent0487718/casent0487718_p_1_thumbview.jpg"
+          ]
+        }
+      ], 
+      "spefimenCode": "casent0487718", 
+      "url": "http://localhost:5000/specimens?code=casent0487718"
+    }, 
+    {
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252953, 
+          "shotNumber": 1, 
+          "shotType": "p", 
+          "uploadDate": "Tue, 24 Apr 2018 09:15:17 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/casent0161103/casent0161103_p_1_low.jpg", 
+            "https://www.antweb.org/images/casent0161103/casent0161103_p_1_med.jpg", 
+            "https://www.antweb.org/images/casent0161103/casent0161103_p_1_high.jpg", 
+            "https://www.antweb.org/images/casent0161103/casent0161103_p_1_thumbview.jpg"
+          ]
+        }
+      ], 
+      "spefimenCode": "casent0161103", 
+      "url": "http://localhost:5000/specimens?code=casent0161103"
+    }, 
+    {
+      "images": [
+        {
+          "hasTiff": 1, 
+          "imageId": 252955, 
+          "shotNumber": 1, 
+          "shotType": "p", 
+          "uploadDate": "Tue, 24 Apr 2018 09:15:17 GMT", 
+          "urls": [
+            "https://www.antweb.org/images/casent0922898/casent0922898_p_1_low.jpg", 
+            "https://www.antweb.org/images/casent0922898/casent0922898_p_1_med.jpg", 
+            "https://www.antweb.org/images/casent0922898/casent0922898_p_1_high.jpg", 
+            "https://www.antweb.org/images/casent0922898/casent0922898_p_1_thumbview.jpg"
+          ]
+        }
+      ], 
+      "specimenCode": "casent0922898", 
+      "url": "http://localhost:5000/specimens?code=casent0922898"
+    }
+  ], 
+  "metaData": {
+    "count": 5, 
+    "limit": 5, 
+    "parameters": [
+      {
+        "limit": "5", 
+        "shotType": "p", 
+        "since": "60"
+      }
+    ], 
+    "request": "<Request 'http://api.antweb.org/v3.1/images?since=60&shotType=p&limit=5' [GET]>", 
+    "specimenCount": 5
+  }
+}
+{
+  "metaData": {
+    "imageCount": 5, 
+    "limit": 5, 
+    "parameters": [
+      {
+        "limit": "5", 
+        "taxonName": "myrmicinaecataulacus oberthueri"
+      }
+    ], 
+    "request": "<Request 'http://api.antweb.org/v3.1/taxaImages?taxonName=myrmicinaecataulacus oberthueri&limit=5' [GET]>", 
+    "specimenCount": 2, 
+    "taxonCount": 1
+  }, 
+  "taxaImages": [
+    {
+      "genus": "cataulacus", 
+      "species": "oberthueri", 
+      "specimen": [
+        {
+          "code": "casent0101987", 
+          "images": [
+            {
+              "hasTiff": 1, 
+              "imageId": 16249, 
+              "shotNumber": 1, 
+              "shotType": "l", 
+              "uploadDate": null, 
+              "urls:": [
+                "https://www.antweb.org/images/casent0101987/casent0101987_l_1_low.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_l_1_med.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_l_1_high.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_l_1_thumbview.jpg"
+              ]
+            }, 
+            {
+              "hasTiff": 1, 
+              "imageId": 23763, 
+              "shotNumber": 1, 
+              "shotType": "p", 
+              "uploadDate": "Mon, 19 Dec 2005 15:04:36 GMT", 
+              "urls:": [
+                "https://www.antweb.org/images/casent0101987/casent0101987_p_1_low.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_p_1_med.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_p_1_high.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_p_1_thumbview.jpg"
+              ]
+            }, 
+            {
+              "hasTiff": 1, 
+              "imageId": 23764, 
+              "shotNumber": 1, 
+              "shotType": "h", 
+              "uploadDate": "Mon, 19 Dec 2005 15:04:36 GMT", 
+              "urls:": [
+                "https://www.antweb.org/images/casent0101987/casent0101987_h_1_low.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_h_1_med.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_h_1_high.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_h_1_thumbview.jpg"
+              ]
+            }, 
+            {
+              "hasTiff": 1, 
+              "imageId": 23765, 
+              "shotNumber": 1, 
+              "shotType": "d", 
+              "uploadDate": "Mon, 19 Dec 2005 15:04:36 GMT", 
+              "urls:": [
+                "https://www.antweb.org/images/casent0101987/casent0101987_d_1_low.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_d_1_med.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_d_1_high.jpg", 
+                "https://www.antweb.org/images/casent0101987/casent0101987_d_1_thumbview.jpg"
+              ]
+            }
+          ]
+        }, 
+        {
+          "code": "casent0102068", 
+          "images": [
+            {
+              "hasTiff": 1, 
+              "imageId": 14697, 
+              "shotNumber": 1, 
+              "shotType": "l", 
+              "uploadDate": null, 
+              "urls:": [
+                "https://www.antweb.org/images/casent0102068/casent0102068_l_1_low.jpg", 
+                "https://www.antweb.org/images/casent0102068/casent0102068_l_1_med.jpg", 
+                "https://www.antweb.org/images/casent0102068/casent0102068_l_1_high.jpg", 
+                "https://www.antweb.org/images/casent0102068/casent0102068_l_1_thumbview.jpg"
+              ]
+            }
+          ]
+        }
+      ], 
+      "subfamily": "myrmicinae", 
+      "subspecies": null, 
+      "taxonName": "myrmicinaecataulacus oberthueri"
+    }
+  ]
+}
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand.<br />
+</p>
+</body></html>
+{
+  "geolocaleTaxa": [
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "Mystrium", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 119, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "mysticum", 
+      "speciesCount": 0, 
+      "specimenCount": 610, 
+      "status": "valid", 
+      "subfamily": "Amblyoponinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "amblyoponinaemystrium mysticum"
+    }, 
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "Mystrium", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 152, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "rogeri", 
+      "speciesCount": 0, 
+      "specimenCount": 895, 
+      "status": "valid", 
+      "subfamily": "Amblyoponinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "amblyoponinaemystrium rogeri"
+    }, 
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "Tapinoma", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 156, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "melanocephalum", 
+      "speciesCount": 0, 
+      "specimenCount": 852, 
+      "status": "valid", 
+      "subfamily": "Dolichoderinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "dolichoderinaetapinoma melanocephalum"
+    }, 
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "Tapinoma", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 85, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "subtile", 
+      "speciesCount": 0, 
+      "specimenCount": 318, 
+      "status": "valid", 
+      "subfamily": "Dolichoderinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "dolichoderinaetapinoma subtile"
+    }, 
+    {
+      "bioregion": "Malagasy", 
+      "country": "Comoros", 
+      "genus": "Technomyrmex", 
+      "genusCount": 0, 
+      "geolocaleId": 2, 
+      "geolocaleName": "Comoros", 
+      "georank": "country", 
+      "imageCount": 27, 
+      "rank": "species", 
+      "region": "Africa", 
+      "source": "worldants", 
+      "species": "docens", 
+      "speciesCount": 0, 
+      "specimenCount": 63, 
+      "status": "valid", 
+      "subfamily": "Dolichoderinae", 
+      "subfamilyCount": 0, 
+      "subregion": "Eastern Africa", 
+      "subspecies": null, 
+      "taxonName": "dolichoderinaetechnomyrmex docens"
+    }
+  ], 
+  "metaData": {
+    "geolocaleCount": 5, 
+    "parameters": [
+      {
+        "country": "Comoros", 
+        "limit": "5", 
+        "rank": "species", 
+        "status": "valid"
+      }
+    ], 
+    "request": "<Request 'http://api.antweb.org/v3.1/geolocaleTaxa?rank=species&country=Comoros&status=valid&limit=5' [GET]>"
+  }
+}
+{
+  "bioregions": [
+    {
+      "bioregionName": "Nearctic", 
+      "description": "including most of North America", 
+      "genusCount": 107, 
+      "imageCount": 14946, 
+      "imagedSpecimenCount": 3507, 
+      "speciesCount": 1401, 
+      "specimenCount": 60668, 
+      "subfamilyCount": 15
+    }
+  ], 
+  "metaData": {
+    "bioregionCount": 1, 
+    "parameters": [
+      {
+        "bioregionName": "Nearctic", 
+        "limit": "5"
+      }
+    ], 
+    "request": "<Request 'http://api.antweb.org/v3.1/bioregions?bioregionName=Nearctic&limit=5' [GET]>"
+  }
+}
+{
+  "bioregionTaxa": [
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(apidae)", 
+      "genusCount": 0, 
+      "imageCount": 0, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 1, 
+      "status": "indetermined", 
+      "subfamily": "(apidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(apidae)(apidae) (indet)"
+    }, 
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(cynipidae)", 
+      "genusCount": 0, 
+      "imageCount": 5, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 1, 
+      "status": "indetermined", 
+      "subfamily": "(cynipidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(cynipidae)(cynipidae) (indet)"
+    }, 
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(diapriidae)", 
+      "genusCount": 0, 
+      "imageCount": 5, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 1, 
+      "status": "indetermined", 
+      "subfamily": "(diapriidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(diapriidae)(diapriidae) (indet)"
+    }, 
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(formicidae)", 
+      "genusCount": 0, 
+      "imageCount": 0, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 7844, 
+      "status": "indetermined", 
+      "subfamily": "(formicidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(formicidae)(formicidae) (indet)"
+    }, 
+    {
+      "bioregionName": "Nearctic", 
+      "genus": "(pompilidae)", 
+      "genusCount": 0, 
+      "imageCount": 0, 
+      "rank": "species", 
+      "source": "specimen1.txt", 
+      "species": "(indet)", 
+      "speciesCount": 0, 
+      "specimenCount": 1, 
+      "status": "indetermined", 
+      "subfamily": "(pompilidae)", 
+      "subfamilyCount": 0, 
+      "subspecies": null, 
+      "taxonName": "(pompilidae)(pompilidae) (indet)"
+    }
+  ], 
+  "metaData": {
+    "bioregionCount": 5, 
+    "parameters": [
+      {
+        "bioregionName": "nearctic", 
+        "limit": "5", 
+        "rank": "species"
+      }
+    ], 
+    "request": "<Request 'http://api.antweb.org/v3.1/bioregionTaxa?rank=species&bioregionName=nearctic&limit=5' [GET]>"
+  }
+}
+{
+  "metaData": {
+    "parameters": [
+      {
+        "byCaste": "1", 
+        "geolocaleName": "California", 
+        "limit": "5"
+      }
+    ], 
+    "request": "<Request 'http://api.antweb.org/v3.1/unimagedGeolocaleTaxa?geolocaleName=California&byCaste=1&limit=5' [GET]>", 
+    "unimagedGeolocaleTaxaCasteCount": 5, 
+    "unimagedGeolocaleTaxaCount": 3
+  }, 
+  "unimagedGeolocaleTaxaDict": [
+    {
+      "castes": "male", 
+      "taxonName": "amblyoponinaestigmatomma oregonense"
+    }, 
+    {
+      "castes": "queen, male", 
+      "taxonName": "dolichoderinaedorymyrmex bicolor"
+    }, 
+    {
+      "castes": "queen, male", 
+      "taxonName": "dolichoderinaedorymyrmex ca01"
+    }
+  ]
+}
+done

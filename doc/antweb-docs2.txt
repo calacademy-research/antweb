@@ -1,0 +1,350 @@
+Antweb-docs2.txt
+----------------
+Written by mark.  Started Sep 27.2010.
+
+Assorted documentations to document new development efforts...
+
+
+
+
+mod_jk
+------
+
+mod_jk
+  mac
+    /etc/apache2   here is httpd.conf (on dev [mac])
+    /var/log/apache2
+    /Library/WebServer/Documents
+    ComputerName: MacPro’s MacBookPro4,1
+    Personal website in home folder, Sites folder here: http://10.5.30.175/~macpro/
+    Computer's website: http://10.5.30.175/
+    Apache HTTP Server Version 2.2
+    mod_jk-1.2.25-httpd-2.2.4.so is for Apache 2.2.x and works with Apache 2.2.4 and later.
+    Instructions: http://tomcat.apache.org/connectors-doc/webserver_howto/apache.html
+    download mod_jk here: http://apache.cyberuse.com//tomcat/tomcat-connectors/jk/binaries/macosx/jk-1.2.25/x86/
+    There is no /usr/lib/apache     
+    ServerRoot /usr
+    Listen 80
+    Put downloaded mod_jk...so here: /usr/libexec/apache2/mod_jk-1.2.25-httpd-2.2.4.so
+    Added to httpd.conf: LoadModule jk_module libexec/apache2/mod_jk-1.2.25-httpd-2.2.4.so
+    Turn on Web Sharing in System Preferences
+    
+    at the end of your httpd.conf
+    Include $TOMCAT_HOME/conf/jk/mod_jk.conf-auto
+
+    Added to server.xml Engine section...    
+    <Engine ...>
+    ...
+    <Listener className="org.apache.jk.config.ApacheConfig" modJk="/usr/libexec/apache2/mod_jk-1.2.25-httpd-2.2.4.so " />
+
+    After Tomcat restart, mod_jk.conf should be generated.  An empty jk directory and auto/mod_jk.conf created.
+    Seems to work.
+    
+    DocumentRoot "/Library/WebServer/Documents"
+    ErrorLog "/private/var/log/apache2/error_log"
+    CustomLog "/private/var/log/apache2/access_log"
+
+    antweb.org
+      /var/www/html/toUpload
+      unaccounted for: phpyZJz2B recentImages_gen_inc.jsp toUpload/ messages/
+    
+    Antweb.org /etc/httpd/conf/httpd.conf jk related mods...
+# Load mod_jk module
+# Update this path to match your modules location
+LoadModule    jk_module  modules/mod_jk.so
+# Where to find workers.properties
+# Update this path to match your conf directory location (put workers.properties next to httpd.conf)
+JkWorkersFile /etc/httpd/conf/workers.properties
+# Where to put jk shared memory
+# Update this path to match your local state directory or logs directory
+JkShmFile     /var/log/httpd/mod_jk.shm
+# Where to put jk logs
+# Update this path to match your logs directory location (put mod_jk.log next to access_log)
+JkLogFile     /var/log/httpd/mod_jk.log
+# Set the jk log level [debug/error/info]
+JkLogLevel    info
+# Select the timestamp log format
+JkLogStampFormat "[%a %b %d %H:%M:%S %Y] "
+#Send everything for context /examples to worker named worker1 (ajp13)
+JkMount  /* worker1
+JkMountFile /etc/httpd/conf/uriworkermap.properties
+
+    Antweb.org  /etc/httpd/conf/workers.properties 
+# Define 1 real worker using ajp13
+worker.list=worker1
+# Set properties for worker1 (ajp13)
+worker.worker1.type=ajp13
+worker.worker1.host=localhost
+worker.worker1.port=8009
+    
+    Antweb.org  /etc/httpd/conf/uriworkermap.properties 
+!/tapirlink/*=worker1
+!/test/*=worker1
+!/bugzilla/*=worker1
+!/cgi-bin/*=worker1
+!/mt-static/*=worker1
+!/imageUpload/*=worker1
+!/antblog/*=worker1
+
+sudo apachectl configtest
+  Useful for showing syntax error in the httpd.conf
+  
+sudo apachectl restart
+httpd: Syntax error on line 117 of /private/etc/apache2/httpd.conf: Cannot load /usr/libexec/apache2/mod_jk-1.2.25-httpd-2.2.4.so into server: dlopen(/usr/libexec/apache2/mod_jk-1.2.25-httpd-2.2.4.so, 10): no suitable image found.  Did find:\n\t/usr/libexec/apache2/mod_jk-1.2.25-httpd-2.2.4.so: mach-o, but wrong architecture
+
+The download of the   libexec/apache2/mod_jk-1.2.25-httpd-2.2.4.so
+  did not work.  Attempt the following...
+
+CODE:
+$ cd native
+$ ./configure CFLAGS='-arch x86_64' APXSLDFLAGS='-arch x86_64' --with-apxs=/usr/sbin/apxs
+$ make
+$ sudo make install
+    
+Which reported:
+
+Libraries have been installed in:
+   /usr/libexec/apache2
+
+If you ever happen to want to link against installed libraries
+in a given directory, LIBDIR, you must either use libtool, and
+specify the full pathname of the library, or use the `-LLIBDIR'
+flag during linking and do at least one of the following:
+   - add LIBDIR to the `DYLD_LIBRARY_PATH' environment variable
+     during execution
+
+See any operating system documentation about shared libraries for
+more information, such as the ld(1) and ld.so(8) manual pages.
+----------------------------------------------------------------------
+chmod 755 /usr/libexec/apache2/mod_jk.so
+
+Please be sure to arrange /usr/conf/httpd.conf...
+
+sudo emacs /etc/apache2/other/workers.properties    - and add the following...
+
+#
+# The workers that jk should create and work with
+#
+worker.list=ajp13
+ 
+#
+# Defining a worker named ajp13 and of type ajp13
+# Note that the name and the type do not have to match.
+#
+worker.ajp13.type=ajp13
+worker.ajp13.host=localhost
+worker.ajp13.port=8009
+
+------
+bash-3.2$ sudo emacs /etc/apache2/other/mod_jk.conf
+
+# Load mod_jk module                                                                                                                                                                                           
+# Update this path to match your modules location                                                                                                                                                              
+LoadModule jk_module libexec/apache2/mod_jk.so
+# Where to find workers.properties                                                                                                                                                                             
+# Update this path to match your conf directory location (put workers.properties next to httpd.conf)                                                                                                           
+JkWorkersFile /etc/apache2/other/workers.properties
+# Where to put jk shared memory                                                                                                                                                                                
+# Update this path to match your local state directory or logs directory                                                                                                                                       
+JkShmFile /var/log/apache2/mod_jk.shm
+# Where to put jk logs                                                                                                                                                                                         
+# Update this path to match your logs directory location (put mod_jk.log next to access_log)                                                                                                                   
+JkLogFile /var/log/apache2/mod_jk.log
+# Set the jk log level [debug/error/info]                                                                                                                                                                      
+JkLogLevel info
+# Select the timestamp log format                                                                                                                                                                              
+JkLogStampFormat "[%a %b %d %H:%M:%S %Y] "
+
+# Send everything for context /example to worker named ajp13                                                                                                                                                   
+JkMount /example/* ajp13
+
+-----
+... substituting in your own JkMount directives at the end:
+
+---
+
+Now, apache can return only images in the root directory.  503 returned for all nested content
+  If apache is started before tomcat, tomcat apps won't work.
+  if apache is started afterwards, or not started, tomcat apps work.
+
+
+
+Files.  Status:
+
+-- antweb.org
+  /etc/httpd/conf/
+    httpd.conf
+    uriworkermap.properties 
+    workers.properties    
+  /var/log/httpd/mod_jk.shm  - JkShmFile     
+  /var/log/httpd/mod_jk.log  - JkLogFile     
+  /var/www/html
+  /usr/local/tomcat/
+
+-- dev mac
+  /etc/apache2/httpd.conf
+  /etc/apache2/other/mod_jk.conf  - the Load mod_jk module text below is in this file.
+  /usr/libexec/ - none
+  /usr/libexec/apache2/mod_jk-1.2.25-httpd-2.2.4.so  and mod_jk.so
+
+-- antweb2
+  /etc/httpd/conf/  - copy over the worker files (uriworkermap.properties, workers.properties) from antweb.org
+  * Inserted the following into httpd.conf
+
+# Load mod_jk module
+# Update this path to match your modules location
+LoadModule    jk_module  modules/mod_jk.so
+# Where to find workers.properties
+# Update this path to match your conf directory location (put workers.properties next to httpd.conf)
+JkWorkersFile /etc/httpd/conf/workers.properties
+# Where to put jk shared memory
+# Update this path to match your local state directory or logs directory
+JkShmFile     /var/log/httpd/mod_jk.shm
+# Where to put jk logs
+# Update this path to match your logs directory location (put mod_jk.log next to access_log)
+JkLogFile     /var/log/httpd/mod_jk.log
+# Set the jk log level [debug/error/info]
+JkLogLevel    info
+# Select the timestamp log format
+JkLogStampFormat "[%a %b %d %H:%M:%S %Y] "
+#Send everything for context /examples to worker named worker1 (ajp13)
+JkMount  /* worker1
+JkMountFile /etc/httpd/conf/uriworkermap.properties
+  
+  Copy over from Antweb directly:
+    /usr/local/tomcat/conf/uriworker.properties and workers.properties     // these are much bigger than those in /etc/httpd/conf
+
+  Copy over Antweb /etc/httpd/modules/mod_jk.so
+  
+  Antblog is already copied over to here:
+    /var/www/html/antblog
+
+  change port 80 to 8080 in /usr/local/tomcat/conf/server.xml
+  
+  restart tomcat and apache
+    sudo /etc/init.d/priv_tomcat restart 
+    sudo /etc/init.d/httpd restart   
+
+  After httpd start get this error:
+    Starting httpd: httpd: Syntax error on line 203 of /etc/httpd/conf/httpd.conf: 
+      Cannot load /etc/httpd/modules/mod_jk.so into server: /etc/httpd/modules/mod_jk.so: 
+      undefined symbol: ap_get_server_description
+
+  AntWeb2$ httpd -v    Server version: Apache/2.2.3    Server built:   Apr  4 2010 17:18:37
+   antweb# httpd -v    Server version: Apache/2.2.9    Server built:   Jul 14 2008 15:36:01
+  dev mac# httpd -v    Server version: Apache/2.2.14   Server built:   Feb 10 2010 22:22:39
+
+  Antweb2.  /etc/redhat-release - CentOS release 5.5 (Final)
+    /proc/version -  Linux version 2.6.18-194.8.1.el5 (mockbuild@builder10.centos.org) (gcc version 4.1.2 20080704 (Red Hat 4.1.2-48)) #1 SMP Thu Jul 1 19:04:48 EDT 2010
+    uname -r    - 2.6.18-194.8.1.el5
+
+  Antblog login:
+    http://www.antweb.org/cgi-bin/mt/mt-cp.cgi?__mode=login&blog_id=1&return_url=http://www.antweb.org/antblog/
+
+  Summary: Dave and I worked on the new machine.  He re-installed Apache in a new location and
+    got the antblog working.  
+    
+---
+ On Mac2
+  Uncomment the loadmodule php5 line in httpd.conf
+  copy php.ini.default to php.ini.  Removing the error_reporting Notice parameter
+  
+  Created imageUploadGuts.html.  Hardcode the group to be 1.
+   This allows us to test the php in Apache without Tomcat running at the same time (avoid mod_jk).
+   
+  Error mysql_connect().  Can't connect to local MySQL server through socket '/var/lmysql/mysql.sock"
+  Run mysql.  /s  to find out proper socket.  It is /tmp/mysql.sock.
+  Modify /etc/php.ini to use /tmp/mysql.sock as mysql.default.socket
+
+  Can now access as 10.5.30.140/imageUpload/imageUploadGuts.html
+  
+  Had to chmod 777 the privs on the /Library/Webserver/Documents/imageUpload directory and contents
+
+ On antweb2:
+  Copied libphp5.so into /usr/local/apache2/modules/  (from antweb.org:/etc/httpd/modules/)
+  Add 
+  
+  Modified /etc/init.d/httpd to point (in two places) to /usr/local/apache2/bin instead of /usr/sbin/
+
+  Modified /usr/local/apache2/conf/httpd.conf to support php - copied from original antweb conf file
+    Each case was documented with a Mark note.
+
+* Thau compiled Apache from source to be able to configure with mod_jk on CentOs.
+
+"The problem with compiling from source is that you are then on the hook to handle any security updates 
+that are required, without any leadtime the distribution vendors might have. This is particularly 
+critical for things that are accessed remotely, like (for example) Apache or PHP. 
+In other words, you've just defeated the security benefits of CentOS (or any other distro). Not a good idea. "
+
+"Why would you pick CentOS if you are going to compile your own apps? 
+It complete breaks the stability and security that is the core of RHEL/CentOS."
+
+
+  In order to get libphp5.so 
+  rpm -ql php 
+
+  Added the following to /usr/local/apache2/conf/httpd.conf:
+    LoadModule php5_module	      /usr/lib64/httpd/modules/libphp5.so
+
+---
+Startup Configuration
+
+added to /etc/rc.local..
+
+/etc/init.d/priv_tomcat start
+/etc/init.d/httpd start
+
+
+
+
+
+
+
+
+
+May 19 4:05 downtime.
+  Following the 4:05 am reboot, apache failed to come up and support tomcat.
+
+  The startup command fails:  sudo /etc/init.d/httpd start  
+    Starting httpd: httpd: Syntax error on line 203 of /etc/httpd/conf/httpd.conf: Cannot load /etc/httpd/modules/mod_jk.so into server: /etc/httpd/modules/mod_jk.so: undefined symbol: ap_get_server_description
+
+  This is line 203 that fails:
+    LoadModule    jk_module  modules/mod_jk.so
+
+  Related files:
+    -rwxr-xr-x 1 root root 956462 Nov 11  2010 /etc/httpd/modules/mod_jk.so
+    -rw-r--r-- 1 root root 34609 Nov 11  2010 /etc/httpd/conf/httpd.conf
+    -rw-r--r-- 1 root root 173 Nov 11  2010 /etc/httpd/conf/workers.properties
+
+    -rwxr-xr-x 1 root root 3916 May  4 03:50 apachectl
+    -rwxr-xr-x 1 root root 329864 May  4 03:54 /usr/sbin/httpd
+    	
+
+/etc/httpd/conf/workers.properties    JkWorkersFile
+/var/log/httpd/mod_jk.shm             JkShmFile
+/var/log/httpd/mod_jk.log             JkLogFile
+
+
+
+
+
+Somewhere there's a directory like
+tomcat-connectors-something.something-src/native
+
+cd to that directory
+./configure --with-apxs=/usr/sbin/apxs
+make
+make install
+  
+restart httpd and keep your fingers crossed.  Let me know if you can't
+find the directory.
+
+
+
+< apachectl=/usr/local/apache2/bin/apachectl
+< httpd=${HTTPD-/usr/local/apache2/bin/httpd}
+---
+> apachectl=/usr/sbin/apachectl
+> httpd=${HTTPD-/usr/sbin/httpd}
+
+

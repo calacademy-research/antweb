@@ -1,0 +1,51 @@
+Feed.txt
+
+This documentation organizes our understanding of Antweb feeds.
+
+Nov 23, 2011 - Mark Johnson
+-------------------------------------------------------------------------------
+
+To summarize: Antweb data is available to other organizations in various ways.
+
+Feeds
+  EOL
+  TAPIR / GBIF
+  Plazi
+  BOLD
+  
+  
+  
+EOL - Encyclopedia of Life
+    We make available to EOL an XML feed.  As of Nov 2011, the /getEOL.do action will cause
+an xml file to be generated on the server, and will return a hyperlink to this file: /eol/eol.xml.
+	The file can be quite large (33MB).  It will display nicely in Firefox.  If there is a parse error,
+perhaps due to some unescaped data, then Chrome will accurately report where the error is in the file.
+    We agree with EOL to generate the file quarterly.  
+    
+Plazi
+    Plazi SPM published and put on Antweb.  Different species identifiers.  We use current valid names. 
+They use literature names (old).   They need to create a current_valid_name.  Or AntCat could query.
+    Wait on this for Plazi and AntCat to come along
+    
+
+TAPIR, GBIF, TDWG, ...   
+  TAPIR - XML schema that allows us to  - field structure mapping.
+    There is a new format to replace TAPIR
+    Stan wants to set up a server
+    http://antweb.org/tapirlink/www/tapir.php
+    We want to publish specimen data in GBIF format
+  TDWG - Meeting place for people working on biodiversity databases.  Thau and Stan go.
+     DarwinCore was the predecessor of TAPIR
+     UN distributes GBIF (Global Bio Informatis Facilitator) is the protocal.
+
+BOLD
+
+GenBak
+  LinkOut
+     
+* See iPhyylo
+    Themes of bioinformatics 
+    Do's and don'ts of bioinformatics data.  Key issues discussed.
+    iPhylo.blogspot.com
+    Things antweb could be doing.     
+     

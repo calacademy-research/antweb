@@ -1,0 +1,18 @@
+subfamily	Tribe	Genus	subgenus	SpeciesGroup	species
+Myrmicinae	Pheidolini	Aphaenogaster			belti 
+Myrmicinae	Pheidolini	Aphaenogaster			friederichsi 
+Myrmicinae	Pheidolini	Aphaenogaster			gonacantha 
+Myrmicinae	Pheidolini	Aphaenogaster			MG04
+Myrmicinae	Pheidolini	Aphaenogaster			MG05
+Myrmicinae	Pheidolini	Aphaenogaster			MG06
+Myrmicinae	Pheidolini	Aphaenogaster			swammerdami 
+Myrmicinae	Pheidolini	Aphaenogaster			swammerdami clara
+Myrmicinae	Pheidolini	Aphaenogaster			swammerdami curta
+Myrmicinae	Pheidolini	Aphaenogaster			swammerdami spinipes
+Myrmicinae	Formicoxenini	Cardiocondyla			cristata 
+Myrmicinae	Formicoxenini	Cardiocondyla			emeryi 
+Myrmicinae	Formicoxenini	Cardiocondyla			nuda sculptinodis
+Myrmicinae	Formicoxenini	Cardiocondyla			shuckardi 
+Formicinae	Camponotini	Camponotus	Mayria		christi
+Formicinae	Camponotini	Camponotus	Mayria		christi ambustus
+Formicinae	Camponotini	Camponotus	Mayria		christi ferrugineus

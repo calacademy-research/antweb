@@ -1,0 +1,25 @@
+AMNH	American Museum of Natural History, New York, NY, USA
+ANIC	Australian National Insect Collection, CSIRO, Canberra, Australia
+BMNH	Natural History Museum, London, U. K.
+CASC	California Academy of Sciences, San Francisco, CA, USA
+CUIC	Cornell University Insect Collection, Ithaca, NY, USA
+JTLC	John T. Longino Collection, University of Utah, Salt Lake City, Utah, USA.
+LACM	Natural History Museum of Los Angeles County, Los Angeles, CA, USA
+MCZC	Museum of Comparative Zoology, Harvard University, Cambridge, MA, USA
+MHNG	Muséum d’Histoire Naturelle, Geneva, Switzerland
+MNHN	Muséum National d’Histoire Naturelle, Paris, France
+MRAC	Musée Royal de l’Afrique Centrale, Tervuren, Belgium
+MSNG Museo Civico de Historia Natural “Giacomo Doria”, Genoa, Italy
+NHMB	Naturhistorisches Museum, Basel, Switzerland
+NHMV	Naturhistorisches Museum, Vienna, Austria
+NMKE	National Museums of Kenya, Nairobi, Kenya
+NMWN	National Museum of Namibia, Windhoek, Namibia
+PSWC	Philip S. Ward Collection, University of California, Davis, CA, USA
+SAMC	South African Museum, Cape Town, South Africa
+UCDC	Bohart Museum of Entomology, University of California at Davis, CA, USA
+UCRC	Entomology Research Museum, University of California at Riverside, CA, USA
+USNM	National Museum of Natural History, Washington, DC, USA
+ZMAS	Zoological Institute, Russian Academy of Science, St. Petersburg, Russia
+ZMHB	Museum für Naturkunde der Humboldt-Universität, Berlin, Germany
+ZMUC	University of Copenhagen, Zoological Museum, Copenhagen, Denmark
+

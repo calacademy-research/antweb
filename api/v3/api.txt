@@ -1,0 +1,56 @@
+Run
+---
+
+On client:
+
+On server it runs within apache.
+  sudo apachectl start | stop | restart
+On dev machine.
+  cd /api/v3/
+  python3.6 api.py
+
+L:ogs
+
+Files
+-----
+On server
+  /var/www/html/v3 is deployment directory.
+
+  sudo tail --lines 100 /var/log/httpd/error_log
+  
+
+Install
+-------
+http://blog.cloudoki.com/getting-started-with-restful-apis-using-the-flask-microframework-for-python/
+
+mkdir ratings
+cd ratings
+virtualenv venv
+. venv/bin/activate
+
+pip3 install Flask
+pip3 install Flask-SQLAlchemy 
+pip3.6 install flask_sqlalchemy
+
+sudo xcodebuild -license
+pip3.6 install mysqlclient
+#pip3.6 install mysql-python
+
+pip3.6 install flask_restful
+
+
+On live server
+--------------
+
+yum install epel-release
+
+sudo pip install virtualenv
+
+virtualenv -p /usr/bin/python3.6 venv
+ 
+sudo pip install virtualenv
+which python3.6
+virtualenv -p /usr/bin/python3.6 venv
+source venv/bin/activate
+pip install Flask-SQLAlchemy
+pip3.6 install mysqlclient

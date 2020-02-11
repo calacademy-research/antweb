@@ -1,0 +1,300 @@
+<project name="antweb" default="compile" basedir=".">
+
+
+<property file="build.properties"/>
+
+<property name="app.version"   value="3.0"/>
+<property name="build.home"    value="build"/>
+<property name="dist.home"     value="dist"/>
+<property name="deploy.home"   value="${antweb.home}"/>
+<property name="doc.home"     value="${deploy.home}/docs/javadocs"/>
+<property name="lib.home"     value="WEB-INF/lib"/>
+<!-- property name="workingdir"  value="${workingdir}"/ -->
+
+<property name="add.home"      value="etc/add"/>
+
+<property name="compile.debug"       value="true"/>
+<property name="compile.deprecation" value="false"/>
+<property name="compile.optimize"    value="true"/>
+
+<!--import file="${catalina.home}/bin/catalina-tasks.xml"/ -->
+
+<path id="compile.classpath">
+
+    <!-- Include all JAR files that will be included in /WEB-INF/lib -->
+    <!-- *** CUSTOMIZE HERE AS REQUIRED BY YOUR APPLICATION *** -->
+    <!--
+        <pathelement location="${foo.jar}"/>
+    -->
+
+  <pathelement location="${lib.home}" />
+  <fileset dir="${lib.home}">
+    <include name="*.jar"/>
+  </fileset>
+
+  <!--pathelement location="${java.home/lib/jars/jtds-0.5.1.jar}"/ -->  <!-- was 0.3.2 -->
+  
+       <!-- 
+       zonaGeek.jpeg.JpegShortcuts class not found can break compilcation after build directory is deleted.
+       It does not seem to compile properly out of Jpeg.java.  Copy from server to build directory is a
+       janky solution.  
+       scp mjohnson@antweb.org:/data/antweb/WEB-INF/classes/com/zonageek/jpeg/JpegShortcuts.class build/WEB-INF/classes/com/zonageek/jpeg/ 
+       -->
+
+  <!-- Include all elements that Tomcat exposes to applications -->
+
+  <!-- pathelement location="${catalina.home}/common/classes"/ --> 
+
+  <fileset dir="${catalina.home}/lib">
+    <include name="*.jar"/>
+  </fileset>
+
+</path>
+
+<target name="all" depends="clean,compile,test"
+   description="Clean build and dist, then compile and test"/>
+
+<target name="clean"
+   description="Delete old build and dist directories">
+    <delete dir="${build.home}"/>
+    <delete dir="${dist.home}"/>
+</target>
+
+<target name="cleanAllX" depends="deleteDeployment" if="{$app.name}==antweb"
+   description="Delete old build and dist directories">
+  <echo message="app.name: ${app.name}"/>
+</target>
+
+<target name="deleteDeployment">
+    <!-- delete dir="${deploy.home}"/ -->
+</target>
+
+
+
+<target name="compile" depends="prepare"
+   description="Compile Java sources">
+
+  <mkdir    dir="${build.home}/WEB-INF/classes"/>
+  <javac srcdir="src"
+        destdir="${build.home}/WEB-INF/classes"
+         debug="${compile.debug}"
+   deprecation="${compile.deprecation}"
+includeantruntime="false"
+      optimize="${compile.optimize}">
+     <classpath refid="compile.classpath"/>
+  </javac>
+
+  <javac srcdir="test"
+        destdir="${build.home}/WEB-INF/classes"
+         debug="${compile.debug}"
+   deprecation="${compile.deprecation}"
+includeantruntime="false"
+      optimize="${compile.optimize}">
+      <classpath refid="compile.classpath"/>
+  </javac>
+
+  <copy  todir="${build.home}/WEB-INF">
+  <fileset dir="WEB-INF" includes="**/*.xml"/>
+  <fileset dir="WEB-INF" includes="**/*.tld"/>
+  <fileset dir="WEB-INF" includes="**/ApplicationResources.properties"  followsymlinks="true"/>
+  <fileset dir="WEB-INF" includes="**/AntwebResources.properties"/>
+  <fileset dir="WEB-INF" includes="**/log4j.properties" />
+  </copy>
+
+  <copy  todir="${build.home}/WEB-INF/lib">
+  <fileset dir="WEB-INF/lib" includes="**/*.jar"/>
+  <fileset dir="WEB-INF" includes="**/*.dtd"/>
+  </copy>
+  
+  <copy todir="${build.home}/doc">
+    <fileset dir="doc" includes="release.txt"/>
+  </copy>
+
+</target>
+
+<!--
+Added by Mark.  Does not work yet.
+To successfully compile jsps from ant you must set this environment property:
+  export ANT_OPTS=-Dorg.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING=false
+-->
+  <target name="jspCompile" depends="clean, compile">
+<!--
+    <taskdef classname="org.apache.jasper.JspC" name="jasper2" > 
+      <classpath id="jspc.classpath"> 
+        <pathelement location="${java.home}/../lib/tools.jar"/> 
+        <fileset dir="${catalina.home}/bin"> 
+          <include name="*.jar"/> 
+        </fileset> 
+        <fileset dir="${catalina.home}/lib"> 
+          <include name="*.jar"/> 
+        </fileset> 
+      </classpath> 
+    </taskdef> 
+-->
+  
+   <!-- target name="jspc" --> 
+
+    <jasper 
+             validateXml="false" 
+             uriroot="${build.home}" 
+             webXmlFragment="${build.home}/WEB-INF/generated_web.xml" 
+             outputDir="${build.home}/WEB-INF/src" /> 
+
+  </target> 
+
+
+<!-- added by mark.  Does not work yet. -->
+<target name="reload" depends="compile"
+ description="Reload application on servlet container">
+
+  <reload url="${manager.url}"
+     username="${manager.username}"
+     password="${manager.password}"
+         path="${app.path}"/>
+</target>
+
+
+<target name="deploy" depends="compile"
+  description="Deploy application to servlet container">
+
+  <!-- Copy the contents of the build directory -->
+
+  <mkdir     dir="${deploy.home}"/>
+
+  <copy    todir="${deploy.home}" failonerror="false">
+    <fileset dir="${build.home}" followsymlinks="false"/>
+  </copy>
+
+  <mkdir  dir="${deploy.home}/WEB-INF/lib"/>
+
+</target>
+
+<target name="updatecode" depends="compile"
+  description="Deploy application to servlet container">
+
+  <!-- Copy the contents of the build directory -->
+  <mkdir     dir="${deploy.home}/WEB-INF"/>
+  <copy    todir="${deploy.home}/WEB-INF">
+    <fileset dir="${build.home}/WEB-INF"/>
+  </copy>
+
+    <mkdir  dir="${deploy.home}/WEB-INF/lib"/>
+
+</target>
+
+<target name="dist" depends="deploy,javadoc"
+ description="Create binary distribution">
+
+  <!-- Copy documentation subdirectory -->
+  <copy    todir="${dist.home}/docs">
+    <fileset dir="docs"/>
+  </copy>
+
+  <!-- Create application JAR file -->
+  <jar jarfile="${dist.home}/${app.name}.war"
+       basedir="${deploy.home}"/>
+
+  <!-- Copy additional files to ${dist.home} as necessary -->
+
+</target>
+
+<target name="javadoc" depends="compile"
+ description="Create Javadoc API documentation">
+
+  <mkdir dir="${doc.home}/docs/api"/>
+  <javadoc sourcepath="src"
+           destdir="${doc.home}/docs/api"
+           packagenames="org.*">
+     <classpath refid="compile.classpath"/>           
+  </javadoc>
+</target>
+
+<!-- target name="jsp">
+    <copy todir="${build.home}">
+      <fileset dir="web" followsymlinks="false"/>
+    </copy>	
+</target -->
+
+
+<target name="prepare">
+  <!-- Create build directory and copy static content -->
+  <mkdir  dir="${build.home}"/>
+  <copy todir="${build.home}">
+    <fileset dir="web" followsymlinks="false"/>
+  </copy>
+  <mkdir  dir="${build.home}/forwards/"/>
+  <!-- copy todir="${build.home}">
+    <fileset dir="web/forwards" followsymlinks="false"/>
+  </copy -->
+  <!-- The "Move Species List Pages" task will not only move the old pages (web/comoros for instance)
+       to the new location (webapps/antweb/web/speciesList/) but it will generate redirects
+       (in web/forwards/ that can be copied into the source tree (at antweb/web/forwards/) so that
+       the antweb perpare task will copy them into the webapps/antweb directory (we don't want
+       to cruft up the antweb/web directory with all of the forwards.  -->
+</target>
+
+  <!-- Create build directory and copy static content -->
+<!-- target name="prepareTest">
+  <copy todir="${build.home}">
+    <fileset dir="${add.home}"/>
+  </copy>
+</target -->
+
+
+
+<target name="test" depends="compile">
+  <junit printsummary="true" fork="true">
+    <test name="test.org.calacademy.antweb.AntWebStrutsTest" />
+    <classpath>
+      <pathelement location="${build.home}/WEB-INF/classes" />
+      <pathelement location="${lib.home}" />
+      <fileset dir="${lib.home}">
+        <include name="*.jar"/>
+      </fileset>
+      <fileset dir="${catalina.home}/lib">
+        <include name="*.jar"/>
+      </fileset>
+    </classpath> 
+<!--
+      <pathelement location="${httpunit.home}/lib/httpunit.jar" />
+      <pathelement location="${httpunit.home}/lib/JTidy.jar" />
+    </classpath>
+--> 
+    <formatter type="plain" usefile="false" />
+  </junit>
+</target>
+
+
+<target name="antwebUtil" depends="compile">
+  <java classname="org.calacademy.antweb.util.AntwebUtil" fork="true">
+    <classpath>
+      <pathelement location="${build.home}/WEB-INF/classes" />
+      <pathelement location="${lib.home}" />
+        <fileset dir="${lib.home}">
+          <include name="*.jar"/>
+        </fileset>
+
+       <fileset dir="${catalina.home}/lib">
+         <include name="*.jar"/>
+       </fileset>
+
+    </classpath> 
+  </java>
+</target>
+
+
+<!-- These are not being used ... but display unless and echo functionality -->
+<target name="debug" depends="setAppName, output">
+</target>
+
+<target name="setAppName" unless="app.name">
+  <property name="app.name"     value="antweb"/>
+  <echo message="setting app.name to be default: antweb"/>
+</target>
+
+<target name="output">
+  <echo message="app.name:${app.name}"/>
+  <echo message="antweb.home:${antweb.home}"/>
+</target>
+
+</project>

@@ -1,0 +1,74 @@
+AntWeb code notes
+  Compiled by Thau circa Jun 1, 2010.
+
+Functionally, there are 4 areas:  the main website, the admin tools for curators, code for sharing data with other sites, and miscellaneous scripts.  I'll also talk about database issues separately.
+
+=========================
+Main Site
+
+===========================
+Curator Tools
+
+Curators can do many things.  Most of those things are handled by the hideous UploadAction.java class.  I will describe those first, and then describe other curator powers.  The first set of curator tools is available by logging in at antweb.org/login.jsp
+
+Upload Authority File: This is information about taxa: species, genus, subfamily.  An authority file is a tab delimited excel export.  You can see them by looking at /home/antweb/workingdir/ - for example serbiaants.txt.   When an authority file is uploaded, the home page of the project associated with that file is regenerated, as are statistics about the number of species, genera, and subfamilies.
+
+Upload a File to a Home Page: Each project has a home directory, and this is how curators upload files to their home directories
+
+Upload a Biota File.  This is another tab delimited file.  Probably the gnarliest code is here.  The file has LOTS of columns.  Some of the columns are mapped to columns in the specimen database table.  Others go into an XML column named other.  These files get big so when someone uploads one, I do a diff and only deal with the differences between the old and just uploaded file.  If for some reason the old file is corrupted, the entire biota file can be uploaded without involving a diff by clicking the "update entire biota file" checkbox.
+
+Image Picker.  Each project can choose the "best" image for a given taxon.  So, if there are 10 pictures of Camponotus modoc, but one specimen is especially nicely photographed, a curator can choose that specimen to represent the species.  The classes to look for here are ImagePickAction, ImagePickResults, and ImagePickSearch
+
+Auxiliary pages.  Projects can create web pages that are saved in their home directory.  These are called auxiliary pages. A new auxiliary page is created on the main curator tools page.  Once an auxiliary page has been created, it may be edited by going to that page and being logged in as a manager for that project.  Under this circumstance a "edit" button will appear on the bottom of the page.
+
+Edit Hope pages.  Home pages for projects are templated, and a curator can edit the contents here.  The Project.java class is key to this, as are PreviewHomePageAction and SaveProjectAction and ProjectResource.  Remember that when a project is changed, many things happen.  Changes are made to the database, to the ProjectResources.properties file in the WEB-INF/classes, and to the home page of the project which is generated as a static page.
+
+View files in home directory.  Pretty straightforward - it lists the files that have been uploaded to a project's home directory
+
+Update Field Guides.  There are three standard field guides that are generated for each project: subfamily, genus and species.  These field guides are regenerated whenever an authority file for a project is uploaded.  If for some reason the field guides need to be generated on call, this can be accomplished on this page.  
+
+Edit AntWeb Staff Page / Edit Antweb Documentation Page.  The antweb user can edit these pages.  They're standard ancillary pages as described above.
+
+Change Group Information.  This link goes to another administration page. On that page are a bunch of things, including user editing functions.  I'll describe those shortly.  The text of the link "Change Group Information" should probably be changed.
+
+Change to a different user.  The antweb user can "log in" as other users in case it is important to see the site from the eyes of a specific curator.
+
+---------------------------------------
+
+Another set of tools is specific for the antweb user.  These are available here: http://www.antweb.org/antweb_admin.jsp
+
+On this page you can create new projects, create biogeographicregions, which subsume projects, and edit the antweb.org home page
+
+There's also a link to: http://www.antweb.org/manageGroups.do  which lets you add a new group, and assign projects to groups.  There's a many to many relationship between groups and projects - one group can edit many projects and a project might be edited by more than one group. 
+
+
+-------------------------------------------
+
+
+
+
+============================
+Data Sharing
+
+Data are shared through a couple of means:
+
+GoogleEarth - there's a google earth application in tomcat.  It's pretty simple - only one class
+
+Encyclopedia of Life - EOL can get a big dump of our data in their format by going to this URL: http://antweb.org/getEOL.do
+
+Tapir - DiGIR is a database federation scheme for sharing museum collections data.  Tapir is a DiGIR provider.  In /var/www/html/tapirlink there's a provider serves these data up.  More about Tapir at http://wiki.tdwg.org/TAPIR/   Stan Blum is the guy to talk to if there are ever issues with this.
+
+Wikimedia Commons - there are scripts in /home/thau/commons for uploading images to wikimedia commons.  This is non-trivial, so if you need to do this, give yourself some time to get acquainted with everything, and drop thau@learningsite.com a line.
+
+
+===========================
+Miscellaneous scripts
+
+Mostly these are one-off perl scripts which hopefully are never used.  But in case you need them.
+
+/home/thau/exifChanger - if you need to change the exif tags for a bunch of images
+
+/home/thau/tifffinder - this was code written to deal with a big set of tiffs that weren't copied into the /data/antweb/images directory.  Shouldn't have to mess with anything in here
+
+/home/thau/commons - this is code to upload images to wikimedia commons.  It might be necessary to do this again some time
+

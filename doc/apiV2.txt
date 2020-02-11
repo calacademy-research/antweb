@@ -1,0 +1,87 @@
+
+---------------------------- Antweb API -------------------------------
+
+This version of the API is written in PHP by Jay Mollica. 
+
+Create a GitHub account
+
+# Download the zip file.  https://github.com/jaymollica/antweb/archive/master.zip
+
+# Unzip it in a working directory
+
+# Get the header.php which is not in the repository because it contains passwords...
+# Copy it into each of the api version include directories...
+cp header.php antweb-master/api/v2.1/include/
+cp header.php antweb-master/api/v2/include/
+cp header.php antweb-master/api/v1/include/
+
+cd /Users/mark/dev/calAcademy/github/antweb-master
+git init
+Reinitialized existing Git repository in /Users/mark/dev/calAcademy/github/antweb-master/.git/
+
+# Add a remote: https://help.github.com/articles/adding-a-remote/
+
+# Remote is commonly called origin.
+
+git remote add origin https://github.com/jaymollica/antweb.git
+
+git fetch https://github.com/jaymollica/antweb.git
+
+
+git pull origin master
+
+# In order to commit changes, in this order
+# -A will cause both addition and 
+git add -A
+git commit -m 'Comment'
+git status
+git pull origin master 
+git push origin master
+
+
+# Add to git config
+Mark-Johnsons-MacBook-Pro:antweb-master mark$ git config --global user.name "Mark S Johnson"
+Mark-Johnsons-MacBook-Pro:antweb-master mark$ git config --global user.email mark@inforaction.com
+
+
+git push origen master
+Username for 'https://github.com': marksjohnson
+Password for 'https://marksjohnson@github.com': 
+
+
+
+#Make sure the api link in these files is correct.  Shouldn't have to worry after
+# initial deployment
+Mark-Johnsons-MacBook-Pro:github mark$ edit antweb-master/api/v2.1/include/header.php
+Mark-Johnsons-MacBook-Pro:github mark$ edit antweb-master/api/v1/include/header.php
+
+
+# To deploy, update from github.  Copy to server
+/Users/mark/dev/calAcademy/github/antweb-master
+
+git pull origin master     #  !!!  (currently mine is misspelled as origen)
+
+scp -r api mjohnson@antweb-prod:/home/mjohnson/
+sudo cp -r api /home/antweb/links/webroot/
+# sudo chown -R apache:antweb /home/antweb/links/webroot/api
+
+# Test it here:
+http://www.antweb.org/api/v2/
+http://www.antweb.org/api/v2.1/
+
+
+----
+
+Local
+  sudo apachectl start/stop
+  http://localhost/
+  /Library/WebServer/Documents/
+  
+    
+  
+  
+
+
+
+
+

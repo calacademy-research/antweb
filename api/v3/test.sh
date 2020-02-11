@@ -1,0 +1,1 @@
+curl localhost:5000/specimens?min_elevation=0&max_elevation=100&country=Australia&habitat=rainforest&type=holotype&georeferenced=true&max_date=1979-12-31&min_date=1970-01-01

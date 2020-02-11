@@ -1,0 +1,223 @@
+Bolton.txt
+
+Created: Mark, Jul 19, 2010
+
+----------------------
+
+Mark:
+Also, Brian wonders, "if I simply need to save the files as html and
+then you can run the code."  I got the impression for our exchanges
+that the process is a bit more extensive and worth going over.
+
+Dave, Jul 7 (12 days ago):
+Yeah, it's slightly more complicated but not too much more.  It's basically
+
+1. convert all to html
+2.  there are 2 files that capture genus/subfamily info that need to
+be combined (cat a b > c)
+3.  then you copy the files over to a special directory
+4.  then you can run the code
+5.  you get an excel file that's just an authority file that brian can look at
+6.  when he's happy with it, you upload the authority file to world ants
+
+I'll need to poke around cvs to get the right directory for #3 and the
+right path for #4
+
+The annoying and most time consuming thing is the html conversion.
+
+--------------------------
+
+Dave: Ok, here it is.
+  
+If you look under browse, in Global, you'll see there's something called "Bolton's Catalog" or some such. See that?
+8:15 PM 
+me: Yes, the Bolton World Catalog?
+ 
+Dave: Yes
+  
+Ok, that's a "project" for all the "valid" ant species according to Bolton's World Catalog.
+  
+Now, there are a ton of ants that are in antweb but are not valid according to bolton.
+8:16 PM 
+They're all like Camponotus mg02, Camponotus undet, Aphaenogaster blf3, and such
+  
+We had a plan for another entry in the "global" section under browse called something like "All ants" or something... I can't remember the wording. Luke would know
+8:17 PM 
+Anyway, your task, should you choose to accept it, is to add that "All ants" to the global section of browse.
+8:18 PM 
+It's mostly stubbed in throughout the code.
+
+---------------------------
+
+The first step is converting all the
+documents to HTML using word.  That's probably the most time consuming
+step.  I have a macro for it, but I can't get to it right now
+
+-------
+
+> From: Barry Bolton <baz.bolton@btinternet.com>
+> To: "Fisher, Brian" <BFisher@calacademy.org>
+> Date: Thu, 1 Jul 2010 08:51:12 -0700
+> Subject: from Barry Bolton
+>
+> Dear Brian,
+>
+> Attached is the latest (1 July 2010) update of the Catalogue and Synopsis.
+>
+> I noticed that Vincent Perrichot has taken over the "Fossils" section.
+> That's fine, but I spotted that all the entries are blank. Let him know that
+> all the fossils are catalogued in NGC; all the data are there and can be
+> used.
+>
+> Vincent has omitted Armaniinae from the ants. Can't think why. Surely it's
+> not the old, "can't see a metapleural gland therefore it's not an ant",
+> argument?
+>
+> I'm still flogging through Peter Hawkes's Tanzanian Hypoponera. Six new ones
+> so far. I know that Tanzania is a biodiversity hot-spot but this is getting
+> ridiculous. I don't think this job is ever going to finish!!
+>
+> All the Best
+> Barry
+
+--------------------------
+
+' Save all as text - save all open documents as text files
+Sub SaveAllAsHTML()
+   Dim a$
+   For Each adoc In Documents
+       a$ = adoc.Name + ".html"
+       adoc.SaveAs FileName:=a$, FileFormat:= _
+       wdFormatHTML, AddToRecentFiles:=False
+       adoc.Close
+   Next adoc
+End Sub
+
+Open all the documents - that itself takes a long time - then run this
+macro.  It'll convert all open documents to HTML.
+
+--------------------
+
+Ok, here are the steps for Bolton.  First, one big caveat. I've always
+run this on my local machine, a mac.  So, you could either get
+everything running on your loaner mac, or you could try doing it on
+your pc and see what happens, or you could try running in on the linux
+box and see what happens.  I'm not sure it runs on the linux box -
+whether or not all the code has been checked in.  And, I'm not sure
+what character encoding issues you'll run into.....  I'm guessing that
+after you've done the conversion to HTML, everything should run ok on
+your windows box...
+
+0.  back up extant.xls and extinct.xls in docroot/worldAuthorityFiles
+- if anything goes wrong, you can revert to these
+1.  export all the bolton files to HTML
+2.  cat NGC-GEN.A-L.docx.html  NGC-GEN.M-Z.docx.html > subfamily_genus.txt
+3. copy all the files starting with numbers, and the NGC-Sp* files and
+the subfamily_genus.txt file to:
+   docroot/worldAuthorityFiles (maybe make a backup of what's there
+now), and synopsis.txt
+4.  go to docroot/world_authority_admin.jsp   (must be logged in)
+5.  use the pulldown to upload one species file (it's the last option
+in the pulldown) - you can pick any of the html files you just made -
+one of the ones you copied over.
+6.  if all goes well, this will generate two files in
+doctroot/worldAuthorityFiles - extant.xls and extinct.xls - you can
+download then with the links on docroot/world_authority_admin.jsp
+7.  these are authority files, look them over to see if they're ok.
+extant.xls is the bolton catalog and extinct.xls is for the extinct
+ants project.
+
+That should do it.  Let me know how it goes.
+
+---------
+
+Me:
+   A few question about the Bolton stuff.  You mention synopsis.txt
+which I have not found anywhere.  What is this and where?
+   As for the process, from your doc it seems that I would only run a
+single file through in order to get the files extant.xls and
+extinct.xls.  If those are good we can assume that all are?  And then
+I will send the whole batch to Brian?
+
+According to the docs on world_authority_admin.jsp: This latter file,
+once it's uploaded will be renamed subfamily_genus.txt.
+But, I created that file by concatenating NGC-GEN.A-L.html and
+NGC-GEN.M-Z.html ... ?
+
+    I am stuck on the synopsis.txt.  Here is where I would expect it:
+
+[mark@antweb antweb]$ cd /data/antweb/worldAuthorityFiles/
+
+Dave:
+To tell you the truth, I'm confused about synopsis.txt.  I'm pretty
+sure it's generated by the code - take a look at the
+WorldAuthorityGenerator.java code to see if it is.  If it's not, I'll
+have to hunt around.
+
+The code there in WorldAuthorityGenerator looks at all the files in
+the directory and processes them all, so really the business of
+choosing a file to upload is silly - I originally thought I'd be
+getting a file at a time, rather than the whole dump every time.  So
+basically, uploading a file just triggers the generation of the files.
+
+--------
+
+Ok, I poked around the code a bit.  synopsis.txt is a concatenation of
+the HTML generated from all the Bolton files that start with numbers
+except the one about extinct ants. I'm attaching a copy of that file
+here.  So, take back what I said about copying all the number starting
+files over to docroot/worldAuthorityFiles - don't copy those over -
+convert them to html and concat them into a file called synopsis.txt.
+
+-----
+
+> According to the docs on world_authority_admin.jsp: This latter file,
+> once it's uploaded will be renamed subfamily_genus.txt.
+> But, I created that file by concatenating NGC-GEN.A-L.html and
+> NGC-GEN.M-Z.html ... ?
+
+Hmm... looking at my code, I don't think the file gets renamed, so
+when you concatenate those two files, name the result
+subfamily_genus.txt
+
+Ok.... I think that should set you up.  Good luck!  Sorry this is so
+crack-addled - it's probably the lamest part of the whole system.
+
+
+------
+
+So it looks like this.
+
+1) Save each file from docx to html from MS Word
+
+2) Concat the NGC-GEN files...
+
+cat NGC-GEN.A-L.html > subfamily_genus.txt
+cat NGC-GEN.M-Z.html >> subfamily_genus.txt
+
+3) Concat all of the files beginning with numbers, except for the extinct ones, into synopsis.txt
+cat 01.\ FORMICIDAE.html > synopsis.txt
+cat 02.\ DOLICHODEROMORPHS.html >> synopsis.txt
+cat 03.\ FORMICOMORPHS.html  >> synopsis.txt
+cat 04.\ MYRMECIOMORPHS.html  >> synopsis.txt
+cat 05.\ DORYLOMORPHS.html  >> synopsis.txt
+cat 06.\ ECTAHETEROMORPHS.html  >> synopsis.txt
+cat 07.\ MYRMICOMORPHS\ 1.html  >> synopsis.txt
+cat 08.\ MYRMICOMORPHS\ 2.html  >> synopsis.txt
+cat 09.\ PONEROIDS.html  >> synopsis.txt
+cat 10.\ LEPTANILL\ \&\ MARTIAL.html  >> synopsis.txt
+
+4) Back up all server files in /data/antweb/worldAuthorityFiles/
+
+5) Copy all files (synopsis.txt, subfamily_genus.txt and NGC-SP* files) to directory
+/docroot/worldAuthorityFiles/
+
+6) After login.jsp go to world_authority_admin.jsp.  Enter any file (I used NGC-Spa-an.html) and submit.
+Send /data/antweb/worldAuthorityFiles/extant.xls to Brian so that he may rename extant.txt and upload
+as an authority file.
+
+
+
+
+
+

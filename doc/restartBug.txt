@@ -1,0 +1,1032 @@
+
+
+
+
+Dec 21 Restarts
+
+2011-12-21 03:30 - Line 5024 - Terminated  first of many restarts.
+2011-12-21 04:05 - 
+2011-12-21 06:12 -
+
+ 
+--- Diagnostics ---
+   CPU pinned diagnostics
+   
+   kill -QUIT <pid>
+   top -Hp <pid>
+
+
+ 
+During a restart mania 
+  2011-12-27 09:29:22,844 ERROR ajp-bio-8009-exec-150 org.calacademy.antweb.Species - error in  getChildren java.util.MissingResourceException: Can't find bundle for base name ApplicationResources, locale en_US
+   ... 
+ 
+
+antweb
+  Start Memory stats - max:2,061,762,560 free:122,842,976 total:128,974,848
+  -
+  Start Memory stats - max:2,061,762,560 free:122,471,088 total:128,974,848
+  end Memory stats - max:2,061,762,560 free:111,843,616 total:520,638,464
+  GC 265 Memory stats - max:2,061,762,560 free:480,479,416 total:819,875,840
+  -
+  In midst of restarts. Memory stats - max:2061762560 free:120431296 total:128974848   no much variation
+
+top - 18:27:13 up 14:21,  2 users,  load average: 0.20, 0.31, 0.49
+Tasks: 121 total,   1 running, 120 sleeping,   0 stopped,   0 zombie
+Cpu(s):  0.0%us,  0.3%sy,  0.0%ni, 99.3%id,  0.3%wa,  0.0%hi,  0.0%si,  0.0%st
+Mem:   8326716k total,  6423196k used,  1903520k free,   232224k buffers
+Swap:   786424k total,        0k used,   786424k free,  3878972k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND       
+ 5315 root      18   0 2413m 1.8g  11m S  7.0 22.1   2:00.62 java                                                                                                                                                                
+ 3440 mysql     15   0  677m 151m 4424 S  0.3  1.9 180:12.94 mysqld     
+
+10.2.22.81
+  Memory stats - max:1,881,341,952 free: 68,287,040 total:117,702,656
+  Memory stats - max:1,881,341,952 free:104,731,136 total:117,702,656
+  
+top - 18:38:14 up 14:32,  1 user,  load average: 0.09, 0.07, 0.02
+Tasks: 114 total,   2 running, 112 sleeping,   0 stopped,   0 zombie
+Cpu(s): 17.9%us,  9.0%sy,  0.0%ni, 17.9%id, 55.2%wa,  0.0%hi,  0.0%si,  0.0%st
+Mem:   7600964k total,   944592k used,  6656372k free,    96360k buffers
+Swap:  9764856k total,        0k used,  9764856k free,   456684k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND                                                                                                                                                            
+ 2613 root      18   0 2221m 124m  10m S 13.0  1.7   0:10.41 java                                                                                                                                                                
+ 2405 mysql     18   0  594m  92m 3852 S  4.3  1.2   0:00.38 mysqld        
+ 
+ 
+ 
+
+Does not correlate with deployments.  Shortly after very minor UI deployment to modify a h1 tag on taxon page
+
+ 2011-12-25 14:59:34,145 ERROR ajp-bio-8009-exec-84 org.calacademy.antweb.SpecimenAction - Specimen:casent06035 is not in the AntWeb database.  No upload in process.
+ 2011-12-25 15:15:00,499 ERROR ajp-bio-8009-exec-130 org.apache.struts.actions.DispatchAction - Request[/advancedSearch] does not contain handler parameter named searchMethod
+ 2011-12-25 15:31:19,436 ERROR ajp-bio-8009-exec-98 org.calacademy.antweb.util.AntwebUtil - bigPicture.jsp Session error.  TheImage:null nameParam:Linepithema rjg-01
+ 2011-12-25 15:40:11,020 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 15:40:11,020 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 15:40:11,079 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:122503576 total:128974848
+ 2011-12-25 15:40:11,079 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 15:42:32,901 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.StartupPlugIn - Exiting Startup.destroy()
+ 2011-12-25 15:42:32,908 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Removing Antweb application context...
+ 2011-12-25 15:42:32,908 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:111746168 total:128974848
+ 2011-12-25 15:42:33,005 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - GarbageCollection: 96
+ 2011-12-25 15:42:33,005 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:120075152 total:128974848
+ 2011-12-25 15:42:33,005 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Terminating Antweb application.
+ 2011-12-25 15:42:33,005 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - ---------------------------
+ 2011-12-25 15:42:54,113 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 15:42:54,113 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 15:42:54,149 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:90354624 total:128974848
+ 2011-12-25 15:42:54,149 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 15:49:13,925 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 15:49:13,925 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 15:49:13,986 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:122514184 total:128974848
+ 2011-12-25 15:49:13,986 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 15:51:32,066 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.StartupPlugIn - Exiting Startup.destroy()
+ 2011-12-25 15:51:32,072 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Removing Antweb application context...
+ 2011-12-25 15:51:32,073 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:112808600 total:128974848
+ 2011-12-25 15:51:32,155 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - GarbageCollection: 82
+ 2011-12-25 15:51:32,155 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:120431296 total:128974848
+ 2011-12-25 15:51:32,155 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Terminating Antweb application.
+ 2011-12-25 15:51:32,155 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - ---------------------------
+ 2011-12-25 15:51:51,049 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 15:51:51,050 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 15:51:51,106 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:123019544 total:128974848
+ 2011-12-25 15:51:51,106 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 15:58:06,766 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 15:58:06,767 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 15:58:06,828 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:122503872 total:128974848
+ 2011-12-25 15:58:06,828 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 15:58:25,904 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.StartupPlugIn - Exiting Startup.destroy()
+ 2011-12-25 15:58:29,528 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Removing Antweb application context...
+ 2011-12-25 15:58:29,556 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:53696336 total:2061762560
+ 2011-12-25 15:58:33,365 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - GarbageCollection: 3809
+ 2011-12-25 15:58:33,365 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:58939232 total:2061762560
+ 2011-12-25 15:58:33,365 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Terminating Antweb application.
+ 2011-12-25 15:58:33,365 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - ---------------------------
+ 2011-12-25 16:00:32,442 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.StartupPlugIn - Exiting Startup.destroy()
+ 2011-12-25 16:00:32,450 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Removing Antweb application context...
+ 2011-12-25 16:00:32,450 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:112743304 total:128974848
+ 2011-12-25 16:00:32,546 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - GarbageCollection: 96
+ 2011-12-25 16:00:32,546 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:120436784 total:128974848
+ 2011-12-25 16:00:32,546 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Terminating Antweb application.
+ 2011-12-25 16:00:32,546 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - ---------------------------
+ 2011-12-25 16:00:50,835 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 16:00:50,836 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 16:00:50,888 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:123215816 total:128974848
+ 2011-12-25 16:00:50,889 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 16:03:40,119 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.StartupPlugIn - Exiting Startup.destroy()
+ 2011-12-25 16:03:40,124 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Removing Antweb application context...
+ 2011-12-25 16:03:40,124 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:66352504 total:128974848
+ 2011-12-25 16:03:40,309 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - GarbageCollection: 184
+ 2011-12-25 16:03:40,309 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:105312104 total:128974848
+ 2011-12-25 16:03:40,309 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Terminating Antweb application.
+ 2011-12-25 16:03:40,309 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - ---------------------------
+ 2011-12-25 16:03:46,697 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 16:03:46,697 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 16:03:46,887 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:122999952 total:128974848
+ 2011-12-25 16:03:46,887 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 16:07:51,438 ERROR ajp-bio-8009-exec-16 org.calacademy.antweb.util.AntwebUtil - error.jsp logMessage: exception: java.lang.NullPointerException java.lang.NullPointerException
+	at org.apache.jsp.taxonPage_002dbody_jsp._jspService(taxonPage_002dbody_jsp.java:184)
+	at org.apache.jasper.runtime.HttpJspBase.service(HttpJspBase.java:70)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:722)
+ 2011-12-25 16:11:19,175 ERROR ajp-bio-8009-exec-12 org.calacademy.antweb.SpecimenAction - Specimen:psw11503-10 is not in the AntWeb database.  No upload in process.
+ 2011-12-25 16:12:48,374 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 16:12:48,374 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 16:12:48,426 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:123067656 total:128974848
+ 2011-12-25 16:12:48,426 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 16:13:12,011 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.StartupPlugIn - Exiting Startup.destroy()
+ 2011-12-25 16:13:12,015 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Removing Antweb application context...
+ 2011-12-25 16:13:12,015 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:98067304 total:128974848
+ 2011-12-25 16:13:12,159 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - GarbageCollection: 144
+ 2011-12-25 16:13:12,159 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:108405440 total:128974848
+ 2011-12-25 16:13:12,159 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Terminating Antweb application.
+ 2011-12-25 16:13:12,159 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - ---------------------------
+ 2011-12-25 16:13:27,822 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 16:13:27,823 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 16:13:27,875 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:122901168 total:128974848
+ 2011-12-25 16:13:27,875 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 16:14:30,490 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.StartupPlugIn - Exiting Startup.destroy()
+ 2011-12-25 16:14:30,494 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Removing Antweb application context...
+ 2011-12-25 16:14:30,494 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:52393240 total:128974848
+ 2011-12-25 16:14:30,728 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - GarbageCollection: 233
+ 2011-12-25 16:14:30,728 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:90424912 total:128974848
+ 2011-12-25 16:14:30,728 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Terminating Antweb application.
+ 2011-12-25 16:14:30,728 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - ---------------------------
+ 2011-12-25 16:14:44,341 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 16:14:44,341 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 16:14:44,391 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:122471088 total:128974848
+ 2011-12-25 16:14:44,391 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+ 2011-12-25 16:28:52,550 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.StartupPlugIn - Exiting Startup.destroy()
+ 2011-12-25 16:28:52,575 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Removing Antweb application context...
+ 2011-12-25 16:28:52,575 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:111843616 total:520638464
+ 2011-12-25 16:28:52,840 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - GarbageCollection: 265
+ 2011-12-25 16:28:52,841 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:480479416 total:819875840
+ 2011-12-25 16:28:52,841 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - Terminating Antweb application.
+ 2011-12-25 16:28:52,841 WARN stop children - Catalina:j2eeType=WebModule,name=//localhost/,J2EEApplication=none,J2EEServer=none org.calacademy.antweb.util.AppContextListener - ---------------------------
+ 2011-12-25 16:29:09,293 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - ++++++++++++++++++++++++++++++++++++++
+ 2011-12-25 16:29:09,293 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Initializing Antweb application context...
+ 2011-12-25 16:29:09,343 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Memory stats - max:2061762560 free:122842976 total:128974848
+ 2011-12-25 16:29:09,343 WARN Thread-2 org.calacademy.antweb.util.AppContextListener - Context Initialized - Server Up.
+
+
+
+
+
+
+
+
+// Here is the list of files modifyed in the deployment directory since Dec 20
+[mjohnson@vAntWeb3 antweb]$ find . -ctime 10 | xargs ls -al
+
+-rw-r--r-- 1 root   root        660 Dec 20 13:54 ./arkansas.jsp
+-rwxrwxrwx 1 antweb antweb     3448 Dec 20 15:50 ./homepage/documentation.jsp
+-rw-r--r-- 1 root   root       3448 Dec 20 15:50 ./homepage/documentation-preview.jsp
+-rw-r--r-- 1 root   root    3018384 Dec 20 15:47 ./homepage/Imaging_Manual_LAS38_v03.pdf
+-rw-r--r-- 1 apache apache   684660 Dec 20 12:16 ./images/casent0004353/casent0004353_d_1_high.jpg
+-rw-r--r-- 1 apache apache    25944 Dec 20 12:16 ./images/casent0004353/casent0004353_d_1_low.jpg
+-rw-r--r-- 1 apache apache    40595 Dec 20 12:16 ./images/casent0004353/casent0004353_d_1_med.jpg
+-rw-r--r-- 1 apache apache 10621438 Dec 20 12:16 ./images/casent0004353/CASENT0004353_D.tif
+-rw-r--r-- 1 apache apache   590620 Dec 20 12:19 ./images/casent0004353/casent0004353_h_1_high.jpg
+-rw-r--r-- 1 apache apache    30372 Dec 20 12:19 ./images/casent0004353/casent0004353_h_1_low.jpg
+-rw-r--r-- 1 apache apache    54395 Dec 20 12:19 ./images/casent0004353/casent0004353_h_1_med.jpg
+-rw-r--r-- 1 apache apache 11974432 Dec 20 12:19 ./images/casent0004353/CASENT0004353_H.tif
+-rw-r--r-- 1 apache apache  1085574 Dec 20 12:25 ./images/casent0004353/casent0004353_l_1_high.jpg
+-rw-r--r-- 1 apache apache    40956 Dec 20 12:25 ./images/casent0004353/casent0004353_l_1_low.jpg
+-rw-r--r-- 1 apache apache    90523 Dec 20 12:25 ./images/casent0004353/casent0004353_l_1_med.jpg
+-rw-r--r-- 1 apache apache  2242026 Dec 20 12:25 ./images/casent0004353/CASENT0004353_L.jpg
+-rw-r--r-- 1 apache apache   715233 Dec 20 12:18 ./images/casent0004353/casent0004353_p_1_high.jpg
+-rw-r--r-- 1 apache apache    30896 Dec 20 12:18 ./images/casent0004353/casent0004353_p_1_low.jpg
+-rw-r--r-- 1 apache apache    54890 Dec 20 12:18 ./images/casent0004353/casent0004353_p_1_med.jpg
+-rw-r--r-- 1 apache apache   814129 Dec 20 12:18 ./images/casent0004353/casent0004353_p_2_high.jpg
+-rw-r--r-- 1 apache apache    29131 Dec 20 12:18 ./images/casent0004353/casent0004353_p_2_low.jpg
+-rw-r--r-- 1 apache apache    51213 Dec 20 12:18 ./images/casent0004353/casent0004353_p_2_med.jpg
+-rw-r--r-- 1 apache apache 13493294 Dec 20 12:18 ./images/casent0004353/CASENT0004353_P_2.tif
+-rw-r--r-- 1 apache apache   590623 Dec 20 12:18 ./images/casent0004353/casent0004353_p_3_high.jpg
+-rw-r--r-- 1 apache apache    28430 Dec 20 12:18 ./images/casent0004353/casent0004353_p_3_low.jpg
+-rw-r--r-- 1 apache apache    49147 Dec 20 12:18 ./images/casent0004353/casent0004353_p_3_med.jpg
+-rw-r--r-- 1 apache apache  9707538 Dec 20 12:18 ./images/casent0004353/CASENT0004353_P_3.tif
+-rw-r--r-- 1 apache apache 13533298 Dec 20 12:18 ./images/casent0004353/CASENT0004353_P.tif
+-rw-r--r-- 1 apache apache   757158 Dec 20 12:19 ./images/casent0011473/casent0011473_d_1_high.jpg
+-rw-r--r-- 1 apache apache    26475 Dec 20 12:19 ./images/casent0011473/casent0011473_d_1_low.jpg
+-rw-r--r-- 1 apache apache    41424 Dec 20 12:19 ./images/casent0011473/casent0011473_d_1_med.jpg
+-rw-r--r-- 1 apache apache 11097366 Dec 20 12:19 ./images/casent0011473/CASENT0011473_D.tif
+-rw-r--r-- 1 apache apache 11316483 Dec 20 12:19 ./images/casent0011473/CASENT0011473_H.tif
+-rw-r--r-- 1 apache apache  1137400 Dec 20 12:25 ./images/casent0011473/casent0011473_l_1_high.jpg
+-rw-r--r-- 1 apache apache    41817 Dec 20 12:25 ./images/casent0011473/casent0011473_l_1_low.jpg
+-rw-r--r-- 1 apache apache    90074 Dec 20 12:25 ./images/casent0011473/casent0011473_l_1_med.jpg
+-rw-r--r-- 1 apache apache  2291072 Dec 20 12:25 ./images/casent0011473/CASENT0011473_L.jpg
+-rw-r--r-- 1 apache apache   665428 Dec 20 12:16 ./images/casent0011473/casent0011473_p_1_high.jpg
+-rw-r--r-- 1 apache apache    31834 Dec 20 12:16 ./images/casent0011473/casent0011473_p_1_low.jpg
+-rw-r--r-- 1 apache apache    56327 Dec 20 12:16 ./images/casent0011473/casent0011473_p_1_med.jpg
+-rw-r--r-- 1 apache apache   734929 Dec 20 12:17 ./images/casent0011473/casent0011473_p_2_high.jpg
+-rw-r--r-- 1 apache apache    29018 Dec 20 12:17 ./images/casent0011473/casent0011473_p_2_low.jpg
+-rw-r--r-- 1 apache apache    50470 Dec 20 12:17 ./images/casent0011473/casent0011473_p_2_med.jpg
+-rw-r--r-- 1 apache apache 12925366 Dec 20 12:17 ./images/casent0011473/CASENT0011473_P_2.tif
+-rw-r--r-- 1 apache apache   635344 Dec 20 12:19 ./images/casent0011473/casent0011473_p_3_high.jpg
+-rw-r--r-- 1 apache apache    26623 Dec 20 12:19 ./images/casent0011473/casent0011473_p_3_low.jpg
+-rw-r--r-- 1 apache apache    44572 Dec 20 12:19 ./images/casent0011473/casent0011473_p_3_med.jpg
+-rw-r--r-- 1 apache apache 10773416 Dec 20 12:19 ./images/casent0011473/CASENT0011473_P_3.tif
+-rw-r--r-- 1 apache apache 12918046 Dec 20 12:16 ./images/casent0011473/CASENT0011473_P.tif
+-rw-r--r-- 1 apache apache   597084 Dec 20 12:16 ./images/casent0071148/casent0071148_d_1_high.jpg
+-rw-r--r-- 1 apache apache    30242 Dec 20 12:16 ./images/casent0071148/casent0071148_d_1_low.jpg
+-rw-r--r-- 1 apache apache    53287 Dec 20 12:16 ./images/casent0071148/casent0071148_d_1_med.jpg
+-rw-r--r-- 1 apache apache 11404258 Dec 20 12:16 ./images/casent0071148/CASENT0071148_D.tif
+-rw-r--r-- 1 apache apache   528684 Dec 20 12:17 ./images/casent0071148/casent0071148_h_1_high.jpg
+-rw-r--r-- 1 apache apache    32241 Dec 20 12:17 ./images/casent0071148/casent0071148_h_1_low.jpg
+-rw-r--r-- 1 apache apache    60850 Dec 20 12:17 ./images/casent0071148/casent0071148_h_1_med.jpg
+-rw-r--r-- 1 apache apache  7202230 Dec 20 12:17 ./images/casent0071148/CASENT0071148_H_1.tif
+-rw-r--r-- 1 apache apache   670864 Dec 20 12:17 ./images/casent0071148/casent0071148_h_2_high.jpg
+-rw-r--r-- 1 apache apache    27168 Dec 20 12:17 ./images/casent0071148/casent0071148_h_2_low.jpg
+-rw-r--r-- 1 apache apache    44299 Dec 20 12:17 ./images/casent0071148/casent0071148_h_2_med.jpg
+-rw-r--r-- 1 apache apache 11626228 Dec 20 12:17 ./images/casent0071148/CASENT0071148_H_2.tif
+-rw-r--r-- 1 apache apache  1132111 Dec 20 12:25 ./images/casent0071148/casent0071148_l_1_high.jpg
+-rw-r--r-- 1 apache apache    40555 Dec 20 12:25 ./images/casent0071148/casent0071148_l_1_low.jpg
+-rw-r--r-- 1 apache apache    85242 Dec 20 12:25 ./images/casent0071148/casent0071148_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1650791 Dec 20 12:25 ./images/casent0071148/CASENT0071148_L.jpg
+-rw-r--r-- 1 apache apache   541475 Dec 20 12:18 ./images/casent0071148/casent0071148_p_1_high.jpg
+-rw-r--r-- 1 apache apache    29052 Dec 20 12:18 ./images/casent0071148/casent0071148_p_1_low.jpg
+-rw-r--r-- 1 apache apache    50052 Dec 20 12:18 ./images/casent0071148/casent0071148_p_1_med.jpg
+-rw-r--r-- 1 apache apache 13103272 Dec 20 12:18 ./images/casent0071148/CASENT0071148_P.tif
+-rw-r--r-- 1 apache apache   742013 Dec 20 12:16 ./images/casent0191378/casent0191378_d_1_high.jpg
+-rw-r--r-- 1 apache apache    25274 Dec 20 12:16 ./images/casent0191378/casent0191378_d_1_low.jpg
+-rw-r--r-- 1 apache apache    39021 Dec 20 12:16 ./images/casent0191378/casent0191378_d_1_med.jpg
+-rw-r--r-- 1 apache apache  9338070 Dec 20 12:16 ./images/casent0191378/CASENT0191378_D.tif
+-rw-r--r-- 1 apache apache   552495 Dec 20 12:16 ./images/casent0191378/casent0191378_h_1_high.jpg
+-rw-r--r-- 1 apache apache    30500 Dec 20 12:16 ./images/casent0191378/casent0191378_h_1_low.jpg
+-rw-r--r-- 1 apache apache    55109 Dec 20 12:16 ./images/casent0191378/casent0191378_h_1_med.jpg
+-rw-r--r-- 1 apache apache  5911294 Dec 20 12:16 ./images/casent0191378/CASENT0191378_H_1.tif
+-rw-r--r-- 1 apache apache   466543 Dec 20 12:16 ./images/casent0191378/casent0191378_h_2_high.jpg
+-rw-r--r-- 1 apache apache    29265 Dec 20 12:16 ./images/casent0191378/casent0191378_h_2_low.jpg
+-rw-r--r-- 1 apache apache    50656 Dec 20 12:16 ./images/casent0191378/casent0191378_h_2_med.jpg
+-rw-r--r-- 1 apache apache 10688576 Dec 20 12:16 ./images/casent0191378/CASENT0191378_H_2.tif
+-rw-r--r-- 1 apache apache  1155405 Dec 20 12:25 ./images/casent0191378/casent0191378_l_1_high.jpg
+-rw-r--r-- 1 apache apache    40888 Dec 20 12:25 ./images/casent0191378/casent0191378_l_1_low.jpg
+-rw-r--r-- 1 apache apache    85877 Dec 20 12:25 ./images/casent0191378/casent0191378_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1806109 Dec 20 12:25 ./images/casent0191378/CASENT0191378_L.jpg
+-rw-r--r-- 1 apache apache   600740 Dec 20 12:16 ./images/casent0191378/casent0191378_p_1_high.jpg
+-rw-r--r-- 1 apache apache    27748 Dec 20 12:16 ./images/casent0191378/casent0191378_p_1_low.jpg
+-rw-r--r-- 1 apache apache    45640 Dec 20 12:16 ./images/casent0191378/casent0191378_p_1_med.jpg
+-rw-r--r-- 1 apache apache   679046 Dec 20 12:18 ./images/casent0191378/casent0191378_p_2_high.jpg
+-rw-r--r-- 1 apache apache    28081 Dec 20 12:18 ./images/casent0191378/casent0191378_p_2_low.jpg
+-rw-r--r-- 1 apache apache    49821 Dec 20 12:18 ./images/casent0191378/casent0191378_p_2_med.jpg
+-rw-r--r-- 1 apache apache 12992724 Dec 20 12:18 ./images/casent0191378/CASENT0191378_P_2.tif
+-rw-r--r-- 1 apache apache   567864 Dec 20 12:18 ./images/casent0191378/casent0191378_p_3_high.jpg
+-rw-r--r-- 1 apache apache    30005 Dec 20 12:17 ./images/casent0191378/casent0191378_p_3_low.jpg
+-rw-r--r-- 1 apache apache    53628 Dec 20 12:17 ./images/casent0191378/casent0191378_p_3_med.jpg
+-rw-r--r-- 1 apache apache  8425068 Dec 20 12:17 ./images/casent0191378/CASENT0191378_P_3.tif
+-rw-r--r-- 1 apache apache 11404294 Dec 20 12:16 ./images/casent0191378/CASENT0191378_P.tif
+-rw-r--r-- 1 apache apache   738398 Dec 20 12:16 ./images/casent0227978/casent0227978_d_1_high.jpg
+-rw-r--r-- 1 apache apache    26550 Dec 20 12:16 ./images/casent0227978/casent0227978_d_1_low.jpg
+-rw-r--r-- 1 apache apache    42516 Dec 20 12:16 ./images/casent0227978/casent0227978_d_1_med.jpg
+-rw-r--r-- 1 apache apache  9987592 Dec 20 12:16 ./images/casent0227978/CASENT0227978_D.tif
+-rw-r--r-- 1 apache apache   595626 Dec 20 12:17 ./images/casent0227978/casent0227978_h_1_high.jpg
+-rw-r--r-- 1 apache apache    32038 Dec 20 12:17 ./images/casent0227978/casent0227978_h_1_low.jpg
+-rw-r--r-- 1 apache apache    58586 Dec 20 12:17 ./images/casent0227978/casent0227978_h_1_med.jpg
+-rw-r--r-- 1 apache apache 10881591 Dec 20 12:17 ./images/casent0227978/CASENT0227978_H.tif
+-rw-r--r-- 1 apache apache  1224362 Dec 20 12:25 ./images/casent0227978/casent0227978_l_1_high.jpg
+-rw-r--r-- 1 apache apache    33122 Dec 20 12:25 ./images/casent0227978/casent0227978_l_1_low.jpg
+-rw-r--r-- 1 apache apache    69584 Dec 20 12:25 ./images/casent0227978/casent0227978_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1624500 Dec 20 12:25 ./images/casent0227978/CASENT0227978_L.jpg
+-rw-r--r-- 1 apache apache   510921 Dec 20 12:16 ./images/casent0227978/casent0227978_p_1_high.jpg
+-rw-r--r-- 1 apache apache    32547 Dec 20 12:16 ./images/casent0227978/casent0227978_p_1_low.jpg
+-rw-r--r-- 1 apache apache    59318 Dec 20 12:16 ./images/casent0227978/casent0227978_p_1_med.jpg
+-rw-r--r-- 1 apache apache   761298 Dec 20 12:17 ./images/casent0227978/casent0227978_p_2_high.jpg
+-rw-r--r-- 1 apache apache    28635 Dec 20 12:17 ./images/casent0227978/casent0227978_p_2_low.jpg
+-rw-r--r-- 1 apache apache    50576 Dec 20 12:17 ./images/casent0227978/casent0227978_p_2_med.jpg
+-rw-r--r-- 1 apache apache 13740232 Dec 20 12:17 ./images/casent0227978/CASENT0227978_P_2.tif
+-rw-r--r-- 1 apache apache   594473 Dec 20 12:17 ./images/casent0227978/casent0227978_p_3_high.jpg
+-rw-r--r-- 1 apache apache    28081 Dec 20 12:17 ./images/casent0227978/casent0227978_p_3_low.jpg
+-rw-r--r-- 1 apache apache    48315 Dec 20 12:17 ./images/casent0227978/casent0227978_p_3_med.jpg
+-rw-r--r-- 1 apache apache 11152573 Dec 20 12:17 ./images/casent0227978/CASENT0227978_P_3.tif
+-rw-r--r-- 1 apache apache 11024752 Dec 20 12:16 ./images/casent0227978/CASENT0227978_P.tif
+-rw-r--r-- 1 apache apache   641886 Dec 20 12:18 ./images/casent0227979/casent0227979_h_1_high.jpg
+-rw-r--r-- 1 apache apache    32861 Dec 20 12:18 ./images/casent0227979/casent0227979_h_1_low.jpg
+-rw-r--r-- 1 apache apache    59807 Dec 20 12:18 ./images/casent0227979/casent0227979_h_1_med.jpg
+-rw-r--r-- 1 apache apache  4818246 Dec 20 12:18 ./images/casent0227979/CASENT0227979_H_1.tif
+-rw-r--r-- 1 apache apache   490869 Dec 20 12:16 ./images/casent0227979/casent0227979_h_2_high.jpg
+-rw-r--r-- 1 apache apache    32613 Dec 20 12:16 ./images/casent0227979/casent0227979_h_2_low.jpg
+-rw-r--r-- 1 apache apache    60379 Dec 20 12:16 ./images/casent0227979/casent0227979_h_2_med.jpg
+-rw-r--r-- 1 apache apache  8628176 Dec 20 12:16 ./images/casent0227979/CASENT0227979_H_2.tif
+-rw-r--r-- 1 apache apache  1520894 Dec 20 12:25 ./images/casent0227979/casent0227979_l_1_high.jpg
+-rw-r--r-- 1 apache apache    32822 Dec 20 12:25 ./images/casent0227979/casent0227979_l_1_low.jpg
+-rw-r--r-- 1 apache apache    67345 Dec 20 12:25 ./images/casent0227979/casent0227979_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1937102 Dec 20 12:25 ./images/casent0227979/CASENT0227979_L.jpg
+-rw-r--r-- 1 apache apache   552262 Dec 20 12:18 ./images/casent0227979/casent0227979_p_1_high.jpg
+-rw-r--r-- 1 apache apache    32349 Dec 20 12:18 ./images/casent0227979/casent0227979_p_1_low.jpg
+-rw-r--r-- 1 apache apache    57228 Dec 20 12:18 ./images/casent0227979/casent0227979_p_1_med.jpg
+-rw-r--r-- 1 apache apache   716927 Dec 20 12:17 ./images/casent0227979/casent0227979_p_2_high.jpg
+-rw-r--r-- 1 apache apache    27965 Dec 20 12:17 ./images/casent0227979/casent0227979_p_2_low.jpg
+-rw-r--r-- 1 apache apache    48476 Dec 20 12:17 ./images/casent0227979/casent0227979_p_2_med.jpg
+-rw-r--r-- 1 apache apache 13900539 Dec 20 12:17 ./images/casent0227979/CASENT0227979_P_2.tif
+-rw-r--r-- 1 apache apache   657766 Dec 20 12:18 ./images/casent0227979/casent0227979_p_3_high.jpg
+-rw-r--r-- 1 apache apache    28299 Dec 20 12:18 ./images/casent0227979/casent0227979_p_3_low.jpg
+-rw-r--r-- 1 apache apache    48020 Dec 20 12:18 ./images/casent0227979/casent0227979_p_3_med.jpg
+-rw-r--r-- 1 apache apache  8756024 Dec 20 12:18 ./images/casent0227979/CASENT0227979_P_3.tif
+-rw-r--r-- 1 apache apache  9614358 Dec 20 12:18 ./images/casent0227979/CASENT0227979_P.tif
+-rw-r--r-- 1 apache apache   698212 Dec 20 12:17 ./images/casent0227980/casent0227980_d_1_high.jpg
+-rw-r--r-- 1 apache apache    28292 Dec 20 12:17 ./images/casent0227980/casent0227980_d_1_low.jpg
+-rw-r--r-- 1 apache apache    46502 Dec 20 12:17 ./images/casent0227980/casent0227980_d_1_med.jpg
+-rw-r--r-- 1 apache apache 12317074 Dec 20 12:17 ./images/casent0227980/CASENT0227980_D.tif
+-rw-r--r-- 1 apache apache   613376 Dec 20 12:18 ./images/casent0227980/casent0227980_h_1_high.jpg
+-rw-r--r-- 1 apache apache    33631 Dec 20 12:18 ./images/casent0227980/casent0227980_h_1_low.jpg
+-rw-r--r-- 1 apache apache    60958 Dec 20 12:18 ./images/casent0227980/casent0227980_h_1_med.jpg
+-rw-r--r-- 1 apache apache  4662670 Dec 20 12:18 ./images/casent0227980/CASENT0227980_H_1.tif
+-rw-r--r-- 1 apache apache   468506 Dec 20 12:18 ./images/casent0227980/casent0227980_h_2_high.jpg
+-rw-r--r-- 1 apache apache    33680 Dec 20 12:18 ./images/casent0227980/casent0227980_h_2_low.jpg
+-rw-r--r-- 1 apache apache    63557 Dec 20 12:18 ./images/casent0227980/casent0227980_h_2_med.jpg
+-rw-r--r-- 1 apache apache  9705010 Dec 20 12:18 ./images/casent0227980/CASENT0227980_H_2.tif
+-rw-r--r-- 1 apache apache  1351777 Dec 20 12:25 ./images/casent0227980/casent0227980_l_1_high.jpg
+-rw-r--r-- 1 apache apache    32650 Dec 20 12:25 ./images/casent0227980/casent0227980_l_1_low.jpg
+-rw-r--r-- 1 apache apache    67953 Dec 20 12:25 ./images/casent0227980/casent0227980_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1690376 Dec 20 12:25 ./images/casent0227980/CASENT0227980_L.jpg
+-rw-r--r-- 1 apache apache   685311 Dec 20 12:16 ./images/casent0227980/casent0227980_p_1_high.jpg
+-rw-r--r-- 1 apache apache    29675 Dec 20 12:16 ./images/casent0227980/casent0227980_p_1_low.jpg
+-rw-r--r-- 1 apache apache    50273 Dec 20 12:16 ./images/casent0227980/casent0227980_p_1_med.jpg
+-rw-r--r-- 1 apache apache   705560 Dec 20 12:18 ./images/casent0227980/casent0227980_p_2_high.jpg
+-rw-r--r-- 1 apache apache    29254 Dec 20 12:18 ./images/casent0227980/casent0227980_p_2_low.jpg
+-rw-r--r-- 1 apache apache    50712 Dec 20 12:18 ./images/casent0227980/casent0227980_p_2_med.jpg
+-rw-r--r-- 1 apache apache 12235558 Dec 20 12:18 ./images/casent0227980/CASENT0227980_P_2.tif
+-rw-r--r-- 1 apache apache   716323 Dec 20 12:19 ./images/casent0227980/casent0227980_p_3_high.jpg
+-rw-r--r-- 1 apache apache    27819 Dec 20 12:19 ./images/casent0227980/casent0227980_p_3_low.jpg
+-rw-r--r-- 1 apache apache    46373 Dec 20 12:19 ./images/casent0227980/casent0227980_p_3_med.jpg
+-rw-r--r-- 1 apache apache  7651484 Dec 20 12:19 ./images/casent0227980/CASENT0227980_P_3.tif
+-rw-r--r-- 1 apache apache 11247094 Dec 20 12:16 ./images/casent0227980/CASENT0227980_P.tif
+-rw-r--r-- 1 apache apache   542481 Dec 20 12:18 ./images/casent0227981/casent0227981_h_1_high.jpg
+-rw-r--r-- 1 apache apache    32647 Dec 20 12:18 ./images/casent0227981/casent0227981_h_1_low.jpg
+-rw-r--r-- 1 apache apache    59224 Dec 20 12:18 ./images/casent0227981/casent0227981_h_1_med.jpg
+-rw-r--r-- 1 apache apache  8347212 Dec 20 12:18 ./images/casent0227981/CASENT0227981_H_1.tif
+-rw-r--r-- 1 apache apache   626106 Dec 20 12:16 ./images/casent0227981/casent0227981_h_2_high.jpg
+-rw-r--r-- 1 apache apache    28409 Dec 20 12:16 ./images/casent0227981/casent0227981_h_2_low.jpg
+-rw-r--r-- 1 apache apache    47731 Dec 20 12:16 ./images/casent0227981/casent0227981_h_2_med.jpg
+-rw-r--r-- 1 apache apache 13156008 Dec 20 12:16 ./images/casent0227981/CASENT0227981_H_2.tif
+-rw-r--r-- 1 apache apache   591903 Dec 20 12:17 ./images/casent0227981/casent0227981_p_1_high.jpg
+-rw-r--r-- 1 apache apache    31005 Dec 20 12:17 ./images/casent0227981/casent0227981_p_1_low.jpg
+-rw-r--r-- 1 apache apache    54349 Dec 20 12:17 ./images/casent0227981/casent0227981_p_1_med.jpg
+-rw-r--r-- 1 apache apache 13209808 Dec 20 12:17 ./images/casent0227981/CASENT0227981_P.tif
+-rw-r--r-- 1 apache apache   670370 Dec 20 12:17 ./images/casent0227982/casent0227982_d_1_high.jpg
+-rw-r--r-- 1 apache apache    29607 Dec 20 12:17 ./images/casent0227982/casent0227982_d_1_low.jpg
+-rw-r--r-- 1 apache apache    50498 Dec 20 12:17 ./images/casent0227982/casent0227982_d_1_med.jpg
+-rw-r--r-- 1 apache apache 11014832 Dec 20 12:17 ./images/casent0227982/CASENT0227982_D.tif
+-rw-r--r-- 1 apache apache   506531 Dec 20 12:16 ./images/casent0227982/casent0227982_h_1_high.jpg
+-rw-r--r-- 1 apache apache    31603 Dec 20 12:16 ./images/casent0227982/casent0227982_h_1_low.jpg
+-rw-r--r-- 1 apache apache    58754 Dec 20 12:16 ./images/casent0227982/casent0227982_h_1_med.jpg
+-rw-r--r-- 1 apache apache  6646538 Dec 20 12:16 ./images/casent0227982/CASENT0227982_H_1.tif
+-rw-r--r-- 1 apache apache   465551 Dec 20 12:19 ./images/casent0227982/casent0227982_h_2_high.jpg
+-rw-r--r-- 1 apache apache    30264 Dec 20 12:19 ./images/casent0227982/casent0227982_h_2_low.jpg
+-rw-r--r-- 1 apache apache    53799 Dec 20 12:19 ./images/casent0227982/casent0227982_h_2_med.jpg
+-rw-r--r-- 1 apache apache 11438334 Dec 20 12:19 ./images/casent0227982/CASENT0227982_H_2.tif
+-rw-r--r-- 1 apache apache  1110190 Dec 20 12:25 ./images/casent0227982/casent0227982_l_1_high.jpg
+-rw-r--r-- 1 apache apache    38047 Dec 20 12:25 ./images/casent0227982/casent0227982_l_1_low.jpg
+-rw-r--r-- 1 apache apache    80163 Dec 20 12:25 ./images/casent0227982/casent0227982_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1478819 Dec 20 12:25 ./images/casent0227982/CASENT0227982_L.jpg
+-rw-r--r-- 1 apache apache   622896 Dec 20 12:18 ./images/casent0227982/casent0227982_p_1_high.jpg
+-rw-r--r-- 1 apache apache    29105 Dec 20 12:18 ./images/casent0227982/casent0227982_p_1_low.jpg
+-rw-r--r-- 1 apache apache    49557 Dec 20 12:18 ./images/casent0227982/casent0227982_p_1_med.jpg
+-rw-r--r-- 1 apache apache 13614958 Dec 20 12:18 ./images/casent0227982/CASENT0227982_P.tif
+-rw-r--r-- 1 apache apache   684889 Dec 20 12:18 ./images/casent0227983/casent0227983_d_1_high.jpg
+-rw-r--r-- 1 apache apache    27623 Dec 20 12:18 ./images/casent0227983/casent0227983_d_1_low.jpg
+-rw-r--r-- 1 apache apache    45782 Dec 20 12:18 ./images/casent0227983/casent0227983_d_1_med.jpg
+-rw-r--r-- 1 apache apache 10011230 Dec 20 12:18 ./images/casent0227983/CASENT0227983_D.tif
+-rw-r--r-- 1 apache apache   624066 Dec 20 12:18 ./images/casent0227983/casent0227983_h_1_high.jpg
+-rw-r--r-- 1 apache apache    29214 Dec 20 12:18 ./images/casent0227983/casent0227983_h_1_low.jpg
+-rw-r--r-- 1 apache apache    50859 Dec 20 12:18 ./images/casent0227983/casent0227983_h_1_med.jpg
+-rw-r--r-- 1 apache apache 13891252 Dec 20 12:18 ./images/casent0227983/CASENT0227983_H.tif
+-rw-r--r-- 1 apache apache  1200655 Dec 20 12:25 ./images/casent0227983/casent0227983_l_1_high.jpg
+-rw-r--r-- 1 apache apache    39410 Dec 20 12:25 ./images/casent0227983/casent0227983_l_1_low.jpg
+-rw-r--r-- 1 apache apache    84063 Dec 20 12:25 ./images/casent0227983/casent0227983_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1751764 Dec 20 12:25 ./images/casent0227983/CASENT0227983_L.jpg
+-rw-r--r-- 1 apache apache   671698 Dec 20 12:19 ./images/casent0227983/casent0227983_p_1_high.jpg
+-rw-r--r-- 1 apache apache    28301 Dec 20 12:19 ./images/casent0227983/casent0227983_p_1_low.jpg
+-rw-r--r-- 1 apache apache    47504 Dec 20 12:19 ./images/casent0227983/casent0227983_p_1_med.jpg
+-rw-r--r-- 1 apache apache 10759138 Dec 20 12:19 ./images/casent0227983/CASENT0227983_P.tif
+-rw-r--r-- 1 apache apache   589732 Dec 20 12:17 ./images/casent0227984/casent0227984_d_1_high.jpg
+-rw-r--r-- 1 apache apache    28851 Dec 20 12:17 ./images/casent0227984/casent0227984_d_1_low.jpg
+-rw-r--r-- 1 apache apache    48317 Dec 20 12:17 ./images/casent0227984/casent0227984_d_1_med.jpg
+-rw-r--r-- 1 apache apache 10790814 Dec 20 12:17 ./images/casent0227984/CASENT0227984_D.tif
+-rw-r--r-- 1 apache apache   557949 Dec 20 12:19 ./images/casent0227984/casent0227984_h_1_high.jpg
+-rw-r--r-- 1 apache apache    31401 Dec 20 12:18 ./images/casent0227984/casent0227984_h_1_low.jpg
+-rw-r--r-- 1 apache apache    58386 Dec 20 12:19 ./images/casent0227984/casent0227984_h_1_med.jpg
+-rw-r--r-- 1 apache apache 10950336 Dec 20 12:18 ./images/casent0227984/CASENT0227984_H.tif
+-rw-r--r-- 1 apache apache  1248701 Dec 20 12:25 ./images/casent0227984/casent0227984_l_1_high.jpg
+-rw-r--r-- 1 apache apache    38691 Dec 20 12:25 ./images/casent0227984/casent0227984_l_1_low.jpg
+-rw-r--r-- 1 apache apache    80895 Dec 20 12:25 ./images/casent0227984/casent0227984_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1892770 Dec 20 12:25 ./images/casent0227984/CASENT0227984_L.jpg
+-rw-r--r-- 1 apache apache   536220 Dec 20 12:16 ./images/casent0227984/casent0227984_p_1_high.jpg
+-rw-r--r-- 1 apache apache    29927 Dec 20 12:16 ./images/casent0227984/casent0227984_p_1_low.jpg
+-rw-r--r-- 1 apache apache    51106 Dec 20 12:16 ./images/casent0227984/casent0227984_p_1_med.jpg
+-rw-r--r-- 1 apache apache 13003474 Dec 20 12:16 ./images/casent0227984/CASENT0227984_P.tif
+-rw-r--r-- 1 apache apache   644733 Dec 20 12:16 ./images/casent0227985/casent0227985_d_1_high.jpg
+-rw-r--r-- 1 apache apache    26836 Dec 20 12:16 ./images/casent0227985/casent0227985_d_1_low.jpg
+-rw-r--r-- 1 apache apache    42297 Dec 20 12:16 ./images/casent0227985/casent0227985_d_1_med.jpg
+-rw-r--r-- 1 apache apache 11540954 Dec 20 12:16 ./images/casent0227985/CASENT0227985_D.tif
+-rw-r--r-- 1 apache apache   565638 Dec 20 12:19 ./images/casent0227985/casent0227985_h_1_high.jpg
+-rw-r--r-- 1 apache apache    30126 Dec 20 12:19 ./images/casent0227985/casent0227985_h_1_low.jpg
+-rw-r--r-- 1 apache apache    54717 Dec 20 12:19 ./images/casent0227985/casent0227985_h_1_med.jpg
+-rw-r--r-- 1 apache apache  5122242 Dec 20 12:19 ./images/casent0227985/CASENT0227985_H_1.tif
+-rw-r--r-- 1 apache apache   466817 Dec 20 12:18 ./images/casent0227985/casent0227985_h_2_high.jpg
+-rw-r--r-- 1 apache apache    29449 Dec 20 12:18 ./images/casent0227985/casent0227985_h_2_low.jpg
+-rw-r--r-- 1 apache apache    52270 Dec 20 12:18 ./images/casent0227985/casent0227985_h_2_med.jpg
+-rw-r--r-- 1 apache apache  9349924 Dec 20 12:18 ./images/casent0227985/CASENT0227985_H_2.tif
+-rw-r--r-- 1 apache apache  1062165 Dec 20 12:25 ./images/casent0227985/casent0227985_l_1_high.jpg
+-rw-r--r-- 1 apache apache    39637 Dec 20 12:25 ./images/casent0227985/casent0227985_l_1_low.jpg
+-rw-r--r-- 1 apache apache    83437 Dec 20 12:25 ./images/casent0227985/casent0227985_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1399600 Dec 20 12:25 ./images/casent0227985/CASENT0227985_L.jpg
+-rw-r--r-- 1 apache apache   473300 Dec 20 12:16 ./images/casent0227985/casent0227985_p_1_high.jpg
+-rw-r--r-- 1 apache apache    30300 Dec 20 12:16 ./images/casent0227985/casent0227985_p_1_low.jpg
+-rw-r--r-- 1 apache apache    54010 Dec 20 12:16 ./images/casent0227985/casent0227985_p_1_med.jpg
+-rw-r--r-- 1 apache apache   621438 Dec 20 12:18 ./images/casent0227985/casent0227985_p_2_high.jpg
+-rw-r--r-- 1 apache apache    28196 Dec 20 12:18 ./images/casent0227985/casent0227985_p_2_low.jpg
+-rw-r--r-- 1 apache apache    50400 Dec 20 12:18 ./images/casent0227985/casent0227985_p_2_med.jpg
+-rw-r--r-- 1 apache apache 11889368 Dec 20 12:18 ./images/casent0227985/CASENT0227985_P_2.tif
+-rw-r--r-- 1 apache apache   596201 Dec 20 12:17 ./images/casent0227985/casent0227985_p_3_high.jpg
+-rw-r--r-- 1 apache apache    29231 Dec 20 12:17 ./images/casent0227985/casent0227985_p_3_low.jpg
+-rw-r--r-- 1 apache apache    49435 Dec 20 12:17 ./images/casent0227985/casent0227985_p_3_med.jpg
+-rw-r--r-- 1 apache apache  9741362 Dec 20 12:17 ./images/casent0227985/CASENT0227985_P_3.tif
+-rw-r--r-- 1 apache apache  9336944 Dec 20 12:16 ./images/casent0227985/CASENT0227985_P.tif
+-rw-r--r-- 1 apache apache   661517 Dec 20 12:18 ./images/casent0227986/casent0227986_d_1_high.jpg
+-rw-r--r-- 1 apache apache    27510 Dec 20 12:18 ./images/casent0227986/casent0227986_d_1_low.jpg
+-rw-r--r-- 1 apache apache    45223 Dec 20 12:18 ./images/casent0227986/casent0227986_d_1_med.jpg
+-rw-r--r-- 1 apache apache 12142362 Dec 20 12:18 ./images/casent0227986/CASENT0227986_D.tif
+-rw-r--r-- 1 apache apache  1105049 Dec 20 12:25 ./images/casent0227986/casent0227986_l_1_high.jpg
+-rw-r--r-- 1 apache apache    38404 Dec 20 12:25 ./images/casent0227986/casent0227986_l_1_low.jpg
+-rw-r--r-- 1 apache apache    81045 Dec 20 12:25 ./images/casent0227986/casent0227986_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1826846 Dec 20 12:25 ./images/casent0227986/CASENT0227986_L.jpg
+-rw-r--r-- 1 apache apache   553552 Dec 20 12:18 ./images/casent0227986/casent0227986_p_1_high.jpg
+-rw-r--r-- 1 apache apache    29837 Dec 20 12:18 ./images/casent0227986/casent0227986_p_1_low.jpg
+-rw-r--r-- 1 apache apache    51221 Dec 20 12:18 ./images/casent0227986/casent0227986_p_1_med.jpg
+-rw-r--r-- 1 apache apache   623122 Dec 20 12:16 ./images/casent0227986/casent0227986_p_2_high.jpg
+-rw-r--r-- 1 apache apache    27864 Dec 20 12:16 ./images/casent0227986/casent0227986_p_2_low.jpg
+-rw-r--r-- 1 apache apache    48809 Dec 20 12:16 ./images/casent0227986/casent0227986_p_2_med.jpg
+-rw-r--r-- 1 apache apache 11763383 Dec 20 12:16 ./images/casent0227986/CASENT0227986_P_2.tif
+-rw-r--r-- 1 apache apache   501645 Dec 20 12:17 ./images/casent0227986/casent0227986_p_3_high.jpg
+-rw-r--r-- 1 apache apache    30421 Dec 20 12:17 ./images/casent0227986/casent0227986_p_3_low.jpg
+-rw-r--r-- 1 apache apache    54563 Dec 20 12:17 ./images/casent0227986/casent0227986_p_3_med.jpg
+-rw-r--r-- 1 apache apache  8656324 Dec 20 12:17 ./images/casent0227986/CASENT0227986_P_3.tif
+-rw-r--r-- 1 apache apache 12565250 Dec 20 12:18 ./images/casent0227986/CASENT0227986_P.tif
+-rw-r--r-- 1 apache apache   725239 Dec 20 12:19 ./images/casent0227988/casent0227988_d_1_high.jpg
+-rw-r--r-- 1 apache apache    26980 Dec 20 12:19 ./images/casent0227988/casent0227988_d_1_low.jpg
+-rw-r--r-- 1 apache apache    43283 Dec 20 12:19 ./images/casent0227988/casent0227988_d_1_med.jpg
+-rw-r--r-- 1 apache apache 10965583 Dec 20 12:19 ./images/casent0227988/CASENT0227988_D.tif
+-rw-r--r-- 1 apache apache  1064595 Dec 20 12:25 ./images/casent0227988/casent0227988_l_1_high.jpg
+-rw-r--r-- 1 apache apache    39534 Dec 20 12:25 ./images/casent0227988/casent0227988_l_1_low.jpg
+-rw-r--r-- 1 apache apache    83013 Dec 20 12:25 ./images/casent0227988/casent0227988_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1638627 Dec 20 12:25 ./images/casent0227988/CASENT0227988_L.jpg
+-rw-r--r-- 1 apache apache   620350 Dec 20 12:16 ./images/casent0227988/casent0227988_p_1_high.jpg
+-rw-r--r-- 1 apache apache    30562 Dec 20 12:16 ./images/casent0227988/casent0227988_p_1_low.jpg
+-rw-r--r-- 1 apache apache    54342 Dec 20 12:16 ./images/casent0227988/casent0227988_p_1_med.jpg
+-rw-r--r-- 1 apache apache   736119 Dec 20 12:17 ./images/casent0227988/casent0227988_p_2_high.jpg
+-rw-r--r-- 1 apache apache    29042 Dec 20 12:17 ./images/casent0227988/casent0227988_p_2_low.jpg
+-rw-r--r-- 1 apache apache    52935 Dec 20 12:17 ./images/casent0227988/casent0227988_p_2_med.jpg
+-rw-r--r-- 1 apache apache 12745210 Dec 20 12:17 ./images/casent0227988/CASENT0227988_P_2.tif
+-rw-r--r-- 1 apache apache   623637 Dec 20 12:16 ./images/casent0227988/casent0227988_p_3_high.jpg
+-rw-r--r-- 1 apache apache    29142 Dec 20 12:16 ./images/casent0227988/casent0227988_p_3_low.jpg
+-rw-r--r-- 1 apache apache    50400 Dec 20 12:16 ./images/casent0227988/casent0227988_p_3_med.jpg
+-rw-r--r-- 1 apache apache  9235718 Dec 20 12:16 ./images/casent0227988/CASENT0227988_P_3.tif
+-rw-r--r-- 1 apache apache  7947458 Dec 20 12:16 ./images/casent0227988/CASENT0227988_P.tif
+-rw-r--r-- 1 apache apache   747599 Dec 20 12:18 ./images/casent0227992/casent0227992_d_1_high.jpg
+-rw-r--r-- 1 apache apache    26473 Dec 20 12:18 ./images/casent0227992/casent0227992_d_1_low.jpg
+-rw-r--r-- 1 apache apache    42365 Dec 20 12:18 ./images/casent0227992/casent0227992_d_1_med.jpg
+-rw-r--r-- 1 apache apache  9484617 Dec 20 12:18 ./images/casent0227992/CASENT0227992_D.tif
+-rw-r--r-- 1 apache apache   542576 Dec 20 12:17 ./images/casent0227992/casent0227992_h_1_high.jpg
+-rw-r--r-- 1 apache apache    30975 Dec 20 12:17 ./images/casent0227992/casent0227992_h_1_low.jpg
+-rw-r--r-- 1 apache apache    56934 Dec 20 12:17 ./images/casent0227992/casent0227992_h_1_med.jpg
+-rw-r--r-- 1 apache apache 10949332 Dec 20 12:17 ./images/casent0227992/CASENT0227992_H.tif
+-rw-r--r-- 1 apache apache  1124870 Dec 20 12:25 ./images/casent0227992/casent0227992_l_1_high.jpg
+-rw-r--r-- 1 apache apache    35415 Dec 20 12:25 ./images/casent0227992/casent0227992_l_1_low.jpg
+-rw-r--r-- 1 apache apache    73472 Dec 20 12:25 ./images/casent0227992/casent0227992_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1307322 Dec 20 12:25 ./images/casent0227992/CASENT0227992_L.jpg
+-rw-r--r-- 1 apache apache   671429 Dec 20 12:16 ./images/casent0227992/casent0227992_p_1_high.jpg
+-rw-r--r-- 1 apache apache    27996 Dec 20 12:16 ./images/casent0227992/casent0227992_p_1_low.jpg
+-rw-r--r-- 1 apache apache    43891 Dec 20 12:16 ./images/casent0227992/casent0227992_p_1_med.jpg
+-rw-r--r-- 1 apache apache 11273480 Dec 20 12:16 ./images/casent0227992/CASENT0227992_P.tif
+-rw-r--r-- 1 apache apache   710849 Dec 20 12:17 ./images/casent0227993/casent0227993_d_1_high.jpg
+-rw-r--r-- 1 apache apache    26205 Dec 20 12:17 ./images/casent0227993/casent0227993_d_1_low.jpg
+-rw-r--r-- 1 apache apache    41730 Dec 20 12:17 ./images/casent0227993/casent0227993_d_1_med.jpg
+-rw-r--r-- 1 apache apache 11020460 Dec 20 12:17 ./images/casent0227993/CASENT0227993_D.tif
+-rw-r--r-- 1 apache apache   479446 Dec 20 12:17 ./images/casent0227993/casent0227993_h_1_high.jpg
+-rw-r--r-- 1 apache apache    32557 Dec 20 12:17 ./images/casent0227993/casent0227993_h_1_low.jpg
+-rw-r--r-- 1 apache apache    63047 Dec 20 12:17 ./images/casent0227993/casent0227993_h_1_med.jpg
+-rw-r--r-- 1 apache apache  8784496 Dec 20 12:17 ./images/casent0227993/CASENT0227993_H.tif
+-rw-r--r-- 1 apache apache  1395280 Dec 20 12:25 ./images/casent0227993/casent0227993_l_1_high.jpg
+-rw-r--r-- 1 apache apache    30072 Dec 20 12:25 ./images/casent0227993/casent0227993_l_1_low.jpg
+-rw-r--r-- 1 apache apache    60035 Dec 20 12:25 ./images/casent0227993/casent0227993_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1377221 Dec 20 12:25 ./images/casent0227993/CASENT0227993_L.jpg
+-rw-r--r-- 1 apache apache   657660 Dec 20 12:17 ./images/casent0227993/casent0227993_p_1_high.jpg
+-rw-r--r-- 1 apache apache    27496 Dec 20 12:17 ./images/casent0227993/casent0227993_p_1_low.jpg
+-rw-r--r-- 1 apache apache    43936 Dec 20 12:17 ./images/casent0227993/casent0227993_p_1_med.jpg
+-rw-r--r-- 1 apache apache 12468149 Dec 20 12:17 ./images/casent0227993/CASENT0227993_P.tif
+-rw-r--r-- 1 apache apache   690123 Dec 20 12:18 ./images/casent0227995/casent0227995_d_1_high.jpg
+-rw-r--r-- 1 apache apache    28109 Dec 20 12:18 ./images/casent0227995/casent0227995_d_1_low.jpg
+-rw-r--r-- 1 apache apache    46078 Dec 20 12:18 ./images/casent0227995/casent0227995_d_1_med.jpg
+-rw-r--r-- 1 apache apache 11747514 Dec 20 12:18 ./images/casent0227995/CASENT0227995_D.tif
+-rw-r--r-- 1 apache apache   653186 Dec 20 12:18 ./images/casent0227995/casent0227995_h_1_high.jpg
+-rw-r--r-- 1 apache apache    27997 Dec 20 12:18 ./images/casent0227995/casent0227995_h_1_low.jpg
+-rw-r--r-- 1 apache apache    47704 Dec 20 12:18 ./images/casent0227995/casent0227995_h_1_med.jpg
+-rw-r--r-- 1 apache apache 11441518 Dec 20 12:18 ./images/casent0227995/CASENT0227995_H.tif
+-rw-r--r-- 1 apache apache  1205053 Dec 20 12:25 ./images/casent0227995/casent0227995_l_1_high.jpg
+-rw-r--r-- 1 apache apache    35665 Dec 20 12:25 ./images/casent0227995/casent0227995_l_1_low.jpg
+-rw-r--r-- 1 apache apache    74895 Dec 20 12:25 ./images/casent0227995/casent0227995_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1633247 Dec 20 12:25 ./images/casent0227995/CASENT0227995_L.jpg
+-rw-r--r-- 1 apache apache   603149 Dec 20 12:16 ./images/casent0227995/casent0227995_p_1_high.jpg
+-rw-r--r-- 1 apache apache    28468 Dec 20 12:16 ./images/casent0227995/casent0227995_p_1_low.jpg
+-rw-r--r-- 1 apache apache    47867 Dec 20 12:16 ./images/casent0227995/casent0227995_p_1_med.jpg
+-rw-r--r-- 1 apache apache 11658598 Dec 20 12:16 ./images/casent0227995/CASENT0227995_P.tif
+-rw-r--r-- 1 apache apache   609412 Dec 20 12:17 ./images/casent0227996/casent0227996_d_1_high.jpg
+-rw-r--r-- 1 apache apache    28208 Dec 20 12:17 ./images/casent0227996/casent0227996_d_1_low.jpg
+-rw-r--r-- 1 apache apache    48290 Dec 20 12:17 ./images/casent0227996/casent0227996_d_1_med.jpg
+-rw-r--r-- 1 apache apache 12329684 Dec 20 12:17 ./images/casent0227996/CASENT0227996_D.tif
+-rw-r--r-- 1 apache apache   452427 Dec 20 12:18 ./images/casent0227996/casent0227996_h_1_high.jpg
+-rw-r--r-- 1 apache apache    33727 Dec 20 12:18 ./images/casent0227996/casent0227996_h_1_low.jpg
+-rw-r--r-- 1 apache apache    67980 Dec 20 12:18 ./images/casent0227996/casent0227996_h_1_med.jpg
+-rw-r--r-- 1 apache apache  8861938 Dec 20 12:18 ./images/casent0227996/CASENT0227996_H.tif
+-rw-r--r-- 1 apache apache  1205384 Dec 20 12:25 ./images/casent0227996/casent0227996_l_1_high.jpg
+-rw-r--r-- 1 apache apache    33781 Dec 20 12:25 ./images/casent0227996/casent0227996_l_1_low.jpg
+-rw-r--r-- 1 apache apache    70164 Dec 20 12:25 ./images/casent0227996/casent0227996_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1477084 Dec 20 12:25 ./images/casent0227996/CASENT0227996_L.jpg
+-rw-r--r-- 1 apache apache   597322 Dec 20 12:18 ./images/casent0227996/casent0227996_p_1_high.jpg
+-rw-r--r-- 1 apache apache    27378 Dec 20 12:18 ./images/casent0227996/casent0227996_p_1_low.jpg
+-rw-r--r-- 1 apache apache    44397 Dec 20 12:18 ./images/casent0227996/casent0227996_p_1_med.jpg
+-rw-r--r-- 1 apache apache 11839704 Dec 20 12:18 ./images/casent0227996/CASENT0227996_P.tif
+-rw-r--r-- 1 apache apache   627666 Dec 20 12:19 ./images/casent0227997/casent0227997_d_1_high.jpg
+-rw-r--r-- 1 apache apache    27266 Dec 20 12:19 ./images/casent0227997/casent0227997_d_1_low.jpg
+-rw-r--r-- 1 apache apache    44646 Dec 20 12:19 ./images/casent0227997/casent0227997_d_1_med.jpg
+-rw-r--r-- 1 apache apache 12109282 Dec 20 12:19 ./images/casent0227997/CASENT0227997_D.tif
+-rw-r--r-- 1 apache apache   499166 Dec 20 12:17 ./images/casent0227997/casent0227997_h_1_high.jpg
+-rw-r--r-- 1 apache apache    33658 Dec 20 12:17 ./images/casent0227997/casent0227997_h_1_low.jpg
+-rw-r--r-- 1 apache apache    65858 Dec 20 12:17 ./images/casent0227997/casent0227997_h_1_med.jpg
+-rw-r--r-- 1 apache apache  8872356 Dec 20 12:17 ./images/casent0227997/CASENT0227997_H.tif
+-rw-r--r-- 1 apache apache  1418161 Dec 20 12:25 ./images/casent0227997/casent0227997_l_1_high.jpg
+-rw-r--r-- 1 apache apache    32751 Dec 20 12:25 ./images/casent0227997/casent0227997_l_1_low.jpg
+-rw-r--r-- 1 apache apache    66547 Dec 20 12:25 ./images/casent0227997/casent0227997_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1785524 Dec 20 12:25 ./images/casent0227997/CASENT0227997_L.jpg
+-rw-r--r-- 1 apache apache   556323 Dec 20 12:17 ./images/casent0227997/casent0227997_p_1_high.jpg
+-rw-r--r-- 1 apache apache    28260 Dec 20 12:17 ./images/casent0227997/casent0227997_p_1_low.jpg
+-rw-r--r-- 1 apache apache    46696 Dec 20 12:17 ./images/casent0227997/casent0227997_p_1_med.jpg
+-rw-r--r-- 1 apache apache 13084762 Dec 20 12:17 ./images/casent0227997/CASENT0227997_P.tif
+-rw-r--r-- 1 apache apache   657535 Dec 20 12:16 ./images/casent0227998/casent0227998_d_1_high.jpg
+-rw-r--r-- 1 apache apache    28914 Dec 20 12:16 ./images/casent0227998/casent0227998_d_1_low.jpg
+-rw-r--r-- 1 apache apache    48160 Dec 20 12:16 ./images/casent0227998/casent0227998_d_1_med.jpg
+-rw-r--r-- 1 apache apache 12783212 Dec 20 12:16 ./images/casent0227998/CASENT0227998_D.tif
+-rw-r--r-- 1 apache apache   590277 Dec 20 12:19 ./images/casent0227998/casent0227998_h_1_high.jpg
+-rw-r--r-- 1 apache apache    30841 Dec 20 12:19 ./images/casent0227998/casent0227998_h_1_low.jpg
+-rw-r--r-- 1 apache apache    55981 Dec 20 12:19 ./images/casent0227998/casent0227998_h_1_med.jpg
+-rw-r--r-- 1 apache apache 11842312 Dec 20 12:19 ./images/casent0227998/CASENT0227998_H.tif
+-rw-r--r-- 1 apache apache  1180464 Dec 20 12:25 ./images/casent0227998/casent0227998_l_1_high.jpg
+-rw-r--r-- 1 apache apache    35930 Dec 20 12:25 ./images/casent0227998/casent0227998_l_1_low.jpg
+-rw-r--r-- 1 apache apache    74466 Dec 20 12:25 ./images/casent0227998/casent0227998_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1844702 Dec 20 12:25 ./images/casent0227998/CASENT0227998_L.jpg
+-rw-r--r-- 1 apache apache   638004 Dec 20 12:17 ./images/casent0227998/casent0227998_p_1_high.jpg
+-rw-r--r-- 1 apache apache    28170 Dec 20 12:17 ./images/casent0227998/casent0227998_p_1_low.jpg
+-rw-r--r-- 1 apache apache    47170 Dec 20 12:17 ./images/casent0227998/casent0227998_p_1_med.jpg
+-rw-r--r-- 1 apache apache 12781608 Dec 20 12:17 ./images/casent0227998/CASENT0227998_P.tif
+-rw-r--r-- 1 apache apache   715042 Dec 20 12:17 ./images/casent0247048/casent0247048_d_1_high.jpg
+-rw-r--r-- 1 apache apache    27821 Dec 20 12:17 ./images/casent0247048/casent0247048_d_1_low.jpg
+-rw-r--r-- 1 apache apache    44779 Dec 20 12:17 ./images/casent0247048/casent0247048_d_1_med.jpg
+-rw-r--r-- 1 apache apache  9519670 Dec 20 12:17 ./images/casent0247048/CASENT0247048_D.tif
+-rw-r--r-- 1 apache apache 11428882 Dec 20 12:18 ./images/casent0247048/CASENT0247048_H.tif
+-rw-r--r-- 1 apache apache  1312750 Dec 20 12:25 ./images/casent0247048/casent0247048_l_1_high.jpg
+-rw-r--r-- 1 apache apache    34509 Dec 20 12:25 ./images/casent0247048/casent0247048_l_1_low.jpg
+-rw-r--r-- 1 apache apache    72760 Dec 20 12:25 ./images/casent0247048/casent0247048_l_1_med.jpg
+-rw-r--r-- 1 apache apache  1820078 Dec 20 12:25 ./images/casent0247048/CASENT0247048_L.jpg
+-rw-r--r-- 1 apache apache   654336 Dec 20 12:19 ./images/casent0247048/casent0247048_p_1_high.jpg
+-rw-r--r-- 1 apache apache    30412 Dec 20 12:19 ./images/casent0247048/casent0247048_p_1_low.jpg
+-rw-r--r-- 1 apache apache    52985 Dec 20 12:19 ./images/casent0247048/casent0247048_p_1_med.jpg
+-rw-r--r-- 1 apache apache   684763 Dec 20 12:18 ./images/casent0247048/casent0247048_p_2_high.jpg
+-rw-r--r-- 1 apache apache    29547 Dec 20 12:18 ./images/casent0247048/casent0247048_p_2_low.jpg
+-rw-r--r-- 1 apache apache    51220 Dec 20 12:18 ./images/casent0247048/casent0247048_p_2_med.jpg
+-rw-r--r-- 1 apache apache 11574486 Dec 20 12:18 ./images/casent0247048/CASENT0247048_P_2.tif
+-rw-r--r-- 1 apache apache   625222 Dec 20 12:18 ./images/casent0247048/casent0247048_p_3_high.jpg
+-rw-r--r-- 1 apache apache    29386 Dec 20 12:18 ./images/casent0247048/casent0247048_p_3_low.jpg
+-rw-r--r-- 1 apache apache    51572 Dec 20 12:18 ./images/casent0247048/casent0247048_p_3_med.jpg
+-rw-r--r-- 1 apache apache 10273554 Dec 20 12:18 ./images/casent0247048/CASENT0247048_P_3.tif
+-rw-r--r-- 1 apache apache 12595342 Dec 20 12:19 ./images/casent0247048/CASENT0247048_P.tif
+
+./images/casent0004353:
+total 65740
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   684660 Dec 20 12:16 casent0004353_d_1_high.jpg
+-rw-r--r--     1 apache apache    25944 Dec 20 12:16 casent0004353_d_1_low.jpg
+-rw-r--r--     1 apache apache    40595 Dec 20 12:16 casent0004353_d_1_med.jpg
+-rw-r--r--     1 apache apache 10621438 Dec 20 12:16 CASENT0004353_D.tif
+-rw-r--r--     1 apache apache   590620 Dec 20 12:19 casent0004353_h_1_high.jpg
+-rw-r--r--     1 apache apache    30372 Dec 20 12:19 casent0004353_h_1_low.jpg
+-rw-r--r--     1 apache apache    54395 Dec 20 12:19 casent0004353_h_1_med.jpg
+-rw-r--r--     1 apache apache 11974432 Dec 20 12:19 CASENT0004353_H.tif
+-rw-r--r--     1 apache apache  1085574 Dec 20 12:25 casent0004353_l_1_high.jpg
+-rw-r--r--     1 apache apache    40956 Dec 20 12:25 casent0004353_l_1_low.jpg
+-rw-r--r--     1 apache apache    90523 Dec 20 12:25 casent0004353_l_1_med.jpg
+-rw-r--r--     1 apache apache  2242026 Dec 20 12:25 CASENT0004353_L.jpg
+-rw-r--r--     1 apache apache   715233 Dec 20 12:18 casent0004353_p_1_high.jpg
+-rw-r--r--     1 apache apache    30896 Dec 20 12:18 casent0004353_p_1_low.jpg
+-rw-r--r--     1 apache apache    54890 Dec 20 12:18 casent0004353_p_1_med.jpg
+-rw-r--r--     1 apache apache   814129 Dec 20 12:18 casent0004353_p_2_high.jpg
+-rw-r--r--     1 apache apache    29131 Dec 20 12:18 casent0004353_p_2_low.jpg
+-rw-r--r--     1 apache apache    51213 Dec 20 12:18 casent0004353_p_2_med.jpg
+-rw-r--r--     1 apache apache 13493294 Dec 20 12:18 CASENT0004353_P_2.tif
+-rw-r--r--     1 apache apache   590623 Dec 20 12:18 casent0004353_p_3_high.jpg
+-rw-r--r--     1 apache apache    28430 Dec 20 12:18 casent0004353_p_3_low.jpg
+-rw-r--r--     1 apache apache    49147 Dec 20 12:18 casent0004353_p_3_med.jpg
+-rw-r--r--     1 apache apache  9707538 Dec 20 12:18 CASENT0004353_P_3.tif
+-rw-r--r--     1 apache apache 13533298 Dec 20 12:18 CASENT0004353_P.tif
+
+./images/casent0071148:
+total 48444
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   597084 Dec 20 12:16 casent0071148_d_1_high.jpg
+-rw-r--r--     1 apache apache    30242 Dec 20 12:16 casent0071148_d_1_low.jpg
+-rw-r--r--     1 apache apache    53287 Dec 20 12:16 casent0071148_d_1_med.jpg
+-rw-r--r--     1 apache apache 11404258 Dec 20 12:16 CASENT0071148_D.tif
+-rw-r--r--     1 apache apache   528684 Dec 20 12:17 casent0071148_h_1_high.jpg
+-rw-r--r--     1 apache apache    32241 Dec 20 12:17 casent0071148_h_1_low.jpg
+-rw-r--r--     1 apache apache    60850 Dec 20 12:17 casent0071148_h_1_med.jpg
+-rw-r--r--     1 apache apache  7202230 Dec 20 12:17 CASENT0071148_H_1.tif
+-rw-r--r--     1 apache apache   670864 Dec 20 12:17 casent0071148_h_2_high.jpg
+-rw-r--r--     1 apache apache    27168 Dec 20 12:17 casent0071148_h_2_low.jpg
+-rw-r--r--     1 apache apache    44299 Dec 20 12:17 casent0071148_h_2_med.jpg
+-rw-r--r--     1 apache apache 11626228 Dec 20 12:17 CASENT0071148_H_2.tif
+-rw-r--r--     1 apache apache  1132111 Dec 20 12:25 casent0071148_l_1_high.jpg
+-rw-r--r--     1 apache apache    40555 Dec 20 12:25 casent0071148_l_1_low.jpg
+-rw-r--r--     1 apache apache    85242 Dec 20 12:25 casent0071148_l_1_med.jpg
+-rw-r--r--     1 apache apache  1650791 Dec 20 12:25 CASENT0071148_L.jpg
+-rw-r--r--     1 apache apache   541475 Dec 20 12:18 casent0071148_p_1_high.jpg
+-rw-r--r--     1 apache apache    29052 Dec 20 12:18 casent0071148_p_1_low.jpg
+-rw-r--r--     1 apache apache    50052 Dec 20 12:18 casent0071148_p_1_med.jpg
+-rw-r--r--     1 apache apache 13103272 Dec 20 12:18 CASENT0071148_P.tif
+
+./images/casent0191378:
+total 65108
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   742013 Dec 20 12:16 casent0191378_d_1_high.jpg
+-rw-r--r--     1 apache apache    25274 Dec 20 12:16 casent0191378_d_1_low.jpg
+-rw-r--r--     1 apache apache    39021 Dec 20 12:16 casent0191378_d_1_med.jpg
+-rw-r--r--     1 apache apache  9338070 Dec 20 12:16 CASENT0191378_D.tif
+-rw-r--r--     1 apache apache   552495 Dec 20 12:16 casent0191378_h_1_high.jpg
+-rw-r--r--     1 apache apache    30500 Dec 20 12:16 casent0191378_h_1_low.jpg
+-rw-r--r--     1 apache apache    55109 Dec 20 12:16 casent0191378_h_1_med.jpg
+-rw-r--r--     1 apache apache  5911294 Dec 20 12:16 CASENT0191378_H_1.tif
+-rw-r--r--     1 apache apache   466543 Dec 20 12:16 casent0191378_h_2_high.jpg
+-rw-r--r--     1 apache apache    29265 Dec 20 12:16 casent0191378_h_2_low.jpg
+-rw-r--r--     1 apache apache    50656 Dec 20 12:16 casent0191378_h_2_med.jpg
+-rw-r--r--     1 apache apache 10688576 Dec 20 12:16 CASENT0191378_H_2.tif
+-rw-r--r--     1 apache apache  1155405 Dec 20 12:25 casent0191378_l_1_high.jpg
+-rw-r--r--     1 apache apache    40888 Dec 20 12:25 casent0191378_l_1_low.jpg
+-rw-r--r--     1 apache apache    85877 Dec 20 12:25 casent0191378_l_1_med.jpg
+-rw-r--r--     1 apache apache  1806109 Dec 20 12:25 CASENT0191378_L.jpg
+-rw-r--r--     1 apache apache   600740 Dec 20 12:16 casent0191378_p_1_high.jpg
+-rw-r--r--     1 apache apache    27748 Dec 20 12:16 casent0191378_p_1_low.jpg
+-rw-r--r--     1 apache apache    45640 Dec 20 12:16 casent0191378_p_1_med.jpg
+-rw-r--r--     1 apache apache   679046 Dec 20 12:18 casent0191378_p_2_high.jpg
+-rw-r--r--     1 apache apache    28081 Dec 20 12:18 casent0191378_p_2_low.jpg
+-rw-r--r--     1 apache apache    49821 Dec 20 12:18 casent0191378_p_2_med.jpg
+-rw-r--r--     1 apache apache 12992724 Dec 20 12:18 CASENT0191378_P_2.tif
+-rw-r--r--     1 apache apache   567864 Dec 20 12:18 casent0191378_p_3_high.jpg
+-rw-r--r--     1 apache apache    30005 Dec 20 12:17 casent0191378_p_3_low.jpg
+-rw-r--r--     1 apache apache    53628 Dec 20 12:17 casent0191378_p_3_med.jpg
+-rw-r--r--     1 apache apache  8425068 Dec 20 12:17 CASENT0191378_P_3.tif
+-rw-r--r--     1 apache apache 11404294 Dec 20 12:16 CASENT0191378_P.tif
+
+./images/casent0227978:
+total 62560
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   738398 Dec 20 12:16 casent0227978_d_1_high.jpg
+-rw-r--r--     1 apache apache    26550 Dec 20 12:16 casent0227978_d_1_low.jpg
+-rw-r--r--     1 apache apache    42516 Dec 20 12:16 casent0227978_d_1_med.jpg
+-rw-r--r--     1 apache apache  9987592 Dec 20 12:16 CASENT0227978_D.tif
+-rw-r--r--     1 apache apache   595626 Dec 20 12:17 casent0227978_h_1_high.jpg
+-rw-r--r--     1 apache apache    32038 Dec 20 12:17 casent0227978_h_1_low.jpg
+-rw-r--r--     1 apache apache    58586 Dec 20 12:17 casent0227978_h_1_med.jpg
+-rw-r--r--     1 apache apache 10881591 Dec 20 12:17 CASENT0227978_H.tif
+-rw-r--r--     1 apache apache  1224362 Dec 20 12:25 casent0227978_l_1_high.jpg
+-rw-r--r--     1 apache apache    33122 Dec 20 12:25 casent0227978_l_1_low.jpg
+-rw-r--r--     1 apache apache    69584 Dec 20 12:25 casent0227978_l_1_med.jpg
+-rw-r--r--     1 apache apache  1624500 Dec 20 12:25 CASENT0227978_L.jpg
+-rw-r--r--     1 apache apache   510921 Dec 20 12:16 casent0227978_p_1_high.jpg
+-rw-r--r--     1 apache apache    32547 Dec 20 12:16 casent0227978_p_1_low.jpg
+-rw-r--r--     1 apache apache    59318 Dec 20 12:16 casent0227978_p_1_med.jpg
+-rw-r--r--     1 apache apache   761298 Dec 20 12:17 casent0227978_p_2_high.jpg
+-rw-r--r--     1 apache apache    28635 Dec 20 12:17 casent0227978_p_2_low.jpg
+-rw-r--r--     1 apache apache    50576 Dec 20 12:17 casent0227978_p_2_med.jpg
+-rw-r--r--     1 apache apache 13740232 Dec 20 12:17 CASENT0227978_P_2.tif
+-rw-r--r--     1 apache apache   594473 Dec 20 12:17 casent0227978_p_3_high.jpg
+-rw-r--r--     1 apache apache    28081 Dec 20 12:17 casent0227978_p_3_low.jpg
+-rw-r--r--     1 apache apache    48315 Dec 20 12:17 casent0227978_p_3_med.jpg
+-rw-r--r--     1 apache apache 11152573 Dec 20 12:17 CASENT0227978_P_3.tif
+-rw-r--r--     1 apache apache 11024752 Dec 20 12:16 CASENT0227978_P.tif
+
+./images/casent0227979:
+total 52220
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   641886 Dec 20 12:18 casent0227979_h_1_high.jpg
+-rw-r--r--     1 apache apache    32861 Dec 20 12:18 casent0227979_h_1_low.jpg
+-rw-r--r--     1 apache apache    59807 Dec 20 12:18 casent0227979_h_1_med.jpg
+-rw-r--r--     1 apache apache  4818246 Dec 20 12:18 CASENT0227979_H_1.tif
+-rw-r--r--     1 apache apache   490869 Dec 20 12:16 casent0227979_h_2_high.jpg
+-rw-r--r--     1 apache apache    32613 Dec 20 12:16 casent0227979_h_2_low.jpg
+-rw-r--r--     1 apache apache    60379 Dec 20 12:16 casent0227979_h_2_med.jpg
+-rw-r--r--     1 apache apache  8628176 Dec 20 12:16 CASENT0227979_H_2.tif
+-rw-r--r--     1 apache apache  1520894 Dec 20 12:25 casent0227979_l_1_high.jpg
+-rw-r--r--     1 apache apache    32822 Dec 20 12:25 casent0227979_l_1_low.jpg
+-rw-r--r--     1 apache apache    67345 Dec 20 12:25 casent0227979_l_1_med.jpg
+-rw-r--r--     1 apache apache  1937102 Dec 20 12:25 CASENT0227979_L.jpg
+-rw-r--r--     1 apache apache   552262 Dec 20 12:18 casent0227979_p_1_high.jpg
+-rw-r--r--     1 apache apache    32349 Dec 20 12:18 casent0227979_p_1_low.jpg
+-rw-r--r--     1 apache apache    57228 Dec 20 12:18 casent0227979_p_1_med.jpg
+-rw-r--r--     1 apache apache   716927 Dec 20 12:17 casent0227979_p_2_high.jpg
+-rw-r--r--     1 apache apache    27965 Dec 20 12:17 casent0227979_p_2_low.jpg
+-rw-r--r--     1 apache apache    48476 Dec 20 12:17 casent0227979_p_2_med.jpg
+-rw-r--r--     1 apache apache 13900539 Dec 20 12:17 CASENT0227979_P_2.tif
+-rw-r--r--     1 apache apache   657766 Dec 20 12:18 casent0227979_p_3_high.jpg
+-rw-r--r--     1 apache apache    28299 Dec 20 12:18 casent0227979_p_3_low.jpg
+-rw-r--r--     1 apache apache    48020 Dec 20 12:18 casent0227979_p_3_med.jpg
+-rw-r--r--     1 apache apache  8756024 Dec 20 12:18 CASENT0227979_P_3.tif
+-rw-r--r--     1 apache apache  9614358 Dec 20 12:18 CASENT0227979_P.tif
+
+./images/casent0227980:
+total 64552
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   698212 Dec 20 12:17 casent0227980_d_1_high.jpg
+-rw-r--r--     1 apache apache    28292 Dec 20 12:17 casent0227980_d_1_low.jpg
+-rw-r--r--     1 apache apache    46502 Dec 20 12:17 casent0227980_d_1_med.jpg
+-rw-r--r--     1 apache apache 12317074 Dec 20 12:17 CASENT0227980_D.tif
+-rw-r--r--     1 apache apache   613376 Dec 20 12:18 casent0227980_h_1_high.jpg
+-rw-r--r--     1 apache apache    33631 Dec 20 12:18 casent0227980_h_1_low.jpg
+-rw-r--r--     1 apache apache    60958 Dec 20 12:18 casent0227980_h_1_med.jpg
+-rw-r--r--     1 apache apache  4662670 Dec 20 12:18 CASENT0227980_H_1.tif
+-rw-r--r--     1 apache apache   468506 Dec 20 12:18 casent0227980_h_2_high.jpg
+-rw-r--r--     1 apache apache    33680 Dec 20 12:18 casent0227980_h_2_low.jpg
+-rw-r--r--     1 apache apache    63557 Dec 20 12:18 casent0227980_h_2_med.jpg
+-rw-r--r--     1 apache apache  9705010 Dec 20 12:18 CASENT0227980_H_2.tif
+-rw-r--r--     1 apache apache  1351777 Dec 20 12:25 casent0227980_l_1_high.jpg
+-rw-r--r--     1 apache apache    32650 Dec 20 12:25 casent0227980_l_1_low.jpg
+-rw-r--r--     1 apache apache    67953 Dec 20 12:25 casent0227980_l_1_med.jpg
+-rw-r--r--     1 apache apache  1690376 Dec 20 12:25 CASENT0227980_L.jpg
+-rw-r--r--     1 apache apache   685311 Dec 20 12:16 casent0227980_p_1_high.jpg
+-rw-r--r--     1 apache apache    29675 Dec 20 12:16 casent0227980_p_1_low.jpg
+-rw-r--r--     1 apache apache    50273 Dec 20 12:16 casent0227980_p_1_med.jpg
+-rw-r--r--     1 apache apache   705560 Dec 20 12:18 casent0227980_p_2_high.jpg
+-rw-r--r--     1 apache apache    29254 Dec 20 12:18 casent0227980_p_2_low.jpg
+-rw-r--r--     1 apache apache    50712 Dec 20 12:18 casent0227980_p_2_med.jpg
+-rw-r--r--     1 apache apache 12235558 Dec 20 12:18 CASENT0227980_P_2.tif
+-rw-r--r--     1 apache apache   716323 Dec 20 12:19 casent0227980_p_3_high.jpg
+-rw-r--r--     1 apache apache    27819 Dec 20 12:19 casent0227980_p_3_low.jpg
+-rw-r--r--     1 apache apache    46373 Dec 20 12:19 casent0227980_p_3_med.jpg
+-rw-r--r--     1 apache apache  7651484 Dec 20 12:19 CASENT0227980_P_3.tif
+-rw-r--r--     1 apache apache 11247094 Dec 20 12:16 CASENT0227980_P.tif
+
+./images/casent0227981:
+total 51036
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:18 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   686936 Dec 19 15:18 casent0227981_d_1_high.jpg
+-rw-r--r--     1 apache apache    29501 Dec 19 15:18 casent0227981_d_1_low.jpg
+-rw-r--r--     1 apache apache    50852 Dec 19 15:18 casent0227981_d_1_med.jpg
+-rw-r--r--     1 apache apache 11167770 Dec 19 15:18 CASENT0227981_D.tif
+-rw-r--r--     1 apache apache   542481 Dec 20 12:18 casent0227981_h_1_high.jpg
+-rw-r--r--     1 apache apache    32647 Dec 20 12:18 casent0227981_h_1_low.jpg
+-rw-r--r--     1 apache apache    59224 Dec 20 12:18 casent0227981_h_1_med.jpg
+-rw-r--r--     1 apache apache  8347212 Dec 20 12:18 CASENT0227981_H_1.tif
+-rw-r--r--     1 apache apache   626106 Dec 20 12:16 casent0227981_h_2_high.jpg
+-rw-r--r--     1 apache apache    28409 Dec 20 12:16 casent0227981_h_2_low.jpg
+-rw-r--r--     1 apache apache    47731 Dec 20 12:16 casent0227981_h_2_med.jpg
+-rw-r--r--     1 apache apache 13156008 Dec 20 12:16 CASENT0227981_H_2.tif
+-rw-r--r--     1 apache apache  1123873 Dec 19 15:14 casent0227981_l_1_high.jpg
+-rw-r--r--     1 apache apache    39382 Dec 19 15:14 casent0227981_l_1_low.jpg
+-rw-r--r--     1 apache apache    83538 Dec 19 15:14 casent0227981_l_1_med.jpg
+-rw-r--r--     1 apache apache  1660894 Dec 19 15:14 CASENT0227981_L.jpg
+-rw-r--r--     1 apache apache   591903 Dec 20 12:17 casent0227981_p_1_high.jpg
+-rw-r--r--     1 apache apache    31005 Dec 20 12:17 casent0227981_p_1_low.jpg
+-rw-r--r--     1 apache apache    54349 Dec 20 12:17 casent0227981_p_1_med.jpg
+-rw-r--r--     1 apache apache 13209808 Dec 20 12:17 CASENT0227981_P.tif
+
+./images/casent0227982:
+total 47584
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   670370 Dec 20 12:17 casent0227982_d_1_high.jpg
+-rw-r--r--     1 apache apache    29607 Dec 20 12:17 casent0227982_d_1_low.jpg
+-rw-r--r--     1 apache apache    50498 Dec 20 12:17 casent0227982_d_1_med.jpg
+-rw-r--r--     1 apache apache 11014832 Dec 20 12:17 CASENT0227982_D.tif
+-rw-r--r--     1 apache apache   506531 Dec 20 12:16 casent0227982_h_1_high.jpg
+-rw-r--r--     1 apache apache    31603 Dec 20 12:16 casent0227982_h_1_low.jpg
+-rw-r--r--     1 apache apache    58754 Dec 20 12:16 casent0227982_h_1_med.jpg
+-rw-r--r--     1 apache apache  6646538 Dec 20 12:16 CASENT0227982_H_1.tif
+-rw-r--r--     1 apache apache   465551 Dec 20 12:19 casent0227982_h_2_high.jpg
+-rw-r--r--     1 apache apache    30264 Dec 20 12:19 casent0227982_h_2_low.jpg
+-rw-r--r--     1 apache apache    53799 Dec 20 12:19 casent0227982_h_2_med.jpg
+-rw-r--r--     1 apache apache 11438334 Dec 20 12:19 CASENT0227982_H_2.tif
+-rw-r--r--     1 apache apache  1110190 Dec 20 12:25 casent0227982_l_1_high.jpg
+-rw-r--r--     1 apache apache    38047 Dec 20 12:25 casent0227982_l_1_low.jpg
+-rw-r--r--     1 apache apache    80163 Dec 20 12:25 casent0227982_l_1_med.jpg
+-rw-r--r--     1 apache apache  1478819 Dec 20 12:25 CASENT0227982_L.jpg
+-rw-r--r--     1 apache apache   622896 Dec 20 12:18 casent0227982_p_1_high.jpg
+-rw-r--r--     1 apache apache    29105 Dec 20 12:18 casent0227982_p_1_low.jpg
+-rw-r--r--     1 apache apache    49557 Dec 20 12:18 casent0227982_p_1_med.jpg
+-rw-r--r--     1 apache apache 13614958 Dec 20 12:18 CASENT0227982_P.tif
+
+./images/casent0227983:
+total 39656
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   684889 Dec 20 12:18 casent0227983_d_1_high.jpg
+-rw-r--r--     1 apache apache    27623 Dec 20 12:18 casent0227983_d_1_low.jpg
+-rw-r--r--     1 apache apache    45782 Dec 20 12:18 casent0227983_d_1_med.jpg
+-rw-r--r--     1 apache apache 10011230 Dec 20 12:18 CASENT0227983_D.tif
+-rw-r--r--     1 apache apache   624066 Dec 20 12:18 casent0227983_h_1_high.jpg
+-rw-r--r--     1 apache apache    29214 Dec 20 12:18 casent0227983_h_1_low.jpg
+-rw-r--r--     1 apache apache    50859 Dec 20 12:18 casent0227983_h_1_med.jpg
+-rw-r--r--     1 apache apache 13891252 Dec 20 12:18 CASENT0227983_H.tif
+-rw-r--r--     1 apache apache  1200655 Dec 20 12:25 casent0227983_l_1_high.jpg
+-rw-r--r--     1 apache apache    39410 Dec 20 12:25 casent0227983_l_1_low.jpg
+-rw-r--r--     1 apache apache    84063 Dec 20 12:25 casent0227983_l_1_med.jpg
+-rw-r--r--     1 apache apache  1751764 Dec 20 12:25 CASENT0227983_L.jpg
+-rw-r--r--     1 apache apache   671698 Dec 20 12:19 casent0227983_p_1_high.jpg
+-rw-r--r--     1 apache apache    28301 Dec 20 12:19 casent0227983_p_1_low.jpg
+-rw-r--r--     1 apache apache    47504 Dec 20 12:19 casent0227983_p_1_med.jpg
+-rw-r--r--     1 apache apache 10759138 Dec 20 12:19 CASENT0227983_P.tif
+
+./images/casent0227984:
+total 39648
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   589732 Dec 20 12:17 casent0227984_d_1_high.jpg
+-rw-r--r--     1 apache apache    28851 Dec 20 12:17 casent0227984_d_1_low.jpg
+-rw-r--r--     1 apache apache    48317 Dec 20 12:17 casent0227984_d_1_med.jpg
+-rw-r--r--     1 apache apache 10790814 Dec 20 12:17 CASENT0227984_D.tif
+-rw-r--r--     1 apache apache   557949 Dec 20 12:19 casent0227984_h_1_high.jpg
+-rw-r--r--     1 apache apache    31401 Dec 20 12:18 casent0227984_h_1_low.jpg
+-rw-r--r--     1 apache apache    58386 Dec 20 12:19 casent0227984_h_1_med.jpg
+-rw-r--r--     1 apache apache 10950336 Dec 20 12:18 CASENT0227984_H.tif
+-rw-r--r--     1 apache apache  1248701 Dec 20 12:25 casent0227984_l_1_high.jpg
+-rw-r--r--     1 apache apache    38691 Dec 20 12:25 casent0227984_l_1_low.jpg
+-rw-r--r--     1 apache apache    80895 Dec 20 12:25 casent0227984_l_1_med.jpg
+-rw-r--r--     1 apache apache  1892770 Dec 20 12:25 CASENT0227984_L.jpg
+-rw-r--r--     1 apache apache   536220 Dec 20 12:16 casent0227984_p_1_high.jpg
+-rw-r--r--     1 apache apache    29927 Dec 20 12:16 casent0227984_p_1_low.jpg
+-rw-r--r--     1 apache apache    51106 Dec 20 12:16 casent0227984_p_1_med.jpg
+-rw-r--r--     1 apache apache 13003474 Dec 20 12:16 CASENT0227984_P.tif
+
+./images/casent0227985:
+total 62664
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   644733 Dec 20 12:16 casent0227985_d_1_high.jpg
+-rw-r--r--     1 apache apache    26836 Dec 20 12:16 casent0227985_d_1_low.jpg
+-rw-r--r--     1 apache apache    42297 Dec 20 12:16 casent0227985_d_1_med.jpg
+-rw-r--r--     1 apache apache 11540954 Dec 20 12:16 CASENT0227985_D.tif
+-rw-r--r--     1 apache apache   565638 Dec 20 12:19 casent0227985_h_1_high.jpg
+-rw-r--r--     1 apache apache    30126 Dec 20 12:19 casent0227985_h_1_low.jpg
+-rw-r--r--     1 apache apache    54717 Dec 20 12:19 casent0227985_h_1_med.jpg
+-rw-r--r--     1 apache apache  5122242 Dec 20 12:19 CASENT0227985_H_1.tif
+-rw-r--r--     1 apache apache   466817 Dec 20 12:18 casent0227985_h_2_high.jpg
+-rw-r--r--     1 apache apache    29449 Dec 20 12:18 casent0227985_h_2_low.jpg
+-rw-r--r--     1 apache apache    52270 Dec 20 12:18 casent0227985_h_2_med.jpg
+-rw-r--r--     1 apache apache  9349924 Dec 20 12:18 CASENT0227985_H_2.tif
+-rw-r--r--     1 apache apache  1062165 Dec 20 12:25 casent0227985_l_1_high.jpg
+-rw-r--r--     1 apache apache    39637 Dec 20 12:25 casent0227985_l_1_low.jpg
+-rw-r--r--     1 apache apache    83437 Dec 20 12:25 casent0227985_l_1_med.jpg
+-rw-r--r--     1 apache apache  1399600 Dec 20 12:25 CASENT0227985_L.jpg
+-rw-r--r--     1 apache apache   473300 Dec 20 12:16 casent0227985_p_1_high.jpg
+-rw-r--r--     1 apache apache    30300 Dec 20 12:16 casent0227985_p_1_low.jpg
+-rw-r--r--     1 apache apache    54010 Dec 20 12:16 casent0227985_p_1_med.jpg
+-rw-r--r--     1 apache apache   621438 Dec 20 12:18 casent0227985_p_2_high.jpg
+-rw-r--r--     1 apache apache    28196 Dec 20 12:18 casent0227985_p_2_low.jpg
+-rw-r--r--     1 apache apache    50400 Dec 20 12:18 casent0227985_p_2_med.jpg
+-rw-r--r--     1 apache apache 11889368 Dec 20 12:18 CASENT0227985_P_2.tif
+-rw-r--r--     1 apache apache   596201 Dec 20 12:17 casent0227985_p_3_high.jpg
+-rw-r--r--     1 apache apache    29231 Dec 20 12:17 casent0227985_p_3_low.jpg
+-rw-r--r--     1 apache apache    49435 Dec 20 12:17 casent0227985_p_3_med.jpg
+-rw-r--r--     1 apache apache  9741362 Dec 20 12:17 CASENT0227985_P_3.tif
+-rw-r--r--     1 apache apache  9336944 Dec 20 12:16 CASENT0227985_P.tif
+
+./images/casent0227992:
+total 36220
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   747599 Dec 20 12:18 casent0227992_d_1_high.jpg
+-rw-r--r--     1 apache apache    26473 Dec 20 12:18 casent0227992_d_1_low.jpg
+-rw-r--r--     1 apache apache    42365 Dec 20 12:18 casent0227992_d_1_med.jpg
+-rw-r--r--     1 apache apache  9484617 Dec 20 12:18 CASENT0227992_D.tif
+-rw-r--r--     1 apache apache   542576 Dec 20 12:17 casent0227992_h_1_high.jpg
+-rw-r--r--     1 apache apache    30975 Dec 20 12:17 casent0227992_h_1_low.jpg
+-rw-r--r--     1 apache apache    56934 Dec 20 12:17 casent0227992_h_1_med.jpg
+-rw-r--r--     1 apache apache 10949332 Dec 20 12:17 CASENT0227992_H.tif
+-rw-r--r--     1 apache apache  1124870 Dec 20 12:25 casent0227992_l_1_high.jpg
+-rw-r--r--     1 apache apache    35415 Dec 20 12:25 casent0227992_l_1_low.jpg
+-rw-r--r--     1 apache apache    73472 Dec 20 12:25 casent0227992_l_1_med.jpg
+-rw-r--r--     1 apache apache  1307322 Dec 20 12:25 CASENT0227992_L.jpg
+-rw-r--r--     1 apache apache   671429 Dec 20 12:16 casent0227992_p_1_high.jpg
+-rw-r--r--     1 apache apache    27996 Dec 20 12:16 casent0227992_p_1_low.jpg
+-rw-r--r--     1 apache apache    43891 Dec 20 12:16 casent0227992_p_1_med.jpg
+-rw-r--r--     1 apache apache 11273480 Dec 20 12:16 CASENT0227992_P.tif
+
+./images/casent0227993:
+total 36984
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   710849 Dec 20 12:17 casent0227993_d_1_high.jpg
+-rw-r--r--     1 apache apache    26205 Dec 20 12:17 casent0227993_d_1_low.jpg
+-rw-r--r--     1 apache apache    41730 Dec 20 12:17 casent0227993_d_1_med.jpg
+-rw-r--r--     1 apache apache 11020460 Dec 20 12:17 CASENT0227993_D.tif
+-rw-r--r--     1 apache apache   479446 Dec 20 12:17 casent0227993_h_1_high.jpg
+-rw-r--r--     1 apache apache    32557 Dec 20 12:17 casent0227993_h_1_low.jpg
+-rw-r--r--     1 apache apache    63047 Dec 20 12:17 casent0227993_h_1_med.jpg
+-rw-r--r--     1 apache apache  8784496 Dec 20 12:17 CASENT0227993_H.tif
+-rw-r--r--     1 apache apache  1395280 Dec 20 12:25 casent0227993_l_1_high.jpg
+-rw-r--r--     1 apache apache    30072 Dec 20 12:25 casent0227993_l_1_low.jpg
+-rw-r--r--     1 apache apache    60035 Dec 20 12:25 casent0227993_l_1_med.jpg
+-rw-r--r--     1 apache apache  1377221 Dec 20 12:25 CASENT0227993_L.jpg
+-rw-r--r--     1 apache apache   657660 Dec 20 12:17 casent0227993_p_1_high.jpg
+-rw-r--r--     1 apache apache    27496 Dec 20 12:17 casent0227993_p_1_low.jpg
+-rw-r--r--     1 apache apache    43936 Dec 20 12:17 casent0227993_p_1_med.jpg
+-rw-r--r--     1 apache apache 12468149 Dec 20 12:17 CASENT0227993_P.tif
+
+./images/casent0227995:
+total 39668
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   690123 Dec 20 12:18 casent0227995_d_1_high.jpg
+-rw-r--r--     1 apache apache    28109 Dec 20 12:18 casent0227995_d_1_low.jpg
+-rw-r--r--     1 apache apache    46078 Dec 20 12:18 casent0227995_d_1_med.jpg
+-rw-r--r--     1 apache apache 11747514 Dec 20 12:18 CASENT0227995_D.tif
+-rw-r--r--     1 apache apache   653186 Dec 20 12:18 casent0227995_h_1_high.jpg
+-rw-r--r--     1 apache apache    27997 Dec 20 12:18 casent0227995_h_1_low.jpg
+-rw-r--r--     1 apache apache    47704 Dec 20 12:18 casent0227995_h_1_med.jpg
+-rw-r--r--     1 apache apache 11441518 Dec 20 12:18 CASENT0227995_H.tif
+-rw-r--r--     1 apache apache  1205053 Dec 20 12:25 casent0227995_l_1_high.jpg
+-rw-r--r--     1 apache apache    35665 Dec 20 12:25 casent0227995_l_1_low.jpg
+-rw-r--r--     1 apache apache    74895 Dec 20 12:25 casent0227995_l_1_med.jpg
+-rw-r--r--     1 apache apache  1633247 Dec 20 12:25 CASENT0227995_L.jpg
+-rw-r--r--     1 apache apache   603149 Dec 20 12:16 casent0227995_p_1_high.jpg
+-rw-r--r--     1 apache apache    28468 Dec 20 12:16 casent0227995_p_1_low.jpg
+-rw-r--r--     1 apache apache    47867 Dec 20 12:16 casent0227995_p_1_med.jpg
+-rw-r--r--     1 apache apache 11658598 Dec 20 12:16 CASENT0227995_P.tif
+
+./images/casent0227996:
+total 37480
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   609412 Dec 20 12:17 casent0227996_d_1_high.jpg
+-rw-r--r--     1 apache apache    28208 Dec 20 12:17 casent0227996_d_1_low.jpg
+-rw-r--r--     1 apache apache    48290 Dec 20 12:17 casent0227996_d_1_med.jpg
+-rw-r--r--     1 apache apache 12329684 Dec 20 12:17 CASENT0227996_D.tif
+-rw-r--r--     1 apache apache   452427 Dec 20 12:18 casent0227996_h_1_high.jpg
+-rw-r--r--     1 apache apache    33727 Dec 20 12:18 casent0227996_h_1_low.jpg
+-rw-r--r--     1 apache apache    67980 Dec 20 12:18 casent0227996_h_1_med.jpg
+-rw-r--r--     1 apache apache  8861938 Dec 20 12:18 CASENT0227996_H.tif
+-rw-r--r--     1 apache apache  1205384 Dec 20 12:25 casent0227996_l_1_high.jpg
+-rw-r--r--     1 apache apache    33781 Dec 20 12:25 casent0227996_l_1_low.jpg
+-rw-r--r--     1 apache apache    70164 Dec 20 12:25 casent0227996_l_1_med.jpg
+-rw-r--r--     1 apache apache  1477084 Dec 20 12:25 CASENT0227996_L.jpg
+-rw-r--r--     1 apache apache   597322 Dec 20 12:18 casent0227996_p_1_high.jpg
+-rw-r--r--     1 apache apache    27378 Dec 20 12:18 casent0227996_p_1_low.jpg
+-rw-r--r--     1 apache apache    44397 Dec 20 12:18 casent0227996_p_1_med.jpg
+-rw-r--r--     1 apache apache 11839704 Dec 20 12:18 CASENT0227996_P.tif
+
+./images/casent0227997:
+total 39020
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   627666 Dec 20 12:19 casent0227997_d_1_high.jpg
+-rw-r--r--     1 apache apache    27266 Dec 20 12:19 casent0227997_d_1_low.jpg
+-rw-r--r--     1 apache apache    44646 Dec 20 12:19 casent0227997_d_1_med.jpg
+-rw-r--r--     1 apache apache 12109282 Dec 20 12:19 CASENT0227997_D.tif
+-rw-r--r--     1 apache apache   499166 Dec 20 12:17 casent0227997_h_1_high.jpg
+-rw-r--r--     1 apache apache    33658 Dec 20 12:17 casent0227997_h_1_low.jpg
+-rw-r--r--     1 apache apache    65858 Dec 20 12:17 casent0227997_h_1_med.jpg
+-rw-r--r--     1 apache apache  8872356 Dec 20 12:17 CASENT0227997_H.tif
+-rw-r--r--     1 apache apache  1418161 Dec 20 12:25 casent0227997_l_1_high.jpg
+-rw-r--r--     1 apache apache    32751 Dec 20 12:25 casent0227997_l_1_low.jpg
+-rw-r--r--     1 apache apache    66547 Dec 20 12:25 casent0227997_l_1_med.jpg
+-rw-r--r--     1 apache apache  1785524 Dec 20 12:25 CASENT0227997_L.jpg
+-rw-r--r--     1 apache apache   556323 Dec 20 12:17 casent0227997_p_1_high.jpg
+-rw-r--r--     1 apache apache    28260 Dec 20 12:17 casent0227997_p_1_low.jpg
+-rw-r--r--     1 apache apache    46696 Dec 20 12:17 casent0227997_p_1_med.jpg
+-rw-r--r--     1 apache apache 13084762 Dec 20 12:17 CASENT0227997_P.tif
+
+./images/casent0227998:
+total 42316
+drwxr-xr-x     2 apache apache     4096 Dec 20 12:25 .
+drwxrwxrwx 15332 antweb antweb   536576 Dec 29 16:27 ..
+-rw-r--r--     1 apache apache   657535 Dec 20 12:16 casent0227998_d_1_high.jpg
+-rw-r--r--     1 apache apache    28914 Dec 20 12:16 casent0227998_d_1_low.jpg
+-rw-r--r--     1 apache apache    48160 Dec 20 12:16 casent0227998_d_1_med.jpg
+-rw-r--r--     1 apache apache 12783212 Dec 20 12:16 CASENT0227998_D.tif
+-rw-r--r--     1 apache apache   590277 Dec 20 12:19 casent0227998_h_1_high.jpg
+-rw-r--r--     1 apache apache    30841 Dec 20 12:19 casent0227998_h_1_low.jpg
+-rw-r--r--     1 apache apache    55981 Dec 20 12:19 casent0227998_h_1_med.jpg
+-rw-r--r--     1 apache apache 11842312 Dec 20 12:19 CASENT0227998_H.tif
+-rw-r--r--     1 apache apache  1180464 Dec 20 12:25 casent0227998_l_1_high.jpg
+-rw-r--r--     1 apache apache    35930 Dec 20 12:25 casent0227998_l_1_low.jpg
+-rw-r--r--     1 apache apache    74466 Dec 20 12:25 casent0227998_l_1_med.jpg
+-rw-r--r--     1 apache apache  1844702 Dec 20 12:25 CASENT0227998_L.jpg
+-rw-r--r--     1 apache apache   638004 Dec 20 12:17 casent0227998_p_1_high.jpg
+-rw-r--r--     1 apache apache    28170 Dec 20 12:17 casent0227998_p_1_low.jpg
+-rw-r--r--     1 apache apache    47170 Dec 20 12:17 casent0227998_p_1_med.jpg
+-rw-r--r--     1 apache apache 12781608 Dec 20 12:17 CASENT0227998_P.tif

@@ -1,0 +1,276 @@
+This document, compiled by mark, colates the technical info received from Dave Thau via email.  
+(Thanks Dave!)
+
+-------------
+
+Hello Thau,
+     Why does the taxon_country table have a primary key on the taxon_name?
+     I am waiting to hear from you on these points...
+
+
+
+  
+For the purpose of raising quality, here are listed worrisome comments in the code:
+
+UploadAction.java:1804
+        // Somewhat goofy way to match biota field names to  
+        // the database schema.  There's a better way to do this, but I don't have time now!
+UploadAction.java:2526
+        // this is a lame hack - if this is the Taxon table, go ahead and update it
+     * Mark note.  Jan 3, 2011.  Yes and it did not work.  Resolved.
+UploadAction.java:231
+                    // do this 3 times because sometimes there are chains of synonyms - this is sort of a hack
+                    // but should be ok...
+
+These bits of code are interested:
+        ancFile.setTitle(ancFile.getTitle());
+        ancFile.setContents(ancFile.getContents());
+
+-------------
+
+--- how goes it?: Jun 7th, 2010
+
+>   We don't need the struts2-core jar file, hibernate.log, com/zonageek/jpeg
+> stuff, org/c4s/algorithm stuff?
+
+Hold of on axing the zonageek stuff.  I'm pretty sure we don't need
+it, but I need to double check.  The rest, yeah, don't need.
+
+I'm pretty sure the whole TypeSearch thing is defunct and can be
+removed.  See if you can find evidence to the contrary.
+
+There are two design mistakes I made early in the project that may
+make you sad:
+
+1.  Maybe not a design mistake, but the way search works now is not
+very easy to change and probably a bit confusing.  If you can get your
+head around how that works, everything else is straightfoward.
+
+2.  The biggest mistake I made is that taxon_name, which is the
+primary key on the Taxon table upon which much of the code pivots, is
+a string of the form "SubfamilyGenus species"  There are methods in
+Utility.java for forming this name, but it turned out to be the source
+of much annoyance for me.  For example, to find the specimens for a
+species, you join on the taxon_name field in both tables and the
+strings have to match.  The Taxon information comes from the authority
+files, and the specimen information comes from the biota file, and if
+the names in those sources don't match, the specimens won't show up on
+the species page.
+
+I did an analysis of how much faster the site would be if taxon_name
+was an integer rather than a string, and I didn't get a huge boost, so
+I left it that way.  However, it's been a constant source of
+irritation for me.
+
+
+
+--- File System: Jun 9th, 2010
+
+The problem is there are several installation specific properties in
+there - paths that vary depending on whether it's on your laptop or
+deployed on antweb_test or in the main application.
+- Hide quoted text -
+
+>I am guessing that some uncommitted changes
+> remain in your dev copy?  Also it seemed that I needed the
+> group_gen_inc.jsp.  Below is a list of all of the files I have downloaded
+> and added to my distribution in order to make it appear complete.
+> images/
+>   casent0039799
+>   casent0178718
+> web/
+>   arizona_body.jsp
+>   arizona.jsp
+>   group_gen_inc.jsp
+>   recentImages_gen_inc.jsp
+>   statistics.jsp
+>   world.jsp
+>   world-body.jsp
+>   arizona/
+>     150CASENT0102784_Hw.jpg
+>     CASENT0102816_Hw.jpg
+>     CASENT0421379_Hw.jpg
+>     Stef-and-uncle-bob.jpg
+>     arizona_map.gif
+>   homepage/
+>     antcourse_plug2.jpg
+>   WEB-INF/
+>     classes/
+>       ApplicationResources.properties
+>       ProjectResources.properties
+
+Right.  These are all "dynamic" elements that may change if Brian
+updates the home page, or someone updates arizona - for that reason
+they don't belong in CVS.
+
+> Why is there a build directory in the CVS tree?
+
+No good reason.  It was an accident.
+
+> Having ApplicationResource.properties in the source tree, and modified in a
+> local deployment creates some risk in deploying to production, no?
+
+No, because it's not in CVS.
+
+> Why is the WEB-INF dir not in the web dir?
+
+Hmmm..... it *is* when it gets deployed.... I feel like this was the
+setup of one of the early example tomcat applications...
+
+> Is it the case that you always deploy to antweb and luke always deploys to antweb_test?
+
+No, I'll deploy to antweb_test to test things out.
+
+> What is the backup strategy?  Is the machine backed up?  Is CVS also copied
+> off site?  How about the images (/data/antweb/images/).  What else?
+
+NO BACKUP STRATEGY!  You would do a HUGE SERVICE to the site to set
+one up.  I've just been doing regular database dumps and taring up the
+code every once and a while.  The original TIF specimen images in
+/data/antweb/images/ are all backed up somewhere, but the rest of the
+images are not.
+
+
+
+--- Hey: Jun 8th, 2010
+
+> Is the localityMap stuff not used?  Is this prototype stuff?
+>     web/localityMap.jsp
+>     web/localityMap-body.jsp
+>     src/org/calacademy/antweb/MapLocality.java
+>     I see that http://www.antweb.org/localityMap.jsp returns a madagascar
+> map...
+
+Yeah, that's probably prototype stuff - I'm not sure what shape it's in.
+
+> Do you know that the arizona-body.jsp that you sent me had a bad
+> arizona_map.gif link in it?  Looks OK on the live site.  Not important.
+
+Automatic map generation was the last feature I added and there was a
+bug that lead to that.  If you cvs update and then use the curator
+tools to update the arizona home page, it should be fixed.
+
+
+
+
+
+Our Chat from Jun 17
+
+
+ me:  Permission denied on:
+[mark@antweb antweb]$ ls -al /data/antweb/documentation/Species_list_example.xls
+rw-rw-r- 1 thau thau 199168 2010-03-26 12:11 /data/antweb/documentation/Species_list_example.xls
+Perhaps I should "sudo ant deploy"
+ Dave:  no....
+check the group on that file
+oops, you did it already, no?
+ me:  yes/
+ Dave:  I'm not convinced that directory is really valid ...
+I think it's vestigal.
+
+ Dave:  That documents directory can just be zapped.  It's old news.  Now it's covered by antweb.org/homepage/documentation.jsp and other stuff in antweb.org/homepage
+On another front - you just deployed something that I 1/2 completed and you should probably do the other 1/2
+
+ Dave:  Ok, here it is.
+If you look under browse, in Global, you'll see there's something called "Bolton's Catalog" or some such.  See that?
+ me:  Yes, the Bolton World Catalog?
+ Dave:  Yes
+Ok, that's a "project" for all the "valid" ant species according to Bolton's World Catalog.
+Now, there are a ton of ants that are in antweb but are not valid according to bolton.
+They're all like Camponotus mg02,  Camponotus undet, Aphaenogaster blf3, and such
+We had a plan for another entry in the "global" section under browse called something like "All ants" or something... I can't remember the wording.  Luke would know
+Anyway, your task, should you choose to accept it, is to add that "All ants" to the global section of browse.
+It's mostly stubbed in throughout the code.
+
+ me:  Hmm.  I don't quite follow.  It could wait for a better understanding?  There are a few stacktraces...
+java.util.MissingResourceException: Can't find resource for bundle java.util.PropertyResourceBundle, key Eurasianants.locality
+       at java.util.ResourceBundle.getObject(ResourceBundle.java:402)
+       at java.util.ResourceBundle.getString(ResourceBundle.java:362)
+       at org.calacademy.antweb.Map.setPoints(Map.java:222)
+       at org.calacademy.antweb.Map.<init>(Map.java:55)
+ Dave:  That's due to Brian not putting a locality in for the eurasian ants.
+Did you deploy any new features or was it all infrastructure cleansing?
+
+ me:  I'll send you the release notes.  Pretty much all infrasture cleansing.
+ Dave:  That's great! You're making it a much better place.
+
+ Dave:  So, this thing I was just talking about - search for "allants" in the code.  I think all you need to do is add a new project under the "global" biogeographic region named "all" and give it a title like "All Antweb" or whatever the hell the wording was, and it'll work.
+Basically, the idea is that we want a project such that when someone clicks on the link to get all species, they get ALL species in antweb including Camponotus mg02.  Right now there's no way to do that.
+ me:  Sounds good.  Is that through the master administrator?
+ Dave:  Yep.  You can do it with Brian and Luke - that would be a nice togetherly thing to do.
+Ooooo, and there's some art!
+ Sent at 8:28 PM on Thursday
+ Dave:  I'm not 100% sure I got all the code right.  It was the last thing I did and I did it poorly and in haste and didn't even finish it.
+But, it's pretty close.  It'll just take some tweaking I'd bet.
+ me:  You refer to the "All Ants" bit?
+ Dave:  Yes... not the whole site!
+
+The other thing I did in haste as I was leaving is for some reason there are two // after data/antweb.  It wasn't that way a month ago.  I think it's something in the ApplicationProperties file - like the document root or something.  It's annoying and I wish it were fixed.
+I'm not sure how it got that way, or what the repercussions of fixing it will be.
+You see what I mean, though, eh?
+
+Any idea how to replicate the PropertyResourceBundle, key Eurasianants.locality
+thing, or how to fix it?
+You said Brian needs to add it - are we sure?
+
+Hmm... looks like there's a problem with the UI on http://www.antweb.org/antweb_admin.jsp
+There's no way to fix the locality problem...
+for the eurasian ants
+
+Hmm... actually, the locality is fine.
+Hmm....
+
+Oh.. ok the problem is for some reason whatever threw that stacktrace was looking for Eurasianants, not eurasianants
+I know not why
+
+---
+
+Me:
+  Brian wonders, "if I simply need to save the files as html and
+then you can run the code."  I got the impression for our exchanges
+that the process is a bit more extensive and worth going over.
+
+Dave:
+1. convert all to html
+2.  there are 2 files that capture genus/subfamily info that need to
+be combined (cat a b > c)
+3.  then you copy the files over to a special directory
+4.  then you can run the code
+5.  you get an excel file that's just an authority file that brian can look at
+6.  when he's happy with it, you upload the authority file to world ants
+
+I'll need to poke around cvs to get the right directory for #3 and the
+right path for #4
+
+The annoying and most time consuming thing is the html conversion
+
+------------------------
+
+Thau visits the office Nov 11, 8pm
+
+Can we get mod_jk working?
+  antweb
+  upload_images
+
+Questions:
+  What's this in the struts action?
+    parameter="getChildImages;get"
+
+Description
+  Description table.  What will it take to remove proj_name from description records?  Hidden snafus
+  Integrate notes and taxonomic notes.
+  Fossil features.
+  Can we review description.txt to verify proj_name and title data?
+
+Review uErrors.txt
+
+Review ERD
+
+MySQL Root?  Nope.
+
+
+
+
+
+
+

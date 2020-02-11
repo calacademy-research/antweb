@@ -1,0 +1,13 @@
+
+Change conf/server.xml to have in the <host> block:
+<Context path="" docBase="/data/antweb"/>  <!-- was debug="0" -->
+
+Edit etc/AppResProd.properties to have:
+#site.domain=www.antweb.org
+site.domain=10.2.22.30
+
+Edit build.properties to have:
+#antweb.home=/usr/local/tomcat/webapps/antweb
+antweb.home=/data/antweb
+
+

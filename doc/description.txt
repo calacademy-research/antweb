@@ -1,0 +1,1072 @@
+
+==== Description ====
+
+Notes left as notes for now.  Because they overlap with comments.  Would be deleted.
+
+=== Data ===
+
+Note: This genus page for louisiana displays the worldants taxonomichistory.  Oh.
+  http://www.antweb.org/description.do?name=pachycondyla&project=louisianaants&rank=genus
+
+Last record of /Users/macpro/dev/apache-tomcat-5.5.27/webapps/antweb/fossil/fossilants_authority.txt are:
+  Dolichoderinae	Zherichiniini	Zherichinius	rapax	Dlussky, 1988	U.s.a.	true	true			<p class=MsoNormal style='margin-left:.5in;text-align:justify;text-indent:-.5in'>*<span style='color:red'><b><i>rapax</i></b></span><i>. *Zherichinius rapax</i><span style='font-style:normal'> Dlussky, 1988: 57, figs. 4, 5 (w.) RUSSIA (Paleocene).</span></p>
+  Fails with: MySQLIntegrityConstraintViolationException: Duplicate entry 'dolichoderinaezherichinius rapax-taxonomichistory' for key 'taxon_name'
+  But it did NOT have a title in the description table.  Must exist twice in the fossilants_authority.txt?
+  No.  Just once.  Insert code must be called twice?
+  Web visible here: http://localhost/antweb/description.do?rank=species&name=rapax&genus=zherichinius&project=fossilants
+    Slightly different than extinct.xls (which contains mention of RUSSIA at the end)
+  Mysql: select * from description_edit where taxon_name like 'dolichoderinaezherichinius rapax';
+    | dolichoderinaezherichinius rapax      | taxonomichistory | <p class=MsoNormal style='margin-left:.5in;text-align:justify;text-indent:-.5in'><span style='font-size:12.0pt'><b>&#8224; <i>rapax</span></i></b>. &#8224; <i>Zherichinius rapax</i> Dlussky, 1988: 57, figs. 4, 5 (w.).</span></p>           |   58842 | 2011-01-24 15:25:18 |     2712 |
+  The record (with Russion) did exist in the description table.
+  As did speciesauthordate, 
+    proj_name - these are porposefully removed.
+    Comments - haven't we moved these yet?  Again?  What happens if there are already notes?
+    taxon_name - what is this good for?  dolichoderinaezherichinius rapax | taxon_name        | dolichoderinaezherichinius rapax
+      Why have a taxon name description record indexed on taxon_name.  Is it for name changes?  Who knows?
+
+To do.  Move all notes to comments and let curators deal with them.  If there is already a comment, 
+
+Current strategy loses data if we use alter ignore
+
+mysql> select * from description where taxon_name = 'myrmicinaetetramorium pacificum' and (title = "notes" or title = "comments");
++---------------------------------+----------+----------------------------------------------+-----------+-----------------+
+| taxon_name                      | title    | content                                      | rankfocus | proj_name       |
++---------------------------------+----------+----------------------------------------------+-----------+-----------------+
+| myrmicinaetetramorium pacificum | comments | Introduced species. CA record: Smith (1943). | NULL      | calants         |
+| myrmicinaetetramorium pacificum | notes    | (Dutch vernacular name: Pacifische zaadmier) | NULL      | netherlandsants |
++---------------------------------+----------+----------------------------------------------+-----------+-----------------+
+2 rows in set (0.00 sec)
+
+mysql> select * from description_edit where taxon_name = 'myrmicinaetetramorium pacificum' and (title = "notes" or title = "comments");
++---------------------------------+----------+----------------------------------------------+---------+---------------------+----------+
+| taxon_name                      | title    | content                                      | edit_id | created             | taxon_id |
++---------------------------------+----------+----------------------------------------------+---------+---------------------+----------+
+| myrmicinaetetramorium pacificum | comments | Introduced species. CA record: Smith (1943). |    7223 | 2011-01-24 15:25:18 |    22059 |
++---------------------------------+----------+----------------------------------------------+---------+---------------------+----------+
+1 row in set (0.07 sec)
+
+
+===
+
+Jan 10.  Now, finish notes integration.  Bolton upload Q's.
+
+* Bolton is the exception (and Plazi).  Description records are created during upload process.
+* Only copy certain record types over to description_edit
+* Home page user-interface widget to report recent edits
+    Other user interface for description_hist?  Later.  Add user to description hist.
+  integrate taxon_id with Taxon so that they can be included in description_edit records.  
+    * Must come later.  Records are re-loaded
+
+* Lots of unfound Plazi records.  Until we iron out our names and know the misspellings, etc...
+* Strange description edit records... extra fields of the authority files.
+  Test on missouri, illinois, costarica, california
+* Similar Species - We will request this field in authority files and down the road will make it into 
+  description record.  A special kind in that it will have smarts associated with it.
+  Maybe a comma separated list that will be parsed to create a genus+species hyperlink list.
+
+Sample: /description.do?genus=camponotus&name=atriceps&rank=species&project=worldants
+
+According to documentation, these are the Editable title records: 
+  (See Page 2 of How to Develop a Regional Species List under Antweb documentation).
+      Distribution, Identification, Similarspecies, Biology, Taxonomic Notes, References
+        TextAuthor author, RevDate, Comments
+
+Make notes into taxanomic notes or comments.
+  Move them all to comments.  And curators can move them to taxanomicnotes as they like.
+
+remove rankfocus
+
+
+
+Description titles as now implemented:
+
+  Order  title                Heading                    Source     Editable    Displayed
+  -----  -----                -------                    ------     --------    ---------
+  1      textauthor           Author                     
+  2      revdate              Revision Date(s)           
+  3      distribution         Distribution               Authority
+  4      identification       Identification             
+  5      biology              Biology - Natural History  
+  6      comments             Comments                   
+  7      notes                Notes                      Authority
+  8      taxanomicnotes       Taxanomic Notes            
+  9      taxonomichistory     Taxonomic History          Bolton     No          Yes
+  10     taxonomictreatment   Taxonomic Treatment        Plazi      No          Yes
+  11     references           References                 Authority  Yes         Yes
+
+Also, there are currently these descriptions for our atriceps sample
+         taxon_name           x                          Authority  No          ?
+         proj_name            x                          Authority  Removed     No
+         speciesauthordate    ?                          ?          ?           No
+         originalcombination  ?                          ?          ?           No  - Bolton, not used.
+         available            ?                          ?          ?           No
+
+Outstanding description titles (not understood):
+  ansp
+  author
+  authorreference
+  authoryearpage
+  available
+  bc
+  bcs
+  biotaspeciescodes
+  citation
+  cmnh
+  collection
+  completenameaurthordate
+  currentvalidname - Bolton, not used.
+  date
+  endemic  - Bolton, not used.
+  genusauthordate
+  intr.
+  introduc
+  introduced - boolean.  Authorities asked to fill in.
+  lit.
+  mg.
+  nc
+  nomenclatureanddistributionnotes
+  origin
+  originalcombination
+  psuc
+  revdate
+  sc
+  sp.andsubmal
+  speciesauthordate - Bolton, not used
+  speciesauthorname - Bolton, not used
+  subfamilyauthordate
+  subsp.mal
+  subspmg
+  taxa
+  total
+  tribeauthordate
+  typelocality - Bolton, not used.
+  typematerial
+  unpublishednotes
+  usnm
+  zfmkcentralkenya
+  zfmkcoastalkenya
+  zfmkwesternkenya
+
+
+Example
+-------
+* all fields displayed, but most content omitted:
+mysql> select taxon_name, title, rankfocus,  edit_id,  created, taxon_id, content from description_edit where taxon_name = 'formicinaecamponotus atriceps';
++-------------------------------+---------------------+-----------+---------+---------------------+----------+-----------
+| taxon_name                    | title               | rankfocus | edit_id | created             | taxon_id | content
++-------------------------------+---------------------+-----------+---------+---------------------+----------+-----------
+| formicinaecamponotus atriceps | available           | NULL      |   57263 | 2010-12-31 16:16:32 |     4193 | false
+| formicinaecamponotus atriceps | biology             | NULL      |   23583 | 2010-12-31 16:16:32 |     4193 | <b>Natural Hist...
+| formicinaecamponotus atriceps | biotaspeciescodes   | NULL      |   36763 | 2010-12-31 16:16:32 |     4193 | Camponotus.atriceps 
+| formicinaecamponotus atriceps | distribution        | NULL      |   23582 | 2010-12-31 16:16:32 |     4193 | <P>Throughout...
+| formicinaecamponotus atriceps | originalcombination | NULL      |   57265 | 2010-12-31 16:16:32 |     4193 | Formica atriceps  
+| formicinaecamponotus atriceps | proj_name           | NULL      |   23584 | 2010-12-31 16:16:32 |     4193 | costaricaants (after "ignore")
+| formicinaecamponotus atriceps | references          | NULL      |   23586 | 2010-12-31 16:16:32 |     4193 | <P>Hashmi,
+| formicinaecamponotus atriceps | speciesauthordate   | NULL      |   23588 | 2010-12-31 16:16:32 |     4193 | (F. Smith 1858)   
+| formicinaecamponotus atriceps | taxonomichistory    | NULL      |   57260 | 2010-12-31 16:16:32 |     4193 | <p class=MsoNormal...
+| formicinaecamponotus atriceps | taxonomictreatment  | NULL      |  321964 | 2010-12-31 16:16:32 |     4193 | <p></p><b> <a href="http://antbase.org...
+| formicinaecamponotus atriceps | taxon_name          | NULL      |   23585 | 2010-12-31 16:16:32 |     4193 | formicinaecamponotus atriceps
+| formicinaecamponotus atriceps | textauthor          | NULL      |   23587 | 2010-12-31 16:16:32 |     4193 | John T. Longino  
++-------------------------------+---------------------+-----------+---------+---------------------+----------+
+
+
+Questions for Thau
+  Is Upload a Authority file the only way to populate description records?
+  
+
+Description table
+  We would like to 
+    1) Remove proj_name.  This is a design shift so that each description records pertains to 
+       a species, not a species in a certain project.
+    2) Create a non-intelligent primary key that uniquely identifies a species record.
+    3) Remove duplicate records (multiples of proj_name)
+    4) Explorations documented in description.txt should be resolved.
+  Currently the primary key is (effectively, for some records) taxon_name, title, proj_name
+    For instance - agroecomyrmecinaetatuidris tatusia, biology, costaricaants
+
+
+Features, to do:
+  Integrate notes and taxonomic notes.
+  Fossil features.
+
+
+
+
+
+Description Edit
+----------------
+
+I see that the description table is overloaded with many functions.  For instance, 
+
+The Plazi data is stored as project_name:worldants and title:taxonomictreatment.
+
+The Bolton data is stored as title:taxonomichistory with project_names including africanants, australiantants, eurasianants, fossilants, malagasyants, nearcticants, neotropicalants, pacificislandsants, southeastasiaants, worldants      
+See below for counts.
+
+=== Table Definitions and Queries ===
+
+mysql> describe description;
++------------+--------------+------+-----+---------+-------+
+| Field      | Type         | Null | Key | Default | Extra 
++------------+--------------+------+-----+---------+-------+
+| taxon_name | varchar(128) | NO   | MUL | NULL    |       |
+| title      | varchar(32)  | NO   |     | NULL    |       |
+| content    | longtext     | YES  |     | NULL    |       |
+| rankfocus  | varchar(32)  | YES  |     | NULL    |       |
+| proj_name  | varchar(32)  | NO   |     | NULL    |       |
++------------+--------------+------+-----+---------+-------+
+5 rows in set (0.00 sec)
+
+
+
+description_edit table
+Total records: 58235
+mysql> select title, count(*) from description_edit group by title;
++--------------------+----------+
+| title              | count(*) |
++--------------------+----------+
+| biology            |     1603 |
+| comments           |      468 |
+| distribution       |     5202 |
+| identification     |       22 |
+| notes              |      743 |
+| references         |      419 |
+| revdate            |       23 |
+| taxonomichistory   |    46531 |
+| taxonomictreatment |     3224 |
++--------------------+----------+
+9 rows in set (0.18 sec)
+
+
+description Table.
+Total records: 330943
+There are 57 distinct titles.  Here they are:
+mysql> select title, count(*) from description group by title;
++----------------------------------+----------+
+| title                            | count(*) |
++----------------------------------+----------+
+|                                  |      218 |
+| ansp                             |       56 |
+| author                           |      869 |
+| authorreference                  |      411 |
+| authoryearpage                   |      149 |
+| available                        |    45666 |
+| bc                               |      158 |
+| bcs                              |       97 |
+| biology                          |     1603 |
+| biotaspeciescodes                |      422 |
+| citation                         |      136 |
+| cmnh                             |        5 |
+| collection                       |       31 |
+| comments                         |      124 |
+| completenameaurthordate          |      237 |
+| currentvalidname                 |     2254 |
+| date                             |       66 |
+| distribution                     |     5378 |
+| endemic                          |      156 |
+| genusauthordate                  |       85 |
+| identification                   |       22 |
+| intr.                            |       99 |
+| introduc                         |       16 |
+| introduced                       |      215 |
+| lit.                             |       30 |
+| mg.                              |      237 |
+| nc                               |      174 |
+| nomenclatureanddistributionnotes |       30 |
+| notes                            |      819 |
+| origin                           |      214 |
+| originalcombination              |    43896 |
+| proj_name                        |    61351 |
+| psuc                             |       45 |
+| references                       |      419 |
+| revdate                          |       22 |
+| sc                               |      236 |
+| sp.andsubmal                     |      172 |
+| speciesauthordate                |    50254 |
+| speciesauthorname                |       83 |
+| subfamilyauthordate              |       85 |
+| subsp.mal                        |       27 |
+| subspmg                          |       27 |
+| taxa                             |      595 |
+| taxonomichistory                 |    46525 |
+| taxonomicnotes                   |      565 |
+| taxonomictreatment               |     3223 |
+| taxon_name                       |    61351 |
+| textauthor                       |      849 |
+| total                            |       84 |
+| tribeauthordate                  |       85 |
+| typelocality                     |      338 |
+| typematerial                     |      331 |
+| unpublishednotes                 |       38 |
+| usnm                             |       46 |
+| zfmkcentralkenya                 |       54 |
+| zfmkcoastalkenya                 |       26 |
+| zfmkwesternkenya                 |      239 |
++----------------------------------+----------+
+57 rows in set (1.07 sec)
+
+mysql> select proj_name, count(*) from description group by proj_name;
++---------------------+----------+
+| proj_name           | count(*) |
++---------------------+----------+
+| africanants         |    37204 |
+| alabama ants        |      493 |
+| alabamaants         |      589 |
+| albertaants         |      355 |
+| arizonaants         |     1022 |
+| atolants            |     1392 |
+| australianants      |      430 |
+| australiantants     |    11673 |
+| austriaants         |      482 |
+| bajaants            |      963 |
+| belgiumants         |      450 |
+| borneoants          |     1180 |
+| britishcolumbiaants |      315 |
+| calants             |     3001 |
+| coloradoants        |      546 |
+| comorosants         |      304 |
+| costaricaants       |     5855 |
+| croatiaants         |      642 |
+| czechants           |      602 |
+| eurasianants        |    18928 |
+| fijiants            |      893 |
+| floridaants         |      990 |
+| fossilants          |     4533 |
+| galapagosants       |      327 |
+| hawaiiants          |      276 |
+| illinoisants        |      723 |
+| indiaants           |     3172 |
+| kenyaants           |     2582 |
+| louisianaants       |      512 |
+| macaronesiaants     |      434 |
+| madants             |     3917 |
+| malagasyants        |     3143 |
+| mauritiusants       |      314 |
+| mayotteants         |      293 |
+| micronesiaants      |      402 |
+| mississippiants     |      625 |
+| missouriants        |      858 |
+| nearcticants        |     8151 |
+| neotropicalants     |    33170 |
+| netherlandsants     |      629 |
+| newguineaants       |     2580 |
+| newzealandants      |      316 |
+| none                |     2342 |
+| ohioants            |      724 |
+| pacificislandsants  |     2157 |
+| paraguayants        |     2241 |
+| pennsylvaniaants    |     1048 |
+| philippinesants     |     1833 |
+| reunionants         |      222 |
+| serbiaants          |      743 |
+| seychellesants      |      466 |
+| sloveniaants        |      693 |
+| southeastasiaants   |    35774 |
+| texasants           |     1167 |
+| tokelauants         |      130 |
+| utahants            |      544 |
+| worldants           |   125593 |
++---------------------+----------+
+57 rows in set (0.84 sec)
+
+mysql> select proj_name, title, count(*) from description group by proj_name, title;
+...
+| alabama ants        | introduced                       |       16 |
+| alabama ants        | proj_name                        |      160 |
+| alabama ants        | speciesauthordate                |      157 |
+| alabama ants        | taxon_name                       |      160 |
+...
+336 rows in set
+
+
+mysql> select * from description where proj_name = 'alabamaants' and title = "introduced";
++---------------------------------------+------------+---------+-----------+-------------+
+| taxon_name                            | title      | content | rankfocus | proj_name   |
++---------------------------------------+------------+---------+-----------+-------------+
+| dolichoderinaelinepithema humile      | introduced | I       | NULL      | alabamaants |
+| ectatomminaegnamptogenys triangularis | introduced | I       | NULL      | alabamaants |
+| formicinaebrachymyrmex musculus       | introduced | I       | NULL      | alabamaants |
+| formicinaeparatrechina longicornis    | introduced | I       | NULL      | alabamaants |
+| myrmicinaecyphomyrmex rimosus         | introduced | I       | NULL      | alabamaants |
+| myrmicinaepyramica margaritae         | introduced | I       | NULL      | alabamaants |
+| myrmicinaestrumigenys silvestrii      | introduced | I       | NULL      | alabamaants |
+| myrmicinaetemnothorax longispinosus   | introduced | I       | NULL      | alabamaants |
+| myrmicinaepheidole moerens            | introduced | I       | NULL      | alabamaants |
+| myrmicinaepheidole obscurithorax      | introduced | I       | NULL      | alabamaants |
+| myrmicinaemonomorium pharaonis        | introduced | I       | NULL      | alabamaants |
+| myrmicinaesolenopsis invicta          | introduced | I       | NULL      | alabamaants |
+| myrmicinaesolenopsis richteri         | introduced | I       | NULL      | alabamaants |
+| myrmicinaetetramorium bicarinatum     | introduced | I       | NULL      | alabamaants |
+| ponerinaeodontomachus brunneus        | introduced | I       | NULL      | alabamaants |
+| ponerinaeodontomachus ruginodis       | introduced | I       | NULL      | alabamaants |
++---------------------------------------+------------+---------+-----------+-------------+
+16 rows in set (1.78 sec)
+
+
+Bolton breakout.  Notice that the sum of ants (25978) is greater than worldants (20547).
+
+mysql> select proj_name, title, count(*) from description group by proj_name, title having title = "taxonomichistory";
++--------------------+------------------+----------+
+| proj_name          | title            | count(*) |
++--------------------+------------------+----------+
+| africanants        | taxonomichistory |     6228 |
+| australiantants    | taxonomichistory |     1974 |
+| eurasianants       | taxonomichistory |     3277 |
+| fossilants         | taxonomichistory |      637 |
+| malagasyants       | taxonomichistory |      526 |
+| nearcticants       | taxonomichistory |     1382 |
+| neotropicalants    | taxonomichistory |     5564 |
+| pacificislandsants | taxonomichistory |      363 |
+| southeastasiaants  | taxonomichistory |     6027 |
+| worldants          | taxonomichistory |    20547 |
++--------------------+------------------+----------+
+10 rows in set (1.37 sec)
+
+
+Finally here is description table grouped by proj_name and title...
+
+mysql> select proj_name, title, count(*) from description group by proj_name, title;
++---------------------+----------------------------------+----------+
+| proj_name           | title                            | count(*) |
++---------------------+----------------------------------+----------+
+| africanants         | available                        |     6212 |
+| africanants         | currentvalidname                 |      115 |
+| africanants         | originalcombination              |     6096 |
+| africanants         | proj_name                        |     6228 |
+| africanants         | speciesauthordate                |     6097 |
+| africanants         | taxonomichistory                 |     6228 |
+| africanants         | taxon_name                       |     6228 |
+| alabama ants        | introduced                       |       16 |
+| alabama ants        | proj_name                        |      160 |
+| alabama ants        | speciesauthordate                |      157 |
+| alabama ants        | taxon_name                       |      160 |
+| alabamaants         | introduced                       |       16 |
+| alabamaants         | proj_name                        |      208 |
+| alabamaants         | speciesauthordate                |      157 |
+| alabamaants         | taxon_name                       |      208 |
+| albertaants         | biology                          |       25 |
+| albertaants         | distribution                     |       34 |
+| albertaants         | endemic                          |        2 |
+| albertaants         | introduced                       |        1 |
+| albertaants         | notes                            |        3 |
+| albertaants         | proj_name                        |      103 |
+| albertaants         | speciesauthordate                |       84 |
+| albertaants         | taxon_name                       |      103 |
+| arizonaants         | distribution                     |      182 |
+| arizonaants         | notes                            |       76 |
+| arizonaants         | proj_name                        |      382 |
+| arizonaants         | taxon_name                       |      382 |
+| atolants            | proj_name                        |      696 |
+| atolants            | taxon_name                       |      696 |
+| australianants      | proj_name                        |      215 |
+| australianants      | taxon_name                       |      215 |
+| australiantants     | available                        |     1965 |
+| australiantants     | currentvalidname                 |      144 |
+| australiantants     | originalcombination              |     1821 |
+| australiantants     | proj_name                        |     1974 |
+| australiantants     | speciesauthordate                |     1821 |
+| australiantants     | taxonomichistory                 |     1974 |
+| australiantants     | taxon_name                       |     1974 |
+| austriaants         | introduced                       |        8 |
+| austriaants         | proj_name                        |      170 |
+| austriaants         | speciesauthordate                |      134 |
+| austriaants         | taxon_name                       |      170 |
+| bajaants            | bc                               |      158 |
+| bajaants            | bcs                              |       97 |
+| bajaants            | distribution                     |      187 |
+| bajaants            | endemic                          |       49 |
+| bajaants            | intr.                            |        9 |
+| bajaants            | notes                            |        1 |
+| bajaants            | proj_name                        |      231 |
+| bajaants            | taxon_name                       |      231 |
+| belgiumants         | biology                          |       26 |
+| belgiumants         | distribution                     |       85 |
+| belgiumants         | introduced                       |        9 |
+| belgiumants         | notes                            |        9 |
+| belgiumants         | proj_name                        |      119 |
+| belgiumants         | speciesauthordate                |       83 |
+| belgiumants         | taxon_name                       |      119 |
+| borneoants          | proj_name                        |      590 |
+| borneoants          | taxon_name                       |      590 |
+| britishcolumbiaants | distribution                     |       18 |
+| britishcolumbiaants | proj_name                        |      107 |
+| britishcolumbiaants | speciesauthorname                |       83 |
+| britishcolumbiaants | taxon_name                       |      107 |
+| calants             | biology                          |       13 |
+| calants             | biotaspeciescodes                |      292 |
+| calants             | comments                         |      124 |
+| calants             | currentvalidname                 |      291 |
+| calants             | distribution                     |       77 |
+| calants             | endemic                          |       69 |
+| calants             | identification                   |       22 |
+| calants             | intr.                            |       26 |
+| calants             | nc                               |      174 |
+| calants             | notes                            |       14 |
+| calants             | originalcombination              |      290 |
+| calants             | proj_name                        |      401 |
+| calants             | references                       |       18 |
+| calants             | revdate                          |       22 |
+| calants             | sc                               |      236 |
+| calants             | speciesauthordate                |      255 |
+| calants             | taxon_name                       |      401 |
+| calants             | textauthor                       |       22 |
+| calants             | typelocality                     |      254 |
+| coloradoants        | notes                            |        2 |
+| coloradoants        | proj_name                        |      195 |
+| coloradoants        | speciesauthordate                |      154 |
+| coloradoants        | taxon_name                       |      195 |
+| comorosants         | proj_name                        |      152 |
+| comorosants         | taxon_name                       |      152 |
+| costaricaants       | biology                          |      773 |
+| costaricaants       | distribution                     |      817 |
+| costaricaants       | notes                            |      202 |
+| costaricaants       | proj_name                        |      979 |
+| costaricaants       | references                       |      401 |
+| costaricaants       | speciesauthordate                |      877 |
+| costaricaants       | taxon_name                       |      979 |
+| costaricaants       | textauthor                       |      827 |
+| croatiaants         | distribution                     |      138 |
+| croatiaants         | proj_name                        |      182 |
+| croatiaants         | speciesauthordate                |      140 |
+| croatiaants         | taxon_name                       |      182 |
+| czechants           | biology                          |      107 |
+| czechants           | distribution                     |      107 |
+| czechants           | endemic                          |        1 |
+| czechants           | introduced                       |        1 |
+| czechants           | proj_name                        |      140 |
+| czechants           | speciesauthordate                |      106 |
+| czechants           | taxon_name                       |      140 |
+| eurasianants        | available                        |     3170 |
+| eurasianants        | currentvalidname                 |      406 |
+| eurasianants        | originalcombination              |     2757 |
+| eurasianants        | proj_name                        |     3277 |
+| eurasianants        | speciesauthordate                |     2764 |
+| eurasianants        | taxonomichistory                 |     3277 |
+| eurasianants        | taxon_name                       |     3277 |
+| fijiants            | authoryearpage                   |      149 |
+| fijiants            | origin                           |      214 |
+| fijiants            | proj_name                        |      265 |
+| fijiants            | taxon_name                       |      265 |
+| floridaants         |                                  |      218 |
+| floridaants         | proj_name                        |      281 |
+| floridaants         | speciesauthordate                |      210 |
+| floridaants         | taxon_name                       |      281 |
+| fossilants          | distribution                     |      642 |
+| fossilants          | proj_name                        |      858 |
+| fossilants          | speciesauthordate                |      642 |
+| fossilants          | taxonomichistory                 |      637 |
+| fossilants          | taxonomicnotes                   |      565 |
+| fossilants          | taxon_name                       |      858 |
+| fossilants          | typematerial                     |      331 |
+| galapagosants       | biology                          |       39 |
+| galapagosants       | distribution                     |       48 |
+| galapagosants       | endemic                          |        8 |
+| galapagosants       | introduced                       |       40 |
+| galapagosants       | notes                            |        1 |
+| galapagosants       | proj_name                        |       75 |
+| galapagosants       | speciesauthordate                |       41 |
+| galapagosants       | taxon_name                       |       75 |
+| hawaiiants          | distribution                     |       54 |
+| hawaiiants          | proj_name                        |       86 |
+| hawaiiants          | speciesauthordate                |       50 |
+| hawaiiants          | taxon_name                       |       86 |
+| illinoisants        | biology                          |      125 |
+| illinoisants        | distribution                     |      129 |
+| illinoisants        | introduced                       |        5 |
+| illinoisants        | notes                            |        6 |
+| illinoisants        | proj_name                        |      165 |
+| illinoisants        | speciesauthordate                |      128 |
+| illinoisants        | taxon_name                       |      165 |
+| indiaants           | author                           |      592 |
+| indiaants           | distribution                     |      599 |
+| indiaants           | proj_name                        |      693 |
+| indiaants           | taxa                             |      595 |
+| indiaants           | taxon_name                       |      693 |
+| kenyaants           | distribution                     |      410 |
+| kenyaants           | notes                            |      330 |
+| kenyaants           | proj_name                        |      555 |
+| kenyaants           | speciesauthordate                |      413 |
+| kenyaants           | taxon_name                       |      555 |
+| kenyaants           | zfmkcentralkenya                 |       54 |
+| kenyaants           | zfmkcoastalkenya                 |       26 |
+| kenyaants           | zfmkwesternkenya                 |      239 |
+| louisianaants       | biotaspeciescodes                |      130 |
+| louisianaants       | introduced                       |       20 |
+| louisianaants       | proj_name                        |      181 |
+| louisianaants       | taxon_name                       |      181 |
+| macaronesiaants     | distribution                     |       95 |
+| macaronesiaants     | notes                            |        5 |
+| macaronesiaants     | proj_name                        |      127 |
+| macaronesiaants     | speciesauthordate                |       80 |
+| macaronesiaants     | taxon_name                       |      127 |
+| madants             | authorreference                  |      411 |
+| madants             | completenameaurthordate          |      237 |
+| madants             | introduc                         |       16 |
+| madants             | mg.                              |      237 |
+| madants             | nomenclatureanddistributionnotes |       30 |
+| madants             | proj_name                        |     1380 |
+| madants             | sp.andsubmal                     |      172 |
+| madants             | subsp.mal                        |       27 |
+| madants             | subspmg                          |       27 |
+| madants             | taxon_name                       |     1380 |
+| malagasyants        | available                        |      522 |
+| malagasyants        | currentvalidname                 |        1 |
+| malagasyants        | originalcombination              |      521 |
+| malagasyants        | proj_name                        |      526 |
+| malagasyants        | speciesauthordate                |      521 |
+| malagasyants        | taxonomichistory                 |      526 |
+| malagasyants        | taxon_name                       |      526 |
+| mauritiusants       | distribution                     |       47 |
+| mauritiusants       | endemic                          |       16 |
+| mauritiusants       | intr.                            |       31 |
+| mauritiusants       | proj_name                        |      110 |
+| mauritiusants       | taxon_name                       |      110 |
+| mayotteants         | distribution                     |       15 |
+| mayotteants         | intr.                            |        2 |
+| mayotteants         | proj_name                        |      130 |
+| mayotteants         | speciesauthordate                |       16 |
+| mayotteants         | taxon_name                       |      130 |
+| micronesiaants      | proj_name                        |      201 |
+| micronesiaants      | taxon_name                       |      201 |
+| mississippiants     | biology                          |        1 |
+| mississippiants     | introduced                       |       16 |
+| mississippiants     | proj_name                        |      220 |
+| mississippiants     | speciesauthordate                |      168 |
+| mississippiants     | taxon_name                       |      220 |
+| missouriants        | biology                          |      149 |
+| missouriants        | distribution                     |      148 |
+| missouriants        | introduced                       |        6 |
+| missouriants        | notes                            |       27 |
+| missouriants        | proj_name                        |      191 |
+| missouriants        | speciesauthordate                |      146 |
+| missouriants        | taxon_name                       |      191 |
+| nearcticants        | available                        |     1371 |
+| nearcticants        | currentvalidname                 |      108 |
+| nearcticants        | originalcombination              |     1263 |
+| nearcticants        | proj_name                        |     1382 |
+| nearcticants        | speciesauthordate                |     1263 |
+| nearcticants        | taxonomichistory                 |     1382 |
+| nearcticants        | taxon_name                       |     1382 |
+| neotropicalants     | available                        |     5537 |
+| neotropicalants     | currentvalidname                 |      129 |
+| neotropicalants     | originalcombination              |     5405 |
+| neotropicalants     | proj_name                        |     5564 |
+| neotropicalants     | speciesauthordate                |     5407 |
+| neotropicalants     | taxonomichistory                 |     5564 |
+| neotropicalants     | taxon_name                       |     5564 |
+| netherlandsants     | biology                          |       18 |
+| netherlandsants     | distribution                     |      102 |
+| netherlandsants     | endemic                          |        1 |
+| netherlandsants     | introduced                       |       37 |
+| netherlandsants     | notes                            |      100 |
+| netherlandsants     | proj_name                        |      135 |
+| netherlandsants     | speciesauthordate                |      101 |
+| netherlandsants     | taxon_name                       |      135 |
+| newguineaants       | proj_name                        |      893 |
+| newguineaants       | speciesauthordate                |      756 |
+| newguineaants       | taxon_name                       |      893 |
+| newguineaants       | unpublishednotes                 |       38 |
+| newzealandants      | biology                          |       38 |
+| newzealandants      | distribution                     |       38 |
+| newzealandants      | endemic                          |       10 |
+| newzealandants      | introduced                       |       28 |
+| newzealandants      | notes                            |       30 |
+| newzealandants      | proj_name                        |       69 |
+| newzealandants      | speciesauthordate                |       34 |
+| newzealandants      | taxon_name                       |       69 |
+| none                | proj_name                        |     1171 |
+| none                | taxon_name                       |     1171 |
+| ohioants            | biology                          |      128 |
+| ohioants            | distribution                     |      128 |
+| ohioants            | proj_name                        |      170 |
+| ohioants            | speciesauthordate                |      128 |
+| ohioants            | taxon_name                       |      170 |
+| pacificislandsants  | available                        |      359 |
+| pacificislandsants  | currentvalidname                 |        9 |
+| pacificislandsants  | originalcombination              |      350 |
+| pacificislandsants  | proj_name                        |      363 |
+| pacificislandsants  | speciesauthordate                |      350 |
+| pacificislandsants  | taxonomichistory                 |      363 |
+| pacificislandsants  | taxon_name                       |      363 |
+| paraguayants        | distribution                     |      541 |
+| paraguayants        | introduced                       |        6 |
+| paraguayants        | notes                            |        3 |
+| paraguayants        | proj_name                        |      633 |
+| paraguayants        | speciesauthordate                |      425 |
+| paraguayants        | taxon_name                       |      633 |
+| pennsylvaniaants    | ansp                             |       56 |
+| pennsylvaniaants    | cmnh                             |        5 |
+| pennsylvaniaants    | collection                       |       31 |
+| pennsylvaniaants    | distribution                     |       84 |
+| pennsylvaniaants    | genusauthordate                  |       85 |
+| pennsylvaniaants    | introduced                       |        3 |
+| pennsylvaniaants    | lit.                             |       30 |
+| pennsylvaniaants    | notes                            |        7 |
+| pennsylvaniaants    | proj_name                        |      117 |
+| pennsylvaniaants    | psuc                             |       45 |
+| pennsylvaniaants    | speciesauthordate                |       84 |
+| pennsylvaniaants    | subfamilyauthordate              |       85 |
+| pennsylvaniaants    | taxon_name                       |      117 |
+| pennsylvaniaants    | total                            |       84 |
+| pennsylvaniaants    | tribeauthordate                  |       85 |
+| pennsylvaniaants    | typelocality                     |       84 |
+| pennsylvaniaants    | usnm                             |       46 |
+| philippinesants     | distribution                     |      332 |
+| philippinesants     | proj_name                        |      533 |
+| philippinesants     | speciesauthordate                |      435 |
+| philippinesants     | taxon_name                       |      533 |
+| reunionants         | distribution                     |       25 |
+| reunionants         | intr.                            |       11 |
+| reunionants         | proj_name                        |       76 |
+| reunionants         | speciesauthordate                |       34 |
+| reunionants         | taxon_name                       |       76 |
+| serbiaants          | biology                          |       67 |
+| serbiaants          | distribution                     |      100 |
+| serbiaants          | proj_name                        |      207 |
+| serbiaants          | speciesauthordate                |      162 |
+| serbiaants          | taxon_name                       |      207 |
+| seychellesants      | biology                          |        3 |
+| seychellesants      | distribution                     |       64 |
+| seychellesants      | intr.                            |       20 |
+| seychellesants      | notes                            |        2 |
+| seychellesants      | proj_name                        |      155 |
+| seychellesants      | speciesauthordate                |       67 |
+| seychellesants      | taxon_name                       |      155 |
+| sloveniaants        | biology                          |       91 |
+| sloveniaants        | distribution                     |      132 |
+| sloveniaants        | proj_name                        |      169 |
+| sloveniaants        | speciesauthordate                |      132 |
+| sloveniaants        | taxon_name                       |      169 |
+| southeastasiaants   | available                        |     6004 |
+| southeastasiaants   | currentvalidname                 |      310 |
+| southeastasiaants   | originalcombination              |     5685 |
+| southeastasiaants   | proj_name                        |     6027 |
+| southeastasiaants   | speciesauthordate                |     5694 |
+| southeastasiaants   | taxonomichistory                 |     6027 |
+| southeastasiaants   | taxon_name                       |     6027 |
+| texasants           | author                           |      277 |
+| texasants           | citation                         |      136 |
+| texasants           | date                             |       66 |
+| texasants           | proj_name                        |      344 |
+| texasants           | taxon_name                       |      344 |
+| tokelauants         | introduced                       |        3 |
+| tokelauants         | notes                            |        1 |
+| tokelauants         | proj_name                        |       49 |
+| tokelauants         | speciesauthordate                |       28 |
+| tokelauants         | taxon_name                       |       49 |
+| utahants            | proj_name                        |      194 |
+| utahants            | speciesauthordate                |      156 |
+| utahants            | taxon_name                       |      194 |
+| worldants           | available                        |    20526 |
+| worldants           | currentvalidname                 |      741 |
+| worldants           | originalcombination              |    19708 |
+| worldants           | proj_name                        |    20547 |
+| worldants           | speciesauthordate                |    19754 |
+| worldants           | taxonomichistory                 |    20547 |
+| worldants           | taxonomictreatment               |     3223 |
+| worldants           | taxon_name                       |    20547 |
++---------------------+----------------------------------+----------+
+336 rows in set (1.34 sec)
+
+
+
+
+Here we see for a single species (Tatuidris tatusia) all of the description records.
+
+mysql> select taxon_name, title, rankfocus, proj_name, substring(content, 1, 50) from description where taxon_name like "%tatusia%";
++------------------------------------+---------------------+-----------+-----------------+----------------------------------------------------+
+| taxon_name                         | title               | rankfocus | proj_name       | substring(content, 1, 50)                          |
++------------------------------------+---------------------+-----------+-----------------+----------------------------------------------------+
+| agroecomyrmecinaetatuidris tatusia | proj_name           | NULL      | atolants        | atolants                                           |
+| agroecomyrmecinaetatuidris tatusia | taxon_name          | NULL      | atolants        | agroecomyrmecinaetatuidris tatusia                 |
+| agroecomyrmecinaetatuidris tatusia | distribution        | NULL      | costaricaants   | <p>Mexico, El Salvador (type locality), Costa Rica |
+| agroecomyrmecinaetatuidris tatusia | biology             | NULL      | costaricaants   | <b>Natural History: </b><br><p>I know this species |
+| agroecomyrmecinaetatuidris tatusia | proj_name           | NULL      | costaricaants   | costaricaants                                      |
+| agroecomyrmecinaetatuidris tatusia | taxon_name          | NULL      | costaricaants   | agroecomyrmecinaetatuidris tatusia                 |
+| agroecomyrmecinaetatuidris tatusia | notes               | NULL      | costaricaants   | <p>One specimen from La Selva Biological Station ( |
+| agroecomyrmecinaetatuidris tatusia | textauthor          | NULL      | costaricaants   | John T. Longino                                    |
+| agroecomyrmecinaetatuidris tatusia | speciesauthordate   | NULL      | costaricaants   | Brown and Kempf 1968                               |
+| agroecomyrmecinaetatuidris tatusia | taxonomichistory    | NULL      | worldants       | <p class=MsoNormal style='margin-left:.5in;text-al |
+| agroecomyrmecinaetatuidris tatusia | proj_name           | NULL      | worldants       | worldants                                          |
+| agroecomyrmecinaetatuidris tatusia | taxon_name          | NULL      | worldants       | agroecomyrmecinaetatuidris tatusia                 |
+| agroecomyrmecinaetatuidris tatusia | available           | NULL      | worldants       | true                                               |
+| agroecomyrmecinaetatuidris tatusia | speciesauthordate   | NULL      | worldants       | Kempf, 1968                                        |
+| agroecomyrmecinaetatuidris tatusia | originalcombination | NULL      | worldants       | Tatuidris tatusia                                  |
+| agroecomyrmecinaetatuidris tatusia | taxonomichistory    | NULL      | neotropicalants | <p class=MsoNormal style='margin-left:.5in;text-al |
+| agroecomyrmecinaetatuidris tatusia | proj_name           | NULL      | neotropicalants | neotropicalants                                    |
+| agroecomyrmecinaetatuidris tatusia | taxon_name          | NULL      | neotropicalants | agroecomyrmecinaetatuidris tatusia                 |
+| agroecomyrmecinaetatuidris tatusia | available           | NULL      | neotropicalants | true                                               |
+| agroecomyrmecinaetatuidris tatusia | speciesauthordate   | NULL      | neotropicalants | Kempf, 1968                                        |
+| agroecomyrmecinaetatuidris tatusia | originalcombination | NULL      | neotropicalants | Tatuidris tatusia                                  |
++------------------------------------+---------------------+-----------+-----------------+----------------------------------------------------+
+21 rows in set (0.98 sec)
+
+
+mysql> select count(*) from description where taxon_name = "";
++----------+
+| count(*) |
++----------+
+|     2352 |
++----------+
+1 row in set (0.12 sec)
+
+
+mysql> select count(*) from description where rankfocus != null;
++----------+
+| count(*) |
++----------+
+|        0 |
++----------+
+1 row in set (0.64 sec)
+
+
+
+
+mysql> select * from description where title = "proj_name" and proj_name = "fossilants" and taxon_name = "";
++------------+-----------+------------+-----------+------------+
+| taxon_name | title     | content    | rankfocus | proj_name  |
++------------+-----------+------------+-----------+------------+
+|            | proj_name | fossilants | NULL      | fossilants |
+|            | proj_name | fossilants | NULL      | fossilants |
+|            | proj_name | fossilants | NULL      | fossilants |
+|            | proj_name | fossilants | NULL      | fossilants |
+|            | proj_name | fossilants | NULL      | fossilants |
++------------+-----------+------------+-----------+------------+
+5 rows in set (0.02 sec)
+
+
+
+mysql> select taxon_name, title, rankfocus, proj_name, count(*) 
+    ->          from description 
+    ->         group by taxon_name, title, proj_name 
+    ->        having count(*) > 10;
++-------------------------+------------------+-----------+--------------+----------+
+| taxon_name              | title            | rankfocus | proj_name    | count(*) |
++-------------------------+------------------+-----------+--------------+----------+
+|                         | proj_name        | NULL      | none         |     1171 |
+|                         | taxon_name       | NULL      | none         |     1171 |
+| dolichoderinae          | proj_name        | NULL      | eurasianants |       25 |
+| dolichoderinae          | taxonomichistory | NULL      | eurasianants |       25 |
+| dolichoderinae          | taxon_name       | NULL      | eurasianants |       25 |
+| dolichoderinaetapinoma  | available        | NULL      | eurasianants |       15 |
+| dolichoderinaetapinoma  | currentvalidname | NULL      | eurasianants |       15 |
+| dolichoderinaetapinoma  | proj_name        | NULL      | eurasianants |       15 |
+| dolichoderinaetapinoma  | taxonomichistory | NULL      | eurasianants |       15 |
+| dolichoderinaetapinoma  | taxon_name       | NULL      | eurasianants |       15 |
+| formicinae              | proj_name        | NULL      | eurasianants |       28 |
+| formicinae              | taxonomichistory | NULL      | eurasianants |       28 |
+| formicinae              | taxon_name       | NULL      | eurasianants |       28 |
+| formicinaecamponotus    | available        | NULL      | eurasianants |       24 |
+| formicinaecamponotus    | currentvalidname | NULL      | eurasianants |       24 |
+| formicinaecamponotus    | proj_name        | NULL      | eurasianants |       24 |
+| formicinaecamponotus    | taxonomichistory | NULL      | eurasianants |       24 |
+| formicinaecamponotus    | taxon_name       | NULL      | eurasianants |       24 |
+| formicinaeformica       | available        | NULL      | eurasianants |       26 |
+| formicinaeformica       | currentvalidname | NULL      | eurasianants |       26 |
+| formicinaeformica       | proj_name        | NULL      | eurasianants |       26 |
+| formicinaeformica       | taxonomichistory | NULL      | eurasianants |       26 |
+| formicinaeformica       | taxon_name       | NULL      | eurasianants |       26 |
+| formicinaelasius        | available        | NULL      | eurasianants |       24 |
+| formicinaelasius        | currentvalidname | NULL      | eurasianants |       24 |
+| formicinaelasius        | proj_name        | NULL      | eurasianants |       24 |
+| formicinaelasius        | taxonomichistory | NULL      | eurasianants |       24 |
+| formicinaelasius        | taxon_name       | NULL      | eurasianants |       24 |
+| myrmicinae              | proj_name        | NULL      | eurasianants |       28 |
+| myrmicinae              | taxonomichistory | NULL      | eurasianants |       28 |
+| myrmicinae              | taxon_name       | NULL      | eurasianants |       28 |
+| myrmicinaeaphaenogaster | available        | NULL      | eurasianants |       15 |
+| myrmicinaeaphaenogaster | currentvalidname | NULL      | eurasianants |       15 |
+| myrmicinaeaphaenogaster | proj_name        | NULL      | eurasianants |       15 |
+| myrmicinaeaphaenogaster | taxonomichistory | NULL      | eurasianants |       15 |
+| myrmicinaeaphaenogaster | taxon_name       | NULL      | eurasianants |       15 |
+| myrmicinaecardiocondyla | available        | NULL      | eurasianants |       11 |
+| myrmicinaecardiocondyla | currentvalidname | NULL      | eurasianants |       11 |
+| myrmicinaecardiocondyla | proj_name        | NULL      | eurasianants |       11 |
+| myrmicinaecardiocondyla | taxonomichistory | NULL      | eurasianants |       11 |
+| myrmicinaecardiocondyla | taxon_name       | NULL      | eurasianants |       11 |
+| myrmicinaeleptothorax   | available        | NULL      | eurasianants |       29 |
+| myrmicinaeleptothorax   | currentvalidname | NULL      | eurasianants |       29 |
+| myrmicinaeleptothorax   | proj_name        | NULL      | eurasianants |       29 |
+| myrmicinaeleptothorax   | taxonomichistory | NULL      | eurasianants |       29 |
+| myrmicinaeleptothorax   | taxon_name       | NULL      | eurasianants |       29 |
+| myrmicinaemessor        | available        | NULL      | eurasianants |       13 |
+| myrmicinaemessor        | currentvalidname | NULL      | eurasianants |       13 |
+| myrmicinaemessor        | proj_name        | NULL      | eurasianants |       13 |
+| myrmicinaemessor        | taxonomichistory | NULL      | eurasianants |       13 |
+| myrmicinaemessor        | taxon_name       | NULL      | eurasianants |       13 |
+| myrmicinaemonomorium    | available        | NULL      | eurasianants |       11 |
+| myrmicinaemonomorium    | currentvalidname | NULL      | eurasianants |       11 |
+| myrmicinaemonomorium    | proj_name        | NULL      | eurasianants |       11 |
+| myrmicinaemonomorium    | taxonomichistory | NULL      | eurasianants |       11 |
+| myrmicinaemonomorium    | taxon_name       | NULL      | eurasianants |       11 |
+| myrmicinaemyrmica       | available        | NULL      | eurasianants |       27 |
+| myrmicinaemyrmica       | currentvalidname | NULL      | eurasianants |       27 |
+| myrmicinaemyrmica       | proj_name        | NULL      | eurasianants |       27 |
+| myrmicinaemyrmica       | taxonomichistory | NULL      | eurasianants |       27 |
+| myrmicinaemyrmica       | taxon_name       | NULL      | eurasianants |       27 |
+| myrmicinaesolenopsis    | available        | NULL      | eurasianants |       11 |
+| myrmicinaesolenopsis    | currentvalidname | NULL      | eurasianants |       11 |
+| myrmicinaesolenopsis    | proj_name        | NULL      | eurasianants |       11 |
+| myrmicinaesolenopsis    | taxonomichistory | NULL      | eurasianants |       11 |
+| myrmicinaesolenopsis    | taxon_name       | NULL      | eurasianants |       11 |
+| myrmicinaetetramorium   | available        | NULL      | eurasianants |       18 |
+| myrmicinaetetramorium   | currentvalidname | NULL      | eurasianants |       18 |
+| myrmicinaetetramorium   | proj_name        | NULL      | eurasianants |       18 |
+| myrmicinaetetramorium   | taxonomichistory | NULL      | eurasianants |       18 |
+| myrmicinaetetramorium   | taxon_name       | NULL      | eurasianants |       18 |
+| ponerinae               | proj_name        | NULL      | eurasianants |       24 |
+| ponerinae               | taxonomichistory | NULL      | eurasianants |       24 |
+| ponerinae               | taxon_name       | NULL      | eurasianants |       24 |
++-------------------------+------------------+-----------+--------------+----------+
+74 rows in set (18.88 sec)
+
+
+
+mysql> select count(*) from description where content = "";
++----------+
+| count(*) |
++----------+
+|     1176 |
++----------+
+1 row in set (0.79 sec)
+
+5 of them are fossilant (4589 total), the rest are proj_name:none.
+  All of them are of title:taxon_name.
+
+
+----------------------------------------
+----------------------------------------
+----------------------------------------
+----------------------------------------
+
+
+Dec 29, 2010
+
+
+
+mysql> select taxon_name from description where taxon_name not in (select taxon_name from taxon);
+
+| "" (2352 times)                 |
+|                                 |
+| camponotus mg095                |
+| camponotus mg095                |
+| formicinaemyrmica venusta       |
+| formicinaeprenolepis pygmaea    |
+| myrmicinaemonomorium clarinodis |
+| myrmicinaemonomorium platynodis |
++---------------------------------+
+2358 rows in set (1.79 sec)
+
+
+There seems to be heavy duplication
+
+Total records: 331026
+
+// Group on all columns... having > 1
+mysql> select taxon_name, title, proj_name, content, rankfocus, count(*) from description group by taxon_name, title, proj_name, content, rankfocus having count(*) > 1;
+17642 rows in set (17.64 sec)
+
+for example:
+mysql> select * from description where taxon_name = "pseudomyrmecinaetetraponera mocquerysi lutea" and title="taxonomichistory" and proj_name = "africanants";
++----------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+-------------+
+| taxon_name                                   | title            | content                                                                                                                                                                                                                                                                                                                                                                                                                               | rankfocus | proj_name   |
++----------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+-------------+
+| pseudomyrmecinaetetraponera mocquerysi lutea | taxonomichistory | <p class=MsoNormal style='margin-left:.5in;text-align:justify;text-indent:-.5in'>#<span style='color:blue'><b><i>lutea</i></b></span><i>. Sima mocquerysi</i><span style='font-style:normal'> var. </span><i>lutea</i><span style='font-style: normal'> Stitz, 1911b: 381, fig. 3 (w.q.) DEMOCRATIC REPUBLIC OF CONGO. Combination in </span><i>Tetraponera</i><span style='font-style:normal'>: Wheeler, W.M. 1922a: 798.</span></p> | NULL      | africanants |
+| pseudomyrmecinaetetraponera mocquerysi lutea | taxonomichistory | <p class=MsoNormal style='margin-left:.5in;text-align:justify;text-indent:-.5in'>#<span style='color:blue'><b><i>lutea</i></b></span><i>. Sima mocquerysi</i><span style='font-style:normal'> var. </span><i>lutea</i><span style='font-style: normal'> Stitz, 1911b: 381, fig. 3 (w.q.) DEMOCRATIC REPUBLIC OF CONGO. Combination in </span><i>Tetraponera</i><span style='font-style:normal'>: Wheeler, W.M. 1922a: 798.</span></p> | NULL      | africanants |
++----------------------------------------------+------------------+--------------------------
+
+
+mysql> select count(*) from description group by taxon_name, title, proj_name, content, rankfocus having count(*) >= 25 order by count(*);
++----------+
+| count(*) |
++----------+
+|       25 |
+|       25 |
+|       25 |
+|       26 |
+|       26 |
+|       26 |
+|       26 |
+|       26 |
+|       27 |
+|       27 |
+|       27 |
+|       27 |
+|       27 |
+|       28 |
+|       28 |
+|       28 |
+|       28 |
+|       28 |
+|       28 |
+|       29 |
+|       29 |
+|       29 |
+|       29 |
+|       29 |
+|     1171 |
+|     1171 |
++----------+
+26 rows in set (16.46 sec)
+
+
+mysql> select * from description group by taxon_name, title, proj_name, content, rankfocus having count(*) >= 1170 order by count(*);
++------------+------------+---------+-----------+-----------+
+| taxon_name | title      | content | rankfocus | proj_name |
++------------+------------+---------+-----------+-----------+
+|            | proj_name  | none    | NULL      | none      |
+|            | taxon_name |         | NULL      | none      |
+
+Of the 29s above, this will select all of them:
+  select taxon_name, title, rankfocus, proj_name, content from description where taxon_name = "myrmicinaeleptothorax" and title = "taxonomichistory" and proj_name = "eurasianants"
+But a select distinct will return a single record.
+
+
+*** Description_edit ***
+As this query shows:
+  select count(*) from description_edit group by taxon_name, title, content, rankfocus having count(*) > 1 order by count(*);
+The "alter ignore" command we used to create a constraint on the description_edit table has eliminated duplicates.  But
+in doing so we had no selection of the "better" records, or information as to if there was any difference.
+
+
+TaxaFromSearchAction.java
+
+Modified:
+src/org/calacademy/antweb/Taxon.java
+src/org/calacademy/antweb/BrowseAction.java
+
+
+"Description"
+src/org/calacademy/antweb/BayAreaSearch.java
+src/com/zonageek/jpeg/ExifBlock.java
+
+"description"
+/src/org/calacademy/antweb/AncForm.java
+src/org/calacademy/antweb/EditProjectForm.java
+src/org/calacademy/antweb/EOL.java
+src/org/calacademy/antweb/FieldGuide.java
+src/org/calacademy/antweb/GoogleEarth.java
+src/org/calacademy/antweb/HomePageForm.java
+src/org/calacademy/antweb/Locality.java
+src/org/calacademy/antweb/NameOnlyForm.java
+src/org/calacademy/antweb/Plazi.java
+src/org/calacademy/antweb/PlaziAction.java
+src/org/calacademy/antweb/PlaziTaxonDescription.java
+src/org/calacademy/antweb/Project.java
+src/org/calacademy/antweb/ProjectForm.java
+src/org/calacademy/antweb/SlideShowSearch.java
+src/org/calacademy/antweb/Specimen.java
+src/org/calacademy/antweb/SlideShowSearch.java
+src/org/calacademy/antweb/SpecimenForm.java
+src/org/calacademy/antweb/UploadImagesAction.java
+test/org/calacademy/antweb/AntWebStrutsTest.java
+
+
+Biota Upload
+------------
+
+SpecimenCode	PreparedBy	DatePrepared	DeterminedBy	DateDetermined	LifeStageSex	Medium	OwnedBy	LocatedAt	TypeStatus	TransectSubsampleNo.	PinnedVoucherSpecimenOfDNA	Abundance	SpcmAuxFields	NumberSpcmImages	SpcmRecordDate	SpcmRecChangedDate	SpcmRecChangedBy	CollectionCode	CollectedBy	DatesCollected	Habitat	TransectType	Method	CollXCoordinate	CollYCoordinate	CollXYAccuracy	HostSpcmCode	CollAuxFields	NumberCollImages	CollRecordDate	CollRecChangedDate	CollRecChangedBy	LocalityCode	LocalityNameIndex	LocalityName	County/sub-territory	State/Prov	Country	Elevation	LocLatitude	LocLongitude	LocXYAccuracy	Biogeographic Region	Continent/Ocean	Area	LocAuxFields	NumberLocImages	LocRecordDate	LocRecChangedDate	LocRecChangedBy	SpeciesCode	ValidSppCode	[Species]Genus	SpeciesName	SpeciesAuthor	Subspecies	SubspeciesAuthor	Variety	VarietyAuthor	Common Name	Distribution	TypeLocality	Type Depository	Subgenus	Speciesgroup	SpeciesAuxFields	NumberSpeciesImages	SpeciesRecordDate	SpeciesRecChangedDate	SpeciesRecChangedBy	Tribe	Subfamily	Genus Cust 1	Genus Cust 2	Genus Cust 3	Family	Superfamily	Suborder	Family Cust 1	Family Cust 2	Family Cust 3	Order	Superorder	Subclass	Order Cust 1	Order Cust 2	Order Cust 3	Class	Subphylum	Class Cust 1	Class Cust 2	Phylum	Subkingdom	Phylum Cust 1	Phylum Cust 2	Kingdom	Superkingdom	Kingdom Cust 1	Kingdom Cust 2
+CASENT0217237	BLF	9 Mar 2004		22 Sep 2010	1w, 1m	pin	CASC	CASC				1	0	0	28 Jun 2010	22 Sep 2010	Michele Esposito	BLF24032	B.L.Fisher et al.	8 Feb 2010	forest		ex dead twig above ground	0	0	Tetramorium		0	0	4 Mar 2010			MahÈ Mont Copolia 520	MahÈ Island, Mont Copolia	MahÈ Island, Mont Copolia			Seychelles	520 m	-4.65121	55.45835	GPS	Malagasy			0	0	4 Mar 2010	4 Mar 2010	Michele Esposito	Tetramorium.pacificum	Tetramorium.pacificum	Tetramorium	pacificum	Mayr 1870							Tonga				0	0	24 Sep 2002	24 May 2010	Michele Esposito	Tetramoriini	Myrmicinae				Formicidae						Hymenoptera						Insecta											
+
+
+

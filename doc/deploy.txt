@@ -1,0 +1,83 @@
+deploy.txt
+
+.. it's changed...
+
+This document outlines the process to deploy antweb to antweb_test and antweb.
+Created: Jun 14, 2010
+
+--------
+
+---
+
+New. Adding to process
+
+-copy source tree
+cp -r antweb antweb3.2.1
+
+-copy projectData
+php bin/copyProjectData.php
+mv projectData/ ../bak/projectData/projectData2011-01-26
+
+-copy WEB-INF
+cp -r /data/antweb/WEB-INF/ ../bak/WEB-INF/WEB-INF2011-01-26
+
+- make database dump
+mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /home/mjohnson/bak/db/2011-01-26.sql.gz
+
+cvs update -Pd
+
+sudo /etc/init.d/priv_tomcat stop
+
+run database scripts
+
+ant deploy
+
+watch logs
+  cd /home/mjohnson/links/
+  tail -f antweb.log
+
+sudo /etc/init.d/priv_tomcat start
+
+
+
+---
+
+
+In a working dir such as /home/mark/antweb/
+
+cvs -d /data/cvsroot co -d antweb antweb
+  // Would add :ext:mark@antweb.org: before the /data if on a remote machine
+  
+Verify Files:
+  build.xml - property app.name should be appropriately defined (antweb or antweb_test)
+  WEB-INF/classes/ApplicationResources.properties - all of the site.* properties should have
+    appropriately defined paths and app name.
+
+ant deploy
+
+sudo /etc/init.d/tomcat5 restart  
+
+test
+
+
+Create softlinks in WEB-INF/classes/
+ln -s ../../etc/AppResLiveAntwebTest.properties ApplicationResouces.properties
+ln -s ../../etc/log4jAntwebTest.properties log4j.properties
+
+
+
+On Development machines:
+  If a fresh build, then certain files should be copied in or created through the 
+
+Installation (working notes)
+  Copy index_body.jsp from live site to web dir 
+  WEB-INF/classes/ApplicationResources.properties
+    ? really - change 8080 to ""
+    site.url=http://localhost/antweb/
+    Where does this file come from?  In /antweb/WEB-INF/classes/ApplicationResources.properties it has a site.inputfilename
+  ProjectResources.properties not in CVS.  Dynamically generated.  Why?  no reason?  Not so much, it seems.
+  Copied in to enable local browsing
+	arizona.jsp, arizona-body.jsp
+  Check build.xml's app.name and app.home.  Using test?  
+  struts-config.xml contains the database url, pwds, etc...
+  Copy web/statistics.jsp and web/recentImages_gen_inc.jsp from server to web directory

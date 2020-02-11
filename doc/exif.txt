@@ -1,0 +1,128 @@
+
+Tools
+-----
+On live server, called from process.pl:
+    /usr/local/bin/exifedit -h
+    /home/antweb/workingdir/exifcopy  // mentioned in resizeImages.pl but not found on disk.
+
+exiftool - Read and write meta information in files
+  Not able to get working. Effort in ImageUploaded.java.
+
+Zonageek jpeg
+  ls /home/antweb/antweb_deploy/src/com/zonageek/jpeg/
+
+EXIFutils V2.5.7
+  Mentioned in some exif data as the generating tool. Exif in wikimedia format. Create how?
+
+
+Exif Data
+---------
+Exif fields coming from image upload. Existing in image table. In Exif.java.
+  artist
+  copyright
+  datetime
+  license
+   
+
+EXIF Sample Data
+----------------
+https://www.antweb.org/bigPicture.do?name=casent0005669&shot=h&number=1
+
+{GPSLatitude=[{val=37.0, num=37, den=1}, {val=25.0, num=25, den=1}, {val=0.12, num=3, den=25}], FlashPixVersion=0100, UserComment=ASCII, ColorSpace=65535, ComponentsConfiguration=, GPSLongitude=[{val=121.0, num=121, den=1}, {val=25.0, num=25, den=1}, {val=1.2, num=6, den=5}], EXIFVersion=0220, YResolution={val=337.0, num=337, den=1}, Copyright=Copyright AntWeb.org, 2000-2009. Licensing: Attribution-ShareAlike 3.0 (cc-by-sa-3.0) Creative Commons License, XResolution={val=337.0, num=337, den=1}, GPSVersionID=[2, 2, 0, 0], ImageDescription=AntWeb.org image of Order:Hymenoptera Family:Formicidae Genus:Crematogaster Species:Crematogaster hespera Specimen:casent0005669 View:head, YCbCrPositioning=1, ResolutionUnit=2}
+
+https://www.antweb.org/bigPicture.do?name=casent0104828&shot=d&number=1
+
+{Artist=April Nobile, Copyright=Copyright AntWeb.org, 2000-2009. Licensing: Attribution-ShareAlike 3.0 (cc-by-sa-3.0) Creative Commons License, UserComment=ASCII, Software=EXIFutils V2.5.7, ImageDescription=AntWeb.org image of Order:Hymenoptera Family:Formicidae Genus:Crematogaster Species:Crematogaster laeviuscula Specimen:casent0104828 View:dorsal, DateTime=2006:02:21 09:09:50, EXIFVersion=0220}
+
+{Artist=April Nobile, Copyright=Copyright AntWeb.org, 2000-2009. Licensing: Attribution-ShareAlike 3.0 (cc-by-sa-3.0) Creative Commons License, GPSLatitude=[{val=39.0, num=39, den=1}, {val=6.0, num=6, den=1}, {val=42.12, num=1053, den=25}], UserComment=ASCII, GPSVersionID=[2, 2, 0, 0], Software=EXIFutils V2.5.7, ImageDescription=AntWeb.org image of Order:Hymenoptera Family:Formicidae Genus:Pogonomyrmex Species:Pogonomyrmex catanlilensis Specimen:casent0102695 View:label, GPSLongitude=[{val=70.0, num=70, den=1}, {val=24.0, num=24, den=1}, {val=36.0, num=36, den=1}], DateTime=2004:12:13 11:06:24, EXIFVersion=0220}
+
+
+Bad UTF8: https://www.antweb.org/bigPicture.do?name=lacment145067&shot=p&number=1
+
+
+Wikimedia commons.
+    
+    
+    
+Old processImages.pl code:
+--------------------------
+sub addMetaData {
+  local($filename, $copyright, $artist, $license, $specimen, $date) = @_;
+
+  ## warn("addMetaData() fileName:".$fileName);  
+  callExifEdit("copyright", $copyright,$filename) if (length($copyright) > 0);
+  callExifEdit("artist",$artist,$filename) if (length($artist) > 0);
+  callExifEdit("comment",$license,$filename) if (length($license) > 0);
+  callExifEdit("doc-name",$specimen,$filename) if (length($specimen) > 0);
+  callExifEdit("date-mod",$date,$filename) if (length($date) > 0);
+}
+
+sub callExifEdit {
+  local($field, $value, $file) = @_;
+  $value =~ s/\,/&#44\;/g;
+  @args = ("/usr/local/bin/exifedit", "-b", "-a", "$field=\"$value\"", $file);
+  system(@args) == 0
+         or doError("system $args[0] $args[1] $args[2] $args[3] fails: $!");
+}    
+
+
+EXIF data
+
+
+
+In:
+  /Users/mark/dev/calacademy/antweb/src/py
+Execute:
+  sudo python3.6 imageCheck.py
+  
+Attempting to set exif data for:
+  /data/antweb/images/casent0005904/CASENT0005904_D.tif
+  
+
+0th: NewSubfileType value:0
+0th: ImageWidth value:1359
+0th: ImageLength value:1023
+0th: BitsPerSample value:(8, 8, 8)
+0th: Compression value:1
+0th: PhotometricInterpretation value:2
+0th: DocumentName value:b'casent000590'
+0th: StripOffsets value:13190
+0th: SamplesPerPixel value:3
+0th: RowsPerStrip value:1023
+0th: StripByteCounts value:4170771
+0th: XResolution value:(720000, 10000)
+0th: YResolution value:(720000, 10000)
+0th: PlanarConfiguration value:1
+0th: ResolutionUnit value:2
+0th: Software value:b'Adobe Photoshop CS Windows'
+0th: DateTime value:b'2007:04:04 10:54:14'
+0th: Artist value:b'April Nobil'
+0th: XMLPacket: [long]...
+0th: Copyright value:b'California Academy of Sciences&#44; 2000-200'
+0th: ImageResources: [long]...
+0th: ExifTag value:13066
+Exif: UserComment value:b'ASCII\x00\x00\x00 Attribution-NonCommercial-ShareAlike Creative Commons License'
+Exif: ColorSpace value:65535
+Exif: PixelXDimension value:1359
+Exif: PixelYDimension value:1023
+    
+Currently, in preview
+  
+EXIF 
+  Color Space: Uncalibrated
+  Date Time Digitized: Apr 4, 2007 at 9:21:38 AM
+  Pixel X Dimension: 1,359
+  Pixel Y Dimension: 1,023
+  User Comment: Attribution-NonCommercial-ShareAlike Creative Commons License'  
+IPTC
+  Creator: April Noble
+  Copyright Notice: California Academy of Sciences&#44; 2000-2006
+TIFF
+  Artist: April Noble
+  Compression: uncompressed
+  Copyright: California Academy of Sciences&#44; 2000-2006
+  Date Time: Apr 4, 2007 at 10:54:14 AM
+  Document Name: casent0005904
+  Software: Adobe Photoshop CS Windows
+  
+exiftool -Copyright="California Academy of Sciences 2000-2019" /data/antweb/images/casent0005904/CASENT0005904_D.tif  

@@ -1,0 +1,234 @@
+package org.calacademy.antweb;
+
+import java.io.IOException;
+import java.util.*;
+import javax.servlet.ServletException;
+import javax.servlet.http.*;
+import org.apache.struts.action.*;
+
+import java.sql.*;
+import java.io.*;
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+
+import org.calacademy.antweb.home.*;
+import org.calacademy.antweb.geolocale.*;
+
+import org.calacademy.antweb.util.*;
+
+public final class TaxaPageAction extends Action {
+
+    private static Log s_log = LogFactory.getLog(TaxaPageAction.class);
+
+    public ActionForward execute(ActionMapping mapping, ActionForm form,
+        HttpServletRequest request, HttpServletResponse response)
+        throws IOException, ServletException {
+
+        HttpUtil.setUtf8(request, response);       
+
+        Login accessLogin = LoginMgr.getAccessLogin(request);
+
+        java.util.Date startTime = new java.util.Date(); // for AntwebUtil.finish(request, startTime);
+
+        ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
+        ActionForward d = Check.valid(request, mapping); if (d != null) return d;
+
+        Locale locale = getLocale(request);
+        HttpSession session = request.getSession();
+
+        String rank = request.getParameter("rank");
+
+        if (ProjectMgr.hasMoved(request, response)) return null;
+
+        boolean withImages = ("true".equals(request.getParameter("images")));     // Mark.  Temp.  True creates performance problems;    
+        boolean withTaxa = true;
+
+        boolean withSpecimen = false;
+        if ("true".equals(request.getParameter("specimen")) || "true".equals((String) session.getAttribute("specimenTaxa"))) {
+          withSpecimen = true;
+          session.setAttribute("specimenTaxa", "true");
+        }   
+        if ("false".equals(request.getParameter("specimen"))) {
+          withSpecimen = false;
+          session.removeAttribute("specimenTaxa");
+        }   
+
+        String simpleStr = request.getParameter("simple");
+        boolean simple = ("true".equals(simpleStr));
+
+        String isImaged = request.getParameter("isImaged");
+        A.log("execute() isImaged:" + isImaged);
+
+        //String orderBy = request.getParameter("orderBy");
+
+        TaxaPageForm taxaPageForm = (TaxaPageForm) form;
+		String caste = Caste.getCaste(taxaPageForm.getCaste(), request);
+  	    //A.log("execute() rank:" + rank + " caste:" + caste + " formCaste:" + taxaPageForm.getCaste());
+
+        String[] testStrings = {rank, simpleStr, isImaged, caste};
+        if (HttpUtil.hasIllegalChars(testStrings, request)) {
+          request.setAttribute("message", "Illegal characters.");
+          return (mapping.findForward("message"));        
+        }
+
+        Overview overview = OverviewMgr.getAndSetOverview(request);
+        if (overview == null) return OverviewMgr.returnMessage(request, mapping);    
+
+        if (AntwebMgr.isServerInitializing(overview)) {
+          request.setAttribute("message", "One moment please, MuseumMgr is initializing.");
+          return (mapping.findForward("message"));        
+        }
+
+        TaxaPage taxaPage = new TaxaPage();
+        if (rank != null) {
+          java.sql.Connection connection = null;
+          //int uniqueNumber = AntwebUtil.getRandomNumber();
+          try {
+            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+
+            if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }            
+            
+            connection = DBUtil.getConnection(dataSource, "TaxaPageAction.execute()", HttpUtil.getTarget(request));
+            //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
+            /*
+              Some TaxaPageAction requests are not getting closed. Here we are logging a number
+              when opened. Next we can see which request is not being closed by looking for the 
+              same number below.
+            */
+          
+			//AntwebMgr.populate(connection);
+			//Overview overview = OverviewMgr.getAndSetOverview(request);
+            
+            //if (overview instanceof Adm1) A.log("execute() overview:" + overview + " parent:" + overview.getParentName());
+			if (overview == null) {
+			  request.setAttribute("message", "overview not found");
+			  return (mapping.findForward("message"));              
+			}        
+
+            if (!Rank.isValid(rank)) {
+                String message = "invalid rank:" + rank;
+				s_log.info("execute() " + message); 
+				request.setAttribute("message", message);
+				return (mapping.findForward("message"));        
+            }
+
+ 			if (("species".equals(rank)) 
+			  && (
+			     Project.ALLANTWEBANTS.equals(overview)
+			  || Project.WORLDANTS.equals(overview)   
+			  )
+			  && (!"false".equals(isImaged))
+			  && (withImages)
+			  && (overview == null)
+			  ) {
+				String message = "Sorry, due to resultset size, this is an unreasonable request.  Rank:" + rank + " overview:" + overview;
+				s_log.info("Execute() " + message); 
+				request.setAttribute("message", message);
+				return (mapping.findForward("message"));        
+			}
+
+            // Caching Logic Part I
+            boolean isGetCache = "true".equals(request.getParameter("getCache"));  //fieldGuideForm.getGetCache()));  // this forces the fetching from cache if available.
+            String data = null;               
+            boolean isGenCache = "true".equals(request.getParameter("genCache"));   //fieldGuideForm.getGenCache());
+            if (withImages && !isGenCache) {
+    
+              // Return a cache paged if not logged in, and cached.
+              A.log("execute() getCache:" + isGetCache);
+          
+              boolean fetchFromCache = AntwebCacheMgr.isFetchFromCache(accessLogin, isGetCache);              
+              if (fetchFromCache) {
+                // was: data = AntwebCacheMgr.fetchFromCache("taxaPage", project, rank);
+                data = AntwebCacheMgr.fetchFromCache("taxaPage", overview.getName(), rank);
+                if (data != null) {
+                  //if (AntwebProps.isDevOrStageMode())
+                  s_log.info("execute() Fetched cached page.  Rank:" + rank + " overview:" + overview + " cacheType:taxaPage");              
+                  PrintWriter out = response.getWriter();
+                  out.println(data);
+                  return null;
+                } else {
+           
+                  if (isGetCache) {
+                    String message = "not fetched from cache.  Rank:" + rank + " overview:" + overview + " cacheType:taxaPage";
+                    //if (AntwebProps.isDevOrStageMode()) 
+                    s_log.info("Execute() " + message); 
+                    request.setAttribute("message", message);
+                    return (mapping.findForward("message"));
+                  }
+                }
+              }
+            }                
+
+			 
+			String statusSetStr = StatusSet.getStatusSet(request, overview);
+			String statusSetSize = StatusSet.getStatusSetSize(request);
+
+            taxaPage.setStatusSetStr(statusSetStr);
+            taxaPage.setStatusSetSize(statusSetSize);
+            
+            if (Rank.SUBSPECIES.equals(rank)) {
+                String message = "Subspecies not supported for taxonomic page. Use species.";
+                s_log.error("execute() " + message + " " + HttpUtil.getRequestInfo(request));
+                request.setAttribute("message", message);
+                return (mapping.findForward("message"));            
+            }
+            taxaPage.setRank(rank);
+            taxaPage.setConnection(connection);
+            taxaPage.setOverview(overview);
+A.log("execute() overview:" + overview);
+            taxaPage.fetchChildren(withImages, withTaxa, withSpecimen, caste, new StatusSet(statusSetStr)); //, orderBy);
+
+            /* 
+              With withImages set, a request like this will take 2/5 minutes...  Really?
+              http://localhost/antweb/taxonomicPage.do?rank=genus&project=allantwebants                
+            */
+          
+            // Caching Logic Part II
+            if (withImages && !isGenCache && !isGetCache) {
+              int busy = DBUtil.getNumBusyConnections(dataSource);              
+              AntwebCacheMgr.finish(request, connection, busy, startTime, "taxaPage", overview, rank);
+            }                            
+         
+            //if (overview instanceof Adm1) A.log("execute() overview:" + overview + " parent:" + overview.getParentName());
+          } catch (SQLException e) {
+            GregorianCalendar now = new GregorianCalendar();
+            s_log.error("execute() at time " + now.get(Calendar.HOUR) 
+              + ":" + now.get(Calendar.MINUTE) + ":" + now.get(Calendar.SECOND) + " e:" + e);
+          } finally {
+            DBUtil.close(connection, this, "TaxaPageAction.execute()");
+            //s_log.info("execute() closing uniqueNumber:" + uniqueNumber);
+          }
+
+          if ("request".equals(mapping.getScope())) {
+              request.setAttribute("taxaPage", taxaPage);
+          } else {
+              try {
+                TaxaPage oldTaxa = (TaxaPage) session.getAttribute("taxaPage");
+                if (oldTaxa != null) {
+                    oldTaxa.finalize();
+                }
+              } catch (IllegalStateException e) {
+                  s_log.error("execute() finalizing e:" + e);                
+              } catch (Throwable e) {
+                  s_log.error("execute() finalizing e:" + e);
+              }
+
+              session.setAttribute("taxaPage", taxaPage);
+              if (rank.equals("subfamily")) {
+                  session.setAttribute("taxon",null);
+              }
+          }
+        }
+
+        // Set a transactional control token to prevent double posting
+        saveToken(request);
+        
+        // A.log("execute() children:" + taxaPage.getChildren() + " simple:" + simple);                      
+
+        if (taxaPage.getChildren() == null) {
+            return (mapping.findForward("failure"));
+        }
+        
+        return (mapping.findForward("success"));
+    }
+}

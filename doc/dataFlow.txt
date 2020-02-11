@@ -1,0 +1,171 @@
+Data Flow Documentation
+
+This file documents the various files that are uploaded to Antweb.
+
+Mark Johnson  Sep 5, 2016
+
+----------------------------------------------------------------------------------
+
+
+
+
+FetchAndLoad on localhost:
+ 2016-09-10 13:06:29,594 WARN http-bio-80-exec-8 org.calacademy.antweb.upload.UploadAction - execute() begin importing species list: 20160910-05-58-21-worldants.txt
+ 2016-09-10 13:06:29,594 INFO http-bio-80-exec-8 antwebEventLog - Import:worldants
+ 2016-09-10 13:06:29,594 WARN http-bio-80-exec-8 org.calacademy.antweb.upload.UploadFile - figureEncoding() fileLoc:/Users/mark/dev/calAcademy/workingdir/worldants.txt isValidUTF8:/Users/mark/dev/calAcademy/workingdir/worldants.txt
+ 2016-09-10 13:06:29,595 WARN http-bio-80-exec-8 org.calacademy.antweb.upload.UploadFile - correctEncoding(UTF-8) found true in 0 seconds.  LineFound:false
+ 2016-09-10 13:06:29,596 WARN http-bio-80-exec-8 org.calacademy.antweb.upload.UploadAction - execute() import species list.  fileName:worldants.txt root:/Users/mark/dev/apache-tomcat-7.0.41/webapps/antweb/ recrawl:true
+ 2016-09-10 13:06:29,596 WARN http-bio-80-exec-8 org.calacademy.antweb.upload.UploadFile - backup() /Users/mark/dev/calAcademy/workingdir/worldants.txt to /Users/mark/dev/tomcat/webapps/antweb/web/upload/20160910-13:06:29-worldants.txt
+ 2016-09-10 13:06:29,597 WARN http-bio-80-exec-8 org.calacademy.antweb.Utility - copyFile(/Users/mark/dev/calAcademy/workingdir/worldants.txt, /Users/mark/dev/tomcat/webapps/antweb/web/upload/20160910-13:06:29-worldants.txt)
+ 2016-09-10 13:06:29,597 ERROR http-bio-80-exec-8 org.calacademy.antweb.Utility - isTabDelimited() null line.  Perhaps empty file:/Users/mark/dev/calAcademy/workingdir/worldants.txt?
+ 2016-09-10 13:06:29,597 WARN http-bio-80-exec-8 org.calacademy.antweb.upload.UploadAction - execute() Species List must be a tab-delimited file.
+ 2016-09-10 13:06:29,598 WARN http-bio-80-exec-8 org.calacademy.antweb.upload.UploadAction - execute() Completion of the Upload Process.  Group:CAS action:import:worldants
+ 2016-09-10 13:06:29,599 WARN http-bio-80-exec-8 org.calacademy.antweb.upload.UploadAction - execute() finally finished.
+ 2016-09-10 13:22:09,979 WARN http-bio-80-exec-13 org.calacademy.antweb.util.HttpUtil - writeUrlContents() IN url:http://ibss-info/antcat.antweb.txt toFile:/Users/mark/dev/tomcat/webapps/antweb/web//speciesList/world/worldants_speciesList.txt
+
+
+2016-09-11 14:19:01,459 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.util.AntwebSystem - countLines:1 return:1 spaceIndex:1
+ 2016-09-11 14:19:01,477 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.UploadFile - correctEncoding(UTF-8) found true in 0 seconds.  LineFound:false
+ 2016-09-11 14:19:01,482 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.SpeciesListUpload - importSpeciesList() fileLoc:/data/antweb/web/speciesList/world/worldants_speciesList.txt
+ 2016-09-11 14:19:01,484 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.util.AntwebSystem - countLines:1 return:1 spaceIndex:1
+ 2016-09-11 14:19:01,540 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.SpeciesListUpload - importSpeciesList() project:worldants shortFileName:worldants_speciesList.txt fileLoc:/data/antweb/web/speciesList/world/worldants_speciesList.txt
+ 2016-09-11 14:19:01,551 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.home.ProjTaxonCountDb - recrawlProject() begin reCrawl project:worldants
+ 2016-09-11 14:19:01,555 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.home.ProjTaxonCountDb - recrawlProject() end recrawl project:worldants
+ 2016-09-11 14:19:01,559 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.UploadAction - runStatistics()
+ 2016-09-11 14:19:03,647 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.UploadAction - runStatistics() query:insert into statistics  (action, specimens, extant_taxa, total_taxa, proj_taxa, total_images, specimens_imaged, species_imaged, valid_species_imaged, login_id, exec_time)  values ('reload:worldants',566457,0,9936,126468,192777,44683,16628,0,22, '5 secs')
+ 2016-09-11 14:19:03,656 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.UploadAction - updateUpload()
+ 2016-09-11 14:19:03,657 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.UploadAction - execute() execTime:5 secs
+ 2016-09-11 14:19:03,657 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.UploadAction - execute() completed.  returning:uploadResults
+ 2016-09-11 14:19:03,658 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.UploadAction - execute() Completion of the Upload Process.  Group:CAS action:reload:worldants
+ 2016-09-11 14:19:03,658 WARN ajp-bio-8009-exec-2 org.calacademy.antweb.upload.UploadAction - execute() finally finished.
+ 
+
+Live server fail loading empty worldants.
+ 2016-09-10 05:58:26,189 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.util.AntwebSystem - countLines:0 0 0 /data/antweb/web//speciesList/world/worldants_speciesList.txt
+ 2016-09-10 05:58:26,189 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.util.AntwebSystem - countLines:0
+ 2016-09-10 05:58:26,189 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.util.AntwebSystem - countLines:0 return:0 spaceIndex:1
+ 2016-09-10 05:58:26,251 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.UploadAction - execute() reloadSpeciesList:worldants
+ 2016-09-10 05:58:26,271 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.UploadFile - correctEncoding(UTF-8) found true in 0 seconds.  LineFound:false
+ 2016-09-10 05:58:35,395 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.SpeciesListUpload - importSpeciesList() project:worldants shortFileName:worldants_speciesList.txt fileLoc:/data/antweb/web/speciesList/world/worldants_speciesList.txt
+ 2016-09-10 05:58:35,398 ERROR ajp-bio-8009-exec-68 org.calacademy.antweb.upload.SpeciesListUpload - importSpeciesList() null line.  Perhaps empty file:/data/antweb/web/speciesList/world/worldants_speciesList.txt?
+ 2016-09-10 05:58:35,404 ERROR ajp-bio-8009-exec-68 org.calacademy.antweb.upload.SpeciesListUpload - importSpeciesList(true) No success at importing project:worldants fileLoc:/data/antweb/web/speciesList/world/worldants_speciesList.txt
+ 2016-09-10 05:58:35,405 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.home.ProjTaxonCountDb - recrawlProject() begin reCrawl project:worldants
+ 2016-09-10 05:58:35,411 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.home.ProjTaxonCountDb - recrawlProject() end recrawl project:worldants
+ 2016-09-10 05:58:35,415 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.UploadAction - runStatistics()
+ 2016-09-10 05:58:45,074 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.UploadAction - runStatistics() query:insert into statistics  (action, specimens, extant_taxa, total_taxa, proj_taxa, total_images, specimens_imaged, species_imaged, valid_species_imaged, login_id, exec_time)  values ('reload:worldants',566457,0,9936,126468,192777,44683,16628,0,1, '14 secs')
+ 2016-09-10 05:58:45,184 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.UploadAction - updateUpload()
+ 2016-09-10 05:58:45,192 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.UploadAction - execute() execTime:14 secs
+ 2016-09-10 05:58:45,192 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.UploadAction - execute() completed.  returning:uploadResults
+ 2016-09-10 05:58:45,192 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.UploadAction - execute() Completion of the Upload Process.  Group:CAS action:reload:worldants
+ 2016-09-10 05:58:45,193 WARN ajp-bio-8009-exec-68 org.calacademy.antweb.upload.UploadAction - execute() finally finished.
+ 
+ 
+   
+   
+   
+   
+1. Introduced/Endemic
+
+
+Endemic means "found only in".
+  Should be computed for both country and adm1.
+  Stored in geolocale_taxon. Is_endemic field.
+  Should be able to compute for all geolocale_taxa.
+  
+Endemic page. What geolocale has the most endemism.
+  Summary. Data on it.
+
+Good questions
+  Least collected
+  Rarest
+  Most widespread (based on country list).
+  Most abundant (number of times collected).
+
+Introduced
+  We need a list (similar to introducedants but with the native bioregion/geolocale).
+	Native biogeographic region set for each introduced species
+	  How?  Brian and Eli?  How is the data set for the 230 records in proj_taxon for introducedants?
+	  Is it by bioregion (maybe an extra field of project just for introducedants)?
+		Or geolocale_taxon? Could be a subRegion like South America (for Argentinian ants).
+		What is up with geolocale_taxon in cases of subregion?  There are 29 records for South America 
+		  Half of them are species, half genus, and subfamily.  insertGeolocaleTaxon.
+		Shouldn't those not be there.    
+	Introduced should be a separate table. Not tacked on to Project in the case of introducedants.
+	  taxonName, biogeographicregion || geolocale_id.
+	when that table changes, start a process to go flag all of the geolocale_taxon records.
+	  Also process to flag all of the bioregion_taxon records.
+
+  
+argentine ants is found in neotropical.
+  if in california, then bioregion of california is not neotropical, so is introduced.
+
+is that latlong in that country?  How to?
+
+
+* Summary: 
+  geolocale_taxon.is_endemic is populated from the (negated) Antweb Regional Taxon List field "Introduced".
+  geolocale_taxon.is_introduced is populated from the specimen upload file.
+  Both are considered when creating the geolocale.endemic_species_count.
+
+a. Upload the Regional Taxon List.
+
+  See AntwikiDataAction.loadRegionalTaxonList() for documentation.
+  Loads the Antwiki_taxon_country table.
+  
+  Download from http://www.antwiki.org/wiki/images/0/0c/AntWiki_Regional_Taxon_List.txt.
+  
+  Rename A,B,etc.. and store in the web/data directory
+  
+  Antwiki_Regional_taxon_list.txt contains records that have a Yes in the species that are known to be introduced in that country.
+    TaxonName	Genus	Species	Subspecies	Country	Introduced	Source
+    Anoplolepis gracilipes	Anoplolepis	gracilipes		Australia	Australasian Region	Yes	http://www.antwiki.org/wiki/Australia
+
+  File is loaded at the bottom of the curate page with a post "Upload Data File".
+  Will not modify geolocale_taxon. Only into antwiki_taxon_country.
+
+b. Then run /util.do?action=finishCountryUpload  (~15min)
+    This will run through specimen data. Popuylate the geolocale_taxon is_introduced field.
+    GeolocaleTaxonDb.populateFromCountrySpecimenData()
+    GeolocaleTaxonDb.populateFromAdm1SpecimenData()
+    GeolocaleTaxonDb.populateFromAntwikiData() antwiki_taxon_country table.
+
+c. Then run /util.do?action=calcEndemic to update the geolocale_taxon table. (~2min)
+   to set Geolocale.endemic_species_count and geolocale_taxon.is_endemic
+
+        GeolocaleDb.calcEndemic()
+
+    * Currently this documentation is weak. The full movement of data is unspecified. In addition to the 
+      Antwiki Regional Taxon List, there is an introduced field in the specimen upload file. These fields
+      are attached to specimen record which is propagated to the geolocale_taxon is_introduced (not to be
+      confused with the is_endemic field).
+
+2. UN countries and Bounds.
+  Primary access method.  Called like: http://localhost/antweb/util.do?action=countryData
+  AntwikiDataAction.pushCountryData() -> geolocaleDb.pushUnCountryToGeolocale() (long static method - necessary?).
+  Fetched from http://www.antwiki.org/wiki/index.php?title=Countries_by_Regions&action=edit
+  Will load and push the UN country data to geolocale. Then fetch the country bounds.
+  Don't think this should have to happen again until the UN Country list changes.
+  
+3. Specimen uploads. 
+  
+4. Bolton list.
+  There is an old file here: doc/bolton.txt
+
+5. Plazi.
+[Copied from src/org/calacademy/antweb/data/Plazi.java]
+
+/**
+  *  Plazi data is stored as description_edit records of title:taxonomictreatment and is displayed 
+  *  as Taxonomic Treatment on the taxon page.  It is imported via a struts tag as such:
+  *  
+  *  /getPlazi.do
+  *
+  *  It relies on the ApplicationResources properties site.plaziFilesURL, site.plaziDescriptionRoot and site.plaziDir.
+  *  It will download lots of xml files.  It takes about 15 minutes to run.
+  *
+  *  Plazi notFoundCount:2401
+  *  Saved Plazi Count:3224
+  *
+  *  Contact: Donat Agosti <agosti@amnh.org>
+  *
+  */

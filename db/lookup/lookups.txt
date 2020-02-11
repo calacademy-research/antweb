@@ -1,0 +1,17 @@
+Lookups.txt is documentation for the creation of database tables where the data comes from csv files.
+
+
+
+The database tables were created here: db/upgrade/4.49/2012-01-27.sql
+
+1) Modify the csv file to contain no records in quotations, and/or no records with commas in the data.  Remove these records and build SQL statements.
+
+2) Run the mysqlimport statement
+
+mysqlimport -u antweb -p ant --delete --local --fields-terminated-by=, --ignore-lines=1 --lines-terminated-by="\r\n" country.csv
+
+3) Manually insert the data that had quotations and commas.
+
+insert into country (name, iso_code) values ("Saint Helena, Ascension and Tristan da Cunha","SH");
+insert into country (name, iso_code) values ("Bonaire, Sint Eustatius and Saba","BQ");
+

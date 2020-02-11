@@ -1,0 +1,212 @@
+fileSystem.txt
+
+--- Log Files ---
+  /var/log/messages
+  /var/www/html/imageUpload/messages
+  /var/log/httpd/
+    access_log, error_log, ssl_error_log, ssl_request_log, ssl_access_log, mod_jk.log
+  /var/log/tomcat5/antwebInfo.log
+  /var/log/tomcat5/antweb.log
+  /var/log/tomcat5/antwebTestInfo.log
+  /var/log/tomcat5/antwebTest.log
+  /var/log/tomcat5/appCheck.log
+
+
+--- File System. 10.2.22.106 - Antweb2 ---
+/
+  usr/
+    bin/
+      java -> /usr/java/default/bin/java    JAVA_HOME
+    java/
+      default -> /usr/java/latest
+      latest -> /usr/java/jdk1.6.0_21
+      jdk1.6.0_21
+        /bin/
+          java, javac, ...
+      ant -> apache-ant-1.8.1
+      apache-ant-1.8.1/
+        lib/
+          catalina-ant.jar
+    lib/
+      jvm/jre-1.6.0-openjdk.x86_64
+      jvm/
+        jre/                    
+        java/      JAVA_HOME
+    local/
+      /apache2/   * New Install!   
+        /conf/httpd.conf - mod_jk config info
+        /logs - log files here for apache and mod_jk
+      tomcat -> apache-tomcat-6.0.29/       CATALINA_HOME
+        work - /usr/local/tomcat/work/Catalina/localhost/_/org/apache/jsp/
+  home/
+    mjohnson/
+      antweb/ - deployment directory for live 
+    sblum/
+  etc/
+    alternatives/
+      java -> /usr/lib/jvm/jre-1.6.0-openjdk.x86_64/bin/java
+    profile - System wide configuration of JAVA_HOME and CATALINA_HOME
+    httpd/   * Old install
+      conf/
+        httpd.conf
+    php.ini
+  data/
+    antweb/
+      images/
+      WEB-INF/
+  var/
+    log/
+      tomcat/
+        appCheck.log
+    www/
+      html/   * New and Old doc root
+  
+
+--- Full File System - Antweb.org ----
+/
+  dead softinks: common, server, shared, webapps - these removed.  temp, log and work remain.
+  temp -> /var/cache/tomcat/temp
+    temp -> /var/cache/tomcat/temp
+  work -> /var/cache/tomcat/work
+  logs -> /var/log/tomcat
+  home/
+    antweb/
+      workingdir/
+        arizonaants.txt 
+        processImages
+    mark/ - check cvs out to here.  Deploy to /antweb.
+      antweb
+        build - "ant compile" will construct here
+      antweb_test
+    thau/
+      java/antweb - Dave's build of antweb.  Aimed at live site.  Left as is.
+    luke/ mysql/ tomcat/ antweb
+  usr/
+    share/
+      tomcat5/ (not softlink)
+        bin
+        common -> /var/lib/tomcat5/common
+        conf -> /etc/tomcat5
+        logs -> /var/log/tomcat5
+        server -> /var/lib/tomcat5/server
+        shared -> /var/lib/tomcat5/shared
+        temp -> /var/cache/tomcat5/temp
+        webapps -> /var/lib/tomcat5/webapps
+          antweb[_test] - this is build.xml's antweb.home
+        work -> /var/cache/tomcat5/work
+          Compiled jsps: /var/cache/tomcat5/work/Catalina/localhost/_/org/apache/jsp
+  etc/
+    rc.d/
+      init.d/
+        tomcat5 8528
+        priv_tomcat
+        httpd   3099
+        
+    php.ini
+    httpd/
+      logs/ - Apache logs
+      conf/ 
+        httpd.conf      
+        uriworkermap.properties 
+        workers.properties
+  data/
+    antweb/  - Tomcat deployment directory (259GB)
+      images/ - organized in dirs, all processed images go here... (149GB)
+      images_090923 (109GB) 
+      *.jsp
+      WEB-INF
+        classes
+          ProjectResources.properties
+          ApplicationResources.properties
+      arizona/ - put here by curator tool
+        arizona_map.gif genus.pdf species.pdf thoughts.txt CASENT0102784_Hw.jpg ...
+      arizona-body.jsp - put here by curator tool
+      arizona.jsp - put here by curator tool
+    cvsroot/
+      antweb
+        build.xml struts-config.xml
+        build/ - does this belong here?
+        doc/
+          erd.mwb erd.png antweb-docs.txt fileMods.txt notes.txt
+        web/
+          blog/ common/ documentation/ images/ layouts/ MA/ wac/ worldAuthorityFiles/ googleMap.js biogeography.pdf
+        src/
+        WEB-INF/
+          struts-config.xml
+          classes/
+            ApplicationResources.properties  
+          lib/  - this is lib.home
+      googleEarth  
+  var/
+    www/
+      html  - web stuff.
+        blog.  antblog.
+        imageUpload
+          process.php
+          toUpload
+        bugzilla
+        Digger - federated database system for sharing collections info.
+          tapirlink (other version - stan knows)
+          gbif.org (a digger client).  This is primary digger client.
+    lib/
+      tomcat5/
+        webapps/  -These are the actual deployments
+          ROOT/
+            admin/
+            WEB-INF/
+            docs/javadocs/docs/api - This is where javadocs are (would be) generated
+          antweb_test/
+          googleEarth/
+    log/
+      httpd/
+      messages - log file for system related stuff
+      tomcat/
+        tomcat -> /var/log/tomcat
+      tomcat5/
+        catalina.out
+        admin... localhost... manager... 
+        
+
+Scratch
+Antweb.org
+What is up with: -Dcatalina.ext.dirs=/usr/share/tomcat5/shared/lib:/usr/share/tomcat5/common/lib
+There is nothing here: /usr/share/tomcat5/shared/lib
+There are a pile of softlinks here: /usr/share/tomcat5/common/lib
+For instance [commons-el].jar -> /usr/share/java/commons-el.jar 
+  Which is a softlink here: /usr/share/java/commons-el.jar -> commons-el-1.0.jar
+  
+
+--- Full File System - Mac Dev machine ----
+
+/
+  etc/
+    apache2/ 
+      httpd.conf
+    httpd/   
+  var/
+    log/
+      apache2/
+        access_log
+        error_log
+  usr/
+    libexec/
+      apache2/
+        mod_jk-1.2.25-httpd-2.2.4.so
+        mod_jk.so 
+  Library/
+    WebServer/
+      Documents/
+        antblog/
+  Users/
+    macpro/
+      dev/
+        calAcademy/
+          antweb/ - dev directory
+            build/  - compilations go here.
+            src/
+        tomcat/
+          webapps/
+            antweb/ - deployment directory
+          work/    /Users/macpro/dev/tomcat/work/Catalina/localhost/antweb/org/apache/jsp/   - compiled jsps
+
+

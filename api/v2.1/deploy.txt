@@ -1,0 +1,15 @@
+API v2.1 Deployment Documentation
+
+Aside from this documentation, the v2.1 api was created by Jay Mollica <jaymollica@gmail.com>
+It is not a part of the usual antweb deployment process. It is stored in a git repository.
+Now the code is included in the Antweb distribution for backup purposes. 
+
+Hoping to replace it with V3, which is in the Antweb distribution.
+
+(This documentation by Mark).
+
+antweb.php is an attempt to replace index.php. Don't believe it got anywhere.
+
+(Aside from antweb.php) the other components need to be deployed to the apache directory:
+/var/www/html/api/ 
+

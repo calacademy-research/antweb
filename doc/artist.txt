@@ -1,0 +1,325 @@
+
+
+
+* This query shows all of the duplicated artist names.  When they are duplicates within the same group,
+confusion will occur.
+
+mysql>  select artist.uid, artist.artist, artist.active, artist_group.group_id from artist, artist_group where artist.uid = artist_group.artist_id and artist in ( select artist from artist group by artist  having count(*) > 1) order by artist.artist; 
++------+---------------------+--------+----------+
+| uid  | artist              | active | group_id |
++------+---------------------+--------+----------+
+|    1 |                     |      1 |        1 | 
+|    2 |                     |      1 |        1 | 
+|    3 |                     |      1 |        1 | 
+|    4 |                     |      1 |        1 | 
+|    5 |                     |      1 |        1 | 
+|    6 |                     |      1 |        1 | 
+|    7 |                     |      1 |        1 | 
+|    8 |                     |      1 |        1 | 
+|    9 |                     |      1 |        1 | 
+|   10 |                     |      1 |        1 | 
+|   11 |                     |      1 |        1 | 
+|   12 |                     |      1 |        1 | 
+|   13 |                     |      1 |        1 | 
+|   14 |                     |      1 |        1 | 
+|   15 |                     |      1 |        1 | 
+|   16 |                     |      1 |        1 | 
+|   17 |                     |      1 |        1 | 
+|   18 |                     |      1 |        1 | 
+|   19 |                     |      1 |        1 | 
+|   20 |                     |      1 |        1 | 
+|   21 |                     |      1 |        1 | 
+|   22 |                     |      1 |        1 | 
+|   23 |                     |      1 |        1 | 
+|   24 |                     |      1 |        1 | 
+|   25 |                     |      1 |        1 | 
+|   26 |                     |      1 |        1 | 
+|   27 |                     |      1 |        1 | 
+|   28 |                     |      1 |        1 | 
+|   29 |                     |      1 |        1 | 
+|   30 |                     |      1 |        1 | 
+|   31 |                     |      1 |        1 | 
+|   33 |                     |      1 |        1 | 
+|   34 |                     |      1 |        1 | 
+|   35 |                     |      1 |        1 | 
+|   36 |                     |      1 |        1 | 
+|   37 |                     |      1 |        1 | 
+|   38 |                     |      1 |        1 | 
+|   39 |                     |      1 |        1 | 
+|   40 |                     |      1 |        1 | 
+|   41 |                     |      1 |        1 | 
+|   42 |                     |      1 |        1 | 
+|   43 |                     |      1 |        1 | 
+|   44 |                     |      1 |        1 | 
+|   45 |                     |      1 |        1 | 
+|   46 |                     |      1 |        1 | 
+|   47 |                     |      1 |        1 | 
+|   48 |                     |      1 |        1 | 
+|   49 |                     |      1 |        1 | 
+|   50 |                     |      1 |        1 | 
+|   51 |                     |      1 |        1 | 
+|   52 |                     |      1 |        1 | 
+|   54 |                     |      1 |        1 | 
+|   55 |                     |      1 |        1 | 
+|   62 |                     |      1 |        1 | 
+|   65 |                     |      1 |        1 | 
+|   66 |                     |      1 |        1 | 
+|   67 |                     |      1 |        1 | 
+|   72 | Bonnie Blaimer      |      1 |        1 | 
+|   89 | Bonnie Blaimer      |      1 |       19 | 
+|  103 | Bruce Archibald     |      1 |       24 | 
+|  104 | Bruce Archibald     |      1 |       24 | 
+|   59 | C. Richart          |      1 |        1 | 
+|   75 | C. Richart          |      1 |        2 | 
+|   76 | C. Richart          |      1 |        2 | 
+|   61 | Claudia Ortiz       |      1 |        1 | 
+|   80 | Claudia Ortiz       |      1 |        1 | 
+|   83 | Donat Agosti        |      0 |        1 | 
+|   91 | Donat Agosti        |      1 |        1 | 
+|   56 | Michael Branstetter |      1 |        1 | 
+|   74 | Michael Branstetter |      1 |       16 | 
+|   68 | S. Bylsma           |      1 |        1 | 
+|   71 | S. Bylsma           |      1 |        1 | 
++------+---------------------+--------+----------+
+72 rows in set (0.00 sec)
+
+
+* For Cal Academy there are lots of "" artists:
+
+mysql> select artist_id, group_id from artist_group where artist_id in (select uid from artist where uid < 32 or (uid > 32 and uid < 53) or (uid > 53 and uid < 56) or uid = 62 or (uid > 64 and uid < 68) or uid = 73);
++-----------+----------+
+| artist_id | group_id |
++-----------+----------+
+|         1 |        1 | 
+|         2 |        1 | 
+|         3 |        1 | 
+|         4 |        1 | 
+|         5 |        1 | 
+|         6 |        1 | 
+|         7 |        1 | 
+|         8 |        1 | 
+|         9 |        1 | 
+|        10 |        1 | 
+|        11 |        1 | 
+|        12 |        1 | 
+|        13 |        1 | 
+|        14 |        1 | 
+|        15 |        1 | 
+|        16 |        1 | 
+|        17 |        1 | 
+|        18 |        1 | 
+|        19 |        1 | 
+|        20 |        1 | 
+|        21 |        1 | 
+|        22 |        1 | 
+|        23 |        1 | 
+|        24 |        1 | 
+|        25 |        1 | 
+|        26 |        1 | 
+|        27 |        1 | 
+|        28 |        1 | 
+|        29 |        1 | 
+|        30 |        1 | 
+|        31 |        1 | 
+|        33 |        1 | 
+|        34 |        1 | 
+|        35 |        1 | 
+|        36 |        1 | 
+|        37 |        1 | 
+|        38 |        1 | 
+|        39 |        1 | 
+|        40 |        1 | 
+|        41 |        1 | 
+|        42 |        1 | 
+|        43 |        1 | 
+|        44 |        1 | 
+|        45 |        1 | 
+|        46 |        1 | 
+|        47 |        1 | 
+|        48 |        1 | 
+|        49 |        1 | 
+|        50 |        1 | 
+|        51 |        1 | 
+|        52 |        1 | 
+|        54 |        1 | 
+|        55 |        1 | 
+|        62 |        1 | 
+|        65 |        1 | 
+|        66 |        1 | 
+|        67 |        1 | 
++-----------+----------+
+57 rows in set (0.01 sec)
+
+
+
+* If we manually manipulate the data as such:
+
+
+mysql> delete from artist_group where artist_id != 1 and artist_id in (select uid from artist where uid < 32 or (uid > 32 and uid < 53) or (uid > 53 and uid < 56) or uid = 62 or (uid > 64 and uid < 68) or uid = 73);
+Query OK, 56 rows affected (0.01 sec)
+
+mysql> update image set artist = 1 where artist in (select uid from artist where uid < 32 or (uid > 32 and uid < 53) or (uid > 53 and uid < 56) or uid = 62 or (uid > 64 and uid < 68) or uid = 73);
+Query OK, 11369 rows affected (3.52 sec)
+Rows matched: 35001  Changed: 11369  Warnings: 0
+
+mysql> delete from artist where uid != 1 and uid < 32 or (uid > 32 and uid < 53) or (uid > 53 and uid < 56) or uid = 62 or (uid > 64 and uid < 68) or uid = 73;
+Query OK, 57 rows affected (0.00 sec)
+
+
+* Then the above query gives these results:
+
+
+mysql> select artist_id, group_id from artist_group where artist_id in (select uid from artist where uid < 32 or (uid > 32 and uid < 53) or (uid > 53 and uid < 56) or uid = 62 or (uid > 64 and uid < 68) or uid = 73);
++-----------+----------+
+| artist_id | group_id |
++-----------+----------+
+|         1 |        1 | 
++-----------+----------+
+1 row in set (0.01 sec)
+
+
+mysql>  select artist.uid, artist.artist, artist.active, artist_group.group_id from artist, artist_group where artist.uid = artist_group.artist_id and artist in ( select artist from artist group by artist  having count(*) > 1) order by artist.artist; 
++------+---------------------+--------+----------+
+| uid  | artist              | active | group_id |
++------+---------------------+--------+----------+
+|   72 | Bonnie Blaimer      |      1 |        1 | 
+|   89 | Bonnie Blaimer      |      1 |       19 | 
+|  103 | Bruce Archibald     |      1 |       24 | 
+|  104 | Bruce Archibald     |      1 |       24 | 
+|   59 | C. Richart          |      1 |        1 | 
+|   75 | C. Richart          |      1 |        2 | 
+|   76 | C. Richart          |      1 |        2 | 
+|   61 | Claudia Ortiz       |      1 |        1 | 
+|   80 | Claudia Ortiz       |      1 |        1 | 
+|   83 | Donat Agosti        |      1 |        1 | 
+|   91 | Donat Agosti        |      1 |        1 | 
+|   56 | Michael Branstetter |      1 |        1 | 
+|   74 | Michael Branstetter |      1 |       16 | 
+|   68 | S. Bylsma           |      1 |        1 | 
+|   71 | S. Bylsma           |      1 |        1 | 
++------+---------------------+--------+----------+
+15 rows in set (0.04 sec)
+
+
+
+* What we are left with is that there are a number of artists entered multiple times (that's ok if they are in different groups), 
+  but misleading if they are in the same group.  These queries will rectify:
+
+
+update image set artist = 104 where artist = 103;
+delete from artist where uid = 103;
+delete from artist_group where artist_id = 103;
+
+update image set artist = 76 where artist = 75;
+delete from artist where uid = 75;
+delete from artist_group where artist_id = 75;
+
+update image set artist = 80 where artist = 61;
+delete from artist where uid = 61;
+delete from artist_group where artist_id = 61;
+
+update image set artist = 71 where artist = 68;
+delete from artist where uid = 68;
+delete from artist_group where artist_id = 68;
+
+
+* Now we have a proper set of artist, artist_group date where the artist is unique within the group.
+
+mysql> select artist.uid, artist.artist, artist.active, artist_group.group_id from artist, artist_group where artist.uid = artist_group.artist_id and artist in ( select artist from artist group by artist  having count(*) > 1) order by artist.artist; 
++------+----------------+--------+----------+
+| uid  | artist         | active | group_id |
++------+----------------+--------+----------+
+|   72 | Bonnie Blaimer |      1 |        1 | 
+|   89 | Bonnie Blaimer |      1 |       19 | 
+|   59 | C. Richart     |      1 |        1 | 
+|   76 | C. Richart     |      1 |        2 | 
++------+----------------+--------+----------+
+4 rows in set (0.03 sec)
+
+
+
+* Perhaps useful to know:
+
+mysql> select count(*) from image where artist = 1;
++----------+
+| count(*) |
++----------+
+|    35001 | 
++----------+
+1 row in set (0.04 sec)
+
+mysql> select count(*) from image;
++----------+
+| count(*) |
++----------+
+|    68537 | 
++----------+
+1 row in set (0.02 sec)
+
+
+* Also there is an "unknown" artist, uid = 90.  Let's just use artist 1 for this:
+
+update image set artist = 1 where artist = 90;
+delete from artist where uid = 90;
+delete from artist_group where artist_id = 90;
+
+
+
+* Now here are all of the artists and their groups, correct in our database.  (Note: created is 0000s because I just added the field):
+
+mysql> select artist.*, artist_group.group_id from artist, artist_group where artist.uid = artist_group.artist_id order by group_id, artist;
++------+---------------------------------------+--------+---------------------+----------+
+| uid  | artist                                | active | created             | group_id |
++------+---------------------------------------+--------+---------------------+----------+
+|  100 | Peter Hawkes                          |      1 | 0000-00-00 00:00:00 |        0 | 
+|    1 |                                       |      1 | 0000-00-00 00:00:00 |        1 | 
+|  105 | Andrea Walker                         |      1 | 0000-00-00 00:00:00 |        1 | 
+|   69 | April Nobile                          |      1 | 0000-00-00 00:00:00 |        1 | 
+|  108 | B. Boudinot                           |      1 | 0000-00-00 00:00:00 |        1 | 
+|   70 | B. Broyles                            |      1 | 0000-00-00 00:00:00 |        1 | 
+|   72 | Bonnie Blaimer                        |      1 | 0000-00-00 00:00:00 |        1 | 
+|   88 | Brian L. Fisher                       |      1 | 0000-00-00 00:00:00 |        1 | 
+|   59 | C. Richart                            |      1 | 0000-00-00 00:00:00 |        1 | 
+|   77 | Christian Peeters                     |      1 | 0000-00-00 00:00:00 |        1 | 
+|   80 | Claudia Ortiz                         |      1 | 0000-00-00 00:00:00 |        1 | 
+|   81 | D. Agosti, F. Firouzi, S. Hoseinezhad |      1 | 0000-00-00 00:00:00 |        1 | 
+|   58 | D. J. Cox                             |      1 | 0000-00-00 00:00:00 |        1 | 
+|   79 | Dimby Raharinjanahary                 |      1 | 0000-00-00 00:00:00 |        1 | 
+|   91 | Donat Agosti                          |      1 | 0000-00-00 00:00:00 |        1 | 
+|   63 | Eli M. Sarnat                         |      1 | 0000-00-00 00:00:00 |        1 | 
+|   53 | Erin Prado                            |      1 | 0000-00-00 00:00:00 |        1 | 
+|   92 | Estella Ortega                        |      1 | 0000-00-00 00:00:00 |        1 | 
+|   87 | Eva Wiesel                            |      1 | 0000-00-00 00:00:00 |        1 | 
+|   99 | Evan P. Economo                       |      1 | 0000-00-00 00:00:00 |        1 | 
+|   85 | Francisco Hita Garcia                 |      1 | 0000-00-00 00:00:00 |        1 | 
+|   86 | Georg Fischer                         |      1 | 0000-00-00 00:00:00 |        1 | 
+|   64 | J. Russ                               |      1 | 0000-00-00 00:00:00 |        1 | 
+|   82 | Jean Claude Rakotonirina              |      1 | 0000-00-00 00:00:00 |        1 | 
+|   57 | John T. Longino                       |      1 | 0000-00-00 00:00:00 |        1 | 
+|   32 | Michele Esposito                      |      1 | 0000-00-00 00:00:00 |        1 | 
+|   60 | Noel Tawatao                          |      1 | 0000-00-00 00:00:00 |        1 | 
+|  106 | Ryan Perry                            |      1 | 0000-00-00 00:00:00 |        1 | 
+|   71 | S. Bylsma                             |      1 | 0000-00-00 00:00:00 |        1 | 
+|  109 | Sara Giles                            |      1 | 0000-00-00 00:00:00 |        1 | 
+|   78 | Scott Serata                          |      1 | 0000-00-00 00:00:00 |        1 | 
+|   93 | Shannon Hartman                       |      1 | 0000-00-00 00:00:00 |        1 | 
+|   84 | Vincent Perrichot                     |      1 | 0000-00-00 00:00:00 |        1 | 
+|   94 | Will Ericson                          |      1 | 0000-00-00 00:00:00 |        1 | 
+|  111 | Zach Lieberman                        |      1 | 0000-00-00 00:00:00 |        1 | 
+|   76 | C. Richart                            |      1 | 0000-00-00 00:00:00 |        2 | 
+|   95 | L. Vilhelmsen                         |      1 | 0000-00-00 00:00:00 |        2 | 
+|  107 | Marek Borowiec                        |      1 | 0000-00-00 00:00:00 |       16 | 
+|   74 | Michael Branstetter                   |      1 | 0000-00-00 00:00:00 |       16 | 
+|   89 | Bonnie Blaimer                        |      1 | 0000-00-00 00:00:00 |       19 | 
+|  104 | Bruce Archibald                       |      1 | 0000-00-00 00:00:00 |       24 | 
+|  110 | John S. LaPolla                       |      1 | 0000-00-00 00:00:00 |       24 | 
+|  101 | Michael Engel                         |      1 | 0000-00-00 00:00:00 |       24 | 
+|  102 | Monica Solorzano Kraemer              |      1 | 0000-00-00 00:00:00 |       24 | 
+|   96 | Sonja Wedmann                         |      1 | 0000-00-00 00:00:00 |       24 | 
+|   97 | Torsten Wappler                       |      1 | 0000-00-00 00:00:00 |       24 | 
+|   98 | Ute Kiel                              |      1 | 0000-00-00 00:00:00 |       24 | 
++------+---------------------------------------+--------+---------------------+----------+
+47 rows in set (0.00 sec)
+
+
+

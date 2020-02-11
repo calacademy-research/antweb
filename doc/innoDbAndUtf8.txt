@@ -1,0 +1,139 @@
+ Update all tables to InnoDB
+ ---------------------------
+ SELECT concat(concat('alter table ', table_name), ' ENGINE = InnoDB;') FROM information_schema.`TABLES` T,information_schema.`COLLATION_CHARACTER_SET_APPLICABILITY` CCSA WHERE CCSA.collation_name = T.table_collation AND T.table_schema = "ant" and engine = "MyISAM";
+ 
+generates...
+
+alter table adm1 ENGINE = InnoDB;                               
+alter table admin_alerts ENGINE = InnoDB;                       
+alter table ancillary ENGINE = InnoDB;                          
+alter table antwiki_fossil_taxa ENGINE = InnoDB;                
+alter table antwiki_valid_taxa ENGINE = InnoDB;                 
+alter table artist_group ENGINE = InnoDB;                       
+alter table bioregion ENGINE = InnoDB;                          
+alter table bioregion_taxon ENGINE = InnoDB;                    
+alter table country ENGINE = InnoDB;                            
+alter table country_bioregion ENGINE = InnoDB;                  
+alter table description_edit ENGINE = InnoDB;                   
+alter table description_hist ENGINE = InnoDB;                   
+alter table event ENGINE = InnoDB;                              
+alter table geolocale_taxon ENGINE = InnoDB;                    
+alter table geolocale_taxon_dispute ENGINE = InnoDB;            
+alter table geolocale_taxon_log ENGINE = InnoDB;                
+alter table geolocale_taxon_log_detail ENGINE = InnoDB;         
+alter table group_image ENGINE = InnoDB;                        
+alter table image_catalog ENGINE = InnoDB;                      
+alter table image_count ENGINE = InnoDB;                        
+alter table image_like ENGINE = InnoDB;                         
+alter table image_upload ENGINE = InnoDB;                       
+alter table image_uploaded ENGINE = InnoDB;                                       
+alter table login_country ENGINE = InnoDB;                      
+alter table login_project ENGINE = InnoDB;                      
+alter table login_project_bak ENGINE = InnoDB;                  
+alter table long_request ENGINE = InnoDB;                       
+alter table lookup ENGINE = InnoDB;                             
+alter table museum_taxon ENGINE = InnoDB;                       
+alter table object_hist ENGINE = InnoDB;                        
+alter table object_map ENGINE = InnoDB;                         
+alter table operation_lock ENGINE = InnoDB;                     
+alter table proj_taxon ENGINE = InnoDB;                         
+alter table proj_taxon20170422 ENGINE = InnoDB;                 
+alter table proj_taxon_dispute ENGINE = InnoDB;                 
+alter table proj_taxon_log ENGINE = InnoDB;                     
+alter table proj_taxon_log_detail ENGINE = InnoDB;               
+alter table server ENGINE = InnoDB;                             
+alter table statistics ENGINE = InnoDB;                         
+alter table taxon_prop ENGINE = InnoDB;                         
+alter table team_member ENGINE = InnoDB;                        
+alter table un_country ENGINE = InnoDB;                         
+alter table upload ENGINE = InnoDB;                             
+alter table upload_line ENGINE = InnoDB;                        
+alter table user_agent ENGINE = InnoDB;                         
+alter table worldants_upload ENGINE = InnoDB;                   
+alter table antwiki_taxon_country ENGINE = InnoDB;              
+alter table object_edit ENGINE = InnoDB;                        
+alter table geolocale ENGINE = InnoDB;  
+ 
+# These tables were not able to be reset to innoDB because of 
+#   ERROR 1292 (22007): Incorrect datetime value: '0000-00-00 00:00:00' for column 'created' at row 1 
+alter table description_homonym ENGINE = InnoDB;                
+alter table geolocale_taxon_log ENGINE = InnoDB;     
+alter table image_catalog2 ENGINE = InnoDB;
+alter table login ENGINE = InnoDB;    
+alter table long_request ENGINE = InnoDB;
+alter table operation_lock ENGINE = InnoDB;                    
+alter table taxon_country ENGINE = InnoDB;  
+ 
+ 
+ Update all tables to UTF8
+ -------------------------
+SELECT concat(concat('alter table ', table_name), ' charset = utf8;') FROM information_schema.`TABLES` T,information_schema.`COLLATION_CHARACTER_SET_APPLICABILITY` CCSA WHERE CCSA.collation_name = T.table_collation AND T.table_schema = "ant" and CCSA.character_set_name = "latin1";
+ 
+
+alter table adm1 charset = utf8;                               
+alter table admin_alerts charset = utf8;                       
+alter table ancillary charset = utf8;                          
+alter table antwiki_fossil_taxa charset = utf8;                
+alter table antwiki_valid_taxa charset = utf8;                 
+alter table artist_group charset = utf8;                       
+alter table bioregion charset = utf8;                          
+alter table bioregionG charset = utf8;                         
+alter table bioregion_taxon charset = utf8;                    
+alter table bioregion_taxonG charset = utf8;                   
+alter table country charset = utf8;                            
+alter table country_bioregion charset = utf8;                  
+alter table description_edit charset = utf8;                   
+alter table description_hist charset = utf8;                   
+alter table event charset = utf8;                              
+alter table geolocaleG charset = utf8;                         
+alter table geolocale_taxon charset = utf8;                    
+alter table geolocale_taxon20181025 charset = utf8;            
+alter table geolocale_taxonG charset = utf8;                   
+alter table geolocale_taxon_antwikiTemp charset = utf8;        
+alter table geolocale_taxon_dispute charset = utf8;            
+alter table geolocale_taxon_log_detail charset = utf8;         
+alter table group_image charset = utf8;                        
+alter table image_catalog charset = utf8;                      
+alter table image_count charset = utf8;                        
+alter table image_like charset = utf8;                         
+alter table image_upload charset = utf8;                       
+alter table image_uploaded charset = utf8;                      
+alter table login_country charset = utf8;                      
+alter table login_project charset = utf8;                      
+alter table login_project_bak charset = utf8;                  
+alter table lookup charset = utf8;                             
+alter table museum charset = utf8;                             
+alter table museumG charset = utf8;                            
+alter table museum_taxon charset = utf8;                       
+alter table museum_taxonG charset = utf8;                      
+alter table object_hist charset = utf8;                        
+alter table object_map charset = utf8;                         
+alter table proj_taxon charset = utf8;                         
+alter table proj_taxonG charset = utf8;                        
+alter table proj_taxon_dispute charset = utf8;                 
+alter table proj_taxon_log charset = utf8;                     
+alter table proj_taxon_log_detail charset = utf8;              
+alter table server charset = utf8;                             
+alter table statistics charset = utf8;                         
+alter table taxon_prop charset = utf8;                         
+alter table team_member charset = utf8;                        
+alter table un_country charset = utf8;                         
+alter table upload charset = utf8;                             
+alter table upload_line charset = utf8;                        
+alter table user_agent charset = utf8;                         
+alter table worldants_upload charset = utf8;
+
+
+# These tables were not able to be reset to innoDB because of 
+#   ERROR 1292 (22007): Incorrect datetime value: '0000-00-00 00:00:00' for column 'created' at row 1  
+alter table description_homonym charset = utf8;                
+alter table geolocale_taxon_log charset = utf8;                
+alter table image_catalog2 charset = utf8;                     
+alter table login charset = utf8;                              
+alter table long_request charset = utf8;                       
+alter table operation_lock charset = utf8;                     
+alter table taxon_country charset = utf8;  
+ 
+ 
+ 
+ 

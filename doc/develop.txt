@@ -1,0 +1,69 @@
+Develop.txt
+
+Created by: Mark Johnson
+      Date: Dec 27, 2010
+
+This document is designed to contain the necessary information for an engineer to be able to support development of Antweb.  This includeds checking out, compiling and deploying the software.
+
+
+
+Checkout
+--------
+cvs -d :ext:mjohnson@antweb.org:/data/cvsroot co -d antweb antweb  
+  // 1st antweb is directory to checkout into.
+  // 2nd antweb is the cvs repository
+  // Checkout out using your server login.  You must be in the antweb user group (luke and thau are).
+  // Guess the password.
+  // You may check out the soure tree to wherever you like.
+
+  //or, if you are on the production machine, simply:
+
+cvs -d /data/cvsroot co -d antweb antweb
+
+  
+Config
+------
+     This is a new process that will configure an Antweb installation to it's environment.  It will
+instantiate the appropriate supporting files by creating softlinks to the files in the etc directory.
+Head the appropriate /etc/config* file to see how it is invoked.  Create your own build.properties
+file and config.sh file to suit your environment, and then invoke, for instance, as such:
+
+sh etc/configMark.sh
+  
+      On production (antweb.org) this will be:
+     
+sh etc/configAntweb.sh
+
+      And on stage (currently 10.2.22.112 - the old antweb server, logins unchanged) this will be:
+      
+sh etc/configStage.sh
+
+  
+Compile and Deploy
+------------------
+ant deploy
+  // This step will compile all files into the antweb/build directory, and deploy that directory to
+  // the tomcat app server webapps dir (or /data/antweb in the case of production).
+
+
+On Production and Staging Servers
+---------------------------------
+It is intended that the above steps should be the same on the production servers as on development machines.
+Here are some links to useful resources on the servers... (see antweb/bin/links.sh):
+
+antweb.log -> tomcat/logs/antweb.log
+appCheck.log -> /var/log/tomcat/appCheck.log
+access_log -> /usr/local/apache/logs/access_log
+error_log -> /usr/local/apache/logs/error_log
+imageUpload -> /var/www/html/imageUpload/
+tomcat -> /usr/local/tomcat
+workingdir -> /home/antweb/workingdir
+
+
+CVS Commit
+----------
+It is assumed that whatever code is in CVS at any given time is valid to deploy to production.  At
+deployment time, or at commit time, send release notes and file mods to the release engineer (currently
+Mark).
+
+

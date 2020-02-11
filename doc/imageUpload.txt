@@ -1,0 +1,153 @@
+Various image upload problems
+
+
+Go to image upload:
+
+10.2.100.73 - - [27/Oct/2014:21:49:58 -0700] "GET /imageUpload.do HTTP/1.1" 200 4150 "http://antweb-stg/curate.do" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.104 Safari/537.36"
+10.2.100.73 - - [27/Oct/2014:21:49:58 -0700] "GET /imageUploadGuts.jsp HTTP/1.1" 200 489 "http://antweb-stg/imageUpload.do" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.104 Safari/537.36"
+10.2.100.73 - - [27/Oct/2014:21:49:59 -0700] "POST /imageUpload/upload.php HTTP/1.1" 200 23413 "http://antweb-stg/imageUploadGuts.jsp" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.104 Safari/537.36"
+::1 - - [27/Oct/2014:21:50:01 -0700] "GET /uptime.do HTTP/1.0" 200 10 "-" "-"
+
+Submit images:
+
+10.2.100.73 - - [27/Oct/2014:21:50:35 -0700] "POST /imageUpload/getFiles.php HTTP/1.1" 200 2 "http://antweb-stg/imageUpload/upload.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.104 Safari/537.36"
+10.2.22.16 - - [27/Oct/2014:21:50:53 -0700] "POST /imageUpload/uploadResults.php HTTP/1.1" 200 838 "-" "-"
+10.2.100.73 - - [27/Oct/2014:21:50:48 -0700] "POST /imageUpload/process.php HTTP/1.1" 200 839 "http://antweb-stg/imageUpload/upload.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.104 Safari/537.36"
+
+
+upload.php
+  Focol (case issue)
+    FoCol2980_H.tif upload allowed, no complaints.
+    Image upload report indicates that focol2980_h (sic) was uploaded.
+    FoCol2980_H.tif	2808.1 kb	Thu, 18 Aug 2016 23:21:15 GMT
+
+
+
+
+Thau Documentation
+------------------
+     On the main curator page (what you get after logging in) there's a link to 
+"upload images".  This is a somewhat tricky bit of coding involving the Yahoo YUI uploader described 
+here: http://developer.yahoo.com/yui/uploader/  I tried long and hard to get this thing working with 
+Tomcat and failed.  So, it works with apache and php.  The code is all in /var/www/html/imageUpload/.  
+On the jsp side, imageUpload.jsp has an iframe pointing to imageUploadGuts.jsp which contains the YUI 
+code that inserts the flash dohickey and performs other YUI madness.  The upshot is that when someone 
+uploads images, the PHP program getFiles.php makes sure that the files being uploaded meet a variety
+of criterion - such as that some other group hasn't already uploaded an image of that name, and 
+ensuring that we already have information about the specimen that the image represents.  Once 
+getFiles.php whittles the upload down to files that are legitimate, the process.php does the work of 
+processing the images.  It calls the perl program /home/antweb/workingdir/processImages which does 
+all the ImageMagick and exif stuff, and it does the necessary database work too.  All in all, it 
+seems a bit fragile, but it does let curators upload images.
+
+
+File System
+-----------
+/var
+  /www
+    /html
+      /imageUpload/
+        *.php files
+        /toUpload
+
+Artists
+-------
+32 | Michele Esposito  
+53 | Erin Prado 
+
+
+1) We have set the /data/antweb/images directory to 777 permissions
+
+LACM ENT 268767_P.tif
+LACM ENT 268766_P.tif
+LACM ENT 268736_H.tif
+LACM ENT 181990_D.tif
+LACM ENT 268717_D.tif
+LACM ENT 268767_D.tif
+LACM ENT268736_H.tif
+LACM ENT 268766_D.tif
+LACM ENT 268766_H.tif
+LACM ENT 268736_D.tif
+LACM ENT 181990_P.tif
+LACM ENT 268767_H.tif
+LACM ENT 268717_H.tif
+LACM ENT 268717_P.tif
+LACM ENT 268736_P.tif
+LACM ENT 181990_H.tif
+
+
+
+ 
+Discovery
+---------
+
+The imageUpload function on /imageUpload.jsp is handled by /imageUpload/upload.php.  
+
+php.ini is located here: /etc/php.ini
+
+logging is turned on.  Log messages go to 
+
+/etc/httpd/logs/error_log
+
+/var/log/php-fpm/error.log
+
+All references to php script are hardcoded in /imageUpload.jsp to refer to antweb.org.  Makes testing hard.
+
+
+Problems
+--------
+
+Erin Problem #1
+I encountered a few problems when uploading images to AntWeb.  When I tried to upload specimens 
+labeled LACM ENT #######, instead of the standard CASENT, I got an error message saying they were 
+incorrectly named and could not be uploaded.  Also, when I uploaded character images labeled 
+CASENT #######_D_1, they replaced CASENT #######_D.  I went back and changed the originals to D_1 
+and the character images to D_2, which corrected the problem,  but I think this should be fixed.
+
+
+To force execute of the upload process to push images out of the imageUpload/toImages directory:
+  sudo -u apache /home/antweb/workingdir/processImages.pl -a "Maïa Berman" -c "California Academy of Sciences, 2002-2012" -l "Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)"
+
+Alexandria Westrich
+Will Ericson
+Estella Ortega
+Maïa Berman
+
+Ownership - 
+  files should be owned by apache:apache as should the image directory it is in.
+  -rw-r--r-- should be sufficient.  
+
+sudo chown -R apache:apache csironc*
+
+find . -user mjohnson | xargs sudo chown apache:apache
+
+
+
+
+--- Image Upload ---
+Sometimes some images get stuck in the /imageUpload/toUpload directory.  Perhaps they were already uploaded successfully?
+
+Some characters are not allowed in image codes, but used to be.  In order to upload images
+for these specimens, put the images in the toUpload directory and upload (or reupload) an
+other image.  This will trigger the processImages script to generate web-sized jpgs.  
+The exif data may be incorrect, in which case in may be modified as such:
+
+[mjohnson@vAntWeb4 blf1753(46)-1]$ /usr/local/bin/exifedit -b -a artist="Cerise Chen" "blf1753(46)-1_d_1_low.jpg"
+[mjohnson@vAntWeb4 blf1753(46)-1]$ /usr/local/bin/exifedit -b -a artist="Cerise Chen" "blf1753(46)-1_d_1_med.jpg"
+[mjohnson@vAntWeb4 blf1753(46)-1]$ /usr/local/bin/exifedit -b -a artist="Cerise Chen" "blf1753(46)-1_d_1_high.jpg"
+[mjohnson@vAntWeb4 blf1753(46)-1]$ /usr/local/bin/exifedit -b -a artist="Cerise Chen" "blf1753(46)-1_p_1_low.jpg"
+[mjohnson@vAntWeb4 blf1753(46)-1]$ /usr/local/bin/exifedit -b -a artist="Cerise Chen" "blf1753(46)-1_p_1_med.jpg"
+[mjohnson@vAntWeb4 blf1753(46)-1]$ /usr/local/bin/exifedit -b -a artist="Cerise Chen" "blf1753(46)-1_p_1_high.jpg"
+[mjohnson@vAntWeb4 blf1753(46)-1]$ /usr/local/bin/exifedit -b -a artist="Cerise Chen" "blf1753(46)-1_h_1_low.jpg"
+[mjohnson@vAntWeb4 blf1753(46)-1]$ /usr/local/bin/exifedit -b -a artist="Cerise Chen" "blf1753(46)-1_h_1_med.jpg"
+[mjohnson@vAntWeb4 blf1753(46)-1]$ /usr/local/bin/exifedit -b -a artist="Cerise Chen" "blf1753(46)-1_h_1_high.jpg"
+
+Probably should also update in database, but values do not seem to be used: 
+
+select * from image where image_of_id = "blf1753(46)-1";
+select * from artist;
+update ...
+
+
+
+

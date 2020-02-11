@@ -1,0 +1,332 @@
+Special Characters
+------------------
+This matters for geolocale, artist...
+
+
+To see the special characters in a column:
+  select name from artist where length(name) > CHAR_LENGTH(name);
+
+
+
+
+SELECT default_character_set_name FROM information_schema.SCHEMATA  WHERE schema_name = "ant";
+SELECT CCSA.character_set_name FROM information_schema.`TABLES` T,        information_schema.`COLLATION_CHARACTER_SET_APPLICABILITY` CCSA WHERE CCSA.collation_name = T.table_collation   AND T.table_schema = "ant"   AND T.table_name = "artist";
+SELECT character_set_name FROM information_schema.`COLUMNS`  WHERE table_schema = "ant"   AND table_name = "artist"   AND column_name = "name";
+
+On live and dev: latin1, utf8, utf8
+
+alter database ant CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+
+SELECT default_character_set_name FROM information_schema.SCHEMATA  WHERE schema_name = "ant";
+SELECT CCSA.character_set_name FROM information_schema.`TABLES` T, information_schema.`COLLATION_CHARACTER_SET_APPLICABILITY` CCSA WHERE CCSA.collation_name = T.table_collation   AND T.table_schema = "ant"   AND T.table_name = "geolocale";
+SELECT character_set_name FROM information_schema.`COLUMNS`  WHERE table_schema = "ant"   AND table_name = "geolocale"   AND column_name = "name";
+
+
+RUN ON DEV:
+ALTER DATABASE ant CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+update artist set created = null where created < "2012-02-23 21:38:43";
+ALTER TABLE artist CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+update artist set name = "Júlio Chaul" where uid = 221;
+
+
+
+
+
+Useful page?  http://stackoverflow.com/questions/202205/how-to-make-mysql-handle-utf-8-properly
+
+My SQL locations
+  /etc/my.cnf
+  /usr/local/mysql
+  
+
+
+my.cnf locations:
+/etc/my.cnf
+/etc/mysql/my.cnf
+SYSCONFDIR/my.cnf
+$MYSQL_HOME/my.cnf
+defaults-extra-file (the file specified with --defaults-extra-file=path, if any)
+~/.my.cnf
+
+in my.cnf:
+
+[client]
+default-character-set=utf8
+
+[mysqld]
+collation_server = utf8_general_ci;
+default-character-set = utf8;
+init_connect = ’SET NAMES utf8′;
+character_set_server = utf8;
+character_set_client = utf8;
+
+maybe with:
+  skip-character-set-client-handshake
+
+
+
+180403 15:04:53 [Warning] The syntax '--log' is deprecated and will be removed in a future release. Please use '--general-log'/'--general-log-file' instead.
+180403 15:04:53 [Warning] /usr/libexec/mysqld: ignoring option '--character-set-client-handshake' due to invalid value 'utf8;'
+180403 15:04:53 [Note] /usr/libexec/mysqld (mysqld 5.5.56-MariaDB) starting as process 1922 ...
+/usr/libexec/mysqld: Character set 'utf8;' is not a compiled character set and is not specified in the '/usr/share/mysql/charsets/Index.xml' file
+180403 15:04:53 [ERROR] Aborting
+
+
+
+
+
+In mysql:
+  SHOW VARIABLES LIKE 'character_set%';
+  show create table description_edit; 
+  ALTER TABLE description_edit CHARACTER SET utf8;    
+
+UTF8 -> UTF8mb4 ?
+
+---
+
+
+Bolton is opened and read in UTF-8
+Jack's is read in MacRoman
+Others are read in ISO8859_1
+
+
+Country data
+------------
+Localhost.
+  mysqlimport works correctly.  At least display in mysql looks good:
+    Åland Islands   
+    Côte d'Ivoire
+    Réunion  
+    Saint Barthélemy    
+  Even though it looks incorrect in the csv, from the shell: 
+    ?land Islands,AX"
+    C?te d'Ivoire,CI
+    Cura?ao,CW
+    R?union,RE
+    Saint Barth?lemy,BL    
+  Text Wrangler display the country.csv as: 
+    ≈land Islands,AX
+    CÙte d'Ivoire,CI
+    CuraÁao,CW
+    RÈunion,RE
+    Saint BarthÈlemy,BL
+  In the Antweb Valid Country List, looks good:
+    Côte d'Ivoire
+    Curaçao 
+    Réunion
+    Saint Barthélemy  
+    Åland Islands
+Stage
+  Csv, from the shell, looks the same as on localhost
+  In mysql, it looks the same as it does in the shell
+  In the Antweb Valid Country List, looks good:
+    Côte d'Ivoire
+    Curaçao 
+    Réunion
+    Saint Barthélemy  
+    Åland Islands
+
+
+* Difficulty create test files to upload with consistent results. 
+  Excel creates bad files. 
+
+
+Live:
+  locality: 
+    http://www.antweb.org/specimen.do?name=casent0160810
+    http://antweb.org/specimen.do?name=CASENT0117439-D01
+  Country:
+    http://antweb.org/specimen.do?name=casent0172656
+localhost:
+  country:
+    http://localhost/antweb/specimen.do?name=MCZ1107.1778b
+Stage:
+  country:
+    http://10.2.22.83/specimen.do?name=MCZ1107.1778b
+
+
+
+
+This record.  Uploaded to biota2.txt on Jan 11th by Jack 
+                    ^MCASENT0625035 J. Longino      11 Jan 2012     J. Longino      11 Jan 2012     adult worker    dry-mount       JTLC    JTLC                    CCDB-11392 G09  0       0       0       11\
+ Jan 2012                     JTL7323-s       J.Longino       18 Apr 2011     18 Apr 2011     2nd growth riparian forest      ex sifted leaf litter   Winkler 0       0       NOTEBY J.Longino, NOTEDATE 18-Ap\
+r-11: Second growth riparian forest along stream; surrounded by agricultural landscape; combined material of 3 people sifting along stream edge. Winkler hung in hotel that evening, 3.5 mesh sacks.          \
+  0       0       14 Jul 2011     14 Dec 2011     Administrator   JTL049628       27km WSW Rama   27km WSW Rama           Regi\227n Aut\227noma del Atl\207ntico Sur      Nicaragua       50      12.12267    \
+    -84.46227       100     Neotropical                     0       0       14 Jul 2011     18 Jul 2011     Administrator   Strumigenys lanuginosa  Strumigenys lanuginosa  Strumigenys     lanuginosa      Wh\
+eeler 1905                                                                                    0       0               18 Oct 2011     Administrator   Dacetonini      Myrmicinae      0       0               \
+Formicidae                      0       0               Hymenoptera                     0       0               Insecta                         Arthropoda                              Animalia           
+
+
+
+Sometimes it seems the server starts in the wrong mode.
+  http://10.2.22.81/serverStatus.do       File Encoding: ANSI_X3.4-1968 : US-ASCII
+  http://www.antweb.org/serverStatus.do   File Encoding: UTF-8 : UTF-8
+* I think that antweb reported ansi the other day...   Today is Sep 12, 2011.
+
+
+
+Ant database is defined this way on antweb1, 2 and my dev machine
+mysql> select * from information_schema.schemata;
++--------------+--------------------+----------------------------+------------------------+----------+
+| CATALOG_NAME | SCHEMA_NAME        | DEFAULT_CHARACTER_SET_NAME | DEFAULT_COLLATION_NAME | SQL_PATH |
+| NULL         | ant                | latin1                     | latin1_swedish_ci      | NULL     |
+
+
+
+
+
+Biota file sometimes contain special characters prior to upload.  Biota file from 081911 contains bad chars...
+bash-3.2$ grep 156657 biota081911.txt
+CASENT0156657	BLF	9 Mar 2004		31 Dec 2008	>5w	100% EtOH	CASC	CASC				1	0	0	29 Jun 2010	30 Aug 2010	Michele Esposito	BLF22838	B.L.Fisher et al.	21 Oct 2009	tropical dry forest on tsingy		under tree bark, live tree	0	0	Melissotarsus		0	0	23 Nov 2009	7 Jun 2011	Administrator	Beanka II 250	R?serve foresti?re Beanka, 50.2 km E Maintirano	R?serve foresti?re Beanka, 50.2 km E Maintirano		Mahajanga	Madagascar	250 m	-18.02649	44.05051	GPS	Malagasy			0	04 Nov 2009	7 Dec 2009	Michele Esposito	Melissotarsus.insularis	Melissotarsus.insularis	Melissotarsus	insularis	Santschi 1911a:122										7 May 2002	1 Dec 2008	Michele Esposito	Melissotarsini	Myrmicinae				Formicidae						Hymenoptera						Insecta											
+bash-3.2$ cd ../newBiota/
+bash-3.2$ grep 156657 speci.txt 
+CASENT10156657	BLF	9-Mar-04		31-Dec-08	>5w	100% EtOH	CASC	CASC				1	0	0	29-Jun-10	30-Aug-10	Michele Esposito	BLF22838	B.L.Fisher et al.	21-Oct-09	tropical dry forest on tsingy		under tree bark, live tree	0	0	Melissotarsus		0	0	23-Nov-09	7-Jun-11	Administrator	Beanka II 250	Réserve forestière Beanka, 50.2 km E Maintirano	Réserve forestière Beanka, 50.2 km E Maintirano		Mahajanga	Madagascar	250 m	-18.02649	44.05051	GPS	Malagasy			0	04-Nov-09	7-Dec-09	Michele Esposito	Melissotarsus.insularis	Melissotarsus.insularis	Melissotarsus	insularis	Santschi 1911a:122											7-May-02	1-Dec-08	Michele Esposito	Melissotarsini	Myrmicinae				Formicidae						Hymenoptera						Insecta
+
+
+Feb 9.  Issue with special characters in taxonomic info on stage.  Settings seem correct.  Reloaded worldants and problem went away.
+
+
+
+
+
+
+mysql> select code, localitycode from specimen where code = 'casent0160810';
++---------------+------------------------+
+| code          | localitycode           |
++---------------+------------------------+
+| casent0160810 | Mah? Mont Copolia 520  |  (dev ant antweb1)
+| casent0160810 | Mah?? Mont Copolia 520 |  (antweb2)
+
+This data change causes links to display incorrectly on new system.
+http://www.antweb.org/locality.do?name=Mah%9D%9D%20Mont%20Copolia%20520
+http://localhost/antweb/locality.do?name=Mah%E9%20Mont%20Copolia%20520
+
+
+
+
+
+Test: Mon, 11 Apr 11 15:45:25 -0700     locality in Biota\ dump\ 041111.TXT appears as: MahÈ Island, Mont Copolia
+testUrl:http://antweb.org/specimen.do?name=casent0160810 localityUrl:/locality.do?name=Mah%9D%9D%20Mont%20Copolia%20520 result:Away too long
+  Appears: Mah Island, Mont Copolia   biotaUpload: Apr 5, 2011
+testUrl:http://antweb.org/antweb_test/specimen.do?name=casent0160810 localityUrl:/locality.do?name=Mah%9D%9D%20Mont%20Copolia%20520 result:Away too long
+  Same as above.
+testUrl:http://10.2.22.112/specimen.do?name=casent0160810 localityUrl:/locality.do?name=Mahé Mont Copolia 520 result:Away too long
+  Appears: Mahé Island, Mont Copolia   Appears correct but link fails due to resolved bug, undeployed on old server.
+testUrl:http://localhost/antweb/specimen.do?name=casent0160810 localityUrl:/locality.do?name=Mah%3F%E0%20Mont%20Copolia%20520 result:<h1>Locality: Mah?? Island, Mont Copolia
+  Appears: Mah?à Island, Mont Copolia
+
+
+
+It seems that biota upload causes the problem.  But it does not seem to depend on the upload file.
+According to michele it seems to happen every other time.
+
+Production Events
+TimeStamp               Event                    Status    
+----------------------  -----                    -----
+...                                              Not working:   Mah%9D%9D%20Mont%20Copolia%20520
+Fri, 08 Apr 2011 10:15  Biota upload             Start working: Change to Mah%E9%20Mont%20Copolia%20520
+Mon, 11 Apr 2011 15:15  Biota upload testing?    Stop working:  Change to Mah%9D%9D%20Mont%20Copolia%20520
+Tue, 12 Apr 2011 14:00  App restart              Start working
+Wed, 13 Apr 2011 10am   Biota upload             Still working  
+Wed, 13 Apr 2011 16:21  App restart.  Why?
+                 16:45                           Stop working:  Change to Mah%C8%20Mont%20Copolia%20520
+                 19:24  db connection down.  ?   
+                 19:27  app restart (appCheck)
+                 19:40  App restart
+                 19:53  App restart              DB connection re-established.
+Thu, 14 Apr 2011 06:30  Biota upload             Start working  (Mahé Mont Copolia 520)
+                 11:44  Biota upload             Still working  (Mahé Mont Copolia 520)
+Fri, 15 Apr 2011 09:23  Hack attempts
+Mon, 18 Apr 2011 15:30  Biota upload             Stop working:  Change to Mah%9D%9D%20Mont%20Copolia%20520 (Mah?? Island, Mont Copolia)
+Tue, 19 Apr 2011 09:00  Biota upload             Start working
+2011-05-10 15:04:22
+Tue, 10 May 2011 15:04  Antweb upload            Stop working   Change to Mah%9D%9D%20Mont%20Copolia%20520
+Fri, 24 Jun 2011 16:00                           Stop working   Change to Mah%9D%9D%20Mont%20Copolia%20520
+Tue,  5 Jul 2011 15:30                           Start working
+Tue,  5 Jul 2001 18:00                           No data
+Tue,  6 Jul 2001 18:00                           Fail to query
+Tue,  6 Jul 2001 19:00                           Stop Working
+Tue, 12 Jul 2011 13:00                           Start Working
+Thu, 21 Jul 2011 09:30                           Stop Working
+Fri, 22 Jul 2011 10:00                           Start Working
+Mon, 01 Aug 2011 14:30                           Stop Working
+Tue, 09 Aug 2011 11:30                           Start Working
+
+
+
+Test: Fri, 24 Jun 2011 15:30:01 PDT
+testUrl:http://antweb.org/specimen.do?name=casent0160810 localityUrl:/locality.do?name=Mah%E9%20Mont%20Copolia%20520 result:<h1>Locality: Mah? Island, Mont Copolia
+testUrl:http://antweb.org/antweb_test/specimen.do?name=casent0160810 localityUrl:/locality.do?name=Mah%9D%9D%20Mont%20Copolia%20520 result:Away too long
+Test: Fri, 24 Jun 2011 16:00:01 PDT
+testUrl:http://antweb.org/specimen.do?name=casent0160810 localityUrl:/locality.do?name=Mah%E9%20Mont%20Copolia%20520 result:<h1>Locality: Mah? Island, Mont Copolia
+
+
+
+
+ 2011-05-10 15:04:22,698 ERROR TP-Processor9 org.calacademy.antweb.upload.AntwebUpload - saveHash() SPECIFIC CODE:0160810 item:{speciesgroup=, province=, code=casent0160810, subgenus=, method=Malaise trap, subspecies=, decimal_longitude=55.45835, type=, other=<features><preparedby>BLF</preparedby><dateprepared>9 Mar 2004</dateprepared><datedetermined>31 Dec 2008</datedetermined><medium>pin</medium><abundance>1</abundance><spcmauxfields>0</spcmauxfields><numberspcmimages>0</numberspcmimages><spcmrecorddate>21 Jun 2010</spcmrecorddate><spcmrecchangeddate>21 Jun 2010</spcmrecchangeddate><spcmrecchangedby>Michele Esposito</spcmrecchangedby><datescollected>8-11 Feb 2010</datescollected><transecttype>4 Malaises traps</transecttype><collxcoordinate>0</collxcoordinate><collycoordinate>0</collycoordinate><collauxfields>0</collauxfields><numbercollimages>0</numbercollimages><collrecorddate>4 Mar 2010</collrecorddate><localitynameindex>Mah?? Island, Mont Copolia</localitynameindex><elevation>520 m</elevation><loclatitude>-4.65121</loclatitude><loclongitude>55.45835</loclongitude><locxyaccuracy>GPS</locxyaccuracy><locauxfields>0</locauxfields><numberlocimages>0</numberlocimages><locrecorddate>4 Mar 2010</locrecorddate><locrecchangeddate>4 Mar 2010</locrecchangeddate><locrecchangedby>Michele Esposito</locrecchangedby><speciescode>Tetramorium.pacificum</speciescode><validsppcode>Tetramorium.pacificum</validsppcode><speciesauthor>Mayr 1870</speciesauthor><typelocality>Tonga</typelocality><speciesauxfields>0</speciesauxfields><numberspeciesimages>0</numberspeciesimages><speciesrecorddate>24 Sep 2002</speciesrecorddate><speciesrecchangeddate>24 May 2010</speciesrecchangeddate><speciesrecchangedby>Michele Esposito</speciesrecchangedby><family>Formicidae</family><order>Hymenoptera</order><class>Insecta</class></features>, species=pacificum, habitat=forest, caste=1aQ, ownedby=CASC, biogeographicregion=Malagasy, localityname=Mah?? Island, Mont Copolia, localitycode=Mah?? Mont Copolia 520, decimal_latitude=-4.65121, country=Seychelles, collectedby=B.L.Fisher et al., subfamily=myrmicinae, county=, collectioncode=BLF24027, locatedat=CASC, access_group=1, genus=tetramorium, tribe=tetramoriini, taxon_name=myrmicinaetetramorium pacificum, access_login=23} table:specimen
+ 2011-05-10 15:05:01,707 WARN TP-Processor32 org.calacademy.antweb.Locality - getFromDatabase() investigate: Locality RecordSet next not found for locality:Mah?? Mont Copolia 520
+
+
+
+Display Variance
+----------------
+Mahé Island, Mont Copolia
+  old antweb
+  antweb.org (when correct)
+  MySQL Workbench pointing at live site - when displays in browser correctly.
+  MySQL Workbench pointing at old antweb.
+MahÈ Mont Copolia
+  Biota viewed in TextWrangler.  
+  Logged prior to insert.
+Mah? Island, Mont Copolia  
+  urlCheck.php script
+  MySQL query editor, antweb
+  MySQL query editor, old antweb
+Mah?? Island, Mont Copolia
+  MySQL query editor, dev
+Mah?à Mont Copolia1 520
+  MySQL Workbench on localhost
+  Viewed in Chrome Browser
+
+Mah‚àö¬© Island, Mont Copolia
+  If biota file is converted to utf prior to upload 
+Mah?© Island, Mont Copolia
+  If biota file is converted to MacRoman prior to upload  
+Mah?© Island, Mont Copolia  
+  
+Discovery
+  in mysql editor, with: SET NAMES 'utf8';
+     on dev: Mah?? Island, Mont Copolia -> Mah?à Island, Mont Copolia
+     on old antweb: Mah? Island, Mont Copolia -> Mahé Island, Mont Copolia
+     on antweb: Mah? Island, Mont Copolia -> MahÈ Island, Mont Copolia
+
+  iconv --from-code=ISO-8859-1 --to-code=UTF-8 ./oldfile.htm > ./newfile.html
+  file filename will display file type
+  jdbc does not need encoding set.  Dependent on system.
+
+Defined in Java system launch perhaps on old antweb - File Encoding: UTF-8 : UTF-8 
+  dev: File Encoding: MacRoman : MacRoman
+  antweb:   File Encoding: UTF-8 : UTF-8
+  ! My dev machine is different from the servers.
+  
+Adding -Dfile.encoding=UTF8 to catalina.sh
+Added File encoding to serverStatus.do
+
+Do NOT set to MacRoman because it was uploaded from a mac.  Jeesh.
+  
+Should we handle in code?  Revisit UploadUtil.getEncoding.  Can we test file's encoding.  
+
+Why is it wrong on the antweb server?  The getEncoding dependent on OS?
+  
+Local testing
+
+247016 specimens  -> 116403 specimens
+14124 extant valid taxa
+12017 specimens imaged -> 357
+5211 species imaged -> 193
+
+
+
+

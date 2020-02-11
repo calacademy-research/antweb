@@ -1,0 +1,424 @@
+[mjohnson@antweb-prod.calacademy.org 20:03:06]$ls -al /var/lib/mysql
+total 9375356
+drwxr-xr-x. 12 mysql mysql       4096 Sep  6 22:02 .
+drwxr-xr-x. 30 root  root        4096 Mar 29 15:19 ..
+drwx------.  2 mysql mysql      12288 Sep 13 13:04 ant
+drwx------.  2 mysql mysql      12288 Jan 22  2018 ant2
+drwx------.  2 mysql mysql       4096 Oct  8  2013 ant_test
+drwx------.  2 mysql mysql       4096 Sep 12  2013 antweb_blog
+-rwxrwxrwx.  1 root  root     7899082 Jul 23  2016 antweb-prod-slow.log
+drwx------.  2 mysql mysql       4096 Jul 22  2016 bak_project_db
+-rw-rw----.  1 mysql mysql 9581887488 Sep 13 20:03 ibdata1
+-rw-rw----.  1 mysql mysql    5242880 Sep 13 20:03 ib_logfile0
+-rw-rw----.  1 mysql mysql    5242880 Sep 12 20:32 ib_logfile1
+drwx------.  2 mysql mysql       4096 Sep 12  2016 julAnt
+-rw-rw----.  1 mysql mysql        177 Jul 23  2016 log
+drwx------.  2 mysql mysql       4096 Oct 28  2014 movable
+drwx------.  2 mysql mysql       4096 Sep 12  2013 mysql
+srwxrwxrwx.  1 mysql mysql          0 Sep  6 22:02 mysql.sock
+drwx------.  2 mysql mysql      12288 Sep  8  2017 sep2017
+-rw-rw----.  1 mysql mysql        354 Jul 23  2016 slowQuery.log
+drwx------.  2 mysql mysql       4096 Sep 12  2013 test
+
+Before and after the Thursday 10pm reboot...
+
+[mjohnson@antweb-prod.calacademy.org 20:03:34]$df -h
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/sda3             147G  131G  8.4G  94% /
+
+[mjohnson@antweb-prod.calacademy.org 22:04:00]$df -h
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/sda3             147G   72G   68G  52% /
+                      
+                      
+                      
+
+* Mod on server:
+alter table specimen modify column datedetermined datetime;
+Test here: http://10.2.22.83/specimen.do?name=CASENT0001332
+  
+Where does antweb yunodorylus come from: http://www.antweb.org/description.do?name=yunodorylus&rank=genus&project=allantwebants
+  source is null
+  It is not on stage.
+  The page displays on Antweb, but there is no taxon record for: dorylinaeyunodorylus
+  
+After Jack's upload, vefify the following:
+   /collection.do?name=JTL7912
+
+http://localhost/antweb/description.do?name=yunodorylus&rank=genus&project=allantwebants
+
+Get Date, Country and collection into the search report, and get it into showbrowse.
+
+
+In the case of species map compare, one species level hasgeoInfo query is run per specimen.  Wrong, inneficient.
+
+
+Image picker
+  #11 missing Agroecomyrmex
+  subsequent to Eldermyrmex is too big to hit buttons.
+
+
+
+ImagePickSearch.java:84 modified to remove the "left" from the join.  This causes only taxons of proper project to return.
+  This resolves the problem of clicking on an Image Pick and not having the casent written into the text field.
+  
+Other problems remain.  For instance:
+http://antweb.org/description.do?rank=genus&name=calyptomyrmex      returns images
+http://www.antweb.org/description.do?rank=genus&name=calyptomyrmex  doesn't
+
+
+-- Queries
+This query will show when the specimen uploads have happened, rounding off to the hour.
+  select count(*), date_format(last_modified, '%Y-%m-%d %H') from specimen where date_format(last_modified, '%Y-%m-%d') > '2011-04-01' group by date_format(last_modified, '%Y-%m-%d %H');
+
+-- Servers
+//was mjohnson@10.2.22.106
+
+Antweb - http://10.2.22.11/
+Antweb3 - http://10.2.22.80/
+Antweb Stage - 10.2.22.112
+
+Transfer
+  From the /data/antweb directory of the destination machine:
+    rsync -avz mark@antweb.org:/data/antweb .
+
+--- Disk
+  To free up disk quickly in case of a large file:
+    cp /dev/null /var/log/mysqld.log
+  To find all files over 50M:
+    find . -type f -size +50000k -exec ls -lh {} \; | awk '{ print $9 ": " $5 }'  
+---Deployment
+  [Test on antwebtest]
+  Copy source tree.  For example:
+    cp -r antweb bak/rel/antweb4.1
+  Backup database.  For example:
+    mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /home/antweb/bak/db/2018-09-27.sql.gz
+  Backup /data/antweb.
+    php bin/copyProjectData.php --backupDir=/home/mjohnson/bak/projectData
+  cvs update -Pd
+  ant compile
+  run database updates
+  ant deploy
+  sudo /etc/init.d/priv_tomcat stop  |  start
+
+--- Docs
+/doc
+/data/antweb/arizona/thoughts.txt
+
+--- Commands ---
+  restart tomcat
+    sudo /etc/init.d/tomcat5 restart        // old server. Should work like new server now,.
+    sudo /etc/init.d/priv_tomcat start      // on new antweb server
+  restart apache
+    on linux:
+      sudo /etc/init.d/httpd restart          // new server
+      sudo /usr/local/apache2/bin/apachectl stop  // ! This works
+    On Mac
+       sudo apachectl stop/start
+  restart MySql 
+    on Mac
+	  sudo launchctl unload -F /Library/LaunchDaemons/com.oracle.oss.mysql.mysqld.plist
+	  sudo launchctl load -F /Library/LaunchDaemons/com.oracle.oss.mysql.mysqld.plist  
+    on Linux
+      sudo /etc/init.d/tomcat restart
+
+--- DB ---
+to create dump:
+  mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /home/antweb/bak/db/2019-02-15.sql.gz  
+to fetch:
+  cd /Users/mark/dev/calAcademy/db/
+  scp mjohnson@antweb-prod:/mnt/backup/db/ant-currentDump.sql.gz .
+To load dump:
+  gunzip < currentDump.sql.gz | mysql -u antweb -p ant
+	
+---Project Data
+  To create snapshot:
+    php bin/copyProjectData.php --backupDir=/home/mjohnson/bak/projectData
+  To transfer (from stage machine):
+    cd /home/mjohnson/bak/projectData/
+    scp -r mjohnson@antweb.org://home/mjohnson/bak/projectData/projectData2012-06-14=14:35 .
+  To install on stage:
+    cd WEB-INF/classes
+    mv ApplicationResources.properties t.properties
+    cd ../..
+    sudo cp -r * /data/antweb/
+
+To backup /data/antweb/web:
+  tar -pczf antwebWebDir.tar.gz /data/antweb/ --exclude "/data/antweb/images"
+
+-- Performance
+  If database is underperforming, see what queries are running:
+    show full processlist;
+
+  
+--- JSP Force Recompile ---
+sudo rm -rf /usr/local/tomcat/work/Catalina/localhost/_/
+
+--- DiskSpace
+  images_090923 was 109G
+  /data/antweb is 151G
+  /data/CVSROOT is 107M
+    /googleEarth is 2.7M
+    /antweb2 is 28M
+    /antweb is 49M (contains build)
+
+--- CVS ---
+  production (from /home/mark/ for instance):
+    cvs -d /data/cvsroot co -d antweb antweb2
+
+  to checkout antweb2 into a dir called antweb
+    cvs -d :ext:mjohnson@antweb-cvs:/data/cvsroot co -d antweb antweb
+
+  To create a new cvs repo, first delete all build, CVS and .DS_Store dirs
+    cvs import -d :ext:mark@antweb.org:/data/cvsroot antweb2 calacademy initial
+      // in order to create a repository called antweb2
+   
+   
+  To create new googleEarth repository
+    cvs -d :ext:mark@antweb-cvs:/data/cvsroot import googleEarth2 calacademy initial
+  To checkout googleEarth2 into a directory called googleEarthTest 
+    cvs -d :ext:mark@antweb-cvs:/data/cvsroot co -d googleEarthTest googleEarth2      
+  Or on production
+    cvs -d /data/cvsroot co -d googleEarth googleEarth2
+  
+---groups
+[mark@antweb]$ groups
+mark wheel apache tomcat cvs antweb
+
+[thau@antweb t]$ groups
+thau wheel apache tomcat cvs antweb mark
+
+[luke@antweb t]$ groups
+luke apache tomcat cvs
+
+sudo usermod -g antweb mark
+  // This command made my primary group antweb.  Others retained...
+[mark@antweb t]$ groups
+antweb wheel apache tomcat cvs
+  // Login required.  Now files are owned by antweb.
+  
+// This changes ownership of a directory structure...
+sudo chgrp -R antweb antweb2
+
+// To change files from root:root to mark:antweb
+sudo find -group root | xargs sudo chown mark:antweb
+
+Owned by Thau
+[mark@antweb antweb]$ sudo find -group thau
+./-preview.jsp
+./method_gen_inc.jsp
+./images/bold_images_100105.zip
+./images/bold_images_100616.zip
+./images/debug.txt
+./images/bold_images_100518.zip
+./images/files.txt
+./documentation
+./artist_gen_inc2.jsp
+./homepage/Specimen_data_example.xlsx
+./homepage/Species_list.pdf
+./homepage/Image_Picker.pdf
+./homepage/Submitting_image.pdf
+./homepage/antcourse_plug2.jpg
+./homepage/Species_list_example.xls
+./homepage/lloyd and pheidole militicida crop.jpg
+./homepage/Erin.jpg
+./homepage/Specimen_data.pdf
+./homepage/James250.jpg
+./homepage/phil.jpg
+./homepage/michelle.gif
+./homepage/jack250.jpg
+./homepage/brian.jpg
+./homepage/thau.jpg
+./homepage/ME2.jpg
+./habitat_gen_inc.jsp
+
+
+--- JSPs---
+locally:
+   /Users/mark/dev/tomcat/work/Catalina/localhost/antweb/org/apache/jsp
+on antweb:
+   /home/mjohnson/links/tomcat/work/Catalina/localhost/_/org/apache/jsp
+   
+--- Crontabs ---
+
+new ones do not run as root
+5 20 * * * root sh /home/antweb/antweb_deploy/bin/reboot.sh > /home/antweb/reboot.log 2>&1
+*/30 * * * * root curl http://www.antweb.org/cache.do?action=genCacheThread > /home/antweb/genCacheThread 2>&1
+*/5 * * * * root php /home/antweb/antweb_deploy/bin/appCheck.php > /home/antweb/appCheck.log 2>&1
+
+5 4 * * * /etc/init.d/mysqld restart
+6 4,14 * * * /etc/init.d/tomcat5 restart
+// In other words, restart mysql at 3:05am.  Restart Tomcat5 at 3:06am and 1:06pm
+
+--- URLs ---
+
+antweb from in the building ... 10.2.22.11?
+
+antweb.org/manager/html
+  /antweb_test
+  /
+  /googleEarth  
+antweb.org/login.jsp  - Antweb Curator Tools
+http://docs.google.com/Doc?docid=0AQnRvieWQOE7ZGYzemRtZmpfMmpmcDRjNGRt&hl=en
+
+
+database
+  database name: ant
+  antweb/
+
+  Authority - genus, species, etc...
+  Biota - specimen data
+
+
+o create a new cvs repo
+  first delete all CVS and .DS_Store dirs
+  cvs -d :ext:mark@antweb.org:/data/cvsroot co -d antweb antweb3
+
+
+New Installation
+  Checkout antweb
+    cvs -d :ext:mark@antweb.org:/data/cvsroot co -d antweb antweb2  // omit :ext:mark@antweb.org: if on antweb server.
+  sh etc/config*.sh   // where * is Antweb, antwebTest, ....
+ 
+  
+Old Installation 
+  Copy index_body.jsp from live site to web dir 
+  Copy statistics.jsp and recentImages_gen_inc.jsp from server to web directory
+  Add add/casent0039799
+  WEB-INF/classes/ApplicationResources.properties
+    ? really - change 8080 to ""
+    site.url=http://localhost/antweb/
+    Where does this file come from?  In /antweb/WEB-INF/classes/ApplicationResources.properties it has a site.inputfilename
+  ProjectResources.properties not in CVS.  Dynamically generated.  Why?  no reason?  Not so much, it seems.
+  Copied in to enable local browsing
+	arizona.jsp, arizona-body.jsp
+  Check build.xml's app.name and app.home.  Using test?  
+  struts-config.xml contains the database url, pwds, etc...
+  
+To change a project name
+  Change file names
+    mv gynandromorph.jsp anomalous.jsp
+    mv gynandromorph-body.jsp anomalous-body.jsp
+    mv gynandromorph-preview.jsp anomalous-preview.jsp
+    mv gynandromorph/ anomalous
+  Change database
+    update project set project_name='anomalousants', root='anomalous' where project_name = 'gynandromorphants';
+    update proj_taxon set project_name = "anomalousants" where project_name = "gynandromorphants";    # not necessary, there are none.
+    update login_project set project_name = "anomalousants" where project_name = "gynandromorphants";  
+    update groups_project set project_name = "anomalousants" where project_name = "gynandromorphants";  # not necessary, there are none.
+  Modify ProjectResources.properties
+    Change gynandromorphs to anomalous
+  Edit anomalous.jsp 
+    change gynandromorph-body.jsp to anomalous-body.jsp
+    edit the title.  
+    Edit the project setting.
+  Generate project page
+    Modify Title and Page Copy
+    Fix all urls embedded within project page form
+  Edit Ancillary pages to allow access
+
+To do
+  Create backup strategy
+  Remove ProjectResources file.  Replace with database call at startup?
+  implement login https (self-signed certificate for security - otherwise passwords in the clear)
+  PHP throws dynamic library errors
+  
+Google Maps
+  taxonPage-body.jsp  
+  ApplicationResources googlekey
+  taxon.getMap().getGoogleFunction
+  For each server that access google maps, on needs a key.
+    googlemap.key is defined in the ApplicationResource.properties files.  To get one, go to 
+    
+Questions for Dave
+  Why does TypeSearch.java not extend GenericSearch?
+    Because it is defunct.  Remove if unused.
+  Where is group_gen_inc.jsp.  It is referenced from login.do
+    Referenced from web/project_upload-body.jsp and web/upload-body.jsp
+    It is in antweb/web dir with all the others.  Why not cvs?
+
+Things I Would Have Done Differently
+  Packages for java classes
+  Unique IDs as primary keys for all tables
+  Instead of deploying to live or test from my account by changing the build.xml, have a separate
+    configured user (live and test) that is always to update from cvs and deploy simply and safely.
+
+  
+--- Stats ---    
+Here are the latest and greatest statistics: 179099 specimens
+14062 extant valid taxa
+8345 specimens imaged
+3763 species imaged     
+    
+    
+    
+Edit Project
+   editProject.do is called from drop down list with a project= parameter such as eurasianants
+   struts config directs to EditProjectAction
+     thisProject is put in session and directed to edit_project.jsp
+   Preview button leads to previewProject.do (very slow page) 
+     PreviewProjectAction success directs to /projectPreview.jsp
+   Save Project leads to saveProject.do
+     success leads back to upload.jsp
+     
+     
+
+
+Biota Application Changes
+  ?
+  
+Biota File Changes
+  Change
+    TransectSubsampleNo. -> SpecimenNotes
+    PinnedVoucherSpecimenOfDNA -> DNAExtractionNotes
+    TransectType -> Microhabitat
+    County/sub-territory -> CountySubterritory
+    State/Prov -> StateProv
+    Biogeographic Region -> BiogeographicRegion
+    Ocean -> LocalityNotes
+    area -> ElevationMaxError
+    
+DB - specimen table
+  Add
+    microhabitat varchar(128)
+    dateDetermined date
+  Remove
+    transecttype
+  Change
+    date_collected should be dates_collected?
+      It is a single date in the speciment table.  What is dates_collected supposed to be?
+Java Objects  
+  Specimen
+     access_group, access_login, last_modified, medium, determinedby    
+  CollectionEvent
+    DatesCollected
+    Microhabitat
+  Locality
+
+JSP
+  specimen-body
+    Change
+      Life Stage -> Life stage
+      Transect Sample # -> Specimen Notes
+      Transect Type -> Microhabitat
+      
+      Change from desc to db table: datescollected, microhabitat, specimennotes, medium, dnaextractionnotes, determinedby
+
+    Also Add (if administrator) 
+      Admin Information:
+        Last Modified
+        Access Group
+        Access Login
+  collection-body    
+    Add
+      Dates
+      Microhabitat (was Transect Type in specimen-body)    
+  locality-body
+    Add
+      County
+      State/Province
+      Biogeographic Region
+      Locality Notes
+      Elevation Max Error
+      Lat. Long. max error
+      LocXYAccuracy

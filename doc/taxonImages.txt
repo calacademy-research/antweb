@@ -1,0 +1,314 @@
+Taxon Images Documentation
+
+
+This functionality is used for the taxonPages and the Favorite Images system.
+
+SubFamily.getImages(project, useDefaults) 
+ /* This method can set images that belong to taxons in the project, where the image itself is of 
+    a specimen that is not in the project.  Email to Brian dated Feb 22nd entitled, Taxon
+    Image imprecision outlines, and there is a piece of documentation in taxonPage-body.jsp 
+    around line 135. */
+
+
+taxonPage-body.jsp:135
+       We would like to have the project remain intact for links to ant images.  But we are not sure 
+       that that image is actually in this project.  If project_name (minus "ants") is equalt to the 
+       lowercased country or adm1, then we wouls like to carry the project forward.  But we don't 
+       have the info in the taxon.getImages().  For now, too bad.  get the images' specimen code, 
+       and query specimen to find it's country and adm2.  Better yet, integrate this functionality 
+       within Specimen so that there is a get Project method.  This would be doubly useful if it 
+       could be not derived from country and or adm1 at run time, but calculated at insertion and 
+       stored in the database, useful for queries.  Then, subclasses of Taxon could be more precise 
+       in the setImages(project, useDefaults) method. 
+    
+Also see ImagePickSearch.java
+
+    
+To: Bfisher  Date:Feb 22    Subject: Taxon Image Imprecision
+    
+Brian,
+    I like the recent changes to taxon image selection a lot because
+I see a lot more ant faces every day, and it is more correct.  Peeling
+the onion, I see that this change is incomplete.  If we drill down
+into Reunion, we will see ants from Reunion, Mauritius, and
+Madagascar.  For instance the Reunion Ponerinae image is actually from
+Mauritius The reason for this is not because it is searching on
+biogeographic region.  It seems more of a design error.  It is not
+that the query is incorrect, more ill conceived, or bad compromise.
+The logic goes like this: Find a specimen of a taxon that can be found
+in Reunion.  It does not get a specimen from Reunion, because the
+database does not know which project a specimen is in.  There is a
+project_taxon table, but no project_specimen table.  Perhaps this is
+because it is not known how to figure this correlation?
+
+    Perhaps we could first choose to display an ant where the
+project_name is equal to either the country of the adm1.  I have not
+thought through this all the way, but that may make many of the
+anomalies go away without spending lots of time on the issue.
+
+    I have included some of my research below for my own reference.
+
+Mark
+
+
+mysql> select distinct specimen.code from specimen, image , proj_taxon
+ where  specimen.subfamily = 'ponerinae' and specimen.code =
+image.image_of_id and proj_taxon.taxon_name = specimen.taxon_name and
+proj_taxon.project_name ='reunionants'
+   -> ;
++------------------+
+| code             |
++------------------+
+| casent0060272    |
+| casent0063130    |
+.....
+| casent0249240    |
++------------------+
+71 rows in set (0.86 sec)
+
+
+
+mysql> select distinct specimen.code from specimen, image , proj_taxon
+ where  specimen.subfamily = 'ponerinae' and specimen.code =
+image.image_of_id and proj_taxon.taxon_name = specimen.taxon_name and
+proj_taxon.project_name ='reunionants' and specimen.code =
+"casent0060272";+---------------+
+| code          |
++---------------+
+| casent0060272 |
++---------------+
+1 row in set (0.01 sec)
+
+mysql> select distinct proj_taxon.taxon_name, specimen.code from
+specimen, image , proj_taxon  where  specimen.subfamily = 'ponerinae'
+and specimen.code = image.image_of_id and proj_taxon.taxon_name =
+specimen.taxon_name and specimen.code =
+"casent0060272";+------------------------------+---------------+
+| taxon_name                   | code          |
++------------------------------+---------------+
+| ponerinaehypoponera johannae | casent0060272 |
++------------------------------+---------------+
+1 row in set (0.00 sec)
+
+mysql> select * from proj_taxon where taxon_name =
+'ponerinaehypoponera johannae';
++----------------+------------------------------+
+| project_name   | taxon_name                   |
++----------------+------------------------------+
+| allantwebants  | ponerinaehypoponera johannae |
+| worldants      | ponerinaehypoponera johannae |
+| madants        | ponerinaehypoponera johannae |
+| reunionants    | ponerinaehypoponera johannae |
+| mauritiusants  | ponerinaehypoponera johannae |
+| seychellesants | ponerinaehypoponera johannae |
+| malagasyants   | ponerinaehypoponera johannae |
+| mayotteants    | ponerinaehypoponera johannae |
++----------------+------------------------------+
+8 rows in set (0.04 sec)
+
+mysql> select * from specimen where code = 'casent0060272';
++---------------+------------------------------+----------+----------+--------------+-----------+------------+----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------+------------+-----------+------+------+--------------------+--------------+----------------+---------------------+------------------+-------------------+---------------------+------------+--------------+------+---------+-------------------+-------+--------------+-----------+--------------+--------+----------------+--------------------+---------------+-------------------+---------------+--------------+-----------+----------------+----------------+----------------------------------------+----------------+-------------------+---------------+--------------------+---------------+----------------+---------------------+------------+-----------------+--------------------+------------------+-----------------------+---------------------+-------------------+
+| code          | taxon_name                   | subgenus | tribe    |
+speciesgroup | subfamily | genus      | species  | other
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          | type | subspecies | country   | adm2 | adm1 |
+localityname       | localitycode | collectioncode |
+biogeographicregion | decimal_latitude | decimal_longitude |
+last_modified       | habitat    | method       | toc  | ownedby |
+collectedby       | caste | access_group | locatedat | determinedby |
+medium | spcmrecorddate | spcmrecchangeddate | locrecorddate |
+locrecchangeddate | speciesauthor | access_login | elevation |
+date_collected | latlonmaxerror | microhabitat
+ | datedetermined | elevationmaxerror | localitynotes |
+dnaextractionnotes | specimennotes | datescollected | created
+  | family     | collectionnotes | datecollectedstart |
+datecollectedend | datecollectedstartstr | datecollectedendstr |
+datedeterminedstr |
++---------------+------------------------------+----------+----------+--------------+-----------+------------+----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------+------------+-----------+------+------+--------------------+--------------+----------------+---------------------+------------------+-------------------+---------------------+------------+--------------+------+---------+-------------------+-------+--------------+-----------+--------------+--------+----------------+--------------------+---------------+-------------------+---------------+--------------+-----------+----------------+----------------+----------------------------------------+----------------+-------------------+---------------+--------------------+---------------+----------------+---------------------+------------+-----------------+--------------------+------------------+-----------------------+---------------------+-------------------+
+| casent0060272 | ponerinaehypoponera johannae |          | ponerini |
+            | ponerinae | hypoponera | johannae |
+<features><preparedby>BLF</preparedby><dateprepared>9 Mar
+2004</dateprepared><abundance>1</abundance><spcmauxfields>0</spcmauxfields><numberspcmimages>0</numberspcmimages><spcmrecorddate>23
+Oct 2009</spcmrecorddate><spcmrecchangeddate>23 Oct
+2009</spcmrecchangeddate><spcmrecchangedby>Michele
+Esposito</spcmrecchangedby><collxcoordinate>0</collxcoordinate><collycoordinate>0</collycoordinate><collauxfields>0</collauxfields><numbercollimages>0</numbercollimages><collrecorddate>10
+Jun 2005</collrecorddate><collrecchangeddate>22 Dec
+2011</collrecchangeddate><collrecchangedby>Administrator</collrecchangedby><localitynameindex>Brise
+Mt., Bambous</localitynameindex><elevation>200
+m</elevation><loclatitude>-20.3455</loclatitude><loclongitude>57.75467</loclongitude><locauxfields>0</locauxfields><numberlocimages>0</numberlocimages><locrecorddate>10
+Jun 2005</locrecorddate><locrecchangeddate>15 Jun
+2006</locrecchangeddate><locrecchangedby>Michele
+Esposito</locrecchangedby><speciescode>Hypoponera.johannae</speciescode><validsppcode>Hypoponera.johannae</validsppcode><speciesauthor>(Forel)
+1891:220</speciesauthor><distribution>Endemic to Malagasy Region;
+Madagascar, Mauritius,
+Seychelles</distribution><speciesauxfields>0</speciesauxfields><numberspeciesimages>0</numberspeciesimages><speciesrecorddate>7
+May 2002</speciesrecorddate><speciesrecchangeddate>25 Aug
+2005</speciesrecchangeddate><speciesrecchangedby>Michele
+Esposito</speciesrecchangedby><order>Hymenoptera</order><class>Insecta</class><phylum>Arthropoda</phylum><kingdom>Animalia</kingdom></features>
+|      |            | Mauritius |      |      | Brise Mt., Bambous |
+Brise 200    | BLF12072       | Malagasy            |         -20.3455
+|           57.7547 | 2012-02-09 09:55:19 | rainforest | 2 Maxi Winks
+| NULL | CASC    | B.L.Fisher et al. | 1dQ   |            1 | CASC
+ |              | pin    | NULL           | NULL               | NULL
+       | NULL              | NULL          |           23 |       200
+| NULL           | GPS            | sifted litter (leaf mold, rotten
+wood) | 2008-12-31     |                   |               | NULL
+        | 02            | NULL           | 2012-02-09 09:55:19 |
+formicidae | NULL            | 2005-05-27         | NULL             |
+27 May 2005           |                     | 31 Dec 2008       |
++---------------+------------------------------+----------+----------+--------------+-----------+------------+----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------+------------+-----------+------+------+--------------------+--------------+----------------+---------------------+------------------+-------------------+---------------------+------------+--------------+------+---------+-------------------+-------+--------------+-----------+--------------+--------+----------------+--------------------+---------------+-------------------+---------------+--------------+-----------+----------------+----------------+----------------------------------------+----------------+-------------------+---------------+--------------------+---------------+----------------+---------------------+------------+-----------------+--------------------+------------------+-----------------------+---------------------+-------------------+
+1 row in set (0.00 sec)
+
+mysql> describe specimen;
++-----------------------+--------------+------+-----+-------------------+-------+
+| Field                 | Type         | Null | Key | Default
+ | Extra |
++-----------------------+--------------+------+-----+-------------------+-------+
+| code                  | varchar(128) | NO   | PRI | NULL
+ |       |
+| taxon_name            | varchar(128) | YES  | MUL | NULL
+ |       |
+| subgenus              | varchar(64)  | YES  |     | NULL
+ |       |
+| tribe                 | varchar(64)  | YES  |     | NULL
+ |       |
+| speciesgroup          | varchar(64)  | YES  |     | NULL
+ |       |
+| subfamily             | varchar(64)  | YES  | MUL | NULL
+ |       |
+| genus                 | varchar(64)  | YES  | MUL | NULL
+ |       |
+| species               | varchar(64)  | YES  |     | NULL
+ |       |
+| other                 | longtext     | YES  |     | NULL
+ |       |
+| type                  | varchar(64)  | YES  |     | NULL
+ |       |
+| subspecies            | varchar(64)  | YES  |     | NULL
+ |       |
+| country               | varchar(64)  | YES  |     | NULL
+ |       |
+| adm2                  | varchar(128) | YES  | MUL | NULL
+ |       |
+| adm1                  | varchar(128) | YES  |     | NULL
+ |       |
+| localityname          | text         | YES  |     | NULL
+ |       |
+| localitycode          | varchar(128) | YES  | MUL | NULL
+ |       |
+| collectioncode        | varchar(128) | YES  |     | NULL
+ |       |
+| biogeographicregion   | varchar(64)  | YES  |     | NULL
+ |       |
+| decimal_latitude      | float        | YES  |     | NULL
+ |       |
+| decimal_longitude     | float        | YES  |     | NULL
+ |       |
+| last_modified         | datetime     | YES  |     | NULL
+ |       |
+| habitat               | varchar(128) | YES  |     | NULL
+ |       |
+| method                | varchar(256) | YES  |     | NULL
+ |       |
+| toc                   | varchar(128) | YES  |     | NULL
+ |       |
+| ownedby               | varchar(128) | YES  |     | NULL
+ |       |
+| collectedby           | varchar(128) | YES  |     | NULL
+ |       |
+| caste                 | varchar(128) | YES  |     | NULL
+ |       |
+| access_group          | int(11)      | YES  |     | NULL
+ |       |
+| locatedat             | varchar(128) | YES  |     | NULL
+ |       |
+| determinedby          | varchar(80)  | YES  |     | NULL
+ |       |
+| medium                | varchar(80)  | YES  |     | NULL
+ |       |
+| spcmrecorddate        | datetime     | YES  |     | NULL
+ |       |
+| spcmrecchangeddate    | datetime     | YES  |     | NULL
+ |       |
+| locrecorddate         | datetime     | YES  |     | NULL
+ |       |
+| locrecchangeddate     | datetime     | YES  |     | NULL
+ |       |
+| speciesauthor         | varchar(80)  | YES  |     | NULL
+ |       |
+| access_login          | int(11)      | YES  |     | NULL
+ |       |
+| elevation             | int(11)      | YES  |     | NULL
+ |       |
+| date_collected        | date         | YES  |     | NULL
+ |       |
+| latlonmaxerror        | varchar(128) | YES  |     | NULL
+ |       |
+| microhabitat          | varchar(256) | YES  |     | NULL
+ |       |
+| datedetermined        | date         | YES  |     | NULL
+ |       |
+| elevationmaxerror     | varchar(128) | YES  |     | NULL
+ |       |
+| localitynotes         | text         | YES  |     | NULL
+ |       |
+| dnaextractionnotes    | varchar(256) | YES  |     | NULL
+ |       |
+| specimennotes         | text         | YES  |     | NULL
+ |       |
+| datescollected        | varchar(128) | YES  |     | NULL
+ |       |
+| created               | timestamp    | NO   |     |
+CURRENT_TIMESTAMP |       |
+| family                | varchar(65)  | YES  |     | formicidae
+ |       |
+| collectionnotes       | text         | YES  |     | NULL
+ |       |
+| datecollectedstart    | date         | YES  |     | NULL
+ |       |
+| datecollectedend      | date         | YES  |     | NULL
+ |       |
+| datecollectedstartstr | varchar(20)  | YES  |     | NULL
+ |       |
+| datecollectedendstr   | varchar(20)  | YES  |     | NULL
+ |       |
+| datedeterminedstr     | varchar(20)  | YES  |     | NULL
+ |       |
++-----------------------+--------------+------+-----+-------------------+-------+
+55 rows in set (0.00 sec)
+
+mysql>
+mysql> select code, localityname, localitycode, biogeographicregion
+from specimen where code = 'casent0060272';
++---------------+--------------------+--------------+---------------------+
+| code          | localityname       | localitycode | biogeographicregion |
++---------------+--------------------+--------------+---------------------+
+| casent0060272 | Brise Mt., Bambous | Brise 200    | Malagasy            |
++---------------+--------------------+--------------+---------------------+
+1 row in set (0.00 sec)
+
+mysql> select code, adm1, adm2, country, localityname, localitycode,
+biogeographicregion, decimal_latitude, decimal_longitude from specimen
+where code = 'casent0060272';
++---------------+------+------+-----------+--------------------+--------------+---------------------+------------------+-------------------+
+| code          | adm1 | adm2 | country   | localityname       |
+localitycode | biogeographicregion | decimal_latitude |
+decimal_longitude |
++---------------+------+------+-----------+--------------------+--------------+---------------------+------------------+-------------------+
+| casent0060272 |      |      | Mauritius | Brise Mt., Bambous | Brise
+200    | Malagasy            |         -20.3455 |           57.7547 |
++---------------+------+------+-----------+--------------------+--------------+---------------------+------------------+-------------------+
+1 row in set (0.00 sec)    

@@ -1,0 +1,110 @@
+package org.calacademy.antweb;
+
+import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpServletResponse;
+import org.apache.struts.action.*;
+import java.sql.*;
+
+import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.upload.UploadUtil;
+import org.calacademy.antweb.home.*;
+
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+    
+public final class CollectionAction extends Action {
+
+    private static Log s_log = LogFactory.getLog(CollectionAction.class);
+
+	public ActionForward execute(ActionMapping mapping, ActionForm form,
+		HttpServletRequest request, HttpServletResponse response)
+		throws IOException, ServletException {
+
+        ActionForward invalid = HttpUtil.invalidRequest(request, mapping); if (invalid != null) return invalid;        
+
+		HttpSession session = request.getSession();
+
+        DynaActionForm df = (DynaActionForm) form;
+        String name = (String) df.get("name"); 
+        A.log("CollectionAction.execute() name:" + name);
+
+        String message = null;
+        if (name == null) {
+          message = "Must enter a collection name.";
+		  request.setAttribute("message", message);
+		  return (mapping.findForward("message"));
+        } 
+        
+        String queryString = request.getQueryString();
+        A.log("CollectionAction.execute() queryString:" + queryString + " p:" + request.getParameter("name"));
+        		
+		Collection collection = null;
+		java.sql.Connection connection = null;
+        java.util.Date startTime = new java.util.Date();
+
+		try {
+	 		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+
+            if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
+            connection = DBUtil.getConnection(dataSource, "CollectionAction.execute()", HttpUtil.getTarget(request));	
+            AntwebMgr.populate(connection);            
+
+            collection = (new CollectionDb(connection)).getCollection(name);
+
+			A.log("collection:" + collection + " size:" + collection.getSpecimenResults().getResults().size());
+
+			//if (!success) {
+			if (collection == null || 0 == collection.getSpecimenResults().getResults().size()) {
+			  message = "Collection not found - name:" + name + ".";
+
+			  String cleanCode = UploadUtil.cleanCode(name);
+			  //A.log("execute() cleanCode:" + cleanCode);
+			  if (!name.equals(cleanCode)) {
+				message = "Unsatisfactory collection code name. Perhaps looking for <a href='" + AntwebProps.getDomainApp() + "/collection.do?name=" + cleanCode + "'>" + cleanCode + "</a>?";
+				request.setAttribute("message", message);
+				return (mapping.findForward("message"));
+			  }
+        			  
+              if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
+                        // An upload is currently in process.  Request that this process be re-attempted shortly.
+                message += "  A curator is currently in the process of an Upload.";
+			  }	else {
+			    message += "  No upload in process.  RequestInfo:" + AntwebUtil.getRequestInfo(request);
+                A.log("execute() " + message); 
+                LogMgr.appendLog("badRequest.log", message);
+			  }
+              request.setAttribute("message", message);
+              return (mapping.findForward("message"));
+			}			
+			
+            session.setAttribute("advancedSearchResults", collection);
+            //session.setAttribute("activeSession", new Object());
+            session.setAttribute("activeSession", new Boolean(true));
+
+            if (collection.getLocality() != null) {
+              Map map = new Map(collection);
+              //s_log.warn("Collection Map: " + map);
+              session.removeAttribute("taxon");  // otherwise bigMap.do would use it by default
+              session.setAttribute("map", map);              
+            }
+		} catch (SQLException e) {
+			s_log.error("execute() e:" + e);
+		} finally {
+		    // java.util.Date startTime = new java.util.Date();
+            QueryProfiler.profile("collection", startTime);	
+            DBUtil.close(connection, this, "CollectionAction.execute()");
+		}
+
+        //mapping.getScope() is "session"
+		session.setAttribute("collection", collection);
+
+		// Set a transactional control token to prevent double posting
+		saveToken(request);
+
+        return (mapping.findForward("success"));
+	}
+}

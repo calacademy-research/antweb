@@ -1,0 +1,2 @@
+command:gunzip < /data/antweb/web/db/ant-currentDump.sql.gz | mysql -u antweb -p ant
+loaded database0

@@ -1,0 +1,26 @@
+Mobile Documentation
+--------------------
+
+Mobile access to Antweb is only available in Chrome. Only tested on IOS.
+It doesn't look perfect but it is usable (to our knowledge).
+
+Mobile is hard to test. Because of the lack of VPN on mobile devices, must be tested
+on the live site.
+
+There are some pages to support testing:
+
+https://antweb.org/mobile.do
+https://antweb.org/testMobile.do
+
+
+layout.jsp is called either way but if HttpUtils.isMobile(request) is true then use:
+    <link rel="stylesheet" href="<%= domainApp %>/common/antwebMobile.css?v1.0"/>
+instead of:
+    <link rel="stylesheet" href="<%= domainApp %>/common/antweb.css?v1.0"/>
+
+
+Dynamically test on live site. Back up first!
+  cp /data/antweb/common/antwebMobile.css /data/antweb/common/antwebMobileBak.css
+  emacs /data/antweb/common/antwebMobile.css
+
+

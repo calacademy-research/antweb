@@ -1,0 +1,13 @@
+5 1 * * * sh /home/mjohnson/antweb/bin/reboot.sh
+5 2 * * * curl http://www.antweb.org/cache.do?action=genCacheThread
+*/5 * * * * php /home/mjohnson/antweb/bin/appCheck.php
+*/30 * * * * php /home/mjohnson/antweb/bin/urlCheck.php --hosts=antweb.org,antweb.org/antweb_test,10.2.22.112 --url=specimen.do?name=casent0160810
+
+
+cron.txt
+
+This document documents the timed tasks of antweb.  The above text is to be the most
+current crontab settings.
+
+Currently, we reboot nightly at 1:05am, begin the caching thread at 2:05am, run the 
+appCheck script every five mintes and the urlCheck every half hour.

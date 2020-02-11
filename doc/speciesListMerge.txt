@@ -1,0 +1,264 @@
+
+We should reload the first speciesList that is different from the authority file
+
+Modifications (copy upload to project authority) came after:
+  drwxrwxrwx  17 mark    staff     578 Dec 10  2012 antweb4.11
+ 
+Before:
+  drwxr-xr-x 13 mjohnson antweb   4096 Apr 26 17:05 antweb4.143
+  drwxrwxrwx  17 mark    staff     578 May 29 15:49 antweb4.149
+exit
+
+
+Problem occurred:
+Release 4.114
+Date: Dec 19, 2012
+  Project handling refactoring with minor feature changes.
+  
+  
+Madagascar
+When did auth = proj (last auth file update)  
+  Madagascar - authJan5.  projfeb5.  #10.  Upload 20130306-13:59:02-madants.txt
+  Comoros - authProjSep26.  #11.  Upload 20130306-13:58:24-comorosants.txt
+  Seychellesants - authProjSep 26.  #4.  Upload 20130321-15:26:06-seychellesants.txt
+
+
+
+   
+Comoros
+  * Mar 6
+
+
+in /bak/backupAuths
+  -rwxrwxrwx 1 antweb   antweb     3632 Sep 26  2012 comorosants_authority.txt
+  -rw-r--r-- 1 root     root       4188 Aug  6 15:23 comorosants_project.txt
+
+in /speciesList/comoros/
+  -rw-r--r--  1 root   root      3473 Aug 22 09:00 comorosants_project.txt
+
+in /upload/
+[mjohnson@vAntWeb4 upload]$ ls -al *como*
+...
+-rw-r--r-- 1 root root 3632 Mar  6 13:58 20130306-13:58:24-comorosants.txt
+-rw-r--r-- 1 root root 3604 Mar 21 15:13 20130321-15:13:13-comorosants.txt
+-rw-r--r-- 1 root root 3614 Jun 14 13:36 20130614-13:36:37-comorosants.txt
+-rw-r--r-- 1 root root 4268 Aug  6 15:23 20130806-15:23:37-comorosants.txt
+-rw-r--r-- 1 root root 4188 Aug 19 15:13 20130819-15:13:20-comorosants.txt
+-rw-r--r-- 1 root root 3607 Aug 19 15:37 20130819-15:37:49-comorosants.txt
+-rw-r--r-- 1 root root 3575 Aug 20 10:31 20130820-10:31:03-comorosants.txt
+-rw-r--r-- 1 root root 4235 Aug 20 10:35 20130820-10:35:31-comorosants.txt
+-rw-r--r-- 1 root root 4235 Aug 21 11:08 20130821-11:08:17-comorosants.txt
+-rw-r--r-- 1 root root 4185 Aug 21 15:31 20130821-15:31:34-comorosants.txt
+-rw-r--r-- 1 root root 3575 Aug 22 08:53 20130822-08:53:25-comorosants.txt
+-rw-r--r-- 1 root root 3473 Aug 22 09:00 20130822-09:00:03-comorosants.txt
+
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130306-13:58:24-comorosants.html           | 2013-03-06 13:58:40 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130321-15:13:13-comorosants.html           | 2013-03-21 15:13:28 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130614-13:36:37-comorosants.html           | 2013-06-14 13:37:01 | 
+| MEsposito@calacademy.org          | California Academy of Sciences | 20130806-15:23:36-comorosants.html           | 2013-08-06 15:28:39 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130819-15:13:20-comorosants.html           | 2013-08-19 15:16:24 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130819-15:37:49-comorosants.html           | 2013-08-19 15:41:47 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130820-10:31:02-comorosants.html           | 2013-08-20 10:35:16 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130820-10:35:31-comorosants.html           | 2013-08-20 10:39:33 | 
+| GFischer@calacademy.org           | California Academy of Sciences | 20130821-11:08:17-comorosants.html           | 2013-08-21 11:13:31 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130821-15:31:34-comorosants.html           | 2013-08-21 15:34:42 |   
+  
+  
+  
+  
+  
+  
+  
+  select email, group_name, log_file_name, upload.created from upload join login on upload.login_id = login.id where upload.created > "2013-01-01" and log_file_name like "%ants%" order by substring(log_file_name, 18), created;
++-----------------------------------+--------------------------------+----------------------------------------------+---------------------+
+| email                             | group_name                     | log_file_name                                | created             |
++-----------------------------------+--------------------------------+----------------------------------------------+---------------------+
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-14:01:59-alabamaants.html           | 2013-03-27 14:02:14 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-14:03:06-alabamaants.html           | 2013-03-27 14:03:21 | 
+| jmacgown@entomology.msstate.edu   | Curator Joe MacGown            | 20130501-11:14:45-alabamaants.html           | 2013-05-01 11:15:08 | 
+| jmacgown@entomology.msstate.edu   | Curator Joe MacGown            | 20130501-11:17:59-alabamaants.html           | 2013-05-01 11:18:26 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130306-10:32:49-albertaants.html           | 2013-03-06 10:33:07 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130306-10:42:04-albertaants.html           | 2013-03-06 10:42:18 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:11:34-alicanteants.html          | 2013-03-28 15:11:48 | 
+| alihormiga@gmail.com              | Default Group                  | 20130331-04:00:43-alicanteants.html          | 2013-03-31 04:01:11 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:05:45-alicanteantsReload.html    | 2013-03-28 15:05:49 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-13:45:56-arizonaants.html           | 2013-03-27 13:46:12 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-13:47:53-arizonaants.html           | 2013-03-27 13:48:10 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-13:49:21-arizonaants.html           | 2013-03-27 13:49:35 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-13:53:24-arizonaants.html           | 2013-03-27 13:53:41 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-13:55:43-arizonaants.html           | 2013-03-27 13:56:04 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130602-10:30:13-arizonaants.html           | 2013-06-02 10:30:26 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-13:58:33-arkansasants.html          | 2013-03-27 13:58:50 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-14:57:09-arkansasants.html          | 2013-03-27 14:57:25 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130409-09:51:07-atolants.html              | 2013-04-09 09:51:35 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130409-09:56:43-atolants.html              | 2013-04-09 09:57:12 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130409-10:22:27-atolants.html              | 2013-04-09 10:22:48 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130409-10:23:54-atolants.html              | 2013-04-09 10:24:16 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130409-12:53:15-atolants.html              | 2013-04-09 12:53:40 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:19:47-austriaants.html           | 2013-03-28 15:20:02 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:15:38-austriaantsReload.html     | 2013-03-28 15:15:42 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:14:22-bajaants.html              | 2013-03-27 15:14:37 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:27:16-belgiumants.html           | 2013-03-28 15:27:34 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:20:21-belgiumantsReload.html     | 2013-03-28 15:20:25 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-14:34:40-borneoants.html            | 2013-03-29 14:35:04 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-14:39:20-borneoants.html            | 2013-03-29 14:39:41 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:55:25-borneoantsReload.html      | 2013-03-29 10:55:35 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:27:58-chinaantsReload.html       | 2013-03-28 15:28:14 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:21:38-coloradoants.html          | 2013-03-27 15:21:54 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:23:37-coloradoants.html          | 2013-03-27 15:23:52 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130306-13:58:24-comorosants.html           | 2013-03-06 13:58:40 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130321-15:13:13-comorosants.html           | 2013-03-21 15:13:28 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130614-13:36:37-comorosants.html           | 2013-06-14 13:37:01 | 
+| MEsposito@calacademy.org          | California Academy of Sciences | 20130806-15:23:36-comorosants.html           | 2013-08-06 15:28:39 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130819-15:13:20-comorosants.html           | 2013-08-19 15:16:24 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130819-15:37:49-comorosants.html           | 2013-08-19 15:41:47 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130820-10:31:02-comorosants.html           | 2013-08-20 10:35:16 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130820-10:35:31-comorosants.html           | 2013-08-20 10:39:33 | 
+| GFischer@calacademy.org           | California Academy of Sciences | 20130821-11:08:17-comorosants.html           | 2013-08-21 11:13:31 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130821-15:31:34-comorosants.html           | 2013-08-21 15:34:42 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:35:07-croatiaants.html           | 2013-03-28 15:35:23 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:29:18-croatiaantsReload.html     | 2013-03-28 15:29:20 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130128-11:16:18-czechants.html             | 2013-01-28 11:16:40 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:35:45-czechantsReload.html       | 2013-03-28 15:35:49 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-06:28:38-fijiants.html              | 2013-03-28 06:28:59 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-06:19:04-fijiantsReload.html        | 2013-03-28 06:19:08 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:33:41-floridaants.html           | 2013-03-27 15:33:59 | 
+| vincent.perrichot@univ-rennes1.fr | Universit? Rennes              | 20130114-10:28:25-fossilants.html            | 2013-01-14 10:29:09 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130122-12:38:36-fossilants.html            | 2013-01-22 12:39:08 | 
+| vincent.perrichot@univ-rennes1.fr | Universit? Rennes              | 20130627-15:58:16-fossilants.html            | 2013-06-27 15:58:44 | 
+| vincent.perrichot@univ-rennes1.fr | Universit? Rennes              | 20130702-14:43:01-fossilants.html            | 2013-07-02 14:43:28 | 
+| vincent.perrichot@univ-rennes1.fr | Universit? Rennes              | 20130708-07:51:34-fossilants.html            | 2013-07-08 07:54:26 | 
+| vincent.perrichot@univ-rennes1.fr | Universit? Rennes              | 20130708-08:01:07-fossilants.html            | 2013-07-08 08:04:02 | 
+| mark@inforaction.com              | California Academy of Sciences | 20130125-11:24:49-fossilantsReload.html      | 2013-01-25 11:25:02 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:36:06-franceantsReload.html      | 2013-03-28 15:36:09 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130717-15:37:19-frenchpolynesiaants.html   | 2013-07-17 15:43:26 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130530-10:06:14-georgiaants.html           | 2013-05-30 10:06:40 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130530-10:16:40-georgiaants.html           | 2013-05-30 10:17:03 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-16:02:01-greeceants.html            | 2013-03-28 16:02:18 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-16:04:24-greeceants.html            | 2013-03-28 16:04:42 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130401-06:45:07-greeceants.html            | 2013-04-01 06:45:27 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130404-15:26:23-greeceants.html            | 2013-04-04 15:26:40 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130408-13:26:27-greeceants.html            | 2013-04-08 13:26:51 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130408-13:37:45-greeceants.html            | 2013-04-08 13:38:03 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130408-13:42:09-greeceants.html            | 2013-04-08 13:42:25 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130416-07:17:17-greeceants.html            | 2013-04-16 07:17:37 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130416-12:50:59-greeceants.html            | 2013-04-16 12:51:16 | 
+| mark@inforaction.com              | California Academy of Sciences | 20130124-13:53:40-greeceantsReload.html      | 2013-01-24 13:53:46 | 
+| mark@inforaction.com              | California Academy of Sciences | 20130124-14:10:24-greeceantsReload.html      | 2013-01-24 14:10:31 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-15:36:27-greeceantsReload.html      | 2013-03-28 15:36:30 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130416-13:19:32-greeceantsReload.html      | 2013-04-16 13:19:39 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-06:30:36-hawaiiantsReload.html      | 2013-03-28 06:30:39 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:42:00-illinoisants.html          | 2013-03-27 15:42:15 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-11:36:40-indiaants.html             | 2013-03-29 11:37:01 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:51:26-indiaantsReload.html       | 2013-03-29 10:51:37 | 
+| ndemik@yahoo.com                  | Curator Eli Sarnat             | 20130402-16:46:00-introducedants.html        | 2013-04-02 16:46:25 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:45:18-iranants.html              | 2013-03-29 10:45:34 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:40:42-iranantsReload.html        | 2013-03-29 10:40:46 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-16:08:59-italyants.html             | 2013-03-28 16:09:16 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-16:15:59-italyants.html             | 2013-03-28 16:16:24 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-16:05:38-italyantsReload.html       | 2013-03-28 16:05:43 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-05:36:14-kenyaants.html             | 2013-03-28 05:36:42 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-05:30:10-kenyaantsReload.html       | 2013-03-28 05:30:22 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:45:27-louisianaants.html         | 2013-03-27 15:45:46 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:46:39-louisianaants.html         | 2013-03-27 15:46:54 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-06:08:15-macaronesiaants.html       | 2013-03-28 06:08:30 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-05:37:06-macaronesiaantsReload.html | 2013-03-28 05:37:07 | 
+| MEsposito@calacademy.org          | California Academy of Sciences | 20130102-09:24:15-madants.html               | 2013-01-02 09:25:03 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130205-17:49:34-madants.html               | 2013-02-05 17:50:15 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130306-13:59:02-madants.html               | 2013-03-06 13:59:31 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130318-17:12:53-madants.html               | 2013-03-18 17:13:26 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130320-16:40:03-madants.html               | 2013-03-20 16:40:35 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130321-10:17:57-madants.html               | 2013-03-21 10:18:28 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130321-15:10:18-madants.html               | 2013-03-21 15:10:52 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-13:42:36-madants.html               | 2013-03-29 13:43:03 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130502-12:46:04-madants.html               | 2013-05-02 12:46:38 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130527-16:38:26-madants.html               | 2013-05-27 16:39:09 | 
+| myoshimura@ant-database.org       | Default Group                  | 20130606-14:07:31-madants.html               | 2013-06-06 14:08:05 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130614-13:37:45-madants.html               | 2013-06-14 13:38:18 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130703-15:50:59-madants.html               | 2013-07-03 15:51:52 | 
+| bbblaimer@ucdavis.edu             | Curator Bonnie Blaimer         | 20130804-09:04:54-madants.html               | 2013-08-04 09:08:11 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130819-15:18:14-madants.html               | 2013-08-19 15:21:22 | 
+| GFischer@calacademy.org           | California Academy of Sciences | 20130821-11:34:24-madants.html               | 2013-08-21 11:39:14 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130821-15:39:09-madants.html               | 2013-08-21 15:42:39 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-11:44:20-madantsReload.html         | 2013-03-29 11:44:42 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130205-17:50:30-malagasyants.html          | 2013-02-05 17:51:02 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130306-14:00:39-malagasyants.html          | 2013-03-06 14:01:18 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130318-17:13:35-malagasyants.html          | 2013-03-18 17:14:14 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130527-16:39:24-malagasyants.html          | 2013-05-27 16:40:03 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130614-13:38:49-malagasyants.html          | 2013-06-14 13:39:24 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130819-15:22:46-malagasyants.html          | 2013-08-19 15:26:06 | 
+| GFischer@calacademy.org           | California Academy of Sciences | 20130821-11:46:49-malagasyants.html          | 2013-08-21 11:52:17 | 
+| phitagarcia@calacademy.org        | California Academy of Sciences | 20130821-17:38:08-malagasyants.html          | 2013-08-21 17:42:24 | 
+| mark@inforaction.com              | California Academy of Sciences | 20130125-11:41:03-malagasyantsReload.html    | 2013-01-25 11:41:23 | 
+| rogeriosilvestre@ufgd.edu.br      | Default Group                  | 20130305-13:18:10-matogrossodosulants.html   | 2013-03-05 13:18:35 | 
+| rogeriosilvestre@ufgd.edu.br      | Default Group                  | 20130305-13:29:27-matogrossodosulants.html   | 2013-03-05 13:29:48 | 
+| rogeriosilvestre@ufgd.edu.br      | Default Group                  | 20130312-12:55:27-matogrossodosulants.html   | 2013-03-12 12:55:52 | 
+| MEsposito@calacademy.org          | California Academy of Sciences | 20130806-15:30:26-mauritiusants.html         | 2013-08-06 15:36:52 | 
+| GFischer@calacademy.org           | California Academy of Sciences | 20130821-11:14:01-mauritiusants.html         | 2013-08-21 11:19:46 | 
+| MEsposito@calacademy.org          | California Academy of Sciences | 20130806-15:39:47-mayotteants.html           | 2013-08-06 15:45:43 | 
+| GFischer@calacademy.org           | California Academy of Sciences | 20130821-11:01:51-mayotteants.html           | 2013-08-21 11:05:54 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-06:31:50-micronesiaantsReload.html  | 2013-03-28 06:31:54 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:49:46-mississippiants.html       | 2013-03-27 15:50:02 | 
+| jmacgown@entomology.msstate.edu   | Curator Joe MacGown            | 20130501-11:24:33-mississippiants.html       | 2013-05-01 11:24:52 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:54:12-missouriants.html          | 2013-03-27 15:54:29 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-15:56:13-missouriants.html          | 2013-03-27 15:56:29 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-09:13:21-netherlandsantsReload.html | 2013-03-29 09:13:28 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-14:41:11-newguineaants.html         | 2013-03-28 14:41:52 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-14:59:50-newguineaants.html         | 2013-03-28 15:00:18 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-07:12:54-newguineaantsReload.html   | 2013-03-28 07:13:03 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-16:58:18-newguineaantsReload.html   | 2013-03-29 16:58:33 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-16:03:28-newmexicoants.html         | 2013-03-27 16:03:53 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-06:42:51-newzealandants.html        | 2013-03-28 06:43:08 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-06:39:56-newzealandantsReload.html  | 2013-03-28 06:39:57 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-16:08:14-ohioants.html              | 2013-03-27 16:08:29 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-16:10:42-pennsylvaniaants.html      | 2013-03-27 16:10:57 | 
+| bzb43@yahoo.com                   | Default Group                  | 20130114-15:19:12-philippinesants.html       | 2013-01-14 15:19:55 | 
+| bzb43@yahoo.com                   | Default Group                  | 20130115-20:35:06-philippinesants.html       | 2013-01-15 20:35:53 | 
+| bzb43@yahoo.com                   | Default Group                  | 20130115-20:46:31-philippinesants.html       | 2013-01-15 20:47:31 | 
+| bzb43@yahoo.com                   | Default Group                  | 20130120-15:13:42-philippinesants.html       | 2013-01-20 15:14:20 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130122-13:22:37-philippinesants.html       | 2013-01-22 13:23:03 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130122-13:30:48-philippinesants.html       | 2013-01-22 13:31:15 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130122-13:15:06-philippinesantsReload.html | 2013-01-22 13:15:15 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:46:15-philippinesantsReload.html | 2013-03-29 10:46:26 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-07:11:41-queenslandants.html        | 2013-03-28 07:12:06 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-06:43:38-queenslandantsReload.html  | 2013-03-28 06:43:51 | 
+| GFischer@calacademy.org           | California Academy of Sciences | 20130821-11:25:03-reunionants.html           | 2013-08-21 11:29:17 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130330-07:49:26-saudiants.html             | 2013-03-30 07:50:04 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:23:02-saudiantsReload.html       | 2013-03-29 10:23:07 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:01:50-serbiaants.html            | 2013-03-29 10:02:06 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:02:46-serbiaants.html            | 2013-03-29 10:03:02 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-09:13:45-serbiaantsReload.html      | 2013-03-29 09:13:48 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130321-15:26:06-seychellesants.html        | 2013-03-21 15:26:28 | 
+| MEsposito@calacademy.org          | California Academy of Sciences | 20130806-15:47:09-seychellesants.html        | 2013-08-06 15:52:16 | 
+| GFischer@calacademy.org           | California Academy of Sciences | 20130821-11:30:56-seychellesants.html        | 2013-08-21 11:33:54 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:06:33-sloveniaants.html          | 2013-03-29 10:06:48 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:03:29-sloveniaantsReload.html    | 2013-03-29 10:03:33 | 
+| ndemik@yahoo.com                  | Curator Eli Sarnat             | 20130228-09:15:25-solomonsants.html          | 2013-02-28 09:15:46 | 
+| ndemik@yahoo.com                  | Curator Eli Sarnat             | 20130228-11:37:22-solomonsants.html          | 2013-02-28 11:37:42 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-17:06:52-solomonsants.html          | 2013-03-29 17:07:22 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130328-06:34:39-solomonsantsReload.html    | 2013-03-28 06:34:42 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-16:59:48-solomonsantsReload.html    | 2013-03-29 16:59:52 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130531-09:14:20-southcarolinaants.html     | 2013-05-31 09:14:41 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130531-09:16:02-southcarolinaants.html     | 2013-05-31 09:16:28 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130531-08:58:49-tennesseeants.html         | 2013-05-31 08:59:21 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130531-09:01:48-tennesseeants.html         | 2013-05-31 09:02:10 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-16:14:28-texasants.html             | 2013-03-27 16:14:48 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:15:35-uaeants.html               | 2013-03-29 10:15:51 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130329-10:08:36-uaeantsReload.html         | 2013-03-29 10:08:41 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130327-16:16:45-utahants.html              | 2013-03-27 16:17:01 | 
+| mark@inforaction.com              | California Academy of Sciences | 20130123-11:50:45-worldants.html             | 2013-01-23 11:51:38 | 
+| mark@inforaction.com              | California Academy of Sciences | 20130125-00:13:39-worldants.html             | 2013-01-25 00:14:16 | 
+| mark@inforaction.com              | California Academy of Sciences | 20130125-00:16:15-worldants.html             | 2013-01-25 00:16:49 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130130-15:17:39-worldants.html             | 2013-01-30 15:18:34 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130130-15:22:03-worldants.html             | 2013-01-30 15:22:49 | 
+| mark@mwilden.com                  | California Academy of Sciences | 20130131-11:59:52-worldants.html             | 2013-01-31 12:00:41 | 
+| mark@mwilden.com                  | California Academy of Sciences | 20130326-14:28:20-worldants.html             | 2013-03-26 14:29:12 | 
+| mark@mwilden.com                  | California Academy of Sciences | 20130327-17:41:00-worldants.html             | 2013-03-27 17:41:48 | 
+| mark@mwilden.com                  | California Academy of Sciences | 20130328-15:14:01-worldants.html             | 2013-03-28 15:14:50 | 
+| mark@mwilden.com                  | California Academy of Sciences | 20130329-09:24:15-worldants.html             | 2013-03-29 09:25:03 | 
+| mark@mwilden.com                  | California Academy of Sciences | 20130628-17:11:12-worldants.html             | 2013-06-28 17:12:25 | 
+| mark@inforaction.com              | California Academy of Sciences | 20130129-15:02:37-worldantsReload.html       | 2013-01-29 15:03:29 | 
+| bfisher@calacademy.org            | California Academy of Sciences | 20130129-15:26:57-worldantsReload.html       | 2013-01-29 15:27:33 | 
+| mark@inforaction.com              | California Academy of Sciences | 20130129-15:36:07-worldantsReload.html       | 2013-01-29 15:36:40 | 
++-----------------------------------+--------------------------------+----------------------------------------------+---------------------+
+187 rows in set (0.00 sec)

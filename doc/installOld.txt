@@ -1,0 +1,987 @@
+Antweb Installation
+
+/*
+About this document. The installation process is manual and will differ for different
+environments. This document is more about having clues, but should include most processes.
+
+Not mentioned in this document (aside for here) are some finishing touches that will be
+required. The home directory is not checked into cvs (because it is big) to keep down zip
+file sizes. Look to an existing deployment to find that in the web/homepage directory.
+     Also ApplicationResources.properties should be copied and customized from 
+WEB-INF/classes/ApplicationResources.propertiesTemplate.
+     Be sure to run the appropriate etc/config*.sh file. Create and customize as necessary.
+Messy non-standard build process.
+*/
+
+
+
+markj.  Aug 23, 2010
+
+These instructions are to make a fully functional antweb server on Centos.  Installation includes:
+  Java
+  MySQL
+  Tomcat
+  Ant
+  Emacs
+  Perl
+  Php
+  Antweb
+
+Also included here is data transfer, startup commands, crontabs, etc...
+
+---
+
+Current Antweb server:
+  10.2.22.11
+  Antweb2
+  
+The New Antweb - Antweb3 - Original server rebuilt: 
+   10.2.22.80
+   ESXi 4.1 update 1 installed.  CentOS 5.6 (64 bit version)
+
+These instructions were written for installation of antweb on Antweb 2.
+  by mjohnson@10.2.22.106
+  on Centos.  Linux version 2.6.18-194.8.1.el5 (mockbuild@builder10.centos.org) (gcc version 4.1.2 20080704 
+    (Red Hat 4.1.2-48)) #1 SMP Thu Jul 1 19:04:48 EDT 2010
+
+----------------------------------------------
+
+Add Users...
+
+sudo /usr/sbin/useradd josh
+sudo /usr/sbin/usermod -g antweb josh
+sudo passwd josh
+
+
+----------------------------------------------
+
+To configure a developer's environment:
+source /etc/profile
+cvs update -Pd
+ant deploy
+mkdir links
+cd links 
+sh ../antweb/etc/makeLinks.sh 
+cd ../antweb
+sh etc/configStage.sh
+
+In case of permission problems:
+  cd /data/antweb
+  sudo chmod 775 . -R
+
+
+---------------------------------------------------------------------------------------------------
+--- Emacs ---
+yum install emacs
+  ...
+
+
+---------------------------------------------------------------------------------------------------
+--- Tomcat ---
+  Download current zip or tar and uncompress in /usr/local
+
+  Create a softlink 
+    ln -s apache-tomcat-6.0.29 tomcat
+
+  sudo ln -s apache-tomcat-5.5.30 tomcat
+
+  edit /usr/local/tomcat/conf/context.xml to disable session persistence.
+
+  Copy of tomcat-users.xml  
+  Copy of server.xml
+  
+Copy these jars into tomcat/lib dir:
+  jaxp_parser_impl.jar serializer.jar xalan.jar xercesImpl.jar xml-apis.jar xml-commons-apis.jar xsltc.jar
+# already there: jsp-api.jar 
+  
+https and ssl
+-------------
+Currently done in Tomcat/bin (on my dev machine)
+cd /usr/local/tomcat/bin
+keytool -genkey -alias mark -keyalg RSA -keystore ./keystore
+  // Creates a keystore file in the tomcat/bin directory
+
+Add /Users/mark/dev/tomcat/bin/keystore with password to edit ../conf/server.xml
+
+ <Connector port="8443" protocol="HTTP/1.1" SSLEnabled="true"
+               maxThreads="150" scheme="https" secure="true"
+               clientAuth="false" sslProtocol="TLS" 
+   	          keystoreFile="c:\mkyongkeystore"
+	          keystorePass="password" 
+ />	       
+https://localhost:8443/antweb/
+
+Stage and production are configured to not specify a secure port.  
+  
+---------------------------------------------------------------------------------------------------
+--- Installing Java on Centos ---
+
+http://java.sun.com/javase/6/webnotes/install/jdk/install-linux.html#install-rpm
+
+  // download a file like jdk-6u21-linux-x64-rpm.bin from sun/Oracle.
+  chmod a+x jdk-6u21-linux-x64-rpm.bin   - to give execute perms.
+  sudo bash
+  ./jdk-6u21-linux-x64-rpm.bin 
+  
+  ! I (mark) believe this is sufficient.  The following may be useful...
+
+---
+
+http://plugindoc.mozdev.org/faqs/java.html
+  // This would only be for browser plugin support.  No use headless.
+
+And this may prove helpful;
+Reconfiguring the default Java configuration for Red Hat / Fedora
+This is done as root or equivalent.
+
+First remove /var/lib/alternatives/java file by typing;
+
+rm /var/lib/alternatives/java
+
+When asked press the 'y' key,
+
+Now to create the new (corrected) alternatives file for java type
+the following commands as root;
+
+# Don't need these
+/usr/sbin/alternatives --install /usr/bin/java java /usr/lib/jvm/jre-1.4.2-gcj/bin/java 1 
+For jre:
+  /usr/sbin/alternatives --install /usr/bin/java java /usr/java/jre1.6.0/bin/java 2
+
+# Be sure to get the version right.
+For jdk:
+  /usr/sbin/alternatives --install /usr/bin/java java /usr/java/jdk1.6.0_21/bin/java 2
+
+/usr/sbin/alternatives --config java
+
+You should now see for example:
+
+There are 2 programs which provide 'java'.
+
+Selection Command
+-----------------
+1 /usr/lib/jvm/jre-1.4.2-gcj/bin/java
+*+ 2 /usr/java/jre1.6.0/bin/java
+
+Enter to keep the current selection[+], or type selection number:
+
+Type: <choose 1 or 2>
+
+In the example above java is already configured correctly [*+ 2] to
+use Sun's Java, no changes are needed, just press the Enter key here.
+If you have been following the instructions then you should have 
+the same results (version numbers may be sightly different).
+
+Now type; /usr/sbin/alternatives --display java
+
+You should see for example;
+
+java - status is manual.
+link currently points to /usr/java/jre1.6.0/bin/java
+/usr/lib/jvm/jre-1.4.2-gcj/bin/java - priority 1
+/usr/java/jre1.6.0/bin/java - priority 2
+Current `best' version is /usr/java/jre1.6.0/bin/java.
+
+Next you might want to create (or edit) /etc/profile.d/java.sh 
+file, examples below:
+
+#export JAVA_HOME="/usr/java/jdk1.6.0_21/jre"
+export JAVA_HOME="/usr/java/default"
+export JAVA_PATH="$JAVA_HOME"
+export PATH="$PATH:$JAVA_HOME"
+
+---expired-
+For jre;
+
+export JAVA_HOME="/usr/java/jre1.6.0/bin"
+export JAVA_PATH="$JAVA_HOME"
+export PATH="$PATH:$JAVA_HOME"
+
+For jdk;
+
+export JAVA_HOME="/usr/java/jdk1.6.0/jre/bin"
+export JAVA_PATH="$JAVA_HOME"
+export PATH="$PATH:$JAVA_HOME"
+---
+
+When done creating or editing the file type; 
+
+source /etc/profile.d/java.sh
+
+Now any user root or other wise should be able to use the command;
+
+which java
+
+and the results should read something like;
+
+/usr/bin/java
+
+Also any user root or otherwise should be able to use the command;
+
+java -version
+
+and the results should read something like;
+
+java version "1.6.0"
+Java(TM) SE Runtime Environment (build 1.6.0-b105)
+Java HotSpot(TM) Client VM (build 1.6.0-b105, mixed mode, sharing)
+
+For Java 7, put this at the top of the catalina.sh
+	CATALINA_OPTS="$CATALINA_OPTS -Djava.util.Arrays.useLegacyMergeSort=true"
+
+---------------------------------------------------------------------------------------------------
+--- Istall Mysql ---
+
+yum install php-mysql mysql mysql-server
+
+/sbin/chkconfig --levels 235 mysqld on
+
+/etc/init.d/mysqld start
+
+mysql -u root mysql
+
+SET PASSWORD FOR 'root'@'localhost' = PASSWORD('*******');
+
+mysql> USE mysql; 
+mysql> UPDATE user SET Password=PASSWORD('new-password') WHERE user='root'; 
+mysql> FLUSH PRIVILEGES;
+
+Edit /etc/my.cnf add at bottom:
+[client]
+socket=/var/lib/mysql/mysql.sock
+
+Perhaps also in my.cnf:
+
+
+# To speed up the specimen uploads
+innodb_buffer_pool_size=4G
+
+[mysqld]
+
+innodb_buffer_pool_size=64MB
+skip-locking
+key_buffer = 384M
+max_allowed_packet = 4M
+table_cache = 512
+sort_buffer_size = 2M
+read_buffer_size = 2M
+read_rnd_buffer_size = 8M
+myisam_sort_buffer_size = 64M
+thread_cache_size = 8
+query_cache_size = 32M
+# Try number of CPU's*2 for thread_concurrency
+thread_concurrency = 8
+log = /var/log/mysqld.log
+
+# This breaks mysql
+#log-output = FILE
+#
+#... and ...
+
+[mysqldump]
+quick
+max_allowed_packet = 16M
+
+[isamchk]
+key_buffer = 256M
+sort_buffer_size = 256M
+read_buffer = 2M
+write_buffer = 2M
+
+[myisamchk]
+key_buffer = 256M
+sort_buffer_size = 256M
+read_buffer = 2M
+write_buffer = 2M
+
+[mysqlhotcopy]
+interactive-timeout
+
+
+---------------------------------------------------------------------------------------------------
+--- Install Ant ---
+
+  Download and uncompress ant installation into /usr/java directory:
+    unzip /home/mjohnson/bak/download/apache-ant-1.8.1-bin.zip 
+
+  Create a softlink:
+    ln -s apache-ant-1.8.1 ant
+
+  To enable "ant reload" to run against Tomcat, copy jar file...
+    cp /usr/local/tomcat/server/lib/catalina-ant.jar /usr/java/ant/lib/
+
+
+---------------------------------------------------------------------------------------------------
+--- Config Env ---
+
+On production machine, must be able to launch admin.sh from java as root. 
+sudo visudo   # and then add:
+antweb	ALL=(ALL)	NOPASSWD: /home/antweb/antweb_deploy/bin/admin.sh
+
+*  Add to /etc/profile:
+    export CATALINA_HOME=/usr/local/tomcat
+    export ANT_HOME=/usr/java/ant   
+* No. Copy over /etc/profile.d/ant.sh and java.sh 
+    
+  [mjohnson@vAntWeb2 ~]$ create /etc/profile.d/java.sh
+    export JAVA_HOME="/usr/java/default"
+    export JAVA_PATH="$JAVA_HOME"
+  
+* No more?
+  in /usr/share/ create softlink:
+    sudo ln -s /usr/local/tomcat tomcat5
+    # This is for compatibility with Antweb1.  After transition change hardcoded build.xml catalina.home.
+
+  Create /etc/init.d/priv_tomcat
+    Make as softlink to something in source tree?
+
+---------------------------------------------------------------------------------------------------
+--- Install Antweb ---
+
+  -- Get production disk data
+  from the /data/ directory of the destination machine:
+    sudo rsync -avz mjohnson@antweb.org:/data/antweb .
+
+  This will copy all image/web data from production site to current directory.  Rsync will copy
+  incrementally, so to re-run the above command will update changes, new files, etc...
+
+  -- Configure Database --  
+  Create a current database dump
+    mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > 2010-08-23.sql.gz
+
+  Transfer it
+    scp 2010-08-23.sql.gz mjohnson@10.2.22.106:/home/mjohnson
+
+  Create antweb user
+    create user antweb identified by '*******';
+    GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'localhost' IDENTIFIED BY '*******' WITH GRANT OPTION;
+    GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'%' IDENTIFIED BY '*******' WITH GRANT OPTION;
+
+  create database ant;
+
+  Load the database dump
+    gunzip < 2010-08-23.sql.gz | mysql -u antweb -p ant
+   
+  -- Antweb application installation
+  in whatever directory you like... (the deployer's choice).
+  cvs -d :ext:mjohnson@10.1.10.98:/data/cvsroot co -d antweb antweb
+    - Currently our cvs repository is named antweb.  This could change.
+    - First antweb above refers to the directory name in which it will be checked out.
+    - Second antweb above refers to the cvs repository
+    - To create antweb_test checkout, not on a remote system, then:
+      cvs -d /data/cvsroot co -d antweb_test antweb
+
+   Also should be checked out in /home/antweb so that the source tree bin directory is in a
+     predictable place.
+
+   In order to make tapirlink work, we need a thau user.
+     create user thau identified by 'f0rm1c6';
+     GRANT ALL PRIVILEGES ON *.* TO 'thau'@'localhost' IDENTIFIED BY 'f0rm1c6' WITH GRANT OPTION;
+     also, enable read priveliges on file system.
+     sudo yum install php-mbstring
+     
+  -- Configure Tomcat --
+    Change 8080 -> 80 in connector of /usr/local/tomcat/conf/server.xml.  Inconsistent with Antweb1.
+      How does Antweb1 manage this?
+
+    Into the tomcat/common/endorsed dir:
+      scp mjohnson@10.2.22.81:/usr/local/tomcat/common/endorsed/*.jar .
+
+    Add to context.xml on dev this:
+           <Resources allowLinking="true"/>
+      to enable the following of images symlinks:
+           sudo ln -s /data/antweb/images images
+
+
+  In server.xml, under this:
+      <Host name="localhost" appBase="webapps"
+       unpackWARs="true" autoDeploy="true"
+       xmlValidation="false" xmlNamespaceAware="false">    // add these?
+  Add this:
+        <Valve className="org.apache.catalina.valves.RemoteAddrValve" deny="218\.81\.137\.161" />   // add this?
+        <Context path="" docBase="/data/antweb" debug="0"/>        //added.
+
+
+
+  -- Configure System Users --
+  sudo groupadd antweb
+  sudo usermod -g antweb mjohnson
+
+  [mjohnson@vAntWeb2 ~]$ groups
+  antweb wheel
+
+  -- Set ownership/priorities of /data/antweb --
+  cd /data/antweb
+  sudo chmod -R 775 .  
+  sudo chown -R mjohnson:antweb .
+
+  These directories should exist 
+    /data
+      /antweb
+        /web/
+          /curator
+          /projects
+          /eol
+          /log
+
+  -- Configure Antweb --
+  sh etc/configAntweb.sh   // Be sure to choose the appropriate config script.
+
+  or 
+   sh etc/configMark.sh
+   
+  Copy the webapps/antweb/web content over.  Necessary for home page. 
+
+  -- Copy various antweb apache services such as antblog and imageUpload...
+  In /var/www/html
+    sudo scp -r * mjohnson@10.2.22.106:/var/www/html/
+
+    Need to set permissions or ownership?  It is apache/apache on antweb
+
+   chmod 775 /var/www/html/imageUpload/recentImages_gen_inc.jsp
+
+  -- Create antweb user, in group antweb, with home dir antweb, and set password to [*******]
+    sudo useradd antweb -g antweb 
+    sudo passwd antweb
+
+  -- Copy across /home/antweb/workingdir contents
+    scp processImages antweb@10.2.22.106:/home/antweb/workingdir/
+    scp newLineZapper.pl antweb@10.2.22.106:/home/antweb/workingdir/      ? Necessary ?
+
+    * These should be in CVS, no?  It appears that the processImages is bigger on disk than in CVS.
+
+  -- Configure/Run apache
+    On Mac, System Preferences -> Sharing -> Web Sharing -> enabled http://192.168.110.251/
+
+
+----
+
+To Create an antwebTest
+
+cvs -d :ext:luke@antweb.org:/data/cvsroot co -d antwebTest antweb
+sh etc/configDevAntwebTest.sh
+ant deploy
+Copy the /data/antweb/web directory contents (excluding speciesLists, uploads, logs) to /usr/local/tomcat/webapps/antweb_test/web
+Create the database ant_test
+Load database 
+
+
+--------------------------------------------------------------------------------------------------
+--- To Do ---
+Put priv_tomcat and server.xml into the source tree?
+
+cronjobs
+googleEarth upload
+
+--------------------------------------------------------------------------------------------------
+
+Fetch Plazi data.
+  Plazi files should exist in /data/antweb/plazi
+  this directory should be specified in ApplicationResources.properties site.plaziDir property.
+
+  http://www.antweb.org/getPlazi.do will invoke the process.  No login required.
+  Watch the standard or info logs for details.
+  
+  select count(*) from description where title = "taxonomictreatment";
+    Should report records after successful run.
+
+  Bolton upload process seems to blow this data away.
+
+--------------------------------------------------------------------------------------------------
+
+Apache Configuration
+
+On Antweb2 Thau installed a custom apache v2.2.17 into /usr/local/apache2/
+   Antweb3 has 2.2.3 installed /usr/sbin/httpd    See also: /etc/httpd/
+   
+   * Below, all instances of /usr/local/apache should be /etc/httpd
+  
+Apache installation is non-standard.  Centos will not upgrade to proper version to support mod_jk,
+  so Thau did a custom install in a new location.  Must modify /etc/init.d/httpd to address new 
+  version.
+  
+Mod_jk
+  See /doc/antweb-docs2.txt for more info...
+
+
+To start http and tomcat:
+    sudo /etc/init.d/priv_tomcat start 
+    sudo /etc/init.d/httpd start   
+    
+These have been added to /etc/rc.local to execute at startup    
+
+
+PHP Configuration
+  yum install php
+
+  In order to get libphp5.so 
+  rpm -ql php 
+
+Apache config & Mod_JK
+  Get file: /usr/local/apache2/conf/workers.properties
+  Copies files and dirs into /var/www/cgi-bin
+
+Added the following to /usr/local/apache2/conf/httpd.conf:
+  or on Antweb3: /etc/httpd/conf/httpd.conf
+
+  #LoadModule rewrite_module modules/mod_rewrite.so
+  # Copy mod_rewrite into /usr/local/apache/modules.  This did not help display special characters.
+
+Insert into httpd.conf (see most recent for best list):
+
+#Add this one high up:  (old)
+#LoadModule php5_module	      /usr/lib64/httpd/modules/libphp5.so
+
+
+// These are old.  Thau removed a bunch of the mods.  Necessary?
+#LoadModule auth_basic_module modules/mod_auth_basic.so
+LoadModule auth_digest_module modules/mod_auth_digest.so
+#LoadModule authn_file_module modules/mod_authn_file.so
+LoadModule authn_alias_module modules/mod_authn_alias.so
+LoadModule authn_anon_module modules/mod_authn_anon.so
+LoadModule authn_dbm_module modules/mod_authn_dbm.so
+#LoadModule authn_default_module modules/mod_authn_default.so
+#LoadModule authz_host_module modules/mod_authz_host.so
+#LoadModule authz_user_module modules/mod_authz_user.so
+LoadModule authz_owner_module modules/mod_authz_owner.so
+#LoadModule authz_groupfile_module modules/mod_authz_groupfile.so
+LoadModule authz_dbm_module modules/mod_authz_dbm.so
+#LoadModule authz_default_module modules/mod_authz_default.so
+#LoadModule ldap_module modules/mod_ldap.so
+#LoadModule authnz_ldap_module modules/mod_authnz_ldap.so
+#LoadModule include_module modules/mod_include.so
+#LoadModule log_config_module modules/mod_log_config.so
+LoadModule logio_module modules/mod_logio.so
+#LoadModule env_module modules/mod_env.so
+LoadModule ext_filter_module modules/mod_ext_filter.so
+LoadModule mime_magic_module modules/mod_mime_magic.so
+LoadModule expires_module modules/mod_expires.so
+LoadModule deflate_module modules/mod_deflate.so
+LoadModule headers_module modules/mod_headers.so
+LoadModule usertrack_module modules/mod_usertrack.so
+#LoadModule setenvif_module modules/mod_setenvif.so
+#LoadModule mime_module modules/mod_mime.so
+LoadModule dav_module modules/mod_dav.so
+#LoadModule status_module modules/mod_status.so
+#LoadModule autoindex_module modules/mod_autoindex.so
+LoadModule info_module modules/mod_info.so
+LoadModule dav_fs_module modules/mod_dav_fs.so
+LoadModule vhost_alias_module modules/mod_vhost_alias.so
+#LoadModule negotiation_module modules/mod_negotiation.so
+#LoadModule dir_module modules/mod_dir.so
+#LoadModule actions_module modules/mod_actions.so
+LoadModule speling_module modules/mod_speling.so
+#LoadModule userdir_module modules/mod_userdir.so
+#LoadModule alias_module modules/mod_alias.so
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
+LoadModule proxy_ftp_module modules/mod_proxy_ftp.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule proxy_connect_module modules/mod_proxy_connect.so
+LoadModule cache_module modules/mod_cache.so
+LoadModule suexec_module modules/mod_suexec.so
+LoadModule disk_cache_module modules/mod_disk_cache.so
+LoadModule file_cache_module modules/mod_file_cache.so
+LoadModule mem_cache_module modules/mod_mem_cache.so
+#LoadModule cgi_module modules/mod_cgi.so
+
+
+
+# configuration for mod_jk
+# these are the things NOT to forward to tomcat
+#
+SetEnvIf Request_URI "/antblog/*" no-jk
+SetEnvIf Request_URI "/tapirlink/*" no-jk
+SetEnvIf Request_URI "/test/*" no-jk
+SetEnvIf Request_URI "/cgi-bin/*" no-jk
+SetEnvIf Request_URI "/mt-static/*" no-jk
+SetEnvIf Request_URI "/imageUpload//*" no-jk
+# the extra slash above is just a guess to stop imageUpload.jsp from not forwarding
+# it could bite you in the future
+
+# more mod_jk configuration
+#
+LoadModule jk_module modules/mod_jk.so
+JkWorkersFile /etc/httpd/conf/workers.properties
+JkLogFile logs/mod_jk.log
+JkLogLevel error
+JkLogStampFormat "[%a %b %d %H:%M:%S %Y]"
+JkOptions +ForwardKeySize +ForwardURICompat -ForwardDirectories
+JkRequestLogFormat "%w %V %T"
+JkMount /* worker1
+
+#
+# DirectoryIndex: sets the file that Apache will serve if a directory
+# is requested.
+#
+# Mark: Added index.html.var index.php  - from original antweb httpd.conf file
+<IfModule dir_module>
+    DirectoryIndex index.html index.html.var index.php
+</IfModule>
+
+
+
+
+Also change:
+  #User daemon
+  #Group daemon
+  User apache
+  Group apache
+
+And remove from default <Directory />
+    Order deny,allow
+    Deny from all
+
+Change
+  ScriptAlias /cgi-bin/ "/usr/local/apache2/cgi-bin/"
+ and
+  <Directory "/usr/local/apache2/cgi-bin">
+To:
+  ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+ and
+  <Directory "/var/www/cgi-bin">
+
+Create an apache softlink in /usr/local pointing at your apache installation
+  cd /usr/local/
+  sudo ln -s apache2 apache
+  * this is useful for links in bin/links.sh
+  
+Modification /etc/php.ini:
+
+; Whether to allow HTTP file uploads.
+file_uploads = On
+
+; Temporary directory for HTTP uploaded files (will use system default if not
+; specified).
+upload_tmp_dir = /var/www/html/imageUpload
+
+; Maximum allowed size for uploaded files.
+upload_max_filesize = 30M
+
+post_max_size = 30M
+
+This URL should be useful for php testing...
+   http://www.antweb.org/imageUpload/test.php
+
+
+Perl version
+  on antweb:
+    This is perl, v5.10.0 built for x86_64-linux-thread-multi
+  on antweb2:
+    This is perl, v5.8.8 built for x86_64-linux-thread-multi
+
+ImageMagick version
+  on antweb:
+    Version: ImageMagick 6.3.8 04/23/08 Q16 http://www.imagemagick.org
+  on antweb2:
+    Version: ImageMagick 6.2.8 10/20/10 Q16 file:/usr/share/ImageMagick-6.2.8/doc/index.html
+
+
+
+Tomcat default web.xml
+  /usr/local/tomcat/conf/web.xml
+  
+  set session-timeout to 10 from default 30.
+    ? Really?  I don't think so.
+
+  Set to enable directory listings:
+            <param-name>listings</param-name>
+            <param-value>true</param-value>
+  
+Perl scripts
+  ?
+  newLineZapper.pl and processImages (also a perl script) lives in /home/antweb/workingdir
+  
+    70 Sep 13 17:47 newLineZapper.pl
+  5339 Sep 13 17:45 processImages
+
+  These DO appear to be out of sync with the source tree:
+    4981 Nov 11 12:18 processImages
+    2293 Nov 11 12:18 resizeImages
+  
+
+FieldGuide.  Does not work on antweb2 but does on antweb.
+  http://10.2.22.106/fieldGuide.do?genus=dorymyrmex&species=lrd-ant&project=worldants  
+
+Install the endorsed jars into /usr/local/tomcat/common/endorsed
+  [jaxp_parser_impl].jar                                                                                                                                                             100% 1166KB   1.1MB/s   00:00    
+  serializer.jar                                                                                                                                                                     100%  184KB 184.5KB/s   00:00    
+  xalan.jar                                                                                                                                                                          100% 3006KB   2.9MB/s   00:00    
+  xercesImpl.jar                                                                                                                                                                     100% 1176KB   1.2MB/s   00:00    
+  xml-apis.jar                                                                                                                                                                       100%  190KB 189.7KB/s   00:00    
+  [xml-commons-apis].jar 
+sudo scp mark@antweb.org:/home/mark/jars/endorsed/* .
+  renamed to get rid of brackets.
+  
+
+error_log reports:
+  [Thu Dec 16 04:06:46 2010] [warn] No JkShmFile defined in httpd.conf. Using default /usr/local/apache2/logs/jk-runtime-status
+
+Was the php script memory intentionally dropped from:
+  memory_limit = 128M to 32M
+
+
+ImageMagick
+-----------
+rpm -aq | grep ImageMagick
+  ImageMagick-6.2.8.0-4.el5_5.3
+
+sudo yum install ImageMagick-devel
+
+sudo yum install ImageMagick-perl
+
+Ant Blog
+--------
+Copy across
+  /var/www/html/antblog
+  /var/www/cgi-bin/mt  
+
+  on destination machine, cd /var/www/html/antblog
+    sudo rsync -avz mjohnson@antweb.org:/var/www/html/antblog/ .
+
+
+Take a database snapshot
+  of thau/not4u2know databases: movable, antweb_blog, bugzilla.
+  
+create database antweb_blog;
+create database movable;
+  
+Transfer and insert into database
+  gunzip < antweb_blog.sql.gz | mysql -u antweb -p antweb_blog
+  gunzip < movable.sql.gz | mysql -u antweb -p movable
+  gunzip < bugzilla.sql.gz | mysql -u antweb -p bugzilla
+
+Make sure that config file has appropriate usr/pwd values
+  /var/www/cgi-bin/mt/mt-config.cgi
+
+
+Cronjobs
+--------
+Note, the Antweb scheduled tasks are triggered by and Antweb thread. The database is backed
+up on the production server by a cronjob, and then loaded on the api server by a cronjob.
+
+On Production server:
+0 21 * * * /home/antweb/antweb_deploy/bin/admin.sh > /home/antweb/adminTask.log
+
+On API server:
+5 21 * * * /usr/local/bin/python3.6 /home/antweb/antweb_deploy/api/dbPull.py > /home/antweb/dbPull.log
+
+* If the production antweb server, create a text file here:  /home/antweb/appCheck.txt
+  Existence of this file will indicate to appCheck.php that it is the production server.
+
+We need to reboot because our disk keeps filling up. Perhaps once per week?
+* 22 * * 4 /sbin/shutdown -r now
+    This will reboot at 10pm Thursdays.
+
+
+Permissions
+-----------
+Permissions on perl scripts
+  sudo usermod -a -G antweb apache          # Add apache to the antweb group
+  chmod 775 /home/antweb/workingdir/*.pl    # Give the perl scripts Group execute permissions
+
+
+On Antweb   
+  User groups 
+    apache - apache tomcat
+    antweb - antweb
+    mark   - antweb wheel apache tomcat cvs
+
+  File Permissions
+    /
+      data/                  root/root        775
+        antweb/              apache/apache    775
+          images/                             775
+            casent*/                          644
+          WEB-INF/..                          775
+      home/                  root/root        755
+        antweb/              antweb/antweb    755
+          workingdir/        antweb/antweb    775
+            reunionants.txt  root/root        644
+            processImages    mjohnson/antweb  775   // owned by whomever deployed
+
+
+Other stuff
+-----------
+These files should be available here:
+
+[mjohnson@vAntWeb2 antweb]$ ls -al /usr/local/bin/
+-r-xr-xr-x  1 root root    1465 Dec 16 16:03 dbilogstrip
+-r-xr-xr-x  1 root root    6300 Dec 16 16:03 dbiprof
+-r-xr-xr-x  1 root root    5482 Dec 16 16:03 dbiproxy
+-r-xr-xr-x  1 root root  442020 Dec 16 16:03 exifedit
+-r-xr-xr-x  1 root root  263712 Dec 16 16:03 exiflist
+-rwxr-xr-x  1 root root 5829514 Dec 16 16:03 mysql
+
+create an eol directory in /data/antweb
+
+---CKEditor ---
+
+Get latest version of CKEditor and unzip it into the /data/antweb dir.
+
+Here: /Users/mark/dev/tomcat/webapps/antweb/ckeditor
+
+mlentbfisher22:ckeditor mark$ scp -r mjohnson@antweb-prod:/data/antweb/ckeditor/* .
+
+http://localhost/antweb/ckeditor/ckeditor.js
+
+--- Antweb_test ---
+Create a new cvs checkout in a directory named antweb_test
+    cvs -d /data/cvsroot co -d antwebTest antweb
+
+A stage server should backup the production antweb server.  There is a script that should be 
+  periodically run on the stage server to fetch images.  head bin/backupImages.sh for details.
+
+Make a fresh backup of projectData (just to be safe):
+    php bin/copyProjectData.php --backupDir=/home/mjohnson/bak/projectData
+
+To install in a webapp/antweb dir
+    cd /Users/macpro/dev/tomcat/webapps/antweb/
+    scp -r mjohnson@antweb.org:/home/mjohnson/bak/projectData/projectData2011-02-09=15:59/* .
+      # or a more recent projectData snapshot.  
+      # Then, to install the correct ApplicationResources.properties:
+      #   rm WEB-INF/classes/ApplicationResources.properties   
+      #   ant deploy
+      
+Create a new database dump:
+    mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /home/mjohnson/bak/db/2011-01-24.sql.gz
+
+Create ant_test database:
+    log into mysql
+    create database ant_test;
+
+Load ant_test database with new database dump
+    gunzip < /home/mjohnson/bak/db/2011-02-07.sql.gz | mysql -u antweb -p ant_test
+
+config stage
+    cd antwebTest
+    sh etc/configAntwebTest.sh
+
+Copy ProjectResources over.  Not deployed to avoid overwriting application data.
+    cp /data/antweb/WEB-INF/classes/ProjectResources.properties /usr/local/tomcat/webapps/antweb_test/WEB-INF/
+
+ant deploy
+
+--- database views ---
+
+There are three views.  image_count, tapir_specimen and valid_taxa.  When moving to the new server,
+image_count was found to be incorrectly defined as a table.  Here is how to remedy:
+
+drop table image_count;
+create view image_count as select `ant`.`specimen`.`subfamily` AS `subfamily`,`ant`.`specimen`.`genus` AS `genus`,`ant`.`specimen`.`species` AS `species`,`ant`.`proj_taxon`.`project_name` AS `project_name`,count(`ant`.`specimen`.`code`) AS `the_count` from ((`ant`.`specimen` left join `ant`.`proj_taxon` on((`ant`.`specimen`.`taxon_name` = `ant`.`proj_taxon`.`taxon_name`))) join `ant`.`image` on((`ant`.`specimen`.`code` = `ant`.`image`.`image_of_id`))) where (`ant`.`image`.`shot_type` <> _utf8'l') group by `ant`.`specimen`.`subfamily`,`ant`.`specimen`.`genus`,`ant`.`specimen`.`species`,`ant`.`proj_taxon`.`project_name`;
+
+Here are the other two view specifications:
+| NULL          | ant          | tapir_specimen | /* ALGORITHM=UNDEFINED */ select `ant`.`specimen`.`code` AS `code`,`ant`.`specimen`.`taxon_name` AS `taxon_name`,`ant`.`specimen`.`subgenus` AS `subgenus`,`ant`.`specimen`.`tribe` AS `tribe`,`ant`.`specimen`.`speciesgroup` AS `speciesgroup`,`ant`.`specimen`.`subfamily` AS `subfamily`,`ant`.`specimen`.`genus` AS `genus`,`ant`.`specimen`.`species` AS `species`,`ant`.`specimen`.`other` AS `other`,`ant`.`specimen`.`type` AS `type`,`ant`.`specimen`.`subspecies` AS `subspecies`,`ant`.`specimen`.`country` AS `country`,`ant`.`specimen`.`county` AS `county`,`ant`.`specimen`.`province` AS `province`,`ant`.`specimen`.`localityname` AS `localityname`,`ant`.`specimen`.`localitycode` AS `localitycode`,`ant`.`specimen`.`collectioncode` AS `collectioncode`,`ant`.`specimen`.`biogeographicregion` AS `biogeographicregion`,`ant`.`specimen`.`decimal_latitude` AS `decimal_latitude`,`ant`.`specimen`.`decimal_longitude` AS `decimal_longitude`,`ant`.`specimen`.`last_modified` AS `last_modified`,`ant`.`specimen`.`habitat` AS `habitat`,`ant`.`specimen`.`method` AS `method`,`ant`.`specimen`.`toc` AS `toc`,`ant`.`specimen`.`ownedby` AS `ownedby`,`ant`.`specimen`.`collectedby` AS `collectedby`,`ant`.`specimen`.`caste` AS `caste`,`ant`.`specimen`.`access_group` AS `access_group`,`ant`.`specimen`.`locatedat` AS `locatedat`,`ant`.`description`.`content` AS `author_date`,concat(`ant`.`specimen`.`genus`,_utf8' ',`ant`.`specimen`.`species`) AS `scientific_name`,concat(_utf8'antweb:',`ant`.`specimen`.`code`) AS `guid` from (`ant`.`specimen` left join `ant`.`description` on((`ant`.`description`.`taxon_name` = `ant`.`specimen`.`taxon_name`))) where (`ant`.`description`.`title` = _utf8'speciesauthordate') | NONE         | YES          | thau@localhost | DEFINER       | 
+| NULL          | ant          | valid_taxa     | /* ALGORITHM=UNDEFINED */ select distinct `ant`.`taxon`.`subfamily` AS `subfamily`,`ant`.`taxon`.`subgenus` AS `subgenus`,`ant`.`taxon`.`speciesgroup` AS `speciesgroup`,`ant`.`taxon`.`genus` AS `genus`,`ant`.`taxon`.`species` AS `species`,`ant`.`proj_taxon`.`project_name` AS `project_name` from (`ant`.`taxon` join `ant`.`proj_taxon` on((`ant`.`taxon`.`taxon_name` = `ant`.`proj_taxon`.`taxon_name`))) where (`ant`.`taxon`.`valid` = 1)
+
+
+------------ Notes Below -------------
+Remaining
+---------
+apachectl is sufficient?  Fix httpd?
+Rsync.  Newly uploaded files on antweb2 are owned by apache/apache.
+  Change all user/owner to me, then rsync, then make apache/apache.
+Apache Startup/Shutdown
+  sudo /etc/init.d/httpd stop                   # This does work (now)
+  sudo /usr/local/apache2/bin/apachectl stop    # This does work
+ [Thu Dec 16 04:06:46 2010] [warn] No JkShmFile defined in httpd.conf. Using default /usr/local/apache2/logs/jk-runtime-status
+ Some issues with /etc/init.d/httpd - not fully in sync with new/old apache
+ Review file ownership and permissions
+ resolve image upload on antweb2.
+  Document Apache configuration
+
+Java Processes
+--------------
+Define at top of catalina.sh
+
+CATALINA_OPTS="-Xmx500m
+-Dorg.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING=false
+-Dfile.encoding=UTF8"
+
+
+
+- 10.2.22.81
+DomainApp: http://10.2.22.81 
+Your Local Address: 10.2.22.81 
+Your Remote Address: 10.5.30.42 
+Your RemoteHost: 10.5.30.42 
+File Encoding: ANSI_X3.4-1968 : US-ASCII 
+
+Memory Stats - max:1881341952 free:96929720 total:117702656 
+Connection Pool Diagnostics:C3P0 maxPoolSize:15 numConnectionsDefaultUser:3 numConnectionsAllUsers:3 numIdleConnections:1 numBusyConnections:2 
+trimSpaces: null 
+isDevMode: true 
+Current Time: Mon Sep 12 15:11:01 PDT 2011 
+
+
+
+
+# Without the -Xmx parameter, the memory allocation is much higher.  Better?
+
+Issues:
+  antweb has catalina.ext.dirs defined twice
+  antweb2 has no catalina.ext.dirs defined
+  antweb2 does not have much of a classpath defined.  Problem?
+
+[mark@antweb]]$ sudo ps ax | grep apache
+/usr/lib/jvm/java/bin/java 
+  -Djava.util.logging.config.file=/usr/share/tomcat5/conf/logging.properties 
+  -Dcatalina.ext.dirs=/usr/share/tomcat5/shared/lib:/usr/share/tomcat5/common/lib 
+  -Dcatalina.ext.dirs=/usr/share/tomcat5/shared/lib:/usr/share/tomcat5/common/lib 
+  -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager 
+  -Xmx2G 
+  -Djava.endorsed.dirs=/usr/share/tomcat5/common/endorsed 
+  -classpath /usr/lib/jvm/java/lib/tools.jar:/usr/share/tomcat5/bin/bootstrap.jar:/usr/share/tomcat5/bin/commons-logging-api.jar:/usr/share/java/mx4j/mx4j-impl.jar:/usr/share/java/mx4j/mx4j-jmx.jar 
+  -Dcatalina.base=/usr/share/tomcat5 
+  -Dcatalina.home=/usr/share/tomcat5 
+  -Djava.io.tmpdir=/usr/share/tomcat5/temp 
+  org.apache.catalina.startup.Bootstrap start
+
+[mark@antweb common]$ ls -al /usr/share/tomcat5/shared/lib
+total 8
+drwxr-xr-x 2 root root 4096 2008-09-15 12:56 .
+drwxr-xr-x 4 root root 4096 2009-05-04 10:39 ..
+[mark@antweb common]$ ls -al /usr/share/tomcat5/common/lib
+total 8
+drwxr-xr-x 2 root root 4096 2010-12-15 14:06 .
+drwxr-xr-x 6 root root 4096 2009-05-04 10:39 ..
+lrwxrwxrwx 1 root root   47 2010-12-15 14:06 [commons-collections-tomcat5].jar -> /usr/share/java/commons-collections-tomcat5.jar
+lrwxrwxrwx 1 root root   40 2010-12-15 14:06 [commons-dbcp-tomcat5].jar -> /usr/share/java/commons-dbcp-tomcat5.jar
+lrwxrwxrwx 1 root root   30 2010-12-15 14:06 [commons-el].jar -> /usr/share/java/commons-el.jar
+lrwxrwxrwx 1 root root   40 2010-12-15 14:06 [commons-pool-tomcat5].jar -> /usr/share/java/commons-pool-tomcat5.jar
+lrwxrwxrwx 1 root root   31 2010-12-15 14:06 [eclipse-ecj].jar -> /usr/share/java/eclipse-ecj.jar
+lrwxrwxrwx 1 root root   36 2010-12-15 14:06 [jasper5-compiler].jar -> /usr/share/java/jasper5-compiler.jar
+lrwxrwxrwx 1 root root   35 2010-12-15 14:06 [jasper5-runtime].jar -> /usr/share/java/jasper5-runtime.jar
+lrwxrwxrwx 1 root root   28 2010-12-15 14:06 [javamail].jar -> /usr/share/java/javamail.jar
+lrwxrwxrwx 1 root root   23 2010-12-15 14:06 [jsp].jar -> /usr/share/java/jsp.jar
+lrwxrwxrwx 1 root root   27 2010-12-15 14:06 [servlet].jar -> /usr/share/java/servlet.jar
+lrwxrwxrwx 1 root root   42 2010-12-15 14:06 [tomcat5][naming-factory].jar -> /usr/share/java/tomcat5/naming-factory.jar
+lrwxrwxrwx 1 root root   44 2010-12-15 14:06 [tomcat5][naming-resources].jar -> /usr/share/java/tomcat5/naming-resources.jar
+[mark@antweb common]$ ls -al /usr/share/tomcat5/common/endorsed
+total 6384
+drwxr-xr-x 2 root root    4096 2010-12-15 14:06 .
+drwxr-xr-x 6 root root    4096 2009-05-04 10:39 ..
+lrwxrwxrwx 1 root root      36 2010-12-15 14:06 [jaxp_parser_impl].jar -> /usr/share/java/jaxp_parser_impl.jar
+-rw-r--r-- 1 root root  188893 2009-05-19 10:01 serializer.jar
+-rw-r--r-- 1 root root 3078593 2009-05-19 10:01 xalan.jar
+-rw-r--r-- 1 root root 1203860 2009-05-19 10:01 xercesImpl.jar
+-rw-r--r-- 1 root root  194205 2009-05-19 10:01 xml-apis.jar
+lrwxrwxrwx 1 root root      36 2010-12-15 14:06 [xml-commons-apis].jar -> /usr/share/java/xml-commons-apis.jar
+-rw-r--r-- 1 root root 1831079 2009-05-19 10:01 xsltc.jar
+
+
+
+[mjohnson@vAntWeb2]$ sudo ps ax | grep apache
+/usr/java/default/bin/java 
+  -Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties 
+  -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager 
+  -Djava.endorsed.dirs=/usr/local/tomcat/common/endorsed 
+  -classpath /usr/local/tomcat/bin/bootstrap.jar 
+  -Dcatalina.base=/usr/local/tomcat 
+  -Dcatalina.home=/usr/local/tomcat 
+  -Djava.io.tmpdir=/usr/local/tomcat/temp 
+  org.apache.catalina.startup.Bootstrap start
+
+
+

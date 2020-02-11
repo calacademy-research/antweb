@@ -1,0 +1,181 @@
+<html>
+  <head>
+    <title>Antweb API</title>
+    <link rel="stylesheet" type="text/css" href="css/readme.css" />
+  </head>
+  <body>
+    <div class="container">
+        <h1>AntWeb API</h1>
+        <div class="version">Version 2.1</div>
+
+        <p>This is an attempt to make the antweb data available to the public in an accessible format.</p>
+
+        <p>AntWeb is the world&rsquo;s largest online database of images, specimen records, and natural history information on ants. It is community driven and open to contribution from anyone with specimen records, natural history comments, or images.</p>
+
+        <p><b>NOTE:</b> While this api is meant to be a firehose of sorts, there is a timeout set to prevent encumbering the server.  Large requests may not be fulfilled.  Using limits and offsets is encouraged.</p>
+
+        <h3>Available Arguments</h3>
+
+        <p>There are four ways to use the api.  You can query for a specific supset of specimen, you can query for a list of distinct names for a taxonomic rank, you can query for specimen near a coordinate point and you can query for images recently added to the antweb database.</p>
+
+        <h3>Specific Subset</h3>
+
+        <table class="arguments">
+
+            <tr>
+                <td><b>Subfamily</b></td>
+                <td>Return only specimens of a specific subfamily.</td>
+            </tr>
+            <tr>
+                <td><b>Genus</b></td>
+                <td>Return only specimens of a specific genus.</td>
+            </tr>
+            <tr>
+                <td><b>Species</b></td>
+                <td>Return only specimens of a specific species.</td>
+            </tr>
+            <tr>
+                <td><b>Catalog Number</b></td>
+                <td>The unique identifier of a particular specimen on Antweb (?catalognumber=inb0003695883)</td>
+            </tr>
+            <tr>
+                <td><b>Habitat</b></td>
+                <td>This uses a wildcard so a query for ?habitat=sand will return any habitat containing the word sand (e.g. sandstone)</td>
+            </tr>
+             <tr>
+                <td><b>Country</b></td>
+                <td>This uses a wildcard so a query for ?country=land will return any country containing the word land (e.g. England, Ireland etc)</td>
+            </tr>
+            <tr>
+                <td><b>Type</b></td>
+                <td>(e.g. holotype), this is a wildcard</td>
+            </tr>
+            <tr>
+                <td><b>Bbox</b></td>
+                <td>This is a bounded box of decimal coordinates in the format ?bbox=x1,y1,x2,y2</td>
+            </tr>
+            <tr>
+                <td><b>Min Date</b></td>
+                <td>Query for specimen identified on or after a single date (?min_date=yyyy-mm-dd)</td>
+            </tr>
+             <tr>
+                <td><b>Max Date</b></td>
+                <td>Query for specimen identified on or before a single date (?max_date=yyyy-mm-dd)</td>
+            </tr>
+            <tr>
+                <td><b>Min Elevation</b></td>
+                <td>This is measured in meters.  Query on specimen found at or above a specific elevation (?min_elevation=1200)</td>
+            </tr>
+            <tr>
+                <td><b>Max Elevation</b></td>
+                <td>This is measured in meters.  Query on specimen found at or below a specific elevation (?max_elevation=1200)</td>
+            </tr>
+            <tr>
+                <td><b>Georeferenced</b></td>
+                <td>This is a boolean argument to filter for only geo referenced specimen (?georeferenced=true)</td>
+            </tr>
+            <tr>
+                <td><b>Limit</b></td>
+                <td>Limit the number of specimen returned on large requests (?limit=100)</td>
+            </tr>
+            <tr>
+                <td><b>Offset</b></td>
+                <td>Used to paginate large requests when paired with the limit argument (this would return records 301-400: ?limit=100&offset=300)</td>
+            </tr>
+
+        </table>
+
+        <h3>Distinct Ranks</h3>
+
+        <table class="arguments">
+            <tr>
+                <td><b>Rank</b></td>
+                <td>Return a list of unique names for a given rank. (?rank=genus)</td>
+            </tr>
+            <tr>
+                <td><b>Habitat</b></td>
+                <td>This uses a wildcard so a query for ?habitat=sand will return any habitat containing the word sand (e.g. sandstone)</td>
+            </tr>
+            <tr>
+                <td><b>Country</b></td>
+                <td>This uses a wildcard so a query for ?country=land will return any country containing the word land (e.g. England, Ireland etc)</td>
+            </tr>
+            <tr>
+                <td><b>Min Elevation</b></td>
+                <td>This is measured in meters.  Query on specimen found at or above a specific elevation (?min_elevation=1200)</td>
+            </tr>
+            <tr>
+                <td><b>Max Elevation</b></td>
+                <td>This is measured in meters.  Query on specimen found at or below a specific elevation (?max_elevation=1200)</td>
+            </tr>
+           <tr>
+                <td><b>Limit</b></td>
+                <td>Limit the number of specimen returned on large requests (?limit=100)</td>
+            </tr>
+            <tr>
+                <td><b>Offset</b></td>
+                <td>Used to paginate large requests when paired with the limit argument (this would return records 301-400: ?limit=100&offset=300)</td>
+            </tr>
+        </table>
+
+        <h3>Decimal Coordinate</h3>
+
+        <table class="arguments">
+            <tr>
+                <td><b>Coord</b></td>
+                <td>Return a list of specimens by decimal coordinates. (?coord=lat,lon)</td>
+            </tr>
+            <tr>
+                <td><b>R</b> (radius)</td>
+                <td>Define a specific radius in kilometers (if radius is not defined it will default to 5km). (?coord=latitude,longitude&r=radius)</td>
+            </tr>
+             <tr>
+                <td><b>Limit</b></td>
+                <td>Limit the number of specimen returned on large requests (?limit=100)</td>
+            </tr>
+            <tr>
+                <td><b>Offset</b></td>
+                <td>Used to paginate large requests when paired with the limit argument (this would return records 301-400: ?limit=100&offset=300)</td>
+            </tr>
+            <tr>
+                <td><b>Distinct</b></td>
+                <td>You can select a list of distinct species, genus or subfamilies in the area. (?coord=latitude,longitude&r=radius&distinct=rank)</td>
+        </table>
+
+        <h3>Recent Images</h3>
+
+        <table class="arguments">
+            <tr>
+                <td><b>Since</b> (recently added images)</td>
+                <td>Return a list of images that were recently added to antweb. (?since=7 returns all images added in the last 7 days)</td>
+            </tr>
+            <tr>
+                <td><b>Img Type</b></td>
+                <td>Specify which images you would like to see.  H = head shots, D = dorsal shots, P = profile shots and L = labels. (?since=7&img_type=h returns all head shots added in the last 7 days)</td>
+            </tr>
+        </table>
+
+        <h3>Examples</h3>
+
+        <p>A query for all specimen of genus Technomyrmex found near The California Academy of Sciences:</p>
+        <p class="link"><a href="http://www.antweb.org/api/v2/?bbox=37.77,-122.46,37.76,-122.47&genus=Technomyrmex">http://www.antweb.org/api/v2/?bbox=37.77,-122.46,37.76,-122.47&genus=Technomyrmex</a></p>
+
+        <p>A query for all specimen of the genus Tetramorium that were identified in the 1970&rsquo;s:</p>
+        <p class="link"><a href="http://www.antweb.org/api/v2/?min_date=1970-01-01&max_date=1979-12-31&genus=Tetramorium">http://www.antweb.org/api/v2/?min_date=1970-01-01&max_date=1979-12-31&genus=Tetramorium</a></p>
+
+        <p>A query for all specimen of genus Acanthognathus with a limit of 100 records returned and an offset of 200 records (meaning records 201 &ndash; 300 were returned):
+
+        <p class="link"><a href="http://www.antweb.org/api/v2/?genus=acanthognathus&limit=100&offset=200">http://www.antweb.org/api/v2/?genus=acanthognathus&limit=100&offset=200</a></p>
+
+        <p>A query for all holotypes in the database that have geo data:</p>
+
+        <p class="link"><a href="http://www.antweb.org/api/v2/?type=holotype&georeferenced=true">http://www.antweb.org/api/v2/?type=holotype&georeferenced=true</a></p>
+
+        <h3></h3>
+
+    </div>
+
+
+  </body>
+
+</html>

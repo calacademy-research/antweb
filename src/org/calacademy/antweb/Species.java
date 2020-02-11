@@ -1,0 +1,829 @@
+package org.calacademy.antweb; 
+
+import java.util.*;
+import java.io.Serializable;
+import java.sql.*;
+
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+
+import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.geolocale.*;
+import org.calacademy.antweb.home.*;
+
+/** Class Species keeps track of the information about a specific taxon */
+public class Species extends Genus implements Serializable {
+
+    private static Log s_log = LogFactory.getLog(Species.class);
+
+    public String getNextRank() {
+        return "Specimens";
+    }
+    
+    public String getName() { 
+        return getSpecies(); 
+    }
+
+    public void setTaxonomicInfo(String project) throws SQLException {
+        s_log.warn("setTaxonomicInfo(project) is deprecated");
+        setTaxonomicInfo();
+    }
+    
+    public void setTaxonomicInfo() throws SQLException {
+        //setSpecies(name);
+
+// Mark Jul 2013.  Remove oldSubfamily and add in subfamilyClaus
+        // remember the old stuff if it's around 
+        // Mark: What?  Why?  How and when is this a good idea?
+       // String oldSubfamily = subfamily;
+
+/*
+Mark, Feb4, 2011.  I have removed proj_taxon from this query because it only served to block the
+retrieval of taxon information in the case in which a project is entered.
+
+It would cause a page like this:
+  http://www.antweb.org/description.do?name=sabatra&genus=crematogaster&rank=species&project=
+When clicking on the species breadcrumb, would lead to the same page without description info
+because the subfamily was not retrieved, and so taxon_name was "crematogaster sabatra" instead
+of "myrmicinaecrematogaster sabatra", returning no description records.
+*/
+
+        String theQuery = null;
+
+		String subfamilyClaus = "";
+		if (subfamily != null) subfamilyClaus = " subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "' and ";
+
+		theQuery = "select distinct taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name " 
+		  + ", taxon.family, taxon.subfamily, taxon.tribe, taxon.subgenus, taxon.speciesgroup " 
+		  + ", taxon.type, taxon.status "
+		  + " from taxon " //, proj_taxon " 
+		 // + " where taxon.taxon_name = proj_taxon.taxon_name " 
+		  + " where " 
+		  + subfamilyClaus
+		  + " genus ='" + AntFormatter.escapeQuotes(genus) + "'"
+		  + " and species ='" + AntFormatter.escapeQuotes(species) + "'" 
+		  // + " and status = 'valid'"
+		  + " and rank = \"species\"";
+
+            // theQuery += " and proj_taxon.project_name = '" + project + "'";
+            //if (AntwebProps.isDevMode()) s_log.info("setTaxonomicInfo() theQuery:" + theQuery);
+
+		TaxonDb taxonDb = new TaxonDb(connection);
+		taxonDb.setTaxonomicInfo(theQuery, this);
+    }
+
+
+/*
+   Stenamma punctatoventre_cf1
+   Stenamma punctatoventre_cf2
+   Stenamma punctatoventre_cf3
+
+so maybe the see also should find: any taxa with the same species name 
+(that will get all supspecies and quadrinomials) and  those that include 
+the species name + and "_"  (that will get all the _cf, _nr, and any of 
+these other _cf1 etc.
+*/
+
+    public String getSeeAlsoCfAndNr() throws SQLException {
+      Statement stmt = null;
+      ResultSet rset = null;
+      try {
+        String cfAndNrTaxaLinks = "";
+        String notCfOrNrTaxonName = getTaxonName();
+        if (getTaxonName().indexOf("_") > 0) notCfOrNrTaxonName = getTaxonName().substring(0, getTaxonName().indexOf("_"));
+        String cfTaxonName = notCfOrNrTaxonName + "_cf%";
+        String nrTaxonName = notCfOrNrTaxonName + "_nr%";
+        String notCfOrNrTaxonNameCondition = "";
+        if (getTaxonName().contains("_cf") || getTaxonName().contains("_nr")) {
+            notCfOrNrTaxonNameCondition = " or taxon.taxon_name = '" + notCfOrNrTaxonName + "'";
+        }                
+        String query = "select taxon.taxon_name " 
+            + " from taxon " 
+            + " where taxon.taxon_name like '" + cfTaxonName + "'"
+            + "    or taxon.taxon_name like '" + nrTaxonName + "'"
+            + notCfOrNrTaxonNameCondition
+          ;
+        stmt = DBUtil.getStatement(getConnection(), "getSeeAlsoCfAndNr()"); 
+        rset = stmt.executeQuery(query);
+        //A.log("getSeeAlsoCfAndNr() query:" + query);
+        while (rset.next()) {
+            String taxonName = rset.getString("taxon.taxon_name");
+            if (taxonName.equals(getTaxonName())) continue;
+            if (!"".equals(cfAndNrTaxaLinks)) {
+              cfAndNrTaxaLinks += ", ";
+            }
+            cfAndNrTaxaLinks += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+        }
+        //A.log("getSeeAlsoCfAndNr() cfAndNrTaxaLinks:" + cfAndNrTaxaLinks);        
+        return cfAndNrTaxaLinks;
+      } finally {
+        DBUtil.close(stmt, rset, this, "getSeeAlsoCfAndNr()");
+      }
+    }
+    
+    public String getSeeAlsoSiblingSubspecies() throws SQLException {
+      // Used by SetSeeAlso()
+      String siblingSubspecies = "";
+      Statement stmt = null;
+      ResultSet rset = null;
+      try {
+        String query = "select taxon.taxon_name " 
+            + " from taxon " 
+            + " where taxon.subfamily = '" + getSubfamily() + "'"
+            + "   and taxon.genus = '" + getGenus() + "'"
+            + "   and taxon.species = '" + getSpecies() + "'"
+            + "   and taxon.rank = 'subspecies'"
+            + "   and taxon.status = 'valid'"
+          ;
+        stmt = DBUtil.getStatement(getConnection(), "getSeeAlsoSiblingSubspecies()"); 
+        rset = stmt.executeQuery(query);
+        while (rset.next()) {
+            String taxonName = rset.getString("taxon.taxon_name");
+            if (!"".equals(siblingSubspecies)) {
+              siblingSubspecies += ", ";
+            }
+            siblingSubspecies += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+        }
+      } finally {
+          DBUtil.close(stmt, rset, this, "getSeeAlsoSiblingSubspecies()");
+      }
+      //A.log("getSiblingSubspecies() siblingSubspecies:" + siblingSubspecies);
+      return siblingSubspecies;
+    }
+
+    public void setSeeAlso()  throws SQLException {
+        //super.setSeeAlso();
+ 
+        // Don't do this now.  We have a separate section for current valid names       
+        //setAlsoDatabased();
+        boolean debug = false;
+        
+        String cfAndNr = getSeeAlsoCfAndNr();
+        if (cfAndNr != null) seeAlso = cfAndNr;        
+
+        if (debug) s_log.warn("setSeeAlso() cfAndNr:" + cfAndNr);
+
+        String siblingSubspecies = getSeeAlsoSiblingSubspecies();
+
+        if (debug) s_log.warn("setSeeAlso() siblingSubspecies:" + siblingSubspecies);
+
+        if (siblingSubspecies != null  && (!"".equals(siblingSubspecies))) {
+          if ((seeAlso != null) && (!"".equals(seeAlso))) seeAlso += ", ";
+          if (seeAlso == null) seeAlso = "";
+          seeAlso += siblingSubspecies;
+        }
+
+        if (debug) s_log.warn("setSeeAlso() seeAlso:" + seeAlso);
+
+        if ("".equals(seeAlso)) seeAlso = null;
+        //A.log("seeAlso() synonyms:" + synonyms + " cfAndNR:" + cfAndNr + " siblingSubspecies:" + siblingSubspecies + " seeAlso:" + seeAlso); 
+    }
+
+
+    public String getFullName() {
+        StringBuffer fullName = new StringBuffer();
+        fullName.append(genus + " ");
+        if ((subgenus != null)
+            && (!("".equals(subgenus)))
+            && (!("null".equals(subgenus)))) {
+            fullName.append("(" + subgenus + ") ");
+        }
+/*        
+        if ((speciesGroup != null)
+            && (!("".equals(speciesGroup)))
+            && (!("null".equals(speciesGroup)))) {
+            fullName.append("(" + speciesGroup + ") ");
+        }
+*/
+        fullName.append(species);
+        if ((subspecies != null)
+            && (!("".equals(subspecies)))
+            && (!("null".equals(subspecies)))) {
+            fullName.append(" " + subspecies);
+        }
+
+        return fullName.toString();
+    }
+
+    public void setAllImages() {
+       // called by EOL to get all images for a given genus
+        Hashtable myImages = new Hashtable();
+        String theQuery = null;
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            
+            theQuery = "select image_of_id, shot_type, has_tiff " 
+                + " from specimen, image, proj_taxon where "
+                + " specimen.genus = '" + AntFormatter.escapeQuotes(genus) + "'" 
+                + " and specimen.species = '" + AntFormatter.escapeQuotes(species) + "'" 
+                //+ " and specimen.subspecies is null"
+                + " and specimen.code = image.image_of_id"
+                + " and proj_taxon.taxon_name = specimen.taxon_name"
+                + " and proj_taxon.project_name = 'worldants'"
+                + " and source_table = 'specimen' and shot_number = 1"; 
+     
+            A.log("setAllImages() genus image query: " + theQuery);
+            
+            stmt = DBUtil.getStatement(getConnection(), "setAllImages()"); ;
+            rset = stmt.executeQuery(theQuery);
+
+                String shot = null;
+                int hasTiff = 0;
+                SpecimenImage specImage = null;
+                int i = 0;
+                while (rset.next()) {
+                    ++i;
+                    String thisCode = rset.getString(1);
+                    shot = rset.getString(2);
+                    hasTiff = rset.getInt(3);
+                    specImage = new SpecimenImage();
+                    specImage.setShot(shot);
+                    specImage.setNumber(1);
+                    specImage.setCode(thisCode);
+                    if (hasTiff == 1) {
+                        specImage.setHasTiff(true);
+                    } else {
+                        specImage.setHasTiff(false);
+                    }
+                    //specImage.setPaths();
+                    myImages.put(shot + i, specImage);
+                }
+          //if (genus.equals("anoplolepis") && species.equals("gracilipes")) {
+          if (AntwebProps.isDevMode() && getTaxonName().contains("insularis")) {
+            s_log.warn("setAllImages query:" + theQuery + " myImages.size:" + myImages.size());
+          }
+            //if (AntwebProps.isDevMode()) s_log.error("setAllImages() theQuery:" + theQuery);                
+        } catch (SQLException e) {
+            s_log.error("setAllImages() e:" + e + " theQuery:"+ theQuery);
+        } finally {
+            DBUtil.close(stmt, rset, this, "setAllImages()");
+        }
+        this.images = myImages;   // setting Taxon.java protected Hashtable images;
+    }
+
+    public String getTaxonomicBrowserParams() {
+        String theParams = "genus=" + this.getGenus() + "&species=" + this.getSpecies() + "&rank=species";
+        return theParams;
+    }
+
+    protected String getThisWhereClause() {
+      return getThisWhereClause("");
+    }
+    protected String getThisWhereClause(String table) {    
+        if (!"".equals(table)) table = table + ".";
+        String clause = " and " + table 
+            + "genus = '" + AntFormatter.escapeQuotes(genus) + "'" 
+            + " and " + table + "species = '" + AntFormatter.escapeQuotes(species) + "'"
+            + " and " + table + "subspecies is null";
+        return clause;    
+    }
+    
+    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global) throws SQLException {
+      // This method does not seem to use project in it's criteria?!  SetChildrenLocalized below does...
+  
+        ArrayList theseChildren = new ArrayList();
+        String overviewCriteria = "";
+        A.log("setChildren() global:" + global);
+        if (!global) overviewCriteria = overview.getOverviewCriteria();
+        
+        String query =
+            "select distinct specimen.code " 
+          + " from taxon, specimen" 
+          + " where taxon.taxon_name = specimen.taxon_name"
+          + overviewCriteria
+          + getThisWhereClause("taxon")
+          + statusSet.getAndCriteria()
+          + " and " + Caste.getSpecimenClause(caste)
+          ;
+            
+        A.log("setChildren() query:" + query);
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+          stmt = DBUtil.getStatement(getConnection(), "setChildren()"); 
+          rset = stmt.executeQuery(query);
+          Specimen child = null;
+
+          //A.log("Species.setChildren(5) overview:" + overview + " getChildImages:" + getChildImages + " query:" + query);
+
+          int i = 0;
+          while (rset.next()) {
+            ++i;
+            child = new Specimen();
+            child.setConnection(connection);
+            child.setRank(Rank.SPECIMEN);
+            child.setSubfamily(subfamily);
+            child.setGenus(genus);
+            child.setSpecies(species);
+            child.setCode(rset.getString("code"));
+            child.setStatus(getStatus());
+            if (getChildImages) {
+                child.setImages(overview, caste);
+                //A.log("Species.setChildren(5) setImages code:" + child.getCode() + " images:" + child.getImages());  // && "casent0227526".equals(child.getCode())
+            } else {
+                child.setHasImages(overview);
+                //A.log("setChildren(4) setHasImages code:" + child.getCode() + " hasImages:" + child.getHasImages());  //  && "casent0227526".equals(child.getCode())
+            }
+            if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
+                child.setMap(new Map(child, (LocalityOverview) overview, connection));
+            }
+            child.setTaxonomicInfo();   // is this needed?  Yes, for now.
+            child.generateBrowserParams(); 
+            // child.init(); // added Oct 3, 2012 Mark.  No, can't.  Specimen has all in setTaxonomicInfo(), bad.            
+            child.initTaxonSet(overview);                 
+            child.setConnection(null);
+
+            //A.log("setChildren() overview:" + overview + " child:" + child.getTaxonName() + " code:" + child.getCode() + " bioregion:" + child.getBioregion());                                
+            theseChildren.add(child);
+          }
+        } catch (SQLException e) {
+            s_log.warn("setChildren(" + overview + ", 3) e:" + e + " query:" + query);         
+        } finally {
+            DBUtil.close(stmt, rset, this, "setChildren()");
+        }        
+
+        this.children = overview.sort(theseChildren);
+        setChildrenCount(theseChildren.size());
+        //A.log("setChildren() size:" + getChildrenCount() + " query:" + query);
+    }
+    
+    public void setChildrenLocalized(Overview overview) throws SQLException {
+    /* Called by FieldGuideAction.execute() in the case of species.
+       ??? Used to be, this method uses project to figure the locality criteria does not use project in it's criteria.
+     */      
+        ArrayList theseChildren = new ArrayList();
+        String query =
+                "select distinct specimen.code from taxon, specimen" 
+                    + " where taxon.taxon_name = specimen.taxon_name" 
+                    + " and taxon.genus = '" + AntFormatter.escapeQuotes(genus) + "'" 
+                    + " and taxon.species = '" + AntFormatter.escapeQuotes(species) + "'" 
+                  //  + ' and status = "valid"'
+                  ;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            // This one is differerent from setChildren in that it will pull back subspecies as well.  Correct?
+            
+
+            if (overview instanceof LocalityOverview) {
+              String locality = ((LocalityOverview) overview).getLocality();                    
+			  A.log("setChildrenLocalized() locality:" + locality);
+              if ((locality != null) && (locality.length() > 0) && (!locality.equals("null")))  {
+                if ("country".equals(locality.substring(0, 7))) {
+                    locality = "specimen." + locality;
+                }
+                query += " and " + locality;
+              }
+            }
+            //A.log("setChildrenLocalized() query:" + query);
+            
+            stmt = DBUtil.getStatement(getConnection(), "setChildrenLocalized()"); 
+            rset = stmt.executeQuery(query);
+            Specimen child = null;
+            while (rset.next()) {
+                child = new Specimen();
+                child.setConnection(connection);
+                child.setRank(Rank.SPECIMEN);
+                child.setSubfamily(subfamily);
+                child.setGenus(genus);
+                child.setSpecies(species);
+                child.setCode(rset.getString("code"));
+                child.setImages(overview);
+                child.setTaxonomicInfo();
+                child.generateBrowserParams(overview);
+                //child.setMap(new Map(child, overview, connection));
+                child.setConnection(null);
+                theseChildren.add(child);
+            }
+        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+           s_log.warn("setChildrenLocalized(" + overview + ") e:" + e + " query:" + query); 
+        } finally {
+            DBUtil.close(stmt, rset, this, "setChildrenLocalized()");
+        }        
+        
+        this.children = overview.sort(theseChildren);
+
+        setChildrenCount(theseChildren.size());
+    }
+
+    public static int count = 0;
+    public static String a1 = "";
+    public static String a2 = "";
+    
+    
+	public void sortBy(String fieldName) {	
+/*
+Required: Legacy Merge Sort: true
+
+The sort will fail with: java.lang.IllegalArgumentException: Comparison method violates its general contract!
+if the server is not configured to use Legacy Merge Sort.
+To fix this proper would involve rewriting Species.sort()
+*/
+	
+	    //s_log.warn("sortBy() field		:" + fieldName + " children:" + children);
+
+	    if (fieldName.equals("bioregion")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getBioregion(), ((Specimen) o2).getBioregion());
+	            }
+	        });
+		} if (fieldName.equals("code")) {
+			Collections.sort(children, new Comparator(){
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getCode(), ((Specimen) o2).getCode());	
+	            }
+	        });	        
+		} else if (fieldName.equals("collectedby")) {
+			Collections.sort(children, new Comparator(){
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getCollectedBy(), ((Specimen) o2).getCollectedBy());   
+	            }
+	        });
+	    
+		} else if (fieldName.equals("caste")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getCaste(), ((Specimen) o2).getCaste());	
+	            }	 
+	        });		
+	    } else if (fieldName.equals("collection")) {
+			Collections.sort(children, new Comparator(){
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getCollectionCode(), ((Specimen) o2).getCollectionCode());
+	            }
+	        });
+		} else if (fieldName.equals("country")) {
+try {	    
+			Collections.sort(children, new Comparator(){			 
+	            public int compare(Object o1, Object o2) {
+	                ++count;
+                    a1 = ((Specimen) o1).getCountry();
+                    a2 = ((Specimen) o2).getCountry();
+	                int c = CompareUtil.compareString(((Specimen) o1).getCountry(), ((Specimen) o2).getCountry());	            
+                    A.log("sort() count:" + count + " o1:" + ((Specimen) o1).getCountry() + " o2:" +  ((Specimen) o2).getCountry());
+	                return c;
+	            }
+	        });
+} catch (IllegalArgumentException e) {
+  A.log("sort() a1:" + a1 + " a2:" + a2);
+}
+		} else if (fieldName.equals("databy")) {
+			Collections.sort(children, new Comparator(){			 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getGroup().getName(), ((Specimen) o2).getGroup().getName());
+	            }
+	        });
+		} else if (fieldName.equals("datecollected")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getDateCollectedStart(), ((Specimen) o2).getDateCollectedStart());
+	            }
+	        });
+		} else if (fieldName.equals("determinedby")) {
+	 		Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getDeterminedBy(), ((Specimen) o2).getDeterminedBy());
+	            }
+	        });
+		} else if (fieldName.equals("dna")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getDnaExtractionNotes(), ((Specimen) o2).getDnaExtractionNotes());	            
+	            }
+	        });
+		} else if (fieldName.equals("elevation")) {
+			Collections.sort(children, new Comparator(){		 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareIntString(((Specimen) o1).getElevation(), ((Specimen) o2).getElevation());
+	            }
+	        });
+		} else if (fieldName.equals("habitat")) {
+			Collections.sort(children, new Comparator(){
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getHabitat(), ((Specimen) o2).getHabitat());	            
+	            }
+	        });	  
+		} else if (fieldName.equals("images")) {
+			Collections.sort(children, new Comparator(){			 
+	            public int compare(Object o1, Object o2) {
+		            A.log("Species.sortBy() o1:" + o1 + " c1:" + ((Specimen) o1).getImageCount() + " o2:" + o2 + " c2:" + ((Specimen) o2).getImageCount());
+	                return CompareUtil.compareInt(((Specimen) o2).getImageCount(), ((Specimen) o1).getImageCount());
+	            }
+	        });	              
+		} else if (fieldName.equals("latitude")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareFloat(((Specimen) o1).getDecimalLatitude(), ((Specimen) o2).getDecimalLatitude());
+	            }
+	        });
+		} else if (fieldName.equals("lifestage")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getLifeStage(), ((Specimen) o2).getLifeStage());
+	            }
+	        });
+		} else if (fieldName.equals("locality")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getLocalityString(), ((Specimen) o2).getLocalityString());	
+	            }
+	        });
+		} else if (fieldName.equals("locatedat")) {
+			Collections.sort(children, new Comparator(){		 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getLocatedAt(), ((Specimen) o2).getLocatedAt());
+	            }
+	        });		
+		} else if (fieldName.equals("longitude")) {
+			Collections.sort(children, new Comparator(){		 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareFloat(((Specimen) o1).getDecimalLongitude(), ((Specimen) o2).getDecimalLongitude());
+	            }
+	        });	        
+		} else if (fieldName.equals("medium")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getMedium(), ((Specimen) o2).getMedium());	            
+	            }
+	        });	        
+		} else if (fieldName.equals("method")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getMethod(), ((Specimen) o2).getMethod());	            
+	            }
+	        });	 
+		} else if (fieldName.equals("microchabitat")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getMicrohabitat(), ((Specimen) o2).getMicrohabitat());	            
+	            }
+	        });
+		} else if (fieldName.equals("museum")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getMuseumCode(), ((Specimen) o2).getMuseumCode());
+	            }
+	        });
+		} else if (fieldName.equals("name")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getFullName(), ((Specimen) o2).getFullName());	
+	            }
+	        });	        
+		} else if (fieldName.equals("ownedby")) {
+			Collections.sort(children, new Comparator(){				 
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getOwnedBy(), ((Specimen) o2).getOwnedBy());	            
+	            }
+	        });		
+		} else if (fieldName.equals("specimennotes")) {
+			Collections.sort(children, new Comparator(){
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getSpecimenNotes(), ((Specimen) o2).getSpecimenNotes());	
+	            }	 
+	        });
+		} else if (fieldName.equals("type")) {
+			Collections.sort(children, new Comparator(){
+	            public int compare(Object o1, Object o2) {
+	                return CompareUtil.compareString(((Specimen) o1).getTypeStatus(), ((Specimen) o2).getTypeStatus());	
+	            }	 
+	        });
+		}	  	              
+	}  
+	
+     /* These two methods are for the automated generation of authority files. */
+    public static String getDataHeader() {
+      String header = 
+        "Subfamily" + "\t" +
+        "Tribe" + "\t" +
+        "Genus" + "\t" +
+        "Subgenus" + "\t" +
+        "SpeciesGroup" + "\t" +
+        "Species" + "\t" +
+        "Subspecies" + "\t";
+      return header;
+    }    
+
+    public String getData() throws SQLException {
+      setTaxonomicInfo();
+
+      String data = "";
+      String delimiter = "\t";   // ", ";
+      
+      data += Utility.notBlankValue(getSubfamily()) + delimiter;
+      data += delimiter;  // data += Utility.notBlankValue(getTribe()) + delimiter;
+      data += Utility.notBlankValue(getGenus()) + delimiter;
+      data += Utility.notBlankValue(getSubgenus()) + delimiter;
+      data += Utility.notBlankValue(getSpeciesGroup()) + delimiter;
+      data += Utility.notBlankValue(getSpecies()) + delimiter;
+      data += Utility.notBlankValue(getSubspecies()) + delimiter;
+      return data;
+    }  
+
+    public boolean hasSpecimenDataSummary() {
+        boolean hasSpecimenData = false;
+        if (
+             ( (habitats != null) && (habitats.size() > 0) )
+          || ( (methods != null) && (methods.size() > 0) )
+          || ( (microhabitats != null) && (microhabitats.size() > 0) )
+          || (!"".equals(elevations)) 
+          || (!"".equals(collectDateRange))
+          || (!"".equals(types))
+        ) hasSpecimenData = true;
+
+        //A.log("hasSpecimenDataSummary() " + hasSpecimenData);
+
+        return hasSpecimenData;
+    }
+    
+    public void setHabitats() {
+        //Formatter formatter = new Formatter();
+        Vector habitats = new Vector();
+        String taxonName = null;
+        String theQuery = null; 
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            //taxonName = getTaxonName();
+            taxonName = AntFormatter.escapeQuotes(getTaxonName());
+            
+            theQuery =
+//                " select count(habitat), habitat " 
+              " select count(distinct collectioncode), habitat "
+              + " from specimen " 
+              + " where taxon_name='" + taxonName + "'"
+              + " and habitat is not null and habitat != ''"
+              + " group by habitat " 
+              + " order by count(habitat) desc"
+              + " limit 25";
+
+            stmt = DBUtil.getStatement(getConnection(), "setHabitats()"); 
+            rset = stmt.executeQuery(theQuery);
+
+            String count = null;
+            String habitat = null;
+            int recordCount = 0;
+            while (rset.next()) {
+                recordCount++;
+                count = rset.getString(1);
+                habitat = rset.getString(2);
+                habitat = myFormatter.dequote(habitat);
+                habitats.add(habitat + ":" + count);
+            }
+            //if (AntwebProps.isDevMode()) s_log.info("setHabitats() recordCount:" + recordCount + " q:" + theQuery);
+        } catch (Exception e) {
+            s_log.error("setHabitats() for taxonName:" + taxonName + " exception:" + e);
+            s_log.info("setHabitats() badQuery? - " + theQuery);
+            // project:" + project + " 
+        } finally {
+            DBUtil.close(stmt, rset, this, "setHabitats()");
+        }        
+        this.habitats = habitats;
+    }
+    
+    public void setMicrohabitats() {
+        //Formatter formatter = new Formatter();
+        Vector microhabitats = new Vector();
+        String taxonName = null;
+        String theQuery = null; 
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            //taxonName = getTaxonName();
+            taxonName = AntFormatter.escapeQuotes(getTaxonName());
+            
+            theQuery =
+//                " select count(habitat), habitat " 
+              " select count(distinct collectioncode), microhabitat "
+              + " from specimen " 
+              + " where taxon_name='" + taxonName + "'"
+              + " and microhabitat is not null and microhabitat != ''"
+              + " group by microhabitat " 
+              + " order by count(microhabitat) desc"
+              + " limit 25";
+
+//A.log("setMicrohabitats() query:" + theQuery);
+
+            stmt = DBUtil.getStatement(getConnection(), "setMicrohabitats()"); 
+            rset = stmt.executeQuery(theQuery);
+
+            String count = null;
+            String microhabitat = null;
+            int recordCount = 0;
+            while (rset.next()) {
+                recordCount++;
+                count = rset.getString(1);
+                microhabitat = rset.getString(2);
+                microhabitat = myFormatter.dequote(microhabitat);
+                microhabitats.add(microhabitat + ":" + count);
+            }
+            //if (AntwebProps.isDevMode()) s_log.info("setHabitats() recordCount:" + recordCount + " q:" + theQuery);
+        } catch (Exception e) {
+            s_log.error("setMicrohabitats() for taxonName:" + taxonName + " exception:" + e + " query:" + theQuery);
+            //s_log.info("setMicrohabitats() badQuery? - " + theQuery);
+            // project:" + project + " 
+        } finally {
+            DBUtil.close(stmt, rset, this, "setMicrohabitats()");
+        }        
+        this.microhabitats = microhabitats;
+    }    
+    
+    public void setMethods() {
+        Vector methods = new Vector();
+        String taxonName = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            //taxonName = getTaxonName();
+            taxonName = AntFormatter.escapeQuotes(getTaxonName());
+            
+            String theQuery =
+                " select count(distinct collectioncode), method " 
+              + " from specimen " 
+              + " where taxon_name='" + taxonName + "'"
+              + " and method is not null and method != ''"
+              + " group by method " 
+              + " order by count(method) desc"
+              + " limit 25";
+
+            stmt = DBUtil.getStatement(getConnection(), "setMethods()"); 
+            rset = stmt.executeQuery(theQuery);
+
+            String count = null;
+            String method = null;
+            int recordCount = 0;
+            while (rset.next()) {
+                recordCount++;
+                count = rset.getString(1);
+                method = rset.getString(2);
+                method = myFormatter.dequote(method);
+                methods.add(method + ":" + count);
+            }
+
+            //s_log.info("setMethods() recordCount:" + recordCount + " q:" + theQuery);
+            
+        } catch (Exception e) {
+            s_log.error("setMethods() for taxonName:" + taxonName + " exception:" + e);
+            // project:" + project + " 
+        } finally {
+            DBUtil.close(stmt, rset, this, "setMethods()");
+        }        
+        this.methods = methods;
+    }    
+        
+        
+    public void setTypes() {
+        //Formatter formatter = new Formatter();
+        String typeString = "";
+        String taxonName = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            //taxonName = getTaxonName();
+            taxonName = AntFormatter.escapeQuotes(getTaxonName());
+            
+            String theQuery =
+                " select code, type_status " 
+              + " from specimen " 
+              + " where taxon_name='" + taxonName + "'"
+              + " and type_status is not null and type_status != ''"
+              + " order by type_status";
+
+            stmt = DBUtil.getStatement(getConnection(), "setTypes()"); 
+            rset = stmt.executeQuery(theQuery);
+
+            String count = null;
+            String typeStatus = "";
+            String lastTypeStatus = "";
+            int recordCount = 0;
+            while (rset.next()) {
+                ++recordCount;
+                code = rset.getString(1);
+                typeStatus = rset.getString(2);
+                if (!typeStatus.equals(lastTypeStatus)) {
+                    if (recordCount > 1) typeString += ";  ";
+                    typeString += typeStatus + ":";
+                } else {
+                    if (recordCount > 1) typeString += ", ";                 
+                }
+                lastTypeStatus = typeStatus;
+                typeString += " <a href=" + AntwebProps.getDomainApp() + "/specimen.do?name=" + code + ">" + code + "</a>";
+            }
+
+            //A.log("setTypes() recordCount:" + recordCount + " query:" + theQuery);
+            
+        } catch (Exception e) {
+            s_log.error("setTypes() for taxonName:" + taxonName + " exception:" + e);
+            // project:" + project + " 
+        } finally {
+            DBUtil.close(stmt, rset, this, "setTypes()");
+        }
+        this.types = typeString;
+    }        
+}
+
+

@@ -1,0 +1,24 @@
+/*
+Mark.  Mar 16, 2011.
+
+ProjectData is a process to work around an unfortunate design decision of Thau's.  He put everything
+into the web deployment directory - The antweb application, images (100s of GB), generated files,
+and user created files.  In order to have an instance of the application running, it needs to have
+these files (for instance the home page, project pages, ancillary pages, ProjectResources.properties,
+etc...)  Using a script on the server (antweb/bin/copyProjectData.php) we are able to create a 
+copy of the relevant data minus the images.  Once it is transfered, following this procedure will
+update a dev or staging environment to function properly.
+*/
+
+from tomcat/webapps/antweb directory...  For example:
+  cp -r /Users/mark/dev/calacademy/bak/projectData/projectData2011-02-09\=15\:59/* .
+  rm WEB-INF/classes/ApplicationResources.properties
+
+From the antweb codebase root:
+  sh etc/configMark.sh  
+  ant deploy
+  
+Restart server from the tomcat bin dir
+  sudo ps ax | grep java
+  sudo kill -9 [pid]
+  sudo sh startup.sh

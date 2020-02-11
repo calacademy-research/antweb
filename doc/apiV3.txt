@@ -1,0 +1,184 @@
+ApiV3.txt
+
+# To deploy the api into place (into /var/www/html/).
+cd /antweb/antweb_deploy
+sudo sh api/v3.1/deploy.sh
+
+*** Paused here for Joe...
+
+// To get python working...
+
+sudo rm /usr/bin/python
+sudo ln -s /usr/bin/python3 /usr/bin/python
+python --version
+    Python 3.6.9
+
+sudo apt-get update
+sudo apt-get install python3-pip
+
+sudo apt-get install mysql-server
+
+mysql_secure_installation
+  root F0rm1c6!
+  No  Y  No  Y  Y
+sudo -H pip3 install pymysql
+
+sudo mkdir /var/www/test
+sudo a2enmod mpm_prefork cgi
+
+sudo mkdir /var/www/test
+  // Maybe will use this...
+sudo a2dismod mpm_event
+sudo a2enmod mpm_prefork cgi
+mark@antweb:~$ sudo emacs /etc/apache2/sites-enabled/000-default.conf
+    // Perhaps /var/www/html should be /var/www/test
+    <VirtualHost *:80>
+        <Directory /var/www/html>
+                Options +ExecCGI
+                DirectoryIndex index.py
+        </Directory>
+        AddHandler cgi-script .py
+
+        ...
+
+        DocumentRoot /var/www/htl
+
+sudo service apache2 restart
+
+// Now we get an Internal Server Error instead of python code from: http://10.2.22.28/v3.1/api.py
+
+ln -s /usr/bin/python3 /usr/local/bin/python3.6
+  // Because the script currently declares /usr/local/bin/python3.6
+
+// sudo apt-get install python3-sqlalchemy
+
+pip install Flask-SQLAlchemy
+pip install Flask-Restful
+pip install mysqlclient
+
+
+
+
+
+
+
+
+
+
+
+
+sudo mkdir /var/www/html/v3.1
+sudo chown mark:mark /var/www/html/v3.1
+cd /antweb/antweb_deploy
+sh api/v3.1/deploy.sh
+
+Test: http://10.2.22.28/v3.1/api.py
+  (Should just see the python code. Not interpreted yet.)
+
+cd /antweb
+sudo apt-get install python3-venv
+python3 -m venv ./venv
+source ./venv/bin/activate
+
+
+
+Testing locally
+cd /antweb/antweb_deploy/api/v3.1
+python3 api.py
+
+sudo apt-get install python3-sqlalchemy
+
+sudo apt-get install libapache2-mod-wsgi-py3 python-dev
+
+pip3 install flask
+
+sudo apt-get -y install python3 ipython3 python3-flask curl
+
+
+
+
+
+
+This version of the API is written in Python by Mark Johnson. 
+Beginning in Nov 2017.
+
+
+Installation of Python 3
+  Followed instructions here: https://danieleriksson.net/2017/02/08/how-to-install-latest-python-on-centos/
+    Do NOT follow instructions for: Install/upgrade pip, setuptools and wheel
+  
+sudo bash
+  
+On Centos
+---------  
+yum update
+yum groupinstall -y "development tools"
+yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel expat-devel
+
+
+wget http://python.org/ftp/python/3.6.3/Python-3.6.3.tar.xz
+tar xf Python-3.6.3.tar.xz
+cd Python-3.6.3
+./configure --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
+make && make altinstall
+
+OR BETTER YET:
+ 1000  sudo yum -y update
+ 1001  sudo yum -y install yum-utils
+ 1002  sudo yum -y groupinstall development
+ 1003  sudo yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+ 1004  cat /etc/issue
+ 1005  sudo yum -y install https://centos6.iuscommunity.org/ius-release.rpm
+ 1006  sudo yum -y install python36u
+
+/usr/local/bin/pip3.6 install virtualenv
+
+sudo yum install python3-devel
+
+Re-install mysql
+  sudo yum install mysql mysql-devel mysql-libs
+  sudo yum install MySQL-python
+  
+pip3.6 install mysqlclient 
+
+sudo emacs /etc/httpd/conf/httpd.conf
+
+/usr/sbin/apachectl -v
+Server version: Apache/2.2.15 (Unix)
+
+# copy the v3/ to the cgi-bin directory
+cd /home/antweb/antweb_deploy/api
+sudo cp -r v3 /var/www/cgi-bin/  # incorrect: /var/www/html
+sudo chmod -R 777 v3
+
+# Modify wsgi to effect apache and manage urls.
+sudo emacs /etc/httpd/conf.d/wsgi.conf
+
+
+
+
+On Ubuntu
+---------
+Following: https://medium.com/@esteininger/python-3-5-flask-apache2-mod-wsgi3-on-ubuntu-16-04-67894abf9f70
+
+sudo apt-get install libapache2-mod-wsgi-py3
+
+sudo apt-get update
+  (Had some issues Forbidden, etc..).
+sudo apt-get -y install python3-pip
+alias pip=pip3
+source ~/.bashrc
+
+???
+
+
+sudo mkdir /var/wwwcgi-bin
+sudo cp -r /antweb/antweb_deploy/api/v3.1 /var/www/html/
+sudo chmod -R 775 /var/www/html/v3.1
+
+
+Test with: http://api.antweb.org/v3.1/specimens?specimenCode=casent0922626&up=1
+
+
+
+

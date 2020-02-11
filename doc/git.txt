@@ -1,0 +1,20 @@
+Antweb.org source -> Github
+
+
+
+Downloaded antweb-cvs:/data/cvsroot/antweb to /dev/calacademy/antwebTest
+
+Trying to follow this outline:
+  http://ghantoos.org/2010/11/11/migrating-sourceforge-cvs-source-repository-to-github/
+  
+Created this .gitconfig file in my home dir.
+  https://gist.github.com/pksunkara/988716
+Tried. 
+Mark-Johnsons-MacBook-Pro:antwebGit mark$ git cvsimport -p x -v -d /Users/mark/dev/calAcademy/antwebTemp/ .
+Expected Valid-requests from server, but got: E Cannot access /Users/mark/dev/calAcademy/antwebTemp/CVSROOT
+
+Maybe cvs2git?
+  http://git.661346.n2.nabble.com/Git-and-cvsimport-td4962864.html
+
+
+

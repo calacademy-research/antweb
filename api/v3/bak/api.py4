@@ -1,0 +1,683 @@
+#! /usr/local/bin/python3.6
+
+#
+
+# To Do.
+#   Performance tuning. Prevent long runs.
+#   Specimen georeferenced parameter.
+# integrate recently added fields. Biogeographicregion and collection date
+# Remove the classes into separate files.
+
+#import os
+#assert os.path.exists('/var/www/html/apiV3/api_db.conf')
+
+import configparser  
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
+from flask import Flask, jsonify, json, request
+from flask_restful import Api
+
+from sqlalchemy import Column, Integer, String
+
+from sqlalchemy.ext.declarative import declarative_base
+
+from sqlalchemy.orm import sessionmaker
+
+engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant')
+'''
+connection = engine.connect()
+result = connection.execute("select occurrenceId from darwin_core_2 limit 20")
+for row in result:
+    print("occurrenceId:", row['occurrenceId'])
+connection.close()
+'''
+Session = sessionmaker(bind=engine)
+session = Session()
+
+Base = declarative_base()
+
+
+import MySQLdb as mysqldb
+
+from datetime import datetime, timedelta
+
+application = Flask(__name__)
+#app.run(port=80)
+api = Api(application)
+
+# MySQL configurations  
+try:
+	apiDbConf = '/var/www/html/apiV3/api_db.conf'                                                                                                                                                                        
+	#apiDbConf = '/home/antweb/antweb_deploy/api/v3/api_db.conf'
+	#apiDbConf = 'api_db.conf'  
+
+	import os
+	assert os.path.exists(apiDbConf)
+
+	# Read config file
+	config = configparser.ConfigParser()  
+	#config.read('api_db.conf')
+	#config.read('/var/www/html/apiV3/api_db.conf')
+	config.read(apiDbConf)
+
+	#print(config.get('DB', 'user'))
+	dbUrl = 'mysql+mysqldb://' + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + ":" + config.get('DB', 'port') + '/' + config.get('DB', 'db') 
+except Exception as e :
+	print('exception e: ' + str(e),' reading configuration file')
+	dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant'
+
+#app = Flask(__name__)
+application.config['SQLALCHEMY_DATABASE_URI'] = dbUrl
+application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+
+db = SQLAlchemy(application)
+    
+version = "V3"    
+localPhpServer = "http://localhost:5000"
+localTomcatServer = "http://localhost/antweb"
+apiServer = "http://api.antweb.org"
+prodServer = "https://www.antweb.org"
+apiUri = "api" + version + ".do"
+    
+    
+@application.route("/")
+def hello():  
+    message = "Antweb API " + version \
+      + "<br><br><a href='" + localTomcatServer + "/" + apiUri + "'>" + version + " Local API Documentation</a>" \
+      + "<br><br><a href='" + prodServer + "/" + apiUri + "'>" + version + " Antweb API Documentation</a>"
+      #+ "<br><br>Application:" + application.name
+    return message 
+
+# ----------------------------------------------------------------------------------------
+
+from home.geolocale import Geolocale
+    
+@application.route('/geolocale', methods=['GET'])
+def getGeolocale():
+    id = request.args.get('id', default='*', type=str)
+    name = request.args.get('name', default='*', type=str)
+    parent = request.args.get('parent', default='*', type=str)
+    georank = request.args.get('georank', default='*', type=str)
+        
+    #print('id:' + id)
+        
+    query = session.query(Geolocale)
+    if (id != '*'):
+      query = query.filter(Geolocale.id == id)
+    if (name != '*'):
+      query = query.filter(Geolocale.name == name)
+    if (parent != '*'):
+      query = query.filter(Geolocale.parent == parent)
+    query = query.filter(Geolocale.isValid == 1)
+    data = query.all()
+
+    print(query)
+    
+    geolocaleCount = 0
+    dataList = []
+    geolocaleDict = {}
+    geolocales = []    
+    for geolocale in data:
+        geolocaleCount += 1
+        geolocaleDict = {
+          'id': geolocale.id
+        , 'name': geolocale.name
+        , 'georank': geolocale.georank
+        , 'parent': geolocale.parent
+        , 'region': geolocale.region
+        , 'bioregion': geolocale.bioregion
+        , 'subfamilyCount': geolocale.subfamilyCount
+        , 'genusCount': geolocale.genusCount
+        , 'speciesCount': geolocale.speciesCount
+        , 'specimenCount': geolocale.specimenCount
+        , 'imageCount': geolocale.imageCount
+        , 'imagedSpecimenCount': geolocale.imagedSpecimenCount
+        #, 'isValid': geolocale.isValid
+        , 'endemicSpeciesCount': geolocale.endemicSpeciesCount
+        , 'introducedSpeciesCount': geolocale.introducedSpeciesCount
+        }
+        geolocales.append(geolocaleDict)
+
+        #print(geolocaleDict)
+        
+        dataList.append(geolocaleDict)
+     
+    params = []
+    params.append(request.args)    
+    metaDataDict = {}
+    metaDataDict['parameters'] = params
+    metaDataDict['geolocaleCount'] = geolocaleCount
+    
+    return jsonify(metaData=metaDataDict, geolocales=dataList)                 
+
+# ----------------------------------------------------------------------------------------
+
+from home.taxaImage import TaxaImage
+
+@application.route('/taxaImages', methods=['GET'])
+def getTaxaImages():
+    taxonName = request.args.get('taxonName', default='*', type=str)
+    subfamily = request.args.get('subfamily', default='*', type=str)
+    genus = request.args.get('genus', default='*', type=str)
+    species = request.args.get('species', default='*', type=str)
+    subspecies = request.args.get('subspecies', default='*', type=str)
+    code = request.args.get('code', default='*', type=str)
+    imageId = request.args.get('imageId', default='*', type=str)
+    #uploadDate = request.args.get('uploadDate', default='*', type=str)
+    shotType = request.args.get('shotType', default='*', type=str)
+    limit = request.args.get('limit', default = '10000', type = int)
+    offset = request.args.get('offset', default = '0', type = int)
+
+    print('taxonName:' + taxonName + ' shotType:' + shotType + ' code:' + code)
+
+    query = session.query(TaxaImage)
+    if (taxonName != '*'):
+      query = query.filter(TaxaImage.taxonName == taxonName)
+    if (subfamily != '*'):
+      query = query.filter(TaxaImage.subfamily == subfamily)
+    if (genus != '*'):
+      query = query.filter(TaxaImage.genus == genus)
+    if (species != '*'):
+      query = query.filter(TaxaImage.species == species)
+    if (subspecies != '*'):
+      query = query.filter(TaxaImage.subspecies == subspecies)
+    if (code != '*'):
+      query = query.filter(TaxaImage.code == code)
+    if (imageId != '*'):
+      query = query.filter(TaxaImage.uid == imageId)
+    #if (uploadDate != '*'):
+    #  query = query.filter(TaxaImage.uploadDate like uploadDate)
+    if (shotType != '*'):
+      query = query.filter(TaxaImage.shotType == shotType)
+    query.order_by(TaxaImage.taxonName, TaxaImage.code) 
+    query = query.limit(limit)
+    query = query.offset(offset)
+    data = query.all()
+
+    specimenCount = 0
+    imageCount = 0
+    taxaDict = {}
+    for taxaImage in data:
+        taxaDict = getTaxaDict(taxaImage, taxaDict)
+
+    taxonCount = getTaxonCount(taxaDict)
+    specimenCount = getSpecimenCount(taxaDict)
+    imageCount = getImageCount(taxaDict)
+    dataList = getDataList(taxaDict)
+
+    params = []
+    params.append(request.args)    
+    metaDataDict = {}
+    metaDataDict['parameters'] = params
+    metaDataDict['limit'] = limit
+    metaDataDict['taxonCount'] = taxonCount
+    metaDataDict['specimenCount'] = specimenCount
+    metaDataDict['imageCount'] = imageCount
+    
+    return jsonify(metaData=metaDataDict, taxaImages=dataList)
+
+def getTaxaDict(taxaImage, taxaDict):
+    # taxaImage is the object created from the result set.
+    #taxaDict is the dictionary containing the hierarchical data taxon - specimen - image.
+
+    # taxaDict is of the format taxonName: {taxonDict}
+    if taxaImage.taxonName not in taxaDict:
+      taxonDict = {
+        'taxonName': taxaImage.taxonName 
+      , 'subfamily': taxaImage.subfamily
+      , 'genus': taxaImage.genus
+      , 'species': taxaImage.species
+      , 'subspecies': taxaImage.subspecies    
+      , 'specimen': []
+      }
+      taxaDict[taxaImage.taxonName] = taxonDict
+      #print('getTaxaDict() + taxonName:' + taxaImage.taxonName)
+    else:
+      taxonDict = taxaDict[taxaImage.taxonName]
+    #print('getTaxaDict() taxonName:' + taxaImage.taxonName)
+    specimens = taxonDict['specimen']    
+
+    specimenDict = getFromSpecimens(specimens, taxaImage.code)    
+    if not specimenDict:
+      specimenDict = {
+        'code': taxaImage.code
+      , 'images': []
+      }
+      specimens.append(specimenDict)
+
+    imagesDict = specimenDict['images']
+
+    if taxaImage.uid not in imagesDict:
+      base = 'https://www.antweb.org/images/' + taxaImage.code + '/' + taxaImage.code + '_' \
+        + taxaImage.shotType + '_' + str(taxaImage.shotNumber) 
+      urls = [base + '_low.jpg' \
+          , base + '_med.jpg'
+          , base + '_high.jpg'
+          , base + '_thumbview.jpg'
+      ]
+      imageDict = {
+        'imageId': taxaImage.uid
+      , 'shotType': taxaImage.shotType
+      , "urls:": urls
+      , 'uploadDate': taxaImage.uploadDate
+      , 'shotNumber': taxaImage.shotNumber
+      , 'hasTiff': taxaImage.hasTiff
+      }
+      imagesDict.append(imageDict)
+      #print('getTaxaDict() uid:' + str(taxaImage.uid))
+    else:
+      imageDict = imagesDict[taxaImage.uid]
+
+    return taxaDict
+
+def getFromSpecimens(specimens, code):
+    for specimenDict in specimens:
+      if specimenDict['code'] == code:
+        return specimenDict      
+
+def getDataList(taxaDict):
+    dataList = []
+    for taxonDict in taxaDict:
+      #print("taxonDict: " + str(taxaDict[taxonDict]))
+      taxonDict = taxaDict[taxonDict]
+      #print("taxonName: " + taxonDict['taxonName'])
+      dataList.append(taxonDict) 
+    return dataList
+
+def getTaxonCount(taxaDict):
+    return len(taxaDict)
+
+def getSpecimenCount(taxaDict):
+    specimenCount = 0
+    for taxonDict in taxaDict:
+      val = taxaDict[taxonDict]    
+      specimenCount = specimenCount + len(val['specimen'])
+    return specimenCount
+
+def getImageCount(taxaDict):
+    imageCount = 0
+    for key in taxaDict:
+      taxonDict = taxaDict[key]    
+      specimens = taxonDict['specimen']
+      for specimenDict in specimens:
+        specimenImages = specimenDict['images']
+        #print("imageCount len:" + str(len(specimenImages)))
+        imageCount = imageCount + len(specimenImages)
+    return imageCount
+
+# ----------------------------------------------------------------------------------------
+
+from home.image import Image
+    
+@application.route('/recentImages', methods=['GET'])
+def getRecentImages():
+    since = request.args.get('since', default='*', type=str)
+    shotType = request.args.get('shotType', default='*', type=str)
+    code = request.args.get('code', default='*', type=str)
+    limit = request.args.get('limit', default = '10000', type = int)            
+    offset = request.args.get('offset', default = '0', type = int)
+    
+    print('since:' + since + ' shotType:' + shotType + ' code:' + code)
+        
+    query = session.query(Image)
+    if (since != '*'):
+      day_interval_before = datetime.now() - timedelta(days=int(since))  
+      query = query.filter(Image.uploadDate >= day_interval_before)
+    if (shotType != '*'):
+      query = query.filter(Image.shotType == shotType)
+    if (code != '*'):
+      query = query.filter(Image.code == code)
+    query = query.limit(limit)
+    query = query.offset(offset)    
+    data = query.all()
+    
+    specimenCount = 0
+    imageCount = 0
+    dataList = []
+    specimenDict = {}
+    tCode = ''
+    images = []    
+    for image in data:
+        imageCount += 1
+        base = 'https://www.antweb.org/images/' + image.code + '/' + image.code + '_' \
+          + image.shotType + '_' + str(image.shotNumber) 
+        #print('code' + image.code + ' base:' + base)
+        urls = [base + '_low.jpg' \
+              , base + '_med.jpg'
+              , base + '_high.jpg'
+              , base + '_thumbview.jpg'
+        ]
+        imageDict = {
+          'imageId': image.uid
+        , 'shotType': image.shotType
+        , "urls:": urls
+        , 'uploadDate': image.uploadDate
+        , 'shotNumber': image.shotNumber
+        , 'hasTiff': image.hasTiff
+        }
+        if (tCode != image.code):
+            if (tCode != ''): # we have one to insert. (Is not the first record).
+              specimenDict = {
+                  'code': tCode
+                , 'url': 'http://localhost:5000/specimens?code=' + tCode
+                , 'images': images
+              }
+              specimenCount += 1
+              dataList.append(specimenDict)          
+            
+            images = []
+            images.append(imageDict)
+            tCode = image.code
+            
+        else:
+            images.append(imageDict)
+        
+    # Handle the last instance of the record (due to group by procedural logic). 
+    if (tCode != ''):   
+      specimenDict = {
+          'code': tCode
+        , 'url': 'http://localhost:5000/specimens?code=' + tCode
+        , 'images': images
+      }
+			  
+    specimenCount += 1
+    dataList.append(specimenDict)
+     
+    # SELECT uid,shot_type,upload_date,shot_number,has_tiff FROM image WHERE image_of_id=? ORDER BY shot_number ASC     
+    #print(query)
+    
+    params = []
+    params.append(request.args)    
+    metaDataDict = {}
+    metaDataDict['parameters'] = params
+    metaDataDict['limit'] = limit
+    metaDataDict['specimenCount'] = specimenCount
+    metaDataDict['imageCount'] = imageCount
+    
+
+    return jsonify(metaData=metaDataDict, recentImages=dataList)                 
+
+
+@application.route('/distinctTaxa', methods=['GET'])
+def getDistinctTaxa():
+    rank = request.args.get('rank', default = '*', type = str)    
+    country = request.args.get('country', default = '*', type = str)
+    habitat = request.args.get('habitat', default = '*', type = str)
+    minDate = request.args.get('minDate', default = '*', type = str)
+    maxDate = request.args.get('maxDate', default = '*', type = str)   
+    minElevation = request.args.get('minElevation', default = '*', type = str) 
+    maxElevation = request.args.get('maxElevation', default = '*', type = str) 
+    limit = request.args.get('limit', default = '10000', type = int)
+    offset = request.args.get('offset', default = '0', type = int)
+        
+    query = session.query(Specimen)
+ 
+    if ('subfamily' == rank):
+      query = db.session.query(Specimen.subfamily).distinct()
+    if ('genus' == rank):
+      query = db.session.query(Specimen.genus).distinct()
+    
+    # if any of these are used, performance suffers!    
+    if (country != '*') :
+      query = query.filter(Specimen.country.contains(country))
+    if (habitat != '*') :
+      query = query.filter(Specimen.habitat.contains(habitat))
+    if (maxDate != '*') :
+      query = query.filter(Specimen.dateCollected < maxDate)
+    if (minDate != '*') :
+      query = query.filter(Specimen.dateCollected > minDate)
+    if (minElevation != '*') :
+      query = query.filter(Specimen.minimumElevationInMeters > minElevation)
+    if (maxElevation != '*') :
+      query = query.filter(Specimen.minimumElevationInMeters < maxElevation)    
+
+    query = query.limit(limit)
+    query = query.offset(offset)
+    data = query.all()
+
+    data_all = []
+    for taxa in data:
+      if ('subfamily' == rank):
+        data_all.append(taxa.subfamily)
+      if ('genus' == rank):
+        #print("rank:" + rank + " genus:" + str(taxa.genus))
+        data_all.append(taxa.genus)
+      #if ('species' == rank):
+
+    params = []
+    params.append(request.args)    
+    metaDataDict = {}
+    metaDataDict['parameters'] = params
+    metaDataDict['limit'] = limit
+    metaDataDict['count'] = len(data_all)
+        
+    print(query)
+    if ('subfamily' == rank):    
+      return jsonify(metaData=metaDataDict, subfamilies=data_all) 
+    if ('genus' == rank):
+      return jsonify(metaData=metaDataDict, genera=data_all) 
+        
+# ---------------------------------------------------------------------------------------
+
+from home.specimen import Specimen
+
+# http://localhost:5000/geoSpecimens?coords=37,%20-122&limit=8000&radius=2
+@application.route('/geoSpecimens', methods=['GET'])
+def getGeoSpecimens():
+    coords = request.args.get('coords', default = '*', type = str) #(?coord=37, -122) is cal academy
+    if (coords == '*'):
+      return 'Must enter coords for a geoSpecimens request'
+    radius = request.args.get('radius', default = '5', type = int)  # in kilometers
+    limit = request.args.get('limit', default = '100', type = int)
+    offset = request.args.get('offset', default = '0', type = int)
+    distinct = request.args.get('distinct', default = '*', type = str)
+
+    query = session.query(Specimen)
+    coordsArray = coords.split(",")
+    query = query.filter(Specimen.decimalLatitude <= (int(coordsArray[0]) + int(radius)), Specimen.decimalLatitude >= (int(coordsArray[0]) - int(radius))) 
+    query = query.filter(Specimen.decimalLongitude <= (int(coordsArray[1]) + int(radius)), Specimen.decimalLongitude >= (int(coordsArray[1]) - int(radius))) 
+
+    if (distinct != '*'):
+      if (distinct == 'subfamily'):
+        query = db.session.query(Specimen.subfamily).distinct()
+      if (distinct == 'genus'):
+        query = db.session.query(Specimen.genus).distinct()
+
+      query = query.limit(limit)
+      query = query.offset(offset)
+      data = query.all()    
+    
+      data_all = []
+      for sp in data:
+
+        if (distinct == 'subfamily'):
+          data_all.append(sp.subfamily)
+        #  specDict = { 'subfamily': sp.subfamily }
+        if (distinct == 'genus'):
+          data_all.append(sp.genus)
+        #  specDict = { 'genus': sp.genus }
+        #data_all.append(specDict)
+    
+      params = []
+      params.append(request.args)    
+      metaDataDict = {}
+      metaDataDict['parameters'] = params
+      metaDataDict['limit'] = limit
+      metaDataDict['count'] = len(data_all)
+    
+      if (distinct == 'subfamily'):
+        return jsonify(metaData=metaDataDict, subfamilies=data_all)    
+      if (distinct == 'genus'):
+        return jsonify(metaData=metaDataDict, genera=data_all)    
+      return jsonify(_metaData=metaDataDict, specimens=data_all)
+
+   # if not distinct. Show everything.
+    query = query.limit(limit)
+    query = query.offset(offset)
+    data = query.all()    
+    
+    data_all = []
+    for sp in data:
+        specDict = getSpecDict(sp)
+
+        data_all.append(specDict)
+
+    #print(query)
+
+    params = []
+    params.append(request.args)    
+    metaDataDict = {}
+    metaDataDict['parameters'] = params
+    metaDataDict['limit'] = limit
+    metaDataDict['count'] = len(data_all)
+
+    return jsonify(metadata=metaDataDict, specimens=data_all)
+
+# --------------------------------------------------------------------------------------
+
+from home.specimen import Specimen
+
+@application.route('/specimens', methods=['GET'])
+def getSpecimen():
+    # Process parameters
+    subfamily = request.args.get('subfamily', default = '*', type = str)
+    genus = request.args.get('genus', default = '*', type = str)
+    species = request.args.get('species', default = '*', type = str)
+    code = request.args.get('code', default = '*', type = str)
+    country = request.args.get('country', default = '*', type = str)
+    habitat = request.args.get('habitat', default = '*', type = str)
+    type = request.args.get('type', default='*', type = str)
+    georeferenced = request.args.get('georeferenced', type = str)
+    bbox = request.args.get('bbox', default = '*', type = str)
+    minDate = request.args.get('minDate', default = '*', type = str)
+    maxDate = request.args.get('maxDate', default = '*', type = str)   
+    minElevation = request.args.get('minElevation', default = '*', type = str) 
+    maxElevation = request.args.get('maxElevation', default = '*', type = str) 
+    museum = request.args.get('museum', default = '*', type = str)
+    ownedby = request.args.get('ownedby', default = '*', type = str)    
+    locatedat = request.args.get('locatedat', default = '*', type = str)
+    collectedby = request.args.get('collectedby', default = '*', type = str)    
+    limit = request.args.get('limit', default = '10000', type = int)
+    offset = request.args.get('offset', default = '0', type = int)
+    
+    #print("genus:" + genus + " bbox:" + bbox + " type:" + type)
+    #print("georeferenced:" + georeferenced + " minDate:" + minDate + " maxDate:" + maxDate)
+
+    # Build query criteria
+    query = session.query(Specimen)
+    if (subfamily != '*') :
+      query = query.filter(Specimen.subfamily == subfamily)
+    if (genus != '*') :
+      query = query.filter(Specimen.genus == genus)
+    if (species != '*') :
+      query = query.filter(Specimen.species == species)
+    if (code != '*') :
+      #print("code:" + code)
+      query = query.filter(Specimen.code == code)
+    if (country != '*') :
+      query = query.filter(Specimen.country.contains(country))
+    if (habitat != '*') :
+      query = query.filter(Specimen.habitat.contains(habitat))
+    if (type != '*') :
+      query = query.filter(Specimen.typeStatus == type)
+    #if (georeferenced == 'true'):
+      #query = query.filter(Specimen.decimalLatitude is not null)
+      #query = query.filter(Specimen.decimalLongitude is not null)    
+    if (bbox != '*') :
+      coords = bbox.split(",")
+      query = query.filter(Specimen.decimalLatitude <= coords[0], Specimen.decimalLatitude >= coords[2]) 
+      query = query.filter(Specimen.decimalLongitude <= coords[1], Specimen.decimalLongitude >= coords[3])
+    if (maxDate != '*') :
+      query = query.filter(Specimen.dateCollected < maxDate)
+    if (minDate != '*') :
+      query = query.filter(Specimen.dateCollected > minDate)
+    if (minElevation != '*') :
+      query = query.filter(Specimen.minimumElevationInMeters > minElevation)
+    if (maxElevation != '*') :
+      query = query.filter(Specimen.minimumElevationInMeters < maxElevation)   
+    if (museum != '*') :
+      query = query.filter(Specimen.museum == museum)
+    if (ownedby != '*') :
+      query = query.filter(Specimen.ownedby == ownedby)
+    if (locatedat != '*') :
+      query = query.filter(Specimen.locatedat == locatedat)
+    if (collectedby != '*') :
+      query = query.filter(Specimen.collectedby == collectedby)
+
+    query = query.limit(limit)
+    query = query.offset(offset)
+    data = query.all()
+
+    data_all = []
+    for sp in data:
+        specDict = getSpecDict(sp)
+
+        data_all.append(specDict)
+
+    params = []
+    params.append(request.args)    
+    metaDataDict = {}
+    metaDataDict['parameters'] = params
+    metaDataDict['limit'] = limit
+    metaDataDict['offset'] = offset
+    metaDataDict['count'] = len(data_all)
+        
+    return jsonify(metadata=metaDataDict, specimens=data_all) 
+
+
+def getSpecDict(sp):
+	specDict = {
+	  'occurrenceId': sp.occurrenceId
+	, 'ownerInstitutionCode': sp.ownerInstitutionCode 
+	, 'basisOfRecord': sp.basisOfRecord
+	, 'institutionCode': sp.institutionCode
+	, 'collectionCode': sp.collectionCode
+	, 'code': sp.code
+	, 'dctermsModified': sp.dctermsModified
+	, 'nomenclaturalCode': sp.nomenclaturalCode
+	, 'kingdom': sp.kingdom
+	, 'phylum': sp.phylum
+	, 'classVal': sp.classVal
+	, 'order': sp.order
+	, 'family': sp.family
+	, 'subfamily': sp.subfamily
+	, 'genus': sp.genus
+	, 'subgenus': sp.subgenus
+	, 'specificEpithet': sp.specificEpithet
+	, 'intraspecificEpithet': sp.intraspecificEpithet
+	, 'scientificName': sp.scientific_name
+	, 'higherClassification': sp.higherClassification
+	, 'type': sp.typeStatus
+	, 'stateProvince': sp.stateProvince
+	, 'country': sp.country
+	, 'decimalLatitude': sp.decimalLatitude
+	, 'decimalLongitude': sp.decimalLongitude
+	, 'georeferenceRemarks': sp.georeferenceRemarks
+	, 'dateIdentified': sp.dateIdentified
+	, 'dateCollected': sp.dateCollected
+	, 'habitat': sp.habitat
+	, 'recordedBy': sp.recordedBy
+	, 'samplingProtocol': sp.samplingProtocol
+	, 'sex': sp.sex
+	, 'preparations': sp.preparations
+	, 'fieldNumber': sp.fieldNumber
+	, 'identifiedBy': sp.identifiedBy
+	, 'locality': sp.locality
+	, 'locationRemark': sp.locationRemarks
+	, 'occurrenceRemarks': sp.occurrenceRemarks
+	, 'fieldNotes': sp.fieldNotes
+	, 'verbatimEventDate': sp.verbatimEventDate    #, sp.eventDate \
+	, 'minimumEleationInMeters': sp.minimumElevationInMeters
+	, 'biogeographicregion': sp.biogeographicregion
+	, 'antwebTaxonName': sp.antweb_taxon_name
+    , 'museum': sp.museum
+    , 'ownedby': sp.ownedby
+    , 'locatedat': sp.locatedat
+    , 'collectedby': sp.collectedby		
+	}
+	
+	return specDict
+    
+ 
+if __name__ == "__main__":  
+    application.run()

@@ -1,0 +1,33 @@
+# This is the place for global properties
+# Values can be override by the platform specific AntwebResources.properties 
+
+isLocal=true
+isDevMode=true
+isStageMode=false
+isMac=true
+
+isGoogleMapsV3=true
+googlemap.key=AIzaSyDECm87Jvl3aI5M-PBd2pwHM1d7vKesXJk
+googleMapsV3.key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
+
+site.protocol=http
+site.imgDomainApp=www.antweb.org
+site.domain=localhost
+
+# If site.securePort= is entered (uncommented below), https will be active.  If uncommented with no value, https will be active on default https port (443)
+#site.securePort=8443
+site.app=antweb
+
+site.docroot=/Users/mark/dev/tomcat/webapps/antweb/
+site.tomcat=/Users/mark/dev/tomcat/
+site.inputfilehome=/Users/mark/dev/calAcademy/workingdir/
+site.toUpload=/Users/mark/dev/calAcademy/imageUpload/toUpload/
+site.plaziDir=/Users/mark/dev/calAcademy/plazi
+
+
+
+error.login.invalidEmail=Must enter a valid email
+error.login.retypePasswordMismatch=Password and Retype Password must match
+button.invite=invite
+button.delete=delete
+button.changePassword= Change Password

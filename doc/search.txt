@@ -1,0 +1,23 @@
+Search.txt
+
+
+
+
+1) Wy would a simple search on cataulicus return no records.  Searching Google on the term points to antweb.
+
+ select taxon.taxon_name, taxon.subfamily, taxon.genus, taxon.species, taxon.valid, sp.type, sp.code,  
+   count(image.uid) as imagecount, taxon.valid, sp.toc, sp.country, sp.province, sp.localityname, sp.caste  
+   from taxon, specimen as sp left outer join image on  sp.code = image.image_of_id 
+   where taxon.taxon_name = sp.taxon_name   
+   and (taxon.taxon_name like '%cataulicus%') 
+   group by taxon.taxon_name, taxon.subfamily, taxon.genus, taxon.species , taxon.valid, sp.type
+     , sp.code, sp.toc, sp.country, sp.province, sp.localityname, sp.caste  order by  taxon.genus, taxon.species;
+
+
+
+2) bayAreaSearch.do is public?  Michele get an error report.  Not linked in.  Does not seem to work.  Very, very slow.
+
+    When it does return, it returns this: [ServletException in:/bayAreaSearchResults-body.jsp] javax.servlet.jsp.JspException: Define tag cannot set a null value'
+
+
+

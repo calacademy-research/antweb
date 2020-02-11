@@ -1,0 +1,33 @@
+#2011-01-11
+
+# Session related bug munged comoros and mayotte.  This script resolved the problems.
+
+#Comoros was:
+
+mysql> select * from project where project_name= "comorosants";
+#+--------------+---------------+--------------------------+---------------------+---------------------+----------+---------------------+---------------------+----------------------+-------------+------------------+-------------------------+---------+--------------------------------+---------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------+-----------------+
+#| project_name | project_title | extent                   | biogeographicregion | last_changed        | contents | specimenImage1      | specimenImage2      | specimenImage3       | authorImage | map              | authorbio               | root    | locality                       | specimenImage1Link                                                                          | specimenImage2Link                                                                              | specimenImage3Link                                                                        | author          |
+#+--------------+---------------+--------------------------+---------------------+---------------------+----------+---------------------+---------------------+----------------------+-------------+------------------+-------------------------+---------+--------------------------------+---------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------+-----------------+
+#| comorosants  | Comoros       | 41.66 -14.90 46.42 -9.62 | malagasyants        | 2010-07-28 00:00:00 |          | CASENT0101243_H.jpg | CASENT0447670_H.jpg | CASENT0136410_Hw.jpg | Team.jpg    | comoros_2332.gif | <b>and Ant Team</b><br> | comoros | biogeographicregion='malagasy' | http://www.antweb.org/description.do?rank=species&genus=cataulacus&name=voeltzkowi&project= | http://www.antweb.org/description.do?rank=species&genus=anochetus&name=madagascarensis&project= | http://www.antweb.org/description.do?rank=species&genus=calyptomyrmex&name=com01&project= | Brian L. Fisher |
+
+#Now, Comoros is:
+
+mysql> select * from project where project_name= "comorosants";
+#+--------------+---------------+--------------------------+---------------------+---------------------+----------+-------------------+-------------------+-------------------+------------------+------+-------------------------+---------+--------------------------------+-----------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------+-----------------+
+#| project_name | project_title | extent                   | biogeographicregion | last_changed        | contents | specimenImage1    | specimenImage2    | specimenImage3    | authorImage      | map  | authorbio               | root    | locality                       | specimenImage1Link                                                                                  | specimenImage2Link                                                                                 | specimenImage3Link                                                                                  | author          |
+#+--------------+---------------+--------------------------+---------------------+---------------------+----------+-------------------+-------------------+-------------------+------------------+------+-------------------------+---------+--------------------------------+-----------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------+-----------------+
+#| comorosants  | Mayotte       | 41.66 -14.90 46.42 -9.62 | malagasyants        | 2011-01-12 00:00:00 |          | casent0132799.jpg | casent0133445.jpg | casent0132269.jpg | Mayottepicv4.jpg |      | <b>and Ant Team</b><br> | mayotte | biogeographicregion='malagasy' | http://www.antweb.org/description.do?rank=species&name=ebrardi&genus=cataulacus&project=mayotteants | http://www.antweb.org/description.do?rank=species&name=emmae&genus=strumigenys&project=mayotteants | http://www.antweb.org/description.do?rank=species&name=pavesii&genus=leptogenys&project=mayotteants | Brian L. Fisher | 
+#+--------------+---------------+--------------------------+---------------------+---------------------+----------+-------------------+-------------------+-------------------+------------------+------+-------------------------+---------+--------------------------------+-----------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------+-----------------+
+
+#These queries should fix:
+
+update project set project_title = "Comoros" where project_name = "comorosants";
+update project set specimenImage1 = "CASENT0101243_H.jpg" where project_name = "comorosants";
+update project set specimenImage2 = "CASENT0447670_H.jpg" where project_name = "comorosants";
+update project set specimenImage3 = "CASENT0136410_Hw.jpg" where project_name = "comorosants";
+update project set authorImage = "Team.jpg" where project_name = "comorosants";
+update project set map = "comoros_2332.gif" where project_name = "comorosants";
+update project set root = "comoros" where project_name = "comorosants";
+update project set specimenImage1Link = "http://www.antweb.org/description.do?rank=species&genus=cataulacus&name=voeltzkowi&project=" where project_name = "comorosants";
+update project set specimenImage2Link = "http://www.antweb.org/description.do?rank=species&genus=anochetus&name=madagascarensis&project=" where project_name = "comorosants";
+update project set specimenImage3Link = "http://www.antweb.org/description.do?rank=species&genus=calyptomyrmex&name=com01&project=" where project_name = "comorosants";
