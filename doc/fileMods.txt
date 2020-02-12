@@ -1,3 +1,33 @@
+Release 8.11
+# Committer: Mark Johnson <mark@Marks-Mac.local>
+#
+# On branch master
+# Your branch is up to date with 'origin/master'.
+#
+# Changes to be committed:
+#       new file:   db/upgrade/8.0/2020-02-12.sql
+#
+# Changes not staged for commit:
+#       typechange: WEB-INF/classes/AntwebResources.properties
+#       typechange: WEB-INF/classes/log4j.properties
+#       typechange: WEB-INF/struts-configDb.xml
+#       typechange: WEB-INF/web.xml
+#       typechange: build.properties
+#       modified:   db/upgrade/8.0/2020-02-12.sql
+#       modified:   doc/done.txt
+#       modified:   doc/fileMods.txt
+#       modified:   doc/install.txt
+#       modified:   doc/release.txt
+#       modified:   etc/configMark.sh
+#       modified:   src/org/calacademy/antweb/home/ArtistDb.java
+#       modified:   src/org/calacademy/antweb/home/LoginDb.java
+#       modified:   src/org/calacademy/antweb/util/AntwebProps.java
+#       modified:   web/documentation/releaseNum.jsp
+#
+# Untracked files:
+#       WEB-INF/classes/ProjectResources.properties
+#       build/
+
 Release 8.10.4
 M    trunk/doc/release.txt
 M    trunk/etc/configMark.sh
