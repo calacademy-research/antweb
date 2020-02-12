@@ -11776,7 +11776,36 @@ Feb 3. 3.5hrs.
   Deploy again.
   Regenerate the genInc files for the live site.
   
+Feb 4. 3hrs.
+  Work with Joe preparing for server switch.
+  Adapt the makeLinks.sh for the new server.
+  Look into mapped drives. Devise tests. Share/document for Joe.
+  New image upload tool respects the Services down mechansism.
+  Deploy.
   
+Feb 7. 1.5hrs.
+  API changes. See release notes for Release 8.10.3
+  
+Feb 8. .5hr.
+  Work on VPN issue with Randy. Upgrade. 
+    
+Feb 9. .5 hr.
+  Get VPN working again with Randy's help.
+  Commit to CVS and deploy to the new server. Document.
+  
+Feb 11. 3hrs.
+  Minor prep for tomorrows deployment of new server.
+  Set up Git antweb repository. Account and Repository.
+  Managed checkout. Could not manage check in.  
+`
+Feb 12. 11 - 
+  Get Joe Remote Desktop access into my dev machine (laptop) using Chrome.
+  Configure laptop to access Github. Install public ssh keys.
+  Configure 10.2.22.30 to access Github. Install public ssh keys for mark and antweb.
+  Handle the artist created db issue but updating early artist to legal values.
+  Get github version configured and working on local machine.  
+  
+    
   
 Login system.
   Heloise Gibb and Bernice

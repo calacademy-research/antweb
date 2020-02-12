@@ -215,6 +215,7 @@ works: http://10.2.22.30:9090/specimens?specimenCode=casent0922626&up=1
 
 
 
+
 Antweb
 ------
 sudo chmod  755 /usr/local/tomcat/lib -R
@@ -280,7 +281,76 @@ sudo systemctl stop apache2
 Antblog
 -------
 
+Antblog
+Cronjobs
+Mount drives
+  v-antweb-web-prod:/vol/antweb_web_prod
+                       67G   61G  5.7G  92% /data/antweb/web
+  everest:/vol/antweb   1.7T  1.4T  245G  86% /data/antweb/images
+  10.2.22.34:/vol/linux_backup/antweb_q
+                      250G   34G  217G  14% /mnt/backup
 
+
+GIT
+---
+  Create Repository (just done once, already done. JRussack's notes).
+
+    To create, I created a blank repo named “antweb”. I then used git clone to place it on my local machine.
+    I then did git clone, per the big green button “Clone or download”:
+    git clone git@github.com:calacademy-research/antweb.git
+    This created the antweb directory on my local machine. I then copied the files that you indicated from .30 to this directory, did a make clean, removed the CVS artifacts with 
+    find . -name "CVS" -type d -exec rm -rf {} \;
+    And verified they were gone with
+    find . -name "CVS" -type d -print
+    I did a quick scan for anything else we might not want in the repo. Looked good.
+    git add *
+    git commit -m "Initial move from CVS - 2-11-20”
+    git push
+
+
+On dev machine (Mac laptop).
+
+  git clone git@github.com:calacademy-research/antweb.git
+  git status
+  git commit -m "This is mark's initial trial"
+  git push
+
+  sh etc/configMark.sh
+  ant deploy
+
+SSH Keys
+--------
+cd $HOME/.ssh
+ssh-keygen -t rsa
+cat id_rsa.pub
+  # Copy the output and paste into Github.
+  
+
+Install After Joe
+-----------------
+Change conf/server.xml to have in the <host> block:
+<Context path="" docBase="/data/antweb"/>  <!-- was debug="0" -->
+
+Edit etc/AppResProd.properties to have:
+#site.domain=www.antweb.org
+site.domain=10.2.22.30
+
+Edit build.properties to have:
+#antweb.home=/usr/local/tomcat/webapps/antweb
+antweb.home=/data/antweb
+
+ant build
+
+Generate the Recent Images, Edits and Statistics 
+  (links in the Technical Functions section of curate page).
+
+
+cd /var/www/html/
+sudo bash
+sudo mkdir antblog
+sudo chmod 775 antblog
+From the live machine in /var/www/html/:
+  scp -r antblog/* mark@10.2.22.30:/var/www/html/antblog
 
 
 

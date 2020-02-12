@@ -45,6 +45,8 @@ public abstract class AntwebProps {
       if (s_antwebResources == null) {
         s_antwebResources =  ResourceBundle.getBundle("AntwebResources");
       }
+      // Can't do A.log() here.
+      //s_log.warn("getAntwebResourceBundle() s_antwebResources:" + s_antwebResources);
       return s_antwebResources;
     }  
         	
@@ -173,7 +175,7 @@ public abstract class AntwebProps {
     public static String getProtocol() {
         // notice that this does not contain a follow / as does getSiteURL.  
         String protocol = AntwebProps.getProp("site.protocol");
-        //A.log("getProtocol() protocol:"+ protocol);
+        A.log("getProtocol() protocol:"+ protocol);
         return protocol;
     }
     

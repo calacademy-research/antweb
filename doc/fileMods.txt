@@ -1,6 +1,26 @@
+Release 8.10.4
+M    trunk/doc/release.txt
+M    trunk/etc/configMark.sh
+M    trunk/web/documentation/releaseNum.jsp
+M    trunk/web/index-body.jsp
+M    trunk/web/index.jsp
+
+Release 8.10.3
+CVS: Modified Files:
+CVS:    web/documentation/api/apiV3_1-body.jsp
+CVS:    api/v3.1/api.py
+
 Release 8.10.2
 CVS: Modified Files:
 CVS:    src/org/calacademy/antweb/upload/UploadAction.java
+CVS:    WEB-INF/struts-config.xml doc/done.txt doc/fileMods.txt
+CVS:    doc/release.txt etc/makeLinks.sh
+CVS:    src/org/calacademy/antweb/Map.java
+CVS:    src/org/calacademy/antweb/geolocale/Country.java
+CVS:    src/org/calacademy/antweb/home/OperationLock.java
+CVS:    src/org/calacademy/antweb/home/OperationLockDb.java
+CVS:    src/org/calacademy/antweb/util/ServerStatusAction.java
+CVS:    web/curate/curate-body.jsp web/util/serverStatus-body.jsp
 
 Release 8.10.1
 CVS: Modified Files:

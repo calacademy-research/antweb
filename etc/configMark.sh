@@ -21,4 +21,4 @@ then
    mkdir build
 fi
 
-cp -r etc/add/* build/
+#cp -r etc/add/* build/

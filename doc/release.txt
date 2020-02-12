@@ -1,9 +1,23 @@
+Release 8.11
+Date: Feb 12
+  First Github release.
+
+Release 8.10.3
+Date: Feb 7
+  Support Taxon type change.
+  API changes. Document admin up feature. Augment links.
+  distinctTaxa print query handled correctly.
+  Geolocale Species Stats link modified. 
+  Bioregion API without parameters link corrected. 
+
+Release 8.10.2
+Date: Feb 4
+  New Image Upload Facility respects the Down For Maintenance mechanism.
+  makeLinks.sh script modified for new production environment.
+
 Release 8.10.1
 Date: Feb 3
   Allow recent desc edit generation through http get.
-  
-Release 8.10.1
-Date: Feb 3
   Login and Group management refinement.
 
 Release 8.10

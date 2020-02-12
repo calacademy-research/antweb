@@ -133,7 +133,7 @@ public class LoginDb extends AntwebDb {
             while (rset.next()) {
                 Curator curator = getCurator(rset.getInt("id"));
                 curatorList.add(curator);
-                if (curator.getId() == 1752) A.log("getAllCurators() curator Gibb:" + curator + " uploadSpecimens:" + curator.isUploadSpecimens());
+                //if (curator.getId() == 1752) A.log("getAllCurators() curator Gibb:" + curator + " uploadSpecimens:" + curator.isUploadSpecimens());
             }
             Collections.sort(curatorList);  
         } finally {
