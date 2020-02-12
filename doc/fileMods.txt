@@ -23,10 +23,12 @@ Release 8.11
 #       modified:   src/org/calacademy/antweb/home/LoginDb.java
 #       modified:   src/org/calacademy/antweb/util/AntwebProps.java
 #       modified:   web/documentation/releaseNum.jsp
+#       modified:   apiV3_1-body.jsp
 #
 # Untracked files:
 #       WEB-INF/classes/ProjectResources.properties
 #       build/
+
 
 Release 8.10.4
 M    trunk/doc/release.txt
