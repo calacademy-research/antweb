@@ -22,58 +22,10 @@
 
 <a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><br><br><br>
 <br>
-<h1>Antweb Server Status</h1>
+<h1><u>Antweb Server Status</u></h1>
 
 <% // Object o = null;  o.toString(); // uncomment this line to create stacktrace %>
 
-<h3>Server Properties </h3>
-
-<b>DomainApp</b>: <%= domainApp %>
-<br><b>SecureDomainApp</b>: <%= AntwebProps.getSecureDomainApp() %>
-
-<br><b>ImgDomainApp:</b> <%= AntwebProps.getImgDomainApp() %>
-<br><b>Your Local Address:</b> <%= request.getLocalAddr() %>
-<br><b>Your Remote Address:</b> <%= request.getRemoteAddr() %>
-<br><b>Your RemoteHost:</b> <%= request.getRemoteHost() %>
-<br><b>User Agent:</b> <%= request.getHeader("User-Agent") %>
-<br><b>File Encoding:</b> <%= System.getProperty("file.encoding") %> : <%=java.nio.charset.Charset.defaultCharset() %>
-<br><b>Legacy Merge Sort:</b> <%= System.getProperty("java.util.Arrays.useLegacyMergeSort") %>
-<br><b>trimSpaces:</b> <%= getServletConfig().getInitParameter("trimSpaces") %>
-<br><b>isLocal:</b> <%= AntwebProps.isLocal() %>
-<br><b>isDevMode:</b> <%= AntwebProps.isDevMode() %>
-<br><b>isStageMode:</b> <%= AntwebProps.isStageMode() %>
-<br><b>isDevOrStageMode:</b> <%= AntwebProps.isDevOrStageMode() %>
-<br><b>isLiveMode:</b> <%= AntwebProps.isLiveMode() %>
-<br><b>CPU:</b> <%= AntwebSystem.getCpuLoad() %>
-<br><b>Encodings:</b><%= HttpUtil.showEncodings(request, response) %>
-<%
-String serverDetails = (String) request.getAttribute("serverDetails");
-%>
-<br><b>Server Details:</b> <%= serverDetails %>
-<br><b>Antweb Props:</b><%= AntwebProps.htmlReport() %>
-<br>
-
-<%
-File file = new File("/");
-
-long totalSpaceInMB = file.getTotalSpace() / 1024 / 1024 / 1024;
-long freeSpaceInMB = file.getFreeSpace() / 1024 / 1024 / 1024;
-long usableSpaceInMB = file.getUsableSpace() / 1024 / 1024 / 1024;
-
-String space = " Total:" + totalSpaceInMB + "GB Free:" + freeSpaceInMB + "GB Usable:" + usableSpaceInMB + "GB";
-double percent = 100 - ((file.getUsableSpace() * 100) / file.getTotalSpace());
-out.println("<b>Disk:</b> <font color=red>" + percent + "%</font>.  " + space);
-%>
-<br>
-<%
-  String memoryStat = AntwebUtil.getMemoryStats();
-  AntwebUtil.log("info", domainApp + "/serverStatus.jsp.  memory:" + memoryStat);
-%>
-
-<b>Memory Stats</b> - <%= memoryStat %>
-<br><b>isServerBusy:</b> <%= request.getAttribute("isServerBusy") %>
-
-<br><br>
 <h3>Antweb Operation</h3>
 
 <br><b>Current Time:</b> <%= (new Date()).toString() %>
@@ -124,6 +76,56 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
 <br><b>Profile:</b><%= QueryProfiler.report() %>
 
 <br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
+
+
+<br><br>
+<h3>Server Properties </h3>
+
+<b>DomainApp</b>: <%= domainApp %>
+<br><b>SecureDomainApp</b>: <%= AntwebProps.getSecureDomainApp() %>
+
+<br><b>ImgDomainApp:</b> <%= AntwebProps.getImgDomainApp() %>
+<br><b>Your Local Address:</b> <%= request.getLocalAddr() %>
+<br><b>Your Remote Address:</b> <%= request.getRemoteAddr() %>
+<br><b>Your RemoteHost:</b> <%= request.getRemoteHost() %>
+<br><b>User Agent:</b> <%= request.getHeader("User-Agent") %>
+<br><b>File Encoding:</b> <%= System.getProperty("file.encoding") %> : <%=java.nio.charset.Charset.defaultCharset() %>
+<br><b>Legacy Merge Sort:</b> <%= System.getProperty("java.util.Arrays.useLegacyMergeSort") %>
+<br><b>trimSpaces:</b> <%= getServletConfig().getInitParameter("trimSpaces") %>
+<br><b>isLocal:</b> <%= AntwebProps.isLocal() %>
+<br><b>isDevMode:</b> <%= AntwebProps.isDevMode() %>
+<br><b>isStageMode:</b> <%= AntwebProps.isStageMode() %>
+<br><b>isDevOrStageMode:</b> <%= AntwebProps.isDevOrStageMode() %>
+<br><b>isLiveMode:</b> <%= AntwebProps.isLiveMode() %>
+<br><b>CPU:</b> <%= AntwebSystem.getCpuLoad() %>
+<br><b>Encodings:</b><%= HttpUtil.showEncodings(request, response) %>
+<%
+String serverDetails = (String) request.getAttribute("serverDetails");
+%>
+<br><b>Server Details:</b> <%= serverDetails %>
+<br><b>Antweb Props:</b><%= AntwebProps.htmlReport() %>
+<br>
+
+<%
+File file = new File("/");
+
+long totalSpaceInMB = file.getTotalSpace() / 1024 / 1024 / 1024;
+long freeSpaceInMB = file.getFreeSpace() / 1024 / 1024 / 1024;
+long usableSpaceInMB = file.getUsableSpace() / 1024 / 1024 / 1024;
+
+String space = " Total:" + totalSpaceInMB + "GB Free:" + freeSpaceInMB + "GB Usable:" + usableSpaceInMB + "GB";
+double percent = 100 - ((file.getUsableSpace() * 100) / file.getTotalSpace());
+out.println("<b>Disk:</b> <font color=red>" + percent + "%</font>.  " + space);
+%>
+<br>
+<%
+  String memoryStat = AntwebUtil.getMemoryStats();
+  AntwebUtil.log("info", domainApp + "/serverStatus.jsp.  memory:" + memoryStat);
+%>
+
+<b>Memory Stats</b> - <%= memoryStat %>
+<br><b>isServerBusy:</b> <%= request.getAttribute("isServerBusy") %>
+
 
 <br><br><h3>Session Attributes Names:</h3>
  <%  //HttpSession session = request.getSession();
