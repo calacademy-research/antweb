@@ -11798,13 +11798,37 @@ Feb 11. 3hrs.
   Set up Git antweb repository. Account and Repository.
   Managed checkout. Could not manage check in.  
 `
-Feb 12. 11 - 
+Feb 12. 11 - 6. 1.5hr break. 1hr in eve. 6.5hrs.
   Get Joe Remote Desktop access into my dev machine (laptop) using Chrome.
   Configure laptop to access Github. Install public ssh keys.
   Configure 10.2.22.30 to access Github. Install public ssh keys for mark and antweb.
   Handle the artist created db issue but updating early artist to legal values.
   Get github version configured and working on local machine.  
+  Move production database to new server.
+  Get UWSGI working. Find fault (not supporting version in url).
+  Deploy release to new server. Adjust to work around git.
+  Diagnose broken apache (bad key file).
+  Install link browser.
+  Document.
+
+Feb 13
+  Work with Joe to get Apache/Tomcat responding to python requests.
+  Create softlink for /mnt/backup.
+  Look into file copy. Taking so long.
   
+  
+
+
+git removed:
+rm 'web/images/.xvpics/madagascar_full.gif'
+rm 'web/images/.xvpics/world.gif'
+rm 'web/images/.xvpics/world_browse_on.gif'
+rm 'web/images/.xvpics/world_full.gif'
+rm 'web/images/.xvpics/world_list.gif'
+rm 'web/images/.xvpics/world_search_on.gif'
+
+web/images/index.jsp removed. Was:
+  <% response.sendRedirect(org.calacademy.antweb.util.AntwebProps.getDomainApp() + "/index.do"); %>  
     
   
 Login system.

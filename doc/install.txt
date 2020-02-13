@@ -190,13 +190,12 @@ Pip3 install Flask-SQLAlchemy
 pip3 install Flask-Restful
 pip3 install mysqlclient
 
-
 Sudo Apt-get install apache2-dev
 Sudo Pip3 install mod-wsgi 
 
 
-API
----
+USWGI API
+---------
 Follow documentation under doc/apiV3.txt
 
 --uWSGI python for tomcat
@@ -209,10 +208,36 @@ sudo -H  pip install uwsgi
 
 launch uwsgi:
 cd /antweb/antweb_deploy/api/v3.1
-uwsgi --http :9090 --wsgi-file /antweb/antweb_deploy/api/v3.1/api.py
+uwsgi --http :9091 --wsgi-file /antweb/antweb_deploy/api/v3.1/api.py
 
-works: http://10.2.22.30:9090/specimens?specimenCode=casent0922626&up=1
+works: http://10.2.22.30:9091/specimens?specimenCode=casent0922626&up=1
 
+This solution doesn't allow for the version number as Apache would...
+Used to be like:
+    https://api.antweb.org/v3.1/specimens?specimenCode=casent0922626
+
+
+Apache API
+----------
+Main config file here: 
+  /etc/apache2/apache2.conf
+
+/etc/apache2/sites-enabled/default-ssl.conf
+
+Apache Work
+-----------
+Not coming up at "apachectl start"
+
+/etc/ssl/private/www_antweb_org.key does not exist or is empty maybe because it is owned by root?
+
+Running apachectl start with sudo seems to work.
+
+apachectl status returns "/usr/sbin/apachectl: www-browser: not found"
+To install a link browser:
+apt install aptitude
+aptitude install w3m
+
+ 
 
 
 
@@ -263,6 +288,8 @@ cd links
 sudo sh ../antweb_deploy/etc/makeLinks.sh
 sudo chmod 775 tomcat/logs -R
 
+ln -s /data/antweb/backup /mnt/backup
+
 sudo systemctl restart tomcat
 http://10.2.22.30:8080/manager/html
 
@@ -312,7 +339,7 @@ On dev machine (Mac laptop).
 
   git clone git@github.com:calacademy-research/antweb.git
   git status
-  git commit -m "This is mark's initial trial"
+  git commit -a -m "This is mark's initial trial"
   git push
 
   sh etc/configMark.sh
