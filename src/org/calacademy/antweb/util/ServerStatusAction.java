@@ -220,7 +220,7 @@ static double getVersion () {
             connection = DBUtil.getConnection(dataSource, "ServerStatusAction.setOperationLockAttr()");
             operationLock = (new OperationLockDb(connection)).getOperationLock();
             if (operationLock != null) {
-              s_log.warn("setOperationLockAttr() isLocked:" + operationLock.isLocked());
+              //s_log.warn("setOperationLockAttr() isLocked:" + operationLock.isLocked());
               request.setAttribute("operationLock", operationLock);
             }
         } catch (SQLException e) {

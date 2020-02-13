@@ -168,7 +168,7 @@ Tomcat failing on launch. Replaced keystone entry:
 From /opt/tomcat/latest”
 Chown -r tomcat:tomcat webapps/ work/ temp/ logs/ conf
 
-
+usermod -a -G antweb tomcat
 
 Installing apache mod_jk:
 https://www.digitalocean.com/community/tutorials/how-to-encrypt-tomcat-8-connections-with-apache-or-nginx-on-ubuntu-16-04
