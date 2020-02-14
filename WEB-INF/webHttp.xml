@@ -74,7 +74,7 @@
 
 <servlet-mapping>
   <servlet-name>DirectoryListing</servlet-name>
-  <url-pattern>/</url-pattern>
+  <url-pattern>/images/</url-pattern>
     <!-- expose all dir listing / is not recommended, lock down to specific dir -->
 </servlet-mapping>
 

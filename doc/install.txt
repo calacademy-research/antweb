@@ -178,6 +178,9 @@ https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl
 When complete, this is the only valid site:
 /etc/apache2/sites-enabled/default-ssl.conf
 
+Set listings to true in /usr/local/tomcat/conf/web.xml
+
+
 Python/API setup (Joe's notes)
 ----------------
 sudo apt install default-jdk
@@ -306,6 +309,9 @@ Mount drives
   10.2.22.34:/vol/linux_backup/antweb_q
                       250G   34G  217G  14% /mnt/backup
 
+Changed all http to https with:
+   find . -name "*.html" -exec perl -p -i -e "s/http/https/g"  {} \;
+
 
 GIT
 ---
@@ -367,6 +373,103 @@ sudo mkdir antblog
 sudo chmod 775 antblog
 From the live machine in /var/www/html/:
   scp -r antblog/* mark@10.2.22.30:/var/www/html/antblog
+
+
+
+We use tomcat and apache.
+Tomcat connects to apache via mod_jk, and the command JKMmount, appended at the end of these notes
+We also call python.
+Python is invoked from WSGI using the WSGI magic at the end of this file. 
+We use a virtualenv for python. WE have to set the virtualenv explicitly, see end of file
+
+
+
+test1:
+https://certbot.eff.org/lets-encrypt/ubuntubionic-apache
+https://10.2.22.30/web/log/worldants/20200107-05:00:02-fetchAndReloadWorldants.html
+
+
+
+Tomcat installation - with connector information below.
+Follow guide here: https://www.digitalocean.com/community/tutorials/install-tomcat-9-ubuntu-1804
+
+sudo apt install default-jdk
+
+In /opt/tomcat/latest/conf:
+/usr/lib/jvm/java-11-openjdk-amd64/bin/keytool -genkey -alias tomcat -keyalg RSA -keystore keystore
+
+
+Tomcat failing on launch. Replaced keystone entry:
+    <Resource name="UserDatabase" auth="Container"
+              type="org.apache.catalina.UserDatabase"
+              description="User database that can be updated and saved"
+              factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+              pathname="conf/tomcat-users.xml" />
+  </GlobalNamingResources>
+
+From /opt/tomcat/latest”
+Chown -r tomcat:tomcat webapps/ work/ temp/ logs/ conf
+
+
+
+
+
+Installing apache mod_jk:
+https://www.digitalocean.com/community/tutorials/how-to-encrypt-tomcat-8-connections-with-apache-or-nginx-on-ubuntu-16-04
+Make cert:
+https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-apache-in-ubuntu-16-04
+
+When complete, this is the only valid site:
+/etc/apache2/sites-enabled/default-ssl.conf
+
+Python/API setup:
+[all apt modules installed with sudo]
+
+apt-get install python3-pip
+hash -d pip3
+apt-get install libssl-dev
+pip3 install phpmysql
+Pip3 install Flask-SQLAlchemy
+pip3 install Flask-Restful
+pip3 install mysqlclient
+
+—————— new notes
+Sudo Apt-get install apache2-dev
+Sudo Pip3 install mod-wsgi 
+
+—————10.2.22.30
+/var/www/html/v3.1/apy.py is our target
+
+sudo apt-get install libapache2-mod-wsgi
+
+
+—————
+  GNU nano 2.9.3                                                                /etc/apache2/sites-available/default-ssl.conf                                                                Modified
+
+<IfModule mod_ssl.c>
+        <VirtualHost *:443>
+                ServerAdmin jrussack@calacademy.org
+                ServerName www.antweb.org
+                ServerAlias antweb.org
+                WSGIProcessGroup api_python
+                WSGIApplicationGroup %{GLOBAL}
+                WSGIDaemonProcess api_python user=www-data group=www-data python-home=/var/www/script/venv python-path=/var/www/script/venv/site-packages:/var/www/script/venv/lib/python3.6/site-pack$
+                WSGIScriptAlias /api/v3.1 /var/www/script/v3.1/api.py process-group=api_python
+
+
+                JKMount / ajp13_worker
+                JKMount /*.html ajp13_worker
+                JKMount /*.css ajp13_worker
+                JKMount /*.jsp ajp13_worker
+                JKMount /*.do ajp13_worker
+                JKMount /*.jpg ajp13_worker
+                JKMount /*.jpeg ajp13_worker
+                JKMount /*.gif ajp13_worker
+                JKMount /*.png ajp13_worker
+                JKMount /antblog/* ajp13_worker
+
+
+                DocumentRoot /var/www/html
 
 
 
