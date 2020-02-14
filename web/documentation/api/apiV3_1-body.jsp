@@ -4,8 +4,8 @@
 
 <% 
   //String apiDomainApp  = "http://api.antweb.org/v3.1";
-  String apiDomainApp = "https://10.2.22.30/v3.1";
-  //String apiDomainApp = "https://antweb.org/v3.1";
+  //String apiDomainApp = "https://10.2.22.30/v3.1";
+  String apiDomainApp = "https://antweb.org/v3.1";
   
   if (AntwebProps.isDevMode()) {
     apiDomainApp = "http://localhost:5000";  
@@ -308,7 +308,7 @@
             <p><b>Examples:</b>
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?taxonName=myrmicinaecrematogaster modiglianii<%= appendStr %>"><%= apiDomainApp %>/taxa?taxonName=myrmicinaecrematogaster modiglianii</a>                  	
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?subfamily=myrmicinae&rank=subfamily<%= appendStr %>"><%= apiDomainApp %>/taxa?subfamily=myrmicinae&rank=subfamily</a>   	
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?genus=camponotus&rank=genus"><%= apiDomainApp %>/taxa?genus=camponotus&rank=genus</a>
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?genus=camponotus&rank=genus<%= appendStr %>"><%= apiDomainApp %>/taxa?genus=camponotus&rank=genus</a>
             <p class="link">This Query will return multiple species from different genera:
               <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?species=aberrans&rank=species&status=valid<%= appendStr %>"><%= apiDomainApp %>/taxa?aberrans&rank=species&status=valid</a>
             </p>          

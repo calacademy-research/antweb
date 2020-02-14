@@ -228,6 +228,10 @@ Main config file here:
 
 sudo apachectl restart
 
+sudo systemctl stop apache2
+
+log files: /var/log/apache2/error.log  
+
 
 
 
@@ -290,11 +294,6 @@ Into:
 emacs /antweb/antweb_deploy/WEB-INF/classes/logging.properties
 
            
-Apache
-------           
-sudo systemctl stop apache2           
-           
-
 Antblog
 -------
 

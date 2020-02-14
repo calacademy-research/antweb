@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Can be execute in local environment (in /Users/mark/dev/calacademy/antweb/api/v3 directory) as such:
-#     python3.6 api.py
+#     python3 api.py
 #
 # Accessible, for instance, here: http://localhost:5000/specimens?specimenCode=casent0922626    
     
