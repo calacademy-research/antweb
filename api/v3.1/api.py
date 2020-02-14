@@ -1,7 +1,5 @@
-#! /usr/local/bin/python3.6
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
-
-# Will need to be: #!/usr/bin/env python3 on the new server, according to Joe.
 
 # Can be execute in local environment (in /Users/mark/dev/calacademy/antweb/api/v3 directory) as such:
 #     python3.6 api.py
@@ -763,7 +761,7 @@ class Taxon(Base):
     specimenCount = Column('specimen_count', Integer)
     imageCount = Column('image_count', Integer)
     parentTaxonName = Column('parent_taxon_name', String)
-    typed = Column(Boolean)
+    type = Column(Boolean)
     antcatId = Column('antcat_id', Integer)
     authorDate = Column('author_date', String)
     authors = Column(String)
@@ -786,7 +784,7 @@ class Taxon(Base):
          , family='%s', kingdomName='%s', phylumName='%s' \
          , className='%s', orderName='%s', antcat='%s', subfamilyCount ='%s' \
          , genusCount='%s', speciesCount='%s', specimenCount='%s', imageCount='%s' \
-         , parentTaxonName='%s', typed='%s', antcatId='%s', authorDate='%s' \
+         , parentTaxonName='%s', type='%s', antcatId='%s', authorDate='%s' \
          , authors='%s', year='%s', status='%s', currentValidName='%s', bioregion='%s' \
          , country='%s', currentValidParent='%s', lineNum='%s', accessGroup='%s' \
        )>" % (         
@@ -796,7 +794,7 @@ class Taxon(Base):
          , self.family, self.kingdomName, self.phylumName \
          , self.className, self.orderName, self.antcat, self.subfamilyCount \
          , self.genusCount, self.speciesCount, self.subspeciesCount, self.imageCount \
-         , self.parentTaxonName, self.typed, self.antcatId, self.authorDate \
+         , self.parentTaxonName, self.type, self.antcatId, self.authorDate \
          , self.authors, self.year, self.status, self.currentValidName, self.bioregion \
          , self.country, self.currentValidParent, self.lineNum, self.accessGroup \
        )
@@ -877,7 +875,7 @@ def getTaxa():
         , 'specimenCount': taxon.specimenCount
         , 'imageCount': taxon.imageCount
         , 'parentTaxonName': taxon.parentTaxonName
-        , 'typed': taxon.typed
+        , 'type': taxon.type
         , 'antcatId': taxon.antcatId
         , 'authorDate': taxon.authorDate
         , 'authors': taxon.authors
@@ -983,7 +981,7 @@ def getDistinctTaxa():
     metaDataDict['count'] = len(dataList)
         
     if (isDevMode):
-        print("devMode query:" + query)
+        print("devMode query:" + str(query))
         
     if ('subfamily' == rank):    
       if (ndjson != 'true'):
@@ -1007,7 +1005,7 @@ def getDistinctTaxa():
 class Image(Base):
     __tablename__ = 'image'
 
-    uid = Column(String, primary_key=True)
+    id = Column(String, primary_key=True)
     shotType = Column('shot_type', String)
     code = Column('image_of_id', String)
     uploadDate = Column('upload_date', String)
@@ -1015,8 +1013,8 @@ class Image(Base):
     hasTiff = Column('has_tiff', String)
 
     def __repr__(self):
-       return "<Image(uid='%s', shotType='%s', code='%s', uploadDate='%s', shotNumber='%s', hasTiff='%s')>" % (
-         self.uid, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
+       return "<Image(id='%s', shotType='%s', code='%s', uploadDate='%s', shotNumber='%s', hasTiff='%s')>" % (
+         self.id, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
     
 @application.route('/images', methods=['GET'])
 def getImages():
@@ -1065,7 +1063,7 @@ def getImages():
               , base + '_thumbview.jpg'
         ]
         imageDict = {
-          'imageId': image.uid
+          'imageId': image.id
         , 'shotType': image.shotType
         , "urls": urls
         , 'uploadDate': image.uploadDate
@@ -1100,7 +1098,7 @@ def getImages():
     specimenCount += 1
     dataList.append(specimenDict)
      
-    # SELECT uid,shot_type,upload_date,shot_number,has_tiff FROM image WHERE image_of_id=? ORDER BY shot_number ASC     
+    # SELECT id,shot_type,upload_date,shot_number,has_tiff FROM image WHERE image_of_id=? ORDER BY shot_number ASC     
     if (isDevMode):
         print(query)
     

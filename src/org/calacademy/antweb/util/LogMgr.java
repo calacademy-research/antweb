@@ -117,7 +117,7 @@ public class LogMgr {
     try {
       Files.move(source, dest.resolve(source.getFileName()), REPLACE_EXISTING);
     } catch (IOException e) {
-      //s_log.info("moveFile() e:" + e);
+      s_log.warn("moveFile() e:" + e + " source:" + source + " dest:" + dest);
     }   
   }
   
