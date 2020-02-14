@@ -168,7 +168,7 @@ Tomcat failing on launch. Replaced keystone entry:
 From /opt/tomcat/latest”
 Chown -r tomcat:tomcat webapps/ work/ temp/ logs/ conf
 
-usermod -a -G antweb tomcat
+usermod -a -G antweb tomcat]
 
 Installing apache mod_jk:
 https://www.digitalocean.com/community/tutorials/how-to-encrypt-tomcat-8-connections-with-apache-or-nginx-on-ubuntu-16-04
@@ -193,8 +193,10 @@ pip3 install mysqlclient
 Sudo Apt-get install apache2-dev
 Sudo Pip3 install mod-wsgi 
 
+ln -s /antweb/antweb/api/v3.1 v3.1
 
-USWGI API
+
+USWGI API * NOT being used. We went the Apache route. This can be deleted.
 ---------
 Follow documentation under doc/apiV3.txt
 
@@ -224,20 +226,8 @@ Main config file here:
 
 /etc/apache2/sites-enabled/default-ssl.conf
 
-Apache Work
------------
-Not coming up at "apachectl start"
+sudo apachectl restart
 
-/etc/ssl/private/www_antweb_org.key does not exist or is empty maybe because it is owned by root?
-
-Running apachectl start with sudo seems to work.
-
-apachectl status returns "/usr/sbin/apachectl: www-browser: not found"
-To install a link browser:
-apt install aptitude
-aptitude install w3m
-
- 
 
 
 
