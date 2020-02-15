@@ -46,7 +46,7 @@ if (AntwebProps.isDevMode() || LoginMgr.isDeveloper(request)) {
 		while (headerNames.hasMoreElements()) {
 			String key = (String) headerNames.nextElement();
 			String value = request.getHeader(key);
-            LogMgr.log("message-body.jsp key:" + key + " value:" + value);
+            A.log("unboldMessage-body.jsp key:" + key + " value:" + value);
 		}
 		       
 /*    

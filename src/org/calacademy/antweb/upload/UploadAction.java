@@ -460,7 +460,7 @@ public class UploadAction extends Action {
 				}	
 
 				if (!AntwebProps.isDevMode()) {
-  	 			  //runCountCrawls(connection);
+  	 			  runCountCrawls(connection);
 				}
 				
 				if (!AntwebProps.isDevMode()) {
