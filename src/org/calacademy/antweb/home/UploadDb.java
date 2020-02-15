@@ -131,10 +131,10 @@ public class UploadDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "addUploadLine()");
             insert = "insert into upload_line(file_name, line_num, display_line_num, line, group_id) " 
-              + "values ('" + fileName + "', " + lineNum + ", " + displayLineNum + ", '" + theLine + "', " + groupId + ")";  
+              + "values ('" + fileName + "', " + lineNum + ", " + displayLineNum + ", '" + AntFormatter.escapeQuotes(theLine) + "', " + groupId + ")";  
             stmt.executeUpdate(insert);
         } catch (SQLException e) {
-            s_log.error("addUploadLine() e:" + e);
+            s_log.error("addUploadLine() fileName:" + fileName + " lineNum:" + lineNum + " displayLineNum:" + displayLineNum + " e:" + e);
         } finally {
            DBUtil.close(stmt, null, this, "addUploadLine()");        
         }
