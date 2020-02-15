@@ -156,12 +156,13 @@ public class Scheduler extends Action {
 					  s_log.warn("doAction() url:" + url);
 					  output += HttpUtil.fetchUrl(url); 
 					}
+if (false) {					
 					if (i == 0 || i == 5) {
 					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow";
 					  s_log.warn("doAction() url:" + url);
 					  output += HttpUtil.fetchUrl(url); 
 					}
-					
+}					
                     // 4 sec
                     if (i == 0 || i == 6) {
                       s_log.warn("doAction() Check For Antwiki Species and Fossil List Updates");
