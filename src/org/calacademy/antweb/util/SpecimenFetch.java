@@ -33,7 +33,16 @@ public class SpecimenFetch extends HttpServlet {
       // return an xml page
     } 
     
-    String output = HttpUtil.getUrl(url);
+    String output = null;
+    try {
+      output = HttpUtil.fetchUrl(url);
+    } catch (Exception e) {
+      output = "e:" + e.toString();
+      //if (AntwebProps.isDevMode()) 
+      output += " url:" + url;
+      s_log.error("execute() " + output);
+    }
+
     //response.setContentType("text/html");
 
     //A.log("SpecimenFetch output:" + output);

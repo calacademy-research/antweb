@@ -175,7 +175,7 @@ public abstract class AntwebProps {
     public static String getProtocol() {
         // notice that this does not contain a follow / as does getSiteURL.  
         String protocol = AntwebProps.getProp("site.protocol");
-        A.log("getProtocol() protocol:"+ protocol);
+        //A.log("getProtocol() protocol:"+ protocol);
         return protocol;
     }
     

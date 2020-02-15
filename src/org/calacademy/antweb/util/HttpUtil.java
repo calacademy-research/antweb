@@ -1072,6 +1072,56 @@ public abstract class HttpUtil {
       return output;
   }
 
+  // fetchUrl is like getUrl but better because it doesnt trap exceptions.
+  // SpecimenFetch uses it.
+  public static String fetchUrl(String theUrl)   
+    throws IOException {  
+
+      String encode = "UTF-8";
+    
+      String output = "";
+      
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + theUrl);
+
+      if ((false) && (AntwebProps.isDevMode())) {
+        s_log.warn("getUrl() the url:" + theUrl);
+        return "";
+      }
+      
+      if (AntwebProps.isStageMode()) {
+        if (!s_beenReported) {
+          if (theUrl.contains("https:")) {
+            s_log.error("getUrl() contains https.  May not work on stage.  url:" + theUrl);
+            s_beenReported = true;         
+          }
+        }
+      }
+      
+      StringBuffer strVal = new StringBuffer();
+      URL url = null;
+
+      //if (AntwebProps.isDevMode()) theUrl = "http://localhost/antweb/specimen.do?name=CASENT0915637";
+
+      //A.log("getUrl:" + theUrl);
+      //InputStream is = new FileInputStream(theUrl);
+      String UTF8 = "utf8";
+      int BUFFER_SIZE = 8192;
+      url = new URL(theUrl) ;
+              
+      //BufferedReader br = new BufferedReader(new InputStreamReader(is, UTF8), BUFFER_SIZE);
+      BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), encode));  //"UTF-8" ?
+
+      String str = null;
+      while ((str = in.readLine()) != null) {
+          //A.log("getUrl() str:" + str);
+          strVal.append(str);
+          //output += str;
+      }   
+
+	  output = strVal.toString();
+      return output;
+  }
+
   public static String getUrlOld(String theUrl)
     throws AntwebException {
       URL url = null;
