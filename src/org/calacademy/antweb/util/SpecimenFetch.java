@@ -24,9 +24,17 @@ public class SpecimenFetch extends HttpServlet {
     String pathInfo = request.getPathInfo();
     String specimenCode = pathInfo.substring(1);
 
-    String url = AntwebProps.getDomainApp() + "/specimen.do?name=" + specimenCode;
-    //s_log.warn("doGet() pathInfo:" + pathInfo + " url:" + url);
+    // String url = AntwebProps.getDomainApp() + "/specimen.do?name=" + specimenCode;
+    
+    // The new server Feb 2020 can not access itself at https://www.antweb.org
+    String url = "http://localhost" + AntwebProps.getApp() + "/specimen.do?name=" + specimenCode;
+/*
+    if (AntwebProps.isDevMode()) {
+      url = "http://localhost/antweb" + "/specimen.do?name=" + specimenCode;
+    }
 
+    //s_log.warn("doGet() pathInfo:" + pathInfo + " url:" + url);
+*/
     if (request.getRequestURL().toString().contains("data.")) {
       //s_log.warn("doGet() data request:" + request.getRequestURL());  // http://localhost/antweb/specimen/CASENT0106322X
 
