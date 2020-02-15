@@ -182,7 +182,7 @@ public abstract class AntwebProps {
     // This is used for self reflexive requests. When the server calls itself,
     //   possible it can't through ssh. Use http, on localhost, with app (if relevant).
     public static String getThisDomainApp() {
-      String thisDomainApp = "https://localhost" + AntwebProps.getApp();
+      String thisDomainApp = "https://www.antweb.org" + AntwebProps.getApp();
       return thisDomainApp;
     }
        
