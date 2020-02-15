@@ -862,8 +862,8 @@ update specimen set other = '
         if (localityLink == null) localityLink = "";
         if (!target.equals("")) {
             String localityName = (getLocalityName() != null) ? getLocalityName() : "link";
-            //out.println("LocalityLink1:" + localityLink + " target:" + target + " name:" + getLocalityName());
-            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + target + "\">" + localityName + "</a>";
+            A.log("getLocalityInfo() localityLink:" + localityLink + " target:" + target + " name:" + localityName);
+            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + localityName + "\">" + localityName + "</a>"; // was name = target
         }
         if ( (getLocalityName() != null) 
             || (Utility.notBlank(getCountry())) 
@@ -908,7 +908,7 @@ update specimen set other = '
             String localityName = (getLocalityName() != null) ? getLocalityName() : "link";
             //out.println("LocalityLink1:" + localityLink + " target:" + target + " name:" + getLocalityName());
             if ("locality".equals(sortBy)) localityName =  "<span class=\"sorted_by\">" + localityName + "</span>";
-            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + target + "\">" + localityName + "</a>";
+            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + localityName + "\">" + localityName + "</a>"; // was name = target
         }
         if ( (getLocalityName() != null) 
             || (Utility.notBlank(getCountry())) 

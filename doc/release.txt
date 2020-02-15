@@ -1,3 +1,9 @@
+Release 8.11.1
+Date: Feb 15
+  Modify codebase to make self-referential http requests.
+  Scheduler changes
+  Server configuration
+
 Release 8.11
 Date: Feb 14
   First Github release.
