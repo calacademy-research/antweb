@@ -166,7 +166,7 @@ if (false) {
                     // 4 sec
                     if (i == 0 || i == 6) {
                       s_log.warn("doAction() Check For Antwiki Species and Fossil List Updates");
-                      output += HttpUtil.fetchUrl(AntwebProps.getThiDomainApp() + "/antWikiData.do?action=checkForUpdates");
+                      output += HttpUtil.fetchUrl(AntwebProps.getThisDomainApp() + "/antWikiData.do?action=checkForUpdates");
                     }
 			
 					s_log.warn("doAction() scheduler complete.");
