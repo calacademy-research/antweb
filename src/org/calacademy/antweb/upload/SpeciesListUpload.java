@@ -42,7 +42,7 @@ import org.apache.avalon.framework.logger.Logger;
  *
  * First the file is copied to the server's working dir:
  * {$workingdir}/[project].txt
- *   where $workingdir is on production:/home/antweb/workingdir and on my dev box:/Users/mark/dev/calAcademy/workingdir
+ *   where $workingdir is on production:/antweb/workingdir and on my dev box:/Users/mark/dev/calAcademy/workingdir
  * 
  * And then it is copied to the project's data directory... {$antweb.home}/[project]/[project]_project.txt
  *   where $antweb.home is on production:/data/antweb and on my dev box: /usr/local/tomcat/webapps/antweb

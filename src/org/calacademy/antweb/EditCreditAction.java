@@ -12,6 +12,9 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 
 /**
+ * Deprecated? editCredit.do? web/edit_credit.jsp
+ *
+ *
  * This class takes the UploadForm and retrieves the text value
  * and file attributes and puts them in the request for the display.jsp
  * page to display them

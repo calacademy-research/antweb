@@ -274,7 +274,7 @@ public class UploadAction extends Action {
 				
 				// Fetched from AppResources site.inputfilehome=/Users/mark/dev/calAcademy/workingdir/                    
 				// In this test case, no file is uploaded, but the server side workingdir copy is used. (specimen21.txt).
-				// UploadFile - backup() /home/antweb/workingdir/specimen21.txt to /data/antweb/web/upload/20131112-21:28:53-specimen21.txt
+				// UploadFile - backup() /antweb/workingdir/specimen21.txt to /data/antweb/web/upload/20131112-21:28:53-specimen21.txt
 				String formFileName = (new Date()).toString() + "specimenTest" + accessGroup + ".txt";
 
 				//logFileName += accessGroup.getAbbrev() + "SpecimenTest" + UploadDetails.getLogExt();
@@ -293,8 +293,8 @@ public class UploadAction extends Action {
 			  } else if ("allSpecimenFiles".equals(action)) {
 				/*
 				// All specimen*.txt files should be downloaded to the machine from the production site, prior to this command.
-				cd /home/antweb/workingdir/
-				scp mjohnson@antweb-prod:/home/antweb/workingdir/specimen*.txt .
+				cd /antweb/workingdir/
+				scp mjohnson@antweb-prod:/antweb/workingdir/specimen*.txt .
 				*/
 				//logFileName += "allSpecimenFiles" + UploadDetails.getLogExt();
 				for (int i=0 ; i < 100; ++i) {

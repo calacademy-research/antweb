@@ -82,7 +82,7 @@ public abstract class AntwebFunctions {
         }
     }
 
-    private static String antwebDir = "/home/antweb/antweb_deploy";
+    private static String antwebDir = "/antweb/antweb_deploy";
 
     public static void imageCheck() {
       String imgDir = AntwebProps.getDocRoot() + "images/";
@@ -102,7 +102,7 @@ public abstract class AntwebFunctions {
 
 /*
     For this to be run, it needs to be run as root. There must be in the /etc/sudoers file the following:
-antweb	ALL=(ALL)	NOPASSWD: /home/antweb/antweb_deploy/bin/admin.sh   
+antweb	ALL=(ALL)	NOPASSWD: /antweb/antweb_deploy/bin/admin.sh   
     You will need to "C-x C-q" in order to edit /etc/sudoers even as root.
 
     Either by Scheduler, or by calling: /schedule.do?action=run&num=14

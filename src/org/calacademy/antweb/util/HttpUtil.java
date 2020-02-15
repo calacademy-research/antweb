@@ -49,7 +49,7 @@ public abstract class HttpUtil {
 
      if there are a variety of errors in the logs:
         
-          tail --lines 1000 /home/antweb/links/antweb.log
+          tail --lines 1000 /antweb/links/antweb.log
        
       and if the database connection pool is filling up quickly to the point of non-functioning....
 
@@ -63,7 +63,7 @@ public abstract class HttpUtil {
      
      To see the extent of the problem, grep for your current hour in the access_log and ssl_access_log to see the number of hits.
 
-       cd /home/antweb/links
+       cd /antweb/links
        sudo grep "18/Oct/2016:00" ssl_access_log | wc
 
      If much more than 10,000 / hour, it seems like someone is hammering the server.
