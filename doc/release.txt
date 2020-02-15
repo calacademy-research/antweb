@@ -1,6 +1,7 @@
 Release 8.11
-Date: Feb 12
+Date: Feb 14
   First Github release.
+  Implementation on new server hardware with all stack software brought current.
 
 Release 8.10.3
 Date: Feb 7

@@ -128,7 +128,7 @@ public class Scheduler extends Action {
 			if (action.equals("run")) {
 			    String output = "";
 				Date startTime = new Date();
-			
+			    String url = null;
 				try {
 					int i = 0;  // This will invoke all of them.
 					if (num > 0) i = num;    // This would invoke one of them
@@ -137,29 +137,29 @@ public class Scheduler extends Action {
 					//s_log.warn("doAction() action:" + action + " i:" + i + " num:" + num);
 
 					if (i == 0 || i == 1) {
-					  String url = AntwebProps.getDomainApp() + "/utilData.do?action=set1&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow";
 					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.getUrl(url); 
+					  output += HttpUtil.fetchUrl(url); 
 					}
 					if (i == 0 || i == 2) {
-					  String url = AntwebProps.getDomainApp() + "/utilData.do?action=set2&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow";
 					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.getUrl(url); 
+					  output += HttpUtil.fetchUrl(url); 
 					}
 					if (i == 0 || i == 3) {
-					  String url = AntwebProps.getDomainApp() + "/utilData.do?action=set3&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow";
 					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.getUrl(url); 
+					  output += HttpUtil.fetchUrl(url); 
 					}
 					if (i == 0 || i == 4) {
-					  String url = AntwebProps.getDomainApp() + "/utilData.do?action=set4&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow";
 					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.getUrl(url); 
+					  output += HttpUtil.fetchUrl(url); 
 					}
 					if (i == 0 || i == 5) {
-					  String url = AntwebProps.getDomainApp() + "/utilData.do?action=set5&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow";
 					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.getUrl(url); 
+					  output += HttpUtil.fetchUrl(url); 
 					}
 					
                     // 4 sec
@@ -171,7 +171,7 @@ public class Scheduler extends Action {
 					s_log.warn("doAction() scheduler complete.");
 			
 				} catch (IOException e) {
-				  s_log.warn("doAction e:" + e);
+				  s_log.warn("doAction e:" + e + " url:" + url);
 				}
 			
 				return "Scheduler " + action + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". output:" + output;
