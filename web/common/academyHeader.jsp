@@ -80,7 +80,7 @@
 			<ul>
 				<li><a href="<%= domainApp %>/about.do">About</a></li>
 				<li><a href="<%= domainApp %>/documentation.do">Participate</a></li>
-				<li><a href="<%= domainApp %>/antblog/" target="new">AntBlog</a></li>
+				<li><a href="<%= domainApp %>/antblog/index.html" target="new">AntBlog</a></li>
 				<li><a href="<%= domainApp %>/antShare.do" target="new">AntShare</a></li>  
 				<li><a href="<%= domainApp %>/press.do">Press</a></li>
 				<li><a href="<%= domainApp %>/favs.do">Favorites</a><img src='<%= AntwebProps.getDomainApp() %>/image/yellow-star-md.png' width=10/></li>

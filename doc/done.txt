@@ -11811,12 +11811,39 @@ Feb 12. 11 - 6. 1.5hr break. 1hr in eve. 6.5hrs.
   Install link browser.
   Document.
 
-Feb 13
+Feb 13. 5.5hrs
   Work with Joe to get Apache/Tomcat responding to python requests.
-  Create softlink for /mnt/backup.
-  Look into file copy. Taking so long.
-  
-  
+  Create softlink for /mnt/backup. Have Joe move from /backup/backup/ to backup/
+  Look into file copy. Taking so long. .snapshot is issue. Exclue. Document.
+  Look into Anc files. Participation link broken.
+  Look into permissions of /data/antweb/web and who is running tomcat?
+  Look into Antblog. Wait to be on Antweb as css includes might work there.
+  Look into Documentation links. Not working.
+  Update the api.do to have appropriate links for testing.
+  Take over the api from Joe. Working now except for a few of the methods.
+  Document/work with Joe.
+  Monitor the data copy.  
+
+Feb 14. 12 - 5.
+  Swap servers. Document.
+
+
+
+
+Fix Antblog. Make sign in go away. Move the Antblog into git and source tree.
+Fix API. Use requirements.txt to replicate environment. Fix actions.
+
+
+IntelliJ
+
+Python Venv
+venv path-to-python path-to-where-it-lives
+activate
+pip goes just to venv so you can track all the versions of your libraries.
+
+git ignore file to remove "git status" warnings.
+
+pip freeze
 
 
 git removed:
@@ -11850,19 +11877,6 @@ Research Shiny
 Turn Worldants Query into a proper page so that it has navigation links.
 
 
-
-
-
-
-Kelly
-
-Meditation. Just to get settled. Hand with breathe trance.
-
-Because we can. The 12 meridians.
-
-The point of awareness
-
-Interruption
 
 
 
