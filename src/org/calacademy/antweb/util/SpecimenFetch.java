@@ -27,7 +27,8 @@ public class SpecimenFetch extends HttpServlet {
     // String url = AntwebProps.getDomainApp() + "/specimen.do?name=" + specimenCode;
     
     // The new server Feb 2020 can not access itself at https://www.antweb.org
-    String url = "http://localhost" + AntwebProps.getApp() + "/specimen.do?name=" + specimenCode;
+        
+    String url = AntwebProps.getThisDomainApp() + "/specimen.do?name=" + specimenCode;
 /*
     if (AntwebProps.isDevMode()) {
       url = "http://localhost/antweb" + "/specimen.do?name=" + specimenCode;

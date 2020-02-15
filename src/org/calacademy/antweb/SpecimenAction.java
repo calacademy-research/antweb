@@ -28,11 +28,8 @@ public final class SpecimenAction extends DescriptionAction {
 
         if (ProjectMgr.hasMoved(request, response)) return null;
 
-        ActionForward invalid = HttpUtil.invalidRequest(request, mapping); 
-        if (invalid != null) {
-          A.log("execute() invalid:" + invalid);        
-          return invalid;        
-        }
+        ActionForward a = Check.init(Check.LOGIN, request, mapping); if (a != null) return a;
+        ActionForward d = Check.valid(request, mapping); if (d != null) return d;
         
         java.util.Date startTime = new java.util.Date();   
 

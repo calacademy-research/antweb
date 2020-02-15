@@ -617,7 +617,7 @@ if (!HttpUtil.isBot(request)) {
    if (specimen.getImages() != null) { %>    
 <logic:iterate id="theImage" name="specimen" collection="<%= specimen.getImages() %>">
   <logic:equal name="theImage" property="key" value="p1">
-        <div class="slide medium last" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><bean:write name="theImage" property="value.thumbview" />');" onclick="window.location='bigPicture.do?name=<%= specimen.getName() %>&shot=p&number=1';"></div>
+        <div class="slide medium last" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><bean:write name="theImage" property="value.thumbview" />');" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= specimen.getName() %>&shot=p&number=1';"></div>
         <div class="clear"></div>
   </logic:equal>
 </logic:iterate>
