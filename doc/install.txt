@@ -31,6 +31,10 @@ These instructions are to make a fully functional antweb server on Centos.  Inst
   CVS
   Antweb  
 
+Ubuntu
+------
+sudo timedatectl set-timezone America/Los_Angeles
+
 Groups and Users
 ----------------
 sudo groupadd antweb
@@ -180,6 +184,9 @@ When complete, this is the only valid site:
 
 Set listings to true in /usr/local/tomcat/conf/web.xml
 
+add to top of /usr/local/tomcat/bin/catalina.sh:
+CATALINA_OPTS="$CATALINA_OPTS -Djava.util.Arrays.useLegacyMergeSort=true -Dfile.encoding=UTF8 -Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager"
+
 
 Python/API setup (Joe's notes)
 ----------------
@@ -234,8 +241,6 @@ sudo apachectl restart
 sudo systemctl stop apache2
 
 log files: /var/log/apache2/error.log  
-
-
 
 
 Antweb

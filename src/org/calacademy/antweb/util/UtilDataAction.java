@@ -46,6 +46,12 @@ import org.calacademy.antweb.search.AdvancedSearchAction;
 
 import com.google.gson.*;
 
+/*
+// Requests look something like:  
+
+   https://www.antweb.org/utilData.do?action=deleteConflictedDefaultImages
+
+*/
 
 public class UtilDataAction extends Action {
 
