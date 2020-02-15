@@ -967,7 +967,7 @@ public abstract class HttpUtil {
         // See PageAction.java.
         //s_log.warn("execute() url:" + url);
         try { 
-          String output = HttpUtil.getUrl(url);
+          String output = HttpUtil.fetchUrl(url);
           HttpUtil.write(output, response);
         } catch (IOException e) {
           String message = "url:" + url + " e:" + e;

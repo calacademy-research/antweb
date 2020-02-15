@@ -35,7 +35,7 @@ public final class PageAction extends Action {
 
         // String url = AntwebProps.getDomainApp() + "/" + Project.getSpeciesListDir() + name + "/" + name + ".jsp";
 
-        String url = AntwebProps.getDomainApp() + "/project.do?name=" + name + "ants";
+        String url = AntwebProps.getThisDomainApp() + "/project.do?name=" + name + "ants";
         //s_log.warn("execute() url:" + url);
 
         PageTracker.remove(request);
