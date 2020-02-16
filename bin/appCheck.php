@@ -46,7 +46,7 @@ $grepStr2 = "java"; // might be something like jsvc
 //$sleepTime = 300;  // in seconds.  5 minutes.
 $sleepTime = 30; // useful for testing  
   
-showProcesslist();
+//showProcesslist();
   
 if (! hasProcess($grepStr1, $grepStr2)) {
   // Then wait five minutes and recheck (might be nightly restart)
@@ -100,7 +100,7 @@ function stopStartProcess() {
 }
 
 function stopProcess() {
-  showProcesslist();
+  //showProcesslist();
 
   $stopCommand = "pkill java";
   exec($stopCommand, $return);  
@@ -109,6 +109,7 @@ function stopProcess() {
   logAppCheck("", $message);
 }
 
+/*
 function showProcesslist() {  
   $username="antweb";$password="f0rm1c6";$database="ant";
   mysql_connect('localhost',$username,$password);
@@ -125,7 +126,7 @@ function showProcesslist() {
   logAppCheck('/usr/local/tomcat/logs/processList.log', $result);
   mysql_close();
 }
-
+*/
 function hasProcess($grepStr1, $grepStr2) {
 
   //if (true) return true;  // Useful for testing processResponds()
@@ -198,7 +199,7 @@ function isProduction() {
 */
 
 function logAppCheck($fileName, $logString) {
-  $logFileName = '/home/antweb/log/appCheck.log';
+  $logFileName = '/antweb/log/appCheck.log';
   if (!($fileName === "")) {
     $logFileName = $fileName;
     echo("is");
@@ -241,7 +242,7 @@ function runDiagnose() {
   $message = $message."\n".$startCommand." = ".$return[0];
   //echo("\nMessage2:".$message);                                                                                                                                                                                                                                   
   //$fileName = '/usr/local/tomcat/logs/appCheckDiagnose.log';
-  $fileName = '/home/antweb/log/appCheck.log';
+  $fileName = '/antweb/log/appCheck.log';
   //echo("message3:".$message);                                                                                                                                                                                                                                     
   logAppCheck($fileName, $message);
 }
