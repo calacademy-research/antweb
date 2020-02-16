@@ -1,10 +1,10 @@
-# This is run as a cron job, as such:
+# This is run as root, in a cron job, as such:
 #
-# 5 1 * * * sh /home/antweb/antweb_deploy/bin/reboot.sh
+# 5 1 * * * sh /antweb/antweb_deploy/bin/reboot.sh
 
-sudo /etc/init.d/tomcat stop
+systemctl stop tomcat
 wait
-sudo kill -9 java
-/etc/init.d/mysqld stop
+kill -9 java
+/etc/init.d/mysql stop
 /sbin/reboot
 
