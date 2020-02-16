@@ -35,8 +35,6 @@
 
 //logAppCheck("", "Running appCheck");
 
-$tomcat = "/etc/init.d/tomcat";
-
 // We are searching the ps results for two strings to avoid the grep command itself returning a false positive.
 $grepStr1 = "Bootstrap";  // a string found in the process on both stage and production
 $grepStr2 = "java"; // might be something like jsvc
@@ -75,20 +73,20 @@ exit;
 
 function startProcess() {
   global $tomcat;
-  $startCommand = $tomcat." start";  // works on stage and production
+  $startCommand = "systemctl start tomcat";  // works on stage and production
   exec($startCommand, $return);
-  $message = "  Starting Antweb Process:".$startCommand;   //." return:".$return[0];
+  $message = "  Starting Antweb Process: ".$startCommand;   //." return:".$return[0];
   print($message."\n");
   logAppCheck("", $message);
 }
 
 function restartProcess() {
   global $tomcat;
-  $restartCommand = $tomcat." restart";
+  $restartCommand = "systemctl restart tomcat";
   //if (isProduction()) {
   //  $restartCommand = "/home/mjohnson/antweb/bin/restartUg.sh";  
   //}
-  print("  Restarting Process:".$restartCommand."\n");
+  print("  Restarting Process: ".$restartCommand."\n");
   logAppCheck("", "  Restarting Antweb".$restartCommand);
   exec($restartCommand, $return);
   print("  Return:".$return[0]."\n");  
