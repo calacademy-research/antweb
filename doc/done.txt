@@ -11859,10 +11859,11 @@ Feb 15. 7am. 10 - 11. 12 - 8. 1 hr break. 8hrs
   Document.
   Invoice and release notes for 8.11 and 8.11.1
 
-Feb 26. 1.5hr.
+Feb 16. 3.5hr.
   Generate new Bolton NGC list.
   Turn off ONLY_FULL_GROUP_BY in /etc/my.cnf to enable recent images query.
   Make the moveFile logs quieter. 
+  Move to IntelliJ
 
 
 Deprecations
