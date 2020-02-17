@@ -35,6 +35,9 @@ Ubuntu
 ------
 sudo timedatectl set-timezone America/Los_Angeles
 
+php
+  Follow the instructions for installation.
+
 Groups and Users
 ----------------
 sudo groupadd antweb
@@ -127,6 +130,10 @@ create database ant;
   scp mjohnson@10.2.22.20:/home/antweb/links/currentDump.sql.gz ./20191025.sql.gz
   gunzip < 20191025.sql.gz | mysql -u antweb -p ant
 
+Added to /etc/my.cnf:
+[mysqld]
+sql_mode = "STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
+# This effectively turns off ONLY_FULL_GROUP_BY and enables recent images query to work.  
 
 CVS
 ---

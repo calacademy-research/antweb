@@ -92,33 +92,37 @@ public class LogMgr {
     (new Utility()).makeDirTree(backupDir);
 
     String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";    
-    
-    LogMgr.make777(bakDir);     
+
+    LogMgr.make777(bakDir);  
     LogMgr.make777(backupDir);
-    
+
     String textFiles = logDir + "*.txt";
     String logFiles = logDir + "*.log";
     String htmlFiles = logDir + "*.html";
-  
+
+    String logsNotFound = "";
     for (String fileToMove : filesToMove) {
-      LogMgr.moveFile(logDir, fileToMove, backupDir);
+      try {
+        LogMgr.moveFile(logDir, fileToMove, backupDir);
+      } catch (IOException e) {
+        logsNotFound += fileToMove + ", ";      
+      }
     }
+    if (!"".equals(logsNotFound)) 
+      s_log.warn("archiveLogs() logsNotFound:" + logsNotFound.substring(0, logsNotFound.length() - 2) + ".");
 
     String message = "files backed up here:" + webBackupDir;
     A.log("archiveLogs() message:" + message);
     return message;
   }
 
-  public static void moveFile(String sourceDir, String fileName, String destDir) {
+  private static void moveFile(String sourceDir, String fileName, String destDir) 
+    throws IOException {
 
     Path source = FileSystems.getDefault().getPath(sourceDir, fileName);
     Path dest = FileSystems.getDefault().getPath(destDir);
 
-    try {
-      Files.move(source, dest.resolve(source.getFileName()), REPLACE_EXISTING);
-    } catch (IOException e) {
-      s_log.warn("moveFile() e:" + e + " source:" + source + " dest:" + dest);
-    }   
+    Files.move(source, dest.resolve(source.getFileName()), REPLACE_EXISTING);
   }
   
   public static void make777(String file) {

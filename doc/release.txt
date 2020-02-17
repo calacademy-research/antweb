@@ -1,3 +1,7 @@
+Release 8.11.2
+Date: Feb 16
+  Turn off ONLY_FULL_GROUP_BY in /etc/my.cnf to enable recent images query.
+
 Release 8.11.1
 Date: Feb 15
   Modify codebase to make self-referential http requests.
@@ -47,10 +51,12 @@ Date: Jan 13
   Remove home page generation. Clean source tree. 
     
 Release 8.9
+Date: Jan 7
   Extend the copyright system to dynamically handle new years.
   Fix the upright.png link icon on the image upload report.
 
 Release 8.8.4
+Date: Dec 20
   Handle gracefully issue with periods in parameters.
   Add more prominent Worldants upload report link for administrators on curate page.
 
