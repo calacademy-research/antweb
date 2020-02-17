@@ -40,7 +40,7 @@ public class GeolocaleTaxonCountDb extends CountDb {
 
      public void childrenCountCrawl() 
        throws SQLException {
-          //s_log.info("startChildrenCountCrawl()");
+         s_log.warn("startChildrenCountCrawl()");
           ArrayList<Geolocale> geolocales = GeolocaleMgr.getLiveGeolocales();
           for (Geolocale geolocale : geolocales) {
             if (geolocale.getIsValid()) {
