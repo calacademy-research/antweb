@@ -893,11 +893,16 @@ Apache Startup/Shutdown
 
 Java Processes
 --------------
-Define at top of catalina.sh
+Define at top of tomcat/bin/catalina.sh
 
 CATALINA_OPTS="-Xmx500m
--Dorg.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING=false
 -Dfile.encoding=UTF8"
+-Djava.util.Arrays.useLegacyMergeSort=true
+
+old servers also had these:
+-Dorg.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING=false
+-Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties
+-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager"
 
 
 

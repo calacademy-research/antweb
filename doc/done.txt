@@ -11867,6 +11867,16 @@ Feb 16. 4.5hr.
   Database performance optimization.
   Engineer: Move runCountCrawls out of execution path. Make optional and separate curator driven action.
 
+Feb 17. 2 - 5am.
+  Testing of specimen upload, worldants.
+  Engineer separation of specimen upload and run count crawls.
+  Turn off specimen upload in jsp file, except for admin.
+  Separate Run Count Crawls from the upload. Make a separate link.
+  Deploy to the live site. Panic! Fix it. Document.
+
+
+
+
 
 
 Deprecations

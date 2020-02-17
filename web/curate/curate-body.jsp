@@ -115,9 +115,11 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
         takeDownUpload = !(LoginMgr.isAdmin(accessLogin) || accessGroup.getId() == 31 );
 
         if (takeDownUpload) { %>
-          <b>Upload services temporarily restricted</b>
+          <b><font color=blue>Upload services temporarily restricted</font></b>
+
    <%   } else { %>
 
+          <b><font color=blue>Upload services temporarily restricted for others</font></b>
 
        <html:form method="POST" action="upload.do" enctype="multipart/form-data">
          <input type="hidden" name="ancFileDirectory" value="none" />

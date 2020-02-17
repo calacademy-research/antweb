@@ -34,7 +34,7 @@ public class ProjTaxonCountDb extends CountDb {
       throws SQLException {
         // If a projTaxon operation removes records there, but the image counts and parents are still 
         //   correct in the taxon table, then this method will correct a particular out of date project
-        A.log("countCrawl() begin project:" + projectName); 
+          s_log.warn("countCrawl() begin project:" + projectName);
 
         Project project = ProjectMgr.getProject(projectName);
         if (project == null) {
@@ -52,7 +52,7 @@ public class ProjTaxonCountDb extends CountDb {
 
      public void childrenCountCrawl() 
        throws SQLException {
-          s_log.info("childrenCountCrawl()");
+         s_log.warn("childrenCountCrawl()");
           ArrayList<Project> projects = ProjectMgr.getLiveProjects();
           for (Project project : projects) {            
              childrenCountCrawl(project);

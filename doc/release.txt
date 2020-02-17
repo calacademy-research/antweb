@@ -1,10 +1,16 @@
+Release 8.11.4
+Date: Feb 17
+
+
 Release 8.11.3
 Date: Feb 17
   Remove extranouse (hidden) files from the source tree.
   Enable .txt download in new server config and web/bak/taxonSets/ access.
   Fix the 35 deprecation warnings.
   Database tuning.
+  Separate Run Count Crawls from the upload. Make a separate link.
   Take down specimen upload for testing.
+  IntelliJ support.
 
 Release 8.11.2
 Date: Feb 16

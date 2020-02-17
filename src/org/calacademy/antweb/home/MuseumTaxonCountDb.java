@@ -38,7 +38,7 @@ public class MuseumTaxonCountDb extends CountDb {
 
      public void childrenCountCrawl() 
        throws SQLException {
-          A.log("childrenCountCrawl()");
+         s_log.warn("childrenCountCrawl()");
           //ArrayList<Museum> museums = (new MuseumDb(getConnection())).getMuseums();
           ArrayList<Museum> museums = MuseumMgr.getMuseums();
           for (Museum museum : museums) {

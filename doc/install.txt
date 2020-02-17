@@ -130,10 +130,9 @@ create database ant;
   scp mjohnson@10.2.22.20:/home/antweb/links/currentDump.sql.gz ./20191025.sql.gz
   gunzip < 20191025.sql.gz | mysql -u antweb -p ant
 
-Added to /etc/my.cnf:
-[mysqld]
-sql_mode = "STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
-# This effectively turns off ONLY_FULL_GROUP_BY and enables recent images query to work.  
+See:
+/etc/mysql/mysql.cnf
+for changes that effect recent images upload and performance.
 
 CVS
 ---
@@ -193,6 +192,11 @@ Set listings to true in /usr/local/tomcat/conf/web.xml
 
 add to top of /usr/local/tomcat/bin/catalina.sh:
 CATALINA_OPTS="$CATALINA_OPTS -Djava.util.Arrays.useLegacyMergeSort=true -Dfile.encoding=UTF8 -Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager"
+
+old servers also had these:
+-Dorg.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING=false
+
+
 
 
 Python/API setup (Joe's notes)

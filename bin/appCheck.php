@@ -180,7 +180,7 @@ function processResponds() {
   $successPos =	strpos($str, "success");
   if ($successPos <= 0) {
     // We did not receive success.  What to do?
-    logAppCheck("", "Not success from ".$jspPage." returned:".$str);
+    logAppCheck("", "Failure from ".$jspPage." returned:".$str);
     runDiagnose();
     return false;
   } else {
@@ -220,7 +220,7 @@ function logAppCheck($fileName, $logString) {
       exit;
   }
 
-  echo "Success, wrote ($logString) to file ($logFileName)"."\n";
+  echo "Write ($logString) to file ($logFileName)"."\n";
 
   fclose($handle);
 }

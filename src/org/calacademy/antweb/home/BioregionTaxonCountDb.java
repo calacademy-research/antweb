@@ -38,7 +38,7 @@ public class BioregionTaxonCountDb extends CountDb {
 
      public void childrenCountCrawl() 
        throws SQLException {
-          A.log("childrenCountCrawl()");
+          s_log.warn("childrenCountCrawl()");
           ArrayList<Bioregion> bioregions = BioregionMgr.getBioregions();
           for (Bioregion bioregion : bioregions) {
              childrenCountCrawl(bioregion);
