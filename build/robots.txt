@@ -1,9 +1,0 @@
-User-agent: *
-Disallow: /curate/
-Disallow: /login/
-Disallow: /search/
-Disallow: /util/
-Disallow: /data/
-Disallow: /ckeditor/
-Disallow: /WEB-INF/
-Disallow: /web/
