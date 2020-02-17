@@ -171,7 +171,30 @@ public class FileUtil {
       }
       //A.log("getFileAttributesHtml() fileData:" + fileData);
       return fileSize;
-    }    
-     
+    }
+
+  public static void set775Permission(String fullPath) {
+      setPermission(new File(fullPath));
+  }
+  public static void setPermission(File file) {
+      try {
+        Set<PosixFilePermission> perms = new HashSet<>();
+        perms.add(PosixFilePermission.OWNER_READ);
+        perms.add(PosixFilePermission.OWNER_WRITE);
+        perms.add(PosixFilePermission.OWNER_EXECUTE);
+
+        perms.add(PosixFilePermission.GROUP_READ);
+        perms.add(PosixFilePermission.GROUP_WRITE);
+        perms.add(PosixFilePermission.GROUP_EXECUTE);
+
+        perms.add(PosixFilePermission.OTHERS_READ);
+        //perms.add(PosixFilePermission.OTHERS_WRITE);
+        //perms.add(PosixFilePermission.OTHERS_EXECUTE);
+
+        Files.setPosixFilePermissions(file.toPath(), perms);
+      } catch (IOException e) {
+        // Do nothing because nothing to do.
+      }
+  }
       
 }

@@ -64,7 +64,9 @@ public class LogMgr {
       out.close();
     } catch (Exception e) {
       s_log.error("appendFile() fullPath:" + fullPath + " e: " + e.getMessage());
-    }    
+    }
+
+    FileUtil.set775Permission(fullPath);
   }
   
   public static void startup() {

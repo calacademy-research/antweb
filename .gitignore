@@ -2,3 +2,4 @@
 /build.properties
 /out
 /WEB-INF/classes/AntwebResources.properties
+/WEB-INF/classes/log4j.properties
