@@ -27,14 +27,16 @@ echo 'Copying ' $backupdir/backup-$dbname-$dayofweek.sql.gz ' to ' $curBak
 cp $backupdir/backup-$dbname-$dayofweek.sql.gz $curBak
 fi
 
-if [ $dbname == "ant" ] || [ $dbname == "stage" ] ; then
+echo 'db:' $dbname
+
+#if [ $dbname == "ant" ] || [ $dbname == "stage" ] ; then
 # This may break on a mac...
 dayofweek=`date --date="6 days ago" +%a`
 echo "Linux date command - 6 days ago:" $dayofweek
-else
-dayofweek=`date -v -6d +%a`
-echo "BSD date command - 6 days ago:" $dayofweek
-fi
+#else
+#dayofweek=`date -v -6d +%a`
+#echo "BSD date command - 6 days ago:" $dayofweek
+#fi
 
 olddump=$backupdir/backup-$dbname-$dayofweek.sql.gz
 if [ -e  $olddump ]; then

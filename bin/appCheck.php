@@ -42,7 +42,7 @@ $grepStr2 = "java"; // might be something like jsvc
 // This is the command to launch the process if it is not found.
 
 //$sleepTime = 300;  // in seconds.  5 minutes.
-$sleepTime = 30; // useful for testing  
+$sleepTime = 10; // useful for testing  
   
 //showProcesslist();
   

@@ -1,1 +1,0 @@
-<p>For a faster search, use the pulldown menus to perform exact searches.  Each text box can take multiple entries, separated by commas or spaces.  Search criteria containing spaces, such as species or location names, should be surrounded by double quotes (e.g., "Camponotus modoc", "San Francisco"). </p>
