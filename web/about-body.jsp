@@ -22,7 +22,7 @@
 <div id="page_data">
 <div id="overview_data">
 
-AntWeb is driven by specimen records.  Images and and collection data are linked by specimen unique identifiers. Taxonomic names in AntWeb are managed by AntCat.org
+AntWeb is driven by specimen records. Images and and collection data are linked by specimen unique identifiers. Taxonomic names in AntWeb are managed by AntCat.org
 Natural history information and field images  are linked directly to taxonomic names.
 Distribution maps and field guides are generated automatically. All data
 in AntWeb are downloadable by users. AntWeb also provides specimen-level

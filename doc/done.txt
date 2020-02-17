@@ -11865,7 +11865,51 @@ Feb 26. 1.5hr.
   Make the moveFile logs quieter. 
 
 
-
+Deprecations
+Information:javac 1.8.0_144 was used to compile java sources
+Information:2/16/20, 10:34 PM - Build completed successfully with 26 warnings in 7 s 710 ms
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/DescriptionAction.java
+Warning:(48, 47) java: decode(java.lang.String) in java.net.URLDecoder has been deprecated
+Information:java: Some input files use unchecked or unsafe operations.
+Information:java: Recompile with -Xlint:unchecked for details.
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/Map.java
+Warning:(377, 99) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(378, 99) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(687, 86) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(689, 86) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/geolocale/Geolocale.java
+Warning:(466, 51) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/geolocale/Adm1.java
+Warning:(136, 51) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(141, 49) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/home/ObjectMapDb.java
+Warning:(146, 46) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(167, 46) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(244, 64) java: decode(java.lang.String) in java.net.URLDecoder has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/upload/MessageMgr.java
+Warning:(486, 65) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/util/AntwebFunctions.java
+Warning:(34, 33) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/util/DateUtil.java
+Warning:(180, 22) java: Date(java.lang.String) in java.util.Date has been deprecated
+Warning:(216, 22) java: Date(java.lang.String) in java.util.Date has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/util/FileUploader.java
+Warning:(51, 37) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/EditCreditAction.java
+Warning:(60, 57) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/data/googleApis/GoogleApisMgr.java
+Warning:(147, 39) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(148, 42) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(158, 42) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/upload/UploadAction.java
+Warning:(798, 33) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
+Warning:(1375, 33) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/upload/SpecimenUploadParse.java
+Warning:(472, 75) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(473, 78) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
+Warning:(1019, 18) java: Date(java.lang.String) in java.util.Date has been deprecated
+/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/upload/DescEditImageUploadAction.java
+Warning:(78, 45) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
 
 Protonyms from Bolton 2020
   
