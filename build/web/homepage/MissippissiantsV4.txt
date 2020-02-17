@@ -1,0 +1,174 @@
+Subfamily	Tribe	Genus	Species	Species Author Date	Distribution	Biology	Notes	Introduced	Endemic
+Amblyoponinae	Amblyoponini	Amblyopone	pallipes 	(Haldeman 1844)					
+Dolichoderinae	Dolichoderini	Dolichoderus	mariae	Forel 1884					
+Dolichoderinae	Dolichoderini	Dolichoderus	pustulatus	(Mayr 1886)					
+Dolichoderinae	Dolichoderini	Dolichoderus	taschenbergi	(Mayr 1866)					
+Dolichoderinae	Dolichoderini	Dorymyrmex	bureni 	(Trager 1988)					
+Dolichoderinae	Dolichoderini	Dorymyrmex	flavus	McCook 1879					
+Dolichoderinae	Dolichoderini	Dorymyrmex	grandulus	(Forel 1922)					
+Dolichoderinae	Dolichoderini	Dorymyrmex	smithi 	Cole 1936					
+Dolichoderinae	Dolichoderini	Forelius	mccooki	(McCook 1879)					
+Dolichoderinae	Dolichoderini	Forelius	pruinosus	Roger 1863					
+Dolichoderinae	Dolichoderini	Linepithema	humile	(Mayr 1868)				I	
+Dolichoderinae	Dolichoderini	Tapinoma	melanocephalum	Fabricius 1793				I	
+Dolichoderinae	Dolichoderini	Tapinoma	sessile	(Say 1836)					
+Ecitoninae	Ecitonini	Neivamyrmex	carolinensis	(Emery 1894)					
+Ecitoninae	Ecitonini	Neivamyrmex	nigrescens	(Cresson 1872)					
+Ecitoninae	Ecitonini	Neivamyrmex	opacithorax	(Emery 1895)					
+Ecitoninae	Ecitonini	Neivamyrmex	pilosus 	(F.Smith 1859)					
+Ectatomminae	Ectatommini	Gnamptogenys	triangularis	(Mayr 1887)				I	
+Formicinae  	Camponotini	Camponotus	americanus	Mayr 1862					
+Formicinae  	Camponotini	Camponotus	caryae	(Fitch 1855)					
+Formicinae 	Camponotini	Camponotus	castaneus	(Latreille 1802)					
+Formicinae 	Camponotini	Camponotus	chromaiodes	Bolton 2000					
+Formicinae  	Camponotini	Camponotus	decipiens	Wheeler 1910					
+Formicinae  	Camponotini	Camponotus	discolor	(Buckley 1866)					
+Formicinae  	Camponotini	Camponotus	floridanus 	(Buckley 1866)					
+Formicinae  	Camponotini	Camponotus	impressus	(Roger 1863)					
+Formicinae  	Camponotini	Camponotus	mississippiensis	M.R.Smith 1923					
+Formicinae  	Camponotini	Camponotus	nearcticus	Emery 1893					
+Formicinae  	Camponotini	Camponotus	obliquus	M.R.Smith 1930					
+Formicinae  	Camponotini	Camponotus	pennsylvanicus	(DeGeer 1773					
+Formicinae	Camponotini	Camponotus	socius	Roger 1863					
+Formicinae 	Camponotini	Camponotus	snellingi	Bolton 1995					
+Formicinae  	Camponotini	Camponotus	subbarbatus	Emery 1893					
+Formicinae  	Formicini	Formica	biophilica 	Trager 2007					
+Formicinae  	Formicini	Formica	dolosa	Wheeler 1912					
+Formicinae  	Formicini	Formica	exsectoides	Forel 1862					
+Formicinae  	Formicini	Formica	integra	Nylander 1856					
+Formicinae  	Formicini	Formica	pallidefulva	Latreille 1802					
+Formicinae  	Formicini	Formica	subsericea	Say 1836					
+Formicinae  	Formicini	Polyergus	longicornis	M.R.Smith 1947 					
+Formicinae  	Formicini	Polyergus	montivagus	Wheeler 1915					
+Formicinae  	Lasiini	Lasius	alienus 	(Foerster 1850)					
+Formicinae  	Lasiini	Lasius	claviger	(Roger 1862)					
+Formicinae  	Lasiini	Lasius	flavus	(Fabricius 1781)					
+Formicinae  	Lasiini	Lasius	interjectus	Mayr 1866					
+Formicinae  	Lasiini	Lasius	neoniger	Emery 1893					
+Formicinae  	Lasiini	Lasius	umbratus	(Nylander 1846)					
+Formicinae  	Plagiolepidini	Brachymyrmex	depilis	Emery 1893					
+Formicinae	Plagiolepidini	Brachymyrmex	patagonicus	Mayr 1868		See also: MacGown, J. A., J.G. Hill, and M. A. Deyrup. 2007. <a href= mississippi/MacGown2007_Brachymyrmex.pdf target = "_blank"><b> Brachymyrmex patagonicus </b></a>(Hymenoptera: Formicidae), an emerging pest species in the southeastern United States. Florida Entomologist 90: 457-464.		I	
+Formicinae	Plagiolepidini	Brachymyrmex	obscurior	Forel 1893					
+Formicinae	Plagiolepidini	Brachymyrmex	sp. ms-01						
+Formicinae  	Plagiolepidini	Paratrechina	arenivaga	(Wheeler 1905)					
+Formicinae  	Plagiolepidini	Paratrechina	faisonensis	(Forel 1922)					
+Formicinae  	Plagiolepidini	Paratrechina	longicornis	(Latreille 1802)				I	
+Formicinae  	Plagiolepidini	Paratrechina	parvula	(Mayr 1870)					
+Formicinae  	Plagiolepidini	Paratrechina	phantasma	Trager 1984					
+Formicinae  	Plagiolepidini	Paratrechina	sp. ms-01						
+Formicinae  	Plagiolepidini	Paratrechina	sp. ms-02						
+Formicinae  	Plagiolepidini	Paratrechina	vividula	(Nylander 1846)					
+Formicinae  	Plagiolepidini	Paratrechina	wojciki	Trager 1984					
+Formicinae  	Plagiolepidini	Prenolepis	imparis	(Say 1836)					
+Myrmicinae	Attini	Cyphomyrmex	rimosus	(Spinola 1853)				I	
+Myrmicinae	Attini	Trachymyrmex	septentrionalis 	McCook 1880					
+Myrmicinae	Crematogastrini	Crematogaster	ashmeadi	Mayr 1886					
+Myrmicinae	Crematogastrini	Crematogaster	atkinsoni	Wheeler 1919					
+Myrmicinae	Crematogastrini	Crematogaster	cerasi	Emery 1895					
+Myrmicinae	Crematogastrini	Crematogaster	lineolata	(Say 1836)					
+Myrmicinae	Crematogastrini	Crematogaster	minutissima	Mayr 1870					
+Myrmicinae	Crematogastrini	Crematogaster	missuriensis	Emery 1895					
+Myrmicinae	Crematogastrini	Crematogaster	pilosa	Emery 1895					
+Myrmicinae	Crematogastrini	Crematogaster	pinicola 	Deyrup and Cover 2007					
+Myrmicinae	Crematogastrini	Crematogaster	vermiculata	Emery 1895					
+Myrmicinae	Dacetini	Pyramica	abdita	(Kempf 1960)					
+Myrmicinae	Dacetini	Pyramica	angulata	(M.R.Smith 1931)					
+Myrmicinae	Dacetini	Pyramica	bimarginata	(Wesson & Wesson 1939)					
+Myrmicinae	Dacetini	Pyramica	bunki	(Brown 1950)					
+Myrmicinae	Dacetini	Pyramica	clypeata	(Roger 1863)					
+Myrmicinae	Dacetini	Pyramica	creightoni	(M.R.Smith 1931)					
+Myrmicinae	Dacetini	Pyramica	dietrichi	(M.R.Smith 1931)					
+Myrmicinae	Dacetini	Pyramica	hexamera	(Brown 1958)				I	
+Myrmicinae	Dacetini	Pyramica	hyalina	Bolton 2000					
+Myrmicinae	Dacetini	Pyramica	laevinasis	(M.R.Smith 1931)					
+Myrmicinae	Dacetini	Pyramica	membranifera	(Emery 1869)					
+Myrmicinae	Dacetini	Pyramica	metazytes	Bolton 2000					
+Myrmicinae	Dacetini	Pyramica	missouriensis	(M.R.Smith 1931)					
+Myrmicinae	Dacetini	Pyramica	ohioensis	(Kennedy & Schramm 1933)					
+Myrmicinae	Dacetini	Pyramica	ornata	(Mayr 1887)					
+Myrmicinae	Dacetini	Pyramica	pergandei	(Emery 1895)					
+Myrmicinae	Dacetini	Pyramica	pilinasis	(Forel 1901)					
+Myrmicinae	Dacetini	Pyramica	pulchella	(Emery 1895)					
+Myrmicinae	Dacetini	Pyramica	reflexa	(L.G.&R.G.Wesson 1939)					
+Myrmicinae	Dacetini	Pyramica	rohweri	(M.R.Smith 1935)					
+Myrmicinae	Dacetini	Pyramica	rostrata	(Emery 1895)					
+Myrmicinae	Dacetini	Pyramica	sp. ms-01						
+Myrmicinae	Dacetini	Pyramica	talpa	Weber 1934					
+Myrmicinae	Dacetini	Strumigenys	louisianae	Roger 1863					
+Myrmicinae	Dacetini	Strumigenys	silvestrii	Emery 1906				I	
+Myrmicinae	Formicoxenini	Temnothorax	curvispinosus	(Mayr 1866)					
+Myrmicinae	Formicoxenini	Temnothorax	longispinosus	(Roger 1863)				I	
+Myrmicinae	Formicoxenini	Temnothorax	pergandei	(Emery 1895)					
+Myrmicinae	Formicoxenini	Temnothorax	schaumii	(Roger 1863)					
+Myrmicinae	Formicoxenini	Temnothorax	smithi	Baroni Urbani					
+Myrmicinae	Formicoxenini	Temnothorax	texanus	(Wheeler 1903)					
+Myrmicinae	Formicoxenini	Temnothorax	tuscaloosae	(Wilson 1951)				 	
+Myrmicinae	Myrmecinini	Myrmecina	americana	Emery 1886					
+Myrmicinae	Myrmicini	Myrmica	latifrons	Starcke 1927					
+Myrmicinae	Myrmicini	Myrmica	pinetorum	Wheeler 1905					
+Myrmicinae	Myrmicini	Myrmica	punctiventris	Roger 1863					
+Myrmicinae	Myrmicini	Myrmica	spatulata	M.R.Smith 1930					
+Myrmicinae	Myrmicini	Pogonomyrmex	badius	(Latreille 1802)					
+Myrmicinae	Pheidolini	Aphaenogaster	ashmeadi	(Emery 1895)					
+Myrmicinae	Pheidolini	Aphaenogaster	carolinensis	Wheeler 1915					
+Myrmicinae	Pheidolini	Aphaenogaster	flemingi	M.R.Smith 1928					
+Myrmicinae	Pheidolini	Aphaenogaster	floridana	M.R.Smith 1941					
+Myrmicinae	Pheidolini	Aphaenogaster	fulva	Roger 1863					
+Myrmicinae	Pheidolini	Aphaenogaster	lamellidens	Mayr 1886					
+Myrmicinae	Pheidolini	Aphaenogaster	mariae	Forel 1886					
+Myrmicinae	Pheidolini	Aphaenogaster	miamiana	Wheeler 1932					
+Myrmicinae	Pheidolini	Aphaenogaster	tennesseensis	(Mayr 1862)					
+Myrmicinae	Pheidolini	Aphaenogaster	treatae	Forel 1886					
+Myrmicinae	Pheidolini	Pheidole	bicarinata	Mayr 1870					
+Myrmicinae	Pheidolini	Pheidole	crassicornis	Emery 1895					
+Myrmicinae	Pheidolini	Pheidole	dentata	Mayr 1886					
+Myrmicinae	Pheidolini	Pheidole	dentigula	M.R. Smith 1927					
+Myrmicinae	Pheidolini	Pheidole	floridana	Emery 1895					
+Myrmicinae	Pheidolini	Pheidole	lamia	Wheeler 1901					
+Myrmicinae	Pheidolini	Pheidole	metallescens	Emery  1895					
+Myrmicinae	Pheidolini	Pheidole	moerens	Wheeler 1908				I	
+Myrmicinae	Pheidolini	Pheidole	morrisii	Forel 1886					
+Myrmicinae	Pheidolini	Pheidole	obscurithorax	Naves 1985				I	
+Myrmicinae	Pheidolini	Pheidole	pilifera	(Roger 1863)					
+Myrmicinae	Pheidolini	Pheidole	soritis	Wheeler 1908					
+Myrmicinae	Pheidolini	Pheidole	sp. ms-01						
+Myrmicinae	Pheidolini	Pheidole	tetra	Wheeler 1908					
+Myrmicinae	Pheidolini	Pheidole	tysoni	Forel 1901					
+Myrmicinae	Solenopsidini	Monomorium	minimum	(Buckley 1866)					
+Myrmicinae	Solenopsidini	Monomorium	pharaonis	(Linnaeus 1758)				I	
+Myrmicinae	Solenopsidini	Monomorium	viride	Brown 1943					
+Myrmicinae	Solenopsidini	Solenopsis	abdita	Thompson 1989					
+Myrmicinae	Solenopsidini	Solenopsis	carolinensis	Forel 1901					
+Myrmicinae	Solenopsidini	Solenopsis	geminata	(Fabricius 1804)					
+Myrmicinae	Solenopsidini	Solenopsis	globularia littoralis	Creighton 1930					
+Myrmicinae	Solenopsidini	Solenopsis	invicta	Buren 1972				I	
+Myrmicinae	Solenopsidini	Solenopsis	molesta	(Say 1836)					
+Myrmicinae	Solenopsidini	Solenopsis	pergandei	Forel 1901					
+Myrmicinae	Solenopsidini	Solenopsis	picta	Emery 1895					
+Myrmicinae	Solenopsidini	Solenopsis	richteri	Forel 1909				I	
+Myrmicinae	Solenopsidini	Solenopsis	salina	Wheeler 1908					
+Myrmicinae	Solenopsidini	Solenopsis	subterranea	MacKay & Vinson 1989					
+Myrmicinae	Solenopsidini	Solenopsis	tennesseensis	M.R.Smith 1943					
+Myrmicinae	Solenopsidini	Solenopsis	texana	Emery 1895					
+Myrmicinae	Solenopsidini	Solenopsis	xyloni	McCook 1879					
+Myrmicinae	Stenammini	Stenamma	foveolocephalum 	M.R.Smith 1930					
+Myrmicinae	Stenammini	Stenamma	impar	Forel 1901					
+Myrmicinae	Tetramoriini	Tetramorium	bicarinatum	(Nylander 1846)				 I	
+Myrmicinae	Tetramoriini	Tetramorium	caespitum	(Linnaeus 1758)					
+Myrmicinae	Tetramoriini	Tetramorium	lanuginosum	Mayr 1870					
+Ponerinae	Ponerini	Cryptopone	gilva	(Roger 1863)					
+Ponerinae	Ponerini	Hypoponera	inexorata	(Wheeler 1903)					
+Ponerinae	Ponerini	Hypoponera	opaciceps	(Mayr 1887)					
+Ponerinae	Ponerini	Hypoponera	opacior	(Forel 1893)					
+Ponerinae	Ponerini	Odontomachus	ruginodis	M.R.Smith 1937				I	
+Ponerinae	Ponerini	Ponera	exotica	M.R.Smith 1962					
+Ponerinae	Ponerini	Ponera	pennsylvanica	Buckley 1866					
+Proceratiinae	Proceratiini	Discothyrea	testacea	Roger 1863					
+Proceratiinae	Proceratiini	Proceratium	chickasaw	DeAndrade 2003					
+Proceratiinae	Proceratiini	Proceratium	crassicorne	Emery 1895					
+Proceratiinae	Proceratiini	Proceratium	croceum	(Roger 1860)					
+Proceratiinae	Proceratiini	Proceratium	pergandei	(Emery 1895)					
+Proceratiinae	Proceratiini	Proceratium	silaceum	Roger 1863					
+Pseudomyrmecinae	Pseudomyrmecini	Pseudomyrmex	ejectus	(F. Smith 1858)					
+Pseudomyrmecinae	Pseudomyrmecini	Pseudomyrmex	pallidus	(F. Smith 1855)					
+Pseudomyrmecinae	Pseudomyrmecini	Pseudomyrmex	seminole	Ward 1985					

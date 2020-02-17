@@ -498,7 +498,13 @@ public class Formatter implements Serializable {
     return hasSpecialCharacter(str, patternStr);
   }
 
-  public static boolean hasWebSpecialCharacter(String str) {
+	public static boolean hasLoginSpecialCharacter(String str) {
+		String extras = "?&=%:,;+äáëéìöü@*";
+		String patternStr = "[^A-Za-z0-9 " + extras + ignoreUtf8;
+		return hasSpecialCharacter(str, patternStr);
+	}
+
+	public static boolean hasWebSpecialCharacter(String str) {
     String extras = "?&=%:,;+äáëéìöü";
     String patternStr = "[^A-Za-z0-9 " + extras + ignoreUtf8;
     return hasSpecialCharacter(str, patternStr);

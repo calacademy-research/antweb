@@ -33,6 +33,15 @@ public class UploadDetails extends OperationDetails {
     private String logFileName = null;
     private String backupDirFile = null;
 
+
+    private boolean offerRunCountCrawlLink = false;
+    public boolean isOfferRunCountCrawlLink() {
+        return offerRunCountCrawlLink;
+    }
+    public void setOfferRunCountCrawlLink(boolean offerRunCountCrawlLink) {
+        this.offerRunCountCrawlLink = offerRunCountCrawlLink;
+    }
+
     public UploadDetails() {
       super();
       messageMgr = new MessageMgr();
@@ -64,17 +73,6 @@ public class UploadDetails extends OperationDetails {
       return "{operation:" + getOperation() + " c:" + getRecordCount() + " forwardPage:" + getForwardPage() 
       + " logFileName:" + getLogFileName() + " message:" + getMessage() + "}";
     }
-    
-
-/*
-    String serverDir = null;
-    public void setServerDir(String serverDir) {
-      this.serverDir = serverDir;
-    }
-    public String getServerDir() {
-      return serverDir;
-    }
-*/
 
     public String getLogFileDir() {
       if (getLogFileName() != null) {
@@ -206,11 +204,6 @@ public class UploadDetails extends OperationDetails {
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Login Id:</b> " + curator.getLink();
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + accessGroup.getLink();
 
-        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Advanced Search:</b><a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?" 
-            + "searchMethod=advancedSearch&advanced=true&uploadId=" + AntwebMgr.getNextSpecimenUploadId()
-            //+ "&groupName=" + accessGroup.getName() 
-            + "\"> This Upload</a><a href='' title='Could be affected/limited by subsequent uploads. No red flagged specimen included in results.'>*</a>";	
-                        
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Record Count:</b> " + getRecordCount();
 
 		logString += "<br>&nbsp;&nbsp;&nbsp;<b>Parsed:</b> " + getBuildLineTotal();
@@ -218,7 +211,12 @@ public class UploadDetails extends OperationDetails {
 		logString += "<br>&nbsp;&nbsp;&nbsp;<b>Museums:</b> <a href='' title='" +  getMuseumMap().toString() + "'>" + getMuseumMap().size() + "</a>";
 
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Specimens:</b> " + countInsertedSpecimens;        
-        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Red Flagged Specimens:</b> " + getMessageMgr().getRedFlagCount();        
+        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Red Flagged Specimens:</b> " + getMessageMgr().getRedFlagCount();
+
+        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Advanced Search:</b><a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?"
+                + "searchMethod=advancedSearch&advanced=true&uploadId=" + AntwebMgr.getNextSpecimenUploadId()
+                //+ "&groupName=" + accessGroup.getName()
+                + "\"> This Upload</a><a href='' title='Could be affected/limited by subsequent uploads. No red flagged specimen included in results.'>*</a>";
 
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Exec Time:</b> " + getExecTime() + getExecTimeMin();
         
@@ -262,11 +260,41 @@ s_log.warn("logMessagesToFile() logFileDir:" + getLogFileDir() + " logFileName:"
         if (request != null) {   
           // It was a post   well be web/log/log/upload if in dev?
           String messageLogFile = getLogFileDir() + "/" + getLogFileName();
-          request.setAttribute("messageLogFile", messageLogFile);
+          //request.setAttribute("messageLogFile", messageLogFile);
+
+          setMessageLogFile(messageLogFile);
           // s_log.warn("logMessages() " + hasMessages);
-          request.setAttribute("hasMessages", hasMessages);
+
+          setHasMessages(hasMessages);
+          //request.setAttribute("hasMessages", hasMessages);
           //s_log.warn("logMessagesToFile() logDir:" + logDir + " logFileName:" + logFileName + " messageLogFile:" + messageLogFile + " hasMessages:" + hasMessages + " logString.length():" + logString.length());
+
+          request.setAttribute("uploadDetails", this);
         }
+    }
+
+    String messageLogFile = null;
+    public String getMessageLogFile() {
+        return messageLogFile;
+    }
+    public void setMessageLogFile(String messageLogFile) {
+        this.messageLogFile = messageLogFile;
+    }
+
+    boolean hasMessages = false;
+    public boolean isHasMessages() {
+        return hasMessages;
+    }
+    public void setHasMessages(boolean hasMessages) {
+        this.hasMessages = hasMessages;
+    }
+
+    private boolean offerRunCountCrawlsLink = false;
+    public void setOfferRunCountCrawlsLink(boolean offer) {
+        offerRunCountCrawlsLink = offer;
+    }
+    public boolean isOfferRunCountCrawlsLink() {
+      return offerRunCountCrawlsLink;
     }
 
     public void augment(UploadDetails uploadDetails) {

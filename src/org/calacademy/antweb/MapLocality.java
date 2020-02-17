@@ -279,7 +279,7 @@ public class MapLocality {
 	
 	/**
 	 * Creates a function string to execute in JavaScript
-	 * @param googleMapFunction The googleMapFunction to set.
+	 * The googleMapFunction to set.
 	 */
 	public void setGoogleMapFunction() {
 		
@@ -421,7 +421,7 @@ public class MapLocality {
 		return mapLocalities;
 	}
 	/**
-	 * @param mapSpecimens The mapSpecimens to set.
+	 * The mapSpecimens to set.
 	 */
 	public void setMapSpecimens(ArrayList mapLocalities) {
 		this.mapLocalities = mapLocalities;

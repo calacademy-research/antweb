@@ -137,6 +137,8 @@ public abstract class HttpUtil {
       boolean hasSpecialChars = false;    
       if (targetSic.contains("locality.do")) {
         hasSpecialChars = AntFormatter.hasTextSpecialCharacter(queryString);      
+      } if (targetSic.contains("login.do")) {
+        hasSpecialChars = AntFormatter.hasLoginSpecialCharacter(queryString);
       } else {
         hasSpecialChars = AntFormatter.hasWebSpecialCharacter(queryString);
       }
@@ -463,7 +465,30 @@ public abstract class HttpUtil {
         }
         return false;
     }
-      
+
+    public static String encode(String toEncode) {
+        String encoded = null;
+        try {
+            // ADDED the utf8 below 20200216.
+            encoded = java.net.URLEncoder.encode(toEncode, "utf8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            s_log.error("encode() e:" + e);
+        }
+        return encoded;
+    }
+
+    public static String decode(String toDecode) {
+        String decoded = null;
+        try {
+            // ADDED the utf8 below 20200216.
+            decoded = java.net.URLDecoder.decode(toDecode, "utf8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            s_log.error("decode() e:" + e);
+        }
+        return decoded;
+    }
+
+
   public static String getParamString(HttpServletRequest request) 
       throws java.net.SocketTimeoutException {
    // This gets used by UgSessionRequestFilter to block SQLInjection attacks.

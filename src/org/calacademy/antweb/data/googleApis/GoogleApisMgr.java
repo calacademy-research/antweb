@@ -144,8 +144,8 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
         String georankTypeStr = "";
         if (geolocale.getGeorankType() != null) georankTypeStr = "%20" + geolocale.getGeorankType();
         
-        String encodeAdm1 = URLEncoder.encode(name) + georankTypeStr;
-        String encodeCountry = URLEncoder.encode(country);
+        String encodeAdm1 = HttpUtil.encode(name) + georankTypeStr;
+        String encodeCountry = HttpUtil.encode(country);
 		String fetchStr = "address=" + encodeAdm1 + ",%20" + encodeCountry + "&components=administrative_area_level_1:" + encodeAdm1 + "|Country:" + encodeCountry;
     
         String fetchUrl = "https://maps.googleapis.com/maps/api/geocode/json?" + fetchStr + "&key=" + AntwebProps.getGoogleMapKey();
@@ -155,7 +155,7 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 
     public static String getFetchCountryUrl(Geolocale geolocale) { 
         String country = geolocale.getName();
-        String encodeCountry = URLEncoder.encode(country);
+        String encodeCountry = HttpUtil.encode(country);
 		String fetchStr = "address=" + encodeCountry + "&components=Country:" + encodeCountry;
         String fetchUrl = "https://maps.googleapis.com/maps/api/geocode/json?" + fetchStr + "&key=" + AntwebProps.getGoogleMapKey();
         return fetchUrl;

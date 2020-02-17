@@ -1,0 +1,1852 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.1//EN"
+          "http://jakarta.apache.org/struts/dtds/struts-config_1_1.dtd">
+
+<struts-config>
+
+  <!-- ========== Form Bean Definitions =================================== -->
+  <form-beans>
+
+    <form-bean      name="browseForm"
+                    type="org.calacademy.antweb.BrowseForm"/>
+
+    <form-bean      name="uploadForm"
+                    type="org.calacademy.antweb.upload.UploadForm"/>
+
+    <form-bean      name="toolForm"
+                    type="org.calacademy.antweb.curate.speciesList.SpeciesListToolForm"/>
+
+    <form-bean      name="historyForm"
+                    type="org.calacademy.antweb.curate.speciesList.SpeciesListHistoryForm"/>
+
+    <form-bean      name="speciesListMoveForm"
+                    type="org.calacademy.antweb.curate.speciesList.SpeciesListMoveForm"/>
+
+    <form-bean      name="utilForm"
+                    type="org.calacademy.antweb.util.UtilForm"/>
+
+    <form-bean      name="descEditImageUploadForm"
+                    type="org.calacademy.antweb.upload.DescEditImageUploadForm"/>
+
+    <form-bean      name="uploadImagesForm"
+                    type="org.calacademy.antweb.upload.UploadImagesForm"/>
+
+    <form-bean      name="editCreditForm"
+                    type="org.calacademy.antweb.EditCreditForm"/>
+
+    <form-bean      name="searchForm"
+                    type="org.calacademy.antweb.search.SearchForm"/>
+
+    <form-bean      name="advancedSearchForm"
+                    type="org.calacademy.antweb.search.AdvancedSearchForm"/>
+
+    <form-bean      name="taxaPageForm"
+                    type="org.calacademy.antweb.TaxaPageForm"/>
+
+    <form-bean      name="slideShowForm"
+                    type="org.calacademy.antweb.SlideShowForm"/>
+
+    <form-bean      name="specimenForm"
+                    type="org.calacademy.antweb.SpecimenForm"/>
+
+    <form-bean      name="chooseComparisonForm"
+                    type="org.calacademy.antweb.ChooseComparisonForm"/>
+
+    <form-bean      name="deleteImagesForm"
+                    type="org.calacademy.antweb.upload.DeleteImagesForm"/>
+
+    <form-bean      name="bayAreaSearchForm"
+                    type="org.calacademy.antweb.search.BayAreaSearchForm"/>
+
+    <form-bean      name="taxaFromSearchForm"
+                    type="org.calacademy.antweb.search.TaxaFromSearchForm"/>
+
+    <form-bean      name="mapForm"
+                    type="org.calacademy.antweb.MapForm"/>
+
+    <form-bean      name="nameOnlyForm"
+                    type="org.calacademy.antweb.NameOnlyForm"/>
+
+    <form-bean      name="blankForm"
+                    type="org.calacademy.antweb.BlankForm"/>
+
+    <form-bean      name="fieldGuideForm"
+                    type="org.calacademy.antweb.search.FieldGuideForm"/>
+
+    <form-bean      name="loginForm"
+                    type="org.calacademy.antweb.LoginForm"/>
+
+    <form-bean      name="changeUserForm"
+                    type="org.calacademy.antweb.curate.ChangeUserForm"/>
+
+    <form-bean      name="changePasswordForm"
+                    type="org.calacademy.antweb.curate.ChangePasswordForm"/>
+                                                                                                                             
+    <form-bean      name="recentImagesForm"
+                    type="org.calacademy.antweb.search.RecentImagesForm"/>
+
+    <form-bean      name="specimenImageForm"
+                    type="org.calacademy.antweb.SpecimenImageForm"/>
+                                                                                                                               
+    <form-bean      name="editProjectForm"
+                    type="org.calacademy.antweb.curate.project.EditProjectForm"/>
+
+    <form-bean      name="ancForm"
+                    type="org.calacademy.antweb.curate.ancFile.AncForm"/>
+                                                                                                                               
+    <form-bean      name="curateProjectForm"
+                    type="org.calacademy.antweb.curate.project.ProjectForm"/>
+    
+    <form-bean      name="projectForm"
+                    type="org.calacademy.antweb.ProjectForm"/>
+
+    <form-bean      name="overviewForm"
+                    type="org.calacademy.antweb.OverviewForm"/>
+
+    <form-bean      name="worldAuthorityForm"
+                    type="org.calacademy.antweb.upload.WorldAuthorityForm"/>
+                                                                                                                               
+    <form-bean      name="saveGroupForm"
+                    type="org.calacademy.antweb.curate.group.SaveGroupForm"/>
+
+    <form-bean      name="saveLoginForm"
+                    type="org.calacademy.antweb.curate.login.SaveLoginForm"/>
+
+    <form-bean      name="editLoginForm"
+                    type="org.calacademy.antweb.EditLoginForm"/>
+                                      
+    <form-bean      name="teamMemberForm"
+                    type="org.calacademy.antweb.curate.team.TeamMemberForm"/>
+                                                                           
+    <form-bean      name="homePageForm"
+                    type="org.calacademy.antweb.curate.HomePageForm"/>
+                                                                                                                               
+    <form-bean      name="newProjectForm"
+                    type="org.calacademy.antweb.curate.project.NewProjectForm"/>
+
+    <form-bean      name="simpleContentEditorForm"
+                    type="org.calacademy.antweb.SimpleContentEditorForm"/>
+
+    <form-bean      name="orphanTaxonsForm"
+                    type="org.calacademy.antweb.curate.orphans.OrphanTaxonsForm"/>
+
+    <form-bean      name="moveToValidForm"
+                    type="org.calacademy.antweb.curate.MoveToValidForm"/>
+
+    <form-bean      name="editGeolocaleForm"
+                    type="org.calacademy.antweb.curate.geolocale.EditGeolocaleForm"/>
+
+    <form-bean      name="bioregionMapMgrForm"
+                    type="org.calacademy.antweb.curate.BioregionMapMgrForm"/>
+
+
+    <form-bean name="imgUploadForm" 
+        type="org.apache.struts.action.DynaActionForm" 
+        dynamic="true">
+      <form-property name="id"     type="java.lang.Long"/>
+      <form-property name="myFile" type="org.apache.struts.upload.FormFile"/>
+    </form-bean> 
+
+
+    <form-bean name="imageUploadForm" 
+        type="org.apache.struts.action.DynaActionForm" dynamic="true">
+      <form-property name="action"     type="java.lang.String"/>
+    </form-bean> 
+
+    <form-bean name="dummyForm" 
+        type="org.apache.struts.action.DynaActionForm" 
+        dynamic="true">
+      <form-property name="action"       type="java.lang.String"/>
+      <form-property name="name"         type="java.lang.String"/>
+      <form-property name="code"         type="java.lang.String"/>
+      <form-property name="projectName"  type="java.lang.String"/>
+      <form-property name="project"      type="java.lang.String"/>
+      <form-property name="taxonName"    type="java.lang.String"/>
+      <form-property name="loginId"      type="java.lang.Integer"/>
+      <form-property name="curatorId"    type="java.lang.Integer"/>
+      <form-property name="groupId"      type="java.lang.Integer"/>
+      <form-property name="uploadId"     type="java.lang.Integer"/>
+      <form-property name="id"           type="java.lang.Integer"/>
+      <form-property name="specimen"     type="java.lang.String"/>
+      <form-property name="specimenCode" type="java.lang.String"/>
+      <form-property name="locality"     type="java.lang.String"/>
+      <form-property name="collection"   type="java.lang.String"/>
+      <form-property name="genCache"     type="java.lang.String"/>
+      <form-property name="getCache"     type="java.lang.String"/>
+      <form-property name="url"          type="java.lang.String"/>
+      <form-property name="orderBy"      type="java.lang.String"/>
+      <form-property name="subfamily"    type="java.lang.String"/>
+      <form-property name="genus"        type="java.lang.String"/>
+      <form-property name="species"      type="java.lang.String"/>
+      <form-property name="file"         type="java.lang.String"/>
+      <form-property name="line"         type="java.lang.String"/>
+      <form-property name="museumCode"   type="java.lang.String"/>
+      <form-property name="value"        type="java.lang.String"/>
+      <form-property name="command"      type="java.lang.String"/>
+      <form-property name="adm1Name"     type="java.lang.String"/>
+      <form-property name="countryName"  type="java.lang.String"/>
+      <form-property name="text"         type="java.lang.String"/>  
+      <form-property name="caste"        type="java.lang.String"/>   
+      <form-property name="geolocaleName"  type="java.lang.String"/>   
+      <form-property name="geolocaleId"    type="java.lang.Integer"/>  
+      <form-property name="geolocaleFocus" type="java.lang.String"/> 
+      <form-property name="isActive"       type="java.lang.Boolean"/> 
+      <form-property name="isCreate"       type="java.lang.Boolean"/>
+      <form-property name="isEdit"         type="java.lang.Boolean"/>
+      <form-property name="isRemove"       type="java.lang.Boolean"/>
+      <form-property name="refresh"        type="java.lang.Boolean"/>
+      <form-property name="moveTo"         type="java.lang.Integer"/>
+      <form-property name="title"          type="java.lang.String"/> 
+      <form-property name="step"           type="java.lang.String"/>       
+      <form-property name="allow"          type="java.lang.Boolean"/>
+      <form-property name="grep"           type="java.lang.String"/>      
+  </form-bean>  
+    
+    <form-bean name="moveTaxonForm" 
+        type="org.apache.struts.action.DynaActionForm" 
+        dynamic="true">
+      <form-property name="action"      type="java.lang.String"/>
+      <form-property name="fromTaxonName"      type="java.lang.String"/>
+      <form-property name="toTaxonName"      type="java.lang.String"/>
+      <form-property name="fromSubfamily"   type="java.lang.String"/>
+      <form-property name="fromGenus"       type="java.lang.String"/>
+      <form-property name="fromSpecies"     type="java.lang.String"/>
+      <form-property name="fromSubspecies"     type="java.lang.String"/>
+      <form-property name="toSubfamily"   type="java.lang.String"/>
+      <form-property name="toGenus"       type="java.lang.String"/>
+      <form-property name="toSpecies"     type="java.lang.String"/>
+      <form-property name="toSubspecies"     type="java.lang.String"/>
+  </form-bean>  
+      
+  </form-beans>
+
+
+  <!-- ========== Global Forward Definitions ============================== -->
+  <global-forwards>
+     <!-- Example logon forward      -->
+     <forward   name="home"                		path="/index.do"/>
+     <forward   name="goToLogin"                path="/login.do"/>
+     <forward   name="error"                    path="/error.jsp"/>     
+     <forward   name="failure"                  path="/error.jsp"/>     
+     <forward   name="message"                  path="/common/message.jsp"/>     
+     <forward   name="unboldMessage"            path="/common/unboldMessage.jsp"/>     
+     <forward   name="bareMessage"              path="/common/bareMessage.jsp"/>
+     <forward   name="adminMessage"             path="/curate/adminMessage.jsp"/> 
+     <forward   name="adminHtmlMessage"         path="/curate/adminHtmlMessage.jsp"/>          
+     <forward   name="justMessage"              path="/common/justMessage.jsp"/>     
+     <forward   name="advSearch"                path="/advSearch.do"/>     
+     <forward   name="notLoggedIn"              path="/notLoggedIn.jsp"/>
+     <forward   name="sessionExpired"           path="/common/sessionExpired.jsp"/>
+     <forward   name="permissionDenied"         path="/permissionDenied.jsp"/>
+  </global-forwards>
+
+  <!-- global-exceptions>
+    <exception
+	      key="error.global.mesage"
+	      type="java.lang.Exception"
+	      handler="org.calacademy.antweb.util.CustomExceptionHandler"
+	      path="/pages/error.jsp" />
+  </global-exceptions -->
+
+	
+  <!-- ========== Action Mapping Definitions ============================== -->
+  <action-mappings>
+
+
+  <!-- Static Mappings - that do not require action or form classes -->
+
+
+    <action
+      path="/" 
+      forward="/index.jsp"/>
+      
+    <action
+      path="/index" 
+      forward="/index.jsp"/>
+
+    <action
+      path="/home" 
+      forward="/index.do"/>
+
+    <action
+      path="/about" 
+      forward="/about.jsp"/>
+
+    <action
+      path="/antShare" 
+      forward="/header/antShare.jsp"/>
+
+    <action
+      path="/documentation"
+      forward="/web/homepage/documentation.jsp"/>
+
+    <action
+      path="/participate"
+      forward="/participation.jsp"/>
+      
+    <action
+      path="/rules"
+      forward="/documentation/rules.jsp"/>
+
+    <action
+      path="/press" 
+      forward="/press.jsp"/>
+      
+    <action
+      path="/donate" 
+      forward="/donate.jsp"/>
+
+    <action
+      path="/contact" 
+      forward="/contact.jsp"/>
+
+    <action
+      path="/techDoc" 
+      forward="/techDoc.jsp"/>
+
+    <action
+      path="/api" 
+      forward="/apiV3.1.do"/>
+    <action
+      path="/apiDev" 
+      forward="/apiV3.1.do"/>
+
+    <action
+      path="/apiV3" 
+      forward="/documentation/api/apiV3.jsp"/>
+    <action
+      path="/apiV3.1" 
+      forward="/documentation/api/apiV3_1.jsp"/>
+      
+    <action
+      path="/tools" 
+      forward="/tools.jsp"/>
+      
+    <action
+      path="/tech" 
+      forward="/tech.jsp"/>
+      
+    <action
+      path="/staff" 
+      forward="/web/team/staff.jsp"/> <!-- The team dir is NOT in CVS.  Generated. -->
+      
+    <action
+      path="/curators" 
+      forward="/web/team/curators.jsp"/> <!-- The team dir is NOT in CVS.  Generated. -->
+      
+    <action
+      path="/curators2" 
+      forward="/teamMember.do"/>      
+
+    <action
+      path="/orphanMgr" 
+      forward="/curate/orphanMgr.jsp"/>
+      
+    <action
+      path="/thanks" 
+      forward="/thanks.jsp"/>      
+
+    <action
+      path="/queries"
+      forward="/util/queries.jsp"/>
+      
+    <action
+      path="/statusDisplayPage" 
+      forward="/common/statusDisplayPage.jsp"/> 
+    <action
+      path="/casteDisplayPage" 
+      forward="/common/casteDisplayPage.jsp"/>       
+    <action
+      path="/testMessage" 
+      forward="/common/testMessage.jsp"/>       
+    <action
+      path="/testMobile" 
+      forward="/common/mobile.jsp"/>       
+                                        
+    <action
+      path="/pageTracker"
+      forward="/util/pageTracker.jsp"/>
+
+    <action path="/worldants" forward="/worldants.jsp"/>
+    <action path="/geneva" forward="/geneva.jsp"/>
+    <action path="/genoa" forward="/genoa.jsp"/>
+    <action path="/basel" forward="/basel.jsp"/>
+    <action path="/oxford" forward="/oxford.jsp"/>
+    <action path="/berlin" forward="/berlin.jsp"/>
+    <action path="/copenhagen" forward="/copenhagen.jsp"/>
+       
+                    
+    <!-- action
+      path="/curator" 
+      forward="/teamMember.do"/ -->  
+      
+   <!--==========Action Mappings that use the browseForm bean==========-->
+<!--    parameter="getChildImages"  getChildImages added 2013-06-12 
+
+if we set getChildImages here, then we do know to add the field guide, but the image
+  counts are overwritten.  Not good final solution
+               parameter="getChildImages"
+ -->
+
+
+    <action  path="/mobile"
+             type="org.calacademy.antweb.TestAction">
+      <forward name="mobile" path="/common/mobile.jsp"/>
+    </action>
+            
+    <action  path="/test"
+             type="org.calacademy.antweb.TestAction">
+      <forward name="success" path="/testMessage.jsp"/>
+    </action>
+      
+    <action  path="/browse"
+             type="org.calacademy.antweb.BrowseAction"
+             name="browseForm"
+             input="/index.jsp"
+             scope="session"
+             validate="true">
+      <forward name="success" path="/showBrowse.jsp"/>
+      <forward name="specimen" path="/specimen.jsp"/>
+      </action>
+
+    <action    path="/getComparison"
+               type="org.calacademy.antweb.BrowseAction"
+               parameter="getChildImages"
+               name="browseForm"
+               input="/index.jsp"
+               scope="session">
+      <forward name="success" path="/comparison.jsp"/>
+      <forward name="oneView" path="/oneView.jsp"/>
+    </action>
+    
+     <action   path="/chooseComparison"
+               type="org.calacademy.antweb.ChooseComparisonAction"
+               name="chooseComparisonForm"
+               input="/index.jsp"
+               scope="session">
+      <forward name="success" path="/displayImageCollection.jsp"/>
+    </action>
+    
+<!-- Only use getComparison now.    
+    <action    path="/oneView"
+               type="org.calacademy.antweb.BrowseAction"
+               name="browseForm"
+               parameter="getChildImages"
+               input="/index.jsp"
+               scope="session">
+      <forward name="success" path="/oneView.jsp"/>
+      <forward name="oneView" path="/oneView.jsp"/>
+    </action>
+ -->
+     <action   path="/mapComparison"
+               type="org.calacademy.antweb.BrowseAction"
+               name="browseForm"
+               parameter="getChildMaps;getChildImages"
+               input="/index.jsp"
+               scope="session">
+      <forward name="success" path="/mapComparison.jsp"/>
+    </action>
+    <!-- To inactivate, replace with the action below. -->
+    <!--     
+    <action
+      path="/mapComparison"  
+      forward="/common/tempDown.jsp"/>
+    -->
+
+<!-- 
+originally:             parameter="getChildImages;get"
+I tried:                parameter="getChildImages;getChildMaps" 
+I tried putting this into place below but it caused a hang at the BrowseAction.execute() invocation 
+of taxon.setChildren(project, getChildImages, getChildMaps);  
+Thau said that the below was a typo, but it seems like a necessary one.
+getChildMaps if passed in is a flag that indicates in the taxon subclass getChildren() method that
+it should also fetch maps.  Do not fetch maps.
+
+
+2013-06-12
+We would like to remove getChildImages.  Not needed now in the new UI
+!!!
+             parameter="getChildImages"
+-->
+    <action path="/description"
+            type="org.calacademy.antweb.BrowseAction"            
+            name="browseForm"
+            scope="session">
+      <forward name="success" path="/taxonPage.jsp"/>
+      <forward name="homonym" path="/homonymPage.jsp"/>
+    </action>    
+<!-- Fix parameter above?  -->
+
+<!-- for images.do -->
+    <action path="/images"
+            type="org.calacademy.antweb.BrowseAction"
+            parameter="getChildImages"
+            name="browseForm"
+            scope="session">
+      <forward name="success" path="/imagePage.jsp"/>
+    </action>    
+
+<!-- This is a test.  To see if we can fetch, cache and return description results -->
+    <action path="/display"
+            type="org.calacademy.antweb.DisplayAction"
+            parameter="getChildImages"
+            name="browseForm">
+      <forward name="success" path="/taxonPage.jsp"/>
+    </action>    
+    <action path="/taxonomicPageGen"
+            type="org.calacademy.antweb.util.TaxonomicPageGenAction"
+            name="browseForm">
+    </action>    
+    
+ <!-- And also imagePickImageGetter which is down below in search -->
+
+ <!--==========End of Action Mappings that use the browseForm bean==========-->
+
+    <action
+      path="/slideshow" 
+      forward="/slideShow.do"/>
+    <action    path="/slideShow"
+               type="org.calacademy.antweb.SlideShowAction"
+               name="slideShowForm"
+               input="/index.jsp"
+               scope="session">
+      <forward name="success" path="/slideShow.jsp"/>
+    </action>
+
+    <action
+      path="/favs" 
+      forward="/list.do?action=likes"/>
+      
+      <action path="/list"
+              type = "org.calacademy.antweb.util.ListAction"
+              name="dummyForm">
+          <forward name ="success" path="/util/list.jsp"/>
+          <forward name ="list" path="/util/list.jsp"/>
+          <forward name ="listTable" path="/util/listTable.jsp"/>
+          <forward name ="listOfLists" path="/util/listOfLists.jsp"/>
+          <forward name="likes" path="/imageLikes.jsp"/>
+      </action>
+
+      <action path="/toUpload"
+              type = "org.calacademy.antweb.util.ToUploadAction"
+              name="dummyForm" 
+              scope="request">
+          <forward name ="success" path="/util/toUpload.jsp"/>
+      </action>
+      
+      <action path="/uploadReport"
+              type = "org.calacademy.antweb.upload.UploadReportAction"
+              name="dummyForm" 
+              scope="request">
+      </action>
+      
+      <action path="/showLog"
+              type = "org.calacademy.antweb.util.ShowLogAction"
+              name="dummyForm" 
+              scope="request">
+          <forward name ="success" path="/util/showLog.jsp"/>
+      </action>
+
+      <action path="/jspFetch"
+              type = "org.calacademy.antweb.util.JspFetch"
+              name="dummyForm" 
+              scope="request">
+          <forward name ="success" path="/util/jspFetch.jsp"/>
+      </action>
+      
+      <action path="/showLine"
+              type = "org.calacademy.antweb.util.ShowLineAction"
+              name="dummyForm" 
+              scope="request">
+          <forward name ="success" path="/util/showLog.jsp"/>
+      </action>
+                  
+    <action 
+            path="/curate"
+            type="org.calacademy.antweb.curate.CurateAction"
+            scope="request">
+      <forward name="curate" path="/curate/curate.jsp" />
+    </action>
+
+    <action 
+            path="/projectMgr"
+            type="org.calacademy.antweb.curate.project.ProjectMgrAction"
+            scope="request">
+      <forward name="projectMgr" path="/curate/projectMgr.jsp" />
+    </action>
+    
+    <action path="/upload"
+            type="org.calacademy.antweb.upload.UploadAction"
+            scope="request"
+            name="uploadForm">
+      <forward name="statisticsDo" path="/statistics.do"/>     
+      <forward name="uploadResults" path="/curate/uploadResults.jsp" />
+      <forward name="speciesListTool" path="/speciesListTool.do" />
+      <forward name="worldAuthorityFiles" path="/world_authority_admin_results.jsp" />
+      <forward name="newAncFile" path="/curate/anc/ancNew.jsp" />
+      <forward name="curate" path="/curate.do" />
+      <forward name="success" path="/curate.do" />
+      <forward name="taxonCountryPage" path="/curate/geolocale/taxonCountryMgr.jsp" />
+      <forward name="statisticsStr" path="/util/statisticsStr.jsp"/>           
+    </action>
+
+    <action 
+            path="/taxonCountryMgr"
+            type="org.calacademy.antweb.curate.TaxonCountryMgrAction"
+            scope="request">
+      <forward name="masterAdmin" path="/curate/geolocale/taxonCountryMgr.jsp" />
+    </action>
+
+    <action path="/bioregionCountryList"
+            type="org.calacademy.antweb.util.ReportAction"
+            name="dummyForm" 
+            scope="request">
+      <forward name="bioregionCountryList" path="/reports/bioregionCountryList.jsp" />
+    </action>
+    <action path="/countryAdm1List"
+            type="org.calacademy.antweb.util.ReportAction"
+            name="dummyForm" 
+            scope="request">
+      <forward name="countryAdm1List" path="/reports/countryAdm1List.jsp" />
+      <forward name="countryAdm1Data" path="/reports/countryAdm1Data.jsp" />
+    </action>
+
+    <action path="/uploadHistory"
+            type="org.calacademy.antweb.upload.UploadHistoryAction"
+            scope="request"
+            name="uploadForm">
+      <forward name="success" path="/uploadHistory.jsp" />
+    </action>
+
+    <action path="/speciesListTool"
+            type="org.calacademy.antweb.curate.speciesList.SpeciesListToolAction"
+            scope="request"
+            input="/curate/speciesList/speciesListTool.jsp"
+            name="toolForm">
+      <forward name="speciesListTool" path="/curate/speciesList/speciesListTool.jsp" />
+      <forward name="advSearch" path="/speciesListToolSearch.do"/>
+      <forward name="speciesListSearch" path="/curate/speciesList/speciesListSearch.jsp"/>
+      <forward name="specimenListSearch" path="/curate/speciesList/specimenListSearch.jsp"/>
+      <forward name="speciesListHistory" path="/speciesListHistory.do"/>
+    </action>
+
+    <action path="/speciesListToolSearch"
+            type="org.calacademy.antweb.curate.speciesList.SpeciesListToolSearchAction"
+            scope="request"
+            name="toolForm">
+      <forward name="advSearch" path="/curate/speciesList/speciesListToolSearch.jsp" />
+      <forward name="speciesListTool" path="/curate/speciesList/speciesListTool.jsp" />
+    </action>
+
+    <action path="/speciesListHistory"
+            type="org.calacademy.antweb.curate.speciesList.SpeciesListHistoryAction"
+            scope="request"
+            input="/curate/speciesList/speciesListHistory.jsp"
+            name="toolForm">
+      <forward name="speciesListHistory" path="/curate/speciesList/speciesListHistory.jsp" />
+    </action>
+
+    <action path="/speciesListToolAdd"
+            type="org.calacademy.antweb.curate.speciesList.SpeciesListToolAction"
+            scope="request"
+            name="toolForm">
+      <forward name="speciesListTool" path="/curate/speciesList/speciesListTool.jsp" />
+    </action>
+    
+    <action path="/speciesListMove"
+            type="org.calacademy.antweb.curate.speciesList.SpeciesListMoveAction"
+            scope="request"
+            name="moveTaxonForm">
+      <forward name="speciesListMove" path="/curate/speciesList/speciesListMove.jsp" />
+      <forward name="speciesListTool" path="/speciesListTool.do" />
+      <forward name="moveToValid" path="/moveToValid.do" />
+    </action>
+
+    <action path="/disputeMgr"
+            type="org.calacademy.antweb.curate.speciesList.DisputeMgrAction"
+            scope="request"
+            input="/curate/speciesList/disputeMgr.jsp"
+            name="dummyForm">
+      <forward name="disputeMgr" path="/curate/speciesList/disputeMgr.jsp" />
+    </action>
+    
+    <action path="/query"
+            type="org.calacademy.antweb.util.QueryAction"
+            scope="request"
+            name="utilForm">
+    </action>
+
+    <action path="/utilData"
+            type="org.calacademy.antweb.util.UtilDataAction"
+            scope="request"
+            name="utilForm">
+      <forward name="success" path="/curate.do" />
+      <forward name="uploadResults" path="/curate/uploadResults.jsp" /> 
+    </action>
+
+    <action path="/util"
+            type="org.calacademy.antweb.util.UtilAction"
+            scope="request"
+            name="utilForm">
+      <forward name="homonyms" path="/util/homonyms.jsp" />
+      <forward name="events" path="/util/events.jsp" />
+      <forward name="success" path="/curate.do" />
+    </action>
+
+    <action path="/schedule"
+            type="org.calacademy.antweb.util.Scheduler"
+            scope="request"
+            name="utilForm">
+      <forward name="success" path="/curate.do" />
+    </action>
+    
+      <action path="/getSpeciesList"
+              type = "org.calacademy.antweb.util.SpeciesListAction"
+              name="dummyForm">
+      </action>    
+      
+      <action path="/getSpecimenList"
+              type = "org.calacademy.antweb.util.SpecimenListAction"
+              name="dummyForm"
+              scope="request">
+      </action> 
+      
+      <!-- deprecated. Replaced by listSpecimenUploads -->
+      <action path="/listUploads"
+              type = "org.calacademy.antweb.util.ListUploadsAction"
+              name="dummyForm"
+              scope="request">
+          <forward name ="success" path="/util/listUploads.jsp"/>
+      </action>    
+
+    <action
+      path="/listUploads" 
+      forward="/listSpecimenUploads.do"/>  
+      
+      <action path="/listSpecimenUploads"
+              type = "org.calacademy.antweb.util.ListUploadsAction"
+              name="dummyForm"
+              scope="request">
+          <forward name ="success" path="/util/listSpecimenUploads.jsp"/>
+      </action>    
+
+      <action path="/listImageUploads"
+              type = "org.calacademy.antweb.util.ListUploadsAction"
+              name="dummyForm"
+              scope="request">
+          <forward name ="success" path="/imageUploader/listImageUploads.jsp"/>
+      </action>    
+
+
+    <action path="/moveToValid"
+            type="org.calacademy.antweb.curate.moveToValid.MoveToValidAction"
+            scope="request"
+            name="moveToValidForm">
+      <forward name="success" path="/curate/moveToValid.jsp" />
+    </action>
+
+    <action path="/orphanSpecies"
+            type="org.calacademy.antweb.curate.orphans.OrphanSpeciesAction"
+            scope="request"
+            name="orphanTaxonsForm">
+      <forward name="success" path="/curate/orphanSpecies.jsp" />
+    </action>
+    <action path="/orphanGenera"
+            type="org.calacademy.antweb.curate.orphans.OrphanGeneraAction"
+            scope="request"
+            name="orphanTaxonsForm">
+      <forward name="success" path="/curate/orphanGenera.jsp" />
+    </action>
+    <action path="/dupedGenera"
+            type="org.calacademy.antweb.curate.orphans.DupedGeneraAction"
+            scope="request"
+            name="orphanTaxonsForm">
+      <forward name="success" path="/curate/dupedGenera.jsp" />
+    </action>
+    <action path="/orphanSubfamilies"
+            type="org.calacademy.antweb.curate.orphans.OrphanSubfamiliesAction"
+            scope="request"
+            name="orphanTaxonsForm">
+      <forward name="success" path="/curate/orphanSubfamilies.jsp" />      
+    </action>    
+    <action path="/orphanDescEdits"
+            type="org.calacademy.antweb.curate.orphans.OrphanDescEditsAction"
+            scope="request"
+            name="orphanTaxonsForm">
+      <forward name="transferPage" path="/curate/orphanDescEditTransfer.jsp" />
+      <forward name="success" path="/curate/orphanDescEdits.jsp" />
+    </action>
+
+    <action path="/orphanAlternates"
+            type="org.calacademy.antweb.curate.orphans.OrphanAlternateAction"
+            scope="request"
+            name="orphanTaxonsForm">
+      <forward name="success" path="/curate/orphanAlternates.jsp" />
+    </action>
+    
+    
+    
+    <action
+      path="/countryDoc" 
+      forward="/curate/geolocale/countryDoc.jsp"/>  
+
+    <action path="/descEditImageUpload"
+            type="org.calacademy.antweb.upload.DescEditImageUploadAction"
+            scope="request"
+            name="descEditImageUploadForm">
+      <forward name="taxonSuccess" path="/common/descEdit/taxonImageConfirmForm.jsp" />
+      <forward name="overviewSuccess" path="/common/descEdit/overviewImageConfirmForm.jsp" />
+    </action>
+
+    <!--
+        <action path="/uploadImages"
+                type="org.calacademy.antweb.upload.UploadImagesAction"
+                scope="request"
+                name="uploadImagesForm">
+          <forward name="uploadResults" path="/uploadResults.jsp" />
+        </action>
+    -->
+    
+     <action path="/deleteImages"
+             type="org.calacademy.antweb.upload.DeleteImagesAction"
+             scope="request"
+             name="deleteImagesForm">
+       <forward name="success" path="/recentSearchResults.do?numToShow=100&amp;searchMethod=recentImageSearch" />
+     </action>
+                                                         
+        <action path="/editCredit"
+            type="org.calacademy.antweb.EditCreditAction"
+            scope="request"
+            name="editCreditForm">
+      <forward name="success" path="/edit_credit.jsp" />
+    </action>
+        
+    <action path="/specimenImages"
+            type="org.calacademy.antweb.SpecimenAction"
+            name="specimenForm"
+        validate="true">
+      <forward name="success" path="/specimenImages.jsp"/>
+    </action>
+   
+    <action path="/specimen"
+            type="org.calacademy.antweb.SpecimenAction"
+            name="specimenForm"
+        validate="true">
+      <forward name="success" path="/specimen.jsp"/>
+    </action>
+    
+    <!--==========Action Mappings that search==========-->
+    
+    <!-- This is our Google driven search box -->
+    <action
+      path="/search"
+      forward="/search/advancedSearch.jsp"/>
+
+    <action
+      path="/basicSearch"
+      forward="/search/basicResults.jsp"/>
+    <action
+      path="/basicsearch"
+      forward="/search/basicResults.jsp"/>
+
+
+    <action path="/defaultSpecimen"
+	  type = "org.calacademy.antweb.DefaultSpecimenAction"
+      scope="request"   
+	  name="dummyForm">
+    </action>
+    
+    <action path="/advSearch"
+            type="org.calacademy.antweb.search.SearchPageAction"
+            name="advancedSearchForm"   
+            scope="session"   
+            input="/search/advancedSearch.jsp"
+            parameter="searchMethod">
+      <forward name="success" path="/search/advancedSearch.jsp"/>
+    </action>
+
+    <!-- action
+      path="/advSearch"
+      forward="/search/advancedSearch.jsp"  
+    / -->
+    <!-- To inactivate, replace:   forward="/search/advancedSearch.jsp"   with:    forward="/common/tempDown.jsp"    -->
+
+    <!-- lowercased to handled error requests --> 
+    <action
+      path="/advancedsearch"  
+      forward="/advSearch.do"/>
+
+    <!-- This action is used for advancedSearch posts.  -->
+    <action path="/advancedSearch"
+            type="org.calacademy.antweb.search.SearchAction"
+            name="advancedSearchForm"
+            input="/search/advancedSearch.jsp"
+            parameter="searchMethod">
+      <forward name="advancedTaxon" path="/search/advancedSearchResultsByTaxon.jsp"/>
+      <forward name="advanced" path="/search/advancedSearchResults.jsp"/>
+      <forward name="dynamicMap" path="/dynamicMap.jsp"/>
+    </action>
+    <!-- To inactivate, replace with the action below. -->
+        
+    <action
+      path="/advancedSearchResults"
+      forward="/search/advancedSearchResults.jsp"/>    
+
+    <!-- This utilizes the advanced search feature and returns advanced search results. -->
+    <action path="/bayAreaSearch"
+            type="org.calacademy.antweb.search.SearchAction"
+            name="bayAreaSearchForm"
+            input="/search/bayArea.jsp"
+            parameter="searchMethod">
+      <forward name="advancedTaxon" path="/search/advancedSearchResultsByTaxon.jsp"/>
+      <forward name="success" path="/search/advancedSearchResults.jsp"/>
+      <forward name="oldBayAreaSearch" path="/search/bayAreaSearchResults.jsp"/>
+    </action >
+
+    <action path="/recentSearchResults"
+            type="org.calacademy.antweb.search.SearchAction"
+            name="recentImagesForm"
+            parameter="searchMethod">
+      <forward name="success" path="/search/recentSearchResults.jsp"/>
+    </action>
+    
+    <action path="/recentDescEdits"
+            type="org.calacademy.antweb.util.ListAction"
+            name="dummyForm">
+      <forward name="success" path="/descEditReport.jsp"/>
+    </action>
+
+<!--    
+    <action path="/descEditSearch"
+            type="org.calacademy.antweb.search.SearchAction"
+            name="recentImagesForm"
+            parameter="searchMethod">
+      <forward name="success" path="/search/descEditReport.jsp"/>
+    </action>
+-->
+   <!--==========End of Action Mappings that search==========-->
+
+    <!-- Search related -->    
+
+
+      <action path="/prepareMapResults"
+            type="org.calacademy.antweb.search.PrepareMapResultsAction"
+            name="blankForm"
+            input="/index.jsp">
+        <forward name="advancedSearch" path="/search/advancedSearchResults.jsp?mode=map"/>
+        <forward name="advancedSearchByTaxon" path="/search/advancedSearchResultsByTaxon.jsp?mode=map"/>
+        <forward name="search" path="/search/results.jsp?mode=map"/>
+        <forward name="bayAreaSearch" path="/search/bayAreaSearchResults.jsp?mode=map"/>
+     </action>
+
+     <action path="/mapResults"
+            type="org.calacademy.antweb.search.MapResultsAction"
+            name="taxaFromSearchForm"
+            input="/index.jsp">
+        <forward name="success" path="/dynamicMap.jsp"/>
+     </action>
+
+     <action path="/prepareCompareResults"
+            type="org.calacademy.antweb.search.PrepareCompareResultsAction"
+            name="blankForm"
+            input="/index.jsp">
+        <forward name="advancedSearch" path="/search/advancedSearchResults.jsp?mode=compare"/>
+        <forward name="advancedSearchByTaxon" path="/search/advancedSearchResultsByTaxon.jsp?mode=compare"/>
+        <forward name="search" path="/search/results.jsp?mode=compare"/>
+        <forward name="bayAreaSearch" path="/search/bayAreaSearchResults.jsp?mode=compare"/>
+        <forward name="collectionSearch" path="/collection.jsp?mode=compare"/>
+     </action>
+     
+     <action path="/compareResults"
+            type="org.calacademy.antweb.search.CompareResultsAction"
+            name="taxaFromSearchForm"
+            input="/index.jsp">
+        <forward name="success" path="/search/multiTaxaComparison.jsp"/>
+        <forward name="oneView" path="/search/multiTaxaOneView.jsp"/>
+     </action>
+
+     <action path="/prepareFieldGuideResults"
+             type="org.calacademy.antweb.search.PrepareFieldGuideResultsAction"
+             name="blankForm"
+             input="/index.jsp">
+        <forward name="advancedSearch" path="/search/advancedSearchResults.jsp?mode=fieldGuide"/>
+        <forward name="advancedSearchByTaxon" path="/search/advancedSearchResultsByTaxon.jsp?mode=fieldGuide"/>
+     </action>
+          
+     <action path="/fieldGuideResults"
+             type="org.calacademy.antweb.search.FieldGuideResultsAction"
+             name="taxaFromSearchForm"
+             input="/index.jsp">
+        <forward name="fieldGuideByTaxon" path="/search/fieldGuide.jsp"/>
+     </action>
+
+     <!-- This is the new web-based field guide tech -->               
+    <action path="/fieldGuide"
+            type="org.calacademy.antweb.search.FieldGuideAction"
+            name="fieldGuideForm">
+      <forward name="fieldGuideByTaxon" path="/search/fieldGuide.jsp"/>
+    </action>      
+
+<!-- if troubles, see layout.jsp:55 -->
+     <action path="/getSearchList"
+             type = "org.calacademy.antweb.search.SearchListAction"
+             name="dummyForm">          
+     </action>         
+    
+    <!-- end Search related -->
+        
+    <action path="/bigMap"
+            type="org.calacademy.antweb.BigMapAction"
+            name="dummyForm"
+            scope="request"            
+            input="/index.jsp">
+        <forward name="success" path="/dynamicMap.jsp"/>
+    </action>
+
+    <action path="/bigMapReq"
+            forward="/bigMap.do"/>
+        
+    <action path="/collection"
+            type="org.calacademy.antweb.CollectionAction"
+            name="dummyForm">
+      <forward name="success" path="/collection.jsp"/>
+    </action>
+                                                                                                               
+    <action path="/locality"
+            type="org.calacademy.antweb.LocalityAction"
+              name="dummyForm"
+            scope="request" 
+            >
+      <forward name="success" path="/locality.jsp"/>
+    </action>
+
+ 
+
+    <action 
+      path="/googleEarth"
+      forward="/common/deprecate.jsp"
+    />                    
+    <!-- action
+      path="/viewGoogleEarth"
+      forward="/viewGoogleEarth.jsp"
+    / -->    
+    <!-- To inactivate, replace:   forward="/viewGoogleEarth.jsp"   with:   forward="/common/tempDown.jsp"  -->
+ 
+    <!--==========Begin User Management Action Mappings==========-->
+
+    <!-- action path="/googleEarth"
+            type="org.calacademy.antweb.GoogleEarthAction"
+            scope="request"
+            name="dummyForm">
+    </action -->
+                                                                                                                               
+    <action path="/editCredit"
+            type="org.calacademy.antweb.EditCreditAction"
+            scope="request"
+            name="editCreditForm">
+      <forward name="success" path="/edit_credit.jsp" />
+    </action>
+                                                                                                                            
+    <action path="/login"
+            type="org.calacademy.antweb.LoginAction"
+            scope="request"
+            name="loginForm">
+          <forward name="success" path="/" />
+          <forward name="failure" path="/login.jsp" />
+    </action>
+
+    <action path="/logout"
+            type="org.calacademy.antweb.LogoutAction"
+            scope="request"
+            name="loginForm">
+      <forward name="success" path="/index.jsp" />
+    </action>
+
+<!-- Contributors -->
+    <action path="/curator"
+            type="org.calacademy.antweb.CuratorAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="curator" path="/curator.jsp" />
+    </action>
+
+    <action path="/curators"
+            type="org.calacademy.antweb.CuratorAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="curators" path="/curators.jsp" />
+    </action>
+
+    <action path="/curation"
+            type="org.calacademy.antweb.CuratorAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="curation" path="/curation.jsp" />
+    </action>
+
+
+<!-- Artist -->                
+
+    <action path="/artist"
+            type="org.calacademy.antweb.ArtistAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="artist" path="/artist.jsp" />
+      <forward name="artists" path="/artists.jsp" />
+    </action>
+
+    <action path="/artists" forward="/artist.do"/>
+      
+<!--  
+    <action path="/artists"
+            type="org.calacademy.antweb.ArtistAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="artists" path="/artists.jsp" />
+    </action>
+                    
+    <action path="/addArtist"
+            type="org.calacademy.antweb.ArtistAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="artist" path="/artist.jsp" />
+      <forward name="artists" path="/artists.jsp" />
+      <forward name="startFresh" path="/artists.do" />
+    </action>
+
+           
+    <action path="/removeArtist"
+            type="org.calacademy.antweb.ArtistAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="artist" path="/artist.jsp" />
+      <forward name="artists" path="/artists.jsp" />
+      <forward name="startFresh" path="/artists.do" />
+    </action>                    
+-->
+                                                   
+<!-- group -->                
+
+    <action path="/group"
+            type="org.calacademy.antweb.GroupAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="group" path="/group.jsp" />
+    </action>
+
+    <action path="/groups"
+            type="org.calacademy.antweb.GroupAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="groups" path="/groups.jsp" />
+    </action>
+
+
+    <action path="/viewGroups"
+            type="org.calacademy.antweb.curate.group.ManageGroupsAction"
+            scope="request"
+            name="blankForm">
+      <forward name="success" path="/curate/viewGroups.jsp" />
+      <forward name="failure" path="/curate/antwebAdmin.jsp" />
+    </action>
+    
+    <action path="/viewGroupsBak"
+            type="org.calacademy.antweb.curate.group.ManageGroupsAction"
+            scope="request"
+            name="blankForm">
+      <forward name="success" path="/curate/viewGroups.jsp" />
+      <forward name="failure" path="/curate/antwebAdmin.jsp" />
+    </action>
+                                                                                                        
+    <action path="/saveGroup"
+            type="org.calacademy.antweb.curate.group.SaveGroupAction"
+            scope="request"
+            input="/curate/viewGroup.jsp"
+            name="saveGroupForm">
+      <forward name="success" path="/curate/saveGroupSuccess.jsp" />
+      <forward name="failure" path="/curate/viewGroup.jsp" />
+    </action>
+                                                                                                       
+    <action path="/newGroup"
+            type="org.calacademy.antweb.curate.group.NewGroupAction"
+            scope="request"
+            name="BlankForm">
+      <forward name="success" path="/curate/viewGroup.jsp" />
+      <!-- forward name="failure" path="/curate/antwebAdmin.jsp" / -->
+    </action>
+                                                                                                        
+    <action path="/viewGroup"
+            type="org.calacademy.antweb.curate.group.ViewGroupAction"
+            scope="request"
+            validate="false"
+            name="saveGroupForm">
+      <forward name="success" path="/curate/viewGroup.jsp" />
+    </action>
+
+    <!-- see masterAdmin.do above - links directory to /curate/antwebAdmin.jsp -->
+
+<!-- Login -->               
+               
+    <action path="/viewLogins"
+            type="org.calacademy.antweb.curate.login.ViewLoginsAction"
+            scope="request"
+            name="blankForm">
+      <forward name="success" path="/curate/viewLogins.jsp" />
+      <forward name="failure" path="/curate/antwebAdmin.jsp" />
+    </action>
+                                                                                                        
+    <action path="/saveLogin"
+            type="org.calacademy.antweb.curate.login.SaveLoginAction"
+            scope="request"
+            input="/curate/viewLogin.jsp"
+            name="saveLoginForm">
+      <forward name="success" path="/curate/saveLoginSuccess.jsp" />
+      <forward name="invite" path="/curate/saveInviteSuccess.jsp" />
+      <forward name="failure" path="/curate/viewLogin.jsp" />  
+    </action>
+                                                                                                       
+    <action path="/newLogin"
+            type="org.calacademy.antweb.curate.login.NewLoginAction"
+            scope="request"
+            name="BlankForm">
+      <forward name="success" path="/curate/viewLogin.jsp" />
+      <forward name="failure" path="/curate/antwebAdmin.jsp" />
+    </action>
+    
+    <action path="/viewLogin"
+            type="org.calacademy.antweb.curate.login.ViewLoginAction"
+            scope="request"
+            validate="false"
+            name="saveLoginForm">
+      <forward name="editLogin" path="/editLogin.jsp" />
+      <forward name="viewLogin" path="/curate/viewLogin.jsp" />
+    </action>
+
+    <action path="/editLogin"
+            type="org.calacademy.antweb.EditLoginAction"
+            scope="session"
+            input="/editLogin.jsp"
+            validate="false"
+            name="editLoginForm">
+      <forward name="editLogin" path="/editLogin.jsp" />
+    </action>
+    
+    <action path="/antwebInvite"
+            type="org.calacademy.antweb.curate.login.AntwebInviteAction"
+            scope="request"
+            validate="false"
+            name="saveLoginForm">
+      <forward name="antwebInvite" path="/login/antwebInvite.jsp" />
+      <forward name="viewLogin" path="/curate/viewLogin.jsp" />      
+    </action>    
+        
+<!-- Password -->
+               
+    <!-- action path="/changePassword"
+                type="org.calacademy.antweb.curate.ChangePasswordAction"
+                scope="request"
+                name="changePasswordForm">
+        <forward name="success" path="/curate/curate.jsp" />
+        <forward name="failure" path="/change_password.jsp" />
+    </action -->
+
+    <action path="/forgotPassword"
+                type="org.calacademy.antweb.LogoutAction"
+                scope="request"
+                name="blankForm">
+        <forward name="success" path="/forgot_password.jsp" />
+    </action>
+    
+    <action path="/manageMuseum"
+            type="org.calacademy.antweb.curate.ManageMuseumsAction"
+            scope="request"
+            name="dummyForm">
+      <forward name="success" path="/curate/manageMuseums.jsp" />
+    </action>    
+
+    <action path="/viewMuseum"
+            type="org.calacademy.antweb.curate.ManageMuseumsAction"
+            scope="request"
+            input="/curate/viewMuseum.jsp"
+            name="dummyForm">
+      <forward name="success" path="/curate/viewMuseum.jsp" />
+    </action>    
+    
+    <action path="/saveMuseum"
+            type="org.calacademy.antweb.curate.ManageMuseumsAction"
+            scope="request"
+            input="/curate/viewMuseum.jsp"
+            name="dummyForm">
+      <forward name="success" path="/curate/viewMuseum.jsp" />
+    </action>    
+ <!--========== Team Member Action Mappings==========-->    
+    
+    <action path="/teamMember"
+            type="org.calacademy.antweb.curate.team.TeamMemberAction"
+            scope="request"
+            validate="false"
+            input="/curate/curators.jsp"
+            name="teamMemberForm">
+      <forward name="success" path="/curate/curators.jsp" />
+    </action>    
+    
+    <action 
+         path="/teamMemberImgUpload" 
+         type="org.calacademy.antweb.curate.team.TeamMemberImgUploadAction" 
+         name="imgUploadForm"
+         scope="request">
+      <forward name="success"            path="/curate/curators.jsp" />
+    </action>
+     <!--Because we are using two separate actions and forms for this page, it does not seem possible
+         to forward to another action and pass parameters.  If possible, not found quickly. -->
+     <!--forward name="success" path="/about_us/team/teamMemberEdit.jsp" / -->
+
+    <action path="/teamMemberImgDownload" 
+         type="org.calacademy.antweb.curate.team.TeamMemberImgDownloadAction" />
+
+ <!--==========Project Managment Action Mappings==========-->
+
+ <!-- project -->
+
+	<action path="/editProject"
+					type="org.calacademy.antweb.curate.project.EditProjectAction"
+					name="editProjectForm"
+					input="/editProject.jsp">
+			<forward name="success" path="/curate/project/editProject.jsp"/>
+			<forward name="failure" path="/index.jsp"/>
+			<!-- forward name="upload" path="/curate/curate.jsp" /   not used.  Was /update.jsp-->                
+	</action>
+																							
+	<action path="/saveProject"
+					type="org.calacademy.antweb.curate.project.SaveProjectAction"
+					name="editProjectForm">
+			<forward name="success" path="/curate.do"/>
+			<forward name="failure" path="/curate/project/editProject.jsp"/>
+	</action>
+				
+<!-- Home Pages --> 
+
+	<action path="/editHomePage"
+					type="org.calacademy.antweb.curate.EditHomePageAction"
+					name="homePageForm">
+			<forward name="success" path="/curate/project/editHome.jsp"/>
+			<!-- forward name="failure" path="/index.jsp"/ -->
+	</action>
+																									
+																									
+	<action path="/previewHomePage"
+					type="org.calacademy.antweb.curate.PreviewHomePageAction"
+					name="homePageForm"
+					input="/curate/project/editHome.jsp">
+			<forward name="success" path="/homePagePreview.jsp"/>
+			<forward name="failure" path="/curate/project/editHome.jsp"/>
+			<!-- forward name="failure" path="/edit_home.jsp"/ -->
+	</action>
+																									
+	<action path="/saveHomePage"
+					type="org.calacademy.antweb.curate.SaveHomePageAction"
+					name="homePageForm"
+					input="/edit_home.jsp">
+			<forward name="success" path="/index.jsp"/>
+			<forward name="failure" path="/curate/project/editHome.jsp"/>
+			<!-- forward name="failure" path="/edit_home.jsp"/ -->
+	</action>                                                                             
+
+	 <action path="/page"
+					type = "org.calacademy.antweb.PageAction"
+					name="dummyForm"
+					scope="request">
+			<forward name ="success" path="/pageTemplate.jsp"/>
+   </action>
+
+   <action path="/projects"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="projects" path="/projects.jsp"/>
+   </action>
+
+   <action path="/project"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="project" path="/project.jsp"/>
+			<forward name ="projects" path="/projects.jsp"/>
+   </action>
+
+   <action path="/museums"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="museums" path="/museums.jsp"/>
+   </action>
+   <action path="/museum"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="museum" path="/museum.jsp"/>
+			<forward name ="museums" path="/museums.jsp"/>
+   </action>
+   <action path="/bioregions"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="bioregions" path="/bioregions.jsp"/>
+   </action>
+   <action path="/bioregion"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="bioregion" path="/bioregion.jsp"/>
+			<forward name ="bioregions" path="/bioregions.jsp"/>
+   </action>
+   <action path="/subregion"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="subregion" path="/subregion.jsp"/>
+			<forward name ="subregions" path="/subregions.jsp"/>
+   </action>
+   <action path="/subregions"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="subregions" path="/subregions.jsp"/>
+   </action>
+   <action path="/region"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="region" path="/region.jsp"/>
+			<forward name ="regions" path="/regions.jsp"/>
+   </action>
+   <action path="/regions"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="regions" path="/regions.jsp"/>
+   </action>
+   <action path="/country"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="country" path="/country.jsp"/>
+			<forward name ="countries" path="/countries.jsp"/>
+   </action>
+   <action path="/countries"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="countries" path="/countries.jsp"/>
+   </action>
+   <action path="/island"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="country" path="/country.jsp"/>
+			<forward name ="countries" path="/countries.jsp"/>
+   </action>      
+   <action path="/adm1"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="adm1" path="/adm1.jsp"/>
+			<forward name ="adm1s" path="/adm1s.jsp"/>
+			<forward name ="island" path="/country.jsp"/>
+   </action>
+
+   <action path="/adm1s"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="adm1s" path="/adm1s.jsp"/>
+   </action>
+   
+   <action path="/place"
+					type = "org.calacademy.antweb.geolocale.PlaceNameAction"
+					name="overviewForm"
+					scope="request">
+   </action>
+
+   <action path="/geolocale"
+					type = "org.calacademy.antweb.OverviewAction"
+					name="overviewForm"
+					scope="request">
+   </action>
+   
+   <action path="/endemic"
+					type = "org.calacademy.antweb.EndemicAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="endemic" path="/endemic.jsp"/>
+   </action>
+
+   <action path="/introduced"
+					type = "org.calacademy.antweb.IntroducedAction"
+					name="overviewForm"
+					scope="request">
+			<forward name ="introduced" path="/introduced.jsp"/>
+   </action>
+   
+   
+        
+    <action path="/geolocaleMgr"
+            type="org.calacademy.antweb.curate.geolocale.GeolocaleMgrAction"
+            scope="request"
+            name="editGeolocaleForm">
+      <forward name="success" path="/curate/geolocale/geolocaleMgr.jsp" />
+    </action>
+    <action path="/editGeolocale"
+            type="org.calacademy.antweb.curate.geolocale.EditGeolocaleAction"
+            scope="request"
+            name="editGeolocaleForm">
+      <forward name="success" path="/curate/geolocale/editGeolocale.jsp" />
+      <forward name="startFresh" path="/geolocaleMgr.do" />
+    </action>        
+   
+	<action path="/adm1Mgr"
+			type="org.calacademy.antweb.curate.geolocale.Adm1MgrAction"
+			name="dummyForm">
+	  <forward name="success" path="/curate/geolocale/adm1Mgr.jsp"/>
+	</action>   
+
+	<action path="/bioregionMapMgr"
+			type="org.calacademy.antweb.curate.BioregionMapMgrAction"
+			name="bioregionMapMgrForm">
+	  <forward name="success" path="/curate/bioregionMapMgr.jsp"/>
+	</action>   
+
+	<action path="/introducedMapMgr"
+			type="org.calacademy.antweb.curate.IntroducedMapMgrAction"
+			name="bioregionMapMgrForm">
+	  <forward name="success" path="/curate/introducedMapMgr.jsp"/>
+	</action>   
+
+   <action path="/speciesListDownload"
+            type = "org.calacademy.antweb.SpeciesListDownloadAction"
+            name="dummyForm"
+            scope="request">
+   </action>
+
+<!-- AncPage -->
+
+   <action path="/ancPageMgr"
+					type = "org.calacademy.antweb.curate.ancFile.AncPageMgrAction"
+					name="dummyForm"
+					scope="request">
+			<forward name ="success" path="/curate/anc/ancPageMgr.jsp"/>
+   </action>
+
+   <action path="/newAncPage"
+					type="org.calacademy.antweb.curate.ancFile.AncNewPageAction"
+					scope="request"
+					name="ancForm">  <!-- Mark added scope request Oct21 -->
+			<forward name="success" path="/ancPreview.jsp"/>
+			<forward name="failure" path="/curate/anc/ancNew.jsp"/>
+	</action>
+   
+   <action path="/ancPagePreview"
+					type="org.calacademy.antweb.curate.ancFile.AncPagePreviewAction"
+					name="ancForm">
+			<forward name="success" path="/ancPreview.jsp"/>
+	</action>
+
+	<action path="/ancPageEdit"
+					type="org.calacademy.antweb.curate.ancFile.AncEditAction"
+					name="ancForm">
+			<forward name="success" path="/curate/anc/ancEdit.jsp"/>
+	</action>
+
+	 <action path="/ancPageSave"
+					type="org.calacademy.antweb.curate.ancFile.AncSaveAction"
+					name="ancForm">
+			<forward name="success" path="/curate/curate.jsp"/>
+	</action>
+
+
+<!--==========End of Project Managment Action Mappings==========-->
+
+
+	<action path="/worldAuthoritySave"
+					type="org.calacademy.antweb.upload.WorldAuthorityAction"
+					name="worldAuthorityForm"
+					input="/world_authority_admin.jsp">
+			<forward name="success" path="/world_authority_admin_saved.jsp"/>
+			<forward name="failure" path="/world_authority_admin.jsp"/>
+	</action>                                                                                                        
+			   
+																									
+	<action path="/simpleContentEditorRead"
+					type="org.calacademy.antweb.SimpleContentEditorReadAction"
+					name="simpleContentEditorForm">
+			<forward name="success" path="/simple_editor.jsp"/>
+	</action>             
+	
+	<action path="/simpleContentEditorWrite"
+					type="org.calacademy.antweb.SimpleContentEditorWriteAction"
+					name="simpleContentEditorForm">
+			<forward name="success" path="/web/team/staff.jsp"/>
+	</action>                                               
+	
+	<action path="/newBioRegion"
+					type="org.calacademy.antweb.curate.NewBioRegionAction"
+					name="editProjectForm"
+					input="/curate/addbio_area.jsp">
+			<forward name="addBioPage" path="/curate/addbio_area.jsp"/>
+			<forward name="success" path="/curate/bioarea_success.jsp"/>
+			<forward name="failure" path="/curate/addbio_area.jsp"/>
+	</action>
+	
+    
+    <action
+      path="/bigpicture" 
+      forward="/bigPicture.do"/>    
+              
+    <action path="/bigPicture"
+            type="org.calacademy.antweb.BigPictureAction"
+            name="specimenImageForm"
+            input="/index.jsp">
+        <forward name="success" path="/bigPicture.jsp"/>
+    </action>
+
+
+    <action
+      path="/pictureLikey" 
+      forward="/bigPicture.do"/> 
+       
+    <action
+      path="/pictureLikex" 
+      forward="/bigPicture.do"/>    
+
+    <action path="/pictureLike"
+            type="org.calacademy.antweb.PictureLikeAction"
+            name="specimenImageForm"
+            input="/index.jsp">
+        <forward name="bigPicture" path="/bigPicture.jsp"/>
+    </action>
+
+    <action path="/orphanedImages"
+            type="org.calacademy.antweb.OrphanedImagesAction"
+            name="slideShowForm"
+            input="/index.jsp">
+        <forward name="success" path="/orphanedImages.jsp"/>
+    </action>
+
+    <action path="/taxonomicPage"
+            type="org.calacademy.antweb.TaxaPageAction"
+            name="taxaPageForm"
+            scope="session">
+        <forward name="success" path="/taxonomicPage.jsp"/>
+        <!-- forward name="simple" path="/taxonomicPageSimple.jsp"/ -->
+    </action>   
+    <!-- To inactivate, replace entire action above with the one below  -->
+  <!--
+    <action
+      path="/taxonomicPage"
+      forward="/common/tempDown.jsp"
+    />    
+  -->
+
+    <action path="/taxaList"
+            type="org.calacademy.antweb.TaxaListAction"
+            name="dummyForm"
+            scope="request">
+          <forward name="success" path="/util/list.jsp"/>
+    </action>  
+
+
+
+    <!-- new -->
+    <action
+      path="/imageUploader" 
+      forward="/imageUploader/imageUploader.jsp"
+      />    
+
+    <action path="/imageUploader"
+            type="org.calacademy.antweb.imageUploader.ImageUploaderAction"
+            scope="request"
+            >
+      <forward name="imagesUploaded" path="/imageUploader/imagesUploaded.jsp" />
+      <forward name="imageUploader" path="/imageUploader/imageUploader.jsp" />
+      <forward name="report" path="/imageUploader/imageUploadReport.jsp"/>
+    </action>
+
+    <action path="/imageUploadReport"
+            type="org.calacademy.antweb.imageUploader.ImageUploadReport"
+            name="dummyForm"
+            scope="request"
+            >
+      <forward name="report" path="/imageUploader/imageUploadReport.jsp"/>
+    </action>
+
+
+    <!-- This is the doorway into the image upload mechanism.  Manages the lock -->
+    <!--
+        <action
+          path="/imageUpload"
+          type="org.calacademy.antweb.curate.imageUpload.ImageUploadAction"
+          name="imageUploadForm">
+          <forward name="success" path="/imageUpload.jsp"/>
+          <forward name="isLocked" path="/imageUpload.jsp"/>
+        </action>  
+    -->      
+      
+      
+    <action path="/getEOL"
+             type="org.calacademy.antweb.EOLAction"
+             name="blankForm"
+             scope="request">
+         <forward name="success" path="/eol.jsp"/>
+     </action>
+    
+     <!-- Deprecated -->
+     <action path="/getPlazi"
+             type="org.calacademy.antweb.data.PlaziAction"
+             name="blankForm"
+             input="/index.jsp">
+         <forward name="failure" path="/plaziFail.jsp"/>
+      </action>
+
+     <!-- called as: /util.do?action=plaziData  as below only to test fetch. -->
+     <action path="/getPlaziData"
+             type="org.calacademy.antweb.data.PlaziDataAction"
+             name="blankForm"
+             input="/index.jsp">
+         <forward name="failure" path="/plaziFail.jsp"/>
+      </action>
+
+     <!-- called as: /util.do?action=countryData  as below only to test fetch. -->
+     <action path="/antWikiData"
+             type="org.calacademy.antweb.data.AntWikiDataAction"
+             name="dummyForm"
+             input="/index.jsp">
+         <forward name="failure" path="/error.jsp"/>
+      </action>
+
+      <action path="/serverStatus"
+              type = "org.calacademy.antweb.util.ServerStatusAction"
+              name="dummyForm">
+          <forward name ="success" path="/util/serverStatus.jsp"/>
+      </action>
+
+      <action path="/userAgents"
+              type = "org.calacademy.antweb.util.DummyAction"
+              name="dummyForm">
+          <forward name ="userAgents" path="/util/dummyPage.jsp"/>
+      </action>
+
+      <action path="/dbStatus"
+              type = "org.calacademy.antweb.util.DbStatusAction"
+              name="dummyForm">
+          <forward name ="success" path="/util/dbStatus.jsp"/>
+      </action>
+
+      <action path="/adminAlert"
+              type = "org.calacademy.antweb.util.AdminAlertAction"
+              name="dummyForm">
+          <forward name ="success" path="/util/adminAlert.jsp"/>
+      </action>
+          
+      <action path="/statistics"   
+              type = "org.calacademy.antweb.StatisticsAction"
+              name="dummyForm">
+          <forward name ="statisticsStr" path="/util/statisticsStr.jsp"/>     
+          <forward name ="statisticsRealTime" path="/util/statisticsRealTime.jsp"/>     
+          <forward name ="statisticsRealTime-body" path="/util/statisticsRealTime-body.jsp"/>     
+          <forward name ="statisticsFromSession" path="/util/statisticsFromSession.jsp"/>
+      </action>
+
+      <action path="/statsPage"   
+              type = "org.calacademy.antweb.StatsPageAction"
+              name="dummyForm">
+          <forward name ="success" path="/util/statsPage.jsp"/>     
+      </action>
+
+
+      <action path="/cache"
+              type = "org.calacademy.antweb.util.CacheAction"
+              name="dummyForm"
+              scope="request">
+          <forward name ="longRequests" path="/curate/cacheMgr.jsp"/>
+          <forward name ="longRequestDetails" path="/curate/cacheDetail.jsp"/>
+      </action>
+
+      <action path="/uptime"
+              type = "org.calacademy.antweb.util.UptimeAction"
+              name="dummyForm">
+          <forward name ="success" path="/util/uptime.jsp"/>
+          <forward name ="fail" path="/util/uptimeFail.jsp"/>
+      </action>
+      
+      <action path="/autoComplete"
+              type = "org.calacademy.antweb.AutoCompleteAction"
+              name="dummyForm">
+          <forward name ="success" path="/autoFill.jsp"/>
+          <forward name ="autoCompleteData" path="/autoFill.jsp"/>
+      </action>
+
+      
+<!--  This uptime test tests the database connection     
+      <action path="/uptime"
+          forward="/util/uptime.jsp" />
+-->
+
+    <!-- The standard administrative actions available with Struts -->
+    <!-- These would be either omitted or protected by security -->
+    <!-- in a real application deployment -->
+  <!--
+    <action    path="/admin/addFormBean"
+               type="org.apache.struts.actions.AddFormBeanAction"/>
+    <action    path="/admin/addForward"
+               type="org.apache.struts.actions.AddForwardAction"/>
+    <action    path="/admin/addMapping"
+               type="org.apache.struts.actions.AddMappingAction"/>
+    <action    path="/admin/reload"
+               type="org.apache.struts.actions.ReloadAction"/>
+    <action    path="/admin/removeFormBean"
+               type="org.apache.struts.actions.RemoveFormBeanAction"/>
+    <action    path="/admin/removeForward"
+               type="org.apache.struts.actions.RemoveForwardAction"/>
+    <action    path="/admin/removeMapping"
+               type="org.apache.struts.actions.RemoveMappingAction"/>
+
+  -->
+
+<!-- To fix bad cases -->
+    <action path="/specimenimages"
+            forward="/specimenImages.do"/>
+    <action path="/bigmap"
+            forward="/bigMap.do"/>
+    <action path="/fieldguide"
+            forward="/fieldGuide.do"/>
+    <action path="/getcomparison"
+            forward="/getcomparison.do"/>
+    <action path="/mapcomparison"
+            forward="/mapComparison.do"/>
+    <!-- action path="/googleearth"
+            forward="/googleEarth.do"/ -->
+    <action path="/recentsearchresults"
+            forward="/recentSearchResults.do"/>
+
+  </action-mappings>
+  
+
+
+  <controller maxFileSize="200M" />  
+  
+  <!-- plugin for project -->
+    <plug-in className="org.calacademy.antweb.util.StartupPlugIn"/>
+
+  <!--plug-in for tiles -->
+  <!--
+  <plug-in className="org.apache.struts.tiles.TilesPlugin">
+      <set-property property="definitions-config" value="/WEB-INF/struts-tiles.tld" />
+    <set-property property="definitions-debug" value="2" />
+    <set-property property="definitions-parser-details" value="2" />
+    <set-property property="definitions-parser-validate" value="true" />
+  </plug-in>
+  -->
+    
+</struts-config>

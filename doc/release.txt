@@ -1,3 +1,11 @@
+Release 8.11.3
+Date: Feb 17
+  Remove extranouse (hidden) files from the source tree.
+  Enable .txt download in new server config and web/bak/taxonSets/ access.
+  Fix the 35 deprecation warnings.
+  Database tuning.
+  Take down specimen upload for testing.
+
 Release 8.11.2
 Date: Feb 16
   Turn off ONLY_FULL_GROUP_BY in /etc/my.cnf to enable recent images query.

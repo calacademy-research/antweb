@@ -538,15 +538,29 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
 		  }
 		  message = "Finished Bioregion Count Crawl (" + form.getName() + ")";
 		}
-		
+
 		// Takes about 26 mins
 		if (action.equals("allCountCrawls")) {
 		  // Image and Children crawls for Bioregion, Project, Geolocale and Museum.
 		  // Crawl for Children and Image Counts
 		  TaxonCountDb taxonCountDb = (new TaxonCountDb(connection));
 		  taxonCountDb.allCountCrawls();
+
 		  message = "Finished All Count Crawls";
 		}
+
+        // Takes about 26 mins
+        if (action.equals("runCountCrawls")) {
+            // Image and Children crawls for Bioregion, Project, Geolocale and Museum.
+            // Crawl for Children and Image Counts
+            TaxonCountDb taxonCountDb = (new TaxonCountDb(connection));
+            taxonCountDb.allCountCrawls();
+
+            (new TaxonDb(connection)).crawlForType();
+
+            message = "Run Count Crawls";
+        }
+
 
         // 37 sec.  Called following specimen upload.
 		if (action.equals("crawlForType")) {

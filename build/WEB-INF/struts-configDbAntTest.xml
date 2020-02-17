@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.1//EN"
+          "http://jakarta.apache.org/struts/dtds/struts-config_1_1.dtd">
+
+<struts-config>
+
+  <data-sources>
+
+    <data-source key="conPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">  
+      <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
+      <set-property property="auth" value="Container"/>
+      <set-property property="maxPoolSize" value="15"/>
+      <set-property property="maxIdleTime" value="10"/>
+      <set-property property="user" value="antweb"/>
+      <set-property property="password" value="f0rm1c6"/>
+      <set-property property="driverClassName" value="com.mysql.jdbc.Driver" />
+      <set-property property="jdbcUrl" value="jdbc:mysql://localhost:3306/ant_test?autoReconnect=true"/>
+      <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
+      <set-property property="unreturnedConnectionTimeout" value="3600"/>  <!-- 3000 is 50 min -->
+      <set-property property="debugUnreturnedConnectionStackTraces" value="true"/>       
+    </data-source>
+
+    
+   <!--
+   <data-source key="conPool" type="org.apache.commons.dbcp.BasicDataSource">
+     <set-property property="driverClassName" value="com.mysql.jdbc.Driver" />
+     <set-property property="url" value="jdbc:mysql://localhost:3306/ant_test?autoReconnect=true" />
+     <set-property property="username" value="antweb" />
+     <set-property property="password" value="f0rm1c6" />
+     <set-property property="maxActive" value="100" />
+     <set-property property="maxIdle" value="25" />
+     <set-property property="maxWait" value="5000" />
+     <set-property property="defaultAutoCommit" value="true" />
+     <set-property property="defaultReadOnly" value="false" />
+     <set-property property="testOnBorrow" value="true" />
+     <set-property property="testWhileIdle" value="true" />
+     <set-property property="timeBetweenEvictionRunsMillis" value="10000" />
+     <set-property property="minEvictableIdleTimeMillis" value="60000" />
+     <set-property property="removeAbandoned" value="true" />
+     <set-property property="removeAbandonedTimeout" value="30" />
+     <set-property property="logAbandoned" value="true" />
+     <set-property property="validationQuery" value="SELECT 1" />
+   </data-source>
+  -->
+
+  </data-sources>
+
+</struts-config>

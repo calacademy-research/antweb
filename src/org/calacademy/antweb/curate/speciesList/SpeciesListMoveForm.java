@@ -1,4 +1,4 @@
-package org.calacademy.antweb.upload;
+package org.calacademy.antweb.curate.speciesList;
 
 import org.apache.struts.action.*;
 import javax.servlet.http.*;

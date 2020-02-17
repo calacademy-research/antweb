@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app
+  PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN"
+  "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
+
+<web-app>
+
+
+  <!-- Example Database Initialization Servlet Configuration
+  <servlet>
+    <servlet-name>database</servlet-name>
+    <servlet-class>org.apache.struts.example.DatabaseServlet</servlet-class>
+    <init-param>
+      <param-name>debug</param-name>
+      <param-value>2</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  -->
+
+    <!-- Define application events listeners -->
+    <listener>
+      <listener-class>
+        org.calacademy.antweb.util.AppContextListener
+      </listener-class>
+    </listener>
+
+  <!-- Standard Action Servlet Configuration (with debugging) -->
+  <servlet>
+    <servlet-name>action</servlet-name>
+    <servlet-class>org.apache.struts.action.ActionServlet</servlet-class>
+    <init-param>
+      <param-name>application</param-name>
+      <param-value>ApplicationResources</param-value>
+    </init-param>
+    <init-param>
+      <param-name>config</param-name>
+      <param-value>/WEB-INF/struts-config.xml,/WEB-INF/struts-configDb.xml</param-value>
+    </init-param>
+    <init-param>
+      <param-name>debug</param-name>
+      <param-value>2</param-value>
+    </init-param>
+    <init-param>
+      <param-name>detail</param-name>
+      <param-value>2</param-value>
+    </init-param>
+    <init-param>
+      <param-name>validate</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <load-on-startup>2</load-on-startup>
+  </servlet>
+
+  <!-- Standard Action Servlet Mapping -->
+  <servlet-mapping>
+    <servlet-name>action</servlet-name>
+    <url-pattern>*.do</url-pattern>
+  </servlet-mapping>
+  
+<servlet>
+  <servlet-name>DirectoryListing</servlet-name>
+  <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+  <init-param>
+    <param-name>debug</param-name>
+    <param-value>0</param-value>
+  </init-param>
+  <init-param>
+    <param-name>listings</param-name>
+    <param-value>true</param-value>
+  </init-param>
+</servlet>
+
+<servlet-mapping>
+  <servlet-name>DirectoryListing</servlet-name>
+  <url-pattern>/images/</url-pattern>
+    <!-- expose all dir listing / is not recommended, lock down to specific dir -->
+</servlet-mapping>
+
+
+<!--  http://www.antweb.org/specimen/casent1  will return
+      http://www.antweb.org/specimen.do?code=casent1  -->
+  <servlet>
+    <servlet-name>SpecimenFetch</servlet-name>
+    <servlet-class>org.calacademy.antweb.util.SpecimenFetch</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>SpecimenFetch</servlet-name>
+    <url-pattern>/specimen/*</url-pattern>
+  </servlet-mapping>
+  
+
+  <!-- servlet>
+    <servlet-name>ApiFetch</servlet-name>
+    <servlet-class>org.calacademy.antweb.util.ApiFetch</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ApiFetch</servlet-name>
+    <url-pattern>/apiV3/*</url-pattern>
+  </servlet-mapping -->
+  
+  
+  <servlet>
+    <servlet-name>FileUploader</servlet-name>
+    <servlet-class>org.calacademy.antweb.util.FileUploader</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>FileUploader</servlet-name>
+    <url-pattern>/fileUploader/*</url-pattern>
+  </servlet-mapping>
+
+  <!-- if antweb_test is not running on server, redirect all requests to corresponding antweb page instead of creating error  -->
+  <!-- if antweb_test is in use, comment out this block -->
+	<servlet>
+		<servlet-name>redirectTest</servlet-name>
+		<display-name>RedirectTest</display-name>
+		<servlet-class>org.calacademy.antweb.util.RedirectTestAction</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>redirectTest</servlet-name>
+		<url-pattern>/antweb_test/*</url-pattern>
+	</servlet-mapping>
+
+
+<welcome-file-list>
+   <welcome-file>index.jsp</welcome-file>
+</welcome-file-list>
+<servlet>
+  <servlet-name>SearchController</servlet-name>
+<servlet-class>org.calacademy.antweb.util.Controller</servlet-class>
+</servlet>
+<servlet-mapping>
+  <servlet-name>SearchController</servlet-name>
+  <url-pattern>/SearchController</url-pattern>
+</servlet-mapping>
+
+
+ 
+  <!-- servlet-mapping>
+    <servlet-name>jsp</servlet-name>
+    <url-pattern>*.kml</url-pattern>
+  </servlet-mapping -->
+
+
+<!-- replaced by a struts action
+	<servlet>
+		<servlet-name>GoogleEarth</servlet-name>
+		<display-name>GoogleEarth</display-name>
+		<servlet-class>org.calacademy.antweb.GoogleEarth</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>GoogleEarth</servlet-name>
+		<url-pattern>/googleEarth</url-pattern>
+	</servlet-mapping>
+-->
+
+
+  <!-- servlet>
+      <servlet-name>fieldGuideServlet</servlet-name>
+       <servlet-class>org.calacademy.antweb.util.FieldGuideServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>fieldGuideServlet</servlet-name>
+    <url-pattern>/fieldGuidePdf</url-pattern>
+  </servlet-mapping -->
+
+
+  <!-- The Usual Welcome File List -->
+  <!-- welcome-file-list>
+    <welcome-file>index.do</welcome-file>
+  </welcome-file-list -->
+
+  <!-- Example Application Tag Library Descriptor
+  <taglib>
+    <taglib-uri>/WEB-INF/app.tld</taglib-uri>
+    <taglib-location>/WEB-INF/app.tld</taglib-location>
+  </taglib>
+  -->
+
+  <!-- Struts Tag Library Descriptors -->
+  <taglib>
+    <taglib-uri>/WEB-INF/struts-bean.tld</taglib-uri>
+    <taglib-location>/WEB-INF/struts-bean.tld</taglib-location>
+  </taglib>
+
+  <taglib>
+    <taglib-uri>/WEB-INF/struts-html.tld</taglib-uri>
+    <taglib-location>/WEB-INF/struts-html.tld</taglib-location>
+  </taglib>
+
+  <taglib>
+    <taglib-uri>/WEB-INF/struts-logic.tld</taglib-uri>
+    <taglib-location>/WEB-INF/struts-logic.tld</taglib-location>
+  </taglib>
+
+<taglib>
+  <taglib-uri>/WEB-INF/struts-tiles.tld</taglib-uri>
+  <taglib-location>/WEB-INF/struts-tiles.tld</taglib-location>
+</taglib>
+
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>antweb login</realm-name>
+  </login-config>
+
+  <security-role>
+    <role-name>antweb</role-name>
+  </security-role>
+
+  <!-- mime types -->
+  <mime-mapping>
+    <extension>kmz</extension>
+    <mime-type>application/vnd.google-earth.kmz</mime-type>
+  </mime-mapping>
+
+<!--
+  <mime-mapping>
+    <extension>ico</extension>
+    <mime-type>image/x-icon</mime-type>
+  </mime-mapping>
+-->
+
+    <!-- cache static files --> 
+    <filter>
+       <filter-name>ExpiresFilter</filter-name>
+       <filter-class>org.apache.catalina.filters.ExpiresFilter</filter-class>
+       <init-param>
+          <param-name>ExpiresByType image</param-name>
+          <param-value>access plus 11 months</param-value>
+       </init-param>
+       <init-param>
+          <param-name>ExpiresByType text/css</param-name>
+          <param-value>access plus 11 months</param-value>
+       </init-param>
+       <init-param>
+          <param-name>ExpiresByType application/javascript</param-name>
+          <param-value>access plus 11 months</param-value>
+       </init-param>
+    </filter>
+    <filter-mapping>
+       <filter-name>ExpiresFilter</filter-name>
+       <url-pattern>/antweb_test/images/*</url-pattern>
+       <url-pattern>/antweb_test/images/*/*</url-pattern>
+       <url-pattern>/antweb_test/common/*</url-pattern>
+       <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+    
+    <!-- Here we can insert code that should be run for every request. -->
+    <filter>
+        <filter-name>SessionRequestFilter</filter-name>
+        <filter-class>org.calacademy.antweb.util.SessionRequestFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>SessionRequestFilter</filter-name>
+        <url-pattern>*.do</url-pattern>
+        <dispatcher>REQUEST</dispatcher>        
+    </filter-mapping>
+    
+</web-app>

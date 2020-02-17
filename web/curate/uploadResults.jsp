@@ -7,6 +7,7 @@
 <%@ page import="org.calacademy.antweb.util.FileUtil" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.upload.AntwebUpload" %>
+<%@ page import="org.calacademy.antweb.upload.UploadDetails" %>
 
 <% String domainApp = (new Utility()).getDomainApp(); %>
 
@@ -33,16 +34,22 @@
 
 <% 
 // if there is a message log file, link to it
-Object messageLogFileObj = request.getAttribute("messageLogFile");
-if (messageLogFileObj != null) { 
-  String messageLogFile = (String) messageLogFileObj;
-  Boolean hasMessages = (Boolean) request.getAttribute("hasMessages");
+UploadDetails uploadDetails = (UploadDetails) request.getAttribute("uploadDetails");
+//Object messageLogFileObj = request.getAttribute("messageLogFile");
+String messageLogFile = uploadDetails.getMessageLogFile();
+//if (messageLogFileObj != null) {
+//  String messageLogFile = (String) messageLogFileObj;
+//  Boolean hasMessages = (Boolean) request.getAttribute("hasMessages");
+
   String hasIssues = "";
-  if (hasMessages) hasIssues = "<font color=red> has issues</font>";
+  if (uploadDetails.isHasMessages()) hasIssues = "<font color=red> has issues</font>";
 %>
   <br><br><h2>Your upload log<%= hasIssues %>: <a href="<%= domainApp %>/web/log/<%= messageLogFile %>"><%= messageLogFile %></a></h2>
 <%
-}
+   if (uploadDetails.isOfferRunCountCrawlLink()) { %>
+      <br><br><h2>Run Count Crawls: <a href="<%= domainApp %>/utilData.do?action=runCountCrawls">Crawls</a></h2>
+      * Optional step. These are calculated nightly.
+<% }
 %>
 
 

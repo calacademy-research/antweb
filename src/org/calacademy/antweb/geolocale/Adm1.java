@@ -133,12 +133,12 @@ public class Adm1 extends Geolocale {
     }
     
     public String getThisPageTarget() {
-	  String encodedAdm1 = java.net.URLEncoder.encode(getName());
+	  String encodedAdm1 = HttpUtil.encode(getName());
 	  String encodedCountry = null;
 	  if (getParent() == null) {
 	    encodedCountry = "null";
 	  } else {
-	    encodedCountry = java.net.URLEncoder.encode(getParent());
+	    encodedCountry = HttpUtil.encode(getParent());
 	  }
 	  return AntwebProps.getDomainApp() + "/" + getTargetDo() + "?name=" + encodedAdm1 + "&country=" + encodedCountry; 
     }

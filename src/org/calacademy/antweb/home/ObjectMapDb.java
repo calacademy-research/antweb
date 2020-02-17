@@ -1,7 +1,6 @@
 package org.calacademy.antweb.home;
 
 //import java.util.*;
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -143,7 +142,8 @@ public class ObjectMapDb extends AntwebDb {
         A.log("setMap(int, str, map) googleMapFunction is null for " + keyCol + ":" + id);
         return;
       }
-      googleMapFunction = java.net.URLEncoder.encode(googleMapFunction);
+      googleMapFunction = HttpUtil.encode(googleMapFunction);
+
       String fields = keyCol + ", google_map_function, title, subtitle, info";
       String values = id 
         + ", '" + googleMapFunction + "'"
@@ -164,7 +164,7 @@ public class ObjectMapDb extends AntwebDb {
         A.log("setMap(str, str, map) googleMapFunction is null for " + keyCol + ":" + key);
         return;
       }
-      googleMapFunction = java.net.URLEncoder.encode(googleMapFunction);
+      googleMapFunction = HttpUtil.encode(googleMapFunction);
       String fields = keyCol + ", google_map_function, title, subtitle, info";
       String values = "'" + key + "'" 
         + ", '" + googleMapFunction + "'"
@@ -241,7 +241,8 @@ public class ObjectMapDb extends AntwebDb {
           while (rset.next()) {
 			map = new Map();			
 			String googleMapFunction = rset.getString("google_map_function");
-			googleMapFunction = java.net.URLDecoder.decode(googleMapFunction);
+            googleMapFunction = HttpUtil.decode(googleMapFunction);
+
 			String title = rset.getString("title");
 			String subtitle = rset.getString("subtitle");
 			String info = rset.getString("info");

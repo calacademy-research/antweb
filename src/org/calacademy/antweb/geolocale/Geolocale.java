@@ -463,7 +463,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       return ""; // Should not happen.  Subclasses.
     } 
     public String getThisPageTarget() {
-	  String encodedName = java.net.URLEncoder.encode(getName());
+	  String encodedName = HttpUtil.encode(getName());
       return AntwebProps.getDomainApp() + "/" + getTargetDo() + "?name=" + encodedName; 
     }
         

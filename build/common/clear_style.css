@@ -1,0 +1,14 @@
+html {
+    margin:0;
+    padding:0;
+    height:auto;
+    line-height:0;
+}
+
+#masthead, #navigation, #ftue_overlay, #footer {
+    display:none;
+}
+
+.container, #page_context {
+    width:auto;
+}

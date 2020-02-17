@@ -2,11 +2,9 @@ package org.calacademy.antweb;
 
 import java.io.*; 
 import java.util.*;
-import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
-import javax.sql.*;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
@@ -45,7 +43,7 @@ public class DescriptionAction extends Action {
               if (imageUrl != null && !"".equals(imageUrl)) {
                 if (contents.equals(guiDefaultContent) || "null".equals(contents)) contents = "";
                 // A.log("saveDescriptionEdit() 1 contents:" + contents);
-                contents = java.net.URLDecoder.decode(contents);
+                contents = HttpUtil.decode(contents);
                 A.log("saveDescriptionEdit() 2 contents:" + contents);
                 String tag = "<a href=\"" + imageUrl + "\"><img class=\"taxon_page_img\" src=\"" + imageUrl + "\"></a>";
                 A.log("saveDescriptionEdit() 3 tag:" + tag);

@@ -464,7 +464,7 @@ public class AntwebUpload {
                 } else {      
                   // For other projects, we will determine here.
                   
-                  A.log("WE DON'T USE THIS CODE?");
+                  // A.log("WE DON'T USE THIS CODE?"); Yes we do! Specimen uploads.
                   
                   Taxon dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
                   if (dummyTaxon != null) {

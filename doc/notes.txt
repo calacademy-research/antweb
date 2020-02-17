@@ -1,37 +1,4 @@
-[mjohnson@antweb-prod.calacademy.org 20:03:06]$ls -al /var/lib/mysql
-total 9375356
-drwxr-xr-x. 12 mysql mysql       4096 Sep  6 22:02 .
-drwxr-xr-x. 30 root  root        4096 Mar 29 15:19 ..
-drwx------.  2 mysql mysql      12288 Sep 13 13:04 ant
-drwx------.  2 mysql mysql      12288 Jan 22  2018 ant2
-drwx------.  2 mysql mysql       4096 Oct  8  2013 ant_test
-drwx------.  2 mysql mysql       4096 Sep 12  2013 antweb_blog
--rwxrwxrwx.  1 root  root     7899082 Jul 23  2016 antweb-prod-slow.log
-drwx------.  2 mysql mysql       4096 Jul 22  2016 bak_project_db
--rw-rw----.  1 mysql mysql 9581887488 Sep 13 20:03 ibdata1
--rw-rw----.  1 mysql mysql    5242880 Sep 13 20:03 ib_logfile0
--rw-rw----.  1 mysql mysql    5242880 Sep 12 20:32 ib_logfile1
-drwx------.  2 mysql mysql       4096 Sep 12  2016 julAnt
--rw-rw----.  1 mysql mysql        177 Jul 23  2016 log
-drwx------.  2 mysql mysql       4096 Oct 28  2014 movable
-drwx------.  2 mysql mysql       4096 Sep 12  2013 mysql
-srwxrwxrwx.  1 mysql mysql          0 Sep  6 22:02 mysql.sock
-drwx------.  2 mysql mysql      12288 Sep  8  2017 sep2017
--rw-rw----.  1 mysql mysql        354 Jul 23  2016 slowQuery.log
-drwx------.  2 mysql mysql       4096 Sep 12  2013 test
 
-Before and after the Thursday 10pm reboot...
-
-[mjohnson@antweb-prod.calacademy.org 20:03:34]$df -h
-Filesystem            Size  Used Avail Use% Mounted on
-/dev/sda3             147G  131G  8.4G  94% /
-
-[mjohnson@antweb-prod.calacademy.org 22:04:00]$df -h
-Filesystem            Size  Used Avail Use% Mounted on
-/dev/sda3             147G   72G   68G  52% /
-                      
-                      
-                      
 
 * Mod on server:
 alter table specimen modify column datedetermined datetime;
@@ -124,7 +91,7 @@ Transfer
 
 --- DB ---
 to create dump:
-  mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /home/antweb/bak/db/2019-02-15.sql.gz  
+  mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /antweb/bak/db/20200217.sql.gz
 to fetch:
   cd /Users/mark/dev/calAcademy/db/
   scp mjohnson@antweb-prod:/mnt/backup/db/ant-currentDump.sql.gz .

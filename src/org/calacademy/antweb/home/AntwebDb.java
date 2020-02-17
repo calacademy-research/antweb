@@ -78,7 +78,7 @@ public class AntwebDb {
         
         if (false && AntwebProps.isDevMode() && !isValidSubfamilyForGenus) s_log.warn("isSubfamilyForGenus() false for subfamily:" + subfamily + ".  Found:" + selectedSubfamilies); // + " query:" + query);
 
-        A.log("isValidSubfamilyForGenus() isValid:" + isValidSubfamilyForGenus + " query:" + query);
+        if (!isValidSubfamilyForGenus) A.log("isValidSubfamilyForGenus() isValid:" + isValidSubfamilyForGenus + " query:" + query);
         return isValidSubfamilyForGenus;
     }    
         

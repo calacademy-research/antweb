@@ -29,6 +29,15 @@ public class UploadForm extends ActionForm {
   private String specimenUploadType = "full";
   protected String recrawl = "true";
 
+  /*
+  private boolean isUp = false;
+  public boolean isUp() {
+    return isUp;
+  }
+  public void setIsUp(boolean isUp) {
+    this.isUp = isUp;
+  }
+*/
   public int groupId;
   
   public int getGroupId() {

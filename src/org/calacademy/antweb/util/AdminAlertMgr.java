@@ -102,7 +102,7 @@ public final class AdminAlertMgr {
         try {        
             stmt = DBUtil.getStatement(connection, "AdminAlertMgr.addIfFresh()");
             stmt.execute(query);        
-            A.log("addIfFresh() query:" + query);
+            s_log.warn("addIfFresh() query:" + query);
             rset = stmt.getResultSet();
             while (rset.next()) {
               int count = rset.getInt("count"); 

@@ -1,17 +1,11 @@
 package org.calacademy.antweb.util;
 
-import java.io.*;
-import java.net.*;
 import java.util.*;
 import java.time.*;
 
-import java.sql.Connection;
-
 import java.text.*;
-import java.io.IOException;
 
-import javax.servlet.http.*;
-import javax.servlet.*;
+import org.calacademy.antweb.util.AntwebUtil;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -170,15 +164,18 @@ public abstract class DateUtil {
 
     public static String getFormatDateStr(Date theDate, String format) {
       return (new SimpleDateFormat(format)).format(theDate);
-    }	 
-    
+    }
 
     // Method designed to take scrappy user entered dates and return Antweb formatted Date
     public static Date constructDate(String dateStr) {
       Date returnDate = null;
       try {
-        returnDate = new Date(dateStr);
-      } catch (IllegalArgumentException e) {
+        //s_log.warn("constructDate() deprecated dateStr:" + dateStr);
+        //AntwebUtil.logShortStackTrace();
+        //returnDate = new Date(dateStr);
+        returnDate = (new SimpleDateFormat("yyyy-mm-dd").parse(dateStr));
+      } catch (ParseException e) {
+      //} catch (IllegalArgumentException e) {
       }
 
       if (returnDate == null) {
@@ -203,6 +200,9 @@ public abstract class DateUtil {
               //s_log.info("constructDate() 3 ParseException on dateStr:" + dateStr);                  
             }  
 
+            if (returnDate == null) {
+              s_log.warn("constructDate() did not figure:" + dateStr);
+            }
           }
         }
       }

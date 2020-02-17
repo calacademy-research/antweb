@@ -1,0 +1,196 @@
+@charset "utf-8";
+body {
+    color: #3e3e3e;
+    background-color: #fff;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    margin:auto;
+}
+a {
+    color: #556b83;
+    font-weight: inherit;
+    text-decoration:none;
+}
+a:hover {
+    color: #556b83;
+    border-bottom:1px dotted #556b83;
+}
+ul, li { 
+    list-style:none; 
+}
+.left {
+    float:left;
+}
+.right {
+    float:right;
+}
+.clear {
+    clear: both;
+}
+body,
+h1, h2, h3, h4, h5, h6,
+p, blockquote, pre, dl, dt, dd, ol, ul, li,
+fieldset, form, input, label, legend, th, td,
+article, aside, figure, footer, header, hgroup, menu, nav, section {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+p {
+    margin-top:10px;
+    margin-bottom:10px;
+}
+
+/*
+Consistency fixes
+adopted from http://necolas.github.com/normalize.css/
+*/
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, nav, section, audio, canvas, video {
+    display: block;
+}
+
+html {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+body {
+    /* min-height: 100%; */
+    font-size: 100%;
+}
+
+a img, img {
+    border: 0;
+}
+
+.ie { 
+}
+
+.container, .header { 
+    margin:auto; 
+}
+
+#masthead {
+    display:block;
+    /*     background-color:#253035; */
+    background-color:#000000;
+    border-bottom:1px solid #b9b9b9;
+    height:45px;
+}
+
+
+#logo {
+    float:left;
+    margin-top:0px;
+    width:125px;
+    height:30px;
+    background: url("../image/new_antweb_logo.png") no-repeat scroll center top transparent;
+    padding-right:4px;
+}
+/*
+ <a href="<%= AntwebProps.getDomainApp() %>/"><img src="<%= logo %>" width='125' title="[AntWeb]"></a> 
+    background: url("../image/new_antweb_logo.png") no-repeat scroll center top transparent;
+
+#logo {
+    float:left;
+    margin-top:9px;
+    width:125px;
+    height:25px;
+    background: url("../image/new_antweb_logo.png") no-repeat scroll center top transparent;
+    padding-right:4px;
+}
+*/
+
+#login {
+    position:absolute;
+    top:5px; /* was 5 */
+    right:0;
+    float:right;
+}
+
+#navigation {
+    display:block;
+    background-color:#a3a3a3;
+    border-bottom:1px solid #b9b9b9;
+    height:24px;
+    z-index:55;
+    position:relative;
+    margin-bottom:12px;
+}
+
+#subnavigation {
+    display:block;
+    background-color:#a3a3a3;
+    position:relative;
+    border-bottom:1px solid #b9b9b9;
+    z-index:55;
+}
+
+#search {
+    float:right;
+}
+
+#search_input {
+    position:relative;
+    top:-1px;
+    font-family:inherit;
+    font-color:#3f3f3f;
+    width:140px;
+    padding:2px;
+    border:1px solid #b9b9b9;
+}
+
+#search_submit {
+    position:relative;
+    top:-1px;
+    font-family:inherit;
+    color:#fff;
+    background-color:#a3a3a3;
+    font-weight:bold;
+    border:1px solid #fff;
+}
+
+.small {
+    font-weight:normal;
+    font-size:11px;
+}
+
+.uppercase {
+    text-transform:uppercase;
+}
+
+#footer {
+    font-size:12px;
+    line-height:1.1;
+    margin-top:24px;
+}
+
+#footer.home {
+    margin-top:0;
+    padding-top:24px;
+    padding-left:12px;
+    padding-right:12px;
+    padding-bottom:12px;
+}
+
+#footer.bump {
+    margin-bottom:210px;
+}
+
+#calacademy {
+    margin-top:6px;
+    padding-left:33px;
+    height:27px;
+    line-height:27px;
+    background: url("../image/calacademy_logo.png") no-repeat scroll 0 0 transparent;
+}
+
+.clear {
+    clear:both;
+}
+a img, img {
+    -ms-interpolation-mode: bicubic;
+    border: 0;
+}

@@ -483,7 +483,7 @@ public class MessageMgr {
           //A.log("toString() heading:" + heading);
           returnStr = "";
           String groupName = group.getName();
-          if (groupName != null) groupName = java.net.URLEncoder.encode(groupName);
+          if (groupName != null) groupName = HttpUtil.encode(groupName);
           if ("countryMissing".equals(getKey())) {
             A.log("MessageMgr.Test.toString() group:" + groupName);
             String countLink = "<a href='" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&country=null&groupName=" + groupName + "'>" + getCount() + "</a>";

@@ -469,8 +469,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				  // We will here lead to a tool that allows curators to select a mapping, if they don't want to change their data.
 				  // It will show specimens that use this "bad" adm1 name.
 				  // At least it will show what the valid adm1 names are for a given country.
-				  String encodedAdm1 = java.net.URLEncoder.encode(adm1);
-				  String encodedCountry = java.net.URLEncoder.encode(country);
+				  String encodedAdm1 = HttpUtil.encode(adm1);
+				  String encodedCountry = HttpUtil.encode(country);
 				  String addAdm1Link = AntwebProps.getDomainApp() + "/adm1Mgr.do?adm1Name=" + encodedAdm1 + "&countryName=" + encodedCountry + "&groupId=" + accessGroup.getId();
 
                   //A.log("parseLine() addAdm1Link:" + addAdm1Link + " code:" + code);
@@ -1013,11 +1013,18 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
         return null;    
     }
-    
+
     private Date getDate(String datesCollected) {
+        //Date date = DateUtil.constructDate(dateStr);
+  //    }
+
       try {
         Date d = new Date(datesCollected);
-        if (AntwebProps.isDevMode()) s_log.info("getDateCollected() Found dateStr:" + datesCollected);
+        if (AntwebProps.isDevMode()) {
+            s_log.warn("getDateCollected() DEPRECATED! Found dateStr:" + datesCollected);
+            AntwebUtil.logShortStackTrace();
+        }
+
         return d;
       } catch (Exception e) {
         // These are expected to occur with our data.
@@ -1025,6 +1032,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
       }
       return null;
     }
+
 
     private static int figuredElevation = 0;
     private static int greaterThanElevation = 0;

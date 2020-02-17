@@ -374,8 +374,8 @@ public class Map {
                             specimen.setSubspecies(rset.getString("subspecies"));
                             String localityCode = rset.getString("localitycode");
                             String localityName = rset.getString("localityname");    
-                            if (localityCode != null) specimen.setLocalityCode(java.net.URLEncoder.encode(localityCode));
-                            if (localityName != null) specimen.setLocalityName(java.net.URLEncoder.encode(localityName));          
+                            if (localityCode != null) specimen.setLocalityCode(HttpUtil.encode(localityCode));
+                            if (localityName != null) specimen.setLocalityName(HttpUtil.encode(localityName));
                                                     
                             tracker.put(key, new Integer(1));
                             //A.log("setPoints(ArrayList<String> specimens coord:" + coord); // isDiscard:" + isDiscard);
@@ -637,7 +637,7 @@ public class Map {
     
     /**
      * Creates a function string to execute in JavaScript
-     * @param googleMapFunction The googleMapFunction to set.
+     * The googleMapFunction to set.
      */
     public void setGoogleMapFunction() {
          
@@ -684,9 +684,9 @@ public class Map {
  
               if (isLocality) {
                   String encodedLocalityName = null;
-                  if (localityName != null) encodedLocalityName = java.net.URLEncoder.encode(localityName);
+                  if (localityName != null) encodedLocalityName = HttpUtil.encode(localityName);
                   String encodedLocalityCode = null;
-                  if (localityCode != null) encodedLocalityCode = java.net.URLEncoder.encode(localityCode);
+                  if (localityCode != null) encodedLocalityCode = HttpUtil.encode(localityCode);
                   theString.append("new Array(\'" + encodedLocalityName + "\'),new Array(\'" + encodedLocalityCode + "\')");
               } else if (isCollection) {
                   theString.append("new Array(\'" + collectionCode + "\')");
