@@ -1,3 +1,7 @@
+Release 8.11.5
+  Invoke 5th step of scheduler.
+  Curate page documentation.
+
 Release 8.11.4
 Date: Feb 17
   Convert 4 mysql tables from myIsam to InnoDb for performance reasons.

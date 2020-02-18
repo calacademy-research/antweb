@@ -1,5 +1,6 @@
 <%@ page errorPage = "/error.jsp" %><%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %><%@ page import="org.calacademy.antweb.Group" %>
+<%@ page import="org.calacademy.antweb.Login" %>
 <%@ page import="org.calacademy.antweb.Utility" %><%@ page import="org.calacademy.antweb.AncFile" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%

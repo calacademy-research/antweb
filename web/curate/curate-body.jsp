@@ -181,9 +181,10 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                      </div>
           <% } %>
 
-<a href='<%= domainApp %>/utilData.do?action=countCrawls' title="Taxon Children counts may be calculated subsequently to upload. Otherwise, it will happen nightly.">Run Count Crawls<img src=<%= domainApp%>/image/new1.png width=20></a>
+To calculate the taxon children counts run the <a href='<%= domainApp %>/utilData.do?action=runCountCrawls' title="If taxon children counts are not calculated subsequent to the upload, it will happen nightly.">Count Crawls<img src=<%= domainApp%>/image/new1.png width=20></a>
+<br>If not returned an upload report, find it in the <a href='<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>'>Specimen Upload Reports</a>.
 
- 
+
                  <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
                  <div class="clear"></div>
              </div>

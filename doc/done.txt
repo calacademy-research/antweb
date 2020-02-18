@@ -11835,7 +11835,7 @@ Feb 13. 5.5hrs
   Monitor the data copy.  
 
 Feb 14. 12 - 5. 12 - 3. 8hrs.
-  Swap servers. 
+  Swap servers!
   Document. 
   Debugging. 
   Testing. Successful.
@@ -11859,99 +11859,45 @@ Feb 15. 7am. 10 - 11. 12 - 8. 1 hr break. 8hrs
   Document.
   Invoice and release notes for 8.11 and 8.11.1
 
-Feb 16. 4.5hr.
+Feb 16. 5.5hr.
   Generate new Bolton NGC list.
   Turn off ONLY_FULL_GROUP_BY in /etc/my.cnf to enable recent images query.
   Make the moveFile logs quieter. 
-  Move to IntelliJ
+  Begin move to IntelliJ
+  Removal of deprecations.
   Database performance optimization.
   Engineer: Move runCountCrawls out of execution path. Make optional and separate curator driven action.
 
-Feb 17. 2 - 5am.
+Feb 17 (late night) 2 - 5am. 3hrs.
   Testing of specimen upload, worldants.
   Engineer separation of specimen upload and run count crawls.
   Turn off specimen upload in jsp file, except for admin.
   Separate Run Count Crawls from the upload. Make a separate link.
-  Deploy to the live site. Panic! Fix it. Document.
+
+Feb 18. 12pm - 4am. 4hrs of break. 3 discounted. 9hrs.
+  Attempt deployment. Went very poorly due to git configuration challenges. Fixed.
+  Document deployment. Document performance concerns and request help.
+  Continue to refine GIT usage. Using .gitignore file we can not step on configurations.
+  Convert four tables from MyIsam to InnoDb tables for performance purposes.
+  Add to curate page the run count crawl option.
+  Add to curate page the final turn off server logic with not to users.
+  Refactor how description field is handled. Do not parse XML at specimen object creation.
+    Do it on demand to limit usage to specimen page display and specimen upload.
+    Create page to display.
+  Remove extraneous files from the /data/antweb directory where they are complicating deployments.
+  Resolved the problem with the new server. JVM memory parameters altered.
+  Search for browser timeout settings on old server. Not found.
+
+Feb 19
+  Performance comparisons run on MyIsam vs InnoDb
 
 
 
-
-
-
-Deprecations
-Information:javac 1.8.0_144 was used to compile java sources
-Information:2/16/20, 10:34 PM - Build completed successfully with 26 warnings in 7 s 710 ms
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/DescriptionAction.java
-Warning:(48, 47) java: decode(java.lang.String) in java.net.URLDecoder has been deprecated
-Information:java: Some input files use unchecked or unsafe operations.
-Information:java: Recompile with -Xlint:unchecked for details.
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/Map.java
-Warning:(377, 99) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(378, 99) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(687, 86) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(689, 86) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/geolocale/Geolocale.java
-Warning:(466, 51) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/geolocale/Adm1.java
-Warning:(136, 51) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(141, 49) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/home/ObjectMapDb.java
-Warning:(146, 46) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(167, 46) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(244, 64) java: decode(java.lang.String) in java.net.URLDecoder has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/upload/MessageMgr.java
-Warning:(486, 65) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/util/AntwebFunctions.java
-Warning:(34, 33) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/util/DateUtil.java
-Warning:(180, 22) java: Date(java.lang.String) in java.util.Date has been deprecated
-Warning:(216, 22) java: Date(java.lang.String) in java.util.Date has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/util/FileUploader.java
-Warning:(51, 37) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/EditCreditAction.java
-Warning:(60, 57) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/data/googleApis/GoogleApisMgr.java
-Warning:(147, 39) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(148, 42) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(158, 42) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/upload/UploadAction.java
-Warning:(798, 33) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
-Warning:(1375, 33) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/upload/SpecimenUploadParse.java
-Warning:(472, 75) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(473, 78) java: encode(java.lang.String) in java.net.URLEncoder has been deprecated
-Warning:(1019, 18) java: Date(java.lang.String) in java.util.Date has been deprecated
-/Users/mark/IdeaProjects/antweb/src/org/calacademy/antweb/upload/DescEditImageUploadAction.java
-Warning:(78, 45) java: getRealPath(java.lang.String) in javax.servlet.ServletRequest has been deprecated
-
-Protonyms from Bolton 2020
-  
-  
-
-[mjohnson@antweb-prod.calacademy.org 11:38:42]$sudo crontab -l
-[sudo] password for mjohnson: 
-#5 21 * * * /sbin/shutdown -r now
-#0 23 * * 1 /sbin/shutdown -r now  # Restart 11pm Monday
-#0 23 * * 3 /sbin/shutdown -r now  # Restart 11pm Wednesday
-#0 23 * * 5 /sbin/shutdown -r now  # Restart 11pm Friday
-0 23 * * 1 sh /home/antweb/antweb_deploy/bin/reboot.sh # Restart 11pm Monday
-0 23 * * 3 sh /home/antweb/antweb_deploy/bin/reboot.sh # Restart 11pm Wednesday
-0 23 * * 5 sh /home/antweb/antweb_deploy/bin/reboot.sh # Restart 11pm Friday
-0 21 * * * /home/antweb/antweb_deploy/bin/admin.sh > /home/antweb/adminTask.log
-50 3 * * 4 /home/antweb/antweb_deploy/bin/taxonSetBackup.sh > /home/antweb/taxonSetBackup.log
-0 23 * * * /home/antweb/antweb_deploy/bin/unclosedConnections.sh
-#*/5 * * * * php /home/antweb/antweb_deploy/bin/appCheck.php >> /home/antweb/log/appCheck.log
-# 5am scheduled tasks are launched by a Java thread.
-  
-
-Do the legacy merge sort to enable recent images search.
+Verify performance gain with InnoDb over MySam. Test locally with Peter's upload.
+Get browsers to stay connected.
 
 Antcat docker
-IntelliJ
 WAR files.
-
-
 
 UTF-8 concern?
 SELECT default_character_set_name FROM information_schema.SCHEMATA  WHERE schema_name = "ant";
@@ -11960,151 +11906,22 @@ SELECT default_character_set_name FROM information_schema.SCHEMATA  WHERE schema
 +----------------------------+
 | latin1                     |
 
----New Server---
-DomainApp: https://www.antweb.org
-SecureDomainApp: https://www.antweb.org
-ImgDomainApp: https://www.antweb.org
-Your Local Address: 10.2.22.30
-Your Remote Address: 10.2.200.22
-Your RemoteHost: 10.2.200.22
-User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.106 Safari/537.36
-File Encoding: UTF-8 : UTF-8
-Legacy Merge Sort: null
-trimSpaces: null
-isLocal: false
-isDevMode: false
-isStageMode: false
-isDevOrStageMode: false
-isLiveMode: true
-CPU: processCpuLoad:0.05731159933853059 systemCpuLoad:0.2839506172839506
-Encodings:Encodings - request:UTF-8 response:UTF-8 system:UTF-8
-Server Details:
-  Operating System: Linux
-  Version: 4.15.0-76-generic
-  Architecture: amd64
-  Java Vendor: Ubuntu
-  Version: 11.0.6
-  Available processors (cores): 4
-  Free memory (bytes): 156,493,104
-  Maximum memory (bytes): 954,728,448
-  Total memory available to JVM (bytes): 794,296,320
-  File system root: /
-  Total space (bytes): 1,504,612,352
-  Free space (bytes): -315,269,120
-  Usable space (bytes): -1,942,499,328
-Antweb Props:
-   DocRoot: /data/antweb/
-   InputFileHome: /home/antweb/workingdir/
-   ImagesDir: /data/antweb/images/
-   WebDir: /data/antweb/web/
-   googleKey: AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
-Disk: 52.0%. Total:29GB Free:15GB Usable:14GB
-Memory Stats - max:910MB free:149MB total:757MB
-isServerBusy: false
-
----Old---
-DomainApp: https://10.2.22.20
-SecureDomainApp: https://10.2.22.20
-ImgDomainApp: https://www.antweb.org
-Your Local Address: 10.2.22.20
-Your Remote Address: 10.2.200.22
-Your RemoteHost: 10.2.200.22
-User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.106 Safari/537.36
-File Encoding: UTF8 : UTF-8
-Legacy Merge Sort: true
-trimSpaces: null
-isLocal: false
-isDevMode: false
-isStageMode: false
-isDevOrStageMode: false
-isLiveMode: true
-CPU: processCpuLoad:0.1264591439688716 systemCpuLoad:0.33846735840899267
-Encodings:Encodings - request:UTF-8 response:UTF-8 system:UTF8
-Server Details:
-  Operating System: Linux
-  Version: 2.6.32-431.20.3.el6.x86_64
-  Architecture: amd64
-  Java Vendor: Oracle Corporation
-  Version: 1.8.0_181
-  Available processors (cores): 4
-  Free memory (bytes): 219,003,624
-  Maximum memory (bytes): -1,520,959,488
-  Total memory available to JVM (bytes): 800,587,776
-  File system root: /
-  Total space (bytes): -1,930,358,784
-  Free space (bytes): -355,921,920
-  Usable space (bytes): 259,645,440
-Antweb Props:
-   DocRoot: /data/antweb/
-   InputFileHome: /home/antweb/workingdir/
-   ImagesDir: /data/antweb/images/
-   WebDir: /data/antweb/web/
-   googleKey: AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
-Disk: 65.0%. Total:146GB Free:59GB Usable:52GB
-Memory Stats - max:2,645MB free:205MB total:763MB
- 
-
-
 from the upload list I re-uploaded https://www.antweb.org/upload.do?action=reloadSpecimenList&groupId=24
 after a while I got: which I think means the upload failed
 
-Bad Gateway
-The proxy server received an invalid response from an upstream server.
-
-Apache/2.4.29 (Ubuntu) Server at www.antweb.org Port 443
-
-
-Brian L. Fisher
-Fri, Feb 14, 6:23 PM (6 hours ago)
-to me
-
 if you click on download data - there is no results:
-
-eg from here: https://www.antweb.org/description.do?subfamily=amblyoponinae&genus=adetomyrma&rank=genus&countryName=Madagascar
-
-Download Specimen Data
-X
-To download specimen data, Right-click and save to your desktop.
-
-
-
-
-                JKMount /specimen/* ajp13_worker
-                
+Make this page secure. Find any others that might exist.
+https://www.antweb.org/description.do?subfamily=amblyoponinae&genus=adetomyrma&rank=genus&countryName=Madagascar
 
 Fix Antblog. Make sign in go away. Move the Antblog into git and source tree.
 Fix API. Use requirements.txt to replicate environment. Fix actions.
-
-
-IntelliJ
 
 Python Venv
 venv path-to-python path-to-where-it-lives
 activate
 pip goes just to venv so you can track all the versions of your libraries.
 
-git ignore file to remove "git status" warnings.
-
 pip freeze
-
-
-git removed:
-rm 'web/images/.xvpics/madagascar_full.gif'
-rm 'web/images/.xvpics/world.gif'
-rm 'web/images/.xvpics/world_browse_on.gif'
-rm 'web/images/.xvpics/world_full.gif'
-rm 'web/images/.xvpics/world_list.gif'
-rm 'web/images/.xvpics/world_search_on.gif'
-
-web/images/index.jsp removed. Was:
-  <% response.sendRedirect(org.calacademy.antweb.util.AntwebProps.getDomainApp() + "/index.do"); %>  
-    
-  
-Login system.
-  Heloise Gibb and Bernice
-  If adding an admin login id to a group, for instance in new group function, set the group
-	of the login.
-
 
 Discuss with Brian Report
   So that Ant people can verify names, a function...
@@ -12114,7 +11931,6 @@ Discuss with Brian Report
   Get report back of options... An interface into Antcat data.
    
 Research Shiny
- 
 
 Turn Worldants Query into a proper page so that it has navigation links.
 

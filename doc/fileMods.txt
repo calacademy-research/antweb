@@ -8,6 +8,12 @@ Release 8.11.4
  src/org/calacademy/antweb/util/ShowLogAction.java | 84 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------
  web/specimen-body.jsp                             |  4 ++--
  8 files changed, 165 insertions(+), 55 deletions(-)
+ doc/install.txt                                   |   4 ++++
+ doc/release.txt                                   |   2 ++
+ src/org/calacademy/antweb/Specimen.java           |   2 ++
+ src/org/calacademy/antweb/util/ShowLogAction.java |   4 ++--
+ web/curate/curate-body.jsp                        | 174 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------------------------------------------------------------------
+ 5 files changed, 101 insertions(+), 85 deletions(-)
 
 Release 8.10.3
 CVS: Modified Files:
