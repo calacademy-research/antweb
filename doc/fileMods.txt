@@ -1,9 +1,4 @@
-Release 8.11
-# Committer: Mark Johnson <mark@Marks-Mac.local>
-#
-# On branch master
-# Your branch is up to date with 'origin/master'.
-#
+Release 8.11.4
 # Changes to be committed:
 #       new file:   db/upgrade/8.0/2020-02-12.sql
 #
@@ -24,18 +19,19 @@ Release 8.11
 #       modified:   src/org/calacademy/antweb/util/AntwebProps.java
 #       modified:   web/documentation/releaseNum.jsp
 #       modified:   apiV3_1-body.jsp
-#
+antweb
+  src/org/calacademy/antweb/util
+    FileUtil.java
+    LogMgr.java
+  WEB-INF
+    classes
+      AntwebResources.properties
+      web.xml
+.gitignore
+build.properties
 # Untracked files:
 #       WEB-INF/classes/ProjectResources.properties
-#       build/
 
-
-Release 8.10.4
-M    trunk/doc/release.txt
-M    trunk/etc/configMark.sh
-M    trunk/web/documentation/releaseNum.jsp
-M    trunk/web/index-body.jsp
-M    trunk/web/index.jsp
 
 Release 8.10.3
 CVS: Modified Files:

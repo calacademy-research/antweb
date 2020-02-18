@@ -126,7 +126,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     }
     
     public void fullInit() throws SQLException {
-        setFeatures();
+        //setFeatures();
 
         setImages();
 
@@ -612,15 +612,10 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         this.hasImages = hasOne;
     }
 
-
+/*
     public Hashtable getFeatures() {
       return features;
     }
-      
-    public void setFeatures(String project) throws SQLException {
-        setFeatures();
-    }
-
     public void setFeatures() throws SQLException {
         Hashtable features = null;
 
@@ -649,6 +644,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         }
         this.features = features;
     }
+*/
 
 /*
 update specimen set other = '
@@ -693,8 +689,7 @@ update specimen set other = '
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            String theQuery =
-                "select other from specimen where code='" + AntFormatter.escapeQuotes(getCode()) + "'";
+            String theQuery = "select other from specimen where code='" + AntFormatter.escapeQuotes(getCode()) + "'";
 
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);

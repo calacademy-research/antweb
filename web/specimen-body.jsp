@@ -580,7 +580,8 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Description: </b></li>
-<li><%= specimen.getFeatures() %> &nbsp;</li>
+<li>[link]</li>
+<!-- %= specimen.getFeatures() % > &nbsp;</li -->
 </ul>
 
 <ul>
