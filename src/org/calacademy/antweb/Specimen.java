@@ -682,6 +682,8 @@ update specimen set other = '
 </features>
 ' where code = "casent0250040";
 */
+
+/*
     private String getXMLFromDB() throws SQLException {
 
         String theXML = null;
@@ -707,7 +709,7 @@ update specimen set other = '
 
         return formatter.dequote(theXML);
     }
-
+*/
 
     public void setDescription(boolean isManualEntry) {
     /* 
