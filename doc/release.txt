@@ -1,6 +1,8 @@
 Release 8.11.4
 Date: Feb 17
-
+  Convert 4 mysql tables from myIsam to InnoDb for performance reasons.
+  Make specimen details generated at deplay time instead of construction.
+    Pretty display page linked to from the specimen page.
 
 Release 8.11.3
 Date: Feb 17

@@ -40,7 +40,7 @@ public class SpecimenDb extends AntwebDb {
             DBUtil.close(stmt, rset, "this", "exists()");
         }
         return false;
-    }    
+    }
     
     public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family) {
         return getAntwebSpecimenCodes(overview, family, null);
@@ -112,7 +112,33 @@ public class SpecimenDb extends AntwebDb {
         }
         
         return specimenCodes;
-    }         
+    }
+
+    public String getSpecimenDetailXML(String code) throws SQLException {
+        // Also called "Other" and "Features".
+        String theXML = null;
+        Formatter formatter = new Formatter();
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            String theQuery = "select other from specimen where code='" + AntFormatter.escapeQuotes(code) + "'";
+
+            stmt = DBUtil.getStatement(getConnection(), "getSpecimenDetailXML()");
+            rset = stmt.executeQuery(theQuery);
+
+            while (rset.next()) {
+                // theXML = new Formatter().convertToUTF8(rset.getString(1));
+                theXML = rset.getString(1);
+            }
+        } catch (SQLException e) {
+            s_log.error("getSpecimenDetailXML() e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, this, "getSpecimenDetailXML()");
+        }
+
+        return formatter.dequote(theXML);
+    }
 
     public ArrayList<String> getIntroducedByGroup(int groupId) {
       ArrayList<String> introducedSpecimen = new ArrayList<String>();

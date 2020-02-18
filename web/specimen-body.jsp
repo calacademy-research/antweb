@@ -580,8 +580,8 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Description: </b></li>
-<li>[link]</li>
-<!-- %= specimen.getFeatures() % > &nbsp;</li -->
+<li><a href='<%= AntwebProps.getDomainApp() %>/showLog.do?action=specimenDetails&code=<%= specimen.getCode() %>'>Link</a> -
+<%= specimen.getDetailHash() %> &nbsp;</li>
 </ul>
 
 <ul>

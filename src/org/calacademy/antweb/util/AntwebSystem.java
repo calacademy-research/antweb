@@ -229,7 +229,9 @@ public class AntwebSystem {
   public String launchProcess(String command, boolean getRetVal) {
     String retVal = "";
     try {
-      //A.log("launchProcess() Running command: " + command);
+      A.log("launchProcess() Running command: " + command);
+      AntwebUtil.logShortStackTrace(3);
+
       //s_log.warn("launchProcess() Running command: " + command);
       Process p = Runtime.getRuntime().exec(command);
       if (! getRetVal) {

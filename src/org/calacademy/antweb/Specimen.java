@@ -1,8 +1,8 @@
 package org.calacademy.antweb;
 
+import java.io.*;
 import java.util.Date;
-import java.util.Hashtable;
-import java.io.Serializable;
+import java.util.*;
 import java.sql.*;
 import java.text.*;
 
@@ -170,7 +170,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                     + ", created "
                     + ", backup_file_name "
                     + ", upload_id "
-                    + ", flag, issue"
+                    + ", flag, issue, other"
                     + " from specimen where code='" + AntFormatter.escapeQuotes(getCode())
                     + "'";
 
@@ -247,6 +247,8 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                 
                 setFlag(rset.getString("flag"));
                 setIssue(rset.getString("issue"));
+
+                setDetailXml(rset.getString("other"));
 
                 //goSetStatus(connection);
                 goSetDetails();
@@ -612,7 +614,21 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         this.hasImages = hasOne;
     }
 
-/*
+    private String detailXml = null;
+
+    public String getDetailXml() {
+        return detailXml;
+    }
+    public void setDetailXml(String detailXml) {
+        this.detailXml = detailXml;
+    }
+
+    // Called from the specimen page (potentially). Not automatically constructed.
+    public Hashtable getDetailHash() {
+        return getDetailHash(getCode(), getDetailXml());
+    }
+
+    /*
     public Hashtable getFeatures() {
       return features;
     }
@@ -645,6 +661,32 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         this.features = features;
     }
 */
+    // Called during the specmen upload process. Specimen never constructed.
+    public static Hashtable getDetailHash(String code, String theXML) {
+
+        Hashtable detailHash = new Hashtable();
+
+        if (theXML == null) {
+            //if (!org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
+            //    s_log.warn("setFeatures() WSS.  Why is there no XML features for code:" + code);
+            //}
+            return detailHash;
+        }
+        SpecimenXML handler = null;
+
+        try {
+            handler = new SpecimenXML();
+            detailHash = handler.parse(theXML);
+        } catch (org.xml.sax.SAXParseException e) {
+            s_log.info("parseXMLIntoHtmlMessage() Parse Exception of generated XML.  code:" + code + " e:" + e + " xml:" + theXML);
+        } catch (Exception e) {
+            // Mark - NPE caught here.  Should check for null?  theXML is null.  Reproduce case first...
+            // Problem setting specimen features java.lang.NullPointerExceptionnullcode:psw9576-15 name:psw9576-15
+            s_log.error("parseXMLIntoHtmlMessage() e:" + e + " code:" + code + " xml:" + theXML);
+        }
+        return detailHash;
+    }
+
 
 /*
 update specimen set other = '
@@ -681,34 +723,6 @@ update specimen set other = '
   <[genus]genus>Polyrhachis</[genus]genus>
 </features>
 ' where code = "casent0250040";
-*/
-
-/*
-    private String getXMLFromDB() throws SQLException {
-
-        String theXML = null;
-        Formatter formatter = new Formatter();
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-            String theQuery = "select other from specimen where code='" + AntFormatter.escapeQuotes(getCode()) + "'";
-
-            stmt = connection.createStatement();
-            rset = stmt.executeQuery(theQuery);
-
-            while (rset.next()) {
-                // theXML = new Formatter().convertToUTF8(rset.getString(1));
-                theXML = rset.getString(1);
-            }
-        } catch (SQLException e) {
-            s_log.error("error in  getXMLFrom DB " + e);
-            throw e;
-        } finally {
-            DBUtil.close(stmt, rset, this, "getXMLFromDB()");
-        }
-
-        return formatter.dequote(theXML);
-    }
 */
 
     public void setDescription(boolean isManualEntry) {

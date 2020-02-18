@@ -30,13 +30,15 @@ public final class SpecimenAction extends DescriptionAction {
 
         ActionForward a = Check.init(Check.LOGIN, request, mapping); if (a != null) return a;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
-        
-        java.util.Date startTime = new java.util.Date();   
 
+        Login accessLogin = LoginMgr.getAccessLogin(request);
+        if (LoginMgr.isAdmin(accessLogin)) {
+          ActionForward c = Check.init(Check.UPLOAD, request, mapping); if (c != null) return c;
+        }
+
+        java.util.Date startTime = new java.util.Date();
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
-        
-        Login accessLogin = LoginMgr.getAccessLogin(request);
 
         SpecimenForm specimenForm = (SpecimenForm) form;
 

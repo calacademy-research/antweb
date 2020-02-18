@@ -37,6 +37,7 @@ public final class ShowLogAction extends Action {
         String fileName = (String) df.get("file");
         String line = (String) df.get("line");
         String grep = (String) df.get("grep");
+        String code = (String) df.get("code");
 
 		int lineNum = 0;
 		if (line != null) {
@@ -48,36 +49,41 @@ public final class ShowLogAction extends Action {
         }
         UploadLine uploadLine = null;
         String message = null;
-        if ("uploadLog".equals(action)) {  // DEPRECATED. Used the old upload/ without worldants or specimen.
+        if ("uploadLog".equals(action)) { // DEPRECATED. Used the old upload/ without worldants or specimen.
           message = getUploadLog(fileName, lineNum); 
+        } else if ("specimenDetails".equals(action)) {
+          message = getSpecimenDetails(request, code);
+          A.log("execute() specimenDetails:" + message);
         } else if ("uploadLine".equals(action)) {
 		  uploadLine = getUploadLine(request, fileName, lineNum); 
           message = uploadLine.getLine();
         }
-        
+
         if (message != null) {
             request.setAttribute("message", message);
             return (mapping.findForward("success"));
         }
 
-        String log = "";
+        String log = null;
         String tomcatDir = AntwebProps.getProp("site.tomcat");
         if (action.equals("tomcatLog")) {
             log = tomcatDir + AntwebProps.getProp("site.tomcatLog");   
-        }
-        if (action.equals("apacheLog")) {
+        } else if (action.equals("apacheLog")) {
             log = tomcatDir + AntwebProps.getProp("site.apacheLog");   
-        }
-        if (action.equals("antwebLog")) {
+        } else if (action.equals("antwebLog")) {
             log = tomcatDir + AntwebProps.getProp("site.antwebLog");   
-        }
-        if (action.equals("antwebInfoLog")) {
+        } else if (action.equals("antwebInfoLog")) {
             log = tomcatDir + AntwebProps.getProp("site.antwebInfoLog");   
-        }
-        if (action.equals("queryStatsLog")) {
+        } else if (action.equals("queryStatsLog")) {
             log = AntwebProps.getProp("site.docroot") + AntwebProps.getProp("site.queryStatsLog");   
         }
-        
+
+        if (log == null) {
+            message = "Must enter a log name for action:" + action;
+            request.setAttribute("message", message);
+            return (mapping.findForward("message"));
+        }
+
         String command = null;
         if (grep != null && !"".equals(grep)) {
             command = "grep " + grep + " " + log;
@@ -87,7 +93,7 @@ public final class ShowLogAction extends Action {
             if (AntwebProps.isProp("isMac")) linesOption = " -n ";   
             String lines = linesOption + " 2000";  
             command = "tail " + lines + " " + log;
-        }        
+        }
         message = (new AntwebSystem()).launchProcess(command, true);
         String logMessage = "";
         if (message != null && message.length() > 100) logMessage = message.substring(100) + "...";
@@ -95,6 +101,58 @@ public final class ShowLogAction extends Action {
 
         request.setAttribute("message", message);
         return (mapping.findForward("success"));
+    }
+
+
+    private String getSpecimenDetails(HttpServletRequest request, String code) {
+        String specimenDetailXml = null;
+        java.sql.Connection connection = null;
+        try {
+            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            connection = DBUtil.getConnection(dataSource, "getSpecimenDetails");
+
+            SpecimenDb specimenDb = new SpecimenDb(connection);
+            specimenDetailXml = specimenDb.getSpecimenDetailXML(code);
+        } catch (SQLException e) {
+            s_log.error("getSpecimenDetails() e:" + e);
+        } finally {
+            DBUtil.close(connection, this, "getSpecimenDetails");
+        }
+
+        String specimenDetail = parseXMLIntoHtmlMessage(code, specimenDetailXml);
+        return specimenDetail;
+    }
+
+
+
+    private String parseXMLIntoHtmlMessage(String code, String theXML) {
+        Hashtable detailHash = Specimen.getDetailHash(code, theXML);
+
+        String message = "<H2>Specimen Description for <a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a></h2><br>";
+
+        message += "<br><br>The XML:<verbatim> " + theXML + "</verbatim></br></br>";
+
+        message += "<table border=1>";
+
+        Vector v = new Vector(detailHash.keySet());
+        Collections.sort(v);
+        Iterator keys = v.iterator();
+
+        int i = 0;
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            String value = (String) detailHash.get(key);
+
+            try {
+                message += "<tr><td>" + key + "</td><td>" + value + "</td></tr>";
+                ++i;
+            } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                A.log("parseXMLIntoHtmlMessage.getUploadLog() i:" + i + " key:" + key + " e:" + e);
+            }
+        }
+        message += "</table>";
+
+        return message;
     }
 
     private UploadLine getUploadLine(HttpServletRequest request, String fileName, int lineNum) {
