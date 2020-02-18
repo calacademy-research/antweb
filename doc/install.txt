@@ -196,6 +196,10 @@ CATALINA_OPTS="$CATALINA_OPTS -Djava.util.Arrays.useLegacyMergeSort=true -Dfile.
 old servers also had these:
 -Dorg.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING=false
 
+Set in /usr/local/tomcat/bin/setenv.sh
+export CATALINA_OPTS="$CATALINA_OPTS -Xms512m"
+export CATALINA_OPTS="$CATALINA_OPTS -Xmx4096m"
+export CATALINA_OPTS="$CATALINA_OPTS -XX:MaxPermSize=256m"
 
 
 

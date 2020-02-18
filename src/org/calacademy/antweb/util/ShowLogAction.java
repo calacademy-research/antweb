@@ -53,7 +53,7 @@ public final class ShowLogAction extends Action {
           message = getUploadLog(fileName, lineNum); 
         } else if ("specimenDetails".equals(action)) {
           message = getSpecimenDetails(request, code);
-          A.log("execute() specimenDetails:" + message);
+          //A.log("execute() specimenDetails:" + message);
         } else if ("uploadLine".equals(action)) {
 		  uploadLine = getUploadLine(request, fileName, lineNum); 
           message = uploadLine.getLine();
@@ -131,7 +131,7 @@ public final class ShowLogAction extends Action {
 
         String message = "<H2>Specimen Description for <a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimen.getCode() + "'>" + specimen.getCode() + "</a></h2><br>";
 
-        message += "<br><br>The XML: " + specimen.getDetailHash() + "</br></br>";
+        message += "<br><br>" + specimen.getDetailHash() + "</br></br>";
 
         message += "<table border=1>";
 

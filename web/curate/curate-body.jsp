@@ -111,15 +111,21 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 <%
     if (accessLogin.isUploadSpecimens()) {
 
+        // HERE is how we can take down the upload services, should we want... Set takeDownUpload to true.
         boolean takeDownUpload = false;
-        takeDownUpload = !(LoginMgr.isAdmin(accessLogin) || accessGroup.getId() == 31 );
-
-        if (takeDownUpload) { %>
-          <b><font color=blue>Upload services temporarily restricted</font></b>
-
-   <%   } else { %>
-
-          <b><font color=blue>Upload services temporarily restricted for others</font></b>
+        //takeDownUpload = !(LoginMgr.isAdmin(accessLogin) || accessGroup.getId() == 31 );
+        String curatorNote = "";
+        String adminNote = "";
+        if (takeDownUpload) {
+          curatorNote = "<b><font color=blue>Upload services temporarily restricted</font></b>";
+          adminNote = "<b><font color=blue>Upload services temporarily restricted for others</font></b>";
+          if (LoginMgr.isAdmin(accessLogin)) {
+            out.println(adminNote);
+          } else {
+            out.println(curatorNote);
+          }
+        }
+        if (!takeDownUpload || LoginMgr.isAdmin(accessLogin)) { %>
 
        <html:form method="POST" action="upload.do" enctype="multipart/form-data">
          <input type="hidden" name="ancFileDirectory" value="none" />
@@ -174,7 +180,10 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                        </select>
                      </div>
           <% } %>
-     
+
+<a href='<%= domainApp %>/utilData.do?action=countCrawls' title="Taxon Children counts may be calculated subsequently to upload. Otherwise, it will happen nightly.">Run Count Crawls<img src=<%= domainApp%>/image/new1.png width=20></a>
+
+ 
                  <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
                  <div class="clear"></div>
              </div>
@@ -221,81 +230,80 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
 
 
-<%
-if (session.getAttribute("museumMap") != null) {  %>
-<html:form method="POST" action="upload.do" enctype="multipart/form-data">
-    <input type="hidden" name="action" value="museumCalc" />
-    <input type="hidden" name="ancFileDirectory" value="none" />
-    <input type="hidden" name="updateAdvanced" value="no" />
-    <input type="hidden" name="updateFieldGuide" value="none" />
-    <input type="hidden" name="images" value="no" />
-    <input type="hidden" name="outputFileName" value="" />
-    <input type="hidden" name="successkey" value="null" />
-    <div class="admin_action_module">
-        <div class="admin_action_item">
-            <div class="action_desc">Recalculate Your <b>Museums</b> </div>
-            <div class="clear"></div>
-            <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="museumCalc"></div>
-            <div class="clear"></div>
-        </div>
-    </div>
-</html:form>
-<% } %>
-
-
-<!-- View Archived Specimen List Files -->
-<% 
-    HashSet<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();
-    //if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadFileKindList:" + uploadFileKindList);
-%>
-<html:form method="POST" action="uploadHistory.do" enctype="multipart/form-data">
-    <input type="hidden" name="ancFileDirectory" value="none" />
-    <input type="hidden" name="updateAdvanced" value="no" />
-    <input type="hidden" name="updateFieldGuide" value="none" />
-    <input type="hidden" name="images" value="no" />
-    <input type="hidden" name="outputFileName" value="" />
-    <input type="hidden" name="successkey" value="null" />
-    <div class="admin_action_module">
-        <div class="admin_action_item">
-            <div class="action_desc"><b>View</b> Archived Specimen List Files: </div>
-            <div class="action_dropdown">
-  <html:select property="editSpeciesList">
-	<html:option value="none">Select...</html:option>
-<!-- change to java interator 
-Look in projList.  If projlist (lowercased compacted) is in uploadFileKindList, list the projList entry.
-Value to send is the uploadFileKindList entry.
--->	
-<%  
-    for (String uploadFileKind : uploadFileKindList) {
-      if (LoginMgr.isAdmin(accessLogin)) { 
-        if (uploadFileKind.contains("specimen")) {
-          //if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp kind:" + uploadFileKind); %>
-          <html:option value="<%= (String) uploadFileKind %>"></html:option>
-<%
-        }
-      } else {
-        // only the one that is specimen[curaror % ]
-        int specIndex = uploadFileKind.indexOf("specimen") + 8;
-        if (specIndex > 8) {
-          String fileAccessId = uploadFileKind.substring(specIndex);
-          if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp fileAccessId:" + fileAccessId);
-          if ((new Integer(accessGroup.getId())).toString().equals(fileAccessId)) {
-%>
-            <html:option value="<%= (String) uploadFileKind %>"></html:option>
-<%
-          }
-        }
-      } 
-    }
-%>
-  </html:select>
+     <% if (session.getAttribute("museumMap") != null) {  %>
+        <html:form method="POST" action="upload.do" enctype="multipart/form-data">
+            <input type="hidden" name="action" value="museumCalc" />
+            <input type="hidden" name="ancFileDirectory" value="none" />
+            <input type="hidden" name="updateAdvanced" value="no" />
+            <input type="hidden" name="updateFieldGuide" value="none" />
+            <input type="hidden" name="images" value="no" />
+            <input type="hidden" name="outputFileName" value="" />
+            <input type="hidden" name="successkey" value="null" />
+            <div class="admin_action_module">
+                <div class="admin_action_item">
+                    <div class="action_desc">Recalculate Your <b>Museums</b> </div>
+                    <div class="clear"></div>
+                    <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="museumCalc"></div>
+                    <div class="clear"></div>
+                </div>
             </div>
-            <div class="clear"></div>
-            <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="EditUploadFileKindList"></div>
-            <div class="clear"></div>
-        </div>
-    </div>
-</html:form>
+        </html:form>
+     <% } %>
+
+
+        <!-- View Archived Specimen List Files -->
+        <% 
+            HashSet<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();
+            //if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadFileKindList:" + uploadFileKindList);
+        %>
+            <html:form method="POST" action="uploadHistory.do" enctype="multipart/form-data">
+                <input type="hidden" name="ancFileDirectory" value="none" />
+                <input type="hidden" name="updateAdvanced" value="no" />
+                <input type="hidden" name="updateFieldGuide" value="none" />
+                <input type="hidden" name="images" value="no" />
+                <input type="hidden" name="outputFileName" value="" />
+                <input type="hidden" name="successkey" value="null" />
+                <div class="admin_action_module">
+                    <div class="admin_action_item">
+                        <div class="action_desc"><b>View</b> Archived Specimen List Files: </div>
+                        <div class="action_dropdown">
+              <html:select property="editSpeciesList">
+                <html:option value="none">Select...</html:option>
+            <!-- change to java interator 
+            Look in projList.  If projlist (lowercased compacted) is in uploadFileKindList, list the projList entry.
+            Value to send is the uploadFileKindList entry.
+            -->	
+            <%  
+                for (String uploadFileKind : uploadFileKindList) {
+                  if (LoginMgr.isAdmin(accessLogin)) { 
+                    if (uploadFileKind.contains("specimen")) {
+                      //if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp kind:" + uploadFileKind); %>
+                      <html:option value="<%= (String) uploadFileKind %>"></html:option>
+            <%
+                    }
+                  } else {
+                    // only the one that is specimen[curaror % ]
+                    int specIndex = uploadFileKind.indexOf("specimen") + 8;
+                    if (specIndex > 8) {
+                      String fileAccessId = uploadFileKind.substring(specIndex);
+                      if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp fileAccessId:" + fileAccessId);
+                      if ((new Integer(accessGroup.getId())).toString().equals(fileAccessId)) {
+            %>
+                        <html:option value="<%= (String) uploadFileKind %>"></html:option>
+            <%
+                      }
+                    }
+                  } 
+                }
+            %>
+              </html:select>
+                </div>
+                <div class="clear"></div>
+                <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="EditUploadFileKindList"></div>
+                <div class="clear"></div>
+                </div>
+            </div>
+        </html:form>
 
 
      <% } %>  <!-- takeDownUpload -->

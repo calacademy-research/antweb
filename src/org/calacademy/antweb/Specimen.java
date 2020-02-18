@@ -725,6 +725,8 @@ update specimen set other = '
 ' where code = "casent0250040";
 */
 
+    // This is NOT the Description field as presented on the specimen page.
+    // This is description edits.
     public void setDescription(boolean isManualEntry) {
     /* 
      * All Specimen description_edits are manual entry
