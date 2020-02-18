@@ -106,31 +106,32 @@ public final class ShowLogAction extends Action {
 
     private String getSpecimenDetails(HttpServletRequest request, String code) {
         String specimenDetailXml = null;
+        Specimen specimen = null;
         java.sql.Connection connection = null;
         try {
             javax.sql.DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "getSpecimenDetails");
 
-            SpecimenDb specimenDb = new SpecimenDb(connection);
-            specimenDetailXml = specimenDb.getSpecimenDetailXML(code);
+            specimenDetailXml = (new SpecimenDb(connection)).getSpecimenDetailXML(code);
+            specimen = (new SpecimenDb(connection)).getSpecimen(code);
+            specimen.getDetailHash();
+
         } catch (SQLException e) {
             s_log.error("getSpecimenDetails() e:" + e);
         } finally {
             DBUtil.close(connection, this, "getSpecimenDetails");
         }
 
-        String specimenDetail = parseXMLIntoHtmlMessage(code, specimenDetailXml);
+        String specimenDetail = parseXMLIntoHtmlMessage(specimen, specimenDetailXml);
         return specimenDetail;
     }
 
+    private String parseXMLIntoHtmlMessage(Specimen specimen, String theXML) {
+        Hashtable detailHash = Specimen.getDetailHash(specimen.getCode(), theXML);
 
+        String message = "<H2>Specimen Description for <a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimen.getCode() + "'>" + specimen.getCode() + "</a></h2><br>";
 
-    private String parseXMLIntoHtmlMessage(String code, String theXML) {
-        Hashtable detailHash = Specimen.getDetailHash(code, theXML);
-
-        String message = "<H2>Specimen Description for <a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a></h2><br>";
-
-        message += "<br><br>The XML:<verbatim> " + theXML + "</verbatim></br></br>";
+        message += "<br><br>The XML: " + specimen.getDetailHash() + "</br></br>";
 
         message += "<table border=1>";
 

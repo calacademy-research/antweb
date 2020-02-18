@@ -1,37 +1,13 @@
 Release 8.11.4
-# Changes to be committed:
-#       new file:   db/upgrade/8.0/2020-02-12.sql
-#
-# Changes not staged for commit:
-#       typechange: WEB-INF/classes/AntwebResources.properties
-#       typechange: WEB-INF/classes/log4j.properties
-#       typechange: WEB-INF/struts-configDb.xml
-#       typechange: WEB-INF/web.xml
-#       typechange: build.properties
-#       modified:   db/upgrade/8.0/2020-02-12.sql
-#       modified:   doc/done.txt
-#       modified:   doc/fileMods.txt
-#       modified:   doc/install.txt
-#       modified:   doc/release.txt
-#       modified:   etc/configMark.sh
-#       modified:   src/org/calacademy/antweb/home/ArtistDb.java
-#       modified:   src/org/calacademy/antweb/home/LoginDb.java
-#       modified:   src/org/calacademy/antweb/util/AntwebProps.java
-#       modified:   web/documentation/releaseNum.jsp
-#       modified:   apiV3_1-body.jsp
-antweb
-  src/org/calacademy/antweb/util
-    FileUtil.java
-    LogMgr.java
-  WEB-INF
-    classes
-      AntwebResources.properties
-      web.xml
-.gitignore
-build.properties
-# Untracked files:
-#       WEB-INF/classes/ProjectResources.properties
-
+ db/upgrade/8.0/2020-02-12.sql                     |  6 ++++++
+ doc/release.txt                                   |  4 +++-
+ src/org/calacademy/antweb/Specimen.java           | 78 ++++++++++++++++++++++++++++++++++++++++++++++--------------------------------
+ src/org/calacademy/antweb/SpecimenAction.java     | 10 ++++++----
+ src/org/calacademy/antweb/home/SpecimenDb.java    | 30 ++++++++++++++++++++++++++++--
+ src/org/calacademy/antweb/util/AntwebSystem.java  |  4 +++-
+ src/org/calacademy/antweb/util/ShowLogAction.java | 84 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------
+ web/specimen-body.jsp                             |  4 ++--
+ 8 files changed, 165 insertions(+), 55 deletions(-)
 
 Release 8.10.3
 CVS: Modified Files:

@@ -41,7 +41,17 @@ public class SpecimenDb extends AntwebDb {
         }
         return false;
     }
-    
+
+    public Specimen getSpecimen(String code) {
+      Specimen specimen = null;
+      try {
+          specimen = new Specimen(code, getConnection());
+      } catch (SQLException e) {
+          A.log("getSpecimen() code:" + code + " e:" + e);
+      }
+      return specimen;
+    }
+
     public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family) {
         return getAntwebSpecimenCodes(overview, family, null);
     }
