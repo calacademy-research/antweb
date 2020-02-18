@@ -166,8 +166,25 @@ public class TaxonMgr {
 
     public static Taxon getTaxon(String taxonName) {
       if (taxonName == null) return null;
-      if (s_taxa == null) return null; // Could happen due to serverinitialization.
-      return s_taxa.get(taxonName);
-    }    
+      if (s_taxa == null) {
+          A.log("getTaxon() returning null because s_taxa is null");
+          // Could happen due to serverinitialization.
+          return null;
+      }
+
+      Taxon taxon = s_taxa.get(taxonName);
+      if (taxon == null) {
+          A.log("getTaxon() taxon not found:" + taxonName);
+          return null;
+      }
+      //A.log("getTaxon() returning taxon:" + taxon);
+      return taxon;
+    }
+
+    public static String getSubgenus(String taxonName) {
+        Taxon taxon = getTaxon(taxonName);
+        return taxon.getSubgenus();
+    }
+
 }
 

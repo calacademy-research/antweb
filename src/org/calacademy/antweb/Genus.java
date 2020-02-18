@@ -212,6 +212,7 @@ We get both... that can't be right.
             DBUtil.close(stmt, rset, this, "setChildren()");
         }
         A.log("setChildren() size:" + theseChildren.size());
+        //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
         this.children = theseChildren;
     }
  

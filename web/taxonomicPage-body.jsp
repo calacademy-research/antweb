@@ -34,8 +34,8 @@
     boolean isBioregion = overview instanceof Bioregion;
 
     boolean displayGlobal = !isProject && (Rank.SPECIES.equals(pageRank)); // was: isGeolocale && 
-    A.log("taxonReportBody.jsp displayGlobal:" + displayGlobal + " pageRank:" + pageRank);
-    A.log("taxonReportBody.jsp isMuseum:" + isMuseum + " str:" + HttpUtil.getParamsString("museumCode", request) + " overview:" + overview.getClass());
+    //A.log("taxonomicPage-body.jsp displayGlobal:" + displayGlobal + " pageRank:" + pageRank);
+    //A.log("taxonomicPage-body.jsp isMuseum:" + isMuseum + " str:" + HttpUtil.getParamsString("museumCode", request) + " overview:" + overview.getClass());
      
     
     String title = "";

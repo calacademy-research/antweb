@@ -10,7 +10,10 @@
     if ("authorDate".equals(orderBy)) Collections.sort(children, new SortTaxaByAuthorDate());
     if ("images".equals(orderBy)) Collections.sort(children, new SortTaxaByImages());
     if ("genera".equals(orderBy)) Collections.sort(children, new SortTaxaByGenera());
-
+    if ("subgenera".equals(orderBy)) {
+      A.log("taxonReportBody.jsp sort by subgenera");
+      Collections.sort(children, new SortTaxaByGenusSubgenusSpecies());
+    }
     if ("lifestage".equals(orderBy)) Collections.sort(children, new SortTaxaByLifeStage());
     if ("medium".equals(orderBy)) Collections.sort(children, new SortTaxaByMedium());
     if ("specimennotes".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimenNotes());

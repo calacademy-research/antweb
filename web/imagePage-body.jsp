@@ -53,8 +53,8 @@
     String pageRank = taxon.getRank();
 
     boolean displayGlobal = !isProject && (Rank.SUBSPECIES.equals(pageRank) || Rank.SPECIES.equals(pageRank) || Rank.SPECIMEN.equals(pageRank)); // was: isGeolocale && 
-    A.log("taxonReportBody.jsp displayGlobal:" + displayGlobal + " pageRank:" + pageRank);
-    A.log("taxonReportBody.jsp isMuseum:" + isMuseum + " str:" + HttpUtil.getParamsString("museumCode", request) + " overview:" + overview.getClass());
+    //A.log("imagePage-body.jsp displayGlobal:" + displayGlobal + " pageRank:" + pageRank);
+    //A.log("imagePage-body.jsp isMuseum:" + isMuseum + " str:" + HttpUtil.getParamsString("museumCode", request) + " overview:" + overview.getClass());
 
 
     String global = request.getParameter("global");

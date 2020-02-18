@@ -66,7 +66,7 @@ public class TaxonDb extends AntwebDb {
             stmt = DBUtil.getStatement(connection, "getInfoInstance() taxonName:" + taxonName);
                   
             theQuery = " select rank, taxon_name, kingdom_name, phylum_name, order_name, class_name" 
-              + ", family, subfamily, genus, species, subspecies " 
+              + ", family, subfamily, genus, subgenus, species, subspecies "
               + ", source, insert_method, created, fossil, antcat, pending, type "
               + ", antcat_id, author_date, author_date_html, authors, year, status, available " 
               + ", current_valid_name, current_valid_rank, current_valid_parent, original_combination, was_original_combination "
@@ -98,7 +98,8 @@ public class TaxonDb extends AntwebDb {
                 taxon.setFamily(rset.getString("family"));
                 taxon.setSubfamily(rset.getString("subfamily"));
                 taxon.setGenus(rset.getString("genus"));
-                taxon.setSpecies(rset.getString("species"));  
+                taxon.setSubgenus(rset.getString("subgenus"));
+                taxon.setSpecies(rset.getString("species"));
                 taxon.setSubspecies(rset.getString("subspecies"));                                
 
                 taxon.setSource(rset.getString("source"));

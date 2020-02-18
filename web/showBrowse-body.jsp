@@ -16,7 +16,7 @@
 
 <% if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return; 
 
-A.log("showbrowse.jsp");
+//A.log("showbrowse.jsp");
 %>
 
 <jsp:useBean id="taxon" scope="request" class="org.calacademy.antweb.Taxon" />
@@ -51,9 +51,9 @@ A.log("showbrowse.jsp");
    String object = "taxonName";
    String objectName = taxon.getTaxonName();
 
-    // actually childRank. Shared with taxonomicPage which views objects differently.
-    String pageRank = Rank.getChildRank(taxon.getRank());
-  A.log("showBrowse pageRank:" + pageRank);    
+   // actually childRank. Shared with taxonomicPage which views objects differently.
+   String pageRank = Rank.getChildRank(taxon.getRank());
+  //A.log("showBrowse pageRank:" + pageRank);    
 
   boolean isMuseum = overview instanceof Museum;
   boolean isGeolocale = overview instanceof Geolocale;
@@ -61,8 +61,8 @@ A.log("showbrowse.jsp");
   boolean isBioregion = overview instanceof Bioregion;
 
   boolean displayGlobal = !isProject && (Rank.SPECIES.equals(pageRank) || Rank.SPECIMEN.equals(pageRank)); // was: isGeolocale && 
-  A.log("taxonReportBody.jsp displayGlobal:" + displayGlobal + " pageRank:" + pageRank);
-  A.log("taxonReportBody.jsp isMuseum:" + isMuseum + " museumCode:" + tMuseumCode + " str:" + HttpUtil.getParamsString("museumCode", request) + " overview:" + overview.getClass());
+  //A.log("showBrowse-body.jsp displayGlobal:" + displayGlobal + " pageRank:" + pageRank);
+  //A.log("showBrowse-body.jsp isMuseum:" + isMuseum + " museumCode:" + tMuseumCode + " str:" + HttpUtil.getParamsString("museumCode", request) + " overview:" + overview.getClass());
 
   String global = request.getParameter("global");
   boolean isGlobal = "true".equals(global);  
@@ -112,7 +112,7 @@ String recordCountString = taxonChildCount + " specimens";
 
 java.util.ArrayList<Taxon> taxonChildren = taxon.getChildren();
 
-A.log("showBrowse-body.jsp size:" + taxonChildren.size());
+//A.log("showBrowse-body.jsp size:" + taxonChildren.size());
 int childrenCount = taxonChildren.size();   
 Taxon[] childrenArray = new Taxon[childrenCount];
 taxonChildren.toArray(childrenArray);
@@ -156,12 +156,8 @@ for (Taxon t : childrenArray) {
 
    //A.log("showBrowse-body.jsp c:" + taxon.getChildrenCount() + " displayCount:" + displayCount + " nextRank:" + taxon.getNextRank());   
 
-
-
    // 346 Specimens (6 imaged)
 %>
-
-
 
     <h2 class="display_count"><%= displayCount %><% if (imagedSpecimenCount > 0) { %> (<span class="numbers"><%= imagedSpecimenCount %></span> imaged)<% } %></h2>
 
@@ -234,11 +230,12 @@ for (Taxon t : childrenArray) {
      <% // USED TO HAVE THE TAXONCHILDCOUNT HERE %>
 
      <%
-		if (request.getParameter("sortBy") != null) {
-		  //if (session.getAttribute("taxon") instanceof Species)
-		  //  ((Species) session.getAttribute("taxon")).sortBy(request.getParameter("sortBy")); 
-		  if (taxon instanceof Species || taxon instanceof Subspecies)
-			((Species) taxon).sortBy(request.getParameter("sortBy")); 
+        String sortBy = (String) request.getParameter("sortBy");
+		if (sortBy != null) {
+		  if (taxon instanceof Species || taxon instanceof Subspecies) {
+			((Species) taxon).sortBy(sortBy);
+            A.log("showBrowse-body rank:" + taxon.getRank() + " sortBy:" + sortBy);
+          }
 		}
 		// USED TO HAVE THE RECORDCOUNTSTRING HERE
 	  %>
