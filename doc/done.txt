@@ -11859,7 +11859,7 @@ Feb 15. 7am. 10 - 11. 12 - 8. 1 hr break. 8hrs
   Document.
   Invoice and release notes for 8.11 and 8.11.1
 
-Feb 16. 5.5hr.
+Feb 16. 5.5hr + 2 - 5am. 8hrs.
   Generate new Bolton NGC list.
   Turn off ONLY_FULL_GROUP_BY in /etc/my.cnf to enable recent images query.
   Make the moveFile logs quieter. 
@@ -11867,14 +11867,12 @@ Feb 16. 5.5hr.
   Removal of deprecations.
   Database performance optimization.
   Engineer: Move runCountCrawls out of execution path. Make optional and separate curator driven action.
-
-Feb 17 (late night) 2 - 5am. 3hrs.
   Testing of specimen upload, worldants.
   Engineer separation of specimen upload and run count crawls.
   Turn off specimen upload in jsp file, except for admin.
   Separate Run Count Crawls from the upload. Make a separate link.
 
-Feb 18. 12pm - 4am. 4hrs of break. 3 discounted. 9hrs.
+Feb 17. 12pm - 4am. 4hrs of break. 3 discounted. 9hrs.
   Attempt deployment. Went very poorly due to git configuration challenges. Fixed.
   Document deployment. Document performance concerns and request help.
   Continue to refine GIT usage. Using .gitignore file we can not step on configurations.
@@ -11888,14 +11886,20 @@ Feb 18. 12pm - 4am. 4hrs of break. 3 discounted. 9hrs.
   Resolved the problem with the new server. JVM memory parameters altered.
   Search for browser timeout settings on old server. Not found.
 
-Feb 19
+Feb 18. 6hrs.
   Performance comparisons run on MyIsam vs InnoDb
+  Verify server working!
+  Document developments for Brian, Joe, Randy and Michele.
+  Request of Jo that he solve the browser timeout issue.
+  Finishing touches on curate page to alert curators to lack of response and run count crawl option.
+  Set database tables back to MySam after finding performance was not improved.
+  Engineer a solution for Brian so that subgenera can be seen.
+  Refactor mapComparison, comparison to not use Iterator (Code is much cleaner with ArrayLists).
+  Deploy. Test. Document.
+  Summarize to do list for Brian.
 
 
-
-Verify performance gain with InnoDb over MySam. Test locally with Peter's upload.
 Get browsers to stay connected.
-
 Antcat docker
 WAR files.
 

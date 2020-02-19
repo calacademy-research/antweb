@@ -145,8 +145,8 @@ public abstract class HttpUtil {
  
       if (queryString.contains("%20and%20")) hasSpecialChars = true;
       if (queryString.contains("%27")) hasSpecialChars = true;
-      if (queryString.contains("%28")) hasSpecialChars = true;
-      if (queryString.contains("%29")) hasSpecialChars = true;
+      //if (queryString.contains("%28")) hasSpecialChars = true; // parens
+      //if (queryString.contains("%29")) hasSpecialChars = true;
  
       if (hasSpecialChars) {
           request.setAttribute("message", "Unallowed characters.");

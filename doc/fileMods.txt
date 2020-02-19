@@ -1,15 +1,20 @@
 Release 8.12
- doc/fileMods.txt                                                   | 10 ++++++++++
- doc/release.txt                                                    |  3 +++
+ doc/fileMods.txt                            |  14 +++++++++
+ doc/release.txt                             |   1 +
+ src/org/calacademy/antweb/BrowseAction.java |  32 ++++++++++----------
+ src/org/calacademy/antweb/BrowseForm.java   |   9 ++++++
+ src/org/calacademy/antweb/Map.java          |   2 +-
+ src/org/calacademy/antweb/Taxon.java        |  33 +++++++++++++++++++-
+ src/org/calacademy/antweb/util/TaxonMgr.java | 23 ++++++++++++++++++++---
+ web/comparison-body.jsp                     |   8 ++++-
+ web/mapComparison-body.jsp                  |  57 ++++++++++++++++-------------------
+ web/search/fieldGuide-body.jsp              | 223 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------------------
+ web/showBrowse-body.jsp                     |   1 -
+ web/taxonReportBody.jsp                     |  26 ++--------------
  src/org/calacademy/antweb/Genus.java                               |  1 +
  src/org/calacademy/antweb/home/TaxonDb.java                        |  5 +++--
  src/org/calacademy/antweb/sort/SortTaxaByGenusSubgenusSpecies.java | 29 +++++++++++++++++++++++++++++
- src/org/calacademy/antweb/util/TaxonMgr.java                       | 23 ++++++++++++++++++++---
- web/documentation/releaseNum.jsp                                   |  2 +-
- web/imagePage-body.jsp                                             |  4 ++--
- web/showBrowse-body.jsp                                            | 29 +++++++++++++----------------
- web/taxonReportBody.jsp                                            |  5 ++++-
- web/taxonomicPage-body.jsp                                         |  4 ++--
+ 11 files changed, 224 insertions(+), 182 deletions(-)
  11 files changed, 88 insertions(+), 27 deletions(-)
 
 Release 8.11.5

@@ -671,7 +671,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Antcat ID:</b>
 </div>
 <div id=data_items2>
-<a href="http://antcat.org/catalog/<%= taxon.getAntcatId() %>"><%= taxon.getAntcatId() %></a>
+<a href="https://antcat.org/catalog/<%= taxon.getAntcatId() %>"><%= taxon.getAntcatId() %></a>
 </div>
 
 <div class="clear"></div>
