@@ -1,3 +1,17 @@
+Release 8.12
+ doc/fileMods.txt                                                   | 10 ++++++++++
+ doc/release.txt                                                    |  3 +++
+ src/org/calacademy/antweb/Genus.java                               |  1 +
+ src/org/calacademy/antweb/home/TaxonDb.java                        |  5 +++--
+ src/org/calacademy/antweb/sort/SortTaxaByGenusSubgenusSpecies.java | 29 +++++++++++++++++++++++++++++
+ src/org/calacademy/antweb/util/TaxonMgr.java                       | 23 ++++++++++++++++++++---
+ web/documentation/releaseNum.jsp                                   |  2 +-
+ web/imagePage-body.jsp                                             |  4 ++--
+ web/showBrowse-body.jsp                                            | 29 +++++++++++++----------------
+ web/taxonReportBody.jsp                                            |  5 ++++-
+ web/taxonomicPage-body.jsp                                         |  4 ++--
+ 11 files changed, 88 insertions(+), 27 deletions(-)
+
 Release 8.11.5
  db/upgrade/8.0/2020-02-12.sql                 |   5 ++++
  doc/done.txt                                  | 242 +++++++++++++++++++++----------------------------------------------------------------------------------------------------------------------------------------------------------

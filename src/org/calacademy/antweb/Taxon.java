@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
+import org.calacademy.antweb.sort.*;
 
 import java.sql.Connection;
 
@@ -3136,7 +3137,37 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public void setExecTime(String execTime) {
         this.execTime = execTime;
     }
-	
+
+    public static void sortTaxa(String orderBy, ArrayList<Taxon> children) {
+      sortTaxa(orderBy, children, null);
+	}
+    public static void sortTaxa(String orderBy, ArrayList<Taxon> children, Overview overview) {
+        // Sort the ChildrenList
+
+        if ("taxonName".equals(orderBy)) Collections.sort(children, new SortTaxaByGenusSpecies());
+        if ("authorDate".equals(orderBy)) Collections.sort(children, new SortTaxaByAuthorDate());
+        if ("images".equals(orderBy)) Collections.sort(children, new SortTaxaByImages());
+        if ("genera".equals(orderBy)) Collections.sort(children, new SortTaxaByGenera());
+        if ("subgenera".equals(orderBy)) {
+            A.log("taxonReportBody.jsp sort by subgenera");
+            Collections.sort(children, new SortTaxaByGenusSubgenusSpecies());
+        }
+        if ("lifestage".equals(orderBy)) Collections.sort(children, new SortTaxaByLifeStage());
+        if ("medium".equals(orderBy)) Collections.sort(children, new SortTaxaByMedium());
+        if ("specimennotes".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimenNotes());
+
+        if ("species".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecies());
+        if ("specimens".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimens());
+        if ("specimensGlobal".equals(orderBy)) Collections.sort(children, new SortTaxaByGlobalChildCount());
+        if ("specimens".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimens());
+        if ("map".equals(orderBy)) Collections.sort(children, new SortTaxaByMap());
+        if ("source".equals(orderBy)) Collections.sort(children, new SortTaxaBySource());
+        if ("status".equals(orderBy)) Collections.sort(children, new SortTaxaByStatus());
+        if ("type".equals(orderBy)) Collections.sort(children, new SortTaxaByIsType());
+        if ("ie".equals(orderBy)) Collections.sort(children, new SortTaxaByIE(overview));
+        if ("fromSpecimen".equals(orderBy)) Collections.sort(children, new SortTaxaByFromSpecimen());
+	}
+
 }
 
 

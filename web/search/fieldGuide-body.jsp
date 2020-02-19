@@ -78,58 +78,58 @@
 <%
    } else {
 %>
-<div id="page_contents">
-<% if (showTaxon.getRank() != null) { %>
-  <h1>
-  <%= new Formatter().capitalizeFirstLetter(showTaxon.getRank()) %>: <%= dagger %><bean:write name="showTaxon" property="prettyName" />
-  <% if (showTaxon.getIsValid()) { %>
-    <img src="<%= AntwebProps.getDomainApp() %>/image/valid_name.png" border="0" title="Valid Name">
-  <% } %>
-  </h1>
-<% } %>
+    <div id="page_contents">
+    <% if (showTaxon.getRank() != null) { %>
+      <h1>
+      <%= new Formatter().capitalizeFirstLetter(showTaxon.getRank()) %>: <%= dagger %><bean:write name="showTaxon" property="prettyName" />
+      <% if (showTaxon.getIsValid()) { %>
+        <img src="<%= AntwebProps.getDomainApp() %>/image/valid_name.png" border="0" title="Valid Name">
+      <% } %>
+      </h1>
+    <% } %>
 
-<%  if (AntwebProps.isDevMode()) AntwebUtil.log("fieldGuide-body.jsp rank:" + showTaxon.getRank() + " from_search:" + from_search + " region_fg:" + region_fg);
+    <%  if (AntwebProps.isDevMode()) AntwebUtil.log("fieldGuide-body.jsp rank:" + showTaxon.getRank() + " from_search:" + from_search + " region_fg:" + region_fg);
 
-    String link_params = "";
-    String taxonRank = taxon.getRank();
-   
-    if (Rank.SUBFAMILY.equals(taxonRank)) {
-        link_params = "subfamily=" + taxon.getSubfamily() + "&name=" + taxon.getSubfamily() + "&rank=subfamily&" + overview.getParams();
-    } else if (Rank.GENUS.equals(taxonRank)) {
-        link_params = "subfamily=" + taxon.getSubfamily() + "&genus=" + taxon.getGenus() + "&name=" + taxon.getGenus() + "&rank=genus&" + overview.getParams();
-    } else if (Rank.SPECIES.equals(taxonRank)) {
-        link_params = "subfamily=" + taxon.getSubfamily() + "&genus=" + taxon.getGenus() + "&name=" + taxon.getName() + "&rank=species&" + overview.getParams();
-    } else if (Rank.SPECIMEN.equals(taxonRank)) {
-        link_params = "name=" + specimen.getName().toLowerCase();
-    } else {
-        link_params = "name=" + taxon.getName() + "&rank=" + taxon.getRank() + "&" + overview.getParams();
-    }
-%>
+        String link_params = "";
+        String taxonRank = taxon.getRank();
 
-	<div class="links">
-		<ul>
-			<li><a class="clean_url overview" href="<%= AntwebProps.getDomainApp() %>/description.do?<%=link_params%>">Overview</a></li>
-			<li><a class="clean_url list" href="<%= AntwebProps.getDomainApp() %>/browse.do?<%=link_params%>"><%= Rank.getNextPluralRank(rank) %></a></li>
-			<li><a class="clean_url images" href="<%= AntwebProps.getDomainApp() %>/images.do?<%=link_params%>">Images</a></li>
-		</ul>
-	</div>
+        if (Rank.SUBFAMILY.equals(taxonRank)) {
+            link_params = "subfamily=" + taxon.getSubfamily() + "&name=" + taxon.getSubfamily() + "&rank=subfamily&" + overview.getParams();
+        } else if (Rank.GENUS.equals(taxonRank)) {
+            link_params = "subfamily=" + taxon.getSubfamily() + "&genus=" + taxon.getGenus() + "&name=" + taxon.getGenus() + "&rank=genus&" + overview.getParams();
+        } else if (Rank.SPECIES.equals(taxonRank)) {
+            link_params = "subfamily=" + taxon.getSubfamily() + "&genus=" + taxon.getGenus() + "&name=" + taxon.getName() + "&rank=species&" + overview.getParams();
+        } else if (Rank.SPECIMEN.equals(taxonRank)) {
+            link_params = "name=" + specimen.getName().toLowerCase();
+        } else {
+            link_params = "name=" + taxon.getName() + "&rank=" + taxon.getRank() + "&" + overview.getParams();
+        }
+    %>
 
-	<%@ include file="/common/viewInAntCat.jsp" %>
-
-	<div class="clear"></div>
-    <!-- /div -->
-
-<%@ include file="/common/taxonomicHierarchy.jsp" %>
-
-    <div id="totals_and_tools_container">
-        <div id="totals_and_tools">
-           <h2>Field Guide <%= fgTitle %></h2>
-           <div id="thumb_toggle"><a href="<%= request.getHeader("Referer") %>">Back to <%= new Formatter().capitalizeFirstLetter(showTaxon.getRank()) %> <bean:write name="showTaxon" property="prettyName" /></a></div>
-        <div class="clear"></div>
+        <div class="links">
+            <ul>
+                <li><a class="clean_url overview" href="<%= AntwebProps.getDomainApp() %>/description.do?<%=link_params%>">Overview</a></li>
+                <li><a class="clean_url list" href="<%= AntwebProps.getDomainApp() %>/browse.do?<%=link_params%>"><%= Rank.getNextPluralRank(rank) %></a></li>
+                <li><a class="clean_url images" href="<%= AntwebProps.getDomainApp() %>/images.do?<%=link_params%>">Images</a></li>
+            </ul>
         </div>
+
+        <%@ include file="/common/viewInAntCat.jsp" %>
+
+        <div class="clear"></div>
+        <!-- /div -->
+
+    <%@ include file="/common/taxonomicHierarchy.jsp" %>
+
+        <div id="totals_and_tools_container">
+            <div id="totals_and_tools">
+               <h2>Field Guide <%= fgTitle %></h2>
+               <div id="thumb_toggle"><a href="<%= request.getHeader("Referer") %>">Back to <%= new Formatter().capitalizeFirstLetter(showTaxon.getRank()) %> <bean:write name="showTaxon" property="prettyName" /></a></div>
+            <div class="clear"></div>
+            </div>
+        </div>
+        <div class="clear"></div>
     </div>
-    <div class="clear"></div>
-</div>
 <%
    }
 %>
@@ -150,71 +150,80 @@
          occasionally happen on subsequent calls.
       */
       //AntwebUtil.log("fieldGuide-body.jsp Incorrect fieldGuide taxa.  size:" + fieldGuideTaxaArray.size() + " request:" + request + " fieldGuide:" + fieldGuide + " theTaxa:" + fieldGuide.getTaxa() + " hashCode:" + fieldGuideTaxaArray.hashCode());
- %> <h2><Font color=red>Apologies, known issue - please attempt Reload!</font></h2> 
+ %>
+      <h2><Font color=red>Apologies, known issue - please attempt Reload!</font></h2>
  <%  
    }
-   
-   int i = 0;
-   for (Taxon fgTaxon : fieldGuideTaxaArray) {
-     ++i;
-     if (fgTaxon == null) {
-       AntwebUtil.log("fieldGuide-body.jsp no taxon");
-       return;
-     }
 
- %>
-<div class="clear"></div> 
-<div class="page_spacer"></div> 
-     <h3><%= (new Formatter()).capitalizeFirstLetter(fgTaxon.getRank()) %>: <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= fgTaxon.getTaxonName() %>"><%= fgTaxon.getPrettyName() %></a></h3>
-<%
-     //if (AntwebProps.isDevMode()) if (map.getGoogleMapFunction() == null) AntwebUtil.log("fieldGuide-body.jsp taxonName:" + fgTaxon.getTaxonName());
-      
-     String object = "thirds"; // "taxon";
-     String objectName = fgTaxon.getTaxonName();       
+    ArrayList<Taxon> fieldGuideArrayList = new ArrayList(Arrays.asList(fieldGuideTaxaArray));
 
-//if (AntwebProps.isDevMode()) AntwebUtil.log("fieldGuide-body.jsp taxon:" + fgTaxon.getTaxonName() + " images:" + fgTaxon.getImages());
+    String orderBy = (String) request.getParameter("orderBy");
+    if (orderBy != null) {
+      A.log("fieldGuide-body.jsp sorting...");
+      Taxon.sortTaxa(orderBy, fieldGuideArrayList);
+    }
 
-     if (fgTaxon.getImages() == null) {
-       //if (AntwebProps.isDevMode()) AntwebUtil.log("fieldGuide-body.jsp no taxon images for taxon:" + fgTaxon.getTaxonName() );
-     } else {
-       String shot = "h"; 
-       SpecimenImage image = (org.calacademy.antweb.SpecimenImage) fgTaxon.getImages().get(shot);
-       if (image != null) {
-%> 
-<div class="slide thirds first" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%= image.getThumbview() %>');">
-<div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= image.getCode() %>&shot=<%= shot %>&number=1';"></div>
-</div>
-<%     } else {
-         //if (AntwebProps.isDevMode()) AntwebUtil.log("info" ,"fieldGuide-body.jsp image null for taxon:" + taxon.getTaxonName() + " shot:" + shot);
-       }
-       shot = "p"; 
-       image = (org.calacademy.antweb.SpecimenImage) fgTaxon.getImages().get(shot);
-       if (image != null) {
-%>     
-<div class="slide thirds" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%= image.getThumbview() %>');">
-<div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= image.getCode() %>&shot=<%= shot %>&number=1';"></div>
-</div>
-<%     }
-     } 
+    int i = 0;
+    for (Taxon fgTaxon : fieldGuideArrayList) {
+        ++i;
+        if (fgTaxon == null) {
+           AntwebUtil.log("fieldGuide-body.jsp no taxon");
+           return;
+        }
 
-     org.calacademy.antweb.Map map = fgTaxon.getMap();  
-     if (map != null) {
-       String mapType = "FieldGuide";
-%> 
-<div class="small_map">
+     %>
+        <div class="clear"></div>
+        <div class="page_spacer"></div>
+        <h3><%= (new Formatter()).capitalizeFirstLetter(fgTaxon.getRank()) %>: <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= fgTaxon.getTaxonName() %>"><%= fgTaxon.getPrettyName() %></a></h3>
+    <%
+        //if (AntwebProps.isDevMode()) if (map.getGoogleMapFunction() == null) AntwebUtil.log("fieldGuide-body.jsp taxonName:" + fgTaxon.getTaxonName());
 
-<%@include file="/maps/googleMapInclude.jsp" %>
-</div>
-<% 
-     }
-     
-     if (fgTaxon.hasSpecimenDataSummary()) {  %>   
-<div class="clear"></div>
-<div class="fg_data_summary">
-<h4>Specimen Habitat Summary</h4>
-<p><%= fgTaxon.getSpecimenDataSummary(10) %>
-</div>
-  <% } %>
+        String object = "thirds"; // "taxon";
+        String objectName = fgTaxon.getTaxonName();
 
-<%   } // for each taxon %>   
+    //if (AntwebProps.isDevMode()) AntwebUtil.log("fieldGuide-body.jsp taxon:" + fgTaxon.getTaxonName() + " images:" + fgTaxon.getImages());
+
+        if (fgTaxon.getImages() == null) {
+           //if (AntwebProps.isDevMode()) AntwebUtil.log("fieldGuide-body.jsp no taxon images for taxon:" + fgTaxon.getTaxonName() );
+        } else {
+            String shot = "h";
+            SpecimenImage image = (org.calacademy.antweb.SpecimenImage) fgTaxon.getImages().get(shot);
+            if (image != null) {
+    %>
+                <div class="slide thirds first" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%= image.getThumbview() %>');">
+                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= image.getCode() %>&shot=<%= shot %>&number=1';"></div>
+                </div>
+    <%      } else {
+                //if (AntwebProps.isDevMode()) AntwebUtil.log("info" ,"fieldGuide-body.jsp image null for taxon:" + taxon.getTaxonName() + " shot:" + shot);
+            }
+            shot = "p";
+            image = (org.calacademy.antweb.SpecimenImage) fgTaxon.getImages().get(shot);
+            if (image != null) {
+    %>
+                <div class="slide thirds" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%= image.getThumbview() %>');">
+                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= image.getCode() %>&shot=<%= shot %>&number=1';"></div>
+                </div>
+    <%      }
+        }
+
+        org.calacademy.antweb.Map map = fgTaxon.getMap();
+        if (map != null) {
+            String mapType = "FieldGuide";
+            %>
+            <div class="small_map">
+
+            <%@include file="/maps/googleMapInclude.jsp" %>
+            </div>
+            <%
+        }
+
+        if (fgTaxon.hasSpecimenDataSummary()) {  %>
+            <div class="clear"></div>
+            <div class="fg_data_summary">
+            <h4>Specimen Habitat Summary</h4>
+            <p><%= fgTaxon.getSpecimenDataSummary(10) %>
+            </div>
+     <% } %>
+
+<%  } // for each taxon %>
 

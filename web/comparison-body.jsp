@@ -182,7 +182,13 @@ function chooseTarget(theForm) {
   Taxon[] childrenArray = new Taxon[childrenCount];
   childrenList.toArray(childrenArray);
 
-  for (Taxon child : childrenArray) {
+  ArrayList<Taxon> childrenArrayList = new ArrayList(Arrays.asList(childrenArray));
+  String orderBy = (String) request.getParameter("orderBy"); // "subgenera";
+  if (orderBy != null) {
+    Taxon.sortTaxa(orderBy, childrenArrayList);
+  }
+
+  for (Taxon child : childrenArrayList) {
     if (child.getHasImages()) { 
       String displayName = child.getFullName(); 
 %>

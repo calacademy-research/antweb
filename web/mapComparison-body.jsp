@@ -59,21 +59,25 @@
 </div>
 
 <%@ include file="/common/taxonomicHierarchy.jsp" %>
-<%
-    java.util.ArrayList theChildren = showTaxon.getChildren(); 
-    
-    if (theChildren == null) AntwebUtil.log("mapComparison-body.jsp theChildren is null");
-    
-    java.util.Iterator iterator = theChildren.iterator();
-    int total = showTaxon.getChildrenCount();
-    
-//A.log("mapComparison-body.jsp childrenCount:" + total);
 
-//A.log("1");
+<%
+    java.util.ArrayList<Taxon> theChildren = showTaxon.getChildren();
+
+    String orderBy = (String) request.getParameter("orderBy"); // "subgenera";
+    if (orderBy != null) {
+      A.log("mapComparison-body.jsp sorting...");
+      Taxon.sortTaxa(orderBy, theChildren);
+    }
+
+    if (theChildren == null) AntwebUtil.log("mapComparison-body.jsp theChildren is null");
+
+    int total = theChildren.size();
+
+//A.log("mapComparison-body.jsp childrenCount:" + total);
 %>
 <div id="totals_and_tools_container">
 	<div id="totals_and_tools">
-		<h2>Map Comparison for <%= new Formatter().capitalizeFirstLetter((String) prettyrank) %> 
+		<h2>Map Comparison for <%= new Formatter().capitalizeFirstLetter((String) prettyrank) %>
 		  <bean:write name="showTaxon" property="prettyName" /> (<!-- span class="numbers" id="mapped"></span --><%= total %> <%=taxon.getNextRank() %> Mapped)</h2>
 		<div id="thumb_toggle"><a href="<%= util.getDomainApp() %><%= facet %>?<%=taxon.getBrowserParams()%>">
 		  Back to <%= new Formatter().capitalizeFirstLetter((String) prettyrank) %> <bean:write name="showTaxon" property="prettyName" /></a></div>
@@ -83,27 +87,18 @@
 <div id="page_data">
 
 <%
-    int rows = total; //(total/3) + 1;  ?????
+    int rows = total;
     int loop=0;
-    int innerloop;
-    boolean printedTr = false;
-    innerloop = 0;
-    while (loop < rows) {
-        printedTr = false;
+    int innerloop = 0;
+    for (Taxon thisChild : theChildren) {
+        //A.log("mapComparison-body.jsp Child:" + thisChild);
 
-//A.log("2 child:" + thisChild);
+          //AntwebUtil.log("mapComparison-body.jsp taxon:" + thisChild);
 
-        while ((innerloop < 3) && (iterator.hasNext())) {  
+          innerloop = 0;
+        while (innerloop < 3) {
 
-    //AntwebUtil.log("mapComparison-body.jsp innerloop:" + innerloop);
-
-            if ((innerloop == 0) && (!printedTr))  {
-                printedTr=true;
-            }
-//A.log("3 child:");
-
-            org.calacademy.antweb.Taxon thisChild = (org.calacademy.antweb.Taxon) iterator.next();
-
+            // AntwebUtil.log("mapComparison-body.jsp taxon:" + thisChild + " innerloop:" + innerloop);
 
             if ((thisChild.getMap() != null) && (thisChild.getMap().getGoogleMapFunction() != null)) {
         
@@ -175,12 +170,10 @@
             </div>
 <%                  } // end contains p 
                 } // images != null 
-                if (innerloop < 2) { } 
-                innerloop++;
-                if (innerloop == 3) { 
-                    innerloop = 0;  // Mark added this 6-26-2103 to fix the only printing 3 times problem
-                } 
-            } // if map not null  
+
+            } // if map not null
+            innerloop++;
+
         } // end inner loop
         loop++;
         //AntwebUtil.log("mapComparison-body.jsp rows:" + rows + " loop:" + loop + " innerloop:" + innerloop);

@@ -20,28 +20,29 @@ import org.apache.commons.logging.LogFactory;
 public class BrowseAction extends DescriptionAction {
 
     private static Log s_log = LogFactory.getLog(BrowseAction.class);
-        
+
     public static int s_mapComparisonLimit = 2;
     public static int s_mapComparisonCount = 0;
     public static int s_getComparisonLimit = 2;
     public static int s_getComparisonCount = 0;
-         
-/*
-BrowseAction called with browseForm in session:
-  browse.do, navigateHierarchy, getComparison, oneView, mapComparison, description.do, 
-in request:
-  imagePickImageGetter, descriptionEdit, 
-*/
+
+    /*
+    BrowseAction called with browseForm in session:
+      browse.do, navigateHierarchy, getComparison, oneView, mapComparison, description.do,
+    in request:
+      imagePickImageGetter, descriptionEdit,
+    */
 
     private String inferredRank(String queryString) {
-      if (queryString.contains("subspecies")) return Rank.SUBSPECIES;
-      if (queryString.contains("species")) return Rank.SPECIES;
-      if (queryString.contains("genus")) return Rank.GENUS;
-      if (queryString.contains("subfamily")) return Rank.SUBFAMILY;
-      if (queryString.contains("family")) return Rank.FAMILY; 
+      if(queryString.contains("subspecies"))return Rank.SUBSPECIES;
+      if(queryString.contains("species"))return Rank.SPECIES;
+      if(queryString.contains("genus")&&!queryString.contains("subgenus"))return Rank.GENUS;
+      if(queryString.contains("subgenus"))return Rank.SUBGENUS;
+      if(queryString.contains("subfamily"))return Rank.SUBFAMILY;
+      if(queryString.contains("family"))return Rank.FAMILY;
       return null;
     }
-    
+
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
@@ -75,13 +76,14 @@ in request:
         if (!queryString.contains("?")) queryString = "?" + queryString;
         
         boolean isPost = HttpUtil.isPost(request);
-        
+
         if ((rank == null) || ("".equals(rank))) rank = inferredRank(queryString);
         if (Rank.SUBGENUS.equals(rank)) rank = Rank.GENUS;
         
         String family = browseForm.getFamily();
         String subfamily = browseForm.getSubfamily();
         String genus = browseForm.getGenus();
+        //String subgenus = browseForm.getSubgenus();
         String species = browseForm.getSpecies();
         String subspecies = browseForm.getSubspecies();
         String[] chosen = browseForm.getChosen();

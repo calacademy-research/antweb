@@ -3,31 +3,9 @@
     // Included by showBrowse-body.jsp and 
 
     // Swap out. Replace the following with taxonReportLines.jsp\
-        
-    // Sort the ChildrenList
-    String orderBy = request.getParameter("orderBy");
-    if ("taxonName".equals(orderBy)) Collections.sort(children, new SortTaxaByGenusSpecies());
-    if ("authorDate".equals(orderBy)) Collections.sort(children, new SortTaxaByAuthorDate());
-    if ("images".equals(orderBy)) Collections.sort(children, new SortTaxaByImages());
-    if ("genera".equals(orderBy)) Collections.sort(children, new SortTaxaByGenera());
-    if ("subgenera".equals(orderBy)) {
-      A.log("taxonReportBody.jsp sort by subgenera");
-      Collections.sort(children, new SortTaxaByGenusSubgenusSpecies());
-    }
-    if ("lifestage".equals(orderBy)) Collections.sort(children, new SortTaxaByLifeStage());
-    if ("medium".equals(orderBy)) Collections.sort(children, new SortTaxaByMedium());
-    if ("specimennotes".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimenNotes());
 
-    if ("species".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecies());
-    if ("specimens".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimens());
-    if ("specimensGlobal".equals(orderBy)) Collections.sort(children, new SortTaxaByGlobalChildCount());
-    if ("specimens".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimens());
-    if ("map".equals(orderBy)) Collections.sort(children, new SortTaxaByMap());
-    if ("source".equals(orderBy)) Collections.sort(children, new SortTaxaBySource());
-    if ("status".equals(orderBy)) Collections.sort(children, new SortTaxaByStatus());
-    if ("type".equals(orderBy)) Collections.sort(children, new SortTaxaByIsType());
-    if ("ie".equals(orderBy)) Collections.sort(children, new SortTaxaByIE(overview));
-    if ("fromSpecimen".equals(orderBy)) Collections.sort(children, new SortTaxaByFromSpecimen());
+    String orderBy = request.getParameter("orderBy");
+    Taxon.sortTaxa(orderBy, children, overview);
 
     // Must have defined isSpecimen, pageRank and displayGlobal.
     // Included by taxonomicPage-body.jsp and taxonReport.jsp (showBrowse-body.jsp)

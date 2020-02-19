@@ -226,7 +226,6 @@ for (Taxon t : childrenArray) {
 <%  } %>
 
  <% if (taxon.isBaseTaxon()) { %>
-
      <% // USED TO HAVE THE TAXONCHILDCOUNT HERE %>
 
      <%

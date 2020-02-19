@@ -33,6 +33,7 @@ public final class BrowseForm extends DescriptionForm {
     private String family = null;
     private String subfamily = null;
     private String genus = null;
+    private String subgenus = null;
     private String species = null;
     private String subspecies = null;    
     private String code = null;
@@ -57,6 +58,7 @@ public final class BrowseForm extends DescriptionForm {
         this.rank = null;
         this.subfamily = null;
         this.genus = null;
+        this.subgenus = null;
         this.species = null;
         this.subspecies = null;
         this.code = null;
@@ -141,6 +143,13 @@ public final class BrowseForm extends DescriptionForm {
     }
     public void setGenus(String genus) {
         this.genus = genus;
+    }
+
+    public String getSubgenus() {
+        return this.subgenus;
+    }
+    public void setSubgenus(String subgenus) {
+        this.subgenus = subgenus;
     }
 
     public String getSpecies() {

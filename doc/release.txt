@@ -1,5 +1,6 @@
 Release 8.12
   Ability to sort by subgenus on the browse.do page. Add &orderBy=subgenera to the url.
+    MapComparison, comparison and field guide support.
 
 Release 8.11.5
   Invoke 5th step of scheduler.

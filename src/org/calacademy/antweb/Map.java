@@ -529,7 +529,7 @@ public class Map {
             //query += " limit " + maxMapPoints;
         }
 
-        A.log("setPoints(taxon, overview, connection, maxPoints, geolocaleFocus) query:" + query);
+        //A.log("setPoints(taxon, overview, connection, maxPoints, geolocaleFocus) query:" + query);
         //if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();
         //A.log("setPoints(taxon, overview, connection, maxPoints) overview:" + name + " locality:" + overview.getLocality());
   
