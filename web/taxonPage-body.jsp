@@ -623,7 +623,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Line Number:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getLineNum() %>
+<%= taxon.getLineNumLink() %>
 </div>
 
 <div class="clear"></div>

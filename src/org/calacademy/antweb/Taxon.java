@@ -2024,7 +2024,12 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public void setLineNum(int lineNum) {
       this.lineNum = lineNum;
     }
-    
+
+    public String getLineNumLink() {
+        if (isValid()) return "<a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=worldants&line=" + getLineNum() + "'>" + getLineNum() + "</a>";
+        return "" + getLineNum();
+    }
+
     public String getInsertMethod() {
       return insertMethod;
     }

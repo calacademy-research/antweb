@@ -1,135 +1,44 @@
+Software Versions in The Antweb Constellation.
 
-To determine versioning
-  CentOS version: cat /etc/centos-release
-  mysql --version
-  /usr/sbin/apachectl -v  
-  more /usr/local/tomcat/RELEASE-NOTES
+10.2.22.30  - New Antweb build w/ Joe Russack.
+  Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-66-generic x86_64)
+  openjdk version "11.0.5" 2019-10-15
+  Python 3.6.8 (default, Oct  7 2019, 12:59:55) installed by default
+  Apache/2.4.29 (Ubuntu)  built:   2019-09-16T12:58:48
+Dev (Mac laptop)
+  MacOS Catalina 10.15.3
+  Mysql  Ver 14.14 Distrib 5.7.19, for macos10.12 (x86_64) using  EditLine wrapper
+  Java 1.8.0_144
+  Apache (Not in usage).
+  Apache Tomcat Version 8.5.20
+10.2.22.30 - 2nd New Antweb build w/ Joe Russack.
+  Used for Antcat file generation
 
-
-antweb-prod (10.2.22.20)
+Old antweb-prod (10.2.22.20) Deprecated
   Centos: Currently 6.4. Upgrade to 7.6.
   Mysql  Ver 14.14 Distrib 5.1.73, for redhat-linux-gnu (x86_64) using readline 5.1
   Java 1.8.0_181
   Apache 2.2.15-31.el6.centos
   Apache Tomcat Version 7.0.42
-antweb-api
+antweb-api Deprecated
   Centos 7.4
   Mysql  Ver 15.1 Distrib 5.5.56-MariaDB, for Linux (x86_64) using readline 5.1
   Java version 1.7.0_161 (Not in production usage).
   Apache 2.4.6-67.el7.centos.6 
   Tomcat Version 7.0.82 (Not in production usage).
-antweb-dev
+antweb-dev Deprecated
   CentOS release 6.10 (Final)
   mysql  Ver 14.14 Distrib 5.1.73, for redhat-linux-gnu (x86_64) using readline 5.1
   java version "1.8.0_181"
   Apache/2.2.15 (Unix)
   Tomcat Version 7.0.42
-antweb-stg
+antweb-stg Deprecated
   CentOS release 6.5 (Final)
   mysql  Ver 14.14 Distrib 5.1.73, for redhat-linux-gnu (x86_64) using readline 5.1
   java version "1.8.0_181"
   Server version: Apache/2.2.15 (Unix)
   Tomcat Version 7.0.42
-Dev (Mac laptop)
-  MacOS Mojave 10.14.5
-  Mysql  Ver 14.14 Distrib 5.7.19, for macos10.12 (x86_64) using  EditLine wrapper  
-  Java 1.8.0_144
-  Apache (Not in usage).
-  Apache Tomcat Version 8.5.20
-Antweb-CVS (10.1.10.98)
-
-10.2.22.28  - New Antweb build w/ Joe Russack.
-  Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-66-generic x86_64)  
-  openjdk version "11.0.5" 2019-10-15  
-  Python 3.6.8 (default, Oct  7 2019, 12:59:55) installed by default
-  Apache/2.4.29 (Ubuntu)  built:   2019-09-16T12:58:48
-
-10.2.22.30 - 2nd New Antweb build w/ Joe Russack.
-
-  
-----------
-  
-Attempted first on antweb-stg  
-  
-Upgrading OS first to 6.10 (latest of the CentOS version 6 releases)
-  sudo yum check-update
-  sudo yum clean all
-  probably not necessary (8.8.8.8 already exists):
-    sudo emacs /etc/resolv.conf
-      add nameserver 8.8.4.4
-  sudo yum update   # will fail without the following      
-  sudo emacs /etc/yum.repos.d/CentOS-Base.repo
-    Add to these three sections:
-      baseurl=http://mirror.centos.org/centos/6.10/os/i386/
-  Browse to: http://mirror.centos.org/centos/6.10/os/i386/
-    Looks good.
-  Tried most of the recommendations here: https://unix.stackexchange.com/questions/22924/how-can-i-fix-cannot-find-a-valid-baseurl-for-repo-errors-on-centos    
-  Could not retrieve mirrorlist https://mirrors.iuscommunity.org/mirrorlist?repo=ius-centos6&arch=x86_64&protocol=http
-  The mirrors in the mirror list: https://mirrors.iuscommunity.org/mirrorlist?repo=ius-centos6&arch=x86_64&protocol=http
-    Are not up.    
-    
-cd /etc/yum.repos.d/
-sudo emacs ius.repo
-   Change enabled = 0
-   // This fixed it!
-
-Sudo yum upgrade
-Transaction Check Error:
-  file /etc/httpd/conf.d/README from install of httpd-2.2.15-69.el6.centos.x86_64 conflicts with file from package httpd24-httpd-2.4.6-5.el6.x86_64
-  file /etc/httpd/conf/httpd.conf from install of httpd-2.2.15-69.el6.centos.x86_64 conflicts with file from package httpd24-httpd-2.4.6-5.el6.x86_64
-  file /etc/httpd/logs from install of httpd-2.2.15-69.el6.centos.x86_64 conflicts with file from package httpd24-httpd-2.4.6-5.el6.x86_64
-  file /etc/httpd/modules from install of httpd-2.2.15-69.el6.centos.x86_64 conflicts with file from package httpd24-httpd-2.4.6-5.el6.x86_64
-  file /etc/httpd/run from install of httpd-2.2.15-69.el6.centos.x86_64 conflicts with file from package httpd24-httpd-2.4.6-5.el6.x86_64
-  
-
-emacs /etc/yum.repos.d/upgrade.repo
-Place the following entries in it.
-
-[upgrade]
-name=upgrade
-baseurl=http://buildlogs.centos.org/centos/6/upg/x86_64/
-enabled=1
-gpgcheck=0
-Install the following packages.
-
-yum -y install preupgrade-assistant-contents redhat-upgrade-tool preupgrade-assistant
-
-
-
-  
-  
-sudo preupg  ?
-
-
-
-
-Sudo yum update not working
-Transaction Check Error:
-  file /etc/httpd/conf.d/README from install of httpd-2.2.15-69.el6.centos.x86_64 conflicts with file from package httpd24-httpd-2.4.6-5.el6.x86_64
-...
-[mjohnson@antweb-stg.calacademy.org 16:15:52]$rpm -qa | grep http
-...
-httpd-2.2.15-30.el6.centos.x86_64
-...
-
-[mjohnson@antweb-stg.calacademy.org 16:20:53]$yum remove httpd24-httpd-2.4.6-5.el6.x86_64
-
-
-warning: /etc/profile created as /etc/profile.rpmnew
-warning: /etc/shadow created as /etc/shadow.rpmnew
-warning: /etc/yum.repos.d/CentOS-Base.repo created as /etc/yum.repos.d/CentOS-Base.repo.rpmnew
-// These might be concerning...
-warning: /etc/httpd/conf/httpd.conf created as /etc/httpd/conf/httpd.conf.rpmnew
-warning: /etc/sudoers created as /etc/sudoers.rpmnew
-
-# This will remove the space and comments from the conf file...
-grep -v ^# /etc/httpd/conf/httpd.conf | grep -v "^ *$" | more
-
-
-
-
-
-
+Antweb-CVS (10.1.10.98) Deprecated
 
 
     

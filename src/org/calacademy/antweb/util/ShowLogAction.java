@@ -50,11 +50,13 @@ public final class ShowLogAction extends Action {
         UploadLine uploadLine = null;
         String message = null;
         if ("uploadLog".equals(action)) { // DEPRECATED. Used the old upload/ without worldants or specimen.
-          message = getUploadLog(fileName, lineNum); 
+          message = getUploadLog(fileName, lineNum);
+        } else if ("worldants".equals(action)) {
+            message = getWorldantsLine(lineNum);
         } else if ("specimenDetails".equals(action)) {
           message = getSpecimenDetails(request, code);
           //A.log("execute() specimenDetails:" + message);
-        } else if ("uploadLine".equals(action)) {
+        } else if ("uploadLine".equals(action)) { // Not sure when/if this and supporting method is used.
 		  uploadLine = getUploadLine(request, fileName, lineNum); 
           message = uploadLine.getLine();
         }
@@ -178,9 +180,20 @@ public final class ShowLogAction extends Action {
     }
           
     private String getUploadLog(String fileName, int lineNum) {
-	    String filePathName = AntwebProps.getWebDir() + "upload/" + fileName;
-	    String message = "Line:<b>" + lineNum + "</b> of file:<b>" + fileName + "</b><br><br>";
+        String path = AntwebProps.getWebDir() + "upload/";
+        return getLogLine(path, fileName, lineNum);
+    }
+    private String getWorldantsLine(int lineNum){
+        // The worldants gets copied here before being archived. This is the easy way.
+        String path = AntwebProps.getWebDir() + "speciesList/world/";
+        String fileName = "worldants_speciesList.txt";
 
+        lineNum = lineNum - 1; // Because of the header.
+        return getLogLine(path, fileName, lineNum);
+    }
+    private String getLogLine(String path, String fileName, int lineNum) {
+	    String message = "Line:<b>" + lineNum + "</b> of file:<b>" + fileName + "</b><br><br>";
+        String filePathName = path + fileName;
 		BufferedReader br = null;
 		String strLine = "";
 
