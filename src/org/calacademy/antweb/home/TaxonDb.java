@@ -798,7 +798,42 @@ public class TaxonDb extends AntwebDb {
       int retVal = (new UtilDb(connection)).deleteFrom("taxon", dmlWhereClause);
       return retVal + " deletedGeneraWithoutSpecimenOrAntcatSource. ";
     }
- 
+
+    /*
+    We want to be rid of taxa generated from specimen uploads for which the specimen and taxa no longer exist. Below
+    we find the specimen upload date and delete taxa from before that. But it is a big list. Why is it not the same
+    (about 42) as this:
+      select taxon_name,access_group from taxon where taxon_name not in (select taxon_name from specimen) "
+        + " and taxon.status in ('morphotaxon', 'indetermined', 'unrecognized');
+     */
+    public String deleteOldSpecimenUploadTaxa() {
+        // Loop through each access Group...
+        String report = "";
+        UtilDb utilDb = new UtilDb(getConnection());
+        ArrayList<Group> groups = GroupMgr.getGroups();
+        for (Group group : groups) {
+
+            String created = utilDb.getDateValue("select distinct date(created) theDate from specimen where access_group = " + group.getId());
+
+            // for each distinct created...
+            if (created != null) {
+                String query = "select concat(access_group, concat(', ', concat(concat(taxon_name, ','), created))) from taxon "
+                    + " where created < '" + created + "' and access_group = " + group.getId() + " and " + StatusSet.getAllAntwebClause();
+                String result = utilDb.runQuery(query);
+                A.log("deleteOldSpecimeUploadTaxa() result:" + result);
+/*
+                String dml = "delete from taxon where created < '" + created + "' and access_group = " + group.getId() + " and " + StatusSet.getAllAntwebClause();
+                int count = utilDb.runDml(dml);
+                A.log("deleteOldSpecimenUploadTaxa() count:" + count + " dml:" + dml);
+                report += group.getId() + ":" + count + ", ";
+*/
+            }
+            if (report.length() > 2) report = report.substring(0, report.length() - 2);
+        }
+        return report;
+    }
+
+
 /*
 1) Are all these good to go?
   select taxon_name, source, created from taxon where taxon_name not in (select taxon_name from proj_taxon where project_name = "worldants") and taxon_name not in (select taxon_name from specimen) and rank in ('species', 'subspecies');   

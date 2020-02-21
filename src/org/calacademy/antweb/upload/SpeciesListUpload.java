@@ -638,7 +638,9 @@ public class SpeciesListUpload extends AntwebUpload {
                     taxonHash.put("taxon_name", taxonName);
                     taxonHash.put("line_num", lineNum);
                     String debugTaxon = "myrmicinaecalyptomyrmex emeryi"; // "dolichoderinaecolobopsis macrocephala";						
-                    
+
+//A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
+
                     String currentValidName = taxonName;
                     
                     boolean ignoreTaxon = false;

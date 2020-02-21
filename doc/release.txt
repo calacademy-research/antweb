@@ -1,3 +1,11 @@
+Release 8.12.3
+  Fix datecollectedstart, datecollectedend.
+  Replace getRealPath deprecated calls.
+  Begin work on procedure to remove specimen taxa related to deprecated specimen.  
+
+Release 8.12.2
+  Allow line number link for all of worldant statuses, not just valid.
+
 Release 8.12.1
   Worldants line number links to showLog in the admin section of the taxon page (for valid ants).
 

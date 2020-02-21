@@ -31,8 +31,9 @@ public abstract class AntwebFunctions {
 
         int MAX_DESC_EDIT_COUNT = 5;
 
-        String docBase = request.getRealPath("/");
-
+//        String docBase = request.getRealPath("/");
+        String docBase = AntwebProps.getDocRoot();
+        
         File outputFile = new File(docBase + "/web/genInc/" + "recentDescEdits.jsp");
         FileWriter outFile = new FileWriter(outputFile);
 

@@ -167,47 +167,42 @@ public abstract class DateUtil {
     }
 
     // Method designed to take scrappy user entered dates and return Antweb formatted Date
+    // Method designed to take scrappy user entered dates and return Antweb formatted Date
     public static Date constructDate(String dateStr) {
       Date returnDate = null;
       try {
-        //s_log.warn("constructDate() deprecated dateStr:" + dateStr);
-        //AntwebUtil.logShortStackTrace();
-        //returnDate = new Date(dateStr);
-        returnDate = (new SimpleDateFormat("yyyy-mm-dd").parse(dateStr));
-      } catch (ParseException e) {
-      //} catch (IllegalArgumentException e) {
+        returnDate = new Date(dateStr);
+      } catch (IllegalArgumentException e) {
       }
 
       if (returnDate == null) {
         try {
           returnDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
         } catch (java.text.ParseException e) {
-          //s_log.info("constructDate() 1 ParseException on dateStr:" + dateStr);                  
-        }    
+          //s_log.info("constructDate() 1 ParseException on dateStr:" + dateStr);
+        }
 
         if (returnDate == null) {
           try {
-            returnDate = (new SimpleDateFormat("yyyy-MM")).parse(dateStr);  
+            returnDate = (new SimpleDateFormat("yyyy-MM")).parse(dateStr);
             // The above line was changed to MM at the same time (Oct 7, 2013) as the case above, which was actually tested.
           } catch (java.text.ParseException e) {
-            //s_log.info("constructDate() 2 ParseException on dateStr:" + dateStr);                  
-          }  
+            //s_log.info("constructDate() 2 ParseException on dateStr:" + dateStr);
+          }
 
           if (returnDate == null) {
             try {
               returnDate = (new SimpleDateFormat("yyyy")).parse(dateStr);
             } catch (java.text.ParseException e) {
-              //s_log.info("constructDate() 3 ParseException on dateStr:" + dateStr);                  
-            }  
-
-            if (returnDate == null) {
-              s_log.warn("constructDate() did not figure:" + dateStr);
+              //s_log.info("constructDate() 3 ParseException on dateStr:" + dateStr);
             }
+
           }
         }
       }
       return returnDate;
     }
+
 
     
     public static Date getDate(String dateStr) {

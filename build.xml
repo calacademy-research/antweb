@@ -14,7 +14,7 @@
 <property name="add.home"      value="etc/add"/>
 
 <property name="compile.debug"       value="true"/>
-<property name="compile.deprecation" value="false"/>
+<property name="compile.deprecation" value="true"/>
 <property name="compile.optimize"    value="true"/>
 
 <!--import file="${catalina.home}/bin/catalina-tasks.xml"/ -->

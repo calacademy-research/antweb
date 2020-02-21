@@ -140,19 +140,12 @@ public class WorldantsUploadDb extends AntwebDb {
     public void deleteHomonymsWithoutTaxa() {
         // Delete from the proj_taxon table.
         // Should we also delete from the homonym table?
-    
-        String dml = "delete from proj_taxon where taxon_name not in (select taxon_name from taxon) " 
-          + " and source not in ('worldants', 'fossilants') and taxon_name in (select taxon_name from homonym)";
+        UtilDb utilDb = new UtilDb(getConnection());
+        String dml = "delete from proj_taxon where taxon_name not in (select taxon_name from taxon) "
+                + " and source not in ('worldants', 'fossilants') and taxon_name in (select taxon_name from homonym)";
+        utilDb.runDml(dml);
 
-        Statement stmt = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "deleteHomonymsWithoutTaxa()");
-            stmt.executeUpdate(dml);
-        } catch (SQLException e) {
-            s_log.error("deleteHomonymsWithoutTaxa() e:" + e + " dml:" + dml);
-        } finally {
-           DBUtil.close(stmt, null, this, "deleteHomonymsWithoutTaxa()");        
-        }    
-    }    
-    
+        dml = "delete from homonym where taxon_name not in (select taxon_name from taxon)";
+        utilDb.runDml(dml);
+    }
 }

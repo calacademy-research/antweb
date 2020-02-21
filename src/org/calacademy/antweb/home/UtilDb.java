@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.upload.*;
 
@@ -26,7 +25,46 @@ public class UtilDb extends AntwebDb {
       String fromWhere = "from " + table + " where " + where;
       count = getCount(fromWhere);
       return count;      
-    }    
+    }
+
+    // Should return a single value. Will return the first if a list.
+    public String XgetValue(String query) {
+        String result = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getValue()");
+
+            rset = stmt.executeQuery(query);
+            result = rset.getString(1);
+        } catch (SQLException e) {
+            s_log.error("getValue() e:" + e + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "getValue()");
+        }
+        return result;
+    }
+
+    // Should return a single value. Will return the first if a list.
+    public String getDateValue(String query) {
+        String result = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getDateValue()");
+
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                Object o = rset.getDate("theDate");
+                if (o != null) result = o.toString();
+            }
+        } catch (SQLException e) {
+            s_log.error("getDateValue() e:" + e + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "getDateValue()");
+        }
+        return result;
+    }
 
     public String runQuery(String query) {
       String results = "[results]";
@@ -43,8 +81,22 @@ public class UtilDb extends AntwebDb {
           DBUtil.close(stmt, rset, "runQuery()");
       }   
       return results;
-    } 
-    
+    }
+
+    public int runDml (String dml) {
+        int count = 0;
+        Statement stmt = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "runDml()");
+            count = stmt.executeUpdate(dml);
+        } catch (SQLException e) {
+            s_log.error("runDml() e:" + e + " dml:" + dml);
+        } finally {
+            DBUtil.close(stmt, null, this, "runDml()");
+        }
+        return count;
+    }
+
     public static String getResultString(ResultSet rs, String newLine) throws SQLException {
         String results = "";
         

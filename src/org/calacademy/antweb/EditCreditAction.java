@@ -57,8 +57,9 @@ public class EditCreditAction extends Action {
 					editCredit(connection, changeField, selectedIntValue, newValue);
 				}
 			
-				String docBase = request.getRealPath("/");
-
+				//String docBase = request.getRealPath("/");
+                String docBase = AntwebProps.getDocRoot();
+        
 				writeUniqValues(connection, docBase, changeField);
 			}
 

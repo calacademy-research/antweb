@@ -203,6 +203,10 @@ public class StatusSet extends Status {
         return statusSetStr;    
     }
 
+    public static String getAllAntwebClause() {
+       return " status in ('morphotaxon', 'indetermined', 'unrecognized')";
+    }
+
 	public static String getStatusSetSize(HttpServletRequest request) {
         String statusSetSize = null;
         HttpSession session = request.getSession();

@@ -628,7 +628,12 @@ public abstract class HttpUtil {
       return false;
     }
   }  
-  
+
+  //   HttpUtil.getRealPath(request);
+  public String getRealPath(HttpServletRequest request) {
+      return request.getSession().getServletContext().getRealPath("/");
+  }
+
   public static void sendRedirect(String target, HttpServletRequest request, HttpServletResponse response) 
     throws IOException {
       PageTracker.remove(request);  

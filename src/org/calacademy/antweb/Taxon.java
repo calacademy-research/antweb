@@ -2026,7 +2026,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     public String getLineNumLink() {
-        if (isValid()) return "<a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=worldants&line=" + getLineNum() + "'>" + getLineNum() + "</a>";
+        if (Status.isWorldantsStatus(getStatus())) return "<a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=worldants&line=" + getLineNum() + "'>" + getLineNum() + "</a>";
         return "" + getLineNum();
     }
 

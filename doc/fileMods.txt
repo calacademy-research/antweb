@@ -1,3 +1,15 @@
+Release 8.12.1
+ doc/done.txt                                                          | 1198 +-----------------------------------------------------------------------------------------------------------------------------------------------------
+ doc/release.txt                                                       |    3 +
+ doc/toDo.txt                                                          | 1006 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ doc/version.txt                                                       |  129 +++--------------
+ src/org/calacademy/antweb/Taxon.java                                  |    7 +-
+ src/org/calacademy/antweb/curate/speciesList/SpeciesListUploader.java |    2 +-
+ src/org/calacademy/antweb/util/ShowLogAction.java                     |   21 ++-
+ web/documentation/releaseNum.jsp                                      |    2 +-
+ web/taxonPage-body.jsp                                                |    2 +-
+ 9 files changed, 1039 insertions(+), 1331 deletions(-)
+
 Release 8.12
  doc/fileMods.txt                            |  14 +++++++++
  doc/release.txt                             |   1 +

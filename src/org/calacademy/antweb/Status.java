@@ -150,7 +150,27 @@ public class Status {
 
       return passed;
     }
-    
+
+    public static boolean isWorldantsStatus(String status) {
+        if (status == null) return false;
+        if (status.equals(Status.VALID)) return true;
+        if (status.equals(Status.ORIGINAL_COMBINATION)) return true;
+        if (status.equals(Status.SYNONYM)) return true;
+        if (status.equals(Status.UNAVAILABLE)) return true;
+        if (status.equals(Status.UNAVAILABLE_MISSPELLING)) return true;
+        if (status.equals(Status.UNIDENTIFIABLE)) return true;
+        if (status.equals(Status.EXCLUDED_FROM_FORMICIDAE)) return true;
+        return false;
+    }
+
+    public static boolean isAllAntwebStatus(String status) {
+        if (status == null) return false;
+        if (status.equals(Status.INDETERMINED)) return true;
+        if (status.equals(Status.UNIDENTIFIABLE)) return true;
+        if (status.equals(Status.MORPHOTAXON)) return true;
+        return false;
+    }
+
     public String getCriteria() {      
       return getCriteria("taxon");
     }

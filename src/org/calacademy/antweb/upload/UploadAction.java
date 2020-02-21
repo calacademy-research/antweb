@@ -814,7 +814,9 @@ public class UploadAction extends Action {
         FormFile testFile = theForm.getTestFile();
         String operation = testFile.getFileName();
 
-        String docBase = request.getRealPath("/");
+
+		String docBase = AntwebProps.getDocRoot();
+        //String docBase = request.getRealPath("/");
         //if (AntwebProps.isDevMode()) docBase = "/Users/mark/dev/calacademy/workingdir/";
         docBase += "web/workingdir/";
         new Utility().makeDirTree(docBase);
@@ -1391,7 +1393,8 @@ public class UploadAction extends Action {
 
         s_log.warn("runStatistics()");
 
-        String docBase = request.getRealPath("/");
+        //String docBase = request.getRealPath("/");
+		String docBase = AntwebProps.getDocRoot();
 
         String execTime = "N/A";
         if (uploadDetails != null) execTime = uploadDetails.getExecTime();

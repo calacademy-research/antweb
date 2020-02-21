@@ -104,28 +104,8 @@ public class SpecimenUploader {
 		uploadDetails = specimenUpload.importSpecimens(uploadFile, login);
         //uploadDetails.setRequest(request);
         uploadDetails.setBackupDirFile(backupDirFile);
-/*
-		try {
-		  success = specimenUpload.importSpecimens(uploadFile, login);
-		} catch (AntwebException e) {
-		  s_log.error("uploadSpecimenFile() AntwebException ROLLBACK " + AntwebUtil.getShortStackTrace(e, 5));
-		  DBUtil.rollback(connection); 
-		  success = true;
-		  // We make success true, because we link to the upload report.                   
-		}
-        //LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "After specimen upload Proj_taxon worldants counts");
 
-        uploadDetails = specimenUpload.getUploadDetails();
 
-        if (!success) {
-            // To Do.  Set this message in the uploadDetails inside the specimenUpload object.  Remove this code.  Allow log to happen naturally.
-            messageStr = "Upload failed at " + new Date() + ".  Please contact technical administrator:" + AntwebProps.getTechAdminContact();
-            messageStr = "uploadSpecimenFile().  Specimen Upload failure formFileName:" + formFileName + " group:" + group.getId() + " message:" + messageStr;
-            uploadDetails.setMessage(messageStr);
-        } else {
-            s_log.warn("uploadSpecimenFile() Specimen upload complete for formFileName:" + formFileName + " accessGroup:" + group.getId());
-        }
-*/
         //(new SpecimenDb(connection)).updateSpecimenStatus();
                    
 		//s_log.warn("uploadSpecimenFile() specimenPostProcess = TRUE");

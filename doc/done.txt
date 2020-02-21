@@ -11901,3 +11901,11 @@ Feb 18. 8hrs.
   Server Reflections and strategy.
 
 
+Feb 19. 2hrs.
+  Correspondence with Randy, Brian and Michele.
+  Investigate log in from home page leading to curate page.
+  Work out solution to display line of worldants file. Line numbers seem to be incorrect for worldants records.
+  Look into subgenus. Does not exist for worldants records. Does exist for specimen records that should not exist.
+  Document.
+
+

@@ -48,7 +48,8 @@ public class FileUploader extends HttpServlet {
         } else {
           try {
             String itemName = item.getName();
-            String docBase = request.getRealPath("/");
+//            String docBase = request.getRealPath("/");
+            String docBase = AntwebProps.getDocRoot();
             // could be: /Users/macpro/dev/apache-tomcat-7.0.21/webapps/antweb/
             String toUploadDir = docBase + "web/toUpload/";
             (new Utility()).makeDirTree(toUploadDir);

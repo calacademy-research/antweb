@@ -3,7 +3,12 @@ To Do List:
 
 Present:
   Fix citing
-
+  Fix worldants line numbers
+  Fix home page log in leading to curate page.
+  Get rid of old specimen data created taxa...
+    All of the taxa with subgenus fields are from specimen data. If I understand correctly, those taxa records should not exist because they were created from old specimen uploads... I will see if I can find all taxa records that should not exist and systematically remove them. List of taxa with subgenus data (100 records) included below...
+*  Delete Homonyms without taxa from Antcat
+    select taxon_name, source from homonym where taxon_name not in (select taxon_name from taxon);
 
 Small things/immediate frame
   Next steps for the Feb 18 &orderBy=subgenera solution
@@ -14,8 +19,6 @@ Small things/immediate frame
     This has been fragile before and is hard to figure.
   This page is not secure: https://www.antweb.org/description.do?subfamily=amblyoponinae&genus=adetomyrma&rank=genus&countryName=Madagascar
     Verify CKEditor working.
-  Delete Homonyms without taxa from Antcat
-    select taxon_name, source from homonym where taxon_name not in (select taxon_name from taxon);
   Review Integrity Queries - no better time than now.
     Review the orphan tools?
 

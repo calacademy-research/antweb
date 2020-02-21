@@ -75,7 +75,8 @@ public class DescEditImageUploadAction extends Action {
                   if (!theFileName.equals("")) {
                     String dir = theForm.getHomePageDirectory();
                     
-                    String docBase = request.getRealPath("/");
+//                    String docBase = request.getRealPath("/");
+                    String docBase = AntwebProps.getDocRoot();
 
                     // Create the curator's directory if it does not already exist.
                     if (dir.equals("curator")) {

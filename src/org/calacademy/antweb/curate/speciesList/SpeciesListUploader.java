@@ -131,7 +131,8 @@ public class SpeciesListUploader {
     
     String backupDirFile = record(validateMessage, fileLoc, origWorldantsCount, true);
     uploadDetails.setBackupDirFile(backupDirFile);
-    
+
+    A.log("Calling deleteHomonymsWithoutTaxa()");
     worldantsUploadDb.deleteHomonymsWithoutTaxa();
 
     A.log("worldantsReload message:" + uploadDetails.getMessage());
