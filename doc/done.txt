@@ -11899,7 +11899,7 @@ Feb 18. 8hrs.
   Look into various server anomalies.
   Review all task lists. Summarize to do list for Brian.
   Server Reflections and strategy.
-
+  Install crontab to handle deletion of old tomcat install log files.
 
 Feb 19. 3hrs.
   Correspondence with Randy, Brian and Michele.
