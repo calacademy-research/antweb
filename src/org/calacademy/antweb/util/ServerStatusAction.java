@@ -120,6 +120,15 @@ static double getVersion () {
 		//ret += "<br>&nbsp;&nbsp;Stack trace:";
 		return ret;
 	}
+	
+
+    public static void populate(Connection connection) {
+        try {
+            getIsDownTime(connection);
+        } catch (SQLException e) {
+            A.log("populate() e:" + e);
+        }
+    }	
 
     public static boolean isInDownTime() {
       return !"".equals(ServerStatusAction.getDownTimeMessage());
@@ -153,6 +162,7 @@ static double getVersion () {
         downTimeMessage = message;
         return message;
     }
+
 
     public static boolean getIsDownTime(java.sql.Connection connection) 
       throws SQLException {

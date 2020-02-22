@@ -43,7 +43,7 @@ Sometimes if you've performed a search and then left your computer, AntWeb forge
 if (exception != null) {
   errorReason = "exception";
   logMessage += errorReason + ": " + exception;
-  logMessage += HttpUtil.getRequestInfo(request);
+  logMessage += " " + HttpUtil.getRequestInfo(request);
   out.println("<!--");
   out.println(logMessage);
 

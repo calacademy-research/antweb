@@ -3,3 +3,4 @@
 /out
 /WEB-INF/classes/AntwebResources.properties
 /WEB-INF/classes/log4j.properties
+/api/v3.1/venv

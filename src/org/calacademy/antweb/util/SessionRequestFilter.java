@@ -145,7 +145,7 @@ public class SessionRequestFilter implements Filter {
         }
 
         long freeSpace = AntwebSystem.getFreeSpace();        
-        long minFreeSpace = 10000000000L; // 10G
+        long minFreeSpace = 12000000000L; // 12G
         String spaceMessage = "Free space:" + Formatter.formatMB(freeSpace); //Formatter.numberConverter(freeSpace);        
         if (freeSpace < minFreeSpace) {
           AdminAlertMgr.add(spaceMessage, connection);

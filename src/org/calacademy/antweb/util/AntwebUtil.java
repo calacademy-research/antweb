@@ -184,9 +184,9 @@ public abstract class AntwebUtil {
   // Still in use. 
   public static ArrayList<String> getUploadDirFiles() {
     String dir = AntwebProps.getWebDir()+ "upload/";
+    A.log("getUploadDirFiles() dir:" + dir);
     File aFile = new File(dir);
     ArrayList<String> dirFiles = getDirFiles(aFile);
-    //s_log.warn("getUploadDirFiles() dir:" + dir + " dirFiles:" + dirFiles);  
     return dirFiles;
   }
 
@@ -209,6 +209,10 @@ public abstract class AntwebUtil {
     //ArrayList<String> kinds = new ArrayList<String>();    
     ArrayList<String> files = getUploadDirFiles();
     for (String file : files) {
+      if (file != null && file .length() < 18){
+         A.log("getUploadDirKinds() File is short:" + file);
+         continue;
+      }
       String kind = file.substring(18); // everything after the date
       kind = kind.substring(0, kind.indexOf(".txt"));
       kinds.add(kind);  

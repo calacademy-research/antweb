@@ -848,9 +848,6 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
             message = (new TaxonDb(connection)).deleteOldSpecimenUploadTaxa();
         }
 
-
-
-
         /*
         // Now automated.
                       if (action.equals("deleteTaxonProp")) {

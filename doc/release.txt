@@ -1,4 +1,13 @@
+Release 8.12.4
+  Login from the home page or the login page leads to the home page.
+  Upload Services down for Maintenance message will persist over server restart.
+  Remove request.getRealPath() deprecation.
+  Develop deleteOldSpecimenUploadTaxa()
+  Delete homonyms without corresponding taxon records. Automate in Worldants upload.
+  API environment work.
+  
 Release 8.12.3
+Date: Feb 21
   Fix datecollectedstart, datecollectedend.
   Replace getRealPath deprecated calls.
   Begin work on procedure to remove specimen taxa related to deprecated specimen.  
@@ -7,9 +16,11 @@ Release 8.12.2
   Allow line number link for all of worldant statuses, not just valid.
 
 Release 8.12.1
+Date: Feb 19
   Worldants line number links to showLog in the admin section of the taxon page (for valid ants).
 
 Release 8.12
+Date: Feb 18
   Ability to sort by subgenus on the browse.do page. Add &orderBy=subgenera to the url.
     MapComparison, comparison and field guide support.
 

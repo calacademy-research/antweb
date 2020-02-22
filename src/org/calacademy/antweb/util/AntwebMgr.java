@@ -152,6 +152,8 @@ public class AntwebMgr {
         isAdminAlertMgrPopulated = true;
         if (log) s_log.warn("populateMgrs() done");      
 
+        ServerStatusAction.populate(connection);
+
         UserAgentTracker.init(connection);
         MapMgr.refresh();     
     }

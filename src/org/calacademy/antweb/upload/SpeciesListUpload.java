@@ -420,7 +420,7 @@ public class SpeciesListUpload extends AntwebUpload {
                     && !theLine.equals(theLineBefore)
                     && (lineNum > 2)
                    ) {
-                     s_log.warn("importSpeciesList() lineNum:" + lineNum + " theLine:" + theLine + " theLineBefore:" + theLineBefore);
+                     A.log("importSpeciesList() lineNum:" + lineNum + " theLine:" + theLine + " theLineBefore:" + theLineBefore);
                 }
                 
                 components = tab.split(theLine);
@@ -639,7 +639,7 @@ public class SpeciesListUpload extends AntwebUpload {
                     taxonHash.put("line_num", lineNum);
                     String debugTaxon = "myrmicinaecalyptomyrmex emeryi"; // "dolichoderinaecolobopsis macrocephala";						
 
-//A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
+A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
 
                     String currentValidName = taxonName;
                     

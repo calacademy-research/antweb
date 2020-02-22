@@ -255,8 +255,6 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
         return getUploadDetails();
     }
-    
-
 
     private ArrayList<String> getArrayListEmptiesToo(String header) {
         /*
@@ -290,7 +288,6 @@ public class SpecimenUpload extends SpecimenUploadParse {
         //s_log.warn("getArrayListEmptiesToo() size:" + headers.size() + " header:" + headers);
         return headers;    
     }
-
 
     protected ArrayList<String> getSpecimenColumns(String header) {
         

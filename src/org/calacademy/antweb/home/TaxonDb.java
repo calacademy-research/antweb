@@ -832,6 +832,12 @@ public class TaxonDb extends AntwebDb {
         }
         return report;
     }
+/*
+// This shows the taxa generated from specimen data that have subgenera. Don't want to take subgenera from specimen records.
+See: select taxon.taxon_name, taxon.status, taxon.access_group, source, taxon.created, code, specimen.subgenus, specimen.created from taxon, specimen where taxon.taxon_name = specimen.taxon_name and taxon.subgenus is not null;
+ */
+
+
 
 
 /*

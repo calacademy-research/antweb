@@ -1,3 +1,33 @@
+
+
+Release 8.12.3
+ build.xml                                                             |  2 +-
+ doc/done.txt                                                          |  8 ++++++++
+ doc/fileMods.txt                                                      | 12 ++++++++++++
+ doc/release.txt                                                       |  8 ++++++++
+ doc/toDo.txt                                                          |  9 ++++++---
+ src/org/calacademy/antweb/EditCreditAction.java                       |  5 +++--
+ src/org/calacademy/antweb/Status.java                                 | 22 +++++++++++++++++++++-
+ src/org/calacademy/antweb/StatusSet.java                              |  4 ++++
+ src/org/calacademy/antweb/Taxon.java                                  |  2 +-
+ src/org/calacademy/antweb/curate/speciesList/SpeciesListUploader.java |  3 ++-
+ src/org/calacademy/antweb/home/TaxonDb.java                           | 37 ++++++++++++++++++++++++++++++++++++-
+ src/org/calacademy/antweb/home/UtilDb.java                            | 60 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ src/org/calacademy/antweb/home/WorldantsUploadDb.java                 | 21 +++++++--------------
+ src/org/calacademy/antweb/upload/DescEditImageUploadAction.java       |  3 ++-
+ src/org/calacademy/antweb/upload/SpeciesListUpload.java               |  4 +++-
+ src/org/calacademy/antweb/upload/SpecimenUploader.java                | 20 --------------------
+ src/org/calacademy/antweb/upload/UploadAction.java                    |  7 +++++--
+ src/org/calacademy/antweb/util/AntwebFunctions.java                   |  5 +++--
+ src/org/calacademy/antweb/util/DateUtil.java                          | 27 +++++++++++----------------
+ src/org/calacademy/antweb/util/FileUploader.java                      |  3 ++-
+ src/org/calacademy/antweb/util/HttpUtil.java                          |  7 ++++++-
+ src/org/calacademy/antweb/util/UtilDataAction.java                    | 26 ++++++++++----------------
+ web/documentation/releaseNum.jsp                                      |  2 +-
+ web/taxonPage-body.jsp                                                |  2 +-
+ 24 files changed, 209 insertions(+), 90 deletions(-)
+ 
+
 Release 8.12.1
  doc/done.txt                                                          | 1198 +-----------------------------------------------------------------------------------------------------------------------------------------------------
  doc/release.txt                                                       |    3 +

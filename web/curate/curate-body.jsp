@@ -95,7 +95,8 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
      if (LoginMgr.isDeveloper(accessLogin)) {
        %><h2><font color=red>Warning: Live Site</font></h2><% 
      }
-   } 
+   }
+   A.log("curate-body.jsp hasServerMessage:" + AntwebMgr.hasServerMessage() + " : " + AntwebMgr.getServerMessage());
    if (AntwebMgr.hasServerMessage()) {
      out.println(AntwebMgr.getServerMessage());
    }

@@ -27,6 +27,7 @@ public class SpeciesListUploader {
 
   // New production link.
   public static String fetchWorldantsUrl = "http://10.2.22.28:9090/antcat.antweb.txt";  
+  // See below to set a dev link. 
    
 /*
    We download the antcat.antweb.txt file from the above link to here:
@@ -41,8 +42,10 @@ public class SpeciesListUploader {
     this.connection = connection;
 
     // For testing... cp /Users/mark/Downloads/antcatTest.txt /usr/local/tomcat/webapps/antweb/test.antcat.txt    
-    if (false && AntwebProps.isDevMode()) {
-      fetchWorldantsUrl = "http://localhost/antweb/test.antcat.txt";  
+    if (true && AntwebProps.isDevMode()) {
+      //fetchWorldantsUrl = "http://localhost/antweb/test.antcat.txt";  
+      fetchWorldantsUrl = "http://localhost/antweb/web/upload/testWorldants.txt";  
+
     }
   }
 

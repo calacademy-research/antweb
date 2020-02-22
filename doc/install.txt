@@ -395,20 +395,17 @@ From the live machine in /var/www/html/:
   scp -r antblog/* mark@10.2.22.30:/var/www/html/antblog
 
 
-
+Joe antweb notes
+----------------
 We use tomcat and apache.
 Tomcat connects to apache via mod_jk, and the command JKMmount, appended at the end of these notes
 We also call python.
 Python is invoked from WSGI using the WSGI magic at the end of this file. 
 We use a virtualenv for python. WE have to set the virtualenv explicitly, see end of file
 
-
-
 test1:
 https://certbot.eff.org/lets-encrypt/ubuntubionic-apache
 https://10.2.22.30/web/log/worldants/20200107-05:00:02-fetchAndReloadWorldants.html
-
-
 
 Tomcat installation - with connector information below.
 Follow guide here: https://www.digitalocean.com/community/tutorials/install-tomcat-9-ubuntu-1804
@@ -429,9 +426,6 @@ Tomcat failing on launch. Replaced keystone entry:
 
 From /opt/tomcat/latest”
 Chown -r tomcat:tomcat webapps/ work/ temp/ logs/ conf
-
-
-
 
 
 Installing apache mod_jk:
@@ -464,7 +458,7 @@ sudo apt-get install libapache2-mod-wsgi
 
 
 —————
-  GNU nano 2.9.3                                                                /etc/apache2/sites-available/default-ssl.conf                                                                Modified
+  GNU nano 2.9.3            /etc/apache2/sites-available/default-ssl.conf                     Modified
 
 <IfModule mod_ssl.c>
         <VirtualHost *:443>
@@ -490,6 +484,22 @@ sudo apt-get install libapache2-mod-wsgi
 
 
                 DocumentRoot /var/www/html
+
+
+Mark PY Notes
+python3 -m pip install --user virtualenv
+/usr/bin/python3 -m pip install --upgrade pip
+
+mark@antweb:/var/www/script$ source venv/bin/activate
+(venv) mark@antweb:/var/www/script$ pip freeze > $HOME/requirements.txt
+
+// Take the requirements.txt to a new machine to set up a new environment there.
+* removed pkg-resources==0.0.0 from requirements.txt
+virtualenv --python=python3 venv
+source venv/bin/activate
+pip install -r requirements.txt
+pip install mysqlclient
+
 
 
 

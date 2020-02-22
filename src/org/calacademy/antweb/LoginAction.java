@@ -59,7 +59,7 @@ public final class LoginAction extends Action {
 */
         String value = loginForm.getValue();
         
-            A.log("execute() value:" + value + " target:" + target + " userNameOrEmail:" + userNameOrEmail + " password:" + password);    
+        A.log("execute() value:" + value + " target:" + target + " userNameOrEmail:" + userNameOrEmail + " password:" + password);
         //AntwebUtil.logShortStackTrace(10);
 
         Login login = null;
@@ -113,7 +113,7 @@ public final class LoginAction extends Action {
             } else {
 
               // If logging in from the home page or the login page, go to the curate page.
-              if ("".equals(target)) return new ActionForward(AntwebProps.getDomainApp() + "/curate.do", true);
+              if ("".equals(target)) return new ActionForward(AntwebProps.getDomainApp() + "/index.do", true);
   
                 return new ActionForward(AntwebProps.getDomainApp(), true);              
 //              return (mapping.findForward("success"));

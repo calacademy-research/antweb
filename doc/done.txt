@@ -11901,11 +11901,31 @@ Feb 18. 8hrs.
   Server Reflections and strategy.
 
 
-Feb 19. 2hrs.
+Feb 19. 3hrs.
   Correspondence with Randy, Brian and Michele.
   Investigate log in from home page leading to curate page.
   Work out solution to display line of worldants file. Line numbers seem to be incorrect for worldants records.
+  Allow line number link for all of worldant statuses, not just valid.
   Look into subgenus. Does not exist for worldants records. Does exist for specimen records that should not exist.
   Document.
+  To do list management.
 
+Feb 20. 2.5hrs.
+  Automate removal of homonyms without taxa during worldants uplood.
+  Work to remove taxa created from old specimen uploads. See TaxonDb.java:836
+
+Feb 21. 3hrs.
+  Fix datecollectedstart, datecollectedend. Test.
+  Find the site not responding because of Joe's faulty install.  Attempt fix. Document.
+
+Feb 22. 6hrs.
+  Clean up/test/document after fix.
+  Home page login leads to home page. Login Page login leads to home page.
+  Upload Services down for Maintenance message will persist over server restart.
+  Remove request.getRealPath() deprecation.
+  Attempt to remove execution on live server of tomcat8.5. "Work" with Joe.
+  Work on Python environment. Attempt requirements.txt usage.
+  Verify that subgenera is ready for upload through species list upload.
+  
+    
 
