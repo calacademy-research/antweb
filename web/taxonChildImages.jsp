@@ -61,7 +61,12 @@
 //A.log("taxonChildImages");
 
 	ArrayList<Taxon> childrenList = taxon.getChildren();     
-	if (childrenList != null) { %>
+	if (childrenList != null) { 
+	
+        String orderBy = request.getParameter("orderBy");
+        Taxon.sortTaxa(orderBy, childrenList, overview);
+	
+	%>	
 	<%@ include file="/unImagedTaxa.jsp" %>       
  <% } 
 %>

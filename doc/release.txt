@@ -1,4 +1,9 @@
+Release 8.12.5
+Date: Feb 23
+  Add subgenera sort option to images page.
+
 Release 8.12.4
+Date: Feb 21
   Login from the home page or the login page leads to the home page.
   Upload Services down for Maintenance message will persist over server restart.
   Remove request.getRealPath() deprecation.
@@ -7,7 +12,7 @@ Release 8.12.4
   API environment work.
   
 Release 8.12.3
-Date: Feb 21
+Date: Feb 21 Morning.
   Fix datecollectedstart, datecollectedend.
   Replace getRealPath deprecated calls.
   Begin work on procedure to remove specimen taxa related to deprecated specimen.  

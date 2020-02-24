@@ -1,4 +1,23 @@
-
+Release 8.12.4
+ doc/done.txt                                                                                                 |   22 +-
+ doc/fileMods.txt                                                                                             |   30 +
+ doc/install.txt                                                                                              |   28 +-
+ doc/release.txt                                                                                              |   11 +
+ doc/toDo.txt                                                                                                 |   11 +-
+ src/org/calacademy/antweb/LoginAction.java                                                                   |    4 +-
+ src/org/calacademy/antweb/curate/speciesList/SpeciesListUploader.java                                        |    7 +-
+ src/org/calacademy/antweb/home/TaxonDb.java                                                                  |    6 +
+ src/org/calacademy/antweb/upload/SpeciesListUpload.java                                                      |    4 +-
+ src/org/calacademy/antweb/upload/SpecimenUpload.java                                                         |    3 -
+ src/org/calacademy/antweb/util/AntwebMgr.java                                                                |    2 +
+ src/org/calacademy/antweb/util/AntwebUtil.java                                                               |    6 +-
+ src/org/calacademy/antweb/util/ServerStatusAction.java                                                       |   10 +
+ src/org/calacademy/antweb/util/SessionRequestFilter.java                                                     |    2 +-
+ src/org/calacademy/antweb/util/UtilDataAction.java                                                           |    3 -
+ web/curate/curate-body.jsp                                                                                   |    3 +-
+ web/documentation/releaseNum.jsp                                                                             |    2 +-
+ web/error.jsp                                                                                                |    2 +-
+ 1510 files changed, 32 deletions(-)
 
 Release 8.12.3
  build.xml                                                             |  2 +-
