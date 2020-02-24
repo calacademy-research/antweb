@@ -13,6 +13,8 @@
 <%@ page import="com.mchange.v2.c3p0.impl.*" %>
 
 <%
+  AntwebUtil.log("in serverStatus-body.jsp");
+
   Utility util = new Utility();
   String domainApp = util.getDomainApp();
 %>  

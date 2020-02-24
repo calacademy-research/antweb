@@ -11,7 +11,7 @@
   //A.log("cvCaste:" + cvCaste);
 %>
  
-<div id="status_toggle">
+<div id="caste_toggle">
             <!-- div class="left"><img src = '<%= AntwebProps.getDomainApp() %>/image/new3.jpg' width=30></div -->
             <!-- (<img src="< %=AntwebProps.getDomainApp() % >/image/i.png" width=15>) -->
             <div class="left"><a href='<%= AntwebProps.getDomainApp() %>/common/casteDisplayPage.jsp' target="new">Caste:</a></div>

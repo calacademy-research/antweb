@@ -533,29 +533,116 @@ Currently on live we show:
     margin-top:3px;
 }
 
+
+#toggle {
+    min-width:20px;  
+    text-align:left;
+    float:right;
+}
+#thumb_toggle {
+    min-width:20px;  
+    text-align:left;
+    float:right;
+}
+#status_toggle {
+    text-align:left;
+    padding-left:20px;
+    float:right;
+}
+#caste_toggle {
+    text-align:left;
+    padding-left:20px;
+    float:right;
+}
+#subgenera_toggle {
+    text-align:left;
+    padding-left:20px;
+    float:right;
+}
+
 #thumb_choices.options {
     left:0;
 }
-
-#thumb_choices ul, #status_choice ul, #caste_choice ul {
-    text-align:left;
-}
-
-#thumb_choices ul li, #status_choice ul li, #caste_choice ul li {
-    cursor:pointer;
-}
-
 #view_choices.options {
     width:190px;  // was 128
 }
 #status_choice.options {
     left: 0;
-    width:150px;
+    width:120px;
 }
 #caste_choice.options {
     left: 0;
     width:120px;
 }
+#subgenera_choice.options {
+    left: 0;
+    width:120px;
+}
+
+#thumb_choices ul, #status_choice ul, #caste_choice ul, #subgenera_choice ul, subgenus_choice ul {
+    text-align:left;
+}
+#thumb_choices ul li, #status_choice ul li, #caste_choice ul li, #subgenera_choice ul li, subgenus_choice ul li {
+    cursor:pointer;
+}
+
+
+#change_thumbs {
+    float:right;
+    margin-left:3px;;
+    font-weight:bold;
+}
+#change_thumbs .has_options {
+}
+#change_thumbs #thumb_choices {
+    width:37px !important;
+}
+
+#change_status {
+    float:right;
+    margin-left:3px;;
+    font-weight:bold;
+}
+#change_status .has_status_options {
+}
+#change_status #status_choices {
+    width:37px !important;
+}
+
+#change_caste {
+    float:right;
+    margin-left:3px;;
+    font-weight:bold;
+}
+#change_caste .has_options {
+}
+#change_caste #caste_choices {
+    width:97px !important;
+}
+
+#change_subgenera {
+    float:right;
+    margin-left:3px;;
+    font-weight:bold;
+}
+#change_subgenera .has_options {
+}
+#change_subgenera #subgenera_choices {
+    width:97px !important;
+}
+
+#change_subgenus {
+    float:right;
+    margin-left:3px;;
+    font-weight:bold;
+}
+#change_subgenus .has_options {
+}
+#change_subgenus #subgenus_choices {
+    width:37px !important;
+}
+
+
 
 #page_contents {
     margin-bottom:6px;
@@ -797,51 +884,6 @@ input[type="checkbox"] {
 #sub_taxon li {
     float:left;
     padding-right:20px;
-}
-
-#thumb_toggle {
-    min-width:20px;  
-    text-align:left;
-    float:right;
-}
-
-#status_toggle {
-    text-align:left;
-    padding-left:20px;
-    float:right;
-}
-
-#change_thumbs {
-    float:right;
-    margin-left:3px;;
-    font-weight:bold;
-}
-#change_thumbs .has_options {
-}
-#change_thumbs #thumb_choices {
-    width:37px !important;
-}
-
-#change_status {
-    float:right;
-    margin-left:3px;;
-    font-weight:bold;
-}
-#change_status .has_status_options {
-}
-#change_status #status_choices {
-    width:37px !important;
-}
-
-#change_caste {
-    float:right;
-    margin-left:3px;;
-    font-weight:bold;
-}
-#change_caste .has_options {
-}
-#change_caste #caste_choices {
-    width:97px !important;
 }
 
 #browse_hint {

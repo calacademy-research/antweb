@@ -110,12 +110,12 @@ int totalImaged = taxon.getUniqueChildImagesCount("p", "h");
 //A.log("totalImaged:" + totalImaged + " taxonChildCount:" + taxonChildCount);
 String recordCountString = taxonChildCount + " specimens"; 
 
-java.util.ArrayList<Taxon> taxonChildren = taxon.getChildren();
+java.util.ArrayList<Taxon> childrenList = taxon.getChildren();
 
-//A.log("showBrowse-body.jsp size:" + taxonChildren.size());
-int childrenCount = taxonChildren.size();   
+//A.log("showBrowse-body.jsp size:" + childrenList.size());
+int childrenCount = childrenList.size();   
 Taxon[] childrenArray = new Taxon[childrenCount];
-taxonChildren.toArray(childrenArray);
+childrenList.toArray(childrenArray);
 
 int imagedSpecimenCount = 0;
 for (Taxon t : childrenArray) {
@@ -124,7 +124,7 @@ for (Taxon t : childrenArray) {
 	}
 }
 
-// A.log("showBrowse-body.jsp taxonChildrenSize:" + taxonChildren.size() + " childrenArraySize:" + childrenArray.length + " imagedSpecimenCount:" + imagedSpecimenCount);
+// A.log("showBrowse-body.jsp childrenListSize:" + childrenList.size() + " childrenArraySize:" + childrenArray.length + " imagedSpecimenCount:" + imagedSpecimenCount);
 
 %>
 <div id="totals_and_tools_container">
@@ -195,6 +195,11 @@ for (Taxon t : childrenArray) {
       String statusSetSize = taxon.getStatusSetSize();
       //A.log("showBrowse-body.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);   
 %>
+
+        <% if (LoginMgr.isDeveloper(request)) { %>
+	          <%@ include file="/common/subgeneraDisplay.jsp" %>
+        <% } %>
+
         <%@ include file="/common/statusesDisplay.jsp" %>
         
         <%  if ("specimen".equals(pageRank) && !"".equals(limitNote)) {

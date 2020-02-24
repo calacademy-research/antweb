@@ -1,3 +1,16 @@
+Release 8.12.5
+Updating 17f6c27..245024b
+Fast-forward
+ doc/done.txt                         | 16 ++++++++++------
+ doc/fileMods.txt                     | 21 ++++++++++++++++++++-
+ doc/release.txt                      |  7 ++++++-
+ src/org/calacademy/antweb/Taxon.java |  3 +++
+ web/common/subgeneraDisplay.jsp      | 45 +++++++++++++++++++++++++++++++++++++++++++++
+ web/documentation/releaseNum.jsp     |  2 +-
+ web/taxonChildImages.jsp             |  7 ++++++-
+ web/web/homepage/documentation.jsp~  | 57 ---------------------------------------------------------
+ 8 files changed, 91 insertions(+), 67 deletions(-)
+
 Release 8.12.4
  doc/done.txt                                                                                                 |   22 +-
  doc/fileMods.txt                                                                                             |   30 +

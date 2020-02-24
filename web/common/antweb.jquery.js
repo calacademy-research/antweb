@@ -314,6 +314,18 @@ $("#accordion a").click(function() {
         $('#caste_choices').delay(1000).fadeOut();
     });
 
+    $('#change_subgenera').click(function(event) {
+        if ($('#subgenera_choices').is(':visible')) { 
+            $('#subgenera_choices').hide();
+        } else {
+            var theWidth = $('#change_subgenera').width() + 7;
+            $('#subgenera_choices').width(theWidth);
+            $('#subgenera_choices').show();
+        }
+    });
+    $('#subgenera_choices').mouseleave(function(event) {
+        $('#subgenera_choices').delay(1000).fadeOut();
+    });
 
 });
 

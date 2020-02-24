@@ -2,7 +2,7 @@
 <%
     // Included by showBrowse-body.jsp and 
 
-    // Swap out. Replace the following with taxonReportLines.jsp\
+    // Swap out. Replace the following with taxonReportLines.jsp
 
     String orderBy = request.getParameter("orderBy");
     Taxon.sortTaxa(orderBy, children, overview);

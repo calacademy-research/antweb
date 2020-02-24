@@ -11,7 +11,7 @@
   in the cases where the children are not specimen (family, subfamily, genus).
 */
     //A.log("taxonReport.jsp XXX");
-    ArrayList<Taxon> childrenList = taxon.getChildren();
+    //ArrayList<Taxon> childrenList = taxon.getChildren();
     int tChildrenCount = childrenList.size();
     Taxon[] trChildrenArray = new Taxon[tChildrenCount];
     childrenList.toArray(trChildrenArray);

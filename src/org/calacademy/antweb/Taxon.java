@@ -3156,9 +3156,6 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         if ("subgenera".equals(orderBy)) {
             A.log("taxonReportBody.jsp sort by subgenera");
             Collections.sort(children, new SortTaxaByGenusSubgenusSpecies());
-            for (Taxon taxon : children) {
-              A.log("sortTaxa() taxon:" + taxon);
-            }
         }
         if ("lifestage".equals(orderBy)) Collections.sort(children, new SortTaxaByLifeStage());
         if ("medium".equals(orderBy)) Collections.sort(children, new SortTaxaByMedium());
@@ -3175,9 +3172,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         if ("ie".equals(orderBy)) Collections.sort(children, new SortTaxaByIE(overview));
         if ("fromSpecimen".equals(orderBy)) Collections.sort(children, new SortTaxaByFromSpecimen());
 	}
-
 }
-
 
 /*
     public int compareTo(Taxon other) {

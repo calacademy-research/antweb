@@ -1,6 +1,8 @@
 <!-- taxonChildImages.jsp -->
 
 <%
+	ArrayList<Taxon> childrenList = taxon.getChildren();
+
     // AntwebUtil.log("warn", " :" + taxon.getChildImagesCount()); 
     int totalImaged = taxon.getUniqueChildImagesCount("p", "h");
     String optionalCaste = "";
@@ -41,6 +43,11 @@
               String statusSetSize = taxon.getStatusSetSize();
               //A.log("taxonChildImages.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);            
               %>           
+
+            <% if (LoginMgr.isDeveloper(request)) { %>
+	          <%@ include file="/common/subgeneraDisplay.jsp" %>
+            <% } %>
+
 	          <%@ include file="/common/statusesDisplay.jsp" %>
  	   <% }
 
@@ -58,9 +65,7 @@
 
 <%
 
-//A.log("taxonChildImages");
-
-	ArrayList<Taxon> childrenList = taxon.getChildren();     
+    //A.log("taxonChildImages");
 	if (childrenList != null) { 
 	
         String orderBy = request.getParameter("orderBy");
@@ -68,8 +73,7 @@
 	
 	%>	
 	<%@ include file="/unImagedTaxa.jsp" %>       
- <% } 
-%>
+ <% } %>
 
     </div>
 </div> <!-- totals_and_tools_container -->
