@@ -34,7 +34,9 @@ from sqlalchemy.ext.declarative import declarative_base
 #from home.image import Image
 #from home.specimen import Specimen
 
-dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant?autocommit=true'
+
+dbUrl = 'mysql+pymysql://antweb:f0rm1c6@localhost:3306/ant?autocommit=true'
+#dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant?autocommit=true'
 engine = create_engine(dbUrl, pool_recycle=280)
 
 '''

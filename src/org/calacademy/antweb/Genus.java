@@ -93,12 +93,22 @@ public class Genus extends Subfamily implements Serializable {
         return clause;    
     }    
 
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global) throws SQLException {
+    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
     
         // global is not used. Currently only in Species.java.
         String fetchChildrenClause = " where 1 = 1";
         //if (!global) overviewCriteria = overview.getOverviewCriteria();
         if (!global) fetchChildrenClause = overview.getFetchChildrenClause();
+
+        String subgenusClause = "";
+        if (subgenus == null) {
+            // Do nothing. Default.
+        } else if ("none".equals(subgenus)) {
+            subgenusClause = " and subgenus is null ";
+        } else {
+            subgenusClause = " and subgenus = '" + subgenus + "' ";
+        }
+        A.log("subgenus clause added:" + subgenusClause);
 
         long now = (new GregorianCalendar()).getTimeInMillis();
         
@@ -117,6 +127,7 @@ public class Genus extends Subfamily implements Serializable {
                         + " and taxon.genus = '" + AntFormatter.escapeQuotes(genus) + "'" 
                         + " and taxon.species != '' "
                         + " and (rank = 'species' || rank = 'subspecies')"
+                        + subgenusClause
                         + statusSet.getAndCriteria()
                         ;
 //            if (!"default".equals(project))                        

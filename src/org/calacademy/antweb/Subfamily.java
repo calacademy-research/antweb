@@ -112,11 +112,13 @@ public class Subfamily extends Family implements Serializable {
         return clause;
     }
 
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global) throws SQLException {
+    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
 
         String fetchChildrenClause = "where 1 = 1";
         if (!global && overview != null) fetchChildrenClause = overview.getFetchChildrenClause();
-        
+
+        // We only use the subgenus clause when rank is genus.
+
         ArrayList theseChildren = new ArrayList();
         String query;
         Statement stmt = null;

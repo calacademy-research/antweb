@@ -11931,5 +11931,23 @@ Feb 21. 7hrs.
 
 Feb 22. 1hr.
   Update dev environment. Test subgenus. Work with Brian to specify solution. Reload taxa.
+  Figure out where log files are. Seems that the server has been misconfigured (using tomcat 8). 
+  Figure out (I think) why API not working. Misconfiguration.
+  
+Feb 23. 2.5hr.
+  Check on server. 
+  User interface for subgenera drop down list on showBrowse and images pages.
+  
+  
 
+Paul Davids 
+  Am7
+  Dm7 
+  G7 
+  CMaj7 
+  Fmaj7
+  Bm7b5  
+  E7 
+  Am  
+  
 

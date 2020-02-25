@@ -1,6 +1,21 @@
+Release 8.12.6
+ doc/fileMods.txt                     |  13 +++++++++++++
+ doc/release.txt                      |   4 ++++
+ src/org/calacademy/antweb/Taxon.java |   5 -----
+ web/common/antweb.css                | 148 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------------------------------------------------
+ web/common/antweb.jquery.js          |  12 ++++++++++++
+ web/common/casteViewsDisplay.jsp     |   2 +-
+ web/common/imageViewsDisplay.jsp     |   3 ++-
+ web/common/subgeneraDisplay.jsp      |  60 +++++++++++++++++++++++-----------------------------------
+ web/documentation/releaseNum.jsp     |   2 +-
+ web/showBrowse-body.jsp              |  15 ++++++++++-----
+ web/taxonChildImages.jsp             |  14 +++++++++-----
+ web/taxonReport.jsp                  |   2 +-
+ web/taxonReportBody.jsp              |   2 +-
+ web/util/serverStatus-body.jsp       |   2 ++
+ 14 files changed, 174 insertions(+), 110 deletions(-)
+
 Release 8.12.5
-Updating 17f6c27..245024b
-Fast-forward
  doc/done.txt                         | 16 ++++++++++------
  doc/fileMods.txt                     | 21 ++++++++++++++++++++-
  doc/release.txt                      |  7 ++++++-

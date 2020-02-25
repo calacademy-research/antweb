@@ -401,8 +401,10 @@ public class BrowseAction extends DescriptionAction {
   		    //taxon.setImages(null, caste); // Do not use overview to select images on the overview page. Do for images.do.
   		    // Otherwise, no image here: http://localhost/antweb/description.do?genus=aphaenogaster&species=fulva&rank=species&countryName=Madagascar
           }
-          
-          //A.log("BrowseAction.execute() setImages() taxon:" + taxon);
+
+          String subgenus = browseForm.getSubgenus();
+          A.log("BrowseAction.execute() subgenus:" + subgenus);
+
   		  taxon.setImages(overview, caste);
 
 		  if (logTimes) s_log.warn("execute() statusSetStr:" + statusSetStr);
@@ -424,7 +426,7 @@ public class BrowseAction extends DescriptionAction {
    	  	        http://localhost/antweb/browse.do?subfamily=dolichoderinae&rank=subfamily&bioregionName=Neotropical		
 			*/
               
-			taxon.setChildren(overview, statusSet, getChildImages, getChildMaps, caste, global);                    
+			taxon.setChildren(overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
 
             //A.log("BrowseAction.execute() childrenSize:" + taxon.getChildren().size());
 

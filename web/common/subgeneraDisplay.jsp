@@ -20,9 +20,9 @@
         <span id="which_subgenera"><span style="text-transform:capitalize;"><%= displaySubgenera %></span></span>
         <div id="subgenera_choices" class="options">
             <ul>
-                <li><a href="<%= subgeneraTarget + "&caste=none" %>"><span style="text-transform:capitalize;">(none)</span></a></li>                        
+                <li><a href="<%= subgeneraTarget + "&subgenus=none" %>"><span style="text-transform:capitalize;">(none)</span></a></li>                        
              <% for (String subgenus : subgenera) { %>
-                    <li><a href="<%= subgeneraTarget + "&subgenera=" + subgenus %>"><span style="text-transform:capitalize;">(<%= subgenus %>)</span></a></li>                        
+                    <li><a href="<%= subgeneraTarget + "&subgenus=" + subgenus %>"><span style="text-transform:capitalize;">(<%= subgenus %>)</span></a></li>                        
              <% } %>
             </ul>
         </div>

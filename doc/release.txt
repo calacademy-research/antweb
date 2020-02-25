@@ -1,6 +1,7 @@
 Release 8.12.6
 Date: Feb 24
   Subgenera UI in dev
+  API dburl implemented in pure Java.
 
 Release 8.12.5
 Date: Feb 23

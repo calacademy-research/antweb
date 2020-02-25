@@ -2599,11 +2599,11 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
     public void setChildren(Overview overview) throws SQLException {
         StatusSet statusSet = StatusSet.getInstance(overview.getName());
-        setChildren(overview, statusSet, false, false, Caste.DEFAULT, false);
+        setChildren(overview, statusSet, false, false, Caste.DEFAULT, false, null);
     }
  
     // Overridden by the Subfamily, genus, species, subspecies.
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getImages, boolean getMaps, String caste, boolean global) throws SQLException {
+    public void setChildren(Overview overview, StatusSet statusSet, boolean getImages, boolean getMaps, String caste, boolean global, String subgenus) throws SQLException {
         //A.log("setChildren(5) overview:" + overview + " getImages:" + getImages + " getMaps:" + getMaps + " caste:" + caste);
         this.children = new ArrayList();
     }

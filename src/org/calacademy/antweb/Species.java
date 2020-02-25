@@ -280,7 +280,7 @@ these other _cf1 etc.
         return clause;    
     }
     
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global) throws SQLException {
+    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
       // This method does not seem to use project in it's criteria?!  SetChildrenLocalized below does...
   
         ArrayList theseChildren = new ArrayList();

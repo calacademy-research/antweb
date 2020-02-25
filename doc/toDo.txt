@@ -1,14 +1,14 @@
 To Do List:
 
+Do not take subgenus data from specimens. 
+
+reloaded the Taxon manager, since the worlants data was loaded subsequent to the last launch of Antweb...
 
 Present:
   Fix citing
-  Fix worldants line numbers
-  The upload services stats message set in serverStatus does not perist after restart.
+  Fix worldants line numbers. Do not overwrite line numbers in taxa from specimen data?
   Get rid of old specimen data created taxa...
     All of the taxa with subgenus fields are from specimen data. If I understand correctly, those taxa records should not exist because they were created from old specimen uploads... I will see if I can find all taxa records that should not exist and systematically remove them. List of taxa with subgenus data (100 records) included below...
-*  Delete Homonyms without taxa from Antcat
-    select taxon_name, source from homonym where taxon_name not in (select taxon_name from taxon);
     See TaxonDb:836
     
 Small things/immediate frame
@@ -22,6 +22,9 @@ Small things/immediate frame
     Verify CKEditor working.
   Review Integrity Queries - no better time than now.
     Review the orphan tools?
+
+  Secure the description_edit titles.
+    select count(*), title from description_edit where content like '%http://www.antweb%' group by title order by count(*) desc;
 
 Server
   Talk to Joe. Remove temp_joe, stop tomcat8.5, apologize to Brian.
