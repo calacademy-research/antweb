@@ -52,7 +52,7 @@ Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()
 
-import MySQLdb as mysqldb
+#import MySQLdb as mysqldb
 
 import time
 
