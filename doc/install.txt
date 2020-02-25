@@ -251,8 +251,7 @@ Main config file here:
 
 /etc/apache2/sites-enabled/default-ssl.conf
 
-sudo apachectl restart
-
+sudo systemctl restart apache2
 sudo systemctl stop apache2
 
 log files: /var/log/apache2/error.log  
