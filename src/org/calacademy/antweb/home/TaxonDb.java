@@ -275,6 +275,38 @@ public class TaxonDb extends AntwebDb {
         return getInfoInstance(getConnection(), taxonName);
     }
 
+    public HashMap<String, ArrayList<String>> getSubgenusHashMap() {
+        HashMap<String, ArrayList<String>> subgenusHashMap = new HashMap<String, ArrayList<String>>();
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select distinct genus, subgenus from taxon where subgenus is not null and status != 'morphotaxon'";
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getShallowTaxa()");
+            rset = stmt.executeQuery(query);
+
+            int count = 0;
+            while (rset.next()) {
+                String genusName = rset.getString(1);
+                ArrayList<String> subgenusList = null;
+                if (subgenusHashMap.containsKey(genusName)) {
+                    subgenusList = (ArrayList<String>) subgenusHashMap.get(genusName);
+                } else {
+                    subgenusList = new ArrayList<String>();
+                }
+                String subgenusName = rset.getString(2);
+                subgenusList.add(subgenusName);
+                Collections.sort(subgenusList);
+                subgenusHashMap.put(genusName, subgenusList);
+            }
+        } catch (SQLException e) {
+            s_log.error("getSubgenusHashMap() e:" + e + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "this", "getSubgenusHashMap()");
+        }
+        return subgenusHashMap;
+    }
+
+
     public void setSubfamilyChartColor() {
       UtilDb utilDb = new UtilDb(getConnection());
       String[] colors = HttpUtil.getColors();

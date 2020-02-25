@@ -1,4 +1,8 @@
 Release 8.13
+Date: Feb 25
+  Subgenera filter drop down list for appropriate genera on browse and image pages.
+
+Release 8.12.8
 Date: Feb 24
   Cite text made dynamic.
 

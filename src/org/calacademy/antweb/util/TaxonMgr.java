@@ -34,6 +34,8 @@ public class TaxonMgr {
     // Shallow copies
     private static HashMap<String, Taxon> s_taxa = null;
 
+    private static HashMap<String, ArrayList<String>> s_subgenusHashMap = new HashMap<String, ArrayList<String>>();
+
     //private static List<String> taxaNamesList = null;
     private static List<String> prettyTaxaNamesList = null;
     
@@ -72,6 +74,8 @@ public class TaxonMgr {
           s_taxa.put(taxon.getTaxonName(), taxon);        
       } 
       //A.log("populate() forceReload:" + forceReload);
+
+      s_subgenusHashMap = taxonDb.getSubgenusHashMap();
     }
 
     // For Taxon Name Search Autocomplete
@@ -187,16 +191,9 @@ public class TaxonMgr {
     }
 
     public static List<String> getSubgenera(String genusName) {
-        TreeSet<String> subgenera = new TreeSet<String>();
-        Genus genus = getGenusFromName(genusName);
-        for (Taxon taxon : genus.getChildren()) {
-            if (taxon.getSubgenus() != null) subgenera.add(taxon.getSubgenus());
-            A.log("getSubgenera() genus:" + genus + " is:" + taxon.getSubgenus());
-        }
 
-        List<String> list = new ArrayList<String>(subgenera.size());
-        list.addAll(subgenera);
-        return list;
+        if (s_subgenusHashMap == null) return null;
+        return s_subgenusHashMap.get(genusName);
     }
 
 }
