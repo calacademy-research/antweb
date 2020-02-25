@@ -1,3 +1,15 @@
+Release 8.13
+ doc/done.txt                                 |  6 ++++--
+ doc/fileMods.txt                             |  6 ++++++
+ doc/release.txt                              |  4 ++++
+ src/org/calacademy/antweb/Genus.java         |  2 +-
+ src/org/calacademy/antweb/util/TaxonMgr.java | 13 +++++++++++++
+ web/common/subgeneraDisplay.jsp              | 11 +++++++++--
+ web/documentation/releaseNum.jsp             |  2 +-
+ web/showBrowse-body.jsp                      |  2 +-
+ web/taxonChildImages.jsp                     |  2 +-
+ 9 files changed, 40 insertions(+), 8 deletions(-)
+
 Release 8.12.8
  doc/done.txt       | 15 +++++++++++----
  doc/install.txt    |  3 +--
