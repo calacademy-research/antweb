@@ -186,5 +186,18 @@ public class TaxonMgr {
         return taxon.getSubgenus();
     }
 
+    public static List<String> getSubgenera(String genusName) {
+        TreeSet<String> subgenera = new TreeSet<String>();
+        Genus genus = getGenusFromName(genusName);
+        for (Taxon taxon : genus.getChildren()) {
+            if (taxon.getSubgenus() != null) subgenera.add(taxon.getSubgenus());
+            A.log("getSubgenera() genus:" + genus + " is:" + taxon.getSubgenus());
+        }
+
+        List<String> list = new ArrayList<String>(subgenera.size());
+        list.addAll(subgenera);
+        return list;
+    }
+
 }
 

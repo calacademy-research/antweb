@@ -44,7 +44,7 @@
               //A.log("taxonChildImages.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);            
               %>           
 
-            <% if (LoginMgr.isDeveloper(request)) { %>
+            <% if (LoginMgr.isAdmin(request)) { %>
 	          <%@ include file="/common/subgeneraDisplay.jsp" %>
             <% } %>
 

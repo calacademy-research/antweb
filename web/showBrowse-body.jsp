@@ -196,7 +196,7 @@ for (Taxon t : childrenArray) {
       //A.log("showBrowse-body.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);   
 %>
 
-        <% if (LoginMgr.isDeveloper(request)) { %>
+        <% if (LoginMgr.isAdmin(request)) { %>
 	          <%@ include file="/common/subgeneraDisplay.jsp" %>
         <% } %>
 

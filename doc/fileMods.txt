@@ -1,3 +1,9 @@
+Release 8.12.8
+ doc/done.txt       | 15 +++++++++++----
+ doc/install.txt    |  3 +--
+ web/about-body.jsp |  3 ++-
+ 3 files changed, 14 insertions(+), 7 deletions(-)
+
 Release 8.12.7
  api/v3.1/api.py                             |  4 +++-
  doc/done.txt                                | 18 ++++++++++++++++++

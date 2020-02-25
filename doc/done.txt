@@ -11938,13 +11938,15 @@ Feb 23. 3hr.
   Check on server. 
   User interface for subgenera drop down list on showBrowse and images pages.
 
-Feb 24. 3.5hrs.
+Feb 24. 6.5hrs.
   Work with Randy on Joe. Get back to Tomcat 9. Support API work  
   Work on the subgenera java work.
   Api testing, deployment, documentation.
   Install tomcat9 in dev.
+  Resolve extra app problem on server.
   Cite text sent to Brian and made dynamic with version number.
-    
+  Tomcat9 memory configuration.
+  Finishing touches on Subgenera. Still need to fetch set with connection.
     
 
 Paul Davids 

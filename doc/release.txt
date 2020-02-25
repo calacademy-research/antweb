@@ -1,3 +1,7 @@
+Release 8.12.8
+Date: Feb 24
+  Cite text made dynamic.
+
 Release 8.12.7
 Date: Feb 24
   API dburl implemented in pure Java.

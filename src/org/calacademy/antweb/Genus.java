@@ -101,7 +101,7 @@ public class Genus extends Subfamily implements Serializable {
         if (!global) fetchChildrenClause = overview.getFetchChildrenClause();
 
         String subgenusClause = "";
-        if (subgenus == null) {
+        if (subgenus == null || "all".equals(subgenus)) {
             // Do nothing. Default.
         } else if ("none".equals(subgenus)) {
             subgenusClause = " and subgenus is null ";
