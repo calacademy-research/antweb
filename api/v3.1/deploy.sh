@@ -4,4 +4,4 @@
 
 #cp -r api/v3.1 /var/www/html/
 
-cp -r -p api/v3.1 /var/www/script/
+cp -r api/v3.1 /var/www/script/

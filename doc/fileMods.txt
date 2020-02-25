@@ -1,3 +1,18 @@
+Release 8.12.7
+ api/v3.1/api.py                             |  4 +++-
+ doc/done.txt                                | 18 ++++++++++++++++++
+ doc/fileMods.txt                            | 19 +++++++++++++++++--
+ doc/release.txt                             |  1 +
+ doc/toDo.txt                                | 11 +++++++----
+ src/org/calacademy/antweb/BrowseAction.java |  8 +++++---
+ src/org/calacademy/antweb/Genus.java        | 13 ++++++++++++-
+ src/org/calacademy/antweb/Species.java      |  2 +-
+ src/org/calacademy/antweb/Subfamily.java    |  6 ++++--
+ src/org/calacademy/antweb/Subspecies.java   |  2 +-
+ src/org/calacademy/antweb/Taxon.java        |  4 ++--
+ web/common/subgeneraDisplay.jsp             |  4 ++--
+ api/v3.1/deploy.sh                          | 4 +++-
+ 
 Release 8.12.6
  doc/fileMods.txt                     |  13 +++++++++++++
  doc/release.txt                      |   4 ++++
