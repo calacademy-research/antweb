@@ -3,6 +3,7 @@ Date: Feb 26
   Image page session fix
   Citing Antweb copy changed.
   Subgenera drop down list made available for all on the image and browse taxon pages.
+  Bolded Citation added prior to citation.
 
 Release 8.14
 Date: Feb 25

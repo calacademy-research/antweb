@@ -14,18 +14,21 @@
     
       List<String> subgenera = new ArrayList<String>();
     
-      // Remove if not in the childrenList.
-      for (String subgenus : fullSetSubgenera) {
-        boolean existsOnPage = false;
-        for (Taxon child : childrenList) {
-          if (subgenus.equals(child.getSubgenus())) {
-            subgenera.add(subgenus);
-            break;
+      if (!"none".equals(displaySubgenera)) {
+        // Remove if not in the childrenList.
+        for (String subgenus : fullSetSubgenera) {
+          boolean existsOnPage = false;
+          for (Taxon child : childrenList) {
+            if (subgenus.equals(child.getSubgenus())) {
+              subgenera.add(subgenus);
+              break;
+            }
           }
         }
       }
-    
-      if (subgenera != null && subgenera.size() > 0) {
+      //A.log("suggeneraDisplay.jsp displaySubgenera:" + displaySubgenera + " size:" + subgenera.size() + " full:" + fullSetSubgenera.size());
+
+      if (subgenera != null && (subgenera.size() > 0 || "none".equals(displaySubgenera))) {
           A.log("subgeneraDisplay.jsp subgenera:" + subgenera + " genus:" + taxon.getGenus());
         %>
 
