@@ -826,14 +826,16 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action path="/specimenImages"
             type="org.calacademy.antweb.SpecimenAction"
             name="specimenForm"
-        validate="true">
+            scope="request"       
+            validate="true">
       <forward name="success" path="/specimenImages.jsp"/>
     </action>
    
     <action path="/specimen"
             type="org.calacademy.antweb.SpecimenAction"
             name="specimenForm"
-        validate="true">
+            scope="request"   
+            validate="true">
       <forward name="success" path="/specimen.jsp"/>
     </action>
     
@@ -948,6 +950,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
         <forward name="success" path="/dynamicMap.jsp"/>
      </action>
 
+<!-- Changed to request Feb2020 -->
      <action path="/prepareCompareResults"
             type="org.calacademy.antweb.search.PrepareCompareResultsAction"
             name="blankForm"
@@ -958,7 +961,8 @@ We would like to remove getChildImages.  Not needed now in the new UI
         <forward name="bayAreaSearch" path="/search/bayAreaSearchResults.jsp?mode=compare"/>
         <forward name="collectionSearch" path="/collection.jsp?mode=compare"/>
      </action>
-     
+
+<!-- Changed to request Feb 2020 -->     
      <action path="/compareResults"
             type="org.calacademy.antweb.search.CompareResultsAction"
             name="taxaFromSearchForm"
@@ -1637,10 +1641,14 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action path="/taxonomicPage"
             type="org.calacademy.antweb.TaxaPageAction"
             name="taxaPageForm"
-            scope="session">
+            scope="request"
+            >
         <forward name="success" path="/taxonomicPage.jsp"/>
         <!-- forward name="simple" path="/taxonomicPageSimple.jsp"/ -->
     </action>   
+            <!-- Feb 20202 was: scope="session" -->
+
+
     <!-- To inactivate, replace entire action above with the one below  -->
   <!--
     <action

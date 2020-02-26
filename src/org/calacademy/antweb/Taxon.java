@@ -193,9 +193,11 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         if (family != null) taxon.setFamily(family);     
         if (subfamily != null) taxon.setSubfamily(subfamily);     
         if (genus != null) taxon.setGenus(genus);
-        if (species != null) taxon.setSpecies(species); 
+        if (species != null) taxon.setSpecies(species);
         if (subspecies != null) taxon.setSubspecies(subspecies);              
-                    
+
+        taxon.setSubgenus(TaxonMgr.getSubgenus(taxon.getTaxonName()));
+
         taxon.setConnection(connection);
         taxon.setTaxonomicInfo();
         
@@ -470,7 +472,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
                 this.prettyName = new Formatter().capitalizeSubgenus(this.prettyName);
             }
         }
-        //A.log("setPrettyName() prettyName:" + this.prettyName);
+        //A.log("setPrettyName() rank:" + getRank() + " prettyName:" + this.prettyName + " subgenus:" + subgenus + " fullName:" + getFullName());
     }
     
     public static String getNoSubfamilyTaxonName(String taxonName) {
@@ -519,6 +521,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     public static String displayTaxonName(String taxonName) {
       return Taxon.getPrettyTaxonName(taxonName);
     }
+
+    // Not to be confused with Specimen.getTaxonPrettyName() or getPrettyTaxonName() above.
     public static String getPrettyTaxonName(String taxonName) {
       // This is preferred over displayTaxonName(taxonName)
       // myrmicinaecrematogaster aberrans assmuthi  =  Crematogaster aberrans assmuthi
@@ -804,30 +808,36 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         taxon.setRank(rank);
         return taxon;
     }
-    
-    public static Taxon getTaxonOfRank(String subfamily, String genus, String species, String subspecies) {
+
+        public static Taxon getTaxonOfRank(String subfamily, String genus, String species, String subspecies) {
+          return getTaxonOfRank(subfamily, genus, null, species, subspecies);
+        }
+
+        public static Taxon getTaxonOfRank(String subfamily, String genus, String subgenus, String species, String subspecies) {
         Taxon taxon = null;
         if ((genus != null) && (species != null) && (subspecies != null)) {
             taxon = new Subspecies();
             //taxon.setName(subspecies);
             taxon.setRank("subspecies");
-            taxon.setSubspecies(subspecies);
-            taxon.setSpecies(species);
-            taxon.setGenus(genus);
             taxon.setSubfamily(subfamily);
+            taxon.setGenus(genus);
+            taxon.setSubgenus(subgenus);
+            taxon.setSpecies(species);
+            taxon.setSubspecies(subspecies);
         } else if ((genus != null) && (species != null)) {
             taxon = new Species();
             //taxon.setName(species);
             taxon.setRank("species");
-            taxon.setSpecies(species);
-            taxon.setGenus(genus);
             taxon.setSubfamily(subfamily);
+            taxon.setGenus(genus);
+            taxon.setSubgenus(subgenus);
+            taxon.setSpecies(species);
         } else if (genus != null) {
             taxon = new Genus();
             //taxon.setName(genus);
             taxon.setRank("genus");
-            taxon.setGenus(genus);
             taxon.setSubfamily(subfamily);
+            taxon.setGenus(genus);
         } else if (subfamily != null) {
             taxon = new Subfamily();
             //taxon.setName(subfamily);
@@ -2637,6 +2647,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         setTaxonomicInfo("");
     }
 
+    /* // Feb2020
     public void callFinalize() throws Throwable {
       finalize();
     }
@@ -2655,7 +2666,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
             children.clear();
         }
     }
-
+*/
     public Map getMap() {
         return map;
     }
@@ -3174,27 +3185,6 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 	}
 }
 
-/*
-    public int compareTo(Taxon other) {
-        //A.log("compareTo() fullName:" + getFullName() + " vs " + other.getFullName());
-        if (getFullName() == null) return 1;
-        if (other == null) {
-          s_log.warn("compareTo() WST other is null. FullName:" + getFullName());
-          return 1;
-        }
-        if (other.getFullName() == null) return 1;
-        return getFullName().compareTo(other.getFullName());
-        //return getTaxonName().compareTo(other.getTaxonName());
-    }
-class SortBySource implements Comparator<Taxon> 
-{ 
-    public int compare(Taxon a, Taxon b) 
-    { 
-        return a.getSource().compareTo(b.getSource());
-    } 
-} 
-*/
-  
   
   
   

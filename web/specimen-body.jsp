@@ -14,14 +14,8 @@
    Overview overview = OverviewMgr.getOverview(request);
    if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);
 
-   Taxon taxon = (Taxon) session.getAttribute("taxon");
-   if (taxon == null) return;
-   
-   Specimen specimen = (Specimen) session.getAttribute("specimen");
-
-   if (taxon == null || specimen == null) {
-     
-   }
+   Specimen specimen = (Specimen) request.getAttribute("specimen");
+   Taxon taxon = specimen;
 
    if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
   

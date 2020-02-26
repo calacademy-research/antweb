@@ -17,11 +17,9 @@
     Overview overview = OverviewMgr.getOverview(request);
     if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);
 
-    Taxon taxon = (Taxon) session.getAttribute("taxon");
+    Specimen specimen = (Specimen) request.getAttribute("specimen"); 
+    Taxon taxon = specimen;
     if (taxon == null) return;
-   
-    Specimen specimen = (Specimen) session.getAttribute("specimen"); 
-    //Login accessLogin = LoginMgr.getAccessLogin(request); 
     
     String thePage = HttpUtil.getTarget(request);
 

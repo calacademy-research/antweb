@@ -13,6 +13,8 @@
 %>
 
 &copy; <%= year %> California Academy of Sciences. All rights reserved. <br />
+<br>
+<jsp:include page="/common/citeInclude.jsp" flush="true"/>
 
 <br><a href="https://www.calacademy.org/privacy-policy">Privacy Policy</a>  -  <a href="https://www.calacademy.org/privacy-policy/#rights">Your California Privacy Rights</a>
   -  <a href="https://www.calacademy.org/terms-of-use">Terms of Use</a>

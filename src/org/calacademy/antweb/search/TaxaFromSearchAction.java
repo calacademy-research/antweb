@@ -96,6 +96,10 @@ public final class TaxaFromSearchAction extends Action {
                 DBUtil.close(connection, this, "execute()");
             }
 
+            session.setAttribute("taxaToCompare", theTaxaList); 
+            A.log("execute() scope:" + mapping.getScope());
+
+/* // Was Feb2020
             if ("request".equals(mapping.getScope())) {
                 request.setAttribute("taxaToCompare", theTaxaList);
             } else {
@@ -115,6 +119,8 @@ public final class TaxaFromSearchAction extends Action {
                 }
                 session.setAttribute("taxaToCompare", theTaxaList);
             }
+*/
+
         }
 
         // Set a transactional control token to prevent double posting

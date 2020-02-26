@@ -554,12 +554,6 @@ We are showin the full map of ponerinae for every adm1.
 
             session.setAttribute("taxon", taxon);                
 
-/*
-        } else {
-            finalizeTaxonIfPresent(session, "taxon");
-            finalizeTaxonIfPresent(session, "showTaxon");
-        }
-*/
         if ("getComparison".equals(cacheType) || "mapComparison".equals(cacheType)) {
             session.setAttribute("showTaxon", taxon);        
             session.setAttribute("mykids", taxon.getChildren());
@@ -706,15 +700,4 @@ We are showin the full map of ponerinae for every adm1.
 	  return mapping.findForward("error");
     }
 
-    private void finalizeTaxonIfPresent(HttpSession session, String whichTaxon) {
-        Taxon oldTaxon = (Taxon) session.getAttribute(whichTaxon);
-        if (oldTaxon != null) {
-            try {
-                oldTaxon.finalize();
-            } catch (Throwable e) {
-                s_log.error("finalizeTaxonIfPresent() oldTaxonName:" + oldTaxon.getName() + " e:" + e);
-            }
-        }
-    }
-    
 }

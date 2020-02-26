@@ -8,8 +8,8 @@
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 
-<%
-   TaxaPage taxaPage = (TaxaPage) session.getAttribute("taxaPage");  
+<% // Feb2020
+   TaxaPage taxaPage = (TaxaPage) request.getAttribute("taxaPage");  
    String titleString = "";
    if (taxaPage != null) {
 	   Overview overview = taxaPage.getOverview();

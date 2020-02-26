@@ -148,25 +148,13 @@ public final class SpecimenAction extends DescriptionAction {
 		      }
 			}
 		    //if (AntwebProps.isDeveloper(request)) s_log.warn("execute() ogTitle:" + ogTitle + " ogImage:" + ogImage + " ogDesc:" + ogDesc);
-		 
-		 
-            if ("request".equals(mapping.getScope())) {
-                request.setAttribute("specimen", specimen);
-            } else {
-                Specimen oldSpec = (Specimen) session.getAttribute("specimen");
-                if (oldSpec != null) {
-                    try {
-                        oldSpec.finalize();
-                    } catch (Throwable e) {
-                        s_log.error("error finalizing specimen " + e);
-                    }
-                }
-                session.setAttribute("specimen", specimen);
-            }
-                  
-            
+
+            request.setAttribute("specimen", specimen);
+            //session.setAttribute("specimen", specimen);
+
             // Mark added.  Sept 13, 2010.  To correct breadcrumb trail.
-            session.setAttribute("taxon", specimen);
+            // Feb2020
+            //session.setAttribute("taxon", specimen);
         }
 
         // Set a transactional control token to prevent double posting

@@ -40,7 +40,7 @@ function submitAndFocus(theForm) {
     java.util.ArrayList shotsToShow;
 %>
  
-<jsp:useBean id="taxaToCompare" scope="session" class="java.util.TreeMap" /> 
+<jsp:useBean id="taxaToCompare" scope="session" class="java.util.TreeMap" />
 
 <div id="page_contents">
     <h1>Compare Selected Results</h1>
@@ -84,7 +84,8 @@ int fourth = 4;
 
   A.log("multiTaxaComparison-body.jsp taxaToCompare:" + taxaToCompare);
 
-  TreeMap<Taxon, Integer> theTaxaToCompare = (TreeMap<Taxon, Integer>)session.getAttribute("taxaToCompare");
+  // was session Feb2020
+  TreeMap<Taxon, Integer> theTaxaToCompare = (TreeMap<Taxon, Integer>) session.getAttribute("taxaToCompare");
   for (java.util.Map.Entry<Taxon,Integer> entry : theTaxaToCompare.entrySet()) {
     Taxon taxon = (Taxon) entry.getKey();
      

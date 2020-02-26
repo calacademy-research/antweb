@@ -17,8 +17,10 @@
     Login accessLogin = LoginMgr.getAccessLogin(request);
     Group accessGroup = GroupMgr.getAccessGroup(request);
     
-    TaxaPage taxaPage = (TaxaPage) session.getAttribute("taxaPage");     
-               
+//  Feb2020    
+//    TaxaPage taxaPage = (TaxaPage) session.getAttribute("taxaPage");     
+      TaxaPage taxaPage = (TaxaPage) request.getAttribute("taxaPage");     
+             
     String pageRank = taxaPage.getRank();
     //String georank = taxaPage.getGeorank();
     A.log("taxonomicPage-body.jsp pageRank:" + pageRank);   

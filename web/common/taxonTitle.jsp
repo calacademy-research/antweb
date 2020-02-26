@@ -3,10 +3,13 @@
 <!-- functionality unnecessarily replicated in specimen-body.jsp --> 
 <h1><%
    if (Utility.notBlank(taxon.getFullName())) {
-     if (taxon instanceof Specimen) { %>
-  <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %>: <%= taxon.getPrettyName() %>
+     if (taxon instanceof Specimen) {
+       String headerTitle = new Formatter().capitalizeFirstLetter(taxon.getRank()) + ": " + taxon.getPrettyName();
+       //A.log("taxonTitle:" + headerTitle);
+       %>
+       <%= headerTitle %>
 <%   } else { %>
-  <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %>: <%= dagger %><%= taxon.getPrettyName() %>
+       <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %>: <%= dagger %><%= taxon.getPrettyName() %>
 <%   }
    } else {
      String target = HttpUtil.getTarget(request);
@@ -16,13 +19,13 @@
        out.println("IsStatic Call Error.");
        return;
      }
-     //AntwebUtil.logStackTrace();
-     //out.println(title);
    }
 
    boolean isType = taxon.getIsType();
    if (taxon instanceof Specimen) { 
-	 Specimen specimenTaxon = (Specimen) taxon; %>
+	 Specimen specimenTaxon = (Specimen) taxon;
+	 //A.log("taxonTitle.jsp specimenTaxon subgenus:" + specimenTaxon.getSubgenus() + " prettyName:" + specimenTaxon.getTaxonPrettyName());
+	 %>
 	 <%= dagger %><%= specimenTaxon.getTaxonPrettyName() %> <%    
 	 isType = specimenTaxon.getIsType();
    } 

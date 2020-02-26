@@ -48,7 +48,7 @@ Wikipedia.
 
 <p><b>To cite AntWeb as a whole (example):</b></p>
 
-<p><pre>AntWeb. Version <%= AntwebProps.getAntwebVersion() %>. California Academy of Science, online at <a href='https://www.antweb.org'>https://www.antweb.org</a>. Accessed <span class="today"></span>.</pre></p>
+<p><jsp:include page="/common/citeInclude.jsp" flush="true"/></p>
 
  the "Accessed" date should be the date you accessed the content, in "day Month Year" format.</p>
 

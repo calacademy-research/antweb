@@ -46,6 +46,7 @@ function changeView(newView) {
 // -->
 </script>
 
+<!-- was session Feb2020 -->
 <jsp:useBean id="taxaToCompare" scope="session" class="java.util.TreeMap"/>
 
 <div id="page_contents">

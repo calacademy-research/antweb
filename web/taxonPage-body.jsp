@@ -12,7 +12,8 @@
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 
 <%
-  Taxon taxon = (Taxon) session.getAttribute("taxon");
+  //Taxon taxon = (Taxon) session.getAttribute("taxon");
+  Taxon taxon = (Taxon) request.getAttribute("taxon");
   //A.log("taaxonPage-body.jsp taxon:" + taxon);
   if (taxon == null) return;
 

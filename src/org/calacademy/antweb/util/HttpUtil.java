@@ -829,6 +829,9 @@ public abstract class HttpUtil {
     
     public static String getTargetMinusParam(HttpServletRequest request, String param) {
       String target = HttpUtil.getTarget(request);
+      return getTargetMinusParam(target, param);
+    }
+    public static String getTargetMinusParam(String target, String param) {
       int i = target.indexOf("&" + param);
       if (i > 0) {
         return target.substring(0, i); // What? We could lose params at the end of the line.

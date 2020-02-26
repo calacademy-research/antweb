@@ -187,6 +187,7 @@ public class TaxonMgr {
 
     public static String getSubgenus(String taxonName) {
         Taxon taxon = getTaxon(taxonName);
+        if (taxon == null) return null;
         return taxon.getSubgenus();
     }
 

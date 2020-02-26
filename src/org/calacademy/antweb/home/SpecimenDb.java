@@ -195,7 +195,7 @@ public class SpecimenDb extends AntwebDb {
 	    specimen.add("<tr><td><hr></td><td><hr></td><td><hr></td></tr>");
         Statement stmt = null;
         ResultSet rset = null;
-		String query = "select code, subfamily, genus from specimen where taxon_name in (select taxon_name from taxon where (rank = 'species' or rank = 'subspecies') " 
+		String query = "select code, subfamily, genus, subgenus from specimen where taxon_name in (select taxon_name from taxon where (rank = 'species' or rank = 'subspecies') "
 		  + " and genus not like '(%'"
 		  + " and (subfamily, genus) in ( select subfamily, genus from taxon where rank = 'genus' and status = 'morphotaxon') and access_group = " + groupId + ") " 
 		  + " and access_group = " + groupId;
@@ -210,7 +210,8 @@ public class SpecimenDb extends AntwebDb {
                 String code = rset.getString("code");
                 String subfamily = rset.getString("subfamily");
                 String genus = rset.getString("genus");
-                
+                String subgenus = rset.getString("subgenus"); // Not used.
+
                 String codeLink = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
                 specimen.add("<tr><td>" + codeLink + "</td><td>" + subfamily + "</td><td>" + genus + "</td></tr>");
             }
@@ -452,7 +453,7 @@ public class SpecimenDb extends AntwebDb {
             stmt = DBUtil.getStatement(getConnection(), "updateSpecimenStatus()");
             String dml = "update specimen s set s.caste = '" + caste + "', s.subcaste = '" + subcaste + "' where s.code = '" + code + "'";
         
-A.log("updateCaste dml:" + dml);
+            //A.log("updateCaste dml:" + dml);
             stmt.executeUpdate(dml);   
         } catch (SQLException e) {
             s_log.error("updateCaste() " + e);

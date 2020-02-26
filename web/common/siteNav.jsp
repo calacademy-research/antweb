@@ -160,7 +160,7 @@
 					  <div class="left"><h3>Citing AntWeb</h3></div><div class="right" id="close_citation_overlay">X</div>
 					  <div class="clear"></div>
 					  <p>To cite this page, please use the following:</p>
-					  <p><b>&middot; For print:</b> <span id="cite_print"></span>. Accessed <span class="today"></span></p>
+					  <p><b>&middot; For print:</b> &nbsp;&nbsp;&nbsp;&nbsp;<jsp:include page="/common/citeInclude.jsp" flush="true"/>					  
 					  <p><b>&middot; For web:</b> <span id="cite_web"></span></p>
 					  <p><span id="cite_copyright"></span></p>
 				  </div>

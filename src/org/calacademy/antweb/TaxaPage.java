@@ -316,7 +316,7 @@ public class TaxaPage implements Serializable {
     }
 */
 
-/*
+/* Feb2020
 	protected boolean notBlank(String theTerm) {
 
 		boolean itIsNotBlank = true;
@@ -329,7 +329,7 @@ public class TaxaPage implements Serializable {
 
 		return itIsNotBlank;
 	}
-*/
+
 	protected void finalize() throws Throwable {
 		super.finalize();
 		if (children != null) {
@@ -343,7 +343,7 @@ public class TaxaPage implements Serializable {
 		}
 		connection = null;
 	}
-
+*/
     public String getBrowserParams() {
       // ?subfamily=myrmicinae&genus=crematogaster&project=allantwebants&rank=genus&pr=i
         String params = "";

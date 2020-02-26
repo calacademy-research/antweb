@@ -150,7 +150,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         ResultSet rset = null;
         try {
             String theQuery =
-                "select subfamily, subgenus, speciesgroup, genus, species, subspecies, type_status, country, adm1, adm2"  // was province, county"
+                "select subfamily, speciesgroup, genus, subgenus, species, subspecies, type_status, country, adm1, adm2"  // was province, county"
                     + ", localityName, collectionCode, bioregion, habitat, method, ownedby, collectedby"
                     + ", life_stage, caste, subcaste"
                     + ", locatedAt, localityCode, museum "
@@ -179,9 +179,11 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
 
             while (rset.next()) {
                 setSubfamily(rset.getString("subfamily"));
-                setSubgenus(rset.getString("subgenus")); 
                 setSpeciesGroup(rset.getString("speciesgroup"));
                 setGenus(rset.getString("genus"));
+                setSubgenus(rset.getString("subgenus"));
+                A.log("setTaxonomicInfo() subgenus:" + getSubgenus());
+
                 setSpecies(rset.getString("species"));
                 setSubspecies(rset.getString("subspecies"));
                 setTypeStatus(rset.getString("type_status"));
@@ -988,12 +990,13 @@ update specimen set other = '
     }
 
     public String getTaxonPrettyName() {
-      Taxon taxon = Taxon.getTaxonOfRank(getSubfamily(), getGenus(), getSpecies(), getSubspecies());
+      Taxon taxon = Taxon.getTaxonOfRank(getSubfamily(), getGenus(), getSubgenus(), getSpecies(), getSubspecies());
       if (taxon == null) {
         s_log.warn("getTaxonPrettyName() taxon not found for subfamily:" + getSubfamily() + " genus:" + getGenus() + " species:" + getSpecies() + " subspecies:" + getSubspecies() + ". Returning:" + getTaxonName());
         return getTaxonName();
       }
       String prettyName = taxon.getPrettyName();
+      A.log("getTaxonPrettyName() rank:" + taxon.getRank() + " prettyName:" + prettyName);
       return prettyName;
     }
 

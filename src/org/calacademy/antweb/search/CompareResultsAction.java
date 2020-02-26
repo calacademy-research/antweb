@@ -138,8 +138,12 @@ public final class CompareResultsAction extends ResultsAction {
             // OCT312016
             //s_log.warn("execute() scope:" + mapping.getScope() + " taxaToCompare:" + taxaToCompare.size());
 
+            //request.setAttribute("taxaToCompare", taxaToCompare);
+            session.setAttribute("taxaToCompare", taxaToCompare);
+            //A.log("execute() scope:" + mapping.getScope());
+/* // Feb2020
+
             if ("request".equals(mapping.getScope())) {
-                request.setAttribute("taxaToCompare", taxaToCompare);
             } else {
                 TreeMap oldList = (TreeMap) session.getAttribute("taxaToCompare");
                 if (oldList != null) {
@@ -157,6 +161,8 @@ public final class CompareResultsAction extends ResultsAction {
                 //s_log.info("execute() session taxaToCompare:" + taxaToCompare);
                 session.setAttribute("taxaToCompare", taxaToCompare);
             }
+*/            
+            
         }
 
         saveToken(request);

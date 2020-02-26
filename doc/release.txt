@@ -1,3 +1,11 @@
+Release 8.13.1
+Date: Feb 25
+  Clean up object finalization.
+  Citing Antweb page made dynamic. Put in include file.
+  View selector fixed.
+  Sort by added to the subgenera select list. Context sensitive list.
+  Subgenus added to specimen page titles.  
+
 Release 8.13
 Date: Feb 25
   Subgenera filter drop down list for appropriate genera on browse and image pages.

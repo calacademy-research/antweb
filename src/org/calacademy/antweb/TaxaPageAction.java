@@ -199,6 +199,8 @@ A.log("execute() overview:" + overview);
             //s_log.info("execute() closing uniqueNumber:" + uniqueNumber);
           }
 
+          request.setAttribute("taxaPage", taxaPage);
+/*
           if ("request".equals(mapping.getScope())) {
               request.setAttribute("taxaPage", taxaPage);
           } else {
@@ -218,6 +220,8 @@ A.log("execute() overview:" + overview);
                   session.setAttribute("taxon",null);
               }
           }
+*/
+
         }
 
         // Set a transactional control token to prevent double posting

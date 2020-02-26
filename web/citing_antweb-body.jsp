@@ -3,6 +3,7 @@
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
+<%@ page import="org.calacademy.antweb.util.AntwebProps" %>
 <%
   java.util.Calendar today = java.util.Calendar.getInstance();
   int year = today.get(java.util.Calendar.YEAR);
@@ -31,7 +32,7 @@
 
 <p><b>To cite AntWeb as a whole (example):</b></p>
 
-<p><pre>AntWeb.  Available from https://www.antweb.org. Accessed <span class="today"></span></pre></p> 
+<p><jsp:include page="/common/citeInclude.jsp" flush="true"/></p>
 
 <b>To cite individual sections (example):</b>
 
