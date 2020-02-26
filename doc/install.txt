@@ -196,12 +196,6 @@ CATALINA_OPTS="$CATALINA_OPTS -Djava.util.Arrays.useLegacyMergeSort=true -Dfile.
 old servers also had these:
 -Dorg.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING=false
 
-Set in /usr/local/tomcat/bin/setenv.sh
-export CATALINA_OPTS="$CATALINA_OPTS -Xms512m"
-export CATALINA_OPTS="$CATALINA_OPTS -Xmx4096m"
-export CATALINA_OPTS="$CATALINA_OPTS -XX:MaxPermSize=256m"
-
-
 
 Python/API setup (Joe's notes)
 ----------------
@@ -408,6 +402,36 @@ https://10.2.22.30/web/log/worldants/20200107-05:00:02-fetchAndReloadWorldants.h
 
 Tomcat installation - with connector information below.
 Follow guide here: https://www.digitalocean.com/community/tutorials/install-tomcat-9-ubuntu-1804
+
+See: /etc/systemd/system/tomcat.service  For startup settings. Should look like this:
+
+[Unit]
+Description=Apache Tomcat Web Application Container
+After=network.target
+
+[Service]
+Type=forking
+
+Environment=JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk-amd64
+Environment=CATALINA_PID=/opt/tomcat/latest/temp/tomcat.pid
+Environment=CATALINA_HOME=/opt/tomcat/latest
+Environment=CATALINA_BASE=/opt/tomcat/latest
+Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
+Environment='JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
+
+ExecStart=/opt/tomcat/latest/bin/startup.sh
+ExecStop=/opt/tomcat/latest/bin/shutdown.sh
+
+User=tomcat
+Group=tomcat
+UMask=0007
+RestartSec=10
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+--- end
 
 sudo apt install default-jdk
 

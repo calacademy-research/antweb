@@ -2,26 +2,27 @@ To Do List:
 
 
 Small things/immediate frame  
+  Download data - there is no results. Works locally, so a config issue. Might be easier to re-implement without js.
+    This has been fragile before and is hard to figure.
+  Field guide heading and back link fixes.
+  This page is not secure: https://www.antweb.org/description.do?subfamily=amblyoponinae&genus=adetomyrma&rank=genus&countryName=Madagascar
+    Verify CKEditor working. CK editor testing.
+    Secure the description_edit titles.
+      select count(*), title from description_edit where content like '%http://www.antweb%' group by title order by count(*) desc;
   Fix worldants line numbers. Do not overwrite line numbers in taxa from specimen data?
   Get rid of old specimen data created taxa...
     All of the taxa with subgenus fields are from specimen data. If I understand correctly, those taxa records should not exist because they were created from old specimen uploads... I will see if I can find all taxa records that should not exist and systematically remove them. List of taxa with subgenus data (100 records) included below...
     See TaxonDb:836
   specimen contributed subgenera... get rid of. Do not take subgenus data from specimens.     
-  Get browsers to stay connected.
-    keep-alive. Asked Joe to see if he could...
-  Lost connection logging. C3p0 load balancer. Good for debugging.
-  Download data - there is no results. Works locally, so a config issue. Might be easier to re-implement without js.
-    This has been fragile before and is hard to figure.
-  This page is not secure: https://www.antweb.org/description.do?subfamily=amblyoponinae&genus=adetomyrma&rank=genus&countryName=Madagascar
-    Verify CKEditor working. CK editor testing.
   Review Integrity Queries - no better time than now. Review the orphan tools?
-  Secure the description_edit titles.
-    select count(*), title from description_edit where content like '%http://www.antweb%' group by title order by count(*) desc;
   reloaded the Taxon manager, since the worlants data was loaded subsequent to the last launch of Antweb...
 
 Server
+  Get browsers to stay connected.
+    keep-alive. Asked Joe to see if he could...
+  Lost connection logging. C3p0 load balancer. Good for debugging.
   Uptime.do seems to be working even when the server is dead.
-  Where is the disk full warning?
+  Where is the disk full warning? More space or relax requirement.
 
 Joe/Randy Things (he has recommended or is involved with)
   Server creation scripting. Would save us and him time in the future.

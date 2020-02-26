@@ -11948,7 +11948,7 @@ Feb 24. 6.5hrs.
   Tomcat9 memory configuration.
   Finishing touches on Subgenera. Still need to fetch set with connection.
     
-Feb 25th. 6 hrs.
+Feb 25th. 7hrs.
   Deploy the dynamic citing test.
   Finish (1st rev) of the subgenera selector. Deploy, document.
   Look into disk space.
@@ -11961,6 +11961,7 @@ Feb 25th. 6 hrs.
   Sort by added to the subgenera select list. Context sensitive list.
   Deploy. Document.
   Testing, adjustments, redeployments.
+  Server configuration.  
   
   
 

@@ -1,4 +1,4 @@
-Release 8.13.1
+Release 8.14
  WEB-INF/struts-config.xml                                  | 16 ++++++++++++----
  doc/done.txt                                               | 13 +++++++++++++
  doc/fileMods.txt                                           |  7 ++++---
@@ -33,7 +33,10 @@ Release 8.13.1
  web/taxonomicPage.jsp                                      |  4 ++--
  32 files changed, 176 insertions(+), 155 deletions(-)
  create mode 100644 web/common/citeInclude.jsp
-
+ web/specimen.jsp                 | 2 +-
+ web/taxonomicPageImages-body.jsp | 3 ++-
+ web/specimenImages.jsp | 2 +-
+  
 Release 8.13
  doc/done.txt                                 |  6 ++++--
  doc/fileMods.txt                             |  6 ++++++
