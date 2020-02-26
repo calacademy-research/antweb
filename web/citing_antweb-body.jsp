@@ -34,10 +34,6 @@
 
 <p><jsp:include page="/common/citeInclude.jsp" flush="true"/></p>
 
-<b>To cite individual sections (example):</b>
-
-<p><pre>Ward, P. S., editor (2013). AntWeb: Ants of California. Available from: https://www.antweb.org/california.jsp. Accessed <span class="today"></span></pre></p> 
-
 <p>In both cases, the "Accessed" date should be the date you accessed the content, in "day Month Year" format.</p>
 
 </div>

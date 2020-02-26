@@ -1,3 +1,10 @@
+Release 8.14.1
+ doc/done.txt           |  3 ++-
+ doc/fileMods.txt       |  7 +++++--
+ doc/install.txt        | 36 ++++++++++++++++++++++++++++++------
+ doc/toDo.txt           | 21 +++++++++++----------
+ web/imagePage-body.jsp |  7 +++++--
+ 
 Release 8.14
  WEB-INF/struts-config.xml                                  | 16 ++++++++++++----
  doc/done.txt                                               | 13 +++++++++++++
