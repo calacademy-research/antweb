@@ -1,6 +1,7 @@
-Release 8.13.1
+Release 8.14
 Date: Feb 25
   Clean up object finalization.
+  Session and request modifications.
   Citing Antweb page made dynamic. Put in include file.
   View selector fixed.
   Sort by added to the subgenera select list. Context sensitive list.

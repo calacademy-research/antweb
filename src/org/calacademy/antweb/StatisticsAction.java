@@ -37,9 +37,6 @@ public final class StatisticsAction extends Action {
         request.getSession().setAttribute("isLink", new Boolean(isLink));
         String bodyStr = (String) request.getParameter("body");
         boolean body = ("true".equals(bodyStr));
-        //String sessionStr = (String) request.getParameter("session");
-        //boolean session = ("true".equals(sessionStr));        
-        //if (session) return mapping.findForward("statisticsRealTime-body");
 
         boolean success = false;
 
