@@ -544,15 +544,15 @@ We are showin the full map of ponerinae for every adm1.
         // A.log("execute() scope:" + mapping.getScope() + " rank:" + taxon.getRank());
         // if ("request".equals(mapping.getScope())) {
 
-            try {
-              request.getSession().setAttribute("taxon", taxon);
-            } catch (Exception e) {
-              s_log.error("execute() finalizing e:" + e);
-            }            
-            request.setAttribute("taxon", taxon);
-            request.setAttribute("showTaxon", taxon);
+        try {
+          request.getSession().setAttribute("taxon", taxon);
+        } catch (Exception e) {
+          s_log.error("execute() finalizing e:" + e);
+        }            
+        request.setAttribute("taxon", taxon);
+        request.setAttribute("showTaxon", taxon);
 
-            session.setAttribute("taxon", taxon);                
+        //session.setAttribute("taxon", taxon);                
 
         if ("getComparison".equals(cacheType) || "mapComparison".equals(cacheType)) {
             session.setAttribute("showTaxon", taxon);        

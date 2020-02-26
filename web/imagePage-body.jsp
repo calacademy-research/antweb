@@ -16,10 +16,16 @@
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 
 <%
-  Taxon taxon = (Taxon) session.getAttribute("taxon");
-  if (taxon == null) return;
-  
+  Taxon taxon = (Taxon) request.getAttribute("taxon");
+  if (taxon == null) {
+     A.log("imagePage-body.jsp taxon not found in request");
+     return;
+  }
   Specimen specimen = (Specimen) session.getAttribute("specimen");
+  if (specimen == null) {
+     A.log("imagePage-body.jsp specimen not found in session");
+     return;
+  }
 
   if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
 

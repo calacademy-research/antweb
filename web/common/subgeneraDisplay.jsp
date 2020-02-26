@@ -9,40 +9,43 @@
     A.log("displaySubgenera:" + displaySubgenera);
 
     List<String> fullSetSubgenera = TaxonMgr.getSubgenera(taxon.getGenus());
-    List<String> subgenera = new ArrayList<String>();
+
+    if (fullSetSubgenera != null && fullSetSubgenera.size() > 0) {
     
-    // Remove if not in the childrenList.
-    for (String subgenus : fullSetSubgenera) {
-      boolean existsOnPage = false;
-      for (Taxon child : childrenList) {
-        if (subgenus.equals(child.getSubgenus())) {
-          subgenera.add(subgenus);
-          break;
+      List<String> subgenera = new ArrayList<String>();
+    
+      // Remove if not in the childrenList.
+      for (String subgenus : fullSetSubgenera) {
+        boolean existsOnPage = false;
+        for (Taxon child : childrenList) {
+          if (subgenus.equals(child.getSubgenus())) {
+            subgenera.add(subgenus);
+            break;
+          }
         }
       }
-    }
     
-    if (subgenera != null && subgenera.size() > 0) {
-        A.log("subgeneraDisplay.jsp subgenera:" + subgenera + " genus:" + taxon.getGenus());
-      %>
+      if (subgenera != null && subgenera.size() > 0) {
+          A.log("subgeneraDisplay.jsp subgenera:" + subgenera + " genus:" + taxon.getGenus());
+        %>
 
-      <div id="subgenera_toggle">
-          <div class="left">Subgenera:</div>
+        <div id="subgenera_toggle">
+            <div class="left">Subgenera:</div>
 
-          <div id="change_subgenera" class="has_options">
-              <span id="which_subgenera"><span style="text-transform:capitalize;"><%= displaySubgenera %></span></span>
-              <div id="subgenera_choices" class="options">
-                  <ul>              
-                      <li><a href="<%= subgeneraTarget + "&orderBy=subgenera" %>"><span style="text-transform:capitalize;">Sort by</span></a></li> 
-                      <li><a href="<%= subgeneraTarget + "&subgenus=all" %>"><span style="text-transform:capitalize;">(all)</span></a></li>                        
-                      <li><a href="<%= subgeneraTarget + "&subgenus=none" %>"><span style="text-transform:capitalize;">(none)</span></a></li>                        
-                   <% for (String subgenus : subgenera) { %>
-                          <li><a href="<%= subgeneraTarget + "&subgenus=" + subgenus %>"><span style="text-transform:capitalize;">(<%= subgenus %>)</span></a></li>                        
-                   <% } %>
-                  </ul>
-              </div>
-              <div class="clear"></div>
-          </div>
-      </div>
-      
+            <div id="change_subgenera" class="has_options">
+                <span id="which_subgenera"><span style="text-transform:capitalize;"><%= displaySubgenera %></span></span>
+                <div id="subgenera_choices" class="options">
+                    <ul>              
+                        <li><a href="<%= subgeneraTarget + "&orderBy=subgenera" %>"><span style="text-transform:capitalize;">Sort by</span></a></li> 
+                        <li><a href="<%= subgeneraTarget + "&subgenus=all" %>"><span style="text-transform:capitalize;">(all)</span></a></li>                        
+                        <li><a href="<%= subgeneraTarget + "&subgenus=none" %>"><span style="text-transform:capitalize;">(none)</span></a></li>                        
+                     <% for (String subgenus : subgenera) { %>
+                            <li><a href="<%= subgeneraTarget + "&subgenus=" + subgenus %>"><span style="text-transform:capitalize;">(<%= subgenus %>)</span></a></li>                        
+                     <% } %>
+                    </ul>
+                </div>
+                <div class="clear"></div>
+            </div>
+        </div>
+   <% } %>      
  <% } %>
