@@ -2,6 +2,7 @@ Release 8.14.1
 Date: Feb 26
   Image page session fix
   Citing Antweb copy changed.
+  Subgenera drop down list made available for all on the image and browse taxon pages.
 
 Release 8.14
 Date: Feb 25
