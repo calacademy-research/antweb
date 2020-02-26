@@ -36,7 +36,7 @@ Wikipedia.
 <p>Projects: <a href="https://www.antweb.org/page.do?name=floridakeys"><span><span style="text-decoration:underline">https://www.antweb.org/page.do?name=floridakeys</span></span></a></p>
 <p>Field guides: <a href="https://www.antweb.org/mapComparison.do?rank=genus&amp;name=adetomyrma&amp;project=madants"><span><span style="text-decoration:underline">https://www.antweb.org/mapComparison.do?rank=genus&amp;name=adetomyrma&amp;project=madants</span></span></a></p>
 
-<p><p><p><span style="text-decoration:underline"><b>How Reuse Content and Cite AntWeb:</b></span></p>
+<br><span style="text-decoration:underline"><b>How to Reuse Content and Cite AntWeb:</b></span></p>
 
 <p>AntWeb content is licensed under a <a href="http://creativecommons.org/licenses/by/3.0/" target="new">Creative Commons Attribution License</a>. We encourage use of AntWeb images.</p>
 
@@ -52,7 +52,7 @@ Wikipedia.
 
  the "Accessed" date should be the date you accessed the content, in "day Month Year" format.</p>
 
-<p><p><p><span style="text-decoration:underline"><b>Taxonomic names in Antweb</b></span></p>
+<br><span style="text-decoration:underline"><b>Taxonomic names in Antweb</b></span></p>
 <p>Taxonomic names in Antweb are provided from two
 sources: AntCat.org for valid names and names used for specimen records. You can filter from viewing just valid names or viewing valid names and morphospecies. </p>
 <p> </p>

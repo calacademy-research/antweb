@@ -7,8 +7,9 @@ Release 8.14.1
  web/citing_antweb-body.jsp       | 4 ---- 
  web/showBrowse-body.jsp  | 4 +---
  web/taxonChildImages.jsp | 2 --
-
-
+ web/common/citeInclude.jsp | 2 +-
+ web/common/copyright.jsp   | 2 +-
+ web/common/subgeneraDisplay.jsp | 21 ++++++++++++---------
   
 Release 8.14
  WEB-INF/struts-config.xml                                  | 16 ++++++++++++----
