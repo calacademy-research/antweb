@@ -4,7 +4,11 @@ Release 8.14.1
  doc/install.txt        | 36 ++++++++++++++++++++++++++++++------
  doc/toDo.txt           | 21 +++++++++++----------
  web/imagePage-body.jsp |  7 +++++--
- web/citing_antweb-body.jsp       | 4 ----
+ web/citing_antweb-body.jsp       | 4 ---- 
+ web/showBrowse-body.jsp  | 4 +---
+ web/taxonChildImages.jsp | 2 --
+
+
   
 Release 8.14
  WEB-INF/struts-config.xml                                  | 16 ++++++++++++----

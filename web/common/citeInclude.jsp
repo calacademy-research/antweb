@@ -1,3 +1,3 @@
 <%@ page import="org.calacademy.antweb.util.AntwebProps" %>
 
-<pre>AntWeb. Version <%= AntwebProps.getAntwebVersion() %>. California Academy of Science, online at <a href='https://www.antweb.org'>https://www.antweb.org</a>. Accessed <span class="today"></span>.</pre>
+<b>Citation:</b> AntWeb. Version <%= AntwebProps.getAntwebVersion() %>. California Academy of Science, online at <a href='https://www.antweb.org'>https://www.antweb.org</a>. Accessed <span class="today"></span>.
