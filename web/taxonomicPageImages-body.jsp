@@ -14,7 +14,8 @@
 <%
     if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
 
-    TaxaPage taxaPage = (TaxaPage) session.getAttribute("taxaPage");
+    //TaxaPage taxaPage = (TaxaPage) session.getAttribute("taxaPage");
+    TaxaPage taxaPage = (TaxaPage) request.getAttribute("taxaPage");
 %>
 
 <bean:define id="showNav" value="taxonomic"/>
