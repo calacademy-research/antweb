@@ -14,7 +14,7 @@
   </logic:notEqual>
 </logic:present>
 
-<jsp:useBean id="specimen" scope="session" class="org.calacademy.antweb.Specimen" />
+<jsp:useBean id="specimen" scope="request" class="org.calacademy.antweb.Specimen" />
 <jsp:setProperty name="specimen" property="*" />
 
 <%
