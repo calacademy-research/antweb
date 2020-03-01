@@ -20,7 +20,7 @@
         <div class="left"><h3>Download KML Data</h3></div><div class="right" id="close_download_data">X</div>
         <div class="clear"></div>
         <p>To download KML data, Right-click and save to your desktop.</p>
-        <ul>
+        <ul><!-- kml_download -->
             <li>&middot; <a href="<%= kmlURL %>" target="new">KML</a></li>
         </ul>
     </div>

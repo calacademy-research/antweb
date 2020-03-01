@@ -11963,13 +11963,13 @@ Feb 25th. 7hrs.
   Testing, adjustments, redeployments.
   Server configuration.  
   
-  
+Feb 26. 1.5hrs.
+  A bunch of jsp fixes. Ironing out yesterday's deployment.  
+    Image page session fix
+    Citing Antweb copy changed.
+    Subgenera drop down list made available for all on the image and browse taxon pages.
+    Bolded Citation added prior to citation.  
 
-max:3,641MB free:349MB total:627MB
-max:3,641MB free:449MB total:888MB   
-max:3,641MB free:660MB total:1,180MB
-max:3,641MB free:1,129MB total:1,608MB  
-max:3,641MB free:1,094MB total:1,608MB
 
 
 

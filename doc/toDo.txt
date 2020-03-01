@@ -1,5 +1,7 @@
 To Do List:
 
+Emails 
+  Links and Why source AntCat for this species in Gabon and thus Afrotropics
 
 Small things/immediate frame  
   Download data - there is no results. Works locally, so a config issue. Might be easier to re-implement without js.

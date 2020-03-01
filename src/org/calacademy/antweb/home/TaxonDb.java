@@ -63,7 +63,7 @@ public class TaxonDb extends AntwebDb {
         ResultSet rset = null;
         Statement stmt = null;
         try {
-            stmt = DBUtil.getStatement(connection, "getInfoInstance() taxonName:" + taxonName);
+            stmt = DBUtil.getStatement(connection, "getCurrentValidTaxonNamestance() taxonName:" + taxonName);
                   
             theQuery = " select rank, taxon_name, kingdom_name, phylum_name, order_name, class_name" 
               + ", family, subfamily, genus, subgenus, species, subspecies "
@@ -687,7 +687,7 @@ public class TaxonDb extends AntwebDb {
             while (rset.next()) {
                 taxonName = rset.getString("taxon_name");
                 s_lastCurrentValidTaxonName = taxonName; 
-                A.log("getCurrentValidTaxonName() taxonName:" + taxonName);
+                //A.log("getCurrentValidTaxonName() taxonName:" + taxonName);
             }
         } catch (SQLException e) {
             s_log.error("getCurrentValidTaxonName() exception:" + e + " theQuery:" + theQuery);

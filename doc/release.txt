@@ -1,3 +1,8 @@
+Release 8.14.2
+Date: Feb 26
+  Disk free warning set to 7G.
+  Server adjustments.
+
 Release 8.14.1
 Date: Feb 26
   Image page session fix

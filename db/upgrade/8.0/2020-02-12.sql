@@ -12,4 +12,5 @@ ALTER TABLE museum_taxon ENGINE=MyIsam;
 ALTER TABLE proj_taxon ENGINE=MyIsam;
 ALTER TABLE bioregion_taxon ENGINE=MyIsam;
 
+alter table specimen modify column dnaextractionnotes varchar(512);
 

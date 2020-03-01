@@ -366,6 +366,10 @@ Install After Joe
 Change conf/server.xml to have in the <host> block:
 <Context path="" docBase="/data/antweb"/>  <!-- was debug="0" -->
 
+edit /usr/local/tomcat/conf/context.xml to disable session persistence.
+  Add into the context section:
+  <Resources cachingAllowed="true" cacheMaxSize="100000" />
+
 Edit etc/AppResProd.properties to have:
 #site.domain=www.antweb.org
 site.domain=10.2.22.30
@@ -535,7 +539,6 @@ Search on tapirlink in antweb/doc/installOld.txt
 Copy these jars into tomcat/lib dir:
   jaxp_parser_impl.jar jsp-api.jar serializer.jar xalan.jar xercesImpl.jar xml-apis.jar xml-commons-apis.jar xsltc.jar
   
-edit /usr/local/tomcat/conf/context.xml to disable session persistence.
 
 https and ssl
 

@@ -248,7 +248,7 @@ public class UploadAction extends Action {
   //LogMgr.logQuery(connection, "After specimen upload Proj_taxon worldants counts", "select project_name, source, count(*) from proj_taxon where source = 'worldants' group by project_name, source");
   // LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "After specimen upload Proj_taxon worldants counts");
 
-         		specimenPostProcess(connection, accessLogin, uploadDetails);
+         		specimenPostProcess(connection, submitLogin, uploadDetails);
 
 				if (!AntwebProps.isDevMode())
 				  runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);

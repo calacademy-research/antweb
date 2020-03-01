@@ -112,6 +112,8 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 			session.setAttribute("searchResults", results);
 		}
 
+        //A.log("execute() scope:" + mapping.getScope());
+
 		return (mapping.findForward(forwardString));
 	}
 

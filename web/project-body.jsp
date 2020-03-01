@@ -126,7 +126,7 @@ if (!project.isAntProject()) {
                     <div class="left"><h3>Download Species</h3></div><div class="right" id="close_download_data">X</div>
                     <div class="clear"></div>
                     <p>To download the species list, Right-click and save to your desktop.</p>
-                    <ul>
+                    <ul><!-- project-body.jsp -->
     <% if (false) { %>
                         <li>&middot; <a href="<%= AntwebProps.getDomainApp() %>/<%= Project.getSpeciesListDir() %><%= project.getRoot() %>/<%= project.getUseName() %><%= UploadFile.getSpeciesListFileTail() %>" target="new">Tab-delimited</a></li>
     <% } %>
