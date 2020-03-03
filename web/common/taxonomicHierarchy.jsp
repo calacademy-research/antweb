@@ -44,8 +44,9 @@
     <div id="classification">        
         <span class="left">Classification:</span>
         <ul>
+        <% if (taxon.getOrderName() != null) { %>}
             <li>Order: <%= format.capitalizeFirstLetter(taxon.getOrderName()) %></li>
-<%
+        <% }
 
         if ((taxon.getFamily() != null) && (taxon.getFamily().length() > 0)) {
             String  browserParams = taxon.getBrowserParams(Rank.FAMILY, overview);

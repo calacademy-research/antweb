@@ -190,7 +190,9 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         Taxon taxon = Taxon.getTaxonOfRank(rank); 
         taxon.setRank(rank);
 
-        if (family != null) taxon.setFamily(family);     
+        if (family != null) taxon.setFamily(family);    
+        if ("formicidae".equals(taxon.getFamily())) taxon.setOrderName("hymenoptera");
+        //A.log("getInfoInstance() order:" + taxon.getOrderName() + " family:" + taxon.getFamily());
         if (subfamily != null) taxon.setSubfamily(subfamily);     
         if (genus != null) taxon.setGenus(genus);
         if (species != null) taxon.setSpecies(species);

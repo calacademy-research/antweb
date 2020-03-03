@@ -11970,8 +11970,20 @@ Feb 26. 1.5hrs.
     Subgenera drop down list made available for all on the image and browse taxon pages.
     Bolded Citation added prior to citation.  
 
+Feb 27. 2.5hrs.
+  Fix the database column length of DNANotes. Adjusted. Test reload.
+  Look into fixing data download features. Complex. Unresolved.
 
-
+Feb 28. 2 hr.
+  Adjust disk space warning. 
+  Adjust the server caching strategy.
+  Fix the effective loging when an admin re-runs a curators upload.  
+    
+Mar 1. 1hrs.
+  Check on server. Looking good.
+  Deploy. Document.
+  
+  
 
 Paul Davids 
   Am7

@@ -1,3 +1,22 @@
+Release 8.14.2
+ db/upgrade/8.0/2020-02-12.sql                                     |  1 +
+ doc/done.txt                                                      | 12 ++++++------
+ doc/fileMods.txt                                                  |  5 +++--
+ doc/install.txt                                                   |  5 ++++-
+ doc/release.txt                                                   |  5 +++++
+ doc/toDo.txt                                                      |  2 ++
+ src/org/calacademy/antweb/home/TaxonDb.java                       |  4 ++--
+ src/org/calacademy/antweb/search/PrepareCompareResultsAction.java |  2 ++
+ src/org/calacademy/antweb/upload/UploadAction.java                |  2 +-
+ src/org/calacademy/antweb/util/SessionRequestFilter.java          |  2 +-
+ web/about-body.jsp                                                |  4 ++--
+ web/common/data_download_overlay.jsp                              | 22 +++++++++-------------
+ web/common/kml_download.jsp                                       |  2 +-
+ web/documentation/releaseNum.jsp                                  |  2 +-
+ web/project-body.jsp                                              |  2 +-
+ web/search/download_results.jsp                                   |  2 +-
+ 16 files changed, 42 insertions(+), 32 deletions(-)
+
 Release 8.14.1
  doc/done.txt           |  3 ++-
  doc/fileMods.txt       |  7 +++++--

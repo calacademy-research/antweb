@@ -141,7 +141,7 @@ public final class FieldGuideAction extends Action {
                 fieldGuide.setExtent(localityOverview.getExtent());
             }
             
-            A.log("FieldGuideAction.execute() overview:" + overview + " subfamily:" + subfamily);
+            A.log("execute() overview:" + overview + " subfamily:" + subfamily);
 
 			if ((subfamily != null) || (genus != null) || (species != null)) {
     		    // Taxon Field Guides
@@ -160,8 +160,7 @@ public final class FieldGuideAction extends Action {
 					taxon.setChildren(overview);
 				}
 				theTaxa = taxon.getChildren();
-                A.log("FieldGuideAction.execute() rank:" +  rank 
-                  + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " taxa.size:" + theTaxa.size());
+                A.log("execute() rank:" +  rank + " order:" + taxon.getOrderName() + " family:" + taxon.getFamily() + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " taxa.size:" + theTaxa.size());
 
 
 				fieldGuide.setTitle(subfamily, genus, species, overview.getName());
@@ -170,7 +169,7 @@ public final class FieldGuideAction extends Action {
 				fieldGuide.setMembers(connection, overview);
 			} else { 
 			    // Regional Field Guides
-                A.log("FieldGuideAction.execute() rank:" + rank + " overview:" + overview + " caste:" + caste);			
+                A.log("execute() rank:" + rank + " overview:" + overview + " caste:" + caste);			
          		
          		TaxaPage taxaPage = new TaxaPage();
 				taxaPage.setRank(rank);

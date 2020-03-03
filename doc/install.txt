@@ -243,7 +243,14 @@ Apache API
 Main config file here: 
   /etc/apache2/apache2.conf
 
-/etc/apache2/sites-enabled/default-ssl.conf
+Copy extensive changes into/from:
+    /etc/apache2/sites-enabled/default-ssl.conf
+
+In order to enable Data Download,in:
+    ./conf-available/security.conf:Header
+    ./conf-available/ssl-params.conf
+set...
+    set X-Frame-Options: "sameorigin"
 
 sudo systemctl restart apache2
 sudo systemctl stop apache2

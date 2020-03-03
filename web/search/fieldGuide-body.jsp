@@ -20,11 +20,10 @@
 <jsp:useBean id="specimen" scope="session" class="org.calacademy.antweb.Specimen" />
 <jsp:setProperty name="specimen" property="*" />
 
-
 <%
-	if (AntwebProps.isDevMode()) {
-	  if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
-	}
+   if (AntwebProps.isDevMode()) {
+     if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
+   }
    Overview overview = OverviewMgr.getOverview(request); 
     
    Utility fg_util = new Utility(); 
@@ -123,8 +122,13 @@
 
         <div id="totals_and_tools_container">
             <div id="totals_and_tools">
-               <h2>Field Guide <%= fgTitle %></h2>
-               <div id="thumb_toggle"><a href="<%= request.getHeader("Referer") %>">Back to <%= new Formatter().capitalizeFirstLetter(showTaxon.getRank()) %> <bean:write name="showTaxon" property="prettyName" /></a></div>
+                <h2>Field Guide <%= fgTitle %></h2>
+                <div id="thumb_toggle">
+               <% A.log("fieldGuide-body.jsp taxon:" + taxon); %>
+                    <a href="<%= request.getHeader("Referer") %>">Back to <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %> 
+                        <%= taxon.getTaxonNameDisplay() %>
+                    </a>
+                </div>
             <div class="clear"></div>
             </div>
         </div>

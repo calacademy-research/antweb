@@ -75,13 +75,10 @@ public class Genus extends Subfamily implements Serializable {
 		  + " and rank = 'genus'"
 		  + " and taxon.genus='" + AntFormatter.escapeQuotes(genus) + "'";
 		 // + " and status = 'valid'";
-
-		//if ((project != null) && (!(project.equals("")))) {
-		//	theQuery = theQuery + " and proj_taxon.project_name = '" + project + "'";
-		//}
 		
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
+		A.log("setTaxonomicInfo() order:" + this.getOrderName() + " query:" + theQuery);
     }
     
     protected String getThisWhereClause() {
@@ -133,7 +130,7 @@ public class Genus extends Subfamily implements Serializable {
 //            if (!"default".equals(project))                        
 //              query += " and proj_taxon.project_name = '" + project + "'";
 
-            A.log("setChildren(5) overview:" + overview + " query:" + query);
+            //A.log("setChildren(5) overview:" + overview + " query:" + query);
             
             //s_log.info("setChildren() getChildMaps:" + getChildMaps + " query:" + query);
 
