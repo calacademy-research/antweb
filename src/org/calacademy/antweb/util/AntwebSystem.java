@@ -230,7 +230,7 @@ public class AntwebSystem {
     String retVal = "";
     try {
       A.log("launchProcess() Running command: " + command);
-      AntwebUtil.logShortStackTrace(3);
+      //AntwebUtil.logShortStackTrace(3);
 
       //s_log.warn("launchProcess() Running command: " + command);
       Process p = Runtime.getRuntime().exec(command);

@@ -59,6 +59,10 @@ public final class UptimeAction extends Action {
 
     private boolean isWebDirAccessible() {
         String uptimeTxt = AntwebUtil.readFile("data/", "uptime.txt");
+        if (uptimeTxt == null) {
+          s_log.error("isWebDirAccessible() uptimeTxt is null");
+          return false;
+        }
         if (!uptimeTxt.contains("success")) {
           A.log("isWebDirAccessible() uptimeTxt:" + uptimeTxt);
           return false;

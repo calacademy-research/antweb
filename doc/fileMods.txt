@@ -1,3 +1,16 @@
+Release 8.14.3
+ doc/done.txt                                           | 16 ++++++++++++++--
+ doc/fileMods.txt                                       | 19 +++++++++++++++++++
+ doc/install.txt                                        |  9 ++++++++-
+ doc/release.txt                                        |  7 ++++++-
+ src/org/calacademy/antweb/Genus.java                   |  7 ++-----
+ src/org/calacademy/antweb/Taxon.java                   |  4 +++-
+ src/org/calacademy/antweb/search/FieldGuideAction.java |  7 +++----
+ web/common/taxonomicHierarchy.jsp                      |  3 ++-
+ web/search/fieldGuide-body.jsp                         | 16 ++++++++++------
+ 9 files changed, 67 insertions(+), 21 deletions(-)
+
+
 Release 8.14.2
  db/upgrade/8.0/2020-02-12.sql                                     |  1 +
  doc/done.txt                                                      | 12 ++++++------

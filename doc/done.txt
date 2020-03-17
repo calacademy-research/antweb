@@ -11983,7 +11983,47 @@ Mar 1. 1hrs.
   Check on server. Looking good.
   Deploy. Document.
   
-  
+Mar 2. 5.5hrs.
+  Get Data download working by adjusting the apache security configuration.
+    set X-Frame-Options: "sameorigin"
+  Cosmetic fixes for field guide (Back link and taxonomic hierarchy shortened).
+    Document.
+  Look into direct db access.
+  Look into CKeditor.
+  Look into dev and stg servers. Currently inaccessible via Chrome.
+  Have Randy bring up the production server again.
+  Got the CK Editor working.
+
+Mar 3. 1hr.
+  Look into, document where are code is. Thau. Iterators, Struts. 
+    Fetch oldest remaining source code (2013) off server.
+
+Mar 5. 3hrs.
+  Attempt IntelliJ war file creation. Not supported in Community edition.
+  Generate war file in Ant.
+  Diagnose CAS Sophos that was throttling upload speeds.
+
+Mar 8. 1hr.
+  Investigating war file.
+
+Mar 10. 1hr.
+  Check on server.  
+
+Mar 12. 1hr.
+  War file deployment. Getting rid of build.properties. 
+    Create softlink for /usr/local/antweb on all platforms.
+
+
+
+Centurylink dsl 10mbs.
+503 933 5345
+
+Cox business line at Scott's  
+  90$ 50mbs download 10mbs
+  $130 month 100mbs 20mbs
+
+Centurylink gigabit 
+
 
 Paul Davids 
   Am7

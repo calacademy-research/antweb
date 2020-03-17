@@ -3,13 +3,17 @@
 
 <property file="build.properties"/>
 
+<property name="app.name"   value="antweb"/>
+
 <property name="app.version"   value="3.0"/>
 <property name="build.home"    value="build"/>
 <property name="dist.home"     value="dist"/>
+<property name="antweb.home"   value="/usr/local/antweb"/>
 <property name="deploy.home"   value="${antweb.home}"/>
 <property name="doc.home"     value="${deploy.home}/docs/javadocs"/>
 <property name="lib.home"     value="WEB-INF/lib"/>
 <!-- property name="workingdir"  value="${workingdir}"/ -->
+<property name="catalina.home" value="/usr/local/tomcat"/>
 
 <property name="add.home"      value="etc/add"/>
 
@@ -282,6 +286,19 @@ To successfully compile jsps from ant you must set this environment property:
   </java>
 </target>
 
+<target name="war" depends="deploy">
+    <war destfile="antweb.war" webxml="WEB-INF/web.xml">
+        <fileset dir="build"/>
+            <lib dir="WEB-INF/lib"/>
+        <classes dir="build/WEB-INF/classes"/>
+    </war>
+</target>
+
+<target name="warDeploy" depends="war">
+  <copy  todir="${deploy.home}">
+    <fileset dir="." includes="antweb.war"/>
+  </copy>
+</target>
 
 <!-- These are not being used ... but display unless and echo functionality -->
 <target name="debug" depends="setAppName, output">

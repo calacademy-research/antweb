@@ -536,6 +536,14 @@ pip install mysqlclient
 
 
 
+Convert for War File Deployment
+-------------------------------
+Remove whatever is in /usr/local/tomcat/webapps/ROOT
+sudo apt install unzip 
+unzip antweb.war into ROOT
+Comment out this line near the bottom of server.xml...
+  	<!-- Context path="" docBase="/data/antweb"/ -->
+
 
 To Do
 -----
