@@ -1,3 +1,16 @@
+Release 8.15
+Fast-forward
+ doc/done.txt                                          |  22 ++++++++++++++++------
+ doc/homepage.txt                                      |  23 +++++++++++++++++++++++
+ doc/install.txt                                       |   9 +++++++++
+ etc/AppResStgAntweb.properties                        |   2 +-
+ src/org/calacademy/antweb/util/Queries.java           | 108 ++++++++++++++++++++++++++++++++++++++++++++++++++++++------------------------------------------------------
+ src/org/calacademy/antweb/util/QueriesWithParams.java |  50 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/org/calacademy/antweb/util/QueryAction.java       |   6 ++++++
+ src/org/calacademy/antweb/util/QueryManager.java      |  10 ++++++++++
+ web/common/taxonSetHeaderNotes.jsp                    |   8 ++++++++
+ web/taxonPage-body.jsp                                |   2 +-
+ 
 Release 8.14.3
  doc/done.txt                                           | 16 ++++++++++++++--
  doc/fileMods.txt                                       | 19 +++++++++++++++++++
