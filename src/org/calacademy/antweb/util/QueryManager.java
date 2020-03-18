@@ -170,6 +170,16 @@ public abstract class QueryManager {
         return message;        
     }
 
+    public static String runQueryWithParam(String queryName, String param, Connection connection) throws SQLException {
+        NamedQuery namedQuery = QueriesWithParams.getNamedQueryWithParam(queryName, param);
+        String result = "";
+        String message = "";
+        if (namedQuery == null) return "Query not found:" + queryName + " with param:" + param;
+        result = runNamedQuery(namedQuery, connection);
+        if (result != null) message += result;
+        return message;
+    }
+
     public static String runNamedQuery(NamedQuery namedQuery, Connection connection) throws SQLException {
         StringBuffer message = new StringBuffer();
         Statement stmt = null;

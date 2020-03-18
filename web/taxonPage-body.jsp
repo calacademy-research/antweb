@@ -575,8 +575,8 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>TaxonSet:</b>
 </div>
 <div id=data_items2>
-<%= overview.getCountCrawlLink() %>
 <br><%= taxonSet %> &nbsp;
+<br><%= overview.getCountCrawlLink() %>
 </div>
 
 <div class="clear"></div>

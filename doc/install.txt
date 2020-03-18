@@ -373,6 +373,12 @@ Install After Joe
 Change conf/server.xml to have in the <host> block:
 <Context path="" docBase="/data/antweb"/>  <!-- was debug="0" -->
 
+
+# To aid in Deployment, on a server system...
+sudo  ln -s /data/antweb /usr/local/antweb
+#On a local dev machine...
+sudo  ln -s /data/antweb /usr/local/tomcat/webapps/antweb/
+
 edit /usr/local/tomcat/conf/context.xml to disable session persistence.
   Add into the context section:
   <Resources cachingAllowed="true" cacheMaxSize="100000" />
@@ -538,6 +544,9 @@ pip install mysqlclient
 
 Convert for War File Deployment
 -------------------------------
+# NOPE! We backed off the idea of using war file deployment because Tomcat does not
+# have an alternate document root.
+
 Remove whatever is in /usr/local/tomcat/webapps/ROOT
 sudo apt install unzip 
 unzip antweb.war into ROOT

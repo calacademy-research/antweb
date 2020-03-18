@@ -12013,16 +12013,26 @@ Mar 12. 1hr.
   War file deployment. Getting rid of build.properties. 
     Create softlink for /usr/local/antweb on all platforms.
 
+Mar 14. 1hr.
+  Reconfiguration work.
+
+Mar 15. 1.5hrs.
+  Late night endemic queries run for Brian.
+
+Mar 16. 3hr.
+  Git work.
+  Rebuild environment with new user. Recover dev enrironment. 1hr (1hr discount).
+  Deploy to dev. New configuration (without war file).
+  Further endemic work.
+
+Mar 17
+  Write Species List with Range Data Report.
+    Link into taxonomicPage. Only for countries and for curators only.
+  Deploy to stage (and configure for modified deployment).
 
 
-Centurylink dsl 10mbs.
-503 933 5345
-
-Cox business line at Scott's  
-  90$ 50mbs download 10mbs
-  $130 month 100mbs 20mbs
-
-Centurylink gigabit 
+Percolate up endemic to subregion and region.
+Public report. How?
 
 
 Paul Davids 

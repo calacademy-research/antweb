@@ -23,6 +23,14 @@ if (true) {
           ;
       } %>
 
+    <%
+      if (LoginMgr.isCurator(request)) {
+        if (overview instanceof Country) {
+          note += "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a><br>";
+        }
+      }
+    %>
+
       <%= note %>
       <div class="page_divider taxonomic"></div>
 <%  }

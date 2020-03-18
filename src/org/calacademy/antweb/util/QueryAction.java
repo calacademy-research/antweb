@@ -162,6 +162,12 @@ public class QueryAction extends Action {
                   //s_log.error("execute()  events:" + event);
                   returnLoc = (mapping.findForward("events"));                  
                 }
+
+                if ("query".equals(action) && name != null && param != null) {
+                    String message = QueryManager.runQueryWithParam(name, param, connection);
+                    request.setAttribute("message", message);
+                    returnLoc = mapping.findForward("adminHtmlMessage");
+                }
 			}
 
 			if (returnLoc != null) {

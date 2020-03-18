@@ -1085,55 +1085,55 @@ public abstract class Queries {
         return queries; // end getImageNamedQueries()
     }         
 
-    private static ArrayList<NamedQuery> getAssortedNamedQueries() {  
-    
+    private static ArrayList<NamedQuery> getAssortedNamedQueries() {
+
         ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
-        
+
         queries.add(new NamedQuery(
-          "descriptionEditCountByOwner"
-        , "Count of Description Edits by Owner"
-        , "<th>Description Edit Count</th><th>Owned By</th>"
-        , "select count(distinct de.taxon_name, de.title) theCount, g.name from description_edit de, groups g where de.access_group = g.id group by de.access_group order by theCount desc"
+                "descriptionEditCountByOwner"
+                , "Count of Description Edits by Owner"
+                , "<th>Description Edit Count</th><th>Owned By</th>"
+                , "select count(distinct de.taxon_name, de.title) theCount, g.name from description_edit de, groups g where de.access_group = g.id group by de.access_group order by theCount desc"
         ));
 
         queries.add(new NamedQuery(
-          "importedCountryData"
-        , "Imported Country Data"
-        , "<th>Country</th><th>UN Region</th><th>UN Subregion</th><th>Bioregion</th>"
-        , "select name, un_region, un_subregion, bioregion from un_country"
+                "importedCountryData"
+                , "Imported Country Data"
+                , "<th>Country</th><th>UN Region</th><th>UN Subregion</th><th>Bioregion</th>"
+                , "select name, un_region, un_subregion, bioregion from un_country"
         ));
 
         queries.add(new NamedQuery(
-            "worldantsUploads"
-          , "Worldants uploads since May of 2019."
-          , "<th>Created</th><th>Operation</th><th>Message</th><th>File Size</th><th>Worldants Count</th><th>Exec Time</th><th>Log File</th>"      
-          , "SELECT created, operation, validate_message, file_size, orig_worldants_count, exec_time "
-          + ", concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/web/log/worldants/\",log_file_name), \"'>Log file</a>\") "           
-          + " FROM worldants_upload order by created desc"
-          ));
+                "worldantsUploads"
+                , "Worldants uploads since May of 2019."
+                , "<th>Created</th><th>Operation</th><th>Message</th><th>File Size</th><th>Worldants Count</th><th>Exec Time</th><th>Log File</th>"
+                , "SELECT created, operation, validate_message, file_size, orig_worldants_count, exec_time "
+                + ", concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/web/log/worldants/\",log_file_name), \"'>Log file</a>\") "
+                + " FROM worldants_upload order by created desc"
+        ));
 
         queries.add(new NamedQuery(
-            "ancillaryFiles"
-          , "Ancillary file list"
-          , "<th>ID</th><th>Title</th><th>FileName</th><th>Directory</th><th>Last Changed</th><th>Project Name</th>"      
-          , "select id, title, fileName, directory, last_changed, project_name, access_login from ancillary"
-          ));          
+                "ancillaryFiles"
+                , "Ancillary file list"
+                , "<th>ID</th><th>Title</th><th>FileName</th><th>Directory</th><th>Last Changed</th><th>Project Name</th>"
+                , "select id, title, fileName, directory, last_changed, project_name, access_login from ancillary"
+        ));
 
         queries.add(new NamedQuery(
-            "adminAlerts"
-          , "These are all of the Admin Alerts over time."
-          , "<th>ID</th><th>Alert</th><th>Acknowledged</th><th>Created</th>"
-          , "select id, alert, acknowledged, created from admin_alerts order by acknowledged, created desc, id"
-          ));
+                "adminAlerts"
+                , "These are all of the Admin Alerts over time."
+                , "<th>ID</th><th>Alert</th><th>Acknowledged</th><th>Created</th>"
+                , "select id, alert, acknowledged, created from admin_alerts order by acknowledged, created desc, id"
+        ));
 
 
         queries.add(new NamedQuery(
-           "lastSpecimenUpload"
-          , "Specimen uploads ordered by date."
-          , "<th>Group Name</th><th>Count</th><th>Last Upload</th><th>Reload</th>"
-          , "select g.name, count(distinct code), max(s.created)" 
-          + ", concat(concat(concat(concat(\"&nbsp;&nbsp;&nbsp;<a href=\'" + AntwebProps.getDomainApp() + "/upload.do?action=reloadSpecimenList&groupId=\", g.id), \"\'>\"), 'run'), \"</a>\") " 
-          + " from specimen s, groups g where s.access_group = g.id group by access_group order by max(s.created) desc"
+                "lastSpecimenUpload"
+                , "Specimen uploads ordered by date."
+                , "<th>Group Name</th><th>Count</th><th>Last Upload</th><th>Reload</th>"
+                , "select g.name, count(distinct code), max(s.created)"
+                + ", concat(concat(concat(concat(\"&nbsp;&nbsp;&nbsp;<a href=\'" + AntwebProps.getDomainApp() + "/upload.do?action=reloadSpecimenList&groupId=\", g.id), \"\'>\"), 'run'), \"</a>\") "
+                + " from specimen s, groups g where s.access_group = g.id group by access_group order by max(s.created) desc"
         ));
         /* namedQueries.add(new NamedQuery(
               "lastSpecimenUpload"
@@ -1143,40 +1143,40 @@ public abstract class Queries {
              + ", concat(concat(concat(concat(\"&nbsp;&nbsp;&nbsp;<a href=\'" + AntwebProps.getDomainApp() + "/upload.do?action=reloadSpecimenList&groupId=\", g.id), \"\'>\"), 'run'), \"</a>\") " 
              + " from specimen s, groups g, login l where s.access_group = g.id and g.id = l.group_id group by access_group order by max(s.created) desc"
            ));
-        */ 
+        */
 
         queries.add(new NamedQuery(
-           "emptySourceTaxonSets"
-          , "Taxon sets with empty source values."
-          , "<th>Key</th><th>Taxon Name</th><th>Source</th><th>Created</th>"
-          , "select project_name, taxon_name, source, created from proj_taxon where source = '' and taxon_name not in ('incertae_sedis', '(formicidae)')"
-            + " union select geolocale_id, taxon_name, source, created from geolocale_taxon where source = '' and taxon_name not in ('incertae_sedis', '(formicidae)')"
-            + " union select bioregion_name, taxon_name, source, created from bioregion_taxon where source = '' and taxon_name not in ('incertae_sedis', '(formicidae)')"
+                "emptySourceTaxonSets"
+                , "Taxon sets with empty source values."
+                , "<th>Key</th><th>Taxon Name</th><th>Source</th><th>Created</th>"
+                , "select project_name, taxon_name, source, created from proj_taxon where source = '' and taxon_name not in ('incertae_sedis', '(formicidae)')"
+                + " union select geolocale_id, taxon_name, source, created from geolocale_taxon where source = '' and taxon_name not in ('incertae_sedis', '(formicidae)')"
+                + " union select bioregion_name, taxon_name, source, created from bioregion_taxon where source = '' and taxon_name not in ('incertae_sedis', '(formicidae)')"
         ));
 
         queries.add(new NamedQuery(
-           "geolocaleTaxonDisputes"
-          , "Taxa that are thought to not exist in a given geolocale."
-          , "<th>Geolocale</th><th>Geolocale ID</th><th>Taxon Name</th><th>Source</th><th>Curator</th><th>Created</th>"
-          , "select g.name, g.id, gtd.taxon_name, gtd.source, gtd.curator_id, gtd.created from geolocale_taxon_dispute gtd, geolocale g where gtd.geolocale_id = g.id order by created desc"
+                "geolocaleTaxonDisputes"
+                , "Taxa that are thought to not exist in a given geolocale."
+                , "<th>Geolocale</th><th>Geolocale ID</th><th>Taxon Name</th><th>Source</th><th>Curator</th><th>Created</th>"
+                , "select g.name, g.id, gtd.taxon_name, gtd.source, gtd.curator_id, gtd.created from geolocale_taxon_dispute gtd, geolocale g where gtd.geolocale_id = g.id order by created desc"
         ));
         queries.add(new NamedQuery(
-           "projectTaxonDisputes"
-          , "Taxa that are thought to not exist in a given project."
-          , "<th>Project</th><th>Taxon Name</th><th>Source</th><th>Curator</th><th>Created</th>"
-          , "select p.project_name, ptd.taxon_name, ptd.source, ptd.curator_id, ptd.created from proj_taxon_dispute ptd, project p where ptd.project_name = p.project_name order by created desc"
+                "projectTaxonDisputes"
+                , "Taxa that are thought to not exist in a given project."
+                , "<th>Project</th><th>Taxon Name</th><th>Source</th><th>Curator</th><th>Created</th>"
+                , "select p.project_name, ptd.taxon_name, ptd.source, ptd.curator_id, ptd.created from proj_taxon_dispute ptd, project p where ptd.project_name = p.project_name order by created desc"
         ));
 
         // These are now automated to dissappear.
         queries.add(new NamedQuery(
-           "conflictedDefaultImages"
-          , "Taxa that have default images set from specimen of different taxa."
-          , "<th>taxon_name</th><th>prop</th><th>value</th><th>created</th><th>login_id</th><th>Specimen Taxon Name</th>"
-          , "select tp.taxon_name, tp.prop, tp.value, tp.created, tp.login_id, specimen.taxon_name from taxon_prop tp, specimen where tp.value = code and tp.prop like '%Specimen' and tp.taxon_name != specimen.taxon_name"
+                "conflictedDefaultImages"
+                , "Taxa that have default images set from specimen of different taxa."
+                , "<th>taxon_name</th><th>prop</th><th>value</th><th>created</th><th>login_id</th><th>Specimen Taxon Name</th>"
+                , "select tp.taxon_name, tp.prop, tp.value, tp.created, tp.login_id, specimen.taxon_name from taxon_prop tp, specimen where tp.value = code and tp.prop like '%Specimen' and tp.taxon_name != specimen.taxon_name"
         ));
 
         return queries; // end getAssortedNamedQueries()
-    }   
+    }
 
     // Invoke like: /util.do?action=curiousQuery&name=nonAsciiTaxonName
     public static ArrayList<NamedQuery> getNamedQueries() {        

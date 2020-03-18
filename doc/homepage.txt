@@ -1,0 +1,23 @@
+Homepage Technology Notes
+-------------------------
+
+Homepage is weird on Antweb. Uses the template engine so that it is modifiable. 
+    See the Curate page, "Edit Home Page for": Antweb Home Page
+
+Attempted to transfer to a simple page but the background image not working.
+    Struts ready with index2.do. index2.jsp and index2-body.jsp created from the templates.
+  
+/data/antweb/index.jsp does this:
+    <% request.getRequestDispatcher("/index.do").forward(request, response); %>
+     
+index.do returns /web/homepage/index.jsp
+    which includes /web/homepage/index-body.jsp
+
+So to modify the homepage, edit /data/antweb/web/homepage/index-body.jsp
+    on the live server!
+
+Create backup of the file as you are modifying a live file.
+
+This will not be in effect in the development environment until:
+    scp mjohnson@antweb-prod:/data/antweb/web/homepage/index-body.jsp /usr/local/tomcat/webapps/antweb/web/homepage/.
+
