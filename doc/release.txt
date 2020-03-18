@@ -1,7 +1,7 @@
 Release 8.15.1
 Date: Mar 17
   Further refinements of build process.
-  Removal of deprecations (about half).
+  Removal of new deprecations (Use valueOf instead of constructors).
 
 Release 8.15
 Date: Mar 17
