@@ -1,6 +1,12 @@
+Release 8.15.1
+Date: Mar 17
+  Further refinements of build process.
+  Removal of deprecations (about half).
+
 Release 8.15
 Date: Mar 17
   Modified build process.
+  Species list with Range Data Report.
 
 Release 8.14.4
 Date:
