@@ -1243,17 +1243,17 @@ update specimen set other = '
     }
 
     public double getDoubleLatitude() {
-        return new Float(getDecimalLatitude()).doubleValue();
+        return Float.valueOf(getDecimalLatitude()).doubleValue();
     }
     public double getDoubleLongitude() {
-        return new Float(getDecimalLongitude()).doubleValue();
+        return Float.valueOf(getDecimalLongitude()).doubleValue();
     }
 
     public String getLocLatitude() {
-        return new Float(getDecimalLatitude()).toString();
+        return Float.valueOf(getDecimalLatitude()).toString();
     }
     public String getLocLongitude() {
-        return new Float(getDecimalLongitude()).toString();
+        return Float.valueOf(getDecimalLongitude()).toString();
     }
 
     public String getLatLonMaxError() {

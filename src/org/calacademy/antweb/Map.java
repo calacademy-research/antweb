@@ -357,7 +357,7 @@ public class Map {
                         if (tracker.containsKey(key)) {
                             keyCount = ((Integer) tracker.get(key)).intValue();
                             ++keyCount;
-                            tracker.put(key, new Integer(keyCount));
+                            tracker.put(key, Integer.valueOf(keyCount));
                             ++nonUniqueLocalities;
                             
                             //Uncomment the s_log to see a list of the nonUniqueLocalities... 
@@ -377,7 +377,7 @@ public class Map {
                             if (localityCode != null) specimen.setLocalityCode(HttpUtil.encode(localityCode));
                             if (localityName != null) specimen.setLocalityName(HttpUtil.encode(localityName));
                                                     
-                            tracker.put(key, new Integer(1));
+                            tracker.put(key, Integer.valueOf(1));
                             //A.log("setPoints(ArrayList<String> specimens coord:" + coord); // isDiscard:" + isDiscard);
                             if (!isDiscard) {
                               Coordinate coord = new Coordinate(thisLon, thisLat);
@@ -575,9 +575,9 @@ public class Map {
 					if (distinctLocalities.containsKey(key)) {
 						keyCount = ((Integer) distinctLocalities.get(key)).intValue();
 						++keyCount;
-						distinctLocalities.put(key, new Integer(keyCount));
+						distinctLocalities.put(key, Integer.valueOf(keyCount));
 					} else {
-						distinctLocalities.put(key, new Integer(1));
+						distinctLocalities.put(key, Integer.valueOf(1));
 						++distinctMappableCount;
 						if (distinctMappableCount <= MAXMAPPOINTS) {  // We only map so many... // was: counter
 						  points.add(new Coordinate(lon, lat));
@@ -596,10 +596,10 @@ public class Map {
 					if (distinctUnmappableLocalities.containsKey(localityCode)) {
 						//keyCount = ((Integer) distinctLocalities.get(localityCode)).intValue();
 						//++keyCount;
-						//distinctLocalities.put(localityCode, new Integer(keyCount));				
+						//distinctLocalities.put(localityCode, Integer.valueOf(keyCount));
 					} else {
 						++distinctUnmappableCount;
-						distinctUnmappableLocalities.put(localityCode, new Integer(1));
+						distinctUnmappableLocalities.put(localityCode, Integer.valueOf(1));
                     }
 				}
             }// end while
@@ -853,9 +853,9 @@ public class Map {
     public static void addToDisplayMapCount(String objectName) {
       Integer count = displayMapHash.get(objectName);
       if (count == null) {
-        displayMapHash.put(objectName, new Integer(1));
+        displayMapHash.put(objectName, Integer.valueOf(1));
       } else {
-        count = new Integer(count.intValue() + 1);
+        count = Integer.valueOf(count.intValue() + 1);
         displayMapHash.put(objectName, count);
       }
       //A.log("addToDisplayMapCount() count:" + count);    

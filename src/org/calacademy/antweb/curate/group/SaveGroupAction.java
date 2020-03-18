@@ -60,7 +60,12 @@ public final class SaveGroupAction extends Action {
                 group.setId(id);
             }
             group.setName(form.getName());
-            Integer adminLoginId = new Integer(form.getAdminLoginId());
+// Use parseInt(String) to convert a string to a int primitive
+// Use valueOf(String) to convert a string to an Integer object.
+
+            //Integer adminLoginId = new Integer(form.getAdminLoginId());
+            Integer adminLoginId = Integer.valueOf(form.getAdminLoginId());
+
             group.setAdminLoginId(adminLoginId.intValue());
             group.setAbbrev(form.getAbbrev());
 

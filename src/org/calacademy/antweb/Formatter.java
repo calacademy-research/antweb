@@ -30,15 +30,15 @@ public class Formatter implements Serializable {
 	
 	
 	public static String commaFormat(String num) {
-	  return commaFormat((new Long(num)).intValue());
+	  return commaFormat((Long.valueOf(num)).intValue());
 	}	
 	
 	public static String commaFormat(long num) {
-	  return commaFormat((new Long(num)).intValue());
+	  return commaFormat((Long.valueOf(num)).intValue());
 	}
 	
 	public static String commaFormat(int num) {
-      return NumberFormat.getNumberInstance(Locale.US).format(num);		
+      return NumberFormat.getNumberInstance(Locale.US).format(num);
 	}
 	
 	public static String stripAccents(String s) {
@@ -487,7 +487,7 @@ public class Formatter implements Serializable {
         
   public static String formatMB(long num) {
     long longNum = num / 1024 / 1024;
-    String stringNum = (new Long(longNum)).toString();
+    String stringNum = (Long.valueOf(longNum)).toString();
     return Formatter.commaFormat(longNum) + "MB";
   }
         

@@ -34,7 +34,7 @@ public class ManageMuseumsAction extends Action {
         String museumTitle = (String) df.get("title");   
            
         Boolean isActive = (Boolean) df.get("isActive"); 
-        if (isActive == null) isActive = new Boolean(false);   
+        if (isActive == null) isActive = Boolean.valueOf(false);
         String action = (String) df.get("action");
         String step = (String) df.get("step");
 

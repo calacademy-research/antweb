@@ -43,7 +43,7 @@ public final class SaveLoginAction extends Action {
 
 		A.log("execute() 0 id:" + form.getId() + " step:" + form.getStep() + " delete:" + form.getDelete());
         
-        int id = (new Integer(form.getId()).intValue());
+        int id = (Integer.valueOf(form.getId()).intValue());
         Login login = null;
 
         java.sql.Connection connection = null;

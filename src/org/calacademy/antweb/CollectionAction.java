@@ -83,7 +83,7 @@ public final class CollectionAction extends Action {
 			
             session.setAttribute("advancedSearchResults", collection);
             //session.setAttribute("activeSession", new Object());
-            session.setAttribute("activeSession", new Boolean(true));
+            session.setAttribute("activeSession", Boolean.valueOf(true));
 
             if (collection.getLocality() != null) {
               Map map = new Map(collection);
