@@ -1,5 +1,8 @@
+Release 8.15.1
+Remove:
+  etc/buildAntweb.properties	etc/buildAntwebJosh.properties	etc/buildAntwebMark.properties	etc/buildAntwebTest.properties	etc/buildProd.properties
+
 Release 8.15
-Fast-forward
  doc/done.txt                                          |  22 ++++++++++++++++------
  doc/homepage.txt                                      |  23 +++++++++++++++++++++++
  doc/install.txt                                       |   9 +++++++++
