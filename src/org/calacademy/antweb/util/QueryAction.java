@@ -164,6 +164,8 @@ public class QueryAction extends Action {
                 }
 
                 if ("query".equals(action) && name != null && param != null) {
+                    ActionForward a = Check.init(Check.GEOLOCALE, request, mapping); if (a != null) return a;
+
                     String message = QueryManager.runQueryWithParam(name, param, connection);
                     request.setAttribute("message", message);
                     returnLoc = mapping.findForward("adminHtmlMessage");
