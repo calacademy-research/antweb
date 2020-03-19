@@ -1,7 +1,11 @@
+Release 8.16.2
+Date: Mar 18
+    Mysql initcap function for Query Manager.
+
 Release 8.16.1
 Date: Mar 18
   Shift code base to use /usr/local/antweb (instead of /data/antweb/ or tomcat/webapps/antweb)
-  Species List with Range Data report refinements. (subfamily and genus capitalized, countries ordered with space after comma).
+  Species List with Range Data report refinements. (countries ordered with space after comma).
 
 Release 8.16
 Date: Mar 18
