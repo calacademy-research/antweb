@@ -573,6 +573,10 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
 		  int c = (new GeolocaleDb(connection)).calcEndemic();
 		  message =  c + " endemics calculated";                 
 		}
+		if (action.equals("calcHigherEndemic")) {
+		  int c = (new GeolocaleDb(connection)).calcHigherEndemism();
+		  message =  c + " higher endemics calculated";                 
+		}
 
         // 40 sec
 		// handled during GeolocaleDb.updateCounts()

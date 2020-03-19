@@ -196,10 +196,13 @@ public abstract class QueryManager {
             }
 
 		    message.append("<hr><br><b>Name: </b><a href='" + AntwebProps.getDomainApp() + "/util.do?action=curiousQuery&name=" + namedQuery.getName() + "'>" + namedQuery.getName() + "</a>\n");
-		    message.append("<br><br><b>Query:</b> " + namedQuery.getQuery() + "\n"); 
-		    if (namedQuery.getDesc() != null)
-		  	  message.append("<br><br><b>Description:</b>" + namedQuery.getDesc() + "\r");
-		    message.append("<br><br><table>");  
+            if (namedQuery.getDesc() != null)
+                message.append("<br><br><b>Description:</b>" + namedQuery.getDesc() + "\r");
+
+A.log("namedQuery:" + namedQuery.getDesc());
+
+            message.append("<br><br><b>Query:</b> " + namedQuery.getQuery() + "\n");
+		    message.append("<br><br><table>");
 		    if (namedQuery.getHeader() != null) 
 			  message.append("<tr>" + namedQuery.getHeader() + "</tr>\n");
             
@@ -224,7 +227,12 @@ public abstract class QueryManager {
             message.append("<br><b>rowCount:</b>" + i + "\n");
 
             long timePassed = AntwebUtil.minsSince(startTime);
-            message.append("<br><b>min:</b>" + timePassed + "\n");
+            String note = "<br><b>min:</b>" + timePassed + "\n";
+            if (timePassed < 3) {
+                timePassed = AntwebUtil.secsSince(startTime);
+                note = "<br><b>secs:</b>" + timePassed + "\n";
+            }
+            message.append(note);
 
             if (i > 0) {               
               if (namedQuery.getDetailQuery() != null) {

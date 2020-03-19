@@ -108,7 +108,7 @@ public class SessionRequestFilter implements Filter {
             htmlMessage 
               = "<br><b>Request Error: </b>" + message;
           } else {
-            message += " See http://antweb.org/web/log/srfExceptions.jsp for case#:" + caseNumber + " e:" + e.toString() + " target:" + target;
+            message += " See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber + " e:" + e.toString() + " target:" + target;
             s_log.error("doFilter() WST " + message);
             message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
   		    LogMgr.appendLog("srfExceptions.jsp", message);    

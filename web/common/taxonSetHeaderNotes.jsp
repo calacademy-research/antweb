@@ -24,10 +24,13 @@ if (true) {
       } %>
 
     <%
-      if (LoginMgr.isCurator(request)) {
-        if (overview instanceof Country) {
+      if ((overview instanceof Country || overview instanceof Adm1) && LoginMgr.isCurator(request)) {
           note += "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a><br>";
-        }
+      }
+      if ((overview instanceof Subregion || overview instanceof Region) && LoginMgr.isAdmin(request)) {
+          note += "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
+          note += "<br><b>&nbsp;&nbsp;&nbsp;(Admin only)</b> Use sparingly. Approximately 1 - 2 minutea for every 1K species - species count:" + overview.getSpeciesCount();
+          note += "<br>";
       }
     %>
 

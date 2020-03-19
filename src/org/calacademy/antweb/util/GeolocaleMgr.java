@@ -268,7 +268,7 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
       return null;
     }
 
-    // To be removed...
+    // To be removed... because not unique.
 	public static Geolocale getAdm1(String adm1Name) {
       for (Geolocale geolocale : s_geolocales) {
         if ("adm1".equals(geolocale.getGeorank()) && geolocale.getName().equals(adm1Name)) return geolocale;
@@ -277,6 +277,11 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
     }
 
 
+    public static Adm1 getAdm1(int geolocaleId) {
+      Geolocale geolocale = getGeolocale(geolocaleId);
+      if (geolocale != null) return (Adm1) geolocale;
+      return null;
+    }
 
     public static Geolocale getGeolocale(int geolocaleId) {
       if (!AntwebMgr.isPopulated()) return null;

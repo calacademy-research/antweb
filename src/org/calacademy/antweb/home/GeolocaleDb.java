@@ -1224,9 +1224,14 @@ public static int c = 0;
       
       c += calcCountryEndemism();
       c += calcAdm1Endemism();
+
+      calcHigherEndemism();
+
       return c;
     }
-    
+
+// ----------------
+
     private void calcSubregionEndemism() {
 		/*
 		  select gt.taxon_name taxon_name, gt.geolocale_id geolocale_id, g.name, count(*) count from geolocale g, geolocale_taxon gt, taxon t
@@ -1343,6 +1348,8 @@ public static int c = 0;
         }
         return c;
     }
+
+    // Will set to true (1)
     private int updateGeolocaleTaxonField(String field, int geolocaleId, String taxonName) {
         int c = 0;
         String updateDml = "update geolocale_taxon set is_" + field + " = "; // will be is_endemic or is_introduced
@@ -1360,6 +1367,119 @@ public static int c = 0;
             s_log.error("updateGeolocaleTaxonField() e:" + e);
         } finally {
 			DBUtil.close(stmt, null, this, "updateGeolocaleTaxonField()");
+        }
+        return c;
+    }
+
+// ----------------
+
+    // After the Adm1 and Country endemism is calculated from geolocale_taxon data we can make sure that those values
+    // are reflected in the higher georanks (subregion and region).
+    public int calcHigherEndemism() {
+
+        // select all of the geolocale_taxa where endemism = 1
+        int a = calcHigherEndemismAdm1();
+        A.log("calcHigherEndemism() country:" + a);
+        int b = calcHigherEndemismCountry();
+        A.log("calcHigherEndemism() subregion:" + b);
+        int c = calcHigherEndemismSubregion();
+        A.log("calcHigherEndemism() region:" + c);
+
+        return a + b + c;
+    }
+
+    private int calcHigherEndemismAdm1() {
+        String query = "select g.id, g.name, g.georank, gt.taxon_name from geolocale_taxon gt, geolocale g "
+          + " where gt.geolocale_id = g.id and is_endemic = 1 and georank = 'adm1'";
+        int c = 0;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "calcHigherEndemismAdm1()");
+            rset = stmt.executeQuery(query);
+
+            while (rset.next()) {
+                int geolocaleId = rset.getInt("g.id");
+                Adm1 adm1 = GeolocaleMgr.getAdm1(geolocaleId);
+
+                String taxonName = rset.getString("gt.taxon_name");
+
+                ++c;
+                Country country = GeolocaleMgr.getCountry(adm1.getParent());
+
+                int updated = updateGeolocaleTaxonField("endemic", country.getId(), taxonName);
+
+                //A.log("calcHigherEndemismAdm1() c:" + c + " country:" + country + " taxonName:" + taxonName + " updated:" + updated);
+            }
+            A.log("calcHigherEndemismAdm1() c:" + c);
+        } catch (SQLException e) {
+            s_log.error("calcHigherEndemismAdm1() query:" + query + " e:" + e.toString());
+        } finally {
+            DBUtil.close(stmt, rset, this, "calcHigherEndemismAdm1()");
+        }
+        return c;
+    }
+
+    private int calcHigherEndemismCountry() {
+        String query = "select g.id, g.name, g.georank, gt.taxon_name from geolocale_taxon gt, geolocale g "
+                + " where gt.geolocale_id = g.id and is_endemic = 1 and georank = 'country'";
+        int c = 0;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "calcHigherEndemismCountry()");
+            rset = stmt.executeQuery(query);
+
+            while (rset.next()) {
+                int geolocaleId = rset.getInt("g.id");
+                Country country = (Country) GeolocaleMgr.getGeolocale(geolocaleId);
+
+                String taxonName = rset.getString("gt.taxon_name");
+
+                ++c;
+                Subregion subregion = (Subregion) GeolocaleMgr.getGeolocale(country.getParent());
+
+                int updated = updateGeolocaleTaxonField("endemic", subregion.getId(), taxonName);
+
+                //A.log("calcHigherEndemismAdm1() c:" + c + " subregion:" + subregion + " taxonName:" + taxonName + " updated:" + updated);
+            }
+            A.log("calcHigherEndemismCountry() c:" + c);
+        } catch (SQLException e) {
+            s_log.error("calcHigherEndemismCountry() query:" + query + " e:" + e.toString());
+        } finally {
+            DBUtil.close(stmt, rset, this, "calcHigherEndemismCountry()");
+        }
+        return c;
+    }
+
+    private int calcHigherEndemismSubregion() {
+        String query = "select g.id, g.name, g.georank, gt.taxon_name from geolocale_taxon gt, geolocale g "
+                + " where gt.geolocale_id = g.id and is_endemic = 1 and georank = 'subregion'";
+        int c = 0;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "calcHigherEndemismSubregion()");
+            rset = stmt.executeQuery(query);
+
+            while (rset.next()) {
+                int geolocaleId = rset.getInt("g.id");
+                Subregion subregion = (Subregion) GeolocaleMgr.getGeolocale(geolocaleId);
+
+                String taxonName = rset.getString("gt.taxon_name");
+
+                ++c;
+                Region region = (Region) GeolocaleMgr.getGeolocale(subregion.getParent());
+
+                int updated = updateGeolocaleTaxonField("endemic", region.getId(), taxonName);
+
+                A.log("calcHigherEndemismAdm1() c:" + c + " region:" + region + " taxonName:" + taxonName + " updated:" + updated);
+            }
+            A.log("calcHigherEndemismSubregion() c:" + c);
+        } catch (SQLException e) {
+            s_log.error("calcHigherEndemismSubregion() query:" + query + " e:" + e.toString());
+        } finally {
+            DBUtil.close(stmt, rset, this, "calcHigherEndemismSubregion()");
         }
         return c;
     }

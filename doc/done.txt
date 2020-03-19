@@ -11777,43 +11777,45 @@ Feb 1. 4 hrs.
   Deploy to live site. Document.
   Reload LoginMgr if login saved (bug fix).  
   Move reload managers to technical info area of curate page.
-  
+
 Feb 3. 3.5hrs.
   Look into down server images. Contact Joe and Randy.
-  Login and Group admin page refinement. 
+  Login and Group admin page refinement.
   Deploy to live site.
-  Update dev environment.  
+  Update dev environment.
   Deploy again.
   Regenerate the genInc files for the live site.
-  
+
 Feb 4. 3hrs.
   Work with Joe preparing for server switch.
   Adapt the makeLinks.sh for the new server.
   Look into mapped drives. Devise tests. Share/document for Joe.
   New image upload tool respects the Services down mechansism.
   Deploy.
-  
+
 Feb 7. 1.5hrs.
   API changes. See release notes for Release 8.10.3
-  
+
 Feb 8. .5hr.
-  Work on VPN issue with Randy. Upgrade VPN. 
-    
+  Work on VPN issue with Randy. Upgrade VPN.
+
+-week: 12.5
+
 Feb 9. .5hr.
   Get VPN working again with Randy's help.
   Commit to CVS and deploy to the new server. Document.
-  
+
 Feb 11. 3hrs.
   Minor prep for tomorrows deployment of new server.
   Set up Git antweb repository. Account and Repository.
-  Managed checkout. Could not manage check in.  
+  Managed checkout. Could not manage check in.
 `
 Feb 12. 11 - 6. 1.5hr break. 1hr in eve. 6.5hrs.
   Get Joe Remote Desktop access into my dev machine (laptop) using Chrome.
   Configure laptop to access Github. Install public ssh keys.
   Configure 10.2.22.30 to access Github. Install public ssh keys for mark and antweb.
   Handle the artist created db issue but updating early artist to legal values.
-  Get github version configured and working on local machine.  
+  Get github version configured and working on local machine.
   Move production database to new server.
   Get UWSGI working. Find fault (not supporting version in url).
   Deploy release to new server. Adjust to work around git.
@@ -11832,14 +11834,14 @@ Feb 13. 5.5hrs
   Update the api.do to have appropriate links for testing.
   Take over the api from Joe. Working now except for a few of the methods.
   Document/work with Joe.
-  Monitor the data copy.  
+  Monitor the data copy.
 
 Feb 14. 12 - 5. 12 - 3. 8hrs.
   Swap servers!
-  Document. 
-  Debugging. 
+  Document.
+  Debugging.
   Testing. Successful.
-  
+
 Feb 15. 7am. 10 - 11. 12 - 8. 1 hr break. 8hrs
   Test to verify server up after scheduler.
   Work to find why wget won't work (server not able to web request from itself).
@@ -11859,10 +11861,12 @@ Feb 15. 7am. 10 - 11. 12 - 8. 1 hr break. 8hrs
   Document.
   Invoice and release notes for 8.11 and 8.11.1
 
+-week: 31.5
+
 Feb 16. 5.5hr + 2 - 5am. 8hrs.
   Generate new Bolton NGC list.
   Turn off ONLY_FULL_GROUP_BY in /etc/my.cnf to enable recent images query.
-  Make the moveFile logs quieter. 
+  Make the moveFile logs quieter.
   Begin move to IntelliJ
   Removal of deprecations.
   Database performance optimization.
@@ -11872,7 +11876,7 @@ Feb 16. 5.5hr + 2 - 5am. 8hrs.
   Turn off specimen upload in jsp file, except for admin.
   Separate Run Count Crawls from the upload. Make a separate link.
 
-Feb 17. 12pm - 4am. 4hrs of break. 3 discounted. 9hrs.
+Feb 17. 12pm - 4am. 4hrs of break. (4 discounted). 8hrs.
   Attempt deployment. Went very poorly due to git configuration challenges. Fixed.
   Document deployment. Document performance concerns and request help.
   Continue to refine GIT usage. Using .gitignore file we can not step on configurations.
@@ -11918,7 +11922,7 @@ Feb 20. 5.5hrs.
 
 * Reporting of work on Feb 20th and 21st was corrected since reported with release.
 
-Feb 21. 7hrs. 
+Feb 21. 7hrs.
   Clean up/test/document after fix.
   Home page login leads to home page. Login Page login leads to home page.
   Upload Services down for Maintenance message will persist over server restart.
@@ -11931,15 +11935,17 @@ Feb 21. 7hrs.
 
 Feb 22. 2hr.
   Update dev environment. Test subgenus. Work with Brian to specify solution. Reload taxa.
-  Figure out where log files are. Seems that the server has been misconfigured (using tomcat 8). 
+  Figure out where log files are. Seems that the server has been misconfigured (using tomcat 8).
   Figure out (I think) why API not working. Misconfiguration.
-  
+
+-week:40 (1.5 discounted)
+
 Feb 23. 3hr.
-  Check on server. 
+  Check on server.
   User interface for subgenera drop down list on showBrowse and images pages.
 
 Feb 24. 6.5hrs.
-  Work with Randy on Joe. Get back to Tomcat 9. Support API work  
+  Work with Randy on Joe. Get back to Tomcat 9. Support API work
   Work on the subgenera java work.
   Api testing, deployment, documentation.
   Install tomcat9 in dev.
@@ -11947,38 +11953,41 @@ Feb 24. 6.5hrs.
   Cite text sent to Brian and made dynamic with version number.
   Tomcat9 memory configuration.
   Finishing touches on Subgenera. Still need to fetch set with connection.
-    
+
 Feb 25th. 7hrs.
   Deploy the dynamic citing test.
   Finish (1st rev) of the subgenera selector. Deploy, document.
   Look into disk space.
-  Subgenus added to specimen page titles.  
+  Subgenus added to specimen page titles.
   Change taxaPage from session to request.
   Clean up object finalization. Finalize removed from specimen and taxon. Objects adjusted.
-  Citing copy changed. 
+  Citing copy changed.
     Citing Antweb page made dynamic. Put in include file.
   View selector fixed.
   Sort by added to the subgenera select list. Context sensitive list.
   Deploy. Document.
   Testing, adjustments, redeployments.
-  Server configuration.  
-  
+  Server configuration.
+
 Feb 26. 1.5hrs.
-  A bunch of jsp fixes. Ironing out yesterday's deployment.  
+  A bunch of jsp fixes. Ironing out yesterday's deployment.
     Image page session fix
     Citing Antweb copy changed.
     Subgenera drop down list made available for all on the image and browse taxon pages.
-    Bolded Citation added prior to citation.  
+    Bolded Citation added prior to citation.
 
 Feb 27. 2.5hrs.
   Fix the database column length of DNANotes. Adjusted. Test reload.
   Look into fixing data download features. Complex. Unresolved.
 
 Feb 28. 2 hr.
-  Adjust disk space warning. 
+  Adjust disk space warning.
   Adjust the server caching strategy.
-  Fix the effective loging when an admin re-runs a curators upload.  
-    
+  Fix the effective logging when an admin re-runs a curators upload.
+
+-week: 22.5
+-Feb: 106
+
 Mar 1. 1hrs.
   Check on server. Looking good.
   Deploy. Document.
@@ -12003,6 +12012,8 @@ Mar 5. 3hrs.
   Generate war file in Ant.
   Diagnose CAS Sophos that was throttling upload speeds.
 
+-week: 10.5
+
 Mar 8. 1hr.
   Investigating war file.
 
@@ -12016,6 +12027,8 @@ Mar 12. 1hr.
 Mar 14. 1hr.
   Reconfiguration work.
 
+-week: 4hrs.
+
 Mar 15. 1.5hrs.
   Late night endemic queries run for Brian.
 
@@ -12025,10 +12038,18 @@ Mar 16. 3hr.
   Deploy to dev. New configuration (without war file).
   Further endemic work.
 
-Mar 17
+Mar 17. 3.5 hrs.
   Write Species List with Range Data Report.
     Link into taxonomicPage. Only for countries and for curators only.
   Deploy to stage (and configure for modified deployment).
+  Deploy to live site. Refining deployment process.
+  Fix a bunch of deprecations. There are a bunch nmore on the server JVMs.
+  Remove extraneous content from our source tree.
+
+
+
+
+-week:
 
 
 Percolate up endemic to subregion and region.
