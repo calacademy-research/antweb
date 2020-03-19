@@ -199,7 +199,7 @@ public abstract class QueryManager {
             if (namedQuery.getDesc() != null)
                 message.append("<br><br><b>Description:</b>" + namedQuery.getDesc() + "\r");
 
-A.log("namedQuery:" + namedQuery.getDesc());
+            A.log("namedQuery:" + namedQuery.getDesc());
 
             message.append("<br><br><b>Query:</b> " + namedQuery.getQuery() + "\n");
 		    message.append("<br><br><table>");

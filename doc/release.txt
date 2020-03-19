@@ -1,8 +1,14 @@
+Release 8.16.1
+Date: Mar 18
+  Shift code base to use /usr/local/antweb (instead of /data/antweb/ or tomcat/webapps/antweb)
+  Species List with Range Data report refinements. (subfamily and genus capitalized, countries ordered with space after comma).
+
 Release 8.16
 Date: Mar 18
   Endemic values will percolate up from adm1 and countries to subregions and regions.
   Species List with Range Data report will now report on regions, subregions, countries or adm1s.
   Linked in to taxonomic species page for countries and adm1 (for curators) and subregions and regions (for admin, with performance warning).
+  Query Manager extended to allow queries with parameters.
   Web Queries will now report seconds if minutes are less than 3.
   
 Release 8.15.1

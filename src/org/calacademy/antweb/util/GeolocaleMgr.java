@@ -239,9 +239,7 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
       if (!AntwebMgr.isPopulated()) return null;
 //      try {
       if (Utility.isNumber(name)) {
-          
-      
-        Integer i = new Integer(name);
+        Integer i = Integer.valueOf(name);
         if (i != null) {
           Geolocale geolocale = getGeolocale(i.intValue());
           //A.log("GeolocaleMgr.getGeolocale(String) i:" + i + " geo:" + geolocale);

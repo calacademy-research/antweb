@@ -46,6 +46,7 @@ import org.apache.avalon.framework.logger.Logger;
  * 
  * And then it is copied to the project's data directory... {$antweb.home}/[project]/[project]_project.txt
  *   where $antweb.home is on production:/data/antweb and on my dev box: /usr/local/tomcat/webapps/antweb
+ *   Either way, pointed to by /usr/local/antweb
  *
  * So we might end up with these files, for instance:
  *   /home/antweb/workingdir/arizonaants.txt
@@ -820,21 +821,6 @@ if ("dorylinaedorylus erraticus".equals(currentValidName)) A.log("importSpeciesL
     }
     
     private static int fossilCount = 0;
-    /*
-      Species lists look like:
-        Live:
-          /data/antweb/web/speciesList/madagascar/madants_speciesList.txt
-          /data/antweb/web/speciesList/illinois/illinoisants_speciesList.txt
-        Dev:
-          /usr/local/tomcat/webapps/antweb/web/speciesList/arizona/arizonaants_speciesList.txt
-
-        For backup convenience, uploaded copies are copied here:
-          /data/antweb/web/workingdir/
-          *? Are these kept current?  Are the *.txt or *_speciesList.txt?
-      
-        Date stamped copies are put here upon upload:
-          /data/antweb/web/upload
-    */
 
     public UploadDetails reloadSpeciesList(String project, int accessGroupId) {
       // Called only from UploadAction. This is half of the fetch and reload process.

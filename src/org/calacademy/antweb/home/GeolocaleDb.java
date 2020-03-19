@@ -1231,16 +1231,6 @@ public static int c = 0;
     }
 
 // ----------------
-
-    private void calcSubregionEndemism() {
-		/*
-		  select gt.taxon_name taxon_name, gt.geolocale_id geolocale_id, g.name, count(*) count from geolocale g, geolocale_taxon gt, taxon t
-		  where g.id = gt.geolocale_id and t.taxon_name = gt.taxon_name and t.status != 'morphotaxon' and t.rank in ('species', 'subspecies')
-		  and g.georank = 'subregion' group by taxon_name having count(*) = 1  order by geolocale_id;    
-		*/
-      String query = "";
-      calcEndemism(query);
-    }
         
     private int calcCountryEndemism() {
       String query = "select gt.taxon_name taxon_name, max(gt.geolocale_id) geolocale_id, count(*) count"
@@ -1551,7 +1541,7 @@ public static int c = 0;
         int count = getImagedSpecimenCount(geolocale);
         UtilDb utilDb = new UtilDb(getConnection());
         //A.log("updateImagedSpecimenCount() id:" + geolocale.getId());
-        utilDb.updateField("geolocale", "imaged_specimen_count", (new Integer(count)).toString(), "id = " + geolocale.getId());
+        utilDb.updateField("geolocale", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "id = " + geolocale.getId());
     }
   
     private int getImagedSpecimenCount(Geolocale geolocale) {

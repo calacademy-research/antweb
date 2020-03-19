@@ -88,7 +88,7 @@ public class LogMgr {
   
     String yearStr = dateStr.substring(0,4);
   
-    String logDir = "/data/antweb/web/log/";
+    String logDir = "/usr/local/antweb/web/log/";
     String bakDir = logDir + "bak/";
     String backupDir = bakDir + yearStr + "/" + dateStr + "/";
     (new Utility()).makeDirTree(backupDir);

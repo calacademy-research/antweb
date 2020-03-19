@@ -1,7 +1,63 @@
+Release 8.16
+ doc/done.txt                                             |  87 +++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------
+ doc/release.txt                                          |   7 +++++++
+ src/org/calacademy/antweb/home/GeolocaleDb.java          | 122 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ src/org/calacademy/antweb/util/GeolocaleMgr.java         |   7 ++++++-
+ src/org/calacademy/antweb/util/QueriesWithParams.java    |  44 ++++++++++++++++++++---------------------
+ src/org/calacademy/antweb/util/QueryManager.java         |  18 ++++++++++++-----
+ src/org/calacademy/antweb/util/SessionRequestFilter.java |   2 +-
+ src/org/calacademy/antweb/util/UtilDataAction.java       |   4 ++++
+ web/common/taxonSetHeaderNotes.jsp                       |   9 ++++++---
+ web/documentation/releaseNum.jsp                         |   2 +-
+ 10 files changed, 234 insertions(+), 68 deletions(-)
+
 Release 8.15.1
 Remove:
   etc/buildAntweb.properties	etc/buildAntwebJosh.properties	etc/buildAntwebMark.properties	etc/buildAntwebTest.properties	etc/buildProd.properties
-
+  AppResJoshAntweb.properties configJosh.sh
+  WEB-INF/classes/ApplicationResources.propertiesNew          | 93 ---------------------------------------------------------------------------------------------
+  WEB-INF/classes/ApplicationResources.propertiesOld          | 87 ---------------------------------------------------------------------------------------
+  WEB-INF/classes/ApplicationResources.propertiesTemplate     | 33 ---------------------------------
+  doc/fileMods.txt                                            |  5 ++++-
+  etc/AppResJoshAntweb.properties                             | 29 -----------------------------
+  etc/AppResLiveAntweb.properties                             | 23 -----------------------
+  etc/AppResLiveAntwebTest.properties                         | 25 -------------------------
+  etc/buildAntweb.properties                                  |  6 ------
+  etc/buildAntwebJosh.properties                              |  6 ------
+  etc/buildAntwebMark.properties                              |  6 ------
+  etc/buildAntwebTest.properties                              |  7 -------
+  etc/buildProd.properties                                    |  5 -----
+  etc/configAntweb.sh                                         | 22 ----------------------
+  etc/configDev.sh                                            |  8 --------
+  etc/configJosh.sh                                           | 25 -------------------------
+  etc/configMark.sh                                           |  6 ------
+  etc/configProd.sh                                           |  3 ---
+  etc/configStg.sh                                            | 12 ------------
+  src/org/calacademy/antweb/CollectionAction.java             |  2 +-
+  src/org/calacademy/antweb/Formatter.java                    |  8 ++++----
+  src/org/calacademy/antweb/Map.java                          | 16 ++++++++--------
+  src/org/calacademy/antweb/Specimen.java                     |  8 ++++----
+  src/org/calacademy/antweb/StatisticsAction.java             |  2 +-
+  src/org/calacademy/antweb/curate/ManageMuseumsAction.java   |  2 +-
+  src/org/calacademy/antweb/curate/group/SaveGroupAction.java |  7 ++++++-
+  src/org/calacademy/antweb/curate/login/SaveLoginAction.java |  2 +-
+  src/org/calacademy/antweb/geolocale/LocalityOverview.java   |  2 +-
+  src/org/calacademy/antweb/search/GenericSearchResults.java  |  8 ++++----
+  28 files changed, 35 insertions(+), 423 deletions(-)
+  delete mode 100644 WEB-INF/classes/ApplicationResources.propertiesNew
+  delete mode 100755 WEB-INF/classes/ApplicationResources.propertiesOld
+  delete mode 100644 WEB-INF/classes/ApplicationResources.propertiesTemplate
+  delete mode 100755 etc/AppResJoshAntweb.properties
+  delete mode 100755 etc/AppResLiveAntweb.properties
+  delete mode 100755 etc/AppResLiveAntwebTest.properties
+  delete mode 100755 etc/buildAntweb.properties
+  delete mode 100755 etc/buildAntwebJosh.properties
+  delete mode 100755 etc/buildAntwebMark.properties
+  delete mode 100755 etc/buildAntwebTest.properties
+  delete mode 100755 etc/buildProd.properties
+  delete mode 100755 etc/configAntweb.sh
+  delete mode 100755 etc/configJosh.sh
+ 
 Release 8.15
  doc/done.txt                                          |  22 ++++++++++++++++------
  doc/homepage.txt                                      |  23 +++++++++++++++++++++++
