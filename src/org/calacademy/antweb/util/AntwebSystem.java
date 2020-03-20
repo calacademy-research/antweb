@@ -59,7 +59,7 @@ public class AntwebSystem {
       countStr = countLinesStr.substring(0, spaceIndex);
       //s_log.warn("countLines:" + countStr);
     
-      count = (new Integer(countStr)).intValue();
+      count = (Integer.valueOf(countStr)).intValue();
     } catch (NumberFormatException e) {
       s_log.error("countLines e:" + e + " countStr:" + countStr);
     } catch (StringIndexOutOfBoundsException e) {

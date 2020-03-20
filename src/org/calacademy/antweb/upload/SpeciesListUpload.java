@@ -526,7 +526,7 @@ public class SpeciesListUpload extends AntwebUpload {
 /**/
                         
                         try {
-                          if (index == antcatIdHeader) antcatId = (new Integer(element)).intValue();
+                          if (index == antcatIdHeader) antcatId = (Integer.valueOf(element)).intValue();
                         } catch (NumberFormatException e) {
                           s_log.warn("importSpeciesList() skipping line:" + lineNum + " column:" + index + " element:" + element + " e:" + e); 
                           //String heading = "Trouble parsing lines:";
