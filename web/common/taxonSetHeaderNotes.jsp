@@ -24,12 +24,17 @@ if (true) {
       } %>
 
     <%
+      String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
+      if (LoginMgr.isAdmin(request)) {
+          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=speciesListWithRangeData&param=Comoros'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
+      }
       if ((overview instanceof Country || overview instanceof Adm1) && LoginMgr.isCurator(request)) {
-          note += "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a><br>";
+          note += speciesListWithRangeDataNote;
+          note += "<br>";
       }
       if ((overview instanceof Subregion || overview instanceof Region) && LoginMgr.isAdmin(request)) {
-          note += "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
-          note += "<br><b>&nbsp;&nbsp;&nbsp;(Admin only)</b> Use sparingly. Approximately 1 - 2 minutea for every 1K species - species count:" + overview.getSpeciesCount();
+          speciesListWithRangeDataNote += "<br><b>&nbsp;&nbsp;&nbsp;(Admin only)</b> Use sparingly. Approximately 1 - 2 minutea for every 1K species - species count:" + overview.getSpeciesCount();
+          note += speciesListWithRangeDataNote;
           note += "<br>";
       }
     %>

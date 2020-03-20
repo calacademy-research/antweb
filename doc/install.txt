@@ -131,8 +131,12 @@ create database ant;
   gunzip < 20191025.sql.gz | mysql -u antweb -p ant
 
 See:
-/etc/mysql/mysql.cnf
-for changes that effect recent images upload and performance.
+/etc/mysql/mysql.cnf (or etc/mysql/my.cnf same thing)...
+  for changes that effect recent images upload and performance.
+and 
+  group_concat_max_len=15360
+etc...
+
 
 CVS
 ---
@@ -569,7 +573,6 @@ https and ssl
 Create /data/antweb/
 image directory mounted.
 
-my.cnf configurations.
 
 
 Move the jar files to enable the ant build...

@@ -54,7 +54,7 @@ public abstract class QueryManager {
         // Above, due to scrappy groups/login design, it is possible to not specify a admin_login for a group, and when the group is created
         // and used for insertion of records (SpecimenUpload.java:309) there is no access_login created, causing problems at loadAllSpecimenFiles times.
         for (NamedQuery namedQuery : queryList) {
-          String results = runNamedQuery(namedQuery, connection);
+          String results = runNamedQueryHtml(namedQuery, connection);
           if (results != null)
             if (!results.contains("rowCount:</b>0"))
               message += results;
@@ -71,7 +71,7 @@ public abstract class QueryManager {
         // Above, due to scrappy groups/login design, it is possible to not specify a admin_login for a group, and when the group is created
         // and used for insertion of records (SpecimenUpload.java:309) there is no access_login created, causing problems at loadAllSpecimenFiles times.
         for (NamedQuery namedQuery : queryList) {
-          String results = runNamedQuery(namedQuery, connection);
+          String results = runNamedQueryHtml(namedQuery, connection);
           if (results != null && !results.contains("<br><b>rowCount:</b>0"))
               message += results;
         }
@@ -88,7 +88,7 @@ public abstract class QueryManager {
         // Above, due to scrappy groups/login design, it is possible to not specify a admin_login for a group, and when the group is created
         // and used for insertion of records (SpecimenUpload.java:309) there is no access_login created, causing problems at loadAllSpecimenFiles times.
         for (NamedQuery namedQuery : queryList) {
-          String results = runNamedQuery(namedQuery, connection);
+          String results = runNamedQueryHtml(namedQuery, connection);
           if (results != null)
             message += results;
         }
@@ -102,7 +102,7 @@ public abstract class QueryManager {
         message += " * - These AntWeb issues imply issues for Antweb developers to resolve.";
         ArrayList<NamedQuery> queryList = Queries.getNamedQueryList(Queries.getDevIntegrityNames());       
         for (NamedQuery namedQuery : queryList) {
-          String results = runNamedQuery(namedQuery, connection);
+          String results = runNamedQueryHtml(namedQuery, connection);
           if (results != null)
             message += results;
         }
@@ -136,7 +136,7 @@ public abstract class QueryManager {
         }
 
         for (NamedQuery query : battery) {
-          message += runNamedQuery(query, connection);
+          message += runNamedQueryHtml(query, connection);
         }
 
         return message;
@@ -154,7 +154,7 @@ public abstract class QueryManager {
           }
         }
         if (namedQuery == null) return "Query not found:" + name;
-        String result = runNamedQuery(namedQuery, connection);
+        String result = runNamedQueryHtml(namedQuery, connection);
         if (result != null) message += result;
         return message;
     }
@@ -162,7 +162,7 @@ public abstract class QueryManager {
     public static String curiousQueries(Connection connection) throws SQLException {
         String message = "";
         for (NamedQuery namedQuery : Queries.getCuriousQueries()) {
-          String results = runNamedQuery(namedQuery, connection);
+          String results = runNamedQueryHtml(namedQuery, connection);
           if (results != null)
             message += results;
         }
@@ -170,22 +170,92 @@ public abstract class QueryManager {
         return message;        
     }
 
-    public static String runQueryWithParam(String queryName, String param, Connection connection) throws SQLException {
+    public static NamedQuery runQueryWithParam(String queryName, String param, Connection connection) throws SQLException {
         NamedQuery namedQuery = QueriesWithParams.getNamedQueryWithParam(queryName, param);
         String result = "";
         String message = "";
-        if (namedQuery == null) return "Query not found:" + queryName + " with param:" + param;
-        result = runNamedQuery(namedQuery, connection);
-        if (result != null) message += result;
-        return message;
+        if (namedQuery == null) {
+            namedQuery.setResult("Query not found:" + queryName + " with param:" + param);
+            return namedQuery;
+        }
+        runNamedQuery(namedQuery, connection);
+
+        return namedQuery;
     }
 
-    public static String runNamedQuery(NamedQuery namedQuery, Connection connection) throws SQLException {
+    // different from runNamedQueryHtl. Results attached to namedQuery. Better way. Eventually both...
+    public static void runNamedQuery(NamedQuery namedQuery, Connection connection) throws SQLException {
         StringBuffer message = new StringBuffer();
         Statement stmt = null;
         ResultSet rset = null;
         try {
             stmt = DBUtil.getStatement(connection, "runNamedQuery()");
+
+            Date startTime = new Date();
+
+            String query = namedQuery.getQuery();
+            if (query.contains("delete from")) {
+                int result = stmt.executeUpdate(query);
+                namedQuery.setResult("query executed result:" + result);
+                return;
+            }
+
+            message.append(namedQuery.getHeader() + "\n");
+
+            rset = stmt.executeQuery(query);
+            int i = 0;
+            while (rset.next()) {
+                ++i;
+                int columnCount = rset.getMetaData().getColumnCount();
+                for (int j=1 ; j <= columnCount ; ++j) {
+                    String val = rset.getString(j);
+                    if (j == 1) {
+                        message.append(val + "\n");
+                    } else if (j == columnCount) {
+                        message.append("\t" + val + "\n");
+                    } else {
+                        message.append("\t" + val);
+                    }
+                }
+            } // end while
+
+            namedQuery.setResult(message.toString());
+            namedQuery.setRowCount(i);
+
+            long timePassed = AntwebUtil.minsSince(startTime);
+            String note = "min: " + timePassed + "\n";
+            if (timePassed < 3) {
+                timePassed = AntwebUtil.secsSince(startTime);
+                note = "secs: " + timePassed + "\n";
+            }
+            namedQuery.setTimePassedNote(note);
+
+            stmt.close();
+        } catch (SQLException e) {
+            s_log.error("runNamedQuery() e:" + e + " query:" + namedQuery.getQuery());
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, "runNamedQuery()");
+        }
+    }
+
+
+    public static String runQueryWithParamHtml(String queryName, String param, Connection connection) throws SQLException {
+        NamedQuery namedQuery = QueriesWithParams.getNamedQueryWithParam(queryName, param);
+        String result = "";
+        String message = "";
+        if (namedQuery == null) return "Query not found:" + queryName + " with param:" + param;
+        result = runNamedQueryHtml(namedQuery, connection);
+        if (result != null) message += result;
+        return message;
+    }
+
+    public static String runNamedQueryHtml(NamedQuery namedQuery, Connection connection) throws SQLException {
+        StringBuffer message = new StringBuffer();
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(connection, "runNamedQueryHtml()");
 
             Date startTime = new Date();            
 
@@ -203,8 +273,8 @@ public abstract class QueryManager {
 
             message.append("<br><br><b>Query:</b> " + namedQuery.getQuery() + "\n");
 		    message.append("<br><br><table>");
-		    if (namedQuery.getHeader() != null) 
-			  message.append("<tr>" + namedQuery.getHeader() + "</tr>\n");
+		    if (namedQuery.getHeaderHtml() != null)
+			  message.append("<tr>" + namedQuery.getHeaderHtml() + "</tr>\n");
             
             rset = stmt.executeQuery(query);
             int i = 0;
@@ -243,10 +313,10 @@ public abstract class QueryManager {
             message.append("<br><br>");
             stmt.close();
         } catch (SQLException e) {
-            s_log.error("integrityQuery() e:" + e + " query:" + namedQuery.getQuery());
+            s_log.error("runNamedQueryHtml() e:" + e + " query:" + namedQuery.getQuery());
             throw e;
         } finally {
-            DBUtil.close(stmt, rset, "runNamedQuery()");
+            DBUtil.close(stmt, rset, "runNamedQueryHtml()");
         }
         if ("".equals(message)) return null;
         return message.toString();

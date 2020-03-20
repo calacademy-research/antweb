@@ -91,15 +91,17 @@
   </servlet-mapping>
   
 
-  <!-- servlet>
-    <servlet-name>ApiFetch</servlet-name>
-    <servlet-class>org.calacademy.antweb.util.ApiFetch</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>ApiFetch</servlet-name>
-    <url-pattern>/apiV3/*</url-pattern>
-  </servlet-mapping -->
-  
+<servlet>
+    <description>This servlet sends file to client</description>
+    <display-name>QueryFileServlet</display-name>
+    <servlet-name>QueryFileServlet</servlet-name>
+    <servlet-class>org.calacademy.antweb.util.QueryFileServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>QueryFileServlet</servlet-name>
+    <url-pattern>/queryFile</url-pattern>
+</servlet-mapping>  
+
   
   <servlet>
     <servlet-name>FileUploader</servlet-name>
@@ -135,36 +137,6 @@
   <url-pattern>/SearchController</url-pattern>
 </servlet-mapping>
 
-
- 
-  <!-- servlet-mapping>
-    <servlet-name>jsp</servlet-name>
-    <url-pattern>*.kml</url-pattern>
-  </servlet-mapping -->
-
-
-<!-- replaced by a struts action
-	<servlet>
-		<servlet-name>GoogleEarth</servlet-name>
-		<display-name>GoogleEarth</display-name>
-		<servlet-class>org.calacademy.antweb.GoogleEarth</servlet-class>
-	</servlet>
-	
-	<servlet-mapping>
-		<servlet-name>GoogleEarth</servlet-name>
-		<url-pattern>/googleEarth</url-pattern>
-	</servlet-mapping>
--->
-
-
-  <!-- servlet>
-      <servlet-name>fieldGuideServlet</servlet-name>
-       <servlet-class>org.calacademy.antweb.util.FieldGuideServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>fieldGuideServlet</servlet-name>
-    <url-pattern>/fieldGuidePdf</url-pattern>
-  </servlet-mapping -->
 
 
   <!-- The Usual Welcome File List -->

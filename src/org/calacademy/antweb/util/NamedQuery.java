@@ -24,18 +24,29 @@ public class NamedQuery  //implements Iterable
   private String name = "";  
   private String desc = "";
   private String query = "";
-  private String header = "";
+  private String headerHtml = "";
+  private String[] headerArray = null;
   private String detailQuery = null;
+  private String result = null;
+  private int rowCount = 0;
+  private String timePassedNote = null;
 
-  NamedQuery(String name, String desc, String header, String query) {
+  NamedQuery(String name, String desc, String[] headerArray, String query) {
+    this.name = name;
+    this.desc = desc;
+    this.headerArray = headerArray;
+    this.query = query;
+  }
+
+  NamedQuery(String name, String desc, String headerHtl, String query) {
       this.name = name;
       this.desc = desc;
-      this.header = header;
+      this.headerHtml = headerHtml;
       this.query = query;
   }
 
-  NamedQuery(String name, String desc, String header, String query, String detailQuery) {
-      this(name, desc, header, query);
+  NamedQuery(String name, String desc, String headerHtml, String query, String detailQuery) {
+      this(name, desc, headerHtml, query);
       this.detailQuery = detailQuery;
   }
 
@@ -52,12 +63,35 @@ public class NamedQuery  //implements Iterable
     this.desc = desc; 
   }
 
-  public String getHeader() { 
-    return header; 
+  public String[] getHeaderArray() {
+    return headerArray;
   }
-  public void setHeader(String header) 
+  public void setHeaderArray(String[] headerArray)
+  {
+    this.headerArray = headerArray;
+  }
+  public String getHeader() {
+    String header = "";
+    if (headerArray != null) {
+      for (String col : headerArray) {
+        header += col + "\t";
+      }
+    }
+    return header;
+  }
+
+  public String getHeaderHtml() {
+    if (headerArray != null) {
+      headerHtml = "";
+      for (String col : headerArray) {
+        headerHtml += "<th>" + col + "</th>";
+      }
+    }
+    return headerHtml;
+  }
+  public void setHeaderHtml(String headerHtml)
   { 
-    this.header = header; 
+    this.headerHtml = headerHtml;
   }
 
   public String getQuery() { 
@@ -74,8 +108,27 @@ public class NamedQuery  //implements Iterable
   public void setDetailQuery(String detailQuery) 
   { 
     this.detailQuery = detailQuery; 
-  }    
-  
+  }
+
+  public String getResult() {
+    return result;
+  }
+  public void setResult(String result)
+  {
+    this.result = result;
+  }
+
+  public int getRowCount() { return rowCount; }
+  public void setRowCount(int rowCount) { this.rowCount = rowCount; }
+
+  public String getTimePassedNote() {
+    return timePassedNote;
+  }
+  public void setTimePassedNote(String timePassedNote)
+  {
+    this.timePassedNote = timePassedNote;
+  }
+
   public String toString() {
     return getName();
   }

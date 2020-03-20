@@ -2,8 +2,6 @@ package org.calacademy.antweb.util;
 
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.Login;
-import org.calacademy.antweb.Map;
-import org.calacademy.antweb.util.DBUtil;
 
 import java.util.Date;
 import java.io.*;

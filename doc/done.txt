@@ -12046,10 +12046,33 @@ Mar 17. 3.5 hrs.
   Fix a bunch of deprecations. There are a bunch nmore on the server JVMs.
   Remove extraneous content from our source tree.
 
+Mar 18. 4.5hrs.
+  Endemic values will percolate up from adm1 and countries to subregions and regions.
+  Species List with Range Data report will now report on regions, subregions, countries or adm1s.
+  Linked in to taxonomic species page for countries and adm1 (for curators) and subregions and regions (for admin, with performance warning).
+  Web Queries will now report seconds if minutes are less than 3.
+  Deploy to live site. Run calcEndemic procedure. Document.
+  Create the initcap mysql function for subfamily and genus display.
 
+Mar 19. 0hrs.
+  Find and set group_concat_max_len=15360 in /etc/mysql/mysql.cnf.
+
+  Look into Malagasy Species List Range Data report... 
 
 
 -week:
+
+
+Marriage story
+Frozen 2
+Fleabag
+RBG
+Man on Fire
+Beanpole
+About Time
+The Nice Guys
+
+
 
 
 Percolate up endemic to subregion and region.

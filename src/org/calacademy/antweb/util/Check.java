@@ -83,6 +83,15 @@ public class Check {
     public static final String ARTIST = "artist";
     public static final String UPLOAD = "upload";
     public static final String ADMINALERT = "adminAlert";
+
+    // To be used by servlets (non-Struts).
+    public static String init(String manager) {
+      if (AntwebMgr.isServerInitializing(manager)) {
+          String message = "Server is initializing the " + Formatter.initCap(manager) + " Manager.";
+          return message;      
+      }
+      return null; // no message means that it works.
+    }
     
     public static ActionForward init(String manager, HttpServletRequest request, ActionMapping mapping) {
       if (AntwebMgr.isServerInitializing(manager)) {
