@@ -19,12 +19,13 @@ public abstract class QueriesWithParams {
         if ("speciesListWithRangeData".equals(queryName)) {
             return getSpeciesListWithRangeData(param); // param is a geolocaleName
         }
+        if ("speciesListRangeSummary".equals(queryName)) {
+            return getSpeciesListRangeSummary(param); // param is a geolocaleName
+        }
         return null;
     }
 
     private static NamedQuery getSpeciesListWithRangeData(String geolocaleName) {
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
-
         NamedQuery query = null;
 
         Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleName);
@@ -45,5 +46,30 @@ public abstract class QueriesWithParams {
 
         return query; // end getQueryWithParam()
     }
+
+    private static NamedQuery getSpeciesListRangeSummary(String geolocaleName) {
+        NamedQuery query = null;
+
+        Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleName);
+        if (geolocale == null) {
+            s_log.warn("getSpeciesListRangeSummary() geolocale not found:" + geolocaleName);
+            return null;
+        }
+        String georank = geolocale.getGeorank();
+        query = new NamedQuery(
+                "speciesListRangeSummary"
+                , FileUtil.makeReportName("SpeciesListRangeSummary" + geolocaleName)
+                , "Species List Range Summary for geolocale: " + geolocaleName
+                , new String[] {"Count", "Status", "Introduced", "Endemic"}
+                , "select count(*), t.status, gt.is_introduced, gt.is_endemic from geolocale g, geolocale_taxon gt, taxon t "
+                + " where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and g.georank = '" + georank + "' and t.rank in ('species', 'subspecies') "
+                + " and g.name = '" + geolocaleName + "' group by t.status, gt.is_introduced, gt.is_endemic"
+        );
+
+        A.log("getNamedQuery() geolocale:" + geolocale + " query:" + query);
+
+        return query; // end getQueryWithParam()
+    }
+
 }
 

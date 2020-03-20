@@ -67,7 +67,7 @@ public class FileUtil {
       percent = percent.trim();
       A.log("isDiskLow() percentI:" + percentI + " percent:" + percent);
 
-      num = new Integer(percent);
+      num = Integer.valueOf(percent);
     } catch(java.lang.StringIndexOutOfBoundsException e) {
       A.log("isDiskLow() e:" + e);
       return -2;
@@ -164,7 +164,7 @@ public class FileUtil {
       try {
         Path file = Paths.get(path);    
         BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
-        fileSize = new Long(attr.size()).intValue();
+        fileSize = Long.valueOf(attr.size()).intValue();
         //fileSize = new Integer(size).intValue();
       } catch (IOException e) {
         A.log("getFileSize() e:" + e);

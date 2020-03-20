@@ -1,3 +1,16 @@
+Release 8.17.12
+ WEB-INF/classes/App.properties                        | 87 ---------------------------------------------------------------------------------------
+ WEB-INF/web.xml                                       | 31 +++++++++++++++----------------
+ doc/done.txt                                          | 14 +++++++++++---
+ src/org/calacademy/antweb/util/DateUtil.java          |  2 +-
+ src/org/calacademy/antweb/util/FileUtil.java          |  5 ++++-
+ src/org/calacademy/antweb/util/NamedQuery.java        | 12 +++++++++++-
+ src/org/calacademy/antweb/util/QueriesWithParams.java |  1 +
+ src/org/calacademy/antweb/util/QueryFileServlet.java  |  9 +++++----
+ src/org/calacademy/antweb/util/QueryManager.java      |  2 +-
+ 9 files changed, 49 insertions(+), 114 deletions(-)
+ delete mode 100644 WEB-INF/classes/App.properties
+ 
 Release 8.17
  WEB-INF/webHttp.xml                                      |  50 +++++++++++---------------------------------------
  doc/done.txt                                             |  23 +++++++++++++++++++++++
@@ -10,6 +23,8 @@ Release 8.17
  src/org/calacademy/antweb/util/QueryFileServlet.java     | 120 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  src/org/calacademy/antweb/util/QueryManager.java         | 100 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------------
  src/org/calacademy/antweb/util/SessionRequestFilter.java |   2 --
+ src/org/calacademy/antweb/upload/SpeciesListUpload.java | 2 +-
+ src/org/calacademy/antweb/util/AntwebSystem.java        | 2 +- 
  web/common/taxonSetHeaderNotes.jsp                       |  11 ++++++++---
  web/documentation/releaseNum.jsp                         |   2 +-
  web/image/fileDownload.png                               | Bin 0 -> 73805 bytes

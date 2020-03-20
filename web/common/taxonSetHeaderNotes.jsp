@@ -26,7 +26,8 @@ if (true) {
     <%
       String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
       if (LoginMgr.isAdmin(request)) {
-          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=speciesListWithRangeData&param=Comoros'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
+          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=speciesListWithRangeData&param=" + overview + "'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
+          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListRangeSummary&param=" + overview + "'>Summary</a>";
       }
       if ((overview instanceof Country || overview instanceof Adm1) && LoginMgr.isCurator(request)) {
           note += speciesListWithRangeDataNote;
