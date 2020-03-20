@@ -12054,10 +12054,18 @@ Mar 18. 4.5hrs.
   Deploy to live site. Run calcEndemic procedure. Document.
   Create the initcap mysql function for subfamily and genus display.
 
-Mar 19. 0hrs.
-  Find and set group_concat_max_len=15360 in /etc/mysql/mysql.cnf.
-
+Mar 19. 5hrs.
+  Find and set group_concat_max_len=15360 in /etc/mysql/mysql.cnf. (no time)
   Look into Malagasy Species List Range Data report... 
+  Download report for Species List with Range Data.
+    Implement downloading through a servlet.
+    Decouple output from logic to remove html. Add to NamedQuery.
+  Consolidate on one web.xml. Remove extra versions and modify config files.
+  Modify the /etc/apache2/sites-available/default-ssl.conf
+  Deploy to dev, stg and prod.
+  Document.
+  Remove unnecessary App.properties.
+
 
 
 -week:

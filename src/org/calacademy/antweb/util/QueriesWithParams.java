@@ -31,6 +31,7 @@ public abstract class QueriesWithParams {
         String georank = geolocale.getGeorank();
         query = new NamedQuery(
                 "speciesListWithRangeData"
+                , FileUtil.makeReportName("SpeciesListWithRange" + geolocaleName)
                 , "species list with range data for given geolocale: " + geolocaleName
                 , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Introduced", "Endemic", "Range"}
                 //, "<th>Subfamily</th><th>Genus</th><th>Species</th><th>Subspecies</th><th>Author Date</th><th>Status</th><th>Introduced</th><th>Endemic</th><th>Range</th>"

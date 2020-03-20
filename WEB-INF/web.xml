@@ -65,7 +65,6 @@
     <!-- expose all dir listing / is not recommended, lock down to specific dir -->
 </servlet-mapping>
 
-
 <!--  http://www.antweb.org/specimen/casent1  will return
       http://www.antweb.org/specimen.do?code=casent1  -->
   <servlet>
@@ -87,14 +86,14 @@
   </servlet-mapping>
 	
   <servlet>
-	  <description>This servlet sends file to client</description>
-	  <display-name>QueryFileServlet</display-name>
-	  <servlet-name>QueryFileServlet</servlet-name>
-	  <servlet-class>org.calacademy.antweb.util.QueryFileServlet</servlet-class>
+	<description>This servlet sends file to client</description>
+	<display-name>QueryFileServlet</display-name>
+	<servlet-name>QueryFileServlet</servlet-name>
+	<servlet-class>org.calacademy.antweb.util.QueryFileServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-	  <servlet-name>QueryFileServlet</servlet-name>
-	  <url-pattern>/queryFile</url-pattern>
+	<servlet-name>QueryFileServlet</servlet-name>
+	<url-pattern>/queryFile</url-pattern>
   </servlet-mapping>  
 	
   <servlet>
@@ -108,15 +107,15 @@
 
   <!-- if antweb_test is not running on server, redirect all requests to corresponding antweb page instead of creating error  -->
   <!-- if antweb_test is in use, comment out this block -->
-	<servlet>
-		<servlet-name>redirectTest</servlet-name>
-		<display-name>RedirectTest</display-name>
-		<servlet-class>org.calacademy.antweb.util.RedirectTestAction</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>redirectTest</servlet-name>
-		<url-pattern>/antweb_test/*</url-pattern>
-	</servlet-mapping>
+  <servlet>
+	<servlet-name>redirectTest</servlet-name>
+	<display-name>RedirectTest</display-name>
+	<servlet-class>org.calacademy.antweb.util.RedirectTestAction</servlet-class>
+  </servlet>
+  <servlet-mapping>
+	<servlet-name>redirectTest</servlet-name>
+	<url-pattern>/antweb_test/*</url-pattern>
+  </servlet-mapping>
 
 
 <error-page>

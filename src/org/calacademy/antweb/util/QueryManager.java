@@ -210,7 +210,7 @@ public abstract class QueryManager {
                 for (int j=1 ; j <= columnCount ; ++j) {
                     String val = rset.getString(j);
                     if (j == 1) {
-                        message.append(val + "\n");
+                        message.append(val);
                     } else if (j == columnCount) {
                         message.append("\t" + val + "\n");
                     } else {

@@ -196,5 +196,8 @@ public class FileUtil {
         // Do nothing because nothing to do.
       }
   }
-      
+
+  public static String makeReportName(String coreName) {
+    return "Antweb" + coreName + DateUtil.getFormatDateStr() + ".txt";
+  }
 }

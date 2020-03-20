@@ -125,7 +125,7 @@ public abstract class DateUtil {
 
     public static String getFormatDateStr() {
       Date theDate = new Date();
-      return getFormatDateStr(theDate, "yyyyMMdd");
+      return getFormatDateStr(theDate, "yyyy-MM-dd");
     }
 
     public static String getFormatDateStr(String dateStr) {

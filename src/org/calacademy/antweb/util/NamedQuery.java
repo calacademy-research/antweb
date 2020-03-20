@@ -30,9 +30,11 @@ public class NamedQuery  //implements Iterable
   private String result = null;
   private int rowCount = 0;
   private String timePassedNote = null;
+  private String fileName = null;
 
-  NamedQuery(String name, String desc, String[] headerArray, String query) {
+  NamedQuery(String name, String fileName, String desc, String[] headerArray, String query) {
     this.name = name;
+    this.fileName = fileName;
     this.desc = desc;
     this.headerArray = headerArray;
     this.query = query;
@@ -127,6 +129,14 @@ public class NamedQuery  //implements Iterable
   public void setTimePassedNote(String timePassedNote)
   {
     this.timePassedNote = timePassedNote;
+  }
+
+  public String getFileName() {
+    return fileName;
+  }
+  public void setFileName(String fileName)
+  {
+    this.fileName = fileName;
   }
 
   public String toString() {

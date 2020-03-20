@@ -24,6 +24,10 @@ Sister servlet for the Struts action QueryAction accessible via query.do.
 QueryFileServlet is accessed by servlet request queryFile:
   http://localhost/antweb/queryFile?name=speciesListWithRangeData&param=Comoros
 
+To make this work, add a section to the web.xml and modify as necessary
+/etc/apache2/sites-available/default-ssl.conf
+  (don't forget to restart apache: sudo systemctl restart apache2)
+
 */
 public class QueryFileServlet extends HttpServlet {
 
@@ -46,9 +50,6 @@ public class QueryFileServlet extends HttpServlet {
         if (message != null) {
             s_log.warn("doGet() name:" + name + " param:" + param + " message:" + message);
         } else {
-            String fileName = name;
-            if (param != null) fileName = param;
-
             NamedQuery namedQuery = null;
             Connection connection = null;
             try {
@@ -94,7 +95,7 @@ public class QueryFileServlet extends HttpServlet {
             // forces download
             String headerKey = "Content-Disposition";
             //String headerValue = String.format("attachment; filename=\"%s\"", downloadFile.getName());
-            String headerValue = String.format("attachment; filename=\"%s\"", fileName);
+            String headerValue = String.format("attachment; filename=\"%s\"", namedQuery.getFileName());
             response.setHeader(headerKey, headerValue);
 
             s_log.warn("doGet() name:" + name + " param:" + param + " results:" + namedQuery.getRowCount() + " in " + namedQuery.getTimePassedNote());
