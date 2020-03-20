@@ -2,6 +2,7 @@ Release 8.17
 Date: Mar 19
   File download supported for Query Manager.
   File download enabled for Species List with Range Data Report.
+  Consolidate on one web.xml for all platforms.
 
 Release 8.16.2
 Date: Mar 18

@@ -1,3 +1,20 @@
+Release 8.17
+ WEB-INF/webHttp.xml                                      |  50 +++++++++++---------------------------------------
+ doc/done.txt                                             |  23 +++++++++++++++++++++++
+ doc/install.txt                                          |   9 ++++++---
+ doc/release.txt                                          |   5 +++++
+ src/org/calacademy/antweb/util/Check.java                |   9 +++++++++
+ src/org/calacademy/antweb/util/NamedQuery.java           |  75 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------
+ src/org/calacademy/antweb/util/QueriesWithParams.java    |  10 +++++-----
+ src/org/calacademy/antweb/util/QueryAction.java          |  29 +----------------------------
+ src/org/calacademy/antweb/util/QueryFileServlet.java     | 120 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/org/calacademy/antweb/util/QueryManager.java         | 100 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------------
+ src/org/calacademy/antweb/util/SessionRequestFilter.java |   2 --
+ web/common/taxonSetHeaderNotes.jsp                       |  11 ++++++++---
+ web/documentation/releaseNum.jsp                         |   2 +-
+ web/image/fileDownload.png                               | Bin 0 -> 73805 bytes
+ 14 files changed, 338 insertions(+), 107 deletions(-)
+
 Release 8.16
  doc/done.txt                                             |  87 +++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------
  doc/release.txt                                          |   7 +++++++

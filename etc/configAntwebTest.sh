@@ -13,7 +13,6 @@ ln -fs ../../etc/log4jAntwebTest.properties WEB-INF/classes/log4j.properties
 ln -fs ../../etc/AppResLiveAntwebTest.properties WEB-INF/classes/AntwebResources.properties
 ln -fs etc/buildAntwebTest.properties build.properties
 ln -fs ../../etc/ProjectResources.properties WEB-INF/classes/ProjectResources.properties
-ln -fs webHttp.xml WEB-INF/web.xml
 
 #ln -fs struts-configDbAnt.xml WEB-INF/struts-configDb.xml
 ln -fs struts-configDbAntTest.xml WEB-INF/struts-configDb.xml
