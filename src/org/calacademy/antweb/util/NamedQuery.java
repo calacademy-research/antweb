@@ -21,10 +21,11 @@ public class NamedQuery  //implements Iterable
 
   private static final Log s_log = LogFactory.getLog(NamedQuery.class);
     
-  private String name = "";  
-  private String desc = "";
-  private String query = "";
-  private String headerHtml = "";
+  private String name = null;
+  private String param = null;
+  private String desc = null;
+  private String query = null;
+  private String headerHtml = null;
   private String[] headerArray = null;
   private String detailQuery = null;
   private String result = null;
@@ -32,15 +33,16 @@ public class NamedQuery  //implements Iterable
   private String timePassedNote = null;
   private String fileName = null;
 
-  NamedQuery(String name, String fileName, String desc, String[] headerArray, String query) {
+  NamedQuery(String name, String param, String fileName, String desc, String[] headerArray, String query) {
     this.name = name;
+    this.param = param;
     this.fileName = fileName;
     this.desc = desc;
     this.headerArray = headerArray;
     this.query = query;
   }
 
-  NamedQuery(String name, String desc, String headerHtl, String query) {
+  NamedQuery(String name, String desc, String headerHtml, String query) {
       this.name = name;
       this.desc = desc;
       this.headerHtml = headerHtml;
@@ -129,6 +131,14 @@ public class NamedQuery  //implements Iterable
   public void setTimePassedNote(String timePassedNote)
   {
     this.timePassedNote = timePassedNote;
+  }
+
+  public String getParam() {
+    return param;
+  }
+  public void setParam(String param)
+  {
+    this.param = param;
   }
 
   public String getFileName() {

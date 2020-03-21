@@ -12066,6 +12066,11 @@ Mar 19. 5hrs.
   Document.
   Remove unnecessary App.properties.
 
+Mar 20. 3hr.
+  Tweaks to report download.
+  Deploy to live site.
+  Look into bioregion endemism.
+  SpeciesListSummaryReport.
 
 
 -week:

@@ -239,7 +239,6 @@ public abstract class QueryManager {
         }
     }
 
-
     public static String runQueryWithParamHtml(String queryName, String param, Connection connection) throws SQLException {
         NamedQuery namedQuery = QueriesWithParams.getNamedQueryWithParam(queryName, param);
         String result = "";
@@ -265,7 +264,14 @@ public abstract class QueryManager {
               return "query executed result:" + result;
             }
 
-		    message.append("<hr><br><b>Name: </b><a href='" + AntwebProps.getDomainApp() + "/util.do?action=curiousQuery&name=" + namedQuery.getName() + "'>" + namedQuery.getName() + "</a>\n");
+            String permalink = AntwebProps.getDomainApp() + "/query.do?name=" + namedQuery.getName() ;
+            String title = namedQuery.getName();
+            if (namedQuery.getParam() != null) {
+                permalink += "&param=" + namedQuery.getParam();
+                title += ": " + namedQuery.getParam();
+            }
+
+		    message.append("<hr><br><b>Name: </b><a href='" + permalink + "'>" + title + "</a>\n");
             if (namedQuery.getDesc() != null)
                 message.append("<br><br><b>Description:</b>" + namedQuery.getDesc() + "\r");
 

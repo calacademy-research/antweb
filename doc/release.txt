@@ -1,3 +1,14 @@
+Release 8.17.2
+Date: Mar 21
+  Adjust the calcAdm1Endemism query.
+
+Release 8.17.1
+Date: Mar 20
+  Report naming convention of "Antweb[coreName]yy-MM-dd.txt" utilized for Species List with Range report.
+  Extraneous new line removed.
+  New report: SpeciesListRangeSummary.
+  Fix the titles for Query reports that have parameters.
+
 Release 8.17
 Date: Mar 19
   File download supported for Query Manager.

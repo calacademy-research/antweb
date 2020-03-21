@@ -1225,6 +1225,7 @@ public static int c = 0;
       c += calcCountryEndemism();
       c += calcAdm1Endemism();
 
+      //if (!AntwebProps.isDevMode())
       calcHigherEndemism();
 
       return c;
@@ -1261,7 +1262,9 @@ public static int c = 0;
 		+ " and taxon.family = 'formicidae'"
         + " group by gt.taxon_name having count(*) = 1 " 
         + " order by geolocale_id";
-    
+
+      //A.log("calcAdm1Endemism() query:" + query);
+
       return calcEndemism(query);
     }
         

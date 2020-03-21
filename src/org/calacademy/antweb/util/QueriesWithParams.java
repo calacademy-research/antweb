@@ -32,8 +32,9 @@ public abstract class QueriesWithParams {
         String georank = geolocale.getGeorank();
         query = new NamedQuery(
                 "speciesListWithRangeData"
+                , geolocaleName
                 , FileUtil.makeReportName("SpeciesListWithRange" + geolocaleName)
-                , "species list with range data for given geolocale: " + geolocaleName
+                , "species list with range data (including is_introduced and is_endemic) for a given geolocale (region, subregion, country or adm1)."
                 , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Introduced", "Endemic", "Range"}
                 //, "<th>Subfamily</th><th>Genus</th><th>Species</th><th>Subspecies</th><th>Author Date</th><th>Status</th><th>Introduced</th><th>Endemic</th><th>Range</th>"
                 , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, gt.is_introduced, gt.is_endemic, "
@@ -58,8 +59,9 @@ public abstract class QueriesWithParams {
         String georank = geolocale.getGeorank();
         query = new NamedQuery(
                 "speciesListRangeSummary"
+                , geolocaleName
                 , FileUtil.makeReportName("SpeciesListRangeSummary" + geolocaleName)
-                , "Species List Range Summary for geolocale: " + geolocaleName
+                , "Species List Range Summary for a given geolocale (region, subregion, country or adm1)."
                 , new String[] {"Count", "Status", "Introduced", "Endemic"}
                 , "select count(*), t.status, gt.is_introduced, gt.is_endemic from geolocale g, geolocale_taxon gt, taxon t "
                 + " where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and g.georank = '" + georank + "' and t.rank in ('species', 'subspecies') "
