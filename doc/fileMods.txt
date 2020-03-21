@@ -1,4 +1,13 @@
-
+Release 8.17.2
+ doc/done.txt                                          |  5 +++++
+ doc/fileMods.txt                                      |  8 +++++++-
+ doc/release.txt                                       | 11 +++++++++++
+ src/org/calacademy/antweb/home/GeolocaleDb.java       |  5 ++++-
+ src/org/calacademy/antweb/util/NamedQuery.java        | 22 ++++++++++++++++------
+ src/org/calacademy/antweb/util/QueriesWithParams.java |  6 ++++--
+ src/org/calacademy/antweb/util/QueryManager.java      | 10 ++++++++--
+ 7 files changed, 55 insertions(+), 12 deletions(-)
+ 
 Release 8.17.1
  WEB-INF/classes/App.properties                        | 87 ---------------------------------------------------------------------------------------
  WEB-INF/web.xml                                       | 31 +++++++++++++++----------------

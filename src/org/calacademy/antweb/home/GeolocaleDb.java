@@ -1256,8 +1256,7 @@ public static int c = 0;
         + " and taxon.status != 'morphotaxon' and taxon.rank in ('species', 'subspecies') " 
         + " and taxon.fossil = 0"
         + " and g.georank = 'adm1'"
-       // Should this criteria be included?
-       // + " and (gt.taxon_name, g.parent) in (select gt.taxon_name, g.name from geolocale g, geolocale_taxon gt where g.id = gt.geolocale_id and gt.is_endemic = 1)" 
+        + " and (gt.taxon_name, g.parent) in (select gt.taxon_name, g.name from geolocale g, geolocale_taxon gt where g.id = gt.geolocale_id and gt.is_endemic = 1)"
         + (new StatusSet()).getAndCriteria()
 		+ " and taxon.family = 'formicidae'"
         + " group by gt.taxon_name having count(*) = 1 " 

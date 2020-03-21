@@ -12072,6 +12072,8 @@ Mar 20. 3hr.
   Look into bioregion endemism.
   SpeciesListSummaryReport.
 
+Mar 21. 1hr.
+  Diagnose, adjust the calcAdm1Endemism query. Deploy.
 
 -week:
 
@@ -12084,7 +12086,14 @@ Man on Fire
 Beanpole
 About Time
 The Nice Guys
+Jar head
 
+Mile 22
+Green Zone
+Social network
+The Hours
+Isle of Dogs
+rimson Peak
 
 
 
