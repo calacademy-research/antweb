@@ -142,7 +142,7 @@ public class ImageUploaded {
         } else {
           setShot(fileName.substring(u1 + 1, u2).toLowerCase());  
           String num = fileName.substring(u2 + 1, period);
-          if (num != null) setNumber(new Integer(num).intValue());
+          if (num != null) setNumber(Integer.valueOf(num).intValue());
         }
         String ext = fileName.substring(period + 1).toLowerCase();
         ext = ext.toLowerCase();

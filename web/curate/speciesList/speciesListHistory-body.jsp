@@ -25,7 +25,7 @@
     curatorList
 */
 
-  Login accessLogin = LoginMgr.getAccessGroup(request);
+  Login accessLogin = LoginMgr.getAccessLogin(request);
 
   ArrayList<SpeciesListable> speciesListList = accessLogin.getSpeciesListList();
 

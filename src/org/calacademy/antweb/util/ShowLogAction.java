@@ -42,7 +42,7 @@ public final class ShowLogAction extends Action {
 		int lineNum = 0;
 		if (line != null) {
             try {
-              lineNum = (new Integer(line)).intValue();
+              lineNum = (Integer.valueOf(line)).intValue();
             } catch(NumberFormatException e) {
               //A.log("execute() e:" + e);
             }
