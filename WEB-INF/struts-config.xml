@@ -529,13 +529,16 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name="likes" path="/imageLikes.jsp"/>
       </action>
 
+<!--
       <action path="/toUpload"
               type = "org.calacademy.antweb.util.ToUploadAction"
               name="dummyForm" 
               scope="request">
           <forward name ="success" path="/util/toUpload.jsp"/>
       </action>
-      
+-->
+
+<!-- still in use? -->      
       <action path="/uploadReport"
               type = "org.calacademy.antweb.upload.UploadReportAction"
               name="dummyForm" 
@@ -732,7 +735,8 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name ="success" path="/util/listSpecimenUploads.jsp"/>
       </action>    
 
-      <action path="/listImageUploads"
+      <!-- new -->
+      <action path="/listImageUploads" 
               type = "org.calacademy.antweb.util.ListUploadsAction"
               name="dummyForm"
               scope="request">
@@ -1689,17 +1693,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="report" path="/imageUploader/imageUploadReport.jsp"/>
     </action>
 
-
-    <!-- This is the doorway into the image upload mechanism.  Manages the lock -->
-    <!--
-        <action
-          path="/imageUpload"
-          type="org.calacademy.antweb.curate.imageUpload.ImageUploadAction"
-          name="imageUploadForm">
-          <forward name="success" path="/imageUpload.jsp"/>
-          <forward name="isLocked" path="/imageUpload.jsp"/>
-        </action>  
-    -->      
       
       
     <action path="/getEOL"

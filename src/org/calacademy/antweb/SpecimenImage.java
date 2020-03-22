@@ -227,7 +227,8 @@ public class SpecimenImage implements Serializable {
 
     public ArrayList<String> getOrigAndDerivPaths() {
       ArrayList<String> paths = new ArrayList<String>();
-      String imgPath = "/data/antweb";
+      //String imgPath = "/data/antweb";
+      String imgPath = AntwebProps.getDocRoot();  // Probably has extra slash. Remove from get methods.
       paths.add(imgPath + getOrigPath());
       paths.add(imgPath + getThumbview());
       paths.add(imgPath + getLowres());

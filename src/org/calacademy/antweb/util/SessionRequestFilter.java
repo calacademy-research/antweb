@@ -39,12 +39,15 @@ public class SessionRequestFilter implements Filter {
       Login accessLogin = LoginMgr.getAccessLogin(request);
       String loginName = "-";
       if (accessLogin != null) loginName = accessLogin.getName();
-      LogMgr.appendLog("accessLog.txt", loginName + " " + AntwebUtil.getRequestInfo(request), true);   
-      
+      String logMessage = loginName + " " + AntwebUtil.getRequestInfo(request);
+      LogMgr.appendLog("accessLog.txt", logMessage, true);
+      A.log("doFilter() message:" + logMessage);
+
       try {
 
 		// Log insecure links.
-		if (!HttpUtil.isSecure(request)) {
+		if (!!HttpUtil.isSecure(request)) {
+		  A.log("doFilter() insecure");
 		  String message = "req:" + target + " scheme:" + request.getScheme()
 			+ " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
 		  LogMgr.appendLog("insecure.log", message, true);  
@@ -130,7 +133,7 @@ public class SessionRequestFilter implements Filter {
     }
         
     public void init(FilterConfig filterConfig) throws ServletException {
-        s_log.warn("init(FilterConfig) - Server is initializing...");
+        s_log.warn("init() - Server is initializing...");
 		System.setProperty("jsse.enableSNIExtension", "false");       
 		
         Connection connection = null;
@@ -152,14 +155,14 @@ public class SessionRequestFilter implements Filter {
           s_log.warn("init() " + spaceMessage);
         }
 
-
         String cpuMessage = AntwebSystem.getCpuLoad();
         s_log.warn("init() " + cpuMessage);
 
         this.runTask(); // Set up the Scheduler
 
-        s_startTime = new Date();        
-        s_log.warn("init(FilterConfig) - Server is up.");
+        s_startTime = new Date();
+        //s_log.warn("init() domainApp:" + AntwebProps.getDomainApp());
+        s_log.warn("init() - Server is up.");
     }    
     
     public void destroy() { 

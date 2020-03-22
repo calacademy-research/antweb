@@ -42,9 +42,9 @@ public class SpeciesListUploader {
     this.connection = connection;
 
     // For testing... cp /Users/mark/Downloads/antcatTest.txt /usr/local/tomcat/webapps/antweb/test.antcat.txt    
-    if (true && AntwebProps.isDevMode()) {
+    if (false && AntwebProps.isDevMode()) {
       //fetchWorldantsUrl = "http://localhost/antweb/test.antcat.txt";  
-      fetchWorldantsUrl = "http://localhost/antweb/web/upload/testWorldants.txt";  
+      fetchWorldantsUrl = "http://localhost/antweb/web/upload/test_worldants_speciesList.txt";  
 
     }
   }

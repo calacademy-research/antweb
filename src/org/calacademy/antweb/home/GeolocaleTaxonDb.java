@@ -117,15 +117,22 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     }
 
     // All insertion should happen here.
-    // Satisfies the abstract method of EditableTaxonSetDb.    
+    // Satisfies the abstract method of EditableTaxonSetDb.
+    // Called from SpeciesListTool and by setTaxonSet() and insertGeolocaleTaxaFromSpecimens() and populateFromAntwikiData(), checkGeolocaleParentage() below.
     public int insert(Overview overview, String taxonName, String source) throws SQLException {
-      //if ("Chile".equals(overview.getName())) A.log("insert('" + overview.getName() + "', '" + taxonName + "', '" + source + "')");
-      
+        if (taxonName.contains("dorylinaecerapachys")) { // && "Madagascar".equals(overview)) {
+            if (AntwebProps.isLocal()) s_log.warn("insert('" + overview.getName() + "', '" + taxonName + "', '" + source + "')");
+            if ("Madagascar".equals(overview.getName())) {
+                AntwebUtil.logStackTrace();
+            }
+        }
+        //s_log.warn("insert() taxonName:" + taxonName);
+/*
       if ("formicinaeformica podzolica".equals(taxonName) && "California".equals(overview.getName())) {
         A.log("insert() overview:" + overview + " taxonName:" + taxonName + " source:" + source);
         AntwebUtil.logStackTrace();
       }
-      
+*/
       Geolocale geolocale = (Geolocale) overview;
 
       // it is a genus or subfamily. Record it in the list so that we can efficiently avoid re-queries.
@@ -186,13 +193,11 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     
      // All updates should happen here? Recursive.
     public int update(Overview overview, String taxonName, String source) throws SQLException {
-      //if ("Chile".equals(overview.getName())) A.log("insert('" + overview.getName() + "', '" + taxonName + "', '" + source + "')");
-      
-      if ("formicinaeformica podzolica".equals(taxonName)) {
-        A.log("insert() overview:" + overview + " taxonName:" + taxonName + " source:" + source);
-        AntwebUtil.logStackTrace();
-      }
-      
+        if (taxonName.contains("dorylinaecerapachys")) {
+            s_log.warn("update() name:" + overview.getName() + "' taxonName:" + taxonName + " source:" + source );
+            AntwebUtil.logStackTrace();
+        }
+
       Geolocale geolocale = (Geolocale) overview;
 
       // it is a genus or subfamily. Record it in the list so that we can efficiently avoid re-queries.
@@ -351,7 +356,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
       throws SQLException {
 
         if (taxonName.contains("podzolica")) {
-          //A.log("insertItem(" + geolocale.getId() + ", " + taxonName + ", " + source + ")");
+          A.log("insertItem(" + geolocale.getId() + ", " + taxonName + ", " + source + ")");
           //AntwebUtil.logStackTrace();
         }
 
@@ -365,7 +370,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
         }          
 
 /*	        
-        // Brian:  record was showing up in Madagascar because myrmicinaepyramica hoplites is found in Madagascar according to Antcat and it's current valid name is myrmicinaestrumigenys hoplites. Let me know how you would like that handled.
+    // Brian:  record was showing up in Madagascar because myrmicinaepyramica hoplites is found in Madagascar according to Antcat and it's current valid name is myrmicinaestrumigenys hoplites. Let me know how you would like that handled.
 	at org.calacademy.antweb.home.GeolocaleTaxonDb.insert(GeolocaleTaxonDb.java:146)
 	at org.calacademy.antweb.home.GeolocaleTaxonDb.setTaxonSet(GeolocaleTaxonDb.java:389)
 	at org.calacademy.antweb.upload.SpeciesListUpload.importSpeciesList(SpeciesListUpload.java:693)
@@ -382,9 +387,8 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             dml = "insert into geolocale_taxon (geolocale_id, taxon_name, insert_method, source)"
               + " values (" + geolocale.getId() + ", '" + taxonName + "', 'insertItem', '" + source + "')";
 
-//if (!AntwebProps.isDevMode()) // For testing
             count = stmt.executeUpdate(dml);
-//else A.log("insertItem() id:" + id + " taxonName:" + taxonName + " source:" + source + " count:" + count);
+            //A.log("insertItem() id:" + id + " taxonName:" + taxonName + " source:" + source + " count:" + count);
 	    } catch (SQLException e) {
           A.log("insertItem() e:" + e + " source:" + source);
           throw e;
@@ -396,25 +400,25 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
     // insert or update as necessary.
 	public int setTaxonSet(Geolocale geolocale, String taxonName, String source) throws SQLException {
-	  int c = 0;
-	  int geolocaleId = geolocale.getId();
-	  TaxonSet taxonSet = get(geolocaleId, taxonName);
-
-      if (false && taxonName.contains("podzolica")) {
-        A.log("insertItem(" + geolocale.getId() + ", " + taxonName + ", " + source + ") taxonSet:" + taxonSet);
-        AntwebUtil.logStackTrace();
+      int c = 0;
+      int geolocaleId = geolocale.getId();
+      TaxonSet taxonSet = get(geolocaleId, taxonName);
+/*
+      if ("dorylinaecerapachys mayri brachynodus".equals(taxonName) && "Madagascar".equals(geolocale.getName())) {
+          A.log("setTaxonSet geolocale:" + geolocale + " taxonName:" + taxonName + " taxonSet:" + taxonSet);
       }
-              	  
-	  if (taxonSet == null) {
-	    insert(geolocale, taxonName, source);
-	  } else {
-	    if (!source.equals(taxonSet.getSource())) {
+*/
+      if (taxonSet == null) {
+        insert(geolocale, taxonName, source);
+      } else {
+        if (!source.equals(taxonSet.getSource())) {
           if (Source.aTrumpsB(source, taxonSet.getSource())) {
-	        c = updateItem(geolocaleId, taxonName, source); // *** SHOULD BE RECURSIVE.
+            A.log("setTaxonSet() calling updateItem (SHOULD BE RECURSIVE?) with geolocaleId:" + geolocaleId + " taxonName:" + taxonName + " source:" + source);
+            c = updateItem(geolocaleId, taxonName, source); // *** SHOULD BE RECURSIVE.
           }
-	    }
-	  }	  
-	  return c;
+        }
+      }
+      return c;
 	}
 	
 	// *** SHOULD ONLY BE USED BY RECURSIVE ABOVE. NEED TO UPDATE PARENT SOURCE TO BE PROXY...
@@ -775,7 +779,8 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
         }
         return count;
     }
-       */           
+       */
+
     private int insertGeolocaleTaxaFromSpecimens() throws SQLException, AntwebException {
         
         s_updateCount = 0;
@@ -879,6 +884,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
     private static int s_speciesCount = 0;
 
 // ---------------------------------------
+
 
     public String populateFromAntwikiData() throws SQLException {
       String disputes = "";
@@ -998,9 +1004,8 @@ mysql> select gt.taxon_name, gt.geolocale_id, gt.source from geolocale_taxon gt,
       return message;
     }
     
-    private String lastLine = "";    
-    
-    
+    private String lastLine = "";
+
 /*
 If this order by source and updates all, shouldn't we run in reverse order. No correct as is. Here is the source order:
 select group_concat( distinct source) from geolocale_taxon order by source;
@@ -1033,7 +1038,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             if ("region".equals(geolocale.getGeorank())) continue;
             Geolocale parentGeolocale = GeolocaleMgr.getGeolocale(geolocale.getParent());
             
-boolean d = ("Chile".equals(geolocale.getName()) || "Chile".equals(parentGeolocale.getName()));            
+          boolean d = ("Chile".equals(geolocale.getName()) || "Chile".equals(parentGeolocale.getName()));
             if (parentGeolocale == null) {
               String message = "null parentGeolocale for geolocaleId:" + geolocaleId + " name:" + geolocale.getName() + " parent:" + geolocale.getParent();
               if (!message.equals(lastLine)) {
@@ -1095,8 +1100,8 @@ boolean d = ("Chile".equals(geolocale.getName()) || "Chile".equals(parentGeoloca
 
             if ("hymenoptera".equals(parentTaxonName)) continue;
             
-            Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId); 
-boolean d = ("Chile".equals(geolocale.getName()));            
+            Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
+          boolean d = ("Chile".equals(geolocale.getName()));
             
             String geolocaleName = geolocale.getName();
             ++outOfIntegrity;

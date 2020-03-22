@@ -12072,8 +12072,10 @@ Mar 20. 3hr.
   Look into bioregion endemism.
   SpeciesListSummaryReport.
 
-Mar 21. 1hr.
+Mar 21. 1.5hr.
   Diagnose, adjust the calcAdm1Endemism query. Deploy.
+  Look into calculation of morphotaxa endemism. Adjust header.
+
 
 -week:
 
@@ -12093,7 +12095,8 @@ Green Zone
 Social network
 The Hours
 Isle of Dogs
-rimson Peak
+Crimson Peak
+Million Dollar Baby
 
 
 

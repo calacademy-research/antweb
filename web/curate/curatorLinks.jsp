@@ -35,7 +35,6 @@
       <li><a href="<%= domainApp %>/userAgents.do">User Agents</a>
       <li><a href="<%= domainApp %>/dbStatus.do">Database Status</a>
       <!-- li><a href="< %= domainApp % >/util.do?action=unlockImageUpload">Unlock</a> Image Upload -->
-      <!-- li><a href="< %= domainApp % >/toUpload.do">Upload Image Tool</a> -->
       <li><a href="<%= AntwebProps.getSecureDomainApp() %>/list.do?action=usrAdm">User Login List</a>
       <li><a href="<%= AntwebProps.getSecureDomainApp() %>/query.do?action=curiousQuery&name=lastSpecimenUpload">Last Upload List</a>
       <li><a href="<%= domainApp %>/list.do?action=usrAdmLastLogin">User Last Login List</a>

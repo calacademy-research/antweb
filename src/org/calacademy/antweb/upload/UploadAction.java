@@ -88,7 +88,6 @@ public class UploadAction extends Action {
         UploadForm theForm = (UploadForm) form;
         //A.log("execute() up:" + theForm.isUp());
 
-        Utility util = new Utility();
         String domainApp = AntwebProps.getDomainApp();
 
         boolean httpPostOK = false;
@@ -140,12 +139,6 @@ public class UploadAction extends Action {
 			  }
 			}
 
-            String outputFileDir = util.getInputFileHome();
-            // s_log.info("execute() outputFileDir:" + outputFileDir);
-
-                /* This is a simple mechanism to allow urls to trigger administrative actions.  Might look like:
-                   http://localhost/antweb/upload.do?action=genFamilyData    */
-
 		    if (!"toggleDownTime".equals(action)) {
 		 	  String downTimeMessage = ServerStatusAction.isDownTime(action, connection);
 			  if (!"".equals(downTimeMessage)) {
@@ -174,7 +167,7 @@ public class UploadAction extends Action {
 
                 // Do we need to create /data/antweb/web/workingdir if it does not exist?
                 // Worldants should not be hardcoded. Get from file... (2 times)
-                UploadFile uploadFile = new UploadFile("/data/antweb/web/workingdir/", "worldants.txt", request.getHeader("User-Agent"), null);
+                UploadFile uploadFile = new UploadFile(AntwebProps.getDocRoot() + "web/workingdir/", "worldants.txt", request.getHeader("User-Agent"), null);
                 uploadFile.setRoot(AntwebProps.getDocRoot());
                 A.log("execute() root:" + uploadFile.getRoot());
 
@@ -193,7 +186,7 @@ public class UploadAction extends Action {
                 A.log("uploadSpeciesList uploadDetails:" + uploadDetails);
 /*
  			  } else if (action.equals("reloadSpeciesLists")) {
-				util.deleteFile("/data/antweb/web/log/passBoltonSpeciesCheck.txt");
+				util.deleteFile(AntwebProps.getWebDir() + "log/passBoltonSpeciesCheck.txt");
 				SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
 				speciesListUpload.reloadSpeciesLists();
 				uploadDetails = speciesListUpload.getUploadDetails();
@@ -275,7 +268,7 @@ public class UploadAction extends Action {
 
 				// Fetched from AppResources site.inputfilehome=/Users/mark/dev/calAcademy/workingdir/
 				// In this test case, no file is uploaded, but the server side workingdir copy is used. (specimen21.txt).
-				// UploadFile - backup() /antweb/workingdir/specimen21.txt to /data/antweb/web/upload/20131112-21:28:53-specimen21.txt
+				// UploadFile - backup() /antweb/workingdir/specimen21.txt to /antweb/web/upload/20131112-21:28:53-specimen21.txt
 				String formFileName = (new Date()).toString() + "specimenTest" + accessGroup + ".txt";
 
 				//logFileName += accessGroup.getAbbrev() + "SpecimenTest" + UploadDetails.getLogExt();

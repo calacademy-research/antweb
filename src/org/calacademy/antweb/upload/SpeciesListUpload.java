@@ -638,9 +638,9 @@ public class SpeciesListUpload extends AntwebUpload {
 
                     taxonHash.put("taxon_name", taxonName);
                     taxonHash.put("line_num", lineNum);
-                    String debugTaxon = "myrmicinaecalyptomyrmex emeryi"; // "dolichoderinaecolobopsis macrocephala";						
+                    String debugTaxonName = "dorylinaecerapachys mayri brachynodus"; // "dolichoderinaecolobopsis macrocephala";
 
-A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
+                    // A.log("importSpeciesList() lineNum:" + lineNum + " taxonName:" + taxonName);
 
                     String currentValidName = taxonName;
                     
@@ -675,13 +675,13 @@ A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
                             ignoreTaxon = true;
                         }
                         // Completely exclude from import.
-                        if ("myrmicinaecalyptomyrmex emeryi".equals(taxonName)) A.log("importSpeciesList() exclude:" + Status.excludeFromImport(status));
+                        if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1a exclude:" + Status.excludeFromImport(status));
 
                         if (Status.excludeFromImport(status)) {
                             ignoreTaxon = true;
                         }
 
-                        //if (taxonName.contains(debugTaxon)) A.log("importSpeciesList() 1 ignoreTaxon:" + ignoreTaxon + " isWorldants:" + isWorldants + " status:" + status + " taxonName:" + taxonName + " currentValidName:" + taxonHash.get("current_valid_name"));
+                        //if (taxonName.equals(debugTaxonName) A.log("importSpeciesList() 1 ignoreTaxon:" + ignoreTaxon + " isWorldants:" + isWorldants + " status:" + status + " taxonName:" + taxonName + " currentValidName:" + taxonHash.get("current_valid_name"));
 
                         // if current valid name is the same as the taxon_name, ignore.
                         if (Status.usesCurrentValidName(status) && taxonName.equals(taxonHash.get("current_valid_name"))) {
@@ -689,7 +689,7 @@ A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
                             ignoreTaxon = true;
                         }
                         
-                        //if (taxonName.contains(debugTaxon)) {
+                        //if (taxonName.contains(debugTaxonName)) {
                           String t = (String) taxonHash.get("current_valid_name");
                           if (t != null && !t.equals("") && !t.equals(taxonName)) {
                           
@@ -697,7 +697,7 @@ A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
                             if (currentValidTaxon != null) {
 								currentValidName = t;                            
                             } else {
-	                            if (debugTaxon.equals(taxonName)) A.log("importSpeciesList() CurrentValidName:" + t + " not found for taxonName:" + taxonName + " of status:" + status);
+	                            if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() CurrentValidName:" + t + " not found for taxonName:" + taxonName + " of status:" + status);
                                 ignoreTaxon = true;
 							}
                           }
@@ -711,23 +711,23 @@ A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
                         */
                     } else {
                         currentValidName = setStatusAndCurrentValidName(taxonName, taxonHash);
-					    if (taxonName.contains(debugTaxon)) A.log("importSpeciesList() SET taxonName:" + taxonName + " currentValidName:" + currentValidName);
+					    if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1b SET taxonName:" + taxonName + " currentValidName:" + currentValidName);
                     }
 
-					if (taxonName.contains(debugTaxon)) A.log("importSpeciesList() SET ignoreTaxon:" + ignoreTaxon + " taxonName:" + taxonName + " country:" + thisCountry + " status:" + status + " currentValidName:" + currentValidName);
+					if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1c SET ignoreTaxon:" + ignoreTaxon + " taxonName:" + taxonName + " country:" + thisCountry + " status:" + status + " currentValidName:" + currentValidName);
 
                     if (Rank.FAMILY.equals(currentValidRank)) {
                         taxonHash.log("importSpeciesList() FAMILY" + " project:" + project);
                     }
 
-                    if ("dorylinaedorylus erraticus".equals(taxonName)) A.log("importSpeciesList() taxonName:" + taxonName + " currentValidRank:" + currentValidRank + " status:" + status + " thisCountry:" + thisCountry + " ignore:" + ignoreTaxon + " currentValidName:" + currentValidName);
+                    if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1d taxonName:" + taxonName + " currentValidRank:" + currentValidRank + " status:" + status + " thisCountry:" + thisCountry + " ignore:" + ignoreTaxon + " currentValidName:" + currentValidName);
 
                     if (!ignoreTaxon) {
                         //A.log("importSpeciesList() currentValidRank:" + currentValidRank + " status:" + status);
 
                         int c = saveTaxonAndProjTaxon(taxonHash, project);
 
-                    if ("dorylinaedorylus erraticus".equals(taxonName)) A.log("importSpeciesList() 2 c:" + c + " taxonName:" + taxonName + " currentValidRank:" + currentValidRank + " status:" + status + " thisCountry:" + thisCountry + " ignore:" + ignoreTaxon + " currentValidName:" + currentValidName);
+                        if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1e c:" + c + " taxonName:" + taxonName + " currentValidRank:" + currentValidRank + " status:" + status + " thisCountry:" + thisCountry + " ignore:" + ignoreTaxon + " currentValidName:" + currentValidName);
 
                         if (c > 0) {
                           description.put("taxon_name", taxonName); // We do NOT use currentValidName here, so as not to overwrite.
@@ -741,20 +741,24 @@ A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
 							if (tempCountry.contains("(")) tempCountry = tempCountry.substring(0, tempCountry.indexOf("("));
 							tempCountry = tempCountry.trim();
 							Country country = GeolocaleMgr.getValidCountry(tempCountry);
-                            if (taxonName.contains(debugTaxon)) A.log("importSpeciesList() taxonName:" + taxonName + " status:" + status + " country:" + country);
+                            if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1f taxonName:" + taxonName + " status:" + status + " country:" + country);
 							if (country != null) {
-							  //if (taxonName.contains(debugTaxon)) 
-							  if (debugTaxon.equals(taxonName)) A.log("importSpeciesList() taxonName:" + taxonName + " thisCountry:" + thisCountry + " country:" + country + " currentValidName:" + currentValidName);
+							  //if (taxonName.contains(debugTaxonName))
+							  if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1g taxonName:" + taxonName + " thisCountry:" + thisCountry + " country:" + country + " currentValidName:" + currentValidName);
 							  //if (taxonName.contains("achycondyla") && country.getName() != null) && country.getName().contains("adagascar")) A.log("importSpeciesList() madagascar taxonName:" + taxonName + "   pachycondyla currentValidName:" + currentValidName);
-// Are we inserting Borneo / myrmicinaecalyptomyrmex emeryi here? 
-							  (new GeolocaleTaxonDb(getConnection())).setTaxonSet(country, currentValidName, Source.ANTCAT); 
+
+                              //if (taxonName.contains("dorylinaecerapachys") || currentValidName.contains("dorylinaecerapachys")) A.log("importSpeciesList() taxonName:" + taxonName + " currentValidName:" + currentValidName + " status:" + status + " ignoreTaxon:" + ignoreTaxon);
+
+                              Taxon current = TaxonMgr.getTaxon(currentValidName);
+                              if (current != null && current.isValid())
+    							  (new GeolocaleTaxonDb(getConnection())).setTaxonSet(country, currentValidName, Source.ANTCAT);
 							} else {
 							  getMessageMgr().addToMessages(MessageMgr.countryNotFound, tempCountry); 
 							  //A.log("country not found:" + thisCountry + " tempCountry:" + tempCountry);
 							}
 						  }
 
-                    if ("dorylinaedorylus erraticus".equals(taxonName)) A.log("importSpeciesList() 2 taxonName:" + taxonName + " bioregion:" + thisBioregion + " fossil:" + isFossil);
+                    if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1h taxonName:" + taxonName + " bioregion:" + thisBioregion + " fossil:" + isFossil);
 
 						  // Use the worldants bioregion to populate bioregion_taxon... 						
 						  if (thisBioregion != null && !"".equals(thisBioregion) && !isFossil) {
@@ -763,7 +767,7 @@ A.log("importSpeciesList lineNum:" + lineNum + " taxonName:" + taxonName);
 						      boolean inserted = (new BioregionTaxonDb(getConnection())).insertTaxon(bioregion.getName(), currentValidName, "importSpeciesList", Source.ANTCAT);
                               if (inserted) {
                                 i = i + 1;
-if ("dorylinaedorylus erraticus".equals(currentValidName)) A.log("importSpeciesList() inserted:" + inserted + " i:" + i + " bioregion:" + bioregion + " currentValidName:" + currentValidName);         
+                                //if ("dorylinaedorylus erraticus".equals(currentValidName)) A.log("importSpeciesList() inserted:" + inserted + " i:" + i + " bioregion:" + bioregion + " currentValidName:" + currentValidName);
 						      }
 						    }
 						  }
@@ -776,7 +780,7 @@ if ("dorylinaedorylus erraticus".equals(currentValidName)) A.log("importSpeciesL
 							  (new ProjTaxonDb(getConnection())).insert(fossilants, currentValidName, Source.ANTCAT); 
 						  }                   
                         } else {
-							if (taxonName.contains("formicinaemyrma")) A.log("importSpeciesList() Not inserted taxonName:" + taxonName + " c:" + c);
+							if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1i Not inserted taxonName:" + taxonName + " c:" + c);
                         }
                         
                         if (taxonName.equals("formicidae") && (!"worldants".equals(project))) {
@@ -793,13 +797,13 @@ if ("dorylinaedorylus erraticus".equals(currentValidName)) A.log("importSpeciesL
 
             returnStr = "success";
         } catch (java.io.FileNotFoundException e) {
-            returnStr = "importSpeciesList() 1 project:" + project + " e" + e;
+            returnStr = "importSpeciesList() c1 project:" + project + " e" + e;
             s_log.error(returnStr);             
         } catch (RESyntaxException e) {
-            returnStr = "importSpeciesList() 2 project:" + project + " fileName:" + fileName + " e" + e;
+            returnStr = "importSpeciesList() c2 project:" + project + " fileName:" + fileName + " e" + e;
             s_log.error(returnStr);
         } catch (java.util.MissingResourceException e) {
-            returnStr = "importSpeciesList() 3 project:" + project + " fileName:" + fileName + " e" + e;
+            returnStr = "importSpeciesList() c3 project:" + project + " fileName:" + fileName + " e" + e;
             s_log.error(returnStr);
         } catch (IndexOutOfBoundsException e) {
             returnStr = "importSpeciesList() project:" + project + " e" + e;
@@ -860,7 +864,7 @@ if ("dorylinaedorylus erraticus".equals(currentValidName)) A.log("importSpeciesL
          then: run the "Reload all Project Files" option
       */
         String baseDir = AntwebProps.getDocRoot() + Project.getSpeciesListDir(); // + root + "/";
-        //A.log("reloadSpeciesList(4) baseDir:" + baseDir + " root:" + root + " project:" + project);      
+        //A.log("reloadSpeciesList(4) baseDir:" + baseDir + " root:" + root + " project:" + project);
         return reloadSpeciesList(baseDir, root, project, UploadFile.getSpeciesListTail(), accessGroupId, singleUpload);
     }
 

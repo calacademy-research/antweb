@@ -83,17 +83,16 @@ public abstract class AntwebFunctions {
         }
     }
 
-    private static String antwebDir = "/antweb/antweb_deploy";
-
+    
     public static void imageCheck() {
       String imgDir = AntwebProps.getDocRoot() + "images/";
       String pyLoc = "/Users/mark/dev/calacademy/antweb/src/py/";
       String pyInstall = "";
       if (!AntwebProps.isDevMode()) {
-        pyLoc = antwebDir + "/src/py/";
+        pyLoc = AntwebProps.getAntwebDir() + "/src/py/";
         //pyInstall = "/usr/local/bin/";
       }
-      String logDir = "/data/antweb/web/log/imageCheck/";
+      String logDir = AntwebProps.getDocRoot() + "web/log/imageCheck/";
       String logFile = logDir + DateUtil.getFormatDateStr() + ".log";
       String command = pyInstall + "python3.6 " + pyLoc + "imageCheck.py > " + logFile;
       s_log.warn("imageCheck() command:" + command);
@@ -135,7 +134,7 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/antweb_deploy/bin/admin.sh
 
     public static String updateExif() {
       String imgDir = AntwebProps.getDocRoot() + "images/";
-      String command = "exiftool -Copyright='California Academy of Sciences 2000-2019' /data/antweb/images/casent0005904/CASENT0005904_D.tif";  
+      String command = "exiftool -Copyright='California Academy of Sciences 2000-2019' /antweb/images/casent0005904/CASENT0005904_D.tif";  
       A.log("updateExif() command:" + command);
 //      (new AntwebSystem()).launchProcess(command); //, true);
       (new AntwebSystem()).launchBuilder(command); //, true);

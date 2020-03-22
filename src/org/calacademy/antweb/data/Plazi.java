@@ -69,7 +69,11 @@ public class Plazi {
 
     private String m_plaziFilesURL = AntwebProps.getProp("site.plaziFilesURL");
     private String m_plaziRoot = AntwebProps.getProp("site.plaziDescriptionRoot");
-    private String m_plaziDir = AntwebProps.getProp("site.plaziDir");
+    private String m_plaziDir = AntwebProps.getPlaziDir(); //AntwebProps.getProp("site.plaziDir");
+    
+// On prod, plazi dir was /data/antweb/plazi/
+
+    
 
 /* Something like:
 

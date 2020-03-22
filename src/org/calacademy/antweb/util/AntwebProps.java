@@ -99,11 +99,27 @@ public abstract class AntwebProps {
         return "2.9.0";    
     }
 
+    public static String getAntwebDir() {
+        if (AntwebProps.isDevMode()) {
+          // This should be: return AntwebProps.getProp("site.docroot"); with in AppResMarkAntweb.properties
+          // This: #site.antwebDir=/Users/remarq/IdealProject/antweb/
+          // Or a standard url like /usr/local/antwebDeploy -> 
+          return "/Users/remarq/IdeaProjects/antweb/";
+        } else {
+          return "/antweb/antweb_deploy/";    
+        }
+    }
+
 	public static String getDocRoot() {
-	    // something like:  /data/antweb/
-		return AntwebProps.getProp("site.docroot");
+	    // always:  /usr/local/antweb/ points to either /data/antweb (on server) or /usr/local/tomcat/webapps/antweb on dev.
+		//return AntwebProps.getProp("site.docroot");
+        return "/usr/local/antweb/";
 	}
-	
+
+    public static String getTomcatDir() {
+        return "/usr/local/tomcat/";
+    }
+
 	public static String getImagesDir() {
 	    return getDocRoot() + "images/";
 	}
@@ -111,9 +127,22 @@ public abstract class AntwebProps {
 	public static String getWebDir() {
 		return AntwebProps.getDocRoot() + "web/";
 	}
+
+	public static String getPlaziDir() {
 	
+	    if (false && isDevMode()) {
+	      return "/Users/remarq/dev/calAcademy/plazi/";
+	    }
+	
+		return AntwebProps.getDocRoot() + "plazi/";
+	}
+
 	public static String getInputFileHome() {
-		return AntwebProps.getProp("site.inputfilehome");
+	    if (AntwebProps.isDevMode()) {
+	        return "/Users/mark/dev/calAcademy/workingdir/";
+        } else {
+	        return "/antweb/workingdir/";
+	    }
 	}
 
 	public static String getGoogleMapKey() {
@@ -172,6 +201,11 @@ public abstract class AntwebProps {
         return app;
     }
 
+    public static boolean isProtocolSecure() {
+      if ("https".equals(getProtocol())) return true;
+      return false;
+    }
+    
     public static String getProtocol() {
         // notice that this does not contain a follow / as does getSiteURL.  
         String protocol = AntwebProps.getProp("site.protocol");
@@ -341,7 +375,7 @@ public abstract class AntwebProps {
 	}
 
 	public static String report() {
-	  String report = "docRoot:" + getDocRoot() + " inputFileHome:" + getInputFileHome()
+	  String report = "docRoot:" + getDocRoot() // + " inputFileHome:" + getInputFileHome()
 	    + " googleKey:" + AntwebProps.getGoogleMapKey() + " domainApp:" + getDomainApp() 
 	    + " devMode:" + getIsDevMode();
 	  return report;
@@ -350,7 +384,7 @@ public abstract class AntwebProps {
 	public static String htmlReport() {
 	  String report = 
 	      " <br>&nbsp;&nbsp;&nbsp;<b>DocRoot:</b> " + getDocRoot() 
-	    + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
+	    // + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
         + " <br>&nbsp;&nbsp;&nbsp;<b>ImagesDir:</b> " + getImagesDir()
 	    + " <br>&nbsp;&nbsp;&nbsp;<b>WebDir:</b> " + getWebDir()
 	    + " <br>&nbsp;&nbsp;&nbsp;<b>googleKey:</b> " + getGoogleMapKey()	

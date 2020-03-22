@@ -8,10 +8,10 @@
 
  <% //if (HttpUtil.isIphone(request)) return; %>
 
- <% if ((AntwebProps.isLiveMode() || AntwebProps.isStageMode()) && !AntwebProps.isDevMode()) { %>
+ <% if (AntwebProps.isProtocolSecure()) { %>
 	  <script>
-	  if (location.protocol != 'https:')
-	  {
+	  if (location.protocol != 'https:') {
+	    A.log("academyHeader.jsp redirect to https");
 		location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
 		//location.href = 'https://www.antweb.org';
 	  }

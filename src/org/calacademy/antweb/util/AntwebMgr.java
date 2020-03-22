@@ -226,10 +226,10 @@ public class AntwebMgr {
     */
     // Something like: <br><font color=lightgreen></font> 
     public static void createSiteWarning(String siteWarning) {
-      AntwebUtil.writeFile("/data/antweb/web/siteWarning.jsp", siteWarning);
+      AntwebUtil.writeFile(AntwebProps.getWebDir() + "siteWarning.jsp", siteWarning);
     }
     public static void removeSiteWarning() {
-      AntwebUtil.remove("/data/antweb/web/siteWarning.jsp");
+      AntwebUtil.remove(AntwebProps.getWebDir() + "siteWarning.jsp");
     }
 
     /*

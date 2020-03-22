@@ -34,7 +34,7 @@ public abstract class QueriesWithParams {
                 "speciesListWithRangeData"
                 , geolocaleName
                 , FileUtil.makeReportName("SpeciesListWithRange" + geolocaleName)
-                , "species list with range data (including is_introduced and is_endemic) for a given geolocale (region, subregion, country or adm1)."
+                , "species list with range data (including is_introduced and is_endemic) for a given geolocale (region, subregion, country or adm1). Introduced and Endemic only calculated for valid taxa."
                 , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Introduced", "Endemic", "Range"}
                 //, "<th>Subfamily</th><th>Genus</th><th>Species</th><th>Subspecies</th><th>Author Date</th><th>Status</th><th>Introduced</th><th>Endemic</th><th>Range</th>"
                 , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, gt.is_introduced, gt.is_endemic, "

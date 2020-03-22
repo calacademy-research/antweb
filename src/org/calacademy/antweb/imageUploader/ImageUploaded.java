@@ -25,8 +25,7 @@ public class ImageUploaded {
 
   private static Log s_log = LogFactory.getLog(ImageUploaded.class);
 
-  public static String rootDir = "/data/antweb/images/";
-  public static String imagesDir = rootDir;
+  public static String imagesDir = AntwebProps.getDocRoot() + "images/";
 
   public static String tempDir = imagesDir + "/temp";
   public static String backupDir = imagesDir + "backup/";

@@ -67,7 +67,7 @@ public final class ShowLogAction extends Action {
         }
 
         String log = null;
-        String tomcatDir = AntwebProps.getProp("site.tomcat");
+        String tomcatDir = AntwebProps.getTomcatDir();
         if (action.equals("tomcatLog")) {
             log = tomcatDir + AntwebProps.getProp("site.tomcatLog");   
         } else if (action.equals("apacheLog")) {
@@ -77,7 +77,7 @@ public final class ShowLogAction extends Action {
         } else if (action.equals("antwebInfoLog")) {
             log = tomcatDir + AntwebProps.getProp("site.antwebInfoLog");   
         } else if (action.equals("queryStatsLog")) {
-            log = AntwebProps.getProp("site.docroot") + AntwebProps.getProp("site.queryStatsLog");   
+            log = AntwebProps.getDocRoot() + AntwebProps.getProp("site.queryStatsLog");   
         }
 
         if (log == null) {
