@@ -154,7 +154,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
                 projTaxonLog.setDetails(projTaxonLogDetails);
 
                 for (ProjTaxonLogDetail detail : projTaxonLogDetails) {
-                  A.log("getProjTaxonLogs() add detail:" + detail);
+                  //A.log("getProjTaxonLogs() add detail:" + detail);
                   masterDetails.remove(detail);  // So that the list remains unique.
                   masterDetails.add(detail);
                 }

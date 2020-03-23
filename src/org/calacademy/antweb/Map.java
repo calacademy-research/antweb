@@ -748,7 +748,7 @@ public class Map {
                 } else {
                     foundPoint = true;
                 }
-                theArrayString.append(new Float(thisFloat));
+                theArrayString.append(Float.valueOf(thisFloat));
             }
         }
 

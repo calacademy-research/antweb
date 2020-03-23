@@ -37,7 +37,7 @@ public final class SaveGroupAction extends Action {
         boolean isNew = false;
         SaveGroupForm form = ((SaveGroupForm) f);
                 
-        int id = (new Integer(form.getId()).intValue());
+        int id = (Integer.valueOf(form.getId()).intValue());
         Group group = null;
         
         try {

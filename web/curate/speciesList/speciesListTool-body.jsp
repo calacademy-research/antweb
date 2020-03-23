@@ -118,6 +118,7 @@ The SpeciesListTool log is here: <a href="<%= AntwebProps.getDomainApp() %>/web/
   String header1 = "Species List 1";
   if (mapSpeciesList1Name != null && !"none".equals(mapSpeciesList1Name)) { 
     SpeciesListable sl = SpeciesListMgr.getSpeciesList(mapSpeciesList1Name);
+if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Name:" + mapSpeciesList1Name);
     String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + sl.getTitle() + " Ant List'></a>";
     header1 = "<a href='" + AntwebProps.getDomainApp() + "/speciesListHistory.do?speciesListName=" + mapSpeciesList1Name + "'>Species List 1</a>" + publicListLink;
   }
