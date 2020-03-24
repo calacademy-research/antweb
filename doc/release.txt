@@ -1,4 +1,8 @@
 Release 8.17.3
+Date:
+  GenericSearchResults finalize removed.
+
+Release 8.17.3
 Date: Mar 21
   Bug fix. Twice removed synonyms will not create geolocale_taxa records.
   System property files overhauled.
