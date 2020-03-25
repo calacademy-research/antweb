@@ -92,14 +92,14 @@ public final class BigPictureAction extends Action {
             ImageDb imageDb = new ImageDb(connection);
             theImage = imageDb.getSpecimenImage(code, shot, number);
 
-            A.log("execute() theImage:" + theImage);
+            //A.log("execute() theImage:" + theImage);
 
             if (LoginMgr.isCurator(request)) {
               if (theImage == null || theImage.getGroup() == null) {
                 s_log.warn("execute() no image:" + theImage + " and/or group for image code:" + code + " shot:" + shot + " number:" + number);
               } else {
-                s_log.warn("execute() theImage:" + theImage +  " group:" + theImage.getGroup() + " accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
-                if (theImage.getGroup().getId() == accessGroup.getId()) {
+                //s_log.warn("execute() theImage:" + theImage +  " group:" + theImage.getGroup() + " accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
+                if (theImage.getGroup().getId() == accessGroup.getId() || LoginMgr.isAdmin(request)) {
                   if ("delete".equals(form.getAction())) {
                     imageDb = new ImageDb(connection);
                     boolean isDeleted = imageDb.deleteImage(code, shot, number);
