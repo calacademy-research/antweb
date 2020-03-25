@@ -1,3 +1,9 @@
+Release 8.19
+  Bioregion endemics calculated and displayed.
+
+Release 8.18.1
+  Admin can now delete images of other curators.
+
 Release 8.18
 Date: Mar 24
   AntwebProps refactored and extended to support platform.properties.

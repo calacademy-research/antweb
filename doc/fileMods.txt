@@ -1,3 +1,10 @@
+Release 8.19
+
+
+Release 8.18.1
+ src/org/calacademy/antweb/BigPictureAction.java | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
 Release 8.18
  .gitignore                                                  |   1 +
  WEB-INF/classes/ApplicationResources.properties             |   6 +++---

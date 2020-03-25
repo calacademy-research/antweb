@@ -52,11 +52,12 @@ public class BioregionDb extends AntwebDb {
            bioregion.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
            bioregion.setTaxonSubfamilyDistJson(rset.getString("taxon_subfamily_dist_json"));
            bioregion.setSpecimenSubfamilyDistJson(rset.getString("specimen_subfamily_dist_json"));
-              
           
           bioregion.setChartColor(rset.getString("chart_color"));
           bioregion.setCreated(rset.getTimestamp("created"));
-         
+
+          bioregion.setEndemicSpeciesCount(rset.getInt("endemic_species_count"));
+
           // bioregion.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
           // subfamily_count, genus_count, species_count, taxon_subfamily_dist_json, specimen_subfamily_dist_json
           // extent, locality, project_name?         
@@ -114,8 +115,10 @@ public class BioregionDb extends AntwebDb {
 			    bioregion.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
 			    bioregion.setTaxonSubfamilyDistJson(rset.getString("taxon_subfamily_dist_json"));
 			    bioregion.setSpecimenSubfamilyDistJson(rset.getString("specimen_subfamily_dist_json"));
-			    bioregion.setChartColor(rset.getString("chart_color"));             
-                
+			    bioregion.setChartColor(rset.getString("chart_color"));
+
+                bioregion.setEndemicSpeciesCount(rset.getInt("endemic_species_count"));
+
                 Hashtable description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
                 bioregion.setDescription(description);     
                           
@@ -487,7 +490,123 @@ public class BioregionDb extends AntwebDb {
           + " and s.family = 'formicidae' " 
           + " group by subfamily"; 
       return query;
-    }     
+    }
 
-           
+// -----------------------------
+
+    public int calcEndemic() {
+        int c = 0;
+        // Set all to false prior to setting specifics to true below...
+        c += updateBioregionTaxonField("endemic", null, null);
+        c += updateBioregionFieldCount("endemic", null, 0);
+
+        c += calcEndemism();
+
+        //calcHigherEndemism();
+
+        return c;
+    }
+
+    public int calcEndemism() {
+        String query = "select bt.taxon_name taxon_name, max(b.name) bioregionName, count(*) count"
+                + " from bioregion b, bioregion_taxon bt, taxon where b.name = bt.bioregion_name"
+                + " and taxon.taxon_name = bt.taxon_name"
+                + " and taxon.status != 'morphotaxon'"
+                + " and taxon.rank in ('species', 'subspecies')"
+                + " and taxon.fossil = 0"
+                + " and  taxon.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
+                + " and taxon.family = 'formicidae'"
+                + " group by bt.taxon_name having count(*) = 1"
+                + " order by bioregionName";
+
+        A.log("calcEndemism() query:" + query);
+
+        return calcEndemism(query);
+    }
+
+    private int calcEndemism(String query) {
+        int c = 0;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "calcEndemism()");
+            rset = stmt.executeQuery(query);
+
+            String lastBioregionName = null;
+            int count = 0;
+            while (rset.next()) {
+                ++count;
+                String bioregionName = rset.getString("bioregionName");
+                String taxonName = rset.getString("taxon_name");
+
+                //if (GeolocaleMgr.getGeolocale(geolocaleId).getGeorank().equals("adm1")) A.log("calcEndemism() adm1:" + geolocaleId);
+
+                c += updateBioregionTaxonField("endemic", bioregionName, taxonName);
+
+                // If a break on bioregion, then update the count appropriately.
+                if (lastBioregionName != null && !lastBioregionName.equals(bioregionName)) {
+                    // A break has occured.
+ A.log("calcEndemism() bioregionName:" + bioregionName + " lastBioregionName:" + lastBioregionName + " count:" + count);
+                    c += updateBioregionFieldCount("endemic", lastBioregionName, count);
+                    count = 0;
+                }
+
+                lastBioregionName = bioregionName;
+            }
+            // After the loop is complete, update the last record that didn't "break on".
+            if (count > 0) {
+                c += updateBioregionFieldCount("endemic", lastBioregionName, count);
+            }
+        } catch (SQLException e) {
+            s_log.error("calcEndemism() query:" + query + " e:" + e.toString());
+        } finally {
+            DBUtil.close(stmt, rset, this, "calcEndemism()");
+        }
+        return c;
+    }
+
+    private int updateBioregionFieldCount(String field, String bioregionName, int count) {
+        int c = 0;
+        String updateDml = "update bioregion set " + field + "_species_count = ";
+        if (bioregionName == null) {
+            updateDml += 0;
+        } else {
+            updateDml += count + " where name = '" + bioregionName + "'";
+        }
+
+        Statement stmt = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "updateBioregionFieldCount()");
+            c = stmt.executeUpdate(updateDml);
+        } catch (SQLException e) {
+            s_log.error("updateBioregionFieldCount() e:" + e);
+        } finally {
+            DBUtil.close(stmt, null, this, "updateBioregionFieldCount()");
+        }
+        return c;
+    }
+
+    // Will set to true (1)
+    private int updateBioregionTaxonField(String field, String bioregionName, String taxonName) {
+        int c = 0;
+        String updateDml = "update bioregion_taxon set is_" + field + " = "; // will be is_endemic or is_introduced
+        if (bioregionName == null) {
+            updateDml += "false";
+        } else {
+            updateDml += "true where bioregion_name = '" + bioregionName + "' and taxon_name = '" + taxonName + "'";
+        }
+
+        Statement stmt = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "updateBioregionTaxonField()");
+            c = stmt.executeUpdate(updateDml);
+        } catch (SQLException e) {
+            s_log.error("updateBioregionTaxonField() e:" + e);
+        } finally {
+            DBUtil.close(stmt, null, this, "updateBioregionTaxonField()");
+        }
+        return c;
+    }
+
+
 }

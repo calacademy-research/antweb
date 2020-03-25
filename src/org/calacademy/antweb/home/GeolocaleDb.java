@@ -1245,6 +1245,8 @@ public static int c = 0;
 		+ " and taxon.family = 'formicidae'"
 		+ " group by gt.taxon_name having count(*) = 1 " 
 		+ " order by geolocale_id";
+      
+      A.log("calcCountryEndemism() query:" + query);
     
       return calcEndemism(query);
     }
@@ -1465,7 +1467,7 @@ public static int c = 0;
 
                 int updated = updateGeolocaleTaxonField("endemic", region.getId(), taxonName);
 
-                A.log("calcHigherEndemismAdm1() c:" + c + " region:" + region + " taxonName:" + taxonName + " updated:" + updated);
+                //A.log("calcHigherEndemismAdm1() c:" + c + " region:" + region + " taxonName:" + taxonName + " updated:" + updated);
             }
             A.log("calcHigherEndemismSubregion() c:" + c);
         } catch (SQLException e) {

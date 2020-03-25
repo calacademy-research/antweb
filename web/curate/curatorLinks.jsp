@@ -139,8 +139,9 @@
         <!-- li><a href="< %= domainApp % >/utilData.do?action=populateObjectEdit">Populate</a> Object Edit -->
         <li><a href="<%= domainApp %>/utilData.do?action=countryData">Fetch</a> Country Data <!-- Fetch data from antwiki.org -->
         <li><a href="<%= domainApp %>/utilData.do?action=finishCountryUpload">Finish</a> Country Upload
-        <li><a href="<%= domainApp %>/utilData.do?action=calcEndemic">Calc</a> Endemic
+        <li><a href="<%= domainApp %>/utilData.do?action=calcEndemic">Calc</a> Endemism
         <li><a href="<%= domainApp %>/utilData.do?action=calcIntroduced">Calc</a> Introduced
+        <li><a href="<%= domainApp %>/utilData.do?action=calcBioEndemic">Calc</a> Bioregion Endemism
 
   	    <li><a href="<%= domainApp %>/utilData.do?action=regenerateAllAntweb"> Regenerate AllAntwebAnts </a>
 	    <li><a href="<%= domainApp %>/utilData.do?action=crawlForType">Crawl </a> For Type

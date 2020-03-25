@@ -356,7 +356,8 @@ public class GenericSearchResults implements Serializable {
             hash.put(key, value);
         }
     }
-    
+
+/*    
     protected void finalize() throws Throwable {
         super.finalize();
         ResultItem theItem = null;
@@ -369,7 +370,7 @@ public class GenericSearchResults implements Serializable {
             results.clear();
         }
     }
-
+*/
     public ArrayList getRset() {
         return rset;
     }

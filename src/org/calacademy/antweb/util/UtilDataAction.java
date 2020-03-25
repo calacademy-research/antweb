@@ -69,16 +69,6 @@ public class UtilDataAction extends Action {
 
         //ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
 
-/*
-        Set<String> skipInitializeSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        skipInitializeSet.addAll(Arrays.asList("imageUtil"));
-        boolean skipInitialize = skipInitializeSet.contains(action);        
-        if (!skipInitialize && !AntwebMgr.isInitialized()) {
-            request.setAttribute("message", "Server is initializing...");
-            return (mapping.findForward("message"));        
-        }
-*/
-
         boolean isAllow = "allow".equals(theForm.getParam()); // Used by scheduler.
 
         String message = null;
@@ -578,6 +568,11 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
 		  message =  c + " higher endemics calculated";                 
 		}
 
+		if (action.equals("calcBioEndemic")) {
+		  int c = (new BioregionDb(connection)).calcEndemic();
+		  message =  c + " bioregion endemics calculated";                 
+		}
+
         // 40 sec
 		// handled during GeolocaleDb.updateCounts()
 		if (action.equals("calcIntroduced")) {
@@ -671,13 +666,7 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
 
         if (action.equals("fetchGoogleApisData")) {   
           int id = 0;
-          //Adm1 adm1 = (Adm1) GeolocaleMgr.getAdm1("Wainikeli", "Fiji");
-          //Adm1 adm1 = (Adm1) GeolocaleMgr.getAdm1("unknown_Australia", "Australia");
-          //Adm1 adm1 = (Adm1) GeolocaleMgr.getGeolocale(8722);
-          //Adm1 adm1 = (Adm1) GeolocaleMgr.getGeolocale(370);
-          //Adm1 adm1 = (Adm1) GeolocaleMgr.getGeolocale(3605);  // 7841);
-          //Adm1 adm1 = (Adm1) GeolocaleMgr.getGeolocale(539);
-          //Adm1 adm1 = (Adm1) GeolocaleMgr.getGeolocale(1434);		                    
+          //Adm1 adm1 = (Adm1) GeolocaleMgr.getAdm1("Wainikeli", "Fiji");	                    
           id = form.getId();
           //if (AntwebProps.isDevMode() && id == 0) id = 5315;				  
           if (id > 0) {

@@ -29,37 +29,35 @@ public abstract class AntwebProps {
         return false;
       return true;
     }
-    
+
+    private static ResourceBundle getBundle(String resourceName) {
+        ResourceBundle bundle = null;
+        try {
+          bundle = ResourceBundle.getBundle(resourceName);
+        } catch (java.util.MissingResourceException e) {
+          s_log.warn("getBundle(" + resourceName + ") e:" + e);       
+        }
+        return bundle;
+    }
+
     private static ResourceBundle getAppResources() {
       if (s_appResources == null) {
-        try {
-          s_appResources =  ResourceBundle.getBundle("ApplicationResources");
-        } catch (java.util.MissingResourceException e) {
-          s_log.warn("getAppResources() e:" + e);       
-        }
+        s_appResources = getBundle("ApplicationResources");
       }
-      //s_log.warn("getAppResources() appResources:" + s_appResources);
       return s_appResources;
     }  
     
     private static ResourceBundle getAntwebResources() {
       if (s_antwebResources == null) {
-        s_antwebResources =  ResourceBundle.getBundle("AntwebResources");
+        s_antwebResources = getBundle("AntwebResources");
       }
-      //AntwebUtil.logStackTrace();
-      //s_log.warn("getAntwebResources() appResources:" + s_appResources);
       return s_antwebResources;
     }  
 
     private static ResourceBundle getPlatformResources() {
       if (s_platformResources == null) {
-        try {
-          s_platformResources =  ResourceBundle.getBundle("platform");
-        } catch (java.util.MissingResourceException e) {
-          s_log.warn("getPlatformResources() e:" + e);
-        }
+        s_platformResources =  getBundle("platform");
       }
-      //s_log.warn("getPlatformResources() platformResources:" + s_platformResources);
       return s_platformResources;
     }
 

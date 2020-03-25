@@ -19,8 +19,9 @@
     String thePage = HttpUtil.getTarget(request);
 
     ArrayList<String> endemics = (ArrayList<String>)request.getAttribute("endemic");       
-    Geolocale geolocale = (Geolocale) request.getAttribute("geolocale");
+    //Overview overview = (Geolocale) request.getAttribute("geolocale");
 
+    Overview overview = (Overview) request.getAttribute("overview");
 %>
 
 <!-- endemic-body.jsp -->
@@ -33,7 +34,7 @@
 <div id="page_data">
     <div id="overview_data">
 
-<br><h2>Endemics for <%= geolocale.getHeading() %>: <%= geolocale.getName() %> </h2>
+<br><h2>Endemics for <%= overview.getHeading() %>: <%= overview.getName() %> </h2>
 
 <%
     int count = 0;

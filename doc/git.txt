@@ -18,3 +18,7 @@ Maybe cvs2git?
 
 
 
+git reset --hard
+git pull
+
+
