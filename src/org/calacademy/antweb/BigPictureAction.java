@@ -88,7 +88,7 @@ public final class BigPictureAction extends Action {
               request.setAttribute("message", message);
               return (mapping.findForward("message"));            
             }
-        
+
             ImageDb imageDb = new ImageDb(connection);
             theImage = imageDb.getSpecimenImage(code, shot, number);
 
@@ -98,6 +98,7 @@ public final class BigPictureAction extends Action {
               if (theImage == null || theImage.getGroup() == null) {
                 s_log.warn("execute() no image:" + theImage + " and/or group for image code:" + code + " shot:" + shot + " number:" + number);
               } else {
+                s_log.warn("execute() theImage:" + theImage +  " group:" + theImage.getGroup() + " accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
                 if (theImage.getGroup().getId() == accessGroup.getId()) {
                   if ("delete".equals(form.getAction())) {
                     imageDb = new ImageDb(connection);
