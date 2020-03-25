@@ -419,7 +419,7 @@ public class BioregionDb extends AntwebDb {
     private void updateImagedSpecimenCount(Bioregion bioregion) {
         int count = getImagedSpecimenCount(bioregion);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("bioregion", "imaged_specimen_count", (new Integer(count)).toString(), "name = '" + bioregion + "'");
+        utilDb.updateField("bioregion", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "name = '" + bioregion + "'");
     }
 
     private int getImagedSpecimenCount(Bioregion bioregion) {
@@ -607,6 +607,15 @@ public class BioregionDb extends AntwebDb {
         }
         return c;
     }
+
+/*
+select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, bt.is_endemic
+, (select group_concat(' ', b2.name order by name) from bioregion_taxon bt2, bioregion b2 where bt2.bioregion_name = b2.name and bt2.taxon_name = t.taxon_name order by b2.name)
+from taxon t, bioregion_taxon bt, bioregion b where t.taxon_name = bt.taxon_name and bt.bioregion_name = b.name and t.rank in ('species', 'subspecies')
+and b.name = 'Oceania'
+order by t.subfamily, t.genus, t.species, t.subspecies
+
+ */
 
 
 }

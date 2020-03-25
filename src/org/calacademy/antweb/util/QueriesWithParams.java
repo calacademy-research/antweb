@@ -16,16 +16,23 @@ public abstract class QueriesWithParams {
 
     public static NamedQuery getNamedQueryWithParam(String queryName, String param) {
 
-        if ("speciesListWithRangeData".equals(queryName)) {
-            return getSpeciesListWithRangeData(param); // param is a geolocaleName
+        if ("geolocaleSpeciesListWithRangeData".equals(queryName)) {
+            return getGeolocaleSpeciesListWithRangeData(param); // param is a geolocaleName
         }
-        if ("speciesListRangeSummary".equals(queryName)) {
-            return getSpeciesListRangeSummary(param); // param is a geolocaleName
+        if ("geolocaleSpeciesListRangeSummary".equals(queryName)) {
+            return getGeolocaleSpeciesListRangeSummary(param); // param is a geolocaleName
+        }
+
+        if ("bioregionSpeciesListWithRangeData".equals(queryName)) {
+            return getBioregionSpeciesListWithRangeData(param); // param is a bioregionName
+        }
+        if ("bioregionSpeciesListRangeSummary".equals(queryName)) {
+            return getBioregionSpeciesListRangeSummary(param); // param is a bioregionName
         }
         return null;
     }
 
-    private static NamedQuery getSpeciesListWithRangeData(String geolocaleName) {
+    private static NamedQuery getGeolocaleSpeciesListWithRangeData(String geolocaleName) {
         NamedQuery query = null;
 
         Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleName);
@@ -36,7 +43,6 @@ public abstract class QueriesWithParams {
                 , FileUtil.makeReportName("SpeciesListWithRange" + geolocaleName)
                 , "species list with range data (including is_introduced and is_endemic) for a given geolocale (region, subregion, country or adm1). Introduced and Endemic only calculated for valid taxa."
                 , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Introduced", "Endemic", "Range"}
-                //, "<th>Subfamily</th><th>Genus</th><th>Species</th><th>Subspecies</th><th>Author Date</th><th>Status</th><th>Introduced</th><th>Endemic</th><th>Range</th>"
                 , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, gt.is_introduced, gt.is_endemic, "
                   + " (select group_concat(' ', g2.name order by name) from geolocale_taxon gt2, geolocale g2 where gt2.geolocale_id = g2.id and g2.georank = '" + georank + "' and gt2.taxon_name = t.taxon_name order by g2.name) "
                   + " from taxon t, geolocale_taxon gt, geolocale g where t.taxon_name = gt.taxon_name and gt.geolocale_id = g.id and t.rank in ('species', 'subspecies') "
@@ -48,12 +54,13 @@ public abstract class QueriesWithParams {
         return query; // end getQueryWithParam()
     }
 
-    private static NamedQuery getSpeciesListRangeSummary(String geolocaleName) {
+
+    private static NamedQuery getGeolocaleSpeciesListRangeSummary(String geolocaleName) {
         NamedQuery query = null;
 
         Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleName);
         if (geolocale == null) {
-            s_log.warn("getSpeciesListRangeSummary() geolocale not found:" + geolocaleName);
+            s_log.warn("getGeolocaleSpeciesListRangeSummary() geolocale not found:" + geolocaleName);
             return null;
         }
         String georank = geolocale.getGeorank();
@@ -71,6 +78,51 @@ public abstract class QueriesWithParams {
         A.log("getNamedQuery() geolocale:" + geolocale + " query:" + query);
 
         return query; // end getQueryWithParam()
+    }
+
+    private static NamedQuery getBioregionSpeciesListWithRangeData(String bioregionName) {
+        NamedQuery query = null;
+
+        Bioregion bioregion = BioregionMgr.getBioregion(bioregionName);
+        query = new NamedQuery(
+                "bioregionSpeciesListWithRangeData"
+                , bioregionName
+                , FileUtil.makeReportName("bioregionSpeciesListWithRange" + bioregionName)
+                , "Bioregion species list with range data (including is_endemic) for a given bioregion. Endemic only calculated for valid taxa."
+                , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Endemic", "Range"}
+                , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, bt.is_endemic"
+                + " , (select group_concat(' ', b2.name order by name) from bioregion_taxon bt2, bioregion b2 where bt2.bioregion_name = b2.name and bt2.taxon_name = t.taxon_name order by b2.name)"
+                + " from taxon t, bioregion_taxon bt, bioregion b where t.taxon_name = bt.taxon_name and bt.bioregion_name = b.name and t.rank in ('species', 'subspecies')"
+                + " and b.name = '" + bioregionName + "' order by t.subfamily, t.genus, t.species, t.subspecies"
+        );
+
+        A.log("getNamedQuery() bioregion:" + bioregion + " query:" + query);
+
+        return query;
+    }
+
+    private static NamedQuery getBioregionSpeciesListRangeSummary(String bioregionName) {
+        NamedQuery query = null;
+
+        Bioregion bioregion = BioregionMgr.getBioregion(bioregionName);
+        if (bioregion == null) {
+            s_log.warn("getBioregionSpeciesListRangeSummary() bioregion not found:" + bioregionName);
+            return null;
+        }
+        query = new NamedQuery(
+                "bioregionSpeciesListRangeSummary"
+                , bioregionName
+                , FileUtil.makeReportName("BioregionSpeciesListRangeSummary" + bioregionName)
+                , "Bioregion Species List Range Summary for a given bioregion."
+                , new String[] {"Count", "Status", "Endemic"}
+                , "select count(*), t.status, bt.is_endemic from bioregion b, bioregion_taxon bt, taxon t "
+                + " where b.name = bt.bioregion_name and bt.taxon_name = t.taxon_name and t.rank in ('species', 'subspecies') "
+                + " and b.name = '" + bioregionName + "' group by t.status, bt.is_endemic"
+        );
+
+        A.log("getNamedQuery() bioregion:" + bioregion + " query:" + query);
+
+        return query;
     }
 
 }

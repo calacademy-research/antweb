@@ -21,13 +21,12 @@ if (true) {
         note += "<br><br>To see all " + Rank.getPluralRank(pageRank).toLowerCase() + " from specimen records in this " 
           + geolocale.getGeorank() + ", click on <b>Show Specimen Taxa</b> at the top of the list."
           ;
-      } %>
+      }
 
-    <%
-      String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
+      String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=geolocaleSpeciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
       if (LoginMgr.isAdmin(request)) {
-          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=speciesListWithRangeData&param=" + overview + "'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
-          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=speciesListRangeSummary&param=" + overview + "'>Summary</a>";
+          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=geolocaleSpeciesListWithRangeData&param=" + overview + "'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
+          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=geolocaleSpeciesListRangeSummary&param=" + overview + "'>Summary</a>";
       }
       if ((overview instanceof Country || overview instanceof Adm1) && LoginMgr.isCurator(request)) {
           note += speciesListWithRangeDataNote;
@@ -50,6 +49,14 @@ if (true) {
       note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Bioregion list are based on the following sources:" 
           + " a) specimen records of any species from the bioregion,"
           + " b) AntCat.org type locality information. Bioregion lists are not managed by curators."; 
+
+      String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=bioregionSpeciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
+      if (LoginMgr.isAdmin(request)) {
+          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=bioregionSpeciesListWithRangeData&param=" + overview + "'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
+          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=bioregionSpeciesListRangeSummary&param=" + overview + "'>Summary</a>";
+      }
+      note += speciesListWithRangeDataNote;
+      note += "<br>";
 %>
       <%= note %>
       <div class="page_divider taxonomic"></div>

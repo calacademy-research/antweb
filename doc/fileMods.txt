@@ -1,5 +1,19 @@
 Release 8.19
-
+ db/upgrade/8.0/2020-02-12.sql                              |  14 ++++++++++++++
+ doc/fileMods.txt                                           |   7 +++++++
+ doc/git.txt                                                |   4 ++++
+ doc/release.txt                                            |   6 ++++++
+ src/org/calacademy/antweb/EndemicAction.java               |  90 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------
+ src/org/calacademy/antweb/home/BioregionDb.java            | 131 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ src/org/calacademy/antweb/home/GeolocaleDb.java            |   4 +++-
+ src/org/calacademy/antweb/search/GenericSearchResults.java |   5 +++--
+ src/org/calacademy/antweb/util/AntwebProps.java            |  28 +++++++++++++---------------
+ src/org/calacademy/antweb/util/UtilDataAction.java         |  23 ++++++-----------------
+ web/curate/curatorLinks.jsp                                |   3 ++-
+ web/documentation/releaseNum.jsp                           |   2 +-
+ web/endemic-body.jsp                                       |   5 +++--
+ web/overview-body.jsp                                      |   9 +++++++++
+ 14 files changed, 264 insertions(+), 67 deletions(-)
 
 Release 8.18.1
  src/org/calacademy/antweb/BigPictureAction.java | 6 +++---
