@@ -14,6 +14,10 @@ Release 8.19
  web/endemic-body.jsp                                       |   5 +++--
  web/overview-body.jsp                                      |   9 +++++++++
  14 files changed, 264 insertions(+), 67 deletions(-)
+ src/org/calacademy/antweb/util/QueriesWithParams.java | 68 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--------
+ web/common/taxonSetHeaderNotes.jsp                    | 17 ++++++++++++-----
+ 5 files changed, 98 insertions(+), 16 deletions(-)
+
 
 Release 8.18.1
  src/org/calacademy/antweb/BigPictureAction.java | 6 +++---

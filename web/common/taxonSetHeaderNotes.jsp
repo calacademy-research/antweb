@@ -23,6 +23,8 @@ if (true) {
           ;
       }
 
+// Really should only be offering links if at the taxa level. Also true for Bioregion below.
+
       String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=geolocaleSpeciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
       if (LoginMgr.isAdmin(request)) {
           speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=geolocaleSpeciesListWithRangeData&param=" + overview + "'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
