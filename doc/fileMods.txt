@@ -1,3 +1,54 @@
+Release 8.18
+ .gitignore                                                  |   1 +
+ WEB-INF/classes/ApplicationResources.properties             |   6 +++---
+ build.xml                                                   |   1 +
+ doc/install.txt                                             |  16 ++++++++++------
+ doc/installNew1.txt                                         |  12 ++++++------
+ doc/installOld.txt                                          |   4 ++--
+ doc/release.txt                                             |   4 ++++
+ etc/AppResStgAntweb.properties                              |   6 +++---
+ src/org/calacademy/antweb/AncFile.java                      |   1 -
+ src/org/calacademy/antweb/Map.java                          |   2 +-
+ src/org/calacademy/antweb/Project.java                      |   8 --------
+ src/org/calacademy/antweb/Utility.java                      |   2 --
+ src/org/calacademy/antweb/curate/group/SaveGroupAction.java |   2 +-
+ src/org/calacademy/antweb/data/PlaziAction.java             |   2 +-
+ src/org/calacademy/antweb/data/googleApis/Adm1Response.java |  16 ----------------
+ src/org/calacademy/antweb/home/ProjTaxonLogDb.java          |   2 +-
+ src/org/calacademy/antweb/util/AntwebMgr.java               |   2 ++
+ src/org/calacademy/antweb/util/AntwebProps.java             | 111 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--------------------------------------------------
+ src/org/calacademy/antweb/util/AppContextListener.java      |  13 +++++++------
+ src/org/calacademy/antweb/util/DBUtil.java                  |   2 +-
+ web/curate/speciesList/speciesListTool-body.jsp             |   1 +
+ web/documentation/releaseNum.jsp                            |   2 +-
+ web/maps/map.jsp                                            |   1 -
+ 
+Release 8.17.3
+ WEB-INF/struts-config.xml                                             | 19 ++++++-------------
+ doc/done.txt                                                          |  7 +++++--
+ doc/release.txt                                                       |  5 +++++
+ etc/AppResMarkAntweb.properties                                       | 13 ++++++-------
+ src/org/calacademy/antweb/SpecimenImage.java                          |  3 ++-
+ src/org/calacademy/antweb/curate/speciesList/SpeciesListUploader.java |  4 ++--
+ src/org/calacademy/antweb/data/Plazi.java                             |  6 +++++-
+ src/org/calacademy/antweb/home/BioregionTaxonDb.java                  |  2 +-
+ src/org/calacademy/antweb/home/GeolocaleTaxonDb.java                  | 81 +++++++++++++++++++++++++++++++++++++++++++--------------------------------------
+ src/org/calacademy/antweb/imageUploader/ImageUploaded.java            |  3 +--
+ src/org/calacademy/antweb/upload/SpeciesListUpload.java               | 48 ++++++++++++++++++++++++++----------------------
+ src/org/calacademy/antweb/upload/UploadAction.java                    | 13 +++----------
+ src/org/calacademy/antweb/util/AntwebFunctions.java                   |  9 ++++-----
+ src/org/calacademy/antweb/util/AntwebMgr.java                         |  4 ++--
+ src/org/calacademy/antweb/util/AntwebProps.java                       | 46 ++++++++++++++++++++++++++++++++++++++++------
+ src/org/calacademy/antweb/util/QueriesWithParams.java                 |  2 +-
+ src/org/calacademy/antweb/util/SessionRequestFilter.java              | 17 ++++++++++-------
+ src/org/calacademy/antweb/util/ShowLogAction.java                     |  4 ++--
+ src/org/calacademy/antweb/util/ToUploadAction.java                    | 76 ----------------------------------------------------------------------------
+ web/common/academyHeader.jsp                                          |  6 +++---
+ web/curate/curatorLinks.jsp                                           |  1 -
+ web/documentation/releaseNum.jsp                                      |  2 +-
+ 22 files changed, 168 insertions(+), 203 deletions(-)
+ delete mode 100755 src/org/calacademy/antweb/util/ToUploadAction.java
+ 
 Release 8.17.2
  doc/done.txt                                          |  5 +++++
  doc/fileMods.txt                                      |  8 +++++++-

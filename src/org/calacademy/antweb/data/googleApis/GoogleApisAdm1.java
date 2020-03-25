@@ -31,9 +31,7 @@ public class GoogleApisAdm1 {
     public static String getBoundingBox() { return boundingBox; }
 
 /*
-
-https://maps.googleapis.com/maps/api/geocode/json?address=Yolo, California&key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
-
+https://maps.googleapis.com/maps/api/geocode/json?address=Yolo, California&key=AntwebProps.getGoogleMapKey()
 */
     public static void fetch(String fetchUrl) throws AntwebException {
 	  centroid = null;

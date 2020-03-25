@@ -1,3 +1,7 @@
+Release 8.18
+Date: Mar 24
+  AntwebProps refactored and extended to support platform.properties.
+
 Release 8.17.3
 Date:
   GenericSearchResults finalize removed.

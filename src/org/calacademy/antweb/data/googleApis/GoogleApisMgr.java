@@ -21,7 +21,7 @@ public class GoogleApisMgr {
     private static Log s_log = LogFactory.getLog(GoogleApisMgr.class);
       
 /*
-https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagascar&key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4	
+https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagascar&key=AntwebProps.getGoogleMapKey()	
 */
 
 
