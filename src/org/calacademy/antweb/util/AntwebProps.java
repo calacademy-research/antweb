@@ -99,7 +99,7 @@ public abstract class AntwebProps {
       try {
           propVal = resources.getString(prop);
 	    } catch (MissingResourceException e) {
-          if ("ant".equals(resource)) {
+          if ("platform".equals(resource)) {
               s_log.warn("getProp(" + prop + ", " + resource + ", " + resources + ") not found in any bundle.  e:" + e );
           }
 	    }

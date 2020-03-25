@@ -22,7 +22,17 @@ Release 8.18
  web/curate/speciesList/speciesListTool-body.jsp             |   1 +
  web/documentation/releaseNum.jsp                            |   2 +-
  web/maps/map.jsp                                            |   1 -
- 
+ WEB-INF/classes/ApplicationResources.properties               |  4 ----
+ doc/fileMods.txt                                              | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ doc/release.txt                                               |  4 ++++
+ etc/AppResDevAntweb.properties                                |  3 ---
+ etc/AppResStgAntweb.properties                                |  7 -------
+ etc/AppResStgAntwebTest.properties                            |  4 ----
+ src/org/calacademy/antweb/data/googleApis/GoogleApisAdm1.java |  4 +---
+ src/org/calacademy/antweb/data/googleApis/GoogleApisMgr.java  |  2 +-
+ web/documentation/releaseNum.jsp                              |  2 +-
+ 9 files changed, 58 insertions(+), 23 deletions(-)
+  
 Release 8.17.3
  WEB-INF/struts-config.xml                                             | 19 ++++++-------------
  doc/done.txt                                                          |  7 +++++--
