@@ -511,10 +511,12 @@ public class BioregionDb extends AntwebDb {
         String query = "select bt.taxon_name taxon_name, max(b.name) bioregionName, count(*) count"
                 + " from bioregion b, bioregion_taxon bt, taxon where b.name = bt.bioregion_name"
                 + " and taxon.taxon_name = bt.taxon_name"
-                + " and taxon.status != 'morphotaxon'"
+                //+ " and taxon.status != 'morphotaxon'"
                 + " and taxon.rank in ('species', 'subspecies')"
                 + " and taxon.fossil = 0"
-                + " and  taxon.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
+                // Project.ALLANTWEBANTS
+                + (new StatusSet()).getAndCriteria(Project.ALLANTWEBANTS)
+                //+ " and  taxon.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
                 + " and taxon.family = 'formicidae'"
                 + " group by bt.taxon_name having count(*) = 1"
                 + " order by bioregionName";

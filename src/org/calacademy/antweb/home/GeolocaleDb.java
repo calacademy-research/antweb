@@ -1151,7 +1151,6 @@ public static int c = 0;
         String query = "select gt.geolocale_id, gt.taxon_name, g.bioregion"
           + " from geolocale_taxon gt, geolocale g"
           + " where gt.geolocale_id = g.id"
-          //+ " and g.georank = 'country'"
           + " and g.georank in ('country', 'adm1')"
           + " and taxon_name in " 
           + "     (select pt.taxon_name from proj_taxon pt, taxon t " 
@@ -1242,6 +1241,7 @@ public static int c = 0;
 		+ " and g.georank = 'country'"
 	    //+ " and g.georank in ('country', 'adm1')" // This would half the result set size.
         + (new StatusSet()).getAndCriteria()
+              // Project.ALLANTWEBANTS
 		+ " and taxon.family = 'formicidae'"
 		+ " group by gt.taxon_name having count(*) = 1 " 
 		+ " order by geolocale_id";

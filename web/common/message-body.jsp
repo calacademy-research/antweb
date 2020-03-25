@@ -20,6 +20,9 @@
 <div class="wide_left">
 
 <% 
+    A.log("message-body.jsp andCriteria:" + StatusSet.getAndCriteria(Project.ALLANTWEBANTS));
+    A.log("message-body.jsp andCriteria:" + StatusSet.getAndCriteria(Project.WORLDANTS));
+
     // Test this way: http://localhost/antweb/util.do?action=testMessage
 
     String message = (String) request.getAttribute("message"); 
