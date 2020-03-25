@@ -4,7 +4,6 @@
     // This map is just to demonstrate GoogleMap V3 functionality
 
     String googleMapKey = AntwebProps.getGoogleMapKey();
-    AntwebUtil.log("maps.jsp isGoogleMapsV3:" + AntwebProps.isGoogleMapsV3() + " googleMapKey:" + googleMapKey);
 %>
 
 

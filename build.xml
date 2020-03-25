@@ -102,6 +102,7 @@ includeantruntime="false"
   <fileset dir="WEB-INF" includes="**/*.tld"/>
   <fileset dir="WEB-INF" includes="**/ApplicationResources.properties"  followsymlinks="true"/>
   <fileset dir="WEB-INF" includes="**/AntwebResources.properties"/>
+  <fileset dir="WEB-INF" includes="**/platform.properties"/>
   <fileset dir="WEB-INF" includes="**/log4j.properties" />
   </copy>
 

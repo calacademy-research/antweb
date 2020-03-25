@@ -17,39 +17,52 @@ public abstract class AntwebProps {
     
     public static String guiDefaultContent = "Add your content here";    
     
+    private static boolean s_loadedResources = false;
     private static ResourceBundle s_appResources = null;
     private static ResourceBundle s_antwebResources = null;
-    
-    // This is the only place we should call ResourceBundle.getBundle()
-    public static ResourceBundle getAppResources() {
-      // This should be deprecated, as misleading.
-      return AntwebProps.getAppResourceBundle();
+    private static ResourceBundle s_platformResources = null;
+
+    public static boolean loadResources() {
+      s_log.warn("loadResouces()");
+      
+      if (getAppResources() == null || getAntwebResources() == null || getPlatformResources() == null)
+        return false;
+      return true;
     }
     
-    private static ResourceBundle getAppResourceBundle() {
+    private static ResourceBundle getAppResources() {
       if (s_appResources == null) {
         try {
           s_appResources =  ResourceBundle.getBundle("ApplicationResources");
         } catch (java.util.MissingResourceException e) {
-          s_log.warn("getAppResourceBundle() e:" + e);       
+          s_log.warn("getAppResources() e:" + e);       
         }
       }
+      //s_log.warn("getAppResources() appResources:" + s_appResources);
       return s_appResources;
     }  
-    private static ResourceBundle getAntwebResources() {
-      // This should be deprecated, as misleading.
-      return AntwebProps.getAntwebResourceBundle();
-    }
     
-    private static ResourceBundle getAntwebResourceBundle() {
+    private static ResourceBundle getAntwebResources() {
       if (s_antwebResources == null) {
         s_antwebResources =  ResourceBundle.getBundle("AntwebResources");
       }
-      // Can't do A.log() here.
-      //s_log.warn("getAntwebResourceBundle() s_antwebResources:" + s_antwebResources);
+      //AntwebUtil.logStackTrace();
+      //s_log.warn("getAntwebResources() appResources:" + s_appResources);
       return s_antwebResources;
     }  
-        	
+
+    private static ResourceBundle getPlatformResources() {
+      if (s_platformResources == null) {
+        try {
+          s_platformResources =  ResourceBundle.getBundle("platform");
+        } catch (java.util.MissingResourceException e) {
+          s_log.warn("getPlatformResources() e:" + e);
+        }
+      }
+      //s_log.warn("getPlatformResources() platformResources:" + s_platformResources);
+      return s_platformResources;
+    }
+
 	public static Boolean isProp(String isProp) {
 		String prop = AntwebProps.getProp(isProp);
         if ("true".equals(prop)) {
@@ -58,39 +71,45 @@ public abstract class AntwebProps {
           return false;
         }
 	}
-	
-	public static String getAntwebVersion() {
-	  return AntwebUtil.getReleaseNum();
-	}
 
 	public static String getProp(String prop) {
-     	ResourceBundle resources = AntwebProps.getAppResources();
-	    if (resources == null) {
-	      s_log.warn("getProp() ApplicationResources.properties not found in WEB-INF/classes.");
-          return null;
+	    if (getAppResources() == null || getAntwebResources() == null || getPlatformResources() == null) {
+	      s_log.warn("getProp() pro:" + prop + " appResources:" + s_appResources + " antwebResources:" + s_antwebResources + " platformResources:" + s_platformResources);
+          loadResources();
 	    }
-        String value = getProp(prop, "appResources", resources); // default to the specific platform
-        if (value != null) {
-           //s_log.warn("getProp() 1 AppResource " + prop + "=" + value + "-");
-           return value;
-        }
-        value = getProp(prop, "antResources", AntwebProps.getAntwebResources());  // fall back on global defaults.
-        //s_log.warn("getProp() 3 AntwebResources " + prop + "=" + value);
+
+        String value = null;
+        
+        value = getProp(prop, "app", getAppResources());
+        if (value != null) return value;
+
+        value = getProp(prop, "ant", getAntwebResources());
+        if (value != null) return value;
+
+        value = getProp(prop, "platform", getPlatformResources());
+
         return value;
 	}
 
 	private static String getProp(String prop, String resource, ResourceBundle resources) {
       String propVal = null;
+      if (resources == null) {
+        s_log.error("getProp() resource:" + resource + " is null.");
+      }
       try {
           propVal = resources.getString(prop);
 	    } catch (MissingResourceException e) {
-          if ("antResources".equals(resource)) {
-              s_log.warn("getProp(" + prop + ", " + resource + ", " + resources + ") not found in either resource.  e:" + e );
+          if ("ant".equals(resource)) {
+              s_log.warn("getProp(" + prop + ", " + resource + ", " + resources + ") not found in any bundle.  e:" + e );
           }
 	    }
       return propVal;
 	}
-	
+
+	public static String getAntwebVersion() {
+	  return AntwebUtil.getReleaseNum();
+	}
+		
     /* If a property is not found in the ApplicationResources.properties file it is returned as "" */
 
     public static String getYuiVersion() {
@@ -146,22 +165,12 @@ public abstract class AntwebProps {
 	}
 
 	public static String getGoogleMapKey() {
-	    if (AntwebProps.isGoogleMapsV3()) {
-	        return AntwebProps.getProp("googleMapsV3.key");
-        } else {
-	        return AntwebProps.getProp("googlemap.key");
-        }
+        return AntwebProps.getProp("googleMaps.key");
 	}
 
-	public static Boolean isGoogleMapsV3() {
-		String v3 = AntwebProps.getProp("isGoogleMapsV3");
-		//s_log.warn("isGoogleMapsV3() v3:" + v3);
-        if (v3.equals("true")) {
-          return true;
-        } else {
-          return false;
-        }
-	}
+    public static String getDbPwd() {
+      return AntwebProps.getProp("dbPwd");
+    }
 
 	public static int rev = 0;
 
@@ -375,8 +384,10 @@ public abstract class AntwebProps {
 	}
 
 	public static String report() {
-	  String report = "docRoot:" + getDocRoot() // + " inputFileHome:" + getInputFileHome()
-	    + " googleKey:" + AntwebProps.getGoogleMapKey() + " domainApp:" + getDomainApp() 
+	  String report = "docRoot:" + getDocRoot() 
+	  // + " inputFileHome:" + getInputFileHome()
+	    + " googleKey:" + AntwebProps.getGoogleMapKey() 
+	    + " domainApp:" + getDomainApp() 
 	    + " devMode:" + getIsDevMode();
 	  return report;
 	}
@@ -394,7 +405,7 @@ public abstract class AntwebProps {
 	}	
 	
 	public static String getTechAdminContact() {
-	  return "mark@inforaction.com";
+	  return "re.mark.johnson@gmail.com";
 	}
 }
 

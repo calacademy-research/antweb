@@ -59,8 +59,6 @@ public final class AppContextListener
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         LogFactory.release(contextClassLoader);
 
-
-
 		// This manually deregisters JDBC driver, which prevents
 		// Tomcat 7 from complaining about memory leaks wrto this class
 		Enumeration drivers = DriverManager.getDrivers();
@@ -74,7 +72,6 @@ public final class AppContextListener
 			}
     	}
 
-
         s_antwebEventLog.info("Antweb Shutdown.  Stats:" + stats);
 
         //Output a simple message to the server's console
@@ -86,7 +83,8 @@ public final class AppContextListener
     //is ready to service requests
     public void contextInitialized(ServletContextEvent event)
     {
-        System.out.println("+++ Starting Antweb application: " + new Date());
+        boolean resourcesLoaded = AntwebProps.loadResources();
+        if (resourcesLoaded == false) contextDestroyed(event);
 
         s_log.warn("++++++++++++++++++++++++++++++++++++++");    
         s_log.warn("Initializing Antweb application context...");
@@ -96,9 +94,12 @@ public final class AppContextListener
         s_log.warn("Antweb Version: " + AntwebProps.getAntwebVersion());
         s_log.warn("Context Initialized - Server Up.");             
 
-        s_antwebEventLog.info("Antweb Startup.  Stats:" + stats); 
-        
+        s_antwebEventLog.info("Antweb Startup.  Stats:" + stats);
+
+        // Can not use A.log or isDevMode or any AntwebProps here.
+
         LogMgr.startup();
+
         String message = LogMgr.archiveLogs();
     }
         

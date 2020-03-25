@@ -5,22 +5,6 @@ import java.util.*;
 import org.calacademy.antweb.data.*;
 //import com.google.maps.model.AddressComponents;
 
-/*
-Brians:
-  https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA&key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
-  https://maps.googleapis.com/maps/api/js/GeocodeService.Search?4syolo%2C%20california&7sUS&9sen-US&callback=_xdc_._p9lvm0&token=55670
-
-
-https://maps.googleapis.com/maps/api/geocode/json?address=Yolo, California&key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
-
-https://maps.googleapis.com/maps/api/geocode/json?address=Wainikeli, Fiji&key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
-https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagascar&key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
-
-
-  googleMapsV3.key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4  
-*/
-
-
 
 // These classes facilitate Gson.
 class Adm1Response {

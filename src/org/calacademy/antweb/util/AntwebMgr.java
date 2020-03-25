@@ -115,6 +115,8 @@ public class AntwebMgr {
     
         populateStats(connection, forceReload);
         
+        //AntwebProps.loadResources();
+        
         boolean log = true;  
         if (log) AntwebUtil.log("populateMgrs() GroupMgr");          
         GroupMgr.populate(connection, forceReload);

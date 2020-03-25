@@ -102,7 +102,7 @@ Or, if there are stmts and/or rsets...
 		ds = new MysqlDataSource();				
 		ds.setURL(jdbcUrl);
 		ds.setUser("antweb");
-		ds.setPassword("f0rm1c6");
+		ds.setPassword(AntwebProps.getDbPwd());
 		return ds;
     }
 

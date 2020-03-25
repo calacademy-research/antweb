@@ -6,9 +6,7 @@ import java.text.Normalizer;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.ResourceBundle;
 import java.sql.Timestamp;
 
 import org.apache.regexp.*;

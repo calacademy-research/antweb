@@ -375,8 +375,8 @@ antweb	ALL=(ALL)	NOPASSWD: /home/antweb/antweb_deploy/bin/admin.sh
      predictable place.
 
    In order to make tapirlink work, we need a thau user.
-     create user thau identified by 'f0rm1c6';
-     GRANT ALL PRIVILEGES ON *.* TO 'thau'@'localhost' IDENTIFIED BY 'f0rm1c6' WITH GRANT OPTION;
+     create user thau identified by '******';
+     GRANT ALL PRIVILEGES ON *.* TO 'thau'@'localhost' IDENTIFIED BY '******' WITH GRANT OPTION;
      also, enable read priveliges on file system.
      sudo yum install php-mbstring
      

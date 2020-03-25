@@ -53,7 +53,7 @@ sudo su antweb
 mkdir /antweb/antweb_deploy
 
 sudo passwd antweb
-  f0rm1c6
+  ****** 
 
 Antweb
 ------
@@ -78,6 +78,10 @@ or:
    ant deploy
    
 sudo chmod 775 antweb_deploy/
+
+There is a file platform.properties that is not in source control that must be installed here:
+  /antweb/antweb_deploy/WEB-INF/CLASSES/
+This file contains the database password, to google maps key, and other private info.  
 
 Ant
 ---
@@ -104,25 +108,25 @@ sudo apt install mysql-server
 
 sudo mysql_secure_installation
   Validate Password Plugin: N
-  Medium strength pwd: f0rm1c6 strength 25
+  Medium strength pwd: ****** strength 25
   Remove anonymous login: Y
   Disallow remote root loging: Y 
   Remove test database:Y
   Remove privileges tables: Y
 
 sudo mysql
-  ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'f0rm1c6';
+  ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '******';
     #NO longer: Note new pwd with capital F and !.
   FLUSH PRIVILEGES;
-  CREATE USER 'antweb'@'localhost' IDENTIFIED BY 'f0rm1c6';
+  CREATE USER 'antweb'@'localhost' IDENTIFIED BY '******';
   
 To start: sudo systemctl start mysql.
 For status: systemctl status mysql.service    
 For version: sudo mysqladmin -p -u root version
   Server version 5.7.27-0ubuntu0.18.04.1
 
-GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'localhost' IDENTIFIED BY 'f0rm1c6' WITH GRANT OPTION;
-GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'%' IDENTIFIED BY 'f0rm1c6' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'localhost' IDENTIFIED BY '******' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'%' IDENTIFIED BY '******' WITH GRANT OPTION;
 
 Log in to mysql as antweb
 
