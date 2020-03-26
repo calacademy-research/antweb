@@ -57,6 +57,7 @@ public class BioregionDb extends AntwebDb {
           bioregion.setCreated(rset.getTimestamp("created"));
 
           bioregion.setEndemicSpeciesCount(rset.getInt("endemic_species_count"));
+          bioregion.setIntroducedSpeciesCount(rset.getInt("introduced_species_count"));
 
           // bioregion.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
           // subfamily_count, genus_count, species_count, taxon_subfamily_dist_json, specimen_subfamily_dist_json
@@ -118,6 +119,7 @@ public class BioregionDb extends AntwebDb {
 			    bioregion.setChartColor(rset.getString("chart_color"));
 
                 bioregion.setEndemicSpeciesCount(rset.getInt("endemic_species_count"));
+                bioregion.setIntroducedSpeciesCount(rset.getInt("introduced_species_count"));
 
                 Hashtable description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
                 bioregion.setDescription(description);     
@@ -492,7 +494,79 @@ public class BioregionDb extends AntwebDb {
       return query;
     }
 
-// -----------------------------
+    // -----------------------------
+
+    /* THIS CODE IS INCOMPLETE. CLOSE TO CORRECT BUT THE QUERY IS STRAIGNT COPIED FROM GeolocaleDb */
+
+    public int calcIntroduced() {
+        // Set all to false prior to setting specifics to true below...
+        updateBioregionTaxonField("introduced", null, null);
+        updateBioregionFieldCount("introduced", null, 0);
+        int totCount = 0;
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "calcIntroduced()");
+
+            // Loop through all of the geolocale_taxa records of taxa on the introduced list.
+            String query = "select bioregion_name, taxon_name"
+                    + " from bioregion_taxon "
+                    + " where taxon_name in "
+                    + "     (select pt.taxon_name from proj_taxon pt, taxon t "
+                    + "      where pt.taxon_name = t.taxon_name and (t.rank = 'species' or t.rank = 'subspecies') "
+                    + "        and project_name = 'introducedants')"
+                    + " order by bioregion_name";
+
+            A.log("calcIntroduced() query:" + query);
+
+            // Break on geolocale to record the count.
+            String lastBioregionName = null;
+            int count = 0;
+
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                String taxonName = rset.getString("taxon_name");
+                String bioregionName = rset.getString("bioregion_name");
+
+                // If a break on geolocale, then update the count appropriately.
+                if (lastBioregionName != null && !lastBioregionName.equals(bioregionName)) {
+                    // A break has occured.
+                    //A.log("calcIntroduceGeolocales() geolocaleId:" + geolocaleId + " lastGeolocaleId:" + lastGeolocaleId + " count:" + count);
+                    updateBioregionFieldCount("introduced", lastBioregionName, count);
+                    count = 0;
+                }
+
+                // If the taxon is introduced in this bioregion then flag it as such.
+                boolean isIntroduced = TaxonPropMgr.isIntroduced(taxonName, bioregionName);
+
+                if (isIntroduced) {
+                    //if (2 == geolocaleId) A.log("calcIntroducedGeolocales() isIntroduced:" + isIntroduced + " taxonName:" + taxonName + " bioregion:" + bioregion);
+                    ++totCount;
+                    ++count;
+                }
+
+                //if (taxonName.contains("corde")) A.log("calcIntroducedGeolocales() isIntroduced:" + isIntroduced + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName + " bioregion:" + bioregion);
+                if (isIntroduced) {
+                    updateBioregionTaxonField("introduced", bioregionName, taxonName);
+                }
+
+                lastBioregionName = bioregionName;
+            }
+            // After the loop is complete, update the last record that didn't "break on".
+            if (count > 0) {
+                updateBioregionFieldCount("introduced", lastBioregionName, count);
+            }
+
+        } catch (SQLException e) {
+            s_log.error("calcIntroduced() e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, "calcIntroduced()");
+        }
+        return totCount;
+    }
+
+// ------------------------
 
     public int calcEndemic() {
         int c = 0;
@@ -500,14 +574,6 @@ public class BioregionDb extends AntwebDb {
         c += updateBioregionTaxonField("endemic", null, null);
         c += updateBioregionFieldCount("endemic", null, 0);
 
-        c += calcEndemism();
-
-        //calcHigherEndemism();
-
-        return c;
-    }
-
-    public int calcEndemism() {
         String query = "select bt.taxon_name taxon_name, max(b.name) bioregionName, count(*) count"
                 + " from bioregion b, bioregion_taxon bt, taxon where b.name = bt.bioregion_name"
                 + " and taxon.taxon_name = bt.taxon_name"

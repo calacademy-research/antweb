@@ -12072,9 +12072,31 @@ Mar 20. 3hr.
   Look into bioregion endemism.
   SpeciesListSummaryReport.
 
-Mar 21. 1.5hr.
+Mar 21. 1.5hr. 4hrs in evening refactoring, fixing and deploying. 5.5hrs.
   Diagnose, adjust the calcAdm1Endemism query. Deploy.
   Look into calculation of morphotaxa endemism. Adjust header.
+  Figure why Cerapachys is listed as proxyAntweb in Madagascar ants.
+  Remove the platform specific directories from the property files (refactor).
+  Allow turning off of devMode on local environment.
+  Fix calacademyHeader.jsp javascript secure protocol test (erroneously reliant on devMode).
+  Deploy and document.
+
+Mar 24
+  AntwebProps refactored and extended to support platform.properties.
+  Put Google Key and DB pwd into new property file.
+  Create file outside of github.
+  Look into Michele's issues with special characters in an image.
+  Enable deletion by admin of a curator's image.
+
+Mar 25th. 3.5hrs.
+  Bioregion Endemism.
+  Deployed.
+
+Mar 26
+
+  Deployment to fix bug with the bioregion species list summary report. Include morphos.
+  Look into bioregion introduced solution.
+  
 
 
 -week:
@@ -12097,7 +12119,8 @@ The Hours
 Isle of Dogs
 Crimson Peak
 Million Dollar Baby
-
+The Day the Earth Caught Fire
+Man Named Pearl
 
 
 Percolate up endemic to subregion and region.

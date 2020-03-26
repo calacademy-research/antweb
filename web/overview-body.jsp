@@ -192,8 +192,16 @@
   	    endemicCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?bioregionName=" + bioregionName + "'>" + endemicCount + "</a>";
 	  }
 	  endemicCountHtml = "<br><b>&nbsp;&nbsp;Endemic:</b>&nbsp;" + endemicCountHtml;
+
+	  String introducedCount = Formatter.commaFormat(overview.getIntroducedSpeciesCount());
+	  introducedCountHtml = introducedCount;
+	  if (overview.getIntroducedSpeciesCount() > 0) {
+		String bioregionName = ((Bioregion) overview).getName();
+  	    introducedCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?bioregionName=" + bioregionName + "'>" + introducedCount + "</a>";
+	  }
+	  introducedCountHtml = "<br><b>&nbsp;&nbsp;Introduced:</b>&nbsp;" + introducedCountHtml;
   }
- %>
+  %>
 <%= endemicCountHtml %></b>
 <%= introducedCountHtml %></b>
 

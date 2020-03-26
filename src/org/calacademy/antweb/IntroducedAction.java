@@ -31,45 +31,66 @@ native bioregions to genera.
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
 
+        ArrayList<String> introduced = null;
+
         String geolocaleIdStr = (String) request.getParameter("geolocaleId");
-        int geolocaleId = 0;
-        try {
-          geolocaleId = (new Integer(geolocaleIdStr)).intValue();
-        } catch (NumberFormatException e) {
-			request.setAttribute("message", "Invalid Geolocale Id:" + geolocaleIdStr);
-			return (mapping.findForward("message"));                 
-        }
-        Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
-        if (geolocale == null) {
-			request.setAttribute("message", "geolocale not found:" + geolocaleId);
-			return (mapping.findForward("message")); 
+        Geolocale geolocale = null;
+        if (geolocaleIdStr != null) {
+            ActionForward a = Check.init(Check.GEOLOCALE, request, mapping); if (a != null) return a;
+
+            int geolocaleId = 0;
+            try {
+                geolocaleId = (Integer.valueOf(geolocaleIdStr)).intValue();
+            } catch (NumberFormatException e) {
+                request.setAttribute("message", "valid Geolocale ID expected. Found:" + geolocaleId);
+                return (mapping.findForward("message"));
+            }
+            geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
+            if (geolocale == null) {
+                request.setAttribute("message", "geolocale not found:" + geolocaleId);
+                return (mapping.findForward("message"));
+            }
         }
 
-        ArrayList<String> introduced = null;
+        String bioregionName = (String) request.getParameter("bioregionName");
+        Bioregion bioregion = null;
+        if (bioregionName != null) {
+            ActionForward a = Check.init(Check.BIOREGION, request, mapping); if (a != null) return a;
+
+            bioregion = BioregionMgr.getBioregion(bioregionName);
+            if (bioregion == null) {
+                request.setAttribute("message", "bioregion not found:" + bioregion);
+                return (mapping.findForward("message"));
+            }
+        }
+
         String dbUtilName = "IntroducedAction.execute()";
   		javax.sql.DataSource dataSource = null;
         Connection connection = null;
         try {
           dataSource = getDataSource(request, "conPool");
-
           if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
-              
           connection = DBUtil.getConnection(dataSource, dbUtilName);
-          introduced = getIntroduced(geolocaleId, connection);
+
+            if (geolocale != null) {
+                introduced = getGeolocaleIntroduced(geolocale.getId(), connection);
+                request.setAttribute("overview", geolocale);
+            } else {
+                introduced = getBioregionIntroduced(bioregionName, connection);
+                request.setAttribute("overview", bioregion);
+            }
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
         } finally {
 			DBUtil.close(connection, this, dbUtilName);
 		}
 		
-        request.setAttribute("introduced", introduced);        
-        request.setAttribute("geolocale", geolocale);
-        
+        request.setAttribute("introduced", introduced);
 	    return (mapping.findForward("introduced"));
     }
 
-    private ArrayList<String> getIntroduced(int geolocaleId, Connection connection) {
-        ArrayList<String> endemics = new ArrayList<String>();
+    private ArrayList<String> getGeolocaleIntroduced(int geolocaleId, Connection connection) {
+        ArrayList<String> introduced = new ArrayList<String>();
 
 		String query = "select gt.taxon_name from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name " 
 		  + " and gt.geolocale_id = " + geolocaleId + " and gt.is_introduced = 1 order by t.genus, t.species, t.subspecies";
@@ -77,21 +98,47 @@ native bioregions to genera.
         Statement stmt = null;
         ResultSet rset = null;
         try {
-          stmt = DBUtil.getStatement(connection, "getIntroduced()");
+          stmt = DBUtil.getStatement(connection, "getGeolocaleIntroduced()");
 
           rset = stmt.executeQuery(query);
           String taxonName = null;
           while (rset.next()) {
             taxonName = rset.getString("taxon_name");
-            endemics.add(taxonName);
+              introduced.add(taxonName);
           }
           A.log("execute() query:" + query);                        
         } catch (SQLException e) {
-          s_log.warn("getIntroduced() query:" + query + " e:" + e);        
+          s_log.warn("getGeolocaleIntroduced() query:" + query + " e:" + e);
         } finally {
-          DBUtil.close(stmt, rset, this, "getIntroduced()");
+          DBUtil.close(stmt, rset, this, "getGeolocaleIntroduced()");
         }   
-        return endemics;
-    }             
-      
+        return introduced;
+    }
+
+    private ArrayList<String> getBioregionIntroduced(String bioregionName, Connection connection) {
+        ArrayList<String> introduced = new ArrayList<String>();
+
+        String query = "select bt.taxon_name from bioregion_taxon bt, taxon t where bt.taxon_name = t.taxon_name "
+                + " and bt.bioregion_name = '" + bioregionName + "' and bt.is_introduced = 1 order by t.genus, t.species, t.subspecies";
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(connection, "getBioregionIntroduced()");
+
+            rset = stmt.executeQuery(query);
+            String taxonName = null;
+            while (rset.next()) {
+                taxonName = rset.getString("taxon_name");
+                introduced.add(taxonName);
+            }
+            A.log("execute() query:" + query);
+        } catch (SQLException e) {
+            s_log.warn("getBioregionIntroduced() query:" + query + " e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, this, "getBioregionIntroduced()");
+        }
+        return introduced;
+    }
+
 }

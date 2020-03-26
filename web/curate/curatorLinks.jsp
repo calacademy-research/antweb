@@ -87,11 +87,11 @@
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=allAntweb">a</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=login">l</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=project">p</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=bioregion">bn</a> 
+        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=bioregion">b</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=museum">m</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=geolocale">g</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=taxonProp">tp</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=taxon">t</a> 
+        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=taxonProp">tp</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=upload">u</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=artist">a</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=adminAlert">aa</a> 
@@ -141,7 +141,6 @@
         <li><a href="<%= domainApp %>/utilData.do?action=finishCountryUpload">Finish</a> Country Upload
         <li><a href="<%= domainApp %>/utilData.do?action=calcEndemic">Calc</a> Endemism
         <li><a href="<%= domainApp %>/utilData.do?action=calcIntroduced">Calc</a> Introduced
-        <li><a href="<%= domainApp %>/utilData.do?action=calcBioEndemic">Calc</a> Bioregion Endemism
 
   	    <li><a href="<%= domainApp %>/utilData.do?action=regenerateAllAntweb"> Regenerate AllAntwebAnts </a>
 	    <li><a href="<%= domainApp %>/utilData.do?action=crawlForType">Crawl </a> For Type

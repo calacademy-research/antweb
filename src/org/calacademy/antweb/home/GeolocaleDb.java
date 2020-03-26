@@ -1133,17 +1133,19 @@ public static int c = 0;
 	   Finally, calculate the number of introducedSpecies and update the geolocale record with it.06-03
 	*/
 
-    public void calcIntroduced() {
+    public int calcIntroduced() {
       // Set all to false prior to setting specifics to true below...
       updateGeolocaleTaxonField("introduced", 0, null);
       updateGeolocaleFieldCount("introduced", 0, 0);
       
-      calcIntroducedGeolocales();
+      return calcIntroducedGeolocales();
     }
 
-    public void calcIntroducedGeolocales() {
+    public int calcIntroducedGeolocales() {
       Statement stmt = null;
       ResultSet rset = null;
+      int totCount = 0;
+
       try {
         stmt = DBUtil.getStatement(getConnection(), "calcIntroducedGeolocales()");
 
@@ -1163,7 +1165,7 @@ public static int c = 0;
         // Break on geolocale to record the count.
         int lastGeolocaleId = 0;
         int count = 0;
-        
+
         rset = stmt.executeQuery(query);
         while (rset.next()) {          
           int geolocaleId = rset.getInt("geolocale_id");
@@ -1174,7 +1176,7 @@ public static int c = 0;
           if (lastGeolocaleId != 0 && lastGeolocaleId != geolocaleId) {
             // A break has occured.
             //A.log("calcIntroduceGeolocales() geolocaleId:" + geolocaleId + " lastGeolocaleId:" + lastGeolocaleId + " count:" + count);
-            updateGeolocaleFieldCount("introduced", lastGeolocaleId, count);          
+            updateGeolocaleFieldCount("introduced", lastGeolocaleId, count);
             count = 0;
           }
 
@@ -1183,6 +1185,7 @@ public static int c = 0;
 
           if (isIntroduced) {
             //if (2 == geolocaleId) A.log("calcIntroducedGeolocales() isIntroduced:" + isIntroduced + " taxonName:" + taxonName + " bioregion:" + bioregion);          
+             ++totCount;
              ++count;
           }
           
@@ -1202,7 +1205,8 @@ public static int c = 0;
         s_log.error("calcIntroducedGeolocales() e:" + e);
       } finally {
         DBUtil.close(stmt, rset, "calcIntroducedGeolocales()");
-      } 
+      }
+      return totCount;
     }    
 
 

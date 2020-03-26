@@ -19,7 +19,6 @@
     String thePage = HttpUtil.getTarget(request);
 
     ArrayList<String> endemics = (ArrayList<String>)request.getAttribute("endemic");       
-    //Overview overview = (Geolocale) request.getAttribute("geolocale");
 
     Overview overview = (Overview) request.getAttribute("overview");
 %>

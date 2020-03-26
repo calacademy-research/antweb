@@ -563,22 +563,12 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
 		  message = (new GeolocaleDb(connection)).calcEndemic() + " geolocale endemcs calculated, ";
 		  message += (new BioregionDb(connection)).calcEndemic() + " bioregion endemics calculated";
 		}
-/*
-		if (action.equals("calcHigherEndemic")) {
-		  int c = (new GeolocaleDb(connection)).calcHigherEndemism();
-		  message =  c + " higher endemics calculated";                 
-		}
 
-		if (action.equals("calcBioEndemic")) {
-		  int c = (new BioregionDb(connection)).calcEndemic();
-		  message =  c + " bioregion endemics calculated";                 
-		}
-*/
         // 40 sec
 		// handled during GeolocaleDb.updateCounts()
 		if (action.equals("calcIntroduced")) {
-		  (new GeolocaleDb(connection)).calcIntroduced();
-		  message = "Introduced calculated";                 
+		  message = (new GeolocaleDb(connection)).calcIntroduced() +  " geolocale introduced calculated, ";
+		  message += (new BioregionDb(connection)).calcIntroduced()  + " bioregion introduced calculated.";
 		}
  
         //  ---- Debugging Methods ---- 

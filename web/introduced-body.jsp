@@ -19,7 +19,7 @@
     String thePage = HttpUtil.getTarget(request);
 
     ArrayList<String> introduced = (ArrayList<String>)request.getAttribute("introduced");       
-    Geolocale geolocale = (Geolocale) request.getAttribute("geolocale");
+    Overview overview = (Overview) request.getAttribute("overview");
 
 %>
 
@@ -33,9 +33,9 @@
 <div id="page_data">
     <div id="overview_data">
 
-<br><h2>Introduced for <%= geolocale.getHeading() %>: <%= geolocale.getName() %> </h2>
+<br><h2>Introduced for <%= overview.getHeading() %>: <%= overview.getName() %> </h2>
 
-<br>Introduced species (and subspecies) are not native to the given <%= geolocale.getName() %>.
+<br>Introduced species (and subspecies) are not native to the given <%= overview.getName() %>.
 <br>
 <%
     int count = 0;
