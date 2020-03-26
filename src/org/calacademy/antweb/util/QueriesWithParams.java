@@ -88,9 +88,9 @@ public abstract class QueriesWithParams {
                 "bioregionSpeciesListWithRangeData"
                 , bioregionName
                 , FileUtil.makeReportName("bioregionSpeciesListWithRange" + bioregionName)
-                , "Bioregion species list with range data (including is_endemic) for a given bioregion. Endemic only calculated for valid taxa."
-                , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Endemic", "Range"}
-                , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, bt.is_endemic"
+                , "Bioregion species list with range data (including is_endemic and introduced) for a given bioregion."
+                , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Introduced", "Endemic", "Range"}
+                , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, bt.is_introduced, bt.is_endemic"
                 + " , (select group_concat(' ', b2.name order by name) from bioregion_taxon bt2, bioregion b2 where bt2.bioregion_name = b2.name and bt2.taxon_name = t.taxon_name order by b2.name)"
                 + " from taxon t, bioregion_taxon bt, bioregion b where t.taxon_name = bt.taxon_name and bt.bioregion_name = b.name and t.rank in ('species', 'subspecies')"
                 + " and b.name = '" + bioregionName + "' order by t.subfamily, t.genus, t.species, t.subspecies"
@@ -114,10 +114,10 @@ public abstract class QueriesWithParams {
                 , bioregionName
                 , FileUtil.makeReportName("BioregionSpeciesListRangeSummary" + bioregionName)
                 , "Bioregion Species List Range Summary for a given bioregion."
-                , new String[] {"Count", "Status", "Endemic"}
-                , "select count(*), t.status, bt.is_endemic from bioregion b, bioregion_taxon bt, taxon t "
+                , new String[] {"Count", "Status", "Introduced", "Endemic"}
+                , "select count(*), t.status, bt.is_introduced, bt.is_endemic from bioregion b, bioregion_taxon bt, taxon t "
                 + " where b.name = bt.bioregion_name and bt.taxon_name = t.taxon_name and t.rank in ('species', 'subspecies') "
-                + " and b.name = '" + bioregionName + "' group by t.status, bt.is_endemic"
+                + " and b.name = '" + bioregionName + "' group by t.status, bt.is_endemic, bt.is_endemic"
         );
 
         A.log("getNamedQuery() bioregion:" + bioregion + " query:" + query);

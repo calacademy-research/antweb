@@ -1,3 +1,17 @@
+Release 8.20
+ doc/done.txt                                       | 27 +++++++++++++++++++++++++--
+ doc/release.txt                                    |  6 ++++++
+ src/org/calacademy/antweb/IntroducedAction.java    | 99 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--------------------------
+ src/org/calacademy/antweb/home/BioregionDb.java    | 84 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ src/org/calacademy/antweb/home/GeolocaleDb.java    | 16 ++++++++++------
+ src/org/calacademy/antweb/util/UtilDataAction.java | 14 ++------------
+ web/curate/curatorLinks.jsp                        |  5 ++---
+ web/documentation/releaseNum.jsp                   |  2 +-
+ web/endemic-body.jsp                               |  1 -
+ web/introduced-body.jsp                            |  6 +++---
+ web/overview-body.jsp                              | 10 +++++++++-
+ 11 files changed, 206 insertions(+), 64 deletions(-)
+
 Release 8.19
  db/upgrade/8.0/2020-02-12.sql                              |  14 ++++++++++++++
  doc/fileMods.txt                                           |   7 +++++++

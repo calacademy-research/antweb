@@ -1,5 +1,5 @@
 Release 8.20
-  Bioregion endemics.
+  Bioregion introduced functionality.
   
 Release 8.19.1
   Deployment to fix bug with the bioregion species list summary report. Include morphos.
