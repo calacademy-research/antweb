@@ -117,7 +117,7 @@ public abstract class QueriesWithParams {
                 , new String[] {"Count", "Status", "Introduced", "Endemic"}
                 , "select count(*), t.status, bt.is_introduced, bt.is_endemic from bioregion b, bioregion_taxon bt, taxon t "
                 + " where b.name = bt.bioregion_name and bt.taxon_name = t.taxon_name and t.rank in ('species', 'subspecies') "
-                + " and b.name = '" + bioregionName + "' group by t.status, bt.is_endemic, bt.is_endemic"
+                + " and b.name = '" + bioregionName + "' group by t.status, bt.is_introduced, bt.is_endemic"
         );
 
         A.log("getNamedQuery() bioregion:" + bioregion + " query:" + query);
