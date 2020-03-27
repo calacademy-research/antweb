@@ -149,6 +149,7 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
             //where.add(" taxon.family = \"formicidae\"");
             //where.add(" 1=1 ");
 
+            // Name is taxonName. duh.
             if ((name != null) && (name.length() > 0)) {
                 if (searchType.equals("equals")) {
                     searchType = "ends";
@@ -359,7 +360,8 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
             
             s_query = theQuery;
             
-              //s_log.warn("createInitialResults() !!! isTempSpecimenSearch:" + SearchAction.isTempSpecimenSearchLimit() + " whereSize:" + where.size() + " where:" + where); 
+            //s_log.warn("createInitialResults() whereSize:" + where.size() + " where:" + where);
+            s_log.warn("createInitialResults() theQuery:" + theQuery);
               //AntwebUtil.logStackTrace();
 
             //A.log("createInitialResults() ignore:" + isIgnoreInsufficientCriteria() + " where.size:" + where.size() + " sufficientCriteria:" + sufficientCriteria);            

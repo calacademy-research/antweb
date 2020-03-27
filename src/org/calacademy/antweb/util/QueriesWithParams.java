@@ -29,8 +29,33 @@ public abstract class QueriesWithParams {
         if ("bioregionSpeciesListRangeSummary".equals(queryName)) {
             return getBioregionSpeciesListRangeSummary(param); // param is a bioregionName
         }
+
+        //if ("specificSpeciesList".equals(queryName)) {
+        //    return getSpecificSpeciesList(param); // param is a bioregionName
+        //}
+
         return null;
     }
+
+    /* Maybe instead of search?
+    private static NamedQuery getSpecificSpeciesList(String species) {
+        NamedQuery query = null;
+        query = new NamedQuery(
+                "specificSpeciesList"
+                , species
+                , FileUtil.makeReportName("SpecificSpeciesList")
+                , ""
+                , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Introduced", "Endemic", "Range"}
+                , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, gt.is_introduced, gt.is_endemic, "
+                + " (select group_concat(' ', g2.name order by name) from geolocale_taxon gt2, geolocale g2 where gt2.geolocale_id = g2.id and g2.georank = '" + georank + "' and gt2.taxon_name = t.taxon_name order by g2.name) "
+                + " from taxon t, geolocale_taxon gt, geolocale g where t.taxon_name = gt.taxon_name and gt.geolocale_id = g.id and t.rank in ('species', 'subspecies') "
+                + " and g.georank = '" + georank + "' and g.name = '" + geolocaleName + "' order by t.subfamily, t.genus, t.species, t.subspecies"
+        );
+
+        A.log("getNamedQuery() geolocale:" + geolocale + " query:" + query);
+
+        return query; // end getQueryWithParam()
+    }*/
 
     private static NamedQuery getGeolocaleSpeciesListWithRangeData(String geolocaleName) {
         NamedQuery query = null;

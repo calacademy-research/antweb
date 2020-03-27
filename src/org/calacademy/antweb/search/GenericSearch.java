@@ -707,6 +707,12 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
             return " 1=1 ";   // This is new to avoid malformed queries.  Fairly untested performance wise.
         }
         
+        A.log("getSearchString() property:" + property + " ");
+        if ("sp.taxon_name".equals(property) && value != null && "(".equals(value.substring(0,1))) {
+          A.log("getSearchString() value:" + value);
+          return property + " in " + value;      
+        }
+        
         ArrayList<String> elements = new ArrayList<String>();
         Matcher m = inQuotes.matcher(value);
         String thisElement = "";

@@ -41,7 +41,7 @@ public class SessionRequestFilter implements Filter {
       if (accessLogin != null) loginName = accessLogin.getName();
       String logMessage = loginName + " " + AntwebUtil.getRequestInfo(request);
       LogMgr.appendLog("accessLog.txt", logMessage, true);
-      A.log("doFilter() message:" + logMessage);
+      //A.log("doFilter() message:" + logMessage);
 
       try {
 

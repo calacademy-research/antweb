@@ -76,7 +76,7 @@ public final class SearchAction extends DispatchAction {
             searchType = "recentImageSearch";
           }
           
-          A.log("searchType:" + searchType + " target:" + target);
+          //A.log("searchType:" + searchType + " target:" + target);
           if (searchType != null) {
             return super.execute(mapping, form, request, response);
           } else {
@@ -392,8 +392,8 @@ public final class SearchAction extends DispatchAction {
       if (tempSpecimenSearchLimit > 0) return true;
       return false;
     }    
-    
-    private void finalizeOldResults(HttpSession session, String searchResultsType) {
+
+/*    private void finalizeOldResults(HttpSession session, String searchResultsType) {
         GenericSearchResults oldResults = (GenericSearchResults) session.getAttribute(searchResultsType);
         if (oldResults != null) {
             try {
@@ -403,6 +403,6 @@ public final class SearchAction extends DispatchAction {
             }
         }
     }
-    
+   */ 
 
 }
