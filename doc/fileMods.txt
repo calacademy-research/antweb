@@ -1,3 +1,19 @@
+Release 8.21.1
+ doc/done.txt                                       | 30 ++++++++++++++++++++++++------
+ doc/fileMods.txt                                   |  8 ++++++++
+ doc/release.txt                                    |  8 ++++++++
+ src/org/calacademy/antweb/EndemicAction.java       |  2 ++
+ src/org/calacademy/antweb/IntroducedAction.java    |  2 ++
+ src/org/calacademy/antweb/StatusSet.java           |  2 +-
+ src/org/calacademy/antweb/search/SearchAction.java |  2 +-
+ src/org/calacademy/antweb/util/Check.java          | 30 ++++++++++++++++++++++++++++++
+ src/org/calacademy/antweb/util/QueryAction.java    |  2 ++
+ web/common/taxonSetHeaderNotes.jsp                 | 45 ++++++++++++++++++++++++---------------------
+ web/common/taxonomicHierarchy.jsp                  |  2 +-
+ web/endemic-body.jsp                               |  3 ++-
+ web/introduced-body.jsp                            |  3 ++-
+ 13 files changed, 107 insertions(+), 32 deletions(-)
+ 
 Release 8.21
  src/org/calacademy/antweb/search/AdvancedSearch.java     |  4 +++-
  src/org/calacademy/antweb/search/GenericSearch.java      |  6 ++++++

@@ -1,7 +1,9 @@
 Release 8.21.1
-Date:
+Date: Mar 30, 2020
   Create Check.notBot method and add to QueryAction, EndemicAction and IntroducedAction.
   Restrict the display of Species List with Range Data report to species level taxonomic pages.
+  Check.requestAttribute for jsp condition handling. Logs with proper response to UI.
+  Remove errant } from taxononomic hierarchy.
 
 Release 8.21
   Date: Mar 26, 2020  Advanced search by taxonomic name as (for example): ("myrmicinaepheidole megatron", "amblyoponinaemystrium mysticum") 
