@@ -361,7 +361,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
             s_query = theQuery;
             
             //s_log.warn("createInitialResults() whereSize:" + where.size() + " where:" + where);
-            s_log.warn("createInitialResults() theQuery:" + theQuery);
+            //s_log.warn("createInitialResults() theQuery:" + theQuery);
               //AntwebUtil.logStackTrace();
 
             //A.log("createInitialResults() ignore:" + isIgnoreInsufficientCriteria() + " where.size:" + where.size() + " sufficientCriteria:" + sufficientCriteria);            

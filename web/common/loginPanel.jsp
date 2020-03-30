@@ -65,19 +65,23 @@
           // do nothing
 	    } else { %>
           &nbsp;|&nbsp;
-	     <% 
-	        // A.log("loginPanel.jsp first else executed");
-	     
-	        if (AntwebMgr.hasServerMessage()) { 
-			 // A.log("loginPanel.jsp serverMessage:" + AntwebMgr.getServerMessage());
-			%> 
-			<img src="<%= domainApp %>/image/redDot.png" width="10" title="<%= AntwebMgr.getServerMessage() %>">
-		 <% } %>
-            <a href="<%= domainApp %>/curate.do">Curate</a> 
+          
+          <!-- The redDot.png code was here -->
+          
+          <a href="<%= domainApp %>/curate.do">Curate</a> 
      <% } %>
         &nbsp;| &nbsp;<a href="<%= domainApp %>/logout.do<%= aTarget %>">Logout</a></span>
  <% } else { %>
         <div class="curator_login">
+
+     <!-- redDot.png code -->             
+	 <% 
+		if (AntwebMgr.hasServerMessage()) { 
+		 // A.log("loginPanel.jsp serverMessage:" + AntwebMgr.getServerMessage());
+		%> 
+		<img src="<%= domainApp %>/image/redDot.png" width="10" title="<%= AntwebMgr.getServerMessage() %>&nbsp;">
+	 <% } %>
+        
      <% if (!HttpUtil.isOnline()) { %>
           <a href='http://localhost/antweb/login.do'>
      <% } %>

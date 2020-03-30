@@ -12098,14 +12098,24 @@ Mar 26. 5.5hrs.
   Implement advanced search by taxon name list.
   Several deployments. Documentation.
 
-Mar 27
+Mar 27. 4hs.
   Create Check.notBot method and add to QueryAction, EndemicAction and IntroducedAction.
   Restrict the display of Species List with Range Data report to species level taxonomic pages.
   Look into dnaextractionnotes. Resolve. Document.
   Verify other database things intact. Document.
   Handle endemic.do and introduced.do exception when overview not included.
+  Check.requestAttribute for jsp condition handling. Logs with proper response to UI.
 
+Mar 29. 0
+  Check on server.
+  
+Mar 30. 1hr.
+  Remove the } from taxonomic hierarchy.
+  Deploy to live site.
+  Add red dot indicating activity regardless of login.
+  Trim logging. Redeploy.
 
+	 
 -week:
 
 Juicer for ginger, honey, cayenne
@@ -12119,6 +12129,8 @@ manuka
 cayenne pepper
 
 
+Health Trello
+
 
 Marriage story
 Frozen 2
@@ -12128,8 +12140,6 @@ Man on Fire
 Beanpole
 About Time
 The Nice Guys
-Jar head
-
 Mile 22
 Green Zone
 Social network
@@ -12139,10 +12149,7 @@ Crimson Peak
 Million Dollar Baby
 The Day the Earth Caught Fire
 Man Named Pearl
-
-
-Percolate up endemic to subregion and region.
-Public report. How?
+The Freshman with Marlon Brando
 
 
 Paul Davids 
