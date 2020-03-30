@@ -100,7 +100,7 @@ public class StatusSet extends Status {
       return getCriteria("taxon");
     }
     public String getCriteria(String table) {
-      if (!("taxon".equals(table) 
+      if (!("taxon".equals(table)
         || "specimen".equals(table)
         || "sp".equals(table)
         )) return null;

@@ -12081,7 +12081,7 @@ Mar 21. 1.5hr. 4hrs in evening refactoring, fixing and deploying. 5.5hrs.
   Fix calacademyHeader.jsp javascript secure protocol test (erroneously reliant on devMode).
   Deploy and document.
 
-Mar 24
+Mar 24. 5hrs.
   AntwebProps refactored and extended to support platform.properties.
   Put Google Key and DB pwd into new property file.
   Create file outside of github.
@@ -12090,16 +12090,34 @@ Mar 24
 
 Mar 25th. 3.5hrs.
   Bioregion Endemism.
-  Deployed.
 
-Mar 26
-
+Mar 26. 5.5hrs.
   Deployment to fix bug with the bioregion species list summary report. Include morphos.
-  Look into bioregion introduced solution.
-  
+  Look into bioregions introduced.
+  Implement bioregion introduced solution.
+  Implement advanced search by taxon name list.
+  Several deployments. Documentation.
+
+Mar 27
+  Create Check.notBot method and add to QueryAction, EndemicAction and IntroducedAction.
+  Restrict the display of Species List with Range Data report to species level taxonomic pages.
+  Look into dnaextractionnotes. Resolve. Document.
+  Verify other database things intact. Document.
+  Handle endemic.do and introduced.do exception when overview not included.
 
 
 -week:
+
+Juicer for ginger, honey, cayenne
+Angelica Salazar
+Dr. Maureen Rosen - left a message. Call back. Fit in at 2pm? 831-426-1093
+How much vitamin D.  Ask Maureen.
+benedictineherbs.com 
+
+Mom?
+manuka
+cayenne pepper
+
 
 
 Marriage story

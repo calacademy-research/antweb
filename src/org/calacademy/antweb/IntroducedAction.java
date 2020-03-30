@@ -31,6 +31,8 @@ native bioregions to genera.
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
 
+        ActionForward b = Check.notBot(request, mapping); if (b != null) return b;
+
         ArrayList<String> introduced = null;
 
         String geolocaleIdStr = (String) request.getParameter("geolocaleId");

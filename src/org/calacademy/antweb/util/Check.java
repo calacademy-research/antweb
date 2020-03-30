@@ -26,6 +26,36 @@ public class Check {
     public Check() {
     }
 
+
+// ------------ General Purpose Checks ----------------
+/* Check mostly has to do with verifying the status of the AntwebMgr startup procedure.
+     Certain services must be up to support certain operations.
+     These are more general services...
+*/  
+    // ActionForward a = Check.notBot(request, mapping); if (a != null) return a;
+    public static ActionForward notBot(HttpServletRequest request, ActionMapping mapping) {
+        if (HttpUtil.isBot(request)) {
+            request.setAttribute("message", "no bots allowed");
+            return (mapping.findForward("message"));
+        }
+        return null;
+    }
+
+    // For use in JSP files. For example with a request object fetched like overview...
+    // String e = Check.requestAttribute(request, "overview"); if (e != null) { out.println("<br><br><b>Error:" + e + "</b>"); return; }
+    // Could be above or below the fetch. But above makes more sense. See web/endemic-body.jsp.
+    public static String requestAttribute(HttpServletRequest request, String objectName) {
+		Object object = request.getAttribute(objectName);
+		if (object == null) {
+		  String message = "requestAttribute() No object:" + objectName + " for request:" + HttpUtil.getRequestInfo(request);
+		  s_log.error("requestAttribute() message:" + message);
+		  return message;
+		}
+		return null;
+    }
+
+// ----------------------------------------------------    
+
     // ActionForward a = Check.initLogin(request, mapping); if (a != null) return a;
     public static ActionForward initLogin(HttpServletRequest request, ActionMapping mapping) {
         ActionForward a = null;

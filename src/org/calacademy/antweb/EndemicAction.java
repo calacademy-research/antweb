@@ -22,6 +22,8 @@ public final class EndemicAction extends Action {
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
 
+        ActionForward b = Check.notBot(request, mapping); if (b != null) return b;
+
         ArrayList<String> endemics = null;
 
         String geolocaleIdStr = (String) request.getParameter("geolocaleId");

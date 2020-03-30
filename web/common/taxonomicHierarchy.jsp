@@ -44,7 +44,7 @@
     <div id="classification">        
         <span class="left">Classification:</span>
         <ul>
-        <% if (taxon.getOrderName() != null) { %>}
+        <% if (taxon.getOrderName() != null) { %>
             <li>Order: <%= format.capitalizeFirstLetter(taxon.getOrderName()) %></li>
         <% }
 

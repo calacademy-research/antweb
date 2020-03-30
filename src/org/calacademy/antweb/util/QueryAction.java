@@ -22,6 +22,8 @@ public class QueryAction extends Action {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
       
+        ActionForward b = Check.notBot(request, mapping); if (b != null) return b;
+      
         response.setCharacterEncoding("UTF-8");
       
         HttpSession session = request.getSession();                

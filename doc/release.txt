@@ -1,3 +1,11 @@
+Release 8.21.1
+Date:
+  Create Check.notBot method and add to QueryAction, EndemicAction and IntroducedAction.
+  Restrict the display of Species List with Range Data report to species level taxonomic pages.
+
+Release 8.21
+  Date: Mar 26, 2020  Advanced search by taxonomic name as (for example): ("myrmicinaepheidole megatron", "amblyoponinaemystrium mysticum") 
+  
 Release 8.20
   Bioregion introduced functionality.
   

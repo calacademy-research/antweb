@@ -23,21 +23,21 @@ if (true) {
           ;
       }
 
-// Really should only be offering links if at the taxa level. Also true for Bioregion below.
-
-      String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=geolocaleSpeciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
-      if (LoginMgr.isAdmin(request)) {
-          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=geolocaleSpeciesListWithRangeData&param=" + overview + "'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
-          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=geolocaleSpeciesListRangeSummary&param=" + overview + "'>Summary</a>";
-      }
-      if ((overview instanceof Country || overview instanceof Adm1) && LoginMgr.isCurator(request)) {
-          note += speciesListWithRangeDataNote;
-          note += "<br>";
-      }
-      if ((overview instanceof Subregion || overview instanceof Region) && LoginMgr.isAdmin(request)) {
-          speciesListWithRangeDataNote += "<br><b>&nbsp;&nbsp;&nbsp;(Admin only)</b> Use sparingly. Approximately 1 - 2 minutea for every 1K species - species count:" + overview.getSpeciesCount();
-          note += speciesListWithRangeDataNote;
-          note += "<br>";
+    if ("species".equals(pageRank)) {
+          String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=geolocaleSpeciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
+          if (LoginMgr.isAdmin(request)) {
+              speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=geolocaleSpeciesListWithRangeData&param=" + overview + "'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
+              speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=geolocaleSpeciesListRangeSummary&param=" + overview + "'>Summary</a>";
+          }
+          if ((overview instanceof Country || overview instanceof Adm1) && LoginMgr.isCurator(request)) {
+              note += speciesListWithRangeDataNote;
+              note += "<br>";
+          }
+          if ((overview instanceof Subregion || overview instanceof Region) && LoginMgr.isAdmin(request)) {
+              speciesListWithRangeDataNote += "<br><b>&nbsp;&nbsp;&nbsp;(Admin only)</b> Use sparingly. Approximately 1 - 2 minutea for every 1K species - species count:" + overview.getSpeciesCount();
+              note += speciesListWithRangeDataNote;
+              note += "<br>";
+          }
       }
     %>
 
@@ -52,13 +52,16 @@ if (true) {
           + " a) specimen records of any species from the bioregion,"
           + " b) AntCat.org type locality information. Bioregion lists are not managed by curators."; 
 
-      String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=bioregionSpeciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
-      if (LoginMgr.isAdmin(request)) {
-          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=bioregionSpeciesListWithRangeData&param=" + overview + "'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
-          speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=bioregionSpeciesListRangeSummary&param=" + overview + "'>Summary</a>";
+      if ("species".equals(pageRank)) {
+
+          String speciesListWithRangeDataNote = "<br><br><b>Report: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?name=bioregionSpeciesListWithRangeData&param=" + overview + "'>Species List with Range Data</a>";
+          if (LoginMgr.isAdmin(request)) {
+              speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/queryFile?name=bioregionSpeciesListWithRangeData&param=" + overview + "'><img src='" + AntwebProps.getDomainApp() + "/image/fileDownload.png' width=15></a>";
+              speciesListWithRangeDataNote += "&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=bioregionSpeciesListRangeSummary&param=" + overview + "'>Summary</a>";
+          }
+          note += speciesListWithRangeDataNote;
+          note += "<br>";
       }
-      note += speciesListWithRangeDataNote;
-      note += "<br>";
 %>
       <%= note %>
       <div class="page_divider taxonomic"></div>

@@ -19,7 +19,8 @@
     String thePage = HttpUtil.getTarget(request);
 
     ArrayList<String> endemics = (ArrayList<String>)request.getAttribute("endemic");       
-
+    
+    String e = Check.requestAttribute(request, "overview"); if (e != null) { out.println("<br><br><b>Error:" + e + "</b>"); return; }
     Overview overview = (Overview) request.getAttribute("overview");
 %>
 

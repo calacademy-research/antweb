@@ -35,7 +35,7 @@ public final class SearchAction extends DispatchAction {
         String requestInfo = AntwebUtil.getRequestInfo(request);
 
         //if (true || AntwebProps.isDevMode()) s_log.warn("execute() set activeSession.");
-        request.getSession().setAttribute("activeSession", new Boolean(true));
+        request.getSession().setAttribute("activeSession", Boolean.valueOf(true));
 
         // These needs to happen, if only because MapResults will use the project from the session.
         OverviewMgr.setOverview(request, null);
