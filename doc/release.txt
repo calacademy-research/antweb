@@ -1,13 +1,13 @@
 
 Release 8.22
 Date: Mar 30, 2020
+  Red dot indicate server activity visible to all users next to login link so that
+    developers do not need to log in to know if the server is active with a process.
+    (Could be removed if distracting for users).
   Create Check.notBot method and add to QueryAction, EndemicAction and IntroducedAction.
   Restrict the display of Species List with Range Data report to species level taxonomic pages.
   Check.requestAttribute for jsp condition handling. Logs with proper response to UI.
   Remove errant } from taxononomic hierarchy.
-  Red dot indicate server activity displayed to all users next to login link so that
-    developers do not need to log in to know if the server is active with a process.
-    (Could be removed if distracting for users).
   Trim logging.
 
 Release 8.21

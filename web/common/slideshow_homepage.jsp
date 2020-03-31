@@ -29,10 +29,13 @@
 
       if (subfamilyName.contains("incertae_sedis")) include = true;
          
+      if (subfamilyName.contains("armaniinae")) include = false;         
+      if (subfamilyName.contains("haidomyrmecinae")) include = false;         
+      //A.log("slideshow family:" + subfamily.getFamily() + " subfamily:" + subfamilyName);         
+         
       if (include) {
         added.add(subfamilyName);
         ++i;
-        
           %>
   <div class="slide small" style="background-image: url(<%= imgFile %>);" id="<%= i %>" onclick="window.location.href='<%= AntwebProps.getDomainApp() %>/images.do?subfamily=<%= subfamilyName %>&rank=subfamily&project=allantwebants';">
       <div class="hover small"></div>

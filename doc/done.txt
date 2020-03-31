@@ -12098,7 +12098,7 @@ Mar 26. 5.5hrs.
   Implement advanced search by taxon name list.
   Several deployments. Documentation.
 
-Mar 27. 4hs.
+Mar 27. 3hs.
   Create Check.notBot method and add to QueryAction, EndemicAction and IntroducedAction.
   Restrict the display of Species List with Range Data report to species level taxonomic pages.
   Look into dnaextractionnotes. Resolve. Document.
@@ -12115,6 +12115,10 @@ Mar 30. 1hr.
   Add red dot indicating activity regardless of login.
   Trim logging. Redeploy.
 
+*reported
+
+
+	 
 	 
 -week:
 
