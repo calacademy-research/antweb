@@ -1,7 +1,14 @@
+
+Release 8.23.1
+Date: Apr 4, 2020
+  Handle single quote in specimen upload file.
+  Extend size of collectedby specimen field. 
+  Escape SQL insertion in AntwebUpload.
+
 Release 8.23
 Date: Apr 4, 2020
   RecentCASPinnedPonerinae report.
-  
+   
 Release 8.22.1
 Date: Mar 30, 2020
   Check for slideshow image existence prior to display.

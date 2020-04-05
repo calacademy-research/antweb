@@ -128,7 +128,7 @@ public final class ListAction extends Action {
     	            return (mapping.findForward("listTable"));
 				}
                 if (action.equals("recentCASPinnedPonerinae")) {
-                    String message = "Most recent CAS pinned Ponerinae specimen not in set of methods (if available).";
+                    String message = "Most recent CAS pinned Ponerinae specimen not in the set of methods (pitfall, malaise, yellow pan, sweeping, winkler, berlese) if available.";
                     request.setAttribute("message", message);
                     SpecimenDb specimenDb = new SpecimenDb(connection);
                     ArrayList<String> list = specimenDb.getRecentCASPinnedPonerinae();

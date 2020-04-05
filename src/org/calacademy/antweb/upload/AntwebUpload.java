@@ -287,6 +287,12 @@ public class AntwebUpload {
 				value = AntFormatter.escapeQuotes((String) value);
 				//s_log.warn("getInsertionQuery() using mysqlEscapeQuotes().  value:" + value);
 			  }
+			  
+			  // *** Added Apr 4 2020
+			  if (((String) value).contains("'")) {
+				value = AntFormatter.escapeQuotes((String) value);
+				//s_log.warn("getInsertionQuery() using mysqlEscapeQuotes().  value:" + value);
+			  }
 
 			  if (((String) value).equals("true")) value = "1";
 			  if (((String) value).equals("false")) value = "0";
