@@ -12,6 +12,7 @@ public class CompareUtil {
     private static final Log s_log = LogFactory.getLog(CompareUtil.class);
 
     public static int compareString(String s1, String s2) {
+        if (s1 == null || s2 == null) return 0;
         if (s1 == null || "".equals(s1)) return 1;
         if (s2 == null || "".equals(s2)) return -1;
         return s1.compareToIgnoreCase(s2);   

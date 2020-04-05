@@ -81,7 +81,12 @@ public class FileUtil {
     s_log.warn("DiskFree:" + diskFree);
     return diskFree;
   }	
+
+  public static boolean fileExists(String file) {
+    return new File(file).exists();
+  }
   
+/*
   public static boolean fileExists(String file) {
     String command = "ls " + file;
     String lsResults = (new AntwebSystem()).launchProcess(command, true);
@@ -95,6 +100,8 @@ public class FileUtil {
       return false;
     }
   }
+*/
+
   
   public static boolean fileExistsAndCurrent(String file) {
     // This could be implemented as above, but with -al, get the date, compare it to the

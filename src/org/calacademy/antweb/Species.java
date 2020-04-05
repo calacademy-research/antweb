@@ -412,8 +412,7 @@ these other _cf1 etc.
     public static int count = 0;
     public static String a1 = "";
     public static String a2 = "";
-    
-    
+        
 	public void sortBy(String fieldName) {	
 /*
 Required: Legacy Merge Sort: true
@@ -424,6 +423,8 @@ To fix this proper would involve rewriting Species.sort()
 */
 	
 	    //s_log.warn("sortBy() field		:" + fieldName + " children:" + children);
+
+try {
 
 	    if (fieldName.equals("bioregion")) {
 			Collections.sort(children, new Comparator(){				 
@@ -457,20 +458,19 @@ To fix this proper would involve rewriting Species.sort()
 	            }
 	        });
 		} else if (fieldName.equals("country")) {
-try {	    
+	    
 			Collections.sort(children, new Comparator(){			 
 	            public int compare(Object o1, Object o2) {
 	                ++count;
                     a1 = ((Specimen) o1).getCountry();
                     a2 = ((Specimen) o2).getCountry();
+                    
+                    if (a1 == null && a2 == null) return 0;
 	                int c = CompareUtil.compareString(((Specimen) o1).getCountry(), ((Specimen) o2).getCountry());	            
-                    A.log("sort() count:" + count + " o1:" + ((Specimen) o1).getCountry() + " o2:" +  ((Specimen) o2).getCountry());
+                    //A.log("sort() count:" + count + " o1:" + ((Specimen) o1).getCountry() + " o2:" +  ((Specimen) o2).getCountry());
 	                return c;
 	            }
 	        });
-} catch (IllegalArgumentException e) {
-  A.log("sort() a1:" + a1 + " a2:" + a2);
-}
 		} else if (fieldName.equals("databy")) {
 			Collections.sort(children, new Comparator(){			 
 	            public int compare(Object o1, Object o2) {
@@ -523,7 +523,15 @@ try {
 		} else if (fieldName.equals("lifestage")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getLifeStage(), ((Specimen) o2).getLifeStage());
+
+					String ls1 = ((Specimen) o1).getLifeStage();
+					String ls2 = ((Specimen) o2).getLifeStage();
+
+                    if (ls1 == null && ls2 == null) return 0;
+
+                    int retVal = CompareUtil.compareString(ls1, ls2);
+                    //A.log("Species.sortBy() retVal:" + retVal + " o1:" + o1 + " ls1:" + ((Specimen) o1).getLifeStage() + " o2:" + o2 + " ls2:" + ((Specimen) o2).getLifeStage());
+	                return retVal;  
 	            }
 	        });
 		} else if (fieldName.equals("locality")) {
@@ -592,7 +600,11 @@ try {
 	                return CompareUtil.compareString(((Specimen) o1).getTypeStatus(), ((Specimen) o2).getTypeStatus());	
 	            }	 
 	        });
-		}	  	              
+		}	
+} catch (IllegalArgumentException e) {
+    A.log("sort() a1:" + a1 + " a2:" + a2 + " e:" + e);
+}
+		  	              
 	}  
 	
      /* These two methods are for the automated generation of authority files. */

@@ -225,89 +225,7 @@ public class SpecimenDb extends AntwebDb {
       
       return specimen;
     }
- 
 
-/*
-  Create report for specimen with multiple taxa. (casent-d anomalies).
-  Where casent and casent-dxx have different taxon names.
-  Invoked as: https://www.antweb.org/list.do?action=casentDAnamalies
-*/
-    public ArrayList<String> getCasentDAnamalies() {
-      ArrayList<String> bads = new ArrayList<String>();
-      Statement stmt = null;
-      ResultSet rset = null;
-      String query = "select concat(substring_index(code, '-d', 1)) as codeFrag from specimen where code like '%-d%'";
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getBads()");
-            rset = stmt.executeQuery(query);
-
-            int count = 0;
-            while (rset.next()) {
-                ++count;
-                String codeFrag = rset.getString("codeFrag");
-                boolean isDup = isDuplicatedTaxonName(codeFrag);
-                if (isDup) {
-                  //A.log("getBads() isDup:true codeFrag:" + codeFrag);
-                  bads.add(getDups(codeFrag));
-                }
-            }
-            A.log("getBads() count:" + count);
-
-        } catch (SQLException e) {
-            s_log.error("getBads() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, "this", "getBads()");
-        }
-      
-      return bads;
-    }
-
-    public boolean isDuplicatedTaxonName(String codeFrag) {
-      Statement stmt = null;
-      ResultSet rset = null;
-      String query = "select count(distinct taxon_name) as c from specimen where code like '" + codeFrag + "%'";
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "isDuplicatedTaxonName()");
-            rset = stmt.executeQuery(query);
-
-            int count = 0;
-            while (rset.next()) {
-                int c = rset.getInt("c");
-                if (c > 1) return true;
-            }
-            //A.log("isDuplicatedTaxonName() count:" + count);
-        } catch (SQLException e) {
-            s_log.error("getBads() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, "this", "isDuplicatedTaxonName()");
-        }
-        return false;
-    }
-
-    public String getDups(String codeFrag) {
-      String dups = "";
-      Statement stmt = null;
-      ResultSet rset = null;
-      String query = "select code, taxon_name from specimen where code like '" + codeFrag + "%'";
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getDups()");
-            rset = stmt.executeQuery(query);
-
-            int count = 0;
-            while (rset.next()) {
-                ++count;
-                String code = rset.getString("code");
-                String taxonName = rset.getString("taxon_name");
-                dups += "<br><b>" + code + ":</b>" + taxonName;
-            }
-        } catch (SQLException e) {
-            s_log.error("getDups() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, "this", "getDups()");
-        }
-        return dups;
-    }
- 
  
     public boolean hasSpecimen(String taxonName, String country) {
       return hasSpecimenWithClause(taxonName, " and country = '" + country + "'");
@@ -633,5 +551,197 @@ public class SpecimenDb extends AntwebDb {
     public static String getAntwebGenusCriteria() {
       return " status = 'valid' and genus not in ('agroecomyrmex', 'archimyrmex', 'asymphylomyrmex', 'attopsis', 'baikuris', 'bradoponera', 'brownimecia', 'burmomyrma', 'camelomecia', 'camponotites', 'casaleia', 'cataglyphoides', 'cephalopone', 'ceratomyrmex', 'chronomyrmex', 'cretopone', 'ctenobethylus', 'cyrtopone', 'drymomyrmex', 'elaeomyrmex', 'eldermyrmex', 'electromyrmex', 'emplastus', 'enneamerus', 'eocenomyrma', 'eoformica', 'eulithomyrmex', 'formicium', 'gerontoformica', 'glaphyromyrmex', 'haidomyrmex', 'haidomyrmodes', 'haidoterminus', 'ktunaxia', 'kyromyrma', 'leucotaphus', 'linguamyrmex', 'messelepone', 'miomyrmex', 'myanmyrma', 'paraneuretus', 'paraphaenogaster', 'petropone', 'ponerites', 'prionomyrmex', 'procerapachys', 'proiridomyrmex', 'protazteca', 'protomyrmica', 'protopone', 'pseudectatomma', 'solenopsites', 'sphecomyrma', 'taphopone', 'titanomyrma', 'yantaromyrmex', 'zherichinius', 'zigrasimecia')";    
     }
+
+
+
+// ---------------------------------- Reports ------------------------------------------------
+
+
+    /*
+      Create report for specimen with multiple taxa. (casent-d anomalies).
+      Where casent and casent-dxx have different taxon names.
+      Invoked as: https://www.antweb.org/list.do?action=casentDAnamalies
+    */
+    public ArrayList<String> getCasentDAnamalies() {
+        ArrayList<String> bads = new ArrayList<String>();
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select concat(substring_index(code, '-d', 1)) as codeFrag from specimen where code like '%-d%'";
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getBads()");
+            rset = stmt.executeQuery(query);
+
+            int count = 0;
+            while (rset.next()) {
+                ++count;
+                String codeFrag = rset.getString("codeFrag");
+                boolean isDup = isDuplicatedTaxonName(codeFrag);
+                if (isDup) {
+                    //A.log("getBads() isDup:true codeFrag:" + codeFrag);
+                    bads.add(getDups(codeFrag));
+                }
+            }
+            A.log("getBads() count:" + count);
+
+        } catch (SQLException e) {
+            s_log.error("getBads() e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, "this", "getBads()");
+        }
+
+        return bads;
+    }
+
+    public boolean isDuplicatedTaxonName(String codeFrag) {
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select count(distinct taxon_name) as c from specimen where code like '" + codeFrag + "%'";
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "isDuplicatedTaxonName()");
+            rset = stmt.executeQuery(query);
+
+            int count = 0;
+            while (rset.next()) {
+                int c = rset.getInt("c");
+                if (c > 1) return true;
+            }
+            //A.log("isDuplicatedTaxonName() count:" + count);
+        } catch (SQLException e) {
+            s_log.error("getBads() e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, "this", "isDuplicatedTaxonName()");
+        }
+        return false;
+    }
+
+    public String getDups(String codeFrag) {
+        String dups = "";
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select code, taxon_name from specimen where code like '" + codeFrag + "%'";
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getDups()");
+            rset = stmt.executeQuery(query);
+
+            int count = 0;
+            while (rset.next()) {
+                ++count;
+                String code = rset.getString("code");
+                String taxonName = rset.getString("taxon_name");
+                dups += "<br><b>" + code + ":</b>" + taxonName;
+            }
+        } catch (SQLException e) {
+            s_log.error("getDups() e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, "this", "getDups()");
+        }
+        return dups;
+    }
+
+
+    /*
+    Must be logged in as admin. Called like this: http://localhost/antweb/list.do?action=recentCASPinnedPonerinae
+
+    ! On Dev, in mysql, must run this first: SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
+
+    I need to know the date of the most recent pinned specimens of every Ponerinae species located at CAS.
+    But I need specimens that are not with method containing pitfall, Malaise, yellow pan trap, sweeping, Winkler, sifter, Berlese
+    but if the only specimens are from those methods, then the most recent is OK.
+
+    For every species of Ponerinae located at CASC provide
+    subfamily, Genus, species, bioregion, casent of most recent collected specimen, date of most recent collected specimen,
+      micohabitat, method [preferably not containing pitfall, Malaise, yellow pan trap, sweeping, Winkler, sifter, Berlese],
+
+    select distinct method from specimen where method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%';
+
+    select code, max(created), subfamily, genus, species  from specimen where subfamily = "ponerinae" group by subfamily, genus, species, created;
+    */
+    public ArrayList<String> getRecentCASPinnedPonerinae() {
+        ArrayList<String> list = new ArrayList<String>();
+        Statement stmt = null;
+        ResultSet rset = null;
+
+        String heading = "<tr><th>#</th><th>genus</th><th>Species</th><th>Subspecies</th><th>Code</th><th>Created</th><th>Bioregions</th><th>Microhabitat</th><th>Is Ideal</th><th>Method</th></tr>";
+        list.add(heading);
+
+        BioregionTaxonDb bioregionTaxonDb = new BioregionTaxonDb(getConnection());
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getRecentCASPinnedPonerinae()");
+
+            String query = "select taxon_name, subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, '1' as ideal, max(created) as created, IFNULL(microhabitat, '') as microhabitat, method from specimen "
+            + "  where subfamily = 'ponerinae'"
+            + " and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
+            + " and locatedat = 'CASC'"
+            + " group by subfamily, genus, species, subspecies"
+
+            + " union"
+
+            + " select taxon_name, subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, '0' as ideal, max(created) as created, IFNULL(microhabitat, '') as microhabitat, method  from specimen "
+            + " where subfamily = 'ponerinae'"
+            + " and (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
+            + " and locatedat = 'CASC'"
+            + " group by taxon_name, subfamily, genus, species, subspecies"
+
+            + " order by subfamily, genus, species, subspecies";
+
+            A.log("getRecentCASPinnedPonerinae() query:" + query);
+
+            int i = 0;
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                ++i;
+                String taxonName = rset.getString("taxon_name");
+                //String subfamily = rset.getString("subfamily");
+                String genus = rset.getString("genus");
+                String species = rset.getString("species");
+                String subspecies = rset.getString("subspecies");
+                String code = rset.getString("code");
+                Timestamp created = rset.getTimestamp("created");
+                String microhabitat = rset.getString("microhabitat");
+                String method = rset.getString("method");
+                String ideal = rset.getString("ideal");
+                String bioregions = bioregionTaxonDb.getBioregionList(taxonName);
+                String record = "<tr><td>" + i + ".</td><td>" + Formatter.initCap(genus)  + "</td><td>" + species  + "</td><td>" + subspecies + "</td><td>" + code + "</td><td>" + created + "</td><td>" + bioregions + "</td><td>" + microhabitat + "</td><td>" + ideal  + "</td><td>" + method  + "</td></tr>";
+                list.add(record);
+            }
+        } catch (SQLException e) {
+            s_log.error("getRecentCASPinnedPonerinae() e:" + e);
+        } finally {
+            DBUtil.close(stmt, "getRecentCASPinnedPonerinae()");
+        }
+        return list;
+    }
+
+/*
+
+select taxon_name, subfamily, genus, species, subspecies, code, 'ideal' as ideal, max(created) as created, microhabitat, method from specimen
+where subfamily = 'ponerinae'
+and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')
+and locatedat = 'CASC'
+group by subfamily, genus, species, subspecies
+union select taxon_name, subfamily, genus, species, subspecies, code, 'not ideal' as ideal, max(created) as created, microhabitat, method
+from specimen  where subfamily = 'ponerinae'
+and (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')
+and locatedat = 'CASC' group by taxon_name, subfamily, genus, species, subspecies
+order by subfamily, genus, species, subspecies
+
+
+
+select subfamily, genus, species, subspecies, code, "ideal", max(created), microhabitat, method from specimen  where subfamily = "ponerinae"
+and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')
+group by subfamily, genus, species, subspecies
+
+union
+
+select subfamily, genus, species, subspecies, code, "not ideal", max(created), microhabitat, method  from specimen  where subfamily = "ponerinae"
+group by subfamily, genus, species, subspecies
+
+order by subfamily, genus, species, subspecies;
+
+*/
+
+
+    // --------------------------- End Reports -----------------------------------
+
 }
 

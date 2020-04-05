@@ -127,6 +127,14 @@ public final class ListAction extends Action {
 					request.setAttribute("listTable", list);
     	            return (mapping.findForward("listTable"));
 				}
+                if (action.equals("recentCASPinnedPonerinae")) {
+                    String message = "Most recent CAS pinned Ponerinae specimen not in set of methods (if available).";
+                    request.setAttribute("message", message);
+                    SpecimenDb specimenDb = new SpecimenDb(connection);
+                    ArrayList<String> list = specimenDb.getRecentCASPinnedPonerinae();
+                    request.setAttribute("listTable", list);
+                    return (mapping.findForward("listTable"));
+                }
             }
 
             if (LoginMgr.isCurator(request)) {   

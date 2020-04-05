@@ -20,18 +20,15 @@
 
     int i = 0;
     for (Taxon subfamily : subfamilies) {
+      boolean include = subfamily.isValid();
       String subfamilyName = subfamily.getName();
-      boolean include = false;
       String imgFile = AntwebProps.getDomainApp() + "/image/" + subfamilyName + ".jpg";
-      //A.log("slideshow_homepage.jsp subfamily:" + subfamily + " file:" + imgFile);
-
-      include = subfamily.isValid();
+      String imgLoc = AntwebProps.getDocRoot() + "image/" + subfamilyName + ".jpg";
 
       if (subfamilyName.contains("incertae_sedis")) include = true;
          
-      if (subfamilyName.contains("armaniinae")) include = false;         
-      if (subfamilyName.contains("haidomyrmecinae")) include = false;         
-      //A.log("slideshow family:" + subfamily.getFamily() + " subfamily:" + subfamilyName);         
+      if (!FileUtil.fileExists(imgLoc)) include = false;
+      //A.log("slideshow_homepage.jsp subfamily:" + subfamily + " file:" + imgFile + " imgLoc:" + imgLoc + " include:"+ include);
          
       if (include) {
         added.add(subfamilyName);

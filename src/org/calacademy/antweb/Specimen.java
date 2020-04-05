@@ -182,7 +182,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                 setSpeciesGroup(rset.getString("speciesgroup"));
                 setGenus(rset.getString("genus"));
                 setSubgenus(rset.getString("subgenus"));
-                A.log("setTaxonomicInfo() subgenus:" + getSubgenus());
+                //A.log("setTaxonomicInfo() subgenus:" + getSubgenus());
 
                 setSpecies(rset.getString("species"));
                 setSubspecies(rset.getString("subspecies"));

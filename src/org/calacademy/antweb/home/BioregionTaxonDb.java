@@ -375,8 +375,20 @@ See BioregionDb.java:77 where this call is commented out.
       } finally {
         DBUtil.close(stmt, "insertBioregionTaxon()");
       }   
-    }  
-    
+    }
+
+    public String getBioregionList(String taxonName) throws SQLException {
+        String bioregionList = "";
+        ArrayList<Bioregion> bioregions = getBioregions(taxonName);
+        int i = 0;
+        for (Bioregion bioregion : bioregions) {
+            ++i;
+            if (i > 1) bioregionList += ", ";
+            bioregionList += bioregion.getName();
+        }
+        return bioregionList;
+    }
+
     public ArrayList<Bioregion> getBioregions(String taxonName) throws SQLException {
         ArrayList<Bioregion> bioregions = new ArrayList<Bioregion>();
         Statement stmt = null;
