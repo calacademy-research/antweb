@@ -1,3 +1,26 @@
+Release 8.23.1
+ doc/done.txt                                       | 23 +++++++++++++----------
+ doc/release.txt                                    |  9 ++++++++-
+ src/org/calacademy/antweb/upload/AntwebUpload.java |  6 ++++++
+ src/org/calacademy/antweb/util/CompareUtil.java    |  4 ++--
+ src/org/calacademy/antweb/util/ListAction.java     |  2 +-
+ web/documentation/releaseNum.jsp                   |  2 +-
+ 6 files changed, 31 insertions(+), 15 deletions(-)
+ 
+Release 8.23
+ doc/dbDebug.txt                                      |  12 +++++++---
+ doc/release.txt                                      |   8 +++++++
+ src/org/calacademy/antweb/Species.java               |  30 ++++++++++++++++-------
+ src/org/calacademy/antweb/Specimen.java              |   2 +-
+ src/org/calacademy/antweb/home/BioregionTaxonDb.java |  16 +++++++++++--
+ src/org/calacademy/antweb/home/SpecimenDb.java       | 274 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------------------------------------------------------------
+ src/org/calacademy/antweb/util/CompareUtil.java      |   1 +
+ src/org/calacademy/antweb/util/FileUtil.java         |   7 ++++++
+ src/org/calacademy/antweb/util/ListAction.java       |   8 +++++++
+ web/common/slideshow_homepage.jsp                    |  11 ++++-----
+ web/documentation/releaseNum.jsp                     |   2 +-
+ 11 files changed, 266 insertions(+), 105 deletions(-)
+ 
 Release 8.21.1
  doc/done.txt                                       | 30 ++++++++++++++++++++++++------
  doc/fileMods.txt                                   |  8 ++++++++
@@ -13,6 +36,8 @@ Release 8.21.1
  web/endemic-body.jsp                               |  3 ++-
  web/introduced-body.jsp                            |  3 ++-
  13 files changed, 107 insertions(+), 32 deletions(-)
+  src/org/calacademy/antweb/search/AdvancedSearch.java |  2 +-
+ web/common/loginPanel.jsp                            | 22 +++++++++++++---------
  
 Release 8.21
  src/org/calacademy/antweb/search/AdvancedSearch.java     |  4 +++-

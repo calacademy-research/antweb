@@ -61,6 +61,11 @@ public class OperationDetails {
        this.forwardPage = forwardPage;
     }
 
+    public ActionForward returnForward(ActionMapping mapping, HttpServletRequest request) {
+      if (getForwardPage() != null) return findForward(mapping, request);
+      return null;
+    }
+
     public ActionForward findForward(ActionMapping mapping, HttpServletRequest request) {
       ActionForward forward = null;
 
@@ -87,16 +92,7 @@ public class OperationDetails {
     public HttpServletRequest getRequest() {
       return this.request;
     }
-/*
-    private ActionForward forward;
-    // This is used by one case.  SpecimenUpload.
-    public ActionForward getForward() {
-       return forward;
-    }
-    public void setForward (ActionForward actionForward) {
-       forward = actionForward;
-    }
-*/
+
     public ActionForward getErrorForward(ActionMapping mapping) {    
         if (!"success".equals(getMessage())) {
           s_log.warn("execute() " + getMessage());
@@ -155,7 +151,5 @@ public class OperationDetails {
     public void setMessage(String message) {
         this.message = message;
     }    
-
 }
-
 

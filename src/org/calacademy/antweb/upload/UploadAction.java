@@ -238,6 +238,8 @@ public class UploadAction extends Action {
 				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theFileName, formFileName
 				  , submitLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 
+                ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
+
   //LogMgr.logQuery(connection, "After specimen upload Proj_taxon worldants counts", "select project_name, source, count(*) from proj_taxon where source = 'worldants' group by project_name, source");
   // LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "After specimen upload Proj_taxon worldants counts");
 
@@ -275,6 +277,8 @@ public class UploadAction extends Action {
 				s_log.warn("execute() specimenTest " );
 				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(accessGroup.getAbbrev() + "specimenTest", formFileName
 				  , accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+
+                ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
 
 				specimenPostProcess(connection, accessLogin, uploadDetails);
 
@@ -320,6 +324,8 @@ public class UploadAction extends Action {
 
 					  uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile("allSpecimenFiles", formFileName
 						, submitAsLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+
+                      ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
 
                       specimenPostProcess(connection, accessLogin, uploadDetails);
 
@@ -442,6 +448,8 @@ public class UploadAction extends Action {
 				s_log.warn("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
 				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+
+                ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
 
 				specimenPostProcess(connection, accessLogin, uploadDetails);
 

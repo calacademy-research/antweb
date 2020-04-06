@@ -290,6 +290,10 @@ public class AntwebUpload {
 			  
 			  // *** Added Apr 4 2020
 			  if (((String) value).contains("'")) {
+			  
+A.log("Should swap Coate'ivory for proper name.");			  
+AntwebUtil.logShortStackTrace(10);
+			  
 				value = AntFormatter.escapeQuotes((String) value);
 				//s_log.warn("getInsertionQuery() using mysqlEscapeQuotes().  value:" + value);
 			  }
@@ -761,7 +765,7 @@ public class AntwebUpload {
 
 
 			fields.append("upload_id" + ")");
-			values.append(new Integer(AntwebMgr.getNextSpecimenUploadId()) + ")");
+			values.append(Integer.valueOf(AntwebMgr.getNextSpecimenUploadId()) + ")");
 			
 //            fields.setCharAt(fields.length() - 1, ')'); // here we remove final commas
 //            values.setCharAt(values.length() - 1, ')');

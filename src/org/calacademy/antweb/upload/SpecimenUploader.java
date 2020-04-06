@@ -85,8 +85,8 @@ public class SpecimenUploader {
             messageStr = "Specimen File must be a .txt file.";
         } else if (!uploadFile.correctEncoding(encoding)) {
             messageStr = "Encoding not validated for file:" + uploadFile.getFileLoc() + " encoding:" + uploadFile.getEncoding();
-        } else if (!isCurrentSpecimenFormat(specimenFileLoc)) {
-            messageStr = "Specimen File must be in the most current format.";
+        } else if (isCurrentSpecimenFormat(specimenFileLoc) != null) {
+            messageStr = "Specimen File must be in the most current format. " + isCurrentSpecimenFormat(specimenFileLoc);
         } else if (!util.isTabDelimited(specimenFileLoc)) {
             messageStr = "Specimen File must be a tab-delimited file.";
         }
@@ -115,39 +115,38 @@ public class SpecimenUploader {
         return uploadDetails;     
     }
     
-    private boolean isCurrentSpecimenFormat(String fileName) {
-        boolean isCurrentFormat = true;
+    private String isCurrentSpecimenFormat(String fileName) {
+        String error = null;
         try {
             BufferedReader in = new BufferedReader(new FileReader(fileName));
             if (in == null) {
-              s_log.error("isCurrentSpecimenFormat() BufferedReader is null for file:" + fileName);
-              return false;
+                error = "BufferedReader is null for file:" + fileName;
+                //s_log.error("isCurrentSpecimenFormat() error:" + error);
             }
             
             String theLine = in.readLine();
             if (theLine == null) {
-              s_log.error("isCurrentSpecimenFormat() null line.  Perhaps empty file:" + fileName + "?");
-              return false;
-            }            
+                error = "null line.  Perhaps empty file:" + fileName + "?";
+                //s_log.error("isCurrentSpecimenFormat() error:" + error);
+            }
 
             //s_log.warn("isCurrentSpecimenFormat() testLine:" + theLine);
            
            if (theLine.contains("/")) {
-              s_log.error("Line contains /.  Must be pre-Antweb 4.13.  The header:" + theLine);
-              return false;
+              error = "Line contains /.  Must be pre-Antweb 4.13.  The header:" + theLine;
             } if (theLine.indexOf("taxonomic history") >= 0) {
-              s_log.warn("This specimen file contains taxonomic history.  Is it maybe a species file?");
-              return false;
+              error = "This specimen file contains taxonomic history.  Is it maybe a species file?";
+              //s_log.warn(error);
             }
             // This line will determine if Antweb4.12            
             //if (theLine.contains(SpecimenNotes)) return true;
 
         } catch (Exception e) {
-            s_log.error("isCurrentSpecimenFormat() fileName:" + fileName + " e:" + e);
-            return false;
+            error = "fileName:" + fileName + " e:" + e;
+            //s_log.error("isCurrentSpecimenFormat() error:" + error);
         }
         //s_log.warn("isCurrentFormat() mustContainStr:" + mustContainStr + " not found in file:" + fileName);
-        return isCurrentFormat;
+        return error;
     }     
     
     

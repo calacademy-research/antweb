@@ -458,8 +458,12 @@ public class SpeciesListUpload extends AntwebUpload {
                     //if (AntwebProps.isDevMode()) s_log.error("importSpeciesList() innerloop element:" + element);
 
                     String theElementBefore = element;
-                    element = Utility.customTrim(element, "\'");
-                    element = Utility.customTrim(element, "\"");
+                    try {
+                        element = Utility.customTrim(element, "\'");
+                        element = Utility.customTrim(element, "\"");
+                    } catch (AntwebException e) {
+                        s_log.warn("importSpeciesList() e:" + e.getMessage());
+                    }
                     if (!element.equals(theElementBefore)) {
                       //getMessageMgr().addToMapMessages(MessageMgr.badQuotations, getLineIdStr(lineNum, antcatId), theElementBefore);
                       //goodLineStatus = "Bad quotation marks";

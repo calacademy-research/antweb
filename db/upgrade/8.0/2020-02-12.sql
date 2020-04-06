@@ -26,5 +26,9 @@ alter table geolocale_taxon_log modify column created timestamp default CURRENT_
 alter table bioregion add column endemic_species_count int(11);
 alter table bioregion_taxon add column is_endemic tinyint(4);
 
-#alter table bioregion add column introduced_species_count int(11);
-#alter table bioregion_taxon add column is_introduced tinyint(4);
+alter table bioregion add column introduced_species_count int(11);
+alter table bioregion_taxon add column is_introduced tinyint(4);
+
+
+alter table specimen modify column collectedby varchar(256);
+

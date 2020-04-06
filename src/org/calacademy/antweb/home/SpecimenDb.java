@@ -4,6 +4,7 @@ import java.util.*;
 import java.sql.*;
 
 import javax.servlet.http.*;
+//import java.time.format.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -656,35 +657,41 @@ public class SpecimenDb extends AntwebDb {
 
     select code, max(created), subfamily, genus, species  from specimen where subfamily = "ponerinae" group by subfamily, genus, species, created;
     */
-    public ArrayList<String> getRecentCASPinnedPonerinae() {
+
+    public QueryReport getRecentCASPinnedPonerinaeQueryReport() {
+        QueryReport queryReport = new QueryReport();
+        queryReport.setName("RecentCASPinnedPonerinae");
+        queryReport.setDesc("Most recent CAS pinned Ponerinae specimen not in the set of methods (pitfall, malaise, yellow pan, sweeping, winkler, berlese) if available.");
+
         ArrayList<String> list = new ArrayList<String>();
         Statement stmt = null;
         ResultSet rset = null;
 
-        String heading = "<tr><th>#</th><th>genus</th><th>Species</th><th>Subspecies</th><th>Code</th><th>Created</th><th>Bioregions</th><th>Microhabitat</th><th>Is Ideal</th><th>Method</th></tr>";
-        list.add(heading);
+        queryReport.setHeading("<tr><th>#</th><th>genus</th><th>Species</th><th>Subspecies</th><th>Code</th><th>DateCollected</th><th>Bioregions</th><th>Microhabitat</th><th>Is Ideal</th><th>Method</th></tr>");
 
         BioregionTaxonDb bioregionTaxonDb = new BioregionTaxonDb(getConnection());
         try {
-            stmt = DBUtil.getStatement(getConnection(), "getRecentCASPinnedPonerinae()");
+            stmt = DBUtil.getStatement(getConnection(), "getRecentCASPinnedPonerinaeQueryReport()");
 
-            String query = "select taxon_name, subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, '1' as ideal, max(created) as created, IFNULL(microhabitat, '') as microhabitat, method from specimen "
+            String query = "select taxon_name, subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, max(datecollectedstart) as dateCollected, IFNULL(microhabitat, '') as microhabitat, IFNULL(method, '') as method from specimen "
             + "  where subfamily = 'ponerinae'"
-            + " and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
+//            + " and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
             + " and locatedat = 'CASC'"
             + " group by subfamily, genus, species, subspecies"
 
+/*
             + " union"
 
-            + " select taxon_name, subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, '0' as ideal, max(created) as created, IFNULL(microhabitat, '') as microhabitat, method  from specimen "
+            + " select taxon_name, subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, 'No' as ideal, max(datecollectedstart) as dateCollected, IFNULL(microhabitat, '') as microhabitat, method  from specimen "
             + " where subfamily = 'ponerinae'"
             + " and (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
             + " and locatedat = 'CASC'"
             + " group by taxon_name, subfamily, genus, species, subspecies"
-
+*/
             + " order by subfamily, genus, species, subspecies";
 
-            A.log("getRecentCASPinnedPonerinae() query:" + query);
+            //A.log("getRecentCASPinnedPonerinae() query:" + query);
+            queryReport.setQuery(query);
 
             int i = 0;
             rset = stmt.executeQuery(query);
@@ -696,20 +703,92 @@ public class SpecimenDb extends AntwebDb {
                 String species = rset.getString("species");
                 String subspecies = rset.getString("subspecies");
                 String code = rset.getString("code");
-                Timestamp created = rset.getTimestamp("created");
+                Timestamp dateCollected = rset.getTimestamp("dateCollected");
+                //String formatDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(dateCollected);
+                String dateCollectedStr = "";
+                if (dateCollected != null) dateCollectedStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
                 String microhabitat = rset.getString("microhabitat");
                 String method = rset.getString("method");
-                String ideal = rset.getString("ideal");
+                //String ideal = rset.getString("ideal");
                 String bioregions = bioregionTaxonDb.getBioregionList(taxonName);
-                String record = "<tr><td>" + i + ".</td><td>" + Formatter.initCap(genus)  + "</td><td>" + species  + "</td><td>" + subspecies + "</td><td>" + code + "</td><td>" + created + "</td><td>" + bioregions + "</td><td>" + microhabitat + "</td><td>" + ideal  + "</td><td>" + method  + "</td></tr>";
+
+                String record = null;
+                String ideal = "Yes"; // maybe not, but to start with.
+/*
+Logic is... get the most recent record which may or may not be ideal (not with method of pitfall, malaise, etc...
+if it is not ideal then try to get an ideal one (which may be older than the most recent).
+ */
+                String lowerMethod = null;
+                if (method != null) lowerMethod = method.toLowerCase();
+                if (lowerMethod != null && (lowerMethod.contains("pitfall") || lowerMethod.contains("malaise") || lowerMethod.contains("yellow pan") || lowerMethod.contains("sweeping") || lowerMethod.contains("winkler") || lowerMethod.contains("berlese") )) {
+                  String idealRecord = getMostRecentIdealMethodRecord(i, taxonName, queryReport);
+                  if (idealRecord != null) {
+                      //A.log("getRecentCASPinnedPonerinaeQueryReport() using ideal for i:" + i + " taxonName:" + taxonName);
+                      record = idealRecord;
+                  } else {
+                      ideal = "No";
+                  }
+                }
+
+                if (record == null) record = "<tr><td>" + i + ".</td><td>" + Formatter.initCap(genus)  + "</td><td>" + species  + "</td><td>" + subspecies + "</td><td>" + code + "</td><td>" + dateCollectedStr + "</td><td>" + bioregions + "</td><td>" + microhabitat + "</td><td>" + ideal  + "</td><td>" + method  + "</td></tr>";
+
                 list.add(record);
             }
         } catch (SQLException e) {
-            s_log.error("getRecentCASPinnedPonerinae() e:" + e);
+            s_log.error("getRecentCASPinnedPonerinaeQueryReport() e:" + e);
+            queryReport.setError(e.toString());
         } finally {
-            DBUtil.close(stmt, "getRecentCASPinnedPonerinae()");
+            DBUtil.close(stmt, "getRecentCASPinnedPonerinaeQueryReport()");
         }
-        return list;
+
+        queryReport.setList(list);
+        return queryReport;
+    }
+
+    public String getMostRecentIdealMethodRecord(int i, String taxonName, QueryReport queryReport) {
+        String record = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+
+        BioregionTaxonDb bioregionTaxonDb = new BioregionTaxonDb(getConnection());
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getMostRecentIdealMethodRecord()");
+
+            String query = "select subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, max(datecollectedstart) as dateCollected, IFNULL(microhabitat, '') as microhabitat, IFNULL(method, '') as method from specimen "
+                    + "  where subfamily = 'ponerinae'"
+                    + " and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
+                    + " and locatedat = 'CASC'"
+                    + " and taxon_name = '" + taxonName + "'"
+                    + " group by subfamily, genus, species, subspecies"
+                    + " order by subfamily, genus, species, subspecies";
+
+            //A.log("getMostRecentIdealMethodRecord() query:" + query);
+
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                queryReport.setSubquery(query);
+
+                //String subfamily = rset.getString("subfamily");
+                String genus = rset.getString("genus");
+                String species = rset.getString("species");
+                String subspecies = rset.getString("subspecies");
+                String code = rset.getString("code");
+                Timestamp dateCollected = rset.getTimestamp("dateCollected");
+                String dateCollectedStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
+                String microhabitat = rset.getString("microhabitat");
+                String method = rset.getString("method");
+                String ideal = "Yes";
+                String bioregions = bioregionTaxonDb.getBioregionList(taxonName);
+                record = "<tr><td>" + i + ".</td><td>" + Formatter.initCap(genus)  + "</td><td>" + species + "</td><td>"
+                        + subspecies + "</td><td>" + code + "</td><td>" + dateCollectedStr + "</td><td>" + bioregions + "</td><td>"
+                        + microhabitat + "</td><td>" + ideal  + "</td><td>" + method  + "</td></tr>";
+            }
+        } catch (SQLException e) {
+            s_log.error("getMostRecentIdealMethodRecord() e:" + e);
+        } finally {
+            DBUtil.close(stmt, "getMostRecentIdealMethodRecord()");
+        }
+        return record;
     }
 
 /*

@@ -583,7 +583,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
                //A.log("getSpecimenSubfamilyDistJSon() subfamily:" + subfamily + " chartColor:" + chartColor);
                distJson += HttpUtil.getJsonElement(i, Formatter.initCap(subfamily), count, chartColor);
              } else {
-               A.log("getSPecimenSubfamilyDistJson() subfamily not found:" + subfamily);
+               A.log("getSpecimenSubfamilyDistJson() subfamily not found:" + subfamily);
              }
              
           }           

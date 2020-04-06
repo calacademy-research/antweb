@@ -1,23 +1,19 @@
 To Do List:
 
-Emails 
-  Links and Why source AntCat for this species in Gabon and thus Afrotropics
+Searching on a list of taxa. Sounds like this is taken care of. Any documentation changes required?
 
 Small things/immediate frame  
-  Download data - there is no results. Works locally, so a config issue. Might be easier to re-implement without js.
-    This has been fragile before and is hard to figure.
   Field guide heading and back link fixes.
   This page is not secure: https://www.antweb.org/description.do?subfamily=amblyoponinae&genus=adetomyrma&rank=genus&countryName=Madagascar
     Verify CKEditor working. CK editor testing.
     Secure the description_edit titles.
       select count(*), title from description_edit where content like '%http://www.antweb%' group by title order by count(*) desc;
-  Fix worldants line numbers. Do not overwrite line numbers in taxa from specimen data?
+  Fix worldants line numbers. Do not overwrite line numbers in taxa from specimen data? Sometimes/usually correct?
   Get rid of old specimen data created taxa...
     All of the taxa with subgenus fields are from specimen data. If I understand correctly, those taxa records should not exist because they were created from old specimen uploads... I will see if I can find all taxa records that should not exist and systematically remove them. List of taxa with subgenus data (100 records) included below...
     See TaxonDb:836
   specimen contributed subgenera... get rid of. Do not take subgenus data from specimens.     
   Review Integrity Queries - no better time than now. Review the orphan tools?
-  reloaded the Taxon manager, since the worlants data was loaded subsequent to the last launch of Antweb...
 
 Server
   Get browsers to stay connected.
@@ -31,11 +27,6 @@ Joe/Randy Things (he has recommended or is involved with)
   Antcat docker
     To lower Joe's Bus Factor. It breaks so frequently. Should be easy might help us in ways.
   Antweb docker. Tomcat docker. Not sure if these are important but Joe might like.
-  Set up Dev and Stage.
-
-Server things.
-  WAR files.
-    Shouldn't be very hard. IntelliJ might help. Is a fairly big change but now is a good time for it.
 
 Image verification.
   Images are misnamed, inconsistent.
@@ -58,7 +49,6 @@ Assorted
 
 Low Priority
   Turn Worldants Query into a proper page so that it has navigation links.
-  Research Shiny
 
 
 ------------

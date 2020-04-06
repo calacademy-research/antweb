@@ -475,7 +475,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
           if ((taxon == null) || (status == null) || (Status.UNRECOGNIZED.equals(status))) {
           
-            if (false && taxonName.contains("gryllinaegryllus")) A.log("SpecimenUpload.setStatusAndCurrentValidName() taxon:" + taxon 
+            if (false && taxonName.contains("gryllinaegryllus")) A.log("setStatusAndCurrentValidName() taxon:" + taxon 
               + " status:" + status + " statusAndCurrentValidNameCount:" + s_statusAndCurrentValidNameCount
               + " quad:" + Taxon.isQuadrinomial(taxonName)
               + " ant:" + Taxon.isAnt(taxonName)
@@ -515,7 +515,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
  
             if (Status.usesCurrentValidName(status)) {
               if (currentValidName == null) {
-                A.log("SpecimenUpload.setStatusAndCurrentValidName() shouldn't status:" + status + " have a current valid name?");
+                A.log("setStatusAndCurrentValidName() shouldn't status:" + status + " have a current valid name?");
                 // Shouldn't a status that uses a current valid name have a current valid name?
               } else {
 
@@ -538,7 +538,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
                     // We will do this even AFTER we shut off specimen upload taxa creation.  We do not want children of homonyms.
 
                     // currentValidName is a misnomer at this point.  As a homonym, new taxon created that is "Unrecoginzed" as a place holder for the homonym.
-                    s_log.warn("SpecimenUpload.setStatusAndCurrentValidName() taxon does not exist for homonym with specimen.  Create.  new taxon:" + currentValidName + " code:" + specimenItem.get("code") + " taxonItem:" + taxonItem + " specimenItem:" + specimenItem);
+                    s_log.warn("setStatusAndCurrentValidName() taxon does not exist for homonym with specimen.  Create.  new taxon:" + currentValidName + " code:" + specimenItem.get("code") + " taxonItem:" + taxonItem + " specimenItem:" + specimenItem);
 
                     DummyTaxon currentTaxon = (new HomonymDb(getConnection())).getDummyTaxon(currentValidName);
 
@@ -561,11 +561,11 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
                     newTaxonStr = makeSpecimenUseTaxon(taxonDb, currentValidName, originalTaxonName, specimenItem, taxonItem);
 
                   } else {
-                    //A.log("SpecimenUpload.setStatusAndCurrentValidName() No currentValidTaxonName for" + " currentValidName:" + currentValidName + " taxonName:" + taxonName + " code:" + specimenItem.get("code"));
+                    //A.log("setStatusAndCurrentValidName() No currentValidTaxonName for" + " currentValidName:" + currentValidName + " taxonName:" + taxonName + " code:" + specimenItem.get("code"));
                   }
                 } else {
                   if (currentValidTaxonName.equals(originalTaxonName)) {
-                    s_log.warn("SpecimenUpload.setStatusAndCurrentValidTaxonName() currentValidName should be distinct from taxonName:" + taxonName);
+                    s_log.warn("setStatusAndCurrentValidTaxonName() currentValidName should be distinct from taxonName:" + taxonName);
                   } else {
                     // We found it.  Use it.
 
@@ -573,7 +573,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
                     newTaxonStr = makeSpecimenUseTaxon(taxonDb, currentValidTaxonName, originalTaxonName, specimenItem, taxonItem);
 
-                    //A.iLog(6, "SpecimenUpload.setStatusAndCurrentValidName() Using currentValidTaxonName:" + currentValidTaxonName + " for originalTaxonName:" + originalTaxonName, 100);
+                    //A.iLog(6, "setStatusAndCurrentValidName() Using currentValidTaxonName:" + currentValidTaxonName + " for originalTaxonName:" + originalTaxonName, 100);
                   }
                 } 
                 if (newTaxonStr != null)
@@ -583,7 +583,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
             } else if (Status.VALID.equals(status)) {
               // do nothing
             } else {
-              A.log("SpecimenUpload.setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
+              A.log("setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
             }            
           }
       } // end if/else
@@ -591,7 +591,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 	  if (!Taxon.isAnt(taxonName)) {
 		String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
         if (taxonName.contains("odontomachus cephalotes")) {
-		  A.log("SpecimenUpload.setStatusAndCurrentValidName() NOT ANT taxonName:" + taxonName + " displayName:" + displayName);
+		  A.log("setStatusAndCurrentValidName() NOT ANT taxonName:" + taxonName + " displayName:" + displayName);
           //AntwebUtil.logStackTrace();
         }
         // displayName += " (line:" + (String) specimenItem.get("lineNum") + ")";
@@ -599,7 +599,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
   	  }
       
       if ("formicinaeforelophilus philippinensis_cf".equals(taxonName)) {
-        A.log("SpecimenUpload.setStatusAndCurrentValidName() taxonName:" + taxonName + " status:" + status + " skip:" + skipTaxonEntry);      
+        A.log("setStatusAndCurrentValidName() taxonName:" + taxonName + " status:" + status + " skip:" + skipTaxonEntry);      
         //AntwebUtil.logShortStackTrace();
       }
       

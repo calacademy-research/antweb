@@ -526,6 +526,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name ="list" path="/util/list.jsp"/>
           <forward name ="listTable" path="/util/listTable.jsp"/>
           <forward name ="listOfLists" path="/util/listOfLists.jsp"/>
+          <forward name ="queryReport" path="/util/queryReport.jsp"/> <!-- preferred -->
           <forward name="likes" path="/imageLikes.jsp"/>
       </action>
 

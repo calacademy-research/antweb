@@ -367,7 +367,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 if (subspeciesName != null && subspeciesName.contains(" ")) tempName += " " + subspeciesName;
                 getMessageMgr().addToMessages(MessageMgr.invalidSpeciesName, tempName);
                 errorMessage = "invalid name for species:" + tempName;
-                A.log("parseLine() errorMessage:" + errorMessage);
+                //A.log("parseLine() errorMessage:" + errorMessage);
             }
 
 			if (LineNumMgr.getDisplayLineNum(lineNum) == 0) {
@@ -399,9 +399,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 AntwebUtil.count("countryMissing");
                 //A.log("parseLine() code:" + code + " countryMissingCount:" + AntwebUtil.getCount("countryMissing") + " lineNum:" + lineNum + " countryMissing:" + country);
 				getMessageMgr().addToMessages(MessageMgr.countryMissing);
-            String adm1 = (String) specimenItem.get("adm1");
+                String adm1 = (String) specimenItem.get("adm1");
 				Geolocale inferCountry = GeolocaleMgr.inferCountry(adm1);
-            A.log("parseLine() adm1:" + adm1 + " country:" + inferCountry);            
+                //A.log("parseLine() adm1:" + adm1 + " country:" + inferCountry);            
 				if (inferCountry != null) country = inferCountry.getName();
             }
             if (country != null) {

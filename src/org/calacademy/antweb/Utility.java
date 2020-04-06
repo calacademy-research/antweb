@@ -58,7 +58,7 @@ public class Utility implements Serializable {
     }
 
         
-    public static String customTrim(String text, String toTrim) {
+    public static String customTrim(String text, String toTrim) throws AntwebException {
         String trimText = text;
         try {
           if (text == null) return text;
@@ -79,8 +79,8 @@ public class Utility implements Serializable {
             //A.log("customTrim() cutLastAgain text:" + text + " trimText:" + trimText);
           }
         } catch (StringIndexOutOfBoundsException e) {
-          s_log.error("customTrim() trimText:" + trimText + " toTrim:" + toTrim + " e:" + e);
-          return null;
+          String message = "customTrim() trimText:" + trimText + " toTrim:" + toTrim + " e:" + e;
+          throw new AntwebException(message);
         }
         //if (!trimText.equals(text)) A.log("customTrim() text:" + text + " trimText:" + trimText);   
         return trimText;

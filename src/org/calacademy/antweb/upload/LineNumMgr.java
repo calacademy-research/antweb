@@ -100,7 +100,7 @@ public class LineNumMgr {
           ++lineNum; 
         }
 
-		s_log.warn("init() componentCountChanges:" + componentCountChanges + " report:" + report());
+		//A.log("init() componentCountChanges:" + componentCountChanges + " report:" + report());
     }
 
 	public static void setIsBadCarriageReturnLine(int lineNum) {
