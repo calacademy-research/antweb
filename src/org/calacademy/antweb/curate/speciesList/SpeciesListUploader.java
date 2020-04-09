@@ -151,7 +151,9 @@ public class SpeciesListUploader {
     
     int worldantsCount = (new AntwebSystem()).countLines(fileLoc);
     boolean countIsLow = true;
-    if (worldantsCount > 30000) countIsLow = false;
+
+    int WORLDANTS_LOW_COUNT = 29000;
+    if (worldantsCount > WORLDANTS_LOW_COUNT) countIsLow = false;
           
     /*
     // The existing count in the database is low. Waive the 
