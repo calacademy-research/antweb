@@ -661,33 +661,22 @@ public class SpecimenDb extends AntwebDb {
     public QueryReport getRecentCASPinnedPonerinaeQueryReport() {
         QueryReport queryReport = new QueryReport();
         queryReport.setName("RecentCASPinnedPonerinae");
-        queryReport.setDesc("Most recent CAS pinned Ponerinae specimen not in the set of methods (pitfall, malaise, yellow pan, sweeping, winkler, berlese) if available.");
+        queryReport.setDesc("Most recent CAS pinned Ponerinae specimen not in the set of methods (pitfall, malaise, yellow pan, sifter, sifted, MW, sweeping, winkler, berlese) if available.");
 
         ArrayList<String> list = new ArrayList<String>();
         Statement stmt = null;
         ResultSet rset = null;
 
-        queryReport.setHeading("<tr><th>#</th><th>genus</th><th>Species</th><th>Subspecies</th><th>Code</th><th>DateCollected</th><th>Bioregions</th><th>Microhabitat</th><th>Is Ideal</th><th>Method</th></tr>");
+        queryReport.setHeading("<tr><th>#</th><th>Genus</th><th>Species</th><th>Subspecies</th><th>Code</th><th>Status</th><th>DateCollected</th><th>Bioregions</th><th>Microhabitat</th><th>Is Ideal</th><th>Method</th></tr>");
 
         BioregionTaxonDb bioregionTaxonDb = new BioregionTaxonDb(getConnection());
         try {
             stmt = DBUtil.getStatement(getConnection(), "getRecentCASPinnedPonerinaeQueryReport()");
 
-            String query = "select taxon_name, subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, max(datecollectedstart) as dateCollected, IFNULL(microhabitat, '') as microhabitat, IFNULL(method, '') as method from specimen "
+            String query = "select taxon_name, subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, status, max(datecollectedstart) as dateCollected, IFNULL(microhabitat, '') as microhabitat, IFNULL(method, '') as method from specimen "
             + "  where subfamily = 'ponerinae'"
-//            + " and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
             + " and locatedat = 'CASC'"
             + " group by subfamily, genus, species, subspecies"
-
-/*
-            + " union"
-
-            + " select taxon_name, subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, 'No' as ideal, max(datecollectedstart) as dateCollected, IFNULL(microhabitat, '') as microhabitat, method  from specimen "
-            + " where subfamily = 'ponerinae'"
-            + " and (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
-            + " and locatedat = 'CASC'"
-            + " group by taxon_name, subfamily, genus, species, subspecies"
-*/
             + " order by subfamily, genus, species, subspecies";
 
             //A.log("getRecentCASPinnedPonerinae() query:" + query);
@@ -703,6 +692,7 @@ public class SpecimenDb extends AntwebDb {
                 String species = rset.getString("species");
                 String subspecies = rset.getString("subspecies");
                 String code = rset.getString("code");
+		String status = rset.getString("status");
                 Timestamp dateCollected = rset.getTimestamp("dateCollected");
                 //String formatDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(dateCollected);
                 String dateCollectedStr = "";
@@ -714,13 +704,15 @@ public class SpecimenDb extends AntwebDb {
 
                 String record = null;
                 String ideal = "Yes"; // maybe not, but to start with.
-/*
-Logic is... get the most recent record which may or may not be ideal (not with method of pitfall, malaise, etc...
-if it is not ideal then try to get an ideal one (which may be older than the most recent).
- */
+                /*
+                Logic is... get the most recent record which may or may not be ideal (not with method of pitfall, malaise, etc...
+                if it is not ideal then try to get an ideal one (which may be older than the most recent).
+                 */
                 String lowerMethod = null;
                 if (method != null) lowerMethod = method.toLowerCase();
-                if (lowerMethod != null && (lowerMethod.contains("pitfall") || lowerMethod.contains("malaise") || lowerMethod.contains("yellow pan") || lowerMethod.contains("sweeping") || lowerMethod.contains("winkler") || lowerMethod.contains("berlese") )) {
+                if (lowerMethod != null && (lowerMethod.contains("pitfall") || lowerMethod.contains("malaise") || lowerMethod.contains("yellow pan") 
+                  || lowerMethod.contains("sifter") || lowerMethod.contains("sifted") || lowerMethod.contains("mw")
+                  || lowerMethod.contains("sweeping") || lowerMethod.contains("winkler") || lowerMethod.contains("berlese") )) {
                   String idealRecord = getMostRecentIdealMethodRecord(i, taxonName, queryReport);
                   if (idealRecord != null) {
                       //A.log("getRecentCASPinnedPonerinaeQueryReport() using ideal for i:" + i + " taxonName:" + taxonName);
@@ -729,8 +721,7 @@ if it is not ideal then try to get an ideal one (which may be older than the mos
                       ideal = "No";
                   }
                 }
-
-                if (record == null) record = "<tr><td>" + i + ".</td><td>" + Formatter.initCap(genus)  + "</td><td>" + species  + "</td><td>" + subspecies + "</td><td>" + code + "</td><td>" + dateCollectedStr + "</td><td>" + bioregions + "</td><td>" + microhabitat + "</td><td>" + ideal  + "</td><td>" + method  + "</td></tr>";
+                if (record == null) record = "<tr><td>" + i + ".</td><td>" + Formatter.initCap(genus)  + "</td><td>" + species  + "</td><td>" + subspecies + "</td><td>" + code + "</td><td>" + status + "</td><td>" + dateCollectedStr + "</td><td>" + bioregions + "</td><td>" + microhabitat + "</td><td>" + ideal  + "</td><td>" + method  + "</td></tr>";
 
                 list.add(record);
             }
@@ -754,9 +745,11 @@ if it is not ideal then try to get an ideal one (which may be older than the mos
         try {
             stmt = DBUtil.getStatement(getConnection(), "getMostRecentIdealMethodRecord()");
 
-            String query = "select subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, max(datecollectedstart) as dateCollected, IFNULL(microhabitat, '') as microhabitat, IFNULL(method, '') as method from specimen "
+            String query = "select subfamily, genus, species, IFNULL(subspecies, '') as subspecies, code, status, max(datecollectedstart) as dateCollected, IFNULL(microhabitat, '') as microhabitat, IFNULL(method, '') as method from specimen "
                     + "  where subfamily = 'ponerinae'"
-                    + " and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
+                    + " and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' " 
+                    + " or method like '%sifted%' or method like '%sifter%' or method like '%MW%'"
+                    + " or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')"
                     + " and locatedat = 'CASC'"
                     + " and taxon_name = '" + taxonName + "'"
                     + " group by subfamily, genus, species, subspecies"
@@ -773,6 +766,7 @@ if it is not ideal then try to get an ideal one (which may be older than the mos
                 String species = rset.getString("species");
                 String subspecies = rset.getString("subspecies");
                 String code = rset.getString("code");
+                String status = rset.getString("status");		
                 Timestamp dateCollected = rset.getTimestamp("dateCollected");
                 String dateCollectedStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
                 String microhabitat = rset.getString("microhabitat");
@@ -780,7 +774,7 @@ if it is not ideal then try to get an ideal one (which may be older than the mos
                 String ideal = "Yes";
                 String bioregions = bioregionTaxonDb.getBioregionList(taxonName);
                 record = "<tr><td>" + i + ".</td><td>" + Formatter.initCap(genus)  + "</td><td>" + species + "</td><td>"
-                        + subspecies + "</td><td>" + code + "</td><td>" + dateCollectedStr + "</td><td>" + bioregions + "</td><td>"
+                        + subspecies + "</td><td>" + code + "</td><td>" + status + "</td><td>" + dateCollectedStr + "</td><td>" + bioregions + "</td><td>"
                         + microhabitat + "</td><td>" + ideal  + "</td><td>" + method  + "</td></tr>";
             }
         } catch (SQLException e) {
