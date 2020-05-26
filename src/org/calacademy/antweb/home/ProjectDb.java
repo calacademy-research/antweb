@@ -358,7 +358,7 @@ public class ProjectDb extends AntwebDb {
             query = "select count(taxon.subfamily) from taxon, proj_taxon " 
                     + " where proj_taxon.project_name = '" + project.getName() + "'" 
                     + " and proj_taxon.taxon_name = taxon.taxon_name " 
-                    + " and rank = 'subfamily'"
+                    + " and taxarank = 'subfamily'"
                     + statusSet.getAndCriteria()
                     ;
                     // + " and taxon.valid=1";
@@ -374,7 +374,7 @@ public class ProjectDb extends AntwebDb {
             query = "select count(taxon.genus) from taxon, proj_taxon " 
                 + " where proj_taxon.project_name = '" + project.getName() + "'"
                 + " and  proj_taxon.taxon_name = taxon.taxon_name " 
-                + " and rank = 'genus'"
+                + " and taxarank = 'genus'"
                 + statusSet.getAndCriteria()
                 ;
 
@@ -389,7 +389,7 @@ public class ProjectDb extends AntwebDb {
                     + " from taxon, proj_taxon "
                     + " where proj_taxon.project_name = '" + project.getName() + "'"
                     + " and proj_taxon.taxon_name = taxon.taxon_name "
-                    + " and taxon.rank in ('species', 'subspecies')"
+                    + " and taxon.taxarank in ('species', 'subspecies')"
                     + statusSet.getAndCriteria()
                     ;
 
@@ -598,7 +598,7 @@ public class ProjectDb extends AntwebDb {
         String query = "select sum(pt.specimen_count) specimen_count, sum(pt.image_count) image_count " 
           + " from proj_taxon pt, taxon t "
           + " where pt.taxon_name = t.taxon_name "
-          + " and t.rank in ('species', 'subspecies')"
+          + " and t.taxarank in ('species', 'subspecies')"
           + " and pt.project_name = '" + project.getName() + "'";
 
         if ("worldants".equals(project.getName())) s_log.warn("getSpecimenAndImageCount() query:" + query);  

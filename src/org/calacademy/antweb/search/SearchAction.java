@@ -83,7 +83,7 @@ public final class SearchAction extends DispatchAction {
              int caseNumber = AntwebUtil.getCaseNumber();
              String shortTarget = target;
              shortTarget = target.substring(0);
-             s_log.warn("execute() case#:" + caseNumber + " searchType null for target:" + shortTarget + "..." + " form:" + form);
+             s_log.warn("execute() case#:" + caseNumber + " searchType null for target:" + shortTarget + "...");
              return HttpUtil.sendMessage(request, mapping, "Invalid searchType:" + searchType + " not found. Case#:" + caseNumber + ". Please report behavior to " + AntwebUtil.getAdminEmail());
           }           
         } catch (SearchException e) {
@@ -112,9 +112,18 @@ public final class SearchAction extends DispatchAction {
         SearchParameters searchParameters = new SearchParameters(advancedSearchForm);
 
         String resultRank = advancedSearchForm.getResultRank();
+        if (!Rank.isLegit(resultRank)) resultRank = "specimen";
         String output = advancedSearchForm.getOutput();
-        //A.log("advancedSearch() resultRank:" + resultRank + " output:" + output); // statusSet:" + searchParameters.getStatusSet());             
-                
+        A.log("advancedSearch() resultRank:" + resultRank + " output:" + output); // statusSet:" + searchParameters.getStatusSet());
+
+        /* Just use specimen as default. See above 3 lines.
+        if (!Rank.isLegit(resultRank)) {
+            int caseNumber = AntwebUtil.getCaseNumber();
+            String message = "case#:" + caseNumber + ". Rank:" + resultRank + " not valid. Please report behavior to " + AntwebUtil.getAdminEmail();
+            s_log.warn("advancedSearch() " + message);
+            return HttpUtil.sendMessage(request, mapping, message);
+        }
+*/
         return doAdvancedSearch(searchParameters, resultRank, output, request, mapping);
     }
 

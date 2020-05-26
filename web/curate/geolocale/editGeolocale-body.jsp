@@ -140,9 +140,7 @@ Mostly the UN geolocales, with overrides.
 <% if (!geolocale.getIsValid()) { %>
 
 <%@include file="/curate/geolocale/validSelect.jsp" %>
-  
-<%   
-
+<%
     if (isOther) out.println("&nbsp;&nbsp;(Other:&nbsp;" + geolocale.getValidName() + ")");
  } else { %>
  <%= "N/A" %>
@@ -385,18 +383,38 @@ Look up bounding box: <a href='https://www.mapdevelopers.com/geocode_bounding_bo
 <textarea rows="4" cols="50" name="adminNotes" id="editor1" class="biotextarea550"><%= adminNotes %></textarea>
 <br>
 
-
 <h3>&nbsp;<h3>
 <h3>Use Parent Region:</h3>
 For some Geolocales it is best to display the region.<br>
 <input type="checkbox" name="isUseParentRegion" <%= (geolocale.getIsUseParentRegion() == true)?"checked":"" %>>
 <br><br>
 
+
+<% if ("country".equals(geolocale.getGeorank())) { %>
+
 <h3>&nbsp;<h3>
 <h3>Is Island:</h3>
-Some countries are treated as countries (like Hawaii) to support our bioregion data.<br>
+Some countries are treated as countries (like Hawaii, Galapagos Islands) to support our bioregion data.<br>
 <input type="checkbox" name="isIsland" <%= (geolocale.getIsIsland() == true)?"checked":"" %>>
 <br><br>
+
+  <% if (geolocale.isIsland()) {
+       if (!geolocale.isValid()) {
+         out.println("Country can be set for valid islands");
+       } else { %>
+<H3>Country (of an Island):</H3>
+An island can have a country set different from its parentage. Galapagos Islands (georank country) is a child of South America
+with country set to Ecuador. Hawaii (georank country) is a child of Polynesia with country set to United States.
+<%
+         String disableCountry = "disabled";
+         if (geolocale.getIsIsland()) { disableCountry = ""; }
+%>
+<input type="text" class="input_20" name="country" value="<%= geolocale.getCountry() %>" <%= disableCountry %> >
+<br><br>
+    <% } %>
+  <% } %>
+<% } %>
+
 
 <h3>Locality:</h3>
 <% String locality = geolocale.getLocality();

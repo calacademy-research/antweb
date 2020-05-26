@@ -193,10 +193,16 @@ if (localityInfoString != null) { %>
 
 <%
    Geolocale country = GeolocaleMgr.getCountry(specimen.getCountry());
-   if (country != null) out.println("<ul><li><b>" + country.getHeading() + "</b></li><li><a href='" + country.getThisPageTarget() + "'>" + country.getName() + "</a></li></ul>");
+   if (country != null) out.println("<ul><li><b>" + country.getHeading() + ":</b></li><li><a href='" + country.getThisPageTarget() + "'>" + country.getName() + "</a></li></ul>");
+   //A.log("specimen-body.jsp islandCountry:" + GeolocaleMgr.getIsland(specimen.getIslandCountry()));
+   Geolocale island = GeolocaleMgr.getIsland(specimen.getIslandCountry());
+   if (island != null) {
+      out.println("<ul><li><b>" + island.getHeading() + ":</b></li><li><a href='" + island.getThisPageTarget() + "'>" + island.getName() + "</a></li></ul>");
+   }
+   //out.println("<ul><li><b>" + specimen.getIslandCountry() + "</b></li><li></ul>");
    Adm1 adm1 = (Adm1) GeolocaleMgr.getAdm1(specimen.getAdm1(), specimen.getCountry());
    
-   if (country != null && !country.isIsland()) {
+   if (country != null && island == null) {
      //A.log("specimen-body.jsp  adm1:" + adm1);
      if (adm1 != null) {
        String warnNote = "";

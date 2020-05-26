@@ -181,12 +181,12 @@ public class ExifBlock extends JpegBlock {
   
   //===========================================================================
   public void setExifInt(String name, int value) {
-    this.setExifField(name, new Integer(value));
+    this.setExifField(name, Integer.valueOf(value));
   }
   
   //===========================================================================
   public void addExifInt(String name, int value) {
-    this.addExifField(name, new Integer(value));
+    this.addExifField(name, Integer.valueOf(value));
   }
   
   //===========================================================================
@@ -339,12 +339,12 @@ public class ExifBlock extends JpegBlock {
         // TODO: Check sign
         if (count == 1) {
           value = this.getByte(base + dataOffset);
-          data = new Integer(value);
+          data = Integer.valueOf(value);
         }
         else {
           values = new Vector();
           for (int j = 0; j < count; j++) {
-            values.add(new Integer(this.getByte(base + dataOffset)));
+            values.add(Integer.valueOf(this.getByte(base + dataOffset)));
             dataOffset += 1;
           }
           data = values;
@@ -359,12 +359,12 @@ public class ExifBlock extends JpegBlock {
         // TODO: Check sign
         if (count == 1) {
           value = this.getShort(base + dataOffset, this.isBigEndian);
-          data = new Integer(value);
+          data = Integer.valueOf(value);
         }
         else {
           values = new Vector();
           for (int j = 0; j < count; j++) {
-            values.add(new Integer(this.getShort(base + dataOffset, 
+            values.add(Integer.valueOf(this.getShort(base + dataOffset,
               this.isBigEndian)));
             dataOffset += 2;
           }
@@ -376,12 +376,12 @@ public class ExifBlock extends JpegBlock {
         // TODO: Check sign
         if (count == 1) {
           value = this.getLong(base + dataOffset, this.isBigEndian);
-          data = new Integer(value);
+          data = Integer.valueOf(value);
         }
         else {
           values = new Vector();
           for (int j = 0; j < count; j++) {
-            values.add(new Integer(this.getLong(base + dataOffset, 
+            values.add(Integer.valueOf(this.getLong(base + dataOffset,
               this.isBigEndian)));
             dataOffset += 4;
           }
@@ -396,9 +396,9 @@ public class ExifBlock extends JpegBlock {
           den = this.getLong(base + dataOffset + 4, this.isBigEndian);
 
           HashMap map = new HashMap();            
-          map.put("val", new Double((double)num / (double)den));
-          map.put("num", new Integer(num));
-          map.put("den", new Integer(den));
+          map.put("val", Double.valueOf((double)num / (double)den));
+          map.put("num", Integer.valueOf(num));
+          map.put("den", Integer.valueOf(den));
           data = map;
         }
         else {
@@ -409,9 +409,9 @@ public class ExifBlock extends JpegBlock {
             dataOffset += 8;
 
             HashMap map = new HashMap();
-            map.put("val", new Double((double)num / (double)den));
-            map.put("num", new Integer(num));
-            map.put("den", new Integer(den));
+            map.put("val", Double.valueOf((double)num / (double)den));
+            map.put("num", Integer.valueOf(num));
+            map.put("den", Integer.valueOf(den));
 
             values.add(map);
           }
@@ -423,12 +423,12 @@ public class ExifBlock extends JpegBlock {
         // TODO: Check sign
         if (count == 1) {
           value = this.getByte(base + dataOffset);
-          data = new Integer(value);
+          data = Integer.valueOf(value);
         }
         else {
           values = new Vector();
           for (int j = 0; j < count; j++) {
-            values.add(new Integer(this.getByte(base + dataOffset)));
+            values.add(Integer.valueOf(this.getByte(base + dataOffset)));
             dataOffset += 1;
           }
           data = values;
@@ -443,12 +443,12 @@ public class ExifBlock extends JpegBlock {
         // TODO: Check sign
         if (count == 1) {
           value = this.getShort(base + dataOffset, this.isBigEndian);
-          data = new Integer(value);
+          data = Integer.valueOf(value);
         }
         else {
           values = new Vector();
           for (int j = 0; j < count; j++) {
-            values.add(new Integer(this.getShort(base + dataOffset, 
+            values.add(Integer.valueOf(this.getShort(base + dataOffset,
               this.isBigEndian)));
             dataOffset += 2;
           }
@@ -460,12 +460,12 @@ public class ExifBlock extends JpegBlock {
         // TODO: Check sign
         if (count == 1) {
           value = this.getLong(base + dataOffset, this.isBigEndian);
-          data = new Integer(value);
+          data = Integer.valueOf(value);
         }
         else {
           values = new Vector();
           for (int j = 0; j < count; j++) {
-            values.add(new Integer(this.getLong(base + dataOffset, 
+            values.add(Integer.valueOf(this.getLong(base + dataOffset,
               this.isBigEndian)));
             dataOffset += 4;
           }
@@ -480,9 +480,9 @@ public class ExifBlock extends JpegBlock {
           den = this.getLong(base + dataOffset + 4, this.isBigEndian);
 
           HashMap map = new HashMap();            
-          map.put("val", new Double((double)num / (double)den));
-          map.put("num", new Integer(num));
-          map.put("den", new Integer(den));
+          map.put("val", Double.valueOf((double)num / (double)den));
+          map.put("num", Integer.valueOf(num));
+          map.put("den", Integer.valueOf(den));
           data = map;
         }
         else {
@@ -493,9 +493,9 @@ public class ExifBlock extends JpegBlock {
             dataOffset += 8;
 
             HashMap map = new HashMap();
-            map.put("val", new Double((double)num / (double)den));
-            map.put("num", new Integer(num));
-            map.put("den", new Integer(den));
+            map.put("val", Double.valueOf((double)num / (double)den));
+            map.put("num", Integer.valueOf(num));
+            map.put("den", Integer.valueOf(den));
 
             values.add(map);
           }
@@ -641,19 +641,19 @@ public class ExifBlock extends JpegBlock {
       // than the original tag
       if (mode.equals("ifd0") && (tag.id == 0x8769)) { // ExifIFDOffset
         if (this.exifData.get("EXIFVersion") != null) {
-          value = new Integer(dataPos - offsetBase);
+          value = Integer.valueOf(dataPos - offsetBase);
           dataPos = this.writeIFD(dataPos, offsetBase, "exif");
         }
       }
       else if(mode.equals("ifd0") && (tag.id == 0x8825)) { // GPSIFDOffset
         if (this.exifData.get("GPSVersionID") != null) {
-          value = new Integer(dataPos - offsetBase);
+          value = Integer.valueOf(dataPos - offsetBase);
           dataPos = this.writeIFD(dataPos, offsetBase, "gps");
         }
       }
       else if(mode.equals("ifd1") && (tag.id == 0x0111)) { // TIFFStripOffset
         if (this.exifData.get("TIFFStrips") != null) {
-          value = new Integer(dataPos - offsetBase);
+          value = Integer.valueOf(dataPos - offsetBase);
           auxString = (String)this.exifData.get("TIFFStrips");
           this.putString(dataPos, auxString);
           dataPos += auxString.length();
@@ -662,12 +662,12 @@ public class ExifBlock extends JpegBlock {
       else if(mode.equals("ifd1") && (tag.id == 0x0117)) { // TIFFStripByteCounts
         if (this.exifData.get("TIFFStrips") != null) {
           auxString = (String)this.exifData.get("TIFFStrips");
-          value = new Integer(auxString.length());
+          value = Integer.valueOf(auxString.length());
         }
       }
       else if(mode.equals("ifd1") && (tag.id == 0x0201)) { // TIFFJFIFOffset
         if (this.exifData.get("JFIFThumbnail") != null) {
-          value = new Integer(dataPos - offsetBase);
+          value = Integer.valueOf(dataPos - offsetBase);
           auxString = (String)this.exifData.get("JFIFThumbnail");
           this.putString(dataPos, auxString);
           dataPos += auxString.length();
@@ -676,12 +676,12 @@ public class ExifBlock extends JpegBlock {
       else if(mode.equals("ifd1") && (tag.id == 0x0202)) { // TIFFJFIFLength
         if (this.exifData.get("JFIFThumbnail") != null) {
           auxString = (String)this.exifData.get("JFIFThumbnail");
-          value = new Integer(auxString.length());
+          value = Integer.valueOf(auxString.length());
         }
       }
       else if(mode.equals("exif") && (tag.id == 0xA005)) { // InteropIFDOffset
         if (this.exifData.get("InteroperabilityIndex") != null) {
-          value = new Integer(dataPos - offsetBase);
+          value = Integer.valueOf(dataPos - offsetBase);
           dataPos = this.writeIFD(dataPos, offsetBase, "interop");
         }
       }
@@ -943,9 +943,9 @@ public class ExifBlock extends JpegBlock {
     }
 
     HashMap map = new HashMap();
-    map.put("num", new Integer((int)num));
-    map.put("den", new Integer((int)den));
-    map.put("val", new Double((double)num / (double)den));
+    map.put("num", Integer.valueOf((int)num));
+    map.put("den", Integer.valueOf((int)den));
+    map.put("val", Double.valueOf((double)num / (double)den));
     
     return map;
   }
@@ -1178,7 +1178,7 @@ class ExifTagList {
   
   //===========================================================================
   public void put(ExifTagInfo tag) {
-    this.ids.put(new Integer(tag.id), tag);
+    this.ids.put(Integer.valueOf(tag.id), tag);
     this.names.put(tag.name, tag);
     this.order.add(tag);
   }
@@ -1190,7 +1190,7 @@ class ExifTagList {
   
   //===========================================================================
   public ExifTagInfo getTagById(int id) {
-    return (ExifTagInfo) this.ids.get(new Integer(id));
+    return (ExifTagInfo) this.ids.get(Integer.valueOf(id));
   }
 
   //===========================================================================

@@ -36,13 +36,13 @@ public class Tribe extends Genus implements Serializable {
         }
 
         String theQuery = null;
-        theQuery = "select distinct taxon.rank, taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name " 
+        theQuery = "select distinct taxon.taxarank, taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name " 
 		  + ", taxon.family, taxon.subfamily from taxon"
 		  // + ", proj_taxon "
 		  + " where 1 = 1 " 
 		  // + " taxon.taxon_name = proj_taxon.taxon_name and "
 		  + subfamilyClause
-		  + " and rank = 'tribe'"
+		  + " and taxarank = 'tribe'"
 		  + " and taxon.genus='" + AntFormatter.escapeQuotes(genus) + "'"; // and status = "valid"';
 
 		//if ((project != null) && (!(project.equals("")))) {

@@ -49,7 +49,7 @@ public class TeamMemberDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            String theQuery = "select max(rank) as maxrank from team_member";
+            String theQuery = "select max(teamrank) as maxrank from team_member";
             stmt = DBUtil.getStatement(getConnection(), "TeamMemberDb.getNewMaxRank()");
             rset = stmt.executeQuery(theQuery);
             max = 0;
@@ -77,7 +77,7 @@ public class TeamMemberDb extends AntwebDb {
             teamMember.setRoleOrg(rset.getString("role_org"));
             teamMember.setEmail(rset.getString("email"));
             teamMember.setSection(rset.getInt("section"));
-            teamMember.setRank(rset.getInt("rank"));
+            teamMember.setRank(rset.getInt("teamrank"));
             teamMember.setText(rset.getString("text"));
             teamMember.setCreated(rset.getDate("created"));
             teamMember.setImgFileBin(rset.getBlob("img_file_bin"));
@@ -88,7 +88,7 @@ public class TeamMemberDb extends AntwebDb {
     
     public ArrayList getCurators() throws SQLException {          
         ArrayList teamMemberList = new ArrayList();
-        String theQuery = "select id from team_member order by rank";
+        String theQuery = "select id from team_member order by teamrank";
         Statement stmt = null;
         ResultSet rset = null;
         try {            
@@ -119,7 +119,7 @@ public class TeamMemberDb extends AntwebDb {
 
             teamMember.setRank(getNewMaxRank());
             theDML = "insert into team_member (id, name, role_org, " 
-              + "email, img_loc, section, rank, is_published, text) values (" 
+              + "email, img_loc, section, teamrank, is_published, text) values ("
               + teamMember.getId() + ", '" + teamMember.getName() + "', " 
               + "'" + teamMember.getRoleOrg() + "', '" + teamMember.getEmail() + "', '" + teamMember.getImgLoc() 
               + "', '" + teamMember.getSection() + "', " + teamMember.getRank() 

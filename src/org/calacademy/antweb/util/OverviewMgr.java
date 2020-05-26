@@ -53,6 +53,8 @@ public class OverviewMgr {
     
     public static Overview findOverview(HttpServletRequest request) throws AntwebException {
 
+        //A.log("findOverview() sort:" + request.getParameter("sortBy") + " " + request.getParameter("sortOrder"));
+
         boolean debug = true && AntwebProps.isDevMode();
         String hasParams = null;
         Overview overview = null;
@@ -74,7 +76,7 @@ public class OverviewMgr {
 				String geolocaleIdStr = request.getParameter("geolocaleId");
 				if (geolocaleIdStr != null) {
                   hasParams = "geolocale overview";
-				  int geolocaleId = (new Integer(geolocaleIdStr)).intValue();
+				  int geolocaleId = (Integer.valueOf(geolocaleIdStr)).intValue();
 				  overview = GeolocaleMgr.getGeolocale(geolocaleId);
 				} else {
 					String regionName = request.getParameter("regionName");
@@ -133,7 +135,7 @@ public class OverviewMgr {
         
         if (overview == null) return null;     
 
-        if (debug) s_log.warn("getOverview() overview:" + overview + " class:" + overview.getClass() + " request:" + request.getQueryString());		
+        if (debug) s_log.warn("findOverview() overview:" + overview + " class:" + overview.getClass() + " queryString:" + request.getQueryString());
 
         return overview;    
     }
@@ -170,7 +172,7 @@ public class OverviewMgr {
         } else {
           retVal = !overview.equals(getLastOverview(session));                      
         }
-        A.log("isNewOverview() retVal:" + retVal + " overview:" + overview + " last:" + getLastOverview(session));
+        //A.log("isNewOverview() retVal:" + retVal + " overview:" + overview + " last:" + getLastOverview(session));
         return retVal;
 	}
 

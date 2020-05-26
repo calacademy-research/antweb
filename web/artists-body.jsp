@@ -40,8 +40,6 @@
     }    
 %>
 
-
-
 <div class="in_admin">
 <br>
 <h1>Artists (Photographers):</h1>
@@ -93,12 +91,21 @@ Create artist with name: <input type="text" style="border:1px solid" name="name"
 <%= hrLine %>
 
 <%
+if (artistArray.size() == 0) {
+  out.println("Artists data loading...");
+  return;
+}
+A.log("artists-body.jsp artistArray.size:" + artistArray.size());
+
+
 int i = 0;
 for (Artist artist : artistArray) {
-  ++i;
-  if (artist.getImageCount() == 0 && !LoginMgr.isCurator(request)) continue;
+   ++i;
+   if (artist.getImageCount() == 0 && !LoginMgr.isCurator(request)) {
+       continue;
+   }
     %>
-<tr><td><%= i %>.</td><td><%= artist.getId() %></td><td><%= artist.getLink() %></td><td><%= Formatter.commaFormat(artist.getImageCount()) %></td><td><%= Formatter.commaFormat(artist.getSpecimenCount()) %></td></tr>
+       <tr><td><%= i %>.</td><td><%= artist.getId() %></td><td><%= artist.getLink() %></td><td><%= Formatter.commaFormat(artist.getImageCount()) %></td><td><%= Formatter.commaFormat(artist.getSpecimenCount()) %></td></tr>
 <% } %>
 </table>
 

@@ -82,7 +82,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
         dml = "insert into proj_taxon_log_detail (project_name, taxon_name, created, subfamily_count, genus_count, species_count, specimen_count, image_count) " 
           + " select project_name, pt.taxon_name, pt.created, pt.subfamily_count, pt.genus_count, pt.species_count, pt.specimen_count, pt.image_count " 
           + " from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name " 
-          + " and ( rank = 'species' or rank = 'subspecies')"
+          + " and ( taxarank = 'species' or taxarank = 'subspecies')"
           + " and project_name = '" + projectName + "'";
         stmt.executeUpdate(dml);
 
@@ -191,7 +191,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             theQuery = "select " + fields
               + " from proj_taxon pt, taxon t"
               + " where pt.taxon_name = t.taxon_name " 
-              + " and (t.rank = 'species' or t.rank = 'subspecies')"
+              + " and (t.taxarank = 'species' or t.taxarank = 'subspecies')"
               + subfamilyClause
               ;
             if (projectName != null) theQuery += " and pt.project_name = '" + projectName + "'";

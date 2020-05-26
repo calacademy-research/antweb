@@ -224,8 +224,11 @@ public class Bioregion extends LocalityOverview implements Countable {
       
     public String getTaxonSetTable() {
       return "bioregion_taxon";
-    }      
-      
+    }
+    public String getTable() {
+        return "bioregion";
+    }
+
     public String getHeading() {
       return "Bioregion";
     }
@@ -321,31 +324,33 @@ public class Bioregion extends LocalityOverview implements Countable {
 
     public String getCountChildrenQuery(String rank) {
         
-        String rankClause = " taxon.rank = '" + rank + "'";
+        String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.rank = 'species' or taxon.rank = 'subspecies') "; 
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
         }
-      
+
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
           + " join bioregion_taxon bt on taxon.taxon_name = bt.taxon_name " 
           + " where " + rankClause
-          + "   and bt.bioregion_name = '" + getName() + "'"
+          + new StatusSet(StatusSet.ALL).getAndCriteria()
+	      + "   and bt.bioregion_name = '" + getName() + "'"
           + " group by parentTaxonName ";
         return query;    
     }
     
     public String getCountGrandChildrenQuery(String rank, String column) {
        
-        String rankClause = " taxon.rank = '" + rank + "'";
+        String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.rank = 'species' or taxon.rank = 'subspecies') "; 
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
         }
         
         // parent is a genus
         String query = "select sum(bt." + column + ") sum, taxon.parent_taxon_name parentTaxonName " 
             + " from taxon " 
             + " join bioregion_taxon bt on taxon.taxon_name = bt.taxon_name " 
-            + "  where " + rank
+            + "  where " + rankClause
+            + new StatusSet(StatusSet.ALL).getAndCriteria()
             + "   and bt.bioregion_name = '" + getName() + "'"
             + "  group by parentTaxonName";
         return query;
@@ -417,18 +422,4 @@ public class Bioregion extends LocalityOverview implements Countable {
       return display;
     }    
 
-/*
-    public String getChildrenListDisplay(String validOrLive, String overviewOrList, String rank) {
-      String display = "";
-      int i = 0;
-      for (Country country : getCountries()) {
-        ++i;
-        if (i == 1) display = "<br><b>Countries:</b> ";
-        if (i > 1) display += ", ";
-          display += country.getName();
-      }
-      //display += "</b>";
-      return display;
-    }    
-*/            
 }

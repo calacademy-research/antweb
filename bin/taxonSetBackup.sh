@@ -1,3 +1,4 @@
+# This script, launched weekly by cronjob, will dump data to /data/antweb/web/bak as a data protection.
 
 today=`date +%Y-%m-%d`
 mysql -u antweb -pf0rm1c6 ant -e  "select g.name, gt.* from geolocale_taxon gt, geolocale g where gt.geolocale_id = g.id order by name, taxon_name" > /data/antweb/web/bak/taxonSets/geolocale/$today

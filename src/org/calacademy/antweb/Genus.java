@@ -66,13 +66,13 @@ public class Genus extends Subfamily implements Serializable {
         }
 		String theQuery = null;
 
-		theQuery = "select distinct taxon.rank, taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name " 
+		theQuery = "select distinct taxon.taxarank, taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name "
 		  + ", taxon.family, taxon.subfamily, taxon.tribe from taxon"
 		  // + ", proj_taxon "
 		  + " where 1 = 1 " 
 		  // + " taxon.taxon_name = proj_taxon.taxon_name and"
 		  + subfamilyClause
-		  + " and rank = 'genus'"
+		  + " and taxarank = 'genus'"
 		  + " and taxon.genus='" + AntFormatter.escapeQuotes(genus) + "'";
 		 // + " and status = 'valid'";
 		
@@ -117,13 +117,13 @@ public class Genus extends Subfamily implements Serializable {
             String query = null;
 
             query = "select distinct taxon.species, taxon.subgenus, taxon.speciesgroup, taxon.subspecies " //, taxon.fossil " 
-                        + ", taxon.rank "
+                        + ", taxon.taxarank "
                         + "from taxon"
                         + fetchChildrenClause   
                         + " and taxon.subfamily = '" + AntFormatter.escapeQuotes(getSubfamily()) + "'"
                         + " and taxon.genus = '" + AntFormatter.escapeQuotes(genus) + "'" 
                         + " and taxon.species != '' "
-                        + " and (rank = 'species' || rank = 'subspecies')"
+                        + " and (taxarank = 'species' || taxarank = 'subspecies')"
                         + subgenusClause
                         + statusSet.getAndCriteria()
                         ;
@@ -151,7 +151,7 @@ public class Genus extends Subfamily implements Serializable {
             int i = 0;
             while (rset.next()) {
                 ++i;
-                String rank = rset.getString("rank");
+                String rank = rset.getString("taxarank");
                 if (Rank.SPECIES.equals(rank)) {
                   child = new Species();
                 } else {

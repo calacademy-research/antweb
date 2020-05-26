@@ -57,23 +57,9 @@ public class SpeciesListDownloadAction extends Action {
             taxa = taxonSetDb.getTaxa(((Museum) overview).getCode());
           }
 
-
           if (taxa == null || taxa.size() == 0) {
               message = "Overview:" + overview + " not found.";
           }
-
-          /*
-           else if (museumCode != null) {
-            //taxa = (new MuseumTaxonDb(connection)).getTaxa(museumCode);
-            if (taxa == null || taxa.size() == 0) {
-              //message = "Museum:" + museumCode + " not found.";
-              message = "Apologies but museum data download is not currently supported";
-            }
-          } 
-          else {
-              message = "Overview:" + overview + " not found.";
-          }
-          */
 
           if (message != null) {
               request.setAttribute("message", message);

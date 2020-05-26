@@ -46,7 +46,7 @@ public final class Subspecies extends Species implements Serializable {
 		  + " genus ='" + AntFormatter.escapeQuotes(genus) + "'"
 		  + " and species ='" + AntFormatter.escapeQuotes(species) + "'" 
 		  + " and subspecies ='" + AntFormatter.escapeQuotes(subspecies) + "'" 
-		  + " and rank = \"subspecies\"";
+		  + " and taxarank = \"subspecies\"";
 
 		// theQuery += " and proj_taxon.project_name = '" + project + "'";
 
@@ -64,7 +64,7 @@ public final class Subspecies extends Species implements Serializable {
             + " where taxon.subfamily = '" + getSubfamily() + "'"
             + "   and taxon.genus = '" + getGenus() + "'"
             + "   and taxon.species = '" + getSpecies() + "'"
-            + "   and taxon.rank = 'species'"
+            + "   and taxon.taxarank = 'species'"
           ;
         Statement stmt = null;
         ResultSet rset = null;

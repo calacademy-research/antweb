@@ -90,9 +90,8 @@ public final class AppContextListener
         s_log.warn("Initializing Antweb application context...");
 
         String stats = AntwebUtil.getMemoryStats();
+        s_log.warn("Context Initialized - Server Up. Antweb Version: " + AntwebProps.getAntwebVersion());  
         s_log.warn("Memory stats - " + stats);
-        s_log.warn("Antweb Version: " + AntwebProps.getAntwebVersion());
-        s_log.warn("Context Initialized - Server Up.");             
 
         s_antwebEventLog.info("Antweb Startup.  Stats:" + stats);
 
@@ -101,6 +100,9 @@ public final class AppContextListener
         LogMgr.startup();
 
         String message = LogMgr.archiveLogs();
+
+        // Preliminary actions
+        //FileUtil.makeDir();
     }
         
 

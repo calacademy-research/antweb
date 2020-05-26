@@ -30,6 +30,7 @@ public class LoginDb extends AntwebDb {
 
 
     public Login getLogin(int id) throws SQLException {
+        //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace(3);
         Login login = null;
         if (id > 0) {
             String theQuery = "select * from login where id = " + id;
@@ -44,9 +45,15 @@ public class LoginDb extends AntwebDb {
             }
         }
         return login;
-    }    
-            
+    }
+    public Login getDeepLogin(int id) throws SQLException {
+        Login login = getLogin(id);
+        postInstantiate(login);
+        return login;
+    }
+
     public Curator getCurator(int id) throws SQLException {
+        //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace(6);
         Curator curator = null;
         if (id > 0) {
             String theQuery = "select * from login where id = " + id;
@@ -61,8 +68,14 @@ public class LoginDb extends AntwebDb {
             }
         }
         return curator;
-    }    
-            
+    }
+    public Curator getDeepCurator(int id) throws SQLException {
+        Curator curator = getCurator(id);
+        postInstantiate(curator);
+        return curator;
+    }
+
+    // Potentially called at login.
     public Login getLoginByName(String name) throws SQLException {
         Login login = null;
         if (name != null) {
@@ -74,6 +87,8 @@ public class LoginDb extends AntwebDb {
                 stmt = DBUtil.getStatement(getConnection(), "getLoginByName()");            
                 rset = stmt.executeQuery(theQuery);
                 login = instantiateLogin(rset);
+                if (login != null)
+                  postInstantiate(login);
             } finally {
                 DBUtil.close(stmt, rset, this, "getLoginByName()");
             }
@@ -81,6 +96,7 @@ public class LoginDb extends AntwebDb {
         return login;
     }
 
+    // Potentially called at login.
     public Login getLoginByEmail(String email) throws SQLException {
         Login login = null;
         if (email != null) {
@@ -92,6 +108,8 @@ public class LoginDb extends AntwebDb {
                 rset = stmt.executeQuery(theQuery);
                 //A.log("getLoginByEmail() 1 email:" + email + " query:" + theQuery);                
                 login = instantiateLogin(rset);
+                if (login != null)
+                  postInstantiate(login);
                 //A.log("getLoginByEmail() 2 email:" + email + " login:" + login);                
             } finally {
               DBUtil.close(stmt, rset, this, "getLoginByEmail()");
@@ -188,25 +206,28 @@ public class LoginDb extends AntwebDb {
 
             //curator.getGroup().setCurator(curator);  // backwards, but allows code to remain unchanged.                    
             login.setIsUploadSpecimens(rset.getBoolean("is_upload_specimens"));
-            login.setIsUploadImages(rset.getBoolean("is_upload_images"));            
-        }    
-        //A.log("instantiate() login:" + login);
+            login.setIsUploadImages(rset.getBoolean("is_upload_images"));
+        }
+        return login;
+    }
+
+    // Expensive. Don't want to do this in the midst of server startup.
+    public void postInstantiate(Login login) throws SQLException {
         if (login.isCurator()) {
             ProjectDb projectDb = new ProjectDb(getConnection());
             login.setProjects(projectDb.fetchSpeciesLists(login));
 
             GeolocaleDb geolocaleDb = new GeolocaleDb(getConnection());
             login.setCountries(geolocaleDb.fetchSpeciesLists(login, false));
-            //A.log("instantiateFromResultSet() countries:" + curator.getCountries().size());
-        
+
+            // really slow to do this here.
             login.setGeolocales(geolocaleDb.fetchSpeciesLists(login));
-            //A.log("instantiateFromResultSet() geolocales:" + curator.getGeolocales()); //.size()
-        } 
 
-        //A.log("instantiate() AFTER login:" + login + " rset:" + rset);            
+            //A.log("postInstantiate() 2 login:" + login);
+        }
+    }
 
-        return login;
-    }    
+
 
     public void setImageUploadCount(Curator curator) {
 
@@ -354,7 +375,7 @@ public class LoginDb extends AntwebDb {
             while (rset.next()) {
                 int id = rset.getInt("id");
                 Login login = getLogin(id);
-                curators.put(new Integer(id), login);
+                curators.put(Integer.valueOf(id), login);
             } 
         } finally {
             DBUtil.close(stmt, rset, this, "getCuratorMap()");
@@ -665,7 +686,7 @@ public class LoginDb extends AntwebDb {
 
             s_log.info("findInviteId() email:" + email + " num:" + num + " + records:" + records + " query:" + theQuery);
                            
-            if (num > 0) return (new Integer(num)).toString();
+            if (num > 0) return (Integer.valueOf(num)).toString();
         } catch (SQLException e) {
             s_log.error("findInviteId() email:" + email + " query:" + theQuery);
             throw e;
@@ -710,7 +731,7 @@ public class LoginDb extends AntwebDb {
     
     public static ArrayList getUsrAdmList(Connection connection) throws SQLException { 
         ArrayList<String> usrAdmList = new ArrayList();
-        String theQuery = "select login.name, password, group_id, groups.name from login, groups where login.group_id = groups.id ";
+        String theQuery = "select login.name, password, group_id, ant_group.name from login, ant_group where login.group_id = ant_group.id ";
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -722,7 +743,7 @@ public class LoginDb extends AntwebDb {
                 String name = rset.getString("login.name");
                 String password = rset.getString("password");
                 int groupId = rset.getInt("group_id");
-                String groupName = rset.getString("groups.name");
+                String groupName = rset.getString("ant_group.name");
                 String url = AntwebProps.getSecureDomainApp() + "/login.do?userName=" + name + "&password=" + password;
                 String groupStr = "";
                 if (!("Default Group".equals(groupName))) { 
@@ -743,8 +764,8 @@ public class LoginDb extends AntwebDb {
 
     public static ArrayList getUsrAdmLastLoginList(Connection connection) throws SQLException {
         ArrayList<String> usrAdmList = new ArrayList();
-        String theQuery = "select login.name, password, group_id, groups.name, login.last_login as lastLogin " 
-          + " from login, groups where login.group_id = groups.id and last_login != '0000-00-00 00:00:00' " 
+        String theQuery = "select login.name, password, group_id, ant_group.name, login.last_login as lastLogin "
+          + " from login, ant_group where login.group_id = ant_group.id and last_login != '0000-00-00 00:00:00' "
           + " order by last_login";
 
         Statement stmt = null;
@@ -757,7 +778,7 @@ public class LoginDb extends AntwebDb {
                 String name = rset.getString("login.name");
                 String password = rset.getString("password");
                 int groupId = rset.getInt("group_id");
-                String groupName = rset.getString("groups.name");
+                String groupName = rset.getString("ant_group.name");
                 //String lastLogin = rset.getTimestamp("login.last_login");
                 Timestamp lastLogin = rset.getTimestamp("lastLogin");
                  String url = AntwebProps.getDomainApp() + "/login.do?userName=" + name + "&password=" + password;

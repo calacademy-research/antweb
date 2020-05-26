@@ -49,8 +49,9 @@ public final class EditProjectAction extends Action {
             if ("delete".equals(editProjectForm.getAction())) {
               ProjectDb projectDb = new ProjectDb(connection);
               projectDb.deleteSpeciesList(projectName);
-        
-              (new LoginDb(connection)).refreshLogin(session);
+
+              LoginDb loginDb = new LoginDb(connection);
+              loginDb.refreshLogin(session);
                     
               String message = "Project deleted:" + projectName + ".";
               s_log.warn("execute() " + message);
@@ -162,7 +163,8 @@ public final class EditProjectAction extends Action {
         AntwebMgr.populate(connection, true);
 
         // Update the project lists...
-        (new LoginDb(connection)).refreshLogin(request.getSession());            
+        LoginDb loginDb = new LoginDb(connection);
+        loginDb.refreshLogin(request.getSession());
 
     }
     

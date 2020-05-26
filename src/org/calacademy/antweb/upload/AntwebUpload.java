@@ -18,9 +18,9 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.Formatter;
 
 public class AntwebUpload {
-/** 
- * Extended by SpecimenUpload, and SpeciesListUpload 
- */
+    /**
+     * Extended by SpecimenUpload, and SpeciesListUpload
+     */
 
     private Connection m_connection = null;
     private static Log s_log = LogFactory.getLog(AntwebUpload.class);
@@ -29,18 +29,18 @@ public class AntwebUpload {
             "transecttype", "locrecorddate", "locrecchangeddate"
     };
     ArrayList dateHeaders = new ArrayList(Arrays.asList(dateHeaderString));
-    String[] taxonHeaders = { "kingdom_name", "phylum_name", "class_name", "order_name", "family", 
+    String[] taxonHeaders = {"kingdom_name", "phylum_name", "class_name", "order_name", "family",
             "subfamily", "tribe", "genus", "subgenus", "speciesgroup", "species", "subspecies"
-        // worldants  
-            , "country", "valid", "fossil"       
+            // worldants
+            , "country", "valid", "fossil"
             , "type"
-            , "antcat_id" 
+            , "antcat_id"
             , "author_date", "author_date_html", "authors", "year", "status", "available"
             , "original_combination", "was_original_combination", "current_valid_name"
             , "hol_id"
-        // new
-         // , "taxonomic_history_html  // taxonomichistory is handled in a custom way...
-            , "reference_id", "bioregion", "country", "current_valid_rank", "current_valid_parent" 
+            // new
+            // , "taxonomic_history_html  // taxonomichistory is handled in a custom way...
+            , "reference_id", "bioregion", "country", "current_valid_rank", "current_valid_parent"
     };
 
     // Set to null for no action.
@@ -52,12 +52,12 @@ public class AntwebUpload {
 
     private int countUploaded = 0;
     private int uploadSkipped = 0;
-    
-    ArrayList goodTaxonHeaders = new ArrayList(Arrays.asList(taxonHeaders));        
+
+    ArrayList goodTaxonHeaders = new ArrayList(Arrays.asList(taxonHeaders));
 
     UploadDb uploadDb = null;
 
-    private DescCounter m_descCounter = new DescCounter();      
+    private DescCounter m_descCounter = new DescCounter();
 
     private UploadDetails uploadDetails = null;
 
@@ -74,53 +74,56 @@ public class AntwebUpload {
 */
 
     AntwebUpload(Connection connection, String operation) {
- 	  saveSpecimenCount = 0;
-	
-      setUploadDetails(new UploadDetails(operation));
-      setConnection(connection);
-      uploadDb = new UploadDb(getConnection());
+        saveSpecimenCount = 0;
+
+        setUploadDetails(new UploadDetails(operation));
+        setConnection(connection);
+        uploadDb = new UploadDb(getConnection());
     }
-    
+
     private UploadDb getUploadDb() {
-      return uploadDb;
-    }    
+        return uploadDb;
+    }
+
     protected DescCounter getDescCounter() {
-      return m_descCounter;
-    }    
-        
+        return m_descCounter;
+    }
+
     protected void saveHomonym(Hashtable item)  //, String source
-      throws SQLException  {
+            throws SQLException {
         //A.log("SaveHomonym item:" + item);
         saveTaxon(item, "homonym");  //source, 
     }
+
     protected int saveTaxon(Hashtable item)  //, String source
-      throws SQLException  {
+            throws SQLException {
         return saveTaxon(item, "taxon");  //source, 
     }
+
     private int saveTaxon(Hashtable item, String table) throws SQLException {
-      return saveTaxon(item, table, false);
+        return saveTaxon(item, table, false);
     }
 
     // Method is recursively inserting parent records.
     private int saveTaxon(Hashtable item, String table, boolean isParent)
-      throws SQLException  {
+            throws SQLException {
         //Called from both SpeciesListUpload and SpecimenUpload.
         int c = 0;
-        
-        boolean debugItem = true;        
-        
+
+        boolean debugItem = true;
+
         String taxonName = (String) item.get("taxon_name");
-        
+
         if (Formatter.hasSpecialCharacter(taxonName)) {
-          s_log.warn("saveTaxon() special character found in:" + taxonName);
-          getMessageMgr().addToMessages(MessageMgr.specialCharacterFound, taxonName);
-          return 0;
+            s_log.warn("saveTaxon() special character found in:" + taxonName);
+            getMessageMgr().addToMessages(MessageMgr.specialCharacterFound, taxonName);
+            return 0;
         }
-        
+
         if ((taxonName == null) || (taxonName.length() == 0)) return 0;
         if (lastTaxonName != null && lastTaxonName.equals(taxonName)) return 0;
         lastTaxonName = taxonName;
-        
+
         String source = (String) item.get("source");
         String rank = (String) item.get("rank");
         String lineNum = "" + item.get("line_num");
@@ -129,42 +132,42 @@ public class AntwebUpload {
 
         // if record already exists (in taxon table) then update, if valid.
         if ("taxon".equals(table)) {
-			DummyTaxon dummyTaxon = new TaxonDb(getConnection()).getDummyTaxon(taxonName, "taxon");
-			if (dummyTaxon != null) {
-			  if (isParent) {
-				return 0; // Already exists. Great.
-			  } else {
-				//A.iLog(3, "saveTaxon() update taxonName:" + taxonName + " lineNum:" + lineNum, 1000);
+            DummyTaxon dummyTaxon = new TaxonDb(getConnection()).getDummyTaxon(taxonName, "taxon");
+            if (dummyTaxon != null) {
+                if (isParent) {
+                    return 0; // Already exists. Great.
+                } else {
+                    //A.iLog(3, "saveTaxon() update taxonName:" + taxonName + " lineNum:" + lineNum, 1000);
 
-				// Unresolved junior homonyms from worldants are getting inserted (technically updated).
-				if ("worldants".equals(source)) {
-				  String status = (String) item.get("status");
-				  if (!Status.VALID.equals(status) && !Status.UNRECOGNIZED.equals(dummyTaxon.getStatus())) {
-					// log. Nope. Won't update a non-valid taxon from worldants.
-					String display = taxonName + " " + status;
-					getMessageMgr().addToMessages(MessageMgr.nonValidWorldantsDup, display);
+                    // Unresolved junior homonyms from worldants are getting inserted (technically updated).
+                    if ("worldants".equals(source)) {
+                        String status = (String) item.get("status");
+                        if (!Status.VALID.equals(status) && !Status.UNRECOGNIZED.equals(dummyTaxon.getStatus())) {
+                            // log. Nope. Won't update a non-valid taxon from worldants.
+                            String display = taxonName + " " + status;
+                            getMessageMgr().addToMessages(MessageMgr.nonValidWorldantsDup, display);
 
-					if (Status.HOMONYM.equals(status) || Status.SYNONYM.equals(status)) {
-					  //A.log("saveTaxon() save:" + display);              
-					  saveTaxon(item, "homonym", false);
-					} else {
-					  //A.log("saveTaxon() do nothing with duplicate original combination:" + display);              
-					}
+                            if (Status.HOMONYM.equals(status) || Status.SYNONYM.equals(status)) {
+                                //A.log("saveTaxon() save:" + display);
+                                saveTaxon(item, "homonym", false);
+                            } else {
+                                //A.log("saveTaxon() do nothing with duplicate original combination:" + display);
+                            }
 
-					return 0;		        
-				  }
-				}
+                            return 0;
+                        }
+                    }
 
-				updateTaxon(item, table);
-				return 0;
-			  }
-			} else {
-			  if (isParent) {
-				A.log("saveTaxon() 1 parent doesn't exist rank:" + rank + " taxonName:" + taxonName + " so creating it.");
-			  }
-			}
+                    updateTaxon(item, table);
+                    return 0;
+                }
+            } else {
+                if (isParent) {
+                    A.log("saveTaxon() 1 parent doesn't exist rank:" + rank + " taxonName:" + taxonName + " so creating it.");
+                }
+            }
         }
-              
+
         // This would cause an NPE for a specimen upload file
         //String lineNum = ((Integer) item.get("line_num")).toString();
 
@@ -172,151 +175,176 @@ public class AntwebUpload {
         String authorDate = (String) item.get("author_date");
         authorDate = UploadUtil.cleanHtml(authorDate);
         if (authorDate != null && authorDate.contains("Csősz")) {
-          //A.log("saveTaxon() does not contains authorDate:" + authorDate);
-          authorDate = AntFormatter.replace(authorDate, "Csősz", "Csosz");
-          //A.log("saveTaxon() new authorDate:" + authorDate);
-          item.put("author_date", authorDate);
+            //A.log("saveTaxon() does not contains authorDate:" + authorDate);
+            authorDate = AntFormatter.replace(authorDate, "Csősz", "Csosz");
+            //A.log("saveTaxon() new authorDate:" + authorDate);
+            item.put("author_date", authorDate);
         }
 
         String parentTaxonName = null;
         String currentValidName = (String) item.get("current_valid_name");
-        if (taxonName.contains("dolichoderinaecolobopsis macrocephala")) A.log("saveTaxon() 2 CURRENT VALID NAME:" + currentValidName + " taxonName:" + taxonName);
+        if (taxonName.contains("dolichoderinaecolobopsis macrocephala"))
+            A.log("saveTaxon() 2 CURRENT VALID NAME:" + currentValidName + " taxonName:" + taxonName);
         if (currentValidName != null && !taxonName.equals(currentValidName)) {
-          parentTaxonName = Taxon.getParentTaxonNameFromName(currentValidName);
+            parentTaxonName = Taxon.getParentTaxonNameFromName(currentValidName);
         } else {
-          parentTaxonName = Taxon.getParentTaxonNameFromName(taxonName);
+            parentTaxonName = Taxon.getParentTaxonNameFromName(taxonName);
         }
         if (parentTaxonName != null) {
-          //A.log("saveTaxon() taxonName:" + taxonName + " parentTaxonName:" + parentTaxonName);
-          if (("species".equals(rank) || "subspecies".equals(rank)) && TaxonMgr.getGenus(parentTaxonName) == null) {
-            //A.log("saveTaxon() 2 parent does not exist:" + parentTaxonName + " rank:" + rank + " genus:" + TaxonMgr.getGenus(parentTaxonName));
-          } else {
-            item.put("parent_taxon_name", parentTaxonName);
-          }
+            //A.log("saveTaxon() taxonName:" + taxonName + " parentTaxonName:" + parentTaxonName);
+            if (("species".equals(rank) || "subspecies".equals(rank)) && TaxonMgr.getGenus(parentTaxonName) == null) {
+                //A.log("saveTaxon() 2 parent does not exist:" + parentTaxonName + " rank:" + rank + " genus:" + TaxonMgr.getGenus(parentTaxonName));
+            } else {
+                item.put("parent_taxon_name", parentTaxonName);
+            }
         }
 
 
-		if (table.equals("taxon") && taxonQueryHashMap.containsKey(taxonName)) {
-		  ++uploadSkipped;
-		} else {
+        if (table.equals("taxon") && taxonQueryHashMap.containsKey(taxonName)) {
+            ++uploadSkipped;
+        } else {
 
-          // if we have a new taxon and we have not already inserted it, then insert it.
-		  if (true) {
-			  String message = "saveTaxon() 3 taxonName:" + taxonName + " rank:" + rank + " isParent:" + isParent + " lineNum:" + lineNum + " hash.size:" + taxonQueryHashMap.size() + " descCounter.size:" + getDescCounter().size();
-			  A.iLog(1, message, 5000);
-			  //AntwebUtil.logShortStackTrace();
-			  //return 0;
-		  }
+            // if we have a new taxon and we have not already inserted it, then insert it.
+            if (true) {
+                String message = "saveTaxon() 3 taxonName:" + taxonName + " rank:" + rank + " isParent:" + isParent + " lineNum:" + lineNum + " hash.size:" + taxonQueryHashMap.size() + " descCounter.size:" + getDescCounter().size();
+                A.iLog(1, message, 5000);
+                //AntwebUtil.logShortStackTrace();
+                //return 0;
+            }
 
-		  String query = getInsertionQuery(item, table);
-          Statement stmt = null;
-          try {
-              stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.saveTaxon()");
+            String query = getInsertionQuery(item, table);
+            Statement stmt = null;
+            try {
+                stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.saveTaxon()");
 
-              ++countUploaded;
-              if (table.equals("taxon")) taxonQueryHashMap.put(taxonName, query);
-              int rowCount = stmt.executeUpdate(query);
-              c += rowCount;
-            
-              if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
-          } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
-            s_log.warn("saveTaxon() 4 e:" + e + " query:" + query);
-          } catch (SQLException e) {
-            s_log.error("saveTaxon() 5 e:" + e + " query:" + query);
-            throw e;
-          } finally {
-            DBUtil.close(stmt, "AntwebUpload.saveTaxon()");
-          }
-		}                
-        
-		// New functionality. Parent taxons are handled.
-		if (!isParent && parentTaxonName != null && !"worldants".equals(source)) {
-		
+                ++countUploaded;
+                if (table.equals("taxon")) taxonQueryHashMap.put(taxonName, query);
+                int rowCount = stmt.executeUpdate(query);
+                c += rowCount;
 
-        if (taxonName.contains("formicinaemyrma iperstriata")) A.log("saveTaxon() 5 BAD currentValidName:" + currentValidName + " taxonName:" + taxonName);		
-		  // if we save a taxon, we make sure it's parent exists, or we create it.
-		  item.put("taxon_name", parentTaxonName);
-		  String grandParentTaxonName = Taxon.getParentTaxonNameFromName(parentTaxonName); 
-		  if (grandParentTaxonName != null) {
-			item.put("parent_taxon_name", grandParentTaxonName);
-			String parentRank = Taxon.getRankFromName(parentTaxonName);
-			item.put("rank", parentRank);
-			if ("family".equals(parentRank)) {
-			  item.remove("subfamily");
-			}                
-			if ("subfamily".equals(parentRank)) {
-			  item.remove("genus");
-			}                
-			if ("genus".equals(parentRank)) {
-			  item.remove("species");
-			  item.remove("subspecies");
-			}
+                if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
+            } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+                s_log.warn("saveTaxon() 4 e:" + e + " query:" + query);
+            } catch (SQLException e) {
+                s_log.error("saveTaxon() 5 e:" + e + " query:" + query);
+                throw e;
+            } finally {
+                DBUtil.close(stmt, "AntwebUpload.saveTaxon()");
+            }
+        }
 
-			//A.iLog(2, "callParent", 10);
+        // New functionality. Parent taxons are handled.
+        if (!isParent && parentTaxonName != null && !"worldants".equals(source)) {
 
-			saveTaxon(item, table, true);
-		  } else {
-			A.log("saveTaxon() 6 grandParentTaxonName null for parentTaxonName:" + parentTaxonName); 
-		  }
-		}
+
+            if (taxonName.contains("formicinaemyrma iperstriata"))
+                A.log("saveTaxon() 5 BAD currentValidName:" + currentValidName + " taxonName:" + taxonName);
+            // if we save a taxon, we make sure it's parent exists, or we create it.
+            item.put("taxon_name", parentTaxonName);
+            String grandParentTaxonName = Taxon.getParentTaxonNameFromName(parentTaxonName);
+            if (grandParentTaxonName != null) {
+                item.put("parent_taxon_name", grandParentTaxonName);
+                String parentRank = Taxon.getRankFromName(parentTaxonName);
+                item.put("rank", parentRank);
+                if ("family".equals(parentRank)) {
+                    item.remove("subfamily");
+                }
+                if ("subfamily".equals(parentRank)) {
+                    item.remove("genus");
+                }
+                if ("genus".equals(parentRank)) {
+                    item.remove("species");
+                    item.remove("subspecies");
+                }
+
+                //A.iLog(2, "callParent", 10);
+
+                saveTaxon(item, table, true);
+            } else {
+                A.log("saveTaxon() 6 grandParentTaxonName null for parentTaxonName:" + parentTaxonName);
+            }
+        }
 
         return c;
     }
 
     private String getInsertionQuery(Hashtable item, String table) {
-		String query = "insert into " + table;
+        String query = "insert into " + table;
 
-		StringBuffer fields = new StringBuffer();
-		StringBuffer values = new StringBuffer();
-		fields.append("(");
-		values.append("(");
-		Float floatValue = null;
-        Object value = null;		
-		Set<String> keys = item.keySet();
-        for (String key : keys) {        
-			value = item.get(key);
+        StringBuffer fields = new StringBuffer();
+        StringBuffer values = new StringBuffer();
+        fields.append("(");
+        values.append("(");
+        Float floatValue = null;
+        Object value = null;
+        Set<String> keys = item.keySet();
+
+        boolean logThis = false;
+        for (String key : keys) {
+            value = item.get(key);
 
 //A.log("updateTaxon() key:" + key + " value:" + value);
 
-			if (enactExceptions(key, value)) continue;
-			
-			fields.append(key + ",");
-			
-			if (value instanceof String) {
-			  if (((String) value).contains("\"")) {
-				value = AntFormatter.escapeQuotes((String) value);
-				//s_log.warn("getInsertionQuery() using mysqlEscapeQuotes().  value:" + value);
-			  }
-			  
-			  // *** Added Apr 4 2020
-			  if (((String) value).contains("'")) {
-			  
-A.log("Should swap Coate'ivory for proper name.");			  
-AntwebUtil.logShortStackTrace(10);
-			  
-				value = AntFormatter.escapeQuotes((String) value);
-				//s_log.warn("getInsertionQuery() using mysqlEscapeQuotes().  value:" + value);
-			  }
+            if (enactExceptions(key, value)) continue;
 
-			  if (((String) value).equals("true")) value = "1";
-			  if (((String) value).equals("false")) value = "0";
-			  
-			  values.append("'" + value + "',");
-			} else {
-			  values.append(value + ",");
-			}
-		}
-		   
-		fields.setCharAt(fields.length() - 1, ')'); // here we remove final commas
-		values.setCharAt(values.length() - 1, ')');
-		query += " " + fields.toString() + " values ";
-		
-		String theValues = values.toString();
-		query += theValues;
+
+            fields.append(translateKeyToColumn(key) + ",");
+
+            if (value instanceof String) {
+                if (((String) value).contains("\"")) {
+                    value = AntFormatter.escapeQuotes((String) value);
+                    //s_log.warn("getInsertionQuery() using mysqlEscapeQuotes().  value:" + value);
+                }
+
+                // *** Added Apr 4 2020
+                if (((String) value).contains("'")) {
+                    logThis = true;
+                    //AntwebUtil.logShortStackTrace(10);
+/*
+ 2020-04-12 21:42:08,340 WARN ajp-nio-8009-exec-5 org.calacademy.antweb.util.A - AntwebUpload.Should swap Coate'ivory for proper name.
+ 2020-04-12 21:42:08,340 WARN ajp-nio-8009-exec-5 org.calacademy.antweb.util.AntwebUtil - AntwebUtil.logShortStackTrace(10) - org.calacademy.antweb.util.StackTraceException
+	at org.calacademy.antweb.util.AntwebUtil.logShortStackTrace(AntwebUtil.java:503)
+	at org.calacademy.antweb.upload.AntwebUpload.getInsertionQuery(AntwebUpload.java:301)
+	at org.calacademy.antweb.upload.AntwebUpload.saveTaxon(AntwebUpload.java:215)
+	at org.calacademy.antweb.upload.AntwebUpload.saveTaxon(AntwebUpload.java:104)
+	at org.calacademy.antweb.upload.AntwebUpload.saveTaxon(AntwebUpload.java:100)
+	at org.calacademy.antweb.upload.AntwebUpload.saveTaxonAndProjTaxon(AntwebUpload.java:559)
+	at org.calacademy.antweb.upload.SpeciesListUpload.importSpeciesList(SpeciesListUpload.java:732)
+	at org.calacademy.antweb.upload.SpeciesListUpload.importSpeciesList(SpeciesListUpload.java:181)
+	at org.calacademy.antweb.upload.SpeciesListUpload.importSpeciesList(SpeciesListUpload.java:245)
+	at org.calacademy.antweb.upload.SpeciesListUpload.reloadSpeciesList(SpeciesListUpload.java:922)
+	*/
+                    value = AntFormatter.escapeQuotes((String) value);
+                    //s_log.warn("getInsertionQuery() using mysqlEscapeQuotes().  value:" + value);
+                }
+
+                if (((String) value).equals("true")) value = "1";
+                if (((String) value).equals("false")) value = "0";
+
+                values.append("'" + value + "',");
+            } else {
+                values.append(value + ",");
+            }
+        }
+
+        fields.setCharAt(fields.length() - 1, ')'); // here we remove final commas
+        values.setCharAt(values.length() - 1, ')');
+        query += " " + fields.toString() + " values ";
+
+        String theValues = values.toString();
+        query += theValues;
+
+        if (logThis) A.logi("Ivory Coast", "Should swap Coate'ivory for proper name? query:" + query);
 
         //if (query.contains("country")) A.log("getInsertionQuery() query:" + query);        
-		
+
         return query;
+    }
+
+    // The key is almost always the columns. But...
+    private String translateKeyToColumn(String key) {
+      if ("rank".equals(key)) return "taxarank";
+      return key;
     }
 
     private void updateTaxon(Hashtable item, String table)
@@ -381,9 +409,9 @@ AntwebUtil.logShortStackTrace(10);
                       if (((String) value).equals("true")) value = "1";
                       if (((String) value).equals("false")) value = "0";
                     
-                      sets.append(key + "='" + value + "',");
+                      sets.append(translateKeyToColumn(key) + "='" + value + "',");
                     } else {
-                      sets.append(key + "=" + value + ",");
+                      sets.append(translateKeyToColumn(key) + "=" + value + ",");
                     }                                   
                 }
             }
@@ -405,7 +433,7 @@ AntwebUtil.logShortStackTrace(10);
 
             Statement stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.updateTaxon()");
 
-//if (query.contains("country")) A.log("updateTaxon() query:" + query);            
+            //if (query.contains("country")) A.log("updateTaxon() query:" + query);
             
             stmt.executeUpdate(query);
             DBUtil.close(stmt, "AntwebUpload.updateTaxon()");
@@ -561,8 +589,8 @@ AntwebUtil.logShortStackTrace(10);
         }
         return c;
     }
-    
-    public String isValidSubfamilyForGenus(String family, String subfamily, String genus) 
+
+    public String isValidSubfamilyForGenus(String family, String subfamily, String genus)
       throws SQLException {
       
       if (new TaxonDb(getConnection()).isValidSubfamilyForGenus(family, subfamily, genus)) return "true";
@@ -647,7 +675,7 @@ AntwebUtil.logShortStackTrace(10);
                     fields.append(key + ",");
 
                     String appendValue = "";
-                    if (floatValue.compareTo(new Float(-999.9)) == 0) {
+                    if (floatValue.compareTo((float)-999.9) == 0) {
                         appendValue = "null,";
                     } else {
                         appendValue = floatValue.floatValue() + ",";
@@ -656,54 +684,45 @@ AntwebUtil.logShortStackTrace(10);
                     //A.log("saveSpecimen() appendValue:" + appendValue);
 
                 } else if (key.equals("elevation")) {
-                    //s_log.warn("saveSpecimen elevation query:" + query);            
+                    //s_log.warn("saveSpecimen elevation query:" + query);
                     fields.append("elevation,");
                     values.append(((Integer) item.get("elevation")).toString() + ",");
-/*                    
-                } else if (key.equals("date_collected")) { 
-                    // to be deprecated
-                    fields.append("date_collected,");
-                    String dateStr = DateUtil.getFormatDateStr((Date) item.get("date_collected"));
-                    //s_log.warn("saveSpecimen() date_collected dateStr:" + dateStr);            
-                    values.append("'" + dateStr + "',");
-*/
+
                 } else if (key.equals("datecollectedstart")) {
-                    fields.append("datecollectedstartstr,");
                     String dateStr = (String) item.get("datecollectedstart");
-                    values.append("'" + dateStr + "',");  
-
-                    fields.append("datecollectedstart,");
-                    String formatDate =  DateUtil.constructDateStr(dateStr);
-                    values.append("'" + formatDate + "',");  
-
-                    //A.log("saveSpecimen() dateStr:" + dateStr + " formatDate:" + formatDate);
-                } else if (key.equals("datecollectedend")) { 
-                    fields.append("datecollectedendstr,");
+                    String formatDate = DateUtil.getConstructDateStr(dateStr);
+                    fields.append("datecollectedstartstr,");
+                    values.append("'" + dateStr + "',");
+                    if (validDate("datecollectedstart", formatDate, code)) {
+                        fields.append("datecollectedstart,");
+                        values.append("'" + formatDate + "',");
+                    } else {
+                        getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedStart, dateStr);
+                        //LogMgr.appendLog("dateCollected.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
+                    }
+                } else if (key.equals("datecollectedend")) {
                     String dateStr = (String) item.get("datecollectedend");
-                    values.append("'" + dateStr + "',");  
-
-                    fields.append("datecollectedend,");
-                    String formatDate =  DateUtil.constructDateStr(dateStr);
-                    values.append("'" + formatDate + "',");  
-
+                    String formatDate = DateUtil.getConstructDateStr(dateStr);
+                    fields.append("datecollectedendstr,");
+                    values.append("'" + dateStr + "',");
+                    if (validDate("datecollectedend", formatDate, code)) {
+                        fields.append("datecollectedend,");
+                        values.append("'" + formatDate + "',");
+                    } else {
+                        getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedEnd, dateStr);
+                        //LogMgr.appendLog("dateCollected.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
+                    }
                 } else if (key.equals("datedetermined")) { 
                     String dateStr = (String) item.get("datedetermined");
-                    String formatDate = DateUtil.constructDateStr(dateStr);
-
-                    if (formatDate != null) {
-                      fields.append("datedeterminedstr,");
-                      values.append("'" + dateStr + "',");  
-
+                    String formatDate = DateUtil.getConstructDateStr(dateStr);
+                    fields.append("datedeterminedstr,");
+                    values.append("'" + dateStr + "',");
+                    if (validDate("datedetermined", formatDate, code)) {
                       fields.append("datedetermined,");
-                      values.append("'" + formatDate + "',");  
-
-                      Date date = DateUtil.constructDate(formatDate);
-                      if (date != null) {
-                        if (date.after(new Date())) {
-                          String message = "code:" + code + " dateDetermined:" + dateStr;
-                            getMessageMgr().addToMessages(MessageMgr.futureDateDetermined, message);
-                        }
-                      }
+                      values.append("'" + formatDate + "',");
+                    } else {
+                        getMessageMgr().addToMessages(MessageMgr.invalidDateDetermined, dateStr);
+                        LogMgr.appendLog("dateDetermined.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
                     }
                 } else if (key.equals("access_group")) {
                     fields.append("access_group,");
@@ -825,7 +844,23 @@ AntwebUtil.logShortStackTrace(10);
             DBUtil.close(stmt, "AntwebUpload.saveSpecimen()");
         }        
     }
+    
+	private boolean validDate(String dateType, String formatDate, String code) {
+	  if (formatDate == null) return false;
 
+	  Date date = DateUtil.getDate(formatDate);
+	  if (date != null) {
+		if (date.after(new Date())) {
+			String message = "code:" + code + " dateDetermined:" + formatDate;
+			getMessageMgr().addToMessages(MessageMgr.futureDateDetermined, message);
+			return false;
+		}
+	  } else {
+		return false;
+	  }
+	  return true;
+	}
+    
 
     // Similar method implemented in SpecimenUpload 
     public String setStatusAndCurrentValidName(String taxonName, Hashtable taxonItem)
@@ -1170,7 +1205,7 @@ AntwebUtil.logShortStackTrace(10);
 
     protected Float convertGeorefToDecimal(String latlon) {
         float decimal = 0;
-        Float result = new Float(0.0);
+        Float result = Float.valueOf((float)0.0);
         try {
             result = Float.valueOf(latlon);
             //s_log.info("convertGeorefToDecimal() result: " + result); 
@@ -1188,7 +1223,7 @@ AntwebUtil.logShortStackTrace(10);
                     if ((direction.equals("s")) || (direction.equals("w"))) {
                         decimal = 0 - decimal;
                     }
-                    result = new Float(decimal);
+                    result = Float.valueOf(decimal);
                 }
             } catch (RESyntaxException e) {
                 s_log.error("convertGeorefToDecimal() e:" + e);

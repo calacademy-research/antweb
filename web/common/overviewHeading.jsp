@@ -57,7 +57,7 @@
     //AntwebUtil.log("overviewHeading.jsp speciesImaged:" + overview.getNumSpeciesImaged() );
     //A.log("overviewHeading.jsp overview:" + overview);
 
-    if (overview instanceof Museum || overview instanceof org.calacademy.antweb.geolocale.Country || overview instanceof Project
+    if (overview instanceof Museum || overview instanceof org.calacademy.antweb.geolocale.Adm1 || overview instanceof org.calacademy.antweb.geolocale.Country || overview instanceof Project
       && !( Project.ALLANTWEBANTS.equals(overview.getName()) || Project.WORLDANTS.equals(overview.getName()) )
        ) {
 

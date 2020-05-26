@@ -290,6 +290,9 @@ public class BioregionDb extends AntwebDb {
       }
       updateBioregion();
 
+        calcEndemic(); //bioregion
+        calcIntroduced();       //bioregion
+
 	  LogMgr.appendLog("compute.log", "  Bioregions populated", true);                    
     }
 
@@ -311,7 +314,7 @@ public class BioregionDb extends AntwebDb {
       (new BioregionTaxonDb(getConnection())).populateHigherTaxa(bioregionName);
       
       // Crawl the Geolocale_taxon table to find the counts.
-      (new BioregionTaxonCountDb(getConnection())).countCrawls(bioregionName);
+      (new BioregionTaxonCountDb(getConnection())).childrenCountCrawl(bioregionName);
 
       // update bioregion fields (title, image_count, subfamily_count, genus_count, species_count).                    
       finish(bioregion); 
@@ -499,9 +502,17 @@ public class BioregionDb extends AntwebDb {
     /* THIS CODE IS INCOMPLETE. CLOSE TO CORRECT BUT THE QUERY IS STRAIGNT COPIED FROM GeolocaleDb */
 
     public int calcIntroduced() {
+        int sum = 0;
+        ArrayList<Bioregion> bioregionList = BioregionMgr.getBioregions();
+        for (Bioregion bioregion : bioregionList) {
+            sum += calcIntroduced(bioregion);
+        }
+        return sum;
+    }
+    public int calcIntroduced(Bioregion bioregion) {
         // Set all to false prior to setting specifics to true below...
-        updateBioregionTaxonField("introduced", null, null);
-        updateBioregionFieldCount("introduced", null, 0);
+        updateBioregionTaxonField("introduced", bioregion.getName(), null);
+        updateBioregionFieldCount("introduced", bioregion.getName(), 0);
         int totCount = 0;
 
         Statement stmt = null;
@@ -514,11 +525,11 @@ public class BioregionDb extends AntwebDb {
                     + " from bioregion_taxon "
                     + " where taxon_name in "
                     + "     (select pt.taxon_name from proj_taxon pt, taxon t "
-                    + "      where pt.taxon_name = t.taxon_name and (t.rank = 'species' or t.rank = 'subspecies') "
+                    + "      where pt.taxon_name = t.taxon_name "
+                    + " and (t.taxarank = 'species' or t.taxarank = 'subspecies') "
                     + "        and project_name = 'introducedants')"
+                    + " and bioregion_taxon.bioregion_name = '" + bioregion.getName() + "'"
                     + " order by bioregion_name";
-
-            A.log("calcIntroduced() query:" + query);
 
             // Break on geolocale to record the count.
             String lastBioregionName = null;
@@ -558,6 +569,9 @@ public class BioregionDb extends AntwebDb {
                 updateBioregionFieldCount("introduced", lastBioregionName, count);
             }
 
+            A.log("calcIntroduced() count:" + count + " query:" + query);
+
+
         } catch (SQLException e) {
             s_log.error("calcIntroduced() e:" + e);
         } finally {
@@ -568,26 +582,34 @@ public class BioregionDb extends AntwebDb {
 
 // ------------------------
 
+    /*
     public int calcEndemic() {
+        int sum = 0;
+        ArrayList<Bioregion> bioregionList = BioregionMgr.getBioregions();
+        for (Bioregion bioregion : bioregionList) {
+            sum += calcEndemic(bioregion);
+        }
+        return sum;
+    }
+    */
+
+    public int calcEndemic() { //Bioregion bioregion) {
         int c = 0;
         // Set all to false prior to setting specifics to true below...
-        c += updateBioregionTaxonField("endemic", null, null);
-        c += updateBioregionFieldCount("endemic", null, 0);
+        c += updateBioregionTaxonField("endemic", null, null); //bioregion.getName()
+        c += updateBioregionFieldCount("endemic", null, 0); //bioregion.getName()
 
         String query = "select bt.taxon_name taxon_name, max(b.name) bioregionName, count(*) count"
                 + " from bioregion b, bioregion_taxon bt, taxon where b.name = bt.bioregion_name"
                 + " and taxon.taxon_name = bt.taxon_name"
-                //+ " and taxon.status != 'morphotaxon'"
-                + " and taxon.rank in ('species', 'subspecies')"
+               // + " and b.name = '" + bioregion.getName() + "'"
+                + " and taxon.taxarank in ('species', 'subspecies')"
                 + " and taxon.fossil = 0"
-                // Project.ALLANTWEBANTS
                 + (new StatusSet()).getAndCriteria(Project.ALLANTWEBANTS)
                 //+ " and  taxon.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
                 + " and taxon.family = 'formicidae'"
                 + " group by bt.taxon_name having count(*) = 1"
                 + " order by bioregionName";
-
-        A.log("calcEndemism() query:" + query);
 
         return calcEndemism(query);
     }
@@ -614,7 +636,7 @@ public class BioregionDb extends AntwebDb {
                 // If a break on bioregion, then update the count appropriately.
                 if (lastBioregionName != null && !lastBioregionName.equals(bioregionName)) {
                     // A break has occured.
- A.log("calcEndemism() bioregionName:" + bioregionName + " lastBioregionName:" + lastBioregionName + " count:" + count);
+                    //A.log("calcEndemism() bioregionName:" + bioregionName + " lastBioregionName:" + lastBioregionName + " count:" + count);
                     c += updateBioregionFieldCount("endemic", lastBioregionName, count);
                     count = 0;
                 }
@@ -625,6 +647,9 @@ public class BioregionDb extends AntwebDb {
             if (count > 0) {
                 c += updateBioregionFieldCount("endemic", lastBioregionName, count);
             }
+
+            A.log("calcEndemism() count:" + count + " query:" + query);
+
         } catch (SQLException e) {
             s_log.error("calcEndemism() query:" + query + " e:" + e.toString());
         } finally {
@@ -675,15 +700,5 @@ public class BioregionDb extends AntwebDb {
         }
         return c;
     }
-
-/*
-select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, bt.is_endemic
-, (select group_concat(' ', b2.name order by name) from bioregion_taxon bt2, bioregion b2 where bt2.bioregion_name = b2.name and bt2.taxon_name = t.taxon_name order by b2.name)
-from taxon t, bioregion_taxon bt, bioregion b where t.taxon_name = bt.taxon_name and bt.bioregion_name = b.name and t.rank in ('species', 'subspecies')
-and b.name = 'Oceania'
-order by t.subfamily, t.genus, t.species, t.subspecies
-
- */
-
 
 }

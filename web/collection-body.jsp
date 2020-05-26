@@ -1,6 +1,7 @@
 <%@ page language="java" %>
 <%@ page import = "java.util.*" %>
 <%@ page import = "org.calacademy.antweb.*" %>
+<%@ page import = "org.calacademy.antweb.geolocale.*" %>
 <%@ page import = "org.calacademy.antweb.Formatter" %>
 <%@ page import = "org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.Taxon" %>
@@ -36,7 +37,6 @@ function selectAll(thisForm) {
 
    Overview overview = OverviewMgr.getOverview(request);
    if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);
-
 %>
 
 <logic:present parameter="mode">
@@ -151,29 +151,41 @@ function selectAll(thisForm) {
    } %>
 <li><b><%= countryLink %></b></li>
 </ul>
-<% } %>
-
-<% if (Utility.displayEmptyOrNotBlank(locality.getAdm1())) { %>
-<ul>
-<li>Adm1:</li>
-<%
-   String adm1Link = "";
-   if (locality.getAdm1() != null) {
-     adm1Link = "<a href='" + AntwebProps.getDomainApp() + "/adm1.do?name=" + java.net.URLEncoder.encode(locality.getAdm1()) + "&country=" + locality.getCountry() + "'>" + locality.getAdm1() + "</a>";
-   } %>
-<li><b><%= adm1Link %></b></li>
-</ul>
-<% 
-} %>
-<% if (Utility.displayEmptyOrNotBlank(locality.getAdm2())) { %>
-<ul>
-<li>Adm2:</li>
-<li><b><bean:write name="collection" property="locality.adm2"/></b></li>
-</ul>
-<% } %>
+<% }
 
 
-		
+     if (locality.getIslandCountry() != null) { %>
+		<ul><li>Island:</li>
+		<%
+		   String islandCountryLink = "";
+		     Geolocale island = GeolocaleMgr.getIsland(locality.getIslandCountry());
+		     //A.log("locality-body.jsp adm1:" + adm1 + " country:" + locality.getCountry() + " adm1:" + locality.getAdm1());
+		     if (island != null) {
+  	 	       //A.log("locality-body.jsp parent:" + adm1.getParent() + " adm1:" + adm1.getName());
+  			   islandCountryLink = "<a href='" + AntwebProps.getDomainApp() + "/island.do?name=" + island.getName() + "'>" + island.getName() + "</a>";
+  		     } %>
+		<li><b><%= islandCountryLink %></b> </li></ul>
+  <% } else {
+        if (Utility.displayEmptyOrNotBlank(locality.getAdm1())) { %>
+        <ul>
+        <li>Adm1:</li>
+        <%
+           String adm1Link = "";
+           if (locality.getAdm1() != null) {
+             adm1Link = "<a href='" + AntwebProps.getDomainApp() + "/adm1.do?name=" + java.net.URLEncoder.encode(locality.getAdm1()) + "&country=" + locality.getCountry() + "'>" + locality.getAdm1() + "</a>";
+           } %>
+        <li><b><%= adm1Link %></b></li>
+        </ul>
+        <%
+        } %>
+        <% if (Utility.displayEmptyOrNotBlank(locality.getAdm2())) { %>
+        <ul>
+        <li>Adm2:</li>
+        <li><b><bean:write name="collection" property="locality.adm2"/></b></li>
+        </ul>
+        <% }
+      } %>
+
 		<% 
 		//Locality locality = collection.getLocality();
 		

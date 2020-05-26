@@ -11,7 +11,7 @@
 </logic:present>
 
 <%
-    A.log("index-body.jsp target:" + HttpUtil.getTarget(request));
+    //A.log("index-body.jsp target:" + HttpUtil.getTarget(request));
 
     String domainApp = org.calacademy.antweb.util.AntwebProps.getDomainApp(); 
 

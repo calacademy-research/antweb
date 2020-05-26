@@ -366,8 +366,6 @@ public final class AntWikiDataAction extends Action {
     // This is checked by the scheduler. Notify Brian if new Species found.
 
     public static String checkForUpdates(Connection connection) {
-    
-A.log("1");
       String message = "";
       message += AntWikiDataAction.checkForValidSpeciesListUpdate(connection);
       message += ".  " + AntWikiDataAction.checkForFossilSpeciesListUpdate(connection);  
@@ -375,15 +373,12 @@ A.log("1");
     }
 
     public static String checkForValidSpeciesListUpdate(Connection connection) {
-A.log("2");
-
       String upDate = AntWikiDataAction.getValidSpeciesListUpDate();
-      
-      //upDate = "test";
-      
+
       // Check in database. Is this the last update date?
       AntwebDb antwebDb = new AntwebDb(connection);
       boolean isCurrent = antwebDb.isCurrentInLookup(connection, "validSpeciesListUpDate", upDate);
+
       //boolean isCurrent = antwebDb.isCurrentInLookup(connection, "validSpeciesListUpDate", upDate);
       // Update lookup table. set upDate to validSpeciesUpDate      
       
@@ -401,17 +396,19 @@ A.log("2");
     }
         
     private static String getValidSpeciesListUpDate() {
-      String output = "";
-      try {
-        output = HttpUtil.getUrl("http://antwiki.org/wiki/Species_Accounts");  
-      } catch (IOException e) {
-        s_log.warn("getValidSpeciesListUpDate() e:" + e);
-      }
-      int i = output.indexOf("List of valid species (names in use)</a> (tab-delimited text) (Date: ");
-      String validSpeciesListUpDate = output.substring(i + 69, i + 69 + 10);
-      A.log("AntWikiDataAction.getValidSpeciesListUpDate() validSpeciesUpDate:" + validSpeciesListUpDate);
- 
-      return validSpeciesListUpDate;
+       // String url = "http://antwiki.org/wiki/Species_Accounts";
+        String url = "https://antwiki.org/wiki/Species_Accounts";
+        String output = "";
+        try {
+          output = HttpUtil.getUrl(url);
+        } catch (IOException e) {
+          s_log.warn("getValidSpeciesListUpDate() e:" + e);
+        }
+
+        int i = output.indexOf("List of valid species (names in use)");
+        String validSpeciesListUpDate = output.substring(i + 69, i + 69 + 10);
+        A.log("AntWikiDataAction.getValidSpeciesListUpDate() i:" + i + " validSpeciesUpDate:" + validSpeciesListUpDate);
+        return validSpeciesListUpDate;
     }
 
     public static String checkForFossilSpeciesListUpdate(Connection connection) {
@@ -425,8 +422,7 @@ A.log("2");
       boolean isCurrent = antwebDb.isCurrentInLookup(connection, "fossilSpeciesListUpDate", upDate);
       
       String prefix = "";
-      if (!isCurrent
-        ) {
+      if (!isCurrent) {
         prefix = "Updated!  ";
         // create an Admin message.      
         A.log("checkForFossilSpeciesListUpdate() upDate:" + upDate);
@@ -437,9 +433,10 @@ A.log("2");
     }
         
     private static String getFossilSpeciesListUpDate() {
+      String url = "https://antwiki.org/wiki/Species_Accounts";
       String output = "";
       try {
-        output = HttpUtil.getUrl("http://antwiki.org/wiki/Species_Accounts");  
+        output = HttpUtil.getUrl(url);
       } catch (IOException e) {
         s_log.warn("getFossilSpeciesListUpDate() e:" + e);
       }

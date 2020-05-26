@@ -23,33 +23,31 @@ public abstract class AntwebFunctions {
     
     public static void genRecentDescEdits(java.sql.Connection connection, HttpServletRequest request) 
       throws SQLException, IOException {
-    /* 
-         This method generates the file here: http://localhost/antweb/recentDescEdits.jsp
-         This will be included by the homepage template.
-     */
-     // The java.io import should be moved with this method elsewhere.
+
+      // This method generates the file here: http://localhost/antweb/recentDescEdits.jsp
+      // This will be included by the homepage template.
 
         int MAX_DESC_EDIT_COUNT = 5;
 
-//        String docBase = request.getRealPath("/");
         String docBase = AntwebProps.getDocRoot();
-        
-        File outputFile = new File(docBase + "/web/genInc/" + "recentDescEdits.jsp");
+
+        String genIncDir = docBase + "/web/genInc/";
+
+        FileUtil.makeDir(genIncDir);
+
+        File outputFile = new File(genIncDir + "recentDescEdits.jsp");
         FileWriter outFile = new FileWriter(outputFile);
 
-        // Should use description_hist?
-        
         Statement stmt = null;
         ResultSet rset = null;
         try {
           stmt = connection.createStatement();
           String query = "select taxon_name, code from description_edit" 
-            + " where taxon_name in (select taxon_name from taxon)"  //  where rank = \'species\'   Not known to prevent performance issues...
+            + " where taxon_name in (select taxon_name from taxon)"
             + " and is_manual_entry = 1"
             + " order by created desc limit 100";
 
-//s_log.warn("getRecentDescEdits() query:" + query);
-
+          //s_log.warn("getRecentDescEdits() query:" + query);
           rset = stmt.executeQuery(query);
 
           int count = 0; 

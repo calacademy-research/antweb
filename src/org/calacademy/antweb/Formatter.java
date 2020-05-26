@@ -507,7 +507,10 @@ public class Formatter implements Serializable {
 	public static boolean hasWebSpecialCharacter(String str) {
     String extras = "?&=%:,;+äáëéìöü";
     String patternStr = "[^A-Za-z0-9 " + extras + ignoreUtf8;
-    return hasSpecialCharacter(str, patternStr);
+    boolean has = hasSpecialCharacter(str, patternStr);
+
+    //A.log("hasWebSpecialCharacter() str:" + str + " + has:" + has + " pattern:" + patternStr);
+    return has;
   }
 
   // Used for things like locality. Allows single quote.

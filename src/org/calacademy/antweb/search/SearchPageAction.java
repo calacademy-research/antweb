@@ -33,7 +33,7 @@ public final class SearchPageAction extends Action {
           }			
           connection = DBUtil.getConnection(dataSource, "SearchPageAction.execute()");
 
-          session.setAttribute("activeSession", new Boolean(true));
+          session.setAttribute("activeSession", Boolean.valueOf(true));
 
           SearchIncludeFactory searchIncludeFactory = new SearchIncludeFactory(connection);
           request.setAttribute("bioregionGenInc", searchIncludeFactory.getBioregionGenInc(searchForm.getBioregion()));

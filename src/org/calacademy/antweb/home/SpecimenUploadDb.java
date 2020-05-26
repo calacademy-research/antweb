@@ -55,7 +55,7 @@ public class SpecimenUploadDb extends UploadDb {
     public void updateSpecimenUploadDate(Group group) throws SQLException {
         
         int id = group.getId();
-        String query = "update groups set last_specimen_upload=" + currentDateFunction + " where id =" +  id;
+        String query = "update ant_group set last_specimen_upload=" + currentDateFunction + " where id =" +  id;
         Statement stmt = null; 
         try {
             stmt = DBUtil.getStatement(getConnection(), "SpecimenUploadDb.uploadSpecimenUploadDate()");

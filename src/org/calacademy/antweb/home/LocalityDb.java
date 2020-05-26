@@ -48,14 +48,14 @@ public class LocalityDb extends AntwebDb {
         Locality locality = null;
     
         // Locality Query         
-        String localityQuery = "select distinct sp.country, sp.adm1, sp.adm2"
+        String localityQuery = "select distinct sp.country, sp.island_country, sp.adm1, sp.adm2"
             + ", sp.localitycode, sp.localityname, sp.other, sp.bioregion, sp.museum"
             + ", sp.decimal_longitude, sp.decimal_latitude "
             + ", sp.localityNotes, sp.elevation, sp.elevationMaxError, sp.latlonmaxerror"            + ", sp.access_group "
             + ", datecollectedstart, datecollectedend "
-            + ", groups.name as groupname"             
+            + ", ant_group.name as groupname"
             + " from specimen as sp " 
-                + " left outer join groups on sp.access_group = groups.id "              
+                + " left outer join ant_group on sp.access_group = ant_group.id "
             + " where " + clause; 
 
         // A.log("getLocality() query:" + localityQuery);
@@ -70,6 +70,7 @@ public class LocalityDb extends AntwebDb {
             while (localityRset.next()) {
                 locality = new Locality();
                 locality.setCountry(localityRset.getString("country"));
+                locality.setIslandCountry(localityRset.getString("island_country"));
                 locality.setAdm1(localityRset.getString("adm1"));
                 locality.setAdm2(localityRset.getString("adm2"));
                 locality.setLocalityName(localityRset.getString("localityname"));

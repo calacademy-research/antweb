@@ -21,7 +21,7 @@ public class SpecimenUploadLookup {
     private static ArrayList specimenUploads = new ArrayList();    
 
     public static void populate(Connection connection) throws SQLException {
-        String theQuery = "select g.name name, count(s.code) count from specimen s left join groups g on s.access_group = g.id group by s.access_group";
+        String theQuery = "select g.name name, count(s.code) count from specimen s left join ant_group g on s.access_group = g.id group by s.access_group";
         Statement stmt = null;
         ResultSet rset = null;
         try {

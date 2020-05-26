@@ -9,14 +9,13 @@
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>
-<%@ page import="org.calacademy.antweb.search.AdvancedSearch" %>
+<%@ page import="org.calacademy.antweb.search.*" %>
 
 <!-- page:advancedSearchResults-body.jsp -->
 
 <% 
     Utility util = new Utility(); 
     Login accessLogin = LoginMgr.getAccessLogin(request);
-   
 %>
 
 <script type="text/javascript">
@@ -31,7 +30,17 @@ function selectAll(thisForm) {
 // -->
 </script>
 
-<jsp:useBean id="advancedSearchResults" scope="session" class="org.calacademy.antweb.search.AdvancedSearchResults" />
+<%
+AdvancedSearchResults advancedSearchResults = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
+if (advancedSearchResults == null) {
+  String message = "No advanced search results in session.";
+  //A.log(message);
+  out.println("<br><b>" + message + "</b>");
+  return;
+}
+//A.log("advancedSearchResults-body.jsp advancedSearchResults:" + advancedSearchResults);
+%>
+
 <jsp:setProperty name="advancedSearchResults" property="*" />
 
 <logic:present parameter="project">
@@ -103,7 +112,7 @@ int intOffset = Integer.parseInt(offset);
 <%
     //if (AntwebProps.isDevMode() && "".equals(mode)) mode = "compare";
 
-    A.log("advancedSearchResults-body.jsp mode:" + mode); // + " formVal:" + thisForm.getResultRank()    
+    //A.log("advancedSearchResults-body.jsp mode:" + mode); // + " formVal:" + thisForm.getResultRank()
     
     if ("map".equals(mode)) {
 %>
@@ -145,22 +154,21 @@ Select All
 
 int size = advancedSearchResults.getResults().size();
 if (size < 1) { %>
-<div class="page_divider"></div>
-<div class="clear"></div>
-<!-- /div -->
-<div id="page_data">
-Sorry, nothing matches your request.
-</div>
+    <div class="page_divider"></div>
+    <div class="clear"></div>
+    <div id="page_data">
+        Sorry, nothing matches your request.
+    </div>
 <% } else if (size > 0) { %> 
 
 <%
     if (request.getParameter("sortBy") != null) {
-      advancedSearchResults.sortBy(request.getParameter("sortBy")); 
+      advancedSearchResults.sortBy(request.getParameter("sortBy"), request.getParameter("sortOrder"));
     }
 
     session.setAttribute("taxon", advancedSearchResults.getResultsAsTaxon());
     Taxon taxon = (Taxon) session.getAttribute("taxon");
-    A.log("advancedSearchResults-body.jsp taxon.class:" + taxon.getClass());
+    //A.log("advancedSearchResults-body.jsp taxon.class:" + taxon.getClass());
     java.util.ArrayList<Taxon> taxonChildren = taxon.getChildren();
     int imagedSpecimenCount = 0;
     for (Taxon t : taxonChildren) {

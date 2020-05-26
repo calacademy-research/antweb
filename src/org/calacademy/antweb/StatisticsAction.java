@@ -279,7 +279,7 @@ public final class StatisticsAction extends Action {
         try {
             stmt = DBUtil.getStatement(connection, "getDescEditHistory()");        
 
-            String query = "select count(code), name, id from specimen, groups where access_group = id group by access_group";
+            String query = "select count(code), name, id from specimen, ant_group where access_group = id group by access_group";
             rset = stmt.executeQuery(query);
 
             String statistics = "<table border=1><tr><td> Specimen Count </td><td> Group Name </td></tr>";

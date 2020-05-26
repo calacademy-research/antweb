@@ -54,45 +54,49 @@
 		</ul>
 
 		<% if (Utility.displayEmptyOrNotBlank(locality.getCountry())) { %>
-		<ul>
-		<li>Country:</li>
+		<ul><li>Country:</li>
 		<%
 		   String countryLink = "";
 		   if (locality.getCountry() != null) {
 			 countryLink = "<a href='" + AntwebProps.getDomainApp() + "/country.do?name=" + locality.getCountry() + "'>" + locality.getCountry() + "</a>";
 		   } %>
-		<li><b><%= countryLink %></b></li>
-		</ul>
-		<% } %>
+		<li><b><%= countryLink %></b></li></ul>
+		<% }
 
-		<% if (Utility.displayEmptyOrNotBlank(locality.getAdm1())) { %>
-		<ul>
-		<li>Adm1:</li>
+     if (locality.getIslandCountry() != null) { %>
+		<ul><li>Island:</li>
+		<%
+		   String islandCountryLink = "";
+		     Geolocale island = GeolocaleMgr.getIsland(locality.getIslandCountry());
+		     //A.log("locality-body.jsp adm1:" + adm1 + " country:" + locality.getCountry() + " adm1:" + locality.getAdm1());
+		     if (island != null) {
+  	 	       //A.log("locality-body.jsp parent:" + adm1.getParent() + " adm1:" + adm1.getName());
+  			   islandCountryLink = "<a href='" + AntwebProps.getDomainApp() + "/island.do?name=" + island.getName() + "'>" + island.getName() + "</a>";
+  		     } %>
+		<li><b><%= islandCountryLink %></b> </li></ul>
+  <% } else {
+		 if (Utility.displayEmptyOrNotBlank(locality.getAdm1())) { %>
+		<ul><li>Adm1:</li>
 		<%
 		   String adm1Link = "";
-		   if (locality.getAdm1() != null) {
-		     Geolocale adm1 = GeolocaleMgr.getAdm1(locality.getAdm1(), locality.getCountry());
-		     A.log("locality-body.jsp adm1:" + adm1 + " country:" + locality.getCountry() + " adm1:" + locality.getAdm1());
-		     if (adm1 == null) {
-		       adm1Link = locality.getAdm1();
-		     } else {
-  	 	       //A.log("locality-body.jsp parent:" + adm1.getParent() + " adm1:" + adm1.getName());
-  			   adm1Link = "<a href='" + AntwebProps.getDomainApp() + "/adm1.do?id=" + adm1.getId() + "'>" + adm1.getName() + "</a>";
-		     }
-		   } %>
-		<li><b><%= adm1Link %></b> </li>
-		</ul>
+           Geolocale adm1 = GeolocaleMgr.getAdm1(locality.getAdm1(), locality.getCountry());
+           A.log("locality-body.jsp adm1:" + adm1 + " country:" + locality.getCountry() + " adm1:" + locality.getAdm1());
+           if (adm1 == null) {
+             adm1Link = locality.getAdm1();
+           } else {
+             //A.log("locality-body.jsp parent:" + adm1.getParent() + " adm1:" + adm1.getName());
+             adm1Link = "<a href='" + AntwebProps.getDomainApp() + "/adm1.do?id=" + adm1.getId() + "'>" + adm1.getName() + "</a>";
+           } %>
+		<li><b><%= adm1Link %></b> </li></ul>
 		<% } %>
 
 		<% if (Utility.displayEmptyOrNotBlank(locality.getAdm2())) { %>
-		<ul>
-		<li>Adm2:</li>
-		<li><b><bean:write name="locality" property="adm2"/></b></li>
-		</ul>
-		<% } %>
-		
-		<% 
-		String lat = new Float(locality.getDecimalLatitude()).toString();		
+		<ul><li>Adm2:</li>
+		<li><b><bean:write name="locality" property="adm2"/></b></li></ul>
+		<% }
+     }
+
+		String lat = new Float(locality.getDecimalLatitude()).toString();
 		if (Utility.displayEmptyOrNotBlank(lat)) { %>
 		<ul>
 		<li>Latitude:</li>

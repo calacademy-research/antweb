@@ -43,14 +43,14 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 "antwiki" can be blown away, but will not overwrite the source of specimen.
   These will be displayed on the site as "Literature".
 */
-// --------------------------------------------------------------------------------------
+
+    // --------------------------------------------------------------------------------------
     // Satisfies the abstract method of EditableTaxonSetDb.
     public TaxonSet get(String speciesListName, String taxonName) {
         int geolocaleId = GeolocaleMgr.getGeolocaleId(speciesListName);
         return get(geolocaleId, taxonName);
     }
-/*
-*/    
+
     public TaxonSet get(int geolocaleId, String taxonName) {
         String query = "";
         GeolocaleTaxon geolocaleTaxon = null;
@@ -59,7 +59,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
         try {
 
             stmt = DBUtil.getStatement(getConnection(), "get()");
-            query = "select geolocale_id, taxon_name, source, rev, is_introduced " 
+            query = "select geolocale_id, taxon_name, source, rev, is_introduced "
                + " from geolocale_taxon " 
                + " where geolocale_id = " + geolocaleId
                + " and taxon_name = '" + taxonName + "'";
@@ -72,9 +72,11 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
                 geolocaleTaxon.setSource((String) rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setIsIntroduced((rset.getInt("is_introduced") == 1) ? true : false);
-           }
 
+                if (geolocaleTaxon.getGeolocaleId() == 10) A.log(" get() Mayotte introduced:" + geolocaleTaxon.getIsIntroduced());
+            }
           //A.log("getTaxonSet() query:" + query);
+
 
         } catch (SQLException e) {
             s_log.error("get() e:" + e);
@@ -83,7 +85,44 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
         }
         return geolocaleTaxon;
     }
-    
+
+    public ArrayList<TaxonSet> getTaxonSetList(String taxaRank, int geolocaleId) {
+        ArrayList<TaxonSet> taxonSetList = new ArrayList<TaxonSet>();
+        String query = "";
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+
+            stmt = DBUtil.getStatement(getConnection(), "getTaxonSetList()");
+            query = "select gt.geolocale_id, gt.taxon_name, gt.source, gt.rev, gt.is_introduced "
+                    + " from geolocale_taxon gt, taxon "
+                    + " where taxon.taxon_name = gt.taxon_name "
+                    + "  and taxon.taxarank = '" + taxaRank + "'"
+                    + "  and geolocale_id = " + geolocaleId
+                    ;
+
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                GeolocaleTaxon geolocaleTaxon = new GeolocaleTaxon();
+                geolocaleTaxon.setGeolocaleId(rset.getInt("geolocale_id"));
+                geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
+                geolocaleTaxon.setSource((String) rset.getString("source"));
+                geolocaleTaxon.setRev(rset.getInt("rev"));
+                geolocaleTaxon.setIsIntroduced((rset.getInt("is_introduced") == 1) ? true : false);
+                taxonSetList.add(geolocaleTaxon);
+
+                if (geolocaleTaxon.getGeolocaleId() == 10) A.log(" getTaxonSetList() Mayotte introduced:" + geolocaleTaxon.getIsIntroduced());
+
+            }
+        } catch (SQLException e) {
+            s_log.error("getTaxonSetList() e:" + e);
+        } finally {
+            DBUtil.close(stmt, "getTaxonSetList()");
+        }
+        return taxonSetList;
+    }
+
+
 
     // --------------------- Recursive Insertion ---------------------------
     /**    Recursive method. Follow a pattern like this. But, for performance, do not insert a pair as per s_queryGovernor.
@@ -120,19 +159,15 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     // Satisfies the abstract method of EditableTaxonSetDb.
     // Called from SpeciesListTool and by setTaxonSet() and insertGeolocaleTaxaFromSpecimens() and populateFromAntwikiData(), checkGeolocaleParentage() below.
     public int insert(Overview overview, String taxonName, String source) throws SQLException {
+        /*
         if (taxonName.contains("dorylinaecerapachys")) { // && "Madagascar".equals(overview)) {
-            if (AntwebProps.isLocal()) s_log.warn("insert('" + overview.getName() + "', '" + taxonName + "', '" + source + "')");
+            A.log("insert('" + overview.getName() + "', '" + taxonName + "', '" + source + "')");
             if ("Madagascar".equals(overview.getName())) {
                 AntwebUtil.logStackTrace();
             }
-        }
+        }*/
         //s_log.warn("insert() taxonName:" + taxonName);
-/*
-      if ("formicinaeformica podzolica".equals(taxonName) && "California".equals(overview.getName())) {
-        A.log("insert() overview:" + overview + " taxonName:" + taxonName + " source:" + source);
-        AntwebUtil.logStackTrace();
-      }
-*/
+
       Geolocale geolocale = (Geolocale) overview;
 
       // it is a genus or subfamily. Record it in the list so that we can efficiently avoid re-queries.
@@ -193,10 +228,11 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     
      // All updates should happen here? Recursive.
     public int update(Overview overview, String taxonName, String source) throws SQLException {
-        if (taxonName.contains("dorylinaecerapachys")) {
+        /*
+          if (taxonName.contains("dorylinaecerapachys")) {
             s_log.warn("update() name:" + overview.getName() + "' taxonName:" + taxonName + " source:" + source );
             AntwebUtil.logStackTrace();
-        }
+        } */
 
       Geolocale geolocale = (Geolocale) overview;
 
@@ -355,10 +391,12 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     private int insertItem(Geolocale geolocale, String taxonName, String source) 
       throws SQLException {
 
+        /*
         if (taxonName.contains("podzolica")) {
           A.log("insertItem(" + geolocale.getId() + ", " + taxonName + ", " + source + ")");
           //AntwebUtil.logStackTrace();
         }
+        */
 
         // We can't insert. Already exists. Update source if priority allows.
 		TaxonSet taxonSet = get(geolocale.getId(), taxonName);
@@ -695,7 +733,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
           + "   select taxon_name from ("
           + "     select t.taxon_name from geolocale_taxon gt, taxon t "
           + "     where gt.taxon_name = t.taxon_name "
-          + "     and t.rank in ('species', 'subspecies') "
+          + "     and t.taxarank in ('species', 'subspecies') "
           + "     and t.status = 'morphotaxon' "
           + "     and gt.source = '" + Source.SPECIMEN + "'" // Corrected
           + "     and t.taxon_name not in ("
@@ -803,14 +841,20 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 			//if (AntwebProps.isDevMode()) clause = " and country = 'Chile'";
 
             query = "select distinct country, adm1, taxon_name " 
-              + " from specimen " 
-              + " where (status = 'valid')"
-              + " and " + SpecimenDb.getFlagCriteria()
-              + " and country is not null" 
+              + " from specimen where (status = 'valid')"
+              + " and " + SpecimenDb.getFlagCriteria() + " and country is not null"
               + clause
+
+              + " union "
+
+              + "select distinct island_country, adm1, taxon_name " // adm1 will generally be null
+                    + " from specimen where (status = 'valid')"
+                    + " and " + SpecimenDb.getFlagCriteria() + " and island_country is not null"
+                    + clause
+
               + " order by country, adm1, taxon_name"
             ;
-            A.log("insertGeolocaleTaxaFromSpecimens() query:" + query);
+            A.log("insertGeolocaleTaxaFromSpecimens() 1 query:" + query);
             rset = stmt.executeQuery(query);
 
             Geolocale country = null;
@@ -828,7 +872,12 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
                 String taxonName = rset.getString("taxon_name");
                 String countryName = rset.getString("country");
                 String adm1Name = rset.getString("adm1");
-              
+
+                if (false && AntwebProps.isDevMode()) {
+                    if ("Colorado".equals(adm1Name)) A.log("country:"+ countryName + " adm1:" + adm1Name);
+                    if (!"Colorado".equals(adm1Name)) continue;
+                }
+
                 boolean countryChanged = !countryName.equals(lastCountryName);
                 lastCountryName = countryName;
                 if (countryChanged) resetQueryGovernors();
@@ -840,22 +889,26 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 				  //A.log("insertGeolocaleTaxaFromSpecimens() Country not found:" + countryName);
 				  continue;
 			    }
+
+  			    //if ("Colorado".equals(adm1Name)) A.log("insertGeolcoaleTaxaFromSpecimen() country:" + country + " adm1Name:" + adm1Name);
 			    count += insert(country, taxonName, "specimen");
 			    //A.log("insertGeolocaleTaxaFromSpecimens() country:" + country + " taxonName:" + taxonName + " count:" + count);
 			    insertCount += count;
-			  
-			  
+
                 // Update the Adm1 records
 			    if (adm1Name != null) {
 				  adm1 = GeolocaleMgr.getValidAdm1(adm1Name, countryName);
+
+                  //if ("Colorado".equals(adm1Name)) A.log("insertGeolocaleTaxaFromSpecimens() 1 adm1:" + adm1 + " taxonName:" + taxonName + " count:" + count);
+
 				  if (adm1 == null) {
 				    unfoundAdm1s.add(adm1Name);
 				    //A.log("insertGeolocaleTaxaFromSpecimens() Adm1 not found:" + adm1Name);
 				    continue;
                   }				  
 				  if (adm1 != null && taxonName != null) {
+                    //if ("Colorado".equals(adm1Name)) A.log("insertGeolocaleTaxaFromSpecimens() 2 adm1:" + adm1 + " taxonName:" + taxonName + " count:" + count);
 				    count += insert(adm1, taxonName, "specimen");
-  	  	  	 	    //A.log("insertGeolocaleTaxaFromSpecimens() adm1:" + adm1 + " taxonName:" + taxonName + " count:" + count);			   		        
 				    insertCount += count;
 				  }
 			    }
@@ -869,7 +922,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
             DBUtil.close(stmt, "insertGeolocaleTaxaFromSpecimens()");
         }
         A.log("insertGeolocaleTaxaFromSpecimens() unfoundCountries:" + unfoundCountries);
-        A.log("insertGeolocaleTaxaFromSpecimens() unfoundAdm1:" + unfoundAdm1s);
+        //A.log("insertGeolocaleTaxaFromSpecimens() unfoundAdm1:" + unfoundAdm1s);
         A.log("insertGeolocaleTaxaFromSpecimens() s_constraintCount:" + s_constraintCount);
         return insertCount;
     }
@@ -1294,7 +1347,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         }            
         return countries;
     }
-    
+
 // --- Statistics ---
 
     public static ArrayList<ArrayList<String>> getStatisticsByGeolocale(Connection connection) //ArrayList<ArrayList<String>>
@@ -1322,56 +1375,56 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         ArrayList<String> statistics = new ArrayList<String>();
         //HashMap<String, String> stats = new HashMap<String, String>();
 
-        String query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 1 and geolocale_taxon.geolocale_id = '" + geolocaleId + "' and rank=\"subfamily\"";
+        String query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 1 and geolocale_taxon.geolocale_id = '" + geolocaleId + "' and taxarank=\"subfamily\"";
         Statement stmt2 = connection.createStatement();              
         ResultSet resultSet2 = stmt2.executeQuery(query);
         int extinctSubfamily = 0;
         while (resultSet2.next()) {
             extinctSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 1 and geolocale_taxon.geolocale_id = " + geolocaleId + " and rank=\"genus\"";
+        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 1 and geolocale_taxon.geolocale_id = " + geolocaleId + " and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int extinctGenera= 0;
         while (resultSet2.next()) {
             extinctGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 1 and geolocale_taxon.geolocale_id = " + geolocaleId + " and rank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 1 and geolocale_taxon.geolocale_id = " + geolocaleId + " and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int extinctSpecies = 0;
         while (resultSet2.next()) {
             extinctSpecies = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 0 and geolocale_taxon.geolocale_id = " + geolocaleId + " and rank=\"subfamily\"";
+        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 0 and geolocale_taxon.geolocale_id = " + geolocaleId + " and taxarank=\"subfamily\"";
         resultSet2 = stmt2.executeQuery(query);
         int extantSubfamily = 0;
         while (resultSet2.next()) {
             extantSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 0 and geolocale_taxon.geolocale_id = " + geolocaleId + " and rank=\"genus\"";
+        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 0 and geolocale_taxon.geolocale_id = " + geolocaleId + " and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int extantGenera = 0;
         while (resultSet2.next()) {
             extantGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 0 and geolocale_taxon.geolocale_id = " + geolocaleId + " and rank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 0 and geolocale_taxon.geolocale_id = " + geolocaleId + " and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int extantSpecies = 0;
         while (resultSet2.next()) {
             extantSpecies = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name  and geolocale_taxon.geolocale_id = " + geolocaleId + " and status='valid' and rank=\"subfamily\"";
+        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name  and geolocale_taxon.geolocale_id = " + geolocaleId + " and status='valid' and taxarank=\"subfamily\"";
         resultSet2 = stmt2.executeQuery(query);
         int validSubfamily = 0;
         while (resultSet2.next()) {
             validSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and geolocale_taxon.geolocale_id = " + geolocaleId + " and status='valid' and rank=\"genus\"";
+        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and geolocale_taxon.geolocale_id = " + geolocaleId + " and status='valid' and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int validGenera = 0;
         while (resultSet2.next()) {
             validGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and geolocale_taxon.geolocale_id = " + geolocaleId + " and status='valid' and rank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and geolocale_taxon.geolocale_id = " + geolocaleId + " and status='valid' and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int validSpecies = 0;
         while (resultSet2.next()) {
@@ -1412,6 +1465,127 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         // A.log("getProjectStatistics() statistics:" + statistics);                    
         return statistics;
     }
-    
+
+// Test ------------------
+
+    public String geolocaleTaxonFix() throws SQLException {
+        String message = " executed.";
+        message += geolocaleTaxonFixCountries();
+        message += geolocaleTaxonFixAdm1s();
+        return message;
+    }
+    public String geolocaleTaxonFixCountries() throws SQLException {
+        String message = "";
+        ArrayList<Geolocale> countries = GeolocaleMgr.getCountries();
+        Collections.sort(countries);
+        for (Geolocale geolocale : countries) {
+            // Hawaii and Galapagos Islands do exist within countries
+            message += fixGeolocaleTaxaSpeciesCount(geolocale);
+        }
+        return message;
+    }
+    public String geolocaleTaxonFixAdm1s() throws SQLException {
+        String message = "";
+        ArrayList<Geolocale> adm1s = GeolocaleMgr.getValidAdm1s();
+        Collections.sort(adm1s);
+        for (Geolocale geolocale : adm1s) {
+            if (geolocale.isLive())
+                message += fixGeolocaleTaxaSpeciesCount(geolocale);
+        }
+        return message;
+    }
+
+    private String fixGeolocaleTaxaSpeciesCount(Geolocale geolocale) throws SQLException {
+        String message = "";
+        ArrayList<TaxonSet> genusSetList = getTaxonSetList("genus", geolocale.getId());
+        for (TaxonSet taxonSet : genusSetList) {
+            //A.log("TaxonName:" + taxonSet.getTaxonName());
+            message += testGeolocaleTaxonSpeciesCount(geolocale, taxonSet.getTaxonName());
+        }
+        return message;
+    }
+
+    private String testGeolocaleTaxonSpeciesCount(Geolocale geolocale, String genusName) throws SQLException {
+        String message = "";
+        Statement stmt = null;
+        ResultSet rset = null;
+    //    String taxonName = "amblyoponinaemystrium";
+
+        int taxonSetCount = getGeolocaleTaxonCount(geolocale, genusName);
+
+        String query = "select geolocale_id, taxon_name, species_count, source, created from geolocale_taxon "
+                + "where taxon_name = '" + genusName + "'"
+                + " and geolocale_id = " + geolocale.getId()
+                + " and species_count != " + taxonSetCount;
+                ;
+        //A.log("testGeolocaleTaxon() query:" + query);
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "geolocalesTaxonTest()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                int geolocaleId = rset.getInt("geolocale_id");
+                String taxonName = rset.getString("taxon_name");
+                int speciesCount = rset.getInt("species_count");
+                String source = rset.getString("source");
+                String created = DateUtil.getFormatDateTimeStr(rset.getTimestamp("created"));
+                //http://localhost/antweb/taxonomicPage.do?rank=genus&countryName=Mayotte
+                message += " <br><br><a href='https://www.antweb.org/taxonomicPage.do?rank=genus&countryName=" + geolocale.getName() + "'>"
+                        + geolocale.getName() + "</a> " + taxonName + " speciesCount:" + speciesCount + " taxonSetCount:" + taxonSetCount
+                        + " source:" + source + " + created:" + created + "\n";
+
+                //s_log.warn("fixGeolocaleTaxonSpeciesCount() FIX TURNED OFF");
+                fixGeolocaleTaxonSpeciesCount(geolocale, taxonName, taxonSetCount);
+            }
+            //A.log("geolocalesTaxonTest() query:" + query);
+        } catch (SQLException e) {
+            s_log.error("geolocalesTaxonTest() for query:" + query + " e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, this, "geolocalesTaxonTest()");
+        }
+        return message;
+    }
+
+    private void fixGeolocaleTaxonSpeciesCount(Geolocale geolocale, String taxonName, int taxonSetCount) {
+        String dml = null;
+        Statement stmt = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "fixGeolocaleTaxonCount()");
+            dml = "update geolocale_taxon set species_count = " + taxonSetCount
+              + " where geolocale_id = " + geolocale.getId()
+              + " and taxon_name = '" + taxonName + "'";
+            stmt.executeUpdate(dml);
+        } catch (SQLException e) {
+            s_log.error("fixGeolocaleTaxonCount() e:" + e + " dml:" + dml);
+        } finally {
+            DBUtil.close(stmt, "fixGeolocaleTaxonCount()");
+        }
+    }
+
+    public int getGeolocaleTaxonCount(Geolocale geolocale, String parentTaxonName) throws SQLException {
+        String message = "";
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select count(*) count from geolocale_taxon where taxon_name in "
+                + " (select taxon_name from taxon where parent_taxon_name = '" + parentTaxonName + "') "
+                + " and geolocale_id = " + geolocale.getId()
+                ;
+        //A.log("testGeolocaleTaxon() query:" + query);
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getGeolocaleTaxonCount()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                return rset.getInt("count");
+            }
+            //A.log("geolocalesTaxonTest() query:" + query);
+        } catch (SQLException e) {
+            s_log.error("getGeolocaleTaxonCount() for query:" + query + " e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, this, "getGeolocaleTaxonCount()");
+        }
+        return 0;
+    }
+
         
 }

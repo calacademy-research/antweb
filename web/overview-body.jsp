@@ -23,11 +23,11 @@
     int year = today.get(java.util.Calendar.YEAR);
   
     Overview overview = OverviewMgr.getOverview(request);
+    String overviewType = overview.getTable();
 
     //A.log("overview-body.jsp overview:" + overview + " class:" + overview.getClass() ); // + " map:" + overview.getMap());
 
     Login accessLogin = LoginMgr.getAccessLogin(request);
-
 
     String mapType = "overview"; // Temporary. Used in googleMapInclude.jsp
 
@@ -156,7 +156,13 @@
 
 <br><b>Subfamilies:</b>&nbsp;<%= Formatter.commaFormat(overview.getSubfamilyCount()) %>
 <br><b>Genera:</b>&nbsp;<%= Formatter.commaFormat(overview.getGenusCount()) %>
-<br><b>Species/Subspecies:</b>&nbsp;<%= Formatter.commaFormat(overview.getSpeciesCount()) %>
+<% String speciesCountLink = Formatter.commaFormat(overview.getSpeciesCount());
+   if (overview instanceof Geolocale) {
+     Geolocale g = (Geolocale) overview;
+     if (LoginMgr.isAdmin(request)) speciesCountLink = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=countReport&num=" + g.getId() + "'>" + speciesCountLink + "</a>";
+   }
+%>
+<br><b>Species/Subspecies:</b>&nbsp;<%= speciesCountLink %>
 
 <% 
    String endemicCountHtml = "";
@@ -218,7 +224,7 @@
      }
      
      if (clause != null) {
-		 String specimenSearchUrl = "/advancedSearch.do?searchMethod=advancedSearch&advanced=true" + clause;
+		 String specimenSearchUrl = "/advancedSearch.do?searchMethod=advancedSearch&advanced=true" + clause + "&resultRank=specimen";
          String speciesSearchUrl = specimenSearchUrl + "&resultRank=species";
      	 out.println("<br><br>");
      	 
@@ -285,6 +291,9 @@ Images:
 
 	   if (isGeolocale) {
 		 out.println("Parent: " + geolocale.getParent());
+         if (geolocale.isIsland()) {
+        	out.println("<br>Country: " + geolocale.getCountry());
+         }
 		 out.println("<br>Bioregion: " + geolocale.getBioregion());
 		 out.println("<br>Alt Bioregion: " + geolocale.getAltBioregion());
 		 out.println("<br><b>Geo Data</b>");
@@ -295,13 +304,14 @@ Images:
 		 out.println("<br>&nbsp;&nbsp;Bounding Box (Fixed): " + geolocale.getBoundingBoxFixed());
 		 out.println("<br>&nbsp;&nbsp;&nbsp;&nbsp;<b>Use</b>: " + geolocale.useBoundingBox());
 		 //out.println("<br><b>Admin Notes</b>: " + geolocale.getAdminNotes());
-		 
 	   }
-
 	   if (LoginMgr.isAdmin(request)) { %>
-         <%= overview.getCountCrawlLink() %> (Recalculate the counts for taxa and images in the Taxa tab).
-         <br><%= overview.getRecalcLink() %> (Recalculate overview:<%= overview.getKeyStr() %> and make the charts.)
-         <br><%= overview.getGoogleMapFunctionLink() %><%= overview.getGoogleMapFunctionLinkDesc() %>	
+         <br><b><%= overview.getRecalcLink() %></b> (Includes count crawl. Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
+         <% if ("geolocale".equals(overviewType)) { %>
+         <br><b><%= overview.getGoogleMapFunctionLink() %></b><%= overview.getGoogleMapFunctionLinkDesc() %>
+         <% } %>
+         <br><b><a href='<%= AntwebProps.getDomainApp() %>/util.do?action=reloadAntwebMgr&name=<%= overviewType %>'>Reload Overview Manager</a></b> (Server-wide. Should not be needed. Takes ~8 seconds.)
+	     <br>
 	<% }
     }
 
@@ -314,7 +324,6 @@ Images:
 	  if (isGeolocale) {
 		out.println("<br>Prefer Link: <a href='" + geolocale.getThisPageTarget() + "'> /" + geolocale.getThisPageTarget() + "</a>");
 		out.println("<br>Alt Link: <a href='" + geolocale.getAltThisPageTarget() + "'> /" + geolocale.getAltThisPageTarget() + "</a>");
-		out.println("<br>Parent: " + geolocale.getParent());    
 	  }
 	} %>
 
@@ -449,6 +458,8 @@ if (!HttpUtil.isBot(request)) {
           AntwebUtil.log("overview-body.jsp overview:" + mapType + " name:" + overview.getName());
         }
         //objectName is set above	
+
+A.log("mapType:" + mapType);
     %>
         <div class="left">
           <div class="small_map">

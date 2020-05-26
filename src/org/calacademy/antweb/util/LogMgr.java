@@ -82,9 +82,9 @@ public class LogMgr {
       , "longRequest.log", "messages.txt", "moveTaxonAndSupportingTaxa.log", "nonWorldAntsDeleted.txt"
       , "noExists.txt", "notFound.txt", "profile.log", "queryStats.log", "searches.txt"
       , "serverBusy.html", "serverBusy.log", "speciesListLog.txt", "invalid.log", "hacks.log"
-      , "badRequest.log"}; 
+      , "badRequest.log", "srfExceptions.jsp"};
   
-    String dateStr = DateUtil.getWebFormatDateTimeStr();
+    String dateStr = DateUtil.getFormatDateTimeStr();
   
     String yearStr = dateStr.substring(0,4);
   
@@ -110,6 +110,7 @@ public class LogMgr {
         logsNotFound += fileToMove + ", ";      
       }
     }
+
     if (!"".equals(logsNotFound)) 
       s_log.warn("archiveLogs() logsNotFound:" + logsNotFound.substring(0, logsNotFound.length() - 2) + ".");
 

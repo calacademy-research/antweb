@@ -10,6 +10,8 @@
 	}
 
 	String introducedMap = child.getIntroducedMap();
+
+    //A.log("distStatus.jsp intrdocuedMap:" + introducedMap);
 	boolean isIntroduced = false;
 
 	if (introducedMap != null) {

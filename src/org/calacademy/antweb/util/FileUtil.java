@@ -127,8 +127,9 @@ public class FileUtil {
       return content;
   }
   
-  public static void makeDir(String dirName) {
+  public static boolean makeDir(String dirName) {
       boolean success = (new File(dirName)).mkdir();
+      return success;
   }
 
     public static String getFileAttributesHtml(String path) {
@@ -146,7 +147,7 @@ public class FileUtil {
         fileData += "<br><b>size:</b> " + attr.size();
         return fileData;
       } catch (IOException e) {
-        A.log("getFileAttributesHtml() e:" + e);
+        s_log.error("getFileAttributesHtml() e:" + e);
       }
       //A.log("getFileAttributesHtml() fileData:" + fileData);
       return fileData;

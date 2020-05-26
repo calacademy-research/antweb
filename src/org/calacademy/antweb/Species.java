@@ -63,7 +63,7 @@ of "myrmicinaecrematogaster sabatra", returning no description records.
 		  + " genus ='" + AntFormatter.escapeQuotes(genus) + "'"
 		  + " and species ='" + AntFormatter.escapeQuotes(species) + "'" 
 		  // + " and status = 'valid'"
-		  + " and rank = \"species\"";
+		  + " and taxarank = 'species'";
 
             // theQuery += " and proj_taxon.project_name = '" + project + "'";
             //if (AntwebProps.isDevMode()) s_log.info("setTaxonomicInfo() theQuery:" + theQuery);
@@ -132,7 +132,7 @@ these other _cf1 etc.
             + " where taxon.subfamily = '" + getSubfamily() + "'"
             + "   and taxon.genus = '" + getGenus() + "'"
             + "   and taxon.species = '" + getSpecies() + "'"
-            + "   and taxon.rank = 'subspecies'"
+            + "   and taxon.taxarank = 'subspecies'"
             + "   and taxon.status = 'valid'"
           ;
         stmt = DBUtil.getStatement(getConnection(), "getSeeAlsoSiblingSubspecies()"); 
@@ -412,8 +412,13 @@ these other _cf1 etc.
     public static int count = 0;
     public static String a1 = "";
     public static String a2 = "";
-        
-	public void sortBy(String fieldName) {	
+
+    public void sortBy(String fieldName) {
+        sortBy(fieldName, "up");
+    }
+	public void sortBy(String fieldName, String sortOrder) {
+
+        //AntwebUtil.logStackTrace();
 /*
 Required: Legacy Merge Sort: true
 
@@ -424,37 +429,49 @@ To fix this proper would involve rewriting Species.sort()
 	
 	    //s_log.warn("sortBy() field		:" + fieldName + " children:" + children);
 
-try {
+        A.log("sortBy() fieldName:" + fieldName);
+
+      try {
 
 	    if (fieldName.equals("bioregion")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
 	                return CompareUtil.compareString(((Specimen) o1).getBioregion(), ((Specimen) o2).getBioregion());
 	            }
 	        });
 		} if (fieldName.equals("code")) {
 			Collections.sort(children, new Comparator(){
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getCode(), ((Specimen) o2).getCode());	
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getCode(), ((Specimen) o2).getCode());
 	            }
 	        });	        
 		} else if (fieldName.equals("collectedby")) {
 			Collections.sort(children, new Comparator(){
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getCollectedBy(), ((Specimen) o2).getCollectedBy());   
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getCollectedBy(), ((Specimen) o2).getCollectedBy());
 	            }
 	        });
-	    
-		} else if (fieldName.equals("caste")) {
-			Collections.sort(children, new Comparator(){				 
-	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getCaste(), ((Specimen) o2).getCaste());	
-	            }	 
-	        });		
+		  // Caste actually sorts by caste+subcaste
+          } else if (fieldName.equals("caste")) {
+              Collections.sort(children, new Comparator() {
+                  public int compare(Object o1, Object o2) {
+                      if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                      Specimen specimenO1 = (Specimen) o1;
+                      Specimen specimenO2 = (Specimen) o2;
+                      String casteSubcasteO1 = specimenO1.getCaste() + specimenO1.getSubcaste();
+                      String casteSubcasteO2 = specimenO2.getCaste() + specimenO1.getSubcaste();
+                      // 2nd one first because reverse order
+                      return CompareUtil.compareString(casteSubcasteO2, casteSubcasteO1);
+                  }
+              });
 	    } else if (fieldName.equals("collection")) {
 			Collections.sort(children, new Comparator(){
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getCollectionCode(), ((Specimen) o2).getCollectionCode());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getCollectionCode(), ((Specimen) o2).getCollectionCode());
 	            }
 	        });
 		} else if (fieldName.equals("country")) {
@@ -462,11 +479,11 @@ try {
 			Collections.sort(children, new Comparator(){			 
 	            public int compare(Object o1, Object o2) {
 	                ++count;
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
                     a1 = ((Specimen) o1).getCountry();
                     a2 = ((Specimen) o2).getCountry();
-                    
-                    if (a1 == null && a2 == null) return 0;
-	                int c = CompareUtil.compareString(((Specimen) o1).getCountry(), ((Specimen) o2).getCountry());	            
+
+	                int c = CompareUtil.compareString(a1, a2);
                     //A.log("sort() count:" + count + " o1:" + ((Specimen) o1).getCountry() + " o2:" +  ((Specimen) o2).getCountry());
 	                return c;
 	            }
@@ -474,137 +491,162 @@ try {
 		} else if (fieldName.equals("databy")) {
 			Collections.sort(children, new Comparator(){			 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getGroup().getName(), ((Specimen) o2).getGroup().getName());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getGroup().getName(), ((Specimen) o2).getGroup().getName());
 	            }
 	        });
 		} else if (fieldName.equals("datecollected")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getDateCollectedStart(), ((Specimen) o2).getDateCollectedStart());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getDateCollectedStart(), ((Specimen) o2).getDateCollectedStart());
 	            }
 	        });
 		} else if (fieldName.equals("determinedby")) {
 	 		Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getDeterminedBy(), ((Specimen) o2).getDeterminedBy());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getDeterminedBy(), ((Specimen) o2).getDeterminedBy());
 	            }
 	        });
 		} else if (fieldName.equals("dna")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getDnaExtractionNotes(), ((Specimen) o2).getDnaExtractionNotes());	            
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    // 2nd one first because reverse order.
+                    return CompareUtil.compareString(((Specimen) o2).getDnaExtractionNotes(), ((Specimen) o2).getDnaExtractionNotes());
 	            }
 	        });
 		} else if (fieldName.equals("elevation")) {
 			Collections.sort(children, new Comparator(){		 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareIntString(((Specimen) o1).getElevation(), ((Specimen) o2).getElevation());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    // 2nd one first because reverse order.
+                    return CompareUtil.compareIntString(((Specimen) o2).getElevation(), ((Specimen) o1).getElevation());
 	            }
 	        });
 		} else if (fieldName.equals("habitat")) {
 			Collections.sort(children, new Comparator(){
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getHabitat(), ((Specimen) o2).getHabitat());	            
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    // 2nd one first because reverse order.
+                    return CompareUtil.compareString(((Specimen) o2).getHabitat(), ((Specimen) o1).getHabitat());
 	            }
 	        });	  
 		} else if (fieldName.equals("images")) {
 			Collections.sort(children, new Comparator(){			 
 	            public int compare(Object o1, Object o2) {
-		            A.log("Species.sortBy() o1:" + o1 + " c1:" + ((Specimen) o1).getImageCount() + " o2:" + o2 + " c2:" + ((Specimen) o2).getImageCount());
+		            //A.log("Species.sortBy() o1:" + o1 + " c1:" + ((Specimen) o1).getImageCount() + " o2:" + o2 + " c2:" + ((Specimen) o2).getImageCount());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    // 2nd one first because reverse order.
 	                return CompareUtil.compareInt(((Specimen) o2).getImageCount(), ((Specimen) o1).getImageCount());
 	            }
 	        });	              
 		} else if (fieldName.equals("latitude")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareFloat(((Specimen) o1).getDecimalLatitude(), ((Specimen) o2).getDecimalLatitude());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    // 2nd one first because reverse order.
+                    return CompareUtil.compareFloat(((Specimen) o2).getDecimalLatitude(), ((Specimen) o1).getDecimalLatitude());
 	            }
 	        });
 		} else if (fieldName.equals("lifestage")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
 					String ls1 = ((Specimen) o1).getLifeStage();
 					String ls2 = ((Specimen) o2).getLifeStage();
-
-                    if (ls1 == null && ls2 == null) return 0;
-
-                    int retVal = CompareUtil.compareString(ls1, ls2);
+                    // 2nd one first because reverse order
+                    int retVal = CompareUtil.compareString(ls2, ls1);
                     //A.log("Species.sortBy() retVal:" + retVal + " o1:" + o1 + " ls1:" + ((Specimen) o1).getLifeStage() + " o2:" + o2 + " ls2:" + ((Specimen) o2).getLifeStage());
 	                return retVal;  
 	            }
 	        });
-		} else if (fieldName.equals("locality")) {
+		} else if (fieldName.equals("location")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getLocalityString(), ((Specimen) o2).getLocalityString());	
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getLocalityString(), ((Specimen) o2).getLocalityString());
 	            }
 	        });
 		} else if (fieldName.equals("locatedat")) {
 			Collections.sort(children, new Comparator(){		 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getLocatedAt(), ((Specimen) o2).getLocatedAt());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getLocatedAt(), ((Specimen) o2).getLocatedAt());
 	            }
 	        });		
 		} else if (fieldName.equals("longitude")) {
 			Collections.sort(children, new Comparator(){		 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareFloat(((Specimen) o1).getDecimalLongitude(), ((Specimen) o2).getDecimalLongitude());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    // 2nd one first because reverse order.
+                    return CompareUtil.compareFloat(((Specimen) o2).getDecimalLongitude(), ((Specimen) o1).getDecimalLongitude());
 	            }
 	        });	        
 		} else if (fieldName.equals("medium")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getMedium(), ((Specimen) o2).getMedium());	            
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getMedium(), ((Specimen) o2).getMedium());
 	            }
 	        });	        
 		} else if (fieldName.equals("method")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getMethod(), ((Specimen) o2).getMethod());	            
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getMethod(), ((Specimen) o2).getMethod());
 	            }
 	        });	 
 		} else if (fieldName.equals("microchabitat")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getMicrohabitat(), ((Specimen) o2).getMicrohabitat());	            
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    // 2nd one first because reverse order.
+                    return CompareUtil.compareString(((Specimen) o2).getMicrohabitat(), ((Specimen) o1).getMicrohabitat());
 	            }
 	        });
 		} else if (fieldName.equals("museum")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getMuseumCode(), ((Specimen) o2).getMuseumCode());
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getMuseumCode(), ((Specimen) o2).getMuseumCode());
 	            }
 	        });
-		} else if (fieldName.equals("name")) {
+		} else if (fieldName.equals("taxonname")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getFullName(), ((Specimen) o2).getFullName());	
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getFullName(), ((Specimen) o2).getFullName());
 	            }
 	        });	        
 		} else if (fieldName.equals("ownedby")) {
 			Collections.sort(children, new Comparator(){				 
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getOwnedBy(), ((Specimen) o2).getOwnedBy());	            
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    return CompareUtil.compareString(((Specimen) o1).getOwnedBy(), ((Specimen) o2).getOwnedBy());
 	            }
 	        });		
 		} else if (fieldName.equals("specimennotes")) {
 			Collections.sort(children, new Comparator(){
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getSpecimenNotes(), ((Specimen) o2).getSpecimenNotes());	
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    // 2nd one first because reverse order.
+                    return CompareUtil.compareString(((Specimen) o2).getSpecimenNotes(), ((Specimen) o1).getSpecimenNotes());
 	            }	 
 	        });
 		} else if (fieldName.equals("type")) {
 			Collections.sort(children, new Comparator(){
 	            public int compare(Object o1, Object o2) {
-	                return CompareUtil.compareString(((Specimen) o1).getTypeStatus(), ((Specimen) o2).getTypeStatus());	
+                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
+                    // 2nd one first because reverse order.
+                    return CompareUtil.compareString(((Specimen) o2).getTypeStatus(), ((Specimen) o1).getTypeStatus());
 	            }	 
 	        });
 		}	
-} catch (IllegalArgumentException e) {
-    A.log("sort() a1:" + a1 + " a2:" + a2 + " e:" + e);
-}
-		  	              
+      } catch (IllegalArgumentException e) {
+        s_log.warn("sortBy() a1:" + a1 + " a2:" + a2 + " e:" + e);
+      }
 	}  
 	
      /* These two methods are for the automated generation of authority files. */

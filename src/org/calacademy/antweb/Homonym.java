@@ -166,7 +166,7 @@ public class Homonym extends Taxon implements Serializable {
 
             theQuery = "select distinct kingdom_name, phylum_name, class_name, order_name " 
               + ", family, subfamily, genus, subgenus, speciesgroup, species " 
-              + ", rank, type, status, author_date "
+              + ", taxarank, type, status, author_date "
               + " from homonym "
               + " where 1 = 1 " 
               + subfamilyClause
@@ -210,7 +210,7 @@ public class Homonym extends Taxon implements Serializable {
                 val = rset.getString("species");
                 if (Utility.notBlank(val)) setSpecies(val);
 
-                val = rset.getString("rank");
+                val = rset.getString("taxarank");
                 if (Utility.notBlank(val)) setRank(rank);
                 
                 setIsType((rset.getInt("type") == 1) ? true : false);            

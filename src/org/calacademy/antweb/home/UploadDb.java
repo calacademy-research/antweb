@@ -447,7 +447,7 @@ public class UploadDb extends AntwebDb {
         Timestamp firstUpload = getFirstUploadDate(accessGroup.getId()); 
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateUpload()");            
-            dml = "update groups set first_specimen_upload = '" + firstUpload + "', upload_count = " + uploadCount + " where id = " + accessGroup.getId();  
+            dml = "update ant_group set first_specimen_upload = '" + firstUpload + "', upload_count = " + uploadCount + " where id = " + accessGroup.getId();
             //A.log("updateGroup insert:" + dml);
             stmt.executeUpdate(dml);
         } catch (SQLException e) {
@@ -599,7 +599,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         //new TaxonDb(getConnection()).delete(taxonName);
         if (new TaxonDb(getConnection()).isExists(taxonName)) return 0;
         
-        dml = "insert into taxon (taxon_name, family, subfamily, genus, rank, source, insert_method, status, access_group) " 
+        dml = "insert into taxon (taxon_name, family, subfamily, genus, taxarank, source, insert_method, status, access_group) "
             + " values ('" + taxonName + "', '" + family + "', '" + subfamily + "', '" + genus + "', 'genus', '" 
             + source + "', '" + insertMethod + "', '" + status + "', " + groupId + ")";
 
@@ -631,7 +631,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         //new TaxonDb(getConnection()).delete(taxonName);
         if (new TaxonDb(getConnection()).isExists(taxonName)) return 0;
 
-        dml = "insert into taxon (taxon_name, family, subfamily, rank, source, insert_method, parent_taxon_name, status) " 
+        dml = "insert into taxon (taxon_name, family, subfamily, taxarank, source, insert_method, parent_taxon_name, status) "
             + " values ('" + taxonName + "', '" + family + "', '" + subfamily + "', 'subfamily', '" 
             + source + "', '" + insertMethod + "', '" + family + "', '" + status + "')";            
         //A.log("insertSubfamily() insert dml:" + dml);
@@ -659,7 +659,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
       if (s_extantIndetSubfamilies == null) {
         s_extantIndetSubfamilies = new ArrayList<String>();
         String query = "select distinct subfamily from taxon " 
-            + " where rank = 'subfamily'"
+            + " where taxarank = 'subfamily'"
             + " and taxon_name like '(%'";
         Statement stmt = null;
         ResultSet rset = null;
@@ -682,7 +682,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
       throws SQLException
     {
         String subfamily = "";
-        String query = "select distinct subfamily from taxon where genus = '" + genus + "' and rank = 'genus'";
+        String query = "select distinct subfamily from taxon where genus = '" + genus + "' and taxarank = 'genus'";
         Statement stmt = null;
         ResultSet rset = null;
         try {

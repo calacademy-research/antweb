@@ -45,10 +45,10 @@ public class MessageMgr {
     public void flag(String key) {
       //A.log("MessageMgr.flag() key:" + key);
       if (flags.get(key) == null) {
-        flags.put(key, new Integer(1));
+        flags.put(key, Integer.valueOf(1));
       } else {
         Integer v = flags.get(key);
-        flags.put(key, new Integer(v+1));
+        flags.put(key, Integer.valueOf(v+1));
       }
     }
 
@@ -95,7 +95,11 @@ public class MessageMgr {
     public static final String invalidColumn = "invalidColumn";
     public static final String notValidAdm1 = "notValidAdm1";
     //public static final String noCasteNotes = "noCasteNotes";  
-    public static final String unrecognizedCaste = "unrecognizedCaste";    
+    public static final String unrecognizedCaste = "unrecognizedCaste";
+    public static final String invalidDateCollectedStart = "invalidDateCollectedStart";
+    public static final String invalidDateCollectedEnd = "invalidDateCollectedEnd";
+    public static final String invalidDateDetermined = "invalidDateDetermined";
+
     public static final String makeTaxonNameError = "makeTaxonNameError";
     public static final String correctedBioregion = "correctedBioregion";
     public static final String latLonNotInCountryBounds = "latLonNotInCountryBounds";
@@ -161,6 +165,9 @@ public class MessageMgr {
       testList.add(new Test(notValidAdm1, STR, "<b>Not <a href='http://geonames.nga.mil/namesgaz/'>valid</a> Antweb adm1</b>"));
       //testList.add(new Test(noCasteNotes, STR, "<b>No life stage/sex data. Undiscernable <a href='" + AntwebProps.getDomainApp() + "/casteDisplayPage.do'>caste</a></b>"));
       testList.add(new Test(unrecognizedCaste, STR, "<b>Unrecognized Caste</b>")); // Not a recognized <a href='" + AntwebProps.getDomainApp() + "/casteList.do'>caste</a>
+      testList.add(new Test(invalidDateCollectedStart, STR, "<b>Invalid Date Collected Start</b>"));
+      testList.add(new Test(invalidDateCollectedEnd, STR, "<b>Invalid Date Collected End</b>"));
+      testList.add(new Test(invalidDateDetermined , STR, "<b>Invalid Date Determined</b>"));
       testList.add(new Test(makeTaxonNameError, STR, "<b>Error constructing taxon name <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(latLonNotInCountryBounds, STR, "<b>Lat/Long not within country's bounds</b>", "red"));
       testList.add(new Test(latLonNotInAdm1Bounds, STR, "<b>Lat/Long not within adm1's bounds</b>", "red"));
@@ -190,8 +197,6 @@ public class MessageMgr {
       testList.add(new Test(invalidSpeciesName, SET, "<b>Invalid species name <font color=red>(not uploaded)</font></b>"));
 
       testList.add(new Test(specialCharacterFound, SET, "<b>Special Character Found <font color=red>(not uploaded)</font></b>"));
-
-      //testList.add(new Test(, SET, ""));
     }      
     
     public static String getMessageDisplay(String key) {

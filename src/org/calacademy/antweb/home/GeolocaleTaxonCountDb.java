@@ -24,45 +24,74 @@ public class GeolocaleTaxonCountDb extends CountDb {
       super(connection);
     }
 
+    /*
     public void countCrawls() throws SQLException {
       childrenCountCrawl();
-      imageCountCrawl();          
+      //imageCountCrawl();
     }
 
+    public static boolean s_reported = false;
     public void countCrawls(int geolocaleId) throws SQLException {
       childrenCountCrawl(geolocaleId);
-      if (!AntwebProps.isDevMode())
-        imageCountCrawl(geolocaleId);          
+
+      if (true) { // !AntwebProps.isDevMode()) {
+          imageCountCrawl(geolocaleId);
+      } else {
+          if (!s_reported) {
+              s_reported = true;
+              A.log("countCrawls() OPTIMIZATION. imageCountCrawl omit on dev.");
+          }
+      }
     }
-    
+*/
+
+    // For debugging: http://localhost/antweb/utilData.do?action=countReport&num=768  (geolocaleId)
+    public String countReport(int geolocaleId) throws SQLException {
+        return childrenCountReport(geolocaleId);
+        //imageCountCrawl(geolocaleId);
+    }
+
 
     // ------------------------- Countable_ Child Count Crawl ----------------------------
 
      public void childrenCountCrawl() 
        throws SQLException {
-         s_log.warn("startChildrenCountCrawl()");
+         //s_log.warn("startChildrenCountCrawl()");
           ArrayList<Geolocale> geolocales = GeolocaleMgr.getLiveGeolocales();
           for (Geolocale geolocale : geolocales) {
+            if (geolocale.isIsland()) A.log("childrenCountCrawl() island geolocale:" + geolocale);
             if (geolocale.getIsValid()) {
               childrenCountCrawl(geolocale);
             }
           }
      }
 
-     public void childrenCountCrawl(int geolocaleId)
-       throws SQLException {
+     public void childrenCountCrawl(int geolocaleId) throws SQLException {
           //s_log.warn("startChildrenCountCrawl(" + geolocaleId + ")");
           Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
           if (geolocale == null) {
-            s_log.warn("childrenCountCrawl() geolocaleId:" + geolocaleId + " geolocale is null. Failed to initialize?");
-            
-            //return;
+            s_log.warn("childrenCountCrawl() geolocaleId:" + geolocaleId + " is null. Failed to initialize?");
+            return;
           }
           if (geolocale.getIsValid()) {
             childrenCountCrawl(geolocale);
           }
      }
-     
+
+    // For debugging: http://localhost/antweb/utilData.do?action=countReport&num=768  (geolocaleId)
+    public String childrenCountReport(int geolocaleId) throws SQLException {
+        //s_log.warn("startChildrenCountCrawl(" + geolocaleId + ")");
+        Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
+        if (geolocale == null) {
+            String message = "childrenCountReport() geolocaleId:" + geolocaleId + " is null. Failed to initialize?";
+            s_log.warn(message);
+            return message;
+        }
+        if (geolocale.getIsValid()) {
+            return childrenCountReport(geolocale);
+        }
+        return null;
+    }
      
     // ------------------------- Countable_Taxon Image Count Crawl ----------------------------
 

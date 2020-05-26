@@ -212,7 +212,7 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
         overviewCriteria = " and specimen.adm1 = '" + getName() + "'";
       }
       if (this instanceof Country) {
-        overviewCriteria = " and specimen.country = '" + getName() + "'";
+        overviewCriteria = " and (specimen.country = '" + getName() + "' or specimen.island_country = '" + getName() + "')";
       }
       if (this instanceof Museum) {
         overviewCriteria = " and specimen.museum = '" + ((Museum) this).getCode() + "'";

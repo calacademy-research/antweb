@@ -2,19 +2,24 @@ $(function () {
 
 $(".specimen_layout:odd").addClass("specimen_layout_alt");
 
+console.log("specimen_list.js");
+
 $('#sortBy_select').on('change', function () { 
     var action = $("#sortby_action").val();
-    var thesort = $(this).val(); 
+    var thesort = $(this).val();
+
     if ($("#ns_sortby_extras").length>0) {
-        var theextras = $("#ns_sortby_extras").val(); 
+        var theextras = $("#ns_sortby_extras").val();
     } else {
         var theextras = $("#sortby_extras").val(); 
     }
-    var thetool = $("#show_tool").val(); 
-    var goto = action + "?" + theextras + "&sortBy=" + thesort + "&t=" + thetool; 
-    if (thesort != '') { 
+
+    var thetool = $("#show_tool").val();
+    var goto = action + "?" + theextras + "&sortBy=" + thesort + "&t=" + thetool;
+    if (thesort != '') {
         window.location = goto; 
     }
+    //console.log("specimen_list.js action:" + action + " thesort:" + thesort + " theextras:" + theextras + " goto:" + goto);
     return false;
 });
 

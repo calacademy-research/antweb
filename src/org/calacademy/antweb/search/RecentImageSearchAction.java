@@ -60,7 +60,7 @@ public final class RecentImageSearchAction extends Action {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            String theQuery = "select distinct name from groups";
+            String theQuery = "select distinct name from ant_group";
 
             javax.sql.DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "RecentImageSearchAction.getSearchResults()");

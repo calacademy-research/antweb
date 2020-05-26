@@ -35,7 +35,7 @@ public final class AncEditAction extends Action {
 		HttpSession session = request.getSession();
 		AncFile inSessionPage = (AncFile) session.getAttribute("ancFile");
 		
-		int id = new Integer(request.getParameter("id")).intValue();
+		int id = Integer.valueOf(request.getParameter("id")).intValue();
 		
 		if ((inSessionPage != null) && (inSessionPage.getId() != id)) inSessionPage = null;
 

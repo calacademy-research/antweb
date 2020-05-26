@@ -179,7 +179,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
         int thisChosen = 0;
   
         for (String chosenListNext : chosenList) {
-            thisChosen = (new Integer(chosenListNext)).intValue();
+            thisChosen = (Integer.valueOf(chosenListNext)).intValue();
             thisItem = (ResultItem) theTaxa.get(thisChosen);
             for (ResultItem resultItem : searchResults) {
                 if (thisItem.getSpecies().equals(resultItem.getSpecies())

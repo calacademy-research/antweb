@@ -152,6 +152,10 @@ public class Login implements Comparable {
     public void setProjects(ArrayList<SpeciesListable> projects) {
         this.projects = projects;
     }
+    public int getProjectCount() {
+        if (getProjects() == null) return 0;
+        return getProjects().size();
+    }
     // Convenience method:
     public ArrayList<String> getProjectNames() {
         ArrayList<String> projectNames = new ArrayList<String>();
@@ -196,7 +200,11 @@ public class Login implements Comparable {
         return countries;
     }
     public void setCountries(ArrayList<SpeciesListable> countries) {
-        this.countries = countries;
+         this.countries = countries;
+    }
+    public int getCountryCount() {
+        if (getCountries() == null) return 0;
+        return getCountries().size();
     }
     // Convenience method:
     public ArrayList<String> getCountryNames() {
@@ -217,13 +225,21 @@ public class Login implements Comparable {
     public void setGeolocales(ArrayList<SpeciesListable> geolocales) {
         this.geolocales = geolocales;
     }    
+    public int getGeolocaleCount() {
+        if (getGeolocales() == null) return 0;
+        return getGeolocales().size();
+    }
 
     // This is used in the drop down lists of the curate page and the Species List Tool
     public ArrayList<SpeciesListable> getSpeciesListList() {
-      ArrayList<SpeciesListable> speciesLists = new ArrayList<SpeciesListable>();
-      speciesLists.addAll(getProjects());
-      speciesLists.addAll(getGeolocales());
-      return speciesLists;    
+        ArrayList<SpeciesListable> speciesLists = new ArrayList<SpeciesListable>();
+        if (getProjects() != null) {
+            speciesLists.addAll(getProjects());
+        }
+        if (getGeolocales() != null) {
+            speciesLists.addAll(getGeolocales());
+        }
+        return speciesLists;
     }
     
     public Date getCreated() {
@@ -243,8 +259,8 @@ public class Login implements Comparable {
 
     public String toString() {
       return "Login id:" + id + " name:" + name + " email:" + email + " groupId:" + groupId 
-        + " isAdmin:" + isAdmin + " isUploadImages:" + isUploadImages + " isUploadSpecimens:" + isUploadSpecimens 
-        + " projects:" + projects;
+        + " admin:" + isAdmin + " curator:" + isCurator() + " isUploadImages:" + isUploadImages + " isUploadSpecimens:" + isUploadSpecimens
+        + " p:" + getProjectCount() + " c:" + getCountryCount() + " g:" + getGeolocaleCount();
     }
 
 

@@ -62,7 +62,7 @@ public class Subfamily extends Family implements Serializable {
 			 + " where " 
 			//+ " taxon.taxon_name = proj_taxon.taxon_name and ";
 		 + " subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'"
-		 + " and rank = 'subfamily'";
+		 + " and taxarank = 'subfamily'";
 		 // and status = 'valid' ";
 
 		if (AntwebProps.isDevMode()) {
@@ -77,31 +77,6 @@ public class Subfamily extends Family implements Serializable {
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
     }
-
-/*
-    public void setTaxonomicInfo(int geolocaleId)  throws SQLException {
-
-		String theQuery = null;
-
-		theQuery = "select distinct taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name, taxon.family " 
-			+ " from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and ";
-		theQuery += " taxon.subfamily='" + AntFormatter.escapeQuotes(subfamily) + "'"
-		 + " and taxon.rank = 'subfamily'";
-		 // and status = 'valid' ";
-
-		if (AntwebProps.isDevMode()) {
-		  s_log.warn("setTaxonomicInfo(int) family:" + family + " subfamily:" + subfamily + " query:" + theQuery);
-		  //AntwebUtil.logStackTrace();
-		}
-		
-		if (geolocaleId > 0) {
-			theQuery = theQuery + " and geolocale_taxon.geolocale_id = " + geolocaleId;
-		}
-
-		GeolocaleTaxonDb taxonSetDb = new GeolocaleTaxonDb(connection);
-		taxonSetDb.setTaxonomicInfo(theQuery, this);
-    }
-*/
 
     protected String getThisWhereClause() {
       return getThisWhereClause("");
@@ -128,7 +103,7 @@ public class Subfamily extends Family implements Serializable {
                 + fetchChildrenClause
                 + " and taxon.subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'" 
                 + " and taxon.genus != '' " 
-                + " and rank = 'genus' "
+                + " and taxarank = 'genus' "
                 + statusSet.getAndCriteria()
                 ;
             

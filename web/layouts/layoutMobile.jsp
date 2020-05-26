@@ -188,9 +188,13 @@ if ($.cookie('thumbs')) {
 } else {
     $.cookie('thumbs', 'h', { path: '/', expires: 365 });
 }
-<% if (request.getParameter("sortBy") !=null) { %>
+<% if (request.getParameter("sortBy") !=null) {
+    // was (but then added sort: String sortByExtras = HttpUtil.getQueryStringNoQuestionMark(request);
+    String targetMinusSort = HttpUtil.getTargetMinusParam(request, "sortOrder");
+    String sortByExtras = HttpUtil.getAfterQuestionMark(targetMinusSort);
+%>
 $(function() {
-    var full_query = '<%= HttpUtil.getQueryStringNoQuestionMark(request) %>';
+    var full_query = '<%= sortByExtras %>';
     var regex = '[?&]sortBy=([^&]*)'; 
     var regex2 = '[?&]t=([^&]*)'; 
     var re = new RegExp(regex, "g");

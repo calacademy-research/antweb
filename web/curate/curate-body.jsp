@@ -425,11 +425,14 @@ Upload Curator File
 
        <html:option value="worldants">Bolton World Catalog</html:option>
 
-	<% for (SpeciesListable p : projList) { %>
-     <%  if (!p.getName().equals("globalants")) { %>
+	<% if (projList != null) {
+	     for (SpeciesListable p : projList) { %>
+     <%    if (!p.getName().equals("globalants")) { %>
            <html:option value="<%= p.getName() %>"><%= p.getTitle() %></html:option>
-      <% } %>  	 
-	<% } %>
+      <%   } 
+	     }
+	   } 
+	%>
 
   </html:select>
             </div>
@@ -589,9 +592,12 @@ function goToFiles() {
                     <option value="< %= domainApp % >/editHomePage.do">AntWeb Home Page</option>
                 < % } % -->
 
-                <% for (SpeciesListable p : projList) { %>
+                <% if (projList != null) {
+                     for (SpeciesListable p : projList) { %>
                   <option value="<%= domainApp %>/editProject.do?projectName=<%= p.getName() %>"><%= p.getTitle() %></option>
-                <% } %>
+                <%   } 
+                   }
+                %>
 
               </select>
             </div> 
@@ -616,13 +622,16 @@ function goToFiles() {
                     <option value="<%= domainApp %>/homepage/">AntWeb Home Page</option>
                 <% } %>
 
-                <% for (SpeciesListable s : projList) { 
-                     Project p = ProjectMgr.getProject(s.getName());
-                     if (p == null) {
-                       //A.log("curate-body.jsp 1 p is null for:" + s.getName());
-                     } else { %>
-                       <option value="<%= domainApp %>/<%= Project.getSpeciesListDir() %><%= p.getRoot() %>"><%= p.getTitle() %></option>
-                  <% } } %>
+                <% if (projList != null) {
+                     for (SpeciesListable s : projList) { 
+                       Project p = ProjectMgr.getProject(s.getName());
+                       if (p == null) {
+                         //A.log("curate-body.jsp 1 p is null for:" + s.getName());
+                       } else { %>
+                         <option value="<%= domainApp %>/<%= Project.getSpeciesListDir() %><%= p.getRoot() %>"><%= p.getTitle() %></option>
+                    <% } 
+                     } 
+                   } %>
     
               </select>
             </div> 
@@ -654,14 +663,15 @@ function goToFiles() {
 		<html:option value="homepage">AntWeb Home Page</html:option>
 <% } %>
 
-	<% for (SpeciesListable s : projList) { 
-	     Project p = ProjectMgr.getProject(s.getName());
-	     if (p == null) {
-	       //A.log("curate-body.jsp 2 p is null for:" + s.getName());
-	     } else {
-	%>
-      <option value="<%= p.getRoot() %>"><%= p.getTitle() %></option>
-	<%   }
+	<% if (projList != null) {
+	     for (SpeciesListable s : projList) { 
+	       Project p = ProjectMgr.getProject(s.getName());
+	       if (p == null) {
+	         //A.log("curate-body.jsp 2 p is null for:" + s.getName());
+	       } else { %>
+             <option value="<%= p.getRoot() %>"><%= p.getTitle() %></option>
+	    <% }
+	     }
 	   } %>
 	
   </html:select>

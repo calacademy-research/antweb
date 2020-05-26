@@ -11,18 +11,12 @@ wait
 
 cp /mnt/backup/db/ant-currentDump.sql.gz /data/antweb/web/db/ant-currentDump.sql.gz
 
+
+# Disk can get eaten up.
+python3 /antweb/antweb/bin/clearDisk.py
+
 #rm /var/log/mysqld.log
 #rm /var/log/apache2/access.log.*
-
-# Gets big.
-#rm -rf /data/antweb/web/log/bak/2018
-
-#rm /usr/local/tomcat/logs/host-manager.2*
-#rm /usr/local/tomcat/logs/localhost.2*
-#rm /usr/local/tomcat/logs/catalina.2*
-#rm /usr/local/tomcat/logs/localhost_access_log.2*
-#rm /usr/local/tomcat/logs/manager.2*
-
 #rm /var/log/mysql/slow.log
 
 # 11G

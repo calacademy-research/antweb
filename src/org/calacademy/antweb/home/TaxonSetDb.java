@@ -41,7 +41,7 @@ public abstract class TaxonSetDb extends AntwebDb {
             theQuery = " select taxon.taxon_name, taxon.subfamily, taxon.genus, taxon.species, taxon.subspecies, taxon.author_date" 
               + " from taxon" 
               + overview.getFetchChildrenClause()
-              + " and taxon.rank in ('species', 'subspecies')";
+              + " and taxon.taxarank in ('species', 'subspecies')";
             theQuery += " order by subfamily, genus, species, subspecies, author_date";
 
             A.log("getTaxa() query:" + theQuery);
@@ -135,7 +135,8 @@ public abstract class TaxonSetDb extends AntwebDb {
       }
     }
 
-// ---------------------------------------------------------------------------------------\
+// ---------------------------------------------------------------
+
 
 /*
     public static String fixSpeciesLists(ArrayList<SpeciesListable> speciesListList, Connection connection) {

@@ -25,8 +25,7 @@
 
     String sortBy = (String) request.getParameter("sortBy");
     if (sortBy == null || "".equals(sortBy)) sortBy = "name";
-    
-    
+
     if ("name".equals(sortBy)) {
 	   Collections.sort(curators, Curator.CuratorNameComparator);
     }    
@@ -76,7 +75,7 @@
    int i = 0;
    for (Curator curator : curators) { 
      if ("Mark Johnson".equals(curator.getFullName())) continue;
-     A.log("curators-body curator:" + curator.getName());
+     //A.log("curators-body curator:" + curator.getName());
      ++i;
    %>   
      <tr><td><%= i %></td><td><%= curator.getLink() %></td><td><%= curator.getGroup().getLink() %></td><td><%= curator.getSpecimenUploadCount() %></td><td><%= curator.getDescEditCount() %></td>

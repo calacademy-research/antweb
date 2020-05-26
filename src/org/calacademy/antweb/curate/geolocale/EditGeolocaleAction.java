@@ -40,11 +40,13 @@ public final class EditGeolocaleAction extends Action {
         String georank = editGeolocaleForm.getGeorank();
         
         String action = editGeolocaleForm.getAction();
-		String parent = editGeolocaleForm.getParent();        
+		String parent = editGeolocaleForm.getParent();
+
+		String country = editGeolocaleForm.getCountry();
 
 		int id = editGeolocaleForm.getId();
         
-        A.log("execute() action:" + action + " name:" + name + " parent:" + parent + " id:" + id + " isFast:" + editGeolocaleForm.getIsFast());   
+        A.log("execute() action:" + action + " name:" + name + " country:" + country + " parent:" + parent + " id:" + id + " isFast:" + editGeolocaleForm.getIsFast());
 
         if ((name == null || "".equals(name)) && editGeolocaleForm.getIsCreate()) {
 			request.setAttribute("message", "Enter an Adm1 Name in the URL bar...");
@@ -112,7 +114,7 @@ public final class EditGeolocaleAction extends Action {
 			  message += " Updated.	";
 			}
    	        if (!editGeolocaleForm.getIsFast()) {
-			    GeolocaleMgr.populate(connection, true);               
+			    GeolocaleMgr.populate(connection, true, false);               
             }		
           } else { // not submit
 			

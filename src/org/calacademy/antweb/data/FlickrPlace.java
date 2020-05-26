@@ -383,7 +383,7 @@ public class FlickrPlace extends DataPlace {
       nextTdI = output.indexOf("(", i) - 1;  // The space will come after the place Type Id 
       String placeTypeId = output.substring(i+4, nextTdI);
       //A.log("FlickrPlace.scrapePlace() i:" + i + " nextTdI:" + nextTdI + " placeTypeId:" + placeTypeId + " woeId:" + woeId);
-      place.placeTypeId = (new Integer(placeTypeId)).intValue();
+      place.placeTypeId = (Integer.valueOf(placeTypeId)).intValue();
 
       // Go about getting the place type?
 

@@ -36,11 +36,11 @@ public class SpecimenUploader {
         //A.log("uploadSpecimenFile() encoding:" + encoding);    
 
         String formFileName = theForm.getBiota().getFileName();
- 
         //String specimenUploadType = theForm.getSpecimenUploadType();
 
         Utility util = new Utility();      
         String outputFileDir = util.getInputFileHome();
+        FileUtil.makeDir(outputFileDir);
         String specimenFileName = outputFileDir + "specimen" + group.getId() + ".txt";
 
         if (formFileName.indexOf("zip") != -1) {
@@ -60,12 +60,12 @@ public class SpecimenUploader {
       , Login login, String userAgent, String encoding) 
       throws SQLException, IOException, RESyntaxException, TestException, AntwebException
     {
+        A.log("uploadSpecimenFile() specimenFileName:" + formFileName + " encoding:" + encoding);
+
         if ("default".equals(encoding)) encoding = null;
 
         Group group = login.getGroup();
-        
-        //A.log("uploadSpecimenFile() specimenFileName:" + formFileName);
-        
+
         UploadDetails uploadDetails = null;
         Utility util = new Utility();      
         String outputFileDir = AntwebProps.getInputFileHome();

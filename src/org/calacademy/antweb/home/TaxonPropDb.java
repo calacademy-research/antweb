@@ -258,7 +258,7 @@ public class TaxonPropDb extends AntwebDb {
         ResultSet rset = null;
         try {
             String query = "select proj_taxon.taxon_name from proj_taxon, taxon where proj_taxon.taxon_name = taxon.taxon_name " 
-              + " and (taxon.rank = 'species' or taxon.rank = 'subspecies') and project_name = 'introducedants' "
+              + " and (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') and project_name = 'introducedants' "
               + orderBy;
             stmt = getConnection().createStatement();
             rset = stmt.executeQuery(query);

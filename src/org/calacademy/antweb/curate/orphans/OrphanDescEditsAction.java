@@ -132,21 +132,21 @@ public final class OrphanDescEditsAction extends Action {
         ArrayList<String> speciesList = new ArrayList<String>();
         
         Statement stmt1 = connection.createStatement();
-        String query = "select distinct subfamily from taxon where family = 'formicidae' and rank = 'subfamily' and status = 'valid'";
+        String query = "select distinct subfamily from taxon where family = 'formicidae' and taxarank = 'subfamily' and status = 'valid'";
         ResultSet rset1 = stmt1.executeQuery(query);
         while (rset1.next()) {
             String subfamily = rset1.getString(1);
             subfamilies.add(subfamily);
         }
 
-        query = "select distinct genus from taxon where family = 'formicidae' and status = 'valid' and rank = 'genus'";
+        query = "select distinct genus from taxon where family = 'formicidae' and status = 'valid' and taxarank = 'genus'";
         rset1 = stmt1.executeQuery(query);
         while (rset1.next()) {
             String genus = rset1.getString(1);
             genera.add(genus);
         }
 
-        query = "select distinct species from taxon where family = 'formicidae' and status = 'valid' and (rank = 'species' or rank = 'subspecies')";
+        query = "select distinct species from taxon where family = 'formicidae' and status = 'valid' and (taxarank = 'species' or taxarank = 'subspecies')";
         rset1 = stmt1.executeQuery(query);
         while (rset1.next()) {
             String species = rset1.getString(1);

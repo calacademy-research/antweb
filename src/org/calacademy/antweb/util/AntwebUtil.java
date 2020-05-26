@@ -631,7 +631,7 @@ public abstract class AntwebUtil {
   
   public static void sleep(double seconds) {
     double doubleMillis = seconds * 1000;
-    int millis = (new Double(doubleMillis)).intValue();
+    int millis = (Double.valueOf(doubleMillis)).intValue();
     try {
       Thread.sleep(millis);
     } catch(InterruptedException e) {
@@ -653,7 +653,7 @@ public abstract class AntwebUtil {
       System.gc();
       long duration = new Date().getTime() - startTime ;
      // s_log.warn("GarbageCollected:" + duration);
-      return (new Long(duration)).toString();
+      return (Long.valueOf(duration)).toString();
   }
   
   public static long millisSince(Date date) {
@@ -706,13 +706,28 @@ public abstract class AntwebUtil {
     long hrsUntil = minsUntil / 60;
     return hrsUntil;
   }
-             
+
+    //This returns as a decimal value of a minutes. So 40 seconds is .66 mins.
 	public static String getMinsPassed(Date startTime) {
       double timePassed = AntwebUtil.doubleMinsSince(startTime);
       DecimalFormat formatter = new DecimalFormat("#0.00");
       return formatter.format(timePassed) + " mins";
-	}             
-             
+	}
+
+    public static String reportTime(java.util.Date startTime) {
+      String execTime = "";
+      long millis = AntwebUtil.millisSince(startTime);
+      int threeMinOfMillis = 3 * 60 * 1000;
+      if (millis > threeMinOfMillis) {
+        execTime = AntwebUtil.getMinsPassed(startTime);
+      } else if (millis < threeMinOfMillis && millis > 1000) {
+          execTime = AntwebUtil.secsSince(startTime) + " secs";
+      } else {
+          execTime = millis + " millis";
+      }
+      return execTime;
+    }
+
     public static long millisUntil8pm() {    
     Calendar c = Calendar.getInstance();
         c.add(Calendar.DAY_OF_MONTH, 0);
@@ -846,9 +861,9 @@ public abstract class AntwebUtil {
       Integer theCount = (Integer) countHash.get(key);  
       int theCountInt = theCount.intValue() + 1;
       //A.log("AntwebUtil.count() key:" + key + " count:" + theCountInt);
-      countHash.put(key, new Integer(theCountInt));
+      countHash.put(key, Integer.valueOf(theCountInt));
     } else {
-      countHash.put(key, new Integer(1));
+      countHash.put(key, Integer.valueOf(1));
     }
   }
   public static int getCount(String key) {

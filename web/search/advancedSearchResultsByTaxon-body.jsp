@@ -244,7 +244,9 @@ Sorry, nothing matches your request.
 				<% } else if (resultRank.equals("subfamily")) { %>
 				<bean:define id="subfamily" name="row" property="subfamily"/>
 				<a href="<%= AntwebProps.getDomainApp() %>/description.do?name=<%= subfamily %>&rank=subfamily"><%=  new Formatter().capitalizeFirstLetter((String) subfamily) %></a>
-				<% } %>
+				<% } else {
+				  A.log("advancedSearchResultsByTaxon-body.jsp rank not found:" + resultRank);
+				} %>
 				</div>
 			</div>
 			<div class=clear></div>

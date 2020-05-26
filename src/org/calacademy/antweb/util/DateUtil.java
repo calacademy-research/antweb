@@ -2,6 +2,7 @@ package org.calacademy.antweb.util;
 
 import java.util.*;
 import java.time.*;
+import java.time.format.*;
 
 import java.text.*;
 
@@ -9,223 +10,405 @@ import org.calacademy.antweb.util.AntwebUtil;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
+import com.joestelmach.natty.*;
 
+import com.joestelmach.natty.generated.*;
 
 public abstract class DateUtil {
 
   private static final Log s_log = LogFactory.getLog(DateUtil.class);
-  
-    public static int getYear() {
-      return Year.now().getValue();
-    }
-    
-    public static void runTests() {
-        DateUtil.d("1 May 2011");
-        DateUtil.d("2011-05-01");
-        DateUtil.d("2011-05-00");    
-		DateUtil.d("2011-00-00");    
-		DateUtil.d("2011-05");    
-		DateUtil.d("2011");
-		DateUtil.d("11 Dec 1995");
-		DateUtil.d("May 1 2011");
-		DateUtil.d("May 1, 2011");
-		DateUtil.d("29.v.1986");
-		DateUtil.d("iv.1976");
-		DateUtil.d("11-14.ii.2007");
-		DateUtil.d("10.VIII.1987");
-		DateUtil.d("12 2012");
-		DateUtil.d("10 12 2012"); // How do we know? Flag this!
-		DateUtil.d("21-Jul-99");
-    }
 
-    public static void d(String d) {
-		A.p("date:" + d + " formatted:" + DateUtil.constructDateStr(d));
-    }
+  public static int getYear() {
+    return Year.now().getValue();
+  }
 
-    public static Date getFormatDate(String dateStr) {
-      Date theDay = null;
-      try {
-        // handle date in the format like log4j: 2008-08-28 09:46:55
-        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        theDay = (Date)formatter.parse(dateStr);
-        //A.log("DateUtil.getFormatDate() theDayStr:" + dateStr + " theDay:" + theDay);
-      } catch (ParseException e) {
-        return null;
-      }
-      return theDay;
-    }	
+  public static void runTests() {
+    DateUtil.testConstructDateStr("1 May 2011");
+    DateUtil.testConstructDateStr("2011-05-02");
+    DateUtil.testConstructDateStr("2011-05-00");
+    DateUtil.testConstructDateStr("2012-00-00");
+    DateUtil.testConstructDateStr("2011-05");
+    DateUtil.testConstructDateStr("2011");
+    DateUtil.testConstructDateStr("11 Dec 1995");
+    DateUtil.testConstructDateStr("May 1 2011");
+    DateUtil.testConstructDateStr("May 1, 2011");
+    DateUtil.testConstructDateStr("29.v.1986");
+    DateUtil.testConstructDateStr("iv.1976");
+    DateUtil.testConstructDateStr("11-14.ii.2007");
+    DateUtil.testConstructDateStr("10.VIII.1987");
+    DateUtil.testConstructDateStr("12 2012");
+    DateUtil.testConstructDateStr("10 12 2012"); // How do we know? Flag this!
+    DateUtil.testConstructDateStr("21-Jul-99");
+    DateUtil.testConstructDateStr("21-Jul-1699");
+    DateUtil.testConstructDateStr("21-Jul-2222");
+    DateUtil.testConstructDateStr("08/1957");
+    DateUtil.testConstructDateStr("1986/00/00");
+    DateUtil.testConstructDateStr("2017/");
+    DateUtil.testConstructDateStr("1986/10/");
+    DateUtil.testConstructDateStr("1898/1899");
+    DateUtil.testConstructDateStr("02/1933");
+    DateUtil.testConstructDateStr("19/10/2013");
+    DateUtil.testConstructDateStr("1915-7-00");
+    DateUtil.testConstructDateStr("1995-11-27");
+    DateUtil.testConstructDateStr("2010/08/12");
+    DateUtil.testConstructDateStr("11/08/2011");
+    DateUtil.testConstructDateStr("11-Oct-2015");
 
-    public static Date getFormatDateShort(String dateStr) {
-      Date theDay = null;
-      try {
-        // handle date in the format like log4j: 2008-08-28 09:46:55
-        DateFormat formatter = new SimpleDateFormat("yyyy-MM");
-        theDay = (Date)formatter.parse(dateStr);
-        //A.log("DateUtil.getFormatDateShort() theDayStr:" + dateStr + " theDay:" + theDay);
-      } catch (ParseException e) {
-        return null;
-      }
-      return theDay;
-    }	
-    
-    public static Date getFormatDateShortShort(String dateStr) {
-      Date theDay = null;
-      try {
-        // handle date in the format like log4j: 2008-08-28 09:46:55
-        DateFormat formatter = new SimpleDateFormat("yyyy");
-        theDay = (Date)formatter.parse(dateStr);
-        //A.log("DateUtil.getFormatDateShortShort() theDayStr:" + dateStr + " theDay:" + theDay);
-      } catch (ParseException e) {
-        return null;
-      }
-      return theDay;
-    }	
-        
-    public static Date getFormatDate() {
-      return getFormatDateOrNow(new Date().toString());
-    }	     
+  }
 
-    public static Date getFormatDateOrNow(String dateStr) {
-      Date theDay = null;
-      try {
-        // handle date in the format like log4j: 2008-08-28 09:46:55
-        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        theDay = (Date)formatter.parse(dateStr);
-        //A.log("DateUtil.getFormatDateOrNow() theDayStr:" + dateStr + " theDay:" + theDay);
-      } catch (ParseException e) {
-        theDay = new Date();
-      }
-      return theDay;
-    }	 
-
-    public static String getEolFormatDateStr() {
-      // Used by Encyclopedia of Life
-      Date theDate = new Date();
-      return getFormatDateStr(theDate, "yyyyMMdd-hh:mm");
-    }
-
-    public static String getAccessFormatDateTimeStr(Date theDate) {
-      // Not used.  This is the format of access_log.
-      return getFormatDateStr(theDate, "dd/mon/yyyy:HH:mm:ss");
-    }
-
-    public static String getFormatDateTimeStr() {
-      Date theDate = new Date();
-      return getFormatDateStr(theDate, "yyyy-MM-dd HH:mm:ss");
-    }
-
-    public static String getWebFormatDateTimeStr() {
-      Date theDate = new Date();
-      return getFormatDateStr(theDate, "yyyy-MM-dd:HH:mm:ss");
-    }
-
-    public static String getFormatDateTimeStr(Date theDate) {
-      return getFormatDateStr(theDate, "yyyy-MM-dd HH:mm:ss");
-    }
-
-    public static String getFormatDateStr() {
-      Date theDate = new Date();
-      return getFormatDateStr(theDate, "yyyy-MM-dd");
-    }
-
-    public static String getFormatDateStr(String dateStr) {
-      // With an input like: 2012-03-27 15:48:09.0 will return: 2012-03-27
-      Date theDate = null;
-      try {
-        theDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
-      } catch (ParseException e) {
-        s_log.error("e:" + e + " theDate:" + dateStr);
-      }
-      String formatDate = getFormatDateStr(theDate, "yyyy-MM-dd");
-      //A.log("getFormatDateStr() dateStr:" + dateStr + " theDate:" + theDate + " formatDate:" + formatDate);
-      return formatDate;
-    }	 
-
-
-    // Here we allow a date like 1980-09-00. The day can be 0 meaning unspecified.
-    public static String formatDateStr(String theDate) {
-	  if (theDate == null) return null;
-      try {
-		   java.util.Date utilDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(theDate);
-		   // A.log("formatDateStr() dateCollectedStartStr:" + dateCollectedStartStr + " utilDate:" + utilDate);
-		   return (utilDate.toString());
-      } catch (ParseException e) {
-		   A.log("formatDateStr() theDate:" + theDate + " e:" + e);
-		   // no action taken.
-      }
+  public static Date getFormatDateShort(String dateStr) {
+    Date theDay = null;
+    try {
+      // handle date in the format like log4j: 2008-08-28 09:46:55
+      DateFormat formatter = new SimpleDateFormat("yyyy-MM");
+      theDay = (Date) formatter.parse(dateStr);
+      //A.log("DateUtil.getFormatDateShort() theDayStr:" + dateStr + " theDay:" + theDay);
+    } catch (ParseException e) {
       return null;
     }
-    
-    public static String getFormatDateStr(Date theDate) {
-      String formatDate = getFormatDateStr(theDate, "yyyy-MM-dd");
-      //A.log("DateUtil.getFormatDateStr() theDate:" + theDate + " formatDate:" + formatDate);
-      return formatDate; 
-    }	 
+    return theDay;
+  }
 
-    public static String getFormatDateStr(Date theDate, String format) {
-      return (new SimpleDateFormat(format)).format(theDate);
+  public static Date getFormatDateShortShort(String dateStr) {
+    Date theDay = null;
+    try {
+      // handle date in the format like log4j: 2008-08-28 09:46:55
+      DateFormat formatter = new SimpleDateFormat("yyyy");
+      theDay = (Date) formatter.parse(dateStr);
+      //A.log("DateUtil.getFormatDateShortShort() theDayStr:" + dateStr + " theDay:" + theDay);
+    } catch (ParseException e) {
+      return null;
     }
+    return theDay;
+  }
 
-    // Method designed to take scrappy user entered dates and return Antweb formatted Date
-    // Method designed to take scrappy user entered dates and return Antweb formatted Date
+  public static String getEolFormatDateStr() {
+    // Used by Encyclopedia of Life
+    Date theDate = new Date();
+    return getFormatDateStr(theDate, "yyyyMMdd-hh:mm");
+  }
+
+  public static String getAccessFormatDateTimeStr(Date theDate) {
+    // Not used.  This is the format of access_log.
+    return getFormatDateStr(theDate, "dd/mon/yyyy:HH:mm:ss");
+  }
+
+  public static String getFormatDateTimeStr() {
+    Date theDate = new Date();
+    return getFormatDateStr(theDate, "yyyy-MM-dd HH:mm:ss");
+  }
+
+  public static String getFormatDateStr() {
+    Date theDate = new Date();
+    return getFormatDateStr(theDate, "yyyy-MM-dd");
+  }
+
+  public static String getFormatDateTimeStr(Date theDate) {
+    return getFormatDateStr(theDate, "yyyy-MM-dd HH:mm:ss");
+  }
+
+  public static String getFormatDateStr(String dateStr) {
+    // With an input like: 2012-03-27 15:48:09.0 will return: 2012-03-27
+    Date theDate = null;
+    try {
+      theDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
+    } catch (ParseException e) {
+      s_log.error("e:" + e + " theDate:" + dateStr);
+    }
+    String formatDate = getFormatDateStr(theDate, "yyyy-MM-dd");
+    //A.log("getFormatDateStr() dateStr:" + dateStr + " theDate:" + theDate + " formatDate:" + formatDate);
+    return formatDate;
+  }
+
+
+  // Here we allow a date like 1980-09-00. The day can be 0 meaning unspecified.
+  public static String formatDateStr(String theDate) {
+    if (theDate == null) return null;
+    try {
+      java.util.Date utilDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(theDate);
+      // A.log("formatDateStr() dateCollectedStartStr:" + dateCollectedStartStr + " utilDate:" + utilDate);
+      return (utilDate.toString());
+    } catch (ParseException e) {
+      A.log("formatDateStr() theDate:" + theDate + " e:" + e);
+      // no action taken.
+    }
+    return null;
+  }
+
+  // Antweb Preferred format. How the String dates are stored in specimen table dateCollectedStart and dateCollectedEnd
+  public static String getFormatDateStr(Date theDate) {
+    String formatDate = getFormatDateStr(theDate, "yyyy-MM-dd");
+    //A.log("DateUtil.getFormatDateStr() theDate:" + theDate + " formatDate:" + formatDate);
+    return formatDate;
+  }
+
+  public static String getFormatDateStr(Date theDate, String format) {
+    return (new SimpleDateFormat(format)).format(theDate);
+  }
+
+  // Take an String of unknown date format and return a string in the correct format. Used for Specimen upload.
+  public static String getConstructDateStr(String dateStr) {
+    if (dateStr == null) return null;
+    Date date = constructDate(dateStr);
+    if (date == null) return null;
+    String formatString = getFormatDateStr(date);
+    return formatString;
+  }
+
+  private static Date format(String format, String dateStr) {
+    Date returnDate = null;
+    try {
+      returnDate = (new SimpleDateFormat(format)).parse(dateStr);
+    } catch (java.text.ParseException e) {
+      //if ("2010/08/12".equals(dateStr)) A.log("format() NOT found:" + dateStr + " format:" + format + " e:" + e);
+    }
+    return returnDate;
+  }
+
+  private static Date newFormat(String format, String dateStr) {
+    Date date = null;
+    try {
+      //if ("2010/08/12".equals(dateStr)) A.log("newFormat() dateStr:" + dateStr + " date:" + date);
+      ZoneId defaultZoneId = ZoneId.systemDefault();
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+      LocalDate localDate = LocalDate.parse(dateStr, formatter);
+      date = Date.from(localDate.atStartOfDay(defaultZoneId).toInstant());
+      //A.log("newFormat() dateStr:" + dateStr + " date:" + date);
+    } catch (Exception e) {
+      //A.log("newFormat() dateStr:" + dateStr + " step:" + s_debugStep + " e:" + e);
+      //AntwebUtil.logShortStackTrace();
+    }
+    return date;
+  }
+
+  private static Date handleDdMmmYy(String dateStr) {
+    //String dateStr = "21-Jul-99"; Because of University of Pretoria
+    int indexOfSecondHyphen = dateStr.indexOf('-', 6);
+    if (indexOfSecondHyphen < 6) return null;
+    if (dateStr.length() > 9) return null;
+    String shortYear = dateStr.substring(indexOfSecondHyphen + 1);
+    int year = Integer.valueOf(shortYear);
+    if (year > 50) {
+      year = year + 1900;
+    } else {
+      year = year + 2000;
+    }
+    dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
+    //A.log("message-body.jsp i:" + indexOfSecondHyphen + " year:" + year + " dateStr:" + dateStr + " l:" + dateStr.length());
+    Date date = format("dd-MMM-yyyy", dateStr);
+    return date;
+  }
+
+  private static int s_debugStep = 0;
+  public static String testConstructDateStr(String dateStr) {
+    if (dateStr == null) return null;
+    // try {
+    String constructedDate = getConstructDateStr(dateStr);
+    if (constructedDate == null) A.log("testConstructDateStr() dateStr:" + dateStr + " formatted:" + constructedDate + " step:" + s_debugStep);
+    return constructedDate;
+  }
+  // Method designed to take scrappy user entered dates and return Antweb formatted Date
     public static Date constructDate(String dateStr) {
+
       Date returnDate = null;
-      try {
-        returnDate = new Date(dateStr);
-      } catch (IllegalArgumentException e) {
+
+      // Antweb preferred format
+      if (returnDate == null) returnDate = format("yyyy-MM-dd", dateStr);
+      if (returnDate == null) returnDate = format("dd-MMM-yyyy", dateStr);
+      if (returnDate == null) returnDate = format("yyyy-MMM-dd", dateStr);
+      if (returnDate == null) returnDate = format("dd MMM yyyy", dateStr);
+      if (returnDate == null) returnDate = format("MMM dd yyyy", dateStr);
+      if (returnDate == null) returnDate = format("dd-MMM-yy", dateStr);
+      if (returnDate == null) returnDate = format("MMM dd, yyyy", dateStr);
+      if (returnDate == null) returnDate = newFormat("yyyy/MM/dd", dateStr);
+      if (returnDate == null) returnDate = format("dd/MM/yyyy", dateStr);
+      if (returnDate == null) returnDate = format("MM/yyyy", dateStr);
+      if (returnDate == null) returnDate = format("yyyy/MM", dateStr);
+      if (returnDate == null) returnDate = format("yyyy/", dateStr);
+      if (returnDate == null) returnDate = format("MM yyyy", dateStr);
+      if (returnDate == null) returnDate = format("dd MM yyyy", dateStr);
+
+      if (returnDate != null) s_debugStep = 1;
+
+      // NOT preferred. JOrivel uses them. Can not be parsed by Natty below.
+      if (returnDate == null) {
+        returnDate = format("dd/MM/yyyy", dateStr);
+        s_debugStep = 6;
       }
 
       if (returnDate == null) {
-        try {
-          returnDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
-        } catch (java.text.ParseException e) {
-          //s_log.info("constructDate() 1 ParseException on dateStr:" + dateStr);
+        // Not a simply parsed date.  perhaps it is like: 8-11 Feb 2010   or like: 1 Feb - Mar 2010
+        // Take what is after the hyphen and see if that can work.
+        if (dateStr.contains("-")) {
+          String substring = dateStr.substring(dateStr.indexOf("-") + 1);
+          //A.log("constructDate() hypen removed from origDatesCollected:" + dateStr + " substring:" + substring);
+          returnDate = constructDate(substring);
+          s_debugStep = 7;
         }
+      }
 
-        if (returnDate == null) {
-          try {
-            returnDate = (new SimpleDateFormat("yyyy-MM")).parse(dateStr);
-            // The above line was changed to MM at the same time (Oct 7, 2013) as the case above, which was actually tested.
-          } catch (java.text.ParseException e) {
-            //s_log.info("constructDate() 2 ParseException on dateStr:" + dateStr);
-          }
+      if (returnDate == null) {
+        if (DateUtil.getFormatDateShort(dateStr) != null) {  // Like: 2011-05
+          returnDate = getDate(dateStr + "-01");
+          s_debugStep = 8;
+        }
+      }
 
-          if (returnDate == null) {
-            try {
-              returnDate = (new SimpleDateFormat("yyyy")).parse(dateStr);
-            } catch (java.text.ParseException e) {
-              //s_log.info("constructDate() 3 ParseException on dateStr:" + dateStr);
+      if (returnDate == null) {
+        if (dateStr.contains(" ")) {
+          int firstSpaceI = dateStr.indexOf(" ");
+          int secondSpaceI = dateStr.indexOf(" ", firstSpaceI + 1);
+          if (firstSpaceI > 0) {
+            if (secondSpaceI < 0) {
+              A.p("constructDateStr(" + dateStr + ") mo year");
+              returnDate = getDate(dateStr);
+            } else {
+              A.p("constructDateStr(" + dateStr + ") day mo year");
+              // if mo > 12 error
+              returnDate = getDate(dateStr);
             }
-
           }
+          s_debugStep = 9;
         }
       }
-      return returnDate;
-    }
 
-
-    
-    public static Date getDate(String dateStr) {
-      Date returnDate = null;
-      try {
-        returnDate = new Date(dateStr);
-      } catch (IllegalArgumentException e) {
+      if (returnDate == null) {
+        if (DateUtil.getFormatDateShortShort(dateStr) != null) {  // Like: 2011
+          returnDate = getDate(dateStr + "-01-01");
+          s_debugStep = 10;
+        }
       }
+
+      if (returnDate == null) {
+        if (dateStr.contains(".")) {
+          returnDate = DateUtil.romanConvertDate(dateStr);
+          s_debugStep = 11;
+        }
+      }
+
+/*
+      if (returnDate == null) {
+        // Using here the Natty date parser. http://natty.joestelmach.com/
+        Parser parser = new Parser();
+        List<DateGroup> groups = parser.parse(dateStr); //"the day before next thursday");
+        for (DateGroup group : groups) {
+          List<Date> dates = group.getDates();
+          if (dates.get(0) != null) returnDate = dates.get(0);
+          s_debugStep = 12;
+          A.log("constructDate() 12 dateStr:" + dateStr + " returnDate:" + returnDate);
+          break;
+
+        //int line = group.getLine();
+        //int column = group.getPosition();
+        //String matchingValue = group.getText();
+        //String syntaxTree = group.getSyntaxTree().toStringTree();
+        //Map> parseMap = group.getParseLocations();
+        //boolean isRecurreing = group.isRecurring();
+        //Date recursUntil = group.getRecursUntil();
+        }
+      }
+*/
+
+      // This is the new way. Pretty cumbersome, right?
+      if (returnDate == null) {
+        try {
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu").withLocale(Locale.US);
+          ZonedDateTime zdt = ZonedDateTime.parse(dateStr, formatter);
+          LocalDate ld = zdt.toLocalDate();
+          DateTimeFormatter fLocalDate = DateTimeFormatter.ofPattern("dd/MM/uuuu");
+          String output = ld.format(fLocalDate);
+          returnDate = getDate(output);
+          s_debugStep = 13;
+        } catch (java.time.format.DateTimeParseException e) {
+        } catch (Exception e) {
+          A.log("constructDate() 1 dateStr:" + dateStr + " e:" + e);
+        }
+      }
+
+      // Jul 2002
+      if (returnDate == null) {
+        returnDate = format("MMM yyyy", dateStr);
+        s_debugStep = 14;
+      }
+
+      // 1995
+      if (returnDate == null) {
+        returnDate = format("yyyy", dateStr);
+        s_debugStep = 15;
+      }
+
+      if (returnDate == null) {
+        s_debugStep = 16;
+        return null;
+      }
+
+      if (returnDate.after(new Date())) {
+        s_debugStep = 17;
+        return null;
+      }
+
+      Date validCutoff = getDate("1700-0-01");
+      if (returnDate.before(validCutoff)) {
+          //A.log("constructDate() dateStr:" + dateStr + " returnDate:" + returnDate + " is before validCutoff:" + validCutoff);
+
+          // If Ex: 21-Jul-99 misread earlier, here we fix.
+          returnDate = handleDdMmmYy(dateStr);
+          if (returnDate != null) {
+            s_debugStep = 18;
+            return returnDate;
+          }
+          //A.log("constructDate() HANDLED! dateStr:" + dateStr + " returnDate:" + returnDate);
+
+        s_debugStep = 19;
+        return null;
+      }
+
       return returnDate;
     }
-     
+
+   // Basciallly just for validation. Have a dateStr in our preferred format and want a date object.
+    public static Date getDate(String dateStr) {
+        Date returnDate = null;
+        if (dateStr != null) {
+          try {
+            returnDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
+            //A.log("constructDate() 2 dateStr:" + dateStr + " returnDate:" + returnDate);
+          } catch (java.text.ParseException e) {
+            //A.log("constructDate() 2 dateStr:" + dateStr + " e:" + e);
+          }
+        }
+        return returnDate;
+    }
+
     public static boolean isDate(String dateStr) {
-      Date date = DateUtil.getDate(dateStr);
+      Date date = DateUtil.constructDate(dateStr);
       return (date != null);    
     }
+
+  private static Date getTruncatedDate(String truncDatesCollected) {
+    // Perhaps it's like: may 2003
+    Date returnDate = getDate("1 " + truncDatesCollected);
+    if (returnDate != null) return returnDate;
+
+    // Perhaps it's like: 2003
+    returnDate = getDate("1 Jan " + truncDatesCollected);
+    if (returnDate != null) return returnDate;
+
+    return null;
+  }
 
     private static String trimDay(String day) {
       if (day == null) return day;
       if (day.contains("-")) day = day.substring(0, day.indexOf("-"));
       return day;
     }
-    
-    private static String romanConvertDate(String theDate) {
+
+    private static Date romanConvertDate(String theDate) {
+      String dateStr = romanConvertDateStr(theDate);
+      Date date = getDate(dateStr);
+      return date;
+    }
+    private static String romanConvertDateStr(String theDate) {
       if (theDate.contains(".")) {
         int firstPeriodI = theDate.indexOf(".");
         int secondPeriodI = theDate.indexOf(".", firstPeriodI + 1);
@@ -268,6 +451,110 @@ public abstract class DateUtil {
     }
 
 
+/*
+    public static void d(String d) {
+		Date theDate = DateUtil.constructDate(d);
+
+        //(new SimpleDateFormat("yy"))
+
+		A.log("date:" + d + " formatted:" + getFormatDateStr(theDate));
+
+    }
+*/
+
+  /* // DEPRECATED ALMOST THERE
+    public static Date getFormatDate(String dateStr) {
+      Date theDay = null;
+      try {
+        // handle date in the format like log4j: 2008-08-28 09:46:55
+        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        theDay = (Date)formatter.parse(dateStr);
+        //A.log("DateUtil.getFormatDate() theDayStr:" + dateStr + " theDay:" + theDay);
+      } catch (ParseException e) {
+        return null;
+      }
+      return theDay;
+    }
+*/
+
+
+/*
+    public static Date getFormatDate() {
+      return getFormatDateOrNow(new Date().toString());
+    }
+
+    public static Date getFormatDateOrNow(String dateStr) {
+      Date theDay = null;
+      try {
+        // handle date in the format like log4j: 2008-08-28 09:46:55
+        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        theDay = (Date)formatter.parse(dateStr);
+        //A.log("DateUtil.getFormatDateOrNow() theDayStr:" + dateStr + " theDay:" + theDay);
+      } catch (ParseException e) {
+        theDay = new Date();
+      }
+      return theDay;
+    }
+*/
+
+/*
+  private Date getParseDate(String thedate) {
+    Date returnDate = null;
+
+    thedate = thedate.trim();
+    if (thedate.equals("")) return null;
+
+    A.log("getParseDate(" + thedate + ") 1 ");
+
+    // many possibilities here...
+    returnDate = getDate(thedate);
+    if (returnDate != null) return returnDate;
+    A.log("getParseDate(" + thedate + ") 1 ");
+
+    // Not a simply parsed date.  perhaps it is like: 8-11 Feb 2010   or like: 1 Feb - Mar 2010
+    if (thedate.contains("-")) {
+      String t = thedate.substring(thedate.indexOf("-") + 1);
+      //s_log.info("getDateCollected() hypen removed from origDatesCollected:" + thedate + " making:" + t);
+      returnDate = getDate(t);
+      if (returnDate != null) return returnDate;
+
+      returnDate = getTruncatedDate(t);
+      if (returnDate != null) return returnDate;
+    }
+
+    A.log("getParseDate(" + thedate + ") 1 ");
+
+    // Maybe it is simply like: Mar 2011   or like: 2010
+    returnDate = getTruncatedDate(thedate);
+
+    A.log("getParseDate(" + thedate + ") 1 ");
+
+    if (returnDate != null) return returnDate;
+
+    s_log.warn("getParseDate() Date not found for date:" + thedate);
+
+    return null;
+  }
+*/
+
+  /*
+  private static Date parseDate(String dateStr) {
+    try {
+      Date d = new Date(dateStr);
+      if (AntwebProps.isDevMode()) {
+        s_log.warn("parseDate() DEPRECATED! Found from dateStr:" + dateStr + " date:" + d);
+      }
+      return d;
+    } catch (Exception e) {
+      // These are expected to occur with our data.
+      A.log("parseDate() failed on datesCollected:" + dateStr + " e:" + e);
+    }
+    return null;
+  }
+  */
+
+/*
+// To Deprecate! Almost there
     // Method designed to take scrappy user entered dates and return Antweb formatted Date String
     public static String constructDateStr(String dateStr) {
     
@@ -312,6 +599,7 @@ public abstract class DateUtil {
   
       return null;
     }
+*/
 }
 
 

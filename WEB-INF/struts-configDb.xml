@@ -1,1 +1,125 @@
-struts-configDbAnt.xml
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- 
+
+This is the one that should be modified - for use on antweb-dev, antweb-stg and antweb-prod.
+
+For local work use struts-configDb.xml.
+
+The WEB-INF/struts-configDb.xml softlink points to this one an antweb-dev, antweb-stg and antweb-prod. 
+
+-->
+
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.1//EN"
+          "http://jakarta.apache.org/struts/dtds/struts-config_1_1.dtd">
+
+<struts-config>
+  <data-sources>
+  
+  <!-- In seconds. 150 is 2.5min.  600 is 10 min.  3000 is 50 min.  Biota takes 30 min.    -->
+  
+    <data-source key="conPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
+      <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
+      <set-property property="auth" value="Container"/>
+      <set-property property="maxPoolSize" value="200"/> <!-- was 15 -->
+      <set-property property="maxIdleTime" value="10"/>
+      <set-property property="user" value="antweb"/>
+      <set-property property="password" value="f0rm1c6"/>
+      <set-property property="driverClass" value="com.mysql.jdbc.Driver" />   <!-- was driverClassName-->
+      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>    
+      <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
+      <set-property property="testConnectionOnCheckout" value="true"/>
+      <set-property property="autoCommitOnClose" value="true"/> 
+
+      <set-property property="unreturnedConnectionTimeout" value="500"/>  <!-- was 600 -->
+      <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
+
+      <set-property property="testConnectionOnCheckin" value="true"/> 
+      <set-property property="idleConnectionTestPeriod" value="60"/> 
+      <set-property property="maxIdleTimeExcessConnections" value="60"/>
+    </data-source>
+
+    <data-source key="mediumConPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
+      <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
+      <set-property property="auth" value="Container"/>
+      <set-property property="maxPoolSize" value="15"/> <!-- was 15 -->
+      <!-- set-property property="maxIdleTime" value="10"/ -->
+      <set-property property="user" value="antweb"/>
+      <set-property property="password" value="f0rm1c6"/>
+      <set-property property="driverClass" value="com.mysql.jdbc.Driver" />   <!-- was driverClassName-->
+      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>    
+      <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
+      <set-property property="testConnectionOnCheckout" value="true"/>
+      <set-property property="autoCommitOnClose" value="true"/> 
+
+      <set-property property="unreturnedConnectionTimeout" value="600"/>
+      <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
+
+      <set-property property="testConnectionOnCheckin" value="true"/> 
+      <set-property property="idleConnectionTestPeriod" value="300"/> 
+      <set-property property="maxIdleTimeExcessConnections" value="240"/>
+    </data-source>
+  
+    <data-source key="longConPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
+      <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
+      <set-property property="auth" value="Container"/>
+      <set-property property="maxPoolSize" value="10"/> <!-- was 15 -->
+      <!-- set-property property="maxIdleTime" value="10"/ -->
+      <set-property property="user" value="antweb"/>
+      <set-property property="password" value="f0rm1c6"/>
+      <set-property property="driverClass" value="com.mysql.jdbc.Driver" />   <!-- was driverClassName-->
+      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>    
+      <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
+      <set-property property="testConnectionOnCheckout" value="true"/>
+      <set-property property="autoCommitOnClose" value="true"/> 
+
+      <set-property property="unreturnedConnectionTimeout" value="6000"/> <!-- 4200 is 70 min -->
+      <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
+       
+      <set-property property="testConnectionOnCheckin" value="true"/> 
+      <set-property property="idleConnectionTestPeriod" value="300"/>
+      <set-property property="maxIdleTimeExcessConnections" value="240"/>
+              
+    </data-source>
+
+<!--  
+Does not work:
+      <set-property property="zeroDateTimeBehavior" value="convertToNull"/> 
+
+To track down an unreturnedConnection, go to /home/mjohnson/links/ and"
+
+    grep checkoutPooledConnection detail/antwebInfo.log -A 5 -B 5
+    
+    
+      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;characterEncoding=utf-8"/>
+-->
+
+
+<!-- property name="c3p0.testConnectionOnCheckout">true</property -->
+
+   <!--
+   <data-source key="conPool" type="org.apache.commons.dbcp.BasicDataSource">
+     <set-property property="driverClassName" value="com.mysql.jdbc.Driver" />
+     <set-property property="url" value="jdbc:mysql://localhost:3306/ant?autoReconnect=true" />
+     <set-property property="username" value="antweb" />
+     <set-property property="password" value="f0rm1c6" />
+     <set-property property="maxActive" value="100" />
+     <set-property property="maxIdle" value="25" />
+     <set-property property="maxWait" value="5000" />
+     <set-property property="defaultAutoCommit" value="true" />
+     <set-property property="defaultReadOnly" value="false" />
+     <set-property property="testOnBorrow" value="true" />
+     <set-property property="testWhileIdle" value="true" />
+     <set-property property="timeBetweenEvictionRunsMillis" value="10000" />
+     <set-property property="minEvictableIdleTimeMillis" value="60000" />
+     <set-property property="removeAbandoned" value="true" />
+     <set-property property="removeAbandonedTimeout" value="30" />
+     <set-property property="logAbandoned" value="true" />
+     <set-property property="validationQuery" value="SELECT 1" />
+   </data-source>
+  -->
+  
+  </data-sources>
+
+</struts-config>

@@ -124,17 +124,17 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
                 + ", sp.toc, sp.country, sp.adm1, sp.adm2, sp.localityname" 
                 + ", sp.life_stage, sp.caste, sp.subcaste"
                 + ", sp.medium, sp.specimennotes, sp.localitycode, sp.collectioncode, sp.created"  // Added Dec, 6, 2012 Mark
-                + ", sp.habitat, sp.microhabitat, sp.collectedby, sp.museum, sp.datecollectedstartstr, sp.access_group " 
+                + ", sp.habitat, sp.microhabitat, sp.collectedby, sp.museum, sp.datecollectedstart, sp.access_group " 
                 + ", sp.determinedby, sp.method, sp.dnaextractionnotes, sp.ownedby, sp.locatedat"
                 + ", sp.elevation, sp.decimal_longitude, sp.decimal_latitude"  //Added Feb 1, 2013.                  
-                + ", groups.name, sp.museum"
+                + ", ant_group.name, sp.museum"
                 + ", sp.created, sp.bioregion, upload_id";
 
             theQuery = "select " + fieldList
                 + ", count(image.id) as imagecount"
                 + " from specimen as sp " 
                 + " left outer join image on (sp.code = image.image_of_id)"  //  and image.shot_type != \"l\"
-                + " left outer join groups on sp.access_group = groups.id "
+                + " left outer join ant_group on sp.access_group = ant_group.id "
                 + " where " + SpecimenDb.getFlagCriteria()
                 ; 
 
@@ -183,7 +183,11 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
                 where.add("sp.country is null");
               } else {
                 String safeCountry = DBUtil.escapeQuotes(country);
-                where.add("sp.country='" + safeCountry + "'");
+                if (GeolocaleMgr.isIsland(safeCountry)) {
+                    where.add("sp.island_country='" + safeCountry + "'");
+                } else {
+                    where.add("sp.country='" + safeCountry + "'");
+                }
               }
             }
             if ((adm1 != null) && (adm1.length() > 0)) {
@@ -283,15 +287,16 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
                 where.add(getSearchString("sp.determinedby", determinedBySearchType, determinedBy));
             }
             
-            //A.log("createInitialResults() dateCollectedSearchType:" + dateCollectedSearchType + " dateCollected); // + " str:" + getSearchString("name", groupNameSearchType, groupName));
-            
+
             if ((dateCollected != null) && (dateCollected.length() > 0)) {
-                where.add(getSearchString("sp.datecollectedstartstr", dateCollectedSearchType, dateCollected));
+                //A.log("createInitialResults() dateCollectedSearchType:" + dateCollectedSearchType + " dateCollected:" + dateCollected); // + " str:" + getSearchString("name", groupNameSearchType, groupName));
+
+                where.add(getDateSearchString("sp.datecollectedstart", dateCollectedSearchType, dateCollected));
             }
 
             //A.log("createInitialResults() groupName:" + groupName + " groupNameSearchType:" + groupNameSearchType);
             if ((groupName != null) && (groupName.length() > 0)) {
-//                where.add(getSearchString("groups.name", groupNameSearchType, groupName)); // This don't for group searches. Break map generation. Why was it like this?
+//                where.add(getSearchString("ant_group.name", groupNameSearchType, groupName)); // This don't for group searches. Break map generation. Why was it like this?
                   where.add(getSearchString("groupName", groupNameSearchType, groupName));
             }
 
@@ -360,7 +365,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
             
             s_query = theQuery;
             
-            //s_log.warn("createInitialResults() whereSize:" + where.size() + " where:" + where);
+            A.log("createInitialResults() theQuery:" + theQuery);
             //s_log.warn("createInitialResults() theQuery:" + theQuery);
               //AntwebUtil.logStackTrace();
 

@@ -54,9 +54,9 @@ public final class TaxaListAction extends Action {
 
         if ((!"".equals(rank)) && rank != null) {
           if ("species".equals(rank)) {
-            query += " and (rank = 'species' or rank = 'subspecies')"; 
+            query += " and (taxarank = 'species' or taxarank = 'subspecies')";
           } else
-            query += " and rank = '" + rank + "'";
+            query += " and taxarank = '" + rank + "'";
         }
         
         if (!"".equals(status) && status != null) {

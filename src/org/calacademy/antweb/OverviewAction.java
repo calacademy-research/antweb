@@ -70,11 +70,18 @@ public final class OverviewAction extends DescriptionAction {
         }
         if (uri.contains("/project.do")) {
           if (name != null && !"".equals(name)) {
-            String projectName = ProjectMgr.getProjectName(name);          
-            Project project = (new ProjectDb(connection)).getProject(projectName);          
+            String projectName = ProjectMgr.getProjectName(name);
+            ProjectDb projectDb = new ProjectDb(connection);
+
+            Project project = projectDb.getProject(projectName);
             if (project == null) {
               request.setAttribute("message", "Project:" + name + " not found.");
               return mapping.findForward("message");
+            }
+
+            if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
+                projectDb.updateCounts(projectName);
+                ProjectMgr.populate(connection, true);
             }
 
             if (HttpUtil.isPost(request)) {
@@ -147,7 +154,17 @@ public final class OverviewAction extends DescriptionAction {
         if (uri.contains("/bioregion.do")) {
            if (name != null && !"".equals(name)) {
 
-              Bioregion bioregion = BioregionMgr.getBioregion(name);
+               if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
+                   (new TaxonDb(connection)).setSubfamilyChartColor();
+
+                   BioregionDb bioregionDb = new BioregionDb(connection);
+                   bioregionDb.populate(name);
+
+                   BioregionMgr.populate(connection, true);
+               }
+
+
+               Bioregion bioregion = BioregionMgr.getBioregion(name);
               if (bioregion == null) {
                 request.setAttribute("message", "Bioregion not found");          
                 return mapping.findForward("message");
@@ -312,7 +329,7 @@ public final class OverviewAction extends DescriptionAction {
 		  if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
-			GeolocaleMgr.populate(connection, true);
+			GeolocaleMgr.populate(connection, true, false);
 			A.log("execute() AntwebMgr.populate()");
 		  }
 
@@ -332,9 +349,17 @@ public final class OverviewAction extends DescriptionAction {
             request.setAttribute("message", "Country not found.");
             return mapping.findForward("message");
           }              
-        }   
+        }
 
+        /*
+          Specimens: 5,748
+          Images: 22,008
+          Imaged Specimens: 5,312
 
+          Subfamilies: 19
+          Genera: 564
+          Species/Subspecies: 13,808
+       */
         if (uri.contains("/adm1s.do")) {          
           ArrayList<Geolocale> geolocales = GeolocaleMgr.getAdm1sWithSpecimen();
           request.setAttribute("overviews", geolocales);
@@ -363,17 +388,17 @@ public final class OverviewAction extends DescriptionAction {
                return mapping.findForward("message");
  			}
  			
-A.log("execute() country:" + country + " id:" + id); 			
+            //A.log("execute() country:" + country + " id:" + id);
             geolocale = GeolocaleMgr.getAnyAdm1(name, country);  // getGeolocale(name, "adm1");
             key = "name:" + name;
 
             String geoString = " geolocale:" + geolocale;
             if (geolocale != null) geoString += " id:" + geolocale.getId() + " name:" + geolocale.getName() + " parent:" + geolocale.getParent() + " georank:" + geolocale.getGeorank();
-            A.log("OverviewAction.execute() name:" + name + " country:" + country + geoString);
+            //A.log("OverviewAction.execute() name:" + name + " country:" + country + geoString);
 
 	        if (geolocale == null && GeolocaleMgr.isIsland(name)) {
               geolocale = GeolocaleMgr.getIsland(name);
-              A.log("OverviewAction.execute() geolocale:" + geolocale + " id:" + geolocale.getId() + " georank:" + geolocale.getGeorank());
+              //A.log("OverviewAction.execute() geolocale:" + geolocale + " id:" + geolocale.getId() + " georank:" + geolocale.getGeorank());
               OverviewMgr.setOverview(request, geolocale);   
               geolocale.setMap((new ObjectMapDb(connection)).getGeolocaleMap(geolocale.getId()));   
               request.setAttribute("overview", geolocale); 
@@ -391,7 +416,7 @@ A.log("execute() country:" + country + " id:" + id);
 		  if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
-			GeolocaleMgr.populate(connection, true);
+			GeolocaleMgr.populate(connection, true, false);
 			A.log("execute() geolocale:" + geolocale.getName() + " recalculated.");
 		  }
 		            

@@ -18,7 +18,7 @@
   boolean isOverviewPage = (thisPage.contains(adm1.getTargetDo())) || (thisPage.contains("description.do"));      
   //boolean isOverviewPage = thisPage.contains(adm1.getTargetDo());
 
-//  A.log("adm1Nav.jsp isOverviewPage:" + isOverviewPage);
+  //A.log("adm1Nav.jsp isOverviewPage:" + isOverviewPage);
 
   if (thisPage.contains("bigMap.do")) thisPage = AntwebProps.getDomainApp() + "/geolocale.do";
 	
@@ -46,7 +46,6 @@
 		if (!thisPage.contains("?")) delim = "?";		
 		view = "<a href='" + thisPage + delim + country.getParams()  + "'>" + country.getName() + "</a>" + " - " + view;     
 	}
-
 
 	if (country.getId() != 0) {
 	   String subregionName = country.getParent();

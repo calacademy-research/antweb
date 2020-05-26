@@ -35,7 +35,7 @@ public class TeamMemberAction extends Action {
             // A submit!
             s_log.warn("execute() id:" + form.getId());
             TeamMember teamMember = new TeamMember();
-            teamMember.setId( (new Integer(form.getId())).intValue() );
+            teamMember.setId( (Integer.valueOf(form.getId())).intValue() );
             teamMember.setRoleOrg(form.getRoleOrg());
             teamMember.setName(form.getName());
             teamMember.setEmail(form.getEmail());

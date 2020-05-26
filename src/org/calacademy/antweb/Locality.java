@@ -25,6 +25,7 @@ public class Locality {
     private String localityCode="";
     private String localityName="";
     private String country="";
+    private String islandCountry = "";
     private String adm1="";  // was province
     private String adm2="";  // was county
     private String bioregion="";
@@ -32,23 +33,19 @@ public class Locality {
     private String museumName = "";
     private float decimalLatitude= 0.0F;
     private float decimalLongitude = 0.0F ;
-    //private String locLatitude = "";
-    //private String locLongitude = "";
     private String elevation = "";
     private ArrayList collections = new ArrayList();
     private String other="";
 
     protected String localityNotes = "";
     protected String elevationMaxError = "";
-    //protected String locXYAccuracy = "";
     protected String latLonMaxError = "";
     
     private ArrayList<Group> groupList = new ArrayList();
     
     // MarkMap
     protected Map map;
-    
-    
+
     public String getElevation() {
         return elevation;
     }
@@ -202,7 +199,14 @@ public class Locality {
     A.log("getAmissEmail() size:" + getGroupList().size() + " amissEmail:" + amissEmail);
     return amissEmail;
   }
-  
+
+    public String getIslandCountry() {
+        return islandCountry;
+    }
+    public void setIslandCountry(String islandCountry) {
+        this.islandCountry = islandCountry;
+    }
+
   public String toString() {
     String str = getLocalityCode();
     if (str == null) str = getLocalityName();

@@ -39,7 +39,7 @@ public class BioregionTaxon extends OverviewTaxon {
                     
         try {
             taxonName = Formatter.escapeQuotes(getTaxonName());   
-            query = "select subfamily_count, genus_count, species_count, specimen_count, image_count, created, source " 
+            query = "select subfamily_count, genus_count, species_count, specimen_count, image_count, created, source " //, is_introduced, is_endemic  "
               + " from " + getTable()
               + " where " + getKeyClause()
               + "   and taxon_name = '" + taxonName + "'";
@@ -58,7 +58,9 @@ public class BioregionTaxon extends OverviewTaxon {
                 setImageCount(rset.getInt("image_count"));
                 setCreated(rset.getTimestamp("created"));
                 setSource(rset.getString("source"));
-                   
+                //setIsIntroduced((rset.getInt("is_introduced") == 1) ? true : false);
+                //setIsEndemic((rset.getInt("is_endemic") == 1) ? true : false);
+
                 ProjTaxon projTaxon = AllAntwebMgr.get(taxonName);
                 setGlobalChildCount(projTaxon);              
              

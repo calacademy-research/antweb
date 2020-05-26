@@ -499,7 +499,7 @@ public class Jpeg {
           actual = input.read(buffer);
           if (actual != -1) {
             buffers.add(buffer);
-            lengths.add(new Integer(actual));
+            lengths.add(Integer.valueOf(actual));
           }
         } while (actual != -1);
     

@@ -50,7 +50,7 @@ public abstract class OverviewTaxon extends TaxonSet {
                 
                 if (AntwebProps.isDevMode() && "myrmicinaepheidole".equals(taxonName)) s_log.warn("init() taxonName:" + taxonName + " keyClause:" + getKeyClause() + " genusCount:" + getGenusCount() + " imageCount:" + imageCount);
                 //if (getTaxonName().contains("humile")) {
-                  A.log("init query:" + query);    //  && getTaxonName().contains("anceps")
+                  //A.log("init query:" + query);    //  && getTaxonName().contains("anceps")
                 //}  
 
                 ProjTaxon projTaxon = AllAntwebMgr.get(taxonName);

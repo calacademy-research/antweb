@@ -157,8 +157,7 @@ public class UploadFile {
       Date startTime = new Date();
       String fileLoc = this.base + this.fileName;
       try {
-        BufferedReader in =
-          new BufferedReader(new InputStreamReader(new FileInputStream(fileLoc), encoding));
+        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileLoc), encoding));
 
         theLine = in.readLine();
         while (theLine != null) {

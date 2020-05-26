@@ -209,7 +209,7 @@ public abstract class Queries {
             "brokenTaxaHierarchy"
           , "Broken Taxa Hierarchy:"
           , ""      
-          , "select taxon_name from taxon where rank = 'species' and (species is null or species = '') and taxon_name not like '%(%'"
+          , "select taxon_name from taxon where taxarank = 'species' and (species is null or species = '') and taxon_name not like '%(%'"
         ));
  
         queries.add(new NamedQuery(
@@ -254,21 +254,21 @@ public abstract class Queries {
             "noSpeciesForSpecies"
           , "There is no Species value for a species."
           , "<th>Taxon Name</th>"      
-          , "select taxon_name from taxon where rank = 'species' and (species is null or species = '')"
+          , "select taxon_name from taxon where taxarank = 'species' and (species is null or species = '')"
           ));
 
         queries.add(new NamedQuery(
             "noGenusForGenus"
           , "Null or empty genus name for a genus."
           , "<th>Taxon Name</th>"      
-          , "select taxon_name from taxon where rank = 'genus' and (genus is null or genus = '')"
+          , "select taxon_name from taxon where taxarank = 'genus' and (genus is null or genus = '')"
           ));
 
         queries.add(new NamedQuery(
             "noSubfamilyForSubfamily"
           , "Null or empty subfamily from a subfamily"
           , "<th>Taxon Name</th><th>source</th><th>created</th>"      
-          , "select taxon_name, source, created from taxon where rank = 'subfamily' and (subfamily is null or subfamily = '')"
+          , "select taxon_name, source, created from taxon where taxarank = 'subfamily' and (subfamily is null or subfamily = '')"
           ));
 
         /*
@@ -276,7 +276,7 @@ public abstract class Queries {
             "noFamilyForFamily"
           , "Null or empty family for a family"
           , "<th>Taxon Name</th>"      
-          , "select taxon_name from taxon where rank = 'family' and (family is null or family = '')"
+          , "select taxon_name from taxon where taxarank = 'family' and (family is null or family = '')"
           ));
         */
         
@@ -284,7 +284,7 @@ public abstract class Queries {
             "emptyGenus"
           , "Genus field is empty for a genus or species"
           , "<th>Taxon Name</th><th>Subfamily</th><th>Genus</th><th>Rank</th>"      
-          , "select taxon_name, subfamily, genus, rank from taxon where genus = '' and rank != 'subfamily' and taxon_name != 'formicidae'"
+          , "select taxon_name, subfamily, genus, taxarank from taxon where genus = '' and taxarank != 'subfamily' and taxon_name != 'formicidae'"
           ));
           
         // contain detail query  
@@ -292,7 +292,7 @@ public abstract class Queries {
             "generaInMultipleSubfamilies"
           , "Show the genera that are in more than one subfamily"
           , "<th>Genus</th><th>Subfamily Count</th><th>Source</th><th>Statuses</th>"      
-          , "select genus, count(distinct subfamily), source, group_concat(distinct status) from taxon where rank != 'family' and rank != 'subfamily' and status not in ('synonym', 'original combination') group by genus, source having count(distinct subfamily) > 1"
+          , "select genus, count(distinct subfamily), source, group_concat(distinct status) from taxon where taxarank != 'family' and taxarank != 'subfamily' and status not in ('synonym', 'original combination') group by genus, source having count(distinct subfamily) > 1"
           , "generalInMultipleSubfamiliesDetail"
           ));
             
@@ -301,49 +301,49 @@ public abstract class Queries {
             "generaInMultipleSubfamilies2"
           , "Show the genera that are in more than one subfamily, 2nd method."
           , "<th>Taxon Name</th><th>Subfamily</th><th>Genus</th><th>Source</th>"      
-          , "select taxon_name, subfamily, genus, source from taxon where genus in (select genus from taxon where rank = 'genus' group by genus having count(*) > 1)"
+          , "select taxon_name, subfamily, genus, source from taxon where genus in (select genus from taxon where taxarank = 'genus' group by genus having count(*) > 1)"
           ));
             
         queries.add(new NamedQuery(
           "generalInMultipleSubfamiliesDetail"
           , "Show the genera that are in more than one subfamily"
           , "<th>Taxon Name</th><th>Subfamily</th><th>Genus</th><th>Source</th><th>Created</th><th>Insert Method</th>"      
-          , "select taxon_name, subfamily, genus, source, created, insert_method from taxon where genus in (select genus from taxon where rank != 'family' and rank != 'subfamily' and status != 'synonym' group by genus having count(distinct subfamily) > 1)"
+          , "select taxon_name, subfamily, genus, source, created, insert_method from taxon where genus in (select genus from taxon where taxarank != 'family' and taxarank != 'subfamily' and status != 'synonym' group by genus having count(distinct subfamily) > 1)"
         ));            
             
         queries.add(new NamedQuery(
             "emptySubfamily"
           , "Subfamily is empty though genus is not."
-          , "<th>Taxon Name</th><th>Rank</th><th>Subfamily</th><th>Genus</th><th>Source</th><th>Created</th>"      
-          , "select taxon_name, rank, subfamily, genus, source, created from taxon where (subfamily is null or subfamily = '') and (genus is not null and genus != '') order by source, taxon_name"
+          , "<th>Taxon Name</th><th>Rank</th><th>Subfamily</th><th>Genus</th><th>Source</th><th>Created</th>"
+          , "select taxon_name, taxarank, subfamily, genus, source, created from taxon where (subfamily is null or subfamily = '') and (genus is not null and genus != '') order by source, taxon_name"
           ));
           
         queries.add(new NamedQuery(
             "taxonNameWithDoubleQuote"
           , "There is a double quotation within the taxon name"
           , "<th>Taxon Name</th><th>Rank</th><th>Status</th><th>Type</th><th>Source</th><th>Insert Method</th><th>Created</th>"      
-          , "select taxon_name, rank, status, type, source, insert_method, created from taxon where taxon_name like '%\"%'"
+          , "select taxon_name, taxarank, status, type, source, insert_method, created from taxon where taxon_name like '%\"%'"
           ));
 
         queries.add(new NamedQuery(
             "taxonNameWithSingleQuote"
           , "There is a single quotation within the taxon name"
           , "<th>Taxon Name</th><th>Rank</th><th>Status</th><th>Type</th><th>Source</th><th>Insert Method</th><th>Created</th>"      
-          , "select taxon_name, rank, status, type, source, insert_method, created from taxon where taxon_name like '%\''%'"
+          , "select taxon_name, taxarank, status, type, source, insert_method, created from taxon where taxon_name like '%\''%'"
           ));
         
         queries.add(new NamedQuery(
             "validsWithCurrentValidName"
           , "Valids with current valid names"
           , "<th>Taxon Name</th><th>Status</th><th>Rank</th><th>Source</th><th>Current Valid Name</th>"      
-          , "select taxon_name, status, rank, source, current_valid_name from taxon where status = 'valid' and current_valid_name is not null"
+          , "select taxon_name, status, taxarank, source, current_valid_name from taxon where status = 'valid' and current_valid_name is not null"
           ));
 
         queries.add(new NamedQuery(
             "missingCurrentValidName"
           , "Status which uses Current Valid Name is missing it."
           , "<th>Taxon Name</th><th>Current Valid Name</th><th>Status</th><th>Created</th><th>Source</th><th>Line Num</th><th>Rank</th>"   
-          , "select taxon_name, current_valid_name, status, created, source, line_num, rank from taxon where current_valid_name is null and status in ('unavailable uncategorized', 'original combination', 'unavailable misspelling', 'obsolete combination', 'synonym')"
+          , "select taxon_name, current_valid_name, status, created, source, line_num, taxarank from taxon where current_valid_name is null and status in ('unavailable uncategorized', 'original combination', 'unavailable misspelling', 'obsolete combination', 'synonym')"
           ));
         
         queries.add(new NamedQuery(
@@ -399,7 +399,7 @@ public abstract class Queries {
             "badSpecies"
            , "Species must have not-null species name."         
            , "<th>Taxon Name</th><th>source</th><th>Created</th>"
-           , "select taxon_name, source, created from taxon where rank = 'species' and species is null"
+           , "select taxon_name, source, created from taxon where taxarank = 'species' and species is null"
            ));
 
         queries.add(new NamedQuery(
@@ -409,21 +409,21 @@ public abstract class Queries {
           , "select "
           // Probably should use domainApp
             + " concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"\'>\"), taxon_name), \"</a>\") "            
-            + " from taxon where rank in ('species', 'subspecies') and status = 'valid' and fossil = 0 and taxon_name not in (select taxon_name from antwiki_valid_taxa)"
+            + " from taxon where taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0 and taxon_name not in (select taxon_name from antwiki_valid_taxa)"
           ));
                   
         queries.add(new NamedQuery(
            "indeterminedAndQuestionableMorphoTaxa"
           , "Display indetermined and questionable morphotaxa."
           , "<th>Taxon Name</th><td>Rank</td><th>Status</th><th>Source</th><th>Created</th>"
-          , "select taxon_name, rank, status, source, created from taxon where status = 'indetermined' or (status = 'morphotaxon' and taxon_name like '%(%') order by status desc, source, taxon_name"
+          , "select taxon_name, taxarank, status, source, created from taxon where status = 'indetermined' or (status = 'morphotaxon' and taxon_name like '%(%') order by status desc, source, taxon_name"
         ));
                 
         queries.add(new NamedQuery(
             "badParentTaxonName"
           , "These taxa have a parent_taxon_name that does not exist in the taxon table. "
           , "<th>TaxonName</th><th>Parent Taxon Name</th><th>Source</th><th>Status</th><th>current_valid_name</th><th>Created</th>"
-          , "select t.taxon_name, t.parent_taxon_name, t.source, t.status, t.current_valid_name, t.created from taxon t where family = 'formicidae' and rank != 'family' and status not in ('unavailable misspelling', 'unavailable uncategorized', 'original combination') and parent_taxon_name not in (select taxon_name from taxon) order by created"  
+          , "select t.taxon_name, t.parent_taxon_name, t.source, t.status, t.current_valid_name, t.created from taxon t where family = 'formicidae' and taxarank != 'family' and status not in ('unavailable misspelling', 'unavailable uncategorized', 'original combination') and parent_taxon_name not in (select taxon_name from taxon) order by created"
         ));
                 
         // This query has a detail query
@@ -447,7 +447,7 @@ public abstract class Queries {
             "sourceWithBadParentDetail2"
           , "Source with taxa with parent taxa not found (Details)"
           , "<th>Source</th><th>Taxon Name</th><th>Groups</th>"      
-          , "select source, taxon_name, (select GROUP_CONCAT(distinct access_group) from specimen where specimen.taxon_name = taxon.taxon_name) as access_groups, (select count(*) from specimen where specimen.taxon_name = taxon.taxon_name) specimen_count, (select count(distinct access_group) from specimen where specimen.taxon_name = taxon.taxon_name) specimen_owner_count, parent_taxon_name, rank, created, insert_method from taxon where parent_taxon_name not in (select taxon_name from taxon) and source like 'specimen%' and family = 'formicidae' order by source"
+          , "select source, taxon_name, (select GROUP_CONCAT(distinct access_group) from specimen where specimen.taxon_name = taxon.taxon_name) as access_groups, (select count(*) from specimen where specimen.taxon_name = taxon.taxon_name) specimen_count, (select count(distinct access_group) from specimen where specimen.taxon_name = taxon.taxon_name) specimen_owner_count, parent_taxon_name, taxarank, created, insert_method from taxon where parent_taxon_name not in (select taxon_name from taxon) and source like 'specimen%' and family = 'formicidae' order by source"
           ));
         // Drill into the results with a query like:  select code, taxon_name, access_group, created, subfamily, genus from specimen where taxon_name = "cerapachyinaecerapachys centurio_cf";
           
@@ -455,7 +455,7 @@ public abstract class Queries {
            "taxaFromOldSpecimenLists"
           , "Show the taxa created from species lists that no longer exist, and their specimen counts."
           , "<th>Taxon Name</th><td>Rank</td><th>Status</th><th>Source</th><th>Created</th><th>Count</th>"
-          , "select t.taxon_name, rank, status, source, created, (select count(*) from specimen s where s.taxon_name = t.taxon_name) count from taxon t where (source like '%ants' or source like '%speciesList.txt') and source not in (select project_name from project) order by count desc"
+          , "select t.taxon_name, taxarank, status, source, created, (select count(*) from specimen s where s.taxon_name = t.taxon_name) count from taxon t where (source like '%ants' or source like '%speciesList.txt') and source not in (select project_name from project) order by count desc"
         ));
                         
         return queries; // end getTaxonNamedQueries()
@@ -482,7 +482,7 @@ public abstract class Queries {
             , "<th>Group</th><th>Taxon Name</th><th>Status</th>"
             , " select distinct g.abbrev, " 
             + " concat(concat(concat(concat(\"<a href=\'http://antweb.org/description.do?taxonName=\", t.taxon_name), \"\'>\"), t.taxon_name), \"</a>\") "            
-            + ", t.status from specimen sp, taxon t, groups g"
+            + ", t.status from specimen sp, taxon t, ant_group g"
             + " where sp.taxon_name = t.taxon_name " 
             + " and sp.access_group = g.id"
             + " and t.family = 'formicidae'"
@@ -530,14 +530,14 @@ public abstract class Queries {
             "specimenGroups"
           , "Specimen submissions by group. "
           , "<th>Group ID</th><th>Group Name</th><th>Count</th>"
-          , "select access_group, (select name from groups where id = access_group) name, count(*) from specimen group by access_group order by count(*) desc"  
+          , "select access_group, (select name from ant_group where id = access_group) name, count(*) from specimen group by access_group order by count(*) desc"
         ));
           
         queries.add(new NamedQuery(
             "introducedSpecimen"
           , "These are the specimen records flagged as introduced."
           , "<th>Group</th><th>Bioregion</th><th>code</th><th>taxon_name</th><th>Country</th>"
-          , "select groups.name, bioregion, code, taxon_name, country from specimen, groups where specimen.access_group = groups.id and is_introduced = 1 order by access_group, bioregion, country"
+          , "select ant_group.name, bioregion, code, taxon_name, country from specimen, ant_group where specimen.access_group = ant_group.id and is_introduced = 1 order by access_group, bioregion, country"
           ));          
           
         queries.add(new NamedQuery(
@@ -594,28 +594,28 @@ public abstract class Queries {
            "validNonfossilSpeciesWithBioregions"
           , "Valid, non-fossil species and their bioregions. Records can be correlated with query: validNonfossilSpeciesWithMuseums"
           , "<th>Taxon Name</th><th>subfamily</th><th>genus</th><th>species</th><th>bioregions</th>"
-          , "select t.taxon_name, subfamily, genus, species, group_concat(distinct bioregion_name) from taxon t left join bioregion_taxon bt on t.taxon_name = bt.taxon_name where status = 'valid' and fossil = 0 and rank in ('species') group by t.taxon_name, subfamily, genus, species"
+          , "select t.taxon_name, subfamily, genus, species, group_concat(distinct bioregion_name) from taxon t left join bioregion_taxon bt on t.taxon_name = bt.taxon_name where status = 'valid' and fossil = 0 and taxarank in ('species') group by t.taxon_name, subfamily, genus, species"
         ));
 
         queries.add(new NamedQuery(
            "validNonfossilSpeciesWithMuseumsOwnedByLocatedAt"
           , "Valid, non-fossil species and their museums, owned by, and located at."
           , "<th>Taxon Name</th><th>Museums</th><th>Owned By</th><th>Located At</th>"
-          , "select t.taxon_name, group_concat(distinct s.museum) museum, group_concat(distinct s.ownedby) ownedBy, group_concat(distinct locatedat) locatedAt from taxon t left join specimen s on t.taxon_name = s.taxon_name where t.status = 'valid' and t.fossil = 0 and t.rank in ('species') group by t.taxon_name order by taxon_name"
+          , "select t.taxon_name, group_concat(distinct s.museum) museum, group_concat(distinct s.ownedby) ownedBy, group_concat(distinct locatedat) locatedAt from taxon t left join specimen s on t.taxon_name = s.taxon_name where t.status = 'valid' and t.fossil = 0 and t.taxarank in ('species') group by t.taxon_name order by taxon_name"
         ));
         
         queries.add(new NamedQuery(
            "validNonfossilSpeciesWithMuseums"
           , "Valid, non-fossil species and their museums."
           , "<th>Taxon Name</th><th>Museums</th>"
-          , "select t.taxon_name, group_concat(distinct s.museum) from taxon t left join specimen s on t.taxon_name = s.taxon_name where t.status = 'valid' and t.fossil = 0 and t.rank in ('species') group by t.taxon_name;"
+          , "select t.taxon_name, group_concat(distinct s.museum) from taxon t left join specimen s on t.taxon_name = s.taxon_name where t.status = 'valid' and t.fossil = 0 and t.taxarank in ('species') group by t.taxon_name;"
         ));
 
         queries.add(new NamedQuery(
            "validNonfossilTaxaWithBioregions"
           , "Valid, non-fossil taxa and their bioregions."
           , "<th>Taxon Name</th><th>subfamily</th><th>genus</th><th>species</th><th>subspecies</th><th>bioregions</th>"
-          , "select taxon_name, subfamily, genus, species, subspecies, group_concat(distinct bioregion_name) from taxon t left join bioregion_taxon bt on t.taxon_name = bt.taxon_name where status = 'valid' and fossil = 0 and rank in ('species', 'subspecies') group by subfamily, genus, species, subspecies"
+          , "select taxon_name, subfamily, genus, species, subspecies, group_concat(distinct bioregion_name) from taxon t left join bioregion_taxon bt on t.taxon_name = bt.taxon_name where status = 'valid' and fossil = 0 and taxarank in ('species', 'subspecies') group by subfamily, genus, species, subspecies"
         ));        
         
         queries.add(new NamedQuery(
@@ -624,7 +624,7 @@ public abstract class Queries {
           , "<th>Taxon Name</th>"
           , "select "
             + " concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"\'>\"), taxon_name), \"</a>\") "            
-            + " from taxon where rank in ('species', 'subspecies') and status= 'valid' and fossil = 1 and taxon_name not in (select taxon_name from antwiki_fossil_taxa)"
+            + " from taxon where taxarank in ('species', 'subspecies') and status= 'valid' and fossil = 1 and taxon_name not in (select taxon_name from antwiki_fossil_taxa)"
           ));
           
         return queries; // end getFossilNamedQueries()
@@ -638,7 +638,7 @@ public abstract class Queries {
             "loginProjectMapping"
           , "These are the logins mapped to projects."
           , "<th>Group Name</th><th>Login Name</th><th>Login Email</th><th>Project Title</th><th>Project Name</th>"
-          , "select g.name, l.name, l.email, p.project_title, p.project_name from groups g, login l, login_project lp, project p where g.id = l.group_id and l.id = lp.login_id and lp.project_name = p.project_name order by g.name, l.name, p.project_title"
+          , "select g.name, l.name, l.email, p.project_title, p.project_name from ant_group g, login l, login_project lp, project p where g.id = l.group_id and l.id = lp.login_id and lp.project_name = p.project_name order by g.name, l.name, p.project_title"
         ));
 
         queries.add(new NamedQuery(
@@ -672,14 +672,14 @@ public abstract class Queries {
             "adminLoginIdIsZero"
           , "Admin Login ID is zero"
           , "<th>Group Name</th>"      
-          , "select name from groups where admin_login_id = 0 and id > 0"
+          , "select name from ant_group where admin_login_id = 0 and id > 0"
           ));
              
         queries.add(new NamedQuery(
             "groups"
           , "Group data."
           , "<th>Group ID</th><th>Group Name</th><th>Last Upload</th><th>Admin Login ID</th><th>Can Upload Specimen?</th><th>Can Upload Images</th><th>Abbreviation</th>"
-          , "select id, name, last_specimen_upload, admin_login_id, is_upload_specimens, is_upload_images, abbrev from groups"  
+          , "select id, name, last_specimen_upload, admin_login_id, is_upload_specimens, is_upload_images, abbrev from ant_group"
         ));
              
                                   
@@ -830,7 +830,7 @@ public abstract class Queries {
             "incorrectNameInSpeciesList"
           , "Not Valid or Morpho taxa in Species list"
           , "<th>Project Name</th><th>Taxon Name</th><th>Source</th><th>Rank</th><th>Status</th><th>Current Valid Name</th>"      
-          , "select pt.project_name, pt.taxon_name, pt.source, t.rank, t.status, t.current_valid_name from taxon t, proj_taxon pt where pt.taxon_name = t.taxon_name and t.status != 'valid' and t.status != 'morphotaxon' and pt.project_name != 'worldants' and pt.project_name != 'allantwebants' order by pt.project_name"
+          , "select pt.project_name, pt.taxon_name, pt.source, t.taxarank, t.status, t.current_valid_name from taxon t, proj_taxon pt where pt.taxon_name = t.taxon_name and t.status != 'valid' and t.status != 'morphotaxon' and pt.project_name != 'worldants' and pt.project_name != 'allantwebants' order by pt.project_name"
           ));
           
         queries.add(new NamedQuery(
@@ -870,7 +870,7 @@ public abstract class Queries {
            "projTaxaMorphosWithNoSpecimen"
           , "Proj_Taxon records that are morphos must have specimen data. Refer to Queries.java for corrective action."
           , "<th>Taxon Name</th><th>Project Name</th><th>Source</th>"
-          , "select pt.taxon_name, pt.project_name, pt.source from proj_taxon pt where pt.taxon_name in (select taxon_name from taxon t where t.rank in ('species', 'subspecies') and t.status = 'morphotaxon') and pt.taxon_name not in (select taxon_name from specimen)"
+          , "select pt.taxon_name, pt.project_name, pt.source from proj_taxon pt where pt.taxon_name in (select taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon') and pt.taxon_name not in (select taxon_name from specimen)"
         //  , "deleteProjTaxaMorphosWithNoSpecimen"
         ));
         /* Something like this...     
@@ -878,7 +878,7 @@ public abstract class Queries {
             "deleteProjTaxaMorphosWithNoSpecimen"
           , "Delete the proj_taxon records for morphotaxa that are in project lists that do not have correlated specimen data."
           , "<th>Taxon Name</th><th>Project Name</th>"
-          , "delete from proj_taxon where project_name = 'XXX' and taxon_name in (select taxon_name from taxon t where t.rank in ('species', 'subspecies') and t.status = 'morphotaxon') and taxon_name not in (select taxon_name from specimen)"
+          , "delete from proj_taxon where project_name = 'XXX' and taxon_name in (select taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon') and taxon_name not in (select taxon_name from specimen)"
         ));
         */
 
@@ -909,9 +909,9 @@ public abstract class Queries {
             "projectTaxaCountByProjectRank"
           , "The count of proj_taxon records."
           , "<th>Project Name</th><th>Rank</th><th>Source</th><th>Count</th>"
-        //  , "select project_name, rank, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name group by project_name, rank"
-        //  , "select project_name, rank, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and project_name = 'allantwebants' group by project_name, rank, pt.source"
-          , "select rank, project_name, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and project_name in ('worldants', 'allantwebants') group by project_name, rank, pt.source order by rank, project_name, source"
+        //  , "select project_name, taxarank, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name group by project_name, taxarank"
+        //  , "select project_name, taxarank, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and project_name = 'allantwebants' group by project_name, taxarank, pt.source"
+          , "select taxarank, project_name, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and project_name in ('worldants', 'allantwebants') group by project_name, taxarank, pt.source order by taxarank, project_name, source"
         ));
         
 
@@ -920,7 +920,7 @@ public abstract class Queries {
         // select taxon_name, status from taxon where taxon_name in (select taxon_name from proj_taxon where source like "proxy%");        
 
         // This shows that after specimen upload, not all worldants records are existing in allantweb ants. Could affect counts.
-        // select rank, project_name, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and project_name in ('worldants', 'allantwebants') group by project_name, rank, pt.source order by rank, project_name, source;
+        // select rank, project_name, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and project_name in ('worldants', 'allantwebants') group by project_name, taxarank, pt.source order by rank, project_name, source;
 
         
         /*
@@ -959,7 +959,7 @@ public abstract class Queries {
            "geolocaleTaxaMorphosWithNoSpecimen"
           , "Geolocale_Taxon records that are morphos must have specimen data. Refer to Queries.java for corrective action."
           , "<th>Taxon Name</th><th>Geolocale Name</th><th>Source</th>"
-          , "select t.taxon_name, g.name, gt.source from geolocale_taxon gt, taxon t, geolocale g where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and t.rank in ('species', 'subspecies') and t.status = 'morphotaxon' and t.taxon_name not in (select taxon_name from specimen)"
+          , "select t.taxon_name, g.name, gt.source from geolocale_taxon gt, taxon t, geolocale g where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon' and t.taxon_name not in (select taxon_name from specimen)"
         ));
 
 
@@ -1027,7 +1027,7 @@ public abstract class Queries {
             + " concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", t.taxon_name), \"\'>\"), t.taxon_name), \"</a>\") "                      
             + ", count(distinct g.bioregion), group_concat(distinct concat(' ', g.bioregion)) from geolocale_taxon gt, geolocale g, taxon t where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name " 
             + " and t.taxon_name not in (select taxon_name from proj_taxon where project_name = 'introducedants')"
-            + " and t.rank in ('species', 'subspecies') group by gt.taxon_name having count(distinct g.bioregion) > 2 order by count(distinct g.bioregion) desc"
+            + " and t.taxarank in ('species', 'subspecies') group by gt.taxon_name having count(distinct g.bioregion) > 2 order by count(distinct g.bioregion) desc"
         ));
                 
         queries.add(new NamedQuery(
@@ -1079,7 +1079,7 @@ public abstract class Queries {
            "imageData"
           , "All Image Data"
           , "<th>Specimen</th><th>Shot</th><th>Number</th><th>Upload Date</th><th>Photographer</th><th>Uploaded By</th><th></th>"
-          , "select specimen.code, image.shot_type, image.shot_number, image.upload_date, artist.name, groups.name from  groups, artist, group_image, image left join specimen on  specimen.code = image.image_of_id  where group_image.image_id = image.id  and groups.id=group_image.group_id  and image.upload_date is not null   and artist.id = image.artist    order by image.upload_date desc, specimen.code, image.shot_type, image.shot_number"
+          , "select specimen.code, image.shot_type, image.shot_number, image.upload_date, artist.name, ant_group.name from  ant_group, artist, group_image, image left join specimen on  specimen.code = image.image_of_id  where group_image.image_id = image.id  and ant_group.id=group_image.group_id  and image.upload_date is not null   and artist.id = image.artist    order by image.upload_date desc, specimen.code, image.shot_type, image.shot_number"
         ));
 
         return queries; // end getImageNamedQueries()
@@ -1093,7 +1093,7 @@ public abstract class Queries {
                 "descriptionEditCountByOwner"
                 , "Count of Description Edits by Owner"
                 , "<th>Description Edit Count</th><th>Owned By</th>"
-                , "select count(distinct de.taxon_name, de.title) theCount, g.name from description_edit de, groups g where de.access_group = g.id group by de.access_group order by theCount desc"
+                , "select count(distinct de.taxon_name, de.title) theCount, g.name from description_edit de, ant_group g where de.access_group = g.id group by de.access_group order by theCount desc"
         ));
 
         queries.add(new NamedQuery(
@@ -1133,7 +1133,7 @@ public abstract class Queries {
                 , "<th>Group Name</th><th>Count</th><th>Last Upload</th><th>Reload</th>"
                 , "select g.name, count(distinct code), max(s.created)"
                 + ", concat(concat(concat(concat(\"&nbsp;&nbsp;&nbsp;<a href=\'" + AntwebProps.getDomainApp() + "/upload.do?action=reloadSpecimenList&groupId=\", g.id), \"\'>\"), 'run'), \"</a>\") "
-                + " from specimen s, groups g where s.access_group = g.id group by access_group order by max(s.created) desc"
+                + " from specimen s, ant_group g where s.access_group = g.id group by access_group order by max(s.created) desc"
         ));
         /* namedQueries.add(new NamedQuery(
               "lastSpecimenUpload"
@@ -1141,7 +1141,7 @@ public abstract class Queries {
              , "<th>Group Name</th><th>Count</th><th>Emails</th><th>Last Upload</th><th>Reload</th>"
              , "select g.name, count(distinct code), substring(group_concat(distinct email), 1, 60), max(s.created)" 
              + ", concat(concat(concat(concat(\"&nbsp;&nbsp;&nbsp;<a href=\'" + AntwebProps.getDomainApp() + "/upload.do?action=reloadSpecimenList&groupId=\", g.id), \"\'>\"), 'run'), \"</a>\") " 
-             + " from specimen s, groups g, login l where s.access_group = g.id and g.id = l.group_id group by access_group order by max(s.created) desc"
+             + " from specimen s, ant_group g, login l where s.access_group = g.id and g.id = l.group_id group by access_group order by max(s.created) desc"
            ));
         */
 

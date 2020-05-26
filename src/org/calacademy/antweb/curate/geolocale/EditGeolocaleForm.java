@@ -31,6 +31,7 @@ public final class EditGeolocaleForm extends ActionForm {
     private String validName;
     private int validNameId;
     private String parent;
+    private String country; // Used for islands
     private String region;
     private String bioregion;
     private String altBioregion;
@@ -155,15 +156,14 @@ public final class EditGeolocaleForm extends ActionForm {
         return parent;
     }
     public void setParent(String parent) {
-    
-    /*
-        A.log("setParent() parent:" + parent);
-        Geolocale parentGeolocale = GeolocaleMgr.getGeolocale(parent);
-        if (parentGeolocale != null) {
-          setRegion(parentGeolocale.getRegion());
-        }
-    */
         this.parent = parent;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+    public void setCountry(String country) {
+        this.country = country;
     }
 
     public String getRegion() {

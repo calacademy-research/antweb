@@ -80,7 +80,10 @@ public class Museum extends LocalityOverview implements Countable {
 
     public String getTaxonSetTable() {
       return "museum_taxon";
-    }      
+    }
+    public String getTable() {
+        return "museum";
+    }
 
     public String getHeading() {
       return "Museum";
@@ -216,33 +219,31 @@ public class Museum extends LocalityOverview implements Countable {
 
     public String getCountChildrenQuery(String rank) {
         
-        String rankClause = " taxon.rank = '" + rank + "'";
-	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.rank = 'species' or taxon.rank = 'subspecies') "; 
-        }
-      
+        String rankClause = " taxon.taxarank = '" + rank + "'";
+        if (Rank.SPECIES.equals(rank)) rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
+
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
           + " join museum_taxon mt on taxon.taxon_name = mt.taxon_name " 
           + " where " + rankClause
+          + new StatusSet(StatusSet.ALL).getAndCriteria()  // Needed for museum?
           + "   and mt.code = '" + getCode() + "'"
-          // + StatusSet.getAndCriteria(projectName)  // Not implemented (yet) for museums.
           + " group by parentTaxonName ";
         return query;    
     }
     
     public String getCountGrandChildrenQuery(String rank, String column) {
        
-        String rankClause = " taxon.rank = '" + rank + "'";
+        String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.rank = 'species' or taxon.rank = 'subspecies') "; 
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
         }
         
         // parent is a genus
         String query = "select sum(mt." + column + ") sum, taxon.parent_taxon_name parentTaxonName from taxon " 
             + " join museum_taxon mt on taxon.taxon_name = mt.taxon_name " 
-            + "  where " + rank
+            + "  where " + rankClause
+            + new StatusSet(StatusSet.ALL).getAndCriteria() // needed for museum?
             + "   and mt.code = '" + getCode() + "'"
-           //  + StatusSet.getAndCriteria(projectName)  // Not implemented for museum
             + "  group by parentTaxonName";
         return query;
     }

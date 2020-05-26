@@ -29,7 +29,7 @@ public class OrphansDb extends AntwebDb {
       String query = "select source, taxon_name from taxon " 
         + " where taxon_name not in (select taxon_name from specimen)";
       //if (!AntwebProps.isDevMode()) 
-      query += " and rank in ('species', 'subspecies')";   // Added in Aug 28th 2013
+      query += " and taxarank in ('species', 'subspecies')";   // Added in Aug 28th 2013
       query += " and source like '%" + source + "%'" // or source like 'addMissingGenera')"
         + orderBy;
 
@@ -49,7 +49,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     // This is not yet utilized...
     public static String getOrphanedGeneraQuery(String source) {
       String query = "select source, taxon_name from taxon " 
-        + " where rank = 'genus'"
+        + " where taxarank = 'genus'"
         + " and taxon_name not in (select parent_taxon_name from taxon)";
       if (source != null) {
         query += " and source like '%" + source + "%'";
@@ -61,8 +61,8 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     
     public static String getOtherOrphanedGeneraQuery() {
       String query = "select taxon_name, subfamily, genus, source, created from taxon " 
-        + " where rank = 'genus' and status = 'morphotaxon' " 
-        + " and (subfamily, genus) not in (select subfamily, genus from taxon where (rank = 'species' or rank = 'subspecies')) " 
+        + " where taxarank = 'genus' and status = 'morphotaxon' "
+        + " and (subfamily, genus) not in (select subfamily, genus from taxon where (taxarank = 'species' or taxarank = 'subspecies')) "
         + " order by taxon_name";    
       return query;
     }
@@ -73,7 +73,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 
     private static String getOrphanedSubfamiliesQuery(String source) {
       String query = "select source, subfamily from taxon " 
-        + " where rank = 'subfamily'"
+        + " where taxarank = 'subfamily'"
         + " and taxon_name not in (select parent_taxon_name from taxon)";   
       if (source != null) {
         query += " and source like '%" + source + "%'";
@@ -380,7 +380,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 		ResultSet rset = null;
 		String query = "select taxon_name, status, genus from taxon where taxon_name like '% " + commonPhrase + "%'" 
 		  + " and taxon_name != '" + taxon.getTaxonName() + "'"
-		  + " and rank in ('species', 'subspecies')"
+		  + " and taxarank in ('species', 'subspecies')"
 		  + " order by status desc, genus";
 		try {
 	        stmt = DBUtil.getStatement(getConnection(), "OrphansDb.getPossibleValidNames()");
@@ -538,7 +538,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         String orphanAlternatesQuery = "select source, taxon_name, (select GROUP_CONCAT(distinct access_group) from specimen where specimen.taxon_name = taxon.taxon_name) as access_groups" 
             + " , (select count(*) from specimen where specimen.taxon_name = taxon.taxon_name) specimen_count" 
             + " , (select count(distinct access_group) from specimen where specimen.taxon_name = taxon.taxon_name) specimen_owner_count" 
-            + " , parent_taxon_name, rank, created, insert_method " 
+            + " , parent_taxon_name, taxarank, created, insert_method "
             + " from taxon " 
             + " where parent_taxon_name not in (select taxon_name from taxon) " 
             + " and source like 'specimen%' " 

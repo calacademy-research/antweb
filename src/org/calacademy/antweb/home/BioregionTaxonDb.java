@@ -130,7 +130,7 @@ See BioregionDb.java:77 where this call is commented out.
           + " and g.bioregion = '" + bioregion.getName() + "'" 
           + " and g.georank = 'country'"
           + " and (g.alt_bioregion is null or g.alt_bioregion = 'none')"          
-          + " and t.rank in ('species', 'subspecies')"
+          + " and t.taxarank in ('species', 'subspecies')"
           + " and t.fossil = 0"
           + " order by source desc";
           ;
@@ -460,56 +460,56 @@ See BioregionDb.java:77 where this call is commented out.
         ArrayList<String> statistics = new ArrayList<String>();
         //HashMap<String, String> stats = new HashMap<String, String>();
 // 1
-        String query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and rank=\"subfamily\"";
+        String query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"subfamily\"";
         Statement stmt2 = connection.createStatement();              
         ResultSet resultSet2 = stmt2.executeQuery(query);
         int extinctSubfamily = 0;
         while (resultSet2.next()) {
             extinctSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and rank=\"genus\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int extinctGenera= 0;
         while (resultSet2.next()) {
             extinctGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and rank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int extinctSpecies = 0;
         while (resultSet2.next()) {
             extinctSpecies = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and rank=\"subfamily\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"subfamily\"";
         resultSet2 = stmt2.executeQuery(query);
         int extantSubfamily = 0;
         while (resultSet2.next()) {
             extantSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and rank=\"genus\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int extantGenera = 0;
         while (resultSet2.next()) {
             extantGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and rank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int extantSpecies = 0;
         while (resultSet2.next()) {
             extantSpecies = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name  and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and rank=\"subfamily\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name  and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and taxarank=\"subfamily\"";
         resultSet2 = stmt2.executeQuery(query);
         int validSubfamily = 0;
         while (resultSet2.next()) {
             validSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and rank=\"genus\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int validGenera = 0;
         while (resultSet2.next()) {
             validGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and rank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int validSpecies = 0;
         while (resultSet2.next()) {
@@ -517,7 +517,7 @@ See BioregionDb.java:77 where this call is commented out.
         }
 // 10
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "'"
-          + " and taxon.status = 'valid' and rank in ('species', 'subspecies') and bioregion_taxon.image_count > 0";
+          + " and taxon.status = 'valid' and taxarank in ('species', 'subspecies') and bioregion_taxon.image_count > 0";
         resultSet2 = stmt2.executeQuery(query);
         int validImagedSpecies = 0;
         while (resultSet2.next()) {

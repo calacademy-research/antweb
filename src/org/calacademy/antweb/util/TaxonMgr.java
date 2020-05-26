@@ -1,4 +1,4 @@
-package org.calacademy.antweb.util;
+    package org.calacademy.antweb.util;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -21,7 +21,7 @@ import org.calacademy.antweb.Formatter;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class TaxonMgr {
+public class TaxonMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(TaxonMgr.class);
 
@@ -38,44 +38,53 @@ public class TaxonMgr {
 
     //private static List<String> taxaNamesList = null;
     private static List<String> prettyTaxaNamesList = null;
-    
 
-    public static void populate(Connection connection) {
-      populate(connection, false);
+    public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
+        if (!forceReload && (s_subfamilies != null)) return;
+
+        TaxonDb taxonDb = new TaxonDb(connection);
+        s_subfamilies = taxonDb.getTaxa(Rank.SUBFAMILY);
+        //A.log("populate() subfamilies:" + s_subfamilies);
+
+        ArrayList<Taxon> genera = taxonDb.getTaxa(Rank.GENUS);
+        s_genera = new HashMap<String, Taxon>();
+
+        //A.log("populate() genera.size:" + genera.size());
+        for (Taxon taxon : genera) {
+            s_genera.put(taxon.getTaxonName(), taxon);
+        }
+
+        // For Taxon Name Search Autocomplete
+        prettyTaxaNamesList = new ArrayList<String>();
+        prettyTaxaNamesList.addAll(CommonNames.getNames());
+
+        List<String> taxaNamesList = taxonDb.getTaxonNames();
+        for (String taxonName : taxaNamesList) {
+            prettyTaxaNamesList.add(Taxon.getPrettyTaxonName(taxonName));
+        }
+
+//        TaxonDb taxonDb = new TaxonDb(connection);
+        s_taxa = new HashMap<String, Taxon>();
+        ArrayList<Taxon> taxa = taxonDb.getShallowTaxa();
+        for (Taxon taxon : taxa) {
+            s_taxa.put(taxon.getTaxonName(), taxon);
+        }
+
+        if (!initialRun) {
+            try {
+                postInitialize(connection);
+            } catch (SQLException e) {
+                s_log.warn("populate() e:" + e);
+            }
+        }
+
+
+        s_subgenusHashMap = taxonDb.getSubgenusHashMap();
     }
 
-    public static void populate(Connection connection, boolean forceReload) {
-      if (!forceReload && (s_subfamilies != null)) return;
-      
-      TaxonDb taxonDb = new TaxonDb(connection);
-      s_subfamilies = taxonDb.getTaxa(Rank.SUBFAMILY);
-      //A.log("populate() subfamilies:" + s_subfamilies);
-
-      ArrayList<Taxon> genera = taxonDb.getTaxa(Rank.GENUS);
-      s_genera = new HashMap<String, Taxon>();
-      
-      //A.log("populate() genera.size:" + genera.size());      
-      for (Taxon taxon : genera) {
-        s_genera.put(taxon.getTaxonName(), taxon);        
-      } 
-
-      // For Taxon Name Search Autocomplete
-      prettyTaxaNamesList = new ArrayList<String>();
-      prettyTaxaNamesList.addAll(CommonNames.getNames());
-
-      List<String> taxaNamesList = taxonDb.getTaxonNames();
-      for (String taxonName : taxaNamesList) {
-        prettyTaxaNamesList.add(Taxon.getPrettyTaxonName(taxonName));
-      }      
-
-      s_taxa = new HashMap<String, Taxon>();
-      ArrayList<Taxon> taxa = taxonDb.getShallowTaxa();
-      for (Taxon taxon : taxa) {
-          s_taxa.put(taxon.getTaxonName(), taxon);        
-      } 
-      //A.log("populate() forceReload:" + forceReload);
-
-      s_subgenusHashMap = taxonDb.getSubgenusHashMap();
+    //Called through UtilAction to, in a separate thread, populate the curators with adm1.
+    // Time consuming. About 8 seconds.
+    public static void postInitialize(Connection connection) throws SQLException {
     }
 
     // For Taxon Name Search Autocomplete

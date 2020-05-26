@@ -400,8 +400,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
         try {
             stmt = DBUtil.getStatement(getConnection(), "groupMorphoGenera()");
 
-            query = "select distinct subfamily, genus from taxon where (rank = 'species' or rank = 'subspecies') " 
-              + " and (subfamily, genus) in ( select subfamily, genus from taxon where rank = 'genus' and status = 'morphotaxon') " 
+            query = "select distinct subfamily, genus from taxon where (taxarank = 'species' or taxarank = 'subspecies') "
+              + " and (subfamily, genus) in ( select subfamily, genus from taxon where taxarank = 'genus' and status = 'morphotaxon') "
               + " and genus not like '(%' and access_group = " + group.getId();
 
              //A.log("groupMorphoGenera() query:" + query);

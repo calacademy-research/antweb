@@ -81,7 +81,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
         dml = "insert into geolocale_taxon_log_detail (geolocale_id, taxon_name, created, subfamily_count, genus_count, species_count, specimen_count, image_count) " 
           + " select gt.geolocale_id, gt.taxon_name, gt.created, gt.subfamily_count, gt.genus_count, gt.species_count, gt.specimen_count, gt.image_count " 
           + " from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name " 
-          + " and ( rank = 'species' or rank = 'subspecies')"
+          + " and ( taxarank = 'species' or taxarank = 'subspecies')"
           + " and geolocale_id = " + geolocaleId;
         stmt.executeUpdate(dml);
 
@@ -195,7 +195,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             query = "select " + fields
               + " from geolocale_taxon gt, taxon t"
               + " where gt.taxon_name = t.taxon_name " 
-              + " and (t.rank = 'species' or t.rank = 'subspecies')"
+              + " and (t.taxarank = 'species' or t.taxarank = 'subspecies')"
               + subfamilyClause
               ;
             if (geolocaleId != 0) query += " and gt.geolocale_id = '" + geolocaleId + "'";
@@ -249,7 +249,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             query = "select " + fields
               + " from geolocale_taxon_log_detail gt"
               //+ " where gt.taxon_name = t.taxon_name " 
-              //+ " and (t.rank = 'species' or t.rank = 'subspecies')"
+              //+ " and (t.taxarank = 'species' or t.taxarank = 'subspecies')"
               //+ subfamilyClause
               + " where 1=1";
             if (logId != 0) query += " and log_id = " + logId;

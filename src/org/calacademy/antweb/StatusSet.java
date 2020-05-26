@@ -29,7 +29,7 @@ public class StatusSet extends Status {
     public final static String COMPLETE = "complete";
     public final static String VALID_FOSSIL = "valid fossil";
     public final static String VALID_WITH_FOSSIL = "Valid (with fossils)";
-    public final static String VALID_EXTANT = "valid extant";    
+    public final static String VALID_EXTANT = "valid extant";
 
     //public final static String VALID_WITHOUT_FOSSIL = "valid without fossil";
     public final static String TYPE = "type";
@@ -197,7 +197,7 @@ public class StatusSet extends Status {
 		//if (Project.WORLDANTS.equals(overview.getName())) statusSetStr = Status.VALID;
 		//if (Project.ALLANTWEBANTS.equals(overview.getName())) statusSetStr = StatusSet.ALL;
 
-        A.log("getStatusSet() 3 requestStatusSet:" + requestStatusSet + " sessionStatusSet:" + (String) session.getAttribute("statusSet") + " overview:" + overview + " statusSetStr:" + statusSetStr);
+        //A.log("getStatusSet() 3 requestStatusSet:" + requestStatusSet + " sessionStatusSet:" + (String) session.getAttribute("statusSet") + " overview:" + overview + " statusSetStr:" + statusSetStr);
         
         if (setInSession) session.setAttribute("statusSet", statusSetStr);
         return statusSetStr;    

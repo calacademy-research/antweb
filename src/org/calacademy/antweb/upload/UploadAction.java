@@ -123,6 +123,8 @@ public class UploadAction extends Action {
             connection = DBUtil.getConnection(dataSource, "UploadAction.execute()", HttpUtil.getTarget(request));
             connection.setAutoCommit(false);
 
+			LoginDb loginDb = new LoginDb(connection);
+
             AntwebMgr.incrementSpecimenUploadId(connection);
 
 			/*
@@ -148,7 +150,6 @@ public class UploadAction extends Action {
 		    }
 
             //if (AntwebProps.isDevOrStageMode()) httpPostOK = true;
-
 		    if (!(HttpUtil.isPost(request) || httpPostOK) && !(
 		           "runStatistics".equals(action)
 		        || "reloadSpecimenList".equals(action)
@@ -238,10 +239,16 @@ public class UploadAction extends Action {
 				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theFileName, formFileName
 				  , submitLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 
-                ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
+                if (false && AntwebProps.isDevMode()) {
+					A.log("BECAUSE IN DEV MODE, post specimen processing aborted.");
+					uploadDetails.finish(accessLogin, request, connection);
+					return uploadDetails.findForward(mapping, request);
+				}
 
-  //LogMgr.logQuery(connection, "After specimen upload Proj_taxon worldants counts", "select project_name, source, count(*) from proj_taxon where source = 'worldants' group by project_name, source");
-  // LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "After specimen upload Proj_taxon worldants counts");
+		        ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
+
+			  //LogMgr.logQuery(connection, "After specimen upload Proj_taxon worldants counts", "select project_name, source, count(*) from proj_taxon where source = 'worldants' group by project_name, source");
+			  // LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "After specimen upload Proj_taxon worldants counts");
 
          		specimenPostProcess(connection, submitLogin, uploadDetails);
 
@@ -265,7 +272,7 @@ public class UploadAction extends Action {
 				//String testAccessLoginName = "psward";
 				//String testAccessLoginName = "SShattuck";
 				String testAccessLoginName = "testLogin";
-				Login testLogin = (new LoginDb(connection)).getLoginByName(testAccessLoginName);
+				Login testLogin = loginDb.getLoginByName(testAccessLoginName);
 				accessGroup = testLogin.getGroup();
 
 				// Fetched from AppResources site.inputfilehome=/Users/mark/dev/calAcademy/workingdir/
@@ -379,7 +386,7 @@ public class UploadAction extends Action {
 				ProjectDb projectDb = new ProjectDb(connection);
 				projectDb.deleteSpeciesList(deleteProject);
 
-				(new LoginDb(connection)).refreshLogin(session);
+				loginDb.refreshLogin(session);
 
 				String message = "Species List deleted:" + deleteProject + ".";
 				s_log.warn("execute() " + message);

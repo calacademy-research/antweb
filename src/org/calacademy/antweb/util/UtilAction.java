@@ -1,3 +1,4 @@
+
 package org.calacademy.antweb.util;
 
 import java.io.*;
@@ -52,12 +53,12 @@ public class UtilAction extends Action {
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
-              
-        HttpSession session = request.getSession();                
+
+        HttpSession session = request.getSession();
         HttpUtil.setUtf8(request, response); 
-        
+
         java.sql.Connection connection = null;
-		ActionForward returnLoc = null;                
+		ActionForward returnLoc = null;
 
 		UtilForm theForm = (UtilForm) form;
 		String action = theForm.getAction();
@@ -67,13 +68,16 @@ public class UtilAction extends Action {
 		String name = theForm.getName();
 
         //A.log("execute() name:" + name + " param:" + param);
-		
         try {
 
             DataSource dataSource = getDataSource(request, "longConPool");
             connection = DBUtil.getConnection(dataSource, "UtilAction.execute()");
 
-			if (action != null) {       
+			if (action != null) {
+				if (action.equals("postInstantiate")) {
+					AntwebMgr.postInitialize(connection);
+					return null;
+				}
 
 			  if (action.equals("unlockImageUpload")) {
 				AntwebUtil.writeFile("/var/www/html/imageUpload/" + "imageUploadInProcess.txt", "0");
@@ -146,7 +150,7 @@ public class UtilAction extends Action {
 
 			  if (action.equals("geolocaleIntroduced")) { 
 				String field = theForm.getField();
-				String query = "select gt.taxon_name, is_introduced, is_endemic from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name and t.rank in ('species', 'subspecies') and geolocale_id = " + field + " and (is_introduced = 1 or is_endemic = 0)";
+				String query = "select gt.taxon_name, is_introduced, is_endemic from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name and t.taxarank in ('species', 'subspecies') and geolocale_id = " + field + " and (is_introduced = 1 or is_endemic = 0)";
 				String message = QueryManager.getQueryResults(connection, query);
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("message");
@@ -185,7 +189,7 @@ public class UtilAction extends Action {
                     AllAntwebMgr.populate(connection);
                     request.setAttribute("message", "AllAntwebMgr Reloaded.");    
 			    } else if ("login".equals(name)) {
-                    LoginMgr.populate(connection, forceReload);
+                    LoginMgr.populate(connection, forceReload, true);
                     request.setAttribute("message", "LoginMgr Reloaded.");    
 			    } else if ("project".equals(name)) {
                     ProjectMgr.populate(connection, forceReload);
@@ -197,19 +201,19 @@ public class UtilAction extends Action {
                     MuseumMgr.populate(connection, forceReload);
                     request.setAttribute("message", "MuseumMgr Reloaded.");    
 			    } else if ("geolocale".equals(name)) {
-                    GeolocaleMgr.populate(connection, forceReload);  // Slow!
+                    GeolocaleMgr.populate(connection, forceReload, true);  // Slow!
                     request.setAttribute("message", "GeolocaleMgr Reloaded.");    
 			    } else if ("taxonProp".equals(name)) {
                     TaxonPropMgr.populate(connection, forceReload);
                     request.setAttribute("message", "TaxonPropMgr Reloaded.");    
 			    } else if ("taxon".equals(name)) {
-                    TaxonMgr.populate(connection, forceReload);
+                    TaxonMgr.populate(connection, forceReload, true);
                     request.setAttribute("message", "TaxonMgr Reloaded.");    
 			    } else if ("upload".equals(name)) {
                     UploadMgr.populate(connection, forceReload);
                     request.setAttribute("message", "UploadMgr Reloaded.");    
 			    } else if ("artist".equals(name)) {
-                    ArtistMgr.populate(connection, forceReload);
+                    ArtistMgr.populate(connection, forceReload, true);
                     request.setAttribute("message", "ArtistMgr Reloaded.");    
 			    } else if ("adminAlert".equals(name)) {
                     AdminAlertMgr.populate(connection);        

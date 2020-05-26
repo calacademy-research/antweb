@@ -51,16 +51,14 @@ public abstract class TaxonSet {
     public String getNextGlobalSubtaxon(String rank) {
       if (globalChildCount == 0 && !"specimen".equals(rank)) return "No " + Rank.getNextPluralRank(rank, 1); //"ex: No Specimens";
       return "<span class='numbers'>" + globalChildCount + "</span> " + Rank.getNextPluralRank(rank, 1);    
-    }    
+    }
 
     public String getNextSubtaxon() {
       return getNextSubtaxon(rank, 1);
     }
-    
     public String getNextSubtaxon(int depth) {
       return getNextSubtaxon(rank, depth);
     }
-    
     public String getNextSubtaxon(String rank, int depth) {
       if (depth > Rank.getRankLevel(rank)) return "";
       int subtaxonCount = getSubtaxonCount(rank, depth);
@@ -74,7 +72,6 @@ public abstract class TaxonSet {
     public int getSubtaxonCount(int depth) {
       return getSubtaxonCount(rank, depth);
     }
-    
     public int getSubtaxonCount(String rank, int depth) {
       if (depth == 1) {
         if (Rank.FAMILY.equals(rank)) return subfamilyCount;

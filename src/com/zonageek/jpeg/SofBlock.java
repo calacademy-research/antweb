@@ -87,10 +87,10 @@ public class SofBlock extends JpegBlock {
       break;
     }
      
-    info.put("Image Width", new Integer(this.sofImageWidth));
-    info.put("Image Height", new Integer(this.sofImageHeight));
-    info.put("Channels", new Integer(this.sofChannelCount));
-    info.put("Bits Per Channel", new Integer(this.sofBitsPerChannel));
+    info.put("Image Width", Integer.valueOf(this.sofImageWidth));
+    info.put("Image Height", Integer.valueOf(this.sofImageHeight));
+    info.put("Channels", Integer.valueOf(this.sofChannelCount));
+    info.put("Bits Per Channel", Integer.valueOf(this.sofBitsPerChannel));
 
     return info;
   }

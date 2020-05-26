@@ -33,19 +33,26 @@ public final class Rank implements Serializable {
     public Rank() {
     }
 
+    public static boolean isLegit(String rank) {
+        int level = getRankLevel(rank);
+        if (level == 0) return false;
+        return true;
+    }
+
     public static int getRankLevel(String rank) {
       // These are relative and can be changed here safely.  Should end at 1.
-      if (KINGDOM.equals(rank)) return 10;
-      if (PHYLUM.equals(rank)) return 9;
-      if (CLASS.equals(rank)) return 8;
-      if (ORDER.equals(rank)) return 7;
-      if (FAMILY.equals(rank)) return 6;
-      if (SUBFAMILY.equals(rank)) return 5;
-      if (TRIBE.equals(rank)) return 4;
-      if (GENUS.equals(rank)) return 3;
-      if (SPECIES.equals(rank)) return 2;
-      if (SUBSPECIES.equals(rank)) return 1;
-      
+      if (KINGDOM.equals(rank)) return 11;
+      if (PHYLUM.equals(rank)) return 10;
+      if (CLASS.equals(rank)) return 9;
+      if (ORDER.equals(rank)) return 8;
+      if (FAMILY.equals(rank)) return 7;
+      if (SUBFAMILY.equals(rank)) return 6;
+      if (TRIBE.equals(rank)) return 5;
+      if (GENUS.equals(rank)) return 4;
+      if (SPECIES.equals(rank)) return 3;
+      if (SUBSPECIES.equals(rank)) return 2;
+      if (SPECIMEN.equals(rank)) return 1;
+
       //if (SPECIMEN.equals(rank)) return 1;
       return 0;
     }
@@ -209,10 +216,10 @@ public final class Rank implements Serializable {
 
     
     public static String getRankClause(String rank) {
-      if (FAMILY.equals(rank)) return " rank = 'family'";
-      if (SUBFAMILY.equals(rank)) return " rank = 'subfamily'";
-      if (GENUS.equals(rank)) return " rank = 'genus'";
-      if (SPECIES.equals(rank)) return " (rank = 'species' or rank = 'subspecies')";
+      if (FAMILY.equals(rank)) return " taxarank = 'family'";
+      if (SUBFAMILY.equals(rank)) return " taxarank = 'subfamily'";
+      if (GENUS.equals(rank)) return " taxarank = 'genus'";
+      if (SPECIES.equals(rank)) return " (taxarank = 'species' or taxarank = 'subspecies')";
       s_log.warn("getRankClause() should never happen rank:" + rank);
       return null; // will never happen
     }

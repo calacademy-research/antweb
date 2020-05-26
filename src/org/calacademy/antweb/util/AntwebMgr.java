@@ -72,14 +72,25 @@ public class AntwebMgr {
             setStartTime();
  		
 			incrementSpecimenUploadId(connection);
- 		
-            if (inThread) {
-                Timer timer = new Timer();
-                // if you want to run the task immediately, set the 2nd parameter to 0      
-                timer.schedule(new PopulateMgrsTask(connection, forceReload), 0);
-            } else {
-                populateMgrs(connection, forceReload);	
-            }					  
+
+            try {
+                AntwebMgr.serverInitializing();
+
+                AntwebMgr.populateMgrs(connection, forceReload);
+
+                AntwebMgr.initializationComplete();
+            } catch (Exception e) {
+                AntwebUtil.log("error running thread e:" + e.getMessage());
+            } finally {
+/*
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    AntwebUtil.log("populate() e:" + e);
+                }
+ 
+ */
+            }
 
 // REFACTOR: Problematic. IsPopulated is not trustworthy. It is set before the thread completes.
 // Instead,  check for null values...
@@ -107,58 +118,137 @@ public class AntwebMgr {
     private static boolean isArtistMgrPopulated = false; 
     private static boolean isAdminAlertMgrPopulated = false;
 
+    //private static boolean isInitializationComplete = false;
+
     public static boolean isLog() {
       return true; // false;
     }
     
     public static void populateMgrs(Connection connection, boolean forceReload) {
-    
+
         populateStats(connection, forceReload);
-        
-        //AntwebProps.loadResources();
-        
-        boolean log = true;  
-        if (log) AntwebUtil.log("populateMgrs() GroupMgr");          
+
+        Date start = new Date();
+
+        boolean log = true;
+        if (log) AntwebUtil.log("populateMgrs() GroupMgr");
         GroupMgr.populate(connection, forceReload);
-        if (log) s_log.warn("populateMgrs() AllAntwebMgr");                  
+        if (log) s_log.warn("populateMgrs() AllAntwebMgr");
         AllAntwebMgr.populate(connection);
         if (log) s_log.warn("populateMgrs() LoginMgr");
-        LoginMgr.populate(connection, forceReload);
+        LoginMgr.populate(connection, forceReload, true);
         isLoginMgrPopulated = true;
-        if (log) s_log.warn("populateMgrs() ProjectMgr"); 
+        if (log) s_log.warn("populateMgrs() ProjectMgr");
         ProjectMgr.populate(connection, forceReload);
         isProjectPopulated = true;
-        if (log) s_log.warn("populateMgrs() BioregionMgr");          
+        if (log) s_log.warn("populateMgrs() BioregionMgr");
         BioregionMgr.populate(connection, forceReload);
         isBioregionPopulated = true;
-        if (log) s_log.warn("populateMgrs() MuseumMgr");          
+        if (log) s_log.warn("populateMgrs() MuseumMgr");
         MuseumMgr.populate(connection, forceReload);
         isMuseumPopulated = true;
-        if (log) s_log.warn("populateMgrs() GeolocaleMgr");    
-        isGeolocalePopulated = true;      
-        GeolocaleMgr.populate(connection, forceReload);  // Slow!
+        if (log) s_log.warn("populateMgrs() GeolocaleMgr");
+        isGeolocalePopulated = true;
+        GeolocaleMgr.populate(connection, forceReload, true);  // Slow!
         if (log) s_log.warn("populateMgrs() TaxonPropMgr");
         TaxonPropMgr.populate(connection, forceReload);
         isTaxonPropMgrPopulated = true;
         if (log) s_log.warn("populateMgrs() TaxonMgr");
-        TaxonMgr.populate(connection, forceReload);
+        TaxonMgr.populate(connection, forceReload, true);
         isTaxonMgrPopulated = true;
-        if (log) s_log.warn("populateMgrs() UploadMgr");          
+        if (log) s_log.warn("populateMgrs() UploadMgr");
         UploadMgr.populate(connection, forceReload);
         isUploadMgrPopulated = true;
-        if (log) s_log.warn("populateMgrs() ArtistMgr");          
-        ArtistMgr.populate(connection, forceReload);
-        isArtistMgrPopulated = true; 
-        if (log) s_log.warn("populateMgrs() AdminAlertMgr");          
-        AdminAlertMgr.populate(connection);        
+        if (log) s_log.warn("populateMgrs() ArtistMgr");
+        ArtistMgr.populate(connection, forceReload, true);
+        isArtistMgrPopulated = true;
+        if (log) s_log.warn("populateMgrs() AdminAlertMgr");
+        AdminAlertMgr.populate(connection);
         isAdminAlertMgrPopulated = true;
-        if (log) s_log.warn("populateMgrs() done");      
+        if (log) s_log.warn("populateMgrs() done in " + AntwebUtil.reportTime(start));
 
         ServerStatusAction.populate(connection);
 
         UserAgentTracker.init(connection);
-        MapMgr.refresh();     
+        MapMgr.refresh();
+
+        callPostInitialize();
     }
+
+    public static String reload(String name, boolean forceReload, Connection connection) {
+        String message = null;
+        if ("group".equals(name)) {
+            GroupMgr.populate(connection, forceReload);
+            message = "GroupMgr Reloaded";
+        } else if ("allAntweb".equals(name)) {
+            AllAntwebMgr.populate(connection);
+            message = "AllAntwebMgr Reloaded.";
+        } else if ("login".equals(name)) {
+            LoginMgr.populate(connection, forceReload, true);
+            message = "LoginMgr Reloaded.";
+        } else if ("project".equals(name)) {
+            ProjectMgr.populate(connection, forceReload);
+            message = "ProjectMgr Reloaded.";
+        } else if ("bioregion".equals(name)) {
+            BioregionMgr.populate(connection, forceReload);
+            message = "BioregionMgr Reloaded.";
+        } else if ("museum".equals(name)) {
+            MuseumMgr.populate(connection, forceReload);
+            message = "MuseumMgr Reloaded.";
+        } else if ("geolocale".equals(name)) {
+            GeolocaleMgr.populate(connection, forceReload, true);  // Slow!
+            message = "GeolocaleMgr Reloaded.";
+        } else if ("taxonProp".equals(name)) {
+            TaxonPropMgr.populate(connection, forceReload);
+            message = "TaxonPropMgr Reloaded.";
+        } else if ("taxon".equals(name)) {
+            TaxonMgr.populate(connection, forceReload, true);
+            message = "TaxonMgr Reloaded.";
+        } else if ("upload".equals(name)) {
+            UploadMgr.populate(connection, forceReload);
+            message = "UploadMgr Reloaded.";
+        } else if ("artist".equals(name)) {
+            ArtistMgr.populate(connection, forceReload, true);
+            message = "ArtistMgr Reloaded.";
+        } else if ("adminAlert".equals(name)) {
+            AdminAlertMgr.populate(connection);
+            message = "AdminAlertMgr Reloaded.";
+        } else {
+            AntwebMgr.populate(connection, true);
+            message = "AntwebMgr Reloaded.";
+        }
+        return message;
+    }
+
+    private static void callPostInitialize() {
+        String url = AntwebProps.getThisDomainApp() + "/util.do?action=postInstantiate";
+        //s_log.warn("callPostInitialize() url:" + url);
+        try {
+            HttpUtil.hitUrl(url);
+        } catch (IOException e) {
+            s_log.error("callPostInitialize() e:" + e);
+        }
+    }
+
+    //Invoked from UtilAction to, in a separate thread, populate the curators with adm1.
+    public static void postInitialize(Connection connection) throws SQLException {
+        Date start = new Date();
+        s_log.warn("postInitialize() begin");
+
+        GeolocaleMgr.postInitialize(connection); // Not really used.
+
+        LoginMgr.postInitialize(connection);
+
+        ArtistMgr.postInitialize(connection);
+
+        TaxonMgr.postInitialize(connection);
+
+        //isInitializationComplete = true;
+
+        s_log.warn("postInitialize() end in " + AntwebUtil.reportTime(start));
+    }
+
+
 
     public static boolean isServerInitializing(String manager) {
         if (Check.MUSEUM.equals(manager) && isMuseumPopulated) return false;
@@ -358,7 +448,7 @@ public class AntwebMgr {
 */                      
   
     public static void populateStats(Connection connection, boolean forceReload) {
-        A.log("populateStats() c:" + getSpecimensCount() + " forceReload:" + forceReload);
+        //A.log("populateStats() c:" + getSpecimensCount() + " forceReload:" + forceReload);
         if (getSpecimensCount() != 0 && !forceReload) return;      
 		String query = "select specimens, extant_taxa, total_taxa, total_images, specimens_imaged, species_imaged from statistics order by created desc limit 1";
 
@@ -398,38 +488,8 @@ public class AntwebMgr {
     public static void setStartTime(Date time) {
       s_startTime = time;
     }    
-    
+
 }
 
 
-class PopulateMgrsTask extends TimerTask  {
-  Connection connection = null;
-  boolean forceReload = false;
-    
-  public PopulateMgrsTask(Connection connection, boolean forceReload) {
-    this.connection = connection;
-    this.forceReload = forceReload;
-  }
-
-  public void run() {
-    try {
-        AntwebUtil.log("AntwebMgr.PopulateMgrsTask.run() populate in thread");
-        AntwebMgr.serverInitializing();
-                
-        AntwebMgr.populateMgrs(connection, forceReload);
-
-        AntwebMgr.initializationComplete();
-        AntwebUtil.log("======== AntwebMgr.PopulateMgrsTask.run() Done populate in thread =======");    
-    } catch (Exception ex) {
-        AntwebUtil.log("AntwebMgr.PopulateMgrsTask.run() error running thread " + ex.getMessage());
-    } finally {
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            AntwebUtil.log("AntwebMgr.PopulateMgrsTask.run() e:" + e);
-        }
-    }
-
-  }
-}
 

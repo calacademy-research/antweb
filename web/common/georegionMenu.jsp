@@ -72,19 +72,26 @@
             <li><%= titleHTML %>
               <ul class="adm1_list region_items">
 <%
+
                             int adm1i = 0;
                             for (Adm1 adm1 : adm1s) { 
+                              //A.log("countryName:" + country + " adm1:" + adm1);
                               if (adm1i == 0) {
                                  ++adm1i;
                                  String countryName = country.getName();
+                                 //A.log("countryName:" + countryName + " adm1:" + adm1);
 								 //if (AntwebProps.isMichele(request)) countryName = "Untethered Sociopaths<br>of Alienation"; // This is a joke for Michele.
                                   %>
-                <li><a href="<%= country.getThisPageTarget() %>"><img src="<%= AntwebProps.getDomainApp() %>/image/flag/16/<%= country.getFlagIcon() %>">&nbsp;<%= countryName %></a></li>
+                        <li><a href="<%= country.getThisPageTarget() %>"><img src="<%= AntwebProps.getDomainApp() %>/image/flag/16/<%= country.getFlagIcon() %>">&nbsp;<%= countryName %></a></li>
                            <% }
-                           %> 
-
-                <li><a href="<%= adm1.getThisPageTarget() %>"><%= adm1.getName() %></a></li> 
-                <!-- taxonomicPage.do?rank=genus&project=< %= adm1.getUseName() % -->
+                           %>
+                                <!-- taxonomicPage.do?rank=genus&project=< %= adm1.getUseName() % -->
+                                <li><a href="<%= adm1.getThisPageTarget() %>"><%= adm1.getName() %></a></li>
+         <% if ("Georgia".equals(adm1.getName())) {
+                        Country hawaii = GeolocaleMgr.getIsland("Hawaii");
+         %>
+                                <li><a href="<%= hawaii.getThisPageTarget() %>">Hawaii</a></li>
+        <% } %>
 <%
                             }
 %>

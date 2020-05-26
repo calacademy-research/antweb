@@ -37,7 +37,7 @@ public class NewGroupAction extends Action {
           
             connection.setAutoCommit(true);
 
-            String theQuery = "select max(id) as maxid from groups";
+            String theQuery = "select max(id) as maxid from ant_group";
             Statement stmt = connection.createStatement();
             ResultSet rset = stmt.executeQuery(theQuery);
             int max = 0;

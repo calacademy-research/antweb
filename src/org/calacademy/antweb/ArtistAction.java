@@ -23,8 +23,9 @@ public final class ArtistAction extends Action {
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
-        
-        ActionForward a = Check.init(request, mapping); if (a != null) return a;
+
+        ActionForward a = Check.init(Check.ARTIST, request, mapping); if (a != null) return a;
+        //ActionForward a = Check.init(request, mapping); if (a != null) return a;
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
         Group accessGroup = GroupMgr.getAccessGroup(request);
@@ -86,7 +87,7 @@ public final class ArtistAction extends Action {
                 if (retVal.contains("error")) {
                   request.setAttribute("message", "<font color=red>Artist " + name + " added.</font>");                  
                 } else {
-                  ArtistMgr.populate(connection, true);                
+                  ArtistMgr.populate(connection, true, false);
                   request.setAttribute("message", "<font color=green>" + retVal + "</font>");
                 }
                 goToArtistManager = true;
@@ -104,7 +105,7 @@ public final class ArtistAction extends Action {
                   request.setAttribute("message", "Artist with id:" + artistId + " not saved.");
                   return (mapping.findForward("message"));
                 }
-                ArtistMgr.populate(connection, true);
+                ArtistMgr.populate(connection, true, false);
                 request.setAttribute("message", "<font color=green>" + returnVal + "</font>");
                 //goToArtistManager = true;
             }
@@ -121,7 +122,7 @@ public final class ArtistAction extends Action {
                   request.setAttribute("message", "Artist with id:" + artistId + " not deleted.");
                   return (mapping.findForward("message"));                
                 }
-                ArtistMgr.populate(connection, true);
+                ArtistMgr.populate(connection, true, false);
                 request.setAttribute("message", "<font color=green>" + returnVal + "</font>");
                 goToArtistManager = true;
             }

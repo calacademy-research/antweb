@@ -22,7 +22,7 @@ public class GroupDb extends AntwebDb {
     }
 
     public ArrayList getAllGroups() throws SQLException {          
-        String theQuery = "select id from groups order by id";
+        String theQuery = "select id from ant_group order by id";
         ArrayList groupList = new ArrayList();
 
         Statement stmt = null;
@@ -73,7 +73,7 @@ public class GroupDb extends AntwebDb {
 
     
     public void updateUploadSpecimens(Group group) {
-        String dml = "update groups set upload_specimens = (select count(*) from specimen where access_group = " + group.getId() + ") where id = " + group.getId();
+        String dml = "update ant_group set upload_specimens = (select count(*) from specimen where access_group = " + group.getId() + ") where id = " + group.getId();
         Statement stmt = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateUploadSpecimens()");
@@ -87,8 +87,8 @@ public class GroupDb extends AntwebDb {
     }
     
     public ArrayList<Group> getAllGroupsWithSpecimenData() throws SQLException {          
-        //String theQuery = "select id from groups g where id in (select distinct access_group from specimen) order by name";
-        String query = "select id from groups g where upload_specimens > 0 order by name";        
+        //String theQuery = "select id from ant_group g where id in (select distinct access_group from specimen) order by name";
+        String query = "select id from ant_group g where upload_specimens > 0 order by name";
         ArrayList<Group> groupList = new ArrayList<Group>();
 
         Statement stmt = null;
@@ -111,7 +111,7 @@ public class GroupDb extends AntwebDb {
     public Group getGroup(int id) throws SQLException {
         Group group = null;
         String theQuery = "select g.id, g.name, g.admin_login_id, g.abbrev "         
-          + " from groups g "           
+          + " from ant_group g "
           + " where g.id = " + id;
 
         Statement stmt = null;
@@ -132,7 +132,7 @@ public class GroupDb extends AntwebDb {
         Group group = null;
         if (name != null) {       
             String theQuery = "select g.id, g.name, g.admin_login_id, g.abbrev " 
-              + " from groups g "       
+              + " from ant_group g "
               + " where g.name = '" + name + "'";
 
           Statement stmt = null;
@@ -166,7 +166,7 @@ public class GroupDb extends AntwebDb {
     
     private int getMaxId() throws SQLException {          
         int maxId = 0;
-        String theQuery = "select max(id) as maxId from groups ";
+        String theQuery = "select max(id) as maxId from ant_group ";
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -211,7 +211,7 @@ public class GroupDb extends AntwebDb {
 
         String orderClause = "";
         if (!Utility.isBlank(orderBy)) orderClause = " order by " + orderBy;
-        String query = "select g.id from groups g, upload u where g.id = u.group_id and u.upload_id in (" + uploadIdList + ") " + orderClause;        
+        String query = "select g.id from ant_group g, upload u where g.id = u.group_id and u.upload_id in (" + uploadIdList + ") " + orderClause;
         //A.log("getUploadGroups() query:" + query);
         Statement stmt = null;
         ResultSet rset = null;
@@ -247,7 +247,7 @@ public class GroupDb extends AntwebDb {
           group.setId(id);
         }
             
-        String theInsert = "insert into groups (id, name, admin_login_id, abbrev) " 
+        String theInsert = "insert into ant_group (id, name, admin_login_id, abbrev) "
             + " values ("+ group.getId() + ", '" + group.getName() + "', " + group.getAdminLoginId() + ", '" + group.getAbbrev() + "')";
         Statement stmt = null;
         try {
@@ -266,7 +266,7 @@ public class GroupDb extends AntwebDb {
     public void updateGroup(Group group) throws SQLException {
         
         if (group.getId() != 0) {
-            String theUpdate = "update groups set " 
+            String theUpdate = "update ant_group set "
               + " name='" + group.getName() + "', "
               + " admin_login_id=" + group.getAdminLoginId() + ", " 
               + " abbrev='" + group.getAbbrev() + "'"
@@ -291,7 +291,7 @@ public class GroupDb extends AntwebDb {
         Statement stmt = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "deleteById()");          
-            String theQuery = "delete from groups where id = " + id;
+            String theQuery = "delete from ant_group where id = " + id;
             int returnVal = stmt.executeUpdate(theQuery);
         } catch (SQLException e) {
             s_log.error("deleteById(" + id + ") e:" + e);

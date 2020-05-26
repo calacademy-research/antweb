@@ -65,6 +65,10 @@ public class ArtistDb extends AntwebDb {
         }
         return null;
     }
+
+    public void postInstantiate(Artist artist) throws SQLException {
+        setArtistCounts(artist);
+    }
     
     public ArrayList<Artist> getArtists() throws SQLException {
         ArrayList<Artist> artists = new ArrayList<Artist>();
@@ -91,7 +95,7 @@ public class ArtistDb extends AntwebDb {
 				//A.log("getArtists() id:" + artist.getId() + " name:" + artist.getName());
                 artist.setCuratorId(rset.getInt("curator_id"));
 
-				setArtistCounts(artist);
+				//setArtistCounts(artist); // Now called in postInstantiate()
 				
 				artists.add(artist);
 			}

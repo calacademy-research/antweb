@@ -47,7 +47,7 @@ public class Family extends Taxon implements Serializable {
 		  // + " taxon.taxon_name = proj_taxon.taxon_name and " 
 		  + " family='" + AntFormatter.escapeQuotes(family) + "' " 
 		  //+ " and status = 'valid' "
-		  + " and rank = 'family'"
+		  + " and taxarank = 'family'"
 		  ;
 
 		//if ((project != null) && (!(project.equals("")))) {
@@ -58,11 +58,13 @@ public class Family extends Taxon implements Serializable {
 		taxonDb.setTaxonomicInfo(theQuery, this);
     }                
 
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global) throws SQLException {
+    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
 
         String fetchChildrenClause = "where 1 = 1";
         if (!global && overview != null) fetchChildrenClause = overview.getFetchChildrenClause();
-        
+
+        // We only use the subgenus clause when rank is genus.
+
         ArrayList theseChildren = new ArrayList();
         Statement stmt = null;
         ResultSet rset = null;
@@ -72,13 +74,15 @@ public class Family extends Taxon implements Serializable {
             "select distinct taxon.subfamily from taxon" // proj_taxon where " 
                 + fetchChildrenClause                   
                 + " and taxon.subfamily != '' "
-                + " and rank = 'subfamily' "
+                + " and taxarank = 'subfamily' "
                 + " and taxon.family = '" + getFamily() + "'"   // added by Mark to avoid non-ants on formicidae page
                 + statusSet.getAndCriteria()
                 + " order by taxon.subfamily";
 
             stmt = DBUtil.getStatement(getConnection(), "setChildren()"); 
             rset = stmt.executeQuery(theQuery);
+
+            //A.log("setChildren() query:" + theQuery);
 
             String subfamily = null;
             Subfamily child = null;
@@ -93,13 +97,13 @@ public class Family extends Taxon implements Serializable {
                 child.init();
                 
                 if (getChildImages) {
-                    A.log("setChildren() setImages(" + overview + ")");   
+                    //A.log("setChildren() setImages(" + overview + ")");
                     child.setImages(overview, caste);
                 }// else {
                 //    child.setHasImages(overview);
                 //}    
                 
-                A.log("setChildren(5) overview:" + overview + " child:" + child.getTaxonName() + " getChildMaps:" + getChildMaps + " getChildImages:" + getChildImages);                                
+                //A.log("setChildren(5) overview:" + overview + " child:" + child.getTaxonName() + " getChildMaps:" + getChildMaps + " getChildImages:" + getChildImages);
                 
                 child.initTaxonSet(overview);
                 child.generateBrowserParams(overview);

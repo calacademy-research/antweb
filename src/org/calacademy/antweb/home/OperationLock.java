@@ -50,7 +50,7 @@ public class OperationLock {
       }
       
       private String getElapsedTimeHoursMinutesSecondsString(double elapsedTimeDbl) {       
-        long elapsedTime = (new Double(elapsedTimeDbl)).longValue();
+        long elapsedTime = (Double.valueOf(elapsedTimeDbl)).longValue();
         String format = String.format("%%0%dd", 2);  
         elapsedTime = elapsedTime / 1000;  
         String seconds = String.format(format, elapsedTime % 60);  
@@ -65,11 +65,11 @@ public class OperationLock {
         
         double nowMillis = (new Date()).getTime();
         //double nowMillis = getNow().getTime();
-        long nowMillisLong = (new Double(nowMillis)).longValue();
+        long nowMillisLong = (Double.valueOf(nowMillis)).longValue();
         // s_log.warn("timeToExpire: now:" + AntwebUtil.getFormatDateTimeStr(new Date(nowMillisLong)) + " nowMillis:" + nowMillis);        
         
         double createdMillis = getCreated().getTime();
-        long createdMillisLong = (new Double(createdMillis)).longValue();
+        long createdMillisLong = (Double.valueOf(createdMillis)).longValue();
         // s_log.warn("timeToExpire: created:" + AntwebUtil.getFormatDateTimeStr(new Date(createdMillisLong)) + " createdMillis:" + createdMillis);        
 
         double sinceLockTime = nowMillis - createdMillis;

@@ -16,7 +16,7 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class GeolocaleMgr {
+public class GeolocaleMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(GeolocaleMgr.class);
 
@@ -28,60 +28,45 @@ public class GeolocaleMgr {
     
     // For Taxon Name Search Autocomplete    
     private static List<String> placeNamesList = null;
-    
-    public static void populate(Connection connection) {
-      populate(connection, false);
-    }
-    
+
     public static boolean isInitialized() {
       return s_regions != null;
     }
 
     private static boolean s_oneAtATime = false;
 
-    public static void populate(Connection connection, boolean forceReload) {
-      //A.log("GeolocaleMgr.populate()");    
-      //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
+    public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
+        if (!forceReload && (s_regions != null)) return;
 
-      java.util.Date startTime = new java.util.Date();     
+        java.util.Date startTime = new java.util.Date();
 
-      if (s_regions == null || forceReload) {
+        if (s_regions == null || forceReload) {
           if (!s_oneAtATime) {
             s_oneAtATime = true;
           } else {
             return;
           }
 
-          GeolocaleMgr.populateDeep(connection, forceReload);
-          //A.log("GeolocaleMgr.populate() after populateDeep()");    
-
-          //A.log("populate() 1:" + AntwebUtil.millisSince(startTime) + " millis");
-          
-          GeolocaleMgr.populateShallow(connection, forceReload);
-          //A.log("populate() after populateShallow() 2:" + AntwebUtil.millisSince(startTime) + " millis");
-
-		  // For Place Name Search Autocomplete
+          // about 12 seconds. Maybe move into postInitialize? Probably needed.
+          GeolocaleMgr.populateDeep(connection, true);
+          GeolocaleMgr.populateShallow(connection, true);
+          // For Place Name Search Autocomplete
 		  placeNamesList = (new GeolocaleDb(connection)).getPlaceNames();
 
-          s_oneAtATime = false;            
-/*
-          if (GeolocaleMgr.getGeolocale(8817) == null) {
-            A.log("GeolocaleMgr.populate Sao not found");
-          } else {
-            A.log("GeolocaleMgr.populate Sao exists!"); 
-          }
-*/
-      }      
-      logDeep(s_regions);
+          s_oneAtATime = false;
+        }
+        logDeep(s_regions);
+    }
+
+    //Called through UtilAction to, in a separate thread, populate the curators with adm1.
+    public static void postInitialize(Connection connection) throws SQLException {
+        //
     }
 
     public static void populateDeep(Connection connection, boolean forceReload) {
       if (!forceReload && (s_regions != null)) return;      
       
       GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
-
-      // java.util.Date startTime = new java.util.Date();     
-      
       // deep crawl through subregion, countries and adm1.  Use for Georegion menu.
       s_regions = geolocaleDb.getRegions(true);       
     }
@@ -318,11 +303,6 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
       
       if (!AntwebMgr.isPopulated()) return null;
 
-
-      //if (GeolocaleMgr.isIslandCountry(name) && "adm1".equals(georank)) {
-      //  return GeolocaleMgr.getGeolocale(name, "country" );
-      //}
-
       for (Geolocale geolocale : s_geolocales) {
           if (georank.equals(geolocale.getGeorank()) && name.equals(geolocale.getName())) {
                //A.log("getGeolocale() name:" + name + " georank:" + georank + " found:" + geolocale);
@@ -553,14 +533,14 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
     }
 
     public static boolean isValid(String adm1Name, String countryName) {    
-		Geolocale adm1 = GeolocaleMgr.getAdm1(adm1Name, countryName);  // Could be a country (Galapagos Islands).
+		Geolocale adm1 = GeolocaleMgr.getAdm1(adm1Name, countryName);
 		if (adm1 != null) {
 		  if (adm1.getIsValid()) return true;
         }
         return false;
     }
     public static boolean isValid(String countryName) {    
-		Geolocale country = GeolocaleMgr.getCountry(countryName);  // Could be a country (Galapagos Islands).
+		Geolocale country = GeolocaleMgr.getCountry(countryName);
 		if (country != null) {
 		  if (country.getIsValid()) return true;
         }
@@ -671,72 +651,36 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
       }
       return null;
     }
-        
-    
+
     // Will return the adm1, or the validName adm1 if the found adm1 is not valid.
 	public static Geolocale getValidAdm1(String adm1, String country) {
+      //A.log("getValidAdm1 adm1:" + adm1 + " country:" + country);
+      Geolocale foundValidAdm1 = null;
+
       ArrayList<Geolocale> adm1s = GeolocaleMgr.getAdm1s();
       for (Geolocale loopAdm1 : adm1s) {
+        //if ("Colorado".equals(loopAdm1.getName())) A.log("getValidAdm1() 1 name:" + loopAdm1.getName());
         if (loopAdm1.getName().equals(adm1) && loopAdm1.getParent() != null && loopAdm1.getParent().equals(country)) {
+          //if ("Colorado".equals(loopAdm1.getName())) A.log("getValidAdm1() 2 parent:" + loopAdm1.getParent());
           if (loopAdm1.getIsValid()) {
              // if it is a valid adm1, return it.
-//A.log("getValidAdm1(" + adm1 + ", " + country + ") validAmd1(1):" + loopAdm1);
-             return loopAdm1;          
+             foundValidAdm1 = loopAdm1;
           } else {
             for (Geolocale loop2Adm1 : adm1s) {
-              //A.log("getProjectNameFromValidCountry() 2 geolocale2.name:" + geolocale2.getName() + " validName:" + geolocale.getValidName());              
+              //A.log("getProjectNameFromValidCountry() 2 geolocale2.name:" + geolocale2.getName() + " validName:" + geolocale.getValidName());
               if (loop2Adm1.getIsValid() && loop2Adm1.getName().equals(loopAdm1.getValidName()) && loopAdm1.getParent().equals(country)) {
                  // This is the validName adm1.
-//A.log("getValidAdm1(" + adm1 + ", " + country + ") validAmd1(2):" + loop2Adm1);
-                 return loop2Adm1;
+                 //A.log("getValidAdm1(" + adm1 + ", " + country + ") validAmd1(2):" + loop2Adm1);
+                  foundValidAdm1 = loop2Adm1;
               }
             }
           }
         }      
       }
-      return null;	  
+      //A.log("getValidAdm1(" + adm1 + ", " + country + ") found:" + foundValidAdm1);
+      return foundValidAdm1;
     }
 
-/*
-  // Not only valid anymore...?
-    // Deep copy. Valid only. Was getAdm1().
-    public static Adm1 getDeepAdm1(String countryName, String adm1Name) {
-    
-      if (s_regions == null) return null;
-
-      int geolocaleCount = 0;
-      
-      for (Region region : s_regions) {
-        ++geolocaleCount;
-        for (Subregion subregion : region.getSubregions()) {
-          ++geolocaleCount;
-          for (Country country : subregion.getCountries()) {
-            ++geolocaleCount;
-            for (Adm1 adm1 : country.getAdm1s()) {
-              ++geolocaleCount;
-              if ("Central".equals(adm1Name)) A.log("getAdm1() countryName:" + countryName + " adm1:" + adm1 + " adm1Name:" + adm1.getName() + " parent:" + adm1.getParent());    
-              if (adm1Name.equals(adm1.getName())) {
-                if (countryName.equals(adm1.getParent())) {
-                  if ("Central".equals(adm1.getName())) A.log("GeolocaleMgr.getAdm1() adm1:" + adm1 + " country:" + countryName);    
-                  return adm1;
-                }
-              }
-            }
-          }
-        }
-      }
-
- //     ArrayList<Geolocale> adm1s = GeolocaleMgr.getAllAdm1s();
- //     for (Geolocale adm1 : adm1s) {
- //       if (adm1Name.equals(adm1.getName())) {
- //         return (Adm1) adm1;
- //       }
- //     }
-
-      //if ("Sucre".equals(name)) A.log("GeolocaleMgr.getAdm1() Sucre not found. geolocaleCount:" + geolocaleCount);
-      return null;
-    }
-*/
 	public static String getRegionsDisplay() {
 	  String newLine = "\r\n";
 	  String indent = "  ";
@@ -871,22 +815,30 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     public static ArrayList<Country> getIslands() {
       return islands;
     }    
-    public static Country getIsland(String element) {        
+
+    public static Country getIsland(String element) {
       for (Country island : islands) {
   	      if (island.getName().equals(element)) {
-  	        return island;
+  	          return island;
   	      }
   	  }
   	  return null;
   	}
-    public static boolean isIsland(String element) {        
-        for (Country island : islands) {
-  	      if (island.getName().equals(element)) {
-            return true;
-          }
-        }
-        return false;
+    public static boolean isIsland(String name) {
+        return getIsland(name) != null;
     }
-
+    public static Country getValidIsland(String name) {
+        Country validIsland = null;
+        Country island = getIsland(name);
+        if (island != null) {
+            if (island.isValid()) {
+                validIsland = island;
+            } else {
+                validIsland = getIsland(island.getValidName());
+            }
+        }
+        //A.log("getValidIsland() name:" + name + " island:" + validIsland);
+        return validIsland;
+    }
 }
 

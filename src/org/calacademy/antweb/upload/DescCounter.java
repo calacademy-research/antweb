@@ -12,10 +12,10 @@ class DescCounter extends HashMap {
      void register(String title) {   // was userId
          Object o = get(title);
          if (o == null) {
-             put(title, new Integer(1));
+             put(title, Integer.valueOf(1));
          } else {
              Integer i = (Integer) o;
-             put(title, new Integer(i.intValue() + 1));
+             put(title, Integer.valueOf(i.intValue() + 1));
          }
      }
          

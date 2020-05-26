@@ -20,28 +20,47 @@ import org.apache.struts.action.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class LoginMgr {
+public class LoginMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(LoginMgr.class);
 
     private static ArrayList<Login> s_logins = null;
     private static ArrayList<Curator> s_curators = null;
-        
-    public static void populate(Connection connection) {
-      populate(connection, false);
-    }
-    
-    public static void populate(Connection connection, boolean forceReload) {
+
+    public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
       if (!forceReload && (s_logins != null)) return;      
       
       LoginDb loginDb = (new LoginDb(connection));
       try {
         s_logins = loginDb.getAllLogins();
-        s_curators = loginDb.getAllCurators();
         //loginDb.getImageUploadCounter();  // initialize the LoginMgr counts.
       } catch (SQLException e) {
         s_log.warn("populate() e:" + e);
       }
+
+      // Subsequent runs should execute this. But not the first, because of postInitialize().
+        if (!initialRun) {
+            try {
+                postInitialize(connection);
+            } catch (SQLException e) {
+                s_log.warn("populate() e:" + e);
+            }
+        }
+    }
+
+    //Called through UtilAction to, in a separate thread, populate the curators with adm1.
+    public static void postInitialize(Connection connection) throws SQLException {
+        LoginDb loginDb = new LoginDb(connection);
+        s_curators = loginDb.getAllCurators();
+
+        ArrayList<Curator> tempList = new ArrayList<Curator>();
+        for (Curator curator : s_curators) {
+            tempList.add(curator);
+        }
+
+        for (Curator curator : tempList) {
+            loginDb.postInstantiate(curator);
+        }
     }
 
     public static Login getAdminLogin() {
@@ -165,17 +184,16 @@ public class LoginMgr {
       return null;
     }
 
-
     public static ArrayList<Curator> getCurators() {
       return s_curators;
     }
 
     public static Curator getCurator(int id) {
-      if (getCurators() == null) return null;
-      for (Curator curator: getCurators()) {
-        if (id == curator.getId()) return curator;
-      }     
-      return null;
+        if (getCurators() == null) return null;
+        for (Curator curator : getCurators()) {
+            if (id == curator.getId()) return curator;
+        }
+        return null;
     }
 
 // ------------------------------------------------
@@ -201,7 +219,7 @@ public class LoginMgr {
       
       int groupId = 0;
       if (!groups.contains(",")) {
-        groupId = new Integer(groups).intValue();
+        groupId = Integer.valueOf(groups).intValue();
       }
       if (groupId == 0) return;
       Counts counts = imageUploadCounts.get("" + groupId);    

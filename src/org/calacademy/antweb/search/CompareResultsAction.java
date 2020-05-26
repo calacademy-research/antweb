@@ -201,13 +201,13 @@ public final class CompareResultsAction extends ResultsAction {
 				specimen = new Specimen(thisItem.getCode(), project, connection, true); // getImages! Needed?
 				//A.log("getSpecimenToCompare() specimen:" + specimen);
 
-				Integer chosenListGetCount = new Integer(0);
+				Integer chosenListGetCount = Integer.valueOf(0);
 				if (chosenList.size() > count) {
-				  chosenListGetCount = new Integer((String) chosenList.get(count));           
+				  chosenListGetCount = Integer.valueOf((String) chosenList.get(count));           
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);
 				}
 				
-				specimenToCompare.put(specimen, new Integer(chosenListGetCount));  // was count
+				specimenToCompare.put(specimen, Integer.valueOf(chosenListGetCount));  // was count
                   // A.log("getSpecimenToCompare() specimen:" + specimen + " count:" + count + " chosenList.getCount:" + chosenListGetCount + " specimenToCompare:" + specimenToCompare.size());
 				++count;      // was count++;              
 			}
@@ -265,13 +265,13 @@ public final class CompareResultsAction extends ResultsAction {
 				taxon.setImages(project);
 				taxon.setConnection(null);
 
-				Integer chosenListGetCount = new Integer(0);
+				Integer chosenListGetCount = Integer.valueOf(0);
 				if (chosenList.size() > count) {
-				  chosenListGetCount = new Integer((String) chosenList.get(count));           
+				  chosenListGetCount = Integer.valueOf((String) chosenList.get(count));
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);
 				}
 				
-				taxaToCompare.put(taxon, new Integer(chosenListGetCount));  // was count
+				taxaToCompare.put(taxon, Integer.valueOf(chosenListGetCount));  // was count
 				if (AntwebProps.isDevMode()) s_log.info("getTaxaToCompare() taxon:" + taxon + " count:" + count + " chosenList.getCount:" + chosenListGetCount + " taxaToCompare:" + taxaToCompare.size());
 				++count;      // was count++;              
 			}
@@ -293,7 +293,7 @@ public final class CompareResultsAction extends ResultsAction {
         int thisChosen = 0;
   
         for (String chosenListNext : chosenList) {
-            thisChosen = (new Integer(chosenListNext)).intValue();
+            thisChosen = (Integer.valueOf(chosenListNext)).intValue();
             thisItem = (ResultItem) theTaxa.get(thisChosen);
 
             //A.log("getSpecimensForTaxaFromResults() chosenListNext:" + chosenListNext + " thisItem:" + thisItem);

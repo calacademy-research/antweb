@@ -106,7 +106,7 @@ function setSectionOpens() {
 	<input type="hidden" name="searchMethod" value="advancedSearch">
 	<input type="hidden" name="advanced" value="true">
 	<input type="hidden" name="isIgnoreInsufficientCriteria" value="false">
-	<input type="hidden" name="sortBy" value="name">
+	<input type="hidden" name="sortBy" value="taxonname">
 	
 	<html:hidden property="collGroupOpen"/>
 	<html:hidden property="specGroupOpen"/>

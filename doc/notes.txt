@@ -59,7 +59,7 @@ Transfer
   Copy source tree.  For example:
     cp -r antweb bak/rel/antweb4.1
   Backup database.  For example:
-    mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /home/antweb/bak/db/2018-09-27.sql.gz
+    mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /antweb/bak/db/2018-09-27.sql.gz
   Backup /data/antweb.
     php bin/copyProjectData.php --backupDir=/home/mjohnson/bak/projectData
   cvs update -Pd

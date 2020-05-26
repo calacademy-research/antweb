@@ -22,12 +22,14 @@ public class ProjTaxonCountDb extends CountDb {
       super(connection);
     }
 
+/*
     // Called from TaxonCountDb.allCountCrawls();
     public void countCrawls() throws SQLException {
       childrenCountCrawl();
 	  LogMgr.appendLog("compute.log", "  Project Taxon Children Counts crawled", true);                    
-      imageCountCrawl();
-	  LogMgr.appendLog("compute.log", "  Project Taxon Image Counts crawled", true);                    
+
+	  //imageCountCrawl();
+	  //LogMgr.appendLog("compute.log", "  Project Taxon Image Counts crawled", true);
     }
 
     public void countCrawl(String projectName)         // about a 32 sec.
@@ -42,12 +44,12 @@ public class ProjTaxonCountDb extends CountDb {
           return;
         }
         
-        childrenCountCrawl(project);
-        imageCountCrawl(project);
+        childrenCountCrawlchildrenCountCrawl(project);
+        //imageCountCrawl(project);
         
         A.log("countCrawl() end project:" + projectName);
     }
-
+*/
     // ------------------------- Proj_Taxon Child Count Crawl ----------------------------
 
      public void childrenCountCrawl() 
@@ -59,6 +61,16 @@ public class ProjTaxonCountDb extends CountDb {
           }
           fixExceptions();
      }
+
+    public void childrenCountCrawl(String projectName)
+            throws SQLException {
+        Project project = ProjectMgr.getProject(projectName);
+        if (project != null) {
+            childrenCountCrawl(project);
+        } else {
+            s_log.warn("childrenCountCrawl() project not found:" + projectName);
+        }
+    }
 
     // ------------------------- Project Taxon Image Count Crawl -------------------------
 
@@ -92,8 +104,6 @@ public class ProjTaxonCountDb extends CountDb {
      // the various ranks with summarized image counts
      public void imageCountCrawl() 
        throws SQLException {
-          s_log.info("startTaxonImageCountCrawl()");
-
           // These two are the same first two steps of startImageCountCrawl()
           if (false) {
             //countSpecimenImages();

@@ -132,10 +132,10 @@ public class JpegCodec {
       info.put("Image Encoding", "Unknown");
       break;
     }
-    info.put("Image Width", new Integer(this.width));
-    info.put("Image Height", new Integer(this.height));
-    info.put("Channels", new Integer(this.channelCount));
-    info.put("Bits Per Channel", new Integer(this.bitsPerChannel));
+    info.put("Image Width", Integer.valueOf(this.width));
+    info.put("Image Height", Integer.valueOf(this.height));
+    info.put("Channels", Integer.valueOf(this.channelCount));
+    info.put("Bits Per Channel", Integer.valueOf(this.bitsPerChannel));
 
     Iterator values;    
     for (values = this.channels.values().iterator(); values.hasNext(); ) {
@@ -242,10 +242,10 @@ public class JpegCodec {
   //===========================================================================
   public void setChannelInfo(int id, int hSamples, 
   int vSamples, int qTableId) {
-    JpegChannel channel = (JpegChannel)this.channels.get(new Integer(id));
+    JpegChannel channel = (JpegChannel)this.channels.get(Integer.valueOf(id));
     if (channel == null) {
       channel = new JpegChannel(id, this);
-      this.channels.put(new Integer(id), channel);
+      this.channels.put(Integer.valueOf(id), channel);
     }
     
     channel.hSamples = hSamples;
@@ -259,10 +259,10 @@ public class JpegCodec {
 
   //===========================================================================
   public void setChannelTables(int id, int dcTableId, int acTableId) {
-    JpegChannel channel = (JpegChannel)this.channels.get(new Integer(id));
+    JpegChannel channel = (JpegChannel)this.channels.get(Integer.valueOf(id));
     if (channel == null) {
       channel = new JpegChannel(id, this);
-      this.channels.put(new Integer(id), channel);
+      this.channels.put(Integer.valueOf(id), channel);
     }
 
     channel.dcTableId = dcTableId;
@@ -271,7 +271,7 @@ public class JpegCodec {
   
   //===========================================================================
   public void setQTable(int id, int[] table) {
-    this.qTables.put(new Integer(id), table);
+    this.qTables.put(Integer.valueOf(id), table);
     
     for (Iterator values = this.channels.values().iterator(); values.hasNext(); ) {
       JpegChannel channel = (JpegChannel)values.next();
@@ -282,7 +282,7 @@ public class JpegCodec {
 
   //===========================================================================
   public int[] getQTable(int id) {
-    return (int []) this.qTables.get(new Integer(id));
+    return (int []) this.qTables.get(Integer.valueOf(id));
   }
 
   //===========================================================================
@@ -293,12 +293,12 @@ public class JpegCodec {
   //===========================================================================
   public void setHuffmanTable(int type, int id, int[] bits, int[] values) {
     if (type == JpegCodec.HUFFMAN_DC_TABLE) {
-      this.dcTableBits.put(new Integer(id), bits);
-      this.dcTableValues.put(new Integer(id), values);
+      this.dcTableBits.put(Integer.valueOf(id), bits);
+      this.dcTableValues.put(Integer.valueOf(id), values);
     }
     else {
-      this.acTableBits.put(new Integer(id), bits);
-      this.acTableValues.put(new Integer(id), values);
+      this.acTableBits.put(Integer.valueOf(id), bits);
+      this.acTableValues.put(Integer.valueOf(id), values);
     }
   }
   

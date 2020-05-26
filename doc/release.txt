@@ -1,3 +1,135 @@
+Release 8.31
+Date: May 11
+  Date determine, and collected start and end date checking and logging in upload report.
+  Refinements to the date discernment routine.
+  
+Release 8.30.1
+Date: May 11
+  Procedure to clean date data.
+  Advanced search adjustment on display data.
+
+Release 8.30
+Date: May 11
+  Fix date advanced searches.
+  Date collected range added to the Specimen Habitat Summary of the taxon page.
+  Remove transition: date_collected.
+  Fix the date deprecations that required testing.
+  Refactoring of Date management.
+  
+Release 8.29.3
+Date: May 7
+  Reload GeolocaleMgr part way through scheduled tasks.
+
+Release 8.29.2
+Date: May 7
+  Fix display of Bioregion endemic on taxonomic page.
+  Adjust invocation and logging of valid/fossil check.
+
+Release 8.29.1
+Date: May 6
+  valid and fossil list check updated.
+  Reload mechanism triggered at the end of the scheduler.
+  Refine the admin options for the various overview pages.
+
+Release 8.29
+Date: May 6
+  Add statusSet criteria to more count methods.
+  Refactor UtilData procedure management and count crawls.
+  Separate children crawls from image crawls. 
+  Optimize scheduler (116 min on server to 89 min on dev.)
+  Create A.logi mechanism to log only once for repetitive messages.
+  Change to how UtilData reloads manager classes. Now done by url parameter.
+  
+Release 8.28.4
+Date: May 4
+  Add admin only all link for count crawls on overview page.
+  Fix the missing endemic and introduced flags on taxonomic page.
+  Adjust museum and bioregion specimen counts
+
+Release 8.28.4
+Date: May 3
+  Add statusClause to getCountChildrenQuery (for geolocale, museum, project, bioregion)
+  Create Count Crawl testing framework.
+    Link into overview species count for geolocales, for admin.
+  Extend on-screen documentation for administrators on overview page.
+  Add subtaxon total to bottom of taxonReports for admin.
+
+Release 8.28.3
+Date: May 3
+  Advanced search by other country or island optimization.
+  overview-body link to specimen resultRank.
+  Adjust security check for dev and stage.
+  Fix validAdm1 bug.
+
+Release 8.28.2
+Date: May 2
+  New island mechanism handled in advanced search.
+  Maps works for islands now. 
+  Island creation mechanisms added to Geolocale Mgr and SpecimenUploadParse. 
+
+Release 8.28.1
+Date: May 2
+  Maintenance.
+  Add island access methods to specimen and to specimen page.
+  Modify locality and collection with island awareness.
+  Javascript antweb.org forwarding to www.antweb.org  
+
+
+Release 8.28
+Date: May 1, 2020
+  Island work
+  Display link to Hawaii under United States Georegion menu.
+  GeolocaleTaxon species count update method.
+ 
+Release 8.27
+Date: Apr 26
+  Add index to specimen report.
+  Sort subcaste by caste+subcaste
+  cleanDisk script to automate removal of old log files.
+  
+Release 8.27
+Date: April 24
+  Advanced Search sort order feature.
+  Insecure page request forwards to the secure version.
+  Slow down the startup to make sure browse.do is supported for specimen.
+  Species page specimen sort feature.
+
+Release 8.26
+Date: April 23
+  Server up images on taxon pages with secure links.
+
+Release 8.25.3
+Date: April 22
+  Handled malformed rank in search request.
+
+Release 8.25.2
+Date: April 21
+  Advanced Search and Specimen Report refactoring.
+    Advanced search sorting not truncated in cases of null caste. 
+    Better debugging.
+    Better error handling in case of stale session. 
+    UI clean up of Specimen Report.
+
+Release 8.25.1
+Date: Apr 14
+  Add srfExceptions.jsp to the LogMgr for moving.
+  LoginDb mod.
+  Thread change in AntwebMgr. Use of fetch instead. 
+  Refinement of postInitialize methods. 
+  Fix %20and%20 requests.
+
+Release 8.25
+Date: Apr 14
+  Update to mysql-connector-java-5.1.48-bin.jar
+  Provide antweb configuration error messages with recommended fixes.
+  Major refactor to accomodate new database reserved words rank and groups. 
+    Database table groups renamed to ant_group.
+    Column Taxon.rank renamed Taxon.taxarank.
+    Column Homonym.rank renamed Homonym.taxarank.
+    Column Team.rank renamed Team.teamrank.
+  Formicidae subfamily list fixed in browse.do.
+  Performance optimization. Populate artist and curator details outside of startup process.
+  
 Release 8.24
 Date: Apr 5, 2020
   Refactor the Java query system to make it flexible, extendable.
@@ -115,7 +247,7 @@ Release 8.14.2
 Date: Mar 1
   Disk free warning set to 7G.
   Server adjustments.
-  Fix the effective loging when an admin re-runs a curators upload.
+  Fix the effective logging when an admin re-runs a curators upload.
 
 Release 8.14.1
 Date: Feb 26

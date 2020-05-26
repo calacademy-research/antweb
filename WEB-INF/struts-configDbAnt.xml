@@ -27,7 +27,7 @@ The WEB-INF/struts-configDb.xml softlink points to this one an antweb-dev, antwe
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
       <set-property property="driverClass" value="com.mysql.jdbc.Driver" />   <!-- was driverClassName-->
-      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci"/>    
+      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>    
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
       <set-property property="autoCommitOnClose" value="true"/> 
@@ -48,7 +48,7 @@ The WEB-INF/struts-configDb.xml softlink points to this one an antweb-dev, antwe
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
       <set-property property="driverClass" value="com.mysql.jdbc.Driver" />   <!-- was driverClassName-->
-      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci"/>    
+      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>    
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
       <set-property property="autoCommitOnClose" value="true"/> 
@@ -69,7 +69,7 @@ The WEB-INF/struts-configDb.xml softlink points to this one an antweb-dev, antwe
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
       <set-property property="driverClass" value="com.mysql.jdbc.Driver" />   <!-- was driverClassName-->
-      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci"/>    
+      <set-property property="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>    
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
       <set-property property="autoCommitOnClose" value="true"/> 

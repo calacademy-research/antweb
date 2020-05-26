@@ -131,7 +131,7 @@ public class MuseumDb extends AntwebDb {
         try {
           stmt = DBUtil.getStatement(getConnection(), "saveMuseum()");  
                                                                                                                          
-          A.log("updateMuseum() dml:" + dml);
+          //A.log("updateMuseum() dml:" + dml);
           int c = stmt.executeUpdate(dml);
           message = c + " record inserted.";
         } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
@@ -231,12 +231,12 @@ public class MuseumDb extends AntwebDb {
           + " from specimen "
           + " where specimen.museum = '" + museumCode + "'";
 
-        //A.log("getMuseumSpecimenCount() query:" + theQuery);  
-          
         rset = stmt.executeQuery(theQuery);
         while (rset.next()) {
           count = rset.getInt("specimen_count");
         }
+
+          A.log("getMuseumSpecimenCount() count:" + count + " query:" + theQuery);
 
       } catch (SQLException e) {
         s_log.error("MuseumDb.getSpecimenCount() e:" + e);
@@ -256,14 +256,13 @@ public class MuseumDb extends AntwebDb {
         String theQuery = "select count(distinct id) image_count" 
           + " from specimen left join image on specimen.code = image.image_of_id"
           + " where specimen.museum = '" + museumCode + "'";
-          
-        //A.log("getMuseumImageCount() query:" + theQuery);  
-          
+
         rset = stmt.executeQuery(theQuery);
         while (rset.next()) {
-          
           count = rset.getInt("image_count");
         }
+
+        A.log("getMuseumImageCount() count:" + count + " query:" + theQuery);
 
       } catch (SQLException e) {
         s_log.error("MuseumDb.getImageCount() e:" + e);
@@ -320,7 +319,7 @@ public class MuseumDb extends AntwebDb {
       
       // Crawl the Museum_taxon table to find the counts.
       MuseumTaxonCountDb MuseumTaxonCountDb = new MuseumTaxonCountDb(getConnection());
-      MuseumTaxonCountDb.countCrawls(code);
+      MuseumTaxonCountDb.childrenCountCrawl(code);
 
       // update museum fields (title, image_count, subfamily_count, genus_count, species_count).                    
       finish(code); 
@@ -360,67 +359,9 @@ public class MuseumDb extends AntwebDb {
 
     // Lightweight.
     public void updateMuseum() {
-//      updateTitles();
-//      updateNames();
       updateColors(); 
     }
-    
-    //private static String[] museumCodes = {"ABS", "BMNH", "CASC", "JTLC", "MCZC", "MHNG", "MSNG", "NHMB", "NHMW", "PSWC", "UCDC", "USNM", "ZMHB"};
-    //private static ArrayList<String> museumCodeList = new ArrayList<String>(Arrays.asList(museumCodes));
-    //public static ArrayList<String> getMuseumCodeList() { return museumCodeList; }
-    
-    /*
-    private void updateTitles() {    
-      updateTitles("ABS", "ABS, Lake Placid");
-      updateTitles("BMNH", "BMNH, London");
-      updateTitles("CASC", "CASC, San Francisco");
-      updateTitles("JTLC", "JTLC, Longino");
-      updateTitles("MCZC", "MCZC, Cambridge");
-      updateTitles("MHNG", "MHNG, Geneva");
-      updateTitles("MSNG", "MSNG, Genoa");
-      updateTitles("NHMB", "NHMB, Basel");
-      updateTitles("NHMW", "NHMW, Vienna");
-      updateTitles("PSWC", "PSWC, Ward");
-      updateTitles("UCDC", "UCDC, Davis");
-      updateTitles("USNM", "USNM, Washington");
-      updateTitles("ZMHB", "ZMHB, Berlin");
-      
-      updateTitles("AFRC", "AFRC, Pretoria");
-      updateTitles("EcoFoG", "EcoFoG, Kourou");
-      updateTitles("FMNH", "FMNH, Chicago");
-      updateTitles("KGAC", "KGAC, Gomez");
-      updateTitles("MHNG", "MHNG, Geneva");
-      updateTitles("MMPC", "MMPC, Prebus");
-      updateTitles("SIZK", "SIZK, Kiev");
-      updateTitles("UTIC", "UTIC, Austin");
 
-    }
-
-    private void updateTitles(String code, String title) {    
-      UtilDb utilDb = new UtilDb(getConnection());
-      utilDb.updateField("museum", "title", "'" + title + "'", "code = '" + code + "'");
-    }    
-    private void updateNames() {    
-      updateNames("ABS", "ABS, Lake Placid");
-      updateNames("BMNH", "BMNH, London");
-      updateNames("CASC", "CASC, San Francisco");
-      updateNames("JTLC", "JTLC, Longino");
-      updateNames("MCZC", "MCZC, Cambridge");
-      updateNames("MHNG", "MHNG, Geneva");
-      updateNames("MSNG", "MSNG, Genoa");
-      updateNames("NHMB", "NHMB, Basel");
-      updateNames("NHMW", "NHMW, Vienna");
-      updateNames("PSWC", "PSWC, Ward");
-      updateNames("UCDC", "UCDC, Davis");
-      updateNames("USNM", "USNM, Washington");
-      updateNames("ZMHB", "ZMHB, Berlin");
-    }
-    private void updateNames(String code, String name) {    
-      UtilDb utilDb = new UtilDb(getConnection());
-      utilDb.updateField("museum", "name", "'" + name + "'", "code = '" + code + "'");
-    }
-    */
-    
     private void updateColors() {    
       String[] colors = HttpUtil.getColors();
     
@@ -476,7 +417,7 @@ public class MuseumDb extends AntwebDb {
     private void updateImagedSpecimenCount(String code) {
         int count = getImagedSpecimenCount(code);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("museum", "imaged_specimen_count", (new Integer(count)).toString(), "code = '" + code + "'");
+        utilDb.updateField("museum", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "code = '" + code + "'");
     }
 
     private int getImagedSpecimenCount(String code) {
@@ -751,7 +692,7 @@ public class MuseumDb extends AntwebDb {
           + " and t.subfamily = t2.taxon_name "
           + " and m.code = mt.code "
           + " and m." + criteria 
-          + " and t.rank in ('species', 'subspecies') "
+          + " and t.taxarank in ('species', 'subspecies') "
           + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
           + " and t.family = 'formicidae' " 
           + " group by t.subfamily"; 

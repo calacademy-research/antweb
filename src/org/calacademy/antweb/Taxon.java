@@ -350,7 +350,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         if (taxonSet == null) { 
           TaxonSet taxonSet = overview.getTaxonSet(getTaxonName(), rank, getConnection());
           
-          //A.log("initTaxonSet() overview:" + overview + " class:" + taxonSet.getClass() + " rank:" + rank + " taxonSet:" + taxonSet + " size:" + taxonSet.getNextSubtaxon());
+          //if ("Mayotte".equals(overview.getName())) A.log("initTaxonSet() overview:" + overview + " class:" + taxonSet.getClass() + " rank:" + rank + " taxonSet:" + taxonSet + " size:" + taxonSet.getNextSubtaxon());
 
           setTaxonSet(taxonSet);
         }
@@ -1601,7 +1601,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		  + overviewClause
 		  + getThisWhereClause()
 		  //+ " and taxon.image_count > 0"   // Removed this.  Yes?
-		  + " and rank in ('species', 'subspecies')"
+		  + " and taxarank in ('species', 'subspecies')"
 		  + " and status in ('valid', 'morphotaxon', 'indetermined')"   
 //  Above line added back in. Seems to work. Then this won't show an image: /description.do?species=acuta&genus=aphaenogaster&rank=species
 		  + " order by status desc, taxon_name"
@@ -2363,7 +2363,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public void setMethods() {
       // override by Species.
     }
-    
+
     public String getCollectDateRange() {
       return this.collectDateRange;
     }
@@ -2373,15 +2373,14 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            //taxonName = getTaxonName();
             taxonName = AntFormatter.escapeQuotes(getTaxonName());
-            
+
             String theQuery =
               //  " select count(method), method " 
-                " select min(date_collected), max(date_collected)" 
+                " select min(dateCollectedStart), max(dateCollectedStart)"
               + " from specimen " 
               + " where taxon_name='" + taxonName + "'"
-              + " and date_collected is not null";
+              + " and datecollectedstart is not null";
 
             stmt = DBUtil.getStatement(getConnection(), "setCollectDateRange()"); 
             rset = stmt.executeQuery(theQuery);
@@ -2393,6 +2392,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
                 min = rset.getDate(1);
                 max = rset.getDate(2);
             }
+
+            //A.log("getDateCollected() min:" + min + " max:" + max + " query:" + theQuery);
 
             if ((min != null) && (min.equals(max))) {
               collectDateRange = "collected on " + min;
@@ -2815,7 +2816,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            query = "select rank, family, subfamily, tribe, genus, subgenus, speciesgroup, species, subspecies " 
+            query = "select taxarank, family, subfamily, tribe, genus, subgenus, speciesgroup, species, subspecies "
               + " from taxon where taxon_name = '" + taxonName +"'";
 
             stmt = connection.createStatement();
@@ -2825,7 +2826,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
             String href = null;
             while (rset.next()) {
               ++rsetCount;
-              String rank = rset.getString("rank");
+              String rank = rset.getString("taxarank");
               String family = rset.getString("family");
               String subfamily = rset.getString("subfamily");
               String genus = rset.getString("genus");

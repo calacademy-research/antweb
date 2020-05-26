@@ -34,17 +34,17 @@ public class DescEditSearch extends GenericSearch implements Serializable {
             groupName = "";
         }
         
-        String fromString = " groups, artist, group_image, image left join specimen on  specimen.code = image.image_of_id ";
+        String fromString = " ant_group, artist, group_image, image left join specimen on  specimen.code = image.image_of_id ";
                 
         // taxon removed        
         String theQuery =
                 "select specimen.valid, specimen.code, specimen.taxon_name,  " 
                 + "image.shot_type, image.shot_number, image.id, image.upload_date, " 
-                + "artist.artist, groups.name as group_name, specimen.toc, " 
+                + "artist.artist, ant_group.name as group_name, specimen.toc, "
                 + "specimen.subfamily, specimen.genus, specimen.species ";
         theQuery += " from " + fromString + 
                 "where image.upload_date is not null and " 
-                + "group_image.image_id = image.id and groups.id=group_image.group_id and " 
+                + "group_image.image_id = image.id and ant_group.id=group_image.group_id and "
                 + "artist.id = image.artist ";
 
         s_log.info("days ago is " + daysAgo);
@@ -62,7 +62,7 @@ public class DescEditSearch extends GenericSearch implements Serializable {
         }
 
         if ((groupName != null) && (groupName.length() > 0)) {
-            theQuery += " and groups.id = group_image.group_id and groups.name='" + groupName + "'";
+            theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + groupName + "'";
         }
             
         theQuery += " group by specimen.taxon_name, specimen.subfamily, specimen.genus, " 

@@ -22,17 +22,17 @@ public class MuseumTaxonCountDb extends CountDb {
       super(connection);
     }
 
-
+    /*
     public void countCrawls() throws SQLException {
       childrenCountCrawl();
-      imageCountCrawl();          
+      //imageCountCrawl();
     }
 
     public void countCrawls(String museumCode) throws SQLException {
       childrenCountCrawl(museumCode);
-      imageCountCrawl(museumCode);          
+      //imageCountCrawl(museumCode);
     }
-
+*/
 
 // ------------------------- Countable_Taxon Child Count Crawl ----------------------------
 
@@ -48,7 +48,7 @@ public class MuseumTaxonCountDb extends CountDb {
 
      public void childrenCountCrawl(String museumCode)
        throws SQLException {
-          A.log("startChildrenCountCrawl(" + museumCode + ")");
+          //A.log("startChildrenCountCrawl(" + museumCode + ")");
 	          //Museum museum = (new MuseumDb(getConnection())).getMuseum(museumCode);
           Museum museum = MuseumMgr.getMuseum(museumCode);
           if (museum != null) {
@@ -64,7 +64,7 @@ public class MuseumTaxonCountDb extends CountDb {
      // Get all of the species for a project, and use the species image counts to pupulate
      // the various ranks with summarized image counts
      
-     private void imageCountCrawl() 
+     public void imageCountCrawl()
        throws SQLException {
           A.log("imageCountCrawl()");
                 
@@ -76,7 +76,7 @@ public class MuseumTaxonCountDb extends CountDb {
 
      private void imageCountCrawl(String museumCode) 
        throws SQLException {
-          A.log("imageCountCrawl(" + museumCode + ")");
+          //A.log("imageCountCrawl(" + museumCode + ")");
                 
           Museum museum = (new MuseumDb(getConnection())).getMuseum(museumCode);
           if (museum != null) {

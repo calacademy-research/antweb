@@ -236,7 +236,7 @@ public class AdobeBlock extends JpegBlock {
   //===========================================================================
   public void addAdobeField(int type, String header, byte[] data) {
     HashMap map = new HashMap();
-    map.put("type", new Integer(type));
+    map.put("type", Integer.valueOf(type));
     map.put("header", header);
     map.put("data", data);
     this.addAdobeField(map);
@@ -291,7 +291,7 @@ public class AdobeBlock extends JpegBlock {
           break;
         default:
           HashMap map = new HashMap();
-          map.put("type", new Integer(type));
+          map.put("type", Integer.valueOf(type));
           map.put("header", header);
           map.put("data", this.getByteArray(pos, length));
           
@@ -529,7 +529,7 @@ class IptcTagList {
   
   //===========================================================================
   public void put(IptcTagInfo tag) {
-    this.ids.put(new Integer(tag.id), tag);
+    this.ids.put(Integer.valueOf(tag.id), tag);
     this.names.put(tag.name, tag);
     this.order.add(tag);
   }
@@ -541,7 +541,7 @@ class IptcTagList {
   
   //===========================================================================
   public IptcTagInfo getTagById(int id) {
-    return (IptcTagInfo) this.ids.get(new Integer(id));
+    return (IptcTagInfo) this.ids.get(Integer.valueOf(id));
   }
 
   //===========================================================================

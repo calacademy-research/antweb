@@ -23,7 +23,7 @@ public abstract class AntwebProps {
     private static ResourceBundle s_platformResources = null;
 
     public static boolean loadResources() {
-      s_log.warn("loadResouces()");
+      //s_log.warn("loadResources()");
       
       if (getAppResources() == null || getAntwebResources() == null || getPlatformResources() == null)
         return false;
@@ -35,7 +35,12 @@ public abstract class AntwebProps {
         try {
           bundle = ResourceBundle.getBundle(resourceName);
         } catch (java.util.MissingResourceException e) {
-          s_log.warn("getBundle(" + resourceName + ") e:" + e);       
+          s_log.warn("getBundle(" + resourceName + ") e:" + e);
+          String message = " Antweb misconfigured. Error reading resource:" + resourceName + ".";
+          if ("platform".equals(resourceName)) message += " Has a platform.properties file been copied into antweb/WEB-INF/classes/ ?";
+          if ("AntwebResources".equals(resourceName)) message = " Has the appropriate antweb/etc/config script been executed?";
+          s_log.error("getBundle(" + resourceName + ") message:" + message);
+          System.exit(0);
         }
         return bundle;
     }
@@ -70,13 +75,22 @@ public abstract class AntwebProps {
         }
 	}
 
+    private static HashMap<String, String> s_propMap = new HashMap<String, String>();
+
 	public static String getProp(String prop) {
-	    if (getAppResources() == null || getAntwebResources() == null || getPlatformResources() == null) {
-	      s_log.warn("getProp() pro:" + prop + " appResources:" + s_appResources + " antwebResources:" + s_antwebResources + " platformResources:" + s_platformResources);
-          loadResources();
-	    }
 
         String value = null;
+
+        if (s_propMap.containsKey(prop)) {
+          value = s_propMap.get(prop);
+          //A.log("getProp() propMap has key:" + prop + " value:" + value);
+          return value;
+        }
+
+	    if (getAppResources() == null || getAntwebResources() == null || getPlatformResources() == null) {
+	      s_log.warn("getProp() prop:" + prop + " appResources:" + s_appResources + " antwebResources:" + s_antwebResources + " platformResources:" + s_platformResources);
+          loadResources();
+	    }
         
         value = getProp(prop, "app", getAppResources());
         if (value != null) return value;
@@ -85,6 +99,8 @@ public abstract class AntwebProps {
         if (value != null) return value;
 
         value = getProp(prop, "platform", getPlatformResources());
+
+        s_propMap.put(prop, value);
 
         return value;
 	}
@@ -98,7 +114,12 @@ public abstract class AntwebProps {
           propVal = resources.getString(prop);
 	    } catch (MissingResourceException e) {
           if ("platform".equals(resource)) {
-              s_log.warn("getProp(" + prop + ", " + resource + ", " + resources + ") not found in any bundle.  e:" + e );
+              if ( ! (
+                  "site.securePort".equals(prop) // Documented that if this is commented out... see AntwebResources.properties.
+               || "isLocal".equals(prop)
+              ) ) {
+                  s_log.warn("getProp(" + prop + ", " + resource + ", " + resources + ") not found in any bundle.  e:" + e);
+              }
           }
 	    }
       return propVal;
@@ -118,10 +139,8 @@ public abstract class AntwebProps {
 
     public static String getAntwebDir() {
         if (AntwebProps.isDevMode()) {
-          // This should be: return AntwebProps.getProp("site.docroot"); with in AppResMarkAntweb.properties
-          // This: #site.antwebDir=/Users/remarq/IdealProject/antweb/
-          // Or a standard url like /usr/local/antwebDeploy -> 
-          return "/Users/remarq/IdeaProjects/antweb/";
+          // This is used for AntwebFunction.imageCheck() to call a python script in the soruce tree.
+          return "/Users/mark/antweb/";
         } else {
           return "/antweb/antweb_deploy/";    
         }
@@ -142,24 +161,25 @@ public abstract class AntwebProps {
 	}
 
 	public static String getWebDir() {
-		return AntwebProps.getDocRoot() + "web/";
+		return getDocRoot() + "web/";
 	}
 
-	public static String getPlaziDir() {
-	
-	    if (false && isDevMode()) {
-	      return "/Users/remarq/dev/calAcademy/plazi/";
-	    }
-	
-		return AntwebProps.getDocRoot() + "plazi/";
-	}
+    public static String getInputFileHome() { return getWorkingDir(); }
+    public static String getWorkingDir() {
+        String workingDir = getDocRoot() + "workingDir/";
 
-	public static String getInputFileHome() {
-	    if (AntwebProps.isDevMode()) {
-	        return "/Users/mark/dev/calAcademy/workingdir/";
-        } else {
-	        return "/antweb/workingdir/";
-	    }
+        s_log.warn("getWorkingDir() workingDir:" + workingDir);
+
+        boolean success = FileUtil.makeDir(workingDir);
+        if (!success) s_log.error("getWorkingDir() Unable to make workingdir:" + workingDir);
+
+        return workingDir;
+    }
+
+    public static String getPlaziDir() {
+        String workingdir = getWorkingDir() + "/plazi/";
+        FileUtil.makeDir(workingdir);
+        return workingdir;
 	}
 
 	public static String getGoogleMapKey() {
@@ -247,7 +267,7 @@ public abstract class AntwebProps {
         if ((app != null) && (!app.equals(""))) {
           domainApp += "/" + app;
         }
-        A.log("getDomainApp() domainApp:" + domainApp);        
+        //A.log("getDomainApp() domainApp:" + domainApp);        
         return domainApp;
     }
         

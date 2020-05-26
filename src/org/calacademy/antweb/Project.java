@@ -554,8 +554,11 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
    
     public String getTaxonSetTable() {
       return "proj_taxon";
-    }      
-   
+    }
+    public String getTable() {
+        return "project";
+    }
+
     public String getHeading() {
       return "Project";
     }
@@ -593,10 +596,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
   	  return ", proj_taxon where taxon.taxon_name = proj_taxon.taxon_name"
   	        + " and project_name = '" + getName() + "'";      
     }       
-    
-// taxaQuery += "proj_taxon where taxon.taxon_name = proj_taxon.taxon_name";
-//taxaQuery += " and proj_taxon.project_name = '" + project + "'";    
-    
+
 //    public String getChosenImageClause() {
     public String getSpecimenTaxonSetClause() {
       return "proj_taxon where proj_taxon.taxon_name = specimen.taxon_name "
@@ -657,16 +657,17 @@ group by taxonName
     
     public String getCountChildrenQuery(String rank) {
         String projectName = getName();
-        String rankClause = " taxon.rank = '" + rank + "'";
+        String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.rank = 'species' or taxon.rank = 'subspecies') "; 
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
         }
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
           + " join proj_taxon pt on taxon.taxon_name = pt.taxon_name " 
           + " where " + rankClause
-          + "   and pt.project_name = '" + projectName + "'"
+	      + "   and pt.project_name = '" + projectName + "'"
           + StatusSet.getAndCriteria(getName())
+                //+ new StatusSet(StatusSet.ALL).getAndCriteria();
           + " group by parentTaxonName "
           + " order by pt.project_name";  
         return query;  
@@ -674,9 +675,9 @@ group by taxonName
     
     public String getCountGrandChildrenQuery(String rank, String column) {
        
-        String rankClause = " taxon.rank = '" + rank + "'";
+        String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.rank = 'species' or taxon.rank = 'subspecies') "; 
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
         }
 
         // parent is a genus
@@ -685,6 +686,7 @@ group by taxonName
             + "  where " + rankClause
             + "   and pt.project_name = '" + getName() + "'"
             + StatusSet.getAndCriteria(getName())
+                //+ new StatusSet(StatusSet.ALL).getAndCriteria();
             + "  group by parentTaxonName";
             
         return query;

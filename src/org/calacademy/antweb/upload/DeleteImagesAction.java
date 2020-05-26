@@ -61,10 +61,10 @@ public final class DeleteImagesAction extends Action {
                 connection = DBUtil.getConnection(dataSource, "DeleteImagesAction.execute()");
 
                 for (int loop = 0; loop < chosen.length; loop++) {
-                    thisResult = (ResultItem) results.get((new Integer(chosen[loop])).intValue());
+                    thisResult = (ResultItem) results.get((Integer.valueOf(chosen[loop])).intValue());
                     
                     ImageDb imageDb = new ImageDb(connection);
-                    int shot = new Integer(thisResult.getShotNumber()).intValue();    
+                    int shot = Integer.valueOf(thisResult.getShotNumber()).intValue();
                     imageDb.deleteImage(thisResult.getCode(), thisResult.getShotType(), shot);
                 }
             } catch (Exception e) {

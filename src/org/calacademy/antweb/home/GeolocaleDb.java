@@ -644,7 +644,11 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
               // Set children georank type (Province, Region, etc...)
               if ("country".equals(form.getGeorank())) updateChildrenGeorankType(form.getName(), form.getGeorankType());
             }
-                        
+
+            if (form.getCountry() != null) {
+                dml += ", country = '" + form.getCountry() + "'";
+            }
+
             if (form.getValidName() != null) dml += " , valid_name = '" + AntFormatter.escapeQuotes(form.getValidName()) + "'";
 
 		    if (form.getValidNameId() > 0) {
@@ -778,20 +782,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
                     //A.log("fetchSpeciesLists(login) name:" + name + " isUseChildren:" + isUseChildren + " isGetAdm1:" + isGetAdm1);              
 				  }
               // }
-/*
-              if (!isUseChildren || isGetAdm1) {              
-				  Geolocale country = new Geolocale();
-				  country.setName(name);       
-				  country.setIsUseChildren(isUseChildren); 
-				  country.setType(SpeciesListable.COUNTRY);
-				  speciesListList.add(country);
 
-				  if (isUseChildren) {
-				    fetchSubSpeciesLists(name, speciesListList);
-                    A.log("fetchSpeciesLists(login) name:" + name + " isUseChildren:" + isUseChildren + " isGetAdm1:" + isGetAdm1);              
-				  }
-              }
-*/
 //if ("Greece".equals(name)) A.log("GeolocaleDb 3 name:" + name + " isUseChildren:" + country.getIsUseChildren());
 
           }
@@ -882,7 +873,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         String query = "select sum(gt.specimen_count) specimen_count" 
           + " from geolocale_taxon gt, taxon t "
           + " where gt.taxon_name = t.taxon_name "
-          + " and t.rank in ('species', 'subspecies')"
+          + " and t.taxarank in ('species', 'subspecies')"
           + " and gt.geolocale_id = " + geolocale.getId();
 
         if (AntwebProps.isDevMode() && geolocale.getId() == 284) s_log.warn("getSpecimenCount() query:" + query);  
@@ -909,7 +900,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         String query = "select sum(gt.image_count) image_count" 
           + " from geolocale_taxon gt, taxon t "
           + " where gt.taxon_name = t.taxon_name "
-          + " and t.rank in ('species', 'subspecies')"
+          + " and t.taxarank in ('species', 'subspecies')"
           + " and gt.geolocale_id = " + geolocale.getId();
 
         if (AntwebProps.isDevMode() && geolocale.getId() == 284) s_log.warn("getImageCount() query:" + query);  
@@ -1017,7 +1008,7 @@ public static int c = 0;
 
 // ------------- Populate Geolocale_Taxon -----------------------
 
-    /* 
+    /*
     Note that Geolocale are handled differently from Museums.  Taxa in the geolocales on the
     subregion level are stored in the geolocale_taxon table.
     */
@@ -1084,10 +1075,11 @@ public static int c = 0;
     }
            
     private void updateCountsFromSpecimenData(int geolocaleId) {
+      //A.log("updateCountsFromSpecimenData() geolocaleId:" + geolocaleId);
       // set the image_count and specimen_count in the geolocale table.
       Geolocale geolocale = getFromSpecimenData(geolocaleId);
       if (geolocale == null) {
-        s_log.error("populateFromSpecimenData() geolocale not found for id:" + geolocaleId);
+        s_log.error("updateCountsFromSpecimenData() geolocale not found for id:" + geolocaleId);
         return;
       }
 
@@ -1114,15 +1106,13 @@ public static int c = 0;
                   
     public void updateCounts(int geolocaleId) throws SQLException {
       // Crawl the Geolocale_taxon table to find the counts.
-      (new GeolocaleTaxonCountDb(getConnection())).countCrawls(geolocaleId);
+      (new GeolocaleTaxonCountDb(getConnection())).childrenCountCrawl(geolocaleId);
 
       updateCountsFromSpecimenData(geolocaleId);
 
       // update fields (title, image_count, subfamily_count, genus_count, species_count).                    
       finish(geolocaleId); 
     }
-   
-
 
     // ------------ Introduced ---------------
 
@@ -1156,7 +1146,7 @@ public static int c = 0;
           + " and g.georank in ('country', 'adm1')"
           + " and taxon_name in " 
           + "     (select pt.taxon_name from proj_taxon pt, taxon t " 
-          + "      where pt.taxon_name = t.taxon_name and (t.rank = 'species' or t.rank = 'subspecies') " 
+          + "      where pt.taxon_name = t.taxon_name and (t.taxarank = 'species' or t.taxarank = 'subspecies') "
           + "        and project_name = 'introducedants')"
 		  + " order by geolocale_id";
 
@@ -1240,7 +1230,7 @@ public static int c = 0;
       String query = "select gt.taxon_name taxon_name, max(gt.geolocale_id) geolocale_id, count(*) count"
 		+ " from geolocale g, geolocale_taxon gt, taxon"
 		+ " where g.id = gt.geolocale_id and taxon.taxon_name = gt.taxon_name"
-		+ " and taxon.status != 'morphotaxon' and taxon.rank in ('species', 'subspecies')" 
+		+ " and taxon.status != 'morphotaxon' and taxon.taxarank in ('species', 'subspecies')"
         + " and taxon.fossil = 0"
 		+ " and g.georank = 'country'"
 	    //+ " and g.georank in ('country', 'adm1')" // This would half the result set size.
@@ -1259,7 +1249,7 @@ public static int c = 0;
       String query = "select gt.taxon_name taxon_name, max(gt.geolocale_id) geolocale_id, count(*) count"
         + " from geolocale g, geolocale_taxon gt, taxon"  
         + " where g.id = gt.geolocale_id and taxon.taxon_name = gt.taxon_name"
-        + " and taxon.status != 'morphotaxon' and taxon.rank in ('species', 'subspecies') " 
+        + " and taxon.status != 'morphotaxon' and taxon.taxarank in ('species', 'subspecies') "
         + " and taxon.fossil = 0"
         + " and g.georank = 'adm1'"
         + " and (gt.taxon_name, g.parent) in (select gt.taxon_name, g.name from geolocale g, geolocale_taxon gt where g.id = gt.geolocale_id and gt.is_endemic = 1)"
@@ -1490,7 +1480,6 @@ public static int c = 0;
       // A.log("updateColors() subregions:" + subregionList);    
 
       for (Geolocale subregion : subregionList) {
-
         //A.log("updateColors() colors:" + colors[i]);    
 
         updateColor(subregion.getId(), colors[i]);
@@ -1503,7 +1492,6 @@ public static int c = 0;
         updateColor(region.getId(), colors[i]);
         ++i;      
       }
-
     }
 
     private void updateColor(int id, String color) {    
@@ -1532,7 +1520,7 @@ public static int c = 0;
         int genusCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "genus");
         int speciesCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "species");
 
-		//A.log("updatedCOuntableTaxonData(" + geolocaleId + ") speciesCount:" + speciesCount);
+		A.log("updatedCountableTaxonData(" + geolocaleId + ") speciesCount:" + speciesCount);
 
         criteria = "id = " + geolocaleId;
         geolocaleTaxonCountDb.updateCountableTaxonCounts("geolocale", criteria, subfamilyCount, genusCount, speciesCount);                  
@@ -1690,7 +1678,7 @@ public static int c = 0;
           + " and g." + criteria
           + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
           + " and family = 'formicidae'" 
-          + " and rank = 'species'"
+          + " and taxarank = 'species'"
           + " group by subfamily, t.chart_color"; 
           //if (AntwebProps.isDevMode()) s_log.info("getTaxonSubfamilyDistJsonQuery() query:" + query);
       return query;
@@ -2278,7 +2266,7 @@ public static int c = 0;
          //A.log("update adm1:" + adm1.getName() + " to have subregion:" + subregion);   
          updateSubregion(adm1.getId(), subregion);    
        }
-       GeolocaleMgr.populate(getConnection(), true); // force reload
+       GeolocaleMgr.populate(getConnection(), true, false); // force reload, initalRun
      }
           
      // Update all geolocale_taxa where the region is null;

@@ -84,7 +84,7 @@ public final class TeamMemberImgUploadAction extends Action {
 
         s_log.warn("in TeamMemberImgUploadAction.executeFresh():" + teamMemberIdStr);
 
-        Long teamMemberId = new Long(teamMemberIdStr);
+        Long teamMemberId = Long.valueOf(teamMemberIdStr);
 
         DynaActionForm df = (DynaActionForm) form;
         df.set("id", teamMemberId);

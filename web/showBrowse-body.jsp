@@ -235,8 +235,8 @@ for (Taxon t : childrenArray) {
         String sortBy = (String) request.getParameter("sortBy");
 		if (sortBy != null) {
 		  if (taxon instanceof Species || taxon instanceof Subspecies) {
-			((Species) taxon).sortBy(sortBy);
-            A.log("showBrowse-body rank:" + taxon.getRank() + " sortBy:" + sortBy);
+			((Species) taxon).sortBy(sortBy, request.getParameter("sortOrder"));
+            A.log("showBrowse-body rank:" + taxon.getRank() + " sortBy:" + sortBy + " sort:" + request.getParameter("sortOrder"));
           }
 		}
 		// USED TO HAVE THE RECORDCOUNTSTRING HERE

@@ -16,17 +16,13 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class ArtistMgr {
+public class ArtistMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(ArtistMgr.class);
 
     private static ArrayList<Artist> s_artists = null;
-        
-    public static void populate(Connection connection) {
-      populate(connection, false);
-    }
     
-    public static void populate(Connection connection, boolean forceReload) {
+    public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
       if (!forceReload && (s_artists != null)) return;      
       
       try {
@@ -36,9 +32,27 @@ public class ArtistMgr {
       } catch (SQLException e) {
         s_log.warn("populate() e:" + e);
       }
+
+      if (!initialRun) {
+          try {
+              postInitialize(connection);
+          } catch (SQLException e) {
+            s_log.warn("populate() e:" + e);
+          }
+      }
+
       //A.log("GroupMgr.populate() groups:" + s_groups);
     }
-    
+
+    //Called through UtilAction to, in a separate thread, populate the curators with adm1.
+    public static void postInitialize(Connection connection) throws SQLException {
+        ArtistDb artistDb = new ArtistDb(connection);
+        ArrayList<Artist> artists = getArtists();
+        for (Artist artist : artists) {
+            artistDb.postInstantiate(artist);
+        }
+    }
+
     public static boolean isInitialized() {
       return s_artists != null;
     }

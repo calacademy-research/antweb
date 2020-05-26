@@ -54,17 +54,10 @@ public class TaxaPage implements Serializable {
 
 	public void setChildren() throws SQLException {
 	    // Called from EOL
-		fetchChildren(false, true, false, Caste.DEFAULT, new StatusSet()); //, null);
+		fetchChildren(false, true, false, true, Caste.DEFAULT, new StatusSet());
 	}
 
-/*
-    // deprecate!
- 	public void fetchChildren(boolean withImages, boolean withTaxa, boolean withSpecimen, StatusSet statusSet) throws SQLException 
-	{
-	  fetchChildren(withImages, withTaxa, withSpecimen, Caste.DEFAULT, statusSet);
-    }
-*/
-	public void fetchChildren(boolean withImages, boolean withTaxa, boolean withSpecimen, String caste, StatusSet statusSet) //, String orderBy) 
+	public void fetchChildren(boolean withImages, boolean withTaxa, boolean withSpecimen, boolean withFossil, String caste, StatusSet statusSet)
 	  throws SQLException 
 	{
 	    Overview overview = getOverview();  // Why not a parameter?
@@ -88,7 +81,7 @@ public class TaxaPage implements Serializable {
 	      taxaQuery += ", taxon.genus as genus ";
   	      }
 	      if (rank.equals("species")) {
-	   	    taxaQuery += ", genus, species, subspecies, rank";
+	   	    taxaQuery += ", genus, species, subspecies, taxarank";
 	   	  }
           	      
   	      taxaQuery += " from taxon";
@@ -98,16 +91,21 @@ public class TaxaPage implements Serializable {
           taxaQuery += " and family = 'formicidae'";				
 
 		  if (!"species".equals(rank)) {
-		    taxaQuery += " and rank = '" + rank + "' ";			
+		    taxaQuery += " and taxarank = '" + rank + "' ";
 		  } else {
-		    taxaQuery += " and rank in ('species', 'subspecies')";
+		    taxaQuery += " and taxarank in ('species', 'subspecies')";
           }
           taxaQuery += statusSet.getAndCriteria();
 
-          //A.log("FetchChildren() overview:" + getOverview().getClass() + " query:" + taxaQuery);  	      
-        
+ 	      //A.log("clause:" + statusSet.getAndCriteria());
+
+          if (!withFossil) {
+			  taxaQuery += " and taxon.fossil = 0 ";
+		  }
+
           fetchChildrenQuery = taxaQuery;
-        }          
+          A.log("FetchChildren() overview:" + getOverview().getClass() + " query:" + taxaQuery);
+        }
         //A.log("fetchChildren() withSpecimen:" + withSpecimen + " overview:" + getOverview().getClass());        
 
         if (withSpecimen) {
@@ -120,7 +118,7 @@ public class TaxaPage implements Serializable {
 		    specimenQuery += ", s.genus as genus ";
     	  }
   	      if (rank.equals("species")) {
-	   	    specimenQuery += ", s.genus, s.species, s.subspecies, IF(subspecies is null ,'species','subspecies') as rank";
+	   	    specimenQuery += ", s.genus, s.species, s.subspecies, IF(subspecies is null ,'species','subspecies') as taxarank";
 	      }          
           
           specimenQuery += " from specimen s ";
@@ -140,15 +138,11 @@ public class TaxaPage implements Serializable {
           fetchChildrenQuery += specimenQuery;
         }
 
-//        if (orderBy != null) {
-//          fetchChildrenQuery += " order by " + orderByPhrase;
-//        } else {
-		  if (rank.equals("species")) {
-			  fetchChildrenQuery += " order by genus, species, subspecies";
-		  } else {
-			  fetchChildrenQuery += " order by " + rank;
-		  }
-//        }						
+		if (rank.equals("species")) {
+			fetchChildrenQuery += " order by genus, species, subspecies";
+		} else {
+			fetchChildrenQuery += " order by " + rank;
+		}
 
         if (getLimit() != 0) {
             fetchChildrenQuery += " limit " + getLimit();
@@ -191,7 +185,7 @@ public class TaxaPage implements Serializable {
 					child.setSubfamily(rset.getString("subfamily"));
 					child.setGenus(rset.getString("genus"));
 				} else if ("species".equals(rank)) {
-					String selectedRank = (rset.getString("rank"));
+					String selectedRank = (rset.getString("taxarank"));
                     if ("species".equals(selectedRank)) {
 	    				child = new Species();   
                     } else { // Then it is subspecies
@@ -261,89 +255,6 @@ public class TaxaPage implements Serializable {
 		return children;
 	}
 
-/*
-    private ArrayList<String> nonImagedTaxa = null;
-    
-    public ArrayList<String> getNonImagedTaxa() {
-      return this.nonImagedTaxa;
-    }
-// Only for Geolocale right now.
-    public void fetchNonImagedTaxa(ArrayList<Taxon> childrenList) {
-
-	  A.log("fetchNonImagedTaxa() childrenList.size:" + childrenList.size());
-
-
-      ArrayList<String> taxa = new ArrayList<String>();
-
-      Statement stmt = null;
-      ResultSet rset = null;
-      String rankClause = Rank.getRankClause(getRank());
-      Geolocale geolocale = (Geolocale) getOverview();
-
-      String query = "select t.taxon_name from geolocale g, geolocale_taxon gt, taxon t "
-      + " where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name "
-      + " and g.id = " + geolocale.getId()
-      + " and " + rankClause;
-
-        int i = 0;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "fetchNonImagedTaxa()");
-            rset = stmt.executeQuery(query);
-
-            while (rset.next()) {
-              ++i;
-              String taxonName = rset.getString("taxon_name");
-              
-              boolean contains = false;
-              for (Taxon taxon : childrenList) {
-                if (taxonName.equals(taxon.getTaxonName())) {
-                  contains = true;
-                  break;
-                }
-              }
-              A.log("fetchNonImagedTaxa() i:" + i + " contains:" + contains + " taxonName:" + taxonName + " childrenList.size:" + childrenList.size());
-              if (!contains) taxa.add(taxonName);
-            }
-        } catch (SQLException e) {
-            s_log.error("fetchNonImagedTaxa() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, "this", "fetchNonImagedTaxa()");
-        }
-
-        //A.log("fetchNonImagedTaxa() childrenList.size():" + childrenList.size() + " query.size:" + i + " query:" + query);
-
-        this.nonImagedTaxa = taxa;
-    }
-*/
-
-/* Feb2020
-	protected boolean notBlank(String theTerm) {
-
-		boolean itIsNotBlank = true;
-		if ((theTerm == null)
-			|| (theTerm.length() <= 0)
-			|| (theTerm.equals("null"))
-			|| (theTerm.equals("NULL"))) {
-			itIsNotBlank = false;
-		}
-
-		return itIsNotBlank;
-	}
-
-	protected void finalize() throws Throwable {
-		super.finalize();
-		if (children != null) {
-			Iterator childIter = children.iterator();
-			Taxon thisChild = null;
-			while (childIter.hasNext()) {
-				thisChild = (Taxon) childIter.next();
-				thisChild.finalize();
-			}
-			children.clear();
-		}
-		connection = null;
-	}
-*/
     public String getBrowserParams() {
       // ?subfamily=myrmicinae&genus=crematogaster&project=allantwebants&rank=genus&pr=i
         String params = "";

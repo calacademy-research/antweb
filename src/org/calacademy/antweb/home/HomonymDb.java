@@ -101,7 +101,7 @@ public class HomonymDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {            
-            theQuery = " select rank, taxon_name, kingdom_name, phylum_name, order_name, class_name" 
+            theQuery = " select taxarank, taxon_name, kingdom_name, phylum_name, order_name, class_name"
               + ", family, subfamily, genus, species, subspecies " 
               + ", source, insert_method, created, fossil, antcat, pending, type "
               + ", antcat_id, author_date, author_date_html, authors, year, status, available " 
@@ -119,7 +119,7 @@ public class HomonymDb extends AntwebDb {
             while (rset.next()) {
                 ++count;
                 // Only one record expected
-                String rank = rset.getString("rank");
+                String rank = rset.getString("taxarank");
                 taxon = new Homonym();
                 taxon.setRank(rank);
 
@@ -181,7 +181,7 @@ public class HomonymDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {            
-            theQuery = " select rank, taxon_name, kingdom_name, phylum_name, order_name, class_name" 
+            theQuery = " select taxarank, taxon_name, kingdom_name, phylum_name, order_name, class_name"
               + ", family, subfamily, genus, species, subspecies " 
               + ", source, insert_method, created, fossil, antcat, pending, type "
               + ", antcat_id, author_date, author_date_html, authors, year, status, available " 
@@ -198,7 +198,7 @@ public class HomonymDb extends AntwebDb {
             while (rset.next()) {
                 ++count;
                 // Only one record expected
-                String rank = rset.getString("rank");
+                String rank = rset.getString("taxarank");
 
                 taxon = new Homonym();
                 taxon.setRank(rank);
@@ -259,7 +259,7 @@ public class HomonymDb extends AntwebDb {
       throws SQLException {
         boolean isSubfamilyForGenus = false;
         String query = "select distinct subfamily from homonym " 
-            + " where rank = 'genus' and "; // Added Jun 26, 2014";
+            + " where taxarank = 'genus' and "; // Added Jun 26, 2014";
         if ((family != null) && !("null".equals(family))) {
             query += " family = '" + family + "' and ";
         } else {

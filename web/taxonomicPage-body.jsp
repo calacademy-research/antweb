@@ -23,7 +23,7 @@
              
     String pageRank = taxaPage.getRank();
     //String georank = taxaPage.getGeorank();
-    A.log("taxonomicPage-body.jsp pageRank:" + pageRank);   
+    //A.log("taxonomicPage-body.jsp pageRank:" + pageRank);
     
     String pageType = "taxaPage";
                  
@@ -113,7 +113,7 @@
 <%
       String statusSet = taxaPage.getStatusSetStr();
       String statusSetSize = taxaPage.getStatusSetSize();
-      A.log("taxaPage-body.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
+      //A.log("taxonomicPage-body.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
 %>
         <%@ include file="/common/statusesDisplay.jsp" %>
 <%
@@ -146,8 +146,7 @@
 &nbsp; | &nbsp;
    <% }
       if (canShowSpecimenTaxa) {
-
-        A.log("taxonomicPage-body.jsp taxaPage:" + taxaPage + " thisTarget:" + thisTarget);
+        //A.log("taxonomicPage-body.jsp taxaPage:" + taxaPage + " thisTarget:" + thisTarget);
 
         if (!taxaPage.isWithSpecimen()) { %>
 <a href='<%= thisTarget %>&specimen=true' title='Show additional taxa from specimen data.'>Show Specimen Taxa</a>

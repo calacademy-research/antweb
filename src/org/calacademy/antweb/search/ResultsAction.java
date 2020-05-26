@@ -32,7 +32,7 @@ public class ResultsAction extends Action {
         ArrayList<ResultItem> chosenResults = new ArrayList<ResultItem>();
 
         for (String choice : chosen) {
-          int chosenInt = (new Integer(choice)).intValue();
+          int chosenInt = (Integer.valueOf(choice)).intValue();
           ResultItem thisItem = (ResultItem) searchResults.get(chosenInt);
           chosenResults.add(thisItem);
         }

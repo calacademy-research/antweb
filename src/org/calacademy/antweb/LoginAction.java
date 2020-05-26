@@ -59,7 +59,7 @@ public final class LoginAction extends Action {
 */
         String value = loginForm.getValue();
         
-        A.log("execute() value:" + value + " target:" + target + " userNameOrEmail:" + userNameOrEmail + " password:" + password);
+        A.log("execute() value:" + value + " target:" + target + " userNameOrEmail:" + userNameOrEmail);
         //AntwebUtil.logShortStackTrace(10);
 
         Login login = null;
@@ -224,10 +224,9 @@ public final class LoginAction extends Action {
             messages.add("message", msg);
             A.log("login() 2 msg:" + msg);
         }
-        
+
         if (messages.isEmpty()) {
             java.sql.Connection connection = null;
-
             try {
                 javax.sql.DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, "LoginAction.login()");

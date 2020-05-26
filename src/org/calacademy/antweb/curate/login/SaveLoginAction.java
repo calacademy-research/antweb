@@ -52,14 +52,16 @@ public final class SaveLoginAction extends Action {
             javax.sql.DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SaveLoginAction.execute()");
 
+            LoginDb loginDb = new LoginDb(connection);
+
             if ("delete".equals(form.getDelete())) {
-                s_log.warn("execute() delete");      
-                (new LoginDb(connection)).deleteById(id);
+                s_log.warn("execute() delete");
+                loginDb.deleteById(id);
                 request.setAttribute("message", "Login deleted id:" + id);
                 return (mapping.findForward("message"));
             }
 
-            login = (new LoginDb(connection)).getLogin(id);
+            login = loginDb.getLogin(id);
 
             if (login == null) {
                 isNew = true;
@@ -121,7 +123,7 @@ A.log("execute() groupName:" + groupName + " loginGroupId:" + login.getGroupId()
             if (isNew) {
                 s_log.info("execute() new Login via invite creation.");
 
-                (new LoginDb(connection)).saveLogin(login);
+                loginDb.saveLogin(login);
             } else {
 
 // was: Login accessLogin = accessGroup.getLogin();
@@ -137,7 +139,7 @@ A.log("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLogin + "
                     saveErrors(request, errors);
                     return (mapping.findForward("failure"));    
                 }  
-                (new LoginDb(connection)).userUpdateLogin(login);
+                loginDb.userUpdateLogin(login);
               } else {
                 // it is an administrator saving a users data.  Do not modify passwords but allow the save.
 
@@ -151,12 +153,12 @@ A.log("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLogin + "
                   }    
 		
                   String newPassword = (String) form.getPassword();		
-                  (new LoginDb(connection)).changePassword(login, newPassword); 
+                  loginDb.changePassword(login, newPassword);
                   return (mapping.findForward("success"));
           
                 } else {
                   s_log.info("execute() 4 step is:" + form.getStep() + " changePassword:" + form.getChangePassword());
-                  (new LoginDb(connection)).adminUpdateLogin(login);                
+                  loginDb.adminUpdateLogin(login);
                 }
               }
             }
@@ -167,7 +169,7 @@ A.log("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLogin + "
             A.log("execute createdDir:" + createdDir);
             // Test for createdDir?
             
-            LoginMgr.populate(connection, true);             
+            LoginMgr.populate(connection, true, false);             
             
             if ("invite".equals(form.getStep())) {
                 s_log.warn("execute() step:" + form.getStep()); 

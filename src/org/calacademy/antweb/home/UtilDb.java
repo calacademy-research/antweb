@@ -159,7 +159,7 @@ public class UtilDb extends AntwebDb {
             for (String dml : dmls) {
               thisDml = dml;
               stmt.executeUpdate(dml);
-              A.log("executeDml() dml:" + dml);
+              //A.log("executeDml() dml:" + dml);
             }
         } catch (SQLException e) {
             s_log.error("executeDmls() e:" + e + " dml:" + thisDml);
@@ -184,7 +184,7 @@ public class UtilDb extends AntwebDb {
             stmt = DBUtil.getStatement(getConnection(), "deleteFrom()");
 
             int count = stmt.executeUpdate(dml);
-            A.log("deleteFrom() count:" + count + " dml:" + dml);
+            //A.log("deleteFrom() count:" + count + " dml:" + dml);
             LogMgr.appendLog("taxonSet.log", "UtilDb.deleteFrom(" + table + "):" + count, true);                      
             
             return count;

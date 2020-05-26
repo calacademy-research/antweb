@@ -1,4 +1,4 @@
-
+<!-- taxonReportBody.jsp -->
 <%
     // Included by showBrowse-body.jsp and 
 
@@ -43,7 +43,7 @@
            <a <%= u %> title="Status" href='<%= sortLink + "&orderBy=status" %>'><img src="<%= AntwebProps.getDomainApp() %>/image/valid_nameBW.png"></a>
 
 
-          <% if (Rank.getRankLevel(pageRank) <= 2) {
+          <% if (Rank.getRankLevel(pageRank) <= Rank.getRankLevel("species")) {
 
                if ("type".equals(orderBy)) u = underline; else u = ""; %>
                <a <%= u %> title="Type" href='<%= sortLink + "&orderBy=type" %>'><img src="<%= AntwebProps.getDomainApp() %>/image/has_type_status_iconBW.png" width="11"></a>
@@ -114,10 +114,10 @@
 <div id="page_data">
 <% 
 	int k = 0;
+    // A.log("taxonReportBody.jsp " + childTaxonSet.getNextSubtaxon());
+	// A.log("taxonReportBody.jsp size:" + children.size());
 
-//	   A.log("taxonReportBody.jsp " + childTaxonSet.getNextSubtaxon());
-	   A.log("taxonReportBody.jsp size:" + children.size());
-
+    int subtaxonTotal = 0;
 
 	for (Taxon child : children) { 
 	  Taxon thisChild = child;
@@ -129,9 +129,12 @@
 	 if ((!isOnlyShowUnImaged) || (!child.getHasImages())) {
 
 	   TaxonSet childTaxonSet = child.getTaxonSet();
-	   
+
 	   String childDagger = "";
-	   if (child.getIsFossil()) childDagger = "&dagger;";   
+	   if (child.getIsFossil()) childDagger = "&dagger;";
+	   //if (AntwebProps.isDevMode()) childTaxonSet.setIsEndemic(true);
+
+  	    //if (childTaxonSet instanceof BioregionTaxon) A.log("taxonReportBody.jsp childTaxonSet:" + child + " pageRank:" + Rank.getRankLevel(pageRank) + " endemic:" + ((BioregionTaxon) childTaxonSet).getIsEndemic());
 
   	    //A.log("taxonReportBody.jsp k:" + k + " hasCount:" + ((Taxon) child).getHasImagesCount());
 		//	   String projectStr = "";
@@ -146,7 +149,7 @@
     <div class="sd_data">
         <div class="sd_name pad">
         <%@include file="/common/statusDisplayChild.jsp" %>
-<% if (Rank.getRankLevel(pageRank) <= 2) { %>
+<% if (Rank.getRankLevel(pageRank) <= Rank.getRankLevel("species")) { %>
         <%@include file="/common/isType.jsp" %>
         <%@include file="/common/distStatus.jsp" %>
 <% } %>
@@ -159,8 +162,11 @@
 
           String childCountStr = null;
 
-          String nextSubtaxon = childTaxonSet.getNextSubtaxon(1);			
-          //A.log("taxonReportBody.jsp nextSubtaxon:" + nextSubtaxon + " Um, nextTaxon should be returning 'No [rank]' instead of :" + childrenCountStr);
+          int nextSubtaxonCount = childTaxonSet.getSubtaxonCount(1);
+          subtaxonTotal += nextSubtaxonCount;
+
+          String nextSubtaxon = childTaxonSet.getNextSubtaxon(1);
+          //A.log("taxonReportBody.jsp nextSubtaxon:" + nextSubtaxon + " Um, nextTaxon should be returning 'No [rank]' instead of :" + childCountStr);
           if (nextSubtaxon != null && nextSubtaxon.contains("No ")) {
             childCountStr = nextSubtaxon; //"No Specimens";
           } else {
@@ -232,4 +238,7 @@
 
 
 </div>
+<% if (LoginMgr.isAdmin(request)) { %>
+     <br>Subtaxon total: <%= subtaxonTotal %>
+<% } %>
 <BR>* <%= asterixNote %>

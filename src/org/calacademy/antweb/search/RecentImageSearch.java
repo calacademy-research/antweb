@@ -38,16 +38,16 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
         //String fieldList = "specimen.taxon_name, specimen.subfamily, specimen.genus, specimen.species, specimen.subspecies " 
         //       + ", image.shot_type, image.shot_number, image.upload_date, name "
           //taxon, 
-        String fromString = " groups, artist, group_image, image left join specimen on  specimen.code = image.image_of_id ";
+        String fromString = " ant_group, artist, group_image, image left join specimen on  specimen.code = image.image_of_id ";
         
         String theQuery =
                 "select specimen.code, specimen.taxon_name" 
               + ", image.shot_type, image.shot_number, image.id, image.upload_date" 
-              + ", artist.name, groups.name, specimen.toc"
+              + ", artist.name, ant_group.name, specimen.toc"
               + ", specimen.subfamily, specimen.genus, specimen.species, specimen.subspecies "   // taxon.valid,  what about status?
               + "from " + fromString 
               + "where group_image.image_id = image.id " 
-              + " and groups.id=group_image.group_id " //specimen.taxon_name = taxon.taxon_name 
+              + " and ant_group.id=group_image.group_id " //specimen.taxon_name = taxon.taxon_name
               + " and image.upload_date is not null " 
               + " and artist.id = image.artist ";
             s_log.info("days ago is " + daysAgo);
@@ -64,12 +64,12 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
             }
 
             if ((group != null) && (group.length() > 0)) {
-                theQuery += " and groups.id = group_image.group_id and groups.name='" + group + "'";
+                theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + group + "'";
             }
 
             theQuery += 
                " group by specimen.taxon_name, specimen.subfamily, specimen.genus, specimen.species, specimen.subspecies " 
-               + ", image.shot_type, image.shot_number, image.upload_date, groups.name " 
+               + ", image.shot_type, image.shot_number, image.upload_date, ant_group.name "
              + " order by image.upload_date desc, specimen.code, image.shot_type, image.shot_number ";
 
         Statement stmt = null;
@@ -104,21 +104,7 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
       String shotNumber = null;
       String uploadDate = null;
       String groupName = null;      
-    }    
-    
-
-/*
-select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, image.id, image.upload_date, artist.artist, groups.name, specimen.toc, specimen.subfamily, specimen.genus, specimen.species, specimen.subspecies 
-from  groups, artist, group_image, image left join specimen on specimen.code = image.image_of_id 
-where group_image.image_id = image.id  
-  and groups.id=group_image.group_id  
-  and image.upload_date is not null  
-  and artist.id = image.artist  
-  and image.upload_date > '2016-07-06 14:57:09' 
-group by specimen.taxon_name, specimen.subfamily, specimen.genus, specimen.species, specimen.subspecies , image.shot_type, image.shot_number, image.upload_date, groups.name  
-order by image.upload_date desc, specimen.code, image.shot_type, image.shot_number ;
-*/    
-    
+    }
     
     public void setResults() {
      // ** This is same as GenericSearch but the filterByProject is commented out

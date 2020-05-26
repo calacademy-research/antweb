@@ -80,8 +80,8 @@ public class Scheduler extends Action {
 						
         String message = doAction(action, num);
 
-        //s_log.warn("execute() " + message);
-        LogMgr.appendLog("admin.log", DateUtil.getFormatDate() + " Scheduler complete: " + message);
+        s_log.warn("execute() " + message);
+        LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete: " + message);
 		request.setAttribute("message", message);
 		return (mapping.findForward("adminMessage")); 	  
     }
@@ -156,19 +156,12 @@ public class Scheduler extends Action {
 					  s_log.warn("doAction() url:" + url);
 					  output += HttpUtil.fetchUrl(url); 
 					}
-
 					if (i == 0 || i == 5) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all";
 					  s_log.warn("doAction() url:" + url);
 					  output += HttpUtil.fetchUrl(url); 
 					}
-
-                    // 4 sec
-                    if (i == 0 || i == 6) {
-                      s_log.warn("doAction() Check For Antwiki Species and Fossil List Updates");
-                      output += HttpUtil.fetchUrl(AntwebProps.getThisDomainApp() + "/antWikiData.do?action=checkForUpdates");
-                    }
-			
+					
 					s_log.warn("doAction() scheduler complete.");
 			
 				} catch (IOException e) {

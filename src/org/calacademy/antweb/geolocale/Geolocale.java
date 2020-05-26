@@ -242,7 +242,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         this.isLive = isLive;
     }
 
-    public String getLocality() {  
+    public String getLocality() {
       // These fired against specimen table.  What about subregion?  Bioregion?
       if (Georank.region.equals(getGeorank())) {
         return "";
@@ -255,6 +255,12 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       //if (getIsUseParentRegion()) {
       //  return " region = '" + getRegion() + "'";
       //}
+
+        A.log("getLocality() isIsland:" + isIsland());
+
+        if (isIsland()) {
+          return " island_country = '" + getName() + "'";
+      }
 
       if (Georank.country.equals(getGeorank())) {
         return " country = '" + getName() + "'";
@@ -447,7 +453,10 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
 
     public String getTaxonSetTable() {
       return "geolocale_taxon";
-    }      
+    }
+    public String getTable() {
+        return "geolocale";
+    }
 
     public String getHeading() {
       return ""; // Should not happen.  Subclasses.
@@ -501,8 +510,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
 
     public String getSearchCriteria() {
       return null;  // Will be overridden by subclasses.
-    } 
-    
+    }
     
     public String getFetchChildrenClause() {
   	  return ", geolocale_taxon where geolocale_taxon.taxon_name = taxon.taxon_name"
@@ -530,7 +538,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     }
 
     public String getCountCrawlLink() {
-      return "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=countCrawl&num=" + getId() + "'>Count Crawl " + getName() + "</a>";
+      return "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=geolocaleTaxonCountCrawl&num=" + getId() + "'>Count Crawl " + getName() + "</a>";
     }
     public String getGoogleMapFunctionLink() {
       String genLink = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=genGoogleMapFunction&num=" + getId() + "'>Generate Google Map " + getName() + "</a>.";
@@ -555,45 +563,44 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       }
       return false;
     }
-    
-    
+
     // -------------------- Countable Implementation ---------------------
-/*
-    
-    public String getCountSpecimensQuery() {
-      String query = "select count(*) count, specimen.taxon_name taxonName from specimen " 
-          + " join geolocale_taxon gt on specimen.taxon_name = gt.taxon_name " 
-          + " where gt.geolocale_id = " + getId()
-          + " and specimen.status in " + StatusSet.getCountables()
-	          + " group by taxonName";
-      return query;
-    }        
-*/ 
 
     // was getCountSpecimensLocalQuery() Now is the default.
     public String getCountSpecimensQuery() {
       String overviewCriteria = "";
-      if (Georank.ADM1.equals(getGeorank())) overviewCriteria = " and specimen.adm1 = '" + getName() + "'"; 
-      if (Georank.COUNTRY.equals(getGeorank())) overviewCriteria = " and specimen.country = '" + getName() + "'"; 
-      String query = "select count(*) count, specimen.taxon_name taxonName from specimen " 
+
+/*
+          adm1 = "Galapagos"
+          1) During upload use the valid name. "Galapagos Islands" not "Galapagos"
+          2) If geolocale is an island, then the
+      }
+*/
+      if (isIsland()) {
+          overviewCriteria = " and specimen.island_country = '" + getName() + "'";
+      } else {
+          if (Georank.ADM1.equals(getGeorank())) overviewCriteria = " and specimen.adm1 = '" + getName() + "'";
+          if (Georank.COUNTRY.equals(getGeorank())) overviewCriteria = " and specimen.country = '" + getName() + "'";
+      }
+      String query = "select count(*) count, specimen.taxon_name taxonName from specimen "
           + " join geolocale_taxon gt on specimen.taxon_name = gt.taxon_name " 
           + " where gt.geolocale_id = " + getId()
           + overviewCriteria
           + " and specimen.status in " + StatusSet.getCountables()
 	          + " group by taxonName";
       return query;
-    }        
-   
+    }
+
     public String getCountChildrenQuery(String rank) {
-        
-        String rankClause = " taxon.rank = '" + rank + "'";
-	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.rank = 'species' or taxon.rank = 'subspecies') "; 
+        String rankClause = " taxon.taxarank = '" + rank + "'";
+        if (Rank.SPECIES.equals(rank)) {
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
         }
-      
+
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
           + " join geolocale_taxon gt on taxon.taxon_name = gt.taxon_name " 
           + " where " + rankClause
+          + new StatusSet(StatusSet.ALL).getAndCriteria()
           + "   and gt.geolocale_id = " + getId()
           + " group by parentTaxonName ";
         return query;    
@@ -602,9 +609,9 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
 // *** Do we need this? It was wrong until 2018-10-28. rankClause was just rank!
     public String getCountGrandChildrenQuery(String rank, String column) {
        
-        String rankClause = " taxon.rank = '" + rank + "'";
+        String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.rank = 'species' or taxon.rank = 'subspecies') "; 
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
         }
         
         // parent is a genus
@@ -612,6 +619,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
             + " from taxon " 
             + " join geolocale_taxon gt on taxon.taxon_name = gt.taxon_name " 
             + "  where " + rankClause
+            + new StatusSet(StatusSet.ALL).getAndCriteria()
             + "   and gt.geolocale_id = " + getId()
             + "  group by parentTaxonName";
         return query;
@@ -624,14 +632,6 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         return updateCountSQL;    
     }
 
-/*    
-    public String getOtherUpdateCountSQL(String parentTaxonName, String columnName, int count) {
-        String updateCountSQL = "update proj_taxon set " + columnName + " = '" + count + "'" 
-            + " where project_name = '" + getProjectName() + "'"
-            + " and taxon_name = '" + parentTaxonName + "'";
-        return updateCountSQL;    
-    }
-*/            
     public String getUpdateImageCountSQL(String taxonName, int sum) { //, String rank) {
         String updateSql = "update geolocale_taxon set image_count = " + sum 
             + " where geolocale_id = " + getId() 
@@ -665,20 +665,6 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     public String toLog() {
       return getName() + " isoCode:" + getIsoCode() + " iso3Code:" + getIso3Code() + " isIsland:" + isIsland();
     }
-
-    
-/*
-    public boolean equals(Object name) {
-      boolean isEqual = false;
-      if (name instanceof String) {
-        isEqual = getName().equals(name);
-      } else {
-        isEqual = super.equals(name);
-      }
-      if (AntwebProps.isDevMode()) if ("Suriname".equals(name)) s_log.warn("equals() name:" + name + " isEqual:" + isEqual);
-      return isEqual;      
-    }
-*/
 
     // Used from browse pages.
     public String getChangeViewOptions(String taxonName, String otherUrl, Connection connection) {
@@ -774,38 +760,6 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         return changeViewOptions;
     }
 
-/*
-    public String getChildrenListDisplay() {      
-      return getChildrenListDisplay(true);
-    }
-
-    public String getAdminChildrenListDisplay() {
-      return getChildrenListDisplay(false);
-    }
-
-    public String getChildrenListDisplay(boolean showOnlyValid) {      
-      if ("adm1".equals(getGeorank())) return "";
-      Geolocale geolocale = GeolocaleMgr.getDeepGeolocale(getName(), getGeorank());
-      if (geolocale == null) {
-        //s_log.warn("getChildrenListDisplay() name:" + getName() + " georank:" + getGeorank() + " geolocale:" + geolocale);
-        return "";
-      }
-      ArrayList<Geolocale> children = geolocale.getChildren();
-      if (children.isEmpty()) return "";
-      int i = 0;
-      String display = "";
-      for (Geolocale child : children) {
-        if (showOnlyValid && !child.getIsValid()) continue;
-        ++i;
-        if (i == 1) display = "<b>" + getChildrenHeading() + ": ";
-        if (i > 1) display += ", ";
-        display += "<a href='" + child.getThisPageTarget() + "'>" + child.getName() + "</a>";
-      }
-      display += "</b><br>";
-      return display;
-    }    
-*/
-
     public String getChildrenListDisplay(String validOrLive, String overviewOrList, String rank) {  
       if ("adm1".equals(getGeorank())) return "";
       Geolocale geolocale = GeolocaleMgr.getDeepGeolocale(getName(), getGeorank());
@@ -832,51 +786,6 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       }
       //display += "</b>";
       return display;
-    }    
-/*
-    public String getValidChildrenListDisplay() {      
-      if ("adm1".equals(getGeorank())) return "";
-      Geolocale geolocale = GeolocaleMgr.getDeepGeolocale(getName(), getGeorank());
-      if (geolocale == null) {
-        //s_log.warn("getChildrenListDisplay() name:" + getName() + " georank:" + getGeorank() + " geolocale:" + geolocale);
-        return "";
-      }
-      ArrayList<Geolocale> children = geolocale.getChildren();
-      if (children.isEmpty()) return "";
-      int i = 0;
-      String display = "";
-      for (Geolocale child : children) {
-        if (!child.getIsValid()) continue;
-        ++i;
-        if (i == 1) display = "<b>" + getChildrenHeading() + ": ";
-        if (i > 1) display += ", ";
-        display += "<a href='" + child.getThisPageTarget() + "'>" + child.getName() + "</a>";
-      }
-      display += "</b><br>";
-      return display;
-    }    
-    public String getLiveChildrenListDisplay() {      
-      if ("adm1".equals(getGeorank())) return "";
-      Geolocale geolocale = GeolocaleMgr.getDeepGeolocale(getName(), getGeorank());
-      if (geolocale == null) {
-        //s_log.warn("getChildrenListDisplay() name:" + getName() + " georank:" + getGeorank() + " geolocale:" + geolocale);
-        return "";
-      }
-      ArrayList<Geolocale> children = geolocale.getChildren();
-      if (children.isEmpty()) return "";
-      int i = 0;
-      String display = "";
-      for (Geolocale child : children) {
-        if (!child.getIsLive()) continue;
-        ++i;
-        if (i == 1) display = "<b>" + getChildrenHeading() + ": ";
-        if (i > 1) display += ", ";
-        display += "<a href='" + child.getThisPageTarget() + "'>" + child.getName() + "</a>";
-      }
-      display += "</b><br>";
-      return display;
-    }    
-*/    
-
+    }
     
 }

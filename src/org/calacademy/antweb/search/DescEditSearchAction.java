@@ -59,7 +59,7 @@ public final class DescEditSearchAction extends Action {
             connection = DBUtil.getConnection(dataSource, "DescEditSearchAction.getSearchResults()");
 
             stmt = connection.createStatement();
-            rset = stmt.executeQuery("select distinct name from groups"); // was title
+            rset = stmt.executeQuery("select distinct name from ant_group"); // was title
             ArrayList groupsArray = new ArrayList();
 
             while (rset.next()) {

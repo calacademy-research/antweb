@@ -19,9 +19,8 @@
 <%
 // title, map, chosenList
 
-   //A.log("dynamicMap-body.jsp map:" + map + " isMapLocalities:" + map.isMapLocalities());
-
    Map map = (Map) session.getAttribute("map");
+   //A.log("dynamicMap-body.jsp map:" + map + " isMapLocalities:" + map.isMapLocalities());
 
    Taxon taxon = (Taxon) session.getAttribute("taxon");
    if (taxon == null) {
@@ -58,7 +57,7 @@
     if (map.getCached() != null) justCached = (AntwebUtil.secsSince(map.getCached()) < 60);
 
     //A.log("justCached:" + justCached + " date:" + map.getCached());
-    if (!justCached) { 
+    if (!justCached) {
       cacheNote = "<b>*</b>This map was cached <font color=green>" + map.getCached() + ".</font>";
       if (LoginMgr.isCurator(request)) {
         cacheNote += " <a href='" + HttpUtil.getTarget(request) + "&refresh=true'>Refresh map</a>.";
@@ -80,7 +79,7 @@
     boolean isMuseum = false;
     if (request.getParameter("museumCode") != null) isMuseum = true;
 
-    //A.log("dynamicMap-body.jsp mapType:" + mapType + " title:" + title); // if not null + " overview:" + overview.getTitle());
+    A.log("dynamicMap-body.jsp mapType:" + mapType + " title:" + title); // if not null + " overview:" + overview.getTitle());
     
     //if ((rank == null) || (taxonPrettyName == null)) {
     String searchParam = (String) request.getParameter("searchMethod");
@@ -123,7 +122,7 @@
         AntwebUtil.log("dynamicMap-body.jsp unrecognized queryString:" + HttpUtil.getQueryString(request));    
     }
    
-    //A.log("dynamicMap-body.jsp mapType:" + mapType + " title:" + title + " isLocality:" + isLocality + " fromSearch:" + isSearch); //  + " isGoogleMapFunction:" + map.getIsGoogleMapFunction());
+    A.log("dynamicMap-body.jsp mapType:" + mapType + " title:" + title + " isLocality:" + isLocality + " fromSearch:" + isSearch); //  + " isGoogleMapFunction:" + map.getIsGoogleMapFunction());
 
     if (isLocality) {
 %>

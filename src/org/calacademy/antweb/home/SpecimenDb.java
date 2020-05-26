@@ -157,8 +157,8 @@ public class SpecimenDb extends AntwebDb {
 	  introducedSpecimen.add("<tr><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr>");
       Statement stmt = null;
       ResultSet rset = null;
-      String query = "select groups.name as groupName, bioregion, code, taxon_name, country from specimen, groups " 
-        + " where specimen.access_group = groups.id " 
+      String query = "select ant_group.name as groupName, bioregion, code, taxon_name, country from specimen, ant_group "
+        + " where specimen.access_group = ant_group.id "
         + " and access_group = " + groupId
         + " and is_introduced = 1 " 
         + "order by access_group, bioregion, country ";
@@ -227,7 +227,7 @@ public class SpecimenDb extends AntwebDb {
       return specimen;
     }
 
- 
+ // *** island_country?
     public boolean hasSpecimen(String taxonName, String country) {
       return hasSpecimenWithClause(taxonName, " and country = '" + country + "'");
     }
@@ -692,7 +692,7 @@ public class SpecimenDb extends AntwebDb {
                 String species = rset.getString("species");
                 String subspecies = rset.getString("subspecies");
                 String code = rset.getString("code");
-		String status = rset.getString("status");
+		        String status = rset.getString("status");
                 Timestamp dateCollected = rset.getTimestamp("dateCollected");
                 //String formatDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(dateCollected);
                 String dateCollectedStr = "";
@@ -783,6 +783,104 @@ public class SpecimenDb extends AntwebDb {
             DBUtil.close(stmt, "getMostRecentIdealMethodRecord()");
         }
         return record;
+    }
+
+    public String parseDates() {
+        String message = "";
+        int count = 0;
+        int updated = 0;
+        int notUpdated = 0;
+        int suspect = 0;
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select code, access_group, datecollectedstartstr, datecollectedendStr, datecollectedstart, datecollectedend from specimen"; // where access_group = 21 and taxon_name = 'fmnhins0000122716'";
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "dateParse()");
+            rset = stmt.executeQuery(query);
+            A.log("parseDates() query:" + query);
+            while (rset.next()) {
+                ++count;
+                String code = rset.getString("code");
+                String accessGroup = rset.getString("access_group");
+                String startStr = rset.getString("datecollectedstartstr");
+                String start = rset.getString("datecollectedstart");
+                String startNew = DateUtil.getConstructDateStr(startStr);
+                String endStr = rset.getString("datecollectedendstr");
+                String end = rset.getString("datecollectedend");
+                String endNew = DateUtil.getConstructDateStr(endStr);
+
+
+/*
+                // Show the unfixed.
+                message = "";
+                if (start != null && !start.equals(startNew)) {
+                    message = "startStr:" + startStr; // + " start:" + start + " -> " + startNew;
+                }
+                if (end != null && !end.equals(endNew)) {
+                    message = "endStr:" + endStr; // + " end:" + end + " -> " + endNew;
+                }
+                if (!message.equals("")) {
+                    // These ones can not be fixed.
+                    s_log.warn("parseDates() Unfixable. Code:" + code + " accessGroup:" + accessGroup + " " + message);
+                    // Should really update so that the start and end are null for these codes.
+                    ++suspect;
+
+                    continue;
+                }
+*/
+                
+                A.log("parseDates() startStr:" + startStr + " start:" + start + " startNew:" + startNew);
+                if ((startNew != null && !startNew.equals(start)) || (endNew != null && !endNew.equals(end))) {
+                    count = updateParsedDates(code, startNew, endNew);
+                    s_log.warn("parseDates() count:" + count + " accessGroup:" + accessGroup + " start:" + start + " -> " + startNew + " end:" + end + " -> :" + endNew);
+                    if (count < 1) {
+                        ++notUpdated;
+                    } else {
+                        ++updated;
+                    }
+                    //A.log("parseDates() updated:" + updated + " startNew:" + startNew + " was start:" + start );
+                }
+            }
+        } catch (SQLException e) {
+            s_log.error("dateParse() e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, "this", "dateParse()");
+        }
+        message = "count:" + count + ". " + updated + " updated. " + notUpdated + " not updated." + suspect + " suspect.";
+        return message;
+    }
+
+    // http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=true&isIgnoreInsufficientCriteria=false&sortBy=taxonname&collGroupOpen=none&specGroupOpen=none&geoGroupOpen=none&typeGroupOpen=none&typeGroupOpen=none&searchType=contains&name=&familySearchType=equals&family=Formicidae&subfamilySearchType=equals&subfamily=none&genusSearchType=equals&genus=anochetus&speciesSearchType=contains&species=&subspeciesSearchType=contains&subspecies=&bioregion=&country=&adm1=&adm2SearchType=contains&adm2=&localityNameSearchType=contains&localityName=&localityCodeSearchType=contains&localityCode=&habitatSearchType=contains&habitat=&elevationSearchType=greaterThanOrEqual&elevation=&methodSearchType=contains&method=&microhabitatSearchType=equals&microhabitat=&collectedBySearchType=equals&collectedBy=&collectionCodeSearchType=contains&collectionCode=&dateCollectedSearchType=greaterThanOrEqual&dateCollected=&specimenCodeSearchType=contains&specimenCode=&locatedAtSearchType=contains&locatedAt=&lifeStageSearchType=contains&lifeStage=&casteSearchType=contains&caste=&mediumSearchType=contains&medium=&specimenNotesSearchType=contains&specimenNotes=&dnaExtractionNotesSearchType=contains&dnaExtractionNotes=&museumCodeSearchType=equals&museumCode=&ownedBySearchType=contains&ownedBy=&createdSearchType=equals&created=&groupName=&uploadId=0&type=&types=off&statusSet=all&imagesOnly=off&resultRank=specimen&output=list&x=27&y=14
+    private int updateParsedDates(String code, String start, String end)
+         throws SQLException {
+        int count = 0;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "updateParsedDates()");
+            String updateStart = null;
+            String updateEnd = null;
+            if (start != null) updateStart = "datecollectedstart = '" + start + "' ";
+            if (end != null) updateEnd = "datecollectedend = '" + end + "' ";
+
+            if (updateStart != null || updateEnd != null) {
+                String dml = "update specimen set ";
+                if (updateStart != null) dml += updateStart;
+                if (updateStart != null && updateEnd != null) dml += ", ";
+                if (updateEnd != null) dml += updateEnd;
+                dml += " where code = '" + code + "'";
+                s_log.warn("updateParsedDates() dml:" + dml);
+
+                //count = stmt.executeUpdate(dml);
+                count = 1;
+            } else A.log("updateParsedDates() updateStart:" + updateStart + " updateEnd:" + updateEnd);
+        } catch (SQLException e) {
+            s_log.error("updateParsedDates() " + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, "updateParsedDates()");
+        }
+        return count;
     }
 
 /*

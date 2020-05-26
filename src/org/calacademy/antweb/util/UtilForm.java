@@ -17,6 +17,7 @@ public class UtilForm extends ActionForm {
   protected String param;
   protected String param2;
   protected String text;
+  protected String reload;
       
   public String getField() {
 	return field;
@@ -108,7 +109,14 @@ public class UtilForm extends ActionForm {
   public void setText(String text) {
     this.text = text;
   }
-  
+
+  public String getReload() {
+    return reload;
+  }
+  public void setReload(String reload) {
+    this.reload = reload;
+  }
+
   public String toString() {
     String retVal = "";
     

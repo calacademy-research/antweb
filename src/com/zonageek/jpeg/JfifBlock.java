@@ -119,8 +119,8 @@ public class JfifBlock extends JpegBlock {
       break;
     }
     if (this.jfifThumbnailWidth > 0) {
-      info.put("Thumbnail Width", new Integer(this.jfifThumbnailWidth));
-      info.put("Thumbnail Height", new Integer(this.jfifThumbnailHeight));
+      info.put("Thumbnail Width", Integer.valueOf(this.jfifThumbnailWidth));
+      info.put("Thumbnail Height", Integer.valueOf(this.jfifThumbnailHeight));
       info.put("Thumbnail Data Length", "" + this.jfifThumbnailRGB.length 
         + " bytes");
     }

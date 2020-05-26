@@ -30,22 +30,22 @@ public class CollectionDb extends AntwebDb {
         Collection collection = new Collection();
         ArrayList<ResultItem> resultsList = collection.getSpecimenResults().getResults();
     
-        String query = " select sp.code, sp.type_status, sp.country, sp.localitycode, sp.collectioncode " 
+        String query = " select sp.code, sp.type_status, sp.country, sp.island_country, sp.localitycode, sp.collectioncode "
             + ", sp.caste, sp.species, sp.genus, sp.localityname, sp.habitat, sp.microhabitat, sp.method"
             + ", sp.collectedby, sp.collectionnotes, sp.adm1, sp.adm2, sp.decimal_longitude, sp.decimal_latitude "
             + ", sp.access_group, sp.bioregion, sp.museum "
             + ", sp.dnaextractionnotes, sp.determinedby, sp.collectedby "
             + ", sp.datecollectedstart, sp.datecollectedend"               
             + ", sp.decimal_latitude, sp.decimal_longitude, sp.elevation, sp.elevationmaxerror, sp.latlonmaxerror, sp.localitynotes"
-            + ", groups.name as groupname, ownedby" 
+            + ", ant_group.name as groupname, ownedby"
                 
             + ", count(image.image_of_id) as images " 
             + " from specimen as sp "
             + " left join image on sp.code = image.image_of_id "
-                + " left outer join groups on sp.access_group = groups.id "            
+                + " left outer join ant_group on sp.access_group = ant_group.id "
             // + " where sp.collectionCode like '%" + code + "%' "
             + " where sp.collectionCode = '" + Formatter.escapeQuotes(code) + "' "  // so the new index can function
-            + " group by sp.code, sp.type_status, sp.country, sp.localitycode, sp.collectioncode "
+            + " group by sp.code, sp.type_status, sp.country, sp.island_country, sp.localitycode, sp.collectioncode "
             + " , sp.caste, sp.species, sp.genus, sp.localityname, sp.habitat, sp.microhabitat, sp.method " 
             + " , sp.collectedBy, sp.collectionnotes, sp.adm1, sp.adm2, sp.decimal_longitude, sp.decimal_latitude "
             + " , sp.access_group, sp.bioregion, sp.museum "            
@@ -75,6 +75,7 @@ public class CollectionDb extends AntwebDb {
                 
                 Locality locality = new Locality();
                 locality.setCountry(rset.getString(rset.findColumn("country")));
+                locality.setIslandCountry(rset.getString(rset.findColumn("island_country")));
                 locality.setAdm1(rset.getString(rset.findColumn("adm1")));
                 locality.setAdm2(rset.getString(rset.findColumn("adm2")));
                 locality.setLocalityName(rset.getString(rset.findColumn("localityname")));

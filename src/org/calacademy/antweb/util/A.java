@@ -51,6 +51,28 @@ public class A {
 	  s_log.warn(className + include + "." + message);   
     }
   }
+
+
+  private static HashMap<String, Integer> s_logiSet = new HashMap<String, Integer>();
+  //Log only once. Enter a unique i. Best to use a contstant.
+  public static void logi(String key, String message) {
+      logi(key, 1, message);
+  }
+  // Optional second parameter i indicates the number of times we would like to log this message.
+  public static void logi(String key, int i, String message) {
+      int nth = 1;
+      // Apparently we have already logged this message.
+      if (s_logiSet.containsKey(key)) {
+         nth = (Integer) s_logiSet.get(key);
+         ++nth;
+         if (nth > i) return;  // done logging that!
+         else s_logiSet.put(key, nth);  // increment it.
+      } else {
+         s_logiSet.put(key, nth);
+      }
+      A.log("key:" + key + " nth:" + nth + " " + message);
+  }
+
   
   // Short for stg log.
   public static void slog(String message) {
@@ -125,12 +147,12 @@ public class A {
    
 	public static String commaFormat(String num) {
 	  if (num == null) return "0";
-	  return commaFormat((new Long(num)).intValue());
+	  return commaFormat((Long.valueOf(num)).intValue());
 	}	
 	
 	public static String commaFormat(long num) {
 	  if (num == 0) return "0";
-	  return commaFormat((new Long(num)).intValue());
+	  return commaFormat((Long.valueOf(num)).intValue());
 	}
 	
 	public static String commaFormat(int num) {

@@ -239,7 +239,6 @@
       <li><a href="<%= domainApp %>/query.do?action=curiousQuery&name=badGeolocaleTaxonParentTaxonName"> Bad GeolocaleTaxon parents</a></li>
       <li><a href="<%= domainApp %>/query.do?action=curiousQuery&name=badParentTaxonName"> Bad Parent TaxonName</a></li>
       <li><a href="<%= domainApp %>/schedule.do?action=run"> New Scheduler functionalty</a></li>
-        <li><a href="<%= domainApp %>/utilData.do?action=taxonSetNameManagement">taxonSetNameManagement</a>
       <li><a href="<%= domainApp %>/utilData.do?action=regenerateAllAntweb"> Regenerate All Antweb</a></li>
       </ul>
 <%   } %> 

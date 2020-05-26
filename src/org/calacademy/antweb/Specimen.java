@@ -32,6 +32,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     protected String country; 
     protected String adm1;  // was state/province;
     protected String adm2;  // was county;
+    protected String islandCountry;
     protected String collectionCode;
     protected String localityName;
     protected String localityCode;
@@ -150,7 +151,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         ResultSet rset = null;
         try {
             String theQuery =
-                "select subfamily, speciesgroup, genus, subgenus, species, subspecies, type_status, country, adm1, adm2"  // was province, county"
+                "select subfamily, speciesgroup, genus, subgenus, species, subspecies, type_status, country, adm1, adm2, island_country"  // was province, county"
                     + ", localityName, collectionCode, bioregion, habitat, method, ownedby, collectedby"
                     + ", life_stage, caste, subcaste"
                     + ", locatedAt, localityCode, museum "
@@ -190,6 +191,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                 setCountry(rset.getString("country"));
                 setAdm1(rset.getString("adm1"));
                 setAdm2(rset.getString("adm2"));
+                setIslandCountry(rset.getString("island_country"));
                 setLocalityName(rset.getString("localityName"));
                 setCollectionCode(rset.getString("collectionCode"));
                 setBioregion(rset.getString("bioregion"));
@@ -847,17 +849,27 @@ update specimen set other = '
     public void setLocalityName(String localityName) {
         this.localityName = localityName;
     }
-    
 
+    public String getIslandCountry() {
+        return islandCountry;
+    }
+    public void setIslandCountry(String islandCountry) {
+        this.islandCountry = islandCountry;
+    }
+
+    public String getIslandOrCountryAdm1() {
+        if (getIslandCountry() != null) return getIslandCountry();
+        return country + ":" + adm1;
+    }
 	public String getLocalityString() {
-		return country + ":" + adm1 + ":" + localityName;  // was province
+		return getIslandOrCountryAdm1() + ":" + localityName;  // was province
 	}
 
 	public String getLocalityInfoString() {
         return getLocalityInfoString(null);
     }
-    
 
+// *** island_country?
     // This gets used on specimen.do.
 	public String getLocalityInfo() {
 	    String localityInfoString = null;
@@ -922,7 +934,7 @@ update specimen set other = '
         if (!target.equals("")) {
             String localityName = (getLocalityName() != null) ? getLocalityName() : "link";
             //out.println("LocalityLink1:" + localityLink + " target:" + target + " name:" + getLocalityName());
-            if ("locality".equals(sortBy)) localityName =  "<span class=\"sorted_by\">" + localityName + "</span>";
+            //if ("locality".equals(sortBy)) localityName =  "<span class=\"sorted_by\">" + localityName + "</span>";
             localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + localityName + "\">" + localityName + "</a>"; // was name = target
         }
         if ( (getLocalityName() != null) 

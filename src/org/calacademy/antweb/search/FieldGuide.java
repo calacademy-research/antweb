@@ -145,9 +145,9 @@ public class FieldGuide {
             Iterator iter = points.iterator();
             while (iter.hasNext()) {
                 coord = (Coordinate) iter.next();
-                markers.append(new Float(coord.getLat()).toString());
+                markers.append(Float.valueOf(coord.getLat()).toString());
                 markers.append(",");
-                markers.append(new Float(coord.getLon()).toString());
+                markers.append(Float.valueOf(coord.getLon()).toString());
                 markers.append(",red");
                 if (iter.hasNext()) {
                     markers.append("%7C");
@@ -155,7 +155,7 @@ public class FieldGuide {
                 totalLat += coord.getLat();
                 totalLon += coord.getLon();
             }
-            String center = "center=" + new Float(totalLat / points.size()).toString() + "," + new Float(totalLon / points.size()).toString();
+            String center = "center=" + Float.valueOf(totalLat / points.size()).toString() + "," + Float.valueOf(totalLon / points.size()).toString();
             result = preamble + sizing + center + "&" + markers.toString() + "&" + key;
             //s_log.info("static map for " + thisTaxon.getName() + " " + result);
         }

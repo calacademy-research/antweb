@@ -24,16 +24,16 @@ public class BioregionTaxonCountDb extends CountDb {
       super(connection);
     }
 
+    /*
     public void countCrawls() throws SQLException {
       childrenCountCrawl();
-      imageCountCrawl();          
+      //imageCountCrawl();
     }
-
     public void countCrawls(String bioregionName) throws SQLException {
       childrenCountCrawl(bioregionName);
-      imageCountCrawl(bioregionName);          
+      //imageCountCrawl(bioregionName);
     }
-    
+    */
     // ------------------------- Countable_ Child Count Crawl ----------------------------
 
      public void childrenCountCrawl() 
@@ -45,7 +45,7 @@ public class BioregionTaxonCountDb extends CountDb {
           }
      }
 
-     private void childrenCountCrawl(String bioregionName)
+     public void childrenCountCrawl(String bioregionName)
        throws SQLException {
           //A.log("childrenCountCrawl(" + bioregionName + ")");
           Bioregion bioregion = BioregionMgr.getBioregion(bioregionName);

@@ -90,8 +90,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             Formatter formatter = new Formatter();
             ArrayList<String> elements = null;
 
-            Float lat = new Float(0);
-            Float lon = new Float(0);
+            Float lat = Float.valueOf(0);
+            Float lon = Float.valueOf(0);
 
             Iterator loopIter = null;
             if (otherInfo.length() > 0) {
@@ -116,10 +116,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             elements = new ArrayList<String>(Arrays.asList(loopComponents));
             loopIter = elements.iterator();
             int colIndex = 0;
-            
 
-			String adm1ToIsland = null;
-                        
             for (String next : elements) {
                 String element = multipleSpaces.subst(next.trim(), " ");
 
@@ -127,7 +124,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 element = Utility.customTrim(element, "\"");
                 if (element == null) element = "";
 
-                //A.log("next:" + next + " element:" + element);
+                //A.log("parseLine() next:" + next + " element:" + element);
                 // if (colIndex == 0) code = element;
                 // colIndex:27  colList:27  otherColumns:27
                 if ((colIndex < colList.size()) && (colIndex < otherColumns.size())) {
@@ -188,7 +185,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                     } else {
                         /* Columns that require data type conversion are not listed above so that here
                            they cam be handled manually.  adding them to the hashtable.
-                            See AntwebUpload.saveHash() for manual handling of elevation, date_collected
+                            See AntwebUpload.saveHash() for manual handling of elevation, datecollectedstart
                               , access_group, access_login, decimal_longitude, decimal_latitude
                               , datedetermined
                          */
@@ -200,10 +197,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -180 && number <= 180) {
 								specimenItem.put("decimal_longitude", number);
-								lon = new Float(number.floatValue() * 1000);
+								lon = Float.valueOf(number.floatValue() * 1000);
 								if (lon.intValue() == 0) {
 									element = "";
-									specimenItem.put("decimal_longitude",  new Float(-999.9));
+									specimenItem.put("decimal_longitude",  Float.valueOf((float)-999.9));
 								}
                             } else {                              
 						      //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
@@ -219,11 +216,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -90 && number <= 90) {
 								specimenItem.put("decimal_latitude", number);
-								lat = new Float(number.floatValue() * 1000);
+								lat = Float.valueOf(number.floatValue() * 1000);
 								//A.log("parseLine() lat:" + lat + " number:" + number);
 								if (lat.intValue() == 0) {
 									element = "";
-									specimenItem.put("decimal_latitude", new Float(-999.9));
+									specimenItem.put("decimal_latitude", Float.valueOf((float)-999.9));
 								}
                             } else {                              
 							  //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
@@ -318,14 +315,14 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
      	    if (!Genus.isIndet(genusName)) {
      	        // Perhaps replace subfamilyName with the parent of the genus...
 			    Genus genus = TaxonMgr.getGenusFromName(genusName);
-			    //A.log("not indet:" + genus);
+			    //A.log("parseLine() not indet:" + genus);
 				if (genus != null) {
                   // If we find it, use it.
 				  String subfamily = genus.getSubfamily();
                   if (!"(Formicidae)".equals(subfamilyName) && !subfamily.equals(subfamilyName)) {                  
  					  String displayTaxonName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + subfamily + genusName + "'>" + Taxon.displaySubfamilyGenus(subfamily, genusName) + "</a>";
 					  getMessageMgr().addToMapMessages(MessageMgr.preferredSubfamilyForGenusReplaced, subfamilyName, displayTaxonName);                  
-                      //A.log("buildLines() preferredSubfamilyForGenusReplaced: displayTaxonName:" + displayTaxonName);
+                      //A.log("parseLine() preferredSubfamilyForGenusReplaced: displayTaxonName:" + displayTaxonName);
                   }
                   subfamilyName = subfamily;
 				} else {
@@ -421,20 +418,6 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 specimenItem.put("country", country);
             }
 
-/*
-				// Island Country Part II of II.  If adm1ToIsland was set above as upgraded, then upgrade it and log it.
-				if (adm1ToIsland != null && upgradeToIsland(adm1ToIsland)) {
-				  //element = adm1ToIsland;
-				  //adm1ToIsland = null;                              
-				  Geolocale islandCountry = GeolocaleMgr.getCountry(adm1ToIsland);
-				  String heading = "<b>Adm1 upgraded to Island Country</b> ";
-				  String message = islandCountry.getBioregion() + " - " + islandCountry.getParent() + " - " + islandCountry.getName();
-				  //getMessageMgr().addToMessageStrings(heading, message);   
-				  getMessageMgr().addToMessages(MessageMgr.adm1UpgradeToIsland, message);   
-				  s_log.warn("parseLine() adm1ToIsland" + adm1ToIsland + " upgraded to Island Country for code:" + code);
-				}
-*/
-
             String listedAdm1 = (String) specimenItem.get("adm1");
             String adm1 = listedAdm1;
             if (adm1 == null) {
@@ -450,8 +433,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				  //A.log("parseLine() swap:" + element + " for:" + listedAdm1);
 				}				
 			}
-                                  
-            if (adm1 != null && country != null) {
+
+            Country islandCountry = GeolocaleMgr.getValidIsland(adm1);
+            if (islandCountry == null) islandCountry = GeolocaleMgr.getValidIsland(country);
+            //A.log("parseLine() thisAdm1:" + adm1 + " country:" + country + " islandCountry:" + islandCountry);
+
+            if (adm1 != null && country != null && islandCountry == null) {
 				Geolocale validAdm1 = GeolocaleMgr.getValidAdm1(adm1, country);  // May change, for instance MA to Massachussetts
 				if (validAdm1 != null) {                  
 				  adm1 = validAdm1.getName(); // This will be used for bioregion validation
@@ -459,9 +446,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
 				boolean isValidAdm1 = GeolocaleMgr.isValid(adm1, country);
 				boolean notBlank = (new Utility()).notBlank(adm1);
-                boolean isIsland = GeolocaleMgr.isIsland(adm1);  // Hasn't been promoted yet...
-
-                //A.log("buildLinesItems() thisAdm1:" + adm1 + " country:" + country + " validAdm1:" + validAdm1 + " isValidAdm1:" + isValidAdm1 + " notBlank:" + notBlank);
+                boolean isIsland = GeolocaleMgr.isIsland(adm1);
 
 				if (!isValidAdm1 && notBlank && !isIsland) {
 				  //String heading = "<b>Not valid Antweb Adm1</b> ";
@@ -476,7 +461,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                   //A.log("parseLine() addAdm1Link:" + addAdm1Link + " code:" + code);
 				  String adm1LogMessage = "";
                   adm1LogMessage = "<a href='" + addAdm1Link + "'>" + adm1 + "</a>";
-                  //A.log("adm1LogMessage:" + adm1LogMessage);
+                  //A.log("parseLine() adm1LogMessage:" + adm1LogMessage);
 
 				  getMessageMgr().addToMessages(MessageMgr.notValidAdm1, adm1LogMessage);  
 
@@ -534,15 +519,18 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
               throw new AntwebException("<b>Invalid Column<font color=red>(Not uploaded)</font>:</b>" + "  " + isInvalid);
             } else {
               specimenItem.put("other", otherInfo.toString());
-            } 
-            
+            }
 
             // Before we are done with specimen...
             //   If an island, change country, adm1 and bioregion to reflect...
-			if (listedAdm1 != null && GeolocaleMgr.isIsland(listedAdm1)) {                           
-			  Geolocale islandCountry = GeolocaleMgr.getCountry(listedAdm1);
+            //A.log("parseLine() adm1:" + adm1 + " listedAdm1:" + listedAdm1 + " country:" + country + " islandCountry:" + islandCountry);
+            if (islandCountry != null) {
+                // Begin Island Adjust
+                //A.log("parseLine() name:" + islandCountry.getName() + " country:" + islandCountry.getCountry());
+
 			  specimenItem.put("bioregion", islandCountry.getBioregion());
-			  specimenItem.put("country", islandCountry.getName());
+			  specimenItem.put("country", islandCountry.getCountry());
+			  specimenItem.put("island_country", islandCountry.getName());
 			  specimenItem.remove("adm1");
 			  
 			  //String heading = "<b>Adm1 upgraded to Island Country</b> ";
@@ -603,14 +591,14 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             
 //if ("casent0187122".equals(code)) A.log("parseLine() 1");                  
             taxonItem.put("source", shortFileName);
-            taxonItem.put("line_num", (new Integer(lineNum)).toString());
-            taxonItem.put("access_group", new Integer(accessGroup.getId()));
+            taxonItem.put("line_num", (Integer.valueOf(lineNum)).toString());
+            taxonItem.put("access_group", Integer.valueOf(accessGroup.getId()));
             
             //if (!taxonItem.containsKey("fossil")) taxonItem.put("fossil", 0);
 
-            specimenItem.put("line_num", (new Integer(lineNum)).toString());
-            specimenItem.put("access_group", new Integer(accessGroup.getId()));
-            specimenItem.put("access_login", new Integer(accessLogin.getId()));
+            specimenItem.put("line_num", (Integer.valueOf(lineNum)).toString());
+            specimenItem.put("access_group", Integer.valueOf(accessGroup.getId()));
+            specimenItem.put("access_login", Integer.valueOf(accessLogin.getId()));
 
             // put a subfamily in front of the TOC
             if ((taxonItem.containsKey("toc")) && (!"".equals((String) taxonItem.get("toc")))) {
@@ -966,73 +954,6 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
       }    
       return string;
     }
-    
-
-    private Date getParseDate(String thedate) {
-      
-      //A.log("getParseDate(" + thedate + ")");
-      
-      Date returnDate = null;
-
-      thedate = thedate.trim();      
-      if (thedate.equals("")) return null;
-
-      // many possibilities here...      
-      returnDate = getDate(thedate);
-      if (returnDate != null) return returnDate;
- 
-      // Not a simply parsed date.  perhaps it is like: 8-11 Feb 2010   or like: 1 Feb - Mar 2010
-      if (thedate.contains("-")) {
-        String t = thedate.substring(thedate.indexOf("-") + 1);
-        //s_log.info("getDateCollected() hypen removed from origDatesCollected:" + thedate + " making:" + t);
-        returnDate = getDate(t);
-        if (returnDate != null) return returnDate;      
-        
-        returnDate = getTruncatedDate(t);         
-        if (returnDate != null) return returnDate;              
-      }      
-
-      // Maybe it is simply like: Mar 2011   or like: 2010
-      returnDate = getTruncatedDate(thedate);         
-
-      if (returnDate != null) return returnDate;            
-
-      s_log.warn("getParseDate() Date not found for date:" + thedate);
-
-      return null;
-    }
-
-    private Date getTruncatedDate(String truncDatesCollected) {
-        // Perhaps it's like: may 2003
-        Date returnDate = getDate("1 " + truncDatesCollected);
-        if (returnDate != null) return returnDate;      
-
-        // Perhaps it's like: 2003
-        returnDate = getDate("1 Jan " + truncDatesCollected);
-        if (returnDate != null) return returnDate;      
-
-        return null;    
-    }
-
-    private Date getDate(String datesCollected) {
-        //Date date = DateUtil.constructDate(dateStr);
-  //    }
-
-      try {
-        Date d = new Date(datesCollected);
-        if (AntwebProps.isDevMode()) {
-            s_log.warn("getDateCollected() DEPRECATED! Found dateStr:" + datesCollected);
-            AntwebUtil.logShortStackTrace();
-        }
-
-        return d;
-      } catch (Exception e) {
-        // These are expected to occur with our data.
-        s_log.info("getDate() failed on datesCollected:" + datesCollected + " e:" + e);
-      }
-      return null;
-    }
-
 
     private static int figuredElevation = 0;
     private static int greaterThanElevation = 0;
@@ -1100,9 +1021,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 ++rangeElevation;
                 String lowRange = elemStr.substring(0, elemStr.indexOf("-")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("-") + 1).trim();
-                double averageElev = ((new Integer(lowRange)).intValue() + (new Integer(elemStr)).intValue()) / 2;
-                int averageElevInt = (new Double(averageElev)).intValue();
-                elemStr = (new Integer(averageElevInt)).toString();
+                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2;
+                int averageElevInt = (Double.valueOf(averageElev)).intValue();
+                elemStr = (Integer.valueOf(averageElevInt)).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);
             }
             if (elemStr.indexOf("to") >= 1) {
@@ -1110,9 +1031,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 ++rangeElevation;
                 String lowRange = elemStr.substring(0, elemStr.indexOf("to")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("to") + 2).trim();
-                double averageElev = ((new Integer(lowRange)).intValue() + (new Integer(elemStr)).intValue()) / 2;
-                int averageElevInt = (new Double(averageElev)).intValue();
-                elemStr = (new Integer(averageElevInt)).toString();
+                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2;
+                int averageElevInt = (Double.valueOf(averageElev)).intValue();
+                elemStr = (Integer.valueOf(averageElevInt)).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);
             }
             if (elemStr.indexOf("+") >= 0) {
@@ -1128,7 +1049,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             }        
             elemStr = elemStr.trim();
 
-            elevation = (new Integer(elemStr));
+            elevation = (Integer.valueOf(elemStr));
             ++figuredElevation;
         } catch (Exception e) {
             ++unfathomableElevation;

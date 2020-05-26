@@ -65,7 +65,7 @@ public class TaxonDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(connection, "getCurrentValidTaxonNamestance() taxonName:" + taxonName);
                   
-            theQuery = " select rank, taxon_name, kingdom_name, phylum_name, order_name, class_name" 
+            theQuery = " select taxarank, taxon_name, kingdom_name, phylum_name, order_name, class_name"
               + ", family, subfamily, genus, subgenus, species, subspecies "
               + ", source, insert_method, created, fossil, antcat, pending, type "
               + ", antcat_id, author_date, author_date_html, authors, year, status, available " 
@@ -82,7 +82,7 @@ public class TaxonDb extends AntwebDb {
 
                 ++count;
                 // Only one record expected
-                String rank = rset.getString("rank");
+                String rank = rset.getString("taxarank");
                 if ("taxon".equals(tableName)) {
                   taxon = Taxon.getTaxonOfRank(rank);
                 } else {
@@ -214,8 +214,8 @@ public class TaxonDb extends AntwebDb {
 					val = rset.getString("taxon.speciesgroup");
 					if (Utility.notBlank(val)) taxon.setSpeciesGroup(val);
                 }
-                if (query.contains("taxon.rank")) {
-                  String rank = rset.getString("taxon.rank");                                                      
+                if (query.contains("taxon.taxarank")) {
+                  String rank = rset.getString("taxon.taxarank");
                   if (!taxon.getRank().equals(rank)) {
                     taxon.setIsExtant(false);
                     s_log.warn("setTaxonomicInfo(query, taxon).  Incorrect rank should be:" + taxon.getRank() + " but is:" + rank + " query:" + query);
@@ -358,10 +358,10 @@ public class TaxonDb extends AntwebDb {
     }
     public ArrayList<Taxon> getTaxa(String rank, String status) {
       String rankClause = "";
-      if (rank.contains("rank in")) {
+      if (rank.contains("taxarank in")) {
         rankClause = rank; // it is already a clause, so use it.
       } else {
-        rankClause = "rank = '" + rank + "'";
+        rankClause = "taxarank = '" + rank + "'";
       }
       String statusClause = "1 = 1";
       if (status != null) statusClause = "status = '" + status + "'";
@@ -656,7 +656,7 @@ public class TaxonDb extends AntwebDb {
         s_log.warn("crawlForType()");
         
         String dml = "update taxon " 
-          + " set type = 1 where rank = 'species' and status != 'morphotaxon' and taxon_name in "
+          + " set type = 1 where taxarank = 'species' and status != 'morphotaxon' and taxon_name in "
           + " (select taxon_name from specimen where type != \"\")";
 
         count = stmt.executeUpdate(dml);
@@ -706,7 +706,7 @@ public class TaxonDb extends AntwebDb {
       throws SQLException {
 
          String query = "select distinct subfamily from taxon " 
-            + " where rank = 'genus' and "; // Added Jun 26, 2014";
+            + " where taxarank = 'genus' and "; // Added Jun 26, 2014";
         if ((family != null) && !("null".equals(family))) {
             query += " family = '" + family + "' and ";
         } else {
@@ -819,14 +819,14 @@ public class TaxonDb extends AntwebDb {
     public static String deleteSpeciesWithoutSpecimenOrAntcatSource(Connection connection) {
       String dmlWhereClause = "where taxon_name not in (select taxon_name from proj_taxon where project_name = 'worldants') "
         + " and taxon_name not in (select taxon_name from specimen) "
-        + " and rank in ('species', 'subspecies')";
+        + " and taxarank in ('species', 'subspecies')";
       int retVal = (new UtilDb(connection)).deleteFrom("taxon", dmlWhereClause);
       return retVal + " deleteSpeciesWithoutSpecimenOrAntcatSource. ";
     }
     public static String deleteGeneraWithoutSpecimenOrAntcatSource(Connection connection) {
       String dmlWhereClause = "where taxon_name not in (select taxon_name from proj_taxon where project_name = 'worldants') "
         + " and (subfamily, genus) not in (select subfamily, genus from specimen) "
-        + " and rank in ('genus')";
+        + " and taxarank in ('genus')";
       int retVal = (new UtilDb(connection)).deleteFrom("taxon", dmlWhereClause);
       return retVal + " deletedGeneraWithoutSpecimenOrAntcatSource. ";
     }

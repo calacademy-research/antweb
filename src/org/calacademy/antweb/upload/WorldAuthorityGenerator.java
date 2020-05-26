@@ -579,8 +579,8 @@ public class WorldAuthorityGenerator {
         result.put("tribe",tribe);
         result.put("taxonomic history", notes);
         result.put("current valid name", currentValid);
-        result.put("available", new Boolean(available).toString());
-        result.put("valid", new Boolean(valid).toString());
+        result.put("available", Boolean.valueOf(available).toString());
+        result.put("valid", Boolean.valueOf(valid).toString());
         //s_log.info("in get genus: " + subfamily + ":" + genus);
         return result;
     }
@@ -727,8 +727,8 @@ public class WorldAuthorityGenerator {
                 result.put("species", species);
                 result.put("species author date", author);
                 result.put("taxonomic history",notes);
-                result.put("valid", new Boolean(valid).toString());
-                result.put("available",new Boolean(available).toString());
+                result.put("valid", Boolean.valueOf(valid).toString());
+                result.put("available", Boolean.valueOf(available).toString());
                 result.put("original combination",originalCombination);
                 result.put("country", country);
                 if (line.indexOf(test) != -1) {
@@ -816,8 +816,8 @@ public class WorldAuthorityGenerator {
                 result.put("species author date", author);
                 result.put("country", country);
                 result.put("taxonomic history",notes);
-                result.put("valid", new Boolean(valid).toString());
-                result.put("available",new Boolean(available).toString());
+                result.put("valid", Boolean.valueOf(valid).toString());
+                result.put("available", Boolean.valueOf(available).toString());
                 result.put("original combination",originalCombination);
                 //s_log.info("success: *" + genus + "* *" + species + "* *"+author + "* *"+notes);
             }        

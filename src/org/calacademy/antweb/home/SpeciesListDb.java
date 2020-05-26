@@ -96,7 +96,7 @@ public class SpeciesListDb extends AntwebDb {
         int specimenCount = rset.getInt("specimen_count");
         Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
         if (taxon != null) {
-          taxon.setSpecimenCount(new Integer(specimenCount));
+          taxon.setSpecimenCount(Integer.valueOf(specimenCount));
           speciesList.add(taxon); // These are dummyTaxons.
         } else {
           s_log.error("getSpeciesList() taxon is null for taxonName:" + taxonName); // + " query:" + query);
@@ -122,8 +122,8 @@ public class SpeciesListDb extends AntwebDb {
 
       String query = "select distinct pt.taxon_name, pt.specimen_count from proj_taxon pt" 
         + " join taxon t on pt.taxon_name = t.taxon_name " 
-        + " where ( t.rank = 'species'" 
-        +    " or t.rank = 'subspecies' )" 
+        + " where ( t.taxarank = 'species'"
+        +    " or t.taxarank = 'subspecies' )"
         + " and " + speciesListCriteria 
         + " and t.family = 'formicidae'" // Added Sep19        
         + displaySubfamilyCriteria
@@ -163,8 +163,8 @@ public class SpeciesListDb extends AntwebDb {
 
       String query = "select distinct gt.taxon_name, gt.specimen_count from geolocale_taxon gt" 
         + " join taxon t on gt.taxon_name = t.taxon_name " 
-        + " where ( t.rank = 'species'" 
-        +    " or t.rank = 'subspecies' )" 
+        + " where ( t.taxarank = 'species'"
+        +    " or t.taxarank = 'subspecies' )"
         + " and " + speciesListCriteria 
         + " and t.family = 'formicidae'" // Added Sep19
         + displaySubfamilyCriteria
@@ -288,8 +288,8 @@ public class SpeciesListDb extends AntwebDb {
       + " , genus, species"
         + " from proj_taxon pt" 
         + " join taxon t on pt.taxon_name = t.taxon_name " 
-        + " where ( t.rank = 'species'" 
-        +    " or t.rank = 'subspecies' )" 
+        + " where ( t.taxarank = 'species'"
+        +    " or t.taxarank = 'subspecies' )"
         + " and t.family = 'formicidae'"   // added Sep19 2016     
         + " and " + projectCriteria 
         + displaySubfamilyCriteria;
@@ -298,8 +298,8 @@ public class SpeciesListDb extends AntwebDb {
       + " , genus, species"
         + " from geolocale_taxon gt" 
         + " join taxon t on gt.taxon_name = t.taxon_name " 
-        + " where ( t.rank = 'species'" 
-        +    " or t.rank = 'subspecies' )" 
+        + " where ( t.taxarank = 'species'"
+        +    " or t.taxarank = 'subspecies' )"
         + " and t.family = 'formicidae'" //added Sep19 2016 
         + " and " + countryCriteria 
         + displaySubfamilyCriteria;
@@ -331,8 +331,8 @@ public class SpeciesListDb extends AntwebDb {
 
      projectQuery = "select distinct t.subfamily subfamily from taxon t " 
         + " join proj_taxon pt on t.taxon_name = pt.taxon_name " 
-        + " where ( t.rank = 'species'" 
-        +    " or t.rank = 'subspecies' )"         
+        + " where ( t.taxarank = 'species'"
+        +    " or t.taxarank = 'subspecies' )"
         + " and " + projectCriteria 
         + " and t.family = 'formicidae'"
         + " and t.subfamily not like '(%'"
@@ -345,8 +345,8 @@ public class SpeciesListDb extends AntwebDb {
      
      countryQuery = "select distinct t2.subfamily subfamily from taxon t2 " 
         + " join geolocale_taxon gt on t2.taxon_name = gt.taxon_name " 
-        + " where ( t2.rank = 'species'" 
-        +    " or t2.rank = 'subspecies' )"         
+        + " where ( t2.taxarank = 'species'"
+        +    " or t2.taxarank = 'subspecies' )"
         + " and " + countryCriteria 
         + " and t2.family = 'formicidae'"
         + " and t2.subfamily not like '(%'"
@@ -526,7 +526,7 @@ public class SpeciesListDb extends AntwebDb {
             + "  or pt.project_name = '" + speciesList2Name + "'" 
             + "  or pt.project_name = '" + speciesList3Name + "'" 
             + "  or pt.project_name = '" + refSpeciesList + "' )" 
-            + " and (t.rank = 'species' or t.rank = 'subspecies')"  // Added subspecies on Nov 16, 2014
+            + " and (t.taxarank = 'species' or t.taxarank = 'subspecies')"  // Added subspecies on Nov 16, 2014
             + " and t.status != 'valid'";
 
         Statement stmt = DBUtil.getStatement(getConnection(), "SpeciesListDb.noPassWorldantsSpeciesList()");      

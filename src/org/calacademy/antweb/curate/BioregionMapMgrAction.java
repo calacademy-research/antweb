@@ -66,7 +66,7 @@ public final class BioregionMapMgrAction extends Action {
               taxonPropDb.refreshBioregionMap();
             }
 
-            String query1 = "select taxon_name from taxon where rank = 'genus' and status = 'valid' and fossil = false " + orderBy;         
+            String query1 = "select taxon_name from taxon where taxarank = 'genus' and status = 'valid' and fossil = false " + orderBy;
             stmt = connection.createStatement();
             rset = stmt.executeQuery(query1);
 

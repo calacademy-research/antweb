@@ -352,7 +352,7 @@ public class MapLocality {
 				} else {
 					foundPoint = true;
 				}
-				theArrayString.append(new Float(thisFloat));
+				theArrayString.append(Float.valueOf(thisFloat));
 			}
 		}
 

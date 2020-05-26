@@ -298,7 +298,7 @@ Examples of species with images that don't have h1 images:
                 }
               }
             }   
-            if (headShotCount < 4) A.log("taxonChildImageSet() head shot displayed:" + headShotCount);
+            //if (headShotCount < 4) A.log("taxonChildImageSet() head shot displayed:" + headShotCount);
 %> 
         </div>
         <div class="clear"></div>

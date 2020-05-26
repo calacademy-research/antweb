@@ -6,6 +6,7 @@ import java.sql.*;
 public interface Overviewable {
 
     public String getTaxonSetTable();
+    public String getTable();
     public String getHeading();
     public String getPluralTargetDo();
     public String getTargetDo();

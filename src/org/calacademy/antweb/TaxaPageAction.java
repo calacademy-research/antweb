@@ -175,8 +175,8 @@ public final class TaxaPageAction extends Action {
             taxaPage.setRank(rank);
             taxaPage.setConnection(connection);
             taxaPage.setOverview(overview);
-A.log("execute() overview:" + overview);
-            taxaPage.fetchChildren(withImages, withTaxa, withSpecimen, caste, new StatusSet(statusSetStr)); //, orderBy);
+            //A.log("execute() overview:" + overview);
+            taxaPage.fetchChildren(withImages, withTaxa, withSpecimen, true, caste, new StatusSet(statusSetStr)); //, orderBy);
 
             /* 
               With withImages set, a request like this will take 2/5 minutes...  Really?

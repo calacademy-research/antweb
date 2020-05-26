@@ -32,3 +32,26 @@ alter table bioregion_taxon add column is_introduced tinyint(4);
 
 alter table specimen modify column collectedby varchar(256);
 
+
+#
+
+alter table taxon rename column `rank` to `taxarank`;
+alter table homonym rename column `rank` to `taxarank`;
+alter table team_member rename column `rank` to `teamrank`;
+rename table ant.groups to ant_group;
+
+On linux:
+alter table taxon change rank taxarank varchar(16);
+alter table homonym change rank taxarank varchar(16);
+alter table team_member change rank teamrank int(11);
+rename table ant.groups to ant_group;
+
+
+
+
+update geolocale set is_island = 1 where id = 1721 or id = 1732 or id = 620;
+update geolocale set valid_name = "Galapagos Islands", is_island = 1, is_valid = 0 where id = 2394;
+update geolocale set valid_name = "Galapagos Islands" where id = 620;
+
+alter table specimen add column island_country varchar(64);
+update geolocale set country = "Ecuador" where id = 1721;

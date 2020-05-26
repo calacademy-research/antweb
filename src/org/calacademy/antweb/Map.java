@@ -58,186 +58,196 @@ public class Map {
     private ArrayList<String> chosenList = null;
     public static int displayMapCount = 0;
     private static HashMap<String, Integer> displayMapHash = new HashMap<String, Integer>();
-     
+
     private String title = null;
     private String subtitle = null;
 
     private String info = null;
-    
+
     protected String staticMapParams = null;
     protected ArrayList<Coordinate> points = new ArrayList<Coordinate>();
     protected ArrayList mapSpecimens = new ArrayList();
 
     protected String mapName = "";
     protected String googleMapFunction = "";
-       
-    protected boolean isLocality = false;  
+
+    protected boolean isLocality = false;
     protected boolean isCollection = false;
-    
+
     protected String taxonName = "";
     protected String localityName = "";
     protected String localityCode = "";
     protected String collectionCode = "";
-    
+
     boolean mapLocalities = false;
     public static int MAXMAPPOINTS = 5000;  // was safely 1000, but we miss some results from madagasy.  Then was 5000
-      // Now it is set to allow all again... will we find memory problems?
-    public String getTaxonName() { return taxonName; }
-    public String getLocalityCode() { return localityCode; }
-    public String getCollectionCode() { return collectionCode; }
+
+    // Now it is set to allow all again... will we find memory problems?
+    public String getTaxonName() {
+        return taxonName;
+    }
+
+    public String getLocalityCode() {
+        return localityCode;
+    }
+
+    public String getCollectionCode() {
+        return collectionCode;
+    }
 
     private Date cached = null;
 
     private static Log s_log = LogFactory.getLog(Map.class);
 
-       
+
     public Map() {
         super();
-	    if (AntwebProps.isDevOrStageMode()) MAXMAPPOINTS = 50000;
+        if (AntwebProps.isDevOrStageMode()) MAXMAPPOINTS = 50000;
     }
-        
+
     public Map(Taxon taxon, Connection connection) {
-       this(taxon, ProjectMgr.getProject(Project.ALLANTWEBANTS), connection, MAXMAPPOINTS, false);
+        this(taxon, ProjectMgr.getProject(Project.ALLANTWEBANTS), connection, MAXMAPPOINTS, false);
     }
 
     public Map(Taxon taxon, LocalityOverview overview, Connection connection) {
-       this(taxon, overview, connection, MAXMAPPOINTS, false);
+        this(taxon, overview, connection, MAXMAPPOINTS, false);
     }
-    
+
     public Map(Taxon taxon, LocalityOverview overview, Connection connection, boolean geolocaleFocus) {
-       // geolocaleFocus passed all the way from the client. By default we show all specimens of a taxa in a geolocale.
-       this(taxon, overview, connection, MAXMAPPOINTS, geolocaleFocus);
+        // geolocaleFocus passed all the way from the client. By default we show all specimens of a taxa in a geolocale.
+        this(taxon, overview, connection, MAXMAPPOINTS, geolocaleFocus);
     }
 
     public Map(Taxon taxon, LocalityOverview overview, Connection connection, int maxMapPoints) {
-       this(taxon, overview, connection, maxMapPoints, false);    
+        this(taxon, overview, connection, maxMapPoints, false);
     }
-    
+
     private Map(Taxon taxon, LocalityOverview overview, Connection connection, int maxMapPoints, boolean geolocaleFocus) {
         // taxon or specimen
 
-       setPoints(taxon, overview, connection, maxMapPoints, geolocaleFocus);
+        setPoints(taxon, overview, connection, maxMapPoints, geolocaleFocus);
 
-       //long thisTime = new GregorianCalendar().getTimeInMillis();
-       long thisRand = new Random().nextLong();
-    
-       taxonName = taxon.getPrettyName();
-    
-       setMapName("map" + thisRand);
-       setGoogleMapFunction();
+        //long thisTime = new GregorianCalendar().getTimeInMillis();
+        long thisRand = new Random().nextLong();
+
+        taxonName = taxon.getPrettyName();
+
+        setMapName("map" + thisRand);
+        setGoogleMapFunction();
     }
 
     public Map(Locality locality) {
-       super();
-       
-       isLocality = true;
-       setPoints(locality);
-       
-       locality.setMap(this);
+        super();
 
-       //long thisTime = new GregorianCalendar().getTimeInMillis();
-       long thisRand = new Random().nextLong();
-    
-       setMapName("map" + thisRand);
-       //A.log("Map(Locality) name is " + getMapName() + " for map:" + this);
-       setGoogleMapFunction();
+        isLocality = true;
+        setPoints(locality);
+
+        locality.setMap(this);
+
+        //long thisTime = new GregorianCalendar().getTimeInMillis();
+        long thisRand = new Random().nextLong();
+
+        setMapName("map" + thisRand);
+        //A.log("Map(Locality) name is " + getMapName() + " for map:" + this);
+        setGoogleMapFunction();
     }
 
     public Map(Collection collection) {
-       super();
-       
-       isCollection = true;
-       setPoints(collection);
-       
-       collection.setMap(this);
+        super();
 
-       //long thisTime = new GregorianCalendar().getTimeInMillis();
-       long thisRand = new Random().nextLong();
-    
-       setMapName("map" + thisRand);
-       //s_log.warn("Map(Locality) name is " + getMapName() + " for map:" + this);
-       setGoogleMapFunction();
-    }              
-       
-    public Map(ArrayList<String> specimens, Connection connection)  {
-       super();
-       setChosenList(specimens);
-       if ((specimens != null) && (specimens.size() > 0)) {     
-		 long thisTime = new GregorianCalendar().getTimeInMillis();
-		 setMapName("map" + thisTime);
-		
-		 setPoints(specimens, connection);
-		 setGoogleMapFunction();
+        isCollection = true;
+        setPoints(collection);
+
+        collection.setMap(this);
+
+        //long thisTime = new GregorianCalendar().getTimeInMillis();
+        long thisRand = new Random().nextLong();
+
+        setMapName("map" + thisRand);
+        //s_log.warn("Map(Locality) name is " + getMapName() + " for map:" + this);
+        setGoogleMapFunction();
+    }
+
+    public Map(ArrayList<String> specimens, Connection connection) {
+        super();
+        setChosenList(specimens);
+        if ((specimens != null) && (specimens.size() > 0)) {
+            long thisTime = new GregorianCalendar().getTimeInMillis();
+            setMapName("map" + thisTime);
+
+            setPoints(specimens, connection);
+            setGoogleMapFunction();
         }
     }
-  
-    public Map(ArrayList<String> specimens, boolean mapLocalities, int searchResultsSize, int localitySize, String info, Connection connection)  {
-       super();
-       setChosenList(specimens);
-       // This is not the same as a Map(Locality). These are specimen codes but one for each locality to be mapped.
-       setIsMapLocalities(mapLocalities);
-       setInfo(info);
-       if ((specimens != null) && (specimens.size() > 0)) {     
-		 long thisTime = new GregorianCalendar().getTimeInMillis();
-		
-		 setMapName("map" + thisTime);
-		
-		 setPoints(specimens, searchResultsSize, localitySize, connection);
-		 setGoogleMapFunction();
+
+    public Map(ArrayList<String> specimens, boolean mapLocalities, int searchResultsSize, int localitySize, String info, Connection connection) {
+        super();
+        setChosenList(specimens);
+        // This is not the same as a Map(Locality). These are specimen codes but one for each locality to be mapped.
+        setIsMapLocalities(mapLocalities);
+        setInfo(info);
+        if ((specimens != null) && (specimens.size() > 0)) {
+            long thisTime = new GregorianCalendar().getTimeInMillis();
+
+            setMapName("map" + thisTime);
+
+            setPoints(specimens, searchResultsSize, localitySize, connection);
+            setGoogleMapFunction();
         }
     }
-      
+
     public String getStaticMapParams() {
         return staticMapParams;
     }
-    
+
     public void setStaticMapParams(String staticMapParams) {
         this.staticMapParams = staticMapParams;
     }
-    
+
     public void setStaticMapParams(Taxon taxon, Overview overview) {
         ArrayList terms = new ArrayList();
-        
+
         this.staticMapParams = "";
-        
+
         if (Utility.notBlank(taxon.getSubfamily())) {
             terms.add("subfamily%3d%27" + taxon.getSubfamily() + "%27");
         }
-        
+
         if (Utility.notBlank(taxon.getGenus())) {
             terms.add("genus%3d%27" + taxon.getGenus() + "%27");
         }
-        
+
         if (Utility.notBlank(taxon.getSpecies())) {
-            terms.add("species%3d%27" + taxon.getSpecies() + "%27");        
+            terms.add("species%3d%27" + taxon.getSpecies() + "%27");
         }
 
         if (Utility.notBlank(taxon.getSubspecies())) {
-            terms.add("subspecies%3d%27" + taxon.getSubspecies() + "%27");        
+            terms.add("subspecies%3d%27" + taxon.getSubspecies() + "%27");
         }
-        
+
         if (Utility.notBlank(overview.toString()) && (!overview.equals(Project.WORLDANTS))) {
             //String term = "project+like+%27%25" + project + "%25%27";
             String term = "project+like+%27%25" + overview + "%25%27";
             terms.add(term);
             s_log.warn("setStaticMapParams() CORRECT? overview:" + overview + " terms:" + terms);
         }
-        
+
         String andedTerms = Utility.andify(terms);
-        andedTerms = andedTerms.replaceAll(" ","+");
-        
+        andedTerms = andedTerms.replaceAll(" ", "+");
+
         //A.log("setStaticMapParams() taxonName:" + taxon.getTaxonName() + " + andedTerms:" + andedTerms);
         setStaticMapParams(andedTerms);
     }
 
     public boolean hasPoints() {
-        if ( (getPoints() != null) && (getPoints().size() > 0) ) return true;
+        if ((getPoints() != null) && (getPoints().size() > 0)) return true;
         return false;
     }
 
     public ArrayList<Coordinate> getPoints() {
         return points;
     }
+
     public void setPoints(ArrayList<Coordinate> points) {
         this.points = points;
     }
@@ -247,56 +257,66 @@ public class Map {
         this.points = new ArrayList<Coordinate>();
         Locality loc = collection.getLocality();
         if (loc == null) {
-           //s_log.warn("setPoints() loc is null for collection:" + collection);
-           return;
+            //s_log.warn("setPoints() loc is null for collection:" + collection);
+            return;
         }
         float thisLon = loc.getDecimalLongitude();
         float thisLat = loc.getDecimalLatitude();
         if ((thisLon != 0.0) && (thisLat != 0.0)) {
-           points.add(new Coordinate(thisLon, thisLat));
-           //s_log.warn("setPoints(locality) lon:" + thisLon + " lat:" + thisLat);
+            points.add(new Coordinate(thisLon, thisLat));
+            //s_log.warn("setPoints(locality) lon:" + thisLon + " lat:" + thisLat);
         } else {
-           //s_log.warn("setPoints(locality) no points");        
+            //s_log.warn("setPoints(locality) no points");
         }
         collectionCode = collection.getCode();  // What?
-    }    
-    
+    }
+
     // MarkMap
     public void setPoints(Locality locality) {
         this.points = new ArrayList<Coordinate>();
-             
+
         float thisLon = locality.getDecimalLongitude();
         float thisLat = locality.getDecimalLatitude();
         if ((thisLon != 0.0) && (thisLat != 0.0)) {
-           points.add(new Coordinate(thisLon, thisLat));
-           //s_log.warn("setPoints(locality) lon:" + thisLon + " lat:" + thisLat);
+            points.add(new Coordinate(thisLon, thisLat));
+            //s_log.warn("setPoints(locality) lon:" + thisLon + " lat:" + thisLat);
         } else {
-           //s_log.warn("setPoints(locality) no points");        
+            //s_log.warn("setPoints(locality) no points");
         }
         localityCode = locality.getLocalityCode();
         localityName = locality.getLocalityName();
         //A.log("setPoints(localityName) locality:" + localityName);
-    }    
-    
-		
+    }
+
+
     private static boolean flip = false;
+
     private boolean isFlip() {
-      flip = !flip;
-      return flip;
-    }		       
+        flip = !flip;
+        return flip;
+    }
 
     public void setPoints(ArrayList<String> specimens, Connection connection) {
-      // usually the specimenCount is the same size as specimens.size(), but not in the case of locality mapping.
-      setPoints(specimens, specimens.size(), 0, connection);
+        // usually the specimenCount is the same size as specimens.size(), but not in the case of locality mapping.
+        setPoints(specimens, specimens.size(), 0, connection);
     }
-        
+
     public void setPoints(ArrayList<String> specimens, int specimenCount, int localityCount, Connection connection) {
+
         this.points = new ArrayList<Coordinate>();
         if (specimens.size() > 0) {
             String firstClause = SpecimenDb.getFlagCriteria();
             if (specimens.size() == 1) firstClause = " 1 = 1 ";
             String theQuery = "select decimal_latitude, decimal_longitude, code, country, adm1, taxon_name, genus, species, subspecies, localityname, localitycode" 
               + " from specimen where " + firstClause;
+
+            if (AntwebProps.isDevMode()) {
+                StatusSet statusSet = new StatusSet(StatusSet.VALID_EXTANT);
+                String statusCriteria = statusSet.getCriteria("specimen");
+                //A.log("setPoints() A statusCriteria:"+statusCriteria);
+               // Do we like this? Want to add to theQuery?
+            }
+
             theQuery += " and code in ";
             
             //A.log("setPoints(ArrayList<String> specimens 1");            
@@ -521,6 +541,15 @@ public class Map {
           }          
         }
 
+        if (AntwebProps.isDevMode()) {  // if statusSet != null
+            //StatusSet statusSet = new StatusSet(StatusSet.VALID_EXTANT);
+            StatusSet statusSet = new StatusSet(StatusSet.VALID_WITH_FOSSIL);
+            String statusCriteria = statusSet.getCriteria("sp");
+            //A.log("setPoints() B statusCriteria:" + statusCriteria);
+
+            terms.add(statusCriteria);
+        }
+
         query += " and " + Utility.andify(terms);
 
         if (maxMapPoints > 1) {
@@ -530,6 +559,7 @@ public class Map {
         }
 
         //A.log("setPoints(taxon, overview, connection, maxPoints, geolocaleFocus) query:" + query);
+
         //if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();
         //A.log("setPoints(taxon, overview, connection, maxPoints) overview:" + name + " locality:" + overview.getLocality());
   

@@ -67,6 +67,27 @@ public class DescEditDb extends AntwebDb{
                 key = rset.getString("title");
                 //s_log.warn("setDescription() key:" + key + " 1:" + rset.getString("1"));
                 value = rset.getString("content");
+
+                if ("images".equals(key))
+                    value = httpSecurify(value);
+
+                /*
+Before:
+ <br><a href="http://www.antweb.org/web/curator/67/Adetomyrma17j-L.jpg"><img class="taxon_page_img" src="http://www.antweb.org/web/curator/67/Adetomyrma17j-L.jpg"></a>
+<br>
+A pair of <i>Adetomyrma goblin</i> workers grooms a larva. Madagascar; captive lab colony photographed at the California Academy of Sciences.
+<br>
+Image © <a href="http://www.alexanderwild.com/" target="new">Alex Wild</a>.  |
+
+After:
+<br><a href="https://www.antweb.org/web/curator/67/Adetomyrma17j-L.jpg"><img class="taxon_page_img" src="https://www.antweb.org/web/curator/67/Adetomyrma17j-L.jpg"></a>
+<br>
+A pair of <i>Adetomyrma goblin</i> workers grooms a larva. Madagascar; captive lab colony photographed at the California Academy of Sciences.
+<br>
+Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
+                 */
+
+
                 //key = AntFormatter.unescapeCharacters(key);
                 //value = AntFormatter.unescapeCharacters(value);
                 value = formatter.dequote(value);
@@ -90,8 +111,44 @@ public class DescEditDb extends AntwebDb{
         return description;
     }
 
-    
-    
+    public static String httpSecurify(String value) {
+      if (value == null) return value;
+      if (value.contains("http://")) {
+          int initSize = value.length();
+          int fixes = 0;
+          int notFixes = 0;
+          String httpsString = "https://";
+          while (value.contains("http://")) {
+              int indexOfHttp = value.indexOf("http://");
+              String delimiter = value.substring(indexOfHttp - 1, indexOfHttp);
+              String beginString = value.substring(0, indexOfHttp);
+
+              String newEndString = httpsString + value.substring(indexOfHttp + 7);  // 7 is the length of http://
+              String newUrl = newEndString.substring(0, newEndString.indexOf(delimiter));
+
+              // For debugging
+              if (AntwebProps.isDevMode()) {
+                  boolean newExists = HttpUtil.urlExists(newUrl);
+                  if (!newExists) {
+                      ++notFixes;
+                      String oldEndString = value.substring(indexOfHttp);  // 7 is the length of http://
+                      String oldUrl = oldEndString.substring(0, oldEndString.indexOf(delimiter));
+                      boolean oldExists = HttpUtil.urlExists(oldUrl);
+
+                      A.log("httpSecurify() newExists:" + newExists + " oldExists:" + oldExists + " oldUrl:" + oldUrl);
+                  } else {
+                      ++fixes;
+                      A.log("httpSecurify() newExists:" + newExists);
+                  }
+              }
+
+              value = beginString + newEndString;
+          }
+          A.log("httpSecurify() contains http. fixes:" + fixes + " notFixes:" + notFixes + " initSize:" + initSize + " postSize:" + value.length());
+      }
+      return value;
+    }
+
     public ArrayList<DescEdit> getRecentDescEdits() throws SQLException {
         // Used in the Description Edit Report, linked off the home page.
         
@@ -315,6 +372,5 @@ public class DescEditDb extends AntwebDb{
       }        
         
     }
-
 
 }

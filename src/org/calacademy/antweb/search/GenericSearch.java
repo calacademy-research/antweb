@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 public class GenericSearch implements Serializable {
 
     private static Log s_log = LogFactory.getLog(GenericSearch.class);
-    
+
     protected String name;
     protected String taxonName;
     protected String searchType;
@@ -36,15 +36,15 @@ public class GenericSearch implements Serializable {
     protected String project;
     protected int geolocaleId;
     protected Connection connection;
-    protected ArrayList<ResultItem> results; 
+    protected ArrayList<ResultItem> results;
     protected Pattern inQuotes = Pattern.compile("(\".*?\")");
-    
+
     public ArrayList<ResultItem> getResults() throws SearchException {
 
         if (results == null) {
             setResults();
         }
-        
+
         //A.log("GenericSearch.getResults() list:" + results.get(0).getDateCollectedStart());
         return results;
     }
@@ -61,40 +61,40 @@ public class GenericSearch implements Serializable {
         ResultSet rset = null;
 
         Date startDate = new Date();
-        
+
         // get the initial result set
         ArrayList<ResultItem> initialResults = createInitialResults();
 
         Date now = new Date();
         A.log("setResults() took " + (now.getTime() - startDate.getTime()) + " initialSize:" + initialResults.size());
-        
+
         // for each invalid name, get the valid version
         //ArrayList validResults = getValidVersion(initialResults);
 
         now = new Date();
         //s_log.info("getting valid version took " + (now.getTime() - startDate.getTime()));
-        
+
         // now filter out based on project - the reason we can't do this in the
         // initial query is that junior synonyms may not be part of a project, but
         // their valid names may be - we want these to show up, so we need two
         // steps here. In theory we could do it in one query - but I'm afraid
         // that one query would become too complicated to understand and debug (Thau).
         ArrayList<ResultItem> thisProjectResults = filterByProject(initialResults, project);
-        
+
         // same kind of thing with types
         //ArrayList typeLookup = setResultTypes(imageLookup, project);
-        
+
         this.results = thisProjectResults;
 
     }
 
     protected ArrayList<ResultItem> filterByProject(ArrayList<ResultItem> currentList, String project) {
         //A.log("GenericSearch.filterByProject() project:" + project);
-        if ((project == null) 
+        if ((project == null)
                 || (project.length() <= 0)
-                || project.equals(Project.WORLDANTS) 
-                || project.equals(Project.ALLANTWEBANTS) 
-                || project.equals("default") 
+                || project.equals(Project.WORLDANTS)
+                || project.equals(Project.ALLANTWEBANTS)
+                || project.equals("default")
                 || (currentList == null)
                 || (currentList.size() == 0)) {
             return currentList;
@@ -119,7 +119,7 @@ public class GenericSearch implements Serializable {
                 if (inBuffer.length() != 0) {
                     inBuffer.append(",");
                 }
-                
+
                 inBuffer.append("'");
                 inBuffer.append(thisName);
                 inBuffer.append("'");
@@ -157,7 +157,7 @@ public class GenericSearch implements Serializable {
             DBUtil.close(stmt, rset, this, "filterByProject()");
         }
     }
-    
+
     // to speed this up a bit, there are two passes.
     // the first pass deals with cases where we have the specimen code
     // in this case we can execute just one query to get the types of all
@@ -179,38 +179,38 @@ public class GenericSearch implements Serializable {
         ArrayList where = new ArrayList();
         HashMap specimens = new HashMap();
         String type = "";
-        
+
         Date startTime = new Date();
         Date now = new Date();
-        
-        String preparedQuery = 
-            "select specimen.type_status from specimen";
-        
-        if ((project != null) 
-            && (project.length() > 0) 
-            && (!project.equals(Project.WORLDANTS))
-            && (!project.equals(Project.ALLANTWEBANTS))
+
+        String preparedQuery =
+                "select specimen.type_status from specimen";
+
+        if ((project != null)
+                && (project.length() > 0)
+                && (!project.equals(Project.WORLDANTS))
+                && (!project.equals(Project.ALLANTWEBANTS))
         ) {
             preparedQuery += ", proj_taxon ";
         }
-        
+
         preparedQuery += " where type_status != '' ";
-            
-        if ((project != null) 
-            && (project.length() > 0)
-            && (!project.equals(Project.WORLDANTS))
-            && (!project.equals(Project.ALLANTWEBANTS))
+
+        if ((project != null)
+                && (project.length() > 0)
+                && (!project.equals(Project.WORLDANTS))
+                && (!project.equals(Project.ALLANTWEBANTS))
         ) {
             preparedQuery += " and proj_taxon.project_name = '" + project + "' ";
             preparedQuery += " and proj_taxon.taxon_name = specimen.taxon_name ";
-        }            
+        }
         preparedQuery += " and specimen.family = ? and specimen.subfamily = ? and specimen.genus = ? and specimen.species = ?";
-            
-        PreparedStatement prepStmt = null;        
+
+        PreparedStatement prepStmt = null;
         ResultSet rset = null;
         try {
             prepStmt = connection.prepareStatement(preparedQuery);
-            
+
             while (currIter.hasNext()) {
 
                 thisItem = (SearchItem) currIter.next();
@@ -224,11 +224,11 @@ public class GenericSearch implements Serializable {
                 if (code != null) {
                     specimens.put(code, "");
                 } else {
-                    prepStmt.setString(1,family);
-                    prepStmt.setString(2,subfamily);
-                    prepStmt.setString(3,genus);
-                    prepStmt.setString(4,species);
-                    
+                    prepStmt.setString(1, family);
+                    prepStmt.setString(2, subfamily);
+                    prepStmt.setString(3, genus);
+                    prepStmt.setString(4, species);
+
                     rset = prepStmt.executeQuery();
                     while (rset.next()) {
                         type = rset.getString(1);
@@ -246,11 +246,11 @@ public class GenericSearch implements Serializable {
             DBUtil.close(prepStmt, rset, this, "setResultTypes() 1");
         }
 
-        
+
         now = new Date();
         //s_log.info("doing the preps took " + (now.getTime() - startTime.getTime()));
         startTime = now;
-            
+
         // now do the specimen code part
         // first get the codes and put them in the hash
         if (specimens.keySet().size() > 0) {
@@ -269,21 +269,21 @@ public class GenericSearch implements Serializable {
             theQuery.append("(");
             theQuery.append(specString.toString());
             theQuery.append(")");
-    
+
             now = new Date();
             //s_log.info("preparing the specimen query took " + (now.getTime() - startTime.getTime()));
             startTime = now;
-                
+
             Statement stmt = null;
             rset = null;
             try {
                 stmt = connection.createStatement();
                 rset = stmt.executeQuery(theQuery.toString());
-                
+
                 now = new Date();
                 //s_log.info("executing the specimen query took " + (now.getTime() - startTime.getTime()));
-                startTime = now;        
-                
+                startTime = now;
+
                 while (rset.next()) {
                     code = rset.getString(1);
                     type = rset.getString(2);
@@ -296,13 +296,13 @@ public class GenericSearch implements Serializable {
                 org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
             } finally {
                 DBUtil.close(stmt, rset, this, "setResultTypes() 2");
-            }        
+            }
         }
 
         now = new Date();
         //s_log.info("parsing the specimen query took " + (now.getTime() - startTime.getTime()));
         startTime = now;
-        
+
         // now loop through the items, setting the code as appropriate
 
         currIter = currentList.iterator();
@@ -314,11 +314,11 @@ public class GenericSearch implements Serializable {
                 thisItem.setType((String) specimens.get(code));
             }
         }
-        
+
         now = new Date();
         //s_log.info("setting the items took " + (now.getTime() - startTime.getTime()));
         startTime = now;
-        
+
         return currentList;
     }
 
@@ -326,9 +326,9 @@ public class GenericSearch implements Serializable {
         //A.log("GenericSearch.createInitialResults()");
 
         // Need Subspecies logic?!
-    
+
         // Added family Jul 22, 2018
-        
+
         String theQuery = null;
         String genus = null;
         String species = null;
@@ -342,26 +342,26 @@ public class GenericSearch implements Serializable {
         }
 
         theQuery = "select sp.taxon_name, sp.family, sp.subfamily, sp.genus, sp.species, sp.subspecies, sp.type_status, sp.code "
-            + " , sp.stutus "
-            + " , sp.life_stage, sp.caste, sp.subcaste"
-            + " , sp.medium, sp.specimennotes "
-            + " , count(image.id) as imagecount "
-            + " from specimen as sp " 
-            + " left outer join image on sp.code = image.image_of_id " 
-            + " where (";
+                + " , sp.stutus "
+                + " , sp.life_stage, sp.caste, sp.subcaste"
+                + " , sp.medium, sp.specimennotes "
+                + " , count(image.id) as imagecount "
+                + " from specimen as sp "
+                + " left outer join image on sp.code = image.image_of_id "
+                + " where (";
 
         if ((genus != null) && (species != null)) {
             theQuery += getSearchString("sp.genus", "equals", genus)
-                + " and " + getSearchString("sp.species", "equals", species)
-                + ") ";
+                    + " and " + getSearchString("sp.species", "equals", species)
+                    + ") ";
         } else {
             theQuery += getSearchString("sp.family", searchType, name)
-                + " or " + getSearchString("sp.subfamily", searchType, name)
-                + " or " + getSearchString("sp.genus", searchType, name)
-                + " or " + getSearchString("sp.species", searchType, name) + ") ";
+                    + " or " + getSearchString("sp.subfamily", searchType, name)
+                    + " or " + getSearchString("sp.genus", searchType, name)
+                    + " or " + getSearchString("sp.species", searchType, name) + ") ";
         }
-        theQuery += " group by sp.taxon_name, sp.family, sp.subfamily, sp.genus, sp.species, sp.type_status, sp.code, sp.status" 
-          + " , sp.life_stage, sp.caste, sp.subcaste, sp.medium, sp.specimennotes ";
+        theQuery += " group by sp.taxon_name, sp.family, sp.subfamily, sp.genus, sp.species, sp.type_status, sp.code, sp.status"
+                + " , sp.life_stage, sp.caste, sp.subcaste, sp.medium, sp.specimennotes ";
         A.log("createInitialResults() query:" + theQuery);
 
         Statement stmt = null;
@@ -371,11 +371,11 @@ public class GenericSearch implements Serializable {
             rset = stmt.executeQuery(theQuery);
             return getListFromRset(GENERIC, rset, null, theQuery);
         } catch (SQLException e) {
-            s_log.error("createInitialResults() query:"  + theQuery + " e:" + e);
+            s_log.error("createInitialResults() query:" + theQuery + " e:" + e);
             throw new SearchException(e.toString());
         } finally {
             DBUtil.close(stmt, rset, this, "createInitialResults()");
-        }        
+        }
     }
 
     protected ArrayList<ResultItem> getListFromRset(ResultSet rset, SearchItem synonymousItem, String theQuery, int numToShow) {
@@ -384,11 +384,11 @@ public class GenericSearch implements Serializable {
         ArrayList<ResultItem> smallList = new ArrayList<ResultItem>();
         int loop = 0;
         int bigListSize = bigList.size();
-        while ((loop < numToShow)  && (loop < bigListSize)){
+        while ((loop < numToShow) && (loop < bigListSize)) {
             smallList.add(bigList.get(loop));
             loop++;
         }
-        return smallList;        
+        return smallList;
     }
 
     public static int GENERIC = 0;
@@ -398,7 +398,7 @@ public class GenericSearch implements Serializable {
     public static int BAY_AREA = 4;
     public static int DESC_EDIT = 5;
     public static int SEARCH = 6;
-    
+
     protected ArrayList<ResultItem> getListFromRset(int searchType, ResultSet rset, SearchItem synonymousItem, String theQuery) {
         //A.log("GenericSearch.getListFromRset(searchType...)"); 
         ArrayList<ResultItem> theList = new ArrayList<ResultItem>();
@@ -445,24 +445,24 @@ public class GenericSearch implements Serializable {
         String determinedBy = "";
         String collectedBy = "";
         String museumCode = "";
-        String dateCollectedStart = null; 
-        int accessGroup = 0; 
+        String dateCollectedStart = null;
+        int accessGroup = 0;
         String groupName = "";
         String ownedBy = "";
 
         // added May 14, 2016 by Mark
         String locatedAt = "";
-        
+
         String elevation = "";
         float decimalLatitude = 0;
         float decimalLongitude = 0;
-        
+
         String museum = null;
         String created = null;
         String bioregion = null;
-        
+
         int uploadId = 0;
-        
+
         int counter = 0;
         try {
             ResultSetMetaData meta = rset.getMetaData();
@@ -475,36 +475,35 @@ public class GenericSearch implements Serializable {
 // Search.java             first columns: taxon.taxon_name, taxon.subfamily, taxon.genus, taxon.species, sp.type, sp.code, taxon.valid
 
             while (rset.next()) {
-            
+
                 //A.log("getListFromRset() counter:" + counter);            
 
                 counter++;
-                
+
 // Won't this always be. Shouldn't we test the criteria, not the query? Field list will trigger these, no?                
 /*
 select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, image.id, image.upload_date
-  , artist.artist, groups.name, specimen.toc, specimen.subfamily, specimen.genus, specimen.species
-  , specimen.subspecies from  groups, artist, group_image, image 
+  , artist.artist, ant_group.name, specimen.toc, specimen.subfamily, specimen.genus, specimen.species
+  , specimen.subspecies from  ant_group, artist, group_image, image
   left join specimen on specimen.code = image.image_of_id where group_image.image_id = image.id  
-    and groups.id=group_image.group_id  and image.upload_date is not null  
+    and ant_group.id=group_image.group_id  and image.upload_date is not null
     and artist.id = image.artist  
     and image.upload_date > '1745-07-31 13:31:53' 
-    group by specimen.taxon_name, specimen.subfamily, specimen.genus, specimen.species, specimen.subspecies , image.shot_type, image.shot_number, image.upload_date, groups.name  order by image.upload_date desc, specimen.code, image.shot_type, image.shot_number  
+    group by specimen.taxon_name, specimen.subfamily, specimen.genus, specimen.species, specimen.subspecies , image.shot_type, image.shot_number, image.upload_date, ant_group.name  order by image.upload_date desc, specimen.code, image.shot_type, image.shot_number
     To fix, see antweb/doc/dbDebug.txt. Must turn off sql_mode: ONLY_FULL_GROUP_BY in my.cnf.
 */
 
                 if (theQuery.contains("taxon_name"))
                     name = rset.getString(rset.findColumn("taxon_name"));
-                    
-                /* Advanced search will always have family. DescEdit and recentEdit search only has subfamily." */    
+
+                /* Advanced search will always have family. DescEdit and recentEdit search only has subfamily." */
                 if (theQuery.contains("family"))
                     // and the instance of family is not actually a subfamily...
                     if (theQuery.indexOf("family") != theQuery.indexOf("subfamily") + 3) {
-                      family = rset.getString(rset.findColumn("family"));
-                      //A.log("getListFromRSet() found family:" + family);
+                        family = rset.getString(rset.findColumn("family"));
+                        //A.log("getListFromRSet() found family:" + family);
                     } else {
-                      A.log("getListFromRSet() They are the same. Dodged a bullet on that one. fi:" + theQuery.indexOf("family") + " si:" + (theQuery.indexOf("subfamily") + 3) + " query:" + theQuery);
-                    
+                        //A.log("getListFromRSet() They are the same. Dodged a bullet on that one. fi:" + theQuery.indexOf("family") + " si:" + (theQuery.indexOf("subfamily") + 3) + " query:" + theQuery);
                     }
                 if (theQuery.contains("subfamily"))
                     subfamily = rset.getString(rset.findColumn("subfamily"));
@@ -531,7 +530,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                 if (theQuery.contains("localitycode"))
                     localityCode = rset.getString(rset.findColumn("localitycode"));
                 if (theQuery.contains("collectioncode"))
-                    collectionCode = rset.getString(rset.findColumn("collectioncode"));                    
+                    collectionCode = rset.getString(rset.findColumn("collectioncode"));
                 if (theQuery.contains("life_stage"))
                     lifeStage = rset.getString(rset.findColumn("life_stage"));
                 if (theQuery.contains("sp.caste"))
@@ -556,63 +555,63 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                     uploadDate = rset.getString(rset.findColumn("upload_date"));
                 if (theQuery.contains("image.id,")) {                  // comma included to exclude count(id)
                     imageId = rset.getInt(rset.findColumn("image.id")); // changed in release 8.6 from uid  Was uid. Then id.
-                    A.log("found id is it really? imageID:" + imageId + " query:" + theQuery);
+                    //A.log("found id is it really? imageID:" + imageId + " query:" + theQuery);
                 }
                 if (theQuery.contains("imagecount"))
                     imageCount = rset.getInt(rset.findColumn("imagecount"));
                 if ((theQuery.contains("type")) && !(searchType == RECENT_IMAGE))  // contains shot_type
                     type = rset.getString(rset.findColumn("type_status"));
                 if (theQuery.contains("status"))
-                  status = rset.getString(rset.findColumn("status"));
-                if (theQuery.contains("habitat"))                
+                    status = rset.getString(rset.findColumn("status"));
+                if (theQuery.contains("habitat"))
                     habitat = rset.getString(rset.findColumn("habitat"));
-                if (theQuery.contains("microhabitat"))                
-                   microhabitat = rset.getString(rset.findColumn("microhabitat"));             
-                if (theQuery.contains("method")) 
-                    method = rset.getString(rset.findColumn("method"));  
+                if (theQuery.contains("microhabitat"))
+                    microhabitat = rset.getString(rset.findColumn("microhabitat"));
+                if (theQuery.contains("method"))
+                    method = rset.getString(rset.findColumn("method"));
                 //A.log("getListFromRset() dnaExtractionNotes:" + dnaExtractionNotes);                      
-                if (theQuery.contains("dnaextractionnotes"))                
+                if (theQuery.contains("dnaextractionnotes"))
                     dnaExtractionNotes = rset.getString(rset.findColumn("dnaextractionnotes"));
-                if (theQuery.contains("determinedby"))                
+                if (theQuery.contains("determinedby"))
                     determinedBy = rset.getString(rset.findColumn("determinedby"));
                 if (theQuery.contains("collectedby"))
                     collectedBy = rset.getString(rset.findColumn("collectedby"));
                 if (theQuery.contains("museum"))
                     museumCode = rset.getString(rset.findColumn("museum"));
                 if (theQuery.contains("datecollectedstart"))
-                    dateCollectedStart = rset.getString(rset.findColumn("datecollectedstartstr"));
+                    dateCollectedStart = rset.getString(rset.findColumn("datecollectedstart"));
                 if (theQuery.contains("access_group"))
                     accessGroup = rset.getInt(rset.findColumn("access_group"));
-                if (theQuery.contains("groups.name")) { // was groupname
-                    groupName = rset.getString(rset.findColumn("groups.name"));                    
+                if (theQuery.contains("ant_group.name")) { // was groupname
+                    groupName = rset.getString(rset.findColumn("ant_group.name"));
                 }
                 if (theQuery.contains("ownedby"))
                     ownedBy = rset.getString(rset.findColumn("ownedby"));
 
                 if (theQuery.contains("locatedat"))
                     locatedAt = rset.getString(rset.findColumn("locatedat"));
-                    
+
                 if (theQuery.contains("elevation"))
                     elevation = rset.getString(rset.findColumn("elevation"));
                 if (theQuery.contains("decimal_latitude"))
                     decimalLatitude = rset.getFloat(rset.findColumn("decimal_latitude"));
                 if (theQuery.contains("decimal_longitude"))
-                    decimalLongitude = rset.getFloat(rset.findColumn("decimal_longitude"));                    
+                    decimalLongitude = rset.getFloat(rset.findColumn("decimal_longitude"));
 
                 if (theQuery.contains("created"))
                     created = rset.getString(rset.findColumn("created"));
 
-                if (theQuery.contains("museum")) 
+                if (theQuery.contains("museum"))
                     museum = rset.getString(rset.findColumn("museum"));
-                    
+
                 if (theQuery.contains("bioregion"))
                     bioregion = rset.getString(rset.findColumn("bioregion"));
 
                 if (theQuery.contains("upload_id"))
                     uploadId = rset.getInt(rset.findColumn("upload_id"));
-                    //A.log("GenericSearch.getListFromRSet() uploadId:" + uploadId);                                      
-                                       
-                                       
+                //A.log("GenericSearch.getListFromRSet() uploadId:" + uploadId);
+
+
                 rank = Rank.getRankList(name, subfamily, genus, species, subspecies);
                 rankIterator = rank.iterator();
                 while (rankIterator.hasNext()) {
@@ -620,16 +619,16 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
 
                     //A.log("GenericSearch().getListFromRSet() name:" + name + " adm1:" + adm1 + " adm2:" + adm2); // got it.
                     ResultItem resultItem = new ResultItem(name, code, family, subfamily, genus, species, subspecies
-                        , thisRank, imageCount, type, null                      // was hasImages instead of imageCount
-                        , status, country, adm1, adm2, localityName, localityCode  //valid was in place of status
-                        , collectionCode
-                        , lifeStage, caste, subcaste
-                        , medium, specimenNotes, artist, group, shotType, shotNumber, uploadDate, imageId
-                        , habitat, microhabitat, method, dnaExtractionNotes, determinedBy, collectedBy, museumCode
-                        , dateCollectedStart, accessGroup, groupName, ownedBy, locatedAt
-                        , elevation, decimalLatitude, decimalLongitude
-                        , museum, created, bioregion, uploadId
-                        );
+                            , thisRank, imageCount, type, null                      // was hasImages instead of imageCount
+                            , status, country, adm1, adm2, localityName, localityCode  //valid was in place of status
+                            , collectionCode
+                            , lifeStage, caste, subcaste
+                            , medium, specimenNotes, artist, group, shotType, shotNumber, uploadDate, imageId
+                            , habitat, microhabitat, method, dnaExtractionNotes, determinedBy, collectedBy, museumCode
+                            , dateCollectedStart, accessGroup, groupName, ownedBy, locatedAt
+                            , elevation, decimalLatitude, decimalLongitude
+                            , museum, created, bioregion, uploadId
+                    );
 
                     //A.log("GenericSearch.getListFromRset() dateCollected:" + dateCollectedStart + " searchItem.dateCollected:" + resultItem.getDateCollectedStart());
                     //AntwebUtil.logStackTrace();
@@ -662,126 +661,172 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         this.connection = connection;
     }
 
+    public String getOperator(String searchType) {
+        String operator = null;
+        if (searchType.equals("equals") || searchType.equals("equal")) {
+            operator = "=";
+        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
+            operator = "!=";
+        } else if (searchType.equals("contains")) {
+            operator = "like";
+        } else if (searchType.equals("begins")) {
+            operator = "like";
+        } else if (searchType.equals("ends")) {
+            operator = "like";
+        } else if (searchType.equals("greaterThanOrEqual")) {
+            operator = ">=";
+        } else if (searchType.equals("lessThanOrEqual")) {
+            operator = "<=";
+        }
+        return operator;
+    }
+
+    private String getLeftPercent(String searchType) {
+        String leftPercent = null;
+        if (searchType.equals("equals") || searchType.equals("equal")) {
+            leftPercent = "";
+        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
+            leftPercent = "";
+        } else if (searchType.equals("contains")) {
+            leftPercent = "%";
+        } else if (searchType.equals("begins")) {
+            leftPercent = "";
+        } else if (searchType.equals("ends")) {
+            leftPercent = "%";
+        } else if (searchType.equals("greaterThanOrEqual")) {
+            leftPercent = "";
+        } else if (searchType.equals("lessThanOrEqual")) {
+            leftPercent = "";
+        }
+        return leftPercent;
+    }
+
+    private String getRightPercent(String searchType) {
+        String rightPercent = null;
+        if (searchType.equals("equals") || searchType.equals("equal")) {
+            rightPercent = "";
+        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
+            rightPercent = "";
+        } else if (searchType.equals("contains")) {
+            rightPercent = "%";
+        } else if (searchType.equals("begins")) {
+            rightPercent = "%";
+        } else if (searchType.equals("ends")) {
+            rightPercent = "";
+        } else if (searchType.equals("greaterThanOrEqual")) {
+            rightPercent = "";
+        } else if (searchType.equals("lessThanOrEqual")) {
+            rightPercent = "";
+        }
+        return rightPercent;
+    }
+
+
     protected String getSearchString(String property, String searchType, String value) {
         //A.log("GenericSearch.getSearchString)");
         if (searchType == null) {
-          //if ("sp.ownedBy".equals(property)) 
-          searchType = "equals";
-          //s_log.warn("getSearchString() searchType:" + searchType + " for property:" + property + " value:" + value);
+            //if ("sp.ownedBy".equals(property))
+            searchType = "equals";
+            //s_log.warn("getSearchString() searchType:" + searchType + " for property:" + property + " value:" + value);
         }
-        
+        //A.log("getSearchString() property:" + property);
+
         StringBuffer sb = new StringBuffer();
         String operator;
         String leftPercent;
         String rightPercent;
 
-        if (searchType.equals("equals") || searchType.equals("equal")) {
-            operator = "=";
-            leftPercent = "";
-            rightPercent = "";
-        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
-            operator = "!=";
-            leftPercent = "";
-            rightPercent = "";
-        } else if (searchType.equals("contains")) {
-            operator = "like";
-            leftPercent = "%";
-            rightPercent = "%";
-        } else if (searchType.equals("begins")) {
-            operator = "like";
-            leftPercent = "";
-            rightPercent = "%";
-        } else if (searchType.equals("ends")) {
-            operator = "like";
-            leftPercent = "%";
-            rightPercent = "";
-        } else if (searchType.equals("greaterThanOrEqual")) {
-            operator = ">=";
-            leftPercent = "";
-            rightPercent = "";
-        } else if (searchType.equals("lessThanOrEqual")) {
-            operator = "<=";
-            leftPercent = "";
-            rightPercent = "";
-        } else {
-            return " 1=1 ";   // This is new to avoid malformed queries.  Fairly untested performance wise.
+        operator = getOperator(searchType);
+        if (operator == null)
+            return " 1=1"; // This is new to avoid malformed queries.  Fairly untested performance wise.
+        leftPercent = getLeftPercent(searchType);
+        rightPercent = getRightPercent(searchType);
+
+        //A.log("getSearchString() property:" + property + " ");
+        if ("sp.taxon_name".equals(property) && value != null && "(".equals(value.substring(0, 1))) {
+            A.log("getSearchString() value:" + value);
+            return property + " in " + value;
         }
-        
-        A.log("getSearchString() property:" + property + " ");
-        if ("sp.taxon_name".equals(property) && value != null && "(".equals(value.substring(0,1))) {
-          A.log("getSearchString() value:" + value);
-          return property + " in " + value;      
-        }
-        
+        //A.log("getSearchString() property:" + property + " value:" + value);
+
         ArrayList<String> elements = new ArrayList<String>();
         Matcher m = inQuotes.matcher(value);
         String thisElement = "";
         int length = 0;
-        while(m.find()) {
+        while (m.find()) {
             thisElement = m.group();
-            
+
             // take off the quotes
             length = thisElement.length();
-            thisElement = thisElement.substring(1, length-1);
+            thisElement = thisElement.substring(1, length - 1);
             elements.add(thisElement);
         }
-        
+
         // pull quoted stuff out of the string
         String newValue = m.replaceAll("");
-        
         if (newValue.length() > 0) {
-            List<String> newElements =  Arrays.asList(newValue.split("[, ]"));
+            List<String> newElements = Arrays.asList(newValue.split("[, ]"));
             elements.addAll(newElements);
         }
+        //A.log("getSearchString() 3 property:" + property + " value:" + value);
+
         for (int loop = 0; loop < elements.size(); loop++) {
             thisElement = elements.get(loop);
             if (thisElement.length() > 0) {
-              sb.append(property);
-              sb.append(" ");
-              sb.append(operator);
-              sb.append(" \'");
-              sb.append(leftPercent);
-              sb.append(AntFormatter.escapeQuotes(thisElement.trim()));
-              sb.append(rightPercent);
-              sb.append("\'");
-              if ((thisElement.length() > 0) && (loop < (elements.size() - 1))) {
-                  sb.append(" or ");
-              }
+                sb.append(property);
+                sb.append(" ");
+                sb.append(operator);
+                sb.append(" \'");
+                sb.append(leftPercent);
+                sb.append(AntFormatter.escapeQuotes(thisElement.trim()));
+                sb.append(rightPercent);
+                sb.append("\'");
+                if ((thisElement.length() > 0) && (loop < (elements.size() - 1))) {
+                    sb.append(" or ");
+                }
             }
         }
         //sb.append(")");
 
         String returnStr = sb.toString();
+        //A.log("getSearchString() 4 returnStr:" + returnStr);
 
-        // debugging        
+        // debugging
         if ("sp.caste like '%male%'".equals(returnStr)) {
-          returnStr = "sp.caste = 'male'"; 
-          A.log("getSearchString() returnStr:" + returnStr);
+            returnStr = "sp.caste = 'male'";
+            A.log("getSearchString() returnStr:" + returnStr);
         }
         if ("sp.caste like '%worker%'".equals(returnStr))
-          returnStr = "sp.caste = 'worker'"; 
+            returnStr = "sp.caste = 'worker'";
         if ("sp.caste like '%queen%'".equals(returnStr))
-          returnStr = "sp.caste = 'queen'"; 
+            returnStr = "sp.caste = 'queen'";
         if ("sp.caste like '%other%'".equals(returnStr))
-          returnStr = "sp.caste = 'other'"; 
+            returnStr = "sp.caste = 'other'";
 
         //A.log("GenericSearch. VERIFY returnStr:" + returnStr);
         //A.log("getSearchString() GROUPNAME property:" + property + " value:" + value); // + " id:" + group.getId());
         if (property.contains("groupName")) {
-           Group group = GroupMgr.getGroup(value);
-           if (group != null) {
-             returnStr = "access_group = " + group.getId();        
-           }
+            Group group = GroupMgr.getGroup(value);
+            if (group != null) {
+                returnStr = "access_group = " + group.getId();
+            }
         }
 
         if ((returnStr == null) || (returnStr.equals(""))) {
-          returnStr = " 1 = 1 ";
+            returnStr = " 1 = 1 ";
         }
-        
         //A.log("getSearchString() property:" + property + " searchType:" + searchType + " value:" + value + " returnStr:" + returnStr);
-        
+
         return returnStr;
     }
+
+    protected String getDateSearchString(String property, String searchType, String value) {
+        String searchStr = null;
+        String operator = getOperator(searchType);
+        searchStr = property + " " + operator + " " + "convert('" + value + "', DATE)";
+        return searchStr;
+    }
+
     public String getSearchType() {
         return (this.searchType);
     }

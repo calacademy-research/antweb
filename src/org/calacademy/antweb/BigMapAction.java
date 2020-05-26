@@ -98,10 +98,10 @@ public final class BigMapAction extends Action {
           }           
                 
           Map map = getMap(project, taxonName, specimenCode, localityKey, collectionCode, geolocaleId, museumCode, geolocaleFocus, connection, session);
-                
+
           if (map != null) {
             String title = map.getTitle();
-            //A.log("BigMapAction.execute() title:" + title);
+            A.log("BigMapAction.execute() title:" + title);
 			session.setAttribute("title", title);          
             session.setAttribute("map", map);
             return (mapping.findForward("success"));
@@ -127,8 +127,7 @@ public final class BigMapAction extends Action {
         , int geolocaleId, String museumCode, boolean geolocaleFocus, Connection connection, HttpSession session) throws SQLException {
         
         Map thisMap = null;
-
-        //A.log("BigMapAction.getMap() geolocaleId:" + geolocaleId);
+        A.log("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName);
                      
         // Taxon map.  
         if ((taxonName != null) && (!"".equals(taxonName))) {
@@ -143,11 +142,11 @@ public final class BigMapAction extends Action {
 
             if (!geolocaleFocus) {
               thisMap = MapMgr.getMap(taxon, localityOverview, connection);
-              A.log("getMap() thisMap:" + thisMap);
+              //A.log("getMap() 1 thisMap:" + thisMap);
             } else {            
               thisMap = new Map(taxon, localityOverview, connection, geolocaleFocus);
             }
-            A.log("getMap() title:" + thisMap.getTitle() + " taxon:" + taxon + " localityOverview:" + localityOverview + " geolocaleFocus:" + geolocaleFocus);
+            //A.log("getMap() title:" + thisMap.getTitle() + " taxon:" + taxon + " localityOverview:" + localityOverview + " geolocaleFocus:" + geolocaleFocus);
 
             session.setAttribute("taxon", taxon);
           } else {
@@ -203,7 +202,8 @@ public final class BigMapAction extends Action {
           ObjectMapDb objectMapDb = new ObjectMapDb(connection);
           thisMap = objectMapDb.getMuseumMap(museumCode);        
         }
-        
+
+        //A.log("getMap() end map:" + thisMap.getMapName() + " " + thisMap.getDisplayMapHashCounts());
         return thisMap;
     }
 

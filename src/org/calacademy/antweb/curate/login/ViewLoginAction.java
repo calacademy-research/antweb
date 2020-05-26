@@ -44,10 +44,11 @@ public final class ViewLoginAction extends Action {
             connection = DBUtil.getConnection(dataSource, "ViewLoginAction()");
           
             String idStr = ((SaveLoginForm) form).getId();
-            int id = (new Integer(idStr)).intValue();
+            int id = (Integer.valueOf(idStr)).intValue();
             //s_log.info("looking up login " + id);
-             
-            login = (new LoginDb(connection)).getLogin(id);
+
+            LoginDb loginDb = new LoginDb(connection);
+            login = loginDb.getDeepLogin(id);
             session.setAttribute("thisLogin", login);
 
             // This fetches the full list for select box population

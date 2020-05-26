@@ -9,7 +9,7 @@
 <%
     session.removeAttribute("taxon");
 
-    A.log("index.jsp target:" + HttpUtil.getTarget(request));
+    //A.log("index.jsp target:" + HttpUtil.getTarget(request));
 %>
 
 <%@include file="/common/antweb-defs.jsp" %>

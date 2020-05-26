@@ -36,6 +36,7 @@ import java.sql.SQLException;
 import java.util.regex.*;
 
 import org.calacademy.antweb.AntFormatter;
+import org.apache.commons.httpclient.util.URIUtil;
 
 
 public abstract class HttpUtil {
@@ -143,7 +144,10 @@ public abstract class HttpUtil {
         hasSpecialChars = AntFormatter.hasWebSpecialCharacter(queryString);
       }
  
-      if (queryString.contains("%20and%20")) hasSpecialChars = true;
+      //if (queryString.contains("%20and%20")) hasSpecialChars = true;
+        // Not sure why had this, but can't because of pages like this...
+        //https://www.antweb.org/taxonomicPage.do?rank=genus&countryName=Saint%20Vincent%20and%20the%20Grenadines
+
       if (queryString.contains("%27")) hasSpecialChars = true;
       //if (queryString.contains("%28")) hasSpecialChars = true; // parens
       //if (queryString.contains("%29")) hasSpecialChars = true;
@@ -276,9 +280,9 @@ public abstract class HttpUtil {
           && true
         // && can fetch a page, ping something, once, at startup, store it.
         ) {
-        s_isOnline = new Boolean(true);
+        s_isOnline = Boolean.valueOf(true);
       } else {
-        s_isOnline = new Boolean(false);
+        s_isOnline = Boolean.valueOf(false);
         s_log.warn("Warning... Running in Offline Mode.");
       }
       return s_isOnline.booleanValue();
@@ -465,6 +469,12 @@ public abstract class HttpUtil {
         }
         return false;
     }
+
+/*
+          // This will turn spaces into +
+          //import org.apache.commons.httpclient.util.URIUtil;
+          //url = URIUtil.encodeQuery(url);
+ */
 
     public static String encode(String toEncode) {
         String encoded = null;
@@ -743,18 +753,47 @@ public abstract class HttpUtil {
       return queryString;
     }
 
-    public static String getQueryStringNoQuestionMark(HttpServletRequest request) {    
-      // Returning null indicates an "issue".  Empty is fine.
-      String queryString = HttpUtil.getQueryString(request);
-      
-      //A.log("getQueryStringNoQuestionMark() queryString:" + queryString);
-      if (queryString == null) 
-        return null;
-      
-      if (queryString.substring(0, 1).equals("?")) 
-        queryString = queryString.substring(1);
-      
-      return queryString;
+    // Like to call this already having a full target (minus a param). Get the queryString from a target via string manipulation.
+    public static String getQueryString(String target) {
+        String queryString = null;
+        //A.log("getQueryString(String) target:" + target);
+
+        int questionMark = target.indexOf("?");
+        if (questionMark < 1) return null;
+        queryString = target.substring(questionMark + 1);
+        A.log("getQueryString(String)"); // queryString:" + queryString);
+        return queryString;
+    }
+    /**/
+    public static String getQueryStringNoQuestionMark(String target) {
+        return getAfterQuestionMark(target);
+    }
+
+    // Original function
+    public static String getQueryStringNoQuestionMark(HttpServletRequest request) {
+        // Returning null indicates an "issue".  Empty is fine.
+        String queryString = HttpUtil.getQueryString(request);
+        return getAfterQuestionMark(queryString);
+    }
+
+    public static String getAfterQuestionMark(String queryString) {
+        String afterQuestionMark = null;
+        // Might just be "?..." or could hav a domain and protocol. Careful not to remove subsequent question marks.
+        //A.log("getAfterQuestionMark() queryString:" + queryString);
+
+        if (queryString == null)
+            return null;
+
+        if (queryString.substring(0, 1).equals("?")) {
+            afterQuestionMark = queryString.substring(1);
+        } else { // Might be string domain.
+            if (queryString.contains(AntwebProps.getDomainApp())) {
+                afterQuestionMark = getQueryString(queryString);
+            }
+        }
+
+        //A.log("getAfterQuestionMark() queryString:" + queryString);
+        return afterQuestionMark;
     }
     
     public static String getRequestURI(HttpServletRequest request) {
@@ -864,7 +903,6 @@ public abstract class HttpUtil {
     public static int SECS = 60;
     //public static int MAX_REQUEST_TIME = MILLIS * SECS * 5 ;
     public static int MAX_REQUEST_TIME = MILLIS * 20;
-    
 
     public static String finish(java.util.Date startTime) {
       String execTime = "";
@@ -1024,23 +1062,30 @@ public abstract class HttpUtil {
     throws IOException {
     return HttpUtil.getUrl(theUrl, "ISO-8859-1");
   }
+
+    public static boolean urlExists(String url) {
+      String content = null;
+      try {
+          // This will turn spaces into +
+          url = URIUtil.encodeQuery(url);
+
+          content = fetchUrl(url);
+      } catch (IOException e) {
+        A.log("urlExists() e:" + e);
+        return false;
+      }
+        if (content == null) return false;
+        //A.log("urlExists() content:" + content);
+        return true;
+    }
+
   
   public static String getUrl(String theUrl) 
     throws IOException {
     return HttpUtil.getUrl(theUrl, "UTF-8");
   }
 
-    public static String getJson(String url) {		
-
-/*
-      if (true) {
-        try {
-          return HttpUtil.getUrlOld(url);
-        } catch (AntwebException e) {
-          s_log.warn("getJson() e:" + e + " url:" + url);
-        }
-      }
-*/
+    public static String getJson(String url) {
 
 		String json = null;
 		try {		
@@ -1106,7 +1151,7 @@ public abstract class HttpUtil {
       return output;
   }
 
-  // fetchUrl is like getUrl but better because it doesnt trap exceptions.
+  // fetchUrl is like getUrl but better because it doesn't trap and log exceptions.
   // SpecimenFetch uses it.
   public static String fetchUrl(String theUrl)   
     throws IOException {  
@@ -1183,7 +1228,7 @@ public abstract class HttpUtil {
     throws IOException {  
 
     new HitUrlThread(url).start();
-    A.log("hitUrl() done");
+    //A.log("hitUrl() done");
   }
 
 /*     

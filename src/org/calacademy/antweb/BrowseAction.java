@@ -47,6 +47,8 @@ public class BrowseAction extends DescriptionAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
+        //A.log("execute() sort:" + request.getParameter("sortBy") + " " + request.getParameter("sortOrder"));
+
         java.util.Date startTime = new java.util.Date();        
 
         AntwebMgr.isPopulated(); // will force populate 
@@ -248,7 +250,7 @@ public class BrowseAction extends DescriptionAction {
 
           if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
-		  dbUtilName = "BrowseAction.execute(" + cacheType + ")";                                          
+		  dbUtilName = "BrowseAction.execute()";
 		  connection = DBUtil.getConnection(dataSource, dbUtilName, HttpUtil.getTarget(request));
 		  if (connection == null) s_log.error("execute() Null connection !!!" + AntwebUtil.getRequestInfo(request));
 
@@ -258,42 +260,6 @@ public class BrowseAction extends DescriptionAction {
 		  boolean logTimes = AntwebProps.isDevMode() && false;   
 		  if (logTimes) s_log.warn("execute() 1 time:" +  AntwebUtil.millisSince(startTime));
 
-/*
-		  boolean isGetCache = ("true".equals(browseForm.getGetCache()));  // this forces the fetching from cache if available.
-
-		  // This code will potentially fetch a cached page...
-		  if (!isGenCache && isCachable) {
-			// boolean fetchFromCache = isGetCache || AntwebUtil.getIsBot(request) || (!isLoggedIn && isServerBusy);
-			boolean fetchFromCache = AntwebCacheMgr.isFetchFromCache(request, isGetCache);
-
-			if (fetchFromCache) {
-			  // Return a cache paged if not logged in, and is cached.
-			  //if (AntwebUtil.getIsBot(request)) {  // only server cached pages to bots
-			  String data = null;
-			  taxon = Taxon.getInfoInstance(connection, family, subfamily, genus, species, subspecies, rank);
-			  String taxonName = taxon.getTaxonName();
-			  //String taxonName = Taxon.getInstanceTaxonName(connection, subfamily, name, genus, rank);
-			  
-			  // was: data = AntwebCacheMgr.fetchFromCache(cacheType, taxonName, projectObj.getUseName());
-			  data = AntwebCacheMgr.fetchFromCache(cacheType, taxonName, overview.getName());
-			  if (data != null) {
-				//if (AntwebProps.isDevOrStageMode()) 
-				  //s_log.info("execute() Fetching cached page.  taxonName:" + taxonName + " cacheType:" + cacheType);              
-				PrintWriter out = response.getWriter();
-				out.println(data);
-				return null;
-			  } else {
-				if (isGetCache) {
-				  //if (AntwebProps.isDevOrStageMode()) 
-				  //s_log.info("Execute() not fetched from cache:" + taxonName);
-				  String message = "Taxon not found in cache:" + taxonName;
-				  request.setAttribute("message", message);
-				  return (mapping.findForward("message"));
-				}
-			  }
-			}
-		  }
-*/
 		  /* --- Here is where we fetch the Taxon or Homonym --- */
 
 		  if (!"homonym".equals(browseForm.getStatus()) && (browseForm.getAuthorDate() == null)) {
@@ -366,8 +332,7 @@ public class BrowseAction extends DescriptionAction {
           );
 
 		  A.log("execute() resetProject:" + browseForm.getResetProject() + " taxon.status:" + taxon.getStatus() + " overview:" + overview);
-		  
-		  
+
 		  if (taxon.getTaxonSet() == null) {
               // if (!ProjectDb.projectHasTaxon(projectName, taxon, connection)) {
 			  String message = "Taxon:" + taxon.getTaxonName() + " not found for overview:" + overview;
@@ -395,7 +360,7 @@ public class BrowseAction extends DescriptionAction {
 		  String caste = Caste.DEFAULT; //ALL;
 		  if ("images".equals(cacheType)) {
 		    caste = Caste.getCaste(browseForm.getCaste(), request);
-            //A.log("BrowseAction.execute() caste:" + caste);
+            //A.log("execute() caste:" + caste);
   		    //taxon.setImages(overview, caste);
           } else {
   		    //taxon.setImages(null, caste); // Do not use overview to select images on the overview page. Do for images.do.
@@ -403,7 +368,7 @@ public class BrowseAction extends DescriptionAction {
           }
 
           String subgenus = browseForm.getSubgenus();
-          A.log("BrowseAction.execute() subgenus:" + subgenus);
+          //A.log("execute() subgenus:" + subgenus);
 
   		  taxon.setImages(overview, caste);
 
@@ -428,7 +393,7 @@ public class BrowseAction extends DescriptionAction {
               
 			taxon.setChildren(overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
 
-            //A.log("BrowseAction.execute() childrenSize:" + taxon.getChildren().size());
+            //A.log("execute() childrenSize:" + taxon.getChildren().size());
 
 			//taxon.setChildren(projectObj, statusSet, getChildImages, getChildMaps);                    
 		  }

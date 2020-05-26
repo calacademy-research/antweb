@@ -33,9 +33,7 @@ import com.google.gson.*;
 
 /*
 // Requests look something like:  
-
    https://www.antweb.org/utilData.do?action=deleteConflictedDefaultImages
-
 */
 
 public class UtilDataAction extends Action {
@@ -43,15 +41,7 @@ public class UtilDataAction extends Action {
     private static Log s_log = LogFactory.getLog(UtilDataAction.class);
 
     private static String m_inComputeProcess;
-    public static boolean isInComputeProcess() {
-      return m_inComputeProcess != null;
-    }
-    public static String getIsInComputeProcess() {
-      return m_inComputeProcess;
-    }
-    public static void setInComputeProcess(String inComputeProcess) {
-      m_inComputeProcess = inComputeProcess;
-    }
+
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
@@ -66,6 +56,13 @@ public class UtilDataAction extends Action {
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
         Group accessGroup = GroupMgr.getAccessGroup(request);
+
+        /*
+          Indication of reloading of Manager objects can happen in the request with:
+             example: &reload=geolocale
+          Or it can just happen in 
+        */        
+        String reload = theForm.getReload();
 
         //ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
 
@@ -98,7 +95,6 @@ public class UtilDataAction extends Action {
               request.setAttribute("message", message);
               return (mapping.findForward("message"));
           }
-
         }
 		
         try {
@@ -113,31 +109,9 @@ public class UtilDataAction extends Action {
               s_log.warn("execute() " + form.toString());
               OperationDetails operationDetails = doAction(action, theForm, accessLogin, accessGroup, connection, request, mapping);
 
-
-              if (!AntwebProps.isDevMode() && !isAllow) {
-                  // Don't need the TreeSet. Could do as above with Arrays.
-                  // We do not need to reload the AntwebMgr after the following:
-                  Set<String> methods = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-                  methods.addAll(Arrays.asList("fetchGoogleApisData", "delGoogleMapFunction", "genGoogleMapFunction", "delGoogleMapFunction", "genObjectMaps"
-                    , "genGroupObjectMap", "genGroupObjectMaps", "updateGroupCounts", "updateGroupUploadStats", "exifData", "changeOwner", "changeOwnerAndPerms"
-                    , "adminAlertTest", "populateBioregion", "siteWarning", "imageUtil"));
-                  if (!methods.contains(action))
-                    AntwebMgr.populate(connection, true); 
-              }
-
               if (operationDetails instanceof UploadDetails) {
                 ((UploadDetails) operationDetails).finish(accessLogin, request, connection);
               }
-
-/*
-              // Don't need the TreeSet. Could do as above with Arrays.
-              // We do not need to reload the AntwebMgr after the following:
-              Set<String> methods = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-              methods.addAll(Arrays.asList("fetchGoogleApisData", "delGoogleMapFunction", "genGoogleMapFunction", "delGoogleMapFunction", "genObjectMaps"
-                , "genGroupObjectMap", "genGroupObjectMaps", "updateGroupCounts", "updateGroupUploadStats", "exifData", "changeOwner", "changeOwnerAndPerms"
-                , "adminAlertTest", "populateBioregion", "siteWarning", "imageUtil"));
-              boolean skipAntwebMgrReload = methods.contains(action);
-*/
 
               connection.commit();
                            
@@ -146,6 +120,9 @@ public class UtilDataAction extends Action {
               if (forward != null) return forward;
 
             } // end if action != null
+
+			String t = AntwebMgr.reload(reload, true, connection);
+			// No need to log.
             
 			request.setAttribute("message", "action not found:" + action);
 			return (mapping.findForward("message")); 
@@ -186,8 +163,8 @@ public class UtilDataAction extends Action {
 
         s_log.warn("doAction() " + action + " request:" + request);
 
-        if ("allSets - ".equals(action)) {
-			message = "allSets"; 
+        if ("allSets".equals(action)) {
+            message = "allSets - "; 
 			message += doAction("set1", form, accessLogin, accessGroup, connection, request, mapping);
 			message += " " + doAction("set2", form, accessLogin, accessGroup, connection, request, mapping);
 			message += " " + doAction("set3", form, accessLogin, accessGroup, connection, request, mapping);
@@ -201,63 +178,59 @@ public class UtilDataAction extends Action {
 			message += " " + doAction("set2", form, accessLogin, accessGroup, connection, request, mapping);
 			message += " " + doAction("set3", form, accessLogin, accessGroup, connection, request, mapping);
 		}
-
-        // worldants.  Must follow with a allCountCrawl
+	
+        // dev: 11.68 mins  Or 24.98 mins? Prod: 11.23 mins  Must be followed with the Count Crawls
         if ("set1".equals(action)) {
-			message = "set1 - "; 
+            message = "set1 - "; 
             message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
             message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
         }
 
-        // population. 10 min. 13.7 on stage.
+        // Dev: 31.50 mins and 25.75 mins. Prod: 43.93
         if ("set2".equals(action)) {
-			message = "set2 - "; 
+            message = "set2 - "; 
             message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);        
-            message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping);
-            message += " " + doAction("populateMuseum", form, accessLogin, accessGroup, connection, request, mapping);
-            message += " " + doAction("populateBioregion", form, accessLogin, accessGroup, connection, request, mapping);
+            message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 12.30 mins
+            message += " " + doAction("GeolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
+            GeolocaleMgr.populate(connection, true, true);
+            doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
         }
 
-        // counts. 13 mins. 12 on stage.
+        // dev: 7.05 mins. Prod: 14.52 mins
         if ("set3".equals(action)) {
-			message = "set3 - "; 
-            message += doAction("updateTaxonSetTaxonNames", form, accessLogin, accessGroup, connection, request, mapping);       
+            message = "set3 - ";
+            message += " " + doAction("ProjectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins     
+            message += " " + doAction("populateMuseum", form, accessLogin, accessGroup, connection, request, mapping);  // was 12.05 mins now 22.68 mins. Prod: 8.17
+            message += " " + doAction("populateBioregion", form, accessLogin, accessGroup, connection, request, mapping); // was 6.80 mins. Now 15.63 mins. // Prod: 5.52 mins  
+            message += doAction("updateTaxonSetTaxonNames", form, accessLogin, accessGroup, connection, request, mapping);      
             message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);                  
-            message += " " + doAction("updateProjectCounts", form, accessLogin, accessGroup, connection, request, mapping);        
         }
-        
-        // finish. 27 min.
+
+        // dev: 6.58 mins. Prod: 15.17 mins
         if ("set4".equals(action)) {     
-			message = "set4 - "; 
-            message += doAction("allCountCrawls", form, accessLogin, accessGroup, connection, request, mapping);   
-            message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);        
-            message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);   
+            message = "set4 - "; 
+           // message += doAction("allCountCrawls", form, accessLogin, accessGroup, connection, request, mapping);   
+            message += doAction("imageCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);               
+           // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);        
+           // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);   
         }
 
+        // dev: 15.22 mins. Prod: 50.98 mins
         if ("set5".equals(action)) {     
-			message = "set5 - "; 
+            message = "set5 - "; 
             message += " " + doAction("deleteConflictedDefaultImages", form, accessLogin, accessGroup, connection, request, mapping);   
-            message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping);
+            message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 48.93 mins
             message += " " + doAction("deleteOldSpecimenUploadTaxa", form, accessLogin, accessGroup, connection, request, mapping);
-        }
-
-        // https://antweb-stg/upload.do?action=allSpecimenFiles
-        //   See uploadAction.java allSpecimenFiles section for documentation.
-        
-        // ---------------
-
-        if (action.equals("repopulateAntwebMgr")) {
-          repopulateAntwebMgr(request);
-          message = "repopulateAntwebMgr";
+            message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
         }
        
+		// ---------- Data Loading --------------------
+
         if (action.equals("updateFormicidaeProjects")) {
 	        ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
             projTaxonDb.addProjectFamily("worldants");
             message = "updateFormicidaeProjects";
         }
-
-		// ---------- Data Loading --------------------
 
 		if (action.equals("testWorldantsLog")) { 
 		  operationDetails = new UploadDetails("testWorldantsLog", "Testing Worldants Log");	
@@ -275,7 +248,7 @@ public class UtilDataAction extends Action {
 		if (action.equals("worldantsFetchAndReload")) { 
 		  operationDetails = (new SpeciesListUploader(connection)).worldantsFetchAndReload();	
 
-		  LogMgr.appendLog("admin.log", DateUtil.getFormatDate() + " worldantsFetchAndReload: " + operationDetails.getMessage());
+		  LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " worldantsFetchAndReload: " + operationDetails.getMessage());
 		  
           ((UploadDetails) operationDetails).finish(accessLogin, request, connection);
     		  
@@ -284,7 +257,7 @@ public class UtilDataAction extends Action {
 		if (action.equals("worldantsReload")) {
 		  operationDetails = (new SpeciesListUploader(connection)).worldantsReload();
 		  if ("success".equals(operationDetails.getMessage())) message = "worldantsReload";		
-		  LogMgr.appendLog("admin.log", DateUtil.getFormatDate() + " worldantsReload: " + operationDetails.getMessage());
+		  LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " worldantsReload: " + operationDetails.getMessage());
           A.log("doAction() operationDetails:" + operationDetails + " message:" + operationDetails.getMessage());  
           return operationDetails;
 		}
@@ -332,7 +305,13 @@ public class UtilDataAction extends Action {
 		  message = geolocaleTaxonDb.populateFromAntwikiData();
 		}		
 
-    // ---------------Overviews -------------------
+		if (action.equals("geolocaleTaxonFix")) {
+		  GeolocaleTaxonDb geolocaleTaxonDb = new GeolocaleTaxonDb(connection);
+		  String result = geolocaleTaxonDb.geolocaleTaxonFix();
+		  message = result;
+		}		
+
+        // ---------------Overviews -------------------
 			  	
 		// Update to Current Valid Name.  3.77 mins.
 		// Test if needed: http://localhost/antweb/util.do?action=curiousQuery&name=geolocaleTaxaNotUsingCurrentValidName	  	
@@ -347,11 +326,18 @@ public class UtilDataAction extends Action {
 		  message = TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection);
           message += TaxonSetDb.dataCleanup(connection);
 		}	
+
+		if (action.equals("parseDates")) {
+  	 	 // DateUtil.runTests();
+          SpecimenDb specimenDb = new SpecimenDb(connection);
+          message = specimenDb.parseDates();
+		}	
+
 		    		
 		// ---- Geolocale ----------
 		
 		// 1.85 min
-		//   Must follow with allCountCrawls? In the scheduler it is all square.
+		//   Must come before the geolocale crawls
 		if (action.equals("generateGeolocaleTaxaFromSpecimens")) {
 		  message = (new GeolocaleTaxonDb(connection)).generateGeolocaleTaxaFromSpecimens();
 		  message = "Finished Generate Geolocale Taxa From Specimens message:" + message;
@@ -373,12 +359,14 @@ public class UtilDataAction extends Action {
 		}
 			  
 		// Geolocale counts updated 6.30 mins	  
-		if (action.equals("updateGeolocaleCounts")) {
+		if (action.equals("GeolocaleCountCrawl")) {
 		  int geolocaleId = form.getNum();
 		  if (geolocaleId > 0) {
 			(new GeolocaleDb(connection)).updateCounts(geolocaleId);
 		  } else {			    
-			(new GeolocaleDb(connection)).updateCounts();
+            CountDb.s_isBulk = true;
+			(new GeolocaleDb(connection)).updateCounts();   // ~13.38 mins.
+            CountDb.s_isBulk = false;
 		  }                 
 		  message = "Updated Geolocale Counts. ";
 		}
@@ -431,29 +419,10 @@ public class UtilDataAction extends Action {
 		}
 
         // ------ Project ----------
-/*
-http://localhost/antweb/utilData.do?action=populateMuseum&code=AFRC
-  Will set the museum field in the specimen table.
-  Set the counts in the museum_taxon table.
-  May populate all if code omitted.
-  Does NOT repopulate AntwebMgr (because in scheduler)
-  
-// This one does everything.  
-http://localhost/antweb/museum.do?museumCode=AFRC&action=recalc
-  (new TaxonDb(connection)).setSubfamilyChartColor();
-  (new MuseumDb(connection)).populate(museumCode);
-    // including count crawl
-  AntwebMgr.populate(connection, true);  
-
-http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC	
-  museumTaxonCountDb.countCrawls(code);	
-*/
-
-
 
 		// Fast.  0.40 min.
 		// http://localhost/antweb/utilData.do?action=updateProjectCounts&name=allantwebants
-		if (action.equals("updateProjectCounts")) {
+		if (action.equals("ProjectCountCrawl")) {
 		  String projectName = form.getName();
 		  String appendStr = "";
 		  ProjectDb projectDb = new ProjectDb(connection);
@@ -486,7 +455,7 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
             s_log.warn("countCrawl expecting num:" + num + ". Running ChildrenCountCrawls for all geolocales.");
 		    geolocaleTaxonCountDb.childrenCountCrawl();
 		  } else {
-		    geolocaleTaxonCountDb.countCrawls(num);
+		    geolocaleTaxonCountDb.childrenCountCrawl(num);
 		  }
 		  message = "Finished Geolocale Count Crawl (" + form.getNum() + ")";
 		}
@@ -499,7 +468,7 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
             s_log.warn("countCrawl expecting num:" + code + ". Running ChildrenCountCrawls for all museum.");
 		    museumTaxonCountDb.childrenCountCrawl();
 		  } else {
-		    museumTaxonCountDb.countCrawls(code);
+		    museumTaxonCountDb.childrenCountCrawl(code);
 		  }
 		  message = "Finished Museum Count Crawl (" + form.getNum() + ")";
 		}
@@ -510,33 +479,39 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
             s_log.warn("countCrawl expecting name:" + name + ". Running ChildrenCountCrawls for all bioregions.");
 		    bioregionTaxonCountDb.childrenCountCrawl();
 		  } else {
-		    bioregionTaxonCountDb.countCrawls(name);
+		    bioregionTaxonCountDb.childrenCountCrawl(name);
 		  }
 		  message = "Finished Bioregion Count Crawl (" + form.getName() + ")";
 		}
 
-		// Takes about 26 mins
-		if (action.equals("allCountCrawls")) {
-		  // Image and Children crawls for Bioregion, Project, Geolocale and Museum.
-		  // Crawl for Children and Image Counts
-		  TaxonCountDb taxonCountDb = (new TaxonCountDb(connection));
-		  taxonCountDb.allCountCrawls();
-
-		  message = "Finished All Count Crawls";
+        // Useful for debugging? Code to execute and get results or a particular count.
+		if (action.equals("countReport")) {
+		  GeolocaleTaxonCountDb geolocaleTaxonCountDb = (new GeolocaleTaxonCountDb(connection));
+          if (num == 0) {
+            message = "countCrawl expecting num:" + num + ". Running ChildrenCountCrawls for all geolocales.";
+            s_log.warn(message);
+		  } else {
+		    message = "Finished Geolocale Count Report (" + form.getNum() + ") " + geolocaleTaxonCountDb.countReport(num);
+		  }
 		}
 
-        // Takes about 26 mins
-        if (action.equals("runCountCrawls")) {
-            // Image and Children crawls for Bioregion, Project, Geolocale and Museum.
-            // Crawl for Children and Image Counts
-            TaxonCountDb taxonCountDb = (new TaxonCountDb(connection));
-            taxonCountDb.allCountCrawls();
+		if (action.equals("imageCountCrawl")) {
+		  ImageCountDb imageCountDb = (new ImageCountDb(connection));
+		  imageCountDb.imageCountCrawls();
+		  message = "Finished Image Count Crawls";
+		}
 
-            (new TaxonDb(connection)).crawlForType();
-
-            message = "Run Count Crawls";
-        }
-
+        //  ---- Debugging Methods ---- 
+        // This adequately computes geolocale_taxon image counts in 10.62 min. Subset of allCountCrawls.			  
+        if (action.equals("geolocaleTaxonImageCountCrawl")) {
+          int id = form.getId();
+          if (id > 0) {
+            (new GeolocaleTaxonCountDb(connection)).imageCountCrawl(id);                    
+          } else {
+            (new GeolocaleTaxonCountDb(connection)).imageCountCrawl();
+          }
+          message = "Finished Geolocale Image Count Crawl";
+        }   
 
         // 37 sec.  Called following specimen upload.
 		if (action.equals("crawlForType")) {
@@ -544,18 +519,9 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
 		  (new TaxonDb(connection)).crawlForType();
 		  message = "Finished crawl for type";
 		}
-	
+
 		// ---------- Testing ------------		  
-		// This is useful following the worldants species list upload.
-		if (action.equals("reCrawl")) {
-		  ProjTaxonCountDb projTaxonCountDb = (new ProjTaxonCountDb(connection));				
-		  if (form.getName() != null) {
-			projTaxonCountDb.countCrawl(form.getName());
-		  } else {
-			projTaxonCountDb.countCrawls();
-		  }
-		  message = "Finished Recrawls";
-		}
+		// This is useful following the worldants species list upload.	
 		
 		// 50 sec		   
 		// handled during GeolocaleDb.updateCounts()
@@ -570,18 +536,7 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
 		  message = (new GeolocaleDb(connection)).calcIntroduced() +  " geolocale introduced calculated, ";
 		  message += (new BioregionDb(connection)).calcIntroduced()  + " bioregion introduced calculated.";
 		}
- 
-        //  ---- Debugging Methods ---- 
-        // This adequately computes geolocale_taxon image counts in 10.62 min. Subset of allCountCrawls.			  
-        if (action.equals("geolocaleTaxonImageCountCrawl")) {
-          int id = form.getId();
-          if (id > 0) {
-            (new GeolocaleTaxonCountDb(connection)).imageCountCrawl(id);                    
-          } else {
-            (new GeolocaleTaxonCountDb(connection)).imageCountCrawl();
-          }
-          message = "Finished Geolocale Image Count Crawl";
-        }              
+           
 
         if (action.equals("getCurations")) {
             String curationsDml = "";
@@ -832,29 +787,10 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
             message = (new TaxonDb(connection)).deleteOldSpecimenUploadTaxa();
         }
 
-        /*
-        // Now automated.
-                      if (action.equals("deleteTaxonProp")) {
-                        if ("".equals(taxonName) || "".equals(prop)) {
-                          message = "deleteTaxonProp creates a way of getting rid of default images."
-                            + "<br>&nbsp;&nbsp;Where the taxonName is a full Antweb taxonName" + "<br>&nbsp;&nbsp;and the prop is in {maleSpecimen, workerSpecimen, queenSpecimen}"
-                            + "<br><br>See <a href='" + AntwebProps.getDomainApp() + "/query.do?action=query&name=conflictedDefaultImages'>Query</a>";
-                        } else {
-                          message = (new TaxonPropDb(connection)).deleteTaxonProp(taxonName, prop);
-                        }
-                      }
-        */
-                                    
-        /*
-          // Handled by cron now
-                      if (action.equals("adminTasks")) {
-                        String message = AntwebFunctions.adminTasks();
-                        message += " in " + AntwebUtil.getMinsPassed(startTime);
-                        s_log.warn("execute() " + message);
-                        request.setAttribute("message", message);
-                        returnLoc = (mapping.findForward("message"));
-                      }
-        */
+        if (action.equals("checkAntwikiForUpdates")) {
+			message = AntWikiDataAction.checkForUpdates(connection);			
+			A.log("doAction() Check For Antwiki Species and Fossil List Updates output:" + message);
+        }
 
 // ----------- Debug -------------
         
@@ -887,7 +823,11 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
           (new ImageDb(connection)).getExifData();
           message = "getExifData()";		  
         }
-
+/*
+        if (action.equals("imageSecure")) {
+            message = (new DescEditDb(connection)).getImageSecure();
+        }
+*/
         if (action.equals("imageUtil")) {
           s_log.warn("execute() imageUtil");  //"CASENT0101586";
           try {
@@ -897,6 +837,7 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
             A.log("e:" + e);
           }
         }
+
                     
 // ----------- Deprecated -------------
 
@@ -933,27 +874,23 @@ http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
           return operationDetails;
         }
 
-		message += " in " + AntwebUtil.getMinsPassed(startTime) + ". ";	   
+		message += "<br><br> in " + AntwebUtil.getMinsPassed(startTime) + ". ";	   
 	    s_log.warn("doAction() action:" + action + " message:" + message);
         operationDetails.setMessage(message);
         operationDetails.setForwardPage(null);
         return operationDetails;
     }    
-      
-    private void repopulateAntwebMgr(HttpServletRequest request) {
-        Connection connection = null;
-        try {
-            DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "repopulateAntwebMgr()");
-		    AntwebMgr.populate(connection, true); 
-		} catch (SQLException e) {
-		    s_log.warn("repopulateAntwebMgr()");
-        } finally {
-            DBUtil.close(connection, this, "repopulateAntwebMgr()");
-        }
+    
+    public static boolean isInComputeProcess() {
+      return m_inComputeProcess != null;
     }
-
-        
+    public static String getIsInComputeProcess() {
+      return m_inComputeProcess;
+    }
+    public static void setInComputeProcess(String inComputeProcess) {
+      m_inComputeProcess = inComputeProcess;
+    }
+  
 }
 
 
