@@ -30,6 +30,7 @@ public class TaxonCountDb extends AntwebDb {
       super(connection);
     }
 
+/*
     // Primary entry point...
     public void allCountCrawls() throws SQLException {    
 
@@ -49,6 +50,8 @@ public class TaxonCountDb extends AntwebDb {
 		  new MuseumTaxonCountDb(getConnection()).countCrawls();
       }
     }
+*/
+
 
 /*
     // Just to the basics. Preliminary for all counts.

@@ -5,7 +5,18 @@
     subgeneraTarget = HttpUtil.getTargetMinusParam(subgeneraTarget, "orderBy");    
  
     String displaySubgenera = request.getParameter("subgenus");
-    if (displaySubgenera == null) displaySubgenera = "all";
+    if (displaySubgenera != null) {
+      if ("none".equals(displaySubgenera)) {
+        displaySubgenera = "Unnassigned";
+      } else if (!"all".equals(displaySubgenera)) {
+        displaySubgenera = "(" + displaySubgenera + ")";
+      }
+    } else {
+      String sDOrderBy = request.getParameter("orderBy");
+      if (sDOrderBy != null) displaySubgenera = "by " + sDOrderBy;
+      if (displaySubgenera == null) displaySubgenera = "All";
+    }
+    //displaySubgenera = "all";
     A.log("displaySubgenera:" + displaySubgenera);
 
     List<String> fullSetSubgenera = TaxonMgr.getSubgenera(taxon.getGenus());
@@ -28,9 +39,7 @@
       }
       //A.log("suggeneraDisplay.jsp displaySubgenera:" + displaySubgenera + " size:" + subgenera.size() + " full:" + fullSetSubgenera.size());
 
-      if (subgenera != null && (subgenera.size() > 0 || "none".equals(displaySubgenera))) {
-          A.log("subgeneraDisplay.jsp subgenera:" + subgenera + " genus:" + taxon.getGenus());
-        %>
+      %>
 
         <div id="subgenera_toggle">
             <div class="left">Subgenera:</div>
@@ -39,16 +48,26 @@
                 <span id="which_subgenera"><span style="text-transform:capitalize;"><%= displaySubgenera %></span></span>
                 <div id="subgenera_choices" class="options">
                     <ul>              
-                        <li><a href="<%= subgeneraTarget + "&orderBy=subgenera" %>"><span style="text-transform:capitalize;">Sort by</span></a></li> 
-                        <li><a href="<%= subgeneraTarget + "&subgenus=all" %>"><span style="text-transform:capitalize;">(all)</span></a></li>                        
-                        <li><a href="<%= subgeneraTarget + "&subgenus=none" %>"><span style="text-transform:capitalize;">(none)</span></a></li>                        
+                        <li><span style="text-transform:capitalize;">Sort</span></li>
+                        <li><a href="<%= subgeneraTarget + "&orderBy=subgenera" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;By Subgenera</span></a></li>
+                        <li><a href="<%= subgeneraTarget + "&orderBy=species" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;By Species</span></a></li>
+                        <li><span style="text-transform:capitalize;">Select</span></li>
+                        <li><a href="<%= subgeneraTarget + "&subgenus=all" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;All</span></a></li>
+<%
+      if (subgenera != null && (subgenera.size() > 0 || "none".equals(displaySubgenera))) {
+          A.log("subgeneraDisplay.jsp subgenera:" + subgenera + " genus:" + taxon.getGenus());
+%>
+                        <li><a href="<%= subgeneraTarget + "&subgenus=none" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;Unassigned</span></a></li>
                      <% for (String subgenus : subgenera) { %>
-                            <li><a href="<%= subgeneraTarget + "&subgenus=" + subgenus %>"><span style="text-transform:capitalize;">(<%= subgenus %>)</span></a></li>                        
+                            <li><a href="<%= subgeneraTarget + "&subgenus=" + subgenus %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;(<%= subgenus %>)</span></a></li>
                      <% } %>
+ <% } %>
+
                     </ul>
                 </div>
                 <div class="clear"></div>
             </div>
         </div>
-   <% } %>      
+
+
  <% } %>
