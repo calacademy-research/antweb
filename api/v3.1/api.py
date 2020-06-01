@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# Can be execute in local environment (in /Users/mark/dev/calacademy/antweb/api/v3 directory) as such:
+# Can be execute in local environment (in /Users/mark/dev/calacademy/antweb/api/v3.1 directory) as such:
 #     python3 api.py
 #
 # Accessible, for instance, here: http://localhost:5000/specimens?specimenCode=casent0922626    
@@ -9,6 +9,11 @@
 # To Do.
 #   Performance tuning. Prevent long runs.
 #   Remove the classes into separate files.
+
+# To configure development environment for this API:
+# pip3 install Flask-SQLAlchemy
+# pip3 install Flask-RESTful
+# pip3 install PyMySQL
 
 #import os
 #assert os.path.exists('/var/www/html/apiV3/api_db.conf')
@@ -742,7 +747,7 @@ def getGeoSpeciesStats():
 class Taxon(Base):
     __tablename__ = 'taxon'
     taxonName = Column('taxon_name', String, primary_key=True)
-    rank = Column(String)
+    taxarank = Column(String)
     subfamily = Column(String)
     genus = Column(String)
     species = Column(String)
@@ -780,7 +785,7 @@ class Taxon(Base):
     
     def __repr__(self):
        return "<Taxa( \
-           taxonName='%s', rank='%s', subfamily='%s', genus='%s' \
+           taxonName='%s', taxarank='%s', subfamily='%s', genus='%s' \
          , species='%s%', subspecies='%s', parent='%s' \
          , fossil='%s', source='%s', created='%s' \
          , family='%s', kingdomName='%s', phylumName='%s' \
@@ -790,7 +795,7 @@ class Taxon(Base):
          , authors='%s', year='%s', status='%s', currentValidName='%s', bioregion='%s' \
          , country='%s', currentValidParent='%s', lineNum='%s', accessGroup='%s' \
        )>" % (         
-           self.taxonName, self.rank, self.subfamily, self.genus \
+           self.taxonName, self.taxarank, self.subfamily, self.genus \
          , self.species, self.subspecies , self.parent \
          , self.fossil, self.source, self.created \
          , self.family, self.kingdomName, self.phylumName \
@@ -804,7 +809,7 @@ class Taxon(Base):
 @application.route('/taxa', methods=['GET'])
 def getTaxa():
     taxonName = request.args.get('taxonName', default='*', type=str)
-    rank = request.args.get('rank', default='*', type=str)
+    taxarank = request.args.get('taxarank', default='*', type=str)
     subfamily = request.args.get('subfamily', default='*', type=str)
     genus = request.args.get('genus', default='*', type=str)
     species = request.args.get('species', default='*', type=str)
@@ -817,8 +822,8 @@ def getTaxa():
     query = session.query(Taxon)
     if (taxonName != '*'):
       query = query.filter(Taxon.taxonName == taxonName)
-    if (rank != '*'):
-      query = query.filter(Taxon.rank == rank)
+    if (taxarank != '*'):
+      query = query.filter(Taxon.taxarank == taxarank)
     if (subfamily != '*'):
       query = query.filter(Taxon.subfamily == subfamily)
     if (genus != '*'):
@@ -856,7 +861,7 @@ def getTaxa():
         taxonCount += 1
         taxonDict = {
           'taxonName': taxon.taxonName
-        , 'rank': taxon.rank
+        , 'taxarank': taxon.taxarank
         , 'subfamily': taxon.subfamily
         , 'genus': initCap(taxon.genus)
         , 'species': taxon.species
@@ -911,7 +916,7 @@ def getTaxa():
 
 @application.route('/distinctTaxa', methods=['GET'])
 def getDistinctTaxa():
-    rank = request.args.get('rank', default = '*', type=str)    
+    taxarank = request.args.get('taxarank', default = '*', type=str)
     country = request.args.get('country', default = '*', type=str)
     habitat = request.args.get('habitat', default = '*', type=str)
     minDate = request.args.get('minDate', default = '*', type=str)
@@ -924,11 +929,11 @@ def getDistinctTaxa():
     
     query = session.query(Specimen)
  
-    if ('subfamily' == rank):
+    if ('subfamily' == taxarank):
       query = session.query(Specimen.subfamily).distinct()
-    if ('genus' == rank):
+    if ('genus' == taxarank):
       query = session.query(Specimen.genus).distinct()
-    if ('species' == rank):
+    if ('species' == taxarank):
       query = session.query(Specimen.species).distinct()
 
     # if any of these are used, performance suffers!    
@@ -966,12 +971,12 @@ def getDistinctTaxa():
 
     dataList = []
     for taxa in data:
-      if ('subfamily' == rank):
+      if ('subfamily' == taxarank):
         dataList.append(taxa.subfamily)
-      if ('genus' == rank):
+      if ('genus' == taxarank):
         dataList.append(taxa.genus)
-        #print("rank:" + rank + " genus:" + str(taxa.genus))
-      if ('species' == rank):
+        #print("taxarank:" + taxarank + " genus:" + str(taxa.genus))
+      if ('species' == taxarank):
         dataList.append(taxa.species)
 
     params = []
@@ -985,19 +990,19 @@ def getDistinctTaxa():
     if (isDevMode):
         print("devMode query:" + str(query))
         
-    if ('subfamily' == rank):    
+    if ('subfamily' == taxarank):
       if (ndjson != 'true'):
         return jsonify(metaData=metaDataDict, subfamilies=dataList) # return flask Response
       else:
         return getNdjson(dataList) # return flask Response
-    if ('genus' == rank):
+    if ('genus' == taxarank):
       if (ndjson != 'true'):
         return jsonify(metaData=metaDataDict, genera=dataList) # return flask Response
       else:
         return getNdjson(dataList) # return flask Response
 
     if (ndjson != 'true'):
-      return jsonify(metaData=metaDataDict, rank=dataList) # return flask Response
+      return jsonify(metaData=metaDataDict, taxarank=dataList) # return flask Response
     else:
       return getNdjson(dataList) # return flask Response
 
@@ -1285,7 +1290,10 @@ def getTaxaImages():
         message = "taxaImages error:" + str(request) + " args:" + str(sys.exc_info()[0])
         print(message)
         return message
-            
+
+    # Looks like this might be necessary. Unless we can upgrade Python to 3.8. May 24 2020.
+    # will need to be taxaImage.getTaxaDict(data); but the method declaration will need (self,) as will the other methods.
+    #taxaImage = TaxaImage()
     taxaDict = TaxaImage.getTaxaDict(data)
 
     taxonCount = TaxaImage.getTaxonCount(taxaDict)
@@ -1496,7 +1504,7 @@ def getGeolocaleTaxa():
     island = request.args.get('island', default='*', type=str)
     adm1 = request.args.get('adm1', default='*', type=str)
     taxonName = request.args.get('taxonName', default='*', type=str)
-    rank = request.args.get('rank', default='*', type=str)
+    taxarank = request.args.get('taxarank', default='*', type=str)
     subfamily = request.args.get('subfamily', default='*', type=str)
     genus = request.args.get('genus', default='*', type=str)
     species = request.args.get('species', default='*', type=str)
@@ -1534,12 +1542,12 @@ def getGeolocaleTaxa():
     # Taxon criteria        
     if (taxonName != '*'):
       query = query.filter(GeolocaleTaxon.taxonName == taxonName)
-    if (rank != '*'):
-      if (rank == 'species'):
-        #query = query.filter(Taxon.rank == 'species' or Taxon.rank == 'subspecies')
-        query = query.filter(or_(Taxon.rank == 'species', Taxon.rank == 'subspecies'))
+    if (taxarank != '*'):
+      if (taxarank == 'species'):
+        #query = query.filter(Taxon.taxarank == 'species' or Taxon.taxarank == 'subspecies')
+        query = query.filter(or_(Taxon.taxarank == 'species', Taxon.taxarank == 'subspecies'))
       else:
-        query = query.filter(Taxon.rank == rank)
+        query = query.filter(Taxon.taxarank == taxarank)
     if (subfamily != '*'):
       query = query.filter(Taxon.subfamily == subfamily)
     if (genus != '*'): 
@@ -1585,7 +1593,7 @@ def getGeolocaleTaxa():
         
         , 'taxonName': geolocaleTaxon.taxonName
         , 'status': geolocaleTaxon.taxon.status
-        , 'rank': geolocaleTaxon.taxon.rank
+        , 'taxarank': geolocaleTaxon.taxon.taxarank
         , 'subfamily': initCap(geolocaleTaxon.taxon.subfamily)
         , 'genus': initCap(geolocaleTaxon.taxon.genus)
         , 'species': geolocaleTaxon.taxon.species
@@ -1734,7 +1742,7 @@ class BioregionTaxon(Base):
 def getBioregionTaxa():
     bioregionName = request.args.get('bioregionName', default='*', type=str)
     taxonName = request.args.get('taxonName', default='*', type=str)
-    rank = request.args.get('rank', default='*', type=str)
+    taxarank = request.args.get('taxarank', default='*', type=str)
     subfamily =request.args.get('subfamily', default='*', type=str)
     genus =request.args.get('genus', default='*', type=str)
     species =request.args.get('species', default='*', type=str)
@@ -1750,12 +1758,12 @@ def getBioregionTaxa():
     # Taxon criteria        
     if (taxonName != '*'):
       query = query.filter(BioregionTaxon.taxonName == taxonName)
-    if (rank != '*'):
-      if (rank == 'species'):
-        #query = query.filter(Taxon.rank == 'species' or Taxon.rank == 'subspecies')
-        query = query.filter(or_(Taxon.rank == 'species', Taxon.rank == 'subspecies'))
+    if (taxarank != '*'):
+      if (taxarank == 'species'):
+        #query = query.filter(Taxon.taxarank == 'species' or Taxon.taxarank == 'subspecies')
+        query = query.filter(or_(Taxon.taxarank == 'species', Taxon.taxarank == 'subspecies'))
       else:
-        query = query.filter(Taxon.rank == rank)
+        query = query.filter(Taxon.taxarank == taxarank)
     if (subfamily != '*'):
       query = query.filter(Taxon.subfamily == subfamily)
     if (genus != '*'): 
@@ -1790,7 +1798,7 @@ def getBioregionTaxa():
           'bioregionName': bioregionTaxon.bioregion.name
         , 'taxonName': bioregionTaxon.taxonName
         , 'status': bioregionTaxon.taxon.status
-        , 'rank': bioregionTaxon.taxon.rank
+        , 'taxarank': bioregionTaxon.taxon.taxarank
         , 'subfamily': initCap(bioregionTaxon.taxon.subfamily)
         , 'genus': initCap(bioregionTaxon.taxon.genus)
         , 'species': bioregionTaxon.taxon.species
@@ -1830,7 +1838,7 @@ def getUnimagedGeolocaleTaxa():
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
     byCaste = request.args.get('byCaste', default = '*',  type=str)
     #caste = request.args.get('caste', default = '*',  type=str)
-    rank = request.args.get('rank', default='*', type=str)
+    taxarank = request.args.get('taxarank', default='*', type=str)
     status = request.args.get('status', default = '*', type=str)        
     setGlobals(request)
     if (down(request)): return ""
@@ -1845,9 +1853,9 @@ def getUnimagedGeolocaleTaxa():
       if (byCaste == 'true'): byCaste = 1
       if (byCaste == 'false'): byCaste = 0
 
-    rankClause = " and t.rank in ('species', 'subspecies')"
-    if (rank != '*'):
-      rankClause = " and t.rank = '" + rank + "'"
+    rankClause = " and t.taxarank in ('species', 'subspecies')"
+    if (taxarank != '*'):
+      rankClause = " and t.taxarank = '" + taxarank + "'"
 
     statusClause = ""
     if (status != '*'):

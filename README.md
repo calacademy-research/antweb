@@ -10,5 +10,3 @@ See doc/releaseNotes.txt
 See doc/toDo.txt
 
 See doc/install.txt
-
-woo hoo a change

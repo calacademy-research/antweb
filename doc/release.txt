@@ -1,3 +1,13 @@
+
+
+Release 8.33
+Date: May 23
+  Fix taxarank in the API
+  
+Release 8.32
+Date: May 23
+  Subgenera selector modified to have Sort and Select.
+
 Release 8.31
 Date: May 11
   Date determine, and collected start and end date checking and logging in upload report.
