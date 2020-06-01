@@ -1,3 +1,11 @@
+Release 8.33
+  api/v3.1/api.py
+  doc/release.txt
+  web/documentation/releaseNum.jsp
+
+Release 8.32
+  web/common/subgeneraDisplay.jsp  
+
 Release 8.23.1
  doc/done.txt                                       | 23 +++++++++++++----------
  doc/release.txt                                    |  9 ++++++++-
