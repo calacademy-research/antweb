@@ -1,4 +1,4 @@
-# sudo /usr/local/bin/python3.6 /home/antweb/antweb_deploy/api/apiCheck.py > /home/antweb/apiCheck.log &
+# sudo /usr/local/bin/python3.6 /antweb/deploy/api/apiCheck.py > /antweb/log/apiCheck.log &
 
 from urllib import request, parse
 

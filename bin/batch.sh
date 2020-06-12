@@ -1,12 +1,12 @@
 # This is similar to reboot.sh. Derived from it.
 #
-# 5 1 * * * sh /home/antweb/antweb_deploy/bin/reboot.sh
+# 5 1 * * * sh /antweb/deploy/bin/reboot.sh
 
 # /etc/init.d/priv_tomcat stop
-sh /home/antweb/antweb_deploy/bin/db-daily-dump.sh &
-sh /home/antweb/antweb_deploy/bin/db-monthly-dump.sh &
-sh /home/antweb/antweb_deploy/bin/db-daily-dump.sh movable &
-sh /home/antweb/antweb_deploy/bin/db-monthly-dump.sh movable &
+sh /home/antweb/deploy/bin/db-daily-dump.sh &
+sh /home/antweb/deploy/bin/db-monthly-dump.sh &
+sh /home/antweb/deploy/bin/db-daily-dump.sh movable &
+sh /home/antweb/deploy/bin/db-monthly-dump.sh movable &
 
 wait 
 

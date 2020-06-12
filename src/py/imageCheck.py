@@ -53,7 +53,7 @@ isDevMode = 0
 # MySQL configurations  
 try:
     #apiDbConf = '/var/www/html/apiV3/api_db.conf'                                                                                                                                                                        
-    #apiDbConf = '/home/antweb/antweb_deploy/api/v3/api_db.conf'
+    #apiDbConf = '/antweb/deploy/api/v3/api_db.conf'
     apiDbConf = 'api_db.conf'  
 
     import os

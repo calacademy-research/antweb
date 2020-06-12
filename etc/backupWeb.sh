@@ -1,4 +1,4 @@
-# sudo sh ../antweb_deploy/etc/backupWeb.sh
+# sudo sh ../deploy/etc/backupWeb.sh
 
 cp -r /data/antweb/web/curator .
 cp -r /data/antweb/web/documentation .

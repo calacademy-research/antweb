@@ -1,5 +1,5 @@
 # Execute from within the links directory
-# sudo sh ../antweb_deploy/etc/makeLinks.sh
+# sudo sh ../deploy/etc/makeLinks.sh
 
 ln -sf /antweb/logs antwebLogs 
 

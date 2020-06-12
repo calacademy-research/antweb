@@ -1,17 +1,19 @@
 Release 8.34
-  modified:   db/upgrade/8.0/2020-02-12.sql
-  modified:   doc/dbDebug.txt
-  modified:   doc/done.txt
-  modified:   doc/release.txt
-  modified:   src/org/calacademy/antweb/SpecimenImage.java
-  modified:   src/org/calacademy/antweb/geolocale/Island.java
-  modified:   src/org/calacademy/antweb/home/SpecimenDb.java
-  modified:   src/org/calacademy/antweb/util/DateUtil.java
-  modified:   web/common/academyHeader.jsp
-  modified:   web/common/georegionMenu.jsp
-  modified:   web/common/message-body.jsp
-  modified:   web/documentation/releaseNum.jsp
-	
+ db/upgrade/8.0/2020-02-12.sql                   |  13 +++++++++++++
+ doc/dbDebug.txt                                 |   6 ++++--
+ doc/done.txt                                    | 194 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++------------------------------------------------------------------------------------------------------------------
+ doc/fileMods.txt                                |  14 ++++++++++++++
+ doc/release.txt                                 |   3 +++
+ src/org/calacademy/antweb/SpecimenImage.java    |  83 ++++++++++++++++++++++++++++++++++++++++++-----------------------------------------
+ src/org/calacademy/antweb/geolocale/Island.java |   4 ++++
+ src/org/calacademy/antweb/home/SpecimenDb.java  |  70 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ src/org/calacademy/antweb/util/DateUtil.java    |  60 +++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ web/common/academyHeader.jsp                    |   1 -
+ web/common/georegionMenu.jsp                    |   4 +++-
+ web/common/message-body.jsp                     |   2 +-
+ web/documentation/releaseNum.jsp                |   2 +-
+ 13 files changed, 281 insertions(+), 175 deletions(-)
+
 Release 8.33
   api/v3.1/api.py
   doc/release.txt

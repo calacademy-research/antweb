@@ -12400,5 +12400,11 @@ Jun 9th. 1hr.
   Look into high res link not working for 
       https://www.antweb.org/bigPicture.do?name=focol1237&shot=p&number=1
 
+Jun 12. 5 hrs. Discounted to 2.
+  Adjustment to specimen date parsing. Support more formats.
+  Deployment of 8.34.
+  Test out database backups. Working. Check on disk space. 85%.
+  
+  
 
 

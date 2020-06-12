@@ -4,7 +4,7 @@
 #   Testing on Dev machine:
 # python3.6 dbPull.py > dbPull.log
 #   or on antweb-api:
-# sudo /usr/local/bin/python3.6 /home/antweb/antweb_deploy/api/dbPull.py > /home/antweb/dbPull.log
+# sudo /usr/local/bin/python3.6 /antweb/deploy/api/dbPull.py > /home/antweb/dbPull.log
 
 
 from urllib import request, parse

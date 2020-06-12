@@ -142,7 +142,7 @@ public abstract class AntwebProps {
           // This is used for AntwebFunction.imageCheck() to call a python script in the soruce tree.
           return "/Users/mark/antweb/";
         } else {
-          return "/antweb/antweb_deploy/";    
+          return "/antweb/deploy/";    
         }
     }
 
