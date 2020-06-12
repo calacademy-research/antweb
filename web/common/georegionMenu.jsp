@@ -80,7 +80,9 @@
                                  ++adm1i;
                                  String countryName = country.getName();
                                  //A.log("countryName:" + countryName + " adm1:" + adm1);
-								 //if (AntwebProps.isMichele(request)) countryName = "Untethered Sociopaths<br>of Alienation"; // This is a joke for Michele.
+								 if ((AntwebProps.isDevMode() || LoginMgr.isMichele(request)) && "United States".equals(countryName)) {
+								   countryName = "Untethered Sociopaths<br>of Alienation"; // This is a joke for Michele.
+                                 }
                                   %>
                         <li><a href="<%= country.getThisPageTarget() %>"><img src="<%= AntwebProps.getDomainApp() %>/image/flag/16/<%= country.getFlagIcon() %>">&nbsp;<%= countryName %></a></li>
                            <% }

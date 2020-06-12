@@ -32,7 +32,6 @@
         }
         //console.log("academyHeader.jsp protocolLength:" + window.location.protocol.length + " location.href:" + location.href);
 	    </script>
-
    <% }
     }
 

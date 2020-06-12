@@ -1,3 +1,17 @@
+Release 8.34
+  modified:   db/upgrade/8.0/2020-02-12.sql
+  modified:   doc/dbDebug.txt
+  modified:   doc/done.txt
+  modified:   doc/release.txt
+  modified:   src/org/calacademy/antweb/SpecimenImage.java
+  modified:   src/org/calacademy/antweb/geolocale/Island.java
+  modified:   src/org/calacademy/antweb/home/SpecimenDb.java
+  modified:   src/org/calacademy/antweb/util/DateUtil.java
+  modified:   web/common/academyHeader.jsp
+  modified:   web/common/georegionMenu.jsp
+  modified:   web/common/message-body.jsp
+  modified:   web/documentation/releaseNum.jsp
+	
 Release 8.33
   api/v3.1/api.py
   doc/release.txt

@@ -791,15 +791,22 @@ public class SpecimenDb extends AntwebDb {
         int updated = 0;
         int notUpdated = 0;
         int suspect = 0;
+        int newNulls1 = 0;
+        int newNulls2 = 0;
         Statement stmt = null;
         ResultSet rset = null;
         String query = "select code, access_group, datecollectedstartstr, datecollectedendStr, datecollectedstart, datecollectedend from specimen"; // where access_group = 21 and taxon_name = 'fmnhins0000122716'";
+
+        //if (AntwebProps.isDevMode()) query += " where taxon_name = 'pseudomyrmecinaetetraponera natalensis'";
+        //if (AntwebProps.isDevMode()) query += " where code = 'fmnhins0000109397'";
+
         try {
             stmt = DBUtil.getStatement(getConnection(), "dateParse()");
             rset = stmt.executeQuery(query);
             A.log("parseDates() query:" + query);
             while (rset.next()) {
-                ++count;
+                //++count;
+                count = 0;
                 String code = rset.getString("code");
                 String accessGroup = rset.getString("access_group");
                 String startStr = rset.getString("datecollectedstartstr");
@@ -808,7 +815,6 @@ public class SpecimenDb extends AntwebDb {
                 String endStr = rset.getString("datecollectedendstr");
                 String end = rset.getString("datecollectedend");
                 String endNew = DateUtil.getConstructDateStr(endStr);
-
 
 /*
                 // Show the unfixed.
@@ -828,25 +834,50 @@ public class SpecimenDb extends AntwebDb {
                     continue;
                 }
 */
-                
-                A.log("parseDates() startStr:" + startStr + " start:" + start + " startNew:" + startNew);
+
+                // We have an old value. mem222072 |            8 | 0000-04-24             | 0000-04-24
+                if ((startNew != null && start == null) || ("mem222072".equals(code))) {
+                    newNulls1 += updateCollectedStartAsNull(code);
+                    A.log("parseDates() code:" + code + " start:" + start + " startNew:" + startNew);
+                }
+                //ex: | sam-hym-c005977   | pseudomyrmecinaetetraponera natalensis | 1947/12/              | 1947/12/-00-00
+                if ((start != null && startNew == null)) {
+                    newNulls2 += updateCollectedStartAsNull(code);
+                    A.log("parseDates() WTF code:" + code + " start:" + start + " startStr:" + startStr + " startNew:" + startNew);
+                }
+
+/*
+                if (startNew != null) {
+                    java.util.Date newD = DateUtil.constructDate(startNew);
+                    java.util.Date date1700 = DateUtil.constructDate("1700");
+                    if (newD == null || date1700 == null) {
+                        A.log("parseDates() newD is null from startNew:" + startNew + " date1700:" + date1700);
+                        continue;
+                    }
+                    if (newD.before(date1700)) {
+                        A.log("parseDates() LESS THAN startStr:" + startStr + " start:" + start + " startNew:" + startNew);
+                        //startNew = null;
+                    }
+                }
+*/
+
                 if ((startNew != null && !startNew.equals(start)) || (endNew != null && !endNew.equals(end))) {
                     count = updateParsedDates(code, startNew, endNew);
-                    s_log.warn("parseDates() count:" + count + " accessGroup:" + accessGroup + " start:" + start + " -> " + startNew + " end:" + end + " -> :" + endNew);
+                    s_log.warn("parseDates() count:" + count + " code:" + code + " startStr:" + startStr + " start:" + start + " -> " + startNew + " end:" + end + " -> " + endNew);
                     if (count < 1) {
                         ++notUpdated;
                     } else {
                         ++updated;
                     }
-                    //A.log("parseDates() updated:" + updated + " startNew:" + startNew + " was start:" + start );
                 }
+                //if (count > 0) A.log("parseDates() updated:" + updated + " startNew:" + startNew + " was start:" + start );
             }
         } catch (SQLException e) {
             s_log.error("dateParse() e:" + e);
         } finally {
             DBUtil.close(stmt, rset, "this", "dateParse()");
         }
-        message = "count:" + count + ". " + updated + " updated. " + notUpdated + " not updated." + suspect + " suspect.";
+        message = "count:" + count + ". " + updated + " updated. " + notUpdated + " newNulls1:" + newNulls1 + " newNulls2:" + newNulls2 + " not updated." + suspect + " suspect.";
         return message;
     }
 
@@ -869,9 +900,9 @@ public class SpecimenDb extends AntwebDb {
                 if (updateStart != null && updateEnd != null) dml += ", ";
                 if (updateEnd != null) dml += updateEnd;
                 dml += " where code = '" + code + "'";
-                s_log.warn("updateParsedDates() dml:" + dml);
+                //s_log.warn("updateParsedDates() dml:" + dml);
 
-                //count = stmt.executeUpdate(dml);
+                count = stmt.executeUpdate(dml);
                 count = 1;
             } else A.log("updateParsedDates() updateStart:" + updateStart + " updateEnd:" + updateEnd);
         } catch (SQLException e) {
@@ -879,6 +910,27 @@ public class SpecimenDb extends AntwebDb {
             throw e;
         } finally {
             DBUtil.close(stmt, "updateParsedDates()");
+        }
+        return count;
+    }
+
+    private int updateCollectedStartAsNull(String code)
+            throws SQLException {
+        int count = 0;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "updateCollectedStartAsNull()");
+            String updateStart = null;
+                String dml = "update specimen set datecollectedstart = null where code = '" + code + "'";
+                s_log.warn("updateParsedDates() dml:" + dml);
+
+                count = stmt.executeUpdate(dml);
+        } catch (SQLException e) {
+            s_log.error("updateCollectedStartAsNull() " + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, "updateCollectedStartAsNull()");
         }
         return count;
     }

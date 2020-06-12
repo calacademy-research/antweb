@@ -125,8 +125,8 @@ public class SpecimenImage implements Serializable {
         String withNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + "_" + number + ".tif";
         String withoutNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + ".tif";
 
-      // For performance sake, when done with the debugging move this into the else statement.
-      String docRoot = (new Utility()).getDocRoot();
+        // For performance sake, when done with the debugging move this into the else statement.
+        String docRoot = (new Utility()).getDocRoot();
 
         if (number > 1) {
           path = withNum;
@@ -138,23 +138,28 @@ public class SpecimenImage implements Serializable {
           }
         }
 
-      // Find the incorrectly flagged (has_tif == 1 in database). Remove code here and above.
-      boolean found = AntwebUtil.fileFound(docRoot + path);
-      //A.log("getTiffPath() found:" + found + " + path:" + path);
-      if (!found) {
-        String testPath = getHighResJpgPath();  
-        //A.log("getTiffPath() test:" + testPath);
-        if (AntwebUtil.fileFound(docRoot + testPath)) {   // REMOVE this check for performance
-          path = testPath;
-          LogMgr.appendLog("OJNotOT.txt", docRoot + testPath);
-          //ImageUtil.getNotTifList().add(this);
-          // Update the is_tif flag in the images table. This is an error condition.
-          // Resolve the root cause existing in existing codebase.
+        String docPath = docRoot + path;
+
+        // Find the incorrectly flagged (has_tif == 1 in database). Remove code here and above.
+        boolean found = AntwebUtil.fileFound(docPath);
+        //A.log("getTiffPath() found:" + found + " + path:" + path);
+        if (!found) {
+          String testPath = getHighResJpgPath();
+          //A.log("getTiffPath() test:" + testPath);
+          if (AntwebUtil.fileFound(docRoot + testPath)) {   // REMOVE this check for performance
+            path = testPath;
+            LogMgr.appendLog("OJNotOT.txt", docRoot + testPath);
+            //ImageUtil.getNotTifList().add(this);
+            // Update the is_tif flag in the images table. This is an error condition.
+            // Resolve the root cause existing in existing codebase.
+          }
         }
-      }
-      
+
+        A.log("getTiffPath() found:" + found + " docPath:" + docPath);
+
         return path;
 	}
+
 	public String getHighResJpgPath() {
         String withNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + "_" + number + ".jpg";
         String withoutNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + ".jpg";
@@ -170,6 +175,7 @@ public class SpecimenImage implements Serializable {
           }
         }    	
 	}
+
 	public String getOrigPath() {
 	  if (getHasTiff()) {
 	    return getTiffPath();
@@ -177,7 +183,45 @@ public class SpecimenImage implements Serializable {
 	    return getHighResJpgPath();
 	  }
 	}
-	
+
+	public boolean isHasTiff() {
+		return hasTiff;
+	}
+	public boolean getHasTiff() {
+	  return isHasTiff();
+    }
+	public void setHasTiff(boolean hasTiff) {
+		this.hasTiff = hasTiff;
+	}
+    
+    public String getOrigUrl() {
+      if (isHasTiff()) {
+        return getTiffUrl();
+      } else {
+        return getHighResJpgUrl();      
+      }       
+    }
+
+    public String getTiffUrl() {
+      return getTiffPath(); //AntwebProps.getDocRoot() +
+    }
+    public String getHighResJpgUrl() {
+      return getHighResJpgPath();
+    }
+
+    public ArrayList<String> getOrigAndDerivPaths() {
+      ArrayList<String> paths = new ArrayList<String>();
+      //String imgPath = "/data/antweb";
+      String imgPath = AntwebProps.getDocRoot();  // Probably has extra slash. Remove from get methods.
+      paths.add(imgPath + getOrigPath());
+      paths.add(imgPath + getThumbview());
+      paths.add(imgPath + getLowres());
+      paths.add(imgPath + getMedres());
+      paths.add(imgPath + getHighres()); 
+      //A.log("getOrigAndDerivPaths() paths:" + paths);
+      return paths;     
+    }
+
     public String getThumbview() {
         if (code == null || code.equals("") || shot == null || shot.equals("")) return null;
         return image_root + "/" + code + "/" + code + "_" + shot + "_" + number + "_thumbview.jpg";
@@ -195,50 +239,7 @@ public class SpecimenImage implements Serializable {
         return image_root + "/" + code + "/" + code + "_" + shot +  "_" + number + "_low.jpg";
     }
 
- 
- 
-	public boolean isHasTiff() {
-		return hasTiff;
-	}
-	public boolean getHasTiff() {
-	  return isHasTiff();
-    }
-	public void setHasTiff(boolean hasTiff) {
-		this.hasTiff = hasTiff;
-	}
-      
-    
-    public String getOrigUrl() {
-      if (isHasTiff()) {
-        return getTiffUrl();
-      } else {
-        return getHighResJpgUrl();      
-      }       
-    }
-
-//AntwebProps.getDocRoot() + 
-
-    public String getTiffUrl() {
-      return getTiffPath(); //AntwebProps.getDocRoot() + 
-    }
-    public String getHighResJpgUrl() {
-      return getHighResJpgPath();
-    }
-
-    public ArrayList<String> getOrigAndDerivPaths() {
-      ArrayList<String> paths = new ArrayList<String>();
-      //String imgPath = "/data/antweb";
-      String imgPath = AntwebProps.getDocRoot();  // Probably has extra slash. Remove from get methods.
-      paths.add(imgPath + getOrigPath());
-      paths.add(imgPath + getThumbview());
-      paths.add(imgPath + getLowres());
-      paths.add(imgPath + getMedres());
-      paths.add(imgPath + getHighres()); 
-      //A.log("getOrigAndDerivPaths() paths:" + paths);
-      return paths;     
-    }        
-
-	public String getDescription() {
+    public String getDescription() {
 		return description;
 	}
 

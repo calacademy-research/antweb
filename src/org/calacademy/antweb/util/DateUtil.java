@@ -53,7 +53,12 @@ public abstract class DateUtil {
     DateUtil.testConstructDateStr("2010/08/12");
     DateUtil.testConstructDateStr("11/08/2011");
     DateUtil.testConstructDateStr("11-Oct-2015");
-
+    DateUtil.testConstructDateStr("1996-10-06");
+    DateUtil.testConstructDateStr("4/2/69");
+    DateUtil.testConstructDateStr("04/02/69");
+    DateUtil.testConstructDateStr("1995-08-31");
+    A.log(DateUtil.getConstructDateStr("1962-08-28"));
+    A.log(DateUtil.getConstructDateStr("7/28/1958"));
   }
 
   public static Date getFormatDateShort(String dateStr) {
@@ -221,7 +226,9 @@ public abstract class DateUtil {
       if (returnDate == null) returnDate = format("dd-MMM-yy", dateStr);
       if (returnDate == null) returnDate = format("MMM dd, yyyy", dateStr);
       if (returnDate == null) returnDate = newFormat("yyyy/MM/dd", dateStr);
-      if (returnDate == null) returnDate = format("dd/MM/yyyy", dateStr);
+
+      if (returnDate == null) returnDate = format("MM/dd/yyyy", dateStr); // Was dd/MM/yyyy
+
       if (returnDate == null) returnDate = format("MM/yyyy", dateStr);
       if (returnDate == null) returnDate = format("yyyy/MM", dateStr);
       if (returnDate == null) returnDate = format("yyyy/", dateStr);
@@ -355,16 +362,59 @@ public abstract class DateUtil {
           returnDate = handleDdMmmYy(dateStr);
           if (returnDate != null) {
             s_debugStep = 18;
+            //A.log("constructDate() 1 dateStr:" + dateStr + " returnDate: " + returnDate);
             return returnDate;
           }
-          //A.log("constructDate() HANDLED! dateStr:" + dateStr + " returnDate:" + returnDate);
 
-        s_debugStep = 19;
-        return null;
+          // If Ex: 4/6/66 misread earlier, here we fix.
+          returnDate = handleDMYy(dateStr);
+          //A.log("constructDate() 2 dateStr:" + dateStr + " returnDate: " + returnDate);
+          s_debugStep = 21;
+          if (returnDate != null) return returnDate;
+
+          s_debugStep = 19;
+          return null;
       }
 
       return returnDate;
     }
+
+
+  private static Date handleDMYy(String dateStr) {
+    //String dateStr = "1/6/66"; // Would be Jan 6, 1966. Takes a bit of work.
+    //A.log("handleDMYy() dateStr:" + dateStr);
+
+    int indexOfFirstHyphen = dateStr.indexOf('/');
+    if (indexOfFirstHyphen < 1 || indexOfFirstHyphen > 3) return null; // Nope, won't support 1985/10
+
+    int indexOfSecondHyphen = dateStr.indexOf('/', indexOfFirstHyphen + 1);
+
+    //A.log("handleDMYy() dateStr:" + dateStr + " 11:" + indexOfFirstHyphen + " i2:" + indexOfSecondHyphen);
+
+    if (indexOfSecondHyphen < 2) return null;
+    if (dateStr.length() > 8) return null;
+    String shortYear = dateStr.substring(indexOfSecondHyphen + 1);
+
+    //A.log("handleDMYy() dateStr:" + dateStr + " shortYear:" + shortYear);
+
+    int year = Integer.valueOf(shortYear);
+    if (year > 50) {
+      year = year + 1900;
+    } else {
+      year = year + 2000;
+    }
+    dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
+    String firstNum = dateStr.substring(0, indexOfFirstHyphen);
+    int firstNumInt = Integer.valueOf(firstNum);
+    Date date = null;
+    if (firstNumInt <= 12) {
+      date = format("MM/dd/yyyy", dateStr);
+    } else {
+      date = format("dd/MM/yyyy", dateStr);
+    }
+    A.log("handleDMYy() i:" + indexOfSecondHyphen + " year:" + year + " dateStr:" + dateStr + " l:" + dateStr.length() + " firstNum:" + firstNum + " date:" + date);
+    return date;
+  }
 
    // Basciallly just for validation. Have a dateStr in our preferred format and want a date object.
     public static Date getDate(String dateStr) {

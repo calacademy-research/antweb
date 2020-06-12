@@ -1,4 +1,7 @@
 
+Release 8.34
+Date: Jun 12
+  Adjustment to specimen date parsing. Support more formats.
 
 Release 8.33
 Date: May 23

@@ -55,3 +55,16 @@ update geolocale set valid_name = "Galapagos Islands" where id = 620;
 
 alter table specimen add column island_country varchar(64);
 update geolocale set country = "Ecuador" where id = 1721;
+
+update specimen set country = "United States", island_country = "Hawaii" where country = "Hawaii";
+update specimen set island_country = "Galapagos Islands" where adm1 like  "Galapagos%";
+
+alter table specimen drop column date_collected;
+
+update specimen set datecollectedstart = null where datecollectedstart = "null";
+update specimen set datecollectedend = null where datecollectedend = "null";
+
+
+
+
+

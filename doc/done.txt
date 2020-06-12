@@ -12122,23 +12122,22 @@ Mar 30. 1hr.
 -week: 1hr
 - Mar: 57.5
 
-
 Apr 3rd. 2hr.
   Organize task list.
   Work on fix for the lifestage sort bug.
-  
-Apr 4th. 4:30 - 7.  
+ 
+Apr 4th. 4:30 - 7.  2.5hrs.
   Documentation. To do list. War file and github.
   Create report for RecentCASPinnedPonerinae
   Deploy to live site. Document.
-  
+ 
 Apr 10. 6hrs.
   Reinstall Antweb on dev Mac (Hard drive came back blank from Apple).
   Add helpful error messages to facilitate misconfiguration.
    Specify if AntwebResources or platform.properties is missing and recommend fix.
   Work to get GitHub working. Incomplete.
   Update to mysql-connector-java-5.1.48-bin.jar
-  Begin major refactor to accomodate new database reserved words rank and groups. 
+  Begin major refactor to accomodate new database reserved words rank and groups.
     Database table groups renamed to ant_group.
     Column Taxon.rank renamed Taxon.taxarank.
     Column Homonym.rank renamed Homonym.taxarank.
@@ -12147,8 +12146,10 @@ Apr 10. 6hrs.
 
 Apr 11. 3.5hrs.
   Finish refactoring.
-  Performance optimization of startup. 
+  Performance optimization of startup.
     Populate login and curator details outside of startup process.
+
+-week: 14
 
 Apr 12. 5hrs.
   Finish postInitialize method.
@@ -12166,14 +12167,15 @@ Apr 13. 1hr.
 
 Apr 14. 2 hr.
   LoginDb instantiation mods.
-  Thread change in AntwebMgr. Use of fetch instead. 
-  Refinement of postInitialize methods. 
+  Thread change in AntwebMgr. Use of fetch instead.
+  Refinement of postInitialize methods.
 
 Apr 15. 1hr.
   Fix %20and%20 requests.
   Deploy live.  
   Invoice.
-  
+ 
+-Week: 9
 
 Apr 21th. 5hrs.
   Look into carrying parameters statusSet and global into the mapping feature.
@@ -12184,7 +12186,7 @@ Apr 21th. 5hrs.
     Fix bug that returned partial result set in case of null values.
     Fix sorting bug that would mis-sort.
     Fix the Location field to not appear insane.
-    Bold the heading and value of all fields. 
+    Bold the heading and value of all fields.
     Update UI. Capitalizations and Naming consistency.
   Deploy to live site. Document.
 
@@ -12200,8 +12202,6 @@ Apr 23. 2.5hrs.
   Implement.
   Deploy. Document.
 
-#reported
-
 Apr 24. 6.5hrs.
   UI and Advanced Search Sort Order.
   Figure out Peter's security issue.
@@ -12210,6 +12210,8 @@ Apr 24. 6.5hrs.
   Get down to 4 deprecations.
   Deploy to live site.  
 
+-week: 15.5
+
 Apr 27. 1hr.
   Look into and implement sort by caste and subcaste.
 
@@ -12217,35 +12219,36 @@ Apr 26. 2.5hr.
   Add line numbers to specimenReport.jsp.
   Look into species list literature records.
   Look for disk space to free.
-    Write script to clear disk space. 
+    Write script to clear disk space.
     Add to admin.sh nightly batch processes.
   Deploy to live site. Document. Contact Randy about disk space.
 
-
 APR 26 (continued) 1hr.
   Make caste and subcaste both sort on caste and both be highlighted.
-  
+ 
 Apr 27. 3hrs.
   Make workingdir configuration go away. Use document root.  
     Get specimen upload working in new dev environment.
   Look into islands solution.
 
-#Reported
-
 Apr 28. 3hrs
   Islands work in the code.
   Modify tables.
   Design with Brian.
-  
+ 
 Apr 29. 3hrs.
   Add bit more documentation to overview page admin options. Specify table to modify.
   Get geolocale taxa loading from specimen data for islands
-  Add geolocale page link for admin to: Generate Geolocale Taxa From Specimens 
+  Add geolocale page link for admin to: Generate Geolocale Taxa From Specimens
   Discover and investigate incorrect results.
 
 Apr 30. 3hrs.
   Island work.
   Write the geolocaleTaxonTest report to find the geolocaletaxa with incorrect species_count.
+ 
+-week: 16.5
+-Apr month: 55
+  
   
 May 1. 3.5hrs.
   Convert the geolocaleTaxaTest into a corrective method.
@@ -12266,6 +12269,8 @@ May 2. 7.5hrs.
   Map failure debugged and fixed. Works for islands now. 
   Island creation mechanisms added to Geolocale Mgr and SpecimenUploadParse. 
 
+-Week: 11
+
 May 3. 8.5hrs.
   Find why Adm1 records are missing. Fix GeolocaleMgr.getValidAdm1().
   Default rank for advanced search.
@@ -12278,9 +12283,7 @@ May 3. 8.5hrs.
   Extend on-screen documentation for administrators on overview page.
   Add subtaxon total to bottom of taxonReports for admin.
   
-#Reported
-
-May 4. 
+May 4. 2.5hrs.
   Add admin only all link for count crawls on overview page.
   Fix the missing endemic and introduced flags on taxonomic page.
   Adjust museum and bioregion specimen counts
@@ -12292,19 +12295,18 @@ May 5. 5hrs.
   Refactor UtilData procedure management and count crawls.
   Separate children crawls from image crawls. 
   Optimize scheduler (1hr 56 min).
-  
-    
+
 May 6. 5.5 hrs.
   Look into getting dev or stg working. Contact Joe.
   Fix the Antwiki screen scraping.
   Deploy 8.29 and 8.29.1. Testing.
   Refactoring of UtilDataAction.
   Modify overview admin actions.
-  Test scheduler on the server. Profiling times.  
+  Test scheduler on the server. Profiling times.
   Document.
   Test specimen upload. 
-  
-May 7
+
+May 7. 2hrs.
   Look into Bioregion introduced.
   Roll back method Bioregion individuation.    
   Trigger GeolocaleMgr.reload after Geolocale Crawl in scheduled tasks.
@@ -12313,6 +12315,8 @@ May 7
 
 May 8. 1hr.
   Checking on server. Planning resolution of endemics and introduced.  
+
+-week: 24.5
 
 May 10. 6.5 hours.
   Date work
@@ -12325,114 +12329,76 @@ May 10. 6.5 hours.
   AntwebUpload date management refactoring.   
   Date collected range added to the Specimen Habitat Summary of the taxon page.
 
-May 11
+May 11. 7hrs.
   Test deployment locally. Documented.
   Deploy to live site. Re-run CAS specimen upload.
   Investigate the page loading sort order bug on advanced search results page.
   Write parseDates procedure. Attempt to get up to code. Not there yet.
   Fix advanced search date display to use new format.
   Deploy to live site.
+  Refinements to Date discernment (difficult).
+  Upload checks for date determined, and collected start and end date, in upload report.
+  Deploy to live site.  
+
+May 14th.
+  Invoice for April.
+
+May 15. 1hr.
+  Contact Joe about GitHub
+  Delete files for Randy. Document.
+
+-week: 14
+
+May 20. 1hr.
+  Talk with Joe about GitHub
+  Talk with Brian about WAR files.
   
+May 22nd. 1.5hr.
+  Species report of an adm1 ordered by subgenus.  
+  SubgeneraDisplay design.
+  Check in with Joe on Github.
+
+May 23rd. 1.5 hours.
+  Refine subgeneraDisplay design with Brian.
+  Modify subgeneraDisplay.jsp and deploy to live site.
+
+-week: 4
+
+May 24th. 2hr.
+  Get the API working in dev environment. (3 Pip install commands).
+  Fix the taxarank column in api.py.
+  Deploy to the live server. Document.
+  Relate with Joe about Python.
+
+May 28th. 3hrs.
+  Github work. Documentation.
+
+May 29th. 0
+  Check in with Brian about CAS/work changes.
+
+-week: 5
+--month:  58.5
+
+-- 
+
+Jun 1. 3 hrs.
+  Meet with Joe. Iron out the github in dev environment.
+  Reconfigure server. Deploy.
+  Debug the http issue on dev.
+    Configure dev server with github, code and data.
+    Document.
+  Expense report for May.
+    
+Jun 2 
+  Task list?
 
 
-Remove date_collected from specimen, views and api.
+Jun 4. 1hr.
+  Look into the Change View links not working. Resolved by reboot.
+
+Jun 9th. 1hr.
+  Look into high res link not working for 
+      https://www.antweb.org/bigPicture.do?name=focol1237&shot=p&number=1
 
 
-Cara
-  not the microphone I requested.
-  Send Alan Watts
-  Was going to mention the part of the Tapping Circle where I acknowledged that I am 
-    posting videos and tracking my narcisstic needs. My desire to be seen, to be loved.
-    To care what other people think. Not wanting condemmation. Just recognizing that none
-    of that business matters to me. Still going to post, still going to try to get likes
-    and views and comments, but not because I care but because that's what I'm doing. But
-    I'm going to really do it. I am going to start linking them together so that people 
-    who liked one gets pointed to the next. Then when I have them all live I will private
-    message people saying, "I think you'd like this one".
-
-#reported
-
-
-tub chemicals
-Tooth insurance
-Tappresence email through wordpress
-Taxes
-      
-  	 
--week:
-
-
-Follow up on species lists: literature records email
-
-
-
-
-follow up benedictineherbs.com 
-
-
-Movies
-
-Marriage story
-Frozen 2
-Fleabag
-RBG
-Man on Fire
-Beanpole
-About Time
-The Nice Guys
-Mile 22
-Green Zone
-Social network
-The Hours
-Isle of Dogs
-Million Dollar Baby
-The Day the Earth Caught Fire
-Man Named Pearl
-The Freshman with Marlon Brando
-Mud - Netflix
-Seconds
-
-
-
-
-Spiritual Gaslighting 
-Workshop.
-Tapping
-Fall back on president.
-Trying to be myself. Trying to be a good preson. Who I am gets used against me.
-Movie gaslight. She is hearing noises in the attic. 
-  He is turning down the gass to make the lights flicker.
-It is realizing that someone iss messing with you is the way to get free.
-Promo (All important)
-  If gaslighted, there is a right way to respond, and an oh-no-very-much-not=the-right-way to repsond.
-  In this supportive group to take place on Zoom we will use EFT Tapping to allow us to 
-    See clearly
-  I will be leading the group and am deeply experienced with working with trauma and 
-    countering manipulation techniques.
-  We will dispel fear of manipulation, to take the claws out, so as to take responsibility
-    for our lives.
-  You will be trusted! We will meet and listen and hear your experience in the group format.
-
-
-  
-  
-Iona
-Brendan
-Whitney?
-Andy
-
-
-
-
-
-Paul Davids 
-  Am7
-  Dm7 
-  G7 
-  CMaj7 
-  Fmaj7
-  Bm7b5  
-  E7 
-  Am  
-  
 
