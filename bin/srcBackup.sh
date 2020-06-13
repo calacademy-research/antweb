@@ -22,8 +22,7 @@ echo 'Making daily database backup of db:' $fileDir
 
 
 if [ -d $backupDir ]; then
-ant clean
-zip -r --exclude=".git/*" $fileDir .
+zip -r --exclude=".git/*" --exclude="build/*" $fileDir .
 fi
 
 # End of script
