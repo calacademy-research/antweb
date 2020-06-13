@@ -12,8 +12,6 @@ import java.util.Set;
 
 import org.calacademy.antweb.util.*;
 
-import org.apache.batik.dom.util.HashTable;
-
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     

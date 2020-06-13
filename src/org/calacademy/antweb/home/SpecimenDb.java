@@ -877,7 +877,7 @@ public class SpecimenDb extends AntwebDb {
         } finally {
             DBUtil.close(stmt, rset, "this", "dateParse()");
         }
-        message = "count:" + count + ". " + updated + " updated. " + notUpdated + " newNulls1:" + newNulls1 + " newNulls2:" + newNulls2 + " not updated." + suspect + " suspect.";
+        message = "Updated: " + updated + " notUpdated: " + notUpdated + " newNulls1:" + newNulls1 + " newNulls2:" + newNulls2 + " suspect:" + suspect + ".";
         return message;
     }
 

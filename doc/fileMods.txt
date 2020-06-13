@@ -1,3 +1,28 @@
+Release 8.35
+  deleted:    WEB-INF/lib/batik.jar
+  deleted:    WEB-INF/lib/commons-lang3-3.7.jar
+  deleted:    WEB-INF/lib/fop.jar
+  deleted:    WEB-INF/lib/hamcrest-core-1.3.jar
+  deleted:    WEB-INF/lib/xercesImpl-2.6.2-jaxb-1.0.6.jar
+  modified:   doc/done.txt
+  modified:   doc/fileMods.txt
+  modified:   doc/release.txt
+  modified:   src/org/calacademy/antweb/home/SpecimenDb.java
+  modified:   src/org/calacademy/antweb/search/AdvancedSearchResults.java
+  modified:   src/org/calacademy/antweb/upload/WorldAuthorityAction.java
+  deleted:    web/web/homepage/Ancillary_pages.pdf
+  deleted:    web/web/homepage/AntWeb Imaging guidelines v01.pdf
+  deleted:    web/web/homepage/FMNH_Imaging_Manual_2013.pdf
+  deleted:    web/web/homepage/Image_Picker.pdf
+  deleted:    web/web/homepage/Imaging_Manual_LAS38_v02.pdf
+  deleted:    web/web/homepage/Imaging_Manual_LAS38_v03.pdf
+  deleted:    web/web/homepage/Photoshop_AntWeb.pdf
+  deleted:    web/web/homepage/RegionalProject species list instructions_v03.pdf
+  deleted:    web/web/homepage/Species_list.pdf
+  deleted:    web/web/homepage/Specimen data overview_v04.pdf
+  deleted:    web/web/homepage/Specimen_data.pdf
+  deleted:    web/web/homepage/Submitting_image.pdf
+
 Release 8.34
  db/upgrade/8.0/2020-02-12.sql                   |  13 +++++++++++++
  doc/dbDebug.txt                                 |   6 ++++--
@@ -12,8 +37,26 @@ Release 8.34
  web/common/georegionMenu.jsp                    |   4 +++-
  web/common/message-body.jsp                     |   2 +-
  web/documentation/releaseNum.jsp                |   2 +-
- 13 files changed, 281 insertions(+), 175 deletions(-)
-
+ api/apiCheck.py                                     |  2 +-
+ api/dbPull.py                                       |  2 +-
+ api/v3.1/api.py                                     |  2 +-
+ api/v3.1/deploy.sh                                  |  2 +-
+ api/v3/api.py                                       |  2 +-
+ api/v3/deploy.sh                                    |  2 +-
+ bin/admin.sh                                        |  8 ++++----
+ bin/batch.sh                                        | 10 +++++-----
+ bin/reboot.sh                                       |  2 +-
+ doc/done.txt                                        |  6 ++++++
+ doc/fileMods.txt                                    | 28 +++++++++++++++-------------
+ etc/backupWeb.sh                                    |  2 +-
+ etc/makeLinks.sh                                    |  2 +-
+ src/org/calacademy/antweb/util/AntwebFunctions.java |  2 +-
+ src/org/calacademy/antweb/util/AntwebProps.java     |  2 +-
+ src/py/imageCheck.py                                |  2 +-
+ src/py/imageExif.py                                 |  2 +-
+ src/py/util.py                                      |  2 +-
+ bin/clearDisk.py | 120 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+ 
 Release 8.33
   api/v3.1/api.py
   doc/release.txt

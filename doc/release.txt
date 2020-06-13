@@ -1,7 +1,12 @@
 
+Release 8.35
+  Remove batik.jar and the need for it. Remove 4 other unused jars.
+
 Release 8.34
 Date: Jun 12
   Adjustment to specimen date parsing. Support more formats.
+    Run procedure to update image collected dates in specimen data.
+  Fix the cleanDisk.py procedure (given new source tree root).
 
 Release 8.33
 Date: May 23
