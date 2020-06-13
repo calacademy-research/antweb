@@ -1,4 +1,5 @@
 Release 8.35
+  added:      bin/srcBackup.sh 
   deleted:    WEB-INF/lib/batik.jar
   deleted:    WEB-INF/lib/commons-lang3-3.7.jar
   deleted:    WEB-INF/lib/fop.jar
