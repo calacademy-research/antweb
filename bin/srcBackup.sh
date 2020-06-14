@@ -9,6 +9,11 @@
 rel="rel"
 if [ $1 ] ; then
 rel="$1"
+else
+  echo "Which release number?"
+  echo "  ex: sh bin/srcBackup.sh 8.35"
+  echo ""
+  exit
 fi
 
 fileName="antweb"
@@ -18,11 +23,13 @@ backupDir="/antweb/bak/rel"
 
 fileDir=$backupDir/$fileName$rel$ext
 
-echo 'Making daily database backup of db:' $fileDir
+echo 'Backing up source to:' $fileDir
 
 
 if [ -d $backupDir ]; then
 zip -r --exclude=".git/*" --exclude="build/*" $fileDir .
 fi
+
+echo ""
 
 # End of script
