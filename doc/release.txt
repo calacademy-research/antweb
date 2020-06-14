@@ -1,6 +1,10 @@
+Release 8.36
+  Handle login failure with concise message.
 
 Release 8.35
-  Remove batik.jar and the need for it. Remove 4 other unused jars.
+  Remove 5 unused jar files.
+  Remove PDF files from source tree.
+  Create the srcBackup.sh script.
 
 Release 8.34
 Date: Jun 12

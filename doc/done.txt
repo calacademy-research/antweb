@@ -12407,13 +12407,13 @@ Jun 11. 5 hrs. Discounted to 2.5
   Reconfigured live source code location.
   Clear disk space. Repain cleanup mechanism.  
 
-#Reported
-
-Jun 12. 1.5hrs.
+Jun 12. 1hr.
   Create source backup script. Exclude the .git directory.
   Remove 5 unneeded jar files to reduce size.
   Remove PDF files from source tree (leave in the server's web dir).
   Deploy to live site.
+
+#Reported
 
 
   
