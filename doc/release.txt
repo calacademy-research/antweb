@@ -1,6 +1,12 @@
+
+Release 8.37
+Date: Jun 15
+  Use guaranteed unique connection name in LoginAction and TaxaPageAction.
+
 Release 8.36
   Handle login failure with concise message.
-
+  Minor changes to srcBackup.sh script. Require release num.
+  
 Release 8.35
   Remove 5 unused jar files.
   Remove PDF files from source tree.

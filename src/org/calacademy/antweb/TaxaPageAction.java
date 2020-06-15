@@ -82,13 +82,15 @@ public final class TaxaPageAction extends Action {
         TaxaPage taxaPage = new TaxaPage();
         if (rank != null) {
           java.sql.Connection connection = null;
+          String connName = "TaxaPageAction.execute()" + AntwebUtil.getRandomNumber();
+
           //int uniqueNumber = AntwebUtil.getRandomNumber();
           try {
             javax.sql.DataSource dataSource = getDataSource(request, "conPool");
 
             if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }            
             
-            connection = DBUtil.getConnection(dataSource, "TaxaPageAction.execute()", HttpUtil.getTarget(request));
+            connection = DBUtil.getConnection(dataSource, connName, HttpUtil.getTarget(request));
             //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
             /*
               Some TaxaPageAction requests are not getting closed. Here we are logging a number
@@ -195,33 +197,11 @@ public final class TaxaPageAction extends Action {
             s_log.error("execute() at time " + now.get(Calendar.HOUR) 
               + ":" + now.get(Calendar.MINUTE) + ":" + now.get(Calendar.SECOND) + " e:" + e);
           } finally {
-            DBUtil.close(connection, this, "TaxaPageAction.execute()");
+            DBUtil.close(connection, this, connName);
             //s_log.info("execute() closing uniqueNumber:" + uniqueNumber);
           }
 
           request.setAttribute("taxaPage", taxaPage);
-/*
-          if ("request".equals(mapping.getScope())) {
-              request.setAttribute("taxaPage", taxaPage);
-          } else {
-              try {
-                TaxaPage oldTaxa = (TaxaPage) session.getAttribute("taxaPage");
-                if (oldTaxa != null) {
-                    oldTaxa.finalize();
-                }
-              } catch (IllegalStateException e) {
-                  s_log.error("execute() finalizing e:" + e);                
-              } catch (Throwable e) {
-                  s_log.error("execute() finalizing e:" + e);
-              }
-
-              session.setAttribute("taxaPage", taxaPage);
-              if (rank.equals("subfamily")) {
-                  session.setAttribute("taxon",null);
-              }
-          }
-*/
-
         }
 
         // Set a transactional control token to prevent double posting

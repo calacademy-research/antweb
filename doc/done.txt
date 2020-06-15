@@ -12415,6 +12415,13 @@ Jun 12. 1hr.
 
 #Reported
 
+Jun 13. 1hr.
+  Handle the login exception gracefully with details.
+  Clean up the srcBackup.sh. Enforce inclusion of release num.
+  Test and deploy on live site.
+
+
+  
 
   
 

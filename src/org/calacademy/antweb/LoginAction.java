@@ -164,9 +164,10 @@ public final class LoginAction extends Action {
         if (messages.isEmpty()) {
 
             java.sql.Connection connection = null;
+            String connName = "LoginAction.createAccount()" + AntwebUtil.getRandomNumber();
             try {
                 javax.sql.DataSource dataSource = getDataSource(request, "conPool");
-                connection = DBUtil.getConnection(dataSource, "LoginAction.createAccount()");
+                connection = DBUtil.getConnection(dataSource, connName);
                 LoginDb loginDb = new LoginDb(connection);
             
                 login = loginDb.createAccount(userNameOrEmail, password);           
@@ -203,7 +204,7 @@ public final class LoginAction extends Action {
                 }
                 return null;
             } finally {
-                DBUtil.close(connection, this, "LoginAction.createAccount()");
+                DBUtil.close(connection, this, connName);
             }
         }    
         return login;
@@ -227,9 +228,10 @@ public final class LoginAction extends Action {
 
         if (messages.isEmpty()) {
             java.sql.Connection connection = null;
+            String connName = "LoginAction.login()" + AntwebUtil.getRandomNumber();
             try {
                 javax.sql.DataSource dataSource = getDataSource(request, "conPool");
-                connection = DBUtil.getConnection(dataSource, "LoginAction.login()");
+                connection = DBUtil.getConnection(dataSource, connName);
                 LoginDb loginDb = new LoginDb(connection);
                 login = loginDb.getLoginByName(userNameOrEmail);
 //A.log("login() A userNameOrEmail:" + userNameOrEmail + " login:" + login);
@@ -251,7 +253,7 @@ public final class LoginAction extends Action {
                 A.log("login() 4 msg:" + msg);
                 s_log.error("Connection.process", sqle);
             } finally {
-                DBUtil.close(connection, this, "LoginAction.login()");
+                DBUtil.close(connection, this, connName);
             }
         }   
         return login; 
