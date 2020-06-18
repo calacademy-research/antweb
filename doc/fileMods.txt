@@ -1,3 +1,11 @@
+Release 8.37
+ doc/done.txt                                  |  7 +++++++
+ doc/fileMods.txt                              |  8 ++++++++
+ doc/release.txt                               |  8 +++++++-
+ src/org/calacademy/antweb/LoginAction.java    | 10 ++++++----
+ src/org/calacademy/antweb/TaxaPageAction.java | 28 ++++------------------------
+ web/documentation/releaseNum.jsp              |  2 +-
+
 Release 8.36
  bin/srcBackup.sh                            | 9 ++++++++-
  doc/done.txt                                | 6 +++---

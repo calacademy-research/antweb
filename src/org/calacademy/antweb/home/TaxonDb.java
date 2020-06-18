@@ -835,9 +835,10 @@ public class TaxonDb extends AntwebDb {
     We want to be rid of taxa generated from specimen uploads for which the specimen and taxa no longer exist. Below
     we find the specimen upload date and delete taxa from before that. But it is a big list. Why is it not the same
     (about 42) as this:
-      select taxon_name,access_group from taxon where taxon_name not in (select taxon_name from specimen) "
-        + " and taxon.status in ('morphotaxon', 'indetermined', 'unrecognized');
-     */
+      select taxon_name, taxarank, status, access_group from taxon where taxon_name not in (select taxon_name from specimen) 
+        and taxon.status in ('morphotaxon', 'indetermined')
+        and taxarank in ('species', 'subspecies');  // No records returned with this clause.
+
     public String deleteOldSpecimenUploadTaxa() {
         // Loop through each access Group...
         String report = "";
@@ -853,26 +854,26 @@ public class TaxonDb extends AntwebDb {
                     + " where created < '" + created + "' and access_group = " + group.getId() + " and " + StatusSet.getAllAntwebClause();
                 String result = utilDb.runQuery(query);
                 A.log("deleteOldSpecimeUploadTaxa() result:" + result);
-/*
-                String dml = "delete from taxon where created < '" + created + "' and access_group = " + group.getId() + " and " + StatusSet.getAllAntwebClause();
-                int count = utilDb.runDml(dml);
-                A.log("deleteOldSpecimenUploadTaxa() count:" + count + " dml:" + dml);
-                report += group.getId() + ":" + count + ", ";
-*/
+                //String dml = "delete from taxon where created < '" + created + "' and access_group = " + group.getId() + " and " + StatusSet.getAllAntwebClause();
+                //int count = utilDb.runDml(dml);
+                //A.log("deleteOldSpecimenUploadTaxa() count:" + count + " dml:" + dml);
+                //report += group.getId() + ":" + count + ", ";
             }
             if (report.length() > 2) report = report.substring(0, report.length() - 2);
         }
         return report;
     }
+     */
+    
 /*
+    All of the taxa with subgenus fields are from specimen data. If I understand correctly, 
+      those taxa records should not exist because they were created from old specimen uploads... 
+      I will see if I can find all taxa records that should not exist and systematically remove them. 
+      List of taxa with subgenus data (100 records) included below...
+
 // This shows the taxa generated from specimen data that have subgenera. Don't want to take subgenera from specimen records.
 See: select taxon.taxon_name, taxon.status, taxon.access_group, source, taxon.created, code, specimen.subgenus, specimen.created from taxon, specimen where taxon.taxon_name = specimen.taxon_name and taxon.subgenus is not null;
- */
 
-
-
-
-/*
 1) Are all these good to go?
   select taxon_name, source, created from taxon where taxon_name not in (select taxon_name from proj_taxon where project_name = "worldants") and taxon_name not in (select taxon_name from specimen) and rank in ('species', 'subspecies');   
 

@@ -1,27 +1,18 @@
 To Do List:
 
 
-Make the map link on a page like: https://www.antweb.org/browse.do?subfamily=myrmicinae&rank=subfamily&bioregionName=Malagasy&statusSet=all
-  be sensitive to the selected status.
-Fix db backup process. To frequently the db archives are not readable.
-Sort by not working on advanced search results page.
+Fix db backup process? The db archives were not readable for a while. 
+  Watch and backup manually if necessary. Seems OK at this point.
 
-Db taken down. 
-  2020-04-13 14:00:41,200 WARN ajp-nio-8009-exec-225 org.calacademy.antweb.util.DBUtil - <br><br>Mon Apr 13 14:00:41 PDT 2020 isServerBusy YES!  num:101  images - (count:1777 | avg:264 | max:28639 | mostSlow:null)<br> locality - (count:117 | avg:5519 | max:47113 | mostSlow:null)<br> specimenAction - (count:1328 | avg:7 | max:321 | mostSlow:null)<br> description - (count:904 | avg:7024 | max:52300 | mostSlow:null)<br> collection - (count:399 | avg:2 | max:40 | mostSlow:null)<br> browse - (count:630 | avg:13557 | max:121011 | mostSlow:null)<br> Memory:max:3,641MB free:1,185MB total:3,431MB
-  See logs for subsequent stack traces.
+
   
 Small things/immediate frame  
-  Field guide heading and back link fixes.
-  This page is insecure: https://www.antweb.org/description.do?subfamily=amblyoponinae&genus=adetomyrma&rank=genus&countryName=Madagascar
-    Verify CKEditor working. CK editor testing.
-    Secure the description_edit titles.
-      select count(*), title from description_edit where content like '%http://www.antweb%' group by title order by count(*) desc;
-    Maps not working on insecure pages that have included images in insecure ways.
+  Field guide heading and back link fixes. See:
+    https://www.antweb.org/fieldGuide.do?subfamily=amblyoponinae&genus=adetomyrma&project=allantwebants&rank=genus&pr=d
   Fix worldants line numbers. Do not overwrite line numbers in taxa from specimen data? Sometimes/usually correct?
-  Get rid of old specimen data created taxa...
-    All of the taxa with subgenus fields are from specimen data. If I understand correctly, those taxa records should not exist because they were created from old specimen uploads... I will see if I can find all taxa records that should not exist and systematically remove them. List of taxa with subgenus data (100 records) included below...
-    See TaxonDb:836
-  specimen contributed subgenera... get rid of. Do not take subgenus data from specimens.     
+  Get rid of old specimen data created taxa...  See documentation at TaxonDb:836
+    specimen contributed subgenera... get rid of. Do not take subgenus data from specimens.     
+    Looked into this. Not sure how much there is trouble here or need to fix. 
   Review Integrity Queries - no better time than now. Review the orphan tools?
 
 Server
@@ -61,6 +52,8 @@ Low Priority
   One day I would like us to add a table for the world where all the "country" stats are summarized like in his example for coronavirus (scroll down to country list) where we have all the stats for species, invasives and endemics.  https://www.worldometers.info/coronavirus/
     Bioregion, regions, subregions, countries, adm1s. 
     Country table showing species countries, endemics, and invasives for easy comparison across countries
+  Make the map link on a page like: https://www.antweb.org/browse.do?subfamily=myrmicinae&rank=subfamily&bioregionName=Malagasy&statusSet=all
+    be sensitive to the selected status. (I think this was deemed difficult).
 
 ------------
 

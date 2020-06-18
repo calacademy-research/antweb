@@ -303,32 +303,6 @@ public class CountDb extends AntwebDb {
           //if (taxonUpdateCount == 0)
             //A.log("updateCount() None Updated countable:" + countable + " columnName:" + columnName + " parentTaxonName:" + parentTaxonName); // + " updateCountSQL:" + updateCountSQL);
 
-/*
-Both of these are happening during the scheduled tasks. Remove one, right?
-
-// First, called with action=updateGeolocaleCounts
-// This one has been removed. All good?
-// 7.5 minutes!
-	at org.calacademy.antweb.home.CountDb.updateCount(CountDb.java:274)
-	at org.calacademy.antweb.home.CountDb.countChildren(CountDb.java:177)
-	at org.calacademy.antweb.home.CountDb.childrenCountCrawl(CountDb.java:65)
-	at org.calacademy.antweb.home.GeolocaleTaxonCountDb.childrenCountCrawl(GeolocaleTaxonCountDb.java:57)
-	at org.calacademy.antweb.home.GeolocaleTaxonCountDb.countCrawls(GeolocaleTaxonCountDb.java:33)
-	at org.calacademy.antweb.home.GeolocaleDb.updateCounts(GeolocaleDb.java:1091)
-	at org.calacademy.antweb.home.GeolocaleDb.updateCountryCounts(GeolocaleDb.java:1041)
-	at org.calacademy.antweb.home.GeolocaleDb.updateCounts(GeolocaleDb.java:1013)
-	at org.calacademy.antweb.util.UtilDataAction.execute(UtilDataAction.java:208)
-	
-// Then, called with action=allCountCrawls
-	at org.calacademy.antweb.home.CountDb.updateCount(CountDb.java:274)
-	at org.calacademy.antweb.home.CountDb.countChildren(CountDb.java:177)
-	at org.calacademy.antweb.home.CountDb.childrenCountCrawl(CountDb.java:65)
-	at org.calacademy.antweb.home.GeolocaleTaxonCountDb.childrenCountCrawl(GeolocaleTaxonCountDb.java:47)
-	at org.calacademy.antweb.home.GeolocaleTaxonCountDb.countCrawls(GeolocaleTaxonCountDb.java:28)
-	at org.calacademy.antweb.home.TaxonCountDb.allCountCrawls(TaxonCountDb.java:41)
-	at org.calacademy.antweb.util.UtilDataAction.execute(UtilDataAction.java:323)	
-*/
-
         } catch (SQLException e) {
           s_log.warn("updateCount() countable:" + countable + " parentTaxonName:" + parentTaxonName + " columnName:" + columnName + " count:" + count + " updateCountSQL:" + updateCountSQL + " otherUpdateCountSQL:" + otherUpdateCountSQL);
           throw e;

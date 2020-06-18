@@ -133,6 +133,7 @@ public class StatusSet extends Status {
         + ", '" + UNAVAILABLE + "'"
         + ", '" + UNIDENTIFIABLE + "'"
         + ", '" + OBSOLETE_COMBINATION + "'"
+        + ", '" + OBSOLETE_CLASSIFICATION + "'"
         + ", '" + UNAVAILABLE_UNCATEGORIZED + "'"
         + ", '" + UNAVAILABLE_MISSPELLING + "'"
         + ")";

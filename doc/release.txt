@@ -1,3 +1,6 @@
+Release 8.38
+Date: Jun 17
+  Obsolete Classification handling for Antcat.
 
 Release 8.37
 Date: Jun 15

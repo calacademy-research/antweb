@@ -32,6 +32,8 @@ public class Status {
 
     public final static String OBSOLETE_COMBINATION = "obsolete combination";
 
+    public final static String OBSOLETE_CLASSIFICATION = "obsolete classification";
+
     //added Jun 12, 2015.
     public final static String UNAVAILABLE_UNCATEGORIZED = "unavailable uncategorized";
     public final static String UNAVAILABLE_MISSPELLING = "unavailable misspelling";
@@ -109,6 +111,7 @@ public class Status {
     public static boolean usesCurrentValidName(String status) {
         if (Status.ORIGINAL_COMBINATION.equals(status)
          || Status.OBSOLETE_COMBINATION.equals(status)
+         || Status.OBSOLETE_CLASSIFICATION.equals(status)
          || Status.UNAVAILABLE_UNCATEGORIZED.equals(status)
          || Status.UNAVAILABLE_MISSPELLING.equals(status)
          || Status.SYNONYM.equals(status)
@@ -196,7 +199,8 @@ public class Status {
       if (Status.INDETERMINED.equals(getValue())) return " " + table + ".status = '" + INDETERMINED + "' ";
 
       if (Status.OBSOLETE_COMBINATION.equals(getValue())) return " " + table + ".status = '" + OBSOLETE_COMBINATION + "' ";
- 
+      if (Status.OBSOLETE_CLASSIFICATION.equals(getValue())) return " " + table + ".status = '" + OBSOLETE_CLASSIFICATION + "' ";
+
       // We do not include criteria for unavailable mispelling or uncategorized because we do not want them in search results.
 
       return null;    
