@@ -12428,8 +12428,12 @@ Jun 16th. 1hr.
   Check on server.
   Status document to Brian.
   
+Jun 17th, 2hr.
+  Prepare for Obsolete Classification. 
+  Deploy and document.  
+  Discover and fix problem with taxon table type indicator.
+  Deploy and document.  
   
-
   
 
   

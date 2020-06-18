@@ -1,3 +1,15 @@
+Release 8.38
+ doc/done.txt                                |  9 +++++++++
+ doc/fileMods.txt                            |  8 ++++++++
+ doc/release.txt                             |  3 +++
+ doc/toDo.txt                                | 29 +++++++++++------------------
+ src/org/calacademy/antweb/Status.java       |  6 +++++-
+ src/org/calacademy/antweb/StatusSet.java    |  1 +
+ src/org/calacademy/antweb/home/CountDb.java | 26 --------------------------
+ src/org/calacademy/antweb/home/TaxonDb.java | 29 +++++++++++++++--------------
+ web/documentation/releaseNum.jsp            |  2 +-
+ 9 files changed, 53 insertions(+), 60 deletions(-)
+
 Release 8.37
  doc/done.txt                                  |  7 +++++++
  doc/fileMods.txt                              |  8 ++++++++

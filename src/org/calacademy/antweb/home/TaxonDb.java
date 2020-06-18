@@ -657,7 +657,7 @@ public class TaxonDb extends AntwebDb {
         
         String dml = "update taxon " 
           + " set type = 1 where taxarank = 'species' and status != 'morphotaxon' and taxon_name in "
-          + " (select taxon_name from specimen where type != \"\")";
+          + " (select taxon_name from specimen where type_status != \"\")";
 
         count = stmt.executeUpdate(dml);
 

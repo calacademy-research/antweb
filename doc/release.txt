@@ -1,3 +1,7 @@
+Release 8.38.1
+Date: Jun 17
+  Problem resolved with table type setting in utilData.do?action=crawlForType
+
 Release 8.38
 Date: Jun 17
   Obsolete Classification handling for Antcat.

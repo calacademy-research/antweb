@@ -148,7 +148,12 @@ public class StatusSet extends Status {
         if (StatusSet.VALID_EXTANT.equals(getValue())) return " " + table + ".status = '" + VALID + "' and fossil = 0 ";
       }
         
-      if (StatusSet.TYPE.equals(getValue())) return " type = 1 ";      
+      if (StatusSet.TYPE.equals(getValue())) {
+          //if ("specimen".equals(table))
+          s_log.warn("getCriteria() If table:specimen, THIS SHOULDN'T HAPPEN? table:" + table + " value:" + getValue());
+          AntwebUtil.logShortStackTrace();
+          return " type = 1 ";
+      }
       
       String singleStatusCriteria = super.getCriteria(table);
       if (singleStatusCriteria != null) return singleStatusCriteria;
