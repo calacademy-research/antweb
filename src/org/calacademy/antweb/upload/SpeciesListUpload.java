@@ -157,13 +157,21 @@ public class SpeciesListUpload extends AntwebUpload {
         
         copySpeciesListFile(project, uploadFile);
 
-        try {
-          (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
-        } catch (SQLException e) {
-          s_log.error("uploadSpeciesList() unable to regenerateAllAntwebProject due to e:" + e); // XXX
+        boolean skip = false;
+        if (AntwebProps.isDevMode()) skip = true;
+        if (!skip) {
+            try {
+                (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
+            } catch (SQLException e) {
+                s_log.error("uploadSpeciesList() unable to regenerateAllAntwebProject due to e:" + e); // XXX
+            }
+        } else {
+            A.log("Warning ProjTaxonDb.regenerateAllAntweb() is skipped in Dev. See SpeciesListUpload.java:169");
         }
+
         s_log.warn("uploadSpeciesList() fossils:" + totalFossils);
         s_log.warn("uploadSpeciesList() NOT fossils:" + totalNotFossils);
+
         message = "success";
         
         uploadDetails.setMessage(message);
@@ -419,9 +427,9 @@ public class SpeciesListUpload extends AntwebUpload {
                 if (false
                     && (AntwebProps.isDevMode())
                     && !theLine.equals(theLineBefore)
-                    && (lineNum > 2)
+                    && (lineNum > 28 && lineNum < 31)
                    ) {
-                     A.log("importSpeciesList() lineNum:" + lineNum + " theLine:" + theLine + " theLineBefore:" + theLineBefore);
+                     A.log("importSpeciesList() lineNum:" + lineNum + " theLine:" + theLine); // + " theLineBefore:" + theLineBefore);
                 }
                 
                 components = tab.split(theLine);
@@ -455,7 +463,7 @@ public class SpeciesListUpload extends AntwebUpload {
                     element = (String) iter.next();
                     element = multipleSpaces.subst(element.trim(), " ");                    
                     if (element == null)  s_log.error("importSpeciesList() 2 element is null");
-                    //if (AntwebProps.isDevMode()) s_log.error("importSpeciesList() innerloop element:" + element);
+                    //A.log("importSpeciesList() innerloop element:" + element);
 
                     String theElementBefore = element;
                     try {
@@ -642,8 +650,9 @@ public class SpeciesListUpload extends AntwebUpload {
 
                     taxonHash.put("taxon_name", taxonName);
                     taxonHash.put("line_num", lineNum);
-                    String debugTaxonName = "dorylinaecerapachys mayri brachynodus"; // "dolichoderinaecolobopsis macrocephala";
-
+                    // String debugTaxonName = "dorylinaecerapachys mayri brachynodus"; // "dolichoderinaecolobopsis macrocephala";
+                    String debugTaxonName = "formicinaephasmomyrmex";
+                    //String debugTaxonName = taxonName; // Debug all lines...
                     // A.log("importSpeciesList() lineNum:" + lineNum + " taxonName:" + taxonName);
 
                     String currentValidName = taxonName;
@@ -659,11 +668,10 @@ public class SpeciesListUpload extends AntwebUpload {
                          || (Rank.SPECIES.equals(currentValidRank))
                          || (Rank.SUBSPECIES.equals(currentValidRank))                        
                           ) ) {
-                            ignoreTaxon = true;  
+                            if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 1 ignoreTaxon:true because of taxarank:" + currentValidRank);
+                            ignoreTaxon = true;
                         }
-                       
-                        // if ("myrmicinaepheidole inquilina".equals(taxonName)) A.log("importSpeciesList() inserting:" + taxonName + " status:" + status);
-                        
+
                         if (Status.HOMONYM.equals(status)) {
                             ++homonymCount;
                             //A.log("importSpeciesList() inserting homonym:" + taxonName + " homonymCount:" + homonymCount);
@@ -678,22 +686,20 @@ public class SpeciesListUpload extends AntwebUpload {
 
                             ignoreTaxon = true;
                         }
-                        // Completely exclude from import.
-                        if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1a exclude:" + Status.excludeFromImport(status));
 
+                        // Completely exclude from import.
                         if (Status.excludeFromImport(status)) {
                             ignoreTaxon = true;
                         }
 
-                        //if (taxonName.equals(debugTaxonName) A.log("importSpeciesList() 1 ignoreTaxon:" + ignoreTaxon + " isWorldants:" + isWorldants + " status:" + status + " taxonName:" + taxonName + " currentValidName:" + taxonHash.get("current_valid_name"));
+                        if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 2 ignoreTaxon:" + ignoreTaxon + " status:" + status + " taxonName:" + taxonName + " currentValidName:" + taxonHash.get("current_valid_name") + " exclude:" + Status.excludeFromImport(status));
 
                         // if current valid name is the same as the taxon_name, ignore.
                         if (Status.usesCurrentValidName(status) && taxonName.equals(taxonHash.get("current_valid_name"))) {
-                            //if ("myrmicinaecalyptomyrmex emeryi".equals(taxonName)) A.log("importSpeciesList() skip because taxonName:" + taxonName + " = " + taxonHash.get("current_valid_name") );
+                            if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 3 skip because taxonName:" + taxonName + " = " + taxonHash.get("current_valid_name") );
                             ignoreTaxon = true;
                         }
-                        
-                        //if (taxonName.contains(debugTaxonName)) {
+
                           String t = (String) taxonHash.get("current_valid_name");
                           if (t != null && !t.equals("") && !t.equals(taxonName)) {
                           
@@ -701,7 +707,7 @@ public class SpeciesListUpload extends AntwebUpload {
                             if (currentValidTaxon != null) {
 								currentValidName = t;                            
                             } else {
-	                            if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() CurrentValidName:" + t + " not found for taxonName:" + taxonName + " of status:" + status);
+	                            if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 4 CurrentValidName:" + t + " not found for taxonName:" + taxonName + " of status:" + status);
                                 ignoreTaxon = true;
 							}
                           }
@@ -715,23 +721,23 @@ public class SpeciesListUpload extends AntwebUpload {
                         */
                     } else {
                         currentValidName = setStatusAndCurrentValidName(taxonName, taxonHash);
-					    if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1b SET taxonName:" + taxonName + " currentValidName:" + currentValidName);
+					    if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 5 SET taxonName:" + taxonName + " currentValidName:" + currentValidName);
                     }
 
-					if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1c SET ignoreTaxon:" + ignoreTaxon + " taxonName:" + taxonName + " country:" + thisCountry + " status:" + status + " currentValidName:" + currentValidName);
+					if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 6 SET ignoreTaxon:" + ignoreTaxon + " taxonName:" + taxonName + " country:" + thisCountry + " status:" + status + " currentValidName:" + currentValidName);
 
                     if (Rank.FAMILY.equals(currentValidRank)) {
                         taxonHash.log("importSpeciesList() FAMILY" + " project:" + project);
                     }
 
-                    if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1d taxonName:" + taxonName + " currentValidRank:" + currentValidRank + " status:" + status + " thisCountry:" + thisCountry + " ignore:" + ignoreTaxon + " currentValidName:" + currentValidName);
+                    if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 7 taxonName:" + taxonName + " currentValidRank:" + currentValidRank + " status:" + status + " thisCountry:" + thisCountry + " ignore:" + ignoreTaxon + " currentValidName:" + currentValidName);
 
                     if (!ignoreTaxon) {
                         //A.log("importSpeciesList() currentValidRank:" + currentValidRank + " status:" + status);
 
                         int c = saveTaxonAndProjTaxon(taxonHash, project);
 
-                        if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1e c:" + c + " taxonName:" + taxonName + " currentValidRank:" + currentValidRank + " status:" + status + " thisCountry:" + thisCountry + " ignore:" + ignoreTaxon + " currentValidName:" + currentValidName);
+                        if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 8 c:" + c + " taxonName:" + taxonName + " currentValidRank:" + currentValidRank + " status:" + status + " thisCountry:" + thisCountry + " ignore:" + ignoreTaxon + " currentValidName:" + currentValidName);
 
                         if (c > 0) {
                           description.put("taxon_name", taxonName); // We do NOT use currentValidName here, so as not to overwrite.
@@ -745,24 +751,34 @@ public class SpeciesListUpload extends AntwebUpload {
 							if (tempCountry.contains("(")) tempCountry = tempCountry.substring(0, tempCountry.indexOf("("));
 							tempCountry = tempCountry.trim();
 							Country country = GeolocaleMgr.getValidCountry(tempCountry);
-                            if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1f taxonName:" + taxonName + " status:" + status + " country:" + country);
+                            if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 9 taxonName:" + taxonName + " status:" + status + " country:" + country);
 							if (country != null) {
 							  //if (taxonName.contains(debugTaxonName))
-							  if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1g taxonName:" + taxonName + " thisCountry:" + thisCountry + " country:" + country + " currentValidName:" + currentValidName);
+							  if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 10 taxonName:" + taxonName + " thisCountry:" + thisCountry + " country:" + country + " currentValidName:" + currentValidName);
 							  //if (taxonName.contains("achycondyla") && country.getName() != null) && country.getName().contains("adagascar")) A.log("importSpeciesList() madagascar taxonName:" + taxonName + "   pachycondyla currentValidName:" + currentValidName);
 
                               //if (taxonName.contains("dorylinaecerapachys") || currentValidName.contains("dorylinaecerapachys")) A.log("importSpeciesList() taxonName:" + taxonName + " currentValidName:" + currentValidName + " status:" + status + " ignoreTaxon:" + ignoreTaxon);
 
                               Taxon current = TaxonMgr.getTaxon(currentValidName);
-                              if (current != null && current.isValid())
-    							  (new GeolocaleTaxonDb(getConnection())).setTaxonSet(country, currentValidName, Source.ANTCAT);
+                              if (current == null) {
+                                  current = (new TaxonDb(getConnection())).getTaxon(currentValidName);
+
+                                  if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 11 currentValidName:" + currentValidName + " not found in TaxonMgr. Found in DB:" + current);
+                                  // If we load a small worldants and then try to load a big one, taxa will not be in the taxonMgr.
+                                  // If this happens a lot, good to know. Hopefully fast enough. Remove the log message.
+                              }
+                              if (current != null) {
+                                  if (current.isValid()) {
+                                      (new GeolocaleTaxonDb(getConnection())).setTaxonSet(country, currentValidName, Source.ANTCAT);
+                                  }
+                              }
 							} else {
 							  getMessageMgr().addToMessages(MessageMgr.countryNotFound, tempCountry); 
 							  //A.log("country not found:" + thisCountry + " tempCountry:" + tempCountry);
 							}
 						  }
 
-                    if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1h taxonName:" + taxonName + " bioregion:" + thisBioregion + " fossil:" + isFossil);
+                          if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 12 taxonName:" + taxonName + " bioregion:" + thisBioregion + " fossil:" + isFossil);
 
 						  // Use the worldants bioregion to populate bioregion_taxon... 						
 						  if (thisBioregion != null && !"".equals(thisBioregion) && !isFossil) {
@@ -784,7 +800,7 @@ public class SpeciesListUpload extends AntwebUpload {
 							  (new ProjTaxonDb(getConnection())).insert(fossilants, currentValidName, Source.ANTCAT); 
 						  }                   
                         } else {
-							if (taxonName.equals(debugTaxonName)) A.log("importSpeciesList() 1i Not inserted taxonName:" + taxonName + " c:" + c);
+							if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 13 Not inserted taxonName:" + taxonName + " c:" + c);
                         }
                         
                         if (taxonName.equals("formicidae") && (!"worldants".equals(project))) {

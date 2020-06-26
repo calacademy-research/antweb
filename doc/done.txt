@@ -12434,6 +12434,12 @@ Jun 17th, 2hr.
   Discover and fix problem with taxon table type indicator.
   Deploy and document.  
   
+Jun 18. 2.5hrs.
+  Test new Antcat upload. Difficult to debug. Uncertain of how to move forward.
+  Document.
+
+
+
   
 
   

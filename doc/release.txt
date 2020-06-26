@@ -1,6 +1,15 @@
+Release 8.39.1
+Date: Jun 25
+  Maintenance release.
+
+Release 8.39
+Date: Jun 17
+  SpeciesListUpload logging changes. Better support for debugTaxonName.
+
 Release 8.38.1
 Date: Jun 17
   Problem resolved with table type setting in utilData.do?action=crawlForType
+  Advanced Search with status fixed.
 
 Release 8.38
 Date: Jun 17

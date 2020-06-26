@@ -325,15 +325,17 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
            }
 */ 
             //A.log("createInitialResults() validNames:" + getValidNames() + " statusSet:" + getStatusSet());
+
             if ((getStatusSet() != null) && (getStatusSet().length() > 0)) {
                 String statusCriteria = (new StatusSet(getStatusSet())).getCriteria("sp");
-                //A.log("createInitialResults() statusCriteria:" + statusCriteria);
-                
+
                 if (!"all".equals(getStatusSet()) 
                  && !"valid".equals(getStatusSet())
                  && !"complete".equals(getStatusSet())
                    ) --sufficientCriteria;
-                
+
+                //A.log("createInitialResults() statusSet:" + getStatusSet() + " statusCriteria:" + statusCriteria);
+
                 where.add(statusCriteria);
             }
             

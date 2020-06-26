@@ -644,7 +644,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "Before regenerateAllAntweb Proj_taxon worldants counts");
 
         String deleteDML = "delete from proj_taxon where project_name = 'allantwebants'";
-        // s_log.warn("regenerateAllAntwebProject() deleteDML:" + deleteDML);
+        // s_log.warn("regenerateAllAntweb() deleteDML:" + deleteDML);
         Statement stmt = DBUtil.getStatement(getConnection(), "regenerateAllAntweb()");
         stmt.executeUpdate(deleteDML);  
         stmt.close();
@@ -655,7 +655,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             + " from taxon "   
             + " where status in " + StatusSet.getCountables()
             + ")";
-        A.log("regenerateAllAntwebProject() insertDML:" + insertDML);
+        //A.log("regenerateAllAntweb() insertDML:" + insertDML);
         stmt = getConnection().createStatement();
         stmt.executeUpdate(insertDML); 
         DBUtil.close(stmt, "regenerateAllAntweb()");
@@ -665,7 +665,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         int deleteCount = utilDb.deleteFrom("proj_taxon", "where (project_name, taxon_name) in (select project_name, taxon_name from proj_taxon_dispute)");
             
         int updateCount = utilDb.updateField("proj_taxon", "source", "'specimen'", "project_name = 'allantwebants' and specimen_count > 0");
-        A.log("regenerateAllAntweb deleteCount:" + deleteCount + " updateCount:" + updateCount);    
+        A.log("regenerateAllAntweb() deleteCount:" + deleteCount + " updateCount:" + updateCount);
 
         // This was in the UtilData.java regenerateAllAntweb
         s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a minute.");  // Just over a minute!

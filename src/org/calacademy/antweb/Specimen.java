@@ -266,7 +266,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         }
     }
 
-    public void goSetDetails() {     
+    private void goSetDetails() {
         Taxon taxon = TaxonMgr.getTaxon(getTaxonName());
         if (taxon == null) {
           //A.log("goSetDetails() taxon is null for taxonName:" + getTaxonName());

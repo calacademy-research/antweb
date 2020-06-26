@@ -32,7 +32,11 @@ public class TaxonDb extends AntwebDb {
 
       return taxon;
     }
-    
+
+    public Taxon getTaxon(String taxonName) {
+        return TaxonDb.getInfoInstance(getConnection(), taxonName);
+    }
+
     public static Taxon getInfoInstance(Connection connection, String taxonName) {
       return TaxonDb.getInfoInstance(connection, "taxon", taxonName);
     }

@@ -100,22 +100,26 @@ public class StatusSet extends Status {
       return getCriteria("taxon");
     }
     public String getCriteria(String table) {
+
       if (!("taxon".equals(table)
         || "specimen".equals(table)
         || "sp".equals(table)
         )) return null;
-    
-      String defaultVal = " " + table + ".status in ('" + VALID + "', '" + UNRECOGNIZED + "', '" 
-        + MORPHOTAXON + "', '" + INDETERMINED + "', '" + UNIDENTIFIABLE + "')";  // + NOT_CURRENT_VALID + "', '" 
-      if (StatusSet.ALL.equals(getValue())) return defaultVal;
 
-      String allDetermined = " " + table + ".status in ('" + VALID + "', '" + UNRECOGNIZED + "', '" 
-        + MORPHOTAXON + "') and " + table + ".taxon_name not like '%(indet)%' ";    // + NOT_CURRENT_VALID + "', '" 
-      if (StatusSet.ALL_DETERMINED.equals(getValue())) return allDetermined;
+      String criteria = null;
+
+      String defaultVal = " " + table + ".status in ('" + VALID + "', '" + UNRECOGNIZED + "', '"
+          + MORPHOTAXON + "', '" + INDETERMINED + "', '" + UNIDENTIFIABLE + "')";  // + NOT_CURRENT_VALID + "', '"
+
+      String allDetermined = " " + table + ".status in ('" + VALID + "', '" + UNRECOGNIZED + "', '"
+          + MORPHOTAXON + "') and " + table + ".taxon_name not like '%(indet)%' ";    // + NOT_CURRENT_VALID + "', '"
 
       String allIndetermined = " " + table + ".status in ('" + VALID + "', '" + UNRECOGNIZED + "', '" 
         + MORPHOTAXON + "') and " + table + ".taxon_name like '%(indet)%' ";   // + NOT_CURRENT_VALID + "', '" 
-      if (StatusSet.ALL_INDETERMINED.equals(getValue())) return allIndetermined;
+
+      if (StatusSet.ALL.equals(getValue())) criteria = defaultVal; //return defaultVal;
+      if (StatusSet.ALL_DETERMINED.equals(getValue())) criteria = allDetermined;
+      if (StatusSet.ALL_INDETERMINED.equals(getValue())) criteria = allIndetermined;
 
 /*
       if (StatusSet.WORLDANTS.equals(getValue())) return " source = 'worldants.txt' ";  // easier than setting the full set.
@@ -123,41 +127,60 @@ public class StatusSet extends Status {
       // This should not usually be used as there are statusSet within the Worldants upload that are not useful for display
       // Generally what is wanted here is VALID (defined in superclass).
 */
-      if (StatusSet.WORLDANTS.equals(getValue())) return " " + table + ".status in (" 
-        +   "'" + VALID + "'"
-        + ", '" + COLLECTIVE_GROUP_NAME + "'"
-        + ", '" + EXCLUDED_FROM_FORMICIDAE + "'"
-        + ", '" + HOMONYM + "'"
-        + ", '" + ORIGINAL_COMBINATION + "'"
-        + ", '" + SYNONYM + "'"
-        + ", '" + UNAVAILABLE + "'"
-        + ", '" + UNIDENTIFIABLE + "'"
-        + ", '" + OBSOLETE_COMBINATION + "'"
-        + ", '" + OBSOLETE_CLASSIFICATION + "'"
-        + ", '" + UNAVAILABLE_UNCATEGORIZED + "'"
-        + ", '" + UNAVAILABLE_MISSPELLING + "'"
-        + ")";
+      if (StatusSet.WORLDANTS.equals(getValue())) {
+          criteria = " " + table + ".status in ("
+                  +   "'" + VALID + "'"
+                  + ", '" + COLLECTIVE_GROUP_NAME + "'"
+                  + ", '" + EXCLUDED_FROM_FORMICIDAE + "'"
+                  + ", '" + HOMONYM + "'"
+                  + ", '" + ORIGINAL_COMBINATION + "'"
+                  + ", '" + SYNONYM + "'"
+                  + ", '" + UNAVAILABLE + "'"
+                  + ", '" + UNIDENTIFIABLE + "'"
+                  + ", '" + OBSOLETE_COMBINATION + "'"
+                  + ", '" + OBSOLETE_CLASSIFICATION + "'"
+                  + ", '" + UNAVAILABLE_UNCATEGORIZED + "'"
+                  + ", '" + UNAVAILABLE_MISSPELLING + "'"
+                  + ")";
+      }
       
-      if (StatusSet.COMPLETE.equals(getValue())) return " 1 = 1 ";
+      if (StatusSet.COMPLETE.equals(getValue())) criteria = " 1 = 1 ";
 
       //A.log("getAndCriteria() table:" + table + " status:" + getValue());        
 
       if ("taxon".equals(table)) {
-        if (StatusSet.VALID_WITH_FOSSIL.equals(getValue())) return " " + table + ".status = '" + VALID + "'"; // Will be further restricted by the fossilants list.
-        if (StatusSet.VALID_FOSSIL.equals(getValue())) return " " + table + ".status = '" + VALID + "' and fossil = 1 ";
-        if (StatusSet.VALID_EXTANT.equals(getValue())) return " " + table + ".status = '" + VALID + "' and fossil = 0 ";
+        if (StatusSet.VALID_WITH_FOSSIL.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "'"; // Will be further restricted by the fossilants list.
+        if (StatusSet.VALID_FOSSIL.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "' and fossil = 1 ";
+        if (StatusSet.VALID_EXTANT.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "' and fossil = 0 ";
       }
         
       if (StatusSet.TYPE.equals(getValue())) {
-          //if ("specimen".equals(table))
-          s_log.warn("getCriteria() If table:specimen, THIS SHOULDN'T HAPPEN? table:" + table + " value:" + getValue());
-          AntwebUtil.logShortStackTrace();
-          return " type = 1 ";
+          if ("specimen".equals(table)) {
+              s_log.warn("getCriteria() THIS SHOULDN'T HAPPEN? table:" + table + " value:" + getValue());
+              //AntwebUtil.logShortStackTrace();
+/*
+	at org.calacademy.antweb.StatusSet.getCriteria(StatusSet.java:154)
+	at org.calacademy.antweb.StatusSet.getCriteria(StatusSet.java:100)
+	at org.calacademy.antweb.StatusSet.getAndCriteria(StatusSet.java:92)
+	at org.calacademy.antweb.TaxaPage.fetchChildren(TaxaPage.java:98)
+ */
+          } else {
+              criteria = " type = 1 ";
+          }
       }
-      
+
+      if (criteria != null) {
+          //A.log("getCriteria() table:" + table + " criteria = " + criteria);
+          return criteria;
+      }
+
       String singleStatusCriteria = super.getCriteria(table);
-      if (singleStatusCriteria != null) return singleStatusCriteria;
-      
+      if (singleStatusCriteria != null) {
+          A.log("getCriteria() table:" + table + " singleStatusCriteria = " + criteria);
+          return singleStatusCriteria;
+      }
+
+      A.log("getCriteria() table:" + table + " default:" + defaultVal);
       return defaultVal;
     }
 
