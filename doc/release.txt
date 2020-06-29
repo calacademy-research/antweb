@@ -1,3 +1,7 @@
+Release 8.39.2
+  Add common name for Colobopsis saundersi.
+  Move distribution logic from taxonPage into distribution.jsp.
+
 Release 8.39.1
 Date: Jun 25
   Maintenance release.

@@ -12438,7 +12438,14 @@ Jun 18. 2.5hrs.
   Test new Antcat upload. Difficult to debug. Uncertain of how to move forward.
   Document.
 
+Jun 25. 1hr.
+  Deploy 8.39, 8.39.1
+  Check on logs. Try to replicate error. 
+  Download latest db snapshot. Successfully load locally. 
 
+  
+    
+  
 
   
 

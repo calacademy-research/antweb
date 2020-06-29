@@ -1,3 +1,16 @@
+Release 8.39.1
+ doc/done.txt                                            |  6 ++++++
+ doc/fileMods.txt                                        |  9 +++++++++
+ doc/release.txt                                         |  9 +++++++++
+ src/org/calacademy/antweb/Specimen.java                 |  2 +-
+ src/org/calacademy/antweb/StatusSet.java                | 89 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------------------------------
+ src/org/calacademy/antweb/home/ProjTaxonDb.java         |  6 +++---
+ src/org/calacademy/antweb/home/TaxonDb.java             |  6 +++++-
+ src/org/calacademy/antweb/search/AdvancedSearch.java    |  8 +++++---
+ src/org/calacademy/antweb/upload/SpeciesListUpload.java | 76 ++++++++++++++++++++++++++++++++++++++++++++++------------------------------
+ web/documentation/releaseNum.jsp                        |  2 +-
+ 10 files changed, 141 insertions(+), 72 deletions(-)
+
 Release 8.38.1
  doc/done.txt                                |  6 +++++-
  doc/fileMods.txt                            | 12 ++++++++++++
