@@ -1,3 +1,14 @@
+Release 8.40
+ doc/done.txt                                                          |  13 ++++++++++++-
+ doc/fileMods.txt                                                      |  13 +++++++++++++
+ doc/release.txt                                                       |   5 +++++
+ src/org/calacademy/antweb/CommonNames.java                            |  12 ++++++------
+ src/org/calacademy/antweb/curate/speciesList/SpeciesListUploader.java |   6 ++++--
+ web/distribution.jsp                                                  |  99 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ web/documentation/releaseNum.jsp                                      |   2 +-
+ web/taxonPage-body.jsp                                                | 101 ++---------------------------------------------------------------------------------------------------
+ 8 files changed, 142 insertions(+), 109 deletions(-)
+
 Release 8.39.1
  doc/done.txt                                            |  6 ++++++
  doc/fileMods.txt                                        |  9 +++++++++
