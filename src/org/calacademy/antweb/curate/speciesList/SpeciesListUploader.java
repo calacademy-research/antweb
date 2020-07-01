@@ -26,8 +26,10 @@ public class SpeciesListUploader {
   //  public static String fetchWorldantsUrl = "http://ibss-info/antcat.antweb.txt";
 
   // New production link.
-  public static String fetchWorldantsUrl = "http://10.2.22.28:9090/antcat.antweb.txt";  
-  // See below to set a dev link. 
+  //public static String fetchWorldantsUrl = "http://10.2.22.28:9090/antcat.antweb.txt";
+  public static String fetchWorldantsUrl = "http://antcat-export:9090/antcat.antweb.txt";
+
+  // See below to set a dev link.
    
 /*
    We download the antcat.antweb.txt file from the above link to here:

@@ -12413,7 +12413,6 @@ Jun 12. 1hr.
   Remove PDF files from source tree (leave in the server's web dir).
   Deploy to live site.
 
-#Reported
 
 Jun 13. 1hr.
   Handle the login exception gracefully with details.
@@ -12442,9 +12441,14 @@ Jun 25. 1hr.
   Deploy 8.39, 8.39.1
   Check on logs. Try to replicate error. 
   Download latest db snapshot. Successfully load locally. 
-
   
-    
+#Reported
+
+Jun 30. 1hr.
+  Look into worldants. Has location changed?
+  Verify that the upload can run at noon, probably.
+
+
   
 
   

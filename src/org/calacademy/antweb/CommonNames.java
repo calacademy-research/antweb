@@ -42,9 +42,9 @@ public class CommonNames {
     nameMap.put("Big-headed ant", "myrmicinaepheidole megacephala ");   
     nameMap.put("Ghost ant", "dolichoderinaetapinoma melanocephalum");   
     nameMap.put("Cornfield abnt", "formicinaelasius alienus");   
-    nameMap.put("Crazy ant", "Nylanderia fulva");
-    nameMap.put("Rasberry crazy ant", "Nylanderia fulva");
-    nameMap.put("Tawny crazy ant", "Nylanderia fulva");        
+    nameMap.put("Crazy ant", "formicinaenylanderia fulva");
+    nameMap.put("Rasberry crazy ant", "formicinaenylanderia fulva");
+    nameMap.put("Tawny crazy ant", "formicinaenylanderia fulva");
     nameMap.put("Little Black ant", "myrmicinaemonomorium minimum ");   
     nameMap.put("Odorous house ant", "dolichoderinaetapinoma sessile ");   
     nameMap.put("Pavement ant", "myrmicinaetetramorium caespitum");   
@@ -61,7 +61,6 @@ public class CommonNames {
 
     // Random source
     nameMap.put("Dracula ant", "amblyoponinaeadetomyrma");
-
     nameMap.put("Tocandiras", "ponerinaedinoponera");
     nameMap.put("Giant Amazonian ant", "ponerinaedinoponera");
     nameMap.put("exploding ant", "formicinaecolobopsis saundersi");
