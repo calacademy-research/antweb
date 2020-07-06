@@ -1470,8 +1470,9 @@ select group_concat( distinct source) from geolocale_taxon order by source;
 
     public String geolocaleTaxonFix() throws SQLException {
         String message = " executed.";
-        message += geolocaleTaxonFixCountries();
-        message += geolocaleTaxonFixAdm1s();
+        String logMessage = geolocaleTaxonFixCountries();
+        logMessage += geolocaleTaxonFixAdm1s();
+        LogMgr.newLog("geolocaleTaxonFix.log", logMessage);
         return message;
     }
     public String geolocaleTaxonFixCountries() throws SQLException {

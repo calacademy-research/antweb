@@ -33,6 +33,13 @@ public class LogMgr {
     AntwebUtil.remove(file); 
   }
 
+  public static void newLog(String file, String data) {
+
+    emptyLog(file);
+    appendLog(file, data, false);
+
+  }
+  
   public static void appendLog(String file, String data) {
     appendLog(file, data, false);
   }

@@ -1,3 +1,6 @@
+Release 8.40.1
+  GeolocaleTaxonFix results written to file, removed from antweb.log.
+
 Release 8.40
   Add common name for Colobopsis saundersi.
   Move distribution logic from taxonPage into distribution.jsp.

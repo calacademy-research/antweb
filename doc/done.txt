@@ -12442,13 +12442,24 @@ Jun 25. 1hr.
   Check on logs. Try to replicate error. 
   Download latest db snapshot. Successfully load locally. 
   
-#Reported
-
 Jun 30. 1hr.
   Look into worldants. Has location changed?
   Verify that the upload can run at noon, probably.
 
+Jul 1. 1hr.
+  Add new antcat url.
+  Deploy. 
+  Test.
+  Configure machine's host file to find new url.
+  Run the Worldants process.
+  Document.
 
+#Reported
+  
+Jul 6. 1hr.
+  Check on server.
+  Write the geolocaleTaxonFix message to a file, remove from the logs.  
+  
   
 
   
