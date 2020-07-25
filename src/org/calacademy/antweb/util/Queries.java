@@ -678,8 +678,8 @@ public abstract class Queries {
         queries.add(new NamedQuery(
             "groups"
           , "Group data."
-          , "<th>Group ID</th><th>Group Name</th><th>Last Upload</th><th>Admin Login ID</th><th>Can Upload Specimen?</th><th>Can Upload Images</th><th>Abbreviation</th>"
-          , "select id, name, last_specimen_upload, admin_login_id, is_upload_specimens, is_upload_images, abbrev from ant_group"
+          , "<th>Group ID</th><th>Group Name</th><th>Last Upload</th><th>Admin Login ID</th><th>Abbreviation</th>" //<th>Can Upload Specimen?</th><th>Can Upload Images</th>
+          , "select id, name, last_specimen_upload, admin_login_id, abbrev from ant_group"  // is_upload_specimens, is_upload_images,  (moved to login).
         ));
              
                                   

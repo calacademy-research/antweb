@@ -68,9 +68,14 @@ public final class GroupAction extends Action {
 		  return (mapping.findForward("group"));
         } else {
           String orderBy = (String) df.get("orderBy");
+          if (orderBy != null && orderBy.toLower().contains("select")) {
+              s_log.warn("execute() rejected orderBy:" + orderBy);
+              request.setAttribute("message", "invalid request");
+              return (mapping.findForward("message"));
+          }
           ArrayList<Group> groups = getUploadGroups(request, orderBy);
           if (groups == null) {
-			  String message = "  Problem fetching groups with orderBy:" + orderBy;
+			  String message = " Problem fetching groups with orderBy:" + orderBy;
               s_log.warn("execute() " + message);
 			  request.setAttribute("message", message);
 			  return (mapping.findForward("message"));          

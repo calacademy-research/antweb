@@ -12395,6 +12395,8 @@ Jun 2
 Jun 4. 1hr.
   Look into the Change View links not working. Resolved by reboot.
 
+-week: 4
+
 Jun 9th. 1hr.
   Look into high res link not working for 
       https://www.antweb.org/bigPicture.do?name=focol1237&shot=p&number=1
@@ -12413,11 +12415,12 @@ Jun 12. 1hr.
   Remove PDF files from source tree (leave in the server's web dir).
   Deploy to live site.
 
-
 Jun 13. 1hr.
   Handle the login exception gracefully with details.
   Clean up the srcBackup.sh. Enforce inclusion of release num.
   Test and deploy on live site.
+
+-week: 5.5
 
 Jun 15. .5hrs.
   Check on server. modify release and deploy.
@@ -12437,6 +12440,8 @@ Jun 18. 2.5hrs.
   Test new Antcat upload. Difficult to debug. Uncertain of how to move forward.
   Document.
 
+-week: 6
+
 Jun 25. 1hr.
   Deploy 8.39, 8.39.1
   Check on logs. Try to replicate error. 
@@ -12445,6 +12450,10 @@ Jun 25. 1hr.
 Jun 30. 1hr.
   Look into worldants. Has location changed?
   Verify that the upload can run at noon, probably.
+
+-week: 2
+--month: 17.5
+(Unreported so far)
 
 Jul 1. 1hr.
   Add new antcat url.
@@ -12460,7 +12469,11 @@ Jul 6. 1hr.
   Check on server.
   Write the geolocaleTaxonFix message to a file, remove from the logs.  
   
-  
+Jul 14. 1hr.
+  Download and verify db backup.
+  Check on server. Document.  
+
+
 
   
 
