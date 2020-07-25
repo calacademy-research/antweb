@@ -1,3 +1,11 @@
+Release 8.40.2
+ doc/done.txt                                | 17 +++++++++++++++--
+ doc/release.txt                             |  4 ++++
+ src/org/calacademy/antweb/GroupAction.java  |  7 ++++++-
+ src/org/calacademy/antweb/util/Queries.java |  4 ++--
+ web/documentation/releaseNum.jsp            |  2 +-
+ 5 files changed, 28 insertions(+), 6 deletions(-)
+
 Release 8.40
  doc/done.txt                                                          |  13 ++++++++++++-
  doc/fileMods.txt                                                      |  13 +++++++++++++

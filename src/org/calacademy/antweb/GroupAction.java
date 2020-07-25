@@ -68,7 +68,7 @@ public final class GroupAction extends Action {
 		  return (mapping.findForward("group"));
         } else {
           String orderBy = (String) df.get("orderBy");
-          if (orderBy != null && orderBy.toLower().contains("select")) {
+          if (orderBy != null && orderBy.toLowerCase().contains("select")) {
               s_log.warn("execute() rejected orderBy:" + orderBy);
               request.setAttribute("message", "invalid request");
               return (mapping.findForward("message"));
