@@ -41,6 +41,7 @@ public class TypeStatusMgr extends Action {
         LogMgr.emptyLog("typeStatusSpeciesFound.txt");
         LogMgr.emptyLog("typeStatusSpeciesNotFound.txt");
         LogMgr.emptyLog("typeStatusNoTaxonName.txt");
+        LogMgr.emptyLog("typeStatusHomonym.txt");
 
         java.sql.Connection connection = null;
         try {
@@ -49,7 +50,7 @@ public class TypeStatusMgr extends Action {
             int speciesFound = 0;
             int speciesNotFound = 0;
             int noTaxonName = 0;
-            
+
                 SpecimenDb specimenDb = new SpecimenDb(connection);
                 ArrayList<String> typeStatusList = specimenDb.getTypeStatusList(1);
                 for (String typeStatus : typeStatusList) {
@@ -63,9 +64,14 @@ public class TypeStatusMgr extends Action {
                         Species species = TaxonMgr.getSpecies(connection, taxonName);
                         if (species != null) {
                             ++speciesFound;
-                            LogMgr.appendLog("typeStatusSpeciesFound.txt", speciesFound + ". taxonName:" + taxonName + " species:" + species.getFullName());
 
-                            if ("philippinensis".equals(species.toString())) A.log("execute() species:" + species + " taxarank:" + species.getRank());
+                            HomonymDb homonymDb = new HomonymDb(connection);
+                            boolean isHomonym = homonymDb.isHomonym(taxonName);
+                            if (isHomonym) {
+                                LogMgr.appendLog("typeStatusSpeciesFound.txt", speciesFound + ". taxonName:" + taxonName + " species:" + species.getFullName());
+                            } else {
+                                LogMgr.appendLog("typeStatusHomonym.txt", speciesFound + ". taxonName:" + taxonName + " species:" + species.getFullName());
+                            }
                         } else {
                             ++speciesNotFound;
                             LogMgr.appendLog("typeStatusSpeciesNotFound.txt", speciesNotFound + ". " + taxonName);
@@ -87,7 +93,7 @@ public class TypeStatusMgr extends Action {
         message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusSpeciesNotFound.txt" + "'>Species Not Found</a>";
         message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusNoTaxonName.txt" + "'>No Taxon Name</a>";
 
-        A.log("execute() complete.");
+        s_log.warn("execute() complete.");
         request.setAttribute("message", message);
         return (mapping.findForward("message"));
     }
