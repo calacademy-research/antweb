@@ -43,10 +43,10 @@ public final class TestAction extends Action {
                 for (String typeStatus : typeStatusList) {
                 	//String typeStatus = "Holotype of Anochetus daedalus";
    				    // This shows some functionality that would handle the specimen.type_status field entries.
-				    String taxonName = TaxonMgr.getTypeStatusSpecies(typeStatus);
+				    //String taxonName = TaxonMgr.getTypeStatusSpecies(typeStatus);
 
 				    //String taxonName = "Anochetus daedalus";
-				    //String taxonName = "ponerinaeanochetus daedalus";
+				    String taxonName = "ponerinaeanochetus daedalus";
 					if (taxonName != null) {
 						++speciesFound;
 						Species species = TaxonMgr.getSpecies(connection, taxonName);

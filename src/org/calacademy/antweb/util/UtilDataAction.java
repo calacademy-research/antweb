@@ -784,7 +784,7 @@ public class UtilDataAction extends Action {
 
         // Morpho taxa created by prior Specimen list upload.
         if (action.equals("deleteOldSpecimenUploadTaxa")) {
-            message = (new TaxonDb(connection)).deleteOldSpecimenUploadTaxa();
+            //message = (new TaxonDb(connection)).deleteOldSpecimenUploadTaxa();
         }
 
         if (action.equals("checkAntwikiForUpdates")) {
