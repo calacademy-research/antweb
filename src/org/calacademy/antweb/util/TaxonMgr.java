@@ -159,7 +159,7 @@ public class TaxonMgr extends Manager {
       }
       return null;
     }
-    
+
     // !!! Only used by Specimen Upload. (First call will cause a 40 second delay).
     public static Species getSpecies(Connection connection, String taxonName) {
       if (taxonName == null) return null;
@@ -167,15 +167,14 @@ public class TaxonMgr extends Manager {
       if (s_species == null) {
         s_species = new HashMap<String, Taxon>();
         TaxonDb taxonDb = new TaxonDb(connection);      
-        ArrayList<Taxon> species = taxonDb.getTaxa("rank in ('" + Rank.SPECIES + "', '" + Rank.SUBSPECIES + "')");
-        //A.log("getSpecies() speciesCount:" + species.size());
+        ArrayList<Taxon> species = taxonDb.getTaxa("taxarank in ('" + Rank.SPECIES + "', '" + Rank.SUBSPECIES + "')");
+        A.log("getSpecies() speciesCount:" + species.size());
         for (Taxon taxon : species) {
-          s_species.put(taxon.getTaxonName(), taxon);        
+          s_species.put(taxon.getTaxonName(), taxon);
         } 
       }
-      
       return (Species) s_species.get(taxonName);
-    }    
+    }
 
     public static Taxon getTaxon(String taxonName) {
       if (taxonName == null) return null;
@@ -205,6 +204,6 @@ public class TaxonMgr extends Manager {
         if (s_subgenusHashMap == null) return null;
         return s_subgenusHashMap.get(genusName);
     }
-
+    
 }
 

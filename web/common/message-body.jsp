@@ -19,7 +19,10 @@
 
 <div class="wide_left">
 
-<% 
+<%
+
+    //AntwebUtil.log("execute() name:" + TaxonMgr.getPrettyTaxaNames(taxonName) + " species:" + species);
+
     //DateUtil.runTests();
 
     //A.log("message-body.jsp andCriteria:" + StatusSet.getAndCriteria(Project.ALLANTWEBANTS));

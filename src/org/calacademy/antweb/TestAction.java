@@ -7,6 +7,7 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.*;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
@@ -14,6 +15,7 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+//http://localhost/antweb/test.do
 public final class TestAction extends Action {
 
     private static Log s_log = LogFactory.getLog(TestAction.class);
@@ -21,6 +23,8 @@ public final class TestAction extends Action {
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
+
+		String message = "Tested.";
 
 		HttpSession session = request.getSession();
 			
@@ -32,6 +36,26 @@ public final class TestAction extends Action {
 		try {
 			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "TestAction.execute()");
+            int speciesFound = 0;
+            if (AntwebProps.isDevMode()) {
+            	SpecimenDb specimenDb = new SpecimenDb(connection);
+				ArrayList<String> typeStatusList = specimenDb.getTypeStatusList(1);
+                for (String typeStatus : typeStatusList) {
+                	//String typeStatus = "Holotype of Anochetus daedalus";
+   				    // This shows some functionality that would handle the specimen.type_status field entries.
+				    String taxonName = TaxonMgr.getTypeStatusSpecies(typeStatus);
+
+				    //String taxonName = "Anochetus daedalus";
+				    //String taxonName = "ponerinaeanochetus daedalus";
+					if (taxonName != null) {
+						++speciesFound;
+						Species species = TaxonMgr.getSpecies(connection, taxonName);
+
+						message = "execute() taxonName:" + taxonName + " speiciesFound:" + speciesFound + " species:" + species;
+						A.log(message);
+					}
+				}
+			}
 
             UploadDb uploadDb = new UploadDb(connection);
             uploadDb.updateCounts(21);
@@ -43,7 +67,6 @@ public final class TestAction extends Action {
 		}
 		        
         if (true) {        
-		  String message = "Tested.";
 		  request.setAttribute("message", message);
 		  return (mapping.findForward("message"));
         }

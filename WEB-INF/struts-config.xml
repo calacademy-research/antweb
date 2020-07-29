@@ -400,7 +400,7 @@ if we set getChildImages here, then we do know to add the field guide, but the i
              type="org.calacademy.antweb.TestAction">
       <forward name="success" path="/testMessage.jsp"/>
     </action>
-      
+
     <action  path="/browse"
              type="org.calacademy.antweb.BrowseAction"
              name="browseForm"
@@ -843,7 +843,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
             validate="true">
       <forward name="success" path="/specimen.jsp"/>
     </action>
-    
+
+    <action  path="/typeStatus"
+             type="org.calacademy.antweb.upload.TypeStatusMgr">
+      <forward name="success" path="/message-body.jsp"/>
+    </action>
+
     <!--==========Action Mappings that search==========-->
     
     <!-- This is our Google driven search box -->

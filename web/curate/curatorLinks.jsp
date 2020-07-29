@@ -24,8 +24,9 @@
       <li><a href="<%= domainApp %>/ancPageMgr.do">Ancillary Page Manager</a> 
       <li><a href="<%= domainApp %>/orphanMgr.do">Orphan Manager</a>
       <li><a href="<%= domainApp %>/bioregionMapMgr.do">Bioregion Map Manager</a>      
-      <li><a href="<%= domainApp %>/introducedMapMgr.do">Introduced Map Manager</a>      
-      <li><a href="<%= domainApp %>/query.do">Query Manager</a>    
+      <li><a href="<%= domainApp %>/introducedMapMgr.do">Introduced Map Manager</a>
+      <li><a href="<%= domainApp %>/typeStatus.do">Type Status Manager</a>
+      <li><a href="<%= domainApp %>/query.do">Query Manager</a>
     </ul>
 
     <h3 align=left>Administrator Functions</h2>

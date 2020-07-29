@@ -1,3 +1,5 @@
+Release 8.41
+  Type Status Manager.
 
 Release 8.40.2
   Error handling in GroupAction.

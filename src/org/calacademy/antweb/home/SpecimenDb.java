@@ -935,6 +935,32 @@ public class SpecimenDb extends AntwebDb {
         return count;
     }
 
+    // Currently testing. Fetch all of the type statuses to see how well we can handle them... Called from TestAction.java.
+    public ArrayList<String> getTypeStatusList(int groupId) {
+        ArrayList<String> typeStatusList = new ArrayList<String>();
+        Statement stmt = null;
+        ResultSet rset = null;
+        int count = 0;
+        String query = "select distinct type_status from specimen where type_status is not null and access_group = " + groupId;
+        try {
+            ++count;
+            stmt = DBUtil.getStatement(getConnection(), "getTypeStatusList()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                String typeStatus = rset.getString("type_status");
+                typeStatusList.add(typeStatus);
+                //A.log("getTypeStatusList() i:" + i + " typeStatus:" + typeStatus);
+            }
+        } catch (SQLException e) {
+            s_log.error("getTypeStatusList() e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, "this", "getTypeStatusList()");
+        }
+        A.log("getTypeStatusList() total type_status selected:" + count);
+        return typeStatusList;
+    }
+
+
 /*
 
 select taxon_name, subfamily, genus, species, subspecies, code, 'ideal' as ideal, max(created) as created, microhabitat, method from specimen
