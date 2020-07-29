@@ -49,7 +49,8 @@ public class TypeStatusMgr extends Action {
             connection = DBUtil.getConnection(dataSource, "TypeStatusMgr.execute()");
             int speciesFound = 0;
             int speciesNotFound = 0;
-            int noTaxonName = 0;
+            int noTaxonNameFound = 0;
+            int homonymFound = 0;
 
                 SpecimenDb specimenDb = new SpecimenDb(connection);
                 ArrayList<String> typeStatusList = specimenDb.getTypeStatusList(1);
@@ -63,22 +64,22 @@ public class TypeStatusMgr extends Action {
                     if (taxonName != null) {
                         Species species = TaxonMgr.getSpecies(connection, taxonName);
                         if (species != null) {
-                            ++speciesFound;
-
                             HomonymDb homonymDb = new HomonymDb(connection);
                             boolean isHomonym = homonymDb.isHomonym(taxonName);
-                            if (isHomonym) {
+                            if (!isHomonym) {
+                                ++speciesFound;
                                 LogMgr.appendLog("typeStatusSpeciesFound.txt", speciesFound + ". taxonName:" + taxonName + " species:" + species.getFullName());
                             } else {
-                                LogMgr.appendLog("typeStatusHomonym.txt", speciesFound + ". taxonName:" + taxonName + " species:" + species.getFullName());
+                                ++homonymFound;
+                                LogMgr.appendLog("typeStatusHomonym.txt", homonymFound + ". taxonName:" + taxonName + " species:" + species.getFullName());
                             }
                         } else {
                             ++speciesNotFound;
                             LogMgr.appendLog("typeStatusSpeciesNotFound.txt", speciesNotFound + ". " + taxonName);
                         }
                     } else {
-                        ++noTaxonName;
-                        LogMgr.appendLog("typeStatusNoTaxonName.txt", noTaxonName + ". " + typeStatus);
+                        ++noTaxonNameFound;
+                        LogMgr.appendLog("typeStatusNoTaxonName.txt", noTaxonNameFound + ". " + typeStatus);
                     }
                 }
 
