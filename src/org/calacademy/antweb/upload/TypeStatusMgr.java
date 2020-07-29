@@ -49,7 +49,7 @@ public class TypeStatusMgr extends Action {
             int speciesFound = 0;
             int speciesNotFound = 0;
             int noTaxonName = 0;
-            if (AntwebProps.isDevMode()) {
+            
                 SpecimenDb specimenDb = new SpecimenDb(connection);
                 ArrayList<String> typeStatusList = specimenDb.getTypeStatusList(1);
                 for (String typeStatus : typeStatusList) {
@@ -75,7 +75,6 @@ public class TypeStatusMgr extends Action {
                         LogMgr.appendLog("typeStatusNoTaxonName.txt", noTaxonName + ". " + typeStatus);
                     }
                 }
-            }
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
