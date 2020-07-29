@@ -92,6 +92,7 @@ public class TypeStatusMgr extends Action {
         message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusSpeciesFound.txt" + "'>Species Found</a>";
         message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusSpeciesNotFound.txt" + "'>Species Not Found</a>";
         message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusNoTaxonName.txt" + "'>No Taxon Name</a>";
+        message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusHomonym.txt" + "'>Homonyms</a>";
 
         s_log.warn("execute() complete.");
         request.setAttribute("message", message);
