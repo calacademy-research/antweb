@@ -57,11 +57,20 @@ public class Scheduler extends Action {
 
     public static int LAUNCHTIME = 5; // 5 am. Referenced from SessionRequestFilter.
 
+
     private static Log s_log = LogFactory.getLog(Scheduler.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {
-      
+
+
+		Login accessLogin = LoginMgr.getAccessLogin(request);
+		if (accessLogin == null || !accessLogin.isAdmin()) {
+			s_log.warn("Scheduler attempted to be launched by non-admin process.");
+			request.setAttribute("message", "Scheduler can only be launched by administrative login");
+			return (mapping.findForward("message"));
+		}
+
         HttpSession session = request.getSession();
 		UtilForm theForm = (UtilForm) form;
 		String action = theForm.getAction();
@@ -77,8 +86,10 @@ public class Scheduler extends Action {
         AntwebUtil.writeDataFile("t.log", "test");  
 
 		s_log.warn("execute() target:" + HttpUtil.getTarget(request) + " action:" + action + " num:" + num);
-						
-        String message = doAction(action, num);
+
+        int secureCode = AntwebUtil.getSecureCode();
+
+        String message = doAction(action, num, secureCode);
 
         s_log.warn("execute() " + message);
         LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete: " + message);
@@ -86,12 +97,15 @@ public class Scheduler extends Action {
 		return (mapping.findForward("adminMessage")); 	  
     }
 
+    // Called from SessionRequestFilter
     public String doAction() {
       //return doAction("justLog", 0); // Perform all
-      return doAction("run", 0); // Perform all
+      int secureCode = AntwebUtil.getSecureCode();
+      String value = doAction("run", 0, secureCode); // Perform all
+      return value;
     }
-        
-    public String doAction(String action, int num) {
+
+    public String doAction(String action, int num, int secureCode) {
     
         if (action == null) return "Null action";
     
@@ -111,6 +125,9 @@ public class Scheduler extends Action {
         }
 				
 		try {
+
+			String codeParam = "&secureCode=" + secureCode;
+
 		    UtilDataAction.setInComputeProcess(action);
 
             Object list = DBUtil.getOldConnectionList();
@@ -137,27 +154,27 @@ public class Scheduler extends Action {
 					//s_log.warn("doAction() action:" + action + " i:" + i + " num:" + num);
 
 					if (i == 0 || i == 1) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow" + codeParam;
 					  s_log.warn("doAction() url:" + url);
 					  output += HttpUtil.fetchUrl(url); 
 					}
 					if (i == 0 || i == 2) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow" + codeParam;
 					  s_log.warn("doAction() url:" + url);
 					  output += HttpUtil.fetchUrl(url); 
 					}
 					if (i == 0 || i == 3) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow" + codeParam;
 					  s_log.warn("doAction() url:" + url);
 					  output += HttpUtil.fetchUrl(url); 
 					}
 					if (i == 0 || i == 4) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow" + codeParam;
 					  s_log.warn("doAction() url:" + url);
 					  output += HttpUtil.fetchUrl(url); 
 					}
 					if (i == 0 || i == 5) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all";
+					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all" + codeParam;
 					  s_log.warn("doAction() url:" + url);
 					  output += HttpUtil.fetchUrl(url); 
 					}
@@ -172,7 +189,9 @@ public class Scheduler extends Action {
 		    }     
 		
 		} finally {
-		  UtilDataAction.setInComputeProcess(null);	  
+		  UtilDataAction.setInComputeProcess(null);
+
+          AntwebUtil.resetSecureCode();
 		}	          
 
         //this shouldn't happen in this example

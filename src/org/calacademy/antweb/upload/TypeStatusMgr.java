@@ -182,6 +182,29 @@ report feedback on which specimens have type status fields that do not match a n
 Second, we will need to figure out how to deal with homonyms.  If the name matches a homonym, we need more information.
 In those cases, we can not link the name to a protonym ID from AntCat.  Could we have the user enter manually the
 Protonym ID into the type status field?
+
+
+---Bfisher July 29
+
+(1) how to clean names: some have bad characters: eg:
+
+4347. syntype of MyrmicocryptaÂ corniculata
+4348. Lectotype of PrenolepisÂ vividula mjobergi
+4349. Lectotype of PrenolepisÂ guatemalensis antillana
+4350. Lectotype of BrachymyrmexÂ bruchi rufipes
+4351. syntype of BrachymyrmexÂ giardi nitida
+
+(2) It appears the type name is not being checked to the protonym.  Thus all names with a joining word like "var." will not match a name.  Maybe easier if we ignore all words with a period when checking?
+
+(3) I see some issues form the antcat side which will be fixed soon.  Not all protonyms have a cleaned version in Antcat (a cleaned version is the protonym without the joining words.)
+
+Overall I see two areas we could move forward with:
+a) improve matching, taking into account the above; and once matching is working more or less fine
+b) start providing feedback on upload reports, starting with indicating:
+1) which type status fields lack names (there are many that just have "type" for example
+2) indicate which names in the type status field were not recognized
+
+we can deal with homonyms later
  */
 
 

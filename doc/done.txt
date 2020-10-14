@@ -13414,8 +13414,6 @@ Jul 1. 1hr.
   Configure machine's host file to find new url.
   Run the Worldants process.
   Document.
-
-#Reported
   
 Jul 6. 1hr.
   Check on server.
@@ -13436,6 +13434,30 @@ July 26 1hr (1hr discounted).
 July 27. 1hr.
   Find and clear some disk space for Joe.  
   Look into processes that fill the disk with backups (that are not needed).
-  Document the type_status work for Brian.  
+  Document the type_status work for Brian.
+  
+July 28 2.5hrs.
+  Develop the Type Status Manager.
+  
+#Reported  
+  
+Aug 3rd. 1hr.
+  Check on server. Document.
 
+Sept 25. 1.5hrs.
+  Support replacing the Antweb.org certification.
+  Look into uptimerobot.com and create new alert.
+  Look into stg.antweb.org.
 
+Sept 30. 2hrs.
+  Look into upload_date presence in API.
+  Look into upload_date data in exif, db, and API.
+  Look into API date format.
+  Document.
+
+Oct 13. 1hr.
+  Look into Jack's slow, failed upload.
+  
+Oct 14. 1hr.
+  Look into performance issues.
+  

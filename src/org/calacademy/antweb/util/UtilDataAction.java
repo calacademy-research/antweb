@@ -159,71 +159,75 @@ public class UtilDataAction extends Action {
         String code = form.getCode();	
         String text = form.getText();	
         String taxonName = form.getTaxonName();
-        String prop = form.getProp();		
+        String prop = form.getProp();
+        int secureCode = form.getSecureCode();
 
-        s_log.warn("doAction() " + action + " request:" + request);
+        boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
+        boolean isSecure = AntwebUtil.isSecureCode(secureCode) || isAdmin;
+        s_log.warn("doAction() " + action + " request:" + request + " isSecure:" + isSecure + " secureCode:" + secureCode + " isAdmin:" + isAdmin);
 
-        if ("allSets".equals(action)) {
-            message = "allSets - "; 
-			message += doAction("set1", form, accessLogin, accessGroup, connection, request, mapping);
-			message += " " + doAction("set2", form, accessLogin, accessGroup, connection, request, mapping);
-			message += " " + doAction("set3", form, accessLogin, accessGroup, connection, request, mapping);
-			message += " " + doAction("set4", form, accessLogin, accessGroup, connection, request, mapping);
-			message += " " + doAction("set5", form, accessLogin, accessGroup, connection, request, mapping);
-        }
-        
-        if ("set1to3".equals(action)) {
-            message = "set1to3 - ";
-			message += doAction("set1", form, accessLogin, accessGroup, connection, request, mapping);
-			message += " " + doAction("set2", form, accessLogin, accessGroup, connection, request, mapping);
-			message += " " + doAction("set3", form, accessLogin, accessGroup, connection, request, mapping);
-		}
-	
-        // dev: 11.68 mins  Or 24.98 mins? Prod: 11.23 mins  Must be followed with the Count Crawls
-        if ("set1".equals(action)) {
-            message = "set1 - "; 
-            message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
-            message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
-        }
+        if (isSecure) {
+            if ("allSets".equals(action)) {
+                message = "allSets - ";
+                message += doAction("set1", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("set2", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("set3", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("set4", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("set5", form, accessLogin, accessGroup, connection, request, mapping);
+            }
 
-        // Dev: 31.50 mins and 25.75 mins. Prod: 43.93
-        if ("set2".equals(action)) {
-            message = "set2 - "; 
-            message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);        
-            message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 12.30 mins
-            message += " " + doAction("GeolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
-            GeolocaleMgr.populate(connection, true, true);
-            doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
-        }
+            if ("set1to3".equals(action)) {
+                message = "set1to3 - ";
+                message += doAction("set1", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("set2", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("set3", form, accessLogin, accessGroup, connection, request, mapping);
+            }
 
-        // dev: 7.05 mins. Prod: 14.52 mins
-        if ("set3".equals(action)) {
-            message = "set3 - ";
-            message += " " + doAction("ProjectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins     
-            message += " " + doAction("populateMuseum", form, accessLogin, accessGroup, connection, request, mapping);  // was 12.05 mins now 22.68 mins. Prod: 8.17
-            message += " " + doAction("populateBioregion", form, accessLogin, accessGroup, connection, request, mapping); // was 6.80 mins. Now 15.63 mins. // Prod: 5.52 mins  
-            message += doAction("updateTaxonSetTaxonNames", form, accessLogin, accessGroup, connection, request, mapping);      
-            message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);                  
-        }
+            // dev: 11.68 mins  Or 24.98 mins? Prod: 11.23 mins  Must be followed with the Count Crawls
+            if ("set1".equals(action)) {
+                message = "set1 - ";
+                message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
+            }
 
-        // dev: 6.58 mins. Prod: 15.17 mins
-        if ("set4".equals(action)) {     
-            message = "set4 - "; 
-           // message += doAction("allCountCrawls", form, accessLogin, accessGroup, connection, request, mapping);   
-            message += doAction("imageCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);               
-           // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);        
-           // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);   
-        }
+            // Dev: 31.50 mins and 25.75 mins. Prod: 43.93
+            if ("set2".equals(action)) {
+                message = "set2 - ";
+                message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 12.30 mins
+                message += " " + doAction("GeolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
+                GeolocaleMgr.populate(connection, true, true);
+                doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
+            }
 
-        // dev: 15.22 mins. Prod: 50.98 mins
-        if ("set5".equals(action)) {     
-            message = "set5 - "; 
-            message += " " + doAction("deleteConflictedDefaultImages", form, accessLogin, accessGroup, connection, request, mapping);   
-            message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 48.93 mins
-            message += " " + doAction("deleteOldSpecimenUploadTaxa", form, accessLogin, accessGroup, connection, request, mapping);
-            message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
+            // dev: 7.05 mins. Prod: 14.52 mins
+            if ("set3".equals(action)) {
+                message = "set3 - ";
+                message += " " + doAction("ProjectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins
+                message += " " + doAction("populateMuseum", form, accessLogin, accessGroup, connection, request, mapping);  // was 12.05 mins now 22.68 mins. Prod: 8.17
+                message += " " + doAction("populateBioregion", form, accessLogin, accessGroup, connection, request, mapping); // was 6.80 mins. Now 15.63 mins. // Prod: 5.52 mins
+                message += doAction("updateTaxonSetTaxonNames", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
+            }
+
+            // dev: 6.58 mins. Prod: 15.17 mins
+            if ("set4".equals(action)) {
+                message = "set4 - ";
+                // message += doAction("allCountCrawls", form, accessLogin, accessGroup, connection, request, mapping);
+                message += doAction("imageCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);
+                // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);
+                // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
+            }
+
+            // dev: 15.22 mins. Prod: 50.98 mins
+            if ("set5".equals(action)) {
+                message = "set5 - ";
+                message += " " + doAction("deleteConflictedDefaultImages", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 48.93 mins
+                message += " " + doAction("deleteOldSpecimenUploadTaxa", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
+            }
         }
-       
 		// ---------- Data Loading --------------------
 
         if (action.equals("updateFormicidaeProjects")) {

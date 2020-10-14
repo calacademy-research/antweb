@@ -18,6 +18,7 @@ public class UtilForm extends ActionForm {
   protected String param2;
   protected String text;
   protected String reload;
+  protected int secureCode;
       
   public String getField() {
 	return field;
@@ -117,6 +118,13 @@ public class UtilForm extends ActionForm {
     this.reload = reload;
   }
 
+  public int getSecureCode() {
+    return secureCode;
+  }
+  public void setSecureCode(int secureCode) {
+    this.secureCode = secureCode;
+  }
+
   public String toString() {
     String retVal = "";
     
@@ -130,8 +138,9 @@ public class UtilForm extends ActionForm {
     if (taxonName != null) retVal += "taxonName:" + taxonName + " ";
     if (prop != null) retVal += "prop:" + prop + " ";
     if (param != null) retVal += "param:" + param + " ";
-    if (param2 != null) retVal += "param2:" + param2 + " ";   
-    return retVal; 
+    if (param2 != null) retVal += "param2:" + param2 + " ";
+    if (secureCode != 0) retVal += "secureCode:" + secureCode + " ";
+    return retVal;
   }
 }
 

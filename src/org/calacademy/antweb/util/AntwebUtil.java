@@ -70,7 +70,19 @@ public abstract class AntwebUtil {
 	    return (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
 	}
 
-    
+    private static int s_secureCode = 0;
+    public static int getSecureCode() {
+      s_secureCode = getRandomNumber();
+      return s_secureCode;
+    }
+    public static boolean isSecureCode(int secureCode) {
+      if (s_secureCode == 0) return false;
+      return (s_secureCode == secureCode);
+    }
+    public static void resetSecureCode() {
+      s_secureCode = 0;
+    }
+
     //public static void adminAlert(String message, Connection connection) { // use AdminAlertMgr.add(String, connection);
     //  AdminAlertMgr.add(message, connection);
     //}		  	

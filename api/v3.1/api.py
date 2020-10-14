@@ -1,10 +1,12 @@
+
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # Can be execute in local environment (in /Users/mark/dev/calacademy/antweb/api/v3.1 directory) as such:
 #     python3 api.py
 #
-# Accessible, for instance, here: http://localhost:5000/specimens?specimenCode=casent0922626    
+# Accessible, for instance, here:
+#   http://localhost:5000/specimens?specimenCode=casent0922626&up=1
     
 # To Do.
 #   Performance tuning. Prevent long runs.
