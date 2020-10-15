@@ -1,3 +1,30 @@
+Release 8.42
+Fast-forward
+ api/v3.1/api.py                                     |   4 +++-
+ doc/done.txt                                        |  28 +++++++++++++++++++++++++---
+ doc/release.txt                                     |   3 +++
+ doc/toDo.txt                                        | 135 ++++++++++++++++++++++++++++--------------------------------------------------------------------------------------------------------
+ src/org/calacademy/antweb/upload/TypeStatusMgr.java |  23 +++++++++++++++++++++++
+ src/org/calacademy/antweb/util/AntwebUtil.java      |  14 +++++++++++++-
+ src/org/calacademy/antweb/util/Scheduler.java       |  43 ++++++++++++++++++++++++++++++------------
+ src/org/calacademy/antweb/util/UtilDataAction.java  | 128 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------------------------------
+ src/org/calacademy/antweb/util/UtilForm.java        |  13 +++++++++++--
+ web/documentation/releaseNum.jsp                    |   2 +-
+ 10 files changed, 204 insertions(+), 189 deletions(-)
+
+Release 8.41
+ WEB-INF/struts-config.xml                           |   9 +-
+ doc/done.txt                                        | 967 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ doc/release.txt                                     |   2 +
+ src/org/calacademy/antweb/TestAction.java           |  25 ++++-
+ src/org/calacademy/antweb/home/SpecimenDb.java      |  26 +++++
+ src/org/calacademy/antweb/upload/TypeStatusMgr.java | 180 +++++++++++++++++++++++++++++++++
+ src/org/calacademy/antweb/util/TaxonMgr.java        |  13 ++-
+ web/common/message-body.jsp                         |   5 +-
+ web/curate/curatorLinks.jsp                         |   5 +-
+ web/documentation/releaseNum.jsp                    |   2 +-
+ 10 files changed, 1216 insertions(+), 18 deletions(-)
+
 Release 8.40.2
  doc/done.txt                                | 17 +++++++++++++++--
  doc/release.txt                             |  4 ++++

@@ -13455,9 +13455,16 @@ Sept 30. 2hrs.
   Look into API date format.
   Document.
 
-Oct 13. 1hr.
+Oct 12. 1hr.
   Look into Jack's slow, failed upload.
   
-Oct 14. 1hr.
+Oct 13. 1hr.
   Look into performance issues.
+  
+Oct 14. 2hrs.
+  Look into performance. Talk with Randy and Joe. 
+  Engineer a secureCode for the scheduler.
+  Deploy. Document.  
+  
+  
   
