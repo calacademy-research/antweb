@@ -1,6 +1,54 @@
 deploy.txt
 
-.. it's changed...
+Commands on the client and server to effect a deployment.
+
+--- On the Client
+ant clean
+ant deploy
+  # Clean then deploy to be sure that any method signature changes need to be tested via compilation.
+
+sudo killall java -9
+sh startup.sh
+  # From /usr/local/tomcat/bin to start and stop the server.
+
+tail -f /usr/local/tomcat/logs/antweb.log
+  # Log file found here:
+
+cvs commit -a -m "8.42"
+  # A line like this commits the changes to git locally.
+
+git push
+  # Push the changes to the global repository
+
+--- On the server
+
+cd /antweb/deploy
+
+sh bin/srcBackup.sh 8.41
+  # From /antweb/deploy run with last version number in order to create a /antweb/bak/rel a file like antweb8.41.zip
+
+git pull
+
+sh etc/configProd.sh
+  # This shouldn't be necessary except after install? In order to configure a build for a given platform.
+  # To test, ls -al WEB-INF/classes/AntwebResources.properties
+    # Should point to -> ../../etc/AppResProd.properties
+
+ant clean
+ant deploy
+
+sudo systemctl restart tomcat
+tail -f ../links/antweb.log
+
+
+
+
+
+
+
+
+
+------------------- it's changed. Here Down is most autodated but kept for reference -----------------------
 
 This document outlines the process to deploy antweb to antweb_test and antweb.
 Created: Jun 14, 2010

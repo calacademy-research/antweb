@@ -38,12 +38,9 @@ public final class FieldGuideResultsAction extends ResultsAction {
 
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
-
-        ActionForward forward = null; 
-         
+        ActionForward forward = null;
         TaxaFromSearchForm taxaForm = (TaxaFromSearchForm) form;
-        
-       
+
         Overview overview = OverviewMgr.getAndSetOverview(request);
         if (overview == null) return OverviewMgr.returnMessage(request, mapping);
                 
@@ -59,7 +56,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 			ArrayList<ResultItem> chosenResults = null;
 			ArrayList<Taxon> chosenTaxa = null;
 
-			String resultRank = taxaForm.getResultRank();
+            String resultRank = taxaForm.getResultRank();
 			if (resultRank == null) resultRank = ResultRank.SPECIMEN;
 			
 			String caste = taxaForm.getCaste();
@@ -72,8 +69,8 @@ public final class FieldGuideResultsAction extends ResultsAction {
 	          s_log.warn("execute() WST. searchResults is null. Sending to login.");
 			  return (mapping.findForward("goToLogin"));        
 			}
-      
-			if (ResultRank.SPECIMEN.equals(resultRank)) {
+
+            if (ResultRank.SPECIMEN.equals(resultRank)) {
 				chosenResults = getChosenResultsFromResults(chosenList, searchResults.getResults());
 				forward = mapping.findForward("fieldGuideByTaxon");
 				title = "Species Field Guide";  
@@ -99,8 +96,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 			    request.setAttribute("message", message);
 			    return (mapping.findForward("message"));            				
             }
-                
-			FieldGuide fieldGuide = new FieldGuide();
+            FieldGuide fieldGuide = new FieldGuide();
             java.sql.Connection connection = null;
             try {
               javax.sql.DataSource dataSource = getDataSource(request, "conPool");              
@@ -127,7 +123,13 @@ public final class FieldGuideResultsAction extends ResultsAction {
             request.setAttribute("fieldGuide", fieldGuide);
             request.setAttribute("title", title);                
             request.setAttribute("chosenTaxa", chosenTaxa);
-        }        
+        } else {
+            String message = "No taxa chosen/found for target:" + HttpUtil.getTarget(request);
+            s_log.warn(message);
+            request.setAttribute("message", message);
+            return (mapping.findForward("message"));
+        }
+
         saveToken(request);
         return forward;
     }

@@ -66,5 +66,7 @@ update specimen set datecollectedend = null where datecollectedend = "null";
 
 
 
+alter table image_uploaded modify column code varchar(128);
+
 
 

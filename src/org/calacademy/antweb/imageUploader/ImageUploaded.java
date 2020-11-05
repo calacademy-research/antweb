@@ -134,6 +134,10 @@ public class ImageUploaded {
         if (u2 <= 0) {
           setNumber(1);
           String shot = fileName.substring(u1 + 1, period);
+          if (shot.contains(" ")){
+             setErrorMessage("Shot contains space");
+             return;
+          }
           if (!Arrays.asList(new String[]{"D", "P", "H", "L", "V"}).contains(shot)){
              setErrorMessage("Unsupported shot type");
              return;

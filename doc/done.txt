@@ -13466,5 +13466,17 @@ Oct 14. 2hrs.
   Engineer a secureCode for the scheduler.
   Deploy. Document.  
   
-  
-  
+Oct 15. 1hr.
+  Investigate down site. Redeploy.
+  Diagnose. Resolve. Document.
+  Update doc/deploy.txt
+  Run scheduler.
+
+Oct 16. 1.5hr.
+  Investigate TIF image "Unsupported shot type" resulting from space in the file name.
+  Stale field guide error.
+  Document.
+  Handle the cases of a space in a shot's file name, and FieldGuideResults without params.
+
+
+    
