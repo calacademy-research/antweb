@@ -483,14 +483,21 @@ public class UploadAction extends Action {
             //A.log("upload file:" + file2);
 			if (file2 != null) {
 			  if (!file2.getFileName().equals("")) {
+
+
+				request.setAttribute("message", "Must select a file for uploading.");
+				return mapping.findForward("message");
+
+/*
 				action = "upload:" + file2.getFileName();
 
+				s_log.warn("file upload:" + action);
 				uploadDetails = uploadFileToFolder(theForm, request, accessLogin);
 
                 ActionForward forward = uploadDetails.findForward(mapping, request);
                 A.log("upload a file forward:" + forward);
                 return forward;
-
+*/
 			  } else {
 				request.setAttribute("message", "Must select a file for uploading.");
 				return mapping.findForward("message");

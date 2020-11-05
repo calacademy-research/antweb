@@ -1,6 +1,7 @@
 Release 8.43
 Date: Nov 5
   Remove icon.jsp
+  Tighten security.
     
 Release 8.42
 Date: Oct 14, 2020

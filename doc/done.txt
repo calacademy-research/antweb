@@ -13478,5 +13478,10 @@ Oct 16. 1.5hr.
   Document.
   Handle the cases of a space in a shot's file name, and FieldGuideResults without params.
 
+Nov 5 3.5hrs.
+  Look into bad files. phpinfo.php, config.php, icon.jsp. 
+  Remove from all servers and Github. Document.
+  Research.
+  
 
     

@@ -645,7 +645,8 @@ function goToFiles() {
     </div>
 
 
-<!-- Upload a File to a Folder -->
+
+<!-- Upload a File to a Folder
 <html:form method="POST" action="upload.do" enctype="multipart/form-data">
     <input type="hidden" name="ancFileDirectory" value="none" />
     <input type="hidden" name="updateAdvanced" value="no" />
@@ -659,9 +660,9 @@ function goToFiles() {
             <div class="action_dropdown">
   <html:select property="homePageDirectory">
 	<html:option value="curator">Curator Dir</html:option>
-<% if (accessLogin.isAdmin()) { %>   	
+< % if (accessLogin.isAdmin()) { % >
 		<html:option value="homepage">AntWeb Home Page</html:option>
-<% } %>
+< % } % >
 
 	<% if (projList != null) {
 	     for (SpeciesListable s : projList) { 
@@ -669,7 +670,7 @@ function goToFiles() {
 	       if (p == null) {
 	         //A.log("curate-body.jsp 2 p is null for:" + s.getName());
 	       } else { %>
-             <option value="<%= p.getRoot() %>"><%= p.getTitle() %></option>
+             <option value="< %= p.getRoot() % >">< %= p.getTitle() % ></option>
 	    <% }
 	     }
 	   } %>
@@ -686,6 +687,8 @@ function goToFiles() {
         </div>
     </div>
 </html:form>
+-->
+
 
 <!-- Data File Upload -->
 <% if (accessLogin.isAdmin()) { %>
