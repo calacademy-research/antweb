@@ -1,24 +1,107 @@
 Antweb.org source -> Github
 
 
+----
 
-Downloaded antweb-cvs:/data/cvsroot/antweb to /dev/calacademy/antwebTest
+For security reasons (and because it is good practice), we are using a “deploy key” (worth looking up) for the server. This means that you can only move files from the repository to the deploy server, not the other way. This prevents an attacker from destroying the GitHub repo, should they compromise the antweb system.
 
-Trying to follow this outline:
-  http://ghantoos.org/2010/11/11/migrating-sourceforge-cvs-source-repository-to-github/
+----
+
+To generate keys...
+
+  ssh-keygen -t rsa -b 4096 -C "mjohnson@calacademyorg"
+
+Start the ssh-agent in the background.
+
+  eval "$(ssh-agent -s)"
+
+Automatically load keys into the ssh-agent
   
-Created this .gitconfig file in my home dir.
-  https://gist.github.com/pksunkara/988716
-Tried. 
-Mark-Johnsons-MacBook-Pro:antwebGit mark$ git cvsimport -p x -v -d /Users/mark/dev/calAcademy/antwebTemp/ .
-Expected Valid-requests from server, but got: E Cannot access /Users/mark/dev/calAcademy/antwebTemp/CVSROOT
+  touch ~/.ssh/config   // Do this if the file doesn't already exist
+  open ~/.ssh/config
 
-Maybe cvs2git?
-  http://git.661346.n2.nabble.com/Git-and-cvsimport-td4962864.html
+Add private key to ssh-agent
+
+  ssh-add -K ~/.ssh/id_rsa
+
+Copy the key into the keyboard buffer for pasting into 
+  
+  pbcopy < ~/.ssh/id_rsa.pub
+
+Finally paste into Github... 
+
+  https://github.com/settings/keys
+
+To set the name and email address globally
+
+ git config --global --edit
+  
+Set user name
+ 
+  git config user.name "Mark Johnson"
+  
+  Different from Github username: remarq    
+
+--- Or, to enable git access from mark account via antweb's key, from /home/mark/
+ cp home/antweb/.ssh/id_rsa to .ssh/
+ sudo chmod 600 .ssh/id_rsa 
+
+---
+
+Project SSH URL (origin): git@github.com:calacademy-research/antweb.git
+
+Create a dev environment, download Clone from Github
+Step into antweb directory
 
 
+  git clone git@github.com:calacademy-research/antweb.git
+
+// ***Here
+
+Set the remote
+  git remote add origin git@github.com:calacademy-research/antweb.git
+
+Show the remote name
+  git remote -v
+
+Pull request
+  git pull  
+  git pull origin master
+
+if fatal: refusing to merge unrelated histories
+  add to the git pull command: --allow-unrelated-histories
+
+if aborted
+
+In case of: The following untracked working tree files would be overwritten by merge:
+
+  perhaps could delete all of them...
+     rm -rf api/v3.1/venv
+     ...
+
+// Never got it working. Tried some of these.
+
+  git add * 
+  git stash
+
+git commit -m "dev"
+
+Show the branches available in the repository.
+  git branch -r
+
+git branch --set-upstream-to=calacademy-research/antweb master
+//  git branch --set-upstream-to=calacademy-research/antweb master
+
+
+---
 
 git reset --hard
 git pull
+
+git init
+
+git pull
+
+---
 
 

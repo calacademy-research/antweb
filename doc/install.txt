@@ -13,7 +13,7 @@ Release:	18.04
 Codename:	bionic
 
 antweb-prod is 10.2.22.20
-antweb-cvs is 10.1.10.98
+antweb-cvs is 10.1.10.98 #Retired.
 
 Installed by user Mark (with sudo priv).
 
@@ -80,12 +80,27 @@ or:
 sudo chmod 775 antweb_deploy/
 
 There is a file platform.properties that is not in source control that must be installed here:
-  /antweb/antweb_deploy/WEB-INF/CLASSES/
+  /antweb/deploy/WEB-INF/classes/
 This file contains the database password, to google maps key, and other private info.  
+
+/* Do we still use platform.properties? Only found in older 8.25 source tree.
+platform.properties not found in 
+Looks expected in AntwebProps.java:40
+On local machine:
+cat ./bak/rel/antweb8.24/WEB-INF/classes/platform.properties
+# This file is NOT checked into git. Included in the .gitignore file.
+
+googleMaps.key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
+dbPwd=f0rm1c6
+
+/*
+
+
 
 Ant
 ---
 sudo apt  install ant  
+
 
 Emacs
 -----
@@ -94,11 +109,11 @@ sudo apt-get install emacs
 Java
 ----
 java -version
-openjdk version "11.0.4" 2019-07-16
-OpenJDK Runtime Environment (build 11.0.4+11-post-Ubuntu-1ubuntu218.04.3)
-OpenJDK 64-Bit Server VM (build 11.0.4+11-post-Ubuntu-1ubuntu218.04.3, mixed mode, sharing)
+openjdk version "11.0.9" 2020-10-20
+OpenJDK Runtime Environment (build 11.0.9+11-Ubuntu-0ubuntu1.18.04.1)
+OpenJDK 64-Bit Server VM (build 11.0.9+11-Ubuntu-0ubuntu1.18.04.1, mixed mode, sharing)
 
-OpenJDK is good enough? TBD.
+OpenJDK is good enough? Yes.
 
 MySQL
 -----
@@ -120,10 +135,10 @@ sudo mysql
   FLUSH PRIVILEGES;
   CREATE USER 'antweb'@'localhost' IDENTIFIED BY '******';
   
-To start: sudo systemctl start mysql.
+To start: sudo systemctl start mysql
 For status: systemctl status mysql.service    
 For version: sudo mysqladmin -p -u root version
-  Server version 5.7.27-0ubuntu0.18.04.1
+  5.7.32-0ubuntu0.18.04.1
 
 GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'localhost' IDENTIFIED BY '******' WITH GRANT OPTION;
 GRANT ALL PRIVILEGES ON *.* TO 'antweb'@'%' IDENTIFIED BY '******' WITH GRANT OPTION;
@@ -165,28 +180,101 @@ sudo apt install apache2
     |       `-- *.conf
     |-- sites-enabled
     |       `-- *.conf    
+
+Gather conf files from old server
+---------------------------------   
+/etc/apache2/apache2.conf    
+/etc/apache2/sites-enabled conf-enabled and mods-enabled directories    
         
 Tomcat
 ------
 Tomcat installation - with connector information below.
 Follow guide here: https://www.digitalocean.com/community/tutorials/install-tomcat-9-ubuntu-1804
 
+--
+sudo groupadd tomcat
+sudo useradd -s /bin/false -g tomcat -d /opt/tomcat tomcat
+
+curl -O https://mirrors.koehn.com/apache/tomcat/tomcat-9/v9.0.39/bin/apache-tomcat-9.0.39.tar.gz
+
+sudo mkdir /opt/tomcat
+sudo tar xzvf apache-tomcat-*tar.gz -C /opt/tomcat --strip-components=1
+
+cd /opt/tomcat
+sudo chgrp -R tomcat /opt/tomcat
+sudo chmod -R g+r conf
+sudo chmod g+x conf
+sudo chown -R tomcat webapps/ work/ temp/ logs/ bin/ lib
+
+sudo update-java-alternatives -l
+ # java-1.11.0-openjdk-amd64      1111       /usr/lib/jvm/java-1.11.0-openjdk-amd64
+
+# Where does this file come from? Copied from old server.
+  sudo emacs /etc/systemd/system/tomcat.service
+  Configure with jvm from above: Environment=JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk-amd64
+
+sudo systemctl daemon-reload
+sudo systemctl start tomcat
+sudo systemctl status tomcat   # active (running)
+
+
+---------- Softlinks created --
+#From /usr/local directory
+ln -s /usr/local/tomcat tomcat
+ln -s /usr/local/tomcat antweb
+
+Create softlink in /opt/tomcat   latest -> ./apache-tomcat-9.0.39/
+  ln -s ./apache-tomcat-9.0.39/ latest
+
+Create softlink tomcat in /usr/local/
+  ln -s /opt/tomcat/latest tomcat
+  ln -s /data/antweb antweb
+----------
+
+# Completed through step 5
+
+# Skipping step 6. Do not want to configure firewall for 8080
+
+# Completed step 7 BUT WITHOUT success:
+systemctl status tomcat.service
+● tomcat.service - Apache Tomcat Web Application Container
+   Loaded: loaded (/etc/systemd/system/tomcat.service; disabled; vendor preset: enabled)
+   Active: activating (auto-restart) (Result: exit-code) since Sun 2020-11-08 14:29:45 PST; 3s ago
+  Process: 18415 ExecStart=/opt/tomcat/latest/bin/startup.sh (code=exited, status=203/EXEC)
+
+Nov 08 14:29:45 antweb systemd[1]: tomcat.service: Control process exited, code=exited status=203
+Nov 08 14:29:45 antweb systemd[1]: tomcat.service: Failed with result 'exit-code'.
+Nov 08 14:29:45 antweb systemd[1]: Failed to start Apache Tomcat Web Application Container.
+
+# When server is running, should be able to access these WITHOUT port numbers (via port 80): 
+  http://server_domain_or_IP:8080
+  http://server_domain_or_IP:8080/host-manager/html/
+  http://server_domain_or_IP:8080/manager/html
+
+
 In /opt/tomcat/latest/conf:
 /usr/lib/jvm/java-11-openjdk-amd64/bin/keytool -genkey -alias tomcat -keyalg RSA -keystore keystore
 
+pd: ******
 
-Tomcat failing on launch. Replaced keystone entry:
-    <Resource name="UserDatabase" auth="Container"
-              type="org.apache.catalina.UserDatabase"
-              description="User database that can be updated and saved"
-              factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
-              pathname="conf/tomcat-users.xml" />
-  </GlobalNamingResources>
+Tomcat failing on launch. Replaced keystone entry (in tomcat/conf/server.xml):
 
 From /opt/tomcat/latest”
-Chown -r tomcat:tomcat webapps/ work/ temp/ logs/ conf
+chown -R tomcat:tomcat webapps/ work/ temp/ logs/ conf/ bin/
 
-usermod -a -G antweb tomcat]
+usermod -a -G antweb tomcat
+
+Set listings to true in /usr/local/tomcat/conf/web.xml
+
+# No! I think this is handled elsewhere now...
+add to top of /usr/local/tomcat/bin/catalina.sh:
+CATALINA_OPTS="$CATALINA_OPTS -Djava.util.Arrays.useLegacyMergeSort=true -Dfile.encoding=UTF8 -Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager"
+
+old servers also had these:
+-Dorg.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING=false
+
+# --- Completed to here (Nov 7 2020, Mark) ---
+
 
 Installing apache mod_jk:
 https://www.digitalocean.com/community/tutorials/how-to-encrypt-tomcat-8-connections-with-apache-or-nginx-on-ubuntu-16-04
@@ -196,31 +284,27 @@ https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl
 When complete, this is the only valid site:
 /etc/apache2/sites-enabled/default-ssl.conf
 
-Set listings to true in /usr/local/tomcat/conf/web.xml
-
-add to top of /usr/local/tomcat/bin/catalina.sh:
-CATALINA_OPTS="$CATALINA_OPTS -Djava.util.Arrays.useLegacyMergeSort=true -Dfile.encoding=UTF8 -Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager"
-
-old servers also had these:
--Dorg.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING=false
 
 
 Python/API setup (Joe's notes)
 ----------------
 sudo apt install default-jdk
 
-apt-get install python3-pip
+apt-get install python3-pip   sudo?
 hash -d pip3
-apt-get install libssl-dev
+apt-get install libssl-dev    sudo?
 pip3 install phpmysql
+  # 404 Not Found for url: https://pypi.org/simple/phpmysql/
 Pip3 install Flask-SQLAlchemy
 pip3 install Flask-Restful
 pip3 install mysqlclient
+  # Command "python setup.py egg_info" failed with error code 1 in /tmp/pip-build-raziuh3l/mysqlclient/
 
-Sudo Apt-get install apache2-dev
-Sudo Pip3 install mod-wsgi 
+sudo apt-get install apache2-dev
+pip3 install mod-wsgi 
 
 ln -s /antweb/antweb/api/v3.1 v3.1
+  # Not Done Yet. Necessary?
 
 
 USWGI API * NOT being used. We went the Apache route. This can be deleted.
@@ -275,7 +359,7 @@ sudo sudo chmod 777 /usr/local/tomcat/webapps/   # needed for "ant build". Must 
 
 # This is a custom step.
 # configX.sh, appResX.properties, and buildX.properties required for each platform instance.
-cd /antweb/antweb_deploy
+cd /antweb/deploy
 sh etc/configProd.sh
 
 sudo mkdir /data
@@ -285,6 +369,7 @@ sudo chown antweb:antweb /data
 # These are necessary if running from tomcat container (as tomcat:tomcat).
 sudo chmod 777 /data/antweb/web
 # When did we create /data/antweb? Maybe in the "ant deploy" below?
+# It gets copied in from latest server.
 
 mkdir /data/antweb/web/log
 sudo chmod 777 /data/antweb/web/log
@@ -327,8 +412,11 @@ emacs /antweb/antweb_deploy/WEB-INF/classes/logging.properties
            
 Antblog
 -------
+  * This may change? All we do is have the antblog exist within the /data/antweb directory.
+    Static content now.
 
-Antblog
+
+Antblog --- To be REMOVED
 Cronjobs
 Mount drives
   v-antweb-web-prod:/vol/antweb_web_prod
@@ -356,7 +444,6 @@ GIT
     git add *
     git commit -m "Initial move from CVS - 2-11-20”
     git push
-
 
 On dev machine (Mac laptop).
 
@@ -387,7 +474,7 @@ sudo  ln -s /data/antweb /usr/local/antweb
 #On a local dev machine...
 sudo  ln -s /data/antweb /usr/local/tomcat/webapps/antweb/
 
-edit /usr/local/tomcat/conf/context.xml to disable session persistence.
+edit 	 to disable session persistence.
   Add into the context section:
   <Resources cachingAllowed="true" cacheMaxSize="100000" />
 
@@ -395,16 +482,17 @@ Edit etc/AppResProd.properties to have:
 #site.domain=www.antweb.org
 site.domain=10.2.22.30
 
-Edit build.properties to have:
+#Removed.
+#Edit build.properties to have:
 #antweb.home=/usr/local/tomcat/webapps/antweb
-antweb.home=/data/antweb
+#antweb.home=/data/antweb
 
 ant build
 
 Generate the Recent Images, Edits and Statistics 
   (links in the Technical Functions section of curate page).
 
-
+# Deprecated.
 cd /var/www/html/
 sudo bash
 sudo mkdir antblog
@@ -474,10 +562,17 @@ Tomcat failing on launch. Replaced keystone entry:
 
 From /opt/tomcat/latest”
 Chown -r tomcat:tomcat webapps/ work/ temp/ logs/ conf
-
+  # What about bin/ and log/?
 
 Installing apache mod_jk:
 https://www.digitalocean.com/community/tutorials/how-to-encrypt-tomcat-8-connections-with-apache-or-nginx-on-ubuntu-16-04
+  sudo apt-get update
+  sudo apt-get install libapache2-mod-jk
+
+  edit /etc/libapache2-mod-jk/workers.properties
+    workers.tomcat_home=/opt/tomcat/latest
+
+
 Make cert:
 https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-apache-in-ubuntu-16-04
 
@@ -593,6 +688,35 @@ mark@10.2.22.28:/antweb/links/tomcat/lib/
 
 
 
+Progress Nov 8, 2020
+--------------------
+.  Ubuntu
+.  Groups and Users
+.  Antweb - Still need platform.properties?
+.  Ant
+.  Emacs
+.  Java
+.  MySQL
+x  CVS - Change to Github
+.  Apache - no configuration yet.
+.  Tomcat
+.  Python
+x  USWGI - Can be deleted?
+  Apache API
+  Antweb config - waiting on Mapped drives.
+.  Antblog
+.  GIT
+.  SSH Keys
+  Install After Joe
+  Finalize, clean up document.
+
+IT Tasks
+.  Access to new machine.
+.  Access to old machine for file transfer. Docroot, and database snapshot, home dirs.
+  Apache/Tomcat config.
+  NetApps mount at:
+    /data/antweb/images
+    /data/antweb/web
 
 
     

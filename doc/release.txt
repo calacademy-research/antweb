@@ -1,6 +1,10 @@
+Release 8.43.1
+Date: Nov 10
+  Modified install.txt
+   
 Release 8.43
 Date: Nov 5
-  Remove icon.jsp
+  Remove icon.jsp.
   Tighten security.
     
 Release 8.42

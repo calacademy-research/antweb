@@ -1,5 +1,12 @@
+Release 8.43
+ doc/done.txt                                       |  5 +++++
+ doc/release.txt                                    |  1 +
+ src/org/calacademy/antweb/upload/UploadAction.java |  9 ++++++++-
+ web/curate/curate-body.jsp                         | 11 +++++++----
+ web/homepage/icon.jsp                              | -------------------
+ 4 files changed, 21 insertions(+), 5 deletions(-)
+
 Release 8.42
-Fast-forward
  api/v3.1/api.py                                     |   4 +++-
  doc/done.txt                                        |  28 +++++++++++++++++++++++++---
  doc/release.txt                                     |   3 +++
