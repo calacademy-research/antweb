@@ -12,8 +12,6 @@ Description:	Ubuntu 18.04.3 LTS
 Release:	18.04
 Codename:	bionic
 
-antweb-prod is 10.2.22.20
-antweb-cvs is 10.1.10.98 #Retired.
 
 Installed by user Mark (with sudo priv).
 
@@ -27,9 +25,8 @@ These instructions are to make a fully functional antweb server on Centos.  Inst
   Perl - no longer necessary. Comes by default.
     This is perl 5, version 26, subversion 1 (v5.26.1)
   Php - still necessary? Comes by default.
-    PHP 7.2.19-0ubuntu0.18.04.2  
-  CVS
-  Antweb  
+    PHP 7.2.19-0ubuntu0.18.04.2
+  Antweb
 
 Ubuntu
 ------
@@ -113,8 +110,6 @@ openjdk version "11.0.9" 2020-10-20
 OpenJDK Runtime Environment (build 11.0.9+11-Ubuntu-0ubuntu1.18.04.1)
 OpenJDK 64-Bit Server VM (build 11.0.9+11-Ubuntu-0ubuntu1.18.04.1, mixed mode, sharing)
 
-OpenJDK is good enough? Yes.
-
 MySQL
 -----
 sudo apt update
@@ -169,17 +164,8 @@ sudo apt install apache2
   replace /var/www/html/index.html
   Ubuntu document root is /var/www/html
   started/stopped with /etc/init.d/apache2 or apache2ctl
-  Conf
-    /etc/apache2/
-    |-- apache2.conf
-    |       `--  ports.conf
-    |-- mods-enabled
-    |       |-- *.load
-    |       `-- *.conf
-    |-- conf-enabled
-    |       `-- *.conf
-    |-- sites-enabled
-    |       `-- *.conf    
+
+
 
 Gather conf files from old server
 ---------------------------------   
@@ -697,7 +683,6 @@ Progress Nov 8, 2020
 .  Emacs
 .  Java
 .  MySQL
-x  CVS - Change to Github
 .  Apache - no configuration yet.
 .  Tomcat
 .  Python
