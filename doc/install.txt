@@ -395,6 +395,18 @@ org.apache.catalina.core.ContainerBase.[Catalina].handlers=java.util.logging.Con
 Into: 
 emacs /antweb/antweb_deploy/WEB-INF/classes/logging.properties
 
+
+Image Upload
+------------
+  Install Image Magick
+  Type "convert" and follow instructions for installation.
+  
+Networking
+----------
+/etc/hosts should include:
+127.0.0.1 localhost
+127.0.1.1 antweb
+127.0.0.1 antweb.org  
            
 Antblog
 -------

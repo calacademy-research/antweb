@@ -1,6 +1,7 @@
-Release 8.43.1
-Date: Nov 10
-  Modified install.txt
+Release 8.44
+Date: Nov 11
+  Modified install.txt, and other documentation.
+  Database backup scripts modified (to not use /mnt directory).
    
 Release 8.43
 Date: Nov 5

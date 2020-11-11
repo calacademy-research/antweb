@@ -13478,10 +13478,53 @@ Oct 16. 1.5hr.
   Document.
   Handle the cases of a space in a shot's file name, and FieldGuideResults without params.
 
-Nov 5 3.5hrs.
+Nov 5 5.5hrs.
   Look into bad files. phpinfo.php, config.php, icon.jsp. 
+  Review date stamps and log files.
   Remove from all servers and Github. Document.
   Research.
+  Review the violating jsp code.
+  47 message email thread.
+
+Nov 6. 5hrs.
+  Reflections for Brian
+  1 hr discussion with Joe
+  Conference call with security team.
+  Discuss strategy with Brian. New server, and new data transfer options.
+  Process the icon.jsp file. 
+
+Nov 7. 5hrs.
+  Configuration of machine.
+  Creating users (antweb and tomcat).
+  Install tomcat, mysql, apache, Java, ant, php, etc...  
+  Documentation.
+
+Nov 8. 5hrs.
+  Take database snapshot and load new database.
+  access to old server. Finding and copying config files across.
+  Get Antweb to build on new machine.
+  Tomcat Apache configuration.
+  Documenting progress.
   
 
+Nov 9. 4hrs.
+  Tomcat installation. Since Joe hasn't done it. Incomplete.
+  Pressing to get drives mapped.
+  Apache configuration. Incomplete.
+  Look into Randy's latest malicious file.  
+  
+Nov 10
+  API installation.
+  Figure the image permissions issue. Attempt resolution.
+  Support Joe in his work.
+  Apache and Tomcat debugging.     
     
+Nov 11. 5hrs.
+  Debug server. Testing.
+  Get the API working. (with Joe's help).
+  Fix hosts so machine can ping itself.
+  Get rid of /mnt directory for backups.
+  Get database configuration file in place.
+  Plan snapshot.
+  Look into restart scripts.  
+  
