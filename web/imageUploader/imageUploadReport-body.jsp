@@ -23,6 +23,9 @@
     Artist artist = ArtistMgr.getArtist(imageUpload.getArtistId());
     Group group = GroupMgr.getGroup(imageUpload.getGroupId());
     Curator curator = LoginMgr.getCurator(imageUpload.getCuratorId());
+    if (curator == null) {
+        AntwebUtil.log("Curator is null for curatorId:" + imageUpload.getCuratorId());
+    }
 %>
 
 
