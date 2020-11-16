@@ -18,7 +18,7 @@ dbuser="antweb"
 dbpass="f0rm1c6"
 #backupdir="/data/antweb/web/db"
 #backupdir="/mnt/backup/db"
-backupdir = "/data/antweb/backup/db"
+backupdir="/data/antweb/backup/db"
  
 curBak=$backupdir/$dbname-currentDump.sql.gz
 

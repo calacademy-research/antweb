@@ -407,7 +407,10 @@ Networking
 127.0.0.1 localhost
 127.0.1.1 antweb
 127.0.0.1 antweb.org  
-           
+127.0.0.1 www.antweb.org
+10.2.22.49 antcat-export
+
+
 Antblog
 -------
   * This may change? All we do is have the antblog exist within the /data/antweb directory.

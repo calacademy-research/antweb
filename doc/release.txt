@@ -1,3 +1,7 @@
+Release 8.45
+Date: Nov 16
+  Fix db-daily and db-monthly database backup scripts.
+  
 Release 8.44
 Date: Nov 11
   Modified install.txt, and other documentation.

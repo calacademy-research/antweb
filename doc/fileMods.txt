@@ -1,3 +1,13 @@
+Release 8.44
+ bin/admin.sh                     |  5 +++--
+ bin/db-daily-dump.sh             |  5 +++--
+ bin/db-monthly-dump.sh           |  3 ++-
+ doc/done.txt                     | 49 ++++++++++++++++++++++++++++++++++++++++++++++---
+ doc/install.txt                  | 12 ++++++++++++
+ doc/release.txt                  |  7 ++++---
+ web/documentation/releaseNum.jsp |  2 +-
+ 7 files changed, 71 insertions(+), 12 deletions(-)
+
 Release 8.43
  doc/done.txt                                       |  5 +++++
  doc/release.txt                                    |  1 +

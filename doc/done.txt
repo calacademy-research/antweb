@@ -13438,11 +13438,15 @@ July 27. 1hr.
   
 July 28 2.5hrs.
   Develop the Type Status Manager.
+ 
+--month: 8.5hrs.
   
-#Reported  
+#Reported  ?? What. No. Hadn't computed yet. ??
   
 Aug 3rd. 1hr.
   Check on server. Document.
+
+-month: 1hr.
 
 Sept 25. 1.5hrs.
   Support replacing the Antweb.org certification.
@@ -13454,6 +13458,8 @@ Sept 30. 2hrs.
   Look into upload_date data in exif, db, and API.
   Look into API date format.
   Document.
+
+-month: 3.5hrs
 
 Oct 12. 1hr.
   Look into Jack's slow, failed upload.
@@ -13477,6 +13483,9 @@ Oct 16. 1.5hr.
   Stale field guide error.
   Document.
   Handle the cases of a space in a shot's file name, and FieldGuideResults without params.
+
+-month: 6.5hrs.
+
 
 Nov 5 5.5hrs.
   Look into bad files. phpinfo.php, config.php, icon.jsp. 
@@ -13513,13 +13522,13 @@ Nov 9. 4hrs.
   Apache configuration. Incomplete.
   Look into Randy's latest malicious file.  
   
-Nov 10
+Nov 10. 3.5hrs.
   API installation.
   Figure the image permissions issue. Attempt resolution.
   Support Joe in his work.
   Apache and Tomcat debugging.     
     
-Nov 11. 5hrs.
+Nov 11. 7.5hrs.
   Debug server. Testing.
   Get the API working. (with Joe's help).
   Fix hosts so machine can ping itself.
@@ -13527,4 +13536,18 @@ Nov 11. 5hrs.
   Get database configuration file in place.
   Plan snapshot.
   Look into restart scripts.  
+  Go through deployment process.  
+  Test the scheduler.
+  Summary for Brian.
+    
+
+Nov 12. 1hr.
+  Install cron jobs. 
   
+Nov 16. 
+  Create invoices Jun - Oct.
+  Check on server.
+  Document completion of server recovery and next steps.
+
+
+   

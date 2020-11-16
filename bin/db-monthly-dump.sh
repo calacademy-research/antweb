@@ -16,7 +16,7 @@ dbuser="antweb"
 dbpass="f0rm1c6"
 #backupdir="/data/antweb/web/db"
 #backupdir="/mnt/backup/db"
-backupdir = "/data/antweb/backup/db"
+backupdir="/data/antweb/backup/db"
 
 if [ -d $backupdir ]; then
 mysqldump --opt -u$dbuser -p$dbpass $dbname | gzip > $backupdir/backup-$dbname-$monthofyear.sql.gz
