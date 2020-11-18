@@ -156,7 +156,10 @@ Or, if there are stmts and/or rsets...
         AntwebUtil.logShortStackTrace();
         s_log.error("getStatement() name:" + name + " e:" + e);
       }
-        return stmt;  
+      if (stmt == null) {
+          s_log.error("getStatement() unable to getStatement:" + name + " from connection:" + connection);
+      }
+      return stmt;
     }
     
     public static void open(String name) {

@@ -639,15 +639,20 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     // XXX Insufficient below. Perhaps fix in allCountCrawl? Performance matters.
     public void regenerateAllAntweb() throws SQLException {
-    
+
+        s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a minute.");  // Just over a minute!
+
         //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before regenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "Before regenerateAllAntweb Proj_taxon worldants counts");
 
         String deleteDML = "delete from proj_taxon where project_name = 'allantwebants'";
         // s_log.warn("regenerateAllAntweb() deleteDML:" + deleteDML);
-        Statement stmt = DBUtil.getStatement(getConnection(), "regenerateAllAntweb()");
-        stmt.executeUpdate(deleteDML);  
-        stmt.close();
+        Statement stmt = DBUtil.getStatement(getConnection(), "regenerateAllAntweb1()");
+        try {
+            stmt.executeUpdate(deleteDML);
+        } finally {
+            DBUtil.close(stmt, "regenerateAllAntweb1()");
+        }
             
         // Source discernment is insufficient here. Must depend mostly on if specimens exist.          
         String insertDML = "insert into proj_taxon (taxon_name, project_name, source) " 
@@ -656,25 +661,27 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             + " where status in " + StatusSet.getCountables()
             + ")";
         //A.log("regenerateAllAntweb() insertDML:" + insertDML);
-        stmt = getConnection().createStatement();
-        stmt.executeUpdate(insertDML); 
-        DBUtil.close(stmt, "regenerateAllAntweb()");
-
+        stmt = DBUtil.getStatement(getConnection(), "regenerateAllAntweb2()");
+        try {
+            stmt.executeUpdate(insertDML);
+        } finally {
+            DBUtil.close(stmt, "regenerateAllAntweb2()");
+        }
 
         UtilDb utilDb = new UtilDb(getConnection());
         int deleteCount = utilDb.deleteFrom("proj_taxon", "where (project_name, taxon_name) in (select project_name, taxon_name from proj_taxon_dispute)");
-            
         int updateCount = utilDb.updateField("proj_taxon", "source", "'specimen'", "project_name = 'allantwebants' and specimen_count > 0");
         A.log("regenerateAllAntweb() deleteCount:" + deleteCount + " updateCount:" + updateCount);
 
         // This was in the UtilData.java regenerateAllAntweb
-        s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a minute.");  // Just over a minute!
-          (new ProjTaxonCountDb(getConnection())).childrenCountCrawl("allantwebants"); // Proj_taxon counts
-		  finishRegenerateAllAntweb();
-		  (new ProjectDb(getConnection())).updateCounts("allantwebants");      // Project counts
+
+        (new ProjTaxonCountDb(getConnection())).childrenCountCrawl("allantwebants"); // Proj_taxon counts
+        finishRegenerateAllAntweb();
+        (new ProjectDb(getConnection())).updateCounts("allantwebants");      // Project counts
+
+        s_log.warn("regenerateAllAntweb() completed.");
+
         //s_log.warn("regenerateAllAntweb() execute complete.");
-
-
         //  LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "After regenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "after regenerateAllAntweb Proj_taxon worldants counts");
     }

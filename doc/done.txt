@@ -13495,7 +13495,7 @@ Nov 5 5.5hrs.
   Review the violating jsp code.
   47 message email thread.
 
-Nov 6. 5hrs.
+Nov 6. 4hrs.
   Reflections for Brian
   1 hr discussion with Joe
   Conference call with security team.
@@ -13540,14 +13540,28 @@ Nov 11. 7.5hrs.
   Test the scheduler.
   Summary for Brian.
     
+-Week: 34.5
 
 Nov 12. 1hr.
   Install cron jobs. 
   
-Nov 16. 
+Nov 16. 2hrs.
   Create invoices Jun - Oct.
   Check on server.
+  Fix the database backup scripts.
+  Look into taxon set backup.
   Document completion of server recovery and next steps.
+  Deploy.
 
-
+--month:
    
+Nov 17
+  Contact Joe about completing Tomcat launch after reboot.
+  Look into server down. 
+  Add log message about null DBUtil.getStatement() response. 
+  Modify db connection code in regenerateAllAntweb().
+  New invoice for November.
+  
+ 
+  
+  

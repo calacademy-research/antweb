@@ -45,27 +45,27 @@ public class SessionRequestFilter implements Filter {
 
       try {
 
-		// Log insecure links.
-		if (!!HttpUtil.isSecure(request)) {
-		  A.log("doFilter() insecure");
-		  String message = "req:" + target + " scheme:" + request.getScheme()
-			+ " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
-		  LogMgr.appendLog("insecure.log", message, true);  
-		}
+          // Log insecure links.
+          if (!!HttpUtil.isSecure(request)) {
+              A.log("doFilter() insecure");
+              String message = "req:" + target + " scheme:" + request.getScheme()
+                      + " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
+              LogMgr.appendLog("insecure.log", message, true);
+          }
 
-		HttpUtil.setUtf8(request, response);
-		
-        // To fix the Desc Edit Image Upload		
-		response.setHeader("X-XSS-Protection", "0");
+          HttpUtil.setUtf8(request, response);
 
-		if (!afterPopulated && AntwebMgr.isPopulated()) {
-		  //s_log.warn("doFilter() Pop done. target:" + target);
-		  afterPopulated = true;
-		}
+          // To fix the Desc Edit Image Upload
+          response.setHeader("X-XSS-Protection", "0");
 
-        UserAgentTracker.track(request);
+          if (!afterPopulated && AntwebMgr.isPopulated()) {
+              //s_log.warn("doFilter() Pop done. target:" + target);
+              afterPopulated = true;
+          }
 
-        chain.doFilter(request, response);
+          UserAgentTracker.track(request);
+
+          chain.doFilter(request, response);
         
 /*        
    June 11, 2019. Removed these and added in the finally clause.
@@ -85,11 +85,9 @@ public class SessionRequestFilter implements Filter {
         
 */
       } catch (Exception e) {
-          // for instance: http://localhost/antweb/adm1.do?%20(Terr.%20Amazonas)
-          String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
-          int caseNumber = AntwebUtil.getCaseNumber();
 
-          String note = ""; // Usually do nothing, but in cases...          
+          String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
+          String note = ""; // Usually do nothing, but in cases...
           int postActionPeriodPos = 0;
           if (target != null) {
             int actionPeriodPos = target.indexOf(".do");
@@ -100,16 +98,20 @@ public class SessionRequestFilter implements Filter {
                 note = " Handled. No periods allowed after action.";
               }
           }
-
           String message = formatDateTime;
           String htmlMessage = null;
-          if (!"".equals(note)) {
+
+          if (!"".equals(note)) {    // for instance: http://localhost/antweb/adm1.do?%20(Terr.%20Amazonas)
             message += note + " e:" + e.toString() + " target:" + target;          
             s_log.warn("doFileter() " + message);
             htmlMessage 
               = "<br><b>Request Error: </b>" + message;
+          //} else if (e instanceof AntwebException) {
+          //    s_log.error("AntwebException handled error:" + e.toString());
           } else {
-            message += " See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber + " e:" + e.toString() + " target:" + target;
+            int caseNumber = AntwebUtil.getCaseNumber();
+            message += " See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber;
+            message += " e:" + e.toString() + " target:" + target;
             s_log.error("doFilter() WST " + message);
             message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
   		    LogMgr.appendLog("srfExceptions.jsp", message);    

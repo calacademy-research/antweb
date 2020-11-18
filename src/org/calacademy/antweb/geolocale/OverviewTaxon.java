@@ -37,7 +37,7 @@ public abstract class OverviewTaxon extends TaxonSet {
 
             //A.log("OverviewTaxon.init query:" + query);        
         
-            stmt = DBUtil.getStatement(connection, "OverviewTaxon.init()");  
+            stmt = DBUtil.getStatement(connection, "OverviewTaxon.init()");
             rset = stmt.executeQuery(query);
             
             while (rset.next()) {

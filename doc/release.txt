@@ -1,3 +1,8 @@
+Release 8.45.1
+Date: Nov 17
+  Database code changed in regenerateAllAntweb().
+  Log messages added for DBUtil.getStatement().
+
 Release 8.45
 Date: Nov 16
   Fix db-daily and db-monthly database backup scripts.
