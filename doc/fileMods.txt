@@ -1,3 +1,17 @@
+Release 8.45.3
+ doc/cron.txt                                          | 16 +++++++---------
+ doc/done.txt                                          | 46 +++++++++++++++++++++++++++++++++++++++++-----
+ doc/fileMods.txt                                      |  9 +++++++++
+ doc/install.txt                                       | 30 +++++++++---------------------
+ doc/release.txt                                       | 11 +++++++++++
+ doc/toDo.txt                                          |  4 +++-
+ src/org/calacademy/antweb/home/ProjTaxonDb.java       |  6 +++---
+ src/org/calacademy/antweb/util/AntwebProps.java       | 22 ++++++++++++++++------
+ src/org/calacademy/antweb/util/QueryManager.java      |  5 +++++
+ src/org/calacademy/antweb/util/SpeciesListAction.java | 24 ++++++++++++++----------
+ web/documentation/releaseNum.jsp                      |  2 +-
+ 11 files changed, 119 insertions(+), 56 deletions(-)
+
 Release 8.45.1
  doc/done.txt                                             | 20 +++++++++++++++++---
  doc/fileMods.txt                                         | 11 +++++++++++

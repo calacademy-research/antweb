@@ -134,7 +134,17 @@ public abstract class HttpUtil {
       if (queryString == null) {
           return null;
       }
- 
+
+
+
+
+        String[] testStrings = {queryString};
+        if (HttpUtil.hasIllegalChars(testStrings, request)) {
+            request.setAttribute("message", "Illegal characters.");
+            return (mapping.findForward("message"));
+        }
+
+
       boolean hasSpecialChars = false;    
       if (targetSic.contains("locality.do")) {
         hasSpecialChars = AntFormatter.hasTextSpecialCharacter(queryString);      
@@ -357,14 +367,70 @@ public abstract class HttpUtil {
         str = str.toLowerCase();
         if ( str.contains("&")
           || str.contains("sleep")
+          || str.contains("CASE%20")
+          || str.contains("SELECT%20")
+          || str.contains("ORDER%20")
+          || str.contains("3DDBMS_PIPE.RECEIVE_MESSAGE")
+          || str.contains("WAITFOR")
           ) {
           AntwebUtil.log("hasIllegalChars() true str:" + str + " target:" + HttpUtil.getTarget(request));
+          addBadActor(HttpUtil.getClientIpAddress(request));
          return true;      
         }
       }
       return false;
     }
-    
+
+    private static final String[] HEADERS_TO_TRY = {
+            "X-Forwarded-For",
+            "Proxy-Client-IP",
+            "WL-Proxy-Client-IP",
+            "HTTP_X_FORWARDED_FOR",
+            "HTTP_X_FORWARDED",
+            "HTTP_X_CLUSTER_CLIENT_IP",
+            "HTTP_CLIENT_IP",
+            "HTTP_FORWARDED_FOR",
+            "HTTP_FORWARDED",
+            "HTTP_VIA",
+            "REMOTE_ADDR" };
+
+    private static String getClientIpAddress(HttpServletRequest request) {
+         if (AntwebProps.isLocal()) return getDevIpAddress(request);
+
+         for (String header : HEADERS_TO_TRY) {
+            String ip = request.getHeader(header);
+            if (ip != null && ip.length() != 0 && !"unknown".equalsIgnoreCase(ip)) {
+                return ip;
+            }
+        }
+        return request.getRemoteAddr();
+    }
+    public static String getDevIpAddress(HttpServletRequest request)
+    {
+        String appUrl = request.getScheme() + "://"+ request.getLocalAddr();
+        return appUrl;
+    }
+
+    private static HashMap badActorMap = new HashMap<String, Integer>();
+    private static void addBadActor(String ip) {
+      A.iLog("addBadActor() ip:" + ip);
+      Integer count = (Integer) badActorMap.get(ip);
+      if (count == null) {
+          badActorMap.put(ip, Integer.valueOf(1));
+      } else {
+          badActorMap.put(ip, ++count);
+      }
+    }
+    public static String getBadActorReport() {
+        Set<String> keys = badActorMap.keySet();
+        String report = "Bad Actor Report";
+        int i = 0;
+        for (String key : keys) {
+            ++i;
+            report += "i:" + i + " key:" + key + " value:" + badActorMap.get(key) + "\n";
+        }
+        return report;
+    }
     
     public static boolean abortAction(String content) {
       // This method looks for jsp injection code.  True to abort.

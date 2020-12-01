@@ -53,8 +53,8 @@ public class BrowseAction extends DescriptionAction {
 
         AntwebMgr.isPopulated(); // will force populate 
         
-        if (!AntwebProps.isDevOrStageMode()) AntwebSystem.cpuCheck(); 
-        
+        if (!AntwebProps.isDevOrStageMode()) AntwebSystem.cpuCheck();
+
         ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
                 
@@ -67,16 +67,15 @@ public class BrowseAction extends DescriptionAction {
         String rank = browseForm.getRank();
         //boolean local = browseForm.getLocal(); // unnecessary now because non-global is the default.
         boolean global = browseForm.getGlobal();
-        
+
         // When and why would we want to do this?
         // Not for: http://localhost/antweb/description.do?subfamily=formicinae&genus=camponotus
         String queryString = request.getQueryString();
-        if (queryString == null) { 
-          request.setAttribute("message", "Invalid: no query string"); 
-          return mapping.findForward("message"); 
+        if (queryString == null) {
+          request.setAttribute("message", "Invalid: no query string");
+          return mapping.findForward("message");
         }
         if (!queryString.contains("?")) queryString = "?" + queryString;
-        
         boolean isPost = HttpUtil.isPost(request);
 
         if ((rank == null) || ("".equals(rank))) rank = inferredRank(queryString);
@@ -90,13 +89,14 @@ public class BrowseAction extends DescriptionAction {
         String subspecies = browseForm.getSubspecies();
         String[] chosen = browseForm.getChosen();
         String authorDate = browseForm.getAuthorDate();
-
-        String[] testStrings = {family, subfamily, genus, species, subspecies, authorDate};
+/*
+        //String[] testStrings = {family, subfamily, genus, species, subspecies, authorDate};
+        String[] testStrings = {queryString};
         if (HttpUtil.hasIllegalChars(testStrings, request)) {
           request.setAttribute("message", "Illegal characters.");
           return (mapping.findForward("message"));        
         }
-
+*/
         String name = browseForm.getName();
         if (name != null) {
           if (Rank.FAMILY.equals(rank)) family = name;
