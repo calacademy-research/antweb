@@ -1,3 +1,11 @@
+Release 8.46
+ doc/fileMods.txt                                         | 14 ++++++++++++++
+ doc/release.txt                                          |  3 +++
+ src/org/calacademy/antweb/BrowseAction.java              | 20 ++++++++++----------
+ src/org/calacademy/antweb/util/HttpUtil.java             | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ src/org/calacademy/antweb/util/SessionRequestFilter.java |  3 ++-
+ web/documentation/releaseNum.jsp                         |  2 +-
+ 
 Release 8.45.3
  doc/cron.txt                                          | 16 +++++++---------
  doc/done.txt                                          | 46 +++++++++++++++++++++++++++++++++++++++++-----

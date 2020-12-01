@@ -137,14 +137,14 @@ public abstract class HttpUtil {
 
 
 
-
+/*
         String[] testStrings = {queryString};
         if (HttpUtil.hasIllegalChars(testStrings, request)) {
             request.setAttribute("message", "Illegal characters.");
             return (mapping.findForward("message"));
         }
 
-
+*/
       boolean hasSpecialChars = false;    
       if (targetSic.contains("locality.do")) {
         hasSpecialChars = AntFormatter.hasTextSpecialCharacter(queryString);      
