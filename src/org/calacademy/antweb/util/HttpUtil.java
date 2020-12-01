@@ -135,16 +135,11 @@ public abstract class HttpUtil {
           return null;
       }
 
-
-
-/*
-        String[] testStrings = {queryString};
-        if (HttpUtil.hasIllegalChars(testStrings, request)) {
+      if (HttpUtil.hasIllegalStr(queryString, request)) {
             request.setAttribute("message", "Illegal characters.");
             return (mapping.findForward("message"));
-        }
+      }
 
-*/
       boolean hasSpecialChars = false;    
       if (targetSic.contains("locality.do")) {
         hasSpecialChars = AntFormatter.hasTextSpecialCharacter(queryString);      
@@ -362,23 +357,40 @@ public abstract class HttpUtil {
     }
     
     public static boolean hasIllegalChars(String[] strings, HttpServletRequest request) {
+      //A.log("hasIllegalChars() strings:" + strings);
       for (String str : strings) {
         if (str == null) continue;
-        str = str.toLowerCase();
-        if ( str.contains("&")
-          || str.contains("sleep")
-          || str.contains("CASE%20")
-          || str.contains("SELECT%20")
-          || str.contains("ORDER%20")
-          || str.contains("3DDBMS_PIPE.RECEIVE_MESSAGE")
-          || str.contains("WAITFOR")
-          ) {
+        if (str.contains("&") || isIllegalStr(str)) {
           AntwebUtil.log("hasIllegalChars() true str:" + str + " target:" + HttpUtil.getTarget(request));
           addBadActor(HttpUtil.getClientIpAddress(request));
          return true;      
         }
       }
       return false;
+    }
+
+    public static boolean hasIllegalStr(String str, HttpServletRequest request) {
+        A.log("hasIllegalStr() string:" + str);
+        if (isIllegalStr(str)) {
+            AntwebUtil.log("hasIllegalChars() true str:" + str + " target:" + HttpUtil.getTarget(request));
+            addBadActor(HttpUtil.getClientIpAddress(request));
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isIllegalStr(String string) {
+        String str = string.toLowerCase();
+        if ( str.contains("sleep")
+          || str.contains("case%20")
+          || str.contains("select%20")
+          || str.contains("order%20")
+          || str.contains("3ddbms_pipe.receive_message")
+          || str.contains("waitfor  ")
+          ) {
+            return true;
+        }
+        return false;
     }
 
     private static final String[] HEADERS_TO_TRY = {
