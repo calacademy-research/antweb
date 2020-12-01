@@ -171,7 +171,7 @@ public class SessionRequestFilter implements Filter {
         s_log.warn("destroy() runTime:" + AntwebUtil.hrsSince(getStartTime()) + " " + AntwebMgr.getReport());
         s_log.warn("destroy() " +  UserAgentTracker.summary() + " overactive:" + UserAgentTracker.overActiveReport());  
         s_log.warn("destroy() overdue resource:" + DBUtil.getOldConnectionList());
-        s_log.warn("Destroy() " + HttpUtil.getBadActorReport());
+        s_log.warn("Destroy() Bad Actor Report:" + HttpUtil.getBadActorReport());
     }
        
     public static Date s_startTime = null;        

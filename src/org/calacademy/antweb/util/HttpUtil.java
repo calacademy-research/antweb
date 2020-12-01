@@ -435,7 +435,7 @@ public abstract class HttpUtil {
     }
     public static String getBadActorReport() {
         Set<String> keys = badActorMap.keySet();
-        String report = "Bad Actor Report";
+        String report = "";
         int i = 0;
         for (String key : keys) {
             ++i;

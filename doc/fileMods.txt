@@ -1,3 +1,8 @@
+Release 8.46.1
+ doc/release.txt                              |  3 ++-
+ src/org/calacademy/antweb/util/HttpUtil.java | 44 ++++++++++++++++++++++++++++----------------
+ 2 files changed, 30 insertions(+), 17 deletions(-)
+ 
 Release 8.46
  doc/fileMods.txt                                         | 14 ++++++++++++++
  doc/release.txt                                          |  3 +++
