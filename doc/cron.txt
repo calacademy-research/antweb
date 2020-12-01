@@ -1,13 +1,11 @@
-5 1 * * * sh /home/mjohnson/antweb/bin/reboot.sh
-5 2 * * * curl http://www.antweb.org/cache.do?action=genCacheThread
-*/5 * * * * php /home/mjohnson/antweb/bin/appCheck.php
-*/30 * * * * php /home/mjohnson/antweb/bin/urlCheck.php --hosts=antweb.org,antweb.org/antweb_test,10.2.22.112 --url=specimen.do?name=casent0160810
+#0 23 * * 1 sh /antweb/deploy/bin/reboot.sh # Restart 11pm Monday
+
+0 21 * * * /antweb/deploy/bin/admin.sh > /antweb/log/adminTask.log
+50 3 * * 4 /antweb/deploy/bin/taxonSetBackup.sh
+*/5 * * * * php /antweb/deploy/bin/appCheck.php >> /antweb/log/appCheck.log
+
+# 5am scheduled tasks are launched by a Java thread.
+#0 23 * * * /antweb/deploy/bin/unclosedConnections.sh
 
 
-cron.txt
-
-This document documents the timed tasks of antweb.  The above text is to be the most
-current crontab settings.
-
-Currently, we reboot nightly at 1:05am, begin the caching thread at 2:05am, run the 
-appCheck script every five mintes and the urlCheck every half hour.
+#Currently, we reboot weekly at Monday 4:05am

@@ -94,13 +94,10 @@ dbPwd=f0rm1c6
 
 
 
-Ant
----
+Support apps
+------------
 sudo apt  install ant  
-
-
-Emacs
------
+sudo apt install zip
 sudo apt-get install emacs
 
 Java
@@ -413,21 +410,7 @@ Networking
 
 Antblog
 -------
-  * This may change? All we do is have the antblog exist within the /data/antweb directory.
-    Static content now.
-
-
-Antblog --- To be REMOVED
-Cronjobs
-Mount drives
-  v-antweb-web-prod:/vol/antweb_web_prod
-                       67G   61G  5.7G  92% /data/antweb/web
-  everest:/vol/antweb   1.7T  1.4T  245G  86% /data/antweb/images
-  10.2.22.34:/vol/linux_backup/antweb_q
-                      250G   34G  217G  14% /mnt/backup
-
-Changed all http to https with:
-   find . -name "*.html" -exec perl -p -i -e "s/http/https/g"  {} \;
+  * To be removed.
 
 
 GIT
@@ -463,6 +446,11 @@ ssh-keygen -t rsa
 cat id_rsa.pub
   # Copy the output and paste into Github.
   
+  
+Cron Jobs
+---------
+See antweb/etc/cronjobs.txt or the current server for latest cronjobs.
+Sudo crontab -e
 
 Install After Joe
 -----------------

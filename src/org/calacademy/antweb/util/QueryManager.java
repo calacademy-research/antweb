@@ -256,6 +256,11 @@ public abstract class QueryManager {
         try {
             stmt = DBUtil.getStatement(connection, "runNamedQueryHtml()");
 
+            if (stmt == null) {
+                s_log.warn("Failed to getStatement: runNamedQueryHtml()");
+                return null;
+            }
+
             Date startTime = new Date();            
 
             String query = namedQuery.getQuery();

@@ -1,3 +1,12 @@
+Release 8.45.1
+ doc/done.txt                                             | 20 +++++++++++++++++---
+ doc/fileMods.txt                                         | 11 +++++++++++
+ doc/release.txt                                          |  5 +++++
+ src/org/calacademy/antweb/geolocale/OverviewTaxon.java   |  2 +-
+ src/org/calacademy/antweb/home/ProjTaxonDb.java          | 35 +++++++++++++++++++++--------------
+ src/org/calacademy/antweb/util/DBUtil.java               |  5 ++++-
+ src/org/calacademy/antweb/util/SessionRequestFilter.java | 52 +++++++++++++++++++++++++++-------------------------
+ web/documentation/releaseNum.jsp                         |  2 +-
 
 Release 8.45
  bin/db-daily-dump.sh             |  2 +-

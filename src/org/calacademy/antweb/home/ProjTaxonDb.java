@@ -640,7 +640,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     // XXX Insufficient below. Perhaps fix in allCountCrawl? Performance matters.
     public void regenerateAllAntweb() throws SQLException {
 
-        s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a minute.");  // Just over a minute!
+        s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a five minutes.");
 
         //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before regenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "Before regenerateAllAntweb Proj_taxon worldants counts");
@@ -691,9 +691,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         UtilDb utilDb = new UtilDb(getConnection());
         int deleteCount = utilDb.deleteFrom("proj_taxon", "where (project_name, taxon_name) in (select project_name, taxon_name from proj_taxon_dispute)");
 
-        int updateCount = 0;
+        //int updateCount = 0;
         //updateCount = utilDb.updateField("proj_taxon", "source", "'specimen'", "project_name = 'allantwebants' and specimen_count > 0");
-        A.log("regenerateAllAntweb deleteCount:" + deleteCount + " updateCount:" + updateCount);
+        A.log("finishRegenerateAllAntweb() deleteCount:" + deleteCount); // + " updateCount:" + updateCount);
 
         // LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "after finishRegenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "after finishRegenerateAllAntweb Proj_taxon worldants counts");

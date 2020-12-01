@@ -1,7 +1,18 @@
+Release 8.45.3
+Date: Dec 1
+  Debug project name in SpeciesListAction.
+  Handle QueryManager condition.
+  
+Release 8.45.2
+Date: Nov 17
+  Improved getWorkingDir() logic and logging.
+
 Release 8.45.1
 Date: Nov 17
   Database code changed in regenerateAllAntweb().
   Log messages added for DBUtil.getStatement().
+  Install Zip on server. Document.
+  Add cronjobs to source tree and document.
 
 Release 8.45
 Date: Nov 16

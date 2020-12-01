@@ -13487,6 +13487,7 @@ Oct 16. 1.5hr.
 -month: 6.5hrs.
 
 
+
 Nov 5 5.5hrs.
   Look into bad files. phpinfo.php, config.php, icon.jsp. 
   Review date stamps and log files.
@@ -13507,6 +13508,8 @@ Nov 7. 5hrs.
   Creating users (antweb and tomcat).
   Install tomcat, mysql, apache, Java, ant, php, etc...  
   Documentation.
+
+-week: 14.5
 
 Nov 8. 5hrs.
   Take database snapshot and load new database.
@@ -13540,10 +13543,11 @@ Nov 11. 7.5hrs.
   Test the scheduler.
   Summary for Brian.
     
--Week: 34.5
 
 Nov 12. 1hr.
   Install cron jobs. 
+
+-Week: 21hrs
   
 Nov 16. 2hrs.
   Create invoices Jun - Oct.
@@ -13552,16 +13556,48 @@ Nov 16. 2hrs.
   Look into taxon set backup.
   Document completion of server recovery and next steps.
   Deploy.
-
---month:
    
-Nov 17
+Nov 17. 3hrs.
   Contact Joe about completing Tomcat launch after reboot.
   Look into server down. 
   Add log message about null DBUtil.getStatement() response. 
   Modify db connection code in regenerateAllAntweb().
   New invoice for November.
+  Install zip on new server. Document.
+  Add cronjobs.txt to source tree and document.  
+  Refine getWorkingDir procedure. More graceful, less logging. 
+
+-week: 5hrs.
+--Nov month: 40.5hr
+
+-- Invoice for November calculated up until Nov 17. ---
+Remaining hours in November will be held for later invoice.
   
- 
+Jun 17.5
+Jul 8.5
+Aug 1
+Sep 3.5
+Oct 6.5
+Nov 40.5
+
+* Billed for November: 77.5
+------------------------------------------------------------------------------------------  
+
+Nov 17, continued... 
+  Test new getWorkingDir() and regenerateAllAntweb() locally.
   
+Nov 30. 1.5hr.
+  Docker, Rails, NodeJS, TaxonWorks install.
+  Explore documentation.
+  
+Dec 1
+  TaxonWorks.
+  Handle missing statement in Query Manager. Log and graceful exit.
+  Handle Project name not having "ants" in SpeciesListAction.  
+  Deploy.
+    
+  
+  
+
+
   

@@ -2,6 +2,8 @@ To Do List:
 
   
 Small things/immediate frame  
+  Remove Antblog
+
   Field guide heading and back link fixes. See:
     https://www.antweb.org/fieldGuide.do?subfamily=amblyoponinae&genus=adetomyrma&project=allantwebants&rank=genus&pr=d
   Review Integrity Queries - no better time than now. Review the orphan tools?
@@ -12,7 +14,7 @@ Small things/immediate frame
   SRF file not working on server. See https://www.antweb.org/web/log/srfExceptions.jsp
   Search concurrent modification exception.
     Fix the srfExceptions first.
-
+  Record the upload before it starts so that we know when they fail. 
 
 Image verification.
   Images are misnamed, inconsistent.

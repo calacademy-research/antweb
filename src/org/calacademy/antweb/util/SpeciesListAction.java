@@ -27,17 +27,14 @@ public final class SpeciesListAction extends Action {
         throws IOException, ServletException {
 
         Locale locale = getLocale(request);
-        HttpSession session = request.getSession();        
-
+        HttpSession session = request.getSession();
         java.util.Date startTime = new java.util.Date();     
         
         DynaActionForm df = (DynaActionForm) form;
         String name = (String) df.get("name");       // (project name)
         if (name != null) {
-        
           java.sql.Connection connection = null;   
           try {
-         
             javax.sql.DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SpeciesListAction.execute()");
         
@@ -49,12 +46,19 @@ public final class SpeciesListAction extends Action {
               } else {
                 // for all regions (and bioregions [only malagasy due to jsp conditions])
                 // we link directly to uploaded authority file
-                String dir = name.substring(0, name.indexOf("ants"));
-                if (dir.equals("mad")) dir = "madagascar";
-                if (dir.equals("cal")) dir = "california";
-                String url = AntwebProps.getDomainApp() + "/web/speciesList/" + dir + "/" + name + UploadFile.getSpeciesListTail();
-                String message = "<b>\'Right-click\' and \'Save Link As\' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
-                s_log.info(message);
+                String message = null;
+                int antsIndex = name.indexOf("ants");
+                if (antsIndex < 0) {
+                    message = "antsIndex:" + antsIndex + " for name:" + name;
+                    s_log.error(message);
+                } else {
+                    String dir = name.substring(0, antsIndex);
+                    if (dir.equals("mad")) dir = "madagascar";
+                    if (dir.equals("cal")) dir = "california";
+                    String url = AntwebProps.getDomainApp() + "/web/speciesList/" + dir + "/" + name + UploadFile.getSpeciesListTail();
+                    message = "<b>\'Right-click\' and \'Save Link As\' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
+                    s_log.info(message);
+                }
                 request.setAttribute("message", message);
                 return mapping.findForward("message");
               }

@@ -1,7 +1,7 @@
 package org.calacademy.antweb.util;
 
 import java.util.*;
-
+import java.io.File;
 import org.calacademy.antweb.*;
 
 import org.apache.commons.logging.Log; 
@@ -165,14 +165,24 @@ public abstract class AntwebProps {
 	}
 
     public static String getInputFileHome() { return getWorkingDir(); }
+
+    private static String s_workingDir = null;
     public static String getWorkingDir() {
+        if (s_workingDir != null) return s_workingDir;
+
         String workingDir = getDocRoot() + "workingDir/";
 
-        s_log.warn("getWorkingDir() workingDir:" + workingDir);
-
-        boolean success = FileUtil.makeDir(workingDir);
-        if (!success) s_log.error("getWorkingDir() Unable to make workingdir:" + workingDir);
-
+        boolean exists = new File(workingDir).exists();
+        if (exists) {
+            s_log.warn("getWorkingDir() workingDir:" + workingDir);
+        } else {
+            boolean success = FileUtil.makeDir(workingDir);
+            if (!success) {
+                s_log.error("getWorkingDir() Unable to make workingdir:" + workingDir);
+                workingDir = null;
+            }
+        }
+        s_workingDir = workingDir;
         return workingDir;
     }
 
