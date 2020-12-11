@@ -184,11 +184,11 @@ if (bioregionNotNative && "Native".equals(speciesDistStatus)) speciesDistStatus 
 </ul>
 
 <%
-String localityInfoString = specimen.getLocalityInfo();
-if (localityInfoString != null) { %>
+String localityLink = specimen.getLocalityLink();
+if (localityLink != null) { %>
 <ul>
 <li><b>Locality name: </b></li>
-<li><%= localityInfoString %></li>
+<li><%= localityLink %></li>
 </ul>
 
 <%

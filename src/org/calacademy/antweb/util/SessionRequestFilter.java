@@ -103,7 +103,7 @@ public class SessionRequestFilter implements Filter {
 
           if (!"".equals(note)) {    // for instance: http://localhost/antweb/adm1.do?%20(Terr.%20Amazonas)
             message += note + " e:" + e.toString() + " target:" + target;          
-            s_log.warn("doFileter() " + message);
+            s_log.warn("doFilter() " + message);
             htmlMessage 
               = "<br><b>Request Error: </b>" + message;
           //} else if (e instanceof AntwebException) {

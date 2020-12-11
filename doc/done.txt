@@ -13590,12 +13590,16 @@ Nov 30. 1.5hr.
   Docker, Rails, NodeJS, TaxonWorks install.
   Explore documentation.
   
-Dec 1
-  TaxonWorks.
+Dec 1. 4.5 hrs.
+  TaxonWorks session 1 (no charge).
+  TaxonWorks session 2.  
   Handle missing statement in Query Manager. Log and graceful exit.
   Handle Project name not having "ants" in SpeciesListAction.  
   Deploy.
-    
+  Review server because of performance warning from Randy.
+  Bad actor detection and logging.
+  Deploy, document. 
+   
   
   
 

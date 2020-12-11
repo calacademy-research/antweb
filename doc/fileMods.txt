@@ -1,8 +1,3 @@
-Release 8.46.1
- doc/release.txt                              |  3 ++-
- src/org/calacademy/antweb/util/HttpUtil.java | 44 ++++++++++++++++++++++++++++----------------
- 2 files changed, 30 insertions(+), 17 deletions(-)
- 
 Release 8.46
  doc/fileMods.txt                                         | 14 ++++++++++++++
  doc/release.txt                                          |  3 +++
@@ -10,6 +5,7 @@ Release 8.46
  src/org/calacademy/antweb/util/HttpUtil.java             | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
  src/org/calacademy/antweb/util/SessionRequestFilter.java |  3 ++-
  web/documentation/releaseNum.jsp                         |  2 +-
+ web/util/serverStatus-body.jsp                           | 1 +
  
 Release 8.45.3
  doc/cron.txt                                          | 16 +++++++---------

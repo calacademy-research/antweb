@@ -870,37 +870,33 @@ update specimen set other = '
     }
 
 // *** island_country?
-    // This gets used on specimen.do.
-	public String getLocalityInfo() {
-	    String localityInfoString = null;
-        Formatter formatter = new Formatter();
-        String localityCode = (String) getLocalityCode();
-        String formatLocalityCode = formatter.clearNull(localityCode);
-        
-        String target = "";
-        if (localityCode != null) {
-            try {
-                target = URIUtil.encodePath(localityCode, "ISO-8859-1");
-            } catch (org.apache.commons.httpclient.URIException e) {
-                // do nothing.
-            }
-        }
-        String localityLink = getLocalityName();
-        if (localityLink == null) localityLink = "";
-        if (!target.equals("")) {
-            String localityName = (getLocalityName() != null) ? getLocalityName() : "link";
-            A.log("getLocalityInfo() localityLink:" + localityLink + " target:" + target + " name:" + localityName);
+    // This gets used on specimen-body.jsp.
+	public String getLocalityLink() {
+        String localityCode = getLocalityCode();
+        String localityName = getLocalityName();
+        String localityLink = "";
+
+        String encodeCode = HttpUtil.encodePath(localityCode);
+        if (encodeCode != null) {  // use the localityCode to link, if there is one.
+            String label = (localityName != null) ? localityName : localityCode;  // but use the localityName to label, if there is one.
+            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + encodeCode + "\">" + label + "</a>";
+        } else { // use the localityName
+            //String encodeName = HttpUtil.encodePath(localityName);
             localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + localityName + "\">" + localityName + "</a>"; // was name = target
         }
-        if ( (getLocalityName() != null) 
-            || (Utility.notBlank(getCountry())) 
-            || (Utility.notBlank(getAdm1())) 
-            || (Utility.notBlank(getAdm2())) 
-        ) {
-            localityInfoString = localityLink + "";
-        }
-        //A.log("getLocalityInfoString() localityInfoStr:" + localityInfoString);
-        return localityInfoString;
+        A.log("getLocalityInfo() localityLink:" + localityLink + " encodeCode:" + encodeCode + " localityName:" + localityName);
+
+        if (localityLink == null) localityLink = "";
+
+/*
+For a specimen like this, the localityName contains & so must use code to link:
+  http://localhost/antweb/specimen.do?name=casent0762401  Must use localitycode as the Name contains &.
+
+For a locality name without code (this name has special characters:
+  http://localhost/antweb/specimen.do?code=ufv-labecol-000469
+*/
+
+        return localityLink;
     }
 
     
@@ -909,8 +905,7 @@ update specimen set other = '
 	public String getLocalityInfoString(String sortBy) {
 	    String localityInfoString = null;
         Formatter formatter = new Formatter();
-        String localityCode = (String) getLocalityCode();
-        String formatLocalityCode = formatter.clearNull(localityCode);
+        String localityCode = getLocalityCode();
         String countryColon = formatter.appendToNonNull(formatter.clearNull((String) getCountry()),":");
         String adm1Colon = formatter.appendToNonNull(formatter.clearNull((String) getAdm1()),":");
         String adm2Semicolon = formatter.appendToNonNull(formatter.clearNull((String) getAdm2()),":");
@@ -920,24 +915,32 @@ update specimen set other = '
         if ("country".equals(sortBy)) countryColon = "<span class=\"sorted_by\">" + countryColon + "</span>";
 
         String linkName = countryColon + " " + adm1Colon + " " + adm2Semicolon;
-        
-        String target = "";
-        if (localityCode != null) {
-            try {
-                target = URIUtil.encodePath(localityCode, "ISO-8859-1");
-            } catch (org.apache.commons.httpclient.URIException e) {
-                // do nothing.
-            }
-        }
-        String localityLink = getLocalityName();
-        if (localityLink == null) localityLink = "";
-        if (!target.equals("")) {
-            String localityName = (getLocalityName() != null) ? getLocalityName() : "link";
+
+        String encodeCode = HttpUtil.encodePath(localityCode);
+
+        String localityLink = null; // getLocalityName();
+
+        if (encodeCode != null) {  // use the localityCode to link, if there is one.
+            String label = (getLocalityName() != null) ? getLocalityName() : localityCode;
             //out.println("LocalityLink1:" + localityLink + " target:" + target + " name:" + getLocalityName());
             //if ("locality".equals(sortBy)) localityName =  "<span class=\"sorted_by\">" + localityName + "</span>";
+            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + localityCode + "\">" + label + "</a>"; // was name = target
+        } else { // use the localityName
+            String encodeName = HttpUtil.encodePath(localityName);
             localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + localityName + "\">" + localityName + "</a>"; // was name = target
         }
-        if ( (getLocalityName() != null) 
+
+        if (localityLink == null) localityLink = "";
+
+/*
+For a specimen like this, the localityName contains & so must use code to link.  On this page, see casent0762401:
+  http://localhost/antweb/browse.do?species=peperi&genus=pseudomyrmex&rank=species
+
+For a locality name without code (this name has special characters):
+  http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=true&localityNameSearchType=equals&localityName=%22RPPN%20Cara%C3%A7a%22
+*/
+
+        if ( (getLocalityName() != null)
             || (Utility.notBlank(getCountry())) 
             || (Utility.notBlank(getAdm1())) 
             || (Utility.notBlank(getAdm2())) 

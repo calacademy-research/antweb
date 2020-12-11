@@ -44,10 +44,10 @@ public final class LocalityAction extends Action {
 			
             connection = DBUtil.getConnection(dataSource, "LocalityAction.execute()");
             LocalityDb localityDb = new LocalityDb(connection);
-            locality = (localityDb).getLocalityByCode(code);    
+            locality = localityDb.getLocalityByCode(code);    
             //A.log("execute() code:" + code + " locality:" + locality);
             if (locality == null) {
-              locality = (localityDb).getLocalityByCodeOrName(name);
+              locality = localityDb.getLocalityByCodeOrName(name);
               A.log("execute() code:" + code + " name:" + name + " locality:" + locality);
             } // else A.log("NOT");
 		} catch (SQLException e) {
@@ -69,7 +69,7 @@ public final class LocalityAction extends Action {
         }
 */        
         if (locality == null) {        
-		  String message = "  Locality not found:" + name + ".";
+		  String message = "  Locality not found for name:" + name + " or code:" + code;
 		  if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
 			// An upload is currently in process.  Request that this process be re-attempted shortly.
 			message += "  A curator is currently in the process of an Upload.";

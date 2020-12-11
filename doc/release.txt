@@ -1,3 +1,6 @@
+Release 8.46.1
+  Locality code and name usage changed to support data.
+
 Release 8.46
   Bad actor detection and logging.
   HasIllegalStr refactor.

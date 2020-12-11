@@ -370,7 +370,6 @@ public abstract class HttpUtil {
     }
 
     public static boolean hasIllegalStr(String str, HttpServletRequest request) {
-        A.log("hasIllegalStr() string:" + str);
         if (isIllegalStr(str)) {
             AntwebUtil.log("hasIllegalChars() true str:" + str + " target:" + HttpUtil.getTarget(request));
             addBadActor(HttpUtil.getClientIpAddress(request));
@@ -548,12 +547,23 @@ public abstract class HttpUtil {
         return false;
     }
 
+    public static String encodePath(String str) {
+        String target = null;
+        if (str != null) {
+            try {
+                target = URIUtil.encodePath(str, "ISO-8859-1");
+            } catch (org.apache.commons.httpclient.URIException e) {
+                // do nothing.
+            }
+        }
+        return target;
+    }
+
 /*
           // This will turn spaces into +
           //import org.apache.commons.httpclient.util.URIUtil;
           //url = URIUtil.encodeQuery(url);
  */
-
     public static String encode(String toEncode) {
         String encoded = null;
         try {
