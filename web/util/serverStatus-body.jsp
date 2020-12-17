@@ -108,10 +108,10 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 <br><b>Antweb Props:</b><%= AntwebProps.htmlReport() %>
 <br><b>Bad Actor Report:</b> <%= HttpUtil.getBadActorReport() %>
 
-<br>Top for Mysql and Java<br>
+<br><b>Top for Mysql and Java</b><br>
 <pre>  PID USER    PR  NI      VIRT    RES    SHR S %CPU  %MEM   TIME+  COMMAND</pre>
-<br></b><pre> <%= AntwebSystem.top("java") %> </pre>
-<br></b><pre> <%= AntwebSystem.top("mysql") %> </pre>
+<pre> <%= AntwebSystem.top("java") %> </pre>
+<pre> <%= AntwebSystem.top("mysql") %> </pre>
 <br>
 
 <%
