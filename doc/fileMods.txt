@@ -1,3 +1,25 @@
+Release 8.47
+ .idea/libraries/lib.xml                          |  1 +
+ doc/done.txt                                     | 11 ++++++++++-
+ doc/release.txt                                  |  3 +++
+ doc/toDo.txt                                     |  2 ++
+ src/org/calacademy/antweb/util/AntwebSystem.java | 43 ++++++++++++++++++++++++++++++++++++++++++-
+ web/documentation/releaseNum.jsp                 |  2 +-
+ web/util/serverStatus-body.jsp                   |  3 +++
+
+Release 8.46.1
+ doc/done.txt                                             | 10 +++++++---
+ doc/fileMods.txt                                         |  6 +-----
+ doc/release.txt                                          |  3 +++
+ src/org/calacademy/antweb/LocalityAction.java            |  6 +++---
+ src/org/calacademy/antweb/Specimen.java                  | 93 ++++++++++++++++++++++++++++++++++++++++++++++++---------------------------------------------
+ src/org/calacademy/antweb/home/LocalityDb.java           |  3 ++-
+ src/org/calacademy/antweb/util/HttpUtil.java             | 14 ++++++++++++--
+ src/org/calacademy/antweb/util/SessionRequestFilter.java |  2 +-
+ web/documentation/releaseNum.jsp                         |  2 +-
+ web/specimen-body.jsp                                    |  6 +++---
+ 10 files changed, 81 insertions(+), 64 deletions(-)
+ 
 Release 8.46
  doc/fileMods.txt                                         | 14 ++++++++++++++
  doc/release.txt                                          |  3 +++
