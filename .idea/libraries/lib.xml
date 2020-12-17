@@ -63,6 +63,7 @@
       <root url="jar:///usr/local/apache-tomcat-9.0.34/lib/tomcat-websocket.jar!/" />
       <root url="jar:///usr/local/apache-tomcat-9.0.34/lib/websocket-api.jar!/" />
     </CLASSES>
+    <JAVADOC />
     <SOURCES />
   </library>
 </component>

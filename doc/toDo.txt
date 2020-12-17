@@ -2,6 +2,8 @@ To Do List:
 
   
 Small things/immediate frame  
+  During specimen upload, if a locality code contains "&", do something different.
+
   Remove Antblog
 
   Field guide heading and back link fixes. See:

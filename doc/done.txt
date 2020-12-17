@@ -13599,7 +13599,16 @@ Dec 1. 4.5 hrs.
   Review server because of performance warning from Randy.
   Bad actor detection and logging.
   Deploy, document. 
-   
+
+Dec 10. 2hrs.
+  Look into Randy's CPU complaint. Encourage Joe to get our reboot and Nagios working.   
+  Change specimen-body.jsp and specimenReport.jsp to use localityCode when it exists.
+    Had to. Our own links were violating our web request legality checks.
+  Deploy. Document.    
+
+
+
+
   
   
 
