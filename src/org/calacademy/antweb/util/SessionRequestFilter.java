@@ -168,10 +168,15 @@ public class SessionRequestFilter implements Filter {
     }    
     
     public void destroy() { 
-        s_log.warn("destroy() runTime:" + AntwebUtil.hrsSince(getStartTime()) + " " + AntwebMgr.getReport());
-        s_log.warn("destroy() " +  UserAgentTracker.summary() + " overactive:" + UserAgentTracker.overActiveReport());  
-        s_log.warn("destroy() overdue resource:" + DBUtil.getOldConnectionList());
-        s_log.warn("Destroy() Bad Actor Report:" + HttpUtil.getBadActorReport());
+      report();
+    }
+
+    public void report() {
+        s_log.warn("runTime:" + AntwebUtil.hrsSince(getStartTime()) + " " + AntwebMgr.getReport());
+        s_log.warn(UserAgentTracker.summary() + "overactive:" + UserAgentTracker.overActiveReport());
+        s_log.warn("Overdue resource:" + DBUtil.getOldConnectionList());
+        s_log.warn("Bad Actor Report:" + HttpUtil.getBadActorReport());
+        s_log.warn(AntwebSystem.getTopReport());
     }
        
     public static Date s_startTime = null;        
