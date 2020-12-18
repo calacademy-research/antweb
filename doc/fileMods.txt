@@ -6,7 +6,8 @@ Release 8.47
  src/org/calacademy/antweb/util/AntwebSystem.java | 43 ++++++++++++++++++++++++++++++++++++++++++-
  web/documentation/releaseNum.jsp                 |  2 +-
  web/util/serverStatus-body.jsp                   |  3 +++
-
+ src/org/calacademy/antweb/util/SessionRequestFilter.java | 13 +++++++++----
+ 
 Release 8.46.1
  doc/done.txt                                             | 10 +++++++---
  doc/fileMods.txt                                         |  6 +-----

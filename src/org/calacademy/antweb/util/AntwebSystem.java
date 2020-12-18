@@ -278,9 +278,9 @@ public class AntwebSystem {
       String report = "<b>Top Report for Mysql and Java:</b>";
       report += "<pre> PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND";
       String javaTop = AntwebSystem.top("java");
-      if (javaTop != null) report += javaTop;
+      if (javaTop != null) report += "\r\n<br>" + javaTop;
       String mysqlTop = AntwebSystem.top("mysql");
-      if (mysqlTop != null) report += mysqlTop;
+      if (mysqlTop != null) report += "\r\n<br>" + mysqlTop;
       if (javaTop == null && mysqlTop == null) report += "\r<br>Top results not found for mysql and java";
       report += "</pre>";
       return report;
