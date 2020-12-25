@@ -12,7 +12,7 @@
  *      AppCheck greps the running processes for the Antweb application.  If not found,
  *  then a period of time is waited before retesting.  This avoids restarting the
  *  application during a timed or engineer triggered restart.
- *      A log file /antweb/log/appCheck.log records appCheck.php triggered events.
+ *      A log file /data/antweb/web/log/appCheck.log records appCheck.php triggered events.
  * 
  *  Installation Instructions:
  *    Insert into the root's crontab as follows
@@ -196,7 +196,7 @@ function isProduction() {
 */
 
 function logAppCheck($fileName, $logString) {
-  $logFileName = '/antweb/log/appCheck.log';
+  $logFileName = '/data/antweb/web/log/appCheck.log';
   if (!($fileName === "")) {
     $logFileName = $fileName;
     echo("is");
@@ -239,7 +239,7 @@ function runDiagnose() {
   $message = $message."\n".$startCommand." = ".$return[0];
   //echo("\nMessage2:".$message);                                                                                                                                                                                                                                   
   //$fileName = '/usr/local/tomcat/logs/appCheckDiagnose.log';
-  $fileName = '/antweb/log/appCheck.log';
+  $fileName = '/data/antweb/web/log/appCheck.log';
   //echo("message3:".$message);                                                                                                                                                                                                                                     
   logAppCheck($fileName, $message);
 }

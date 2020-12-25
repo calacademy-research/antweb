@@ -410,7 +410,7 @@ Or, if there are stmts and/or rsets...
 	}
 
     public static String getSimpleCpDiagnosticsAttr(javax.sql.DataSource dataSource) {
-        String cpDiagnostics = null;
+        String cpDiagnostics = "";
         if (dataSource instanceof ComboPooledDataSource) {
             ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
             try {
@@ -428,7 +428,7 @@ Or, if there are stmts and/or rsets...
 
 
     public static String getCpDiagnosticsAttr(javax.sql.DataSource dataSource) {
-        String cpDiagnostics = null;
+        String cpDiagnostics = "";
         if (dataSource instanceof ComboPooledDataSource) {
             ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
             try {

@@ -72,7 +72,7 @@ static double getVersion () {
         }
                    
         String serverDetails = ServerStatusAction.getServerDetails();
-        serverDetails += "<br>&nbsp;&nbsp;Operating System: " + cpDiagnostics;
+        serverDetails += "<br>&nbsp;&nbsp;Connection Pool: " + cpDiagnostics;
         request.setAttribute("serverDetails", serverDetails);           
                    
 		return (mapping.findForward("success"));

@@ -1,3 +1,20 @@
+Release 8.47.1
+ bin/appCheck.php                                       |  3 +--
+ doc/done.txt                                           | 24 +++++++++++++++++++++++-
+ doc/install.txt                                        |  8 ++++++++
+ doc/notes.txt                                          | 15 ++++++++++++++-
+ doc/release.txt                                        |  7 ++++++-
+ src/org/calacademy/antweb/home/BioregionTaxonDb.java   |  2 +-
+ src/org/calacademy/antweb/home/TaxonSetDb.java         |  3 +--
+ src/org/calacademy/antweb/util/AntwebMgr.java          |  6 +++---
+ src/org/calacademy/antweb/util/AntwebSystem.java       |  4 ++--
+ src/org/calacademy/antweb/util/DBUtil.java             | 39 ++++++++++++++++++++++++++++++++++++++-
+ src/org/calacademy/antweb/util/DbStatusAction.java     | 17 ++---------------
+ src/org/calacademy/antweb/util/ServerStatusAction.java | 10 +++++++---
+ src/org/calacademy/antweb/util/UserAgentTracker.java   | 27 ++++++++++++++++++++++++---
+ web/documentation/releaseNum.jsp                       |  2 +-
+ 14 files changed, 131 insertions(+), 36 deletions(-)
+ 
 Release 8.47
  .idea/libraries/lib.xml                          |  1 +
  doc/done.txt                                     | 11 ++++++++++-
