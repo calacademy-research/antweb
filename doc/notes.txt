@@ -1,3 +1,16 @@
+Whi
+
+
+--- For my reference
+rm /antweb/web/homepage/icon.jsprm /data/antweb/web/homepage/icon.jsp
+rm -rf /data/antweb/antblog/assets_c/phpinfo.php
+rm -rf /data/antweb/antblog/assets_c/config.php
+rm /opt/tomcat/apache-tomcat-9.0.30/antweb/web/homepage/icon.jsp
+rm /opt/tomcat/apache-tomcat-9.0.30/antweb/web/icon.jsp
+
+ls -al /antweb/antwebGithub/build/ancPreview.jsp-rw-r--r-- 1 root root 714 Oct 15 06:46 /antweb/antwebGithub/build/ancPreview.jsp
+
+
 
 
 * Mod on server:
@@ -59,7 +72,7 @@ Transfer
   Copy source tree.  For example:
     cp -r antweb bak/rel/antweb4.1
   Backup database.  For example:
-    mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /antweb/bak/db/2018-09-27.sql.gz
+    mysqldump --opt --skip-lock-tables -u antweb -p ant | gzip > /antweb/bak/db/2020-04-23.sql.gz
   Backup /data/antweb.
     php bin/copyProjectData.php --backupDir=/home/mjohnson/bak/projectData
   cvs update -Pd

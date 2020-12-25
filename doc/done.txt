@@ -13583,7 +13583,7 @@ Nov 40.5
 * Billed for November: 77.5
 ------------------------------------------------------------------------------------------  
 
-Nov 17, continued... 
+Nov 17, continued...  1hr.
   Test new getWorkingDir() and regenerateAllAntweb() locally.
   
 Nov 30. 1.5hr.
@@ -13606,6 +13606,28 @@ Dec 10. 2hrs.
     Had to. Our own links were violating our web request legality checks.
   Deploy. Document.    
 
+Dec 16. 1hr.
+  Debug with Randy why I can't access server.
+  Check on server.
+  
+Dec 17. 1hr.
+  Deploy new release with top report for java and mysql.
+  Restart server. Document.
+
+#Reported
+
+Dec 20. 1hr.
+  Look into and document server trouble involving db connection pool.
+
+Dec 24. 2.5hrs.
+  Look into uptime warning.
+  Add the database connections to the server status page.
+  Order the UserAgent list by count (so that it is potentially useful).
+  Have the appCheck.php script run on the live server to check, and restart the server.
+  Separate the appcheck logs.
+  Deploy.
+  Document.  
+  
 
 
 

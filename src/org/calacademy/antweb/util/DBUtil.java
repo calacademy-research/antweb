@@ -408,5 +408,42 @@ Or, if there are stmts and/or rsets...
 	public static String escapeQuotes(String theString) {
 	  return AntFormatter.escapeQuotes(theString);
 	}
-    
+
+    public static String getSimpleCpDiagnosticsAttr(javax.sql.DataSource dataSource) {
+        String cpDiagnostics = null;
+        if (dataSource instanceof ComboPooledDataSource) {
+            ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
+            try {
+                cpDiagnostics = "C3P0 maxPoolSize:" + c3p0DataSource.getMaxPoolSize()
+                        + " numConnectionsDefaultUser:" + c3p0DataSource.getNumConnectionsDefaultUser()
+                        + " numConnectionsAllUsers:" + c3p0DataSource.getNumConnectionsAllUsers()
+                        + " numIdleConnections:" + c3p0DataSource.getNumIdleConnectionsDefaultUser()
+                        + " numBusyConnections:" + c3p0DataSource.getNumBusyConnectionsDefaultUser();
+            } catch (SQLException e) {
+                s_log.error("getCpDiagnosticsAttr() error:" + e);
+            }
+        }
+        return cpDiagnostics;
+    }
+
+
+    public static String getCpDiagnosticsAttr(javax.sql.DataSource dataSource) {
+        String cpDiagnostics = null;
+        if (dataSource instanceof ComboPooledDataSource) {
+            ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
+            try {
+                cpDiagnostics = "C3P0 maxPoolSize:" + c3p0DataSource.getMaxPoolSize()
+                        + " numConnectionsDefaultUser:" + c3p0DataSource.getNumConnectionsDefaultUser()
+                        + " numConnectionsAllUsers:" + c3p0DataSource.getNumConnectionsAllUsers()
+                        + " numIdleConnections:" + c3p0DataSource.getNumIdleConnectionsDefaultUser()
+                        + " numBusyConnections:" + c3p0DataSource.getNumBusyConnectionsDefaultUser()
+                        + " \r\r" + DBUtil.getThreadPoolStatus(dataSource);
+            } catch (SQLException e) {
+                s_log.error("getCpDiagnosticsAttr() error:" + e);
+            }
+        }
+        return cpDiagnostics;
+    }
+
+
 }

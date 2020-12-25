@@ -308,8 +308,8 @@ public class AntwebMgr {
       return report;
     }
     public static String getHtmlReport() {
-      String report = "<br>&nbsp;&nbsp;<b>MapMgr: </b>" + MapMgr.report();  
-      report += "<br>&nbsp;&nbsp;<b>MapCount: </b>" + Map.getDisplayMapCount() + " MapHashCounts:" + Map.getDisplayMapHashCounts();
+      String report = "<br><b>MapMgr: </b>" + MapMgr.report();
+      report += "<br><b>MapCount: </b>" + Map.getDisplayMapCount() + " MapHashCounts:" + Map.getDisplayMapHashCounts();
       return report;
     }
 
@@ -347,7 +347,7 @@ public class AntwebMgr {
 		 return "Computation Currently In Process (" + UtilDataAction.getIsInComputeProcess() + "). Some services are down.";
 	   }
 	   if (DBUtil.isServerBusy()) {
-		 return "Server is busy.  Service currently inactivated.";
+		 return "Server is busy.  Some services currently inactivated.";
 	   }
        return "";
     }    

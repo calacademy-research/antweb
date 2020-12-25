@@ -28,8 +28,7 @@ public abstract class TaxonSetDb extends AntwebDb {
 
     public abstract ArrayList<Taxon> getTaxa(String name);
     
-    public ArrayList<Taxon> getTaxa(Overview overview) {        
-
+    public ArrayList<Taxon> getTaxa(Overview overview) {
         ArrayList<Taxon> taxa = new ArrayList<Taxon>();    
         
         String theQuery = "";

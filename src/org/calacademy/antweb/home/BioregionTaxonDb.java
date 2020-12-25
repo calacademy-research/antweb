@@ -24,7 +24,7 @@ public class BioregionTaxonDb extends TaxonSetDb {
 
     public ArrayList<Taxon> getTaxa(String name) {
         Bioregion bioregion = BioregionMgr.getBioregion(name);
-        
+        A.log("getTaxa() name:" + name);
         return super.getTaxa(bioregion);
     }
 

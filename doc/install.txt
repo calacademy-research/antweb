@@ -52,6 +52,14 @@ mkdir /antweb/antweb_deploy
 sudo passwd antweb
   ****** 
 
+Install PHP
+-----------
+  In order for appCheck.php to work
+  Try running the command from the crontab at the command line:
+    php /antweb/deploy/bin/appCheck.php >> /antweb/log/appCheck.log
+  Should receive instructions towards installing php.
+
+
 Antweb
 ------
 Should be done with a cvs checkout. For now, from local antweb directory...

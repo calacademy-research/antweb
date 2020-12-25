@@ -12,7 +12,7 @@
  *      AppCheck greps the running processes for the Antweb application.  If not found,
  *  then a period of time is waited before retesting.  This avoids restarting the
  *  application during a timed or engineer triggered restart.
- *      A log file /usr/local/tomcat/logs/appCheck.log records appCheck.php triggered events.
+ *      A log file /antweb/log/appCheck.log records appCheck.php triggered events.
  * 
  *  Installation Instructions:
  *    Insert into the root's crontab as follows
@@ -27,7 +27,6 @@
  *    *[nospace here]/30 * * * * php /home/mjohnson/antweb/bin/appCheck.php   // every half hour
  *
 
- * /var/log/tomcat/appCheck.log was /var/log/tomcat5/.  Now /usr/local/tomcat/logs/appCheck.log
  * "/etc/init.d/tomcat5 start" is properly accessed by: "/etc/init.d/priv_tomcat start"
  * 
  * Two changes were made on Dec 26.  Comment out first part of stopProcess() and change uptime.jsp to uptime.do

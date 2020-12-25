@@ -21,8 +21,8 @@ public class UserAgentTracker {
 
   private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);
 
-  private static Map<String, Integer> agentsMap = new HashMap<String, Integer>();      
-  private static int nullAgent = 0;    
+  private static Map<String, Integer> agentsMap = new HashMap<String, Integer>();
+  private static int nullAgent = 0;
 
   private static Set<String> knownAgentsSet = new HashSet<String>();      
       
@@ -153,13 +153,34 @@ public class UserAgentTracker {
   public static String htmlReport() {
       Set<String> keySet = agentsMap.keySet();
       String report = "";
+      String agent = "";
+
+      // Used for sorting
+      Map<Integer, String> countMap = new HashMap<Integer, String>();
+
       for (String key : keySet) {
         int count = ((Integer) agentsMap.get(key)).intValue();
         String star = "";
         if (knownAgentsSet.contains(key)) star = "<b><font color=red>X</font></b>";        
         if (key.contains("(login:")) star = "<b><font color=red><img src='" + AntwebProps.getDomainApp() + "/image/greenCheck.png'></font></b>";
-        report += "<br>" + key + star + ": <b>" + count + "</b>";
+        agent += "<br>" + key + star + ": <b>" + count + "</b>";
+        //report += agent;
+        countMap.put(count, agent);
       }
+
+      report += "<br><br>DevMode:";
+
+      ArrayList<Integer> list = new ArrayList<Integer>();
+      TreeSet treeSet = new TreeSet();
+      treeSet.addAll(countMap.keySet());
+      list.addAll(treeSet);
+
+      for (Integer count : list) {
+          agent = (countMap.get(count));
+          A.log("htmlReport() count:" + count + " agent:" + agent);
+          report += agent;
+      }
+
       return report;
   }
 

@@ -60,21 +60,8 @@ public final class DbStatusAction extends Action {
 	}
 	
 	private void setCpDiagnosticsAttr(javax.sql.DataSource dataSource, HttpServletRequest request) {
-        String cpDiagnostics = null;
-        if (dataSource instanceof ComboPooledDataSource) {
-          ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;	
-          try {
-            cpDiagnostics = "C3P0 maxPoolSize:" + c3p0DataSource.getMaxPoolSize()
-              + " numConnectionsDefaultUser:" + c3p0DataSource.getNumConnectionsDefaultUser()
-              + " numConnectionsAllUsers:" + c3p0DataSource.getNumConnectionsAllUsers()
-              + " numIdleConnections:" + c3p0DataSource.getNumIdleConnectionsDefaultUser()
-              + " numBusyConnections:" + c3p0DataSource.getNumBusyConnectionsDefaultUser()
-              + " \r\r" + DBUtil.getThreadPoolStatus(dataSource);
-            request.setAttribute("cpDiagnostics", cpDiagnostics);  
-          } catch (SQLException e) {
-            s_log.error("setCpDiagnosticsAttr() error:" + e);
-          }
-        }	
+        String cpDiagnostics = DBUtil.getCpDiagnosticsAttr(dataSource);
+        request.setAttribute("cpDiagnostics", cpDiagnostics);
 	}
 
     public String getMySqlProcessListHtml(HttpServletRequest request) {

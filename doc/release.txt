@@ -1,5 +1,10 @@
+Release 8.47.1
+  Re-install appCheck.php.
+  Order the UserAgent list.
+  Add dbConnectionPool to serverStatus page.  
+
 Release 8.47
-  Top feature built into Server Status
+  Top feature built into Server Status for Java and Mysql. Recorded in log at shutdown.
   
 Release 8.46.1
   Locality code and name usage changed to support data.
