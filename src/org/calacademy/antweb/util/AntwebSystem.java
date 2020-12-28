@@ -78,7 +78,7 @@ public class AntwebSystem {
     } else {
       // NOPE: (new AntwebSystem()).exec("systemctl restart tomcat");
       // NOPE: (new AntwebSystem()).launchProcess("systemctl restart tomcat");
-      (new AntwebSystem()).launchProcess("systemctl restart tomcat");
+      restart();
       message = "restarting...";
     }
     return message;
