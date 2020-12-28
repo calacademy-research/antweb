@@ -69,6 +69,18 @@ public class AntwebSystem {
     return count;
   }	
 
+  public static String restartAntweb(Login accessLogin) {
+    String message = "";
+    s_log.warn("restartAntweb() invoked by:" + accessLogin);
+    if (AntwebProps.isDevMode()) {
+      message = "restartAntweb does not run in dev.";
+      A.log("restartAntweb() message:" + message);
+    } else {
+      (new AntwebSystem()).exec("systemctl restart tomcat");
+      message = "restarting";
+    }
+    return message;
+  }
 
 // These might only work with Java 1.8 as it does in dev.
 /*

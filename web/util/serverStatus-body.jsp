@@ -28,13 +28,14 @@
 
 <% // Object o = null;  o.toString(); // uncomment this line to create stacktrace %>
 
+<br>
 <h3>Antweb Operation</h3>
 
 <br><b>Current Time:</b> <%= (new Date()).toString() %>
 <br><b>Server Start Time:</b> <%= (SessionRequestFilter.getStartTime()).toString() %>
 <br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getStartTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getStartTime()) %>.
 <br><b>AntwebMgr (re)Start Time:</b> <%= AntwebMgr.getStartTime() %>. <b>(Hrs:</b> <%= AntwebUtil.hrsSince(AntwebMgr.getStartTime()) %><b>).</b>
-<br><b>Upload services</b> - To take On/Off line:<a href="<%= domainApp %>/serverStatus.do?action=toggleDownTime">Toggle Down Time</a>
+<br><br><b>Upload services</b> - To take On/Off line:<a href="<%= domainApp %>/serverStatus.do?action=toggleDownTime">Toggle Down Time</a>
 <%
 boolean otherOption = !UptimeAction.isFailOnPurpose();
 %>
@@ -72,17 +73,11 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
 }
 %>
 <br>&nbsp;&nbsp;&nbsp;Is Image Upload locked: <%= imageUploadLock %>  
-<br>&nbsp;&nbsp;&nbsp;Plazi state: <%= Plazi.s_state %>  
+<br>&nbsp;&nbsp;&nbsp;Plazi state: <%= Plazi.s_state %>
 
-<br><b>AntwebMgr Report:</b> <%= AntwebMgr.getHtmlReport() %>
-<br><b>Profile:</b><%= QueryProfiler.report() %>
-
-<br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
-<br><b>Bad Actor Report:</b> <%= HttpUtil.getBadActorReport() %>
-<br><b>CPU:</b> <%= AntwebSystem.getCpuLoad() %>
+<br><br><b>CPU:</b> <%= AntwebSystem.getCpuLoad() %>
 <br><%= AntwebSystem.getTopReport() %>
-
-<br><%= FileUtil.getDiskStats() %>
+<%= FileUtil.getDiskStats() %>
 <br>
 <%
   String memoryStat = AntwebUtil.getMemoryStats();
@@ -93,7 +88,16 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
 <br><b>isServerBusy:</b> <%= request.getAttribute("isServerBusy") %>
 <br><b>Connection Pool:</b> <%= request.getAttribute("cpDiagnostics") %>
 
-<br><br>
+<br><br><br>
+<h3>Server Stats</h3>
+
+<br><b>AntwebMgr Report:</b> <%= AntwebMgr.getHtmlReport() %>
+<br><b>Profile:</b><%= QueryProfiler.report() %>
+
+<br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
+<br><b>Bad Actor Report:</b> <%= HttpUtil.getBadActorReport() %>
+
+<br><br><br>
 <h3>Server Properties </h3>
 
 <b>DomainApp</b>: <%= domainApp %>
@@ -118,20 +122,21 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 %>
 <br><b>Server Details:</b> <%= serverDetails %>
 
-<br><br><h3>Session Attributes Names:</h3>
+<br><br><br>
+<h3>Session Attributes Names:</h3>
  <%  //HttpSession session = request.getSession();
      for (Enumeration e = session.getAttributeNames() ; e.hasMoreElements() ;) {
        String name = (String) e.nextElement();
        out.println("<br>name:<b>" + name + "</b> value:" + session.getAttribute(name));
      }
  %>  
-<br><br>
+<br><br><br>
 <h3>Assorted Links</h3>
      <a href = "<%= domainApp %>/uptime.do">Uptime</a>
      <br><a href = "<%= domainApp %>/sessionExpired.jsp">sessionExpired.jsp</a>
      <br><a href = "<%= domainApp %>/error.jsp">error.jsp</a>
-<br><br>
 
+<br><br><br>
 <h3>Form Actions</h3>
 <br><br>
 <html:form action="<%= domainApp %>/serverStatus">

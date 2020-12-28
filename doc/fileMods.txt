@@ -1,3 +1,18 @@
+Release 8.47.3
+ bin/appCheck.php                                       |  6 +++---
+ doc/done.txt                                           | 20 ++++++++++----------
+ doc/release.txt                                        |  6 ++++++
+ src/org/calacademy/antweb/BrowseAction.java            |  3 ++-
+ src/org/calacademy/antweb/util/AntwebSystem.java       | 15 ++++++++-------
+ src/org/calacademy/antweb/util/Emailer.java            |  1 +
+ src/org/calacademy/antweb/util/FileUtil.java           | 97 +++++++++++++++++++++++++++++++++++++++++++++++--------------------------------------------------
+ src/org/calacademy/antweb/util/HttpUtil.java           |  3 +--
+ src/org/calacademy/antweb/util/ServerStatusAction.java |  6 +++---
+ src/org/calacademy/antweb/util/UtilAction.java         |  2 +-
+ web/documentation/releaseNum.jsp                       |  2 +-
+ web/util/serverStatus-body.jsp                         | 41 ++++++++++++++---------------------------
+ 
+
 Release 8.47.1
  bin/appCheck.php                                       |  3 +--
  doc/done.txt                                           | 24 +++++++++++++++++++++++-

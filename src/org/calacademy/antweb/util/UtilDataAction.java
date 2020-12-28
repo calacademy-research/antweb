@@ -227,6 +227,11 @@ public class UtilDataAction extends Action {
                 message += " " + doAction("deleteOldSpecimenUploadTaxa", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
             }
+
+            if ("restart".equals(action)) {
+                message += AntwebSystem.restartAntweb(accessLogin);
+            }
+
         }
 		// ---------- Data Loading --------------------
 

@@ -13629,7 +13629,9 @@ Dec 24. 3hrs.
   Document.   Plan to install Joe's recommended DOS defender.
   Adjust logs. Put /antweb/log content in /data/antweb/web/log so web accessible. 
  
-
+Dec 28.
+  Investigate ongoing performance issue.
+  Modifications to server status page and supporting logic.
 
   
   
