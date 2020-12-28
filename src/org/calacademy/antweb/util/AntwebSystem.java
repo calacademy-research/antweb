@@ -71,16 +71,50 @@ public class AntwebSystem {
 
   public static String restartAntweb(Login accessLogin) {
     String message = "";
-    s_log.warn("restartAntweb() invoked by:" + accessLogin);
+    s_log.warn("restartAntweb() invoked by:" + accessLogin.getName());
     if (AntwebProps.isDevMode()) {
       message = "restartAntweb does not run in dev.";
       A.log("restartAntweb() message:" + message);
     } else {
+      // NOPE: (new AntwebSystem()).exec("systemctl restart tomcat");
+      // NOPE: (new AntwebSystem()).launchProcess("systemctl restart tomcat");
       (new AntwebSystem()).launchProcess("systemctl restart tomcat");
-      message = "restarting";
+      message = "restarting...";
     }
     return message;
   }
+
+  public static String restart() {
+    String processLine = "";
+    try {
+      ProcessBuilder builder = new ProcessBuilder("systemctl restart tomcat", "-b", "-n", "1");
+      Process proc = builder.start();
+
+      try (BufferedReader stdin = new BufferedReader(
+              new InputStreamReader(proc.getInputStream()))) {
+        String line;
+        // Blank line indicates end of summary.
+        while ((line = stdin.readLine()) != null) {
+          if (line.isEmpty()) {
+            break;
+          }
+        }
+        // Skip header line.
+        if (line != null) {
+          line = stdin.readLine();
+        }
+        if (line != null) {
+          while ((line = stdin.readLine()) != null) {
+              processLine += line;
+          }
+        }
+      }
+    } catch (IOException e) {
+      A.log("restart() e:" + e);
+    }
+
+    return processLine;
+    }
 
 // These might only work with Java 1.8 as it does in dev.
 /*
@@ -264,7 +298,7 @@ public class AntwebSystem {
     public static String getCpuLoad() {
 		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
 		// What % CPU load this current JVM is taking, from 0.0-1.0
-		String cpuLoad = "processCpuLoad:" + osBean.getProcessCpuLoad() + " cpuLoad:" + osBean.getSystemCpuLoad();
+		String cpuLoad = "processCpuLoad:" + osBean.getProcessCpuLoad() + " systemCpuLoad:" + osBean.getSystemCpuLoad();
   
         return cpuLoad;    
     }
@@ -301,28 +335,23 @@ public class AntwebSystem {
 
     public static String top(String processName) {
       String processLine = null;
-
       try {
         ProcessBuilder builder = new ProcessBuilder("top", "-b", "-n", "1");
         Process proc = builder.start();
 
         try (BufferedReader stdin = new BufferedReader(
                 new InputStreamReader(proc.getInputStream()))) {
-
           String line;
-
           // Blank line indicates end of summary.
           while ((line = stdin.readLine()) != null) {
             if (line.isEmpty()) {
               break;
             }
           }
-
           // Skip header line.
           if (line != null) {
             line = stdin.readLine();
           }
-
           if (line != null) {
             while ((line = stdin.readLine()) != null) {
               if (line.contains(processName)) {   // No need for grep
@@ -338,7 +367,6 @@ public class AntwebSystem {
 
       return processLine;
     }
-
 }
 
 class StreamGobbler extends Thread

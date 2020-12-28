@@ -229,7 +229,7 @@ public class UtilDataAction extends Action {
             }
 
             if ("restart".equals(action)) {
-                message += AntwebSystem.restartAntweb(accessLogin);
+                message = AntwebSystem.restartAntweb(accessLogin);
             }
 
         }
