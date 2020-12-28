@@ -252,7 +252,7 @@ public class AntwebSystem {
     public static String getCpuLoad() {
 		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
 		// What % CPU load this current JVM is taking, from 0.0-1.0
-		String cpuLoad = "processCpuLoad:" + osBean.getProcessCpuLoad() + " cpuLoad:" + osBean.getCpuLoad();
+		String cpuLoad = "processCpuLoad:" + osBean.getProcessCpuLoad() + " cpuLoad:" + osBean.getSystemCpuLoad();
   
         return cpuLoad;    
     }
@@ -261,7 +261,7 @@ public class AntwebSystem {
     private static double threshold = .9; // 1;
     public static String cpuCheck() {
 		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
-        double cpuLoad = osBean.getCpuLoad();
+        double cpuLoad = osBean.getSystemCpuLoad();
         A.log("cpuCheck() cpuLoad:" + cpuLoad);
         //if (AntwebProps.isDevMode()) threshold = 0;
         if (cpuLoad > threshold && !messageSent) {
