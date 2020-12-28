@@ -16,6 +16,7 @@ public class Emailer
    public static void main(String [] args) {
    }
 
+   // Testable: https://www.antweb.org/util.do?action=emailTest
    public static void sendMail(String to, String subject, String content) {
 
 		final String username = "antweb@calacademy.org";

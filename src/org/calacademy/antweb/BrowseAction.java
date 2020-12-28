@@ -53,7 +53,8 @@ public class BrowseAction extends DescriptionAction {
 
         AntwebMgr.isPopulated(); // will force populate 
         
-        if (!AntwebProps.isDevOrStageMode()) AntwebSystem.cpuCheck();
+        //if (!AntwebProps.isDevOrStageMode())
+        AntwebSystem.cpuCheck();
 
         ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;

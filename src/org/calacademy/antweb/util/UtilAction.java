@@ -242,7 +242,7 @@ public class UtilAction extends Action {
 				request.setAttribute("message", message);
 				returnLoc = (mapping.findForward("adminMessage"));                  
 			  }
-			  
+
 			  if (action.equals("emailTest")) {
 			    String recipients = AntwebUtil.getDevEmail(); // + ", " + AntwebUtil.getAdminEmail();
 			    String subject = "Test Message from Antweb";

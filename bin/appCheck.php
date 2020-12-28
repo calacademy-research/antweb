@@ -19,12 +19,12 @@
  *
  *    sudo bash (enter password)
  *    crontab -e
- *    [* followed by /30] * * * * php /home/mjohnson/antweb/bin/appCheck.php
+ *    [* followed by /30] * * * * php /antweb/deploy/bin/appCheck.php
  *
  *    This crontab will be run every 30 minutes, or for every hour ...
  *
- *    *[nospace here]15 * * * * php /home/mjohnson/antweb/bin/appCheck.php      // every 15 min?
- *    *[nospace here]/30 * * * * php /home/mjohnson/antweb/bin/appCheck.php   // every half hour
+ *    *[nospace here]15 * * * * php /antweb/deploy/bin/appCheck.php      // every 15 min?
+ *    *[nospace here]/30 * * * * php /antweb/deploy/bin/appCheck.php   // every half hour
  *
 
  * "/etc/init.d/tomcat5 start" is properly accessed by: "/etc/init.d/priv_tomcat start"

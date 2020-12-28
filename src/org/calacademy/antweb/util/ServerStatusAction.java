@@ -44,7 +44,7 @@ static double getVersion () {
         String action = (String) df.get("action");   
     
         //A.log("execute action:" + action);
-        String cpDiagnostics = null;
+
 
         try {
             javax.sql.DataSource dataSource = getDataSource(request, "conPool");
@@ -63,7 +63,8 @@ static double getVersion () {
                 s_log.error("e:" + e);
             }
 
-            cpDiagnostics += DBUtil.getSimpleCpDiagnosticsAttr(dataSource);
+            String cpDiagnostics = DBUtil.getSimpleCpDiagnosticsAttr(dataSource);
+            request.setAttribute("cpDiagnostics", cpDiagnostics);
 
         } catch (Exception e) {
             s_log.error("e:" + e);
@@ -72,7 +73,6 @@ static double getVersion () {
         }
                    
         String serverDetails = ServerStatusAction.getServerDetails();
-        serverDetails += "<br>&nbsp;&nbsp;Connection Pool: " + cpDiagnostics;
         request.setAttribute("serverDetails", serverDetails);           
                    
 		return (mapping.findForward("success"));

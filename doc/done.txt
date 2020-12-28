@@ -13619,16 +13619,16 @@ Dec 17. 1hr.
 Dec 20. 1hr.
   Look into and document server trouble involving db connection pool.
 
-Dec 24. 2.5hrs.
-  Look into uptime warning.
-  Add the database connections to the server status page.
-  Order the UserAgent list by count (so that it is potentially useful).
-  Have the appCheck.php script run on the live server to check, and restart the server.
-  Separate the appcheck logs.
-  Deploy.
-  Document.  
-  
-
+Dec 24. 3hrs.
+  Look into uptime warnings.
+  Add the database connections to the server status page.
+  Order the UserAgent list by count (so that it is potentially useful).
+  Configure the appCheck.php script run on the live server to check, and restart the server.
+  Separate the appcheck logs.
+  Deploy.
+  Document.   Plan to install Joe's recommended DOS defender.
+  Adjust logs. Put /antweb/log content in /data/antweb/web/log so web accessible. 
+ 
 
 
   

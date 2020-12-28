@@ -380,7 +380,7 @@ public abstract class HttpUtil {
 
     public static boolean isIllegalStr(String string) {
         String str = string.toLowerCase();
-        if ( str.contains("sleep")
+        if ( str.contains("sleep") && !str.contains("sleeping")
           || str.contains("case%20")
           || str.contains("select%20")
           || str.contains("order%20")
@@ -391,7 +391,6 @@ public abstract class HttpUtil {
         }
         return false;
     }
-
     private static final String[] HEADERS_TO_TRY = {
             "X-Forwarded-For",
             "Proxy-Client-IP",
