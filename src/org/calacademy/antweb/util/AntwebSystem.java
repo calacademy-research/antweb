@@ -69,6 +69,7 @@ public class AntwebSystem {
     return count;
   }	
 
+  // NOT WORKING: https://www.antweb.org/utilData.do?action=restart
   public static String restartAntweb(Login accessLogin) {
     String message = "";
     s_log.warn("restartAntweb() invoked by:" + accessLogin.getName());
@@ -76,14 +77,16 @@ public class AntwebSystem {
       message = "restartAntweb does not run in dev.";
       A.log("restartAntweb() message:" + message);
     } else {
+      // None of these have worked.
       // NOPE: (new AntwebSystem()).exec("systemctl restart tomcat");
       // NOPE: (new AntwebSystem()).launchProcess("systemctl restart tomcat");
-      restart();
+      //restart();
+      (new AntwebSystem()).launchProcess("reboot now");
       message = "restarting...";
     }
     return message;
   }
-
+/*
   public static String restart() {
     String processLine = "";
     try {
@@ -115,6 +118,7 @@ public class AntwebSystem {
 
     return processLine;
     }
+*/
 
 // These might only work with Java 1.8 as it does in dev.
 /*
