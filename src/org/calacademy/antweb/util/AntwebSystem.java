@@ -76,7 +76,7 @@ public class AntwebSystem {
       message = "restartAntweb does not run in dev.";
       A.log("restartAntweb() message:" + message);
     } else {
-      (new AntwebSystem()).exec("systemctl restart tomcat");
+      (new AntwebSystem()).launchProcess("systemctl restart tomcat");
       message = "restarting";
     }
     return message;
@@ -116,7 +116,7 @@ public class AntwebSystem {
 	try {
 	  process = builder.start();
 	} catch (IOException e) {
-	  s_log.error("exec() e:" + e);	
+	  s_log.error("launchBuilder() e:" + e);
 	}	
 //	StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);
 	StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), "error");
@@ -125,12 +125,12 @@ public class AntwebSystem {
 	try {
 	  exitCode = process.waitFor();
 	} catch (InterruptedException e) {
-	  s_log.error("exec() e:" + e);
+	  s_log.error("launchBuilder() e:" + e);
 	}
 	assert exitCode == 0;
   }
 
-  
+  /*
   public void exec(String command) {
     try {
       s_log.warn("Running command:" + command);
@@ -148,10 +148,10 @@ public class AntwebSystem {
       Runtime.getRuntime().exec(new String[]{"sh", "-c", command}, null, null);
       //s_log.warn("  Process:" + p.toString() + " exitValue:" + p.exitValue());
     } catch (IOException e) {
-      s_log.error("exec() e:" + e);
+      s_log.error("execPipe() e:" + e);
     }
   }    
- 
+ */
   public void launchProcess(String command) {	
     launchProcess(command, false);
   }
