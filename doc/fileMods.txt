@@ -1,4 +1,4 @@
-Release 8.48
+Release 8.47.4
  doc/done.txt                                       |  4 +++-
  doc/fileMods.txt                                   | 15 +++++++++++++++
  src/org/calacademy/antweb/util/AntwebSystem.java   | 12 ++++++++++++

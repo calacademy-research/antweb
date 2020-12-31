@@ -380,10 +380,10 @@ public abstract class HttpUtil {
 
     public static boolean isIllegalStr(String string) {
         String str = string.toLowerCase();
-        if ( str.contains("sleep") && !str.contains("sleeping")
+        if ( (str.contains("sleep") && !(str.contains("sleeping") || str.contains("kameelsleep")))
           || str.contains("case%20")
           || str.contains("select%20")
-          || str.contains("order%20")
+          || (str.contains("order%20") && !str.contains("border"))
           || str.contains("3ddbms_pipe.receive_message")
           || str.contains("waitfor  ")
           ) {

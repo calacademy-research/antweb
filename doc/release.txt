@@ -1,7 +1,9 @@
+Release 8.47.4
+  Allow "border" but disallow other "order" parameters.
+  Allow "Kameelsleep" but disallow other "sleep" parameters.
+
 Release 8.47.3
   Refinement to server status page and supporting logic. 
-  
-Release 8.47.2
   Allow sleeping parameter but not sleep parameter.
 
 Release 8.47.1

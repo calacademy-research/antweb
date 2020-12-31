@@ -77,11 +77,11 @@ public class AntwebSystem {
       message = "restartAntweb does not run in dev.";
       A.log("restartAntweb() message:" + message);
     } else {
-      // None of these have worked.
+      // None of these have worked...
       // NOPE: (new AntwebSystem()).exec("systemctl restart tomcat");
       // NOPE: (new AntwebSystem()).launchProcess("systemctl restart tomcat");
-      //restart();
-      (new AntwebSystem()).launchProcess("reboot now");
+      // restart();
+      // (new AntwebSystem()).launchProcess("reboot now");
       message = "restarting...";
     }
     return message;
