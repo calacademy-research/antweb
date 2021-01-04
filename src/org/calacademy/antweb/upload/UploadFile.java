@@ -167,7 +167,7 @@ public class UploadFile {
             int endLocCodePos = startLocCodePos + 21;
             String localityCode = theLine.substring(startLocCodePos, endLocCodePos); // was (211, 232);
             String localityEncoded = org.apache.commons.httpclient.util.URIUtil.encodePath(localityCode, "ISO-8859-1");
-            s_log.warn("correctEncoding(): 0160810 localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded);
+            A.log("correctEncoding(): 0160810 localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded);
             //s_log.warn("correctEncoding(): substring:" + theLine.substring(277, 298);
             if (!localityEncoded.equals("Mah%E9%20Mont%20Copolia%20520")) {   // MahÈ Island, Mont Copolia
               s_log.error("correctEncoding() found false in " + AntwebUtil.secsSince(startTime) + " seconds.  Should be encoded: Mah%E9%20Mont%20Copolia%20520");
@@ -192,7 +192,7 @@ public class UploadFile {
             int endLocCodePos = startLocCodePos + 33;  // 33 if UTF.  36 in ...
             String localityCode = theLine.substring(startLocCodePos, endLocCodePos); // was (211, 232);
             String localityEncoded = org.apache.commons.httpclient.util.URIUtil.encodePath(localityCode, "ISO-8859-1");
-            s_log.warn("correctEncoding(): 0625035 encoding:" + encoding + " localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded 
+            A.log("correctEncoding(): 0625035 encoding:" + encoding + " localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded
     + " theLine:" + theLine);
 
             //if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();
@@ -216,7 +216,8 @@ public class UploadFile {
           theLine = in.readLine();
         }
       } catch (Exception e) {
-        s_log.error("correctEncoding(" + encoding + ") fileLoc:" + fileLoc + " e:" + e);
+        //s_log.error("correctEncoding(" + encoding + ") fileLoc:" + fileLoc + " e:" + e);
+          // Expected, for instance from Jack's upload.
         // return false; // Not in 6.8.1
         /* This was added in, reasonably. In tricky release 6.9 (that included a wider rollout of the encoding selector,
            it caused uploads to be invalid. */

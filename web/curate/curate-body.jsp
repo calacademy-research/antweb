@@ -12,7 +12,11 @@
 
 <%@include file="/curate/curatorCheck.jsp" %>
 
-<% if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return; %>
+<% if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) {
+  AntwebUtil.log("curate-body.jsp static call:" + HttpUtil.getTarget(request));
+  return;
+}
+%>
 
 <%
     String domainApp = AntwebProps.getDomainApp();

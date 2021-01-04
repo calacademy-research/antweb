@@ -4,8 +4,9 @@ Release 8.47.4
  src/org/calacademy/antweb/util/AntwebSystem.java   | 12 ++++++++++++
  src/org/calacademy/antweb/util/UtilDataAction.java |  5 +++++
  web/util/serverStatus-body.jsp                     | 33 +++++++++++++++++++--------------
-
-
+ src/org/calacademy/antweb/util/HttpUtil.java     | 4 ++--
+ web/documentation/releaseNum.jsp                 | 2 +-
+ 
 
 Release 8.47.3
  bin/appCheck.php                                       |  6 +++---

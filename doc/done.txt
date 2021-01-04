@@ -13635,7 +13635,14 @@ Dec 28. 3hrs.
   Modifications to server status page and supporting logic.
   Deploy. Document.
   Attempt restart triggered from app. Incomplete.
+
+Dec 30. 1hr.
+  Look into server down. /tmp/ unwritable errors. Discuss with IT.
+  Deploy minor release.
+
+
   
+    
   
 
 

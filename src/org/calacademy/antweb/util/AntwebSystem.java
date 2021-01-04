@@ -306,23 +306,31 @@ public class AntwebSystem {
   
         return cpuLoad;    
     }
-    
+
     private static boolean messageSent = false;
     private static double threshold = .9; // 1;
     public static String cpuCheck() {
+		String message = null;
 		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
-        double cpuLoad = osBean.getSystemCpuLoad();
-        A.log("cpuCheck() cpuLoad:" + cpuLoad);
+        double systemCpuLoad = osBean.getSystemCpuLoad();
+        double processCpuLoad = osBean.getProcessCpuLoad();
+
+        A.log("cpuCheck() systemCpuLoad:" + systemCpuLoad + " processCpuLoad:" + processCpuLoad);
+
         //if (AntwebProps.isDevMode()) threshold = 0;
-        if (cpuLoad > threshold && !messageSent) {
-            messageSent = true;
-			String recipients = "re.mark.johnson@gmail.com";
-			String subject = "CPU on Antweb at " + cpuLoad;
-			String body = ".";
-            s_log.warn("cpuCheck() cpuLoad:" + cpuLoad + " recipients:" + recipients);
-            //Emailer.sendMail(recipients, subject, body);
+        if (systemCpuLoad > threshold || processCpuLoad > threshold) {
+           message = "systemCpuLoad:" + systemCpuLoad + " processCpuLoad:" + processCpuLoad;
+           if (!messageSent) {
+             messageSent = true;
+             String recipients = "re.mark.johnson@gmail.com";
+             String subject = "Antweb " + message;
+             String body = ".";
+             s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
+             //Emailer.sendMail(recipients, subject, body);
+           }
+           LogMgr.appendLog("cpuCheck.log", message , true);
         }
-        return "cpuCheck:" + cpuLoad;
+        return message;
     }
 
     public static String getTopReport() {
