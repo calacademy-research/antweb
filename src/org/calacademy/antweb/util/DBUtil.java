@@ -269,11 +269,15 @@ Or, if there are stmts and/or rsets...
         }
 
         if (conn != null) {
+          NewProxyConnection newProxyConn = (NewProxyConnection) conn;
           int connMapSize = connectionRequestMap.size(); 
-          connectionMap.remove((NewProxyConnection) conn);
-          connectionRequestMap.remove((NewProxyConnection) conn);
-          if (connectionRequestMap.size() == connMapSize) {
-            s_log.warn("close() failed to remove name:" + name + " from connectionRequestMap.  connMapSize:" + connMapSize);
+          //connectionMap.remove();
+          boolean containsConn = connectionRequestMap.containsKey(newProxyConn);
+          if (containsConn) {
+              connectionRequestMap.remove(newProxyConn);
+              if (connectionRequestMap.size() == connMapSize) {
+                  s_log.warn("close() failed to remove name:" + name + " from connectionRequestMap.  connMapSize:" + connMapSize + " contains:" + containsConn);
+              }
           }
         }
 

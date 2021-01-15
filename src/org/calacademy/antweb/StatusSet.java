@@ -154,7 +154,7 @@ public class StatusSet extends Status {
         if (StatusSet.VALID_EXTANT.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "' and fossil = 0 ";
       }
         
-      if (StatusSet.TYPE.equals(getValue())) {
+      if (StatusSet.TYPE.equals(getValue())) {  // type
           if ("specimen".equals(table)) {
               s_log.warn("getCriteria() THIS SHOULDN'T HAPPEN? table:" + table + " value:" + getValue());
               //AntwebUtil.logShortStackTrace();
@@ -165,7 +165,10 @@ public class StatusSet extends Status {
 	at org.calacademy.antweb.TaxaPage.fetchChildren(TaxaPage.java:98)
  */
           } else {
-              criteria = " type = 1 ";
+              //s_log.warn("ISSUE! How this invoked? Search form? table:" + table);
+              criteria = "type_status = type_status"; //"" type = 1 ";
+              // Kiko invoked this Jan 4 2021 but it is not known how.
+              // Called from org.calacademy.antweb.search.AdvancedSearch.createInitialResults(AdvancedSearch.java:330)
           }
       }
 

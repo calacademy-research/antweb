@@ -81,7 +81,7 @@ public class BrowseAction extends DescriptionAction {
 
         if ((rank == null) || ("".equals(rank))) rank = inferredRank(queryString);
         if (Rank.SUBGENUS.equals(rank)) rank = Rank.GENUS;
-        
+
         String family = browseForm.getFamily();
         String subfamily = browseForm.getSubfamily();
         String genus = browseForm.getGenus();
@@ -90,6 +90,7 @@ public class BrowseAction extends DescriptionAction {
         String subspecies = browseForm.getSubspecies();
         String[] chosen = browseForm.getChosen();
         String authorDate = browseForm.getAuthorDate();
+        
 /*
         //String[] testStrings = {family, subfamily, genus, species, subspecies, authorDate};
         String[] testStrings = {queryString};

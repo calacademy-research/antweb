@@ -379,9 +379,11 @@ public abstract class AntwebUtil {
     AntwebUtil.remove(file); 
   }
 */
-  // For backwards compatibility.
+
+/*
+  // For backwards compatibility. Should use LogMgr methods.
   public static void appendLog(String file, String data) {
-    LogMgr.appendLog(file, data);
+    LogMgr.appendLog(file, data, true);
   }
 
   public static void appendLog(String file, String data, boolean addTimestamp) {
@@ -395,6 +397,8 @@ public abstract class AntwebUtil {
   public static void appendFile(String fullPath, String data) {
     LogMgr.appendFile(fullPath, data);
   }
+*/
+
 /*
   // Only used for logs.
   public static void appendLog(String file, String data) {
@@ -618,7 +622,6 @@ public abstract class AntwebUtil {
     }
   }
 
-    
   public static void throwUndeclaredException() {
     s_log.error("Throwing undeclared exception.  - for testing");  
     String t = null;

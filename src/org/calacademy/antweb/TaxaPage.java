@@ -61,6 +61,11 @@ public class TaxaPage implements Serializable {
 	  throws SQLException 
 	{
 	    Overview overview = getOverview();  // Why not a parameter?
+
+		if (overview.getName().equals("allantwebants") && "species".equals(rank)) {
+		  s_log.warn("fetchChildren() Expensive query. Who is requesting all species of allantwebants?");
+          AntwebUtil.logShortStackTrace();
+	    }
 	
         long now = new java.util.Date().getTime();
 	    ArrayList<Taxon> theseChildren = new ArrayList();

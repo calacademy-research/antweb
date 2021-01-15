@@ -244,7 +244,7 @@ public final class SpecimenListAction extends Action {
 
             // Write out
             if ((specimenCount % 10000) == 0) {
-                AntwebUtil.appendFile(fullPath, dataBuffer.toString());
+                LogMgr.appendFile(fullPath, dataBuffer.toString());
                 dataBuffer = new StringBuffer();                  
             }
             // Log progress
@@ -253,7 +253,7 @@ public final class SpecimenListAction extends Action {
             }
         }
         A.log("geneateAntwebSpecimenData() fullPath:" + fullPath + " data:" + dataBuffer.toString());
-        AntwebUtil.appendFile(fullPath, dataBuffer.toString());
+        LogMgr.appendFile(fullPath, dataBuffer.toString());
         //return dataBuffer;
     }
     
@@ -296,7 +296,7 @@ public final class SpecimenListAction extends Action {
 
                 if ((specimenCount % 10000) == 0) {
                     s_log.warn("generateAllAntwebAnts() specimenCount:" + specimenCount + " writing to:" + fullPath);
-                    AntwebUtil.appendFile(fullPath, dataBuffer.toString());
+                    LogMgr.appendFile(fullPath, dataBuffer.toString());
                     dataBuffer = new StringBuffer();                
                 }
                 if ((specimenCount % 100000) == 0) {
@@ -307,7 +307,7 @@ public final class SpecimenListAction extends Action {
                     s_log.warn("generateAllAntwebAnts() count:" + specimenCount + " new connection!");
                 }            
             }
-            AntwebUtil.appendFile(fullPath, dataBuffer.toString());
+            LogMgr.appendFile(fullPath, dataBuffer.toString());
 
         } catch (SQLException e) {
             String message = e.toString();

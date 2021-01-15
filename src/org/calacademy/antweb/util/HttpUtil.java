@@ -135,6 +135,12 @@ public abstract class HttpUtil {
           return null;
       }
 
+      String message = BadActorMgr.ifBadActorBlockedGetMessage(request);
+      if (message != null) {
+          request.setAttribute("message", message);
+          return (mapping.findForward("message"));
+      }
+
       if (HttpUtil.hasIllegalStr(queryString, request)) {
             request.setAttribute("message", "Illegal characters.");
             return (mapping.findForward("message"));
@@ -361,9 +367,9 @@ public abstract class HttpUtil {
       for (String str : strings) {
         if (str == null) continue;
         if (str.contains("&") || isIllegalStr(str)) {
-          AntwebUtil.log("hasIllegalChars() true str:" + str + " target:" + HttpUtil.getTarget(request));
-          addBadActor(HttpUtil.getClientIpAddress(request));
-         return true;      
+          AntwebUtil.log("HttpUtil.hasIllegalChars() 1 true str:" + str + " target:" + HttpUtil.getTarget(request));
+          BadActorMgr.addBadActor(request);
+         return true;
         }
       }
       return false;
@@ -371,8 +377,8 @@ public abstract class HttpUtil {
 
     public static boolean hasIllegalStr(String str, HttpServletRequest request) {
         if (isIllegalStr(str)) {
-            AntwebUtil.log("hasIllegalChars() true str:" + str + " target:" + HttpUtil.getTarget(request));
-            addBadActor(HttpUtil.getClientIpAddress(request));
+            AntwebUtil.log("HttpUtil.hasIllegalChars() 2 true str:" + str + " target:" + HttpUtil.getTarget(request));
+            BadActorMgr.addBadActor(request);
             return true;
         }
         return false;
@@ -404,7 +410,7 @@ public abstract class HttpUtil {
             "HTTP_VIA",
             "REMOTE_ADDR" };
 
-    private static String getClientIpAddress(HttpServletRequest request) {
+    public static String getClientIpAddress(HttpServletRequest request) {
          if (AntwebProps.isLocal()) return getDevIpAddress(request);
 
          for (String header : HEADERS_TO_TRY) {
@@ -421,27 +427,10 @@ public abstract class HttpUtil {
         return appUrl;
     }
 
-    private static HashMap badActorMap = new HashMap<String, Integer>();
-    private static void addBadActor(String ip) {
-      A.iLog("addBadActor() ip:" + ip);
-      Integer count = (Integer) badActorMap.get(ip);
-      if (count == null) {
-          badActorMap.put(ip, Integer.valueOf(1));
-      } else {
-          badActorMap.put(ip, ++count);
-      }
+    private static boolean isBadActorBlocked(HttpServletRequest request) {
+      return false; // To be...
     }
-    public static String getBadActorReport() {
-        Set<String> keys = badActorMap.keySet();
-        String report = "";
-        int i = 0;
-        for (String key : keys) {
-            ++i;
-            report += "i:" + i + " key:" + key + " value:" + badActorMap.get(key) + "\n";
-        }
-        return report;
-    }
-    
+
     public static boolean abortAction(String content) {
       // This method looks for jsp injection code.  True to abort.
       if ( (content != null) &&

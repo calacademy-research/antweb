@@ -13640,10 +13640,28 @@ Dec 30. 1hr.
   Look into server down. /tmp/ unwritable errors. Discuss with IT.
   Deploy minor release.
 
-
+Jan 3. 2hrs.
+  More server debugging/documentation.
+  Test Jack's upload.
+  Extend the cpu load facility. Deploy. Document.  
   
+#Reported    
     
-  
+Jan 4. 1hr.
+  Fix type_status= problem with search.
+  Monitor server.
 
+Jan 5. 1hr.
+  Server restart. 
+  Investigate.
+  
+Jan 14. 1hr.
+  Respond to uptime message. Reboot. Diagnose. Document.
+
+Jan 15.
+  Another outage handled.
+  Extend, creating the BadActorMbr.
+  
+  
 
   

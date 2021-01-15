@@ -1,3 +1,15 @@
+Release 8.48
+ WEB-INF/struts-configDbAnt.xml                   |  2 +-
+ doc/done.txt                                     |  7 +++++++
+ doc/fileMods.txt                                 |  5 +++--
+ doc/release.txt                                  |  3 +++
+ src/org/calacademy/antweb/upload/UploadFile.java |  7 ++++---
+ src/org/calacademy/antweb/util/AntwebSystem.java | 30 +++++++++++++++++++-----------
+ web/curate/curate-body.jsp                       |  6 +++++-
+ web/documentation/releaseNum.jsp                 |  2 +-
+ 8 files changed, 43 insertions(+), 19 deletions(-)
+
+
 Release 8.47.4
  doc/done.txt                                       |  4 +++-
  doc/fileMods.txt                                   | 15 +++++++++++++++

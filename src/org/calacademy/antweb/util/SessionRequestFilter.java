@@ -175,7 +175,7 @@ public class SessionRequestFilter implements Filter {
         s_log.warn("runTime:" + AntwebUtil.hrsSince(getStartTime()) + " " + AntwebMgr.getReport());
         s_log.warn(UserAgentTracker.summary() + "overactive:" + UserAgentTracker.overActiveReport());
         s_log.warn("Overdue resource:" + DBUtil.getOldConnectionList());
-        s_log.warn("Bad Actor Report:" + HttpUtil.getBadActorReport());
+        s_log.warn("Bad Actor Report:" + BadActorMgr.getBadActorReport());
         s_log.warn(AntwebSystem.getTopReport());
     }
        

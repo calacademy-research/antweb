@@ -1,3 +1,7 @@
+Release 8.48.1
+  Move BadActor logic into BadActorMgr.
+  AppendLog changes.
+
 Release 8.48
   Extend the cpuCheck to log system and process stats in cpuCheck.log
 

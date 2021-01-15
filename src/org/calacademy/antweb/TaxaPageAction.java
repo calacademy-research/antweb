@@ -58,9 +58,7 @@ public final class TaxaPageAction extends Action {
 
         String isImaged = request.getParameter("isImaged");
         A.log("execute() isImaged:" + isImaged);
-
-        //String orderBy = request.getParameter("orderBy");
-
+        
         TaxaPageForm taxaPageForm = (TaxaPageForm) form;
 		String caste = Caste.getCaste(taxaPageForm.getCaste(), request);
   	    //A.log("execute() rank:" + rank + " caste:" + caste + " formCaste:" + taxaPageForm.getCaste());

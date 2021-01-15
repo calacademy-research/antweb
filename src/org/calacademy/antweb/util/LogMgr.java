@@ -58,7 +58,7 @@ public class LogMgr {
     String logRoot = docRoot + "web/log/";
     if (dir != null) logRoot += dir + "/";
     file = logRoot + file;
-    AntwebUtil.appendFile(file, data);
+    LogMgr.appendFile(file, data);
   }
 
   public static void appendFile(String fullPath, String data) {
