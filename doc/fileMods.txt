@@ -1,3 +1,20 @@
+Releaase 8.48.1
+ doc/done.txt                                             |  20 +++++++++++++++++++-
+ doc/fileMods.txt                                         |  12 ++++++++++++
+ doc/release.txt                                          |   4 ++++
+ src/org/calacademy/antweb/BrowseAction.java              |   3 ++-
+ src/org/calacademy/antweb/StatusSet.java                 |   7 +++++--
+ src/org/calacademy/antweb/TaxaPage.java                  |   5 +++++
+ src/org/calacademy/antweb/TaxaPageAction.java            |   4 +---
+ src/org/calacademy/antweb/util/AntwebUtil.java           |   9 ++++++---
+ src/org/calacademy/antweb/util/BadActorMgr.java          | 106 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/org/calacademy/antweb/util/DBUtil.java               |  12 ++++++++----
+ src/org/calacademy/antweb/util/HttpUtil.java             |  41 +++++++++++++++--------------------------
+ src/org/calacademy/antweb/util/LogMgr.java               |   2 +-
+ src/org/calacademy/antweb/util/SessionRequestFilter.java |   2 +-
+ src/org/calacademy/antweb/util/SpecimenListAction.java   |   8 ++++----
+ web/documentation/releaseNum.jsp                         |   2 +-
+ 
 Release 8.48
  WEB-INF/struts-configDbAnt.xml                   |  2 +-
  doc/done.txt                                     |  7 +++++++
