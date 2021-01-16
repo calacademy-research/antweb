@@ -1,3 +1,17 @@
+Release 8.48.2
+ doc/fileMods.txt                   |   17 ++
+ doc/release.txt                    |    3 +
+ web/ancFileBak/AZspeciesguide.jsp  |  351 ----------------------------------------
+ web/ancFileBak/Gynandromorph.jsp   |   28 ----
+ web/ancFileBak/Intercaste.jsp      |   28 ----
+ web/ancFileBak/KeyOdontomachus.jsp |   73 ---------
+ web/ancFileBak/MadaCremato.jsp     |   27 ----
+ web/ancFileBak/Other.jsp           |   28 ----
+ web/ancFileBak/crodontomachus.jsp  |   28 ----
+ web/ancFileBak/introduced.jsp      |  856 -------------------------------------------------------------------------------------------------
+ web/ancFileBak/measuring.jsp       | 1339 --------------------------------------------------------------------------------------------------------------------------------------------------------
+ web/documentation/releaseNum.jsp   |    2 +-
+ 
 Releaase 8.48.1
  doc/done.txt                                             |  20 +++++++++++++++++++-
  doc/fileMods.txt                                         |  12 ++++++++++++
