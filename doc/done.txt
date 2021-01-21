@@ -13658,10 +13658,15 @@ Jan 5. 1hr.
 Jan 14. 1hr.
   Respond to uptime message. Reboot. Diagnose. Document.
 
-Jan 15.
+Jan 15. 2hrs. (Modified following initial reporting of 1.5)
   Another outage handled.
   Extend, creating the BadActorMbr.
-  
-  
+  Deploy  
+  Fix/clean up the modified deployment process.
+
+#Reported  
+
+
+
 
   

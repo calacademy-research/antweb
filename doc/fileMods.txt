@@ -1,3 +1,4 @@
+
 Release 8.48.2
  doc/fileMods.txt                   |   17 ++
  doc/release.txt                    |    3 +
@@ -11,6 +12,8 @@ Release 8.48.2
  web/ancFileBak/introduced.jsp      |  856 -------------------------------------------------------------------------------------------------
  web/ancFileBak/measuring.jsp       | 1339 --------------------------------------------------------------------------------------------------------------------------------------------------------
  web/documentation/releaseNum.jsp   |    2 +-
+ web/arizona_wildlife_views_1995.pdf | Bin 2222836 -> 0 bytes
+ 
  
 Releaase 8.48.1
  doc/done.txt                                             |  20 +++++++++++++++++++-

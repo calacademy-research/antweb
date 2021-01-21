@@ -95,7 +95,7 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
 <br><b>Profile:</b><%= QueryProfiler.report() %>
 
 <br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
-<br><b>Bad Actor Report:</b> <%= HttpUtil.getBadActorReport() %>
+<br><b>Bad Actor Report:</b> <%= BadActorMgr.getBadActorReport() %>
 
 <br><br><br>
 <h3>Server Properties </h3>
