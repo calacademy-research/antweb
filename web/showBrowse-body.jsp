@@ -84,7 +84,7 @@
        //A.log("show-browse.jsp hasMap:" + taxon.hasMap() + " map:" + taxon.getMap());	
        boolean hasMap = false;
        hasMap = taxon.hasMap() || taxon.getMap() != null;
-       if (taxon.getChildren().size() > 0) hasMap = true;
+       if (taxon.getChildren() != null && taxon.getChildren().size() > 0) hasMap = true;
        if (hasMap) {
            %>		
 			<li><a href="<%= AntwebProps.getDomainApp() %>/bigMap.do?<%= object %>=<%= objectName %>&<%= overview.getParams() %>">Map</a></li>
@@ -111,20 +111,21 @@ int totalImaged = taxon.getUniqueChildImagesCount("p", "h");
 String recordCountString = taxonChildCount + " specimens"; 
 
 java.util.ArrayList<Taxon> childrenList = taxon.getChildren();
+if (childrenList != null) {
 
-//A.log("showBrowse-body.jsp size:" + childrenList.size());
-int childrenCount = childrenList.size();   
-Taxon[] childrenArray = new Taxon[childrenCount];
-childrenList.toArray(childrenArray);
+  //A.log("showBrowse-body.jsp size:" + childrenList.size());
+  int childrenCount = childrenList.size();
+  Taxon[] childrenArray = new Taxon[childrenCount];
+  childrenList.toArray(childrenArray);
 
-int imagedSpecimenCount = 0;
-for (Taxon t : childrenArray) {
+  int imagedSpecimenCount = 0;
+  for (Taxon t : childrenArray) {
 	if (t != null && t.getHasImages()) {
 	   ++imagedSpecimenCount;
 	}
-}
+  }
 
-// A.log("showBrowse-body.jsp childrenListSize:" + childrenList.size() + " childrenArraySize:" + childrenArray.length + " imagedSpecimenCount:" + imagedSpecimenCount);
+  // A.log("showBrowse-body.jsp childrenListSize:" + childrenList.size() + " childrenArraySize:" + childrenArray.length + " imagedSpecimenCount:" + imagedSpecimenCount);
 
 %>
 <div id="totals_and_tools_container">
@@ -249,7 +250,9 @@ for (Taxon t : childrenArray) {
 		<%@include file="/specimenReport.jsp" %>  
 	 <% } %> 
 
- <% } %>
+ <% }
+ }
+ %>
 
 </div>
 </logic:present>
