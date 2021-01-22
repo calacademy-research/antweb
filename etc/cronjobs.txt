@@ -1,0 +1,10 @@
+# These were the cronjob entries as of Nov 17, 2020
+
+#0 23 * * 1 sh /antweb/deploy/bin/reboot.sh # Restart 11pm Monday
+
+0 21 * * * /antweb/deploy/bin/admin.sh > /antweb/log/adminTask.log
+50 3 * * 4 /antweb/deploy/bin/taxonSetBackup.sh
+*/5 * * * * php /antweb/deploy/bin/appCheck.php >> /antweb/log/appCheck.log
+
+# 5am scheduled tasks are launched by a Java thread.
+#0 23 * * * /antweb/deploy/bin/unclosedConnections.sh
