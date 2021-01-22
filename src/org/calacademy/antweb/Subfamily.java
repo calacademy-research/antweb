@@ -100,13 +100,13 @@ public class Subfamily extends Family implements Serializable {
         ResultSet rset = null;
         try {
             query = "select distinct taxon.genus from taxon"
-                + fetchChildrenClause
-                + " and taxon.subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'" 
-                + " and taxon.genus != '' " 
-                + " and taxarank = 'genus' "
-                + statusSet.getAndCriteria()
-                ;
-            
+                    + fetchChildrenClause
+                    + " and taxon.subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'"
+                    + " and taxon.genus != '' "
+                    + " and taxarank = 'genus' "
+                    + statusSet.getAndCriteria()
+            ;
+
             A.log("setChildren(5) overview:" + overview + " query:" + query);
 
             stmt = connection.createStatement();
@@ -125,24 +125,27 @@ public class Subfamily extends Family implements Serializable {
                 child.setRank("genus");
                 child.setConnection(connection);
                 child.init(); // added Oct 3, 2012 Mark
-                if (getChildImages) { 
+                if (getChildImages) {
                     child.setImages(overview, caste);
                 }// else {
                 //    child.setHasImages(overview);
                 //}
-            
+
                 if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount())) {
-                  if (overview instanceof LocalityOverview) 
-                  child.setMap(new Map(child, (LocalityOverview) overview, connection));
+                    if (overview instanceof LocalityOverview)
+                        child.setMap(new Map(child, (LocalityOverview) overview, connection));
                 }
-                
+
                 //A.log("setChildren() overview:" + overview + " child:" + child.getTaxonName() + " + this:" + this);                                                
-                child.initTaxonSet(overview);                
+                child.initTaxonSet(overview);
                 child.generateBrowserParams(overview);
-                
-                child.setConnection(null);                
-                theseChildren.add(child);                
+
+                child.setConnection(null);
+                theseChildren.add(child);
             }
+        } catch (SQLException e) {
+            s_log.warn("setChildren() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "setChildren() overview:" + overview);
         }        this.children = theseChildren;

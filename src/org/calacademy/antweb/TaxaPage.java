@@ -60,11 +60,14 @@ public class TaxaPage implements Serializable {
 	public void fetchChildren(boolean withImages, boolean withTaxa, boolean withSpecimen, boolean withFossil, String caste, StatusSet statusSet)
 	  throws SQLException 
 	{
-	    Overview overview = getOverview();  // Why not a parameter?
+	    Overview overview = getOverview();  // Why not a parameter? Be nice to have the reques as well for diagnoses.
 
 		if (overview.getName().equals("allantwebants") && "species".equals(rank)) {
-		  s_log.warn("fetchChildren() Expensive query. Who is requesting all species of allantwebants?");
-          AntwebUtil.logShortStackTrace();
+		  s_log.warn("fetchChildren() Expensive query... all species of allantwebants. withImages:" + withImages + " withTaxa:" + withTaxa
+				  + " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet);
+          //AntwebUtil.logShortStackTrace();
+			// at org.calacademy.antweb.TaxaPage.fetchChildren(TaxaPage.java:67)
+			// at org.calacademy.antweb.TaxaPageAction.execute(TaxaPageAction.java:179)
 	    }
 	
         long now = new java.util.Date().getTime();

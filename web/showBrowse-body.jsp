@@ -110,22 +110,21 @@ int totalImaged = taxon.getUniqueChildImagesCount("p", "h");
 //A.log("totalImaged:" + totalImaged + " taxonChildCount:" + taxonChildCount);
 String recordCountString = taxonChildCount + " specimens"; 
 
+int imagedSpecimenCount = 0;
+
 java.util.ArrayList<Taxon> childrenList = taxon.getChildren();
 if (childrenList != null) {
-
   //A.log("showBrowse-body.jsp size:" + childrenList.size());
   int childrenCount = childrenList.size();
   Taxon[] childrenArray = new Taxon[childrenCount];
   childrenList.toArray(childrenArray);
-
-  int imagedSpecimenCount = 0;
   for (Taxon t : childrenArray) {
 	if (t != null && t.getHasImages()) {
 	   ++imagedSpecimenCount;
 	}
   }
-
   // A.log("showBrowse-body.jsp childrenListSize:" + childrenList.size() + " childrenArraySize:" + childrenArray.length + " imagedSpecimenCount:" + imagedSpecimenCount);
+}
 
 %>
 <div id="totals_and_tools_container">
@@ -251,7 +250,6 @@ if (childrenList != null) {
 	 <% } %> 
 
  <% }
- }
  %>
 
 </div>

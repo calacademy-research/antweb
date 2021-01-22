@@ -166,8 +166,11 @@ public class StatusSet extends Status {
  */
           } else {
               //s_log.warn("ISSUE! How this invoked? Search form? table:" + table);
-              criteria = "type_status = type_status"; //"" type = 1 ";
+              //criteria = "type_status = type_status"; //"" type = 1 ";
+              //criteria = "type_status is not null"; //"" type = 1 ";
+              criteria = "1 = 1";
               // Kiko invoked this Jan 4 2021 but it is not known how.
+              //  This: http://localhost/antweb/browse.do?genus=myrmecina&museumCode=MCZC&statusSet=type
               // Called from org.calacademy.antweb.search.AdvancedSearch.createInitialResults(AdvancedSearch.java:330)
           }
       }

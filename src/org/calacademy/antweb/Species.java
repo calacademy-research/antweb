@@ -340,7 +340,8 @@ these other _cf1 etc.
             theseChildren.add(child);
           }
         } catch (SQLException e) {
-            s_log.warn("setChildren(" + overview + ", 3) e:" + e + " query:" + query);         
+            s_log.warn("setChildren(" + overview + ", 3) e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "setChildren()");
         }        

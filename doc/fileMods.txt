@@ -1,3 +1,11 @@
+Release 8.48.3
+ doc/done.txt                     | 11 ++++++++---
+ doc/fileMods.txt                 |  3 +++
+ doc/release.txt                  |  3 +++
+ etc/cronjobs.txt                 | 10 ++++++++++
+ web/documentation/releaseNum.jsp |  2 +-
+ web/showBrowse-body.jsp          | 23 +++++++++++++----------
+ web/util/serverStatus-body.jsp   |  2 +-
 
 Release 8.48.2
  doc/fileMods.txt                   |   17 ++
@@ -13,7 +21,6 @@ Release 8.48.2
  web/ancFileBak/measuring.jsp       | 1339 --------------------------------------------------------------------------------------------------------------------------------------------------------
  web/documentation/releaseNum.jsp   |    2 +-
  web/arizona_wildlife_views_1995.pdf | Bin 2222836 -> 0 bytes
- 
  
 Releaase 8.48.1
  doc/done.txt                                             |  20 +++++++++++++++++++-
@@ -43,7 +50,6 @@ Release 8.48
  web/documentation/releaseNum.jsp                 |  2 +-
  8 files changed, 43 insertions(+), 19 deletions(-)
 
-
 Release 8.47.4
  doc/done.txt                                       |  4 +++-
  doc/fileMods.txt                                   | 15 +++++++++++++++
@@ -52,7 +58,6 @@ Release 8.47.4
  web/util/serverStatus-body.jsp                     | 33 +++++++++++++++++++--------------
  src/org/calacademy/antweb/util/HttpUtil.java     | 4 ++--
  web/documentation/releaseNum.jsp                 | 2 +-
- 
 
 Release 8.47.3
  bin/appCheck.php                                       |  6 +++---
@@ -67,7 +72,6 @@ Release 8.47.3
  src/org/calacademy/antweb/util/UtilAction.java         |  2 +-
  web/documentation/releaseNum.jsp                       |  2 +-
  web/util/serverStatus-body.jsp                         | 41 ++++++++++++++---------------------------
- 
 
 Release 8.47.1
  bin/appCheck.php                                       |  3 +--

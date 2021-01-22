@@ -90,7 +90,8 @@ public class Genus extends Subfamily implements Serializable {
         return clause;    
     }    
 
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
+    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus)
+            throws SQLException {
     
         // global is not used. Currently only in Species.java.
         String fetchChildrenClause = " where 1 = 1";
@@ -113,25 +114,25 @@ public class Genus extends Subfamily implements Serializable {
 
         Statement stmt = null;
         ResultSet rset = null;
+        String query = null;
         try {
-            String query = null;
 
             query = "select distinct taxon.species, taxon.subgenus, taxon.speciesgroup, taxon.subspecies " //, taxon.fossil " 
-                        + ", taxon.taxarank "
-                        + "from taxon"
-                        + fetchChildrenClause   
-                        + " and taxon.subfamily = '" + AntFormatter.escapeQuotes(getSubfamily()) + "'"
-                        + " and taxon.genus = '" + AntFormatter.escapeQuotes(genus) + "'" 
-                        + " and taxon.species != '' "
-                        + " and (taxarank = 'species' || taxarank = 'subspecies')"
-                        + subgenusClause
-                        + statusSet.getAndCriteria()
-                        ;
+                    + ", taxon.taxarank "
+                    + "from taxon"
+                    + fetchChildrenClause
+                    + " and taxon.subfamily = '" + AntFormatter.escapeQuotes(getSubfamily()) + "'"
+                    + " and taxon.genus = '" + AntFormatter.escapeQuotes(genus) + "'"
+                    + " and taxon.species != '' "
+                    + " and (taxarank = 'species' || taxarank = 'subspecies')"
+                    + subgenusClause
+                    + statusSet.getAndCriteria()
+            ;
 //            if (!"default".equals(project))                        
 //              query += " and proj_taxon.project_name = '" + project + "'";
 
             //A.log("setChildren(5) overview:" + overview + " query:" + query);
-            
+
             //s_log.info("setChildren() getChildMaps:" + getChildMaps + " query:" + query);
 
             //s_log.info("in genus set children query is : " + theQuery);
@@ -153,10 +154,10 @@ public class Genus extends Subfamily implements Serializable {
                 ++i;
                 String rank = rset.getString("taxarank");
                 if (Rank.SPECIES.equals(rank)) {
-                  child = new Species();
+                    child = new Species();
                 } else {
-                  child = new Subspecies();
-                  child.setSubspecies(rset.getString("subspecies"));
+                    child = new Subspecies();
+                    child.setSubspecies(rset.getString("subspecies"));
                 }
                 child.setRank(rank);
                 child.setSubfamily(subfamily);
@@ -165,20 +166,20 @@ public class Genus extends Subfamily implements Serializable {
                 child.setSpeciesGroup(rset.getString("speciesgroup"));
                 child.setSpecies(rset.getString("species"));
                 child.setConnection(connection);
-			
+
                 child.init();
-                
+
                 // setupTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
                 //  s_log.info("setChildren setup time:" + setupTime);
                 //  now = (new GregorianCalendar()).getTimeInMillis();
 
                 if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
-                    child.setMap(new Map(child, (LocalityOverview) overview, connection));                
-                    if ((i + 1) ==  Taxon.getMaxSafeChildrenCount()) {
-                      s_log.warn("setChildren taxon:" + getGenus() + " has over " + Taxon.getMaxSafeChildrenCount() + " maps");
+                    child.setMap(new Map(child, (LocalityOverview) overview, connection));
+                    if ((i + 1) == Taxon.getMaxSafeChildrenCount()) {
+                        s_log.warn("setChildren taxon:" + getGenus() + " has over " + Taxon.getMaxSafeChildrenCount() + " maps");
                     }
                 }
-                
+
                 //  mapTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
                 //  now = (new GregorianCalendar()).getTimeInMillis();                
                 browserTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
@@ -187,7 +188,7 @@ public class Genus extends Subfamily implements Serializable {
                 //A.log("setChildren() getChildImages:" + getChildImages);
                 if (getChildImages) {
                     if (i > Taxon.getMaxSafeChildrenCount()) {
-                      // Do something?  or now, allow.
+                        // Do something?  or now, allow.
                     }
                     child.setImages(overview, caste);
                 }
@@ -199,13 +200,14 @@ We get both... that can't be right.
  2016-07-01 20:01:19,194 WARN http-bio-80-exec-8 org.calacademy.antweb.Taxon - setHasImages() XXX imageCount:52 overview:Afrotropical query: select image_count from bioregion_taxon  where taxon_name = "myrmicinaetemnothorax"  and bioregion_name ='Afrotropical'
  2016-07-01 20:01:19,194 WARN http-bio-80-exec-8 org.calacademy.antweb.geolocale.OverviewTaxon - OverviewTaxon.init query:select subfamily_count, genus_count, species_count, specimen_count, image_count  from bioregion_taxon where  bioregion_name = 'Afrotropical'   and taxon_name = 'myrmicinaetemnothorax'
 */
-                 
-                if (getTaxonName().contains("acanthobius")) A.log("setChildren() getChildImages:" + getChildImages + " images:" + child.getHasImagesCount() + " imagess:" + child.getImages());
-                
-                child.initTaxonSet(overview); 
 
-                child.generateBrowserParams(overview);                
-            
+                if (getTaxonName().contains("acanthobius"))
+                    A.log("setChildren() getChildImages:" + getChildImages + " images:" + child.getHasImagesCount() + " imagess:" + child.getImages());
+
+                child.initTaxonSet(overview);
+
+                child.generateBrowserParams(overview);
+
                 // imageTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
                 // now = (new GregorianCalendar()).getTimeInMillis();
                 child.setConnection(null);
@@ -216,6 +218,9 @@ We get both... that can't be right.
             setChildrenCount(theseChildren.size());
             //s_log.info("setChildren() total time:" + (((new GregorianCalendar()).getTimeInMillis()) - now));
             now = (new GregorianCalendar()).getTimeInMillis();
+        } catch (SQLException e) {
+            A.log("setChildren() query:" + query + " e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "setChildren()");
         }

@@ -14,7 +14,11 @@
     sdDisplayChildRank = Formatter.initCap(sdRank);
   } else {
     sdDisplayChildRank = Formatter.initCap(Rank.getNextRank(sdRank));
+    //A.log("*** sdDisplayChildRank:" + sdDisplayChildRank + " sdRank:" + sdRank);
   }
+  // if no rank parameter, we will be vague. It is for display on a page like: http://localhost/antweb/browse.do?genus=myrmecina&statusSet=all
+  if (sdDisplayChildRank == null) sdDisplayChildRank = "Children";
+
   if (false && Rank.SPECIES.equals(sdRank) && !(sdTarget.contains("taxonomicPage.do"))) {
     // Do nothing. False added Oct 14, 2018 to handle missing specimens here:
     //   http://localhost/antweb/browse.do?genus=hypoponera&species=us-ca01&rank=species&project=allantwebants&statusSet=all

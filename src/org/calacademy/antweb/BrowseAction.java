@@ -465,8 +465,10 @@ We are showin the full map of ponerinae for every adm1.
 			request.setAttribute("message", message);
 			return (mapping.findForward("message"));
         } catch (SQLException e) {
-			s_log.error("execute() SQLException caught on request:" + AntwebUtil.getRequestInfo(request));
-			s_log.info(AntwebUtil.getStackTrace(e));
+            String message = "execute() SQLException caught on request:" + AntwebUtil.getRequestInfo(request);
+            if (AntwebProps.isDevMode()) message += " e:" + e.toString();
+            s_log.error(message);
+            if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace(e);
         } finally {
             if ("mapComparison".equals(cacheType)) --s_mapComparisonCount;
             if ("getComparison".equals(cacheType)) --s_getComparisonCount;
