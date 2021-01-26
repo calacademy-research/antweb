@@ -574,7 +574,22 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="curate" path="/curate/curate.jsp" />
     </action>
 
-    <action 
+    <action
+            path="/curateB"
+            type="org.calacademy.antweb.curate.CurateActionB"
+            scope="request">
+      <forward name="curateB" path="/curate/curateB.jsp" />
+    </action>
+
+    <action
+            path="/curateC"
+            type="org.calacademy.antweb.curate.CurateActionC"
+            scope="request">
+      <forward name="curateC" path="/curate/curateC.jsp" />
+    </action>
+
+
+    <action
             path="/projectMgr"
             type="org.calacademy.antweb.curate.project.ProjectMgrAction"
             scope="request">
@@ -1737,6 +1752,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
               name="dummyForm">
           <forward name ="success" path="/util/serverStatus.jsp"/>
       </action>
+
+    <action path="/serverStatusB"
+            type = "org.calacademy.antweb.util.ServerStatusActionB"
+            name="dummyForm">
+      <forward name ="success" path="/util/serverStatusB.jsp"/>
+    </action>
 
       <action path="/userAgents"
               type = "org.calacademy.antweb.util.DummyAction"

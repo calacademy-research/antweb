@@ -13666,7 +13666,24 @@ Jan 15. 2hrs. (Modified following initial reporting of 1.5)
 
 #Reported  
 
+Jan 20. 1hr.
+  Unable to access server. 
+  Server issue attempted to support remotely.
 
+Jan 21. 3.5hrs.
+  Server access resolved with Joe.
+  Bug fixes.
+  Deployment of 8.48.3. Document.
+
+#Reported  
+
+Jan 25. 1hr.
+  Server cpu pinned. Access via vcenter. Diagnose as mysql without active queries. 
+  Reboot. Document.
+
+Jan 26. 1hr.
+  Build alternate curate pages for diagnostic testing to see if slow curate page is clue.
+  Deploy.
 
 
   

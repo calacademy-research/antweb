@@ -6,6 +6,14 @@ Release 8.48.3
  web/documentation/releaseNum.jsp |  2 +-
  web/showBrowse-body.jsp          | 23 +++++++++++++----------
  web/util/serverStatus-body.jsp   |  2 +-
+ src/org/calacademy/antweb/BrowseAction.java |  6 ++++--
+ src/org/calacademy/antweb/Genus.java        | 63 ++++++++++++++++++++++++++++++++++-----------------------------
+ src/org/calacademy/antweb/Species.java      |  3 ++-
+ src/org/calacademy/antweb/StatusSet.java    |  5 ++++-
+ src/org/calacademy/antweb/Subfamily.java    | 35 +++++++++++++++++++----------------
+ src/org/calacademy/antweb/TaxaPage.java     |  9 ++++++---
+ web/common/statusesDisplay.jsp              |  4 ++++
+
 
 Release 8.48.2
  doc/fileMods.txt                   |   17 ++

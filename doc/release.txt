@@ -1,11 +1,14 @@
+Release 8.48.4
+  CurateB support for speed diagnostics.
+
 Release 8.48.3
   serverStatusPage.jsp fix.
   Gracefully handle genus without species
     On a page like: https://www.antweb.org/browse.do?genus=myrmecina&museumCode=MCZC&statusSet=type  
   If rank is not specified on command line present "Children" instead of null.
   Handle SQLException in Species, Genus and Subfamily regularly. Log exception and throw.
-  Finish resolving Bug Fix for type status set of tables.
-  Change logging in TaxaPage.getChildren to log expensive requests.
+  Finish resolving Bug Fix for type status set of tables (the root problem).
+  Change logging in TaxaPage.getChildren() to log expensive requests.
 
 Release 8.48.2
   remove ancFileBak files.

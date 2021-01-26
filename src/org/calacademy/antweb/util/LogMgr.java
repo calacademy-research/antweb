@@ -21,7 +21,6 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-
 public class LogMgr {
 
   private static final Log s_log = LogFactory.getLog(LogMgr.class);
@@ -34,10 +33,8 @@ public class LogMgr {
   }
 
   public static void newLog(String file, String data) {
-
     emptyLog(file);
     appendLog(file, data, false);
-
   }
   
   public static void appendLog(String file, String data) {
@@ -63,7 +60,6 @@ public class LogMgr {
 
   public static void appendFile(String fullPath, String data) {
     (new Utility()).makeDirTree(fullPath);
-
     try {
       FileWriter fstream = new FileWriter(fullPath, true);
       BufferedWriter out = new BufferedWriter(fstream);

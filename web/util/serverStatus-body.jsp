@@ -13,12 +13,10 @@
 <%@ page import="com.mchange.v2.c3p0.impl.*" %>
 
 <%
-  AntwebUtil.log("in serverStatus-body.jsp");
-
+  String message = "serverStatus-body.jsp message:";
   Utility util = new Utility();
   String domainApp = util.getDomainApp();
-%>  
-
+%>
 
 <div class="admin_left">
 
@@ -76,7 +74,15 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
 <br>&nbsp;&nbsp;&nbsp;Plazi state: <%= Plazi.s_state %>
 
 <br><br><b>CPU:</b> <%= AntwebSystem.getCpuLoad() %>
-<br><%= AntwebSystem.getTopReport() %>
+<br>
+
+<%
+String topReport = AntwebSystem.getTopReport();
+message += topReport;
+%>
+
+<%= topReport %>
+
 <%= FileUtil.getDiskStats() %>
 <br>
 <%
@@ -153,5 +159,8 @@ String serverDetails = (String) request.getAttribute("serverDetails");
        <br><br>
 </html:form>
 <hr>
-
 </div>
+
+<%
+  AntwebUtil.log(message);
+%>
