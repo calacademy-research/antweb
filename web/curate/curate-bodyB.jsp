@@ -13,7 +13,7 @@
 <%@include file="/curate/curatorCheck.jsp" %>
 
 <%
-  AntwebUtil.log("curate-bodyB.jsp");
+  AntwebUtil.log("curate-bodyB.jsp 1");
 
 if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) {
   AntwebUtil.log("curate-bodyB.jsp static call:" + HttpUtil.getTarget(request));
@@ -22,22 +22,30 @@ if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) {
 %>
 
 <%
+  AntwebUtil.log("curate-bodyB.jsp 2");
+
     String domainApp = AntwebProps.getDomainApp();
     String secureDomainApp = AntwebProps.getSecureDomainApp();
 	
 	Login accessLogin = LoginMgr.getAccessLogin(request);
     Group accessGroup = GroupMgr.getAccessGroup(request);
-    
+
+  AntwebUtil.log("curate-bodyB.jsp 3");
+
 	ArrayList<SpeciesListable> projList = accessLogin.getProjects();	
     ArrayList<SpeciesListable> speciesListList = accessLogin.getSpeciesListList();
     
     session.removeAttribute("ancFile");
+
+  AntwebUtil.log("curate-bodyB.jsp 4");
 
     String active = "";
     Boolean isServerBusy = DBUtil.isServerBusy();
     if (isServerBusy) {
       active = " disabled ";
     }    
+
+  AntwebUtil.log("curate-bodyB.jsp 5");
 %>
 
 Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new">Curator Tool Documentation</a> | <a href="<%= domainApp %>/curate.do">Refresh</a>
@@ -118,6 +126,9 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 <div class="admin_action_module">
 
 <%
+
+  AntwebUtil.log("curate-bodyB.jsp 6");
+
     if (accessLogin.isUploadSpecimens()) {
 
         // HERE is how we can take down the upload services, should we want... Set takeDownUpload to true.
@@ -134,7 +145,8 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
             out.println(curatorNote);
           }
         }
-        if (!takeDownUpload || LoginMgr.isAdmin(accessLogin)) { %>
+        if (!takeDownUpload || LoginMgr.isAdmin(accessLogin)) {
+%>
 
        <html:form method="POST" action="upload.do" enctype="multipart/form-data">
          <input type="hidden" name="ancFileDirectory" value="none" />
@@ -177,9 +189,11 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
             <% } %>
           <% } else { %>
                <input type="hidden" name="whole" value="true" />
-          <% } %>
+          <% }
 
-          <% if (false && LoginMgr.isCurator(accessLogin)) { // || accessLogin.getId() == 16) { //  || accessLogin.getId() == 338   %>
+  AntwebUtil.log("curate-bodyB.jsp 7");
+
+             if (false && LoginMgr.isCurator(accessLogin)) { // || accessLogin.getId() == 16) { //  || accessLogin.getId() == 338   %>
                      <div class="align_left">
                        <select name="encoding">
                          <option value="default" selected>Default
@@ -343,7 +357,10 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
 <% } %>
 
 
-<% if (LoginMgr.isAdmin(request)) { %>
+<%
+  AntwebUtil.log("curate-bodyB.jsp 8");
+
+  if (LoginMgr.isAdmin(request)) { %>
 <!-- Create Ancillary Pages -->
 <html:form method="POST" action="upload.do" enctype="multipart/form-data">
     <div style="display:none;">
@@ -699,7 +716,10 @@ function goToFiles() {
 
 
 <!-- Data File Upload -->
-<% if (accessLogin.isAdmin()) { %>
+<%
+  AntwebUtil.log("curate-bodyB.jsp 9");
+
+  if (accessLogin.isAdmin()) { %>
 <html:form method="POST" action="upload.do" enctype="multipart/form-data">
     <input type="hidden" name="ancFileDirectory" value="none" />
     <input type="hidden" name="updateAdvanced" value="no" />
@@ -719,7 +739,10 @@ function goToFiles() {
         </div>
     </div>
 </html:form>
-<% } %>
+<% }
+
+  AntwebUtil.log("curate-bodyB.jsp 10");
+%>
 
 </div>
 

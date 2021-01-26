@@ -1,3 +1,18 @@
+Release 8.48.4
+ WEB-INF/struts-config.xml                           |  23 +++-
+ doc/done.txt                                        |  17 +++
+ doc/fileMods.txt                                    |   8 ++
+ doc/release.txt                                     |   7 +-
+ src/org/calacademy/antweb/curate/CurateActionB.java |  40 +++++++
+ src/org/calacademy/antweb/curate/CurateActionC.java |  40 +++++++
+ src/org/calacademy/antweb/util/LogMgr.java          |   4 -
+ web/curate/curate-bodyB.jsp                         | 755 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ web/curate/curate-bodyC.jsp                         | 755 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ web/curate/curateB.jsp                              |  23 ++++
+ web/curate/curateC.jsp                              |  22 ++++
+ web/documentation/releaseNum.jsp                    |   2 +-
+ web/util/serverStatus-body.jsp                      |  21 +++-
+
 Release 8.48.3
  doc/done.txt                     | 11 ++++++++---
  doc/fileMods.txt                 |  3 +++
