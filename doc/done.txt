@@ -13681,9 +13681,11 @@ Jan 25. 1hr.
   Server cpu pinned. Access via vcenter. Diagnose as mysql without active queries. 
   Reboot. Document.
 
-Jan 26. 1hr.
+Jan 26. 1.5hr.
   Build alternate curate pages for diagnostic testing to see if slow curate page is clue.
   Deploy.
+  Discovery, enhance, deploy, document.  
+  
 
 
   
