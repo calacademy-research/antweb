@@ -233,7 +233,7 @@ public abstract class AntwebUtil {
       }
       String kind = file.substring(18); // everything after the date
       kind = kind.substring(0, kind.indexOf(".txt"));
-      s_uploadDirKinds.add(kind);
+      if (!s_uploadDirKinds.contains(kind)) s_uploadDirKinds.add(kind);
     }
     Collections.sort(s_uploadDirKinds);
 

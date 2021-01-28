@@ -247,7 +247,6 @@ public class AntwebMgr {
         //isInitializationComplete = true;
 
         AntwebUtil.getUploadDirKinds();
-        if (log) s_log.warn("populateMgrs() AntwebUtil.getUploadDirTypes()");
 
         s_log.warn("postInitialize() end in " + AntwebUtil.reportTime(start));
     }
