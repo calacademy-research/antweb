@@ -166,9 +166,6 @@ public class AntwebMgr {
         AdminAlertMgr.populate(connection);
         isAdminAlertMgrPopulated = true;
 
-        AntwebUtil.getUploadDirKinds();
-        if (log) s_log.warn("populateMgrs() AntwebUtil.getUploadDirTypes()");
-
         ServerStatusAction.populate(connection);
 
         UserAgentTracker.init(connection);
@@ -248,6 +245,9 @@ public class AntwebMgr {
         TaxonMgr.postInitialize(connection);
 
         //isInitializationComplete = true;
+
+        AntwebUtil.getUploadDirKinds();
+        if (log) s_log.warn("populateMgrs() AntwebUtil.getUploadDirTypes()");
 
         s_log.warn("postInitialize() end in " + AntwebUtil.reportTime(start));
     }

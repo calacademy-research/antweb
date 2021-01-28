@@ -1,3 +1,13 @@
+Release 8.48.5
+ WEB-INF/struts-config.xml                           |   8 --
+ src/org/calacademy/antweb/curate/CurateActionC.java |  40 -------
+ src/org/calacademy/antweb/util/AntwebMgr.java       |   6 +-
+ src/org/calacademy/antweb/util/AntwebUtil.java      |  20 +++-
+ web/curate/curate-body.jsp                          |   2 +-
+ web/curate/curate-bodyB.jsp                         |   2 +-
+ web/curate/curate-bodyC.jsp                         | 755 ---------------------------------------------------------------------------------------------------------------------------
+ web/curate/curateC.jsp                              |  22 ----
+
 Release 8.48.4
  WEB-INF/struts-config.xml                           |  23 +++-
  doc/done.txt                                        |  17 +++

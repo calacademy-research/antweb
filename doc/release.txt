@@ -1,3 +1,6 @@
+Release 8.48.5
+  Fix for the slow curate.do page.
+
 Release 8.48.4
   CurateB support for speed diagnostics.
 
