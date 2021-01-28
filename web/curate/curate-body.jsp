@@ -259,8 +259,11 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
 
         <!-- View Archived Specimen List Files -->
         <% 
-            ArrayList<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();
-            //if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadFileKindList:" + uploadFileKindList);
+            ArrayList<Integer> uploadGroupList = AntwebUtil.getUploadGroupList();
+            if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadGroupList:" + uploadGroupList);
+
+           // To be replaced by uploadGroupList
+          //  ArrayList<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();
         %>
             <html:form method="POST" action="uploadHistory.do" enctype="multipart/form-data">
                 <input type="hidden" name="ancFileDirectory" value="none" />
@@ -280,27 +283,49 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
             Value to send is the uploadFileKindList entry.
             -->	
             <%  
+
+                for (Integer uploadGroupId : uploadGroupList) {
+                  String val = "specimen" + uploadGroupId.toString();
+                  if (LoginMgr.isAdmin(accessLogin)) {
+                      if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadGroupId:" + uploadGroupId);
+                        %>
+                      <html:option value="<%= val %>"></html:option>
+                      <%
+                  } else {
+                      if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadGroupId:" + uploadGroupId);
+                      if (Integer.valueOf(accessGroup.getId()).equals(uploadGroupId)) {
+                      %>
+                        <html:option value="<%= val %>"></html:option>
+                      <%
+                      }
+
+                  }
+                }
+
+/*
                 for (String uploadFileKind : uploadFileKindList) {
                   if (LoginMgr.isAdmin(accessLogin)) { 
                     if (uploadFileKind.contains("specimen")) {
-                      //if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp kind:" + uploadFileKind); %>
+                      if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp kind:" + uploadFileKind);
+                      %>
                       <html:option value="<%= (String) uploadFileKind %>"></html:option>
-            <%
+                      <%
                     }
                   } else {
-                    // only the one that is specimen[curaror % ]
+                    // only the one that is specimen[curator % ]
                     int specIndex = uploadFileKind.indexOf("specimen") + 8;
                     if (specIndex > 8) {
                       String fileAccessId = uploadFileKind.substring(specIndex);
                       if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp fileAccessId:" + fileAccessId);
                       if ((new Integer(accessGroup.getId())).toString().equals(fileAccessId)) {
-            %>
-                        <html:option value="<%= (String) uploadFileKind %>"></html:option>
-            <%
+            % >
+                        <html:option value="< %= (String) uploadFileKind % >"></html:option>
+            < %
                       }
                     }
                   } 
                 }
+*/
             %>
               </html:select>
                 </div>

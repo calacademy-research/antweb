@@ -197,8 +197,8 @@ public class AntwebMgr {
             MuseumMgr.populate(connection, forceReload);
             message = "MuseumMgr Reloaded.";
         } else if ("geolocale".equals(name)) {
-            GeolocaleMgr.populate(connection, forceReload, true);  // Slow!
-            message = "GeolocaleMgr Reloaded.";
+          GeolocaleMgr.populate(connection, forceReload, true);  // Slow!
+          message = "GeolocaleMgr Reloaded.";
         } else if ("taxonProp".equals(name)) {
             TaxonPropMgr.populate(connection, forceReload);
             message = "TaxonPropMgr Reloaded.";
@@ -246,7 +246,8 @@ public class AntwebMgr {
 
         //isInitializationComplete = true;
 
-        AntwebUtil.getUploadDirKinds();
+//        AntwebUtil.getUploadDirKinds();
+        AntwebUtil.getUploadGroupList();
 
         s_log.warn("postInitialize() end in " + AntwebUtil.reportTime(start));
     }

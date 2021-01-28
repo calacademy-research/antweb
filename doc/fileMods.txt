@@ -1,4 +1,7 @@
 Release 8.48.5
+
+
+Release 8.48.5
  WEB-INF/struts-config.xml                           |   8 --
  src/org/calacademy/antweb/curate/CurateActionC.java |  40 -------
  src/org/calacademy/antweb/util/AntwebMgr.java       |   6 +-

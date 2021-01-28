@@ -216,8 +216,9 @@ public abstract class AntwebUtil {
     return qualifiedFiles;
   }
 
+  /*
+  // To Be replaced by getUploadGroupList()
   private static ArrayList s_uploadDirKinds = null;
-
   public static ArrayList<String> getUploadDirKinds() {
     if (s_uploadDirKinds != null) return s_uploadDirKinds;
 
@@ -241,8 +242,38 @@ public abstract class AntwebUtil {
 
     return s_uploadDirKinds;
   }
-  
-  
+*/
+  private static ArrayList<Integer> s_uploadGroupList = null;
+  public static ArrayList<Integer> getUploadGroupList() {
+    if (s_uploadGroupList != null) return s_uploadGroupList;
+
+    Date start = new Date();
+
+    s_uploadGroupList = new ArrayList<Integer>();
+    ArrayList<String> files = getUploadDirFiles();
+    for (String file : files) {
+      if (file != null && file .length() < 18){
+        A.log("getUploadGroupList() File is short:" + file);
+        continue;
+      }
+      String kind = file.substring(18); // everything after the date
+      kind = kind.substring(0, kind.indexOf(".txt"));
+
+      int specIndex = kind.indexOf("specimen") + 8;
+      if (specIndex == 8) {
+        String groupId = kind.substring(specIndex);
+        Integer groupIdInteger = Integer.valueOf(groupId);
+        A.log("groupIdInteger:" + groupIdInteger);
+        if (!s_uploadGroupList.contains(groupIdInteger)) s_uploadGroupList.add(groupIdInteger);
+      } else {
+        A.log("getUploadGroupList() specIndex:" + specIndex + " file:" + file + " kind:" + kind);
+      }
+    }
+    Collections.sort(s_uploadGroupList);
+
+    s_log.warn("getUploadGroupList() done in " + AntwebUtil.reportTime(start));
+    return s_uploadGroupList;
+  }
 
     public static void writeXmlFile(Document doc, String fileName) {
       try {

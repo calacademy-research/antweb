@@ -95,6 +95,7 @@ public class GroupMgr {
     public static Group getAdminGroup() {
       return getGroup(1);
     }    
+    
     public static Group getGroup(int id) {
       if (getGroups() == null) return null; // will happen during startup.
       if (id == -1) return getAnonGroup();

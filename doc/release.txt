@@ -1,3 +1,7 @@
+Release 8.49
+  Retooled "View specimen file" feature.
+  worldants removed from web/upload.
+
 Release 8.48.5
   Fix for the slow curate.do page.
 
