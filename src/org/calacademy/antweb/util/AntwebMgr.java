@@ -165,12 +165,16 @@ public class AntwebMgr {
         if (log) s_log.warn("populateMgrs() AdminAlertMgr");
         AdminAlertMgr.populate(connection);
         isAdminAlertMgrPopulated = true;
-        if (log) s_log.warn("populateMgrs() done in " + AntwebUtil.reportTime(start));
+
+        AntwebUtil.getUploadDirKinds();
+        if (log) s_log.warn("populateMgrs() AntwebUtil.getUploadDirTypes()");
 
         ServerStatusAction.populate(connection);
 
         UserAgentTracker.init(connection);
         MapMgr.refresh();
+
+        if (log) s_log.warn("populateMgrs() done in " + AntwebUtil.reportTime(start));
 
         callPostInitialize();
     }

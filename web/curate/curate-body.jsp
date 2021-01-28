@@ -259,7 +259,7 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
 
         <!-- View Archived Specimen List Files -->
         <% 
-            HashSet<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();
+            ArrayList<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();
             //if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadFileKindList:" + uploadFileKindList);
         %>
             <html:form method="POST" action="uploadHistory.do" enctype="multipart/form-data">

@@ -216,9 +216,15 @@ public abstract class AntwebUtil {
     return qualifiedFiles;
   }
 
-  public static HashSet<String> getUploadDirKinds() {
-    HashSet kinds = new HashSet<String>();
-    //ArrayList<String> kinds = new ArrayList<String>();    
+  private static ArrayList s_uploadDirKinds = null;
+
+  public static ArrayList<String> getUploadDirKinds() {
+    if (s_uploadDirKinds != null) return s_uploadDirKinds;
+
+    Date start = new Date();
+
+    s_uploadDirKinds = new ArrayList<String>();
+    //ArrayList<String> kinds = new ArrayList<String>();
     ArrayList<String> files = getUploadDirFiles();
     for (String file : files) {
       if (file != null && file .length() < 18){
@@ -227,9 +233,13 @@ public abstract class AntwebUtil {
       }
       String kind = file.substring(18); // everything after the date
       kind = kind.substring(0, kind.indexOf(".txt"));
-      kinds.add(kind);  
+      s_uploadDirKinds.add(kind);
     }
-    return kinds;
+    Collections.sort(s_uploadDirKinds);
+
+    s_log.warn("getUploadDirKinds() done in " + AntwebUtil.reportTime(start));
+
+    return s_uploadDirKinds;
   }
   
   

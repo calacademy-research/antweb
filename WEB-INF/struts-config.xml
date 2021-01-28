@@ -582,14 +582,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
     </action>
 
     <action
-            path="/curateC"
-            type="org.calacademy.antweb.curate.CurateActionC"
-            scope="request">
-      <forward name="curateC" path="/curate/curateC.jsp" />
-    </action>
-
-
-    <action
             path="/projectMgr"
             type="org.calacademy.antweb.curate.project.ProjectMgrAction"
             scope="request">
