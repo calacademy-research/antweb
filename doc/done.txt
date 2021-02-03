@@ -13686,13 +13686,30 @@ Jan 26. 1.5hr.
   Deploy.
   Discovery, enhance, deploy, document.  
   
-Jan 27 3hrs.
+Jan 27. 3hrs.
   Retooled "View specimen file" feature.
   worldants removed from web/upload. Report.
   Deployments.
 
-Feb 2. .5hrs.
+Feb 1. .5hrs.
   Whip up some queries to give Brian info about images.
+
+Feb 2. 4 hours.
+  Add valid species to Overview summary pages (project, geolocale, bioregion, museum).
+    Added to Scheduled tasks.
+  Fix Antarctica title.
+  GeolocaleDb connection handling mods.    
+  Deploy. document.
+
+# Reported.
+
+Feb 2. 1hr 
+  Look into images counts for institutions.
+  Documentation.
+  
+Feb 3
+  Check on scheduled tasks.
+
   
   
   

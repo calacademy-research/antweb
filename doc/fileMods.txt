@@ -1,3 +1,23 @@
+Release 8.50
+ db/upgrade/8.0/2020-02-12.sql                        |   7 +++++++
+ doc/done.txt                                         |  10 ++++++++++
+ doc/fileMods.txt                                     |  10 ++++++++--
+ doc/release.txt                                      |   9 +++++++++
+ src/org/calacademy/antweb/Overview.java              |  10 +++++++++-
+ src/org/calacademy/antweb/Overviewable.java          |   6 ++++--
+ src/org/calacademy/antweb/home/BioregionDb.java      |  79 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------
+ src/org/calacademy/antweb/home/BioregionTaxonDb.java | 117 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------------------
+ src/org/calacademy/antweb/home/GeolocaleDb.java      |  86 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------
+ src/org/calacademy/antweb/home/MuseumDb.java         |  40 ++++++++++++++++++++++++++++++++++++++--
+ src/org/calacademy/antweb/home/ProjectDb.java        |  38 ++++++++++++++++++++++++++++++++++++--
+ src/org/calacademy/antweb/home/UtilDb.java           |   2 +-
+ src/org/calacademy/antweb/util/FileUtil.java         |  29 +++++++++++++++++++++++++++++
+ src/org/calacademy/antweb/util/UtilDataAction.java   |  15 ++++++++++++++-
+ web/curate/curate-body.jsp                           |   5 ++++-
+ web/documentation/releaseNum.jsp                     |   2 +-
+ web/overviews-body.jsp                               |  20 +++++++++++++++-----
+ 17 files changed, 379 insertions(+), 106 deletions(-)
+
 Release 8.49
  doc/fileMods.txt                               |  3 +++
  doc/release.txt                                |  4 ++++

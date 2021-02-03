@@ -145,6 +145,7 @@
      }
    }
 %>
+<br><b>Valid Species:</b>&nbsp;<%=  Formatter.commaFormat(overview.getValidSpeciesCount()) %>
 <br><b>Specimens:</b>&nbsp;<%=  Formatter.commaFormat(overview.getSpecimenCount()) %>
 <br><b>Images:</b>&nbsp;<%=  Formatter.commaFormat(overview.getImageCount()) %>
 

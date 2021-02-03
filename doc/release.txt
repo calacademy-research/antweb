@@ -1,3 +1,6 @@
+Release 8.51
+  Valid species count listed on overview pages.
+
 Release 8.50
   Add valid species to Overview summary pages (project, geolocale, bioregion, museum).
   Fix Antarctica title. 
