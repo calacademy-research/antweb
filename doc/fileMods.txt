@@ -1,5 +1,11 @@
-Release 8.48.5
-
+Release 8.49
+ doc/fileMods.txt                               |  3 +++
+ doc/release.txt                                |  4 ++++
+ src/org/calacademy/antweb/util/AntwebMgr.java  |  7 ++++---
+ src/org/calacademy/antweb/util/AntwebUtil.java | 37 ++++++++++++++++++++++++++++++++++---
+ src/org/calacademy/antweb/util/GroupMgr.java   |  1 +
+ web/curate/curate-body.jsp                     | 41 +++++++++++++++++++++++++++++++++--------
+ web/documentation/releaseNum.jsp               |  2 +-
 
 Release 8.48.5
  WEB-INF/struts-config.xml                           |   8 --

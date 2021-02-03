@@ -13686,6 +13686,16 @@ Jan 26. 1.5hr.
   Deploy.
   Discovery, enhance, deploy, document.  
   
+Jan 27 3hrs.
+  Retooled "View specimen file" feature.
+  worldants removed from web/upload. Report.
+  Deployments.
+
+Feb 2. .5hrs.
+  Whip up some queries to give Brian info about images.
+  
+  
+  
 
 
   

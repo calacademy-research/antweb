@@ -49,6 +49,7 @@ public class MuseumDb extends AntwebDb {
            museum.setSubfamilyCount(rset.getInt("subfamily_count"));
            museum.setGenusCount(rset.getInt("genus_count"));
            museum.setSpeciesCount(rset.getInt("species_count"));
+           museum.setValidSpeciesCount(rset.getInt("valid_species_count"));
            museum.setSpecimenCount(rset.getInt("specimen_count"));
            museum.setImageCount(rset.getInt("image_count"));
            museum.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
@@ -97,6 +98,7 @@ public class MuseumDb extends AntwebDb {
            museum.setName(rset.getString("name"));
            museum.setTitle(rset.getString("title"));
            museum.setIsActive(rset.getBoolean("active"));
+           museum.setValidSpeciesCount(rset.getInt("valid_species_count"));
            museum.setSpecimenCount(rset.getInt("specimen_count"));
            museum.setImageCount(rset.getInt("image_count"));
            museum.setChartColor(rset.getString("chart_color"));
@@ -376,7 +378,7 @@ public class MuseumDb extends AntwebDb {
       utilDb.updateField("museum", "chart_color", "'" + color + "'", "code = '" + code + "'");
     }
 
-    private String finish() {    
+    public String finish() {
       for (Museum museum : MuseumMgr.getMuseums()) {
         finish(museum.getCode());
       }  
@@ -385,6 +387,7 @@ public class MuseumDb extends AntwebDb {
     private void finish(String code) {    
       updateCountableTaxonData(code);      
       updateImagedSpecimenCount(code);
+      updateValidSpeciesCount(code);
       makeCharts(code);
     }    
     
@@ -441,7 +444,40 @@ public class MuseumDb extends AntwebDb {
           DBUtil.close(stmt, rset, "getImagedSpecimenCount()");
       }
       return imagedSpecimenCount;
-    }       
+    }
+
+    private void updateValidSpeciesCount(String code) {
+        int count = getValidSpeciesCount(code);
+        UtilDb utilDb = new UtilDb(getConnection());
+        utilDb.updateField("museum", "valid_species_count", (Integer.valueOf(count)).toString(), "code = '" + code + "'");
+    }
+
+    private int getValidSpeciesCount(String code) {
+        int validSpeciesCount = 0;
+        String query = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = getConnection().createStatement();
+
+            query = "select count(*) count from taxon, museum_taxon mt where taxon.taxon_name = mt.taxon_name"
+                    + " and taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0"
+                    + " and code = '" + code + "'";
+
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                validSpeciesCount = rset.getInt("count");
+            }
+
+        } catch (SQLException e2) {
+            s_log.error("getValidSpeciesCount() e:" + e2 + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "getValidSpeciesCount()");
+        }
+        A.log("getValidSpeciesCount() code:" + code + " count:" + validSpeciesCount);
+        return validSpeciesCount;
+    }
+
 
 /*
     private void populateSpecimenMuseum() {

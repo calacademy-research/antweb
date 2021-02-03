@@ -39,32 +39,33 @@ public class BioregionDb extends AntwebDb {
         rset = stmt.executeQuery(theQuery);
 
         while (rset.next()) {
-          bioregion = new Bioregion();
-          bioregion.setName(rset.getString("name"));
-          bioregion.setTitle(rset.getString("title"));
+            bioregion = new Bioregion();
+            bioregion.setName(rset.getString("name"));
+            bioregion.setTitle(rset.getString("title"));
           //bioregion.setDescription(rset.getString("description"));
-              
-           bioregion.setSubfamilyCount(rset.getInt("subfamily_count"));
-           bioregion.setGenusCount(rset.getInt("genus_count"));
-           bioregion.setSpeciesCount(rset.getInt("species_count"));
-           bioregion.setSpecimenCount(rset.getInt("specimen_count"));
-           bioregion.setImageCount(rset.getInt("image_count"));          
-           bioregion.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
-           bioregion.setTaxonSubfamilyDistJson(rset.getString("taxon_subfamily_dist_json"));
-           bioregion.setSpecimenSubfamilyDistJson(rset.getString("specimen_subfamily_dist_json"));
-          
-          bioregion.setChartColor(rset.getString("chart_color"));
-          bioregion.setCreated(rset.getTimestamp("created"));
 
-          bioregion.setEndemicSpeciesCount(rset.getInt("endemic_species_count"));
-          bioregion.setIntroducedSpeciesCount(rset.getInt("introduced_species_count"));
+            bioregion.setSubfamilyCount(rset.getInt("subfamily_count"));
+            bioregion.setGenusCount(rset.getInt("genus_count"));
+            bioregion.setSpeciesCount(rset.getInt("species_count"));
+            bioregion.setValidSpeciesCount(rset.getInt("valid_species_count"));
+            bioregion.setSpecimenCount(rset.getInt("specimen_count"));
+            bioregion.setImageCount(rset.getInt("image_count"));
+            bioregion.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
+            bioregion.setTaxonSubfamilyDistJson(rset.getString("taxon_subfamily_dist_json"));
+            bioregion.setSpecimenSubfamilyDistJson(rset.getString("specimen_subfamily_dist_json"));
+          
+            bioregion.setChartColor(rset.getString("chart_color"));
+            bioregion.setCreated(rset.getTimestamp("created"));
+
+            bioregion.setEndemicSpeciesCount(rset.getInt("endemic_species_count"));
+            bioregion.setIntroducedSpeciesCount(rset.getInt("introduced_species_count"));
 
           // bioregion.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
           // subfamily_count, genus_count, species_count, taxon_subfamily_dist_json, specimen_subfamily_dist_json
           // extent, locality, project_name?         
          
-          Hashtable description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
-          bioregion.setDescription(description);         
+            Hashtable description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
+            bioregion.setDescription(description);
         }
 
         //A.log("getBioregionWithClause() query:" + theQuery);   
@@ -111,6 +112,7 @@ public class BioregionDb extends AntwebDb {
 		 	    bioregion.setSubfamilyCount(rset.getInt("subfamily_count"));
 	 		    bioregion.setGenusCount(rset.getInt("genus_count"));
 			    bioregion.setSpeciesCount(rset.getInt("species_count"));
+                bioregion.setValidSpeciesCount(rset.getInt("valid_species_count"));
 			    bioregion.setSpecimenCount(rset.getInt("specimen_count"));
 			    bioregion.setImageCount(rset.getInt("image_count"));          
 			    bioregion.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
@@ -386,16 +388,17 @@ public class BioregionDb extends AntwebDb {
       utilDb.updateField("bioregion", "chart_color", "'" + color + "'", "name = '" + bioregionName + "'" );
     }
 
-    private String finish() {    
+    public String finish() {
       for (Bioregion bioregion : BioregionMgr.getBioregions()) {
         finish(bioregion);
       }  
       return "Bioregion Finished";
     }
 
-    private String finish(Bioregion bioregion) {    
+    private String finish(Bioregion bioregion) {
       updateCountableTaxonData(bioregion);
       updateImagedSpecimenCount(bioregion);
+      updateValidSpeciesCount(bioregion);
       makeCharts(bioregion);
       return "Bioregion Finished:" + bioregion;
     }       
@@ -449,8 +452,40 @@ public class BioregionDb extends AntwebDb {
           DBUtil.close(stmt, rset, "getImagedSpecimenCount()");
       }  
       return imagedSpecimenCount;
-    }    
-    
+    }
+
+    private void updateValidSpeciesCount(Bioregion bioregion) {
+        int count = getValidSpeciesCount(bioregion);
+        UtilDb utilDb = new UtilDb(getConnection());
+        utilDb.updateField("bioregion", "valid_species_count", (Integer.valueOf(count)).toString(), "name = '" + bioregion + "'");
+    }
+
+    private int getValidSpeciesCount(Bioregion bioregion) {
+        int validSpeciesCount = 0;
+        String query = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = getConnection().createStatement();
+
+            query = "select count(*) count from taxon, bioregion_taxon bt where taxon.taxon_name = bt.taxon_name"
+                + " and taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0"
+                + " and bioregion_name = '" + bioregion + "'";
+
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                validSpeciesCount = rset.getInt("count");
+            }
+
+        } catch (SQLException e2) {
+            s_log.error("getValidSpeciesCount() e:" + e2 + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "getValidSpeciesCount()");
+        }
+        A.log("getValidSpeciesCount() bioregion:" + bioregion + " count:" + validSpeciesCount);
+        return validSpeciesCount;
+    }
+
     // --- Charts ---
         
     public void makeCharts() {

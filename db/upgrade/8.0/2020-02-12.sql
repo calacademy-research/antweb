@@ -69,4 +69,11 @@ update specimen set datecollectedend = null where datecollectedend = "null";
 alter table image_uploaded modify column code varchar(128);
 
 
+# Feb 2 2021
+alter table bioregion add column valid_species_count int;
+alter table project add column valid_species_count int;
+alter table museum add column valid_species_count int;
+alter table geolocale add column valid_species_count int;
+
+
 

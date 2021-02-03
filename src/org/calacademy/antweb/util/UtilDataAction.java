@@ -409,7 +409,6 @@ public class UtilDataAction extends Action {
         // ------ Museums ---------
 		//Museum populated 7.22 mins
 		if (action.equals("populateMuseum")) {
-		  (new TaxonDb(connection)).setSubfamilyChartColor();
 		  String museumCode = form.getCode();   
 		  // ex: /utilData.do?action=populateMuseum&code=ZMHB finished in 4.07 mins
 		  // JTLC, CASC
@@ -425,6 +424,20 @@ public class UtilDataAction extends Action {
 		  museumDb.updateMuseum();
 
 		  message = "Museum populated" + appendStr;                 
+		}
+
+        // ------ Populate Finish ---------
+		if (action.equals("populateFinish")) {
+
+		 // (new ProjectDb(connection)).finish();
+
+		 // (new BioregionDb(connection)).finish();
+
+		  (new GeolocaleDb(connection)).finish();
+
+		 // (new MuseumDb(connection)).finish();
+
+		  message = "Populate finish"; 
 		}
 
         // ------ Project ----------

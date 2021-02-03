@@ -165,6 +165,7 @@ public class ProjectDb extends AntwebDb {
             project.setSubfamilyCount(rset.getInt("subfamily_count"));
             project.setGenusCount(rset.getInt("genus_count"));
             project.setSpeciesCount(rset.getInt("species_count"));
+            project.setValidSpeciesCount(rset.getInt("valid_species_count"));
             //project.setEndemicSpeciesCount(rset.getInt("endemic_species_count"));
             project.setSpecimenCount(rset.getInt("specimen_count"));
             project.setImageCount(rset.getInt("image_count"));          
@@ -705,7 +706,7 @@ public class ProjectDb extends AntwebDb {
       utilDb.updateField("project", "chart_color", "'" + color + "'", "project_name = '" + projectName + "'" );
     }
 
-    private String finish() {    
+    public String finish() {
       for (Project project : ProjectMgr.getLiveProjects()) {
         finish(project);
       }  
@@ -715,6 +716,7 @@ public class ProjectDb extends AntwebDb {
     private String finish(Project project) {     
       updateCountableTaxonData(project);
       //updateImagedSpecimenCount(project);
+      updateValidSpeciesCount(project);
       makeCharts(project);
       return "Project Finished:" + project;
     }       
@@ -734,7 +736,39 @@ public class ProjectDb extends AntwebDb {
           s_log.warn("updateCountableTaxonData(" + project + ") Not updating subfamilyCount:" + subfamilyCount);
         }
     }
-    
+
+    private void updateValidSpeciesCount(Project project) {
+        int count = getValidSpeciesCount(project);
+        UtilDb utilDb = new UtilDb(getConnection());
+        utilDb.updateField("project", "valid_species_count", (Integer.valueOf(count)).toString(), "project_name = '" + project.getName() + "'");
+    }
+
+    private int getValidSpeciesCount(Project project) {
+        int validSpeciesCount = 0;
+        String query = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = getConnection().createStatement();
+
+            query = "select count(*) count from taxon, proj_taxon pt where taxon.taxon_name = pt.taxon_name"
+                    + " and taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0"
+                    + " and project_name = '" + project.getName() + "'";
+
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                validSpeciesCount = rset.getInt("count");
+            }
+
+        } catch (SQLException e2) {
+            s_log.error("getValidSpeciesCount() e:" + e2 + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "getValidSpeciesCount()");
+        }
+        A.log("getValidSpeciesCount() name:" + project.getName() + " count:" + validSpeciesCount);
+        return validSpeciesCount;
+    }
+
     // --- Charts ---
         
     public void makeCharts() {

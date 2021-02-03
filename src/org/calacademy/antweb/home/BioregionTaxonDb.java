@@ -110,6 +110,7 @@ public class BioregionTaxonDb extends TaxonSetDb {
 
       return taxaCount;
     }
+    
 
     public int populateSpeciesFromGeolocaleTaxon(Bioregion bioregion) {
     
@@ -200,7 +201,6 @@ See BioregionDb.java:77 where this call is commented out.
                 //if (AntwebProps.isDevMode() && "ectatomminae".equals(taxonName)) s_log.warn("init() taxonName:" + taxonName + " keyClause:" + getKeyClause() + " genusCount:" + getGenusCount() + " imageCount:" + imageCount);
             }             
             //A.log("init() warn() taxonName:" + taxonName + " projectName:" + projectName + " imageCount:" + imageCount);
-            stmt.close();
         } catch (SQLException e) {
             s_log.error("get() Cannot convert value 0000-00-00 00:00:00 taxonName:" + taxonName + " bioregion:" + bioregionName + "  e:" + e + " query:" + query);
             throw e;
@@ -436,99 +436,111 @@ See BioregionDb.java:77 where this call is commented out.
 
     public static ArrayList<ArrayList<String>> getStatisticsByBioregion(Connection connection) //ArrayList<ArrayList<String>>
         throws SQLException {
-        Statement stmt = connection.createStatement();              
-
-        String query = "select bioregion_name, count(*) from bioregion_taxon group by bioregion_name order by count(*) desc";
-
-        ResultSet resultSet = stmt.executeQuery(query);
 
         ArrayList<ArrayList<String>> statistics = new ArrayList<ArrayList<String>>();
-        //ArrayList<HashMap<String, String>> statsArray = new ArrayList<HashMap<String, String>>();
+        Statement stmt = DBUtil.getStatement(connection, "getStatisticsByBioregion()");
+        ResultSet resultSet = null;
+        String query = "select bioregion_name, count(*) from bioregion_taxon group by bioregion_name order by count(*) desc";
+        try {
+            resultSet = stmt.executeQuery(query);
 
-        while (resultSet.next()) {
-            String bioregionName = resultSet.getString(1);
-            statistics.add(BioregionTaxonDb.getStatistics(bioregionName, connection));
-            //statsArray.add(ProjTaxonDb.getProjectStatistics(project, connection));
-        }                        
-        stmt.close();
-        // return statsArray;
+            while (resultSet.next()) {
+                String bioregionName = resultSet.getString(1);
+                statistics.add(BioregionTaxonDb.getStatistics(bioregionName, connection));
+                //statsArray.add(ProjTaxonDb.getProjectStatistics(project, connection));
+            }
+
+        } catch (SQLException e) {
+            s_log.error("getStatisticsByBioregion() query:" + query + " e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, resultSet, null, "getStatisticsByBioregion()"); // null was this
+        }
+
         return statistics;
     }
     
     public static ArrayList<String> getStatistics(String bioregionName, Connection connection) 
         throws SQLException {
+
         ArrayList<String> statistics = new ArrayList<String>();
-        //HashMap<String, String> stats = new HashMap<String, String>();
-// 1
+
         String query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"subfamily\"";
-        Statement stmt2 = connection.createStatement();              
-        ResultSet resultSet2 = stmt2.executeQuery(query);
+
+        Statement stmt = null;
+        ResultSet rset = null;
+    try {
+
+        stmt = DBUtil.getStatement(connection, "getStatistics()");
+        rset = stmt.executeQuery(query);
+
+
         int extinctSubfamily = 0;
-        while (resultSet2.next()) {
-            extinctSubfamily = resultSet2.getInt(1);
+        while (rset.next()) {
+            extinctSubfamily = rset.getInt(1);
         }
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"genus\"";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int extinctGenera= 0;
-        while (resultSet2.next()) {
-            extinctGenera = resultSet2.getInt(1);
+        while (rset.next()) {
+            extinctGenera = rset.getInt(1);
         }
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank in ('species', 'subspecies')";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int extinctSpecies = 0;
-        while (resultSet2.next()) {
-            extinctSpecies = resultSet2.getInt(1);
+        while (rset.next()) {
+            extinctSpecies = rset.getInt(1);
         }
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"subfamily\"";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int extantSubfamily = 0;
-        while (resultSet2.next()) {
-            extantSubfamily = resultSet2.getInt(1);
+        while (rset.next()) {
+            extantSubfamily = rset.getInt(1);
         }
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"genus\"";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int extantGenera = 0;
-        while (resultSet2.next()) {
-            extantGenera = resultSet2.getInt(1);
+        while (rset.next()) {
+            extantGenera = rset.getInt(1);
         }
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank in ('species', 'subspecies')";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int extantSpecies = 0;
-        while (resultSet2.next()) {
-            extantSpecies = resultSet2.getInt(1);
+        while (rset.next()) {
+            extantSpecies = rset.getInt(1);
         }
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name  and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and taxarank=\"subfamily\"";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int validSubfamily = 0;
-        while (resultSet2.next()) {
-            validSubfamily = resultSet2.getInt(1);
+        while (rset.next()) {
+            validSubfamily = rset.getInt(1);
         }
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and taxarank=\"genus\"";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int validGenera = 0;
-        while (resultSet2.next()) {
-            validGenera = resultSet2.getInt(1);
+        while (rset.next()) {
+            validGenera = rset.getInt(1);
         }
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and taxarank in ('species', 'subspecies')";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int validSpecies = 0;
-        while (resultSet2.next()) {
-            validSpecies = resultSet2.getInt(1);
+        while (rset.next()) {
+            validSpecies = rset.getInt(1);
         }
 // 10
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "'"
           + " and taxon.status = 'valid' and taxarank in ('species', 'subspecies') and bioregion_taxon.image_count > 0";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int validImagedSpecies = 0;
-        while (resultSet2.next()) {
-            validImagedSpecies = resultSet2.getInt(1);
+        while (rset.next()) {
+            validImagedSpecies = rset.getInt(1);
         }
         
         query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "'";
-        resultSet2 = stmt2.executeQuery(query);
+        rset = stmt.executeQuery(query);
         int totalTaxa = 0;
-        while (resultSet2.next()) {
-            totalTaxa = resultSet2.getInt(1);
+        while (rset.next()) {
+            totalTaxa = rset.getInt(1);
         }
 
         statistics.add(bioregionName); 
@@ -546,6 +558,13 @@ See BioregionDb.java:77 where this call is commented out.
         statistics.add("" + validImagedSpecies);
         statistics.add("" + (extinctSpecies + extantSpecies)); // all 
         statistics.add("" + totalTaxa);
+
+    } catch (SQLException e) {
+        s_log.error("getStatistics() query:" + query + " e:" + e);
+        throw e;
+    } finally {
+        DBUtil.close(stmt, rset, null, "getStatistics()"); // null was this
+    }
 
         // A.log("getProjectStatistics() statistics:" + statistics);                    
         return statistics;

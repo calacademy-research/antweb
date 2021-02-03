@@ -14,6 +14,7 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
     protected int speciesCount;
     private int endemicSpeciesCount;
     private int introducedSpeciesCount;
+    private int validSpeciesCount;
     private int specimenCount;
     private int imageCount;
     private int imagedSpecimenCount;
@@ -73,6 +74,13 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
         this.introducedSpeciesCount = introducedSpeciesCount;
     }    
 
+    public int getValidSpeciesCount() {
+        return validSpeciesCount;
+    }
+    public void setValidSpeciesCount(int validSpeciesCount) {
+        this.validSpeciesCount = validSpeciesCount;
+    }
+    
     public int getSpecimenCount() {
         return specimenCount;
     }
@@ -122,7 +130,7 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
     
     public ArrayList sort(ArrayList children) {
         return children;
-    }      
+    }
     
     public String getKeyStr() {
       if (this instanceof Museum) {

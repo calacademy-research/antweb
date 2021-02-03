@@ -53,15 +53,25 @@ else heading = heading + "s";
 <% } %>
 
 <%
-    out.println("<table><tr><th>Name</th><th>Title</th><th>Specimen</th><th>Images</th></tr>");
+    boolean titleIsName = true;
+    for (Overview overview : overviews) {
+        if (!overview.getName().equals(overview.getTitle())) {
+          titleIsName = false;
+          A.log("Setting title isName:" + titleIsName + " name:" + overview.getName() + " title:" + overview.getTitle());
+          continue;
+        }
+    }
+    out.println("<table><tr><th>Name</th>");
+    if (!titleIsName) out.println("<th>Title</th>");
+    out.println("<th>Species</th><th>Specimen</th><th>Images</th></tr>");
     for (Overview overview : overviews) {
       if ("Antarctica_region".equals(overview.getName())) continue;
       out.println(
           "<tr>"
-        //<td>" + overview.getShortDisplayName() + "</td>" 
-        + "<td><a href=\"" + overview.getThisPageTarget() + "\">" + overview.getDisplayName() + "</a></td>" 
-        + "<td>" + overview.getTitle() + "</td>" 
-        + "<td>" + overview.getSpecimenCount() + "</td>"
+          + "<td><a href=\"" + overview.getThisPageTarget() + "\">" + overview.getKeyStr() + "</a></td>");
+       if (!titleIsName) out.println("<td>" + overview.getTitle() + "</td>");
+       out.println("<td>" + overview.getValidSpeciesCount() + "</td>");
+       out.println("<td>" + overview.getSpecimenCount() + "</td>"
         + "<td>" + overview.getImageCount() + "</td>"
         + "</tr>");
     }

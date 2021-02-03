@@ -50,6 +50,35 @@ public class FileUtil {
     }
   }
 
+  // Delete directory given and all subdirectories and files (i.e. recursively).
+//
+  static public boolean clearWebUploadDir(File webUploadDir) throws IOException, InterruptedException {
+
+    if (webUploadDir.exists()) {
+
+      // 20210127
+
+      Date today = new Date();
+      Calendar cal = Calendar.getInstance(); cal.setTime(today); // don't forget this if date is arbitrary e.g. 01-01-2014
+
+      int year = cal.get(Calendar.YEAR);
+
+      String pattern = "";
+
+      String deleteCommand = "rm -rf " + webUploadDir.getAbsolutePath() + year + "*";
+      A.log("clearWebUploadDir() command:" + deleteCommand);
+//      Runtime runtime = Runtime.getRuntime();
+//      Process process = runtime.exec( deleteCommand );
+//      process.waitFor();
+
+      //file.mkdirs(); // Since we only want to clear the directory and not delete it, we need to re-create the directory.
+
+      return true;
+    }
+
+    return false;
+
+  }
 
   public static int getPercentDiskFull() {
     String percent = null;

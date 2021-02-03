@@ -288,8 +288,11 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
                   String val = "specimen" + uploadGroupId.toString();
                   if (LoginMgr.isAdmin(accessLogin)) {
                       if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadGroupId:" + uploadGroupId);
+                        String groupName = "specimen" + uploadGroupId;
+                        Group g = GroupMgr.getGroup(uploadGroupId);
+                        if (g != null) groupName = g.toString();
                         %>
-                      <html:option value="<%= val %>"></html:option>
+                      <html:option value="<%= val %>"><%= groupName %></html:option>
                       <%
                   } else {
                       if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadGroupId:" + uploadGroupId);

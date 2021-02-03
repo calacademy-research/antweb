@@ -15,7 +15,7 @@ public interface Overviewable {
     public String getName();
     public String getDisplayName();
     public String getShortDisplayName();
-  
+
     public String getParams();
 
     public String getSearchCriteria();
@@ -26,5 +26,7 @@ public interface Overviewable {
 
     public String getImageCountQuery(String taxonName);
 
-    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection); 
+    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection);
+
+
 }

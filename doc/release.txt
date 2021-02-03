@@ -1,3 +1,12 @@
+Release 8.50
+  Add valid species to Overview summary pages (project, geolocale, bioregion, museum).
+  Fix Antarctica title. 
+  GeolocaleDb connection handling mods.
+
+Release 8.49.1
+  Group name used for View Specimen Files instead of "specimen[id]"
+  Old species lists removed.
+
 Release 8.49
   Retooled "View specimen file" feature.
   worldants removed from web/upload.

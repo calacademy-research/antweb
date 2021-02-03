@@ -72,18 +72,20 @@ public class GeolocaleDb extends AntwebDb {
 
         //name = AntFormatter.escapeQuotes(name);
         try {
-            query = "select id, name, isoCode, iso3Code "
+            query = "select * "
+/*
+              + "id, name, isoCode, iso3Code "
               + ", georank, is_valid, valid_name, is_un, g.source, g.bioregion, g.alt_bioregion" 
               + ", parent, region, subregion, country " 
               + ", g.extent, g.coords, g.map, is_use_children, is_use_parent_region, g.is_island, g.is_live"
               + ", g.centroid, g.centroid_fixed, g.bounding_box, g.bounding_box_fixed, woe_id, admin_notes " 
               + ", g.created "
-              + ", g.subfamily_count, g.genus_count, g.species_count, g.specimen_count, g.image_count "
+              + ", g.subfamily_count, g.genus_count, g.species_count, g.valid_species_count, g.specimen_count, g.image_count "
               + ", g.imaged_specimen_count, g.taxon_subfamily_dist_json, g.specimen_subfamily_dist_json, g.chart_color"
               + ", g.endemic_species_count, g.introduced_species_count"
 			  + ", g.rev, g.georank_type"                 
 	  		  //+ " , g.specimenImage1, g.specimenImage2, g.specimenImage3, g.specimenImage1Link, g.specimenImage2Link, g.specimenImage3Link, g.author, g.authorImage, g.authorbio "               
-
+*/
               + " from geolocale g "  // left join project on id = geolocale_id"
               + " where id = " + id
               + " order by name"              
@@ -141,16 +143,19 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
         name = Formatter.escapeQuotes(name);
         try {
-            query = "select id, name, isoCode, iso3Code, georank, is_valid, valid_name, is_un, source, bioregion, alt_bioregion " 
+            query = "select * "
+/*
+              + "id, name, isoCode, iso3Code, georank, is_valid, valid_name, is_un, source, bioregion, alt_bioregion "
               + ", parent, region, subregion, country " 
               + ", extent, coords, map, is_use_children, is_use_parent_region, is_island, is_live"
               + ", g.centroid, g.centroid_fixed, g.bounding_box, g.bounding_box_fixed, woe_id, admin_notes "
               + ", created "
-              + ", subfamily_count, genus_count, species_count, specimen_count, image_count "
+              + ", subfamily_count, genus_count, species_count, valid_species_count, specimen_count, image_count "
               + " , imaged_specimen_count, taxon_subfamily_dist_json, specimen_subfamily_dist_json, chart_color "  
               + " , endemic_species_count, g.introduced_species_count"    
 			  + ", g.rev, g.georank_type"        
              // + " , specimenImage1, specimenImage2, specimenImage3, specimenImage1Link, specimenImage2Link, specimenImage3Link, author, authorImage, authorbio "               
+ */
               + " from geolocale g " // left join project on id = geolocale_id"
               + " where name = '" + name + "'"
               + " and georank = '" + georank + "'"
@@ -241,7 +246,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         ResultSet rset = null;
 
         try {
-            query = "select id, name, isoCode, iso3Code, georank, is_valid, valid_name, is_un, g.source, g.bioregion, g.alt_bioregion " 
+            query = "select * "
+               /*
+              + " id, name, isoCode, iso3Code, georank, is_valid, valid_name, is_un, g.source, g.bioregion, g.alt_bioregion "
               + ", parent, region, subregion, country " 
               + ", g.extent, g.coords, g.map, is_use_children, is_use_parent_region, g.is_live, g.is_island"
               + ", g.centroid, g.centroid_fixed, g.bounding_box, g.bounding_box_fixed, woe_id, admin_notes "
@@ -251,7 +258,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
               + " , g.endemic_species_count, g.introduced_species_count"
               + ", g.rev, g.georank_type"
               //+ " , g.specimenImage1, g.specimenImage2, g.specimenImage3, g.specimenImage1Link, g.specimenImage2Link, g.specimenImage3Link, g.author, g.authorImage, g.authorbio "               
-                          
+                  */
               + " from geolocale g " // left join project on id = geolocale_id"
               + " where 1 = 1"
               + rankClause
@@ -355,6 +362,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 		  geolocale.setSubfamilyCount(rset.getInt("subfamily_count"));
 		  geolocale.setGenusCount(rset.getInt("genus_count"));
 		  geolocale.setSpeciesCount(rset.getInt("species_count"));
+          geolocale.setValidSpeciesCount(rset.getInt("valid_species_count"));
 		  geolocale.setSpecimenCount(rset.getInt("specimen_count"));
 		  geolocale.setImageCount(rset.getInt("image_count"));
 		  geolocale.setImagedSpecimenCount(rset.getInt("imaged_specimen_count"));
@@ -1499,17 +1507,29 @@ public static int c = 0;
       utilDb.updateField("geolocale", "chart_color", "'" + color + "'", "id = " + id );
     }
 
-    private String finish() {
-      for (Geolocale subregion : GeolocaleMgr.getGeolocales("subregion")) {
-        finish(subregion.getId());
-      }
-      return "Geolocale Finished";
+    public String finish() {
+        for (Geolocale subregion : GeolocaleMgr.getGeolocales("subregion")) {
+            updateValidSpeciesCount(subregion.getId());
+        }
+        for (Geolocale country : GeolocaleMgr.getGeolocales("country")) {
+          updateValidSpeciesCount(country.getId());
+        }
+        for (Geolocale adm1 : GeolocaleMgr.getGeolocales("adm1")) {
+            updateValidSpeciesCount(adm1.getId());
+        }
+
+        //if (AntwebProps.isDevMode()) return "Geolocale Finished (early in dev)";
+
+        for (Geolocale subregion : GeolocaleMgr.getGeolocales("subregion")) {
+            finish(subregion.getId());
+        }
+        return "Geolocale Finished";
     }
 
     private String finish(int geolocaleId) {
-      updateCountableTaxonData(geolocaleId);
-      updateImagedSpecimenCount(geolocaleId);
-      makeCharts(geolocaleId);
+        updateCountableTaxonData(geolocaleId);
+        updateImagedSpecimenCount(geolocaleId);
+        makeCharts(geolocaleId);
       return "Geolocale Finished:" + geolocaleId;
     }
 
@@ -1539,7 +1559,7 @@ public static int c = 0;
         //A.log("updateImagedSpecimenCount() id:" + geolocale.getId());
         utilDb.updateField("geolocale", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "id = " + geolocale.getId());
     }
-  
+
     private int getImagedSpecimenCount(Geolocale geolocale) {
       int geolocaleId = geolocale.getId();
       int imagedSpecimenCount = 0;
@@ -1648,7 +1668,39 @@ public static int c = 0;
       } 
       return countryList;    
     }
-    
+
+    private void updateValidSpeciesCount(int geolocaleId) {
+        int count = getValidSpeciesCount(geolocaleId);
+        UtilDb utilDb = new UtilDb(getConnection());
+        utilDb.updateField("geolocale", "valid_species_count", (Integer.valueOf(count)).toString(), "id = '" + geolocaleId + "'");
+    }
+
+    private int getValidSpeciesCount(int geolocaleId) {
+        int validSpeciesCount = 0;
+        String query = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = getConnection().createStatement();
+
+            query = "select count(*) count from taxon, geolocale_taxon gt where taxon.taxon_name = gt.taxon_name"
+                    + " and taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0"
+                    + " and geolocale_id = " + geolocaleId;
+
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                validSpeciesCount = rset.getInt("count");
+            }
+
+        } catch (SQLException e2) {
+            s_log.error("getValidSpeciesCount() e:" + e2 + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "getValidSpeciesCount()");
+        }
+        if (geolocaleId == 172) A.log("getValidSpeciesCount() id:" + geolocaleId + " count:" + validSpeciesCount);
+
+        return validSpeciesCount;
+    }
         
     // --- Charts ---
         
