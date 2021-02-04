@@ -1,3 +1,13 @@
+
+Release 8.52
+ WEB-INF/struts-config.xml                         |  4 ++++
+ doc/fileMods.txt                                  |  7 +++++++
+ doc/release.txt                                   |  4 ++++
+ src/org/calacademy/antweb/util/AntwebSystem.java  |  6 +++---
+ src/org/calacademy/antweb/util/ShowLogAction.java | 96 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++------------
+ web/documentation/releaseNum.jsp                  |  2 +-
+ 6 files changed, 103 insertions(+), 16 deletions(-)
+
 Release 8.51
  doc/done.txt                     | 21 +++++++++++++++++++--
  doc/fileMods.txt                 | 20 ++++++++++++++++++++

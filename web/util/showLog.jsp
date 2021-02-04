@@ -16,7 +16,7 @@
     String domainApp = AntwebProps.getDomainApp();
 %>
 
-<h1>Show Log</h1>
+<h1>Log Mgr</h1>
 
 <div class=left>
 <a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><br><br><br>

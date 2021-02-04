@@ -27,6 +27,7 @@
       <li><a href="<%= domainApp %>/introducedMapMgr.do">Introduced Map Manager</a>
       <li><a href="<%= domainApp %>/typeStatus.do">Type Status Manager</a>
       <li><a href="<%= domainApp %>/query.do">Query Manager</a>
+      <li><a href="<%= domainApp %>/showLog.do?action=list">Log Manager</a>
     </ul>
 
     <h3 align=left>Administrator Functions</h2>
@@ -47,17 +48,6 @@
       <li><a href="<%= domainApp %>/utilData.do?action=siteWarning&text=<%= content %>">Site Warning</a> 
          <br><verbatim>&lt;br&gt;&lt;font color=lightgreen&gt;&lt;/font&gt;</verbatim>
       <li><a href="<%= domainApp %>/utilData.do?action=deleteTaxonProp&taxonName=&prop=">Delete Taxon Property</a> 
-    </ul>
-
-    <h3 align=left>Log Files</H3>
-    <ul align=left>
-      <li><a href="<%= domainApp %>/listUploads.do?groupId=0">Specimen Uploads</a>
-      <li><a href="<%= domainApp %>/query.do?name=worldantsUploads">Worldants Uploads</a>
-      <li><a href="<%= domainApp %>/web/bak/taxonSets/">Taxon Set Backups</a>
-      <li><a href="<%= domainApp %>/web/log/">All Logs</a>
-      <li><a href="<%= domainApp %>/showLog.do?action=tomcatLog">Tomcat Log</a>
-      <li><a href="<%= domainApp %>/showLog.do?action=apacheLog">Apache Log</a>
-      <li><a href="<%= domainApp %>/showLog.do?action=antwebLog">Antweb Log</a>
     </ul>
 
     <h3 align=left>Reports</H3>

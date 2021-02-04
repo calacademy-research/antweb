@@ -1,6 +1,6 @@
 
 Release 8.52
-  Show log enhancements
+  Log Mgr enhancements
   
 Release 8.51
   Valid species count listed on overview pages.
