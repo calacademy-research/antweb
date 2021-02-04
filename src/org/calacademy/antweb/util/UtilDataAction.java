@@ -429,13 +429,13 @@ public class UtilDataAction extends Action {
         // ------ Populate Finish ---------
 		if (action.equals("populateFinish")) {
 
-		 // (new ProjectDb(connection)).finish();
+		  (new ProjectDb(connection)).finish();
 
-		 // (new BioregionDb(connection)).finish();
+		  (new BioregionDb(connection)).finish();
 
 		  (new GeolocaleDb(connection)).finish();
 
-		 // (new MuseumDb(connection)).finish();
+		  (new MuseumDb(connection)).finish();
 
 		  message = "Populate finish"; 
 		}

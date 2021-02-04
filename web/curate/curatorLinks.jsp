@@ -27,7 +27,7 @@
       <li><a href="<%= domainApp %>/introducedMapMgr.do">Introduced Map Manager</a>
       <li><a href="<%= domainApp %>/typeStatus.do">Type Status Manager</a>
       <li><a href="<%= domainApp %>/query.do">Query Manager</a>
-      <li><a href="<%= domainApp %>/showLog.do?action=list">Log Manager</a>
+      <li><a href="<%= domainApp %>/logMgr.do">Log Manager</a>
     </ul>
 
     <h3 align=left>Administrator Functions</h2>

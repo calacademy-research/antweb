@@ -1508,6 +1508,9 @@ public static int c = 0;
     }
 
     public String finish() {
+        for (Geolocale region : GeolocaleMgr.getGeolocales("region")) {
+            updateValidSpeciesCount(region.getId());
+        }
         for (Geolocale subregion : GeolocaleMgr.getGeolocales("subregion")) {
             updateValidSpeciesCount(subregion.getId());
         }

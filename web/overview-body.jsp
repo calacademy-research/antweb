@@ -144,8 +144,11 @@
        mapType = "adm1";
      }
    }
+   if (overview.getValidSpeciesCount() > 0) {
 %>
-<br><b>Valid Species:</b>&nbsp;<%=  Formatter.commaFormat(overview.getValidSpeciesCount()) %>
+       <br><b>Valid Species:</b>&nbsp;<%=  Formatter.commaFormat(overview.getValidSpeciesCount()) %>
+<% } %>
+
 <br><b>Specimens:</b>&nbsp;<%=  Formatter.commaFormat(overview.getSpecimenCount()) %>
 <br><b>Images:</b>&nbsp;<%=  Formatter.commaFormat(overview.getImageCount()) %>
 

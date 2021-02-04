@@ -380,7 +380,10 @@
     <action path="/oxford" forward="/oxford.jsp"/>
     <action path="/berlin" forward="/berlin.jsp"/>
     <action path="/copenhagen" forward="/copenhagen.jsp"/>
-       
+
+    <action
+            path="/logMgr"
+            forward="/showLog.do?action=list"/>
                     
     <!-- action
       path="/curator" 
