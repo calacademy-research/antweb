@@ -169,6 +169,7 @@
    if (overview.getValidSpeciesCount() > 0) {
 %>
        <br><br><b>Valid Species/Subspecies:</b>&nbsp;<%=  Formatter.commaFormat(overview.getValidSpeciesCount()) %>
+       <br>
 <% } %>
 
 
