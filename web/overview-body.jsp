@@ -144,10 +144,7 @@
        mapType = "adm1";
      }
    }
-   if (overview.getValidSpeciesCount() > 0) {
 %>
-       <br><b>Valid Species:</b>&nbsp;<%=  Formatter.commaFormat(overview.getValidSpeciesCount()) %>
-<% } %>
 
 <br><b>Specimens:</b>&nbsp;<%=  Formatter.commaFormat(overview.getSpecimenCount()) %>
 <br><b>Images:</b>&nbsp;<%=  Formatter.commaFormat(overview.getImageCount()) %>
@@ -167,6 +164,14 @@
    }
 %>
 <br><b>Species/Subspecies:</b>&nbsp;<%= speciesCountLink %>
+
+<%
+   if (overview.getValidSpeciesCount() > 0) {
+%>
+       <br><br><b>Valid Species/Subspecies:</b>&nbsp;<%=  Formatter.commaFormat(overview.getValidSpeciesCount()) %>
+<% } %>
+
+
 
 <% 
    String endemicCountHtml = "";

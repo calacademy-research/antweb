@@ -1523,6 +1523,7 @@ public static int c = 0;
 
         //if (AntwebProps.isDevMode()) return "Geolocale Finished (early in dev)";
 
+        // Why like this? Doesn't seem right.
         for (Geolocale subregion : GeolocaleMgr.getGeolocales("subregion")) {
             finish(subregion.getId());
         }
