@@ -6,7 +6,8 @@ Release 8.52
  src/org/calacademy/antweb/util/AntwebSystem.java  |  6 +++---
  src/org/calacademy/antweb/util/ShowLogAction.java | 96 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++------------
  web/documentation/releaseNum.jsp                  |  2 +-
- 6 files changed, 103 insertions(+), 16 deletions(-)
+ web/util/showLog.jsp                              |  2 +-
+ 6 files changed, 56 insertions(+), 38 deletions(-)
 
 Release 8.51
  doc/done.txt                     | 21 +++++++++++++++++++--

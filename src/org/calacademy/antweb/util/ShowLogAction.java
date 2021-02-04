@@ -314,7 +314,7 @@ public final class ShowLogAction extends Action {
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=badRequest&ext=log'>badRequest.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=hacks&ext=log'>hacks.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=profiler&ext=jsp'>profiler.jsp</a>";
-        message  = "<br>><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=compute&ext=log'>compute.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=compute&ext=log'>compute.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=accessLog&ext=txt'>accessLog.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=appCheck&ext=log'>appCheck.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=appCheckOutput&ext=log'>appCheckOutput.log</a>";
