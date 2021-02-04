@@ -15,6 +15,11 @@ import org.calacademy.antweb.upload.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+//http://localhost/antweb/showLog.do?action=list
+// https://www.antweb.org/showLog.do?action=tomcatLog
+//http://localhost/antweb/showLog.do?fileName=compute&ext=log&action=get&lines=50
+
+
 public final class ShowLogAction extends Action {
 
     private static Log s_log = LogFactory.getLog(ShowLogAction.class);
@@ -30,14 +35,25 @@ public final class ShowLogAction extends Action {
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
 
-        HttpUtil.setUtf8(request, response); 
+        HttpUtil.setUtf8(request, response);
+
+        String log = null;
+
+        String message = null;
 
         DynaActionForm df = (DynaActionForm) form;
         String action = (String) df.get("action");                
-        String fileName = (String) df.get("file");
+        String file = (String) df.get("file");
+        String fileName = (String) df.get("fileName");
+        String ext = (String) df.get("ext");
         String line = (String) df.get("line");
         String grep = (String) df.get("grep");
         String code = (String) df.get("code");
+        String lines = (String) df.get("lines");
+        String list = (String) df.get("list");
+        if ("list".equals(action)) {
+            message = getLinkList();
+        }
 
 		int lineNum = 0;
 		if (line != null) {
@@ -48,16 +64,16 @@ public final class ShowLogAction extends Action {
             }
         }
         UploadLine uploadLine = null;
-        String message = null;
+
         if ("uploadLog".equals(action)) { // DEPRECATED. Used the old upload/ without worldants or specimen.
-          message = getUploadLog(fileName, lineNum);
+          message = getUploadLog(file, lineNum);
         } else if ("worldants".equals(action)) {
             message = getWorldantsLine(lineNum);
         } else if ("specimenDetails".equals(action)) {
           message = getSpecimenDetails(request, code);
           //A.log("execute() specimenDetails:" + message);
         } else if ("uploadLine".equals(action)) { // Not sure when/if this and supporting method is used.
-		  uploadLine = getUploadLine(request, fileName, lineNum); 
+		  uploadLine = getUploadLine(request, file, lineNum);
           message = uploadLine.getLine();
         }
 
@@ -66,7 +82,7 @@ public final class ShowLogAction extends Action {
             return (mapping.findForward("success"));
         }
 
-        String log = null;
+
         String tomcatDir = AntwebProps.getTomcatDir();
         if (action.equals("tomcatLog")) {
             log = tomcatDir + AntwebProps.getProp("site.tomcatLog");   
@@ -78,6 +94,8 @@ public final class ShowLogAction extends Action {
             log = tomcatDir + AntwebProps.getProp("site.antwebInfoLog");   
         } else if (action.equals("queryStatsLog")) {
             log = AntwebProps.getDocRoot() + AntwebProps.getProp("site.queryStatsLog");   
+        } else if (action.equals("get")) {
+            log = AntwebProps.getDocRoot() + "web/log/" + fileName + "." + ext;
         }
 
         if (log == null) {
@@ -90,11 +108,13 @@ public final class ShowLogAction extends Action {
         if (grep != null && !"".equals(grep)) {
             command = "grep " + grep + " " + log;
             A.log(" command:" + command);
-        } else {  
+        } else {
             String linesOption = " --lines ";
-            if (AntwebProps.isProp("isMac")) linesOption = " -n ";   
-            String lines = linesOption + " 2000";  
-            command = "tail " + lines + " " + log;
+            if (AntwebProps.isProp("isMac")) linesOption = " -n ";
+
+            if (lines == null || "".equals(lines)) lines = "2000";
+            String linesParam = linesOption + " " + lines;
+            command = "tail" + linesParam + " " + log;
         }
         message = (new AntwebSystem()).launchProcess(command, true);
         String logMessage = "";
@@ -104,7 +124,6 @@ public final class ShowLogAction extends Action {
         request.setAttribute("message", message);
         return (mapping.findForward("success"));
     }
-
 
     private String getSpecimenDetails(HttpServletRequest request, String code) {
         String specimenDetailXml = null;
@@ -254,5 +273,58 @@ public final class ShowLogAction extends Action {
 			message += "<br><pre>" + theLine + "</pre>";
 		}            
 		return message;  
-    }      
+    }
+
+    private String getLinkList() {
+        // directories: detail   worldants   bak   specimen  unclosedConnections  imageCheck
+        String message = "";
+        message  = " <a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=compute&ext=log'>compute.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=accessLog&ext=txt'>accessLog.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=appCheckOutput&ext=log'>appCheckOutput.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=cCheck&ext=log'>cCheck.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=getUrl&ext=txt'>getUrl.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=hacks&ext=log'>hacks.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=longRequest&ext=log'>longRequest.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=typeStatusNoTaxonName&ext=txt'>typeStatusNoTaxonName.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=adminAlerts&ext=log'>adminAlerts.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=badRequest&ext=log'>badRequest.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=DataPlaceCase&ext=txt'>DataPlaceCase.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=exifData&ext=txt'>exifData.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=googleApisAdm1Adm2Data&ext=html'>googleApisAdm1Adm2Data.html</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=flickrAdm1&ext=html'>flickrAdm1.html</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=googleApisAdm1&ext=html'>googleApisAdm1.html</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=googleApisAdm1Issue&ext=html'>googleApisAdm1Issue.html</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=profiler&ext=jsp'>profiler.jsp</a>";
+        //message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=srfExceptions20191206&ext=jsp'>srfExceptions20191206.jsp</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=messages&ext=txt'>messages.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=searches&ext=txt'>searches.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=taxonSetBackup&ext=log'>taxonSetBackup.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=typeStatusSpeciesFound&ext=txt'>typeStatusSpeciesFound.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=zonageeks&ext=txt'>zonageeks.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=admin&ext=log'>admin.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=dateDetermined&ext=log'>dateDetermined.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=insecure&ext=log'>insecure.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName= notFound&ext=txt'>notFound.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=speciesListLog&ext=txt'>speciesListLog.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=taxonSet&ext=log'>taxonSet.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=typeStatusSpeciesNotFound&ext=txt'>typeStatusSpeciesNotFound.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=adminTask.log&ext=log'>adminTask.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=compute&ext=log'>compute.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=defaultSpecimen&ext=log'>defaultSpecimen.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=geolocaleTaxonFix&ext=log'>geolocaleTaxonFix.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=invalid&ext=log'>invalid.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=OTNotFound&ext=txt'>OTNotFound.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=speciesListTool&ext=txt'>speciesListTool.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=throttle&ext=txt'>throttle.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=appCheck&ext=log'>appCheck.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=deletedImageLog&ext=txt'>deletedImageLog.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=geonames&ext=log'>geonames.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=googleApisAdm1&ext=log'>googleApisAdm1.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=logins&ext=txt'>logins.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=pageTracker&ext=log'>pageTracker.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=typeStatusHomonym&ext=txt'>typeStatusHomonym.txt</a>";
+        return message;
+    }
+
+
 }

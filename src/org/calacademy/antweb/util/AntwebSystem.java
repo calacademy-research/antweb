@@ -314,8 +314,8 @@ public class AntwebSystem {
 		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         double systemCpuLoad = osBean.getSystemCpuLoad();
         double processCpuLoad = osBean.getProcessCpuLoad();
-
-        A.log("cpuCheck() systemCpuLoad:" + systemCpuLoad + " processCpuLoad:" + processCpuLoad);
+// CpuCheck SystemCpuLoad and processCpuLoad
+        A.log("cCheck() s:" + systemCpuLoad + " p:" + processCpuLoad);
 
         //if (AntwebProps.isDevMode()) threshold = 0;
         if (systemCpuLoad > threshold || processCpuLoad > threshold) {
@@ -328,7 +328,7 @@ public class AntwebSystem {
              s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
              //Emailer.sendMail(recipients, subject, body);
            }
-           LogMgr.appendLog("cpuCheck.log", message , true);
+           LogMgr.appendLog("cCheck.log", message , true);
         }
         return message;
     }

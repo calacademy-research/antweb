@@ -181,7 +181,11 @@
       <form-property name="genus"        type="java.lang.String"/>
       <form-property name="species"      type="java.lang.String"/>
       <form-property name="file"         type="java.lang.String"/>
+      <form-property name="fileName"     type="java.lang.String"/>
+      <form-property name="ext"         type="java.lang.String"/>
+      <form-property name="list"      type="java.lang.String"/>
       <form-property name="line"         type="java.lang.String"/>
+      <form-property name="lines"         type="java.lang.String"/>
       <form-property name="museumCode"   type="java.lang.String"/>
       <form-property name="value"        type="java.lang.String"/>
       <form-property name="command"      type="java.lang.String"/>

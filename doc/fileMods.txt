@@ -1,3 +1,10 @@
+Release 8.51
+ doc/done.txt                     | 21 +++++++++++++++++++--
+ doc/fileMods.txt                 | 20 ++++++++++++++++++++
+ doc/release.txt                  |  3 +++
+ web/documentation/releaseNum.jsp |  2 +-
+ web/overview-body.jsp            |  1 +
+ 
 Release 8.50
  db/upgrade/8.0/2020-02-12.sql                        |   7 +++++++
  doc/done.txt                                         |  10 ++++++++++
