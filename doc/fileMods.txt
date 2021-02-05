@@ -1,4 +1,17 @@
-
+Release 8.53
+ doc/done.txt                                      | 16 ++++++++++++++--
+ doc/install.txt                                   | 11 +++++++++--
+ doc/release.txt                                   |  3 +++
+ src/org/calacademy/antweb/home/LoginDb.java       |  2 --
+ src/org/calacademy/antweb/util/AntwebProps.java   | 10 ++++++++--
+ src/org/calacademy/antweb/util/AntwebSystem.java  |  6 +++---
+ src/org/calacademy/antweb/util/HttpUtil.java      |  4 ++--
+ src/org/calacademy/antweb/util/LogMgr.java        | 55 ++++++++++++++++++++++++++++++++++++++++++-------------
+ src/org/calacademy/antweb/util/ShowLogAction.java | 10 ++++++++--
+ web/common/message-body.jsp                       |  2 +-
+ web/documentation/releaseNum.jsp                  |  2 +-
+ 11 files changed, 91 insertions(+), 30 deletions(-)
+ 
 Release 8.52
  WEB-INF/struts-config.xml                         |  4 ++++
  doc/fileMods.txt                                  |  7 +++++++

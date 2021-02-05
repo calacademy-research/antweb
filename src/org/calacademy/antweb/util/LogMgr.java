@@ -119,14 +119,13 @@ public class LogMgr {
   
     String yearStr = dateStr.substring(0,4);
   
-    String logDir = AntwebProps.getDataDir() + "/log/";
+    String logDir = AntwebProps.getDataRoot() + "/log/";
     String bakDir = logDir + "bak/";
     String backupDir = bakDir + yearStr + "/" + dateStr + "/";
     (new Utility()).makeDirTree(backupDir);
 
     //String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";
-    String backupDir = logDir + "bak/" + dateStr + "/";
-    
+
     LogMgr.make777(bakDir);  
     LogMgr.make777(backupDir);
 
