@@ -123,6 +123,7 @@ public class LogMgr {
     String bakDir = logDir + "bak/";
     String backupDir = bakDir + yearStr + "/" + dateStr + "/";
     (new Utility()).makeDirTree(backupDir);
+    s_log.warn("archiveLogs() Make backupDir:" + backupDir);
 
     //String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";
 

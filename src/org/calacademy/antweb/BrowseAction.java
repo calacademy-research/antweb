@@ -189,8 +189,7 @@ public class BrowseAction extends DescriptionAction {
         if ("mapComparison".equals(cacheType)
          || "getComparison".equals(cacheType)
            ) {
-            if (accessLogin == null) {    
-              A.log("MUST_LOGIN_MESSAGE");      
+            if (accessLogin == null) {        
               request.setAttribute("message", Login.MUST_LOGIN_MESSAGE);
               return (mapping.findForward("message"));
             }
