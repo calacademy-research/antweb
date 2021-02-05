@@ -147,11 +147,17 @@ public abstract class AntwebProps {
     }
 
 	public static String getDocRoot() {
-	    // always:  /usr/local/antweb/ points to either /data/antweb (on server) or /usr/local/tomcat/webapps/antweb on dev.
-		//return AntwebProps.getProp("site.docroot");
+	    // /usr/local/antweb/ points to either /data/antweb (on server) or /usr/local/tomcat/webapps/antweb on dev.
         return "/usr/local/antweb/";
 	}
 
+	// Create /usr/local/data softlink. On server: /data  On dev it is a directory.
+    
+    public static String getDataRoot() {
+        // /usr/local/data/ points to either /data/antweb (on server) or /usr/local/tomcat/webapps/antweb on dev.
+        return "/usr/local/data/";
+    }
+	
     public static String getTomcatDir() {
         return "/usr/local/tomcat/";
     }

@@ -51,6 +51,7 @@ public final class ShowLogAction extends Action {
         String code = (String) df.get("code");
         String lines = (String) df.get("lines");
         String list = (String) df.get("list");
+        String loc = (String) df.get("loc"); // Either data or web (which is web/log).
         if ("list".equals(action)) {
             message = getLinkList();
         }
@@ -95,7 +96,11 @@ public final class ShowLogAction extends Action {
         } else if (action.equals("queryStatsLog")) {
             log = AntwebProps.getDocRoot() + AntwebProps.getProp("site.queryStatsLog");   
         } else if (action.equals("get")) {
-            log = AntwebProps.getDocRoot() + "web/log/" + fileName + "." + ext;
+            if (loc == null || "".equals(loc) || loc.equals("web")) {
+                log = AntwebProps.getDocRoot() + "web/log/" + fileName + "." + ext;
+            } else {
+                log = AntwebProps.getDataRoot() + "log/" + fileName + "." + ext;
+            }
         }
 
         if (log == null) {
@@ -287,6 +292,7 @@ public final class ShowLogAction extends Action {
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=tomcatLog'>Tomcat Log</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=apacheLog'>Apache Log</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=antwebLog'>Antweb Log</a>";
+        message += "<li><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=antwebLog'>Antweb Log</a>";
         message += "</ul><br><br>";
 
 
@@ -318,7 +324,7 @@ public final class ShowLogAction extends Action {
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=accessLog&ext=txt'>accessLog.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=appCheck&ext=log'>appCheck.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=appCheckOutput&ext=log'>appCheckOutput.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=cCheck&ext=log'>cCheck.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&loc=data&fileName=cpuCheck&ext=log'>cpuCheck.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=getUrl&ext=txt'>getUrl.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=zonageeks&ext=txt'>zonageeks.txt</a>";
 

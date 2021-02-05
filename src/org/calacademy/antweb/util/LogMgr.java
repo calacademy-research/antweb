@@ -36,27 +36,55 @@ public class LogMgr {
     emptyLog(file);
     appendLog(file, data, false);
   }
-  
-  public static void appendLog(String file, String data) {
-    appendLog(file, data, false);
-  }
 
+  // All 3 are Deprecated. Use appendWebLog() or appendDataLog() as needed.
+  public static void appendLog(String file, String data) {
+    appendWebLog(file, data, false);
+  }
   public static void appendLog(String file, String data, boolean addTimestamp) {
     if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
-    appendLog(null, file, data);
+    appendWebLog(null, file, data);
+  }
+  public static void appendLog(String dir, String file, String data) {
+    appendWebLog(dir, file, data);
   }
 
-  // Only used for logs.
-  public static void appendLog(String dir, String file, String data) {
+  // These should be used for things log to a web accessible directory: /data/antweb/web/log
+  public static void appendWebLog(String file, String data) {
+    appendWebLog(file, data, false);
+  }
+  public static void appendWebLog(String file, String data, boolean addTimestamp) {
+    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
+    appendWebLog(null, file, data);
+  }
+  public static void appendWebLog(String dir, String file, String data) {
     /* This method will create and/or append stringData to a file.  If the dir
        parameter is not null, the file will be created in a dir of that name.
-       If /data/antweb/log or the nested dir does not exist, it will be created. */
-    String docRoot = AntwebProps.getDocRoot();
-    String logRoot = docRoot + "web/log/";
+       If the nested dir does not exist, it will be created. */
+    String logRoot = AntwebProps.getDocRoot() + "web/log/";
     if (dir != null) logRoot += dir + "/";
     file = logRoot + file;
     LogMgr.appendFile(file, data);
   }
+
+  // These should be used for things log to a non-web-accessible directory: /data/log
+  public static void appendDataLog(String file, String data) {
+    appendDataLog(file, data, false);
+  }
+  public static void appendDataLog(String file, String data, boolean addTimestamp) {
+    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
+    appendDataLog(null, file, data);
+  }
+  public static void appendDataLog(String dir, String file, String data) {
+    /* This method will create and/or append stringData to a file.  If the dir
+       parameter is not null, the file will be created in a dir of that name.
+       If the nested dir does not exist, it will be created. */
+    String logRoot = AntwebProps.getDataRoot()+ "log/";
+    if (dir != null) logRoot += dir + "/";
+    file = logRoot + file;
+    LogMgr.appendFile(file, data);
+  }
+
 
   public static void appendFile(String fullPath, String data) {
     (new Utility()).makeDirTree(fullPath);
@@ -91,13 +119,14 @@ public class LogMgr {
   
     String yearStr = dateStr.substring(0,4);
   
-    String logDir = "/usr/local/antweb/web/log/";
+    String logDir = AntwebProps.getDataDir() + "/log/";
     String bakDir = logDir + "bak/";
     String backupDir = bakDir + yearStr + "/" + dateStr + "/";
     (new Utility()).makeDirTree(backupDir);
 
-    String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";    
-
+    //String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";
+    String backupDir = logDir + "bak/" + dateStr + "/";
+    
     LogMgr.make777(bakDir);  
     LogMgr.make777(backupDir);
 
@@ -117,7 +146,7 @@ public class LogMgr {
     if (!"".equals(logsNotFound)) 
       s_log.warn("archiveLogs() logsNotFound:" + logsNotFound.substring(0, logsNotFound.length() - 2) + ".");
 
-    String message = "files backed up here:" + webBackupDir;
+    String message = "files backed up here:" + backupDir;
     A.log("archiveLogs() message:" + message);
     return message;
   }

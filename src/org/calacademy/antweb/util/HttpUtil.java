@@ -993,7 +993,7 @@ public abstract class HttpUtil {
         //s_log.warn(message);
         MAX_REQUEST_TIME = 1;
       }
-      if (millis > MAX_REQUEST_TIME) LogMgr.appendLog("longRequest.log", message);   
+      if (millis > MAX_REQUEST_TIME) LogMgr.appendDataLog("longRequest.log", message);
       return execTime; 
     }
 
@@ -1011,7 +1011,7 @@ public abstract class HttpUtil {
         //s_log.warn(message);
         MAX_REQUEST_TIME = 1;
       }
-      if (millis > MAX_REQUEST_TIME) LogMgr.appendLog("longRequest.log", message);   
+      if (millis > MAX_REQUEST_TIME) LogMgr.appendDataLog("longRequest.log", message);
       return execTime; 
     }
 

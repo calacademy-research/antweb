@@ -1,4 +1,7 @@
 
+Release 8.53
+  Sensitive log files put to /data.
+
 Release 8.52
   Log Mgr enhancements
   

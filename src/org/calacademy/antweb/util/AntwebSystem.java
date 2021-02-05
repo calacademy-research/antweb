@@ -314,12 +314,12 @@ public class AntwebSystem {
 		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         double systemCpuLoad = osBean.getSystemCpuLoad();
         double processCpuLoad = osBean.getProcessCpuLoad();
-        A.log("cCheck() s:" + systemCpuLoad + " p:" + processCpuLoad);
+        A.log("cpuCheck() s:" + systemCpuLoad + " p:" + processCpuLoad);
 
         //if (AntwebProps.isDevMode()) threshold = 0;
         if (systemCpuLoad > threshold || processCpuLoad > threshold) {
            // SystemCpuLoad is s and processCpuLoad is p to hide "inner workings to satisfy Joe Russack in IT.
-           message = "s:" + systemCpuLoad + " p:" + processCpuLoad;
+           message = "systemCpuLoad:" + systemCpuLoad + " processCpuLoad:" + processCpuLoad;
            if (!messageSent) {
              messageSent = true;
              String recipients = "re.mark.johnson@gmail.com";
@@ -329,7 +329,7 @@ public class AntwebSystem {
              //Emailer.sendMail(recipients, subject, body);
            }
           // CpuCheck is called cCheck.log to hide "inner workings to satisfy Joe Russack in IT.
-          LogMgr.appendLog("cCheck.log", message , true);
+          LogMgr.appendDataLog("cpuCheck.log", message , true);
         }
         return message;
     }

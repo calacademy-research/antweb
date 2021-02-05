@@ -13707,8 +13707,20 @@ Feb 2. 1hr
   Look into images counts for institutions.
   Documentation.
   
-Feb 3
-  Check on scheduled tasks.
+Feb 3. 3.5hrs.
+  Look into web/log directory for Joe.
+  Build Log Mgr.
+  Check on scheduled tasks. Problem with Geolocales on server, and with Region everywhere.
+    Problems with Regions fixed and deployed.
+    Geolocale pages will not display if 0. Something to do with scheduled tasks.
+
+#Reported
+
+Feb 4. 0.
+  Verify data of valid count species.
+  Improve UI.
+  Deploy.
+
 
   
   

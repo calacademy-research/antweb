@@ -50,7 +50,7 @@ sudo su antweb
 mkdir /antweb/antweb_deploy
 
 sudo passwd antweb
-  ****** 
+  ******
 
 Install PHP
 -----------
@@ -209,7 +209,7 @@ sudo systemctl start tomcat
 sudo systemctl status tomcat   # active (running)
 
 
----------- Softlinks created --
+---------- Softlinks created ---
 #From /usr/local directory
 ln -s /usr/local/tomcat tomcat
 ln -s /usr/local/tomcat antweb
@@ -470,6 +470,13 @@ Change conf/server.xml to have in the <host> block:
 sudo  ln -s /data/antweb /usr/local/antweb
 #On a local dev machine...
 sudo  ln -s /data/antweb /usr/local/tomcat/webapps/antweb/
+
+# To support log files in the web dir (/data/antweb/web/log) as well as in /data/log)
+sudo  ln -s /data /usr/local/data
+mkdir /data/log
+#On a local dev machine...
+sudo  mkdir /usr/local/data
+
 
 edit 	 to disable session persistence.
   Add into the context section:

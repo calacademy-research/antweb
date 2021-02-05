@@ -32,7 +32,7 @@
 
     String message = (String) request.getAttribute("message"); 
     //A.log("message-body.jsp message:" + message);
-    LogMgr.appendLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
+    LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
 %>
 <br>
 <br>

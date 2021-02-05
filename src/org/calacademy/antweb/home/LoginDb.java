@@ -466,8 +466,6 @@ public class LoginDb extends AntwebDb {
 
     public void updateLastLogin(Login login) throws SQLException {
     
-        //if (true) return; // update login turned off. Can be derived from the logs: /data/antweb/web/log/bak/*/logins.txt
-    
         Statement stmt = null;
         try {
             stmt = getConnection().createStatement();            
