@@ -87,7 +87,7 @@ public final class PlaziAction extends Action {
 			
             // That seems to work (on stage)... Not on dev.  Not using connection pool.
             java.lang.Class.forName("com.mysql.jdbc.Driver").newInstance();
-            String jdbc = "jdbc:mysql://127.0.0.1:3306/ant?autoReconnect=true&user=antweb&password=" + AntwebProps.getDbPwd();
+            String jdbc = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&user=antweb&password=" + AntwebProps.getDbPwd();
             String jdbcutf8 = "&useUnicode=true&characterEncoding=UTF-8";
             connection = java.sql.DriverManager.getConnection(jdbc+jdbcutf8);              
 			

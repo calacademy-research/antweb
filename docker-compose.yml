@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  mysql:
+    restart: unless-stopped
+    image: mysql:5
+    command: "--default-authentication-plugin=mysql_native_password"
+
+    volumes:
+      - ./docker/mysql/mysql.cnf:/etc/mysql/conf.d/custom.cnf
+      - ./database:/var/lib/mysql:delegated
+    environment:
+      TZ: America/Los_Angeles
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+    user: "1000:1000"
+    expose:
+      - 3306
+    ports:
+      - "127.0.0.1:3306:3306"
+  #      - "10.2.22.30:3306:3306"   # Enable when on production server. This will allow internal network access to database
+
+  httpd:
+    build:
+      context: .
+      dockerfile: docker/httpd/Dockerfile
+
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+
+  antweb:
+    build:
+      context: .
+      dockerfile: docker/antweb/Dockerfile
+    restart: unless-stopped
+    hostname: antweb
+    expose:
+      - 8009
+    extra_hosts:
+      - "antweb.org:127.0.0.1"
+      - "www.antweb.org:127.0.0.1"
+      - "antcat-export:10.2.22.49"
+
+    # to allow s3fs mounting
+
+    volumes:
+      - ${ANTWEB_BUCKET_PATH:-/mnt/antweb}:/mnt/antweb

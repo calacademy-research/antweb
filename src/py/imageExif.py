@@ -20,7 +20,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant')
+engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant')
 
 Base = declarative_base()
 
@@ -73,7 +73,7 @@ try:
 
 except Exception as e :
     print('Exception e: ' + str(e),' reading configuration file')
-    dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant'
+    dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant'
 
 #app = Flask(__name__)
 application.config['SQLALCHEMY_DATABASE_URI'] = dbUrl
