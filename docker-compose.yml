@@ -42,7 +42,6 @@ services:
       - "www.antweb.org:127.0.0.1"
       - "antcat-export:10.2.22.49"
 
-    # to allow s3fs mounting
-
+    # Mount the s3fs bucket for serving files
     volumes:
       - ${ANTWEB_BUCKET_PATH:-/mnt/antweb}:/mnt/antweb

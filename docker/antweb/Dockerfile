@@ -20,10 +20,16 @@ RUN mkdir -p /antweb/deploy && \
 RUN apt-get update && apt-get install -y --no-install-recommends \
 ant \
 ant-optional \
+cron \
 fuse \
 imagemagick \
+mariadb-client \
+php \
 python3 \
 zip
+
+COPY --chown=tomcat docker/antweb/startup.sh /startup.sh
+COPY --chmod=0644 docker/antweb/crontab.txt /etc/cron.d/antwebcrontab
 
 
 COPY --chown=tomcat docker/antweb/tomcat/conf/ /usr/local/tomcat/conf/
@@ -137,6 +143,4 @@ RUN ant deploy
 
 WORKDIR /usr/local/tomcat
 
-USER tomcat
-
-CMD catalina.sh run
+ENTRYPOINT ["/startup.sh"]
