@@ -94,6 +94,11 @@ COPY --chown=antweb etc/AppResDevDocker.properties classes/AntwebResources.prope
 COPY --chown=antweb WEB-INF/struts-configDbAnt.xml struts-configDb.xml
 
 
+RUN mkdir -p /antweb/links
+WORKDIR /antweb/links
+RUN sh ../deploy/bin/links.sh
+
+
 USER root
 RUN mkdir /data && \
     chmod 755 /data && \
