@@ -540,6 +540,7 @@ public class UploadAction extends Action {
 			  }
 			}
 
+/*
 			String ancFileDir = theForm.getAncFileDirectory();
 			if ((ancFileDir != null) &&
 			   (ancFileDir.length() > 0) &&
@@ -561,7 +562,7 @@ public class UploadAction extends Action {
 
 				//A.log("ancillaryFile details:" + uploadDetails);
 			}
-
+*/
 			if ((theForm.getSuccessKey() != null) && (theForm.getSuccessKey().equals("worldAuthorityFiles"))) {
 			    A.log("execute() worldauth successKey:" + theForm.getSuccessKey());
                 worldAuthGen(request);
@@ -1346,6 +1347,7 @@ public class UploadAction extends Action {
         return "worldAuthorityFiles";
     }
 
+/*
     private void setNewAncFile(Login accessLogin, HttpSession session, Connection connection) {
       setNewAncFile(null, accessLogin, session, connection);
     }
@@ -1371,7 +1373,7 @@ public class UploadAction extends Action {
         session.setAttribute("ancFile", ancFile);
         A.log("executeNewAncFile() logMessage:" + logMessage + " directory:" + directory);
     }
-
+*/
 
 
     public Project getProjectForDirectory(Login login, String directory, Connection connection) {

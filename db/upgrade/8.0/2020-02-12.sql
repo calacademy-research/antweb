@@ -74,6 +74,9 @@ alter table bioregion add column valid_species_count int;
 alter table project add column valid_species_count int;
 alter table museum add column valid_species_count int;
 alter table geolocale add column valid_species_count int;
+update bioregion set title = "Antarctica" where name = "Antarctica";
 
+#alter table statistics add column valid_species int;
+# Add total of all speciews imaged for each bioregion
 
 
