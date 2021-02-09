@@ -7,7 +7,7 @@
 <%@ page import="org.calacademy.antweb.Login" %>
 <%@ page import="org.calacademy.antweb.TeamMember" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
-<%@ page import="org.calacademy.antweb.util.AntwebUtil" %>
+<%@ page import="org.calacademy.antweb.util.*" %>
 
 <% String domainApp = (new Utility()).getDomainApp(); %>
 

@@ -1,3 +1,33 @@
+Release 8.53.1
+
+Release 8.53.1
+ WEB-INF/struts-config.xml                                          |  22 ++--------
+ db/upgrade/8.0/2020-02-12.sql                                      |   3 ++
+ doc/done.txt                                                       |   6 ++-
+ doc/release.txt                                                    |   2 +
+ src/org/calacademy/antweb/AncFile.java                             | 402 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ src/org/calacademy/antweb/curate/ancFile/AncEditAction.java        | 105 ----------------------------------------------
+ src/org/calacademy/antweb/curate/ancFile/AncNewPageAction.java     | 131 ----------------------------------------------------------
+ src/org/calacademy/antweb/curate/ancFile/AncPageMgrAction.java     |  94 -----------------------------------------
+ src/org/calacademy/antweb/curate/ancFile/AncPagePreviewAction.java |  91 ----------------------------------------
+ src/org/calacademy/antweb/curate/ancFile/AncSaveAction.java        |  67 ------------------------------
+ src/org/calacademy/antweb/upload/UploadAction.java                 |   6 ++-
+ web/curate/curators-body.jsp                                       |   2 +-
+ web/documentation/releaseNum.jsp                                   |   2 +-
+ web/team/Erin.jpg                                                  | Bin 0 -> 31069 bytes
+ web/team/James250.jpg                                              | Bin 0 -> 32681 bytes
+ web/team/ME2.jpg                                                   | Bin 0 -> 64292 bytes
+ web/team/Michelev2.jpg                                             | Bin 0 -> 45520 bytes
+ web/team/Michelev3.jpg                                             | Bin 0 -> 66639 bytes
+ web/team/brian.jpg                                                 | Bin 0 -> 18418 bytes
+ web/team/jack250.jpg                                               | Bin 0 -> 19289 bytes
+ web/team/lloydAndPheidoleMiliticidaCrop.jpg                        | Bin 0 -> 82223 bytes
+ web/team/mark.jpg                                                  | Bin 0 -> 23150 bytes
+ web/team/michelle.gif                                              | Bin 0 -> 28193 bytes
+ web/team/phil.jpg                                                  | Bin 0 -> 13679 bytes
+ web/team/staff.jsp                                                 |  46 +++++++++++++++++++++
+ web/team/thau.jpg                                                  | Bin 0 -> 20435 bytes
+
 Release 8.53
  doc/done.txt                                      | 16 ++++++++++++++--
  doc/install.txt                                   | 11 +++++++++--

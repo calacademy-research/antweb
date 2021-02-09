@@ -92,9 +92,6 @@
                                                                                                                                
     <form-bean      name="editProjectForm"
                     type="org.calacademy.antweb.curate.project.EditProjectForm"/>
-
-    <form-bean      name="ancForm"
-                    type="org.calacademy.antweb.curate.ancFile.AncForm"/>
                                                                                                                                
     <form-bean      name="curateProjectForm"
                     type="org.calacademy.antweb.curate.project.ProjectForm"/>
@@ -335,15 +332,7 @@
       
     <action
       path="/staff" 
-      forward="/web/team/staff.jsp"/> <!-- The team dir is NOT in CVS.  Generated. -->
-      
-    <action
-      path="/curators" 
-      forward="/web/team/curators.jsp"/> <!-- The team dir is NOT in CVS.  Generated. -->
-      
-    <action
-      path="/curators2" 
-      forward="/teamMember.do"/>      
+      forward="/team/staff.jsp"/>
 
     <action
       path="/orphanMgr" 
@@ -386,10 +375,7 @@
             path="/logMgr"
             forward="/showLog.do?action=list"/>
                     
-    <!-- action
-      path="/curator" 
-      forward="/teamMember.do"/ -->  
-      
+
    <!--==========Action Mappings that use the browseForm bean==========-->
 <!--    parameter="getChildImages"  getChildImages added 2013-06-12 
 
@@ -604,7 +590,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="uploadResults" path="/curate/uploadResults.jsp" />
       <forward name="speciesListTool" path="/speciesListTool.do" />
       <forward name="worldAuthorityFiles" path="/world_authority_admin_results.jsp" />
-      <forward name="newAncFile" path="/curate/anc/ancNew.jsp" />
       <forward name="curate" path="/curate.do" />
       <forward name="success" path="/curate.do" />
       <forward name="taxonCountryPage" path="/curate/geolocale/taxonCountryMgr.jsp" />
@@ -1309,7 +1294,8 @@ We would like to remove getChildImages.  Not needed now in the new UI
             input="/curate/viewMuseum.jsp"
             name="dummyForm">
       <forward name="success" path="/curate/viewMuseum.jsp" />
-    </action>    
+    </action>
+
  <!--========== Team Member Action Mappings==========-->    
     
     <action path="/teamMember"
@@ -1567,33 +1553,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
 					scope="request">
 			<forward name ="success" path="/curate/anc/ancPageMgr.jsp"/>
    </action>
-
-   <action path="/newAncPage"
-					type="org.calacademy.antweb.curate.ancFile.AncNewPageAction"
-					scope="request"
-					name="ancForm">  <!-- Mark added scope request Oct21 -->
-			<forward name="success" path="/ancPreview.jsp"/>
-			<forward name="failure" path="/curate/anc/ancNew.jsp"/>
-	</action>
-   
-   <action path="/ancPagePreview"
-					type="org.calacademy.antweb.curate.ancFile.AncPagePreviewAction"
-					name="ancForm">
-			<forward name="success" path="/ancPreview.jsp"/>
-	</action>
-
-	<action path="/ancPageEdit"
-					type="org.calacademy.antweb.curate.ancFile.AncEditAction"
-					name="ancForm">
-			<forward name="success" path="/curate/anc/ancEdit.jsp"/>
-	</action>
-
-	 <action path="/ancPageSave"
-					type="org.calacademy.antweb.curate.ancFile.AncSaveAction"
-					name="ancForm">
-			<forward name="success" path="/curate/curate.jsp"/>
-	</action>
-
 
 <!--==========End of Project Managment Action Mappings==========-->
 
