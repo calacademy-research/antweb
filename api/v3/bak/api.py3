@@ -23,7 +23,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant')
+engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant')
 '''
 connection = engine.connect()
 result = connection.execute("select occurrenceId from darwin_core_2 limit 20")
@@ -64,7 +64,7 @@ try:
   dbUrl = 'mysql+mysqldb://' + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + ":" + config.get('DB', 'port') + '/' + config.get('DB', 'db') 
 except Exception as e :
   print('exception e: ' + str(e),' reading configuration file')
-  dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant'
+  dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant'
 
 #app = Flask(__name__)
 application.config['SQLALCHEMY_DATABASE_URI'] = dbUrl
