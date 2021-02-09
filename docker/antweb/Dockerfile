@@ -131,7 +131,6 @@ RUN ln -s /mnt/antweb/web/bak bak && \
     ln -s /mnt/antweb/web/eol eol && \
     ln -s /mnt/antweb/web/homepage homepage && \
     ln -s /mnt/antweb/web/specieslist specieslist && \
-    ln -s /mnt/antweb/web/team team && \
     ln -s /mnt/antweb/web/upload upload && \
     ln -s /mnt/antweb/web/workingdir workingdir
 
