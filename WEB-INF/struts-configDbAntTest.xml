@@ -16,7 +16,7 @@
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
       <set-property property="driverClassName" value="com.mysql.jdbc.Driver" />
-      <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant_test?autoReconnect=true"/>
+      <set-property property="jdbcUrl" value="jdbc:mysql://localhost:3306/ant_test?autoReconnect=true"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="unreturnedConnectionTimeout" value="3600"/>  <!-- 3000 is 50 min -->
       <set-property property="debugUnreturnedConnectionStackTraces" value="true"/>       
@@ -26,7 +26,7 @@
    <!--
    <data-source key="conPool" type="org.apache.commons.dbcp.BasicDataSource">
      <set-property property="driverClassName" value="com.mysql.jdbc.Driver" />
-     <set-property property="url" value="jdbc:mysql://mysql:3306/ant_test?autoReconnect=true" />
+     <set-property property="url" value="jdbc:mysql://localhost:3306/ant_test?autoReconnect=true" />
      <set-property property="username" value="antweb" />
      <set-property property="password" value="f0rm1c6" />
      <set-property property="maxActive" value="100" />
