@@ -15,6 +15,7 @@ RUN apt-get update && \
     mariadb-client \
     && rm -rf /var/lib/apt/lists/*
 
+# this is how to enable the virtualenv inside the dockerfile
 ENV VIRTUAL_ENV=/var/www/script/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
@@ -33,6 +34,8 @@ COPY docker/httpd/ports.conf ports.conf
 COPY docker/httpd/sites-enabled/ sites-available/
 COPY docker/httpd/mods-enabled/ mods-available/
 COPY docker/httpd/conf-enabled/ conf-available/
+RUN mkdir -p shared-conf
+COPY docker/httpd/shared-conf/ shared-conf/
 
 COPY docker/httpd/workers.properties /etc/libapache2-mod-jk/workers.properties
 
@@ -50,7 +53,7 @@ COPY api/v3.1/ /var/www/script/v3.1/
 
 
 RUN a2enmod ssl headers wsgi proxy_http rewrite && \
-    a2enconf ssl-params && \
+    a2enconf ssl-params wsgi && \
     a2ensite default-ssl antweb_calacademy_org
 
 RUN a2dismod mpm_event && \
