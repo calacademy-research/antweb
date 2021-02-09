@@ -27,7 +27,7 @@
 
 <br><br>
 <table>
-<tr><td>Title</td><td></td><td>Project</td><td>Last Changed</td><td>Directory</td><td>File Name</td><td>Curator</td></tr>
+<tr><td>Title</td><td>Project</td><td>Last Changed</td><td>Directory</td><td>File Name</td><td>Curator</td></tr>
 <% for (AncFile ancFile : ancFileArray) { %>
 <tr>
 <% String dir = "";
@@ -36,7 +36,6 @@
 %>
 
 <td><a href="<%= dir %><%= ancFile.getFileName() %>.jsp"><%= ancFile.getTitle() %></a></td>
-<td><a href="<%= AntwebProps.getDomainApp() %>/ancPageEdit.do?id=<%= ancFile.getId() %>">edit</a></td>
 <td><%= ancFile.getProject() %></td>
 <td><%= ancFile.getLastChanged() %></td>
 <td><%= ancFile.getDirectory() %></td>

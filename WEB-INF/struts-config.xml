@@ -1554,33 +1554,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
 			<forward name ="success" path="/curate/anc/ancPageMgr.jsp"/>
    </action>
 
-   <action path="/newAncPage"
-					type="org.calacademy.antweb.curate.ancFile.AncNewPageAction"
-					scope="request"
-					name="ancForm">  <!-- Mark added scope request Oct21 -->
-			<forward name="success" path="/ancPreview.jsp"/>
-			<forward name="failure" path="/curate/anc/ancNew.jsp"/>
-	</action>
-   
-   <action path="/ancPagePreview"
-					type="org.calacademy.antweb.curate.ancFile.AncPagePreviewAction"
-					name="ancForm">
-			<forward name="success" path="/ancPreview.jsp"/>
-	</action>
-
-	<action path="/ancPageEdit"
-					type="org.calacademy.antweb.curate.ancFile.AncEditAction"
-					name="ancForm">
-			<forward name="success" path="/curate/anc/ancEdit.jsp"/>
-	</action>
-
-	 <action path="/ancPageSave"
-					type="org.calacademy.antweb.curate.ancFile.AncSaveAction"
-					name="ancForm">
-			<forward name="success" path="/curate/curate.jsp"/>
-	</action>
-
-
 <!--==========End of Project Managment Action Mappings==========-->
 
 
