@@ -53,7 +53,7 @@ COPY api/v3.1/ /var/www/script/v3.1/
 
 
 RUN a2enmod ssl headers wsgi proxy_http rewrite && \
-    a2enconf ssl-params wsgi && \
+    a2enconf ssl-params && \
     a2ensite default-ssl antweb_calacademy_org
 
 RUN a2dismod mpm_event && \
