@@ -17,7 +17,6 @@ services:
       - 3306
     ports:
       - "127.0.0.1:3306:3306"
-  #      - "10.2.22.30:3306:3306"   # Enable when on production server. This will allow internal network access to database
 
   httpd:
     build:
@@ -33,6 +32,8 @@ services:
     build:
       context: .
       dockerfile: docker/antweb/Dockerfile
+      args:
+        ENV: PROD
     restart: unless-stopped
     hostname: antweb
     expose:

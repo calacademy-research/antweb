@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  antweb:
+    build:
+      args:
+        ENV: DEV
+    volumes:
+      - ".:/antweb/deploy"
+      # These files are normally copied to final folder, since ant deploy doesn't follow symlinks
+      # We link them using bind mounts instead so they can be modified without rebuilding the container
+      - ./etc/AppResDevDocker.properties:/usr/local/antweb/WEB-INF/classes/AntwebResources.properties
+      - ./etc/log4jAntweb.properties:/usr/local/antweb/WEB-INF/classes/log4j.properties
+      - ./WEB-INF/struts-configDbAnt.xml:/usr/local/antweb/WEB-INF/struts-configDb.xml

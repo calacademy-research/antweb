@@ -26,7 +26,8 @@ imagemagick \
 mariadb-client \
 php \
 python3 \
-zip
+zip \
+&& rm -rf /var/lib/apt/lists/*
 
 COPY --chown=tomcat docker/antweb/startup.sh /startup.sh
 COPY --chmod=0644 docker/antweb/crontab.txt /etc/cron.d/antwebcrontab
@@ -63,35 +64,25 @@ RUN keytool -genkeypair -alias tomcat -keyalg RSA -keystore keystore -storepass 
 # Container must be built from base antweb dir, or have context set to base antweb dir
 WORKDIR /antweb/deploy
 
-COPY --chown=antweb build.xml ./
-COPY --chown=antweb bin ./bin
-COPY --chown=antweb db ./db
-COPY --chown=antweb doc ./doc
-COPY --chown=antweb META-INF ./META-INF
-COPY --chown=antweb src ./src
-COPY --chown=antweb test ./test
-COPY --chown=antweb web ./web
-COPY --chown=antweb WEB-INF ./WEB-INF
-
-
-USER root
-RUN chmod 755 -R /antweb/deploy && \
-    chown -R antweb:antweb /antweb/deploy
+COPY --chown=antweb --chmod=755 build.xml ./
+COPY --chown=antweb --chmod=755 bin ./bin
+COPY --chown=antweb --chmod=755 db ./db
+COPY --chown=antweb --chmod=755 doc ./doc
+COPY --chown=antweb --chmod=755 etc ./etc
+COPY --chown=antweb --chmod=755 META-INF ./META-INF
+COPY --chown=antweb --chmod=755 src ./src
+COPY --chown=antweb --chmod=755 test ./test
+COPY --chown=antweb --chmod=755 web ./web
+COPY --chown=antweb --chmod=755 WEB-INF ./WEB-INF
 
 
 USER antweb
 
-#WORKDIR /antweb/deploy/etc
-#COPY etc/configProd.sh ./
-#RUN etc/configProd.sh
+# Specifies which resources.properties file we copy at buildtime
+ARG ENV=PROD
 
-#This is instead of running configProd.sh. If we want to use configDev.sh later, maybe switch back to scripts
-WORKDIR /antweb/deploy/WEB-INF
-COPY --chown=antweb etc/log4jAntweb.properties classes/log4j.properties
-#COPY --chown=antweb etc/AppResProd.properties classes/AntwebResources.properties
-COPY --chown=antweb etc/AppResDevDocker.properties classes/AntwebResources.properties
-#COPY --chown=antweb etc/AppResDevAntweb.properties classes/AntwebResources.properties
-COPY --chown=antweb WEB-INF/struts-configDbAnt.xml struts-configDb.xml
+WORKDIR /antweb/deploy
+RUN etc/configDocker.sh
 
 
 RUN mkdir -p /antweb/links
@@ -145,7 +136,5 @@ WORKDIR /antweb/deploy
 USER root
 
 RUN ant deploy
-
-WORKDIR /usr/local/tomcat
 
 ENTRYPOINT ["/startup.sh"]
