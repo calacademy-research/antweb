@@ -19,7 +19,7 @@ dbpass="f0rm1c6"
 backupdir="/data/antweb/backup/db"
 
 if [ -d $backupdir ]; then
-mysqldump --opt -u$dbuser -p$dbpass $dbname | gzip > $backupdir/backup-$dbname-$monthofyear.sql.gz
+mysqldump --opt -u$dbuser -p$dbpass -B $dbname | gzip > $backupdir/backup-$dbname-$monthofyear.sql.gz
 fi
 
 # remove dump from 3 months ago - so that we only have 3 months at a time
