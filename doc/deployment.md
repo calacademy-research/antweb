@@ -13,7 +13,7 @@ antweb_calacademy_org.conf:
 * Edit the ServerName to match the staging url
 * comment out the redirects in the virtualhost entries and uncomment the https upgrade
 
-etc/AppResProdDocker.properties:
+etc/AppResStageDocker.properties:
 * set correct site.imgDomainApp and site.domain
 
 
