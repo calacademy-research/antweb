@@ -1,5 +1,16 @@
-Release 8.53.1
-
+Release 8.53.2
+ WEB-INF/struts-config.xml                             | 27 ---------------------------
+ doc/fileMods.txt                                      | 30 ++++++++++++++++++++++++++++++
+ doc/release.txt                                       |  3 +++
+ src/org/calacademy/antweb/curate/ancFile/AncForm.java | 89 -----------------------------------------------------------------------------------------
+ web/curate/anc/ancEdit-body.jsp                       | 60 ------------------------------------------------------------
+ web/curate/anc/ancEdit.jsp                            | 19 -------------------
+ web/curate/anc/ancNew-body.jsp                        | 75 ---------------------------------------------------------------------------
+ web/curate/anc/ancNew.jsp                             | 19 -------------------
+ web/curate/anc/ancPageMgr-body.jsp                    |  3 +--
+ web/documentation/releaseNum.jsp                      |  2 +-
+ 10 files changed, 35 insertions(+), 292 deletions(-)
+ 
 Release 8.53.1
  WEB-INF/struts-config.xml                                          |  22 ++--------
  db/upgrade/8.0/2020-02-12.sql                                      |   3 ++
