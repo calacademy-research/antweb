@@ -7,6 +7,8 @@ web/web/*
 !web/web/bak
 !web/web/homepage
 !web/web/image
+!web/web/team
+!web/web/imageUploader
 
 
 .dockerignore
