@@ -134,6 +134,6 @@ WORKDIR /antweb/deploy
 
 USER root
 
-RUN ant deploy
+RUN ant deploy && ant clean
 
 ENTRYPOINT ["/startup.sh"]
