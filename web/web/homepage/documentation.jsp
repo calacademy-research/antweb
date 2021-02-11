@@ -58,7 +58,7 @@
 		<a href="https://www.antweb.org/countryAdm1List.do" target="_blank">List of Country names and alternate names</a></li>
 </ul>
 
-</div>
-</div>
+    </div>
+</div>	
 </tiles:put>
 </tiles:insert>

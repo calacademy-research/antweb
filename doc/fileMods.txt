@@ -1,5 +1,50 @@
-Release 8.53.1
 
+
+Release 8.54
+ doc/done.txt                                                                        |  16 ++++++++++++++++
+ doc/fileMods.txt                                                                    |  15 +++++++++++++--
+ doc/release.txt                                                                     |   3 +++
+ web/documentation/releaseNum.jsp                                                    |   2 +-
+ web/web/homepage/150CASENT0010852_Hw.jpg.bak                                        | Bin 42002 -> 0 bytes
+ web/web/homepage/Ancillary_pages.pdf                                                | Bin 0 -> 255351 bytes
+ web/web/homepage/AntWeb Imaging guidelines v01.pdf                                  | Bin 0 -> 5190694 bytes
+ web/web/homepage/AntWeb specimen data requirements_2017v2.xlsx                      | Bin 0 -> 176192 bytes
+ web/web/homepage/CASENT0006129_Hw.jpg.bak                                           | Bin 34436 -> 0 bytes
+ web/web/homepage/CASENT0010689_Hw.jpg.bak                                           | Bin 43265 -> 0 bytes
+ web/web/homepage/CASENT0010689_Pw.jpg.bak                                           | Bin 19966 -> 0 bytes
+ web/web/homepage/CASENT0010852_Hw.jpg.bak                                           | Bin 621153 -> 0 bytes
+ web/web/homepage/CASENT0012654_Hw.jpg.bak                                           | Bin 15672 -> 0 bytes
+ web/web/homepage/{FMNH_Imaging_Manual_2013.pdf.bak => FMNH_Imaging_Manual_2013.pdf} | Bin
+ web/web/homepage/Image_Picker.pdf                                                   | Bin 0 -> 360100 bytes
+ web/web/homepage/Imaging_Manual_LAS38_v02.pdf                                       | Bin 0 -> 4002098 bytes
+ web/web/homepage/Imaging_Manual_LAS38_v03.pdf                                       | Bin 0 -> 3018384 bytes
+ web/web/homepage/Imaging_Manual_LAS38_v05.pdf                                       | Bin 0 -> 2492721 bytes
+ web/web/homepage/{Photoshop_AntWeb.pdf.bak => Photoshop_AntWeb.pdf}                 | Bin 2240977 -> 2238905 bytes
+ web/web/homepage/RegionalProject species list instructions_v03.pdf                  | Bin 0 -> 455708 bytes
+ web/web/homepage/Species_list.pdf                                                   | Bin 0 -> 444624 bytes
+ web/web/homepage/Specimen data overview_v04.pdf                                     | Bin 0 -> 144116 bytes
+ web/web/homepage/Specimen_data.pdf                                                  | Bin 0 -> 358010 bytes
+ web/web/homepage/Submitting_image.pdf                                               | Bin 0 -> 657304 bytes
+ web/web/homepage/Submitting_image.pdf.bak                                           | Bin 577281 -> 0 bytes
+ web/web/homepage/Submitting_image_files_to_Antweb v10.pdf                           | Bin 0 -> 1465346 bytes
+ web/web/homepage/Submitting_image_files_to_Antweb v11.pdf                           | Bin 0 -> 1465249 bytes
+ web/web/homepage/Submitting_image_files_to_Antweb v9.pdf                            | Bin 0 -> 1466621 bytes
+ web/web/homepage/documentation.jsp                                                  |  30 ++----------------------------
+ web/web/homepage/documentationBak.jsp~                                              |  57 ---------------------------------------------------------
+
+Release 8.53.2
+ WEB-INF/struts-config.xml                             | 27 ---------------------------
+ doc/fileMods.txt                                      | 30 ++++++++++++++++++++++++++++++
+ doc/release.txt                                       |  3 +++
+ src/org/calacademy/antweb/curate/ancFile/AncForm.java | 89 -----------------------------------------------------------------------------------------
+ web/curate/anc/ancEdit-body.jsp                       | 60 ------------------------------------------------------------
+ web/curate/anc/ancEdit.jsp                            | 19 -------------------
+ web/curate/anc/ancNew-body.jsp                        | 75 ---------------------------------------------------------------------------
+ web/curate/anc/ancNew.jsp                             | 19 -------------------
+ web/curate/anc/ancPageMgr-body.jsp                    |  3 +--
+ web/documentation/releaseNum.jsp                      |  2 +-
+ 10 files changed, 35 insertions(+), 292 deletions(-)
+ 
 Release 8.53.1
  WEB-INF/struts-config.xml                                          |  22 ++--------
  db/upgrade/8.0/2020-02-12.sql                                      |   3 ++
