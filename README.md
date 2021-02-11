@@ -13,6 +13,10 @@ See doc/install.txt
 
 Prerequisites
 ---
+[Docker Engine](https://docs.docker.com/engine/install/)
+
+[Docker-Compose](https://docs.docker.com/compose/install/)
+
 
 ### (Option 1): Staging | using s3 server via VPN
 
@@ -70,10 +74,14 @@ in your `AntwebResources.properties` file.
 
 ### Download the (hopefully soon to be) sanitized database
 
-Download and unzip the database dump from antweb
+Create a full database dump from antweb and copy it to your machine
 
 ```bash
-scp user@antweb:/data/antweb/backup/db/ant-currentDump.sql.gz ./
+ssh user@antweb
+mysqldump -u antweb -p --all-databases --routines --single-transaction --quick --lock-tables=false | gzip > /tmp/ant-currentDump.sql.gz
+# Enter password:
+
+scp user@antweb:/tmp/ant-currentDump.sql.gz ./
 gunzip ant-currentDump.sql.gz
 ```
 
@@ -83,15 +91,17 @@ Load the database into a data directory mounted by the mysql container
 mkdir -p database
 CID=$(docker run -d --rm \
 	-e MYSQL_ALLOW_EMPTY_PASSWORD=1 \
-	-e MYSQL_DATABASE=antweb \
+	-e MYSQL_DATABASE=ant \
 	--mount type=bind,source="$(pwd)"/database,target=/var/lib/mysql \
 	 mysql:5)
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
-docker exec -i $CID sh -c "exec mysql -uroot antweb" < ./ant-currentDump.sql && docker stop $CID
+docker exec -i $CID sh -c "exec mysql -uroot ant" < ./ant-currentDump.sql && docker stop $CID
 ```
 
-This creates a temporary mysql container and generates the mysql data directory from the data in a folder on the machine. It'll take 5-10 minutes for the import to complete. Once it's done, you should see a `database/` directory inside antweb that's about 2.5GB.
+This creates a temporary mysql container and generates the mysql data directory from the data in a folder on the machine. It'll take 5-10 minutes for the import to complete. Once it's done, you should see a `database/`
+
+Depending on the system, you may need to run `chmod -R 777 database` if the mysql container encounters errors.
 
 \#### After sanitized database is available: create an admin antweb user
 
@@ -111,6 +121,17 @@ dev: project is mounted into /antweb/deploy so changes in the IDE are synced imm
 staging: project is compiled at build-time
 
 production: additional networking configuration
+
+### Building the containers
+
+This project uses [Docker BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) for some non-backwards compatible features.
+
+Before building the containers, set the following environment variables:
+
+```bash
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOOCKER_CLI_BUILD=1
+```
 
 
 ### For active development (modification of source code)
@@ -136,3 +157,6 @@ docker-compose exec antweb ant deploy
 
 
 Note: if you point image domain at antweb.org, can't test image uploading/progressing
+
+### Staging / production
+Take a look at [deployment.md](doc/deployment.md) for staging/production specific instructions
