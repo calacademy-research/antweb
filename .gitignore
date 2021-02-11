@@ -9,3 +9,6 @@
 
 **/__pycache__
 /.env
+
+# This is for devs who clone web/ to their local machines
+/data
