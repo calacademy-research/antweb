@@ -21,7 +21,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ant \
 ant-optional \
 cron \
-fuse \
 imagemagick \
 mariadb-client \
 php \
