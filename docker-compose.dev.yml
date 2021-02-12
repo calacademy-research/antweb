@@ -12,3 +12,10 @@ services:
       - ./etc/AppResDevDocker.properties:/usr/local/antweb/WEB-INF/classes/AntwebResources.properties
       - ./etc/log4jAntweb.properties:/usr/local/antweb/WEB-INF/classes/log4j.properties
       - ./WEB-INF/struts-configDbAnt.xml:/usr/local/antweb/WEB-INF/struts-configDb.xml
+
+  api:
+    volumes:
+      - "./api/v3.1:/api"   # Mount the api dir in the container for making edits without rebuilding
+    ports:
+    - "127.0.0.1:5000:5000"   #Expose the api outside the container to the local machine for debugging
+    command: ["--reload"]
