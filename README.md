@@ -68,6 +68,11 @@ storage_class =
 
 
 #### Project documents (~10G) (required)
+
+`rclone sync` will make the destination look identical to the source! (This includes deleting files in the destination directory).
+
+Use `rclone copy` to only download new files from the source.
+
 ```bash
 rclone sync --size-only -P --exclude={log,upload} minio:antweb/web/ data/web/
 
@@ -75,7 +80,7 @@ rclone sync --size-only -P --exclude={log,upload} minio:antweb/web/ data/web/
 
 #### Images (~1.6 TB) (optional)
 ```bash
-rclone sync --size-only -P minio:antweb/images/ data/images/
+rclone sync --size-only -P --checkers 32 --transfers 32 --fast-list minio:antweb/images images
 ```
 
 
@@ -119,6 +124,9 @@ CID=$(docker run -d --rm \
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
 docker exec -i $CID sh -c "exec mysql -uroot ant" < ./ant-currentDump.sql && docker stop $CID
+
+# Remove the dump to reduce docker daemon build time
+rm ant-currentDump.sql
 ```
 
 This creates a temporary mysql container and generates the mysql data directory from the data in a folder on the machine. It'll take 5-10 minutes for the import to complete. Once it's done, you should see a `database/`
@@ -182,3 +190,9 @@ Note: if you point image domain at antweb.org, can't test image uploading/progre
 
 ### Staging / production
 Take a look at [deployment.md](doc/deployment.md) for staging/production specific instructions
+
+The antweb bucket is mounted at `/mnt/antweb`
+
+```bash
+export ANTWEB_BUCKET_PATH=$HOME/volumes/antweb 
+```
