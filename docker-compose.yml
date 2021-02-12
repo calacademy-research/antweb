@@ -27,6 +27,14 @@ services:
     ports:
       - "80:80"
       - "443:443"
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+
+    restart: unless-stopped
+    expose:
+      - 5000
 
   antweb:
     build:
