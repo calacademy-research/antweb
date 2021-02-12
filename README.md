@@ -40,20 +40,42 @@ echo ANTWEB_S3FS_KEY=$(printenv ANTWEB_S3FS_KEY) >> .env
 
 ### (Option 2): Development | downloading files to local machine
 
-
-
-Use `rsync` to copy and synchronize web data from the server while connected to the VPN
-
 *Note: repeat this process every week to fetch latest changes*
+
+Use `rclone` to copy and synchronize web data from the server while connected to the VPN.
+
+If you're on Ubuntu 18.04, get rclone from the script on the site, not from apt.
+
+To configure rclone, add the following to the file `~/.config/rclone/rclone.conf`.
+
+In the lastpass note "Minio Bucket Credentials", copy the 48 character key after "antweb:"
+
+Replace `SECRET_ACCESS_KEY` with the antweb key.
+
+```
+$ cat ~/.config/rclone/rclone.conf
+[minio]
+env_auth = false
+access_key_id = antweb
+secret_access_key = SECRET_ACCESS_KEY
+region = us-east-1
+endpoint = https://slevin.calacademy.org:9000
+location_constraint =
+acl =
+server_side_encryption =
+storage_class =
+```
+
 
 #### Project documents (~10G) (required)
 ```bash
-rsync -ah --info=progress2 --exclude={'log/*', 'upload/*'} user@antweb:/mnt/antweb/web data/web
+rclone sync --size-only -P --exclude={log,upload} minio:antweb/web/ data/web/
+
 ```
 
 #### Images (~1.6 TB) (optional)
 ```bash
-rsync -ah --info=progress2 user@antweb:/mnt/antweb/images data/images
+rclone sync --size-only -P minio:antweb/images/ data/images/
 ```
 
 
