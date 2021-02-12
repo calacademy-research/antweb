@@ -275,6 +275,7 @@ public abstract class AntwebProps {
     
     public static String s_domainApp = null;
     public static String s_secureDomainApp = null;
+    public static String s_apiUrl = null;
 
     public static String getInsecureDomainApp() {
         String domain = AntwebProps.getProp("site.domain");
@@ -364,6 +365,35 @@ public abstract class AntwebProps {
         s_secureDomainApp = domainApp;
         return domainApp;    
     } 
+        
+    /**
+     * Get the url for the API.
+     * <p>
+     * Can either be a path from the domain, like: site.apiUrl=/v3.1
+     * or a complete url, like: site.apiUrl=api.antweb.org
+     */
+    public static String getApiUrl() {
+
+        if (s_apiUrl != null) return s_apiUrl;
+
+        String apiUrl = AntwebProps.getProp("site.apiUrl");
+
+        if (apiUrl == null) {
+            A.log("site.apiUrl was null!");
+            s_apiUrl = "https://antweb.org/v3.1";
+            return s_apiUrl;
+        }
+
+        if (apiUrl.startsWith("/")) {
+            s_apiUrl = getDomainApp() + apiUrl;
+        } else if (apiUrl.startsWith("http")) {
+            s_apiUrl = apiUrl;
+        }
+
+        A.log("getApiUrl() apiDomainApp:" + s_apiUrl);
+
+        return s_apiUrl;
+    }
         
         
 	public static String getGoogleEarthURI() {

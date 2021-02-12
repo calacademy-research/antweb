@@ -5,8 +5,9 @@
 <% 
   //String apiDomainApp  = "http://api.antweb.org/v3.1";
   //String apiDomainApp = "https://10.2.22.30/v3.1";
-  String apiDomainApp = "https://antweb.org/v3.1";
-  
+//  String apiDomainApp = "https://antweb.org/v3.1";
+  String apiDomainApp = AntwebProps.getApiUrl();
+
   if (AntwebProps.isDevMode()) {
     apiDomainApp = "http://localhost:5000";  
   }
