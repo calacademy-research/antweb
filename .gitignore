@@ -14,3 +14,4 @@
 /data
 
 docker-compose.override.yml
+/logs/

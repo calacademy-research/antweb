@@ -2,6 +2,7 @@
 .git/
 api/
 database/
+logs/
 
 web/web/*
 !web/web/bak

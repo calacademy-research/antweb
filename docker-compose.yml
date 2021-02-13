@@ -54,3 +54,4 @@ services:
     # Mount the s3fs bucket for serving files
     volumes:
       - ${ANTWEB_BUCKET_PATH:-/mnt/antweb}:/mnt/antweb
+      - ./logs:/usr/local/tomcat/logs
