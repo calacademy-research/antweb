@@ -123,33 +123,30 @@ ssh user@antweb
 mysqldump -u antweb -p --all-databases --routines --single-transaction --quick --lock-tables=false | gzip > /tmp/ant-currentDump.sql.gz
 # Enter password:
 
-cd antweb
 
 scp user@antweb:/tmp/ant-currentDump.sql.gz ./
 gunzip ant-currentDump.sql.gz
 ```
 
-Load the database into a data directory mounted by the mysql container
+Load the database into docker volume mounted by the mysql container
 
 ```bash
-cd antweb
-mkdir -p database
+docker volume create antweb_database
+
 CID=$(docker run -d --rm \
 	-e MYSQL_ALLOW_EMPTY_PASSWORD=1 \
 	-e MYSQL_DATABASE=ant \
-	--mount type=bind,source="$(pwd)"/database,target=/var/lib/mysql \
+	--mount source=antweb_database,target=/var/lib/mysql \
 	 mysql:5)
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
 docker exec -i $CID sh -c "exec mysql -uroot ant" < ./ant-currentDump.sql && docker stop $CID
 
-# Remove the dump to reduce docker daemon build time
+# If ant-currentDump.sql is in the antweb directory, remove the dump to reduce docker daemon build time
 rm ant-currentDump.sql
 ```
 
-This creates a temporary mysql container and generates the mysql data directory from the data in a folder on the machine. It'll take 5-10 minutes for the import to complete. Once it's done, you should see a `database/` with mysql data inside.
-
-Depending on the system, you may need to run `chmod -R 777 database` if the mysql container encounters errors.
+This creates a temporary mysql container and loads the database dump into a docker-managed volume. This volume persists after the container is removed.  It'll take 5-10 minutes for the import to complete. 
 
 \#### After sanitized database is available: create an admin antweb user
 
@@ -178,7 +175,7 @@ Before building the containers, set the following environment variables:
 
 ```bash
 export DOCKER_BUILDKIT=1
-export COMPOSE_DOOCKER_CLI_BUILD=1
+export COMPOSE_DOCKER_CLI_BUILD=1
 ```
 
 

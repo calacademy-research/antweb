@@ -8,11 +8,10 @@ services:
 
     volumes:
       - ./docker/mysql/mysql.cnf:/etc/mysql/conf.d/custom.cnf
-      - ./database:/var/lib/mysql:delegated
+      - antweb_database:/var/lib/mysql
     environment:
       TZ: America/Los_Angeles
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
-    user: "1000:1000"
     expose:
       - 3306
     ports:
@@ -55,3 +54,7 @@ services:
     volumes:
       - ${ANTWEB_BUCKET_PATH:-/mnt/antweb}:/mnt/antweb
       - ./logs:/usr/local/tomcat/logs
+
+volumes:
+  antweb_database:
+    external: true
