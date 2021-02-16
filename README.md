@@ -11,11 +11,18 @@ See doc/toDo.txt
 
 See doc/install.txt
 
-Prerequisites
+Installation
 ---
 [Docker Engine](https://docs.docker.com/engine/install/)
 
 [Docker-Compose](https://docs.docker.com/compose/install/)
+
+
+### Clone the repo
+
+```bash
+git clone git@github.com:calacademy-research/antweb.git
+```
 
 
 ### (Option 1): Staging | using s3 server via VPN
@@ -69,18 +76,23 @@ storage_class =
 
 #### Project documents (~10G) (required)
 
+
 `rclone sync` will make the destination look identical to the source! (This includes deleting files in the destination directory).
 
-Use `rclone copy` to only download new files from the source.
+If you've made changes to these directories, `rclone copy` instead to only download new files from the source.
 
 ```bash
+cd antweb
+mkdir -p data/web
 rclone sync --size-only -P --exclude={log,upload} minio:antweb/web/ data/web/
 
 ```
 
 #### Images (~1.6 TB) (optional)
 ```bash
-rclone sync --size-only -P --checkers 32 --transfers 32 --fast-list minio:antweb/images images
+cd antweb
+mkdir -p data/images
+rclone sync --size-only -P --checkers 32 --transfers 32 --fast-list minio:antweb/images data/images
 ```
 
 
@@ -91,7 +103,10 @@ using the `ANTWEB_BUCKET_PATH` environment variable.
 
 docker-compose will read the .env file in the project directory, mounting the directory automatically.
 
+Inside the antweb directory:
+
 ```bash
+cd antweb
 export ANTWEB_BUCKET_PATH=$(pwd)/data
 echo ANTWEB_BUCKET_PATH=$(printenv ANTWEB_BUCKET_PATH) >> .env
 ```
@@ -108,6 +123,8 @@ ssh user@antweb
 mysqldump -u antweb -p --all-databases --routines --single-transaction --quick --lock-tables=false | gzip > /tmp/ant-currentDump.sql.gz
 # Enter password:
 
+cd antweb
+
 scp user@antweb:/tmp/ant-currentDump.sql.gz ./
 gunzip ant-currentDump.sql.gz
 ```
@@ -115,6 +132,7 @@ gunzip ant-currentDump.sql.gz
 Load the database into a data directory mounted by the mysql container
 
 ```bash
+cd antweb
 mkdir -p database
 CID=$(docker run -d --rm \
 	-e MYSQL_ALLOW_EMPTY_PASSWORD=1 \
@@ -129,7 +147,7 @@ docker exec -i $CID sh -c "exec mysql -uroot ant" < ./ant-currentDump.sql && doc
 rm ant-currentDump.sql
 ```
 
-This creates a temporary mysql container and generates the mysql data directory from the data in a folder on the machine. It'll take 5-10 minutes for the import to complete. Once it's done, you should see a `database/`
+This creates a temporary mysql container and generates the mysql data directory from the data in a folder on the machine. It'll take 5-10 minutes for the import to complete. Once it's done, you should see a `database/` with mysql data inside.
 
 Depending on the system, you may need to run `chmod -R 777 database` if the mysql container encounters errors.
 
