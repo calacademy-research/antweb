@@ -206,7 +206,7 @@ Examples of species with images that don't have h1 images:
                   //  + " position:" + position + " imgCount:" + imgCount);
                   --position;  // If the image doesn't have an image, counter the counter incrementation.
                   --imgCount;  // hack to figure out the count after the fact
-                  A.log("Subtracted 1 from imageCount:" + imgCount);
+                  //A.log("Subtracted 1 from imageCount:" + imgCount);
               } else {             
                   //A.log("taxonChildImageSet.jsp case where img != null.  Taxon:" + thisChild.getTaxonName() + " pos:" + position);
 
@@ -284,7 +284,7 @@ Examples of species with images that don't have h1 images:
             for (SpecimenImage specimenImage : thisChild.getImagesSorted("h|h1,p|p1,d|d1,l|l1,*",true)) {
               if (!"none".equals(specimenImage.getThumbview())) {
                 if (specimenImage.getCode() == null) { 
-                  A.log("taxonChildImageSet() code is null for thisChild:" + thisChild + " specimenImage:" + specimenImage);
+                  // A.log("taxonChildImageSet() code is null for thisChild:" + thisChild + " specimenImage:" + specimenImage);
                 } else {
                   //  if (specimenImage.getCode().contains("0188199")) A.log("taxonChildImageSet() image:" + specimenImage);
                   ++ headShotCount;

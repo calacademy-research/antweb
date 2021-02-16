@@ -13735,15 +13735,13 @@ Feb 9. 2hrs.
   Anc File Mgr still works.
   Source tree cleaned.
 
-Feb 11. 1hr.
+Feb 11. 2hr.
   Review of Dash's new server.
   Fix of documentation.jsp.
+  Clean up of other directories.
 
   
-      
-  
 
-  
   
 
 
