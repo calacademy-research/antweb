@@ -1,7 +1,6 @@
 .idea/
 .git/
 api/
-database/
 logs/
 
 web/web/*
