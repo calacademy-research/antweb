@@ -1,3 +1,10 @@
+Release 8.54.2
+  Handle TaxaAction where Adm1 is not found. Performance improvement.
+
+Release 8.54.1
+  Remove web/bak from source tree
+  Prune the live web directory.
+
 Release 8.54
   Add homepage content to source tree.
 

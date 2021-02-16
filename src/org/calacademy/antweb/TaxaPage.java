@@ -60,7 +60,7 @@ public class TaxaPage implements Serializable {
 	public void fetchChildren(boolean withImages, boolean withTaxa, boolean withSpecimen, boolean withFossil, String caste, StatusSet statusSet)
 	  throws SQLException 
 	{
-	    Overview overview = getOverview();  // Why not a parameter? Be nice to have the reques as well for diagnoses.
+	    Overview overview = getOverview();  // Why not a parameter? Be nice to have the request as well for diagnoses.
 
 		if (overview.getName().equals("allantwebants") && "species".equals(rank)) {
 		  s_log.warn("fetchChildren() Expensive query... all species of allantwebants. withImages:" + withImages + " withTaxa:" + withTaxa
@@ -68,7 +68,14 @@ public class TaxaPage implements Serializable {
           //AntwebUtil.logShortStackTrace();
 			// at org.calacademy.antweb.TaxaPage.fetchChildren(TaxaPage.java:67)
 			// at org.calacademy.antweb.TaxaPageAction.execute(TaxaPageAction.java:179)
-	    }
+
+			// TaxaPage - fetchChildren() Expensive query... all species of allantwebants. withImages:true withTaxa:true 
+			//   withSpecimen:false withFossil:true caste:default statusSet:org.calacademy.antweb.StatusSet@3a25716b			
+            // https://www.antweb.org/taxonomicPage.do?rank=species&images=true&countryName=Russia&adm1Name=Volgograd2121121121212.1
+	    } else {
+			A.log("fetchChildren() overview:" + overview + " overview class:" + overview.getClass()+ "withImages:" + withImages + " withTaxa:" + withTaxa
+					+ " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet);
+		}
 	
         long now = new java.util.Date().getTime();
 	    ArrayList<Taxon> theseChildren = new ArrayList();
