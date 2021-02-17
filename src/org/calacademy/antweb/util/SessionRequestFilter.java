@@ -136,15 +136,16 @@ public class SessionRequestFilter implements Filter {
         
     public void init(FilterConfig filterConfig) throws ServletException {
         s_log.warn("init() - Server is initializing...");
-		System.setProperty("jsse.enableSNIExtension", "false");       
-		
+		System.setProperty("jsse.enableSNIExtension", "false");
+
+        DataSource ds = null;
         Connection connection = null;
         try {
-		  DataSource ds = DBUtil.getDataSource();
+		  ds = DBUtil.getDataSource();
 		  connection = ds.getConnection(); 
 		  AntwebMgr.populate(connection, true, true); // Trusted to close the connection
         } catch (SQLException e) {
-          s_log.error("init() e:" + e);
+          s_log.error("init() e:" + e + " datasource:" + ds + " connection:" + connection);
         }
 
         long freeSpace = AntwebSystem.getFreeSpace();        

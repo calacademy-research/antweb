@@ -20,20 +20,19 @@
 //  Feb2020    
 //    TaxaPage taxaPage = (TaxaPage) session.getAttribute("taxaPage");     
       TaxaPage taxaPage = (TaxaPage) request.getAttribute("taxaPage");     
-             
+
+    // An overview is a Museum, Bioregion, Geolocale, Project.
+    Overview overview = OverviewMgr.getOverview(request);
+    boolean isMuseum = overview instanceof Museum;
+    boolean isGeolocale = overview instanceof Geolocale;
+    boolean isProject = overview instanceof Project;
+    boolean isBioregion = overview instanceof Bioregion;
+
     String pageRank = taxaPage.getRank();
     //String georank = taxaPage.getGeorank();
     //A.log("taxonomicPage-body.jsp pageRank:" + pageRank);
     
     String pageType = "taxaPage";
-                 
-    // An overview is a Museum, Bioregion, Geolocale, Project.
-    Overview overview = taxaPage.getOverview();     
-    
-    boolean isMuseum = overview instanceof Museum;
-    boolean isGeolocale = overview instanceof Geolocale;
-    boolean isProject = overview instanceof Project;
-    boolean isBioregion = overview instanceof Bioregion;
 
     boolean displayGlobal = !isProject && (Rank.SPECIES.equals(pageRank)); // was: isGeolocale && 
     //A.log("taxonomicPage-body.jsp displayGlobal:" + displayGlobal + " pageRank:" + pageRank);

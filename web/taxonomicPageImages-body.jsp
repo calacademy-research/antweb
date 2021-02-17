@@ -43,8 +43,7 @@
     }
 
     // An overview is a Museum, Bioregion, Geolocale, (Project?).
-    Overview overview = taxaPage.getOverview();
-    
+    Overview overview = OverviewMgr.getOverview(request);
     //A.log("taxonomicPageImages-body.jsp overview:" + overview);
 
     boolean isOnlyShowUnImaged = false;

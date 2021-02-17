@@ -10,7 +10,9 @@ import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-    
+
+import javax.servlet.http.*;
+
 /** Class Taxon keeps track of the information about a specific taxon */
 public class TaxaPage implements Serializable {
 
@@ -18,11 +20,13 @@ public class TaxaPage implements Serializable {
 
 	private String rank;
 	private ArrayList<Taxon> children;
-	private Connection connection;
+//	private Connection connection;
 	private String browserParams;
 	private int childrenCount;
 	private String pluralRank;
-	
+
+	private HttpServletRequest request = null;
+
     private Overview overview;
 
 	private int limit;  // This allows a throttling of the results for testing.
@@ -33,7 +37,6 @@ public class TaxaPage implements Serializable {
 
     private String statusSetStr = null;
     private String statusSetSize = null;
-    
 
 	public int getChildrenCount() {
 		if (children != null) {
@@ -52,19 +55,19 @@ public class TaxaPage implements Serializable {
 		this.children = children;
 	}
 
-	public void setChildren() throws SQLException {
+	public void setChildren(Connection connection, Overview overview, String rank) throws SQLException {
 	    // Called from EOL
-		fetchChildren(false, true, false, true, Caste.DEFAULT, new StatusSet());
+		fetchChildren(connection, overview, rank, false, true, false, true, Caste.DEFAULT, new StatusSet());
 	}
 
-	public void fetchChildren(boolean withImages, boolean withTaxa, boolean withSpecimen, boolean withFossil, String caste, StatusSet statusSet)
+	public void fetchChildren(Connection connection, Overview overview, String rank, boolean withImages, boolean withTaxa, boolean withSpecimen, boolean withFossil, String caste, StatusSet statusSet)
 	  throws SQLException 
 	{
-	    Overview overview = getOverview();  // Why not a parameter? Be nice to have the request as well for diagnoses.
-
 		if (overview.getName().equals("allantwebants") && "species".equals(rank)) {
-		  s_log.warn("fetchChildren() Expensive query... all species of allantwebants. withImages:" + withImages + " withTaxa:" + withTaxa
-				  + " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet);
+          String message = "fetchChildren() Expensive query... overview:" + overview + " rank:" + rank + " withImages:" + withImages + " withTaxa:" + withTaxa
+				  + " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet;
+          message += " target:" + HttpUtil.getTarget(getRequest());
+		  s_log.warn(message);
           //AntwebUtil.logShortStackTrace();
 			// at org.calacademy.antweb.TaxaPage.fetchChildren(TaxaPage.java:67)
 			// at org.calacademy.antweb.TaxaPageAction.execute(TaxaPageAction.java:179)
@@ -119,9 +122,9 @@ public class TaxaPage implements Serializable {
 		  }
 
           fetchChildrenQuery = taxaQuery;
-          A.log("FetchChildren() overview:" + getOverview().getClass() + " query:" + taxaQuery);
+          A.log("FetchChildren() overview:" + overview.getClass() + " query:" + taxaQuery);
         }
-        //A.log("fetchChildren() withSpecimen:" + withSpecimen + " overview:" + getOverview().getClass());        
+        //A.log("fetchChildren() withSpecimen:" + withSpecimen + " overview:" + overview.getClass());
 
         if (withSpecimen) {
           if (taxaQuery != null) fetchChildrenQuery += " union ";
@@ -138,16 +141,16 @@ public class TaxaPage implements Serializable {
           
           specimenQuery += " from specimen s ";
           
-          if (getOverview() instanceof Country) {
-            specimenQuery += " where country = '" + getOverview() + "'";
+          if (overview instanceof Country) {
+            specimenQuery += " where country = '" + overview+ "'";
           }
-          if (getOverview() instanceof Adm1) {
-            specimenQuery += " where adm1 = '" + getOverview() + "'";
+          if (overview instanceof Adm1) {
+            specimenQuery += " where adm1 = '" + overview + "'";
           }
 
-          if (getOverview() instanceof Project) {
-            specimenQuery += " where ( country = '" + ((Project) getOverview()).getTitle() + "'"
-              + " or adm1 = '" + ((Project) getOverview()).getTitle() + "' )" ;
+          if (overview instanceof Project) {
+            specimenQuery += " where ( country = '" + ((Project) overview).getTitle() + "'"
+              + " or adm1 = '" + ((Project) overview).getTitle() + "' )" ;
           }
 
           fetchChildrenQuery += specimenQuery;
@@ -169,7 +172,7 @@ public class TaxaPage implements Serializable {
         
             TaxonDb taxonDb = new TaxonDb(connection);
             
-            stmt = DBUtil.getStatement(getConnection(), "fetchChildren()"); 
+            stmt = DBUtil.getStatement(connection, "fetchChildren()");
             rset = stmt.executeQuery(fetchChildrenQuery);
 
             A.log("fetchChidren() query:" + fetchChildrenQuery);
@@ -224,7 +227,7 @@ public class TaxaPage implements Serializable {
 
                   String projectName = null;
                 
-                  //if (getOverview().getProject() != null) projectName = getOverview().getProject().getName();
+                  //if (overview.getProject() != null) projectName = overview.getProject().getName();
                   child.generateBrowserParams(overview);
                 
                   child.setConnection(connection);
@@ -235,11 +238,11 @@ public class TaxaPage implements Serializable {
                   child.setDetails(withImages);
 
                   if (withImages) {
-                    child.setImages(getOverview(), caste); // Will be overriden?
-                    //A.log("fetchChildren(5) withImages:" + withImages + " caste:" + caste + " overview:" + getOverview() + " child:" + child.getClass() + " imageCount:" + child.getImageCount() + " images:" + child.getImages());
+                    child.setImages(overview, caste); // Will be overriden?
+                    //A.log("fetchChildren(5) withImages:" + withImages + " caste:" + caste + " overview:" + overview + " child:" + child.getClass() + " imageCount:" + child.getImageCount() + " images:" + child.getImages());
                   }
 
-                  child.initTaxonSet(getOverview());   
+                  child.initTaxonSet(overview);
 
                   //A.log("fetchChildren() projTaxon:" + child.getProjTaxon().toString());                                        
                   //if (child.getImageCount() < 4) A.log("fetchChildren() class:" + child.getClass() + " withImages:" + withImages + " imageCount:" + child.getImageCount() + " child:" + child);                                        
@@ -270,6 +273,14 @@ public class TaxaPage implements Serializable {
 		return children;
 	}
 
+
+	public String getBrowserParams() {
+		return browserParams;
+	}
+	public void setBrowserParams(String rank, Overview overview) {
+        browserParams = "rank=" + rank + "&" + overview.getParams();
+	}
+	/*
     public String getBrowserParams() {
       // ?subfamily=myrmicinae&genus=crematogaster&project=allantwebants&rank=genus&pr=i
         String params = "";
@@ -284,19 +295,12 @@ public class TaxaPage implements Serializable {
         if (getOverview() != null) {
             params += "&" + getOverview().getParams();
         }
-        /*
-         else {
-          if (getProject() != null) {
-            params += "&project=" + ProjectMgr.getUseName(getProject());
-          }         
-        } */
-        return params;   
+        return params;
     }
-
+*/
 	public String getPluralRank() {
 	    return Rank.getPluralRank(rank);
 	}
-
 	public void setPluralRank(String pluralRank) {
 		this.pluralRank = pluralRank;
 	}
@@ -307,36 +311,36 @@ public class TaxaPage implements Serializable {
 	public void setStatusSetStr(String statusSetStr) {
 		this.statusSetStr = statusSetStr;
 	}    
+
 	public String getStatusSetSize() {
 	    return statusSetSize;
 	}
 	public void setStatusSetSize(String statusSetSize) {
 		this.statusSetSize = statusSetSize;
 	}
-	
-    public Overview getOverview() {
-      return overview;
-    }
-    public void setOverview(Overview overview) {
-      this.overview = overview;
-    }
-    
+
+	public HttpServletRequest getRequest() {
+		return this.request;
+	}
+	public void setRequest(HttpServletRequest request) {
+		this.request = request;
+	}
+
+	/*
 	public String getRank() {
 		return rank;
 	}
-
 	public void setRank(String rank) {
 		this.rank = rank;
 	}
-
-	public Connection getConnection() {
+*/
+/*	public Connection getConnection() {
 		return connection;
 	}
-
 	public void setConnection(Connection connection) {
 		this.connection = connection;
 	}
-
+*/
     public void setLimit(int limit) {
       this.limit = limit;
     }    

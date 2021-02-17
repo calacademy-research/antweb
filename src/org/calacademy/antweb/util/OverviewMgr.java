@@ -32,7 +32,26 @@ public class OverviewMgr {
       request.setAttribute("overview", overview);       
       request.getSession().setAttribute("overview", overview);
     }
+/*
+    // Do not default to AllAntwebAnts!
+    public static Overview getAndSetOverviewSafe(HttpServletRequest request) {
+        Overview lastOverview = (Overview) request.getSession().getAttribute("overview");
+        request.getSession().setAttribute("lastOverview", lastOverview);
 
+        Overview overview = null;
+        try {
+            overview = OverviewMgr.findOverview(request);
+        } catch (AntwebException e) {
+            //s_log.warn("getAndSetOverview() e:" + e);
+            return null;
+        }
+
+        // if (overview == null) overview = new Project(Project.ALLANTWEBANTS);
+
+        OverviewMgr.setOverview(request, overview);
+        return overview;
+    }
+*/
     // This can and should be called once per request. Fetch and set. Also set lastOverview.
     public static Overview getAndSetOverview(HttpServletRequest request) {
         Overview lastOverview = (Overview) request.getSession().getAttribute("overview");
@@ -109,13 +128,13 @@ public class OverviewMgr {
  								      countryName = request.getParameter("country");
                                     }
                                     overview = GeolocaleMgr.getAdm1(adm1Name, countryName);
-                                    if (overview == null) {
-                                       // Apparently adm1Name not found. Return country instead. Otherwise would be very poor performance.
-                                        // The overview would end up being allantwebants. Why? To be resolved. Other misses could trigger?
-                                        overview = GeolocaleMgr.getCountry(countryName);
-                                        s_log.warn("findOverview() Serious performance issue? See TaxaPage.fetchChildren() overview:" + overview + " countryName:" + countryName + " adm1Name:" + adm1Name);
-                                    }
-                                  }
+                                        if (overview == null) {
+                                            // Apparently adm1Name not found. Return country instead. Otherwise would be very poor performance.
+                                            // The overview would end up being allantwebants. Why? To be resolved. Other misses could trigger?
+                                            overview = GeolocaleMgr.getCountry(countryName);
+                                            s_log.warn("findOverview() Serious performance issue? See TaxaPage.fetchChildren() overview:" + overview + " countryName:" + countryName + " adm1Name:" + adm1Name);
+                                        }
+								  }
                                   //A.log("getOverview() adm1Name:" + adm1Name + " country:" + countryName + " overview:" + overview); // + " country:" + ((Adm1)overview).getParent());								  
 								} else {      
 									String bioregionName = request.getParameter("bioregionName");

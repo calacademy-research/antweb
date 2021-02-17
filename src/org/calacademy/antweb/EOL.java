@@ -59,18 +59,13 @@ public class EOL {
     private ArrayList getAllTaxa(Connection connection, String rank) {
         ArrayList theTaxa = new ArrayList();
         TaxaPage taxaPage = new TaxaPage();
-        taxaPage.setRank(rank);
         Project project = ProjectMgr.getProject("worldants");
-        taxaPage.setOverview(project);
-
-        taxaPage.setConnection(connection);
 
         if (AntwebProps.isDevMode()) taxaPage.setLimit(s_devModeLimit);
-
         int i = 0;
         
         try {
-          taxaPage.setChildren();
+          taxaPage.setChildren(connection, project, rank);
           theTaxa = taxaPage.getChildren();
           s_log.warn("rank " + rank + " found " + theTaxa.size() + " items");
           Iterator childIter = theTaxa.iterator();
