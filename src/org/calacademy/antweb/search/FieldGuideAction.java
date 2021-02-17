@@ -176,7 +176,11 @@ public final class FieldGuideAction extends Action {
 				boolean withImages = true;     // Mark.  Temp.  True creates performance problems;
 				if (Project.ALLANTWEBANTS.equals(overview)) withImages = false;
                 StatusSet statusSet = new StatusSet(StatusSet.ALL_DETERMINED);
-				taxaPage.fetchChildren(connection, overview, rank, false, true, false, false, caste, statusSet);
+				String successMsg = taxaPage.fetchChildren(connection, overview, rank, false, true, false, false, caste, statusSet);
+                if (successMsg != null) {
+                    request.setAttribute("message", successMsg);
+                    return mapping.findForward("message");
+                }
                 // With withImages set, a request like this will take 2/5 minutes...  Really, still?
                 //   http://localhost/antweb/taxonomicPage.do?rank=genus&project=allantwebants
 				fieldGuide.setTitle("of " + Rank.getPluralRank(rank) + " in " + overview.getTitle());				

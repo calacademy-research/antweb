@@ -175,8 +175,11 @@ public final class TaxaPageAction extends Action {
 
             //taxaPage.setOverview(overview);
             //A.log("execute() overview:" + overview);
-            taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, new StatusSet(statusSetStr)); //, orderBy);
-
+            String successMsg = taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, new StatusSet(statusSetStr)); //, orderBy);
+            if (successMsg != null) {
+                request.setAttribute("message", successMsg);
+                return mapping.findForward("message");
+            }
             /* 
               With withImages set, a request like this will take 2/5 minutes...  Really?
               http://localhost/antweb/taxonomicPage.do?rank=genus&project=allantwebants                

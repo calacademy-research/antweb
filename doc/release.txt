@@ -1,3 +1,9 @@
+Release 8.54.4
+  Taxonomic page expensive queries averted.
+
+Release 8.54.3
+  Log the target if a non-performant query happens on a taxonomic page.
+
 Release 8.54.2
   Handle TaxaAction where Adm1 is not found. Performance improvement.
 
