@@ -1,3 +1,13 @@
+Release 8.54.4
+ doc/fileMods.txt                                       | 17 ++++++++++++++++-
+ doc/release.txt                                        |  6 ++++++
+ src/org/calacademy/antweb/TaxaPage.java                |  9 +++++----
+ src/org/calacademy/antweb/TaxaPageAction.java          |  7 +++++--
+ src/org/calacademy/antweb/search/FieldGuideAction.java |  6 +++++-
+ src/org/calacademy/antweb/util/OverviewMgr.java        | 12 ++++++------
+ web/documentation/releaseNum.jsp                       |  2 +-
+ 7 files changed, 44 insertions(+), 15 deletions(-)
+ 
 Release 8.54.3
  .gitignore                                               |  1 +
  doc/done.txt                                             | 57 +++++++++++++++++++++++++++++++++++++++++++++++++++++++--
