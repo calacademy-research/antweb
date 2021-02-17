@@ -78,6 +78,7 @@ public final class TaxaPageAction extends Action {
         }
 
         TaxaPage taxaPage = new TaxaPage();
+        taxaPage.setRequest(request);
         if (rank != null) {
           java.sql.Connection connection = null;
           String connName = "TaxaPageAction.execute()" + AntwebUtil.getRandomNumber();
@@ -162,9 +163,8 @@ public final class TaxaPageAction extends Action {
 			 
 			String statusSetStr = StatusSet.getStatusSet(request, overview);
 			String statusSetSize = StatusSet.getStatusSetSize(request);
-
-            taxaPage.setStatusSetStr(statusSetStr);
-            taxaPage.setStatusSetSize(statusSetSize);
+//            taxaPage.setStatusSetStr(statusSetStr);
+//            taxaPage.setStatusSetSize(statusSetSize);
             
             if (Rank.SUBSPECIES.equals(rank)) {
                 String message = "Subspecies not supported for taxonomic page. Use species.";
@@ -172,11 +172,10 @@ public final class TaxaPageAction extends Action {
                 request.setAttribute("message", message);
                 return (mapping.findForward("message"));            
             }
-            taxaPage.setRank(rank);
-            taxaPage.setConnection(connection);
-            taxaPage.setOverview(overview);
+
+            //taxaPage.setOverview(overview);
             //A.log("execute() overview:" + overview);
-            taxaPage.fetchChildren(withImages, withTaxa, withSpecimen, true, caste, new StatusSet(statusSetStr)); //, orderBy);
+            taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, new StatusSet(statusSetStr)); //, orderBy);
 
             /* 
               With withImages set, a request like this will take 2/5 minutes...  Really?

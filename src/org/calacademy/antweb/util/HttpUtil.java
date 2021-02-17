@@ -902,6 +902,7 @@ public abstract class HttpUtil {
     }
         
     public static String getTarget(HttpServletRequest request) {
+        if (request == null) return "";
       String target = "";
       String queryString = HttpUtil.getQueryString(request);
       if (queryString == null) {

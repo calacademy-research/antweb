@@ -13735,10 +13735,24 @@ Feb 9. 2hrs.
   Anc File Mgr still works.
   Source tree cleaned.
 
-Feb 11. 2hr.
+Feb 11. 1hr.
   Review of Dash's new server.
   Fix of documentation.jsp.
-  Clean up of other directories.
+
+  
+Feb 12. 3hrs.
+  Testing of new server.
+  Meet with Dash
+  Work on Git.
+
+Feb 16. 5hrs.
+  Meet with Dash.  
+  Resolve issue Dash identified. Adm1 not found in TaxonomicPage.do     
+    Refactor the fetchChildren method.
+    Handle and add request to logs.  
+  Resolve issue with Git.
+  Deploy.
+
 
 Feb 12.
   Testing of new server.  
@@ -13773,11 +13787,14 @@ Automatic generated content:
 
 
 
+  
 
+  
+  
 
+  
 
-
-
+  
   
 
 

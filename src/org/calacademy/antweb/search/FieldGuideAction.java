@@ -172,14 +172,11 @@ public final class FieldGuideAction extends Action {
                 A.log("execute() rank:" + rank + " overview:" + overview + " caste:" + caste);			
          		
          		TaxaPage taxaPage = new TaxaPage();
-				taxaPage.setRank(rank);
-				taxaPage.setConnection(connection);
-				taxaPage.setOverview(overview);
-				
+
 				boolean withImages = true;     // Mark.  Temp.  True creates performance problems;
 				if (Project.ALLANTWEBANTS.equals(overview)) withImages = false;
                 StatusSet statusSet = new StatusSet(StatusSet.ALL_DETERMINED);
-				taxaPage.fetchChildren(false, true, false, false, caste, statusSet);
+				taxaPage.fetchChildren(connection, overview, rank, false, true, false, false, caste, statusSet);
                 // With withImages set, a request like this will take 2/5 minutes...  Really, still?
                 //   http://localhost/antweb/taxonomicPage.do?rank=genus&project=allantwebants
 				fieldGuide.setTitle("of " + Rank.getPluralRank(rank) + " in " + overview.getTitle());				

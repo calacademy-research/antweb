@@ -8,11 +8,11 @@
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 
-<% // Feb2020
-   TaxaPage taxaPage = (TaxaPage) request.getAttribute("taxaPage");  
+<%
+   Overview overview = OverviewMgr.getOverview(request);
+   TaxaPage taxaPage = (TaxaPage) request.getAttribute("taxaPage");
    String titleString = "";
    if (taxaPage != null) {
-	   Overview overview = taxaPage.getOverview();
 	   if (overview != null) titleString = overview.getTitle() + " Ants";
 	   titleString += " (" + taxaPage.getPluralRank() + ") - ";
    } else {
