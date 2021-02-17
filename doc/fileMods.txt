@@ -1,4 +1,11 @@
-
+Release 8.54.2
+ doc/done.txt                                    |  6 ++----
+ doc/release.txt                                 |  7 +++++++
+ src/org/calacademy/antweb/TaxaPage.java         | 11 +++++++++--
+ src/org/calacademy/antweb/util/OverviewMgr.java |  6 ++++++
+ web/documentation/releaseNum.jsp                |  2 +-
+ web/taxonChildImageSet.jsp                      |  4 ++--
+ 6 files changed, 27 insertions(+), 9 deletions(-)
 
 Release 8.54
  doc/done.txt                                                                        |  16 ++++++++++++++++
