@@ -937,7 +937,7 @@ public abstract class HttpUtil {
       String target = request.getHeader("referer");  //HttpUtil.getTarget(request);
       String domainApp = AntwebProps.getDomainApp();
       //s_log.warn("target:" + target + " domainApp:" + domainApp);
-      if (target.contains(domainApp)) {
+      if (target != null && target.contains(domainApp)) {
         target = target.substring(domainApp.length());
       }
       return target;
