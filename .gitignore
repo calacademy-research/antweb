@@ -1,4 +1,5 @@
 /build/
+.idea
 /build.properties
 /out
 /WEB-INF/classes/AntwebResources.properties
@@ -15,3 +16,5 @@ antweb.iml
 
 docker-compose.override.yml
 /logs/
+
+antweb.iml
