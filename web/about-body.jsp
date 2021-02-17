@@ -28,8 +28,7 @@ Natural history information and field images  are linked directly to taxonomic n
 Distribution maps and field guides are generated automatically. All data
 in AntWeb are downloadable by users. AntWeb also provides specimen-level
 data, images, and natural history content to the Global Biodiversity
-Information Facility (GBIF), the Encyclopedia of Life (EOL.org), and
-Wikipedia.
+Information Facility (GBIF) and Wikipedia.
 <p><p><p><span style="text-decoration:underline"><b>Examples:</b></span></p>
 <p>Species pages: <a href="https://www.antweb.org/description.do?rank=species&amp;name=apache&amp;genus=pseudomyrmex&amp;project=worldants"><span><span style="text-decoration:underline">https://www.antweb.org/description.do?rank=species&amp;name=apache&amp;genus=pseudomyrmex&amp;project=worldants</span></span></a></p>
 <p>Regional lists: <a href="https://www.antweb.org/page.do?name=california"><span><span style="text-decoration:underline">https://www.antweb.org/page.do?name=california</span></span></a></p>

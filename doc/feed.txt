@@ -8,14 +8,14 @@ Nov 23, 2011 - Mark Johnson
 To summarize: Antweb data is available to other organizations in various ways.
 
 Feeds
-  EOL
+  EOL - Discontinued Feb 2021
   TAPIR / GBIF
   Plazi
   BOLD
   
   
   
-EOL - Encyclopedia of Life
+EOL - Encyclopedia of Life - Discontinued Feb 2021. Quarterly exports agreement ended in 2016.
     We make available to EOL an XML feed.  As of Nov 2011, the /getEOL.do action will cause
 an xml file to be generated on the server, and will return a hyperlink to this file: /eol/eol.xml.
 	The file can be quite large (33MB).  It will display nicely in Firefox.  If there is a parse error,

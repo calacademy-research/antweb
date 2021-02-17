@@ -87,12 +87,6 @@ public abstract class DateUtil {
     return theDay;
   }
 
-  public static String getEolFormatDateStr() {
-    // Used by Encyclopedia of Life
-    Date theDate = new Date();
-    return getFormatDateStr(theDate, "yyyyMMdd-hh:mm");
-  }
-
   public static String getAccessFormatDateTimeStr(Date theDate) {
     // Not used.  This is the format of access_log.
     return getFormatDateStr(theDate, "dd/mon/yyyy:HH:mm:ss");

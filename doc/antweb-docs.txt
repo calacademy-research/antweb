@@ -54,8 +54,6 @@ Data are shared through a couple of means:
 
 GoogleEarth - there's a google earth application in tomcat.  It's pretty simple - only one class
 
-Encyclopedia of Life - EOL can get a big dump of our data in their format by going to this URL: http://antweb.org/getEOL.do
-
 Tapir - DiGIR is a database federation scheme for sharing museum collections data.  Tapir is a DiGIR provider.  In /var/www/html/tapirlink there's a provider serves these data up.  More about Tapir at http://wiki.tdwg.org/TAPIR/   Stan Blum is the guy to talk to if there are ever issues with this.
 
 Wikimedia Commons - there are scripts in /home/thau/commons for uploading images to wikimedia commons.  This is non-trivial, so if you need to do this, give yourself some time to get acquainted with everything, and drop thau@learningsite.com a line.

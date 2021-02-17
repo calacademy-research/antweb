@@ -205,6 +205,8 @@ these other _cf1 etc.
         return fullName.toString();
     }
 
+
+    // TODO after removing EOL, is this called anywhere?
     public void setAllImages() {
        // called by EOL to get all images for a given genus
         Hashtable myImages = new Hashtable();
