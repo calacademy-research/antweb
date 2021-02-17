@@ -92,7 +92,7 @@ rclone sync --size-only -P --exclude={log,upload} minio:antweb/web/ data/web/
 ```bash
 cd antweb
 mkdir -p data/images
-rclone sync --size-only -P --checkers 32 --transfers 32 --fast-list minio:antweb/images data/images
+rclone sync --size-only -P --checkers 32 --fast-list minio:antweb/images data/images
 ```
 
 
@@ -206,7 +206,7 @@ Note: if you point image domain at antweb.org, can't test image uploading/progre
 ### Staging / production
 Take a look at [deployment.md](doc/deployment.md) for staging/production specific instructions
 
-The antweb bucket is mounted at `/mnt/antweb`
+The antweb bucket is mounted in the antweb container at `/mnt/antweb`
 
 ```bash
 export ANTWEB_BUCKET_PATH=$HOME/volumes/antweb 
