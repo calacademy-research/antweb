@@ -13740,7 +13740,43 @@ Feb 11. 2hr.
   Fix of documentation.jsp.
   Clean up of other directories.
 
-  
+Feb 12.
+  Testing of new server.  
+
+Meet with Dash? Go over Docker.
+
+Feb 16
+  Fix the bad adm1 requests that were slow for the server.
+  Look into lost connection problem.
+  Deploy release.
+  Deploy to docker.
+
+
+
+
+
+Which OS?
+Soon to be sanitized database?
+
+
+docker logs
+
+docker-compose logs
+docker-compose logs -f 
+
+antweb mysql httpd api
+
+docker-compose exec antweb bash
+
+Automatic generated content:
+  /usr/local/antweb/web
+
+
+
+
+
+
+
 
   
 
