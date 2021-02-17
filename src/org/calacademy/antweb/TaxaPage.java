@@ -60,11 +60,11 @@ public class TaxaPage implements Serializable {
 		fetchChildren(connection, overview, rank, false, true, false, true, Caste.DEFAULT, new StatusSet());
 	}
 
-	public void fetchChildren(Connection connection, Overview overview, String rank, boolean withImages, boolean withTaxa, boolean withSpecimen, boolean withFossil, String caste, StatusSet statusSet)
+	public String fetchChildren(Connection connection, Overview overview, String rank, boolean withImages, boolean withTaxa, boolean withSpecimen, boolean withFossil, String caste, StatusSet statusSet)
 	  throws SQLException 
 	{
 		if (overview.getName().equals("allantwebants") && "species".equals(rank)) {
-          String message = "fetchChildren() Expensive query... overview:" + overview + " rank:" + rank + " withImages:" + withImages + " withTaxa:" + withTaxa
+          String message = "fetchChildren() Expensive query averted. overview:" + overview + " rank:" + rank + " withImages:" + withImages + " withTaxa:" + withTaxa
 				  + " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet;
           message += " target:" + HttpUtil.getTarget(getRequest());
 		  s_log.warn(message);
@@ -75,6 +75,7 @@ public class TaxaPage implements Serializable {
 			// TaxaPage - fetchChildren() Expensive query... all species of allantwebants. withImages:true withTaxa:true 
 			//   withSpecimen:false withFossil:true caste:default statusSet:org.calacademy.antweb.StatusSet@3a25716b			
             // https://www.antweb.org/taxonomicPage.do?rank=species&images=true&countryName=Russia&adm1Name=Volgograd2121121121212.1
+            return "Query not allowed.";
 	    } else {
 			A.log("fetchChildren() overview:" + overview + " overview class:" + overview.getClass()+ "withImages:" + withImages + " withTaxa:" + withTaxa
 					+ " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet);
@@ -265,8 +266,8 @@ public class TaxaPage implements Serializable {
         }	
 
 		this.children = theseChildren;
-
-        //A.log("fetchChildren size:" + children.size());
+		//A.log("fetchChildren size:" + children.size());
+        return null;  // indicating success
 	}
 
 	public ArrayList<Taxon> getChildren() {
