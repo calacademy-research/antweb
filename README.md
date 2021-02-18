@@ -84,7 +84,7 @@ If you've made changes to these directories, `rclone copy` instead to only downl
 ```bash
 cd antweb
 mkdir -p data/web
-rclone sync --size-only -P --exclude={log,upload} minio:antweb/web/ data/web/
+rclone sync --size-only -P --exclude "{upload}/**" minio:antweb/web/ data/web/
 
 ```
 
