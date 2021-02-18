@@ -62,6 +62,7 @@ Replace `SECRET_ACCESS_KEY` with the antweb key.
 ```
 $ cat ~/.config/rclone/rclone.conf
 [minio]
+type = s3
 env_auth = false
 access_key_id = antweb
 secret_access_key = SECRET_ACCESS_KEY
@@ -84,7 +85,7 @@ If you've made changes to these directories, `rclone copy` instead to only downl
 ```bash
 cd antweb
 mkdir -p data/web
-rclone sync --size-only -P --exclude "{upload}/**" minio:antweb/web/ data/web/
+rclone sync --size-only -P --exclude "upload/**" minio:antweb/web/ data/web/
 
 ```
 
@@ -120,7 +121,7 @@ Create a full database dump from antweb and copy it to your machine
 
 ```bash
 ssh user@antweb
-mysqldump -u antweb -p --all-databases --routines --single-transaction --quick --lock-tables=false | gzip > /tmp/ant-currentDump.sql.gz
+mysqldump -u antweb -p --all-databases --routines --single-transaction --quick | gzip > /tmp/ant-currentDump.sql.gz
 # Enter password:
 
 
