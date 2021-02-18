@@ -28,7 +28,8 @@
     boolean isProject = overview instanceof Project;
     boolean isBioregion = overview instanceof Bioregion;
 
-    String pageRank = taxaPage.getRank();
+    String pageRank = request.getParameter("rank");
+    //String pageRank = taxaPage.getRank();
     //String georank = taxaPage.getGeorank();
     //A.log("taxonomicPage-body.jsp pageRank:" + pageRank);
     
@@ -60,9 +61,9 @@
 
 <% if (LoginMgr.isAdmin(request)) { %>
   <% if (LoginMgr.isCurator(request)) { %>
-  <%= overview.getChildrenListDisplay("valid", "list", taxaPage.getRank()) %>
+  <%= overview.getChildrenListDisplay("valid", "list", pageRank) %>
   <% } else { %>
-  <%= overview.getChildrenListDisplay("live", "list", taxaPage.getRank()) %>
+  <%= overview.getChildrenListDisplay("live", "list", pageRank) %>
   <% } %>
 <% } %>
 
@@ -85,7 +86,7 @@
 
     //A.log("taxonomicPage-body.jsp 4 childrenCount:" + childrenCount);
 
-	String childSizeStr = Formatter.commaFormat(childrenCount) + " " + statusStr + taxaPage.getPluralRank();
+	String childSizeStr = Formatter.commaFormat(childrenCount) + " " + statusStr + Rank.getPluralRank(pageRank);
 
 	String unImagedCountStr = "";
 	if (isOnlyShowUnImaged) {
@@ -99,7 +100,7 @@
 		    }
 		}
 		if (unImagedCount > 0) {
-		    childSizeStr = "<span class=\"numbers\">" + unImagedCount + "</span> Unimaged " + taxaPage.getPluralRank() + " (out of <span class=\"numbers\">" + childrenCount + "</span>)";
+		    childSizeStr = "<span class=\"numbers\">" + unImagedCount + "</span> Unimaged " + Rank.getPluralRank(pageRank) + " (out of <span class=\"numbers\">" + childrenCount + "</span>)";
 		    AntwebUtil.log("taxonomicPage-body.jsp unImagedCountStr:" + unImagedCountStr);
 	    }
     }

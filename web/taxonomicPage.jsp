@@ -9,12 +9,13 @@
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 
 <%
+   String pageRank = request.getParameter("rank");
    Overview overview = OverviewMgr.getOverview(request);
    TaxaPage taxaPage = (TaxaPage) request.getAttribute("taxaPage");
    String titleString = "";
    if (taxaPage != null) {
 	   if (overview != null) titleString = overview.getTitle() + " Ants";
-	   titleString += " (" + taxaPage.getPluralRank() + ") - ";
+	   titleString += " (" + Rank.getPluralRank(pageRank) + ") - ";
    } else {
        AntwebUtil.log("taxonomicPage.jsp taxaPage is null for request:" + HttpUtil.getTarget(request));
        return;   

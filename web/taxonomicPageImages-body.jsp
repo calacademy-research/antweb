@@ -14,6 +14,8 @@
 <%
     if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
 
+    String pageRank = request.getParameter("rank");
+    
     //TaxaPage taxaPage = (TaxaPage) session.getAttribute("taxaPage");
     TaxaPage taxaPage = (TaxaPage) request.getAttribute("taxaPage");
 %>
@@ -71,7 +73,7 @@
 
   <div id="totals_and_tools_container">
     <div id="totals_and_tools">
-        <h2 class="display_count"><span id="imaged_taxa"></span> <bean:write name="taxaPage" property="pluralRank" /> Imaged (out of <%= childrenCount %> Total)</h2>
+        <h2 class="display_count"><%= Rank.getPluralRank(pageRank) %> Imaged (out of <%= childrenCount %> Total)</h2>
 <%
     if (false && overview instanceof Geolocale) { 
     %> <font color=red>Page Under Maintenance</font> <% 

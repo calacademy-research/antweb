@@ -163,8 +163,8 @@ public final class TaxaPageAction extends Action {
 			 
 			String statusSetStr = StatusSet.getStatusSet(request, overview);
 			String statusSetSize = StatusSet.getStatusSetSize(request);
-//            taxaPage.setStatusSetStr(statusSetStr);
-//            taxaPage.setStatusSetSize(statusSetSize);
+            taxaPage.setStatusSetStr(statusSetStr);
+            taxaPage.setStatusSetSize(statusSetSize);
             
             if (Rank.SUBSPECIES.equals(rank)) {
                 String message = "Subspecies not supported for taxonomic page. Use species.";

@@ -13754,18 +13754,16 @@ Feb 16. 5hrs.
   Deploy.
 
 
-Feb 12.
-  Testing of new server.  
+Feb 17. 3hrs.
+  Do not execute expensive queries in TaxaPage.java. Return error message.
+  Log with the reffering URL.
+  Deploy.
+  Check on server.
+  Docker work.
 
-Meet with Dash? Go over Docker.
-
-Feb 16
-  Fix the bad adm1 requests that were slow for the server.
-  Look into lost connection problem.
-  Deploy release.
-  Deploy to docker.
-
-
+Feb 18
+  Work with docker on dev machine.
+  Meet with Dash  
 
 
 
