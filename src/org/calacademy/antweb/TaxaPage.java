@@ -299,13 +299,14 @@ public class TaxaPage implements Serializable {
         return params;
     }
 */
+/*
 	public String getPluralRank() {
 	    return Rank.getPluralRank(rank);
 	}
 	public void setPluralRank(String pluralRank) {
 		this.pluralRank = pluralRank;
 	}
-
+*/
 	public String getStatusSetStr() {
 	    return statusSetStr;
 	}
