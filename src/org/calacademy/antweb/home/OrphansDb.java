@@ -594,7 +594,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
           try {
             update = "delete from taxon where taxon_name = '" + taxonName + "'";
             stmt.executeUpdate(update);    
-          } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+          } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             // ignore.
           }
         } finally {
@@ -641,7 +641,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
             if (alternateColumn2 != null && alternateValue2 != null) update += " and " + alternateColumn2 + " = '" + alternateValue2 + "'";
             //if (true) s_log.warn("updateFailGraceful() update:" + update); else
             stmt.executeUpdate(update);    
-          } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+          } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             // If a primary key conflict, then delete the old.
             update = "delete from " + table + " where taxon_name = '" + oldTaxonName + "'";
             if (alternateColumn != null && alternateValue != null) update += " and " + alternateColumn + " = '" + alternateValue + "'";

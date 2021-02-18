@@ -16,7 +16,7 @@ import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
-import com.mysql.jdbc.exceptions.jdbc4.*;
+import java.sql.*;
 
 public abstract class EditableTaxonSetDb extends TaxonSetDb {
 
