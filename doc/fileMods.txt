@@ -6,6 +6,7 @@ Release 8.54.5
  web/documentation/releaseNum.jsp              |  2 +-
  web/taxonomicPage-body.jsp                    | 11 ++++++-----
  web/taxonomicPage.jsp                         |  3 ++-
+ web/taxonomicPageImages-body.jsp | 4 +++-
 
 Release 8.54.4
  doc/fileMods.txt                                       | 17 ++++++++++++++++-

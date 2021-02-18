@@ -13764,13 +13764,12 @@ Feb 17. 3hrs.
 Feb 18
   Work with docker on dev machine.
   Meet with Dash  
+  Install GitKraken
 
+another thing
 
-
-Which OS?
-Soon to be sanitized database?
-
-
+git checkout docker-conversion
+ 
 docker logs
 
 docker-compose logs
