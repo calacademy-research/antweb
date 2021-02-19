@@ -116,11 +116,10 @@ RUN mkdir log -pm 777 && \
 
 RUN ln -s /mnt/antweb/web/bak bak && \
     ln -s /mnt/antweb/web/curator curator && \
-    ln -s /mnt/antweb/web/data data && \
     ln -s /mnt/antweb/web/documentation documentation && \
     ln -s /mnt/antweb/web/specieslist specieslist && \
     ln -s /mnt/antweb/web/upload upload && \
-    ln -s /mnt/antweb/web/workingdir workingdir
+
 
 RUN ln -s /mnt/antweb/images /data/antweb/images && \
 #    mkdir -p /data/antweb/images/temp      # Dash: temp folder should already be in bucket
