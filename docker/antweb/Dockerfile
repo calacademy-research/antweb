@@ -118,7 +118,7 @@ RUN ln -s /mnt/antweb/web/bak bak && \
     ln -s /mnt/antweb/web/curator curator && \
     ln -s /mnt/antweb/web/documentation documentation && \
     ln -s /mnt/antweb/web/specieslist specieslist && \
-    ln -s /mnt/antweb/web/upload upload && \
+    ln -s /mnt/antweb/web/upload upload
 
 
 RUN ln -s /mnt/antweb/images /data/antweb/images && \
