@@ -256,13 +256,11 @@ public abstract class AntwebProps {
         return protocol;
     }
     
-    // This is used for self reflexive requests. When the server calls itself,
-    //   possible it can't through ssh. Use http, on localhost, with app (if relevant).
+    // This is used for self reflexive requests. When the server calls itself, localhost:80 is not available since the
+    // httpd container is separate. Instead, we use the 8080 port, which is not exposed outside the container.
     public static String getThisDomainApp() {
-      //String thisDomainApp = "https://www.antweb.org" + AntwebProps.getApp();
-      //return thisDomainApp;
-      // This was useful when the live server needed to call itself via http.
-      return getDomainApp();
+//        return getDomainApp();
+        return "http://localhost:8080";
     }
        
     public static String getDomain() {
