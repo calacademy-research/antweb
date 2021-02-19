@@ -179,9 +179,7 @@ museum
     }
 
 
-
-
-// Everything below is not used and unnecessary. Oops.
+    // Everything below is not used and unnecessary. Oops. Really?
     // for statistics.do
     public String getStatistics() {
         String statistics = null;
@@ -343,6 +341,11 @@ museum
         
         return statistics;
 	}
+
+    // Called by the Scheduler (or at startup?)
+    public void populateStatistics() throws SQLException {
+        populateStatistics("routine", 0, null, AntwebProps.getDocRoot());
+    }
 
     public void populateStatistics(String action, int loginId, String execTime, String docBase) throws SQLException {
     

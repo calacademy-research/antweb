@@ -163,7 +163,7 @@ public final class ImageUploaderAction extends Action {
         }    
 	}	
 
-    private void writeRecentImages(java.sql.Connection connection) {
+    public void writeRecentImages(java.sql.Connection connection) {
         int maxRecent = 5;
         Utility util = new Utility();
         String docBase = util.getDocRoot();

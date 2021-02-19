@@ -874,9 +874,18 @@ public class UtilDataAction extends Action {
         if (action.equals("changeOwnerAndPerms")) {
           s_log.warn("execute() changeOwnerAndPerms code:" + code);
           message = AntwebFunctions.changeOwnerAndPerms(code);
-        } 
+        }
 
-                    
+        // For testing localhost web request. java.net.ConnectException?
+        if (action.equals("callPostInitialize")) {
+            AntwebMgr.callPostInitialize();
+            message = "Called Post Initialize.";
+        }
+
+        if (action.equals("genRecentContent")) {
+            AntwebMgr.genRecentContent(connection);
+            message = "Recent content generated.";
+        }
 /*
         // This to get geolocale_taxon in alignment with specimen.
         if (action.equals("processSpecimen")) {

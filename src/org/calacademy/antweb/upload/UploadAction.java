@@ -684,7 +684,7 @@ public class UploadAction extends Action {
 
 		if (action.equals("genRecentDescEdits") || action.equals("genAll")) {
 		   try {
-			  AntwebFunctions.genRecentDescEdits(connection, request);
+			  AntwebFunctions.genRecentDescEdits(connection);
 			  return (mapping.findForward("success"));
 		   } catch (IOException e) {
 			   String message = e.toString();
@@ -1392,7 +1392,6 @@ public class UploadAction extends Action {
       if (returnVal == null) s_log.warn("getProjectForDirectory() returnVal is null for directory:" + directory);
       return returnVal;
     }
-
 
     private void runStatistics(String action, java.sql.Connection connection, HttpServletRequest request, int loginId)
       throws SQLException {

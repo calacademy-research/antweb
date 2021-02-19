@@ -21,7 +21,7 @@ public abstract class AntwebFunctions {
 
   private static final Log s_log = LogFactory.getLog(AntwebFunctions.class);
     
-    public static void genRecentDescEdits(java.sql.Connection connection, HttpServletRequest request) 
+    public static void genRecentDescEdits(java.sql.Connection connection)
       throws SQLException, IOException {
 
       // This method generates the file here: http://localhost/antweb/recentDescEdits.jsp
