@@ -23,7 +23,7 @@ backupdir="/data/antweb/backup/db"
 curBak=$backupdir/$dbname-currentDump.sql.gz
 
 if [ -d $backupdir ]; then
-mysqldump --opt --skip-lock-tables -u$dbuser -p$dbpass -B $dbname | gzip > $backupdir/backup-$dbname-$dayofweek.sql.gz
+mysqldump --skip-lock-tables -u$dbuser -p$dbpass --all-databases --routines --single-transaction --quick | gzip > $backupdir/backup-$dbname-$dayofweek.sql.gz
 echo 'Copying ' $backupdir/backup-$dbname-$dayofweek.sql.gz ' to ' $curBak
 cp $backupdir/backup-$dbname-$dayofweek.sql.gz $curBak
 fi
