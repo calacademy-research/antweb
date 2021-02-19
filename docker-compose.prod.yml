@@ -10,3 +10,7 @@ services:
         dockerfile: docker/antweb/Dockerfile
         args:
           ENV: PROD
+
+  httpd:
+    environment:
+      ENV: 'PROD'

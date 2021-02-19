@@ -5,3 +5,7 @@ services:
     build:
       args:
         ENV: STAGE
+
+  httpd:
+    environment:
+      ENV: 'STAGE'

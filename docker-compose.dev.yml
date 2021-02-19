@@ -21,3 +21,9 @@ services:
     ports:
     - "127.0.0.1:5000:5000"   #Expose the api outside the container to the local machine for debugging
     command: ["--reload"]
+
+
+  httpd:
+    environment:
+      ENV: 'DEV'
+      image_bucket_url: "https://slevin.calacademy.org:9000/antweb"
