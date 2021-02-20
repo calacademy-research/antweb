@@ -48,6 +48,8 @@ services:
     hostname: antweb
     expose:
       - 8009
+    environment:
+      CATALINA_OPTS: "-XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80 -server -XX:+UseParallelGC"
     extra_hosts:
       - "antweb.org:127.0.0.1"
       - "www.antweb.org:127.0.0.1"
