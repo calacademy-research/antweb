@@ -65,14 +65,12 @@
     ArrayList<Taxon> childrenList = taxaPage.getChildren();
     int childrenCount = childrenList.size();
    
-   A.log("taxonomicPageImages.jsp count:" + childrenCount);
-    //Taxon[] childrenArray = new Taxon[childrenCount];
-    //childrenList.toArray(childrenArray);
+    A.log("count:" + childrenCount);
 %>
 
   <div id="totals_and_tools_container">
     <div id="totals_and_tools">
-        <h2 class="display_count"><%= Rank.getPluralRank(pageRank) %> Imaged (out of <%= childrenCount %> Total)</h2>
+        <h2 class="display_count"><%= childrenCount %> <%= Rank.getPluralRank(pageRank) %> Imaged (out of <%= childrenCount %> Total)</h2>
 <%
     if (false && overview instanceof Geolocale) { 
     %> <font color=red>Page Under Maintenance</font> <% 
@@ -80,7 +78,7 @@
 
       String statusSet = taxaPage.getStatusSetStr();
       String statusSetSize = taxaPage.getStatusSetSize();
-      A.log("taxaPageImages-body.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
+      A.log("statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
 %>
 
         <%@ include file="/common/statusesDisplay.jsp" %>

@@ -889,26 +889,17 @@ public class UploadAction extends Action {
               messageStr = testFileSynonyms(in, connection);
             } else if (fileName.contains("Regional_Taxon_List")) {
               messageStr = "<br><br>In order to push antwiki data on to geolocale_taxon, click ";
-              messageStr += "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a><br><br>";
+              messageStr += "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>"
+					  + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a><br><br>";
               messageStr += (new AntWikiDataAction()).loadRegionalTaxonList(in, connection);
-              request.setAttribute("message", messageStr);
-              uploadDetails = new UploadDetails(operation, messageStr, request);
-              uploadDetails.setForwardPage("adminMessage"); //"taxonCountryPage"));
             } else if (fileName.contains("fips-414")) {  // Adm1 load file
               messageStr = (new Adm1LoadAction()).loadList(in, connection);
-              request.setAttribute("message", messageStr);
-              uploadDetails = new UploadDetails(operation, messageStr, request);
-              uploadDetails.setForwardPage("adminMessage"); //"taxonCountryPage"));
             } else if (fileName.contains("ngc_species") || fileName.contains("NGC Species")) { // Bolton New Genera Catalog
               messageStr = boltonNewGeneraCatalog(in, connection);
-              request.setAttribute("message", messageStr);
-              uploadDetails = new UploadDetails(operation, messageStr, request);
-              uploadDetails.setForwardPage("adminMessage"); //"taxonCountryPage"));
-            } else {
-              request.setAttribute("message", messageStr);
-              uploadDetails = new UploadDetails(operation, messageStr, request);
-              uploadDetails.setForwardPage("adminMessage");
             }
+            request.setAttribute("message", messageStr);
+            uploadDetails = new UploadDetails(operation, messageStr, request);
+            uploadDetails.setForwardPage("adminMessage");
         } catch (java.io.FileNotFoundException e) {
             messageStr = "uploadDataFile() e" + e;
             s_log.error(messageStr);
@@ -923,7 +914,6 @@ public class UploadAction extends Action {
         } finally {
             in.close();
         }
-
         return uploadDetails;
     }
 

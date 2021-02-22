@@ -46,7 +46,7 @@ public class SessionRequestFilter implements Filter {
       try {
 
           // Log insecure links.
-          if (!!HttpUtil.isSecure(request)) {
+          if (!HttpUtil.isSecure(request)) {
               A.log("doFilter() insecure");
               String message = "req:" + target + " scheme:" + request.getScheme()
                       + " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
