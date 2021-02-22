@@ -35,7 +35,7 @@ COPY docker/httpd/ssl/wildcard_calacademy_org.pem ./
 
 RUN a2enmod ssl headers proxy_http rewrite && \
     a2enconf ssl-params && \
-    a2ensite default-ssl antweb_calacademy_org
+    a2ensite default-ssl
 
 RUN a2dismod mpm_event && \
     a2enmod mpm_prefork cgi

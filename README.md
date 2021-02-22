@@ -141,7 +141,10 @@ CID=$(docker run -d --rm \
 	 mysql:5)
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
-docker exec -i $CID sh -c "exec mysql -uroot ant" < ./ant-currentDump.sql && docker stop $CID
+docker exec -i $CID sh -c "exec mysql -uroot ant" < ./ant-currentDump.sql
+
+# Run an optimize to regenerate index, enter database password when prompted
+docker exec -it $CID sh -c "exec mysqlcheck --all-databases --optimize -u antweb -p" && docker stop $CID
 
 # If ant-currentDump.sql is in the antweb directory, remove the dump to reduce docker daemon build time
 rm ant-currentDump.sql

@@ -2,14 +2,12 @@ version: "3.9"
 
 services:
   mysql:
-    ports:
-      - "10.2.22.30:3306:3306"   # Enable when on production server. This will allow internal network access to database
+#    ports:
+#      - "3306"   # Enable when on production server. This will allow internal network access to database
   antweb:
     build:
-      context: .
-        dockerfile: docker/antweb/Dockerfile
-        args:
-          ENV: PROD
+      args:
+        ENV: PROD
 
   httpd:
     environment:

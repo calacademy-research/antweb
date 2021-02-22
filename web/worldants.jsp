@@ -4,7 +4,6 @@
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.Group" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
-<%@ page import="org.calacademy.antweb.AncFile" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>
 
@@ -71,26 +70,7 @@
         (The Natural History Museum of Denmark)<br />
         <a href="/copenhagen.jsp"><img border="0" src="<%= domainApp %>/wac/ZMUC001.jpg" /></a><br />
         <strong>ZMUC<br />
-        Fabricius</strong> 
-        
-   <%        
-   AncFile ancFile = (AncFile) session.getAttribute("ancFile");	           
-   Login accessLogin = LoginMgr.getAccessLogin(request);     
-   if (accessLogin != null) {          
-     String requestURL = request.getRequestURL().toString();          
-     String accessIdStr = "/" + (new Integer(accessLogin.getId())).toString() + "/";   
-     ArrayList<SpeciesListable> projects = accessLogin.getProjects();  
-     if ( (accessLogin.isAdmin()) || (projects != null && projects.contains("")) || (requestURL.contains(accessIdStr)) ) {	%>	   
-       <form method="POST" action="<%= domainApp %>/ancPageEdit.do?id=41" />	   		
-         <input type="submit" value="Edit Page">	   	
-       </form>
-    <% if (!(session.getAttribute("ancFile") == null)) { %>	   	
-         <form method="POST" action="<%= domainApp %>/ancPageSave.do"> 	   		
-           <input type="submit" value="Save Page">	   	
-         </form>         
-    <% } %>
-  <% } %> 
-<% } %>
+        Fabricius</strong>
 
 </div>	
 

@@ -155,7 +155,7 @@ public abstract class AntwebProps {
     
     public static String getDataRoot() {
         // /usr/local/data/ points to either /data/antweb (on server) or /usr/local/tomcat/webapps/antweb on dev.
-        return "/usr/local/data/";
+        return "/usr/local/antweb/";
     }
 	
     public static String getTomcatDir() {

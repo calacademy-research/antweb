@@ -409,7 +409,7 @@ public class AntwebMgr {
 
       try {
           if (!s_isPopulated) {
-            String page = AntwebProps.getInsecureDomainApp() + "/uptime.do";
+            String page = AntwebProps.getThisDomainApp() + "/uptime.do";
             s_log.warn("isPopulated() calling:" + page); 
             String results = HttpUtil.getUrl(page);
           }
