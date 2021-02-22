@@ -7,9 +7,9 @@ services:
   antweb:
     build:
       context: .
-        dockerfile: docker/antweb/Dockerfile
-        args:
-          ENV: PROD
+      dockerfile: docker/antweb/Dockerfile
+      args:
+        ENV: PROD
 
   httpd:
     environment:
