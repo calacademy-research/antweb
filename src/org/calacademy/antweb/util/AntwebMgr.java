@@ -225,10 +225,7 @@ public class AntwebMgr {
     public static void callPostInitialize() {
 
         String url = AntwebProps.getThisDomainApp() + "/util.do?action=postInstantiate";
-<<<<<<< HEAD
         //if (AntwebProps.isDevMode()) url = "https://localhost:8080/util.do?action=postInstantiate";
-=======
->>>>>>> docker-conversion
 
         A.log("callPostInitialize() url:" + url);
         //s_log.warn("callPostInitialize() url:" + url);
