@@ -1,50 +1,50 @@
-#
+#!/usr/bin/env bash
 # Usage: sh db-daily-dump.sh [dbname]
 #
-# Backup the antweb, or specified, database
-# 
-# Assumes that the /data/db is world writable
+# Backup all databases
+#
+# Assumes that /data/antweb/backup/db/daily is world writable
 
-dayofweek=`date +%a`
+
+date=$(date +"%Y-%m-%d")
 
 dbname="ant"
-if [ $1 ] ; then
-dbname="$1"
+if [ $1 ]; then
+  dbname="$1"
 fi
 
-echo 'Making daily database backup of db:' $dbname
 
 dbuser="antweb"
 dbpass="f0rm1c6"
 #backupdir="/data/antweb/web/db"
 #backupdir="/mnt/backup/db"
-backupdir="/data/antweb/backup/db"
- 
+backupdir="/data/antweb/backup/db/daily"
+
 curBak=$backupdir/$dbname-currentDump.sql.gz
 
-if [ -d $backupdir ]; then
-mysqldump --skip-lock-tables -u$dbuser -p$dbpass --all-databases --routines --single-transaction --quick | gzip > $backupdir/backup-$dbname-$dayofweek.sql.gz
-echo 'Copying ' $backupdir/backup-$dbname-$dayofweek.sql.gz ' to ' $curBak
-cp $backupdir/backup-$dbname-$dayofweek.sql.gz $curBak
-fi
+datedBackupFile=$backupdir/backup-"$date".sql.gz
 
-echo 'db:' $dbname
+if [ -d $backupdir ]; then
+  mysqldump --skip-lock-tables -u$dbuser -p$dbpass --all-databases --routines --single-transaction --quick | gzip > "$datedBackupFile"
+  echo "Copying $datedBackupFile to $curBak"
+  cp "$datedBackupFile" "$curBak"
+fi
 
 #if [ $dbname == "ant" ] || [ $dbname == "stage" ] ; then
 # This may break on a mac...
-dayofweek=`date --date="6 days ago" +%a`
-echo "Linux date command - 6 days ago:" $dayofweek
+maxDate=$(date --date="7 days ago" +"%Y-%m-%d")
+#echo "Linux date command - 7 days ago:" $dayofweek
 #else
 #dayofweek=`date -v -6d +%a`
 #echo "BSD date command - 6 days ago:" $dayofweek
 #fi
 
-olddump=$backupdir/backup-$dbname-$dayofweek.sql.gz
-if [ -e  $olddump ]; then
-echo 'Removing ' $olddump
-rm $olddump
-else
-echo "Not removing old daily backup (does not exist):" $olddump
-fi
+for fn in "$backupdir"/*; do
+  fdate="${fn#*backup-}"   # remove everything in filename before "backup-"
+  fdate="${fdate%.sql.gz}"    # remove .sql.gz from end of filename, leaving only the date
 
-# End of script db_daily_dump.sh
+  if [[ "$fdate" > "$maxDate" ]]; then
+    echo "Found backup to be removed $fn"
+#    rm "$fn"
+  fi
+done
