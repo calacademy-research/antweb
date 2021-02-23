@@ -59,7 +59,9 @@ services:
     volumes:
       - ${ANTWEB_BUCKET_PATH:-/mnt/antweb}:/mnt/antweb
       - ./logs:/usr/local/tomcat/logs
+      - antweb_genInc:/usr/local/antweb/web/genInc
 
 volumes:
+  antweb_genInc:
   antweb_database:
     external: true
