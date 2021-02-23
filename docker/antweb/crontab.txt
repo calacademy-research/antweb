@@ -1,4 +1,4 @@
-27 3 * * * root sh /antweb/deploy/bin/reboot.sh # Restart at 3:27 am every day.
+#27 3 * * * root sh /antweb/deploy/bin/reboot.sh # Restart at 3:27 am every day.
 0 21 * * * root /antweb/deploy/bin/admin.sh > /data/antweb/web/log/adminTask.log
 50 3 * * 4 root /antweb/deploy/bin/taxonSetBackup.sh >> /data/antweb/web/log/taxonSetBackup.log
 #*/5 * * * * root php /antweb/deploy/bin/appCheck.php >> /data/antweb/web/log/appCheckOutput.log     # docker handles restarting on failure
