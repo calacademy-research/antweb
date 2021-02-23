@@ -124,7 +124,6 @@ ssh user@antweb
 mysqldump -u antweb -p --all-databases --routines --single-transaction --quick | gzip > /tmp/ant-currentDump.sql.gz
 # Enter password:
 
-
 scp user@antweb:/tmp/ant-currentDump.sql.gz ./
 gunzip ant-currentDump.sql.gz
 ```

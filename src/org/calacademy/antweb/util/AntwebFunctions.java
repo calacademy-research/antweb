@@ -65,7 +65,7 @@ public abstract class AntwebFunctions {
               } else {
                 href = Specimen.makeLink(code);
               }
-              A.log("getRecentDescEdits() taxonName:" + taxonName + " code:" + code + " href:" + href);              
+              //A.log("getRecentDescEdits() taxonName:" + taxonName + " code:" + code + " href:" + href);
               outFile.write(href + "<br/>\n");
               count++;
               if (count > MAX_DESC_EDIT_COUNT) {
@@ -253,8 +253,5 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
         }
         return list;
     }
-
-
-
 }
 

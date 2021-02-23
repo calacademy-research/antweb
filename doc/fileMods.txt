@@ -1,3 +1,18 @@
+Release 8.54.7
+ README.md                                                |  2 +-
+ doc/release.txt                                          |  3 +++
+ docker-compose.prod.yml                                  | 10 ++++------
+ docker/httpd/Dockerfile                                  |  2 +-
+ docker/httpd/sites-enabled/antweb_calacademy_org.conf    | 60 ++++++++++++++++++++++++++++++------------------------------
+ src/org/calacademy/antweb/upload/UploadAction.java       | 20 +++++---------------
+ src/org/calacademy/antweb/util/AntwebMgr.java            |  3 +++
+ src/org/calacademy/antweb/util/SessionRequestFilter.java |  2 +-
+ src/org/calacademy/antweb/util/UtilDataAction.java       | 21 ++++++++++-----------
+ web/documentation/releaseNum.jsp                         |  2 +-
+ web/taxonomicPageImages-body.jsp                         |  8 +++-----
+ web/worldants.jsp                                        | 22 +---------------------
+ 12 files changed, 63 insertions(+), 92 deletions(-)
+ 
 Release 8.54.5
  doc/done.txt                                  | 20 +++++++++-----------
  doc/release.txt                               |  3 +++

@@ -1,0 +1,56 @@
+# devAdmin.txt
+#   To document the daily tasks involved with managing the antweb environments.
+
+
+--- Compilation ---
+
+# To bring up docker
+docker-compose up
+
+docker-compose up --build
+  # This will also do an ant build
+
+# To compile
+docker-compose exec antweb ant deploy
+
+# To restart tomcat (without rebuilding docker)
+docker-compose restart antweb
+
+
+--- Database Stuff ---
+
+cd /Users/mark/bak/db
+  // move the ant-current to a date stamped backup file
+
+# To get the current database dump from the production server.
+scp root@antweb.org:/root/ant-currentDump.sql.gz .
+  # /root/ant-currentDump.sql.gz -> /mnt/antweb/backup/db/ant-currentDump.sql.gz 
+
+# To load the database locally
+mysqldump -u antweb -p --all-databases --routines --single-transaction --quick | gzip > ant-currentDump.sql.gz
+
+# To speed up (optimize). To be run after database load
+docker-compose exec mysql sh -c "exec mysqlcheck --all-databases --optimize -u antweb -p"
+
+
+#To get into mysql:
+docker-compose exec mysql mysql -u antweb -p ant
+
+
+--- Server Stuff ---
+
+# log in as root
+ssh root@antweb.org
+
+# To see log Antweb.log
+cd /root/antweb
+tail --lines 1000 logs/antweb.log
+
+
+
+--- tomcat configuration ---
+cd /Users/mark/antweb/docker/antweb/tomcat/conf
+
+
+   
+

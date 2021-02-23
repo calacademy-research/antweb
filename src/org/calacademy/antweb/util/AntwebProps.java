@@ -259,8 +259,15 @@ public abstract class AntwebProps {
     // This is used for self reflexive requests. When the server calls itself, localhost:80 is not available since the
     // httpd container is separate. Instead, we use the 8080 port, which is not exposed outside the container.
     public static String getThisDomainApp() {
-//        return getDomainApp();
-        return "http://localhost:8080";
+        // return getDomainApp();
+        // String domainApp = "http://httpd";
+        String domainApp = null;
+        domainApp = "http://localhost:8080";
+
+       //if (AntwebProps.isDevMode()) domainApp = "http://127.0.0.1";
+
+        A.log("domainApp:" + domainApp);
+        return domainApp;
     }
        
     public static String getDomain() {
