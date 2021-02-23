@@ -120,6 +120,8 @@ RUN ln -s /mnt/antweb/web/bak bak && \
     ln -s /mnt/antweb/web/specieslist specieslist && \
     ln -s /mnt/antweb/web/upload upload
 
+# Add link to bucket for backups
+RUN ln -s /mnt/antweb/backup /data/antweb/backup
 
 RUN ln -s /mnt/antweb/images /data/antweb/images && \
 #    mkdir -p /data/antweb/images/temp      # Dash: temp folder should already be in bucket
