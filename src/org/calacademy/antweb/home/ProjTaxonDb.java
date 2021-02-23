@@ -639,8 +639,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     // XXX Insufficient below. Perhaps fix in allCountCrawl? Performance matters.
     public void regenerateAllAntweb() throws SQLException {
-
-        s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a five minutes.");
+        //s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a minute.");
 
         //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before regenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "Before regenerateAllAntweb Proj_taxon worldants counts");

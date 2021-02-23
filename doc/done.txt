@@ -13761,33 +13761,38 @@ Feb 17. 3hrs.
   Check on server.
   Docker work.
 
-Feb 18
+Feb 18. 1-6. 10-12. 7hrs.
   Work with docker on dev machine.
   Meet with Dash  
+    Install GitKraken.
+    Install Homebrew
+    Docker work.
+  Engineering. 
+    PostInitialize utilData.do option for testing. Diagnoses. Incomplete.
+    Generate recent content from a single method AntwebMgr.genRecentContent().
+      Include in the postInitialization.
+    
+Mon 21. 1hr.
+  Figure the site warnings and take down the upload facility.    
+    
+Mon 22. 3 - 7.
+  Review new server.
+  Working with Dash.
+  Get postInitialize working on client.
+  Create devAdmin.txt document for regular operations.
+  Visit stage. Talk about what needs to happen there.
+  Figure strategy over genIncs.
+
+    
 
 
+Still...  
+ssh mark@antweb-staging.calacademy.org  
+When will it be mark@antweb.org ?
 
-Which OS?
-Soon to be sanitized database?
-
-
-docker logs
-
-docker-compose logs
-docker-compose logs -f 
-
-antweb mysql httpd api
-
-docker-compose exec antweb bash
-
-Automatic generated content:
-  /usr/local/antweb/web
-
-
-
+Regenerate genIncs if they do not exist, during startup.
   
 
-  
   
 
   
