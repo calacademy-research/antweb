@@ -53,7 +53,6 @@ services:
     extra_hosts:
       - "antweb.org:127.0.0.1"
       - "www.antweb.org:127.0.0.1"
-      - "antcat-export:10.2.22.49"
 
     # Mount the s3fs bucket for serving files
     volumes:

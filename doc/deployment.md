@@ -38,3 +38,5 @@ Create a symlink to latest database dump
 ```bash
 ln -s /mnt/antweb/backup/db/ant-currentDump.sql.gz ant-currentDump.sql.gz
 ```
+
+Make sure  `docker-compose.prod.yml` antweb.extra_hosts points to the correct private IP for antcat-export
