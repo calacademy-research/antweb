@@ -18,9 +18,10 @@ dbuser="antweb"
 dbpass="f0rm1c6"
 #backupdir="/data/antweb/web/db"
 #backupdir="/mnt/backup/db"
+rootbackupdir="/data/antweb/backup/db"
 backupdir="/data/antweb/backup/db/daily"
 
-curBak=$backupdir/$dbname-currentDump.sql.gz
+curBak="$rootbackupdir"/"$dbname"-currentDump.sql.gz
 
 datedBackupFile=$backupdir/backup-"$date".sql.gz
 
