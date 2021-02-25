@@ -23,29 +23,16 @@ backupdir="/data/antweb/backup/db/daily"
 
 curBak="$rootbackupdir"/"$dbname"-currentDump.sql.gz
 
-datedBackupFile=$backupdir/backup-"$date".sql.gz
+tempfile=/tmp/"$date".sql.gz
+
+datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
-  mysqldump --skip-lock-tables -u$dbuser -p$dbpass --all-databases --routines --single-transaction --quick | gzip > "$datedBackupFile"
+  mysqldump --skip-lock-tables -u$dbuser -p$dbpass --all-databases --routines --single-transaction --quick | gzip -c -9 > "$tempfile"
+  mv "$tempfile" "$datedBackupFile"
   echo "Copying $datedBackupFile to $curBak"
   cp "$datedBackupFile" "$curBak"
 fi
 
-#if [ $dbname == "ant" ] || [ $dbname == "stage" ] ; then
-# This may break on a mac...
-maxDate=$(date --date="7 days ago" +"%Y-%m-%d")
-#echo "Linux date command - 7 days ago:" $dayofweek
-#else
-#dayofweek=`date -v -6d +%a`
-#echo "BSD date command - 6 days ago:" $dayofweek
-#fi
-
-for fn in "$backupdir"/*; do
-  fdate="${fn#*backup-}"   # remove everything in filename before "backup-"
-  fdate="${fdate%.sql.gz}"    # remove .sql.gz from end of filename, leaving only the date
-
-  if [[ "$fdate" > "$maxDate" ]]; then
-    echo "Found backup to be removed $fn"
-#    rm "$fn"
-  fi
-done
+# Remove backups after a week
+find "$backupdir" -mindepth 1 -mtime +7 -type f -name "*.sql.gz" -delete
