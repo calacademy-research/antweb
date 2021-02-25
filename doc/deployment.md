@@ -1,9 +1,16 @@
 Create ~/.passwd-s3fs, put `ACCESS_KEY:SECRET_KEY` inside
 
+Install s3fs
+```bash
+sudo apt install s3fs
+```
+
 Add s3fs bucket to fstab
 ```
 s3fs#antweb /mnt/antweb 	fuse 	_netdev,url=https://sfo3.digitaloceanspaces.com,use_cache=/tmp,allow_other,use_path_request_style,ensure_diskfree=20000 0 0
 ```
+
+Add/uncomment `user_allow_other` in /etc/fuse.conf
 
 Create bucket directory 
 ```bash
