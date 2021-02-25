@@ -20,7 +20,7 @@ tempfile=/tmp/"$date".sql.gz
 datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
-  mysqldump --skip-lock-tables -u$dbuser -p$dbpass --all-databases --routines --single-transaction --quick | gzip -c -9 > "$tempfile"
+  mysqldump --skip-lock-tables -u$dbuser -p$dbpass -h mysql --all-databases --routines --single-transaction --quick | gzip -c -9 > "$tempfile"
   mv "$tempfile" "$datedBackupFile"
 fi
 # remove dump from 3 months ago - so that we only have 3 months at a time

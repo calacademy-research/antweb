@@ -28,7 +28,7 @@ tempfile=/tmp/"$date".sql.gz
 datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
-  mysqldump --skip-lock-tables -u$dbuser -p$dbpass --all-databases --routines --single-transaction --quick | gzip -c -9 > "$tempfile"
+  mysqldump --skip-lock-tables -u$dbuser -p$dbpass -h mysql --all-databases --routines --single-transaction --quick | gzip -c -9 > "$tempfile"
   mv "$tempfile" "$datedBackupFile"
   echo "Copying $datedBackupFile to $curBak"
   cp "$datedBackupFile" "$curBak"
