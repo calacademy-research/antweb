@@ -22,7 +22,7 @@ ant \
 ant-optional \
 cron \
 imagemagick \
-mariadb-client \
+default-mysql-client \
 php \
 python3 \
 zip \
@@ -104,6 +104,7 @@ RUN mkdir -p /data/antweb/web
 
 WORKDIR /data/antweb/web
 RUN mkdir log -pm 777 && \
+    mkdir data -pm 777 && \
     mkdir genInc -pm 777 && \
     touch genInc/statistics.jsp
 
@@ -121,11 +122,10 @@ RUN ln -s /mnt/antweb/web/bak bak && \
     ln -s /mnt/antweb/web/upload upload
 
 # Add link to bucket for backups
-RUN ln -s /mnt/antweb/backup /data/antweb/backup
+RUN ln -s /mnt/backup /data/antweb/backup
 
-RUN ln -s /mnt/antweb/images /data/antweb/images && \
+RUN ln -s /mnt/antweb/images /data/antweb/images
 #    mkdir -p /data/antweb/images/temp      # Dash: temp folder should already be in bucket
-    ln -s /mnt/antweb/backup /data/antweb/backups
 
 COPY --chown=antweb docker/antweb/platform.properties /data/antweb/WEB-INF/classes/
 

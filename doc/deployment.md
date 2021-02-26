@@ -14,7 +14,7 @@ provider = DigitalOcean
 access_key_id = ACCESS_KEY
 secret_access_key = SECRET_KEY
 endpoint = sfo3.digitaloceanspaces.com
-acl = private
+acl =
 ```
 
 Create rclone mounting script at `/usr/local/bin/rclonefs`. See 
@@ -73,19 +73,22 @@ EOF
 
 Add rclone mount to fstab
 ```
-digitalocean:/antweb	/mnt/antweb	fuse.rclonefs	config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full		0 0
+digitalocean:/antweb	/mnt/antweb	fuse.rclonefs	config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full,s3-acl=public-read		0 0
+digitalocean:/antweb-dbarchive	/mnt/backup	fuse.rclonefs	config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full,s3-acl=private	0 0
 ```
 
 Add/uncomment `user_allow_other` in /etc/fuse.conf
 
-Create bucket directory 
+Create bucket directories
 ```bash
 mkdir -p /mnt/antweb
+mkdir -p /mnt/backup
 ```
 
-Mount rclone volume
+Mount rclone volumes
 ```bash
 mount /mnt/antweb
+mount /mnt/backup
 ```
 
 Staging
@@ -109,7 +112,7 @@ Production
 
 Create a symlink to latest database dump
 ```bash
-ln -s /mnt/antweb/backup/db/ant-currentDump.sql.gz ant-currentDump.sql.gz
+ln -s /mnt/backup/db/ant-currentDump.sql.gz ant-currentDump.sql.gz
 ```
 
 Make sure  `docker-compose.prod.yml` antweb.extra_hosts points to the correct private IP for antcat-export

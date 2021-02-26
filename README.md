@@ -34,14 +34,17 @@ git clone git@github.com:calacademy-research/antweb.git
 ```bash
 # this can be anywhere that you have write permission to, but ~/volumes/antweb is an easy place to remember and find
 export ANTWEB_BUCKET_PATH=$HOME/volumes/antweb 
+export ANTWEB_BACKUP_PATH=$HOME/volumes/antweb_backup 
 export ANTWEB_S3FS_KEY=$HOME/.s3fs_antweb_key
 s3fs antweb "$ANTWEB_BUCKET_PATH" -o passwd_file="$ANTWEB_S3FS_KEY" -o url=https://slevin.calacademy.org:9000 -o allow_other -o use_path_request_style
+s3fs antweb-dbarchive "$ANTWEB_BUCKET_PATH" -o passwd_file="$ANTWEB_S3FS_KEY" -o url=https://slevin.calacademy.org:9000 -o allow_other -o use_path_request_style
 ```
 
 * Add the bucket and key path to a `.env` file in the project root
 
 ```bash
 echo ANTWEB_BUCKET_PATH=$(printenv ANTWEB_BUCKET_PATH) >> .env
+echo ANTWEB_BACKUP_PATH=$(printenv ANTWEB_BACKUP_PATH) >> .env
 echo ANTWEB_S3FS_KEY=$(printenv ANTWEB_S3FS_KEY) >> .env
 ```
 
@@ -210,7 +213,4 @@ Note: if you point image domain at antweb.org, can't test image uploading/progre
 Take a look at [deployment.md](doc/deployment.md) for staging/production specific instructions
 
 The antweb bucket is mounted in the antweb container at `/mnt/antweb`
-
-```bash
-export ANTWEB_BUCKET_PATH=$HOME/volumes/antweb 
-```
+The database archive is mounted in the antweb container at `/mnt/backup`
