@@ -4,10 +4,8 @@
 
 sh unclosedConnections.sh
 
-sh /antweb/deploy/bin/db-daily-dump.sh &
-sh /antweb/deploy/bin/db-monthly-dump.sh &
+sh /antweb/deploy/bin/db-daily-dump.sh
 
-wait 
 
 #cp /mnt/backup/db/ant-currentDump.sql.gz /data/antweb/web/db/ant-currentDump.sql.gz
 # Did have a softlink in the /mnt directory: ln -s /data/antweb/backup backup
