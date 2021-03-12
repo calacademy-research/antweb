@@ -4,10 +4,9 @@ sql_mode = "STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_
 group_concat_max_len=15360
 
 # To speed up the specimen uploads
-innodb_buffer_pool_size=4G
-#innodb_buffer_pool_size=64MB
-
-innodb_buffer_pool_size=64MB
+innodb_buffer_pool_size=2G
+innodb_log_file_size=256M
+innodb_buffer_pool_instances=2
 
 #skip-locking
 skip-external-locking
