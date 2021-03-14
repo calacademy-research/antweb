@@ -73,7 +73,7 @@ EOF
 
 Add rclone mount to fstab
 ```
-digitalocean:/antweb	/mnt/antweb	fuse.rclonefs	config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full,s3-acl=public-read		0 0
+digitalocean:/antweb	/mnt/antweb	fuse.rclonefs	config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full,attr-timeout=10s,dir-cache-time=24h,vfs-cache-max-age=24h,use-server-modtime,log-file=/root/.config/rclone/rclone.log,log-level=NOTICE	0 0
 digitalocean:/antweb-dbarchive	/mnt/backup	fuse.rclonefs	config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full,s3-acl=private	0 0
 ```
 
