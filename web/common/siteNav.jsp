@@ -32,8 +32,6 @@
            <%@ include file="mobileSearchBar.jsp" %>
      <% } %>
 
-
-        
 	  <%@ include file="menuBar.jsp" %>
 
 	  <%
@@ -108,7 +106,7 @@
              || (uri.contains("statsPage.jsp"))
 			 ) {
 		%>
-  
+
 		<div id="page_context">
 		  <div id="view"></div>
 
@@ -180,4 +178,6 @@
 	  //out.println(message);
 	  //throw e;
 	}
+
+	//AntwebUtil.logAntwebStackTrace();
 %>

@@ -529,6 +529,10 @@ public abstract class AntwebUtil {
     e.printStackTrace(System.out);
   }
 
+  public static String getStackTrace() {
+    return AntwebUtil.getStackTrace(new AntwebException(""));
+  }
+
   public static String getStackTrace(Throwable e)
   {
     ByteArrayOutputStream os = new ByteArrayOutputStream(1000);
@@ -537,6 +541,46 @@ public abstract class AntwebUtil {
     printWriter.flush();
     return os.toString();
   }
+
+
+  public static void logAntwebStackTrace() {
+    s_log.warn(getAntwebStackTrace());
+  }
+  public static void logAntwebStackTrace(Exception e) {
+    s_log.warn(getAntwebStackTrace(e));
+  }
+
+  public static String getAntwebStackTrace() {
+    String trace = getStackTrace();
+    return getAntwebStackTrace(trace);
+  }
+  public static String getAntwebStackTrace(Exception e) {
+    String trace = getStackTrace(e);
+    return getAntwebStackTrace(trace);
+  }
+
+  public static String getAntwebStackTrace(String trace) {
+    ArrayList<String> traceLines = new ArrayList<String>();
+    //traceLines.add("\r\n");
+    String character = "at ";
+    int i = 0;
+    while (trace.contains(character)) {
+      ++i;
+      int nIndex = trace.indexOf(character);
+      String line = trace.substring(0, nIndex);
+      trace = trace.substring(nIndex + 3);
+
+      if ((line.contains("org.apache.jsp") || line.contains("org.calacademy.antweb")) && !(line.contains("StackTrace"))) { // || line.contains("AntwebException")
+        //A.log("i:" + i + " nIndex:" + nIndex + " line:" + line);
+        traceLines.add("at " + line);
+      }
+
+      if (i > 100) break;
+    }
+    //A.log("TraceLines:" + traceLines);
+    return traceLines.toString();
+  }
+
 
   private static int s_shortStackLines = 6;
 
@@ -571,24 +615,6 @@ public abstract class AntwebUtil {
     s_log.warn("AntwebUtil.logShortStackTrace(e, i) lines:" + lines + " - " + stackTrace);    
   }   
 
-/*    
-    if (lines == 0) {
-      // This means - show as many lines as it take to get an antweb line of code...
-      int i = 3;
-      String stackTrace = AntwebUtil.getShortStackTrace(e, i);
-      while((i < 10) && (!stackTrace.contains("antweb"))) {
-        ++i;      
-      }
-      s_log.warn("AntwebUtil.logShortStackTrace(" + lines + ") - " + stackTrace);    
-    } else {
-      String stackTrace = AntwebUtil.getShortStackTrace(e, lines);
-      s_log.warn("AntwebUtil.logShortStackTrace(" + lines + ") - " + stackTrace);
-    }
-  }
-*/  
-
-  
-
   // This is the generic version.  
   public static String getShortStackTrace(Throwable e, int lines)
   {
@@ -604,61 +630,6 @@ public abstract class AntwebUtil {
       return shortStackTrace;
     } catch ( java.lang.StringIndexOutOfBoundsException e2) {
       s_log.warn("getShortStackTrace() e:" + e2 + " Returning full stacktrace.");
-      return stackTrace;
-    }
-  }  
-  
-  /*
-    To trigger, first invoke: http://localhost/antweb//slideShow.do?rank=genus&mini=1&slideShow=off
-                    and then: http://localhost/antweb/slideShow.jsp?shot=
-  */
-  // This is the Antweb specific version that will return salient lines of the stacktrace
-  public static String getShortAntwebStackTrace(Throwable e)
-  {
-    int lines = 30;
-    String stackTrace = AntwebUtil.getStackTrace(e);
-    A.log("getShortStackTrace() - stackTrace:" + stackTrace);
-
-    int i = 0;    
-    int nextCarriageReturn = 0;
-    boolean foundAntweb = false;
-    boolean breakNextTime = false;
-    int loop = 0;
-    for (loop = 0; loop <= lines; ++loop) {
-        i = stackTrace.indexOf("\n", i + 1);
-        nextCarriageReturn = (stackTrace.indexOf("\n", i + 1));
-      
-        if (breakNextTime) break;  // we break here so as to get the next line
-
-        // Here, we look to find the first jsp compiled class OR the last line of code that
-        // is and Antweb class.
-        int antwebIndex = stackTrace.indexOf("antweb", i + 1);
-        if (antwebIndex == 0) antwebIndex = stackTrace.indexOf("fieldGuide", i + 1);
-        if (antwebIndex == 0) antwebIndex = stackTrace.indexOf("taxonPage", i + 1);
-        if (antwebIndex == 0) antwebIndex = stackTrace.indexOf("body_jsp.java", i + 1);
-        int jspIndex = stackTrace.indexOf(".jsp", i + 1);
-        if ((antwebIndex > 0) && (antwebIndex < nextCarriageReturn)) {  // to catch an antweb line
-          foundAntweb = true;
-        } else if (foundAntweb) {
-          breakNextTime = true;
-        } else if ((jspIndex > 0) && (antwebIndex < nextCarriageReturn)) {  // to catch an antweb jsp line   "_jsp._jspService"
-          breakNextTime = true;
-        }
-        //A.log("getShortStackTrace() - loop:" + loop + " i:" + i + " antwebIndex:" + antwebIndex + " jspIndex:" + jspIndex);    
-
-        if (i == -1) {
-          break;  // We have reached the end of the stacktrace.
-        }
-    }
-
-    A.log("getShortStackTrace() - final i:" + i);
-    try {
-      String shortStackTrace = stackTrace.substring(0, nextCarriageReturn);
-      s_log.info("getShortAntwebStackTrace() nextCarriageReturn:" + nextCarriageReturn 
-        + " loop:" + loop + " shortStackTrace:" + shortStackTrace + " stackTrace:" + stackTrace);
-      return shortStackTrace;
-    } catch ( java.lang.StringIndexOutOfBoundsException e2) {
-      //s_log.warn("getShortStackTrace(e, i) Returning full stacktrace.");  // expected
       return stackTrace;
     }
   }
@@ -684,7 +655,7 @@ public abstract class AntwebUtil {
 
     return memory;
   }
-  
+
   public static void sleep(double seconds) {
     double doubleMillis = seconds * 1000;
     int millis = (Double.valueOf(doubleMillis)).intValue();
@@ -703,7 +674,14 @@ public abstract class AntwebUtil {
       s_log.warn("Exception in AntwebUtil.sleep(): " + e.toString());
     }   
   }
-  
+
+  public static void devSleep(int seconds) {
+    if (AntwebProps.isDevMode()) {
+      AntwebUtil.logAntwebStackTrace();
+      AntwebUtil.sleep(seconds);
+    }
+  }
+
   public static String timedGC() {  
       long startTime = new Date().getTime(); 
       System.gc();

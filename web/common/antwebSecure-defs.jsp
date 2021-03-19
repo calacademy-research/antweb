@@ -1,5 +1,9 @@
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 
+<%@ page import="org.calacademy.antweb.util.*" %>
+
+<% AntwebUtil.devSleep(4); %>
+
 <tiles:definition
 	id="antweb.default"
 	page="/layouts/secureLayout.jsp"

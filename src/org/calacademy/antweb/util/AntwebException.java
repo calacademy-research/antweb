@@ -4,6 +4,9 @@ public class AntwebException extends Exception {
 
   private String message = null;;
 
+  public AntwebException() {
+  }
+
   public AntwebException(String message) {
     this.message = message;  
   }

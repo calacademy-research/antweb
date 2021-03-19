@@ -78,7 +78,8 @@
 
       String statusSet = taxaPage.getStatusSetStr();
       String statusSetSize = taxaPage.getStatusSetSize();
-      A.log("statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
+      String browserParams = taxaPage.getBrowserParams();
+      A.log("browserParams:" + browserParams + " statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
 %>
 
         <%@ include file="/common/statusesDisplay.jsp" %>
@@ -91,7 +92,7 @@
 
         <div id="thumb_toggle">
 
-       <% String browserParams = taxaPage.getBrowserParams();
+       <%
           String imagesTrueStr = "&images=true";  %>
         <%@ include file="/common/imageViewsDisplay.jsp" %>
 

@@ -28,8 +28,8 @@ public final class BigPictureAction extends Action {
 
         if (ProjectMgr.hasMoved(request, response)) return null;
 
-        ActionForward d = Check.valid(request, mapping); if (d != null) return d;      
-
+        ActionForward d = Check.valid(request, mapping); if (d != null) return d;
+        
         Login accessLogin = LoginMgr.getAccessLogin(request);
         Group accessGroup = GroupMgr.getAccessGroup(request);
                             

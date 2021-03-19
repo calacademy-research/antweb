@@ -310,10 +310,13 @@ public class SpecimenImage implements Serializable {
     }
     
     public String getOrigFileData() {
+      String origFileData = null;
       try {
-        return FileUtil.getFileAttributesHtml(getOrigPath());
+          A.log("origFilePath:" + getOrigPath() + " origFileData:" + origFileData);
+          origFileData = FileUtil.getFileAttributesHtml(getOrigPath());
+          return origFileData;
       } catch (Exception e) { // java.nio.file.NoSuchFileException is not explicitly thrown
-        s_log.warn("getOrigFileData() fileNotFound:" + getOrigPath());
+          s_log.warn("getOrigFileData() fileNotFound:" + getOrigPath());
       }
       return null;
     }
@@ -329,8 +332,7 @@ public class SpecimenImage implements Serializable {
     public String getThumbData() {
       //A.log("getThumbData() file:" + AntwebProps.getDocRoot() + getThumbview());
       return FileUtil.getLastModified(AntwebProps.getDocRoot() + getThumbview());    
-    }    	
-    	
+    }
 	public String getShotText() {
 		String result = "";
 		String shot = getShot();

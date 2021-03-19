@@ -28,11 +28,11 @@ public class Exif {
       jpeg.read(new FileInputStream(imagePath));
     } catch (java.io.FileNotFoundException e) {
       LogMgr.appendLog("imageNotFound.txt", imagePath);
-      AntwebUtil.log("WSS. Exif() exception:" + e + " on " + imagePath);      
+      AntwebUtil.log("WSS. Exif() 1 exception:" + e + " on " + imagePath);
       return;
     } catch (com.zonageek.jpeg.JpegException e) {    
       LogMgr.appendLog("zonageeks.txt", imagePath);
-      AntwebUtil.log("WSS. Exif() exception:" + e + " on " + imagePath);
+      AntwebUtil.log("WSS. Exif() 2 exception:" + e + " on " + imagePath);
       //String reqInfo = HttpUtil.getRequestInfo(request);
       //AntwebUtil.log("  - Request Info:" + reqInfo);
       return;

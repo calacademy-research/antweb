@@ -33,7 +33,7 @@ public class ImageDb extends AntwebDb {
             // image_path is always null/
         
             String query = "select i.id, image_of_id, shot_type, shot_number, has_tiff, c.copyright " 
-              + " from image i, copyright c " 
+              + " from image i, copyright c "
               + " where i.copyright = c.id"
               //+ " and modified > '2019-05-01'"
               //+ " and image_of_id = 'antweb1038462'"
@@ -124,7 +124,7 @@ public class ImageDb extends AntwebDb {
                 String highres = specimenImage.getHighres();
                 if (highres != null && !"null".equals(highres)) {             
                     String imagePath = AntwebProps.getDocRoot() + specimenImage.getHighres();
-
+                    A.log("getExifData() imagePath:" + imagePath);
                     Exif exif = new Exif(imagePath);
                     if (exif.isFound()) {
                       String artistName = exif.getArtist();

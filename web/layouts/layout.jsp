@@ -2,7 +2,7 @@
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
-<%@ page import="org.calacademy.antweb.util.AntwebUtil" %>
+<%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.Project" %>
@@ -254,6 +254,7 @@ $(function() {
     </div>
 </div>
 */ %>
+
 <tiles:insert attribute="academyHeader"/>
 <tiles:insert attribute="menubar"/>
 <tiles:insert attribute="body-content"/>

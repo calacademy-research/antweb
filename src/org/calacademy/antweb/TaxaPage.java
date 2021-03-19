@@ -274,7 +274,6 @@ public class TaxaPage implements Serializable {
 		return children;
 	}
 
-
 	public String getBrowserParams() {
 		return browserParams;
 	}

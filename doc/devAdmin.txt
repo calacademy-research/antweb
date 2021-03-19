@@ -46,10 +46,28 @@ ssh root@antweb.org
 cd /root/antweb
 tail --lines 1000 logs/antweb.log
 
+Location of antweb web accessible data: 
+  /mnt/antweb/images/
+  /mnt/antweb/web/
+
+From inside the docker (using: docker-compose exec antweb bash)
+  ls /data/antweb/
+  
+  
+--- Administration ---
+
+# To create a shell in the antweb docker
+docker-compose exec antweb bash
 
 
 --- tomcat configuration ---
 cd /Users/mark/antweb/docker/antweb/tomcat/conf
+
+
+--- Local Development ---
+
+
+--- Server Environment ---
 
 
    
