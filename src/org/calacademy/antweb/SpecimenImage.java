@@ -115,13 +115,14 @@ public class SpecimenImage implements Serializable {
         this.number = number;
     }
 
-    public String getThumbPath() { return getThumbview(); }
-    public String getLowPath() { return getLowres(); }
-    public String getMedPath() { return getMedres(); }
-    public String getHighPath() { return getHighres(); }
-	public String getTiffPath() {
+    public String getThumbPath() { return AntwebProps.getDocRoot() + getThumbview(); }
+    public String getLowPath() { return AntwebProps.getDocRoot() + getLowres(); }
+    public String getMedPath() { return AntwebProps.getDocRoot() + getMedres(); }
+    public String getHighPath() { return AntwebProps.getDocRoot() + getHighres(); }
+
+	public String getTiffUrl() {
         String path = null;
-        
+
         String withNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + "_" + number + ".tif";
         String withoutNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + ".tif";
 
@@ -146,9 +147,9 @@ public class SpecimenImage implements Serializable {
         if (!found) {
           String testPath = getHighResJpgPath();
           //A.log("getTiffPath() test:" + testPath);
-          if (AntwebUtil.fileFound(docRoot + testPath)) {   // REMOVE this check for performance
+          if (AntwebUtil.fileFound(testPath)) {   // REMOVE this check for performance
             path = testPath;
-            LogMgr.appendLog("OJNotOT.txt", docRoot + testPath);
+            LogMgr.appendLog("OJNotOT.txt", testPath);
             //ImageUtil.getNotTifList().add(this);
             // Update the is_tif flag in the images table. This is an error condition.
             // Resolve the root cause existing in existing codebase.
@@ -160,12 +161,12 @@ public class SpecimenImage implements Serializable {
         return path;
 	}
 
-	public String getHighResJpgPath() {
+	private String getHighResJpgUrl() {
         String withNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + "_" + number + ".jpg";
         String withoutNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + ".jpg";
 
         if (number > 1) {
-          return withNum;        
+          return withNum;
         } else {
     	  String docRoot = (new Utility()).getDocRoot();
           if (AntwebUtil.fileFound(docRoot + withNum)) {
@@ -202,11 +203,11 @@ public class SpecimenImage implements Serializable {
       }       
     }
 
-    public String getTiffUrl() {
-      return getTiffPath(); //AntwebProps.getDocRoot() +
+    private String getTiffPath() {
+      return AntwebProps.getDocRoot() + getTiffUrl();
     }
-    public String getHighResJpgUrl() {
-      return getHighResJpgPath();
+    private String getHighResJpgPath() {
+      return AntwebProps.getDocRoot() + getHighResJpgUrl();
     }
 
     public ArrayList<String> getOrigAndDerivPaths() {
