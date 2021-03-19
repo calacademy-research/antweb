@@ -133,10 +133,10 @@ gunzip ant-currentDump.sql.gz
 
 Load the database into docker volume mounted by the mysql container
 
-*Important: Stop the antweb mysql container if it exists before continuing*
+*Important: Bring down the antweb mysql container if it exists before continuing*
 
 ```bash
-
+docker-compose down
 docker volume rm antweb_database
 docker volume create antweb_database
 
