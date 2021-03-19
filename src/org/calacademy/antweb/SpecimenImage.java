@@ -4,7 +4,6 @@ import java.util.*;
 import java.io.*;
 import java.util.HashMap;
 
-import com.zonageek.jpeg.*;
 import com.zonageek.jpeg.ExifBlock;
 import com.zonageek.jpeg.Jpeg;
 import com.zonageek.jpeg.JpegException;
@@ -22,7 +21,7 @@ public class SpecimenImage implements Serializable {
     public static String DRACULA = "/images/casent0435930/casent0435930_h_1_med.jpg";
     public static String TEXTURED = "/images/casent0171158/casent0171158_h_1_med.jpg";
      
-    private static String image_root = "/images";
+    private static final String image_root = "/images";
     protected String code;
     protected String shot;
     protected int number;
@@ -120,7 +119,7 @@ public class SpecimenImage implements Serializable {
     public String getMedPath() { return AntwebProps.getDocRoot() + getMedres(); }
     public String getHighPath() { return AntwebProps.getDocRoot() + getHighres(); }
 
-	public String getTiffUrl() {
+	private String getTiffUrl() {
         String path = null;
 
         String withNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + "_" + number + ".tif";
@@ -168,39 +167,39 @@ public class SpecimenImage implements Serializable {
         if (number > 1) {
           return withNum;
         } else {
-    	  String docRoot = (new Utility()).getDocRoot();
-          if (AntwebUtil.fileFound(docRoot + withNum)) {
-            return withNum;
-          }	else {
-            return withoutNum;
-          }
-        }    	
-	}
+            String docRoot = (new Utility()).getDocRoot();
+            if (AntwebUtil.fileFound(docRoot + withNum)) {
+                return withNum;
+            } else {
+                return withoutNum;
+            }
+        }
+    }
 
-	public String getOrigPath() {
-	  if (getHasTiff()) {
-	    return getTiffPath();
-	  } else {
-	    return getHighResJpgPath();
-	  }
-	}
+    private String getOrigPath() {
+        if (getHasTiff()) {
+            return getTiffPath();
+        } else {
+            return getHighResJpgPath();
+        }
+    }
 
-	public boolean isHasTiff() {
-		return hasTiff;
-	}
+    public boolean isHasTiff() {
+        return hasTiff;
+    }
 	public boolean getHasTiff() {
 	  return isHasTiff();
     }
 	public void setHasTiff(boolean hasTiff) {
 		this.hasTiff = hasTiff;
 	}
-    
+
     public String getOrigUrl() {
       if (isHasTiff()) {
         return getTiffUrl();
       } else {
-        return getHighResJpgUrl();      
-      }       
+          return getHighResJpgUrl();
+      }
     }
 
     private String getTiffPath() {
@@ -336,18 +335,18 @@ public class SpecimenImage implements Serializable {
 		String result = "";
 		String shot = getShot();
         if (shot == null) {
-          return result;
-		} else if (shot.indexOf("h") != -1) {
-			result = "head";
-		} else if (shot.indexOf("p") != -1) {
-			result = "profile";
-		} else if (shot.indexOf("l") != -1) {
-			result = "label";
-		} else if (shot.indexOf("d") != -1) {
-			result = "dorsal";
-		} else if (shot.indexOf("v") != -1) {
-			result = "ventral";
-		}
+            return result;
+        } else if (shot.contains("h")) {
+            result = "head";
+        } else if (shot.contains("p")) {
+            result = "profile";
+        } else if (shot.contains("l")) {
+            result = "label";
+        } else if (shot.contains("d")) {
+            result = "dorsal";
+        } else if (shot.contains("v")) {
+            result = "ventral";
+        }
 		return result;
 	}	
 	
