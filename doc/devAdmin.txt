@@ -64,11 +64,62 @@ docker-compose exec antweb bash
 cd /Users/mark/antweb/docker/antweb/tomcat/conf
 
 
---- Local Development ---
+--- Installation notes ---
+[install GitKraken, IntelliJ]
+As described in README.txt
+mkdir $HOME/volumes/
+git clone git@github.com:calacademy-research/antweb.git
+Open repository in GitKraken. 
+  Pull appropriate branch.
+ln -sf docker-compose.dev.yml docker-compose.override.yml
+Copy over /data directory to antweb/ 
+  Using rclone in README.txt or some other means. Copy from another installation?
+[in antweb directory] Create the .env file.
+  export ANTWEB_BUCKET_PATH=$(pwd)/data
+  echo ANTWEB_BUCKET_PATH=$(printenv ANTWEB_BUCKET_PATH) >> .env  
+  export ANTWEB_BACKUP_PATH=$HOME/volumes/antweb_backup 
+  echo ANTWEB_BACKUP_PATH=$(printenv ANTWEB_BACKUP_PATH) >> .env
+
+-Database install
+scp root@antweb.org:/root/ant-currentDump.sql.gz .
+gunzip ant-currentDump.sql.gz
+docker volume create antweb_database
+CID=$(docker run -d --rm \
+	-e MYSQL_ALLOW_EMPTY_PASSWORD=1 \
+	-e MYSQL_DATABASE=ant \
+	--mount source=antweb_database,target=/var/lib/mysql \
+	 mysql:5)   
+sleep 15
+docker exec -i $CID sh -c "exec mysql -uroot ant" < ../bak/db/ant-currentDump.sql  
+
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock' (2)
+
+Stop mysql before loading database
+  docker-compose stop mysql
+
+If a mysql process is lost (the CID=$(docker run...) it can interfere:
+  InnoDB: Check that you do not already have another mysqld process using the same InnoDB data or log files
+  mark@Marks-iMac antweb % docker ps -a
+  CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS          PORTS                 NAMES
+  3a3e63a03e3f   mysql:5   "docker-entrypoint.s…"   54 minutes ago   Up 54 minutes   3306/tcp, 33060/tcp   wonderful_galileo
+  mark@Marks-iMac antweb % docker stop 3a   [Look for the one that does not look like antweb_*]
+
+ docker compose down
+ 
+docker exec -it $CID mysql -u root 
+    
+docker logs -f $CID
+
+docker-compose up -d    (d for daemon [or detached])
+docker-compose up --build
 
 
---- Server Environment ---
 
 
-   
+
+
+	
+--- Questions for Dash ---
+README.txt
+  Replace SECRET_ACCESS_KEY with the antweb key?
 

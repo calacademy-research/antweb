@@ -187,19 +187,21 @@ public class ImageUploaded {
 
     private String genImage(String specimenDir, String type, int width, int height) {
         String message = "";
+        String imageName = null;
+        String imagePath = null;
+        String tags = "";
         try {
-            String imageName = getCode() + "_" + getShot() + "_" + getNumber() + "_" + type + ".jpg";
+            imageName = getCode() + "_" + getShot() + "_" + getNumber() + "_" + type + ".jpg";
 
             IMOperation op = new IMOperation();
             op.addImage(imagesDir + getCode() + "/" + getFileName());
             op.resize(height, width);
-            String imagePath = specimenDir + "/" + imageName;
+            imagePath = specimenDir + "/" + imageName;
             op.addImage(imagePath);
 
             // This would be JMagick. Doesn't work on Mac.
             //setExifData(specimenDir, imageName, code);
-            
-            String tags = "";
+
             //tags = setExifData(imagePath);
 
             message = "<br>" + imageName;
@@ -209,7 +211,7 @@ public class ImageUploaded {
             ConvertCmd cmd = new ConvertCmd();
             cmd.run(op);
         } catch (org.im4java.core.CommandException e) {
-            AntwebUtil.log("im4java test e:" + e);
+            AntwebUtil.log("im4java test e:" + e + " imageName:" + imageName + " imagePath:" + imagePath + " tags:" + tags);
         } catch (IOException e) {
             AntwebUtil.log("im4java test 2e:" + e);
         } catch (InterruptedException e) {
