@@ -14,67 +14,84 @@ provider = DigitalOcean
 access_key_id = ACCESS_KEY
 secret_access_key = SECRET_KEY
 endpoint = sfo3.digitaloceanspaces.com
-acl =
+acl = public-read
 ```
 
-Create rclone mounting script at `/usr/local/bin/rclonefs`. See 
-[rclone mount helper script](https://github.com/rclone/rclone/wiki/rclone-mount-helper-script) for extra details.
+Rclone systemd mounting service. Derived from https://github.com/animosity22/homescripts/blob/master/systemd/rclone.service
+and https://github.com/rclone/rclone/wiki/Systemd-rclone-mount
+
+Create this service at `/etc/systemd/system/rclone.service`
+```
+cat <<'EOF' > /etc/systemd/system/rclone.service
+[Unit]
+Description=rclone mount for antweb:/mnt/antweb bucket
+Requires=systemd-networkd.service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=notify
+Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
+KillMode=none
+RestartSec=5
+ExecStart=/usr/bin/rclone mount digitalocean:/antweb /mnt/antweb \
+--default-permissions \
+--s3-acl public \
+--dir-cache-time 24h \
+# To log to syslog as well
+--syslog \
+# This is used for caching files to local disk
+--vfs-cache-mode full \
+# This limits the cache size to the value below (about half the drive)
+--vfs-cache-max-size 80G \
+# This adds a little buffer for read ahead
+--vfs-read-ahead 256M \
+# This limits the age in the cache if the size is reached and it removes the oldest files first
+--vfs-cache-max-age 1000h  \
+# Keep attributes in kernel for longer
+--attr-timeout 10s \
+# Use server upload as modification time (since upload occurs on change)
+--use-server-modtime
+
+ExecStop=/bin/fusermount -u /mnt/antweb
+Restart=on-failure
 
 
-```bash
-touch /usr/local/bin/rclonefs
-chmod +x /usr/local/bin/rclonefs
-
-cat <<'EOF' > /usr/local/bin/rclonefs
-#!/bin/bash
-remote=$1
-mountpoint=$2
-shift 2
-
-# Process -o parameters
-while getopts :o: opts; do
-    case $opts in
-        o)
-            params=${OPTARG//,/ }
-            for param in $params; do
-                if [ "$param" == "rw"   ]; then continue; fi
-                if [ "$param" == "ro"   ]; then continue; fi
-                if [ "$param" == "dev"  ]; then continue; fi
-                if [ "$param" == "suid" ]; then continue; fi
-                if [ "$param" == "exec" ]; then continue; fi
-                if [ "$param" == "auto" ]; then continue; fi
-                if [ "$param" == "nodev" ]; then continue; fi
-                if [ "$param" == "nosuid" ]; then continue; fi
-                if [ "$param" == "noexec" ]; then continue; fi
-                if [ "$param" == "noauto" ]; then continue; fi
-                if [[ $param == x-systemd.* ]]; then continue; fi
-                trans="$trans --$param"
-            done
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG"
-            ;;
-    esac
-done
-
-# exec rclone
-trans="$trans $remote $mountpoint"
-# NOTE: do not try "mount --daemon" here, it does not play well with systemd automount, use '&'!
-# NOTE: mount is suid and ignores pre-set PATHs -> specify explicitely
-PATH=$PATH rclone mount $trans </dev/null >/dev/null 2>/dev/null &
-
-# WARNING: this will loop forever if remote is actually empty!
-until [ "`ls -l $mountpoint`" != 'total 0' ]; do
-    sleep 1
-done
+[Install]
+WantedBy=multi-user.target
 EOF
 ```
 
+And create a service for the achival bucket
 
-Add rclone mount to fstab
 ```
-digitalocean:/antweb	/mnt/antweb	fuse.rclonefs	config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full,attr-timeout=10s,dir-cache-time=24h,vfs-cache-max-age=24h,use-server-modtime,log-file=/root/.config/rclone/rclone.log,log-level=NOTICE	0 0
-digitalocean:/antweb-dbarchive	/mnt/backup	fuse.rclonefs	config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full,s3-acl=private	0 0
+cat <<'EOF' > /etc/systemd/system/rclone-dbarchive.service
+[Unit]
+Description=rclone mount for antweb:/mnt/antweb bucket
+Requires=systemd-networkd.service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=notify
+Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
+KillMode=none
+RestartSec=5
+
+ExecStart=/usr/bin/rclone mount digitalocean:/antweb-dbarchive /mnt/backup \
+--default-permissions \
+--vfs-cache-mode full \
+--syslog \
+--use-server-modtime \
+--s3-acl private
+
+ExecStop=/bin/fusermount -u /mnt/backup
+Restart=on-failure
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
 ```
 
 Add/uncomment `user_allow_other` in /etc/fuse.conf
@@ -85,10 +102,13 @@ mkdir -p /mnt/antweb
 mkdir -p /mnt/backup
 ```
 
-Mount rclone volumes
+Start rclone service and mount buckets
 ```bash
-mount /mnt/antweb
-mount /mnt/backup
+systemd start rclone
+systemd enable rclone
+
+systemd start rclone-dbarchive
+systemd enable rclone-dbarchive
 ```
 
 Staging
