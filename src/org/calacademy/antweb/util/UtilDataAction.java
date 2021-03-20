@@ -299,13 +299,13 @@ public class UtilDataAction extends Action {
 		  message = "worldantsSource";
 		}
 
-*/				  
+
 		if (action.equals("plaziData")) {
 		  PlaziDataAction plaziDataAction = new PlaziDataAction();                    
 		  plaziDataAction.fetchPlaziData(connection);
           message = "Plazi Data fetched";
 		}
-
+*/
 		// This, after a regional Taxon List uploaded as a data file from the curate page
 		// will push the data into geolocale. Inserting the record if it does not exist.
 		if (action.equals("populateFromAntwikiData")) {
