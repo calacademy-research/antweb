@@ -1,0 +1,28 @@
+Python Development Document.
+
+
+Some scripts are run. This (rough) documentation gathers clues for the process.
+
+
+
+To run one of the scripts:
+  python3 imageCheck.py  
+   
+To install a missing module:
+  pip3 install flask_sqlalchemy
+  # Fails due to security. Use venv.
+  
+Instead, using venv:
+  python3 -m venv env
+  source ./env/bin/activate 
+  python -m pip install flask_sqlalchemy
+
+Inside the venv, this could work:
+  pip3 install --upgrade pip
+
+requirements.txt should be used as such:
+  To create a requirements.txt from a configured environment:
+    pip3 freeze > requirements.txt
+  To load that environment:
+    pip3 install -r requirements.txt
+

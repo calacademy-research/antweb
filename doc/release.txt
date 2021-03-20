@@ -1,6 +1,12 @@
+Release  8.55.1
+  Plazi Data compiler warning mitigated.
+  
 Release 8.55
-  Fix of View: drop down on taxonomic pages.
+  Fix of View: drop down on taxonomic pages of images.
   Fix added to toDo.txt - Orig File Data, bigPicture.do for admins.
+  Log more info for convert warning.
+  devSleep method. 
+  AntwebStackTrace methods.
 
 Release 8.54.9
   Minor logging change.

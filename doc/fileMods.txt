@@ -1,3 +1,32 @@
+Release 8.55
+Fast-forward
+ .gitignore                                                 |   1 +
+ README.md                                                  |   8 ++++++--
+ doc/devAdmin.txt                                           |  71 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ doc/install.txt                                            |   2 +-
+ doc/release.txt                                            |   4 ++++
+ doc/toDo.txt                                               |  63 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ src/org/calacademy/antweb/BigPictureAction.java            |   4 ++--
+ src/org/calacademy/antweb/SpecimenImage.java               | 108 +++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
+ src/org/calacademy/antweb/TaxaPage.java                    |   1 -
+ src/org/calacademy/antweb/TaxaPageAction.java              |   2 ++
+ src/org/calacademy/antweb/home/ImageDb.java                |   4 ++--
+ src/org/calacademy/antweb/imageUploader/ImageUploaded.java |  12 +++++++-----
+ src/org/calacademy/antweb/util/AntwebException.java        |   3 +++
+ src/org/calacademy/antweb/util/AntwebUtil.java             | 128 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------------------------------------------------------------------------
+ src/org/calacademy/antweb/util/Exif.java                   |   4 ++--
+ web/bigPicture-body.jsp                                    |   7 ++++++-
+ web/common/antweb-defs.jsp                                 |   7 +++----
+ web/common/antwebSecure-defs.jsp                           |   4 ++++
+ web/common/jspError-body.jsp                               |   2 +-
+ web/common/siteNav.jsp                                     |   8 ++++----
+ web/documentation/releaseNum.jsp                           |   2 +-
+ web/error.jsp                                              |   2 +-
+ web/layouts/layout.jsp                                     |   3 ++-
+ web/taxonomicPageImages-body.jsp                           |   5 +++--
+ 24 files changed, 295 insertions(+), 160 deletions(-)
+
+
 Release 8.54.7
  README.md                                                |  2 +-
  doc/release.txt                                          |  3 +++

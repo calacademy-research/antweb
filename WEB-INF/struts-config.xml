@@ -1673,23 +1673,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="report" path="/imageUploader/imageUploadReport.jsp"/>
     </action>
 
-    
-     <!-- Deprecated -->
-     <action path="/getPlazi"
-             type="org.calacademy.antweb.data.PlaziAction"
-             name="blankForm"
-             input="/index.jsp">
-         <forward name="failure" path="/plaziFail.jsp"/>
-      </action>
-
-     <!-- called as: /util.do?action=plaziData  as below only to test fetch. -->
-     <action path="/getPlaziData"
-             type="org.calacademy.antweb.data.PlaziDataAction"
-             name="blankForm"
-             input="/index.jsp">
-         <forward name="failure" path="/plaziFail.jsp"/>
-      </action>
-
      <!-- called as: /util.do?action=countryData  as below only to test fetch. -->
      <action path="/antWikiData"
              type="org.calacademy.antweb.data.AntWikiDataAction"
