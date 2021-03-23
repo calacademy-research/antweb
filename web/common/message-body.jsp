@@ -5,21 +5,22 @@
 <%@ page import="java.util.*" %>
 <%@ page import="java.io.*" %>
 <%@ page import="java.lang.*" %>
+<%@ page import="org.calacademy.antweb.imageUploader.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.upload.*" %>
 <%@ page import="org.calacademy.antweb.geolocale.*" %>
 <%@ page import="org.calacademy.antweb.Formatter" %>
 <%@ page import="org.calacademy.antweb.*" %>
 
-
 <%@ page import="java.util.regex.Matcher" %>
 <%@ page import="java.util.regex.Pattern" %>
-
-
 
 <div class="wide_left">
 
 <%
+      //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D.tif"));
+      //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D_2.tif"));
+      //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("UFV_LABECOL_000386_P_2.tif"));
 
     //AntwebUtil.log("execute() name:" + TaxonMgr.getPrettyTaxaNames(taxonName) + " species:" + species);
 

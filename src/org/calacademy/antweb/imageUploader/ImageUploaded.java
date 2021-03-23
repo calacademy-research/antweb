@@ -84,6 +84,13 @@ public class ImageUploaded {
       fileItem.write(file);
   }
 
+  public static String getTestString(String fileName) {
+      ImageUploaded iu = new ImageUploaded();
+      iu.init(fileName);
+      String val = "fileName:" + iu.getFileName() + " getCode:" + iu.getCode() + " shot:" + iu.getShot() + " number:" + iu.getNumber() + " ext:" + iu.getExt();
+      return val;
+  }
+
   // From the original file uploaded we derive the code, the shot and number.
   public void init(String fileName) {
     int u1 = 0;
@@ -100,6 +107,18 @@ public class ImageUploaded {
           setErrorMessage("_ and shot type required.");         
           return;
         }
+
+        // handle underscore that could be early in the name.
+        period = fileName.indexOf(".");
+        if (period - u1 > 5) {
+            u1 = fileName.indexOf("_", u1 + 1);
+        }
+
+        // handle underscore that could be early in the name.
+        if (period - u1 > 5) {
+            u1 = fileName.indexOf("_", u1 + 1);
+        }
+
         setCode(fileName.substring(0, u1).toLowerCase());
 
         String beforePeriod = fileName.substring(0, fileName.indexOf("."));
@@ -160,8 +179,6 @@ public class ImageUploaded {
       s_log.warn("populate() e:" + e);
     } catch (StringIndexOutOfBoundsException e) {
       s_log.warn("populate() e:" + e);
-    //} catch (Exception e) {
-    //  s_log.warn("populate() e:" + e);
     }  
     setErrorMessage("Invalid filename");
   }
