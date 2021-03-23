@@ -33,7 +33,6 @@ After=network-online.target
 Type=notify
 Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
 KillMode=none
-RestartSec=5
 ExecStart=/usr/bin/rclone mount digitalocean:/antweb /mnt/antweb \
 --default-permissions \
 --s3-acl public \
@@ -53,9 +52,9 @@ ExecStart=/usr/bin/rclone mount digitalocean:/antweb /mnt/antweb \
 # Use server upload as modification time (since upload occurs on change)
 --use-server-modtime
 
-ExecStop=/bin/fusermount -u /mnt/antweb
-Restart=on-failure
-
+ExecStop=/bin/fusermount -uz /mnt/antweb
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
@@ -76,8 +75,6 @@ After=network-online.target
 Type=notify
 Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
 KillMode=none
-RestartSec=5
-
 ExecStart=/usr/bin/rclone mount digitalocean:/antweb-dbarchive /mnt/backup \
 --default-permissions \
 --vfs-cache-mode full \
@@ -85,8 +82,9 @@ ExecStart=/usr/bin/rclone mount digitalocean:/antweb-dbarchive /mnt/backup \
 --use-server-modtime \
 --s3-acl private
 
-ExecStop=/bin/fusermount -u /mnt/backup
-Restart=on-failure
+ExecStop=/bin/fusermount -uz /mnt/backup
+Restart=always
+RestartSec=5
 
 
 [Install]
