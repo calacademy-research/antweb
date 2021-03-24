@@ -35,7 +35,7 @@ Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
 KillMode=none
 ExecStart=/usr/bin/rclone mount digitalocean:/antweb /mnt/antweb \
 --default-permissions \
---s3-acl public \
+--s3-acl public-read \
 --dir-cache-time 24h \
 # To log to syslog as well
 --syslog \
@@ -50,7 +50,9 @@ ExecStart=/usr/bin/rclone mount digitalocean:/antweb /mnt/antweb \
 # Keep attributes in kernel for longer
 --attr-timeout 10s \
 # Use server upload as modification time (since upload occurs on change)
---use-server-modtime
+--use-server-modtime \
+# Don't kill process if taking a while to read folders
+--daemon-timeout 10m
 
 ExecStop=/bin/fusermount -uz /mnt/antweb
 Restart=always
