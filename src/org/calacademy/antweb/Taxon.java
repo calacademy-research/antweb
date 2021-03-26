@@ -440,10 +440,14 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
     public String removeParens(String name) {
       if (name == null) return null;
+
+      // remove everything inside the parens and any extra spaces left over
+      // return name.replaceAll("\\(.*?\\)", "").replaceAll("\\s+", " ");
+
       int i = 0;
-      while (name.contains("(")) {
+      while (name.contains("(") && name.contains(")")) {
         ++i;
-        if (i > 5) continue;
+        if (i > 5) break;
         int lParenPos = name.indexOf("(");      
         int rParenPos = name.indexOf(")");
         name = name.substring(0, lParenPos) + name.substring(rParenPos + 1).trim();
