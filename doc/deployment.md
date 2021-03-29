@@ -33,6 +33,7 @@ After=network-online.target
 Type=notify
 Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
 KillMode=none
+ExecStartPre=/bin/fusermount -uz /mnt/antweb
 ExecStart=/usr/bin/rclone mount digitalocean:/antweb /mnt/antweb \
 --default-permissions \
 --s3-acl public-read \
@@ -77,6 +78,7 @@ After=network-online.target
 Type=notify
 Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
 KillMode=none
+ExecStartPre=/bin/fusermount -uz /mnt/backup
 ExecStart=/usr/bin/rclone mount digitalocean:/antweb-dbarchive /mnt/backup \
 --default-permissions \
 --vfs-cache-mode full \
