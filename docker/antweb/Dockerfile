@@ -120,7 +120,8 @@ RUN ln -s /mnt/antweb/web/bak bak && \
     ln -s /mnt/antweb/web/documentation documentation && \
     ln -s /mnt/antweb/web/specieslist specieslist && \
     ln -s /mnt/antweb/web/upload upload && \
-    ln -s /mnt/antweb/web/specimen log/specimen
+    ln -s /mnt/antweb/web/log/specimen log/specimen && \
+    ln -s /mnt/antweb/web/log/worldants log/worldants
 
 # Add link to bucket for backups
 RUN ln -s /mnt/backup /data/antweb/backup
