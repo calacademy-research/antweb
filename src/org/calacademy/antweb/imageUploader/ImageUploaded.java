@@ -1,5 +1,6 @@
 package org.calacademy.antweb.imageUploader;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.io.*;
 
@@ -27,7 +28,7 @@ public class ImageUploaded {
 
   public static String imagesDir = AntwebProps.getDocRoot() + "images/";
 
-  public static String tempDir = imagesDir + "/temp";
+  public static Path tempDir = Path.of(AntwebProps.getDocRoot(), "temp", "images");
   public static String backupDir = imagesDir + "backup/";
 
   private int id = 0;
