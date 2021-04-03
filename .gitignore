@@ -11,6 +11,7 @@ antweb.iml
 
 **/__pycache__
 /.env
+/src/py/env
 
 # This is for devs who clone web/ to their local machines
 /data

@@ -28,14 +28,23 @@ from sqlalchemy.orm import sessionmaker, relationship
 
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant')
+# was engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant')
+
+# CHANGED APR 2, 2021 - attempting to get working with new docker config
+#import MySQLdb as mysqldb
+#OLD_PROTOCOL = 'mysql+mysqldb://'
+#PROTOCOL = OLD_PROTOCOL
+
+NEW_PROTOCOL = 'mysql+pymysql://'
+PROTOCOL = NEW_PROTOCOL
+
+SQLALCHEMY_DATABASE_URI = PROTOCOL + 'antweb:f0rm1c6@mysql:3306/ant'
+engine = create_engine(SQLALCHEMY_DATABASE_URI)
 
 Base = declarative_base()
 
 Session = sessionmaker(bind=engine)
 session = Session()
-
-import MySQLdb as mysqldb
 
 from datetime import datetime, timedelta
 
@@ -66,15 +75,16 @@ try:
     config.read(apiDbConf)
 
     #print(config.get('DB', 'user'))
-    dbUrl = 'mysql+mysqldb://' + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + ":" + config.get('DB', 'port') + '/' + config.get('DB', 'db') 
+    #dbUrl = OLD_PROTOCOL + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + ":" + config.get('DB', 'port') + '/' + config.get('DB', 'db')
+    dbUrl = PROTOCOL + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + ":" + config.get('DB', 'port') + '/' + config.get('DB', 'db')
 
-    isDevMode = 1 # This will not execute deployed on server. This is how we determined devMode.   
+    isDevMode = 1 # This will not execute deployed on server. This is how we determined devMode.
     if (isDevMode):
       print("isDevMode:" + str(isDevMode))
 
 except Exception as e :
     print('Exception e: ' + str(e),' reading configuration file')
-    dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant'
+    dbUrl = SQLALCHEMY_DATABASE_URI
 
 #app = Flask(__name__)
 application.config['SQLALCHEMY_DATABASE_URI'] = dbUrl
@@ -376,10 +386,10 @@ def verifyImages():
 
     try:
         data = query.all()
-    except OperationalError as error:        
-        message = "images operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message    
+#    except OperationalError as error:
+#        message = "images operational error:" + str(error) + " on request:" + str(request)
+#        print(message)
+#        return message
     except:
         message = "images error:" + str(request)
         print(message) # + error.orig.message, error.params
@@ -445,10 +455,10 @@ if __name__ == "__main__":
 
     #findSmallImages()
 
-    findLowerCaseTifs()
-    findLowerCaseOrigJpgs()
+    #findLowerCaseTifs()
+    #findLowerCaseOrigJpgs()
    
-    #verifyImages()
+    verifyImages()
 
     #findIgnoredOrigFiles()
     

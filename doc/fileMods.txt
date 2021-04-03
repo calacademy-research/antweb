@@ -1,3 +1,22 @@
+RElease 8.55.2
+ WEB-INF/struts-config.xml                                  |  17 -------
+ api/v3.1/localRequirements.txt                             |   2 +-
+ api/v3.1/requirements.txt                                  |   4 +-
+ api/v3.1/serverRequirements.txt                            |   2 +-
+ doc/deployment.md                                          | 132 +++++++++++++++++++++++++++++++-----------------------
+ doc/fileMods.txt                                           |  29 ++++++++++++
+ doc/pythonDev.txt                                          |  28 ++++++++++++
+ doc/release.txt                                            |  11 ++++-
+ src/org/calacademy/antweb/data/Plazi.java                  | 572 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ src/org/calacademy/antweb/data/PlaziAction.java            | 277 -----------------------------------------------------------------------------------------------------------------
+ src/org/calacademy/antweb/data/PlaziDataAction.java        | 311 -------------------------------------------------------------------------------------------------------------------------------
+ src/org/calacademy/antweb/data/PlaziTaxonDescription.java  |  33 --------------
+ src/org/calacademy/antweb/imageUploader/ImageUploaded.java |  21 ++++++++-
+ src/org/calacademy/antweb/util/UtilDataAction.java         |   4 +-
+ src/py/requirements.txt                                    |  14 ++++++
+ web/common/message-body.jsp                                |   7 +--
+ web/documentation/releaseNum.jsp                           |   2 +-
+
 Release 8.55
 Fast-forward
  .gitignore                                                 |   1 +

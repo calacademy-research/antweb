@@ -1,0 +1,27 @@
+
+
+
+Documentation for Running Python scripts in the /src/py directory.
+------------------------------------------------------------------
+
+cp /Volumes/markDisk/dev/bak/requirements.txt src/py/
+
+cd src/py/
+
+python3 imageCheck.py
+   ModuleNotFoundError: No module named 'flask_sqlalchemy'
+
+virtualenv env -p python3
+
+source env/bin/activate 
+   
+pip3 install -r requirements.txt
+
+python3 imageCheck.py
+   ModuleNotFoundError: No module named 'MySQLdb'
+
+Had to comment the #mysqlclient==1.3.10 our of requirements.txt
+  But then the pip3 install fails.
+
+
+pip3 install pymysql

@@ -21,6 +21,7 @@
       //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D.tif"));
       //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D_2.tif"));
       //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("UFV_LABECOL_000386_P_2.tif"));
+      //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("ZRC_6_1520_H.tif"));
 
     //AntwebUtil.log("execute() name:" + TaxonMgr.getPrettyTaxaNames(taxonName) + " species:" + species);
 

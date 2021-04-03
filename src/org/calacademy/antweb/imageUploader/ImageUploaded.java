@@ -88,7 +88,7 @@ public class ImageUploaded {
   public static String getTestString(String fileName) {
       ImageUploaded iu = new ImageUploaded();
       iu.init(fileName);
-      String val = "fileName:" + iu.getFileName() + " getCode:" + iu.getCode() + " shot:" + iu.getShot() + " number:" + iu.getNumber() + " ext:" + iu.getExt();
+      String val = "fileName:" + iu.getFileName() + " code:" + iu.getCode() + " shot:" + iu.getShot() + " number:" + iu.getNumber() + " ext:" + iu.getExt();
       return val;
   }
 
