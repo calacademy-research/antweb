@@ -58,6 +58,8 @@ application = Flask(__name__)
 api = Api(application)
 
 isDevMode = 0
+
+image_root_dir = "/mnt/antweb/images"
  
 # MySQL configurations  
 try:
@@ -111,7 +113,7 @@ def hello():
 
 def dirExists(code):
     #print(code)
-    dir = '/data/antweb/images/' + code
+    dir = image_root_dir + '/' + code
     #print(dir)
     isDir = os.path.isdir(dir)
     if (not isDir):
@@ -212,7 +214,7 @@ def procImages():
 def findOrphanDirs():
     orphanImgs = ''
     orphanDirCount = 0
-    for dirname, dirnames, filenames in os.walk('/data/antweb/images'):
+    for dirname, dirnames, filenames in os.walk(image_root_dir):
         # print path to all subdirectories first.
         for subdirname in dirnames:        
             code = subdirname
@@ -233,7 +235,7 @@ def procSpaceFiles():
     spaceFileCount = 0
     lastDirName = ''
     #dirNameCount = 0
-    for dirName, dirNames, fileNames in os.walk('/data/antweb/images'):
+    for dirName, dirNames, fileNames in os.walk(image_root_dir):
 
         if (' ' in dirName):
             spacelessDirName = dirName.replace(" ", "")
@@ -267,7 +269,7 @@ def procSpaceFiles():
  
 def findIgnoredOrigFiles():
     print("Ignored originals with no derivatives created due to file naming conflict:")
-    rootDir = '/data/antweb/images'
+    rootDir = image_root_dir
     ignoredCount = 0
     for dirName, dirNames, fileNames in os.walk(rootDir):
       for fileName in fileNames:    
@@ -301,7 +303,7 @@ def ignoredTest(shotType, dirName, fileName):
 def findSmallImages():
     base = "http://www.antweb.org/images/"
     smallImageCount = 0
-    for dirName, dirNames, fileNames in os.walk('/data/antweb/images'):
+    for dirName, dirNames, fileNames in os.walk(image_root_dir):
         for fileName in fileNames:
             filePath = os.path.join(dirName, fileName)
             size = os.stat(filePath).st_size
@@ -320,7 +322,7 @@ def findSmallImages():
 def findLowerCaseTifs():
     base = "http://www.antweb.org/images/"
     count = 0
-    for dirName, dirNames, fileNames in os.walk('/data/antweb/images'):
+    for dirName, dirNames, fileNames in os.walk(image_root_dir):
         for fileName in fileNames:
             filePath = os.path.join(dirName, fileName)
             if ( \
@@ -340,7 +342,7 @@ def findLowerCaseTifs():
 def findLowerCaseOrigJpgs():
     base = "http://www.antweb.org/images/"
     count = 0
-    for dirName, dirNames, fileNames in os.walk('/data/antweb/images'):
+    for dirName, dirNames, fileNames in os.walk(image_root_dir):
         for fileName in fileNames:
             filePath = os.path.join(dirName, fileName)
             if ( \
@@ -411,7 +413,7 @@ def verifyImages():
 # Antweb imageCount:214710  Those without Tifs:70858
 def verifyTif(image):
     missingImageCount = 0;
-    base = '/data/antweb/images/' + image.code + '/' 
+    base = image_root_dir + '/' + image.code + '/'
     shotName =  image.code + '_' 
     file1 = base + shotName.upper() + image.shotType.upper() + '.tif'
     
@@ -432,7 +434,7 @@ def verifyTif(image):
 # imageCount:214710 missingImageCount:44
 def verifyDerivatives(image):
     missingImageCount = 0;
-    base = '/data/antweb/images/' + image.code + '/' + image.code + '_' + image.shotType + '_' + str(image.shotNumber);
+    base = image_root_dir + '/' + image.code + '/' + image.code + '_' + image.shotType + '_' + str(image.shotNumber);
     files = [base + '_low.jpg' \
       , base + '_med.jpg'
       , base + '_high.jpg'
