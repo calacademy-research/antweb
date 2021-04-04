@@ -38,7 +38,7 @@ from sqlalchemy.ext.declarative import declarative_base
 NEW_PROTOCOL = 'mysql+pymysql://'
 PROTOCOL = NEW_PROTOCOL
 
-SQLALCHEMY_DATABASE_URI = PROTOCOL + 'antweb:f0rm1c6@mysql:3306/ant'
+SQLALCHEMY_DATABASE_URI = PROTOCOL + 'antweb:f0rm1c6@127.0.0.1:3306/ant'
 engine = create_engine(SQLALCHEMY_DATABASE_URI)
 
 Base = declarative_base()
@@ -83,7 +83,7 @@ try:
       print("isDevMode:" + str(isDevMode))
 
 except Exception as e :
-    print('Exception e: ' + str(e),' reading configuration file')
+    print('Exception reading configuration file:', e)
     dbUrl = SQLALCHEMY_DATABASE_URI
 
 #app = Flask(__name__)
@@ -123,16 +123,16 @@ def dirExists(code):
 class Image(Base):
     __tablename__ = 'image'
 
-    uid = Column(String, primary_key=True)
+    id = Column(String, primary_key=True)
     shotType = Column('shot_type', String)
     code = Column('image_of_id', String)
-    uploadDate = Column('upload_date', String)
+    uploadDate = Column('upload_date', DateTime)
     shotNumber = Column('shot_number', String)
     hasTiff = Column('has_tiff', String)
 
     def __repr__(self):
        return "<Image(uid='%s', shotType='%s', code='%s', uploadDate='%s', shotNumber='%s', hasTiff='%s')>" % (
-         self.uid, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
+           self.id, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
 
 def findImage(code):
     query = session.query(Image)
@@ -145,8 +145,8 @@ def findImage(code):
         data = query.all()
     except UnicodeEncodeError as uniError:
         print("uniError:" + code)        
-    except Error as error:
-        print("images error:" + error.orig.message, error.params)
+    except Exception as e:
+        print("images error:", e, e.args)
     
     for image in data:
       return 1
@@ -182,8 +182,8 @@ def procImages():
 
     try:
         data = query.all()
-    except Error as error:
-        print("images error:" + error.orig.message, error.params)
+    except Exception as e:
+        print("images error:", e, e.args)
     
     lastCode = ""
     specimenCount = 0
