@@ -370,7 +370,7 @@ def verifyImages():
     shotType='*'
     code='*'
     #code = 'casent0623849'
-    code = 'casent0005904';
+    # code = 'casent0005904';
     limit='*' #10
     offset=0
         
