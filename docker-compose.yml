@@ -27,7 +27,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      image_bucket_url: 'https://antweb.sfo3.digitaloceanspaces.com'
+      image_bucket_url: 'https://static.antweb.org'
 
   api:
     build:
