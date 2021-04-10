@@ -401,7 +401,7 @@ these other _cf1 etc.
                 child.setConnection(null);
                 theseChildren.add(child);
             }
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
            s_log.warn("setChildrenLocalized(" + overview + ") e:" + e + " query:" + query); 
         } finally {
             DBUtil.close(stmt, rset, this, "setChildrenLocalized()");

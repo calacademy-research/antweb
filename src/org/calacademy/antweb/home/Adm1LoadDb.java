@@ -67,9 +67,9 @@ public class Adm1LoadDb extends AntwebDb {
             //A.log("putAdm1() dml:" + dml);
             stmt = DBUtil.getStatement(getConnection(), "putAdm1()");
             int x = stmt.executeUpdate(dml);
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException e) {
+        } catch (java.sql.SQLSyntaxErrorException e) {
             A.log("Adm1LoadDb.putAdm1() failed to insert country:" + country + " adm1:" + adm1);
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             // no problem. Already there.
             //A.log("Adm1LoadDb.putAdm1() exists: " + country + " " + adm1);
         } catch (SQLException e) {

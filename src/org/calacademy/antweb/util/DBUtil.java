@@ -98,7 +98,7 @@ Or, if there are stmts and/or rsets...
 
     public static DataSource getDataSource() {
 		MysqlDataSource ds = null;
-		String jdbcUrl = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci";
+		String jdbcUrl = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&characterSetResults=utf8&connectionCollation=utf8_general_ci";
 		ds = new MysqlDataSource();				
 		ds.setURL(jdbcUrl);
 		ds.setUser("antweb");

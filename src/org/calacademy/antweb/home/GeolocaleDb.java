@@ -2069,7 +2069,7 @@ public static int c = 0;
 
 		//A.log("addAddm1FromSpecimenData() 2 adm1:" + adm1 + " country:" + country + " accessGroupId:" + accessGroupId + " x:" + x + " dml:" + dml);
 
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {         
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             // no problem. Set the valid name...
         } catch (SQLException e) {
             s_log.error("addAdm1FromSpecimenData() e:" + e + " dml:" + dml);

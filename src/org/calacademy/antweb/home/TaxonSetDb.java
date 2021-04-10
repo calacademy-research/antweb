@@ -16,7 +16,7 @@ import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
-import com.mysql.jdbc.exceptions.jdbc4.*;
+import java.sql.*;
 
 public abstract class TaxonSetDb extends AntwebDb {
 
@@ -108,7 +108,7 @@ public abstract class TaxonSetDb extends AntwebDb {
           stmt = DBUtil.getStatement(getConnection(), "TaxonSetDb.updateTaxonSetTaxonName()");
           c = stmt.executeUpdate(dml);
           //A.log("updateTaxonSetTaxonName() c:" + c + " dml: " + dml);
-      } catch (MySQLIntegrityConstraintViolationException e) {
+      } catch (SQLIntegrityConstraintViolationException e) {
         // This will slow things down, but tricky to replace.
         // We delete the record that we could not update to point at the new key which already exists.
         //s_log.warn("updateTaxonSetTaxonName() REALLY? why delete if pre-existing? tableName:" + tableName + " taxonName:" + taxonName + " whereClause:" + whereClause);

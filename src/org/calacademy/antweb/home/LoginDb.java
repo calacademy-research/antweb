@@ -111,7 +111,7 @@ public class LoginDb extends AntwebDb {
                 if (login != null)
                     postInstantiate(login);
                 //A.log("getLoginByEmail() 2 email:" + email + " login:" + login);                
-            } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException e) {
+            } catch (java.sql.SQLSyntaxErrorException e) {
               s_log.error("getLoginByEmail() email:" + email + " e:" + e);
             } finally {
               DBUtil.close(stmt, rset, this, "getLoginByEmail()");

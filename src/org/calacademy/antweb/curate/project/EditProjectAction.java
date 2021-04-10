@@ -153,7 +153,7 @@ public final class EditProjectAction extends Action {
 
         try {
             projectDb.save(project);        
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             if (AntwebProps.isDevMode()) s_log.error("no worries on save.");
         }
                 

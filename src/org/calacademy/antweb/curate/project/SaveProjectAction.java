@@ -77,7 +77,7 @@ public final class SaveProjectAction extends Action {
 
         try {
             projectDb.save(project);        
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             s_log.error("no worries on save.");
         }
                 

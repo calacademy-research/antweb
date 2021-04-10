@@ -224,7 +224,7 @@ See BioregionDb.java:77 where this call is commented out.
 
           int x = stmt.executeUpdate(dml);
           
-      } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+      } catch (java.sql.SQLIntegrityConstraintViolationException e) {
         A.log("insertSpecies() expected integrity exception. bioregion:" + bioregion.getName() + " taxonName:" + taxonName + " source:" + source); //e:" + e);
 
         // expected. Can we do an update here instead?  
@@ -267,7 +267,7 @@ See BioregionDb.java:77 where this call is commented out.
               + " ) values ('" + bioregionName + "', '" + taxonName + "','" + insertMethod + "', '" + source + "')";
             //A.log("insertTaxon() dml:" + dml);
             stmt.executeUpdate(dml);
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             A.iLog("insertTaxon() optimize by checking for existence first? e:" + e);
             return false;
         } catch (SQLException e) {
@@ -368,7 +368,7 @@ See BioregionDb.java:77 where this call is commented out.
         dml = "insert into bioregion_taxon (bioregion_name, taxon_name) "
             + " values ('" + bioregion.getName() + "', '" + taxonName + "')";
         stmt.executeUpdate(dml); 
-      } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+      } catch (java.sql.SQLIntegrityConstraintViolationException e) {
         // do nothing.  Return false;  
       } catch (SQLException e) {
         s_log.warn("insertBioregionTaxon() e:" + e);
