@@ -59,6 +59,7 @@ services:
       - ${ANTWEB_BUCKET_PATH:-/mnt/antweb}:/mnt/antweb
       - ${ANTWEB_BACKUP_PATH:-/mnt/backup}:/mnt/backup
       - ./logs:/usr/local/tomcat/logs
+      - ./logbak:/usr/local/antweb/log/
       - antweb_genInc:/usr/local/antweb/web/genInc
 
 volumes:

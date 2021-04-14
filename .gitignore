@@ -18,5 +18,6 @@ antweb.iml
 
 docker-compose.override.yml
 /logs/
+/logbak/
 
 antweb.iml
