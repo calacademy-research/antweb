@@ -580,7 +580,7 @@ public class AntwebUpload {
               A.log("saveTaxonAndProjTaxon() taxonName:" + taxonName);
             }
         } catch (SQLException e) {
-            if (e instanceof com.mysql.jdbc.MysqlDataTruncation) {
+            if (e instanceof java.sql.DataTruncation) {
                 AntwebUtil.logStackTrace(e);
             }
             s_log.error("saveTaxonAndProjTaxon() project:" + project + " e:" + e);
@@ -834,7 +834,7 @@ public class AntwebUpload {
 
             // if a different access_group attempts to load a code of another group's specimen...
 
-            if (e instanceof com.mysql.jdbc.MysqlDataTruncation) return;
+            if (e instanceof java.sql.DataTruncation) return;
             
             // or could we always add to the DBErrorSet and return?
             if (!(e instanceof java.sql.SQLIntegrityConstraintViolationException)) {
