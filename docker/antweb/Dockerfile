@@ -28,6 +28,9 @@ python3 \
 zip \
 && rm -rf /var/lib/apt/lists/*
 
+RUN ln -fs /usr/share/zoneinfo/"${TZ}" /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata
+
 COPY --chown=tomcat docker/antweb/startup.sh /startup.sh
 COPY --chmod=0644 docker/antweb/crontab.txt /etc/cron.d/antwebcrontab
 

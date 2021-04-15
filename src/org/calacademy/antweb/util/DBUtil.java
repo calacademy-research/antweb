@@ -6,7 +6,7 @@ import java.sql.*;
 
 import javax.sql.*;
 import com.mchange.v2.c3p0.*;
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+import com.mysql.cj.jdbc.MysqlDataSource;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

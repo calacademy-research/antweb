@@ -124,11 +124,10 @@ Create a full database dump from antweb and copy it to your machine
 
 ```bash
 ssh user@antweb
-mysqldump -u antweb -p --all-databases --routines --single-transaction --quick | gzip > /tmp/ant-currentDump.sql.gz
+mysqldump -h 127.0.0.1 -u antweb -p --all-databases --routines --single-transaction --quick --column-statistics=0 | gzip > /tmp/ant-currentDump.sql.gz
 # Enter password:
 
 scp user@antweb:/tmp/ant-currentDump.sql.gz ./
-gunzip ant-currentDump.sql.gz
 ```
 
 Load the database into docker volume mounted by the mysql container
@@ -147,13 +146,13 @@ CID=$(docker run -d --rm \
 	 mysql:5)
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
-docker exec -i $CID sh -c "exec mysql -uroot ant" < ./ant-currentDump.sql
+gunzip -c ./ant-currentDump.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
 
 # Run an optimize to regenerate index
-docker exec -it $CID sh -c "exec mysqlcheck --all-databases --optimize -uroot" && docker stop $CID
+docker exec -it $CID sh -c "exec mysqlcheck --all-databases --analyze -uroot" && docker stop $CID
 
-# If ant-currentDump.sql is in the antweb directory, remove the dump to reduce docker daemon build time
-rm ant-currentDump.sql
+# If ant-currentDump.sql.gz is in the antweb directory, remove the dump to reduce docker daemon build time
+rm ant-currentDump.sql.gz
 ```
 
 This creates a temporary mysql container and loads the database dump into a docker-managed volume. This volume persists after the container is removed.  It'll take 5-10 minutes for the import to complete. 
