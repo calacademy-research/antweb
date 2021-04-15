@@ -29,10 +29,12 @@ public final class LoginAction extends Action {
         HttpSession session = request.getSession();
 
         ActionForward a = Check.init(Check.LOGIN, request, mapping); if (a != null) return a;
-        
-        // This would prevent some passwords
-        ActionForward d = Check.valid(request, mapping); if (d != null) return d;
 
+        // This would prevent some passwords
+
+        if (!LoginMgr.isAdmin(request)) {
+          ActionForward d = Check.valid(request, mapping); if (d != null) return d;
+        }
         //s_log.warn("Login.execute() attempt userName:" + userNameOrEmail);    
              
         LoginForm loginForm = (LoginForm) form;             

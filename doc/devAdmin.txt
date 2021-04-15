@@ -16,8 +16,14 @@ docker-compose exec antweb ant deploy
 # To restart tomcat (without rebuilding docker)
 docker-compose restart antweb
 
+docker-compose up --build antweb
+
+docker-compose up --build -d
 
 --- Database Stuff ---
+
+#To get into mysql:
+docker-compose exec mysql mysql -u antweb -p ant
 
 cd /Users/mark/bak/db
   // move the ant-current to a date stamped backup file
@@ -28,13 +34,24 @@ scp root@antweb.org:/root/ant-currentDump.sql.gz .
 
 # To load the database locally
 mysqldump -u antweb -p --all-databases --routines --single-transaction --quick | gzip > ant-currentDump.sql.gz
+  #docker-compose exec mysql .... ?
 
 # To speed up (optimize). To be run after database load
 docker-compose exec mysql sh -c "exec mysqlcheck --all-databases --optimize -u antweb -p"
 
 
-#To get into mysql:
-docker-compose exec mysql mysql -u antweb -p ant
+
+
+--- Deployment
+
+git pull
+
+docker-compose build    # To see how it goes
+
+docker-compose up -d    # To put changes into effect
+
+tail -f logs/antweb.log 
+
 
 
 --- Server Stuff ---
@@ -80,46 +97,50 @@ Copy over /data directory to antweb/
   export ANTWEB_BACKUP_PATH=$HOME/volumes/antweb_backup 
   echo ANTWEB_BACKUP_PATH=$(printenv ANTWEB_BACKUP_PATH) >> .env
 
--Database install
+
+---Loading local Database
+
+# Fetch and unzip the current database dump from the server. Delete it when finished.
+
 scp root@antweb.org:/root/ant-currentDump.sql.gz .
 gunzip ant-currentDump.sql.gz
+
+# Stop mysql before loading database
+docker-compose stop mysql
+
+*Process Check and Kill as needed
+# If a mysql process is lost (the CID=$(docker run...) it can interfere with the process.
+# InnoDB: Check that you do not already have another mysqld process using the same InnoDB data or log files
+docker ps -a
+  CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS          PORTS                 NAMES
+  3a3e63a03e3f   mysql:5   "docker-entrypoint.s…"   54 minutes ago   Up 54 minutes   3306/tcp, 33060/tcp   wonderful_galileo
+
+# Look for the processes that do not look like "antweb_*". Can kill with abbreviated ID.
+docker stop 3a   
+
+docker compose down
+
+# Remove and create database
+docker volume remove antweb_database
 docker volume create antweb_database
+
 CID=$(docker run -d --rm \
 	-e MYSQL_ALLOW_EMPTY_PASSWORD=1 \
 	-e MYSQL_DATABASE=ant \
 	--mount source=antweb_database,target=/var/lib/mysql \
 	 mysql:5)   
-sleep 15
-docker exec -i $CID sh -c "exec mysql -uroot ant" < ../bak/db/ant-currentDump.sql  
 
-ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock' (2)
-
-Stop mysql before loading database
-  docker-compose stop mysql
-
-If a mysql process is lost (the CID=$(docker run...) it can interfere:
-  InnoDB: Check that you do not already have another mysqld process using the same InnoDB data or log files
-  mark@Marks-iMac antweb % docker ps -a
-  CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS          PORTS                 NAMES
-  3a3e63a03e3f   mysql:5   "docker-entrypoint.s…"   54 minutes ago   Up 54 minutes   3306/tcp, 33060/tcp   wonderful_galileo
-  mark@Marks-iMac antweb % docker stop 3a   [Look for the one that does not look like antweb_*]
-
- docker compose down
+docker exec -i $CID sh -c "exec mysql -uroot ant" < ant-currentDump.sql  
  
-docker exec -it $CID mysql -u root 
+# NOPE. Use the above, not this one: docker exec -it $CID mysql -u root 
+
+-Repeaat the "*Process Check and Kill as needed" above.
     
 docker logs -f $CID
 
 docker-compose up -d    (d for daemon [or detached])
-docker-compose up --build
+docker-compose up --build   (--build to build dockers from scratch)
 
 
 
-
-
-
-	
---- Questions for Dash ---
-README.txt
-  Replace SECRET_ACCESS_KEY with the antweb key?
 

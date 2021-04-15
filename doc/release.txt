@@ -1,3 +1,7 @@
+Release 8.55.3
+  Admin "Login as" feature allows exceptions.
+  Updates to documentation.
+
 Release 8.55.2
   Image Uploader allows underscores in the image id.
  
