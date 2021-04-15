@@ -1,7 +1,11 @@
 .idea/
 .git/
 api/
+build/
+db/
+logbak/
 logs/
+out/
 
 web/web/*
 !web/web/bak
