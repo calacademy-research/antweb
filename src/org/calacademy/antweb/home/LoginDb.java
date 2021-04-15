@@ -762,11 +762,11 @@ public class LoginDb extends AntwebDb {
         return usrAdmList;
     }
 
-    public static ArrayList getUsrAdmLastLoginList(Connection connection) throws SQLException {
-        ArrayList<String> usrAdmList = new ArrayList();
+    public static ArrayList<String> getUsrAdmLastLoginList(Connection connection) throws SQLException {
+        ArrayList<String> usrAdmList = new ArrayList<>();
         String theQuery = "select login.name, password, group_id, ant_group.name, login.last_login as lastLogin "
-          + " from login, ant_group where login.group_id = ant_group.id and last_login != '0000-00-00 00:00:00' "
-          + " order by last_login";
+                + "from login, ant_group where login.group_id = ant_group.id and last_login IS NOT NULL "
+                + "order by last_login";
 
         Statement stmt = null;
         ResultSet rset = null;
