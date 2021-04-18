@@ -213,8 +213,8 @@ public class ImageUploaded {
 
             IMOperation op = new IMOperation();
             op.addImage(imagesDir + getCode() + "/" + getFileName());
-            op.resize(height, width);
             op.flatten();
+            op.resize(height, width);
             imagePath = specimenDir + "/" + imageName;
             op.addImage(imagePath);
 
