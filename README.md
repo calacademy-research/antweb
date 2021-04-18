@@ -66,15 +66,11 @@ Replace `SECRET_ACCESS_KEY` with the antweb key.
 $ cat ~/.config/rclone/rclone.conf
 [minio]
 type = s3
-env_auth = false
+provider = Minio
 access_key_id = antweb
 secret_access_key = SECRET_ACCESS_KEY
-region = us-east-1
 endpoint = https://slevin.calacademy.org:9000
-location_constraint =
-acl =
-server_side_encryption =
-storage_class =
+acl = public-read
 ```
 
 

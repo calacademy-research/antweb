@@ -101,10 +101,10 @@ RUN mkdir -pm 777 /usr/local/antweb && chown antweb:antweb /usr/local/antweb
 USER antweb
 RUN ln -s /usr/local/antweb /data/antweb
 
-RUN mkdir -p /data/antweb/web
+RUN mkdir -p /usr/local/antweb/web
 
 
-WORKDIR /data/antweb/web
+WORKDIR /usr/local/antweb/web
 RUN mkdir log -pm 777 && \
     mkdir data -pm 777 && \
     mkdir genInc -pm 777 && \
