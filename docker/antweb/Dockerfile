@@ -68,7 +68,6 @@ WORKDIR /antweb/deploy
 
 COPY --chown=antweb --chmod=755 build.xml ./
 COPY --chown=antweb --chmod=755 bin ./bin
-COPY --chown=antweb --chmod=755 db ./db
 COPY --chown=antweb --chmod=755 doc ./doc
 COPY --chown=antweb --chmod=755 etc ./etc
 COPY --chown=antweb --chmod=755 META-INF ./META-INF

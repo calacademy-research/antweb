@@ -2,10 +2,13 @@
 .git/
 api/
 build/
+db/
 
 logbak/
 logs/
 out/
+
+/src/py
 
 web/web/*
 !web/web/bak
