@@ -59,11 +59,8 @@ api = Api(application)
 
 isDevMode = 0
 
-#image_root_dir = "/mnt/antweb/images"
-# Now, in the /root/antweb/data/images directory on the server and
-# in the /Users/mark/volumes/antweb/data/images directory on mark's dev machine.
-image_root_dir = "../../data/images"
-
+image_root_dir = "/mnt/antweb/images"
+ 
 # MySQL configurations  
 try:
     #apiDbConf = '/var/www/html/apiV3/api_db.conf'                                                                                                                                                                        
@@ -373,8 +370,7 @@ def verifyImages():
     shotType='*'
     code='*'
     #code = 'casent0623849'
-    # code = 'casent0005904'
-    code = 'antweb1008568'
+    # code = 'casent0005904';
     limit='*' #10
     offset=0
         
@@ -409,14 +405,14 @@ def verifyImages():
 
         c = verifyTif(image)
         c += verifyDerivatives(image)
-        #print("verify:" + str(image))
+        
         missingImageCount = missingImageCount + c
 
     print("verifyImages() imageCount:" + str(imageCount) + " missingImageCount:" + str(missingImageCount) + " code:" + image.code + " num:" + str(image.shotNumber))
 
 # Antweb imageCount:214710  Those without Tifs:70858
 def verifyTif(image):
-    missingImageCount = 0
+    missingImageCount = 0;
     base = image_root_dir + '/' + image.code + '/'
     shotName =  image.code + '_' 
     file1 = base + shotName.upper() + image.shotType.upper() + '.tif'
@@ -437,8 +433,8 @@ def verifyTif(image):
 
 # imageCount:214710 missingImageCount:44
 def verifyDerivatives(image):
-    missingImageCount = 0
-    base = image_root_dir + '/' + image.code + '/' + image.code + '_' + image.shotType + '_' + str(image.shotNumber)
+    missingImageCount = 0;
+    base = image_root_dir + '/' + image.code + '/' + image.code + '_' + image.shotType + '_' + str(image.shotNumber);
     files = [base + '_low.jpg' \
       , base + '_med.jpg'
       , base + '_high.jpg'
@@ -449,129 +445,6 @@ def verifyDerivatives(image):
         missingImageCount += 1
         print("verifyDerivatives() missing file:" + fileName)
     return missingImageCount
-
-
-# ----------------------------------------------------------------------------------------
-
-def regenerateDerivatives():
-
-    since='*'
-    shotType='*'
-    code='*'
-    #code = 'casent0623849'
-    # code = 'casent0005904'
-    code = 'antweb1008568'
-    limit='*' #10
-    offset=0
-
-    query = session.query(Image)
-    if (since != '*'):
-      day_interval_before = datetime.now() - timedelta(days=int(since))
-      query = query.filter(Image.uploadDate >= day_interval_before)
-    if (shotType != '*'):
-      query = query.filter(Image.shotType == shotType)
-    if (code != '*'):
-      query = query.filter(Image.code == code)
-    if (limit != '*'):
-      query = query.limit(limit)
-    query = query.offset(offset)
-
-    try:
-        data = query.all()
-#    except OperationalError as error:
-#        message = "images operational error:" + str(error) + " on request:" + str(request)
-#        print(message)
-#        return message
-    except:
-        message = "images error:" + str(request)
-        print(message) # + error.orig.message, error.params
-        return
-
-    imageCount = 0
-    missingImageCount = 0;
-    for image in data:
-        imageCount += 1
-        c = 0
-
-        c += regenForImage(image)
-        #print("verify:" + str(image))
-        missingImageCount = missingImageCount + c
-
-        break
-
-    print("regenerateDerivatives() imageCount:" + str(imageCount) + " missingImageCount:" + str(missingImageCount) + " code:" + image.code + " num:" + str(image.shotNumber))
-
-def regenForImage(image):
-    count = 0
-    base = image_root_dir + '/' + image.code + '/' + image.code + '_' + image.shotType + '_' + str(image.shotNumber);
-    files = [base + '_low.jpg' \
-      , base + '_med.jpg'
-      , base + '_high.jpg'
-      , base + '_thumbview.jpg'
-    ]
-    for fileName in files:
-      i = 0
-      print("regenForImage() file:" + fileName)
-      #resizeImage(fileName, 1000, 800)
-      resizeImage('../../data/images/antweb1008568/','ANTWEB1008568_D_2.tif') # 'antweb1008568_p_3_low.jpg')
-      i = i + 1
-      if (i > 0):
-       break
-
-
-    return count
-
-# From example 14 here: https://www.programcreek.com/python/example/82689/wand.image.Image
-def resizeImage(path, width, height):
-    filename_without_extension, extension = os.path.splitext(path)
-
-    with Image(filename=path) as src:
-        img = src.clone()
-
-    current_aspect_ratio = img.width / img.height
-
-    if not width:
-        width = int(current_aspect_ratio * height)
-
-    if not height:
-        height = int(width / current_aspect_ratio)
-
-    desired_aspect_ratio = width / height
-
-    # Crop the image to fit the desired AR
-    if desired_aspect_ratio > current_aspect_ratio:
-        newheight = int(img.width / desired_aspect_ratio)
-        img.crop(
-            0,
-            int((img.height / 2) - (newheight / 2)),
-            width=img.width,
-            height=newheight,
-        )
-    else:
-        newwidth = int(img.height * desired_aspect_ratio)
-        img.crop(
-            int((img.width / 2) - (newwidth / 2)), 0, width=newwidth, height=img.height,
-        )
-
-    img.resize(width, height)
-
-    return img
-
-def resizeImage(path, fileName):
-  #!/usr/bin/env python
-  # encoding: utf-8
-  from wand.image import Image
-
-  pathFile = path + fileName
-
-  with Image(filename=pathFile) as img:
-    print ('format:' + img.format)
-    with img.convert('jpeg') as converted:
-        converted.save(filename=path + 'tOut.jpg')
-        converted.resize(72,72)
-        converted.save(filename='tOutputimage_thumbnail.jpg')
-
-
 
 # ----------------------------------------------------------------------------------------
   
@@ -587,9 +460,7 @@ if __name__ == "__main__":
     #findLowerCaseTifs()
     #findLowerCaseOrigJpgs()
    
-    #verifyImages()
-
-    regenerateDerivatives()
+    verifyImages()
 
     #findIgnoredOrigFiles()
     

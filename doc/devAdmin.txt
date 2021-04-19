@@ -67,7 +67,7 @@ Location of antweb web accessible data:
   /mnt/antweb/images/
   /mnt/antweb/web/
 
-From inside the docker (using: docker-compose exec antweb bash)
+From inside the docker (using: 	)
   ls /data/antweb/
   
   
@@ -96,7 +96,9 @@ Copy over /data directory to antweb/
   echo ANTWEB_BUCKET_PATH=$(printenv ANTWEB_BUCKET_PATH) >> .env  
   export ANTWEB_BACKUP_PATH=$HOME/volumes/antweb_backup 
   echo ANTWEB_BACKUP_PATH=$(printenv ANTWEB_BACKUP_PATH) >> .env
-
+* On Mac... Docker - Preferences - Resources - set the Memory to at least 3GB. Maybe 8MB?
+  Too low will cause failure of specimen upload as well as: 
+    https://localhost/query.do?action=curiousQuery&name=lastSpecimenUpload
 
 ---Loading local Database
 
@@ -140,6 +142,26 @@ docker logs -f $CID
 
 docker-compose up -d    (d for daemon [or detached])
 docker-compose up --build   (--build to build dockers from scratch)
+
+
+
+--- Necesssary in dev environment?
+
+mkdir /mnt/antweb/web/upload
+mkdir /mnt/antweb/web/log/
+mkdir /mnt/antweb/web/log/worldants
+mkdir /mnt/antweb/web/log/specimen
+
+
+--- Assorted.
+
+To reference Antweb container specific addresses:
+# On server:
+ln -s /mnt/antweb /usr/local/antweb
+# On dev machine, something like:
+sudo ln -s /Users/mark/volumes/antweb/data/ /usr/local/antweb
+
+
 
 
 

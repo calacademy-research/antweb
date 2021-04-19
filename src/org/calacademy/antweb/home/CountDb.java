@@ -47,7 +47,8 @@ public class CountDb extends AntwebDb {
     // Best to use a lightly populated subfamily name.    
     //String debugName = "martialinae";    
     String debugTaxonName = "dorylinaeacanthostichus davisi";
-    int debugGeolocaleId = 2;
+    int debugGeolocaleId = 0;
+    //int debugGeolocaleId = 2;
     boolean debug = true;
 
     public static boolean s_isBulk = false; // We want to turn of logging if invoked from the scheduler.
@@ -272,7 +273,7 @@ public class CountDb extends AntwebDb {
             DBUtil.close(stmt, rset, this, "countGrandChildren()");
         }
 
-         A.logi("countGrandChildren()", 7, "count:" + count + " query:" + query);
+         //A.logi("countGrandChildren()", 7, "count:" + count + " query:" + query);
 
          // return count;
         return sum;

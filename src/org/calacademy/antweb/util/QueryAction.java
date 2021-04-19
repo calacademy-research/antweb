@@ -157,7 +157,8 @@ public class QueryAction extends Action {
 
         } catch (SQLException e) {
             s_log.error("execute() action:" + action + " e:" + e);
-            AntwebUtil.errorStackTrace(e);         
+            //AntwebUtil.errorStackTrace(e);
+            A.log(AntwebUtil.getAntwebStackTrace(e));
         } finally {
             DBUtil.close(connection, this, "UploadAction.execute() 1");
         }

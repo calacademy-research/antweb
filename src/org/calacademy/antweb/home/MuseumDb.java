@@ -509,7 +509,7 @@ public class MuseumDb extends AntwebDb {
 
           int c = stmt.executeUpdate(dml);
 
-          //A.log("populateSpecimenMuseum() updated:" + c + " dml:" + dml);
+          if ("AFRC".equals(museumCode)) A.log("populateSpecimenMuseum() updated:" + c + " dml:" + dml);
           
       } catch (SQLException e) {
         s_log.error("MuseumDb.populateSpecimenMuseum() e:" + e);

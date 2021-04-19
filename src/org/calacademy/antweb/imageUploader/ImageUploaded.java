@@ -175,6 +175,8 @@ public class ImageUploaded {
         setExt(ext);
         //A.log("populate() fileName:" + fileName + " u1:" + u1 + " u2:" + u2 + " period:" + period + " code:" + getCode() + " shot:" + getShot() + " number:" + getNumber() + " ext:" + ext);
 
+        //A.log("init() this:" + this.toString());
+
         return;
     } catch (NumberFormatException e) {
       s_log.warn("populate() e:" + e);
@@ -210,6 +212,7 @@ public class ImageUploaded {
         String tags = "";
         try {
             imageName = getCode() + "_" + getShot() + "_" + getNumber() + "_" + type + ".jpg";
+            //A.log("genImages() imageName:" + imageName);
 
             IMOperation op = new IMOperation();
             op.addImage(imagesDir + getCode() + "/" + getFileName());
@@ -227,8 +230,14 @@ public class ImageUploaded {
             if (!"".equals(tags)) message += " created with tags:" + tags;
 
             // create and execute the command
+            //A.log("genImage() path:" + imagePath + " this:" + this.toString());
+            //A.log("genImage() 1 EXISTS? " + FileUtil.fileExists("/usr/local/antweb/images/casent0286677/casent0286677_p_1_high-2.jpg"));
             ConvertCmd cmd = new ConvertCmd();
             cmd.run(op);
+            //A.log("genImage() 2 EXISTS? " + FileUtil.fileExists("/usr/local/antweb/images/casent0286677/casent0286677_p_1_high-2.jpg"));
+
+            //cleanUp(imagePath);  // Unneded because of op.flatten().
+
         } catch (org.im4java.core.CommandException e) {
             AntwebUtil.log("im4java test e:" + e + " imageName:" + imageName + " imagePath:" + imagePath + " tags:" + tags);
         } catch (IOException e) {
@@ -240,8 +249,38 @@ public class ImageUploaded {
         }  
         return message;
     }
+
+    /*
+    private void cleanUp(String imagePath) {
+        // Sometimes instead of p.jpg there is p-0.jpg, p-1.jpg and p-2.jpg,or perhaps instead of h.jpg...
+        // if the expected file is not generated, but a "-0" one is, then rename it and remove the others.
+
+        //A.log("cleanUp() imagePath:" + imagePath);
+
+        if (FileUtil.fileExists(imagePath)) return;
+
+        int i = imagePath.indexOf(".jpg");
+        String dash0ImagePath = imagePath.substring(0, i) + "-0.jpg";
+        if (FileUtil.fileExists(dash0ImagePath)) {
+             // Then rename it to the desired file name. Delete the extras.
+             try {
+                 Utility util = new Utility();
+                 util.moveFile(dash0ImagePath, imagePath);
+                 s_log.warn("cleanUp fixed:" + imagePath);
+                 String dash1ImagePath = imagePath.substring(0, i) + "-1.jpg";
+                 util.deleteFile(dash1ImagePath);
+                 String dash2ImagePath = imagePath.substring(0, i) + "-2.jpg";
+                 util.deleteFile(dash2ImagePath);
+                 return;
+             } catch (IOException e) {
+                 s_log.warn("cleanUp() Failed to move " + dash0ImagePath + " to imagePath:" + imagePath);
+             }
+        }
+        s_log.warn("cleanUp() Investigate. Expected file not found:" + imagePath);
+    }
+*/
     
-/*    
+    /*
     private String setExifData(String imagePath) {
 
      //exiftool -comment='this is a new comment' casent0005904_d_1_low.jpg
@@ -380,6 +419,10 @@ public class ImageUploaded {
     }
     public void setIsSpecimenDataExists(boolean isSpecimenDataExists) {
       this.isSpecimenDataExists = isSpecimenDataExists;
+    }
+
+    public String toString() {
+      return "code:" + code + " number:" + number + " shot:" + shot + " ext:" + ext + " displayName:" + getDisplayName();
     }
 }
 

@@ -1,3 +1,11 @@
+
+
+Release 8.56
+  Fix the mnt directory configuration right in dev environment. Upload logs generated.
+  Added recalculate for AFRC.
+  Minor logging changes.
+  Fix the missing derivative image issue.
+
 Release 8.55.3
   Admin "Login as" feature allows exceptions.
   Updates to documentation.

@@ -44,7 +44,7 @@ public class ImageDb extends AntwebDb {
             stmt = DBUtil.getStatement(getConnection(), "getExifImages()");
 
             rset = stmt.executeQuery(query);
-            A.log("getExifImages() query:" + query);
+            //A.log("getExifImages() query:" + query);
 
             int i = 0;
             while (rset.next()) {
@@ -199,7 +199,7 @@ public class ImageDb extends AntwebDb {
                 + " and i.shot_type='" + shot + "'" 
                 + " and i.shot_number=" + number;
 
-            A.log("getSpecimenImage() query:" + query);            
+            //A.log("getSpecimenImage() query:" + query);
 
             stmt = DBUtil.getStatement(getConnection(), "getSpecimenImage()");
             stmt.executeQuery(query);
@@ -249,18 +249,18 @@ public class ImageDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "deleteImage()");
 
-            A.log("execute()  deleting:" + code + " " + shotType + " " + shotNumber);
+            //A.log("execute()  deleting:" + code + " " + shotType + " " + shotNumber);
             String whereClause = "where image_of_id = '" + code + "' and shot_type='" + shotType + "' and shot_number=" + shotNumber;
             
             dml = "delete from group_image where image_id in (select id from image " + whereClause + ")";                                    
             int c = stmt.executeUpdate(dml);                    
             if (c > 0) deleted = true;
-            A.log("delete 1 c:" + c + " query: " + dml);
+            //A.log("delete 1 c:" + c + " query: " + dml);
                  
             dml = "delete from image " + whereClause;
             c = stmt.executeUpdate(dml);
             if (c > 0) deleted = true;
-            A.log("delete 2 c:" + c + " query: " + dml);
+            //A.log("delete 2 c:" + c + " query: " + dml);
         
             boolean exists = false;
 
@@ -286,7 +286,7 @@ public class ImageDb extends AntwebDb {
         int number = imageUploaded.getNumber();
         
         SpecimenImage specimenImage = getSpecimenImage(code, shot, number);
-        A.log("specimenImage:" + specimenImage);
+        //A.log("specimenImage:" + specimenImage);
         if (specimenImage != null) {
         // We delete first so that we know the insertions will work.
           deleteImage(code, shot, number);
@@ -335,16 +335,14 @@ public class ImageDb extends AntwebDb {
                   + ", now(), " + imageUploaded.hasTiff() + ", " + imageUploaded.getImageUpload().getId() + ")";
 
     	    stmt.executeUpdate(dml);
-    	    A.log("insertImage() 1 dml:" + dml);
+    	    //A.log("insertImage() 1 dml:" + dml);
 
             dml = "insert into group_image (group_id, image_id)" 
               + " values (" + imageUploaded.getImageUpload().getGroupId() + ", " + id + ")";
 
     	    stmt.executeUpdate(dml);
-    	    
-    	    A.log("insertImage() 1 dml:" + dml);
 
-            A.log("insertImage() dml:" + dml);
+            //A.log("insertImage() dml:" + dml);
 		} catch (SQLException e) {
 			s_log.error("insertImage() dml" + dml + " e:" + e);
 		} finally { 		
@@ -454,7 +452,7 @@ public class ImageDb extends AntwebDb {
         try {
           stmt = DBUtil.getStatement(getConnection(), "getImageStats()");
           rset = stmt.executeQuery(theQuery);
-A.log("getImageStats() query:" + theQuery);
+          //A.log("getImageStats() query:" + theQuery);
           while (rset.next()) {
             String status = rset.getString("status");
             int total = rset.getInt("total");

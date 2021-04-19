@@ -308,6 +308,7 @@ public class UploadFile {
           String fullWebUploadDir = fullWebDir + "/upload";
           //String backupWorkingDir = util.getInputFileHome() + "/backup";
           util.makeDirTree(fullWebUploadDir);
+          //A.log("backup() makeDirTree:" + fullWebUploadDir);
           this.backupFileName = util.getDateForFileName() + "-" + getShortFileName();
           String tempBackupDirFile = fullWebUploadDir + "/" + backupFileName;
           try {

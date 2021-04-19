@@ -70,7 +70,7 @@ public class A {
       } else {
          s_logiSet.put(key, nth);
       }
-      A.log("key:" + key + " nth:" + nth + " " + message);
+      A.log("A.logi(" + key + ") nth:" + nth + " " + message);
   }
 
   
