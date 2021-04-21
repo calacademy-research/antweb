@@ -1,4 +1,5 @@
 import argparse
+import io
 import shutil
 import tempfile
 from pathlib import Path
@@ -117,6 +118,20 @@ def download_images_to_folder(image_objects: list[botostubs.S3.S3Resource.Object
     return image_paths
 
 
+def download_image_to_filestream(image: botostubs.S3.S3Resource.ObjectSummary) -> io.BytesIO:
+    """
+    Download an s3 image to memory, not a file on the system
+    """
+    # Convert from objectSummary to Object to get file info and download
+    image_s3obj = image.Object()
+
+    image_fileobj = io.BytesIO()
+
+    image_s3obj.download_fileobj(image_fileobj)
+
+    return image_fileobj
+
+
 def generate_file_names(input_image_path: Path) -> dict[str, (int, int)]:
     """
     Generate file names given the filepath to an original TIF or JPG
@@ -138,7 +153,7 @@ def generate_file_names(input_image_path: Path) -> dict[str, (int, int)]:
     return image_sizes
 
 
-def resize_image_as_filestream(input_image: Image, width: int, height: int) -> Image:
+def resize_image(input_image: Image, width: int, height: int) -> Image:
     """
     Clones an image and resizes it.
 
@@ -153,7 +168,7 @@ def resize_image_as_filestream(input_image: Image, width: int, height: int) -> I
         return new_image
 
 
-def resize_image(input_image_path: Path, out_dir: Path, only_create_missing: bool = False):
+def resize_image_from_path(input_image_path: Path, out_dir: Path, only_create_missing: bool = False):
     # The images to create, and their dimensions. keys are image names, values are (width, height) tuples
     create_sizes = {}
 
@@ -179,6 +194,7 @@ def resize_image(input_image_path: Path, out_dir: Path, only_create_missing: boo
                 new_image_filepath = out_dir.joinpath(new_image_name)
 
                 with original_image.clone() as new_image:
+                    new_image.merge_layers('flatten')
                     new_image.transform(resize=f"{width}x{height}>")
                     new_image.strip()
                     print(f"Creating image {new_image_name}")
@@ -247,4 +263,4 @@ if __name__ == '__main__':
         for image_path in image_files:
             output_folder.mkdir(parents=True, exist_ok=True)
 
-            resize_image(image_path, output_folder, args.only_missing)
+            resize_image_from_path(image_path, output_folder, args.only_missing)
