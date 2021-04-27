@@ -1,6 +1,8 @@
 package org.calacademy.antweb.imageUploader;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.io.*;
 
@@ -19,8 +21,10 @@ import org.im4java.core.*;
 import org.im4java.process.*;
 //import org.im4java.core.ETOperation
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class ImageUploaded {
 
@@ -196,7 +200,6 @@ public class ImageUploaded {
         }
 
         //addMetaData($newFileName, $copyright, $artist, $license, $specimen, $date);
-        //AntwebUtil.log("genImage() 1:
 
         message += genImage(specimenDir, "thumbview", 400, 300);
         message += genImage(specimenDir, "low", 800, 600);
@@ -207,19 +210,16 @@ public class ImageUploaded {
 
     private String genImage(String specimenDir, String type, int width, int height) {
         String message = "";
-        String imageName = null;
-        String imagePath = null;
+        String imageName = getCode() + "_" + getShot() + "_" + getNumber() + "_" + type + ".jpg";
+        String imagePath = specimenDir + "/" + imageName;
+        Path tempFile = tempDir.resolve(imageName);
         String tags = "";
         try {
-            imageName = getCode() + "_" + getShot() + "_" + getNumber() + "_" + type + ".jpg";
-            //A.log("genImages() imageName:" + imageName);
-
             IMOperation op = new IMOperation();
             op.addImage(imagesDir + getCode() + "/" + getFileName());
             op.flatten();
             op.resize(height, width);
-            imagePath = specimenDir + "/" + imageName;
-            op.addImage(imagePath);
+            op.addImage(tempFile.toString());
 
             // This would be JMagick. Doesn't work on Mac.
             //setExifData(specimenDir, imageName, code);
@@ -236,7 +236,7 @@ public class ImageUploaded {
             cmd.run(op);
             //A.log("genImage() 2 EXISTS? " + FileUtil.fileExists("/usr/local/antweb/images/casent0286677/casent0286677_p_1_high-2.jpg"));
 
-            //cleanUp(imagePath);  // Unneded because of op.flatten().
+            Files.move(tempFile, Path.of(imagePath), REPLACE_EXISTING);
 
         } catch (org.im4java.core.CommandException e) {
             AntwebUtil.log("im4java test e:" + e + " imageName:" + imageName + " imagePath:" + imagePath + " tags:" + tags);
@@ -246,39 +246,9 @@ public class ImageUploaded {
             AntwebUtil.log("im4java test 3e:" + e);
         } catch (IM4JavaException e) {
             AntwebUtil.log("im4java test 4e:" + e);
-        }  
+        }
         return message;
     }
-
-    /*
-    private void cleanUp(String imagePath) {
-        // Sometimes instead of p.jpg there is p-0.jpg, p-1.jpg and p-2.jpg,or perhaps instead of h.jpg...
-        // if the expected file is not generated, but a "-0" one is, then rename it and remove the others.
-
-        //A.log("cleanUp() imagePath:" + imagePath);
-
-        if (FileUtil.fileExists(imagePath)) return;
-
-        int i = imagePath.indexOf(".jpg");
-        String dash0ImagePath = imagePath.substring(0, i) + "-0.jpg";
-        if (FileUtil.fileExists(dash0ImagePath)) {
-             // Then rename it to the desired file name. Delete the extras.
-             try {
-                 Utility util = new Utility();
-                 util.moveFile(dash0ImagePath, imagePath);
-                 s_log.warn("cleanUp fixed:" + imagePath);
-                 String dash1ImagePath = imagePath.substring(0, i) + "-1.jpg";
-                 util.deleteFile(dash1ImagePath);
-                 String dash2ImagePath = imagePath.substring(0, i) + "-2.jpg";
-                 util.deleteFile(dash2ImagePath);
-                 return;
-             } catch (IOException e) {
-                 s_log.warn("cleanUp() Failed to move " + dash0ImagePath + " to imagePath:" + imagePath);
-             }
-        }
-        s_log.warn("cleanUp() Investigate. Expected file not found:" + imagePath);
-    }
-*/
     
     /*
     private String setExifData(String imagePath) {
