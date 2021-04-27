@@ -8,6 +8,8 @@ import boto3
 import botostubs
 from wand.image import Image
 
+from typing import Dict, List, Tuple
+
 # IMPORTANT: s3 credentials must be configured!
 # Read https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#guide-credentials
 # for instructions on how to pass them to the script
@@ -49,7 +51,7 @@ specimen_targets.add_argument('--all-missing', action='store_true',
 
 
 def find_original_images(specimen_code: str, s3_bucket: botostubs.S3.S3Resource.Bucket,
-                         image_bucket_prefix: Path = Path('images')) -> list[botostubs.S3.S3Resource.ObjectSummary]:
+                         image_bucket_prefix: Path = Path('images')) -> List[botostubs.S3.S3Resource.ObjectSummary]:
     """
     Finds the original tiff or jpg images for a specimen code.
 
@@ -76,8 +78,8 @@ def find_original_images(specimen_code: str, s3_bucket: botostubs.S3.S3Resource.
     return original_images
 
 
-def download_images_to_folder(image_objects: list[botostubs.S3.S3Resource.ObjectSummary], download_dir: Path = None,
-                              source_dir: Path = None, replace_existing=False) -> list[Path]:
+def download_images_to_folder(image_objects: List[botostubs.S3.S3Resource.ObjectSummary], download_dir: Path = None,
+                              source_dir: Path = None, replace_existing=False) -> List[Path]:
     if download_dir is None:
         download_dir = Path(tempfile.mkdtemp())
 
@@ -132,7 +134,7 @@ def download_image_to_filestream(image: botostubs.S3.S3Resource.ObjectSummary) -
     return image_fileobj
 
 
-def generate_file_names(input_image_path: Path) -> dict[str, (int, int)]:
+def generate_file_names(input_image_path: Path) -> Dict[str, Tuple[int, int]]:
     """
     Generate file names given the filepath to an original TIF or JPG
 
@@ -201,7 +203,8 @@ def resize_image_from_path(input_image_path: Path, out_dir: Path, only_create_mi
                     new_image.save(filename=new_image_filepath)
 
 
-def find_empty_files(bucket, prefix: str = '') -> list[str]:
+
+def find_empty_files(bucket, prefix: str = '') -> List[str]:
     empty_files = []
     for obj in bucket.objects.filter(Prefix=prefix):
         if obj.size == 0 and obj.key.endswith(".jpg"):
@@ -247,7 +250,7 @@ if __name__ == '__main__':
         specimen_codes = args.specimens
 
     for code in specimen_codes:
-        images: list[botostubs.S3.S3Resource.ObjectSummary] = find_original_images(code, s3_bucket, args.bucket_prefix)
+        images: List[botostubs.S3.S3Resource.ObjectSummary] = find_original_images(code, s3_bucket, args.bucket_prefix)
 
         # If subdir enabled or uploading to s3 bucket, create subdirs
         # if args.subdir or args.upload:
