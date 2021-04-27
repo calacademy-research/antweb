@@ -7,5 +7,6 @@ api/v2.1
 build/
 db/
 out/
+logbak/
 
 .gitignore
