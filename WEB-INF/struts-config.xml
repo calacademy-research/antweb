@@ -718,12 +718,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
       </action> 
       
       <!-- deprecated. Replaced by listSpecimenUploads -->
-      <action path="/listUploads"
+<!--      <action path="/listUploads"
               type = "org.calacademy.antweb.util.ListUploadsAction"
               name="dummyForm"
               scope="request">
           <forward name ="success" path="/util/listUploads.jsp"/>
-      </action>    
+      </action>-->
 
     <action
       path="/listUploads" 
