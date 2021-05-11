@@ -285,10 +285,6 @@
       forward="/web/homepage/documentation.jsp"/>
 
     <action
-      path="/participate"
-      forward="/participation.jsp"/>
-      
-    <action
       path="/rules"
       forward="/documentation/rules.jsp"/>
 
