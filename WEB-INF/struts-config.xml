@@ -1784,7 +1784,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action path="/fieldguide"
             forward="/fieldGuide.do"/>
     <action path="/getcomparison"
-            forward="/getcomparison.do"/>
+            forward="/getComparison.do"/>
     <action path="/mapcomparison"
             forward="/mapComparison.do"/>
     <!-- action path="/googleearth"
