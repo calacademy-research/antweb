@@ -69,7 +69,7 @@ And create a service for the achival bucket
 ```
 cat <<'EOF' > /etc/systemd/system/rclone-dbarchive.service
 [Unit]
-Description=rclone mount for antweb:/mnt/antweb bucket
+Description=rclone mount for antweb-dbarchive:/mnt/backup bucket
 Requires=systemd-networkd.service
 Wants=network-online.target
 After=network-online.target
@@ -78,7 +78,8 @@ After=network-online.target
 Type=notify
 Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
 KillMode=none
-ExecStartPre=/bin/fusermount -uz /mnt/backup
+TimeoutSec=300
+ExecStartPre=-/bin/fusermount -uz /mnt/backup
 ExecStart=/usr/bin/rclone mount digitalocean:/antweb-dbarchive /mnt/backup \
 --default-permissions \
 --vfs-cache-mode full \
