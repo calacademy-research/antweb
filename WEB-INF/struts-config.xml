@@ -820,13 +820,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
              name="deleteImagesForm">
        <forward name="success" path="/recentSearchResults.do?numToShow=100&amp;searchMethod=recentImageSearch" />
      </action>
-                                                         
-        <action path="/editCredit"
-            type="org.calacademy.antweb.EditCreditAction"
-            scope="request"
-            name="editCreditForm">
-      <forward name="success" path="/edit_credit.jsp" />
-    </action>
         
     <action path="/specimenImages"
             type="org.calacademy.antweb.SpecimenAction"
