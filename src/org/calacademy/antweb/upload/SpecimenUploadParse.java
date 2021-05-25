@@ -1053,7 +1053,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             ++figuredElevation;
         } catch (Exception e) {
             ++unfathomableElevation;
-            s_log.error("getElevationFromString() unfathomable elevation:" + element + " line:" + lineNum + " elevation:" + elemStr + " e:" + e);
+            //s_log.error("getElevationFromString() unfathomable elevation:" + element + " line:" + lineNum + " elevation:" + elemStr + " e:" + e);
 
             //String heading = "<b>Incorrect elevation format</b>";   
             //getMessageMgr().addToMessageStrings(heading, "Line:" + lineNum + " elevation:" + element);          
