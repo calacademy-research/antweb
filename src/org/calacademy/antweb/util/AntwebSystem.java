@@ -314,7 +314,7 @@ public class AntwebSystem {
 		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         double systemCpuLoad = osBean.getSystemCpuLoad();
         double processCpuLoad = osBean.getProcessCpuLoad();
-        A.log("cpuCheck() s:" + systemCpuLoad + " p:" + processCpuLoad);
+        //A.log("cpuCheck() s:" + systemCpuLoad + " p:" + processCpuLoad);
 
         //if (AntwebProps.isDevMode()) threshold = 0;
         if (systemCpuLoad > threshold || processCpuLoad > threshold) {

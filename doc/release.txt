@@ -1,5 +1,17 @@
+Release 8.56.3
+  Add condition for file not found to showLog.do.
+  Add more data to the searches log.
+  Fix serverStatus-body bug.
+  Extend devAdmin documentation. Locations info.
+  Remove unneeded logged data from logs in devMode.
+  Create AntwebDebug utility class.
+  Fix the missing image if only a dorsal image exists.
+
+Release 8.56.2
+  Adm1 support for Nuble.
+
 Release 8.56.1
-  Adm1 support for Córdoba.
+  Adm1 support for Cordoba.
 
 Release 8.56
   Added recalculate for AFRC.

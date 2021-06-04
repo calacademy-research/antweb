@@ -119,7 +119,7 @@ public class BrowseAction extends DescriptionAction {
         if (overview == null) return OverviewMgr.returnMessage(request, mapping);
         
         String title = overview.getTitle(); 
-        A.log("execute() title:" + title + " overview:" + overview);
+        //A.log("execute() title:" + title + " overview:" + overview);
 
         // This block of code will handle a request that comes in with a taxonName parameter 
         // by building up and redirecting to a new request.
@@ -327,19 +327,16 @@ public class BrowseAction extends DescriptionAction {
           taxon.setStatusSetSize(statusSetSize);
 	
           if (true) A.log("execute() family:" + family + " subfamily:" + subfamily + " genus:" + genus 
-            + " species:" + species + " subspecies:" + subspecies + " rank:" + rank + " overview:" + overview.getName() 
+            + " species:" + species + " subspecies:" + subspecies + " rank:" + rank + " overview:" + overview
             + " statusStr:" + statusStr + " statusSetStr:" + statusSetStr + " resetProject:" + browseForm.getResetProject()
-            //+ " queryString:" + queryString + " isPost:" + isPost
+            + " taxon.status:" + taxon.getStatus()
           );
-
-		  A.log("execute() resetProject:" + browseForm.getResetProject() + " taxon.status:" + taxon.getStatus() + " overview:" + overview);
 
 		  if (taxon.getTaxonSet() == null) {
               // if (!ProjectDb.projectHasTaxon(projectName, taxon, connection)) {
 			  String message = "Taxon:" + taxon.getTaxonName() + " not found for overview:" + overview;
 			  request.setAttribute("message", message);
 			  return (mapping.findForward("message"));
-		
 		  }
 
 		  String facet = HttpUtil.getFacet(request);
@@ -375,7 +372,8 @@ public class BrowseAction extends DescriptionAction {
 
 		  if (logTimes) s_log.warn("execute() statusSetStr:" + statusSetStr);
 
-		  A.log("execute() cacheType:" + cacheType + " childImages:" + getChildImages + " childMaps:" + getChildMaps); 
+		  //A.log("execute() cacheType:" + cacheType + " childImages:" + getChildImages + " childMaps:" + getChildMaps);
+
 		  if (!"description".equals(cacheType)) {
 			//StatusSet statusSet = new StatusSet(StatusSet.ALL); //statusSetStr); // Sep 2017
 			StatusSet statusSet = new StatusSet(statusSetStr);
@@ -540,7 +538,10 @@ We are showin the full map of ponerinae for every adm1.
 			//A.log("execute() ogImg:" + ogImg);
 			//OpenGraphMgr.setOGImage(ogImg);
     		request.setAttribute("ogImage", ogImage);
-		  } else A.log("No Open Graph Image set.");
+		  } else A.log("No Open Graph Image set. No headshot");
+
+          if (AntwebDebug.isDebugTaxon(taxon.getTaxonName())) A.log("has d image:" + taxon.getImages().get("d"));
+
         }
         
         String execTime = AntwebUtil.finish(request, startTime);
