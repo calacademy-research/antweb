@@ -105,7 +105,7 @@
 <logic:present name="taxon" property="nextRank">
 <bean:define id="taxonChildCount" name="taxon" property="childrenCount" />
 <%
-int totalImaged = taxon.getUniqueChildImagesCount("p", "h");
+int totalImaged = taxon.getUniqueChildImagesCount("p", "h", "d");
 
 //A.log("totalImaged:" + totalImaged + " taxonChildCount:" + taxonChildCount);
 String recordCountString = taxonChildCount + " specimens"; 

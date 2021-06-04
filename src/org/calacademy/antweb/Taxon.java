@@ -1259,8 +1259,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public void setImages(Hashtable images) {
         // Not called very much. Common practice in Specimen and Species, and Taxon to directly set with this.images =
 
-		if (false && AntwebProps.isDevMode()) {
-			s_log.warn("setImages images:" + images);
+		if (false) {
+			A.log("setImages images:" + images);
 			AntwebUtil.logStackTrace();
 		}
     
@@ -1296,7 +1296,6 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
                 addHere = loop;
             } else {
                 if (thisComponent.indexOf('|') != -1) {
-            
                     ors = thisComponent.split("\\|");
                 } else {
                     ors = new String[1];
@@ -1353,6 +1352,15 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           if (shot.equals("p") && images.containsKey("p2")) {
               return true;
           }
+
+          // Added Jun 4, 2021 to allow image here to display: https://www.antweb.org/specimenImages.do?name=usnm609585
+          if (shot.equals("d") && images.containsKey("d1")) {
+              return true;
+          }
+          if (shot.equals("d") && images.containsKey("d2")) {
+              return true;
+          }
+
         }
         return hasImage;
     }
@@ -1392,17 +1400,25 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       return false;
     }
 
-    public int getUniqueChildImagesCount(String shot, String shot2) {
+    public int getUniqueChildImagesCount(String shot, String shot2, String shot3) {
         int theCount = 0;
 
-        if (getChildren() != null) { 
-            for (Taxon taxon : getChildren()) {   // ConcurrentModificationException
+        if (getChildren() != null) {
+
+            // To avoid ConcurrentModificationException
+            ArrayList<Taxon> children = getChildren();
+            int childrenCount = children.size();
+            Taxon[] childrenArray = new Taxon[childrenCount];
+            children.toArray(childrenArray);
+
+            for (Taxon taxon : childrenArray) {   // was getChildren()
                 boolean hasImage = taxon.hasImage(shot);
                 if (!hasImage) hasImage = taxon.hasImage(shot2);
-                //s_log.warn("getUniqueChildImagesCount() for name:" + getTaxonName() + " shot:" + shot + " shot2:" + shot2 + " hasImage:" + hasImage);
+                if (!hasImage) hasImage = taxon.hasImage(shot3);
                 if (hasImage) {
                     theCount += 1;
                 }
+                if (taxonDebug()) A.log("getUniqueChildImagesCount() for name:" + getTaxonName() + " shot:" + shot + " shot2:" + shot2 + " shot3:" + shot3 + " hasImage:" + hasImage + " theCount:" + theCount);
             }
         }
         return theCount;
@@ -1507,7 +1523,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
 			// When searching on a subcaste, they must be exact.
 			String rsetSubcaste = rset.getString("subcaste");
-			//if (d()) A.log("selectCodeByCaste() caste:" + caste + " rsetCaste:" + rsetCaste + " code:" + code);
+			//if (taxonDebug()) A.log("selectCodeByCaste() caste:" + caste + " rsetCaste:" + rsetCaste + " code:" + code);
 			if ("alateDealateQueen".equals(caste) && "alate/dealate".equals(rsetSubcaste)) return code;
 			if ("ergatoidQueen".equals(caste) && "ergatoid".equals(rsetSubcaste) && "queen".equals(rsetCaste)) return code;
 			if ("brachypterous".equals(caste) && "brachypterous".equals(rsetSubcaste)) return code;
@@ -1544,7 +1560,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         if (i > maxLoop) return null;
         String pick = imagePickDb.getDefaultSpecimenForTaxon(caste, speciesName);   
         if (pick != null) {
-          if (d()) A.log("getDefaultFromSpeciesSet() caste:" + caste + " pick:" + pick + " taxonName:" + getTaxonName() + " speciesNameSet:" + speciesNameSet);
+          if (taxonDebug()) A.log("getDefaultFromSpeciesSet() caste:" + caste + " pick:" + pick + " taxonName:" + getTaxonName() + " speciesNameSet:" + speciesNameSet);
           return pick;
         }
       }
@@ -1558,7 +1574,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       return getUnpickedFromSpeciesSet(caste, speciesSetStr, shotClause);
     }
     private String getUnpickedFromSpeciesSetFlex(String caste, String speciesSetStr) {
-      String shotClause = " and (shot_type = 'h' or shot_type = 'p' or shot_type = 'p' or shot_type = 'v')";
+      String shotClause = " and (shot_type = 'h' or shot_type = 'p' or shot_type = 'd' or shot_type = 'v')";
       return getUnpickedFromSpeciesSet(caste, speciesSetStr, shotClause);
     }
 
@@ -1575,14 +1591,14 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       Statement stmt = null;
       ResultSet rset = null;    
       try {
-        if (d()) A.log("getUnpickedFromSpeciesSet() query:" + query);
+        if (taxonDebug()) A.log("getUnpickedFromSpeciesSet() query:" + query);
 
 		stmt = DBUtil.getStatement(getConnection(), "getUnpickedFromSpeciesSet()");
 		rset = stmt.executeQuery(query);
 
 		// now if we got a specimen, get its image information
 		String code = selectCodeByCaste(rset, caste);
-		if (d()) A.log("getUnpickedFromSpeciesSet() caste:" + caste + " code:" + code + " taxonName:" + getTaxonName()); // + " speciesSetStr:" + speciesSetStr);
+		if (taxonDebug()) A.log("getUnpickedFromSpeciesSet() caste:" + caste + " code:" + code + " taxonName:" + getTaxonName()); // + " speciesSetStr:" + speciesSetStr);
         return code;
 
       } catch (Exception e) {
@@ -1617,7 +1633,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		stmt = DBUtil.getStatement(getConnection(), "getSpeciesNameSet()");
 		rset = stmt.executeQuery(query);
 
-		if (d()) A.log("getSpeciesNameSet() this:" + this.getClass() + " query:" + query);
+		if (taxonDebug()) A.log("getSpeciesNameSet() this:" + this.getClass() + " query:" + query);
 
 		while (rset.next()) {
 		  String taxonName = rset.getString("taxon_name");
@@ -1654,7 +1670,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		  return null;
 		}
 		
-		if (d()) A.log("caste:" + caste);
+		if (taxonDebug()) A.log("caste:" + caste);
 
         if (Rank.GENUS.equals(getRank())) {
           if (Caste.DEFAULT.equals(caste)) {
@@ -1675,7 +1691,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           } else {
             // ? Shouldn't do this if the caste represents a subcaste. For we won't find one. Image picking not supporting subcaste (yet). Performance.
             chosenImageCode = getDefaultFromSpeciesSet(caste, speciesNameSet);
-            if (d()) A.log("getUnpickedDefault() chosenImageCode:" + chosenImageCode);
+            if (taxonDebug()) A.log("getUnpickedDefault() chosenImageCode:" + chosenImageCode);
             if (chosenImageCode == null) 
               chosenImageCode = getUnpickedFromSpeciesSet(caste, speciesSetStr);
 // Need these?
@@ -1683,7 +1699,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 //              chosenImageCode = getUnpickedFromSpeciesSetFlex(caste, speciesSetStr);
           }
 
-		  if (d()) A.log("getUnpickedDefault() " + getRank() + " taxonName:" + getTaxonName() + " caste:" + caste + " overview:" + overview + " chosenImageCode:" + chosenImageCode); // + " speciesNameSet:" + speciesNameSet + " speciesSetStr:" + speciesSetStr);
+		  if (taxonDebug()) A.log("getUnpickedDefault() " + getRank() + " taxonName:" + getTaxonName() + " caste:" + caste + " overview:" + overview + " chosenImageCode:" + chosenImageCode); // + " speciesNameSet:" + speciesNameSet + " speciesSetStr:" + speciesSetStr);
 		  //AntwebUtil.logStackTrace();
 
           return chosenImageCode;          
@@ -1700,7 +1716,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         if (chosenImageCode == null) 
           chosenImageCode = getUnpickedFromSpeciesSetFlex(caste, speciesSetStr);
 
-		if (d()) A.log("getUnpickedDefault() rank:" + getRank() + " taxonName:" + getTaxonName() + " caste:" + caste + " overview:" + overview + " chosenImageCode:" + chosenImageCode); // + " speciesNameSet:" + speciesNameSet + " speciesSetStr:" + speciesSetStr);
+		if (taxonDebug()) A.log("getUnpickedDefault() rank:" + getRank() + " taxonName:" + getTaxonName() + " caste:" + caste + " overview:" + overview + " chosenImageCode:" + chosenImageCode); // + " speciesNameSet:" + speciesNameSet + " speciesSetStr:" + speciesSetStr);
 
         if (chosenImageCode != null) {
 
@@ -1769,18 +1785,18 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           //if (chosenImageCode != null) A.log("setImages() PICKED:" + chosenImageCode + " caste:" + caste + "  taxonName:" + getTaxonName());
         }
         
-        if (d()) A.log("setImages(" + overview + ", " + caste + ") 1 taxonName:" + getTaxonName() + " code:" + chosenImageCode);
+        if (taxonDebug()) A.log("setImages(" + overview + ", " + caste + ") 1 taxonName:" + getTaxonName() + " code:" + chosenImageCode);
         
 		// well, no default Image, so try to find one good specimen for this family
         if (chosenImageCode == null) {
           chosenImageCode = getUnpickedDefault(overview, caste);
-          if (d() && chosenImageCode != null) A.log("setImages(" + overview + "," + caste + ") unPickedDefault:" + chosenImageCode + " taxonName:" + getTaxonName());
+          if (taxonDebug() && chosenImageCode != null) A.log("setImages(" + overview + "," + caste + ") unPickedDefault:" + chosenImageCode + " taxonName:" + getTaxonName());
         }		
 
-        if (d()) A.log("setImages(" + overview + ", " + caste + ") 2 taxonName:" + getTaxonName() + " code:" + chosenImageCode);
+        if (taxonDebug()) A.log("setImages(" + overview + ", " + caste + ") 2 taxonName:" + getTaxonName() + " code:" + chosenImageCode);
 
 		if (chosenImageCode == null) {
-		  if (d()) A.log("setImages() none found. Bail. TaxonName:" + getTaxonName());
+		  if (taxonDebug()) A.log("setImages() none found. Bail. TaxonName:" + getTaxonName());
 		  return; 
         }
         
@@ -1789,19 +1805,23 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		for (SpecimenImage specImage : specImages) {
 		  myImages.put(specImage.getShotType(), specImage);
 		}
-        if (d()) A.log("setImages(" + overview + ", " + caste + ") 3 taxonName:" + getTaxonName() + " code:" + chosenImageCode + " count:" + myImages.size());
+        if (taxonDebug()) A.log("setImages(" + overview + ", " + caste + ") 3 taxonName:" + getTaxonName() + " code:" + chosenImageCode + " count:" + myImages.size());
         this.images = myImages;
-    }  
+    }
 
-    private boolean d() { 
+    private boolean taxonDebug() {
+      return true && AntwebDebug.isDebugTaxon(getTaxonName());
+        /*
       return (
-        false && (        
+        true && (
            "formicidae".equals(getTaxonName())
         || "myrmicinaecrematogaster".equals(getTaxonName())
         || "myrmicinaeaphaenogaster acuta".equals(getTaxonName())
         || "myrmicinaecardiocondyla shuckardi sculptinodis".equals(getTaxonName()) 
         || "formicinaecamponotus hova radamae".equals(getTaxonName())
+        || "dolichoderinaektunaxia jucunda".equals(getTaxonName())
         ));
+*/
     }
 
     public static boolean isQuadrinomial(String taxonName) {
@@ -2694,9 +2714,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         if (map.hasPoints()) hasMap = true;
         //String function = map.getGoogleMapFunction();
         //if ((function != null) && (function.length() > 0)) return true;
-        A.log("hasMap() hasMap:" + hasMap + " map:" + map + " hasPoints:" + map.hasPoints());
+        //A.log("hasMap() hasMap:" + hasMap + " map:" + map + " hasPoints:" + map.hasPoints());
       } else {
-        A.log("hasMap() hasMap:" + hasMap + " map:" + map);    
+        //A.log("hasMap() hasMap:" + hasMap + " map:" + map);
       }
       return hasMap;
     }

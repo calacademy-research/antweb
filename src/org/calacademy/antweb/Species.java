@@ -287,7 +287,7 @@ these other _cf1 etc.
   
         ArrayList theseChildren = new ArrayList();
         String overviewCriteria = "";
-        A.log("setChildren() global:" + global);
+        //A.log("setChildren() global:" + global);
         if (!global) overviewCriteria = overview.getOverviewCriteria();
         
         String query =
@@ -324,11 +324,11 @@ these other _cf1 etc.
             child.setStatus(getStatus());
             if (getChildImages) {
                 child.setImages(overview, caste);
-                //A.log("Species.setChildren(5) setImages code:" + child.getCode() + " images:" + child.getImages());  // && "casent0227526".equals(child.getCode())
             } else {
                 child.setHasImages(overview);
-                //A.log("setChildren(4) setHasImages code:" + child.getCode() + " hasImages:" + child.getHasImages());  //  && "casent0227526".equals(child.getCode())
             }
+            if (AntwebDebug.isDebugTaxon(getTaxonName())) A.log("setChildren(7) setHasImages code:" + child.getCode() + " hasImages:" + child.getHasImages());
+
             if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
                 child.setMap(new Map(child, (LocalityOverview) overview, connection));
             }

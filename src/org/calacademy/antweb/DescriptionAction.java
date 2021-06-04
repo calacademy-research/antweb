@@ -280,7 +280,7 @@ public class DescriptionAction extends Action {
           stmt = DBUtil.getStatement(connection, "getDescEditHistory()");
           rset = stmt.executeQuery(query);
 
-          A.log("getDescEditHistory() query:" + query);
+          //A.log("getDescEditHistory() query:" + query);
  
           ArrayList<String> arrayList = new ArrayList();
           while (rset.next()) {

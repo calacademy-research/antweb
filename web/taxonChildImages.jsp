@@ -3,8 +3,8 @@
 <%
 	ArrayList<Taxon> childrenList = taxon.getChildren();
 
-    // AntwebUtil.log("warn", " :" + taxon.getChildImagesCount()); 
-    int totalImaged = taxon.getUniqueChildImagesCount("p", "h");
+    // AntwebUtil.log("warn", " :" + taxon.getChildImagesCount());
+    int totalImaged = taxon.getUniqueChildImagesCount("p", "h", "d");
     String optionalCaste = "";
     String tCaste = Caste.getDisplayCaste(request);
     if (!Caste.DEFAULT.equals(tCaste)) optionalCaste = "<font color=red>" + Formatter.initCap(tCaste) + "</font> ";
@@ -87,7 +87,7 @@
    Cookie reallyCookie = null;
 	   if (the_cookies != null) {
 		   for (int i = 0; i < the_cookies.length; i++) {
-		   if (the_cookies [i].getName().equals (the_cookie)) {
+		   if (the_cookies[i].getName().equals(the_cookie)) {
 			   reallyCookie = the_cookies[i];
 			   break;
 		   }
@@ -118,6 +118,15 @@
 	} else {
 		choice_is = "Head";
 	}
+
+    if (AntwebDebug.isDebugTaxon(taxon.getTaxonName())) {
+      // This reallyCookie business is strange.
+      useShot = true;
+      use_thumb = "d";
+      choice_is="Dorsal";
+      A.log("taxonChildImages.jsp useShot:" + useShot + " use_thumb:" + use_thumb + " choice_is:" + choice_is + " reallyCookie:" + reallyCookie.getValue() + " totalImaged:" + totalImaged);
+    }
+
 %>
 <input type="hidden" name="name" value="<bean:write name="showTaxon" property="name"/>">
 <input type="hidden" name="rank" value="<bean:write name="showTaxon" property="rank"/>">
@@ -126,7 +135,8 @@
 </logic:equal>
 <input type="hidden" name="overview" value="<%= overview.getName() %>">
 
- <% if (useShot) { %>
+ <%
+    if (useShot) { %>
  <input id="thumb_choice" type="hidden" name="shot" value="<%= choice_is %>" checked>
  <% }
     if (totalImaged > 0) {

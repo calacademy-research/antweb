@@ -433,8 +433,9 @@ public abstract class AntwebProps {
 
 	public static String htmlReport() {
 	  String report = 
-	      " <br>&nbsp;&nbsp;&nbsp;<b>DocRoot:</b> " + getDocRoot() 
-	    // + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
+	      " <br>&nbsp;&nbsp;&nbsp;<b>DocRoot:</b> " + getDocRoot()
+        + " <br>&nbsp;&nbsp;&nbsp;<b>DataRoot:</b> " + getDataRoot()
+                // + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
         + " <br>&nbsp;&nbsp;&nbsp;<b>ImagesDir:</b> " + getImagesDir()
 	    + " <br>&nbsp;&nbsp;&nbsp;<b>WebDir:</b> " + getWebDir()
 	    + " <br>&nbsp;&nbsp;&nbsp;<b>googleKey:</b> " + getGoogleMapKey()	
