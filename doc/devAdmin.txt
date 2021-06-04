@@ -41,18 +41,19 @@ docker-compose exec mysql sh -c "exec mysqlcheck --all-databases --optimize -u a
 
 
 
-
 --- Deployment
+-New
 
+cd /root/antweb
 git pull
+source .env
+docker-compose up -d --build
 
-docker-compose build    # To see how it goes
-
+-Old
+git pull
+docker-compose build    # To see how it goes   ! Long and slow. Failured to build?
 docker-compose up -d    # To put changes into effect
-
 tail -f logs/antweb.log 
-
-
 
 --- Server Stuff ---
 
@@ -157,9 +158,25 @@ mkdir /mnt/antweb/web/log/specimen
 
 To reference Antweb container specific addresses:
 # On server:
-ln -s /mnt/antweb /usr/local/antweb
+  ln -s /mnt/antweb /usr/local/antweb
 # On dev machine, something like:
-sudo ln -s /Users/mark/volumes/antweb/data/ /usr/local/antweb
+  sudo ln -s /Users/mark/volumes/antweb/data/ /usr/local/antweb
+
+--- Locations
+Antweb directories
+  on server: /root/antweb
+  on client: /Users/mark/volumes/antweb
+  
+To see logs:
+  docker-compose exec antweb bash
+  ls /usr/local/antweb/web/log/
+    accessLog.txt  adminTask.log  compute.log  dateDetermined.log  deletedImageLog.txt  detail  getUrl.txt	imageNotFound.txt  logins.txt  messages.txt  notFound.txt  profiler.jsp  searches.txt  specimen  srfExceptions.jsp  taxonSet.log  taxonSetBackup.log  worldants
+
+These are here:
+  ls antweb/logs/detail    antwebEvent.log  googleEarth.log  search.log
+
+  Only these are here: ls /mnt/antweb/web/log    specimen  worldants
+
 
 
 
