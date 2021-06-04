@@ -113,6 +113,8 @@ public final class ShowLogAction extends Action {
         if (grep != null && !"".equals(grep)) {
             command = "grep " + grep + " " + log;
             A.log(" command:" + command);
+              // Must: docker-compose exec antweb bash
+              // to see the logs here: /usr/local/antweb/web/log/
         } else {
             String linesOption = " --lines ";
             if (AntwebProps.isProp("isMac")) linesOption = " -n ";
@@ -124,6 +126,8 @@ public final class ShowLogAction extends Action {
         message = (new AntwebSystem()).launchProcess(command, true);
         String logMessage = "";
         if (message != null && message.length() > 100) logMessage = message.substring(100) + "...";
+
+        if (message == null || message.equals("")) message = "File empty or not found: " + log;
         //A.log("command:" + command + " results:" + logMessage);
 
         request.setAttribute("message", message);
