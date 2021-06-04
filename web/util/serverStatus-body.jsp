@@ -8,7 +8,6 @@
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.upload.*" %>
 <%@ page import="org.calacademy.antweb.home.*" %>
-<%@ page import="org.calacademy.antweb.data.Plazi" %>
 
 <%@ page import="com.mchange.v2.c3p0.impl.*" %>
 
@@ -71,7 +70,6 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
 }
 %>
 <br>&nbsp;&nbsp;&nbsp;Is Image Upload locked: <%= imageUploadLock %>  
-<br>&nbsp;&nbsp;&nbsp;Plazi state: <%= Plazi.s_state %>
 
 <br><br><b>CPU:</b> <%= AntwebSystem.getCpuLoad() %>
 <br>
