@@ -236,7 +236,7 @@ public class DescriptionAction extends Action {
             // New contents.  Let's regenerate the recent content list...
             //s_log.warn("genRecentDescEdits.");
             try {
-              AntwebFunctions.genRecentDescEdits(connection, request);              
+              AntwebFunctions.genRecentDescEdits(connection);
             } catch (IOException e) {
               s_log.error("saveOrUpdateDescription() taxonName:" + taxonName + " Title:" + title + " e:" + e);
               return false;
@@ -280,7 +280,7 @@ public class DescriptionAction extends Action {
           stmt = DBUtil.getStatement(connection, "getDescEditHistory()");
           rset = stmt.executeQuery(query);
 
-          A.log("getDescEditHistory() query:" + query);
+          //A.log("getDescEditHistory() query:" + query);
  
           ArrayList<String> arrayList = new ArrayList();
           while (rset.next()) {

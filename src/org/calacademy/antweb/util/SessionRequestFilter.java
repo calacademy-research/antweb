@@ -35,7 +35,9 @@ public class SessionRequestFilter implements Filter {
 
       PageTracker.add(request);
 
-	  String target = HttpUtil.getTarget(request);      
+	  String target = HttpUtil.getTarget(request);
+	  //A.log("target:"+ target);
+
       Login accessLogin = LoginMgr.getAccessLogin(request);
       String loginName = "-";
       if (accessLogin != null) loginName = accessLogin.getName();
@@ -46,7 +48,7 @@ public class SessionRequestFilter implements Filter {
       try {
 
           // Log insecure links.
-          if (!!HttpUtil.isSecure(request)) {
+          if (!HttpUtil.isSecure(request)) {
               A.log("doFilter() insecure");
               String message = "req:" + target + " scheme:" + request.getScheme()
                       + " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
@@ -136,6 +138,7 @@ public class SessionRequestFilter implements Filter {
         
     public void init(FilterConfig filterConfig) throws ServletException {
         s_log.warn("init() - Server is initializing...");
+        String message = "";
 		System.setProperty("jsse.enableSNIExtension", "false");
 
         DataSource ds = null;
@@ -153,19 +156,19 @@ public class SessionRequestFilter implements Filter {
         String spaceMessage = "Free space:" + Formatter.formatMB(freeSpace); //Formatter.numberConverter(freeSpace);        
         if (freeSpace < minFreeSpace) {
           AdminAlertMgr.add(spaceMessage, connection);
-          s_log.warn("init() warning:" + spaceMessage);
+          message += "warning:" + spaceMessage;
         } else {
-          s_log.warn("init() " + spaceMessage);
+          message += spaceMessage;
         }
 
         String cpuMessage = AntwebSystem.getCpuLoad();
-        s_log.warn("init() " + cpuMessage);
+        message += " " + cpuMessage;
 
         this.runTask(); // Set up the Scheduler
 
         s_startTime = new Date();
         //s_log.warn("init() domainApp:" + AntwebProps.getDomainApp());
-        s_log.warn("init() - Server is up.");
+        s_log.warn("init() - Server is up. " + message);
     }    
     
     public void destroy() { 

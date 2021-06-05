@@ -1,14 +1,11 @@
 #
 # Usage: sh db-monthly-dump.sh [dbname]
 #
-# Backup the antweb, or specified, database
-# 
-# Assumes that the /data/db is world writable
-monthofyear=`date +%b`
+# Backup of all antweb databases
+#
+
 dbname="ant"
-if [ $1 ] ; then
-dbname="$1"
-fi
+date=$(date +"%Y-%m-%d")
 
 echo 'Making monthly database backup of db:' $dbname
 
@@ -16,17 +13,17 @@ dbuser="antweb"
 dbpass="f0rm1c6"
 #backupdir="/data/antweb/web/db"
 #backupdir="/mnt/backup/db"
-backupdir="/data/antweb/backup/db"
+backupdir="/data/antweb/backup/db/monthly"
+
+tempfile=/tmp/"$date".sql.gz
+
+datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
-mysqldump --opt -u$dbuser -p$dbpass $dbname | gzip > $backupdir/backup-$dbname-$monthofyear.sql.gz
+  mysqldump --skip-lock-tables -u$dbuser -p$dbpass -h mysql --all-databases --routines --single-transaction --quick --ignore-database sys | gzip -c -9 > "$tempfile"
+  mv "$tempfile" "$datedBackupFile"
 fi
-
-# remove dump from 3 months ago - so that we only have 3 months at a time
-monthofyear=`date --date="3 months ago" +%b`
-olddump=$backupdir/backup-$dbname-$month.sql.gz
-if [ -e  $olddump ]; then
-rm $olddump
-fi
+# keep monthly backups for a year
+find "$backupdir" -mindepth 1 -mtime +365 -type f -name "*.sql.gz" -delete
 
 # End of script db_monthly_dump.sh

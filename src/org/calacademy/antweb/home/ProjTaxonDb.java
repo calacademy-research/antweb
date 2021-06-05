@@ -639,8 +639,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     // XXX Insufficient below. Perhaps fix in allCountCrawl? Performance matters.
     public void regenerateAllAntweb() throws SQLException {
-
-        s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a five minutes.");
+        //s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a minute.");
 
         //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before regenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "Before regenerateAllAntweb Proj_taxon worldants counts");
@@ -712,7 +711,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             stmt.executeUpdate(query);
             stmt.close();
         } catch (SQLException e) {
-            if (! (e instanceof com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException)) {
+            if (! (e instanceof java.sql.SQLIntegrityConstraintViolationException)) {
                 s_log.error("addProjectFamily() e:" + e);
             } else {
                 //s_log.info("addProjectFamily() expected - e:" + e);            

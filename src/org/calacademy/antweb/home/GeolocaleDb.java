@@ -552,8 +552,8 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return validGeolocales;
     }
 
-    public boolean createGeolocale(EditGeolocaleForm form) {
-        boolean success = false;
+    public String createGeolocale(EditGeolocaleForm form) {
+        String message = null;
         Statement stmt = null;
 
         String cols = "";
@@ -573,8 +573,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         vals += ", 0";
 
         if (Formatter.hasSpecialCharacter(form.getName())) {
-          s_log.error("createGeolocale() special character detected in: " + form.getName());
-          return false;
+          message = "createGeolocale() special character(s) detected in: " + form.getName();
+          s_log.error(message);
+          return message;
         }
         
         String dml = null;
@@ -586,13 +587,13 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
             stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.createGeolocale()");
             int x = stmt.executeUpdate(dml);
-            if (x > 0) success = true;
+            if (x > 0) message = "success";
         } catch (SQLException e) {
             s_log.error("createGeolocale() e:" + e);
         } finally {
             DBUtil.close(stmt, null, "GeolocaleDb.createGeolocale()");
         }   
-        return success;
+        return message;
     }    
     
     public boolean deleteGeolocale(int id) {
@@ -2069,7 +2070,7 @@ public static int c = 0;
 
 		//A.log("addAddm1FromSpecimenData() 2 adm1:" + adm1 + " country:" + country + " accessGroupId:" + accessGroupId + " x:" + x + " dml:" + dml);
 
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {         
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             // no problem. Set the valid name...
         } catch (SQLException e) {
             s_log.error("addAdm1FromSpecimenData() e:" + e + " dml:" + dml);

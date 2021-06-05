@@ -1,0 +1,88 @@
+
+
+
+Documentation for Running Python scripts in the /src/py directory.
+------------------------------------------------------------------
+
+In effort to run src/py/imageCheck.py:
+  python3 imageCheck.py
+
+... I have it running but it is failing to connect to the database. Here is the process
+of getting the code deployed on the server.
+
+cp /Volumes/markDisk/dev/bak/requirements.txt src/py/
+  # This was our old requirements.txt from the last server.
+
+cd src/py/
+
+virtualenv env -p python3
+
+apt install python3-virtualenv
+  
+source env/bin/activate 
+   
+pip3 install -r requirements.txt
+
+Had to comment the #mysqlclient==1.3.10 our of requirements.txt
+  But then the pip3 install fails.
+  # online recommendation to switch to pymysql...
+
+pip install pymysql
+
+# Modified requirements.txt. Upgraded: six==1.14.0
+# Recreated the virtualenv.
+
+pip install flask_sqlalchemy
+pip install flask_restful
+
+
+python3 imageCheck.py
+
+Error remaining is:
+  sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (2003, "Can't connect to MySQL server on 'mysql' ([Errno -3] Temporary failure in name resolution)")
+(Background on this error at: http://sqlalche.me/e/14/e3q8)
+
+Seems that the packages are ironed out. I see from running pip freeze that there is whole lot more for a new requirements.txt.
+
+Is it possible that the docker configuration requires a different means of database access?
+
+
+
+--- More notes
+
+cp /Volumes/markDisk/dev/bak/requirements.txt src/py/
+
+cd src/py/
+
+python3 imageCheck.py
+   ModuleNotFoundError: No module named 'flask_sqlalchemy'
+
+virtualenv env -p python3
+
+source env/bin/activate 
+   
+pip3 install -r requirements.txt
+  # from: pip3 freeze > requirements.txt
+
+python3 imageCheck.py
+   ModuleNotFoundError: No module named 'MySQLdb'
+
+Had to comment the #mysqlclient==1.3.10 our of requirements.txt
+  But then the pip3 install fails.
+
+pip3 install pymysql
+
+
+
+--- For ImageMagick
+pip install wand
+
+--Mac Specific
+
+- To install Homebrew:
+  ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+- To install Imagemagick
+  brew install imagemagick
+
+

@@ -163,7 +163,7 @@ public class ImageUploadDb extends AntwebDb {
               s_log.warn("NOT IMPLEMENTED. Error.");
             }       
 
-            A.log("saveImageUpload() dml:" + dml);
+            //A.log("saveImageUpload() dml:" + dml);
 		} catch (SQLException e) {
 			s_log.error("saveImageUpload() dml" + dml + " e:" + e);
 			throw e;
@@ -185,7 +185,7 @@ public class ImageUploadDb extends AntwebDb {
      
             stmt.executeUpdate(dml);
 
-            A.log("completeImageUpload() dml:" + dml);
+            //A.log("completeImageUpload() dml:" + dml);
 		} catch (SQLException e) {
 			s_log.error("completeImageUpload() dml" + dml + " e:" + e);
 			throw e;
@@ -220,7 +220,7 @@ public class ImageUploadDb extends AntwebDb {
             
     	    stmt.executeUpdate(dml);
 
-            A.log("saveImageUploaded() dml:" + dml);
+            //A.log("saveImageUploaded() dml:" + dml);
 		} catch (SQLException e) {
 			s_log.error("saveImageUploaded() dml" + dml + " e:" + e);
 			throw e;

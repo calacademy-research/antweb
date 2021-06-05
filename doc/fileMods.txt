@@ -1,3 +1,66 @@
+RElease 8.55.2
+ WEB-INF/struts-config.xml                                  |  17 -------
+ api/v3.1/localRequirements.txt                             |   2 +-
+ api/v3.1/requirements.txt                                  |   4 +-
+ api/v3.1/serverRequirements.txt                            |   2 +-
+ doc/deployment.md                                          | 132 +++++++++++++++++++++++++++++++-----------------------
+ doc/fileMods.txt                                           |  29 ++++++++++++
+ doc/pythonDev.txt                                          |  28 ++++++++++++
+ doc/release.txt                                            |  11 ++++-
+ src/org/calacademy/antweb/data/Plazi.java                  | 572 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ src/org/calacademy/antweb/data/PlaziAction.java            | 277 -----------------------------------------------------------------------------------------------------------------
+ src/org/calacademy/antweb/data/PlaziDataAction.java        | 311 -------------------------------------------------------------------------------------------------------------------------------
+ src/org/calacademy/antweb/data/PlaziTaxonDescription.java  |  33 --------------
+ src/org/calacademy/antweb/imageUploader/ImageUploaded.java |  21 ++++++++-
+ src/org/calacademy/antweb/util/UtilDataAction.java         |   4 +-
+ src/py/requirements.txt                                    |  14 ++++++
+ web/common/message-body.jsp                                |   7 +--
+ web/documentation/releaseNum.jsp                           |   2 +-
+
+Release 8.55
+Fast-forward
+ .gitignore                                                 |   1 +
+ README.md                                                  |   8 ++++++--
+ doc/devAdmin.txt                                           |  71 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ doc/install.txt                                            |   2 +-
+ doc/release.txt                                            |   4 ++++
+ doc/toDo.txt                                               |  63 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ src/org/calacademy/antweb/BigPictureAction.java            |   4 ++--
+ src/org/calacademy/antweb/SpecimenImage.java               | 108 +++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
+ src/org/calacademy/antweb/TaxaPage.java                    |   1 -
+ src/org/calacademy/antweb/TaxaPageAction.java              |   2 ++
+ src/org/calacademy/antweb/home/ImageDb.java                |   4 ++--
+ src/org/calacademy/antweb/imageUploader/ImageUploaded.java |  12 +++++++-----
+ src/org/calacademy/antweb/util/AntwebException.java        |   3 +++
+ src/org/calacademy/antweb/util/AntwebUtil.java             | 128 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------------------------------------------------------------------------
+ src/org/calacademy/antweb/util/Exif.java                   |   4 ++--
+ web/bigPicture-body.jsp                                    |   7 ++++++-
+ web/common/antweb-defs.jsp                                 |   7 +++----
+ web/common/antwebSecure-defs.jsp                           |   4 ++++
+ web/common/jspError-body.jsp                               |   2 +-
+ web/common/siteNav.jsp                                     |   8 ++++----
+ web/documentation/releaseNum.jsp                           |   2 +-
+ web/error.jsp                                              |   2 +-
+ web/layouts/layout.jsp                                     |   3 ++-
+ web/taxonomicPageImages-body.jsp                           |   5 +++--
+ 24 files changed, 295 insertions(+), 160 deletions(-)
+
+
+Release 8.54.7
+ README.md                                                |  2 +-
+ doc/release.txt                                          |  3 +++
+ docker-compose.prod.yml                                  | 10 ++++------
+ docker/httpd/Dockerfile                                  |  2 +-
+ docker/httpd/sites-enabled/antweb_calacademy_org.conf    | 60 ++++++++++++++++++++++++++++++------------------------------
+ src/org/calacademy/antweb/upload/UploadAction.java       | 20 +++++---------------
+ src/org/calacademy/antweb/util/AntwebMgr.java            |  3 +++
+ src/org/calacademy/antweb/util/SessionRequestFilter.java |  2 +-
+ src/org/calacademy/antweb/util/UtilDataAction.java       | 21 ++++++++++-----------
+ web/documentation/releaseNum.jsp                         |  2 +-
+ web/taxonomicPageImages-body.jsp                         |  8 +++-----
+ web/worldants.jsp                                        | 22 +---------------------
+ 12 files changed, 63 insertions(+), 92 deletions(-)
+ 
 Release 8.54.5
  doc/done.txt                                  | 20 +++++++++-----------
  doc/release.txt                               |  3 +++

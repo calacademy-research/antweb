@@ -1,5 +1,8 @@
 package org.calacademy.antweb.imageUploader;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.io.*;
 
@@ -18,8 +21,10 @@ import org.im4java.core.*;
 import org.im4java.process.*;
 //import org.im4java.core.ETOperation
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class ImageUploaded {
 
@@ -27,7 +32,7 @@ public class ImageUploaded {
 
   public static String imagesDir = AntwebProps.getDocRoot() + "images/";
 
-  public static String tempDir = imagesDir + "/temp";
+  public static Path tempDir = Path.of(AntwebProps.getDocRoot(), "temp", "images");
   public static String backupDir = imagesDir + "backup/";
 
   private int id = 0;
@@ -84,6 +89,13 @@ public class ImageUploaded {
       fileItem.write(file);
   }
 
+  public static String getTestString(String fileName) {
+      ImageUploaded iu = new ImageUploaded();
+      iu.init(fileName);
+      String val = "fileName:" + iu.getFileName() + " code:" + iu.getCode() + " shot:" + iu.getShot() + " number:" + iu.getNumber() + " ext:" + iu.getExt();
+      return val;
+  }
+
   // From the original file uploaded we derive the code, the shot and number.
   public void init(String fileName) {
     int u1 = 0;
@@ -100,6 +112,18 @@ public class ImageUploaded {
           setErrorMessage("_ and shot type required.");         
           return;
         }
+
+        // handle underscore that could be early in the name.
+        period = fileName.indexOf(".");
+        if (period - u1 > 5) {
+            u1 = fileName.indexOf("_", u1 + 1);
+        }
+
+        // handle underscore that could be early in the name.
+        if (period - u1 > 5) {
+            u1 = fileName.indexOf("_", u1 + 1);
+        }
+
         setCode(fileName.substring(0, u1).toLowerCase());
 
         String beforePeriod = fileName.substring(0, fileName.indexOf("."));
@@ -155,13 +179,13 @@ public class ImageUploaded {
         setExt(ext);
         //A.log("populate() fileName:" + fileName + " u1:" + u1 + " u2:" + u2 + " period:" + period + " code:" + getCode() + " shot:" + getShot() + " number:" + getNumber() + " ext:" + ext);
 
+        //A.log("init() this:" + this.toString());
+
         return;
     } catch (NumberFormatException e) {
       s_log.warn("populate() e:" + e);
     } catch (StringIndexOutOfBoundsException e) {
       s_log.warn("populate() e:" + e);
-    //} catch (Exception e) {
-    //  s_log.warn("populate() e:" + e);
     }  
     setErrorMessage("Invalid filename");
   }
@@ -176,7 +200,6 @@ public class ImageUploaded {
         }
 
         //addMetaData($newFileName, $copyright, $artist, $license, $specimen, $date);
-        //AntwebUtil.log("genImage() 1:
 
         message += genImage(specimenDir, "thumbview", 400, 300);
         message += genImage(specimenDir, "low", 800, 600);
@@ -187,40 +210,47 @@ public class ImageUploaded {
 
     private String genImage(String specimenDir, String type, int width, int height) {
         String message = "";
+        String imageName = getCode() + "_" + getShot() + "_" + getNumber() + "_" + type + ".jpg";
+        String imagePath = specimenDir + "/" + imageName;
+        Path tempFile = tempDir.resolve(imageName);
+        String tags = "";
         try {
-            String imageName = getCode() + "_" + getShot() + "_" + getNumber() + "_" + type + ".jpg";
-
             IMOperation op = new IMOperation();
             op.addImage(imagesDir + getCode() + "/" + getFileName());
+            op.flatten();
             op.resize(height, width);
-            String imagePath = specimenDir + "/" + imageName;
-            op.addImage(imagePath);
+            op.addImage(tempFile.toString());
 
             // This would be JMagick. Doesn't work on Mac.
             //setExifData(specimenDir, imageName, code);
-            
-            String tags = "";
+
             //tags = setExifData(imagePath);
 
             message = "<br>" + imageName;
             if (!"".equals(tags)) message += " created with tags:" + tags;
 
             // create and execute the command
+            //A.log("genImage() path:" + imagePath + " this:" + this.toString());
+            //A.log("genImage() 1 EXISTS? " + FileUtil.fileExists("/usr/local/antweb/images/casent0286677/casent0286677_p_1_high-2.jpg"));
             ConvertCmd cmd = new ConvertCmd();
             cmd.run(op);
+            //A.log("genImage() 2 EXISTS? " + FileUtil.fileExists("/usr/local/antweb/images/casent0286677/casent0286677_p_1_high-2.jpg"));
+
+            Files.move(tempFile, Path.of(imagePath), REPLACE_EXISTING);
+
         } catch (org.im4java.core.CommandException e) {
-            AntwebUtil.log("im4java test e:" + e);
+            AntwebUtil.log("im4java test e:" + e + " imageName:" + imageName + " imagePath:" + imagePath + " tags:" + tags);
         } catch (IOException e) {
             AntwebUtil.log("im4java test 2e:" + e);
         } catch (InterruptedException e) {
             AntwebUtil.log("im4java test 3e:" + e);
         } catch (IM4JavaException e) {
             AntwebUtil.log("im4java test 4e:" + e);
-        }  
+        }
         return message;
     }
     
-/*    
+    /*
     private String setExifData(String imagePath) {
 
      //exiftool -comment='this is a new comment' casent0005904_d_1_low.jpg
@@ -359,6 +389,10 @@ public class ImageUploaded {
     }
     public void setIsSpecimenDataExists(boolean isSpecimenDataExists) {
       this.isSpecimenDataExists = isSpecimenDataExists;
+    }
+
+    public String toString() {
+      return "code:" + code + " number:" + number + " shot:" + shot + " ext:" + ext + " displayName:" + getDisplayName();
     }
 }
 

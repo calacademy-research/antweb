@@ -354,7 +354,7 @@ public final class SearchAction extends DispatchAction {
         SearchParameters searchParameters = new SearchParameters((RecentImagesForm) form);
             
         String project = searchParameters.getProject();
-        searchLog("recentImageSearch() project:" + project);
+        searchLog("recentImageSearch() shortParams:" + searchParameters.toStringShort());
 
         RecentImageSearchAction searchAction = new RecentImageSearchAction();
         searchAction.setServlet(servlet);

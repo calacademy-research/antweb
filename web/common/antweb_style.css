@@ -234,9 +234,6 @@
 #nav li.contact{ background: url("../images/contact_off4.gif") no-repeat; width: 89px; height:36px; }
 #nav li.contact:hover { background: url("../images/contact_on4.gif") no-repeat; width: 89px; height:36px; }
 
-#nav li.antblog{ background: url("../images/blog_off.gif") no-repeat; width: 68px; height:36px; }
-#nav li.antblog:hover { background: url("../images/blog_on.gif") no-repeat; width: 68px; height:36px; }
-
 #nav li.documentation{ background: url("../images/documentation_off.gif") no-repeat; width: 114px; height:36px; }
 #nav li.documentation:hover { background: url("../images/documentation_on.gif") no-repeat; width: 114px; height:36px; }
 

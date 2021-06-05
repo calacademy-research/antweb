@@ -494,6 +494,7 @@ public class Formatter implements Serializable {
   public static String ignoreUtf8 = "()/_.,&-]";  
   public static boolean hasSpecialCharacter(String str) {
     String extras = "äáëéìöü";
+    extras += "óÑ";  // Added May 202 for Córdoba and Ñuble
     String patternStr = "[^A-Za-z0-9 " + extras + ignoreUtf8;
     return hasSpecialCharacter(str, patternStr);
   }

@@ -43,7 +43,7 @@ $dirName = $args['dirName'];
 
 echo("dirName:".$dirName."\n");
 
-  $conn = mysql_connect("localhost","antweb","f0rm1c6");
+  $conn = mysql_connect("mysql","antweb","f0rm1c6");
   @mysql_select_db("ant") or logAndDie("could not connect to ant db");
 
 

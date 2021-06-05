@@ -118,8 +118,6 @@
  if (rank != null && (rank.equals(Rank.SPECIES) || rank.equals(Rank.SUBSPECIES))) { %>
       <% // @ include file="/curate/defaultSpecimen/defaultSpecimen.jsp" %>
  <% } %>
-  
-   
         <div class="clear"></div>
     </div>
     <!-- 
@@ -150,7 +148,6 @@
    <% } %>
 <% } 
   //A.log("imagePage-body.jsp taxon:" + taxon);
-  
 %>
   
 <%@include file="/taxonChildImages.jsp" %>  

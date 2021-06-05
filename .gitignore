@@ -1,3 +1,4 @@
+.DS_Store
 /build/
 .idea
 /build.properties
@@ -6,4 +7,17 @@
 /WEB-INF/classes/log4j.properties
 /WEB-INF/classes/platform.properties
 /api/v3.1/venv
+antweb.iml
+
+**/__pycache__
+/.env
+/src/py/env/
+
+# This is for devs who clone web/ to their local machines
+/data
+
+docker-compose.override.yml
+/logs/
+/logbak/
+
 antweb.iml

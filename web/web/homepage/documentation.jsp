@@ -3,8 +3,8 @@
 <%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%
-if (!org.calacademy.antweb.util.HttpUtil.isInWhiteListCheck(request.getQueryString(), response)) return;     
-String domainApp = (new Utility()).getDomainApp(); 
+	if (!org.calacademy.antweb.util.HttpUtil.isInWhiteListCheck(request.getQueryString(), response)) return;
+	String domainApp = (new Utility()).getDomainApp();
 %>
 
 <%@include file="/common/antweb-defs.jsp" %>

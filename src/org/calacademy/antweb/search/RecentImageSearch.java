@@ -84,7 +84,7 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
             
             //return getListFromRset(rset,null, Integer.parseInt(numToShow));
             return getListFromRset(GenericSearch.RECENT_IMAGE, rset, null, theQuery);
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException e) {
+        } catch (java.sql.SQLSyntaxErrorException e) {
             s_log.error("createInitialResults() !!!!FIX!!!! e:" + e + " query:" + theQuery + " To fix, see antweb/doc/dbDebug.txt. Must turn off sql_mode: ONLY_FULL_GROUP_BY in my.cnf.");
         } catch (SQLException e) {
             s_log.error("createInitialResults() e:" + e + " query:" + theQuery);

@@ -155,7 +155,7 @@ public abstract class AntwebProps {
     
     public static String getDataRoot() {
         // /usr/local/data/ points to either /data/antweb (on server) or /usr/local/tomcat/webapps/antweb on dev.
-        return "/usr/local/data/";
+        return "/usr/local/antweb/";
     }
 	
     public static String getTomcatDir() {
@@ -256,13 +256,18 @@ public abstract class AntwebProps {
         return protocol;
     }
     
-    // This is used for self reflexive requests. When the server calls itself,
-    //   possible it can't through ssh. Use http, on localhost, with app (if relevant).
+    // This is used for self reflexive requests. When the server calls itself, localhost:80 is not available since the
+    // httpd container is separate. Instead, we use the 8080 port, which is not exposed outside the container.
     public static String getThisDomainApp() {
-      //String thisDomainApp = "https://www.antweb.org" + AntwebProps.getApp();
-      //return thisDomainApp;
-      // This was useful when the live server needed to call itself via http.
-      return getDomainApp();
+        // return getDomainApp();
+        // String domainApp = "http://httpd";
+        String domainApp = null;
+        domainApp = "http://localhost:8080";
+
+       //if (AntwebProps.isDevMode()) domainApp = "http://127.0.0.1";
+
+        A.log("domainApp:" + domainApp);
+        return domainApp;
     }
        
     public static String getDomain() {
@@ -428,8 +433,9 @@ public abstract class AntwebProps {
 
 	public static String htmlReport() {
 	  String report = 
-	      " <br>&nbsp;&nbsp;&nbsp;<b>DocRoot:</b> " + getDocRoot() 
-	    // + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
+	      " <br>&nbsp;&nbsp;&nbsp;<b>DocRoot:</b> " + getDocRoot()
+        + " <br>&nbsp;&nbsp;&nbsp;<b>DataRoot:</b> " + getDataRoot()
+                // + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
         + " <br>&nbsp;&nbsp;&nbsp;<b>ImagesDir:</b> " + getImagesDir()
 	    + " <br>&nbsp;&nbsp;&nbsp;<b>WebDir:</b> " + getWebDir()
 	    + " <br>&nbsp;&nbsp;&nbsp;<b>googleKey:</b> " + getGoogleMapKey()	

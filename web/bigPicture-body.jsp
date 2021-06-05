@@ -214,7 +214,10 @@ if (theImage.getNumber() > 1) {
 
 <ul>
 <%
-   if (theImage.getOrigUrl() != null) { %>
+   String origUrl = AntwebProps.getDomainApp() + theImage.getOrigUrl();
+   if (false && AntwebProps.isDevMode()) { %> * <%= origUrl %> <% }
+   if (theImage.getOrigUrl() != null) {
+   %>
     <li><a href="<%= AntwebProps.getDomainApp() %><%= theImage.getOrigUrl() %>" target="new">View Highest Resolution</a></li>
 <% } %>
 
@@ -314,6 +317,8 @@ if (theImage.getNumber() > 1) {
 <ul>
 <li><b>Orig File data:</b></li>
 <li><%= theImage.getOrigFileData()  %></li>
+<% if (true && AntwebProps.isDevMode()) { %> * <%= theImage.getOrigFileData() %> <% } %>
+
 </ul>
 
 <ul>

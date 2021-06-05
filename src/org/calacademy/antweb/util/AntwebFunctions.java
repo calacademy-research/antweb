@@ -21,7 +21,7 @@ public abstract class AntwebFunctions {
 
   private static final Log s_log = LogFactory.getLog(AntwebFunctions.class);
     
-    public static void genRecentDescEdits(java.sql.Connection connection, HttpServletRequest request) 
+    public static void genRecentDescEdits(java.sql.Connection connection)
       throws SQLException, IOException {
 
       // This method generates the file here: http://localhost/antweb/recentDescEdits.jsp
@@ -65,7 +65,7 @@ public abstract class AntwebFunctions {
               } else {
                 href = Specimen.makeLink(code);
               }
-              A.log("getRecentDescEdits() taxonName:" + taxonName + " code:" + code + " href:" + href);              
+              //A.log("getRecentDescEdits() taxonName:" + taxonName + " code:" + code + " href:" + href);
               outFile.write(href + "<br/>\n");
               count++;
               if (count > MAX_DESC_EDIT_COUNT) {
@@ -253,8 +253,5 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
         }
         return list;
     }
-
-
-
 }
 

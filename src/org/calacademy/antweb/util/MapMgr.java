@@ -39,7 +39,7 @@ public abstract class MapMgr {
           map = new Map(taxon, overview, connection);
         }
 
-        A.log("execute() persist:" + persist + " taxon:" + taxon + " map:" + map);
+        //A.log("execute() persist:" + persist + " taxon:" + taxon + " map:" + map);
 
         return map;
     }

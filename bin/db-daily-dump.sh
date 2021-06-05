@@ -1,50 +1,38 @@
-#
+#!/usr/bin/env bash
 # Usage: sh db-daily-dump.sh [dbname]
 #
-# Backup the antweb, or specified, database
-# 
-# Assumes that the /data/db is world writable
+# Backup all databases
+#
+# Assumes that /data/antweb/backup/db/daily is world writable
 
-dayofweek=`date +%a`
+
+date=$(date +"%Y-%m-%d")
 
 dbname="ant"
-if [ $1 ] ; then
-dbname="$1"
+if [ $1 ]; then
+  dbname="$1"
 fi
 
-echo 'Making daily database backup of db:' $dbname
 
 dbuser="antweb"
 dbpass="f0rm1c6"
 #backupdir="/data/antweb/web/db"
 #backupdir="/mnt/backup/db"
-backupdir="/data/antweb/backup/db"
- 
-curBak=$backupdir/$dbname-currentDump.sql.gz
+rootbackupdir="/data/antweb/backup/db"
+backupdir="/data/antweb/backup/db/daily"
+
+curBak="$rootbackupdir"/"$dbname"-currentDump.sql.gz
+
+tempfile=/tmp/"$date".sql.gz
+
+datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
-mysqldump --opt --skip-lock-tables -u$dbuser -p$dbpass $dbname | gzip > $backupdir/backup-$dbname-$dayofweek.sql.gz
-echo 'Copying ' $backupdir/backup-$dbname-$dayofweek.sql.gz ' to ' $curBak
-cp $backupdir/backup-$dbname-$dayofweek.sql.gz $curBak
+  mysqldump --skip-lock-tables -u$dbuser -p$dbpass -h mysql --all-databases --routines --single-transaction --quick --ignore-database sys | gzip -c -9 > "$tempfile"
+  mv "$tempfile" "$datedBackupFile"
+  echo "Copying $datedBackupFile to $curBak"
+  cp "$datedBackupFile" "$curBak"
 fi
 
-echo 'db:' $dbname
-
-#if [ $dbname == "ant" ] || [ $dbname == "stage" ] ; then
-# This may break on a mac...
-dayofweek=`date --date="6 days ago" +%a`
-echo "Linux date command - 6 days ago:" $dayofweek
-#else
-#dayofweek=`date -v -6d +%a`
-#echo "BSD date command - 6 days ago:" $dayofweek
-#fi
-
-olddump=$backupdir/backup-$dbname-$dayofweek.sql.gz
-if [ -e  $olddump ]; then
-echo 'Removing ' $olddump
-rm $olddump
-else
-echo "Not removing old daily backup (does not exist):" $olddump
-fi
-
-# End of script db_daily_dump.sh
+# Remove backups after a week
+find "$backupdir" -mindepth 1 -mtime +7 -type f -name "*.sql.gz" -delete

@@ -1,0 +1,8 @@
+# Ignore everything be default, include specific dirs
+*
+
+!api/v3.1
+!docker/api
+
+# Ignore all venv files
+**/venv

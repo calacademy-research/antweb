@@ -1673,31 +1673,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="report" path="/imageUploader/imageUploadReport.jsp"/>
     </action>
 
-      
-      
-    <action path="/getEOL"
-             type="org.calacademy.antweb.EOLAction"
-             name="blankForm"
-             scope="request">
-         <forward name="success" path="/eol.jsp"/>
-     </action>
-    
-     <!-- Deprecated -->
-     <action path="/getPlazi"
-             type="org.calacademy.antweb.data.PlaziAction"
-             name="blankForm"
-             input="/index.jsp">
-         <forward name="failure" path="/plaziFail.jsp"/>
-      </action>
-
-     <!-- called as: /util.do?action=plaziData  as below only to test fetch. -->
-     <action path="/getPlaziData"
-             type="org.calacademy.antweb.data.PlaziDataAction"
-             name="blankForm"
-             input="/index.jsp">
-         <forward name="failure" path="/plaziFail.jsp"/>
-      </action>
-
      <!-- called as: /util.do?action=countryData  as below only to test fetch. -->
      <action path="/antWikiData"
              type="org.calacademy.antweb.data.AntWikiDataAction"
@@ -1809,7 +1784,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action path="/fieldguide"
             forward="/fieldGuide.do"/>
     <action path="/getcomparison"
-            forward="/getcomparison.do"/>
+            forward="/getComparison.do"/>
     <action path="/mapcomparison"
             forward="/mapComparison.do"/>
     <!-- action path="/googleearth"

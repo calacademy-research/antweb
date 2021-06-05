@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  mysql:
+#    ports:
+#      - "3306"   # Enable when on production server. This will allow internal network access to database
+  antweb:
+    build:
+      args:
+        ENV: PROD
+
+    extra_hosts:
+      - "antcat-export:10.124.0.4"
+
+
+  httpd:
+    environment:
+      ENV: 'PROD'

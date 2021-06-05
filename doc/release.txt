@@ -1,3 +1,54 @@
+Release 8.57
+  Add condition for file not found to showLog.do.
+  Add more data to the searches log.
+  Fix serverStatus-body bug.
+  Extend devAdmin documentation. Locations info.
+  Remove unneeded logged data from logs in devMode.
+  Create AntwebDebug utility class.
+  Fix the missing image if only a dorsal image exists.
+
+Release 8.56.2
+  Adm1 support for Nuble.
+
+Release 8.56.1
+  Adm1 support for Cordoba.
+
+Release 8.56
+  Added recalculate for AFRC.
+  Minor logging changes.
+  Diagnose, proposed Fix for the missing derivative image issue.
+
+Release 8.55.3
+  Admin "Login as" feature allows exceptions.
+  Updates to documentation.
+
+Release 8.55.2
+  Image Uploader allows underscores in the image id.
+ 
+Release  8.55.1
+  Plazi Data compiler warning mitigated.
+  
+Release 8.55
+  Fix of View: drop down on taxonomic pages of images.
+  Fix added to toDo.txt - Orig File Data, bigPicture.do for admins.
+  Log more info for convert warning.
+  devSleep method. 
+  AntwebStackTrace methods.
+
+Release 8.54.9
+  Minor logging change.
+
+Release 8.54.8
+  Post-initalize changes.
+  Documentation. 
+
+Release 8.54.7
+  Taxonomic Page number for images returned.
+
+Release 8.54.6
+  Generate dynamic content at application startup.
+  PostInitialize test functionality.
+
 Release 8.54.5
   Fix for Taxonomic Page
   

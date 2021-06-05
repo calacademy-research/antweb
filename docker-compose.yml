@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  mysql:
+    restart: unless-stopped
+    image: mysql:5
+    command: "--default-authentication-plugin=mysql_native_password"
+
+    volumes:
+      - ./docker/mysql/mysql.cnf:/etc/mysql/conf.d/custom.cnf
+      - antweb_database:/var/lib/mysql
+    environment:
+      TZ: America/Los_Angeles
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+    expose:
+      - 3306
+    ports:
+      - "127.0.0.1:3306:3306"
+
+  httpd:
+    build:
+      context: .
+      dockerfile: docker/httpd/Dockerfile
+
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      image_bucket_url: 'https://static.antweb.org'
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+
+    restart: unless-stopped
+    expose:
+      - 5000
+
+  antweb:
+    build:
+      context: .
+      dockerfile: docker/antweb/Dockerfile
+      args:
+        ENV: PROD
+    restart: unless-stopped
+    hostname: antweb
+    expose:
+      - 8009
+    environment:
+      CATALINA_OPTS: "-XX:MaxRAMPercentage=40 -server -XX:+UseParallelGC"
+    extra_hosts:
+      - "antweb.org:127.0.0.1"
+      - "www.antweb.org:127.0.0.1"
+
+    # Mount the s3fs bucket for serving files
+    volumes:
+      - ${ANTWEB_BUCKET_PATH:-/mnt/antweb}:/mnt/antweb
+      - ${ANTWEB_BACKUP_PATH:-/mnt/backup}:/mnt/backup
+      - ./logs:/usr/local/tomcat/logs
+      - ./logbak:/usr/local/antweb/log/
+      - antweb_genInc:/usr/local/antweb/web/genInc
+
+volumes:
+  antweb_genInc:
+  antweb_database:
+    external: true

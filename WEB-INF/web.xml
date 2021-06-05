@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
 <!DOCTYPE web-app
-  PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN"
-  "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
+        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+        "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
 
@@ -184,22 +184,23 @@
        <filter-class>org.apache.catalina.filters.ExpiresFilter</filter-class>
        <init-param>
           <param-name>ExpiresByType image</param-name>
-          <param-value>access plus 11 months</param-value>
+          <param-value>access plus 1 year</param-value>
        </init-param>
        <init-param>
           <param-name>ExpiresByType text/css</param-name>
-          <param-value>access plus 11 months</param-value>
+          <param-value>access plus 1 month</param-value>
        </init-param>
        <init-param>
           <param-name>ExpiresByType application/javascript</param-name>
-          <param-value>access plus 11 months</param-value>
+          <param-value>access plus 1 month</param-value>
        </init-param>
     </filter>
     <filter-mapping>
        <filter-name>ExpiresFilter</filter-name>
-       <url-pattern>/antweb_test/images/*</url-pattern>
-       <url-pattern>/antweb_test/images/*/*</url-pattern>
-       <url-pattern>/antweb_test/common/*</url-pattern>
+      <url-pattern>/image/*</url-pattern>
+      <url-pattern>/images/*</url-pattern>
+      <url-pattern>/common/*</url-pattern>
+      <url-pattern>/search/*</url-pattern>
        <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 

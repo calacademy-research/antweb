@@ -223,7 +223,7 @@ public class AntwebUpload {
                 c += rowCount;
 
                 if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
-            } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+            } catch (java.sql.SQLIntegrityConstraintViolationException e) {
                 s_log.warn("saveTaxon() 4 e:" + e + " query:" + query);
             } catch (SQLException e) {
                 s_log.error("saveTaxon() 5 e:" + e + " query:" + query);
@@ -580,7 +580,7 @@ public class AntwebUpload {
               A.log("saveTaxonAndProjTaxon() taxonName:" + taxonName);
             }
         } catch (SQLException e) {
-            if (e instanceof com.mysql.jdbc.MysqlDataTruncation) {
+            if (e instanceof java.sql.DataTruncation) {
                 AntwebUtil.logStackTrace(e);
             }
             s_log.error("saveTaxonAndProjTaxon() project:" + project + " e:" + e);
@@ -815,12 +815,12 @@ public class AntwebUpload {
             
         } catch (ClassCastException e) {
            AntwebUtil.logStackTrace(e);
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException e) {
+        } catch (java.sql.SQLSyntaxErrorException e) {
             s_log.error("saveSpecimen() dml:" + dml + " e:" + e);
             String message = "Specimen jdbc exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e; // + " query:" + query;
             A.log("saveSpecimen() " + message);
             getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             String message = "Specimen code:" + code;
             getMessageMgr().addToMessages(MessageMgr.duplicateEntries, "", message);       
         } catch (SQLException e) {
@@ -834,10 +834,10 @@ public class AntwebUpload {
 
             // if a different access_group attempts to load a code of another group's specimen...
 
-            if (e instanceof com.mysql.jdbc.MysqlDataTruncation) return;
+            if (e instanceof java.sql.DataTruncation) return;
             
             // or could we always add to the DBErrorSet and return?
-            if (!(e instanceof com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException)) {            
+            if (!(e instanceof java.sql.SQLIntegrityConstraintViolationException)) {
                 throw e;
             }
         } finally {

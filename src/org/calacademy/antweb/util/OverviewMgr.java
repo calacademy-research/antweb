@@ -74,7 +74,7 @@ public class OverviewMgr {
 
         //A.log("findOverview() sort:" + request.getParameter("sortBy") + " " + request.getParameter("sortOrder"));
 
-        boolean debug = true && AntwebProps.isDevMode();
+        boolean debug = false && AntwebProps.isDevMode();
         String hasParams = null;
         Overview overview = null;
         

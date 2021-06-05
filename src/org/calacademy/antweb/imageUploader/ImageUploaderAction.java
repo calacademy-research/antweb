@@ -77,9 +77,8 @@ public final class ImageUploaderAction extends Action {
 
                 UploadAction.setIsInUploadProcess(accessLogin.getName() + ":" + accessGroup.getName());
 
-                FileUtil.makeDir(ImageUploaded.tempDir);  
-                // data/antweb/web/temp/
-                // was: /var/www/html/imageUpload/toUpload
+                ImageUploaded.tempDir.toFile().mkdirs();
+                // /usr/local/antweb/temp/images/
 
                 ImageUploadDb imageUploadDb = new ImageUploadDb(connection);        
                 ImageDb imageDb = new ImageDb(connection);
@@ -87,7 +86,7 @@ public final class ImageUploaderAction extends Action {
    
                 DiskFileItemFactory factory = new DiskFileItemFactory();
                 //factory.setSizeThreshold(MAX_REQUEST_SIZE); // maximum size that will be stored in memory      
-                factory.setRepository(new File(ImageUploaded.tempDir)); // Location to save data that is larger than maxMemSize.
+                factory.setRepository(ImageUploaded.tempDir.toFile()); // Location to save data that is larger than maxMemSize.
   
                 ServletFileUpload upload = new ServletFileUpload(factory); // Create a new file upload handler                            
                 //upload.setSizeMax(MAX_REQUEST_SIZE); // maximum file size to be uploaded.
@@ -163,7 +162,7 @@ public final class ImageUploaderAction extends Action {
         }    
 	}	
 
-    private void writeRecentImages(java.sql.Connection connection) {
+    public void writeRecentImages(java.sql.Connection connection) {
         int maxRecent = 5;
         Utility util = new Utility();
         String docBase = util.getDocRoot();

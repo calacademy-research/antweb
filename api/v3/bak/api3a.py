@@ -39,7 +39,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = dbUrl
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 '''
-engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant')
+engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant')
 connection = engine.connect()
 result = connection.execute("select occurrenceId from darwin_core_2 limit 20")
 for row in result:

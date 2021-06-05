@@ -28,14 +28,23 @@ from sqlalchemy.orm import sessionmaker, relationship
 
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant')
+# was engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant')
+
+# CHANGED APR 2, 2021 - attempting to get working with new docker config
+#import MySQLdb as mysqldb
+#OLD_PROTOCOL = 'mysql+mysqldb://'
+#PROTOCOL = OLD_PROTOCOL
+
+NEW_PROTOCOL = 'mysql+pymysql://'
+PROTOCOL = NEW_PROTOCOL
+
+SQLALCHEMY_DATABASE_URI = PROTOCOL + 'antweb:f0rm1c6@127.0.0.1:3306/ant'
+engine = create_engine(SQLALCHEMY_DATABASE_URI)
 
 Base = declarative_base()
 
 Session = sessionmaker(bind=engine)
 session = Session()
-
-import MySQLdb as mysqldb
 
 from datetime import datetime, timedelta
 
@@ -49,7 +58,12 @@ application = Flask(__name__)
 api = Api(application)
 
 isDevMode = 0
- 
+
+#image_root_dir = "/mnt/antweb/images"
+# Now, in the /root/antweb/data/images directory on the server and
+# in the /Users/mark/volumes/antweb/data/images directory on mark's dev machine.
+image_root_dir = "../../data/images"
+
 # MySQL configurations  
 try:
     #apiDbConf = '/var/www/html/apiV3/api_db.conf'                                                                                                                                                                        
@@ -66,15 +80,16 @@ try:
     config.read(apiDbConf)
 
     #print(config.get('DB', 'user'))
-    dbUrl = 'mysql+mysqldb://' + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + ":" + config.get('DB', 'port') + '/' + config.get('DB', 'db') 
+    #dbUrl = OLD_PROTOCOL + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + ":" + config.get('DB', 'port') + '/' + config.get('DB', 'db')
+    dbUrl = PROTOCOL + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + ":" + config.get('DB', 'port') + '/' + config.get('DB', 'db')
 
-    isDevMode = 1 # This will not execute deployed on server. This is how we determined devMode.   
+    isDevMode = 1 # This will not execute deployed on server. This is how we determined devMode.
     if (isDevMode):
       print("isDevMode:" + str(isDevMode))
 
 except Exception as e :
-    print('Exception e: ' + str(e),' reading configuration file')
-    dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant'
+    print('Exception reading configuration file:', e)
+    dbUrl = SQLALCHEMY_DATABASE_URI
 
 #app = Flask(__name__)
 application.config['SQLALCHEMY_DATABASE_URI'] = dbUrl
@@ -101,7 +116,7 @@ def hello():
 
 def dirExists(code):
     #print(code)
-    dir = '/data/antweb/images/' + code
+    dir = image_root_dir + '/' + code
     #print(dir)
     isDir = os.path.isdir(dir)
     if (not isDir):
@@ -113,16 +128,16 @@ def dirExists(code):
 class Image(Base):
     __tablename__ = 'image'
 
-    uid = Column(String, primary_key=True)
+    id = Column(String, primary_key=True)
     shotType = Column('shot_type', String)
     code = Column('image_of_id', String)
-    uploadDate = Column('upload_date', String)
+    uploadDate = Column('upload_date', DateTime)
     shotNumber = Column('shot_number', String)
     hasTiff = Column('has_tiff', String)
 
     def __repr__(self):
        return "<Image(uid='%s', shotType='%s', code='%s', uploadDate='%s', shotNumber='%s', hasTiff='%s')>" % (
-         self.uid, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
+           self.id, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
 
 def findImage(code):
     query = session.query(Image)
@@ -135,8 +150,8 @@ def findImage(code):
         data = query.all()
     except UnicodeEncodeError as uniError:
         print("uniError:" + code)        
-    except Error as error:
-        print("images error:" + error.orig.message, error.params)
+    except Exception as e:
+        print("images error:", e, e.args)
     
     for image in data:
       return 1
@@ -172,8 +187,8 @@ def procImages():
 
     try:
         data = query.all()
-    except Error as error:
-        print("images error:" + error.orig.message, error.params)
+    except Exception as e:
+        print("images error:", e, e.args)
     
     lastCode = ""
     specimenCount = 0
@@ -202,7 +217,7 @@ def procImages():
 def findOrphanDirs():
     orphanImgs = ''
     orphanDirCount = 0
-    for dirname, dirnames, filenames in os.walk('/data/antweb/images'):
+    for dirname, dirnames, filenames in os.walk(image_root_dir):
         # print path to all subdirectories first.
         for subdirname in dirnames:        
             code = subdirname
@@ -223,7 +238,7 @@ def procSpaceFiles():
     spaceFileCount = 0
     lastDirName = ''
     #dirNameCount = 0
-    for dirName, dirNames, fileNames in os.walk('/data/antweb/images'):
+    for dirName, dirNames, fileNames in os.walk(image_root_dir):
 
         if (' ' in dirName):
             spacelessDirName = dirName.replace(" ", "")
@@ -257,7 +272,7 @@ def procSpaceFiles():
  
 def findIgnoredOrigFiles():
     print("Ignored originals with no derivatives created due to file naming conflict:")
-    rootDir = '/data/antweb/images'
+    rootDir = image_root_dir
     ignoredCount = 0
     for dirName, dirNames, fileNames in os.walk(rootDir):
       for fileName in fileNames:    
@@ -291,7 +306,7 @@ def ignoredTest(shotType, dirName, fileName):
 def findSmallImages():
     base = "http://www.antweb.org/images/"
     smallImageCount = 0
-    for dirName, dirNames, fileNames in os.walk('/data/antweb/images'):
+    for dirName, dirNames, fileNames in os.walk(image_root_dir):
         for fileName in fileNames:
             filePath = os.path.join(dirName, fileName)
             size = os.stat(filePath).st_size
@@ -310,7 +325,7 @@ def findSmallImages():
 def findLowerCaseTifs():
     base = "http://www.antweb.org/images/"
     count = 0
-    for dirName, dirNames, fileNames in os.walk('/data/antweb/images'):
+    for dirName, dirNames, fileNames in os.walk(image_root_dir):
         for fileName in fileNames:
             filePath = os.path.join(dirName, fileName)
             if ( \
@@ -330,7 +345,7 @@ def findLowerCaseTifs():
 def findLowerCaseOrigJpgs():
     base = "http://www.antweb.org/images/"
     count = 0
-    for dirName, dirNames, fileNames in os.walk('/data/antweb/images'):
+    for dirName, dirNames, fileNames in os.walk(image_root_dir):
         for fileName in fileNames:
             filePath = os.path.join(dirName, fileName)
             if ( \
@@ -358,7 +373,8 @@ def verifyImages():
     shotType='*'
     code='*'
     #code = 'casent0623849'
-    code = 'casent0005904';
+    # code = 'casent0005904'
+    code = 'antweb1008568'
     limit='*' #10
     offset=0
         
@@ -376,10 +392,10 @@ def verifyImages():
 
     try:
         data = query.all()
-    except OperationalError as error:        
-        message = "images operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message    
+#    except OperationalError as error:
+#        message = "images operational error:" + str(error) + " on request:" + str(request)
+#        print(message)
+#        return message
     except:
         message = "images error:" + str(request)
         print(message) # + error.orig.message, error.params
@@ -393,15 +409,15 @@ def verifyImages():
 
         c = verifyTif(image)
         c += verifyDerivatives(image)
-        
+        #print("verify:" + str(image))
         missingImageCount = missingImageCount + c
 
     print("verifyImages() imageCount:" + str(imageCount) + " missingImageCount:" + str(missingImageCount) + " code:" + image.code + " num:" + str(image.shotNumber))
 
 # Antweb imageCount:214710  Those without Tifs:70858
 def verifyTif(image):
-    missingImageCount = 0;
-    base = '/data/antweb/images/' + image.code + '/' 
+    missingImageCount = 0
+    base = image_root_dir + '/' + image.code + '/'
     shotName =  image.code + '_' 
     file1 = base + shotName.upper() + image.shotType.upper() + '.tif'
     
@@ -421,8 +437,8 @@ def verifyTif(image):
 
 # imageCount:214710 missingImageCount:44
 def verifyDerivatives(image):
-    missingImageCount = 0;
-    base = '/data/antweb/images/' + image.code + '/' + image.code + '_' + image.shotType + '_' + str(image.shotNumber);
+    missingImageCount = 0
+    base = image_root_dir + '/' + image.code + '/' + image.code + '_' + image.shotType + '_' + str(image.shotNumber)
     files = [base + '_low.jpg' \
       , base + '_med.jpg'
       , base + '_high.jpg'
@@ -433,6 +449,129 @@ def verifyDerivatives(image):
         missingImageCount += 1
         print("verifyDerivatives() missing file:" + fileName)
     return missingImageCount
+
+
+# ----------------------------------------------------------------------------------------
+
+def regenerateDerivatives():
+
+    since='*'
+    shotType='*'
+    code='*'
+    #code = 'casent0623849'
+    # code = 'casent0005904'
+    code = 'antweb1008568'
+    limit='*' #10
+    offset=0
+
+    query = session.query(Image)
+    if (since != '*'):
+      day_interval_before = datetime.now() - timedelta(days=int(since))
+      query = query.filter(Image.uploadDate >= day_interval_before)
+    if (shotType != '*'):
+      query = query.filter(Image.shotType == shotType)
+    if (code != '*'):
+      query = query.filter(Image.code == code)
+    if (limit != '*'):
+      query = query.limit(limit)
+    query = query.offset(offset)
+
+    try:
+        data = query.all()
+#    except OperationalError as error:
+#        message = "images operational error:" + str(error) + " on request:" + str(request)
+#        print(message)
+#        return message
+    except:
+        message = "images error:" + str(request)
+        print(message) # + error.orig.message, error.params
+        return
+
+    imageCount = 0
+    missingImageCount = 0;
+    for image in data:
+        imageCount += 1
+        c = 0
+
+        c += regenForImage(image)
+        #print("verify:" + str(image))
+        missingImageCount = missingImageCount + c
+
+        break
+
+    print("regenerateDerivatives() imageCount:" + str(imageCount) + " missingImageCount:" + str(missingImageCount) + " code:" + image.code + " num:" + str(image.shotNumber))
+
+def regenForImage(image):
+    count = 0
+    base = image_root_dir + '/' + image.code + '/' + image.code + '_' + image.shotType + '_' + str(image.shotNumber);
+    files = [base + '_low.jpg' \
+      , base + '_med.jpg'
+      , base + '_high.jpg'
+      , base + '_thumbview.jpg'
+    ]
+    for fileName in files:
+      i = 0
+      print("regenForImage() file:" + fileName)
+      #resizeImage(fileName, 1000, 800)
+      resizeImage('../../data/images/antweb1008568/','ANTWEB1008568_D_2.tif') # 'antweb1008568_p_3_low.jpg')
+      i = i + 1
+      if (i > 0):
+       break
+
+
+    return count
+
+# From example 14 here: https://www.programcreek.com/python/example/82689/wand.image.Image
+def resizeImage(path, width, height):
+    filename_without_extension, extension = os.path.splitext(path)
+
+    with Image(filename=path) as src:
+        img = src.clone()
+
+    current_aspect_ratio = img.width / img.height
+
+    if not width:
+        width = int(current_aspect_ratio * height)
+
+    if not height:
+        height = int(width / current_aspect_ratio)
+
+    desired_aspect_ratio = width / height
+
+    # Crop the image to fit the desired AR
+    if desired_aspect_ratio > current_aspect_ratio:
+        newheight = int(img.width / desired_aspect_ratio)
+        img.crop(
+            0,
+            int((img.height / 2) - (newheight / 2)),
+            width=img.width,
+            height=newheight,
+        )
+    else:
+        newwidth = int(img.height * desired_aspect_ratio)
+        img.crop(
+            int((img.width / 2) - (newwidth / 2)), 0, width=newwidth, height=img.height,
+        )
+
+    img.resize(width, height)
+
+    return img
+
+def resizeImage(path, fileName):
+  #!/usr/bin/env python
+  # encoding: utf-8
+  from wand.image import Image
+
+  pathFile = path + fileName
+
+  with Image(filename=pathFile) as img:
+    print ('format:' + img.format)
+    with img.convert('jpeg') as converted:
+        converted.save(filename=path + 'tOut.jpg')
+        converted.resize(72,72)
+        converted.save(filename='tOutputimage_thumbnail.jpg')
+
+
 
 # ----------------------------------------------------------------------------------------
   
@@ -445,10 +584,12 @@ if __name__ == "__main__":
 
     #findSmallImages()
 
-    findLowerCaseTifs()
-    findLowerCaseOrigJpgs()
+    #findLowerCaseTifs()
+    #findLowerCaseOrigJpgs()
    
     #verifyImages()
+
+    regenerateDerivatives()
 
     #findIgnoredOrigFiles()
     

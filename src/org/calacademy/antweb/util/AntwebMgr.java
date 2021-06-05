@@ -18,6 +18,7 @@ import org.apache.struts.action.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
+import org.calacademy.antweb.imageUploader.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.util.*;
@@ -221,8 +222,12 @@ public class AntwebMgr {
         return message;
     }
 
-    private static void callPostInitialize() {
+    public static void callPostInitialize() {
+
         String url = AntwebProps.getThisDomainApp() + "/util.do?action=postInstantiate";
+        //if (AntwebProps.isDevMode()) url = "https://localhost:8080/util.do?action=postInstantiate";
+
+        A.log("callPostInitialize() url:" + url);
         //s_log.warn("callPostInitialize() url:" + url);
         try {
             HttpUtil.hitUrl(url);
@@ -232,7 +237,7 @@ public class AntwebMgr {
     }
 
     //Invoked from UtilAction to, in a separate thread, populate the curators with adm1.
-    public static void postInitialize(Connection connection) throws SQLException {
+    public static void postInitialize(Connection connection) throws SQLException, IOException {
         Date start = new Date();
         s_log.warn("postInitialize() begin");
 
@@ -249,10 +254,23 @@ public class AntwebMgr {
 //        AntwebUtil.getUploadDirKinds();
         AntwebUtil.getUploadGroupList();
 
+        AntwebMgr.genRecentContent(connection); // Takes about a second. Mostly redundant but good for new installations.
+
         s_log.warn("postInitialize() end in " + AntwebUtil.reportTime(start));
     }
 
+    // Dynamically generated content. Useful for home page.
+    //   web/genInc/recentImages_gen_inc.jsp
+    //   web/genInc/recentDescEdits.jsp
+    public static void genRecentContent(Connection connection) throws SQLException, IOException {
+        Date startTime = new Date();
+        AntwebFunctions.genRecentDescEdits(connection);
 
+        (new ImageUploaderAction()).writeRecentImages(connection);
+
+        A.log("genRecentContent() secs:" + AntwebUtil.secsSince(startTime));
+        // (new StatisticsDb(connection)).populateStatistics();
+    }
 
     public static boolean isServerInitializing(String manager) {
         if (Check.MUSEUM.equals(manager) && isMuseumPopulated) return false;
@@ -391,7 +409,7 @@ public class AntwebMgr {
 
       try {
           if (!s_isPopulated) {
-            String page = AntwebProps.getInsecureDomainApp() + "/uptime.do";
+            String page = AntwebProps.getThisDomainApp() + "/uptime.do";
             s_log.warn("isPopulated() calling:" + page); 
             String results = HttpUtil.getUrl(page);
           }

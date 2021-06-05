@@ -4,7 +4,6 @@ import java.util.*;
 import java.io.*;
 import java.util.HashMap;
 
-import com.zonageek.jpeg.*;
 import com.zonageek.jpeg.ExifBlock;
 import com.zonageek.jpeg.Jpeg;
 import com.zonageek.jpeg.JpegException;
@@ -22,7 +21,7 @@ public class SpecimenImage implements Serializable {
     public static String DRACULA = "/images/casent0435930/casent0435930_h_1_med.jpg";
     public static String TEXTURED = "/images/casent0171158/casent0171158_h_1_med.jpg";
      
-    private static String image_root = "/images";
+    private static final String image_root = "/images";
     protected String code;
     protected String shot;
     protected int number;
@@ -115,13 +114,14 @@ public class SpecimenImage implements Serializable {
         this.number = number;
     }
 
-    public String getThumbPath() { return getThumbview(); }
-    public String getLowPath() { return getLowres(); }
-    public String getMedPath() { return getMedres(); }
-    public String getHighPath() { return getHighres(); }
-	public String getTiffPath() {
+    public String getThumbPath() { return AntwebProps.getDocRoot() + getThumbview(); }
+    public String getLowPath() { return AntwebProps.getDocRoot() + getLowres(); }
+    public String getMedPath() { return AntwebProps.getDocRoot() + getMedres(); }
+    public String getHighPath() { return AntwebProps.getDocRoot() + getHighres(); }
+
+	private String getTiffUrl() {
         String path = null;
-        
+
         String withNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + "_" + number + ".tif";
         String withoutNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + ".tif";
 
@@ -146,9 +146,9 @@ public class SpecimenImage implements Serializable {
         if (!found) {
           String testPath = getHighResJpgPath();
           //A.log("getTiffPath() test:" + testPath);
-          if (AntwebUtil.fileFound(docRoot + testPath)) {   // REMOVE this check for performance
+          if (AntwebUtil.fileFound(testPath)) {   // REMOVE this check for performance
             path = testPath;
-            LogMgr.appendLog("OJNotOT.txt", docRoot + testPath);
+            LogMgr.appendLog("OJNotOT.txt", testPath);
             //ImageUtil.getNotTifList().add(this);
             // Update the is_tif flag in the images table. This is an error condition.
             // Resolve the root cause existing in existing codebase.
@@ -160,53 +160,53 @@ public class SpecimenImage implements Serializable {
         return path;
 	}
 
-	public String getHighResJpgPath() {
+	private String getHighResJpgUrl() {
         String withNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + "_" + number + ".jpg";
         String withoutNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + ".jpg";
 
         if (number > 1) {
-          return withNum;        
+          return withNum;
         } else {
-    	  String docRoot = (new Utility()).getDocRoot();
-          if (AntwebUtil.fileFound(docRoot + withNum)) {
-            return withNum;
-          }	else {
-            return withoutNum;
-          }
-        }    	
-	}
+            String docRoot = (new Utility()).getDocRoot();
+            if (AntwebUtil.fileFound(docRoot + withNum)) {
+                return withNum;
+            } else {
+                return withoutNum;
+            }
+        }
+    }
 
-	public String getOrigPath() {
-	  if (getHasTiff()) {
-	    return getTiffPath();
-	  } else {
-	    return getHighResJpgPath();
-	  }
-	}
+    private String getOrigPath() {
+        if (getHasTiff()) {
+            return getTiffPath();
+        } else {
+            return getHighResJpgPath();
+        }
+    }
 
-	public boolean isHasTiff() {
-		return hasTiff;
-	}
+    public boolean isHasTiff() {
+        return hasTiff;
+    }
 	public boolean getHasTiff() {
 	  return isHasTiff();
     }
 	public void setHasTiff(boolean hasTiff) {
 		this.hasTiff = hasTiff;
 	}
-    
+
     public String getOrigUrl() {
       if (isHasTiff()) {
         return getTiffUrl();
       } else {
-        return getHighResJpgUrl();      
-      }       
+          return getHighResJpgUrl();
+      }
     }
 
-    public String getTiffUrl() {
-      return getTiffPath(); //AntwebProps.getDocRoot() +
+    private String getTiffPath() {
+      return AntwebProps.getDocRoot() + getTiffUrl();
     }
-    public String getHighResJpgUrl() {
-      return getHighResJpgPath();
+    private String getHighResJpgPath() {
+      return AntwebProps.getDocRoot() + getHighResJpgUrl();
     }
 
     public ArrayList<String> getOrigAndDerivPaths() {
@@ -310,10 +310,13 @@ public class SpecimenImage implements Serializable {
     }
     
     public String getOrigFileData() {
+      String origFileData = null;
       try {
-        return FileUtil.getFileAttributesHtml(getOrigPath());
+          A.log("origFilePath:" + getOrigPath() + " origFileData:" + origFileData);
+          origFileData = FileUtil.getFileAttributesHtml(getOrigPath());
+          return origFileData;
       } catch (Exception e) { // java.nio.file.NoSuchFileException is not explicitly thrown
-        s_log.warn("getOrigFileData() fileNotFound:" + getOrigPath());
+          s_log.warn("getOrigFileData() fileNotFound:" + getOrigPath());
       }
       return null;
     }
@@ -329,24 +332,23 @@ public class SpecimenImage implements Serializable {
     public String getThumbData() {
       //A.log("getThumbData() file:" + AntwebProps.getDocRoot() + getThumbview());
       return FileUtil.getLastModified(AntwebProps.getDocRoot() + getThumbview());    
-    }    	
-    	
+    }
 	public String getShotText() {
 		String result = "";
 		String shot = getShot();
         if (shot == null) {
-          return result;
-		} else if (shot.indexOf("h") != -1) {
-			result = "head";
-		} else if (shot.indexOf("p") != -1) {
-			result = "profile";
-		} else if (shot.indexOf("l") != -1) {
-			result = "label";
-		} else if (shot.indexOf("d") != -1) {
-			result = "dorsal";
-		} else if (shot.indexOf("v") != -1) {
-			result = "ventral";
-		}
+            return result;
+        } else if (shot.contains("h")) {
+            result = "head";
+        } else if (shot.contains("p")) {
+            result = "profile";
+        } else if (shot.contains("l")) {
+            result = "label";
+        } else if (shot.contains("d")) {
+            result = "dorsal";
+        } else if (shot.contains("v")) {
+            result = "ventral";
+        }
 		return result;
 	}	
 	

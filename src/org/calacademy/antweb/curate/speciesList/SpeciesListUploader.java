@@ -28,7 +28,6 @@ public class SpeciesListUploader {
   // New production link.
   //public static String fetchWorldantsUrl = "http://10.2.22.28:9090/antcat.antweb.txt";
   public static String fetchWorldantsUrl = "http://antcat-export:9090/antcat.antweb.txt";
-
   // See below to set a dev link.
    
 /*
@@ -46,12 +45,10 @@ public class SpeciesListUploader {
     // For testing... cp /Users/mark/Downloads/antcatTest.txt /usr/local/tomcat/webapps/antweb/test.antcat.txt    
     if (false && AntwebProps.isDevMode()) {
       //fetchWorldantsUrl = "http://localhost/antweb/test.antcat.txt";  
-      fetchWorldantsUrl = "http://localhost/antweb/web/upload/test_worldants_speciesList.txt";  
-
+      fetchWorldantsUrl = "http://localhost/antweb/web/upload/test_worldants_speciesList.txt";
     }
   }
 
-/* */
   public UploadDetails worldantsFetchAndReload() throws IOException {
   
     UploadDetails fetchDetails = fetchWorldantsList();

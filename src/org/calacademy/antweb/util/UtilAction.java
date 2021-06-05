@@ -286,7 +286,10 @@ public class UtilAction extends Action {
 
         } catch (SQLException e) {
             s_log.error("execute() action:" + action + " e:" + e);
-            AntwebUtil.errorStackTrace(e);         
+            AntwebUtil.errorStackTrace(e);
+		} catch (IOException e) {
+			s_log.error("execute() action:" + action + " e:" + e);
+			AntwebUtil.errorStackTrace(e);
         } finally {
             DBUtil.close(connection, this, "UploadAction.execute() 1");
         }

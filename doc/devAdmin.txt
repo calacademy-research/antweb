@@ -1,0 +1,185 @@
+# devAdmin.txt
+#   To document the daily tasks involved with managing the antweb environments.
+
+
+--- Compilation ---
+
+# To bring up docker
+docker-compose up
+
+docker-compose up --build
+  # This will also do an ant build
+
+# To compile
+docker-compose exec antweb ant deploy
+
+# To restart tomcat (without rebuilding docker)
+docker-compose restart antweb
+
+docker-compose up --build antweb
+
+docker-compose up --build -d
+
+--- Database Stuff ---
+
+#To get into mysql:
+docker-compose exec mysql mysql -u antweb -p ant
+
+cd /Users/mark/bak/db
+  // move the ant-current to a date stamped backup file
+
+# To get the current database dump from the production server.
+scp root@antweb.org:/root/ant-currentDump.sql.gz .
+  # /root/ant-currentDump.sql.gz -> /mnt/antweb/backup/db/ant-currentDump.sql.gz 
+
+# To load the database locally
+mysqldump -u antweb -p --all-databases --routines --single-transaction --quick | gzip > ant-currentDump.sql.gz
+  #docker-compose exec mysql .... ?
+
+# To speed up (optimize). To be run after database load
+docker-compose exec mysql sh -c "exec mysqlcheck --all-databases --optimize -u antweb -p"
+
+
+
+--- Deployment
+-New
+
+cd /root/antweb
+git pull
+source .env
+docker-compose up -d --build
+
+-Old
+git pull
+docker-compose build    # To see how it goes   ! Long and slow. Failured to build?
+docker-compose up -d    # To put changes into effect
+tail -f logs/antweb.log 
+
+--- Server Stuff ---
+
+# log in as root
+ssh root@antweb.org
+
+# To see log Antweb.log
+cd /root/antweb
+tail --lines 1000 logs/antweb.log
+
+Location of antweb web accessible data: 
+  /mnt/antweb/images/
+  /mnt/antweb/web/
+
+From inside the docker (using: 	)
+  ls /data/antweb/
+  
+  
+--- Administration ---
+
+# To create a shell in the antweb docker
+docker-compose exec antweb bash
+
+
+--- tomcat configuration ---
+cd /Users/mark/antweb/docker/antweb/tomcat/conf
+
+
+--- Installation notes ---
+[install GitKraken, IntelliJ]
+As described in README.txt
+mkdir $HOME/volumes/
+git clone git@github.com:calacademy-research/antweb.git
+Open repository in GitKraken. 
+  Pull appropriate branch.
+ln -sf docker-compose.dev.yml docker-compose.override.yml
+Copy over /data directory to antweb/ 
+  Using rclone in README.txt or some other means. Copy from another installation?
+[in antweb directory] Create the .env file.
+  export ANTWEB_BUCKET_PATH=$(pwd)/data
+  echo ANTWEB_BUCKET_PATH=$(printenv ANTWEB_BUCKET_PATH) >> .env  
+  export ANTWEB_BACKUP_PATH=$HOME/volumes/antweb_backup 
+  echo ANTWEB_BACKUP_PATH=$(printenv ANTWEB_BACKUP_PATH) >> .env
+* On Mac... Docker - Preferences - Resources - set the Memory to at least 3GB. Maybe 8MB?
+  Too low will cause failure of specimen upload as well as: 
+    https://localhost/query.do?action=curiousQuery&name=lastSpecimenUpload
+
+---Loading local Database
+
+# Fetch and unzip the current database dump from the server. Delete it when finished.
+
+scp root@antweb.org:/root/ant-currentDump.sql.gz .
+gunzip ant-currentDump.sql.gz
+
+# Stop mysql before loading database
+docker-compose stop mysql
+
+*Process Check and Kill as needed
+# If a mysql process is lost (the CID=$(docker run...) it can interfere with the process.
+# InnoDB: Check that you do not already have another mysqld process using the same InnoDB data or log files
+docker ps -a
+  CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS          PORTS                 NAMES
+  3a3e63a03e3f   mysql:5   "docker-entrypoint.s…"   54 minutes ago   Up 54 minutes   3306/tcp, 33060/tcp   wonderful_galileo
+
+# Look for the processes that do not look like "antweb_*". Can kill with abbreviated ID.
+docker stop 3a   
+
+docker compose down
+
+# Remove and create database
+docker volume remove antweb_database
+docker volume create antweb_database
+
+CID=$(docker run -d --rm \
+	-e MYSQL_ALLOW_EMPTY_PASSWORD=1 \
+	-e MYSQL_DATABASE=ant \
+	--mount source=antweb_database,target=/var/lib/mysql \
+	 mysql:5)   
+
+docker exec -i $CID sh -c "exec mysql -uroot ant" < ant-currentDump.sql  
+ 
+# NOPE. Use the above, not this one: docker exec -it $CID mysql -u root 
+
+-Repeaat the "*Process Check and Kill as needed" above.
+    
+docker logs -f $CID
+
+docker-compose up -d    (d for daemon [or detached])
+docker-compose up --build   (--build to build dockers from scratch)
+
+
+
+--- Necesssary in dev environment?
+
+mkdir /mnt/antweb/web/upload
+mkdir /mnt/antweb/web/log/
+mkdir /mnt/antweb/web/log/worldants
+mkdir /mnt/antweb/web/log/specimen
+
+
+--- Assorted.
+
+To reference Antweb container specific addresses:
+# On server:
+  ln -s /mnt/antweb /usr/local/antweb
+# On dev machine, something like:
+  sudo ln -s /Users/mark/volumes/antweb/data/ /usr/local/antweb
+
+--- Locations
+Antweb directories
+  on server: /root/antweb
+  on client: /Users/mark/volumes/antweb
+  
+To see logs:
+  docker-compose exec antweb bash
+  ls /usr/local/antweb/web/log/
+    accessLog.txt  adminTask.log  compute.log  dateDetermined.log  deletedImageLog.txt  detail  getUrl.txt	imageNotFound.txt  logins.txt  messages.txt  notFound.txt  profiler.jsp  searches.txt  specimen  srfExceptions.jsp  taxonSet.log  taxonSetBackup.log  worldants
+
+These are here:
+  ls antweb/logs/detail    antwebEvent.log  googleEarth.log  search.log
+
+  Only these are here: ls /mnt/antweb/web/log    specimen  worldants
+
+
+
+
+
+
+

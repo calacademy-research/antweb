@@ -85,8 +85,8 @@ public final class EditGeolocaleAction extends Action {
 			A.log("execute() name:" + name + " isPost:" + HttpUtil.isPost(request));
 			if (editGeolocaleForm.getIsCreate()) {
 			  if (editGeolocaleForm.getSource() == null) editGeolocaleForm.setSource("geolocaleMgr");
-			  boolean success = geolocaleDb.createGeolocale(editGeolocaleForm);
-			  if (success) {
+			  String createMessage = geolocaleDb.createGeolocale(editGeolocaleForm);
+			  if ("success".equals(createMessage)) {
 				Geolocale createGeolocale = null;
 				if (!"adm1".equals(georank)) {
 				  createGeolocale = geolocaleDb.getGeolocale(name, georank);
@@ -103,7 +103,7 @@ public final class EditGeolocaleAction extends Action {
 				}
 			  } else {
 				  forwardToMessage = true;
-				  message = "Failed to created:" + name;                  
+				  message = "Failed to create:" + name + ". " + createMessage;
 			  }
 			} else { // if not create
 	   	      A.log("execute() form:" + editGeolocaleForm);

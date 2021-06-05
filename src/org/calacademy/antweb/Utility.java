@@ -455,6 +455,7 @@ public class Utility implements Serializable {
     }
 
     public static boolean makeDirTree(String dirTree) {
+       boolean debug = false;
       boolean isSuccess = true;
       String[] splitDirTree = dirTree.split("/");
       //s_log.warn("splitDirTree:" + splitDirTree + " 1:" + splitDirTree[0] + " 2:" + splitDirTree[2]);
@@ -478,16 +479,21 @@ public class Utility implements Serializable {
           try {
             isSuccess = (dirFile).mkdir();
             if (isSuccess) {
-                s_log.info("makeDirTree() Success creating dir:" + thisDir);   
+                if (debug) A.log("makeDirTree() Success creating dir:" + thisDir);
             } else {
-                s_log.info("makeDirTree() Failure creating dir:" + thisDir);
+                //if (debug)
+                s_log.warn("makeDirTree() Failure creating dir:" + thisDir);
             }
           } catch (Exception e1) {
              s_log.error("makeDirTree() Exception dir:" + thisDir + " e:" + e1);
              isSuccess = false;
           }
+        } else {
+            if (debug) {
+                A.log("makeDirTree() already exists:" + thisDir);
+            }
         }
-      }     
+      }
       return isSuccess;
     }
     

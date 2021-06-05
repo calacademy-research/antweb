@@ -183,11 +183,6 @@ these values are not retrieved correctly from the database (?) to be translated.
 <li><a href="https://www.antweb.org/browse.do?subfamily=myrmicinae&genus=tetramorium&name=pacificum&rank=species&project=mauritiusants">Antweb</a> Does not work!  Did before.  Now it does again.  Confusion.
 </ul>
 
-<h2>Antblog</h2>
-<ul>
-<li><a href="http://www.antweb.org/cgi-bin/mt/mt.cgi">Admin</a>
-</ul>
-
 <h2>Special Characters</h2>
 <ul>
 <li>Locality (Jack's): <a href="<%= AntwebProps.getDomainApp() %>/specimen.do?name=CASENT0606226">Machaquilá</a>

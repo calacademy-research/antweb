@@ -142,9 +142,18 @@ public class LoginMgr extends Manager {
 	    return LoginMgr.isMark(getAccessLogin(request));
 	}
 	public static boolean isMark(Login accessLogin) {
-	  if ((accessLogin != null) && (accessLogin.getId() == 22)) return true;
-	  return false;
-	}	
+        if ((accessLogin != null) && (accessLogin.getId() == 22)) return true;
+        return false;
+    }
+
+    public static boolean isPeter(HttpServletRequest request) {
+        return LoginMgr.isPeter(getAccessLogin(request));
+    }
+    public static boolean isPeter(Login accessLogin) {
+        if ((accessLogin != null) && (accessLogin.getId() == 36)) return true;
+        return false;
+    }
+
     public static boolean isMichele(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
 	    return isMichele(accessLogin);

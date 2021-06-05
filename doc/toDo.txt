@@ -1,7 +1,68 @@
 To Do List:
 
-  
+
+Remove leading slash of image_root in SpecimenImage.java
+In Admin info, missing orig File data.
+  For example https://antweb.org/bigPicture.do?name=antweb1008568&shot=h&number=2
+  in info log: getFileAttributesHtml() e:java.nio.file.NoSuchFileException: /images/antweb1008568/ANTWEB1008568_H_2.tif
+  The path should be /usr/local/antweb/images instead of images. Or would /data/antweb/images be better?
+  See Dash's email from Mar 13, 2021. "Another minor bug".
+
+Look into these: Removable?
+  Run Materialize Images
+  Update Advanced Search
+  Update Specimen Status
+
+look into /data/antweb/web/genInc
+  species_gen_inc
+  genus_gen_inc
+  sufamily_gen_inc
+
+Steps to deploy and run
+  from /antweb
+  git pull   
+  source .env
+  docker-compose up --build    # build from docker files. This will run "ant deploy".
+
+Other docker commands
+  docker-compose up antweb --build    # To only bring up antweb (not httpd, api, mysql).
+  docker-compose up -d    # without output
+  docker-compose down
+
+docker-compose exec antweb bash
+docker-compose exec ant deploy
+
+mark@antweb-staging:/antweb/docker/antweb$ tree
+.
+├── crontab.txt
+├── Dockerfile
+├── Dockerfile.dockerignore
+├── platform.properties
+├── startup.sh
+└── tomcat
+    ├── conf
+    │   ├── catalina.properties
+    │   ├── context.xml
+    │   ├── server.xml
+    │   ├── tomcat-users.xml
+    │   └── web.xml
+    └── webapps
+        ├── host-manager
+        │   └── context.xml
+        └── manager
+            └── context.xml
+
+Try ito get running in dev.
+
+
+
+
 Small things/immediate frame  
+
+  removed the old worldants upload files older than 2021 from that directory. 
+    Need to automate a solution - or have to delete files in /data/antweb/web/upload every year or so...
+
+
   During specimen upload, if a locality code contains "&", do something different.
 
   Remove Antblog

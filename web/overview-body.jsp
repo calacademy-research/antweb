@@ -283,9 +283,13 @@ Images:
       if (overview instanceof Museum) { %>
         <br><br><h2>Curator Info</h2>
         Museum counts are computed daily and may not reflect most recent specimen uploads.
- <%   }
-    }
 
+	 <% if (LoginMgr.isPeter(request)) { %>
+          <br><b><%= overview.getRecalcLink() %></b> (Includes count crawl. Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
+     <% }
+
+      }
+    }
 
 	if (LoginMgr.isAdmin(accessLogin)) { %>
 	<br><br>
@@ -315,12 +319,13 @@ Images:
 		 out.println("<br>&nbsp;&nbsp;&nbsp;&nbsp;<b>Use</b>: " + geolocale.useBoundingBox());
 		 //out.println("<br><b>Admin Notes</b>: " + geolocale.getAdminNotes());
 	   }
+
 	   if (LoginMgr.isAdmin(request)) { %>
          <br><b><%= overview.getRecalcLink() %></b> (Includes count crawl. Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
          <% if ("geolocale".equals(overviewType)) { %>
          <br><b><%= overview.getGoogleMapFunctionLink() %></b><%= overview.getGoogleMapFunctionLinkDesc() %>
          <% } %>
-         <br><b><a href='<%= AntwebProps.getDomainApp() %>/util.do?action=reloadAntwebMgr&name=<%= overviewType %>'>Reload Overview Manager</a></b> (Server-wide. Should not be needed. Takes ~8 seconds.)
+         <br><b><a href='<%= AntwebProps.getDomainApp() %>/util.do?action=reloadAntwebMgr&name=<%= overviewType %>'>Reload Overview Manager</a></b> (Server-wide. Should not be needed. Takes up to 8 seconds.)
 	     <br>
 	<% }
     }

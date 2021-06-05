@@ -79,6 +79,8 @@ public final class TaxaPageAction extends Action {
 
         TaxaPage taxaPage = new TaxaPage();
         taxaPage.setRequest(request);
+        taxaPage.setBrowserParams(rank, overview);
+
         if (rank != null) {
           java.sql.Connection connection = null;
           String connName = "TaxaPageAction.execute()" + AntwebUtil.getRandomNumber();

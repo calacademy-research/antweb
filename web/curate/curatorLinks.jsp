@@ -91,8 +91,9 @@
 	  <li><a href="<%= domainApp %>/cache.do?action=display">Cache Manager</a>
 	  <li>Process (automated)</li>
       <ul align=left>
-  	    <li><a href="<%= domainApp %>/upload.do?action=genRecentDescEdits">Generate</a> Recent Desc Edits 
-	    <li><a href="<%= domainApp %>/imageUploader.do?action=regenerate">Generate</a> Recent Images
+  	    <li><a href="<%= domainApp %>/utilData.do?action=genRecentContent">Generate</a> Recent Content
+    	    <!-- li><a href="< %= domainApp % >/upload.do?action=genRecentDescEdits">Generate</a> Recent Desc Edits -->
+    	    <!-- li><a href="< %= domainApp % >/imageUploader.do?action=regenerate">Generate</a> Recent Images -->
 	    <li><a href="<%= domainApp %>/upload.do?action=runStatistics">Generate</a> Statistics
 	    <li><a href="<%= domainApp %>/upload.do?action=materializeImages">Run</a> Materialize Images
 	    <li><a href="<%= domainApp %>/upload.do?action=updateAdvancedSearch">Update</a> Advanced Search
@@ -199,7 +200,9 @@
       </ul>
 <%   } %> 
 
-<%   if (AntwebProps.isDevOrStageMode()) { %>
+<%
+   if (false) {
+     if (AntwebProps.isDevOrStageMode()) { %>
       <h3 align=left>Retired</h3>
       <ul align=left>
 	  <li><a href="<%= domainApp %>/utilData.do?action=updateFormicidaeProjects"> Update </a>Formicidae Project
@@ -232,7 +235,9 @@
       <li><a href="<%= domainApp %>/schedule.do?action=run"> New Scheduler functionalty</a></li>
       <li><a href="<%= domainApp %>/utilData.do?action=regenerateAllAntweb"> Regenerate All Antweb</a></li>
       </ul>
-<%   } %> 
+<%   }
+   }
+%>
     </ul>
 
 <% } %>    

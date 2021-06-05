@@ -274,6 +274,16 @@ public final class SearchParameters extends AdvancedSearchForm {
         this.toDate = toDate;
     }
 
+    public String toStringShort() {
+        return "types = " + types
+                + ", images=" + imagesOnly
+                + ", project=" + project
+                + ", geolocaleId=" + geolocaleId
+                + ", name=" + name
+                + ", searchType=" + searchType
+                + ", daysAgo=" + daysAgo;
+    }
+
     public String toString() {
         return
         "types = "+ types

@@ -136,7 +136,7 @@ public class MuseumDb extends AntwebDb {
           //A.log("updateMuseum() dml:" + dml);
           int c = stmt.executeUpdate(dml);
           message = c + " record inserted.";
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
           // no problem
           message = updateMuseum(museum);
         } catch (SQLException e) {
@@ -509,7 +509,7 @@ public class MuseumDb extends AntwebDb {
 
           int c = stmt.executeUpdate(dml);
 
-          //A.log("populateSpecimenMuseum() updated:" + c + " dml:" + dml);
+          if ("AFRC".equals(museumCode)) A.log("populateSpecimenMuseum() updated:" + c + " dml:" + dml);
           
       } catch (SQLException e) {
         s_log.error("MuseumDb.populateSpecimenMuseum() e:" + e);
@@ -672,7 +672,7 @@ public class MuseumDb extends AntwebDb {
               + " ) values ('" + code + "', '" + taxonName + "','" + insertMethod + "')";
             //A.log("insertProjTaxon() dml:" + dml);
             stmt.executeUpdate(dml);
-        } catch (com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException e) {
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             return false;
         } catch (SQLException e) {
             s_log.error("insertTaxon() e:" + e + " dml:" + dml);

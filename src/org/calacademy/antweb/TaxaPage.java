@@ -77,8 +77,8 @@ public class TaxaPage implements Serializable {
             // https://www.antweb.org/taxonomicPage.do?rank=species&images=true&countryName=Russia&adm1Name=Volgograd2121121121212.1
             return "Query not allowed.";
 	    } else {
-			A.log("fetchChildren() overview:" + overview + " overview class:" + overview.getClass()+ "withImages:" + withImages + " withTaxa:" + withTaxa
-					+ " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet);
+			//A.log("fetchChildren() overview:" + overview + " overview class:" + overview.getClass()+ "withImages:" + withImages + " withTaxa:" + withTaxa
+			//		+ " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet);
 		}
 	
         long now = new java.util.Date().getTime();
@@ -273,7 +273,6 @@ public class TaxaPage implements Serializable {
 	public ArrayList<Taxon> getChildren() {
 		return children;
 	}
-
 
 	public String getBrowserParams() {
 		return browserParams;

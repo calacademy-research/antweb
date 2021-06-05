@@ -473,10 +473,10 @@ sudo  ln -s /data/antweb /usr/local/tomcat/webapps/antweb/
 
 # To support log files in the web dir (/data/antweb/web/log) as well as in /data/log)
 sudo  ln -s /data /usr/local/data
-mkdir /data/log
 #On a local dev machine...
 sudo  mkdir /usr/local/data
 
+The for both: sudo mkdir /usr/local/data/log
 
 edit 	 to disable session persistence.
   Add into the context section:

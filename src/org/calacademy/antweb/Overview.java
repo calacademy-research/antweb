@@ -229,7 +229,7 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
         overviewCriteria = " and specimen.bioregion = '" + getName() + "'";
       }
       
-      A.log("getOverviewCritieria() this:" + this.getClass() + " criteria:" + overviewCriteria);
+      //A.log("getOverviewCritieria() this:" + this.getClass() + " criteria:" + overviewCriteria);
       return overviewCriteria;
     }
 
