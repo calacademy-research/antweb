@@ -96,6 +96,19 @@ possible moment - ideally in jsp footer.
     public static int getRequestCount() {
       return trackerMap.size();
     }
+    
+    public static String showRequests() {
+        String message = "";
+
+        Collection<Tracker> trackers = trackerMap.values();
+        ArrayList<Tracker> trackerList = new ArrayList<>(trackers);
+        Collections.sort(trackerList);
+
+        for (Tracker tracker : trackerList) {
+            message += tracker.toString() + "\r\n";
+        }
+        return message;
+    }
 }
 
 

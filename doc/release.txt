@@ -1,3 +1,7 @@
+Release 8.58
+  Sort the Page Tracker.
+  Create a Page Tracker action.
+
 Release 8.57
   Add condition for file not found to showLog.do.
   Add more data to the searches log.

@@ -358,10 +358,6 @@
     <action
       path="/testMobile" 
       forward="/common/mobile.jsp"/>       
-                                        
-    <action
-      path="/pageTracker"
-      forward="/util/pageTracker.jsp"/>
 
     <action path="/worldants" forward="/worldants.jsp"/>
     <action path="/geneva" forward="/geneva.jsp"/>
@@ -384,6 +380,10 @@ if we set getChildImages here, then we do know to add the field guide, but the i
                parameter="getChildImages"
  -->
 
+    <action  path="/pageTracker"
+             type="org.calacademy.antweb.util.PageTrackerAction">
+      <forward name="success" path="/util/pageTracker.jsp"/>
+    </action>
 
     <action  path="/mobile"
              type="org.calacademy.antweb.TestAction">

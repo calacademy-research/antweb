@@ -6,8 +6,15 @@ import java.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class Tracker {
-    private static final Log s_log = LogFactory.getLog(Tracker.class);
+public class Tracker implements Comparable<Tracker> {
+  private static final Log s_log = LogFactory.getLog(Tracker.class);
+
+  public int compareTo(Tracker other) {
+    if (getMillis() > other.getMillis()) return 1;
+    if (getMillis() == other.getMillis()) return 0;
+    if (getMillis() < other.getMillis()) return -1;
+    return 0;
+  }
 
   String target;  
   public void setTarget(String target) {
@@ -44,7 +51,12 @@ public class Tracker {
   public String getKey() {
     return getTarget() + " " + getCode(); //getRequestString();
   }
-  
+
+  public long getMillis() {
+    long millis = AntwebUtil.millisSince(startTime);
+    return millis;
+  }
+
   public String getSinceStartTime() {
       String execTime = "";
       long millis = AntwebUtil.millisSince(startTime);
@@ -54,6 +66,10 @@ public class Tracker {
         execTime = millis + " millis";      
       }
       return execTime;
-  }  
+  }
+  
+  public String toString() {
+    return getTarget() + " runtTime:" + getSinceStartTime();
+  }
   
 }

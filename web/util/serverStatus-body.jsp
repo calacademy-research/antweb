@@ -142,20 +142,23 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 
 <br><br><br>
 <h3>Form Actions</h3>
-<br><br>
 <html:form action="<%= domainApp %>/serverStatus">
-
-       <br><br>
        <input type="submit" name="methodHabitat" value="methodHabitat"/>
 <br>
        <input type="submit" name="name" value="holdOpenConnection"/>
        
        <!-- input type="submit" name="ugServerRestart" value="ugServerRestart" / -->
 
-       
-
        <br><br>
 </html:form>
+
+<br>
+<h3>Page Tracker</h3>
+<pre>
+<%= PageTracker.showRequests() %>
+</pre>
+
+
 <hr>
 </div>
 
