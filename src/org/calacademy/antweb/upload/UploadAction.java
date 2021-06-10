@@ -100,6 +100,13 @@ public class UploadAction extends Action {
             return mapping.findForward("goToLogin");
         }
 
+		if (UploadAction.isInUploadProcess()) {
+			String message = "Server is currently in an Upload Process. Please try again in a little while.";
+			if (LoginMgr.isAdmin(request)) message += " " + getIsInUploadProcess();
+			request.setAttribute("message", message);
+			return (mapping.findForward("message"));
+		}
+
         String root = session.getServletContext().getRealPath("") + "/";
         java.sql.Connection connection = null;
         String query;

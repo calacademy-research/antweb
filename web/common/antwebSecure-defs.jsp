@@ -2,7 +2,7 @@
 
 <%@ page import="org.calacademy.antweb.util.*" %>
 
-<% AntwebUtil.devSleep(4); %>
+<% //AntwebUtil.devSleep(4); %>
 
 <tiles:definition
 	id="antweb.default"

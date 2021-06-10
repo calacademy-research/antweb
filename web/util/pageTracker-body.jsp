@@ -13,8 +13,6 @@
 
 <%@include file="/curate/adminCheck.jsp" %>
 
-
-<!-- jsp:useBean id="antwebGroups" scope="session" class="java.util.ArrayList<Group>" / -->
 <%
   ArrayList<Group> antwebGroups = (ArrayList) session.getAttribute("antwebGroups");
 %>
@@ -22,6 +20,25 @@
 <div class=left>
 <h1>Page Tracker</h1>
 
-<%@ include file="/util/pageTracker.jsp" %>
+<br>Request Details:
+<%
+Tracker thisTracker = PageTracker.getTracker(request);
+if (thisTracker != null) { %>
+<br>&nbsp;&nbsp;Target:<%= thisTracker.getTarget() %>
+<br>&nbsp;&nbsp;Response time:<%= thisTracker.getSinceStartTime() %>
+<% } else { %>
+<br>&nbsp;&nbsp;Tracker not found
+<% }%>
 
-</div > 
+
+<br><br>Server Details:
+<br>&nbsp;&nbsp;Server Busy Connection Count:<%= DBUtil.getServerBusyConnectionCount() %>
+
+<br>&nbsp;&nbsp;Request Count:<%= PageTracker.getRequestCount() %>
+
+<br>&nbsp;&nbsp;Target list:
+<%
+    for (Tracker tracker : PageTracker.getTrackers()) { %>
+      <br>&nbsp;&nbsp;&nbsp;&nbsp;<%= tracker.getTarget() %> <%= tracker.getSinceStartTime() %>
+<%  } %>
+

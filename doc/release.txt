@@ -1,4 +1,10 @@
+Release 8.58.1
+Jun 7, 2021
+  Image upload and specimen data upload not to be run concurrently.
+
+
 Release 8.58
+Jun 7, 2021
   Sort the Page Tracker.
   Create a Page Tracker action.
 

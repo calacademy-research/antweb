@@ -39,8 +39,15 @@ public final class ImageUploaderAction extends Action {
         ActionForward a = Check.init(request, mapping); if (a != null) return a;
         ActionForward b = Check.busy(getDataSource(request, "conPool"), request, mapping); if (b != null) return b; 
         ActionForward c = Check.login(request, mapping); if (c != null) return c;
-        ActionForward d = Check.valid(request, mapping); if (d != null) return d; 
-     
+        ActionForward d = Check.valid(request, mapping); if (d != null) return d;
+
+        if (UploadAction.isInUploadProcess()) {
+            String message = "Server is currently in an Upload Process. Please try again in a little while.";
+            if (LoginMgr.isAdmin(request)) message += " " + UploadAction.getIsInUploadProcess();
+            request.setAttribute("message", message);
+            return (mapping.findForward("message"));
+        }
+
         //ActionForward e = Check.admin(request, mapping); if (e != null) return e;     
      
         Login accessLogin = LoginMgr.getAccessLogin(request);
@@ -76,6 +83,7 @@ public final class ImageUploaderAction extends Action {
                 ImageUpload imageUpload = null;
 
                 UploadAction.setIsInUploadProcess(accessLogin.getName() + ":" + accessGroup.getName());
+A.log(accessLogin.getName() + ":" + accessGroup.getName());
 
                 ImageUploaded.tempDir.toFile().mkdirs();
                 // /usr/local/antweb/temp/images/
