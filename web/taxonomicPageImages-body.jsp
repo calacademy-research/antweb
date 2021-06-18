@@ -64,8 +64,7 @@
 <% 
     ArrayList<Taxon> childrenList = taxaPage.getChildren();
     int childrenCount = childrenList.size();
-   
-    A.log("count:" + childrenCount);
+    //A.log("count:" + childrenCount);
 %>
 
   <div id="totals_and_tools_container">
@@ -79,7 +78,7 @@
       String statusSet = taxaPage.getStatusSetStr();
       String statusSetSize = taxaPage.getStatusSetSize();
       String browserParams = taxaPage.getBrowserParams();
-      A.log("browserParams:" + browserParams + " statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
+      //A.log("browserParams:" + browserParams + " statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
 %>
 
         <%@ include file="/common/statusesDisplay.jsp" %>
@@ -158,8 +157,8 @@
      int childDisplayCount = 50;
 
    }
-   A.log("taxonomicPageImages i:" + i);
-    %>
+   //A.log("taxonomicPageImages i:" + i);
+%>
    
    
 

@@ -288,12 +288,14 @@ public class AntwebMgr {
     }
     
     public static boolean isServerInitializing(Overview overview) {
-        A.log("isServerInitializing() isMuseumPopulated:" + isMuseumPopulated + " overview:" + overview + " class:" + overview.getClass());
+        //A.log("isServerInitializing() isMuseumPopulated:" + isMuseumPopulated + " overview:" + overview + " class:" + overview.getClass());
         if (overview instanceof Museum && isMuseumPopulated) return false;
         if (overview instanceof Geolocale && isGeolocalePopulated) return false;
         if (overview instanceof Project && isProjectPopulated) return false;
         if (overview instanceof Bioregion && isBioregionPopulated) return false;        
-        return isServerInitializing();
+        boolean isIt = isServerInitializing();
+        A.log("isServerInitializing() isIt:" + isIt);
+        return isIt;
     }
 
     // See Check.java.

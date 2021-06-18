@@ -172,7 +172,7 @@ Examples of species with images that don't have h1 images:
                     String shotNumber = (new Integer(specimenImage.getNumber())).toString();
 %>
 <div class="slide medium <% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %> ratio">
-    <div class="adjust"><img class="medres" src="<%= AntwebProps.getImgDomainApp() %><%= specimenImage.getThumbview() %>" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= imageRoot %>&shot=<%= shotType %>&number=<%= shotNumber %>';" /></div>
+    <div class="adjust"><img class="medres" src="<%= AntwebProps.getImgDomainApp() %><%= specimenImage.getThumbview() %>" loading="lazy" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= imageRoot %>&shot=<%= shotType %>&number=<%= shotNumber %>';" /></div>
 </div>
            <%   }
               } // isGoodShot

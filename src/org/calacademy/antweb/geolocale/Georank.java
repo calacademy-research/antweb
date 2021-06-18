@@ -53,7 +53,7 @@ public class Georank {
     }      
     
     public static String getChildPluralRank(Geolocale geolocale) {
-A.log("getChildPluralRank() geolocale:" + geolocale);
+      //A.log("getChildPluralRank() geolocale:" + geolocale);
       if (geolocale instanceof Region) return getChildPluralRank(Georank.region);
       if (geolocale instanceof Subregion) return getChildPluralRank(Georank.subregion);
       if (geolocale instanceof Country) return getChildPluralRank(Georank.country);

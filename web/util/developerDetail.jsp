@@ -11,5 +11,7 @@
 <%@ include file="/util/pageTracker.jsp" %>
 
 <% }
-   PageTracker.remove(request); 
+
+   // Not sure why this would be here. There is a finally in SessionRequestFilter.
+   // PageTracker.remove(request);
 %>

@@ -38,7 +38,12 @@ if (thisTracker != null) { %>
 
 <br>&nbsp;&nbsp;Target list:
 <%
-    for (Tracker tracker : PageTracker.getTrackers()) { %>
-      <br>&nbsp;&nbsp;&nbsp;&nbsp;<%= tracker.getTarget() %> <%= tracker.getSinceStartTime() %>
-<%  } %>
+    String star = "";
+    for (Tracker tracker : PageTracker.getTrackers()) {
+      if (tracker.getKey().equals(request.getAttribute("trackerKey"))) star = "*";
+%>
+      <br>&nbsp;&nbsp;&nbsp;&nbsp;<%= tracker.getTarget() %> code:<%= tracker.getCode() %> time:<%= tracker.getSinceStartTime() %> isThisPage:<%= star %>
+<%
+      star = "";
+    } %>
 

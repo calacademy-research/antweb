@@ -57,7 +57,7 @@ public final class TaxaPageAction extends Action {
         boolean simple = ("true".equals(simpleStr));
 
         String isImaged = request.getParameter("isImaged");
-        A.log("execute() isImaged:" + isImaged);
+        //A.log("execute() isImaged:" + isImaged);
         
         TaxaPageForm taxaPageForm = (TaxaPageForm) form;
 		String caste = Caste.getCaste(taxaPageForm.getCaste(), request);
@@ -137,7 +137,7 @@ public final class TaxaPageAction extends Action {
             if (withImages && !isGenCache) {
     
               // Return a cache paged if not logged in, and cached.
-              A.log("execute() getCache:" + isGetCache);
+              //A.log("execute() getCache:" + isGetCache);
           
               boolean fetchFromCache = AntwebCacheMgr.isFetchFromCache(accessLogin, isGetCache);              
               if (fetchFromCache) {

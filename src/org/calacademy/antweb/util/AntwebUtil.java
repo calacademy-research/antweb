@@ -263,7 +263,7 @@ public abstract class AntwebUtil {
       if (specIndex == 8) {
         String groupId = kind.substring(specIndex);
         Integer groupIdInteger = Integer.valueOf(groupId);
-        A.log("groupIdInteger:" + groupIdInteger);
+        //A.log("groupIdInteger:" + groupIdInteger);
         if (!s_uploadGroupList.contains(groupIdInteger)) s_uploadGroupList.add(groupIdInteger);
       } else {
         A.log("getUploadGroupList() specIndex:" + specIndex + " file:" + file + " kind:" + kind);

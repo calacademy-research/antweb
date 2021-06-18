@@ -27,7 +27,7 @@ public class SessionRequestFilter implements Filter {
     
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
- 
+
  //A.log("doFilter()");
       HttpServletRequest request = (HttpServletRequest) req;
       HttpServletResponse response = (HttpServletResponse) res;

@@ -138,7 +138,7 @@
   <%
 
         thisTarget = HttpUtil.removeParam(thisTarget, "specimen");
-        A.log("taxonomicPage-body.jsp thisTarget:" + thisTarget);
+        //A.log("taxonomicPage-body.jsp thisTarget:" + thisTarget);
       }
 
 	  canShowSpecimenTaxa = overview.isCanShowSpecimenTaxa();

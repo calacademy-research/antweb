@@ -204,7 +204,7 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
 */
 
     public boolean isCanShowSpeciesListTool(Login accessLogin) {
-      A.log("Overview.isCanShowSpeciesListTool() FALSE group:" + accessLogin);
+      //A.log("isCanShowSpeciesListTool() FALSE group:" + accessLogin);
       return false;
     }
     

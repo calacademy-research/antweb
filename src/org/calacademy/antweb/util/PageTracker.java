@@ -19,6 +19,7 @@ in SessionRequestFilter.doFilter() - pretty much all pages. And then removed at 
 possible moment - ideally in jsp footer.
 */
 
+    private static boolean isDebug = true; // && AntwebProps.isDevMode();
 
     private static final Log s_log = LogFactory.getLog(PageTracker.class);
 
@@ -26,7 +27,7 @@ possible moment - ideally in jsp footer.
     
     public static void add(HttpServletRequest request) {    
       //if (AntwebProps.isDevMode() && getRequestCount() > 3) purge();
-      
+
       if (getRequestCount() > 100) {
         try {
           purge();
@@ -47,6 +48,24 @@ possible moment - ideally in jsp footer.
       tracker.setCode(AntwebUtil.getRandomNumber());
       request.setAttribute("trackerKey", tracker.getKey());
       trackerMap.put(tracker.getKey(), tracker);
+
+      if (isDebug) {
+          if (target.contains("ionName=Oceania"))
+              s_log.warn("add() request:" + (String) request.getAttribute("trackerKey"));
+          
+          //A.log("add() request:" + (String) request.getAttribute("trackerKey"));
+          //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();
+      }
+    }
+
+    public static void remove(HttpServletRequest request) {
+      String key = (String) request.getAttribute("trackerKey");
+      trackerMap.remove(key);
+
+      if (isDebug) {
+        A.log("remove() request:" + (String) request.getAttribute("trackerKey"));
+        //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();
+      }
     }
 
     // was synchronized
@@ -65,11 +84,6 @@ possible moment - ideally in jsp footer.
         LogMgr.appendLog("pageTracker.log", logString); 
       }
       trackerMap = new HashMap<String, Tracker>(); // was  .clear();
-    }
-
-    public static void remove(HttpServletRequest request) {
-      String key = (String) request.getAttribute("trackerKey");
-      trackerMap.remove(key);
     }
 
     public static Collection<Tracker> getTrackers() {

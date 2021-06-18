@@ -21,7 +21,7 @@
        return;   
    }
    titleString += "Antweb";   
-   if (AntwebProps.isDevMode()) AntwebUtil.log(titleString);  
+   //if (AntwebProps.isDevMode()) AntwebUtil.log(titleString);
 %>
 
 <bean:define id="showNav" value="taxonomic" toScope="request" />
