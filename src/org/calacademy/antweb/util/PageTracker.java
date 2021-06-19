@@ -50,11 +50,7 @@ possible moment - ideally in jsp footer.
       trackerMap.put(tracker.getKey(), tracker);
 
       if (isDebug) {
-<<<<<<< HEAD
           if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
-=======
-          if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request)))
->>>>>>> master
               s_log.warn("add() request:" + (String) request.getAttribute("trackerKey"));
 
           //A.log("add() request:" + (String) request.getAttribute("trackerKey"));
