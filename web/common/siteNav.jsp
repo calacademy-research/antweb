@@ -9,7 +9,7 @@
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>
 
-<% 
+<%
 	Taxon taxon = (Taxon) session.getAttribute("taxon");
 
 	Overview overview = OverviewMgr.getOverview(request);

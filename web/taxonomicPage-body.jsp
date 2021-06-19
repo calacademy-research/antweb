@@ -101,7 +101,8 @@
 		}
 		if (unImagedCount > 0) {
 		    childSizeStr = "<span class=\"numbers\">" + unImagedCount + "</span> Unimaged " + Rank.getPluralRank(pageRank) + " (out of <span class=\"numbers\">" + childrenCount + "</span>)";
-		    AntwebUtil.log("taxonomicPage-body.jsp unImagedCountStr:" + unImagedCountStr);
+		    // Not sure this is a problem.
+		    AntwebUtil.log("taxonomicPage-body.jsp target:" + thisTarget + " childSizeStr:" + childSizeStr);
 	    }
     }
 %>

@@ -130,40 +130,41 @@ public final class TaxaPageAction extends Action {
 				return (mapping.findForward("message"));        
 			}
 
-            // Caching Logic Part I
-            boolean isGetCache = "true".equals(request.getParameter("getCache"));  //fieldGuideForm.getGetCache()));  // this forces the fetching from cache if available.
-            String data = null;               
-            boolean isGenCache = "true".equals(request.getParameter("genCache"));   //fieldGuideForm.getGenCache());
-            if (withImages && !isGenCache) {
-    
-              // Return a cache paged if not logged in, and cached.
-              //A.log("execute() getCache:" + isGetCache);
-          
-              boolean fetchFromCache = AntwebCacheMgr.isFetchFromCache(accessLogin, isGetCache);              
-              if (fetchFromCache) {
-                // was: data = AntwebCacheMgr.fetchFromCache("taxaPage", project, rank);
-                data = AntwebCacheMgr.fetchFromCache("taxaPage", overview.getName(), rank);
-                if (data != null) {
-                  //if (AntwebProps.isDevOrStageMode())
-                  s_log.info("execute() Fetched cached page.  Rank:" + rank + " overview:" + overview + " cacheType:taxaPage");              
-                  PrintWriter out = response.getWriter();
-                  out.println(data);
-                  return null;
-                } else {
-           
-                  if (isGetCache) {
-                    String message = "not fetched from cache.  Rank:" + rank + " overview:" + overview + " cacheType:taxaPage";
-                    //if (AntwebProps.isDevOrStageMode()) 
-                    s_log.info("Execute() " + message); 
-                    request.setAttribute("message", message);
-                    return (mapping.findForward("message"));
-                  }
-                }
-              }
-            }                
+              // Caching Logic Part I
+              boolean isGetCache = "true".equals(request.getParameter("getCache"));  //fieldGuideForm.getGetCache()));  // this forces the fetching from cache if available.
+              String data = null;
+              boolean isGenCache = "true".equals(request.getParameter("genCache"));   //fieldGuideForm.getGenCache());
+              if (withImages && !isGenCache) {
 
-			 
-			String statusSetStr = StatusSet.getStatusSet(request, overview);
+                  boolean fetchFromCache = false && AntwebCacheMgr.isFetchFromCache(accessLogin, isGetCache);
+
+
+                  // Return a cache paged if not logged in, and cached.
+                  //A.log("execute() getCache:" + isGetCache);
+
+                  if (fetchFromCache) {
+                      // was: data = AntwebCacheMgr.fetchFromCache("taxaPage", project, rank);
+                      data = AntwebCacheMgr.fetchFromCache("taxaPage", overview.getName(), rank);
+                      if (data != null) {
+                          //if (AntwebProps.isDevOrStageMode())
+                          s_log.info("execute() Fetched cached page.  Rank:" + rank + " overview:" + overview + " cacheType:taxaPage");
+                          PrintWriter out = response.getWriter();
+                          out.println(data);
+                          return null;
+                      } else {
+
+                          if (isGetCache) {
+                              String message = "not fetched from cache.  Rank:" + rank + " overview:" + overview + " cacheType:taxaPage";
+                              //if (AntwebProps.isDevOrStageMode())
+                              s_log.info("Execute() " + message);
+                              request.setAttribute("message", message);
+                              return (mapping.findForward("message"));
+                          }
+                      }
+                  }
+              }
+
+              String statusSetStr = StatusSet.getStatusSet(request, overview);
 			String statusSetSize = StatusSet.getStatusSetSize(request);
             taxaPage.setStatusSetStr(statusSetStr);
             taxaPage.setStatusSetSize(statusSetSize);
@@ -175,24 +176,32 @@ public final class TaxaPageAction extends Action {
                 return (mapping.findForward("message"));            
             }
 
+
+// no double
             //taxaPage.setOverview(overview);
             //A.log("execute() overview:" + overview);
             String successMsg = taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, new StatusSet(statusSetStr)); //, orderBy);
+            // String successMsg = "SUCCESS!";
             if (successMsg != null) {
                 request.setAttribute("message", successMsg);
                 return mapping.findForward("message");
             }
+
+//         if (HttpUtil.getTarget(request).contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) { s_log.warn("MarkNote() break:" + HttpUtil.getTarget(request)); return (mapping.findForward("error"));}
+// Doubled
+
             /* 
               With withImages set, a request like this will take 2/5 minutes...  Really?
               http://localhost/antweb/taxonomicPage.do?rank=genus&project=allantwebants                
             */
-          
+
+
             // Caching Logic Part II
-            if (withImages && !isGenCache && !isGetCache) {
-              int busy = DBUtil.getNumBusyConnections(dataSource);              
+            if (false && withImages && !isGenCache && !isGetCache) {
+              int busy = DBUtil.getNumBusyConnections(dataSource);
               AntwebCacheMgr.finish(request, connection, busy, startTime, "taxaPage", overview, rank);
-            }                            
-         
+            }
+
             //if (overview instanceof Adm1) A.log("execute() overview:" + overview + " parent:" + overview.getParentName());
           } catch (SQLException e) {
             GregorianCalendar now = new GregorianCalendar();
@@ -214,7 +223,7 @@ public final class TaxaPageAction extends Action {
         if (taxaPage.getChildren() == null) {
             return (mapping.findForward("failure"));
         }
-        
+
         return (mapping.findForward("success"));
     }
 }

@@ -6,35 +6,11 @@
 <%@ page import = "org.calacademy.antweb.Login" %>
 <% String antwebRelease = "0"; %>
 
- <% //if (HttpUtil.isIphone(request)) return; %>
 
- <% if (!AntwebProps.isDevMode() && !AntwebProps.isStageMode()) {
-      if (!AntwebProps.isProtocolSecure()) { %>
-	    <script>
-	    if (location.protocol != 'https:') {
-		  location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
-		  //location.href = 'https://www.antweb.org';
-          //console.log("academyHeader.jsp location.href:" + location.href);
-	    }
-	    // This does not seem to work. OK, I think.
-        if (location.href.includes("https://antweb.org")) {
-          location.href= "https://www.antweb.org" + location.href.substring(17);
-          //console.log("academyHeader.jsp location.href:" + location.href);
-        }
-        //console.log("academyHeader.jsp protocolLength:" + window.location.protocol.length + " location.href:" + location.href);
-	    </script>
+<%@ include file="location.jsp" %>
 
-   <% } else { %>
-	    <script>
-        if (location.href.includes("https://antweb.org")) {
-          location.href= "https://www.antweb.org" + location.href.substring(18);
-          //console.log("academyHeader.jsp location.href:" + location.href);
-        }
-        //console.log("academyHeader.jsp protocolLength:" + window.location.protocol.length + " location.href:" + location.href);
-	    </script>
-   <% }
-    }
 
+<%
     if (!AntwebMgr.isPopulated()) { %>
       <b>Server Initializing</b>
 <%      return;

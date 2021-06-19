@@ -28,14 +28,16 @@ public class SessionRequestFilter implements Filter {
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
 
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpServletResponse response = (HttpServletResponse) res;
+        String target = HttpUtil.getTarget(request);
+
  //A.log("doFilter()");
-      HttpServletRequest request = (HttpServletRequest) req;
-      HttpServletResponse response = (HttpServletResponse) res;
-      ServletContext ctx = request.getSession().getServletContext();      
+      ServletContext ctx = request.getSession().getServletContext();
 
       PageTracker.add(request);
 
-	  String target = HttpUtil.getTarget(request);
+
 	  //A.log("target:"+ target);
 
       Login accessLogin = LoginMgr.getAccessLogin(request);
@@ -66,26 +68,11 @@ public class SessionRequestFilter implements Filter {
           }
 
           UserAgentTracker.track(request);
-
+          
           chain.doFilter(request, response);
-        
-/*        
-   June 11, 2019. Removed these and added in the finally clause.
 
-   Do we care to know about the ones that don't finish as expected, or the ones that don't finish?
+          //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
 
-        // Here we remove non-standard pages. Curator pages etc...
-        if (target.contains("curate.do")
-         || target.contains("listUploads.do") 
-         || target.contains("forgotpassword.do") 
-         || target.contains("manageMuseum.do") 
-         || target.contains("viewMuseum.do")
-         || target.contains("listUploads.do")
-           ) {
-          PageTracker.remove(request);
-        }
-        
-*/
       } catch (Exception e) {
 
           String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
@@ -131,9 +118,10 @@ public class SessionRequestFilter implements Filter {
           }
 		  HttpUtil.write(htmlMessage, response);   
       } finally {
-          PageTracker.remove(request);     
+          PageTracker.remove(request);
+
+          if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
       }
-      
     }
         
     public void init(FilterConfig filterConfig) throws ServletException {

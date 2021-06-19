@@ -1612,48 +1612,63 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     private ArrayList<String> getSpeciesNameSet(Overview overview) {
       ArrayList<String> speciesNameSet = new ArrayList<String>();
       Statement stmt = null;
-      ResultSet rset = null;    
+      ResultSet rset = null;
+      String query = null;
       try {
         // This works for genera.  Find a taxon with the genera, or subfamily, and use it.
         String overviewClause = " where 1 = 1 ";
         if (overview != null) overviewClause = overview.getFetchChildrenClause();
-		String query = "select taxon.taxon_name taxon_name from taxon" 
+		query = "select taxon.taxon_name taxon_name from taxon"
 		  + overviewClause
 		  + getThisWhereClause()
 		  //+ " and taxon.image_count > 0"   // Removed this.  Yes?
 		  + " and taxarank in ('species', 'subspecies')"
 		  + " and status in ('valid', 'morphotaxon', 'indetermined')"   
-//  Above line added back in. Seems to work. Then this won't show an image: /description.do?species=acuta&genus=aphaenogaster&rank=species
+          //  Above line added back in. Seems to work. Then this won't show an image: /description.do?species=acuta&genus=aphaenogaster&rank=species
 		  + " order by status desc, taxon_name"
 		  // + " limit 100"  // Dropped. Myrmicinae still seems to perform (10 seconds).
 		  ;
-// Mark May 3 remove limit add status criteria.
+
+		  stmt = DBUtil.getStatement(getConnection(), "getSpeciesNameSet()");
+		  rset = stmt.executeQuery(query);
+
+          if (taxonDebug()) A.log("getSpeciesNameSet() this:" + this.getClass() + " query:" + query);
+
+           int i = 0;
+           while (rset.next()) {
+               i = i + 1;
+               String taxonName = rset.getString("taxon_name");
+               speciesNameSet.add(taxonName);
+           }
 
 
-		stmt = DBUtil.getStatement(getConnection(), "getSpeciesNameSet()");
-		rset = stmt.executeQuery(query);
-
-		if (taxonDebug()) A.log("getSpeciesNameSet() this:" + this.getClass() + " query:" + query);
-
-		while (rset.next()) {
-		  String taxonName = rset.getString("taxon_name");
-          speciesNameSet.add(taxonName);
-		}    
       } catch (SQLException e) {
         s_log.error("getSpeciesNameSet() e:" + e);
       } finally {
         DBUtil.close(stmt, rset, this, "getSpeciesNameSet()");
-      }  		
+      }
+
       return speciesNameSet;
     }
 
     // Should show all the genera and use images from the species. 
     private String getUnpickedDefault(Overview overview, String caste) {
         String chosenImageCode = null;
-    
+
         if (caste == null) caste = Caste.DEFAULT;
-        ArrayList<String> speciesNameSet = getSpeciesNameSet(overview);		
-        //if (getTaxonName().contains("solenopsis")) A.log("getUnpickedDefault() overview:" + overview + " caste:" + caste + " taxonNameSet:" + speciesNameSet);		
+        ArrayList<String> speciesNameSet = new ArrayList<String>();
+
+        /*
+        Doubled http requests. It seems that if we let these queries run in getSpeciesNameSet() on a page such as:
+        https://localhost/taxonomicPage.do?rank=species&images=true&statusSet=all&regionName=Oceania
+        ... even if we discard the results, the whole http request is rerun. Makes no sense (and hard to track down).
+        Adjustment made so that it doesn't run on overviews that are regions.
+         */
+        boolean skipSpeciesNameSet = false;
+        if (overview instanceof Region) {
+            skipSpeciesNameSet = true;
+        }
+        if (!skipSpeciesNameSet) speciesNameSet = getSpeciesNameSet(overview);
 
         // Subfamilies are different.
         if (Rank.SUBFAMILY.equals(getRank())) {
@@ -1738,7 +1753,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     public void setImages(Overview overview, String caste) throws SQLException {
-    
+
+// Break here, not doubled.
+
       /* we have to get one good specimen and load up all the shots into the images hashtable
  
          This.images which is set, is only one set of the best images.  No counts.
@@ -1784,14 +1801,18 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           chosenImageCode = getDefaultSpecimen(caste);
           //if (chosenImageCode != null) A.log("setImages() PICKED:" + chosenImageCode + " caste:" + caste + "  taxonName:" + getTaxonName());
         }
-        
+
+// Break here, not doubled.
+
         if (taxonDebug()) A.log("setImages(" + overview + ", " + caste + ") 1 taxonName:" + getTaxonName() + " code:" + chosenImageCode);
         
 		// well, no default Image, so try to find one good specimen for this family
         if (chosenImageCode == null) {
           chosenImageCode = getUnpickedDefault(overview, caste);
           if (taxonDebug() && chosenImageCode != null) A.log("setImages(" + overview + "," + caste + ") unPickedDefault:" + chosenImageCode + " taxonName:" + getTaxonName());
-        }		
+        }
+
+// Break here, doubled
 
         if (taxonDebug()) A.log("setImages(" + overview + ", " + caste + ") 2 taxonName:" + getTaxonName() + " code:" + chosenImageCode);
 
@@ -1799,13 +1820,16 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		  if (taxonDebug()) A.log("setImages() none found. Bail. TaxonName:" + getTaxonName());
 		  return; 
         }
-        
+
         // Found a good one. Load it into images.
 		ArrayList<SpecimenImage> specImages = (new ImageDb(connection)).getSpecimenImages(chosenImageCode); 
 		for (SpecimenImage specImage : specImages) {
 		  myImages.put(specImage.getShotType(), specImage);
 		}
         if (taxonDebug()) A.log("setImages(" + overview + ", " + caste + ") 3 taxonName:" + getTaxonName() + " code:" + chosenImageCode + " count:" + myImages.size());
+
+// If break here, doubled.
+
         this.images = myImages;
     }
 

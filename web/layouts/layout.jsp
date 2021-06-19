@@ -256,7 +256,7 @@ $(function() {
 */ %>
 
 <tiles:insert attribute="academyHeader"/>
-<tiles:insert attribute="menubar"/>
+<tiles:insert attribute="siteNav"/>
 <tiles:insert attribute="body-content"/>
 
 <div class="clear"></div>
