@@ -2,6 +2,7 @@ package org.calacademy.antweb.geolocale;
 
 import java.sql.*;
 import java.util.*;
+import javax.servlet.http.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -62,7 +63,28 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     private int rev;
 
     private Hashtable description;
-            
+
+    /*
+    // should be abstract.
+    public String getNavLink(HttpServletRequest request, String thisPage, String view) {
+        return null;
+    }
+*/
+    public String getNavLink(HttpServletRequest request, String thisPage, String view) {
+        String navLink = "";
+        String delim = "&";
+        if (!thisPage.contains("?")) delim = "?";
+        String link = thisPage + delim + getParams();
+        if (link.contains("images=true") && !LoginMgr.isCurator(request)) {
+            navLink = getName();
+        } else {
+            navLink = "<a href='" + thisPage + delim + getParams() + "'>" + getName() + "</a>";
+        }
+        if (view != null && !view.equals("")) navLink += " - " + view;
+        //A.log("regionNav.jsp !O view:" + view);
+        return navLink;
+    }
+
     private transient ArrayList<Geolocale> children = new ArrayList<Geolocale>();
 
     public static final String REGION = "region";

@@ -19,7 +19,7 @@ in SessionRequestFilter.doFilter() - pretty much all pages. And then removed at 
 possible moment - ideally in jsp footer.
 */
 
-    private static boolean isDebug = true; // && AntwebProps.isDevMode();
+    private static boolean isDebug = AntwebProps.isDevMode();
 
     private static final Log s_log = LogFactory.getLog(PageTracker.class);
 
@@ -50,7 +50,7 @@ possible moment - ideally in jsp footer.
       trackerMap.put(tracker.getKey(), tracker);
 
       if (isDebug) {
-          if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request)))
+          if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
               s_log.warn("add() request:" + (String) request.getAttribute("trackerKey"));
 
           //A.log("add() request:" + (String) request.getAttribute("trackerKey"));
@@ -63,7 +63,8 @@ possible moment - ideally in jsp footer.
       trackerMap.remove(key);
 
       if (isDebug) {
-        A.log("remove() request:" + (String) request.getAttribute("trackerKey"));
+          if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
+              A.log("remove() request:" + (String) request.getAttribute("trackerKey"));
         //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();
       }
     }

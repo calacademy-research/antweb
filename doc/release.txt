@@ -1,3 +1,14 @@
+
+Release 8.60
+  Added subregion to the list of overviews to skipGetUnpickedDefault. 
+  Restrict linking of higher overview taxonomic pages with images from nav includes to curators.
+
+Release 8.59
+  Fix doubled requests.
+  loading="lazy" added to taxonChildImageSet.jsp   
+  Extend PageTracker. Show codes. Show isThisPage.   
+  Refine logging on dev.
+   
 Release 8.58.1
 Jun 7, 2021
   Image upload and specimen data upload not to be run concurrently.

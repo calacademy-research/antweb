@@ -57,10 +57,8 @@
 	  } else if (thisPage.contains("endemic.do")) {
 		view = "<a href='" + AntwebProps.getDomainApp() + "/subregion.do?id=" + subregion.getId() + "'>" +  subregion.getName() + "</a> - " + view;         
 	  } else {
-		// used for taxonomic pages.
-		String delim = "&";
-		if (!thisPage.contains("?")) delim = "?"; 
-		if (subregion != null) view = "<a href='" + thisPage + delim + subregion.getParams()  + "'>" + subregion.getName() + "</a>" + " - " + view;
+		// used for taxonomic pages. Might be with images.
+		view = subregion.getNavLink(request, thisPage, view);
 	  }
 	  if (subregion != null) {
 		String subregionId = subregion.getParent();
@@ -70,10 +68,8 @@
 		} else if (thisPage.contains("endemic.do")) {
 		  view = "<a href='" + AntwebProps.getDomainApp() + "/region.do?id=" + region.getId() + "'>" +  region.getName() + "</a> - " + view;         
 		} else {
-		  // used for taxonomic pages.
-		  String delim = "&";
-		  if (!thisPage.contains("?")) delim = "?";               
-		  view = "<a href='" + thisPage + delim + region.getParams() + "'>" + region.getName() + "</a>" + " - " + view;  // was grandParent.getThisPageTarget()
+		  // used for taxonomic pages. Might be with images.
+  	  	  view = region.getNavLink(request, thisPage, view);
 		}
 	  }
 	}
@@ -83,6 +79,3 @@
 %>
 	</div>
 </div>
-
-
-

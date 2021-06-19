@@ -13,24 +13,22 @@
 	  if (isOverviewPage) {
 		view = "<a href='" + subregion.getThisPageTarget()  + "'>" + subregion.getName() + "</a>" + view;
 	  } else {
-		// used for taxonomic pages.
-		String delim = "&";
-		if (!thisPage.contains("?")) delim = "?";            
-		view = "<a href='" + thisPage + delim + subregion.getParams()  + "'>" + subregion.getName() + "</a>" + view;
-A.log("subregionNav.jsp view:" + view);
+		// used for taxonomic pages. Might be with images.
+  	  	  view = subregion.getNavLink(request, thisPage, view);
 	  }
 	  if (subregion != null) {
-		String subregionId = subregion.getParent();
-		Geolocale region = GeolocaleMgr.getGeolocale(subregionId);
+		String regionId = subregion.getParent();
+		Region region = (Region) GeolocaleMgr.getGeolocale(regionId);
 		if (isOverviewPage) {
 		  view = "<a href='" + region.getThisPageTarget() + "'>" + region.getName() + "</a>" + " - " + view;  // was grandParent.getThisPageTarget()
 		} else {
-		  // used for taxonomic pages.
-		  String delim = "&";
-		  if (!thisPage.contains("?")) delim = "?";               
-		  view = "<a href='" + thisPage + delim + region.getParams() + "'>" + region.getName() + "</a>" + " - " + view;  // was grandParent.getThisPageTarget()
+		  // used for taxonomic pages. Might be with images.
+  	  	  view = region.getNavLink(request, thisPage, view);
 		}
 	  }
+
+	if (AntwebProps.isDevMode()) AntwebUtil.log("subregionNav.jsp isOverviewPage:" + isOverviewPage + " view:" + view);
+
 
 	  out.println(view);      
 %>
