@@ -166,7 +166,8 @@ public class TaxaPage implements Serializable {
         if (getLimit() != 0) {
             fetchChildrenQuery += " limit " + getLimit();
         }        
-					
+
+
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -184,7 +185,8 @@ public class TaxaPage implements Serializable {
 			//A.log("fetchChildren() statusSetValue:" + statusSet.getValue() + " statusSet:" + statusSet.getStatusSets());
 				
 			now = again;
-				
+
+
 			while (rset.next()) {
 				Taxon child = null;
 
@@ -245,7 +247,7 @@ public class TaxaPage implements Serializable {
 
                   child.initTaxonSet(overview);
 
-                  //A.log("fetchChildren() projTaxon:" + child.getProjTaxon().toString());                                        
+                  //A.log("fetchChildren() projTaxon:" + child.getProjTaxon().toString());
                   //if (child.getImageCount() < 4) A.log("fetchChildren() class:" + child.getClass() + " withImages:" + withImages + " imageCount:" + child.getImageCount() + " child:" + child);                                        
 
                   child.setConnection(null);
@@ -253,7 +255,8 @@ public class TaxaPage implements Serializable {
                   theseChildren.add(child);
                 }
 			}
-			again = new java.util.Date().getTime(); 
+
+			again = new java.util.Date().getTime();
 			now = new java.util.Date().getTime();
 			//s_log.error("basic query took " + (again-now) + " millis");
 
