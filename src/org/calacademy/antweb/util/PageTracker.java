@@ -63,6 +63,7 @@ possible moment - ideally in jsp footer.
     }
 
     public static void remove(HttpServletRequest request) {
+      String target = HttpUtil.getTarget(request);
       String key = (String) request.getAttribute("trackerKey");
       trackerMap.remove(key);
 
