@@ -978,9 +978,8 @@ public abstract class HttpUtil {
         
     public static int MILLIS = 1000;
     public static int SECS = 60;
-    //public static int MAX_REQUEST_TIME = MILLIS * SECS * 5 ;
     public static int MAX_REQUEST_TIME = MILLIS * 20;
-
+/*
     public static String finish(java.util.Date startTime) {
       String execTime = "";
       long millis = AntwebUtil.millisSince(startTime);
@@ -997,8 +996,8 @@ public abstract class HttpUtil {
       if (millis > MAX_REQUEST_TIME) LogMgr.appendDataLog("longRequest.log", message);
       return execTime; 
     }
-
-
+*/
+// The logging functionality moved into SessionRequestFilter
     public static String finish(HttpServletRequest request, java.util.Date startTime) {
       String execTime = "";
       long millis = AntwebUtil.millisSince(startTime);
@@ -1007,13 +1006,15 @@ public abstract class HttpUtil {
       } else {
         execTime = millis + " millis";      
       }
+    /*
       String message = (new Date()).toString() + " time:" + execTime + " requestInfo:" + HttpUtil.getRequestInfo(request);
       if (AntwebProps.isDevMode()) {
         //s_log.warn(message);
         MAX_REQUEST_TIME = 1;
       }
       if (millis > MAX_REQUEST_TIME) LogMgr.appendDataLog("longRequest.log", message);
-      return execTime; 
+    */
+      return execTime;
     }
 
 

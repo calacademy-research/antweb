@@ -64,7 +64,7 @@ public final class CacheAction extends Action {
         */
         if (action.equals("genCacheItem")) {
           returnVal = generateCacheItem(mapping, request);
-          AntwebUtil.finish(request, startTime);
+          HttpUtil.finish(request, startTime);
           request.setAttribute("message", "genCacheItem completed.");
           return (mapping.findForward("message"));        
         } else {

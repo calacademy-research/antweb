@@ -64,14 +64,14 @@ public class AntwebCacheMgr {
 
   If a request is deemed long, then it is entered into the long_request database to be
   used at generateCacheContent time to generate the cached content 
-*/  
+*/
     public static void finish(HttpServletRequest request, Connection connection, int busyConnections,
         java.util.Date startTime, String cacheType, Overview overview, String param1) 
         throws SQLException {
       
       // param1 is taxonName, or in the case of taxaPage, it is rank.
 
-      AntwebUtil.finish(request, startTime);
+      HttpUtil.finish(request, startTime);
       
       long millis = AntwebUtil.millisSince(startTime);
       A.log("finish() millis:" + millis);
@@ -94,7 +94,7 @@ public class AntwebCacheMgr {
         java.util.Date startTime, String cacheType, String subfamily, String genus, String rank, Overview overview) 
         throws SQLException {
 
-      AntwebUtil.finish(request, startTime);
+      HttpUtil.finish(request, startTime);
 
       if (CACHING_OFF) return;
             

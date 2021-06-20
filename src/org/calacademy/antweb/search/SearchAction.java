@@ -280,7 +280,7 @@ public final class SearchAction extends DispatchAction {
           }
 
           session.setAttribute("resultRank", resultRank);        
-          execTime = AntwebUtil.finish(request, startTime);
+          execTime = HttpUtil.finish(request, startTime);
           searchLog("doAdvancedSearch() time:" + execTime + " title:" + title);		    
 
           //A.log("doAdvancedSearch() forward:" + forward);          
@@ -301,7 +301,7 @@ public final class SearchAction extends DispatchAction {
           throws IOException, ServletException, SearchException {
 
         HttpSession session = request.getSession();
-		java.util.Date startTime = new java.util.Date(); // for AntwebUtil.finish(request, startTime);
+		java.util.Date startTime = new java.util.Date(); // for HttpUtil.finish(request, startTime);
 
         BayAreaSearchForm bayForm = (BayAreaSearchForm) form;
 
@@ -348,7 +348,7 @@ public final class SearchAction extends DispatchAction {
         HttpServletRequest request, HttpServletResponse response)
           throws IOException, ServletException, SearchException {
             
-		java.util.Date startTime = new java.util.Date(); // for AntwebUtil.finish(request, startTime);
+		java.util.Date startTime = new java.util.Date(); // for HttpUtil.finish(request, startTime);
             
         HttpSession session = request.getSession();
         SearchParameters searchParameters = new SearchParameters((RecentImagesForm) form);
@@ -369,7 +369,7 @@ public final class SearchAction extends DispatchAction {
         } 
         session.setAttribute("searchResults", results);
 
-		AntwebUtil.finish(request, startTime);
+		HttpUtil.finish(request, startTime);
 
         if (results != null) {
             return (mapping.findForward("success"));

@@ -322,7 +322,7 @@ s_log.warn("logMessagesToFile() logFileDir:" + getLogFileDir() + " logFileName:"
     
     public void finish(Login accessLogin, HttpServletRequest request, Connection connection) {
         A.log("finish() operation:" +  getOperation());
-        String execTime = AntwebUtil.finish(request, getStartTime());
+        String execTime = HttpUtil.finish(request, getStartTime());
         setExecTime(execTime);
 
         if (getOperation().contains("orldants")) {

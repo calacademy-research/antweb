@@ -228,7 +228,7 @@ public final class FieldGuideAction extends Action {
 		// Set a transactional control token to prevent double posting
 	    saveToken(request);
 		
-        AntwebUtil.finish(request, startTime);
+        HttpUtil.finish(request, startTime);
           
         try {
           request.setAttribute("fieldGuideTaxaHashCode", fieldGuide.getTaxa().hashCode());  

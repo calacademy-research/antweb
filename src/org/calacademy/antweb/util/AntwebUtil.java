@@ -864,10 +864,7 @@ public abstract class AntwebUtil {
         return true;
     }   
 
-    // convenience methods.  These and more were moved to HttpUtil.  Use that class instead.
-    public static String finish(HttpServletRequest request, java.util.Date startTime) {
-      return HttpUtil.finish(request, startTime);
-    }
+
     public static String getRequestInfo(HttpServletRequest request) {
       return HttpUtil.getRequestInfo(request);
     }

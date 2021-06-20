@@ -67,7 +67,7 @@ public class LogMgr {
     LogMgr.appendFile(file, data);
   }
 
-  // These should be used for things log to a non-web-accessible directory: /data/log
+  // These should be used for things log to a non-web-accessible directory: /data/antweb/log
   public static void appendDataLog(String file, String data) {
     appendDataLog(file, data, false);
   }

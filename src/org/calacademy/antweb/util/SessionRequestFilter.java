@@ -28,6 +28,8 @@ public class SessionRequestFilter implements Filter {
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
 
+        Date startTime = new Date();
+
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
         String target = HttpUtil.getTarget(request);
@@ -68,7 +70,7 @@ public class SessionRequestFilter implements Filter {
           }
 
           UserAgentTracker.track(request);
-          
+
           chain.doFilter(request, response);
 
           //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
@@ -120,10 +122,35 @@ public class SessionRequestFilter implements Filter {
       } finally {
           PageTracker.remove(request);
 
+          finish(request, startTime);
+
           if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
       }
     }
-        
+
+    public static int MILLIS = 1000;
+    public static int SECS = 60;
+    public static int MAX_REQUEST_TIME = MILLIS * 10;
+    public static String finish(HttpServletRequest request, java.util.Date startTime) {
+        String execTime = "";
+        long millis = AntwebUtil.millisSince(startTime);
+        if (millis > 2000) {
+            execTime = AntwebUtil.secsSince(startTime) + " secs";
+        } else {
+            execTime = millis + " millis";
+        }
+        String message = (new Date()).toString() + " time:" + execTime + " requestInfo:" + HttpUtil.getRequestInfo(request);
+        if (AntwebProps.isDevMode()) {
+            //s_log.warn(message);
+            MAX_REQUEST_TIME = 1;
+        }
+
+        A.log("finish() millis:" + millis + " info:" + HttpUtil.getRequestInfo(request));
+        if (millis > MAX_REQUEST_TIME) LogMgr.appendDataLog("longRequest.log", message);
+        return execTime;
+    }
+
+
     public void init(FilterConfig filterConfig) throws ServletException {
         s_log.warn("init() - Server is initializing...");
         String message = "";
@@ -154,7 +181,7 @@ public class SessionRequestFilter implements Filter {
 
         this.runTask(); // Set up the Scheduler
 
-        s_startTime = new Date();
+        setInitTime(new Date());
         //s_log.warn("init() domainApp:" + AntwebProps.getDomainApp());
         s_log.warn("init() - Server is up. " + message);
     }    
@@ -164,19 +191,19 @@ public class SessionRequestFilter implements Filter {
     }
 
     public void report() {
-        s_log.warn("runTime:" + AntwebUtil.hrsSince(getStartTime()) + " " + AntwebMgr.getReport());
+        s_log.warn("runTime:" + AntwebUtil.hrsSince(getInitTime()) + " " + AntwebMgr.getReport());
         s_log.warn(UserAgentTracker.summary() + "overactive:" + UserAgentTracker.overActiveReport());
         s_log.warn("Overdue resource:" + DBUtil.getOldConnectionList());
         s_log.warn("Bad Actor Report:" + BadActorMgr.getBadActorReport());
         s_log.warn(AntwebSystem.getTopReport());
     }
        
-    public static Date s_startTime = null;        
-    public static Date getStartTime() {
-      return s_startTime;
+    public static Date s_initTime = null;
+    public static Date getInitTime() {
+      return s_initTime;
     }
-    public static void setStartTime(Date time) {
-      s_startTime = time;
+    public static void setInitTime(Date time) {
+      s_initTime = time;
     }
 
     public void runTask() {

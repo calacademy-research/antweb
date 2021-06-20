@@ -74,7 +74,7 @@ public final class SpeciesListAction extends Action {
           }    
         }
 
-        AntwebUtil.finish(request, startTime);        
+        HttpUtil.finish(request, startTime);
         return null;
     }
 
