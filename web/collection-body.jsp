@@ -129,16 +129,21 @@ function selectAll(thisForm) {
 
 <ul>
 <li>Locality Code:</li>
-<li><b><a href="locality.do?code=<bean:write name="collection" property="locality.localityCode"/>">
- <bean:write name="collection" property="locality.localityCode"/></a></b></li>
+<li><b><a href='locality.do?code=<%= locality.getLocalityCode() %> '><%= locality.getLocalityCode() %></a></b></li>
 </ul>
+
 <% } %>
 <% if (Utility.displayEmptyOrNotBlank(locality.getLocalityName())) { %>
+
 <ul>
 <li>Locality Name:</li>
-<li><b><a href="locality.do?name=<bean:write name="collection" property="locality.localityName"/>">
-<li><bean:write name="collection" property="locality.localityName"/></a></b></li>
+<% if (locality.getLocalityCode() != null) { %>
+<li><b><%= locality.getLocalityName() %></a></b></li>
+<% } else { %>
+<li><b><a href='locality.do?name=<%= locality.getLocalityName() %> '><%= locality.getLocalityName() %></a></b></li>
+<% } %>
 </ul>
+
 <% } %>
 
 <% if (Utility.displayEmptyOrNotBlank(locality.getCountry())) { %>

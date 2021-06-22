@@ -171,7 +171,11 @@ To see logs:
   docker-compose exec antweb bash
   ls /usr/local/antweb/web/log/
     accessLog.txt  adminTask.log  compute.log  dateDetermined.log  deletedImageLog.txt  detail  getUrl.txt	imageNotFound.txt  logins.txt  messages.txt  notFound.txt  profiler.jsp  searches.txt  specimen  srfExceptions.jsp  taxonSet.log  taxonSetBackup.log  worldants
-
+  ls /data/antweb/log/
+    bak  cpuCheck.log  longRequest.log  messages.txt
+  ls /usr/local/tomcat/logs
+    catalina.out access_logs.
+  
 These are here:
   ls antweb/logs/detail    antwebEvent.log  googleEarth.log  search.log
 
