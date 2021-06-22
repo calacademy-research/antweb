@@ -28,8 +28,13 @@ public final class LocalityAction extends Action {
 		HttpSession session = request.getSession();
 			
         DynaActionForm df = (DynaActionForm) form;
-        String name = (String) df.get("name"); // Name could be code or name. We try code first.
-        String code = (String) df.get("code");                
+        String name = (String) df.get("name"); // Was: Name could be code or name. We try code first.
+        String code = (String) df.get("code");
+
+        if (HttpUtil.isBot(request) && code == null) {
+			request.setAttribute("message", "Locality access by name is restricted. Please use the code.");
+			return mapping.findForward("message");
+		}
 
         // This is weird. Initially name= was used for code. Now we also allow code=.
         // name= can still be used for the code and now also for the name.

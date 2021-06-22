@@ -1,6 +1,6 @@
 
 Release 8.61
-  Create index on locality name.
+  dissallow bot access of locality.do?name=
 
 Release 8.60
   Added subregion to the list of overviews to skipGetUnpickedDefault. 
