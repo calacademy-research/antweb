@@ -29,8 +29,8 @@
 <h3>Antweb Operation</h3>
 
 <br><b>Current Time:</b> <%= (new Date()).toString() %>
-<br><b>Server Start Time:</b> <%= (SessionRequestFilter.getStartTime()).toString() %>
-<br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getStartTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getStartTime()) %>.
+<br><b>Server Start Time:</b> <%= (SessionRequestFilter.getInitTime()).toString() %>
+<br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getInitTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) %>.
 <br><b>AntwebMgr (re)Start Time:</b> <%= AntwebMgr.getStartTime() %>. <b>(Hrs:</b> <%= AntwebUtil.hrsSince(AntwebMgr.getStartTime()) %><b>).</b>
 <br><br><b>Upload services</b> - To take On/Off line:<a href="<%= domainApp %>/serverStatus.do?action=toggleDownTime">Toggle Down Time</a>
 <%

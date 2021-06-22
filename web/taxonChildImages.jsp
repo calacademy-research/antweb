@@ -124,7 +124,9 @@
       useShot = true;
       use_thumb = "d";
       choice_is="Dorsal";
-      A.log("taxonChildImages.jsp useShot:" + useShot + " use_thumb:" + use_thumb + " choice_is:" + choice_is + " reallyCookie:" + reallyCookie.getValue() + " totalImaged:" + totalImaged);
+      String cookieStr = "";
+      if (reallyCookie != null) cookieStr = reallyCookie.getValue();
+      A.log("taxonChildImages.jsp useShot:" + useShot + " use_thumb:" + use_thumb + " choice_is:" + choice_is + " reallyCookie:" + cookieStr + " totalImaged:" + totalImaged);
     }
 
 %>
