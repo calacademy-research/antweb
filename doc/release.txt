@@ -1,4 +1,7 @@
-
+Release 8.62
+  Fix css column display for Show Specimen Taxa feature.
+  Regional data upload refinements.
+  
 Release 8.61
   dissallow bot access of locality.do?name=
 

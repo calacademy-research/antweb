@@ -1471,6 +1471,13 @@ h2.display_count {
     width: 90px; // 80    
 }
 
+/*
+ added. Testing
+*/
+.list_extras.localSpecimens {
+    width: 90px; // 80
+}
+
 .was_list_extras.map {
     text-align:left;
     padding-left:3px;   // was 30px;

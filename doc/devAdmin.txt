@@ -21,7 +21,7 @@ docker-compose up --build antweb
 docker-compose up --build -d
 
 --- Database Stuff ---
-
+  * Some of this old. See below: Loading local Database
 #To get into mysql:
 docker-compose exec mysql mysql -u antweb -p ant
 
@@ -134,8 +134,6 @@ CID=$(docker run -d --rm \
 	 mysql:5)   
 
 docker exec -i $CID sh -c "exec mysql -uroot ant" < ant-currentDump.sql  
- 
-# NOPE. Use the above, not this one: docker exec -it $CID mysql -u root 
 
 -Repeaat the "*Process Check and Kill as needed" above.
     

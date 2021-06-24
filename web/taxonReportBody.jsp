@@ -99,7 +99,7 @@
      <% if ("images".equals(orderBy)) u = underline; else u = "";  %>        
         <div class="list_extras images"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=images" %>'>Images</a></b></font></div>
 
-     <% if ("map".equals(orderBy)) u = underline; else u = "";  %>
+     <% if ("map".equals(orderBy)) u = underline; else u = ""; %>
      <div class="list_extras map"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=map" %>'>Map</a></u></b></font></div>
 	 <% if (!isMuseum) { %>        
 		  <% if ("source".equals(orderBy)) u = underline; else u = "";  %>
@@ -222,6 +222,7 @@
         </div>
     <% } else { %>
         <div class="list_extras specimens"><a title="From specimen data">n/a</a></div>
+        <div class="list_extras localSpecimens"><a title="From specimen data">n/a</a></div>
         <div class="list_extras images"><a title="From specimen data">n/a</a></div>
         <div class="list_extras map"><a title="From specimen data">n/a</a></div>
         <div class="list_extras source">AntWeb&nbsp;specimen</div>

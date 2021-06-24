@@ -535,7 +535,7 @@ public class UploadAction extends Action {
 				  + "<br><br>or"
 				  + "<br><br>'<b>Regional_Taxon_List</b>' in the filename."
 				  + "<br>File can be downloaded from http://www.antwiki.org/wiki/images/0/0c/AntWiki_Regional_Taxon_List.txt."
-				  + "<br>File likely to require editing/massage.  If file is 'binary', select * in Textwrangler and save in a new file (with name that contains 'Regional__Taxon_List'."
+				  + "<br>File likely to require editing/massage.  If file is 'binary', select * in Textwrangler and save in a new file (with name that contains 'Regional_Taxon_List'."
                   + "<br>File may be persisted in source tree at /web/data/. After this first step is complete, execute "
                   + "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a>"
                   + "<br>in order to push data from the antwiki_taxon_country into the geolocale_taxon table with source = 'antwiki'."
@@ -830,13 +830,11 @@ public class UploadAction extends Action {
       throws IOException {
 
         UploadDetails uploadDetails = null;
-        String messageStr = null;
 
         String dir = theForm.getHomePageDirectory();
 
         FormFile testFile = theForm.getTestFile();
         String operation = testFile.getFileName();
-
 
 		String docBase = AntwebProps.getDocRoot();
         //String docBase = request.getRealPath("/");
@@ -846,7 +844,9 @@ public class UploadAction extends Action {
         //A.log("uploadDataFile() docBase:" + docBase);
         String fileName = docBase + testFile.getFileName();
         boolean isSuccess = new Utility().copyFile(theForm.getTestFile(), fileName);
-        if (!isSuccess) {
+
+		String messageStr = "Warning - file not uploaded:" + fileName;
+		if (!isSuccess) {
           messageStr = "copyFile failure";
 
           s_log.error("uploadDataFile() messageStr:" + messageStr + " does docBase exist:" + docBase);
@@ -856,7 +856,7 @@ public class UploadAction extends Action {
         A.log("uploadDataFile() dir:" + dir + " docBase:" + docBase + " fileName:" + fileName);
         // project:worldants fileName:/Users/mark/dev/calAcademy/workingdir/worldants.txt shortFileName:worldants.txt encoding:UTF-8 isBioRegion:true
 
-        BufferedReader in = null;
+		BufferedReader in = null;
         try {
 
             String encoding = "UTF-8";
