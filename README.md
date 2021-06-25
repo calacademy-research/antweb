@@ -139,7 +139,7 @@ CID=$(docker run -d --rm \
 	-e MYSQL_ALLOW_EMPTY_PASSWORD=1 \
 	-e MYSQL_DATABASE=ant \
 	--mount source=antweb_database,target=/var/lib/mysql \
-	 mysql:5)
+	 mysql:5 --innodb-buffer-pool-size=4G --innodb-log-file-size=512M --innodb-buffer-pool-instances=4)
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
 gunzip -c ./ant-currentDump.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
