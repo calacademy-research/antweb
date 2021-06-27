@@ -43,8 +43,7 @@ public abstract class QueryManager {
         if (i == queries.size()) html += "</ul>";
       }
       return html;
-    }    
-    
+    }
 
 // ---------------- 
 
@@ -53,11 +52,20 @@ public abstract class QueryManager {
         ArrayList<NamedQuery> queryList = Queries.getAdminCheckQueries();       
         // Above, due to scrappy groups/login design, it is possible to not specify a admin_login for a group, and when the group is created
         // and used for insertion of records (SpecimenUpload.java:309) there is no access_login created, causing problems at loadAllSpecimenFiles times.
+        A.log("Running adminAlerts:" + queryList);
         for (NamedQuery namedQuery : queryList) {
           String results = runNamedQueryHtml(namedQuery, connection);
+          //A.log("namedQuery:" + namedQuery + " results:" + results);
           if (results != null)
-            if (!results.contains("rowCount:</b>0"))
-              message += results;
+            if ("geolocaleTaxaPresent".equals(namedQuery.getName())) {
+              if (results.contains("records missing")) {
+                  s_log.warn("Investigate: " + results);
+                  message += results;
+              }
+            } else{
+                if (!results.contains("rowCount:</b>0"))
+                    message += results;
+            }
         }
         if ("".equals(message)) message = "Success";
         return message;        
@@ -280,7 +288,7 @@ public abstract class QueryManager {
             if (namedQuery.getDesc() != null)
                 message.append("<br><br><b>Description:</b>" + namedQuery.getDesc() + "\r");
 
-            A.log("namedQuery:" + namedQuery.getDesc());
+            //A.log("namedQuery:" + namedQuery.getDesc());
 
             message.append("<br><br><b>Query:</b> " + namedQuery.getQuery() + "\n");
 		    message.append("<br><br><table>");

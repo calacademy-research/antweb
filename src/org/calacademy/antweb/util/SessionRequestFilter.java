@@ -38,8 +38,7 @@ public class SessionRequestFilter implements Filter {
       ServletContext ctx = request.getSession().getServletContext();
 
       PageTracker.add(request);
-
-
+      
 	  //A.log("target:"+ target);
 
       Login accessLogin = LoginMgr.getAccessLogin(request);

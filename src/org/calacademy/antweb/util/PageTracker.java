@@ -37,11 +37,17 @@ possible moment - ideally in jsp footer.
       }
       
       String target = HttpUtil.getTarget(request);
-      
+
+      int targetCount = PageTracker.getTargetCount(target);
+      if (targetCount > 0) {
+          s_log.warn("add() targetCount:" + targetCount + " target:" + target);
+      }
+
       // Curator pages can go in here. Things that an admin would notice going wrong may be exempt.
       if (target.contains("curate.do")
        || target.contains("adminAlert.do")
       ) return;
+
       Tracker tracker = new Tracker();
       tracker.setTarget(target);
       tracker.setStartTime(new Date());    
@@ -112,7 +118,17 @@ possible moment - ideally in jsp footer.
     public static int getRequestCount() {
       return trackerMap.size();
     }
-    
+
+    public static int getTargetCount(String target) {
+        if (target == null) return 0;
+        int targetCount = 0;
+        Collection<Tracker> trackers = trackerMap.values();
+        for (Tracker tracker : trackers) {
+            if (target.equals(tracker.getTarget())) targetCount = targetCount + 1;
+        }
+        return targetCount;
+    }
+
     public static String showRequests() {
         String message = "";
 
