@@ -49,7 +49,7 @@ if (exception != null) {
 
   String shortStack = "No stacktrace.";
   if (exception instanceof Exception) {
-    shortStack = AntwebUtil.getAntwebStackTrace((Exception) exception);
+    //shortStack = AntwebUtil.getAntwebStackTrace((Exception) exception);
   }
   out.print(shortStack);
 

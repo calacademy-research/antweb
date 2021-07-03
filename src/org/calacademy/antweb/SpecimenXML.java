@@ -38,7 +38,8 @@ public class SpecimenXML extends DefaultHandler {
             }
             if (xmlString.contains(" ")) message = "Is file in UTF? Do not use UTF - With BOM. ";
          */
-            s_log.error("isInvalid() " + message + " e:" + e + " for xmlString:" + xmlString + ". FILE COULD BE SAVED AS UTF8 with BOM?");
+            s_log.error("isInvalid() " + message + " e:" + e + ". FILE COULD BE SAVED AS UTF8 with BOM?");
+            s_log.info("isInvalid() " + message + " e:" + e + " for xmlString:" + xmlString + ". FILE COULD BE SAVED AS UTF8 with BOM?");
             isInvalid = message + e.toString() + ". Could file have been erroneously saved as UTF8 with BOM?";
         } catch (Exception e) {
             String message = "";

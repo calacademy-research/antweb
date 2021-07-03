@@ -131,7 +131,11 @@ String serverDetails = (String) request.getAttribute("serverDetails");
  <%  //HttpSession session = request.getSession();
      for (Enumeration e = session.getAttributeNames() ; e.hasMoreElements() ;) {
        String name = (String) e.nextElement();
-       out.println("<br>name:<b>" + name + "</b> value:" + session.getAttribute(name));
+       if (!"dummyForm".equals(name)) {
+         out.println("<br>name:<b>" + name + "</b> value:" + session.getAttribute(name));
+       } else {
+         out.println("<br>name:<b>dummyForm</b>");
+       }
      }
  %>  
 <br><br><br>

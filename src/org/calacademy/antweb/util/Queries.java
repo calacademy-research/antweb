@@ -216,10 +216,10 @@ public abstract class Queries {
         // SHould be over 57000 records from: select count(*) from geolocale_taxon gt, geolocale g where gt.geolocale_id = g.id and g.georank = 'country';
         queries.add(new NamedQuery(
             "geolocaleTaxaPresent"
-          , "Geolocale Taxa Present: Aught to be at least 50,000 geolocale_taxa country records. Row will be returned if less, and that is a problem. Check literature records."
+          , "Geolocale Taxa Present: Aught to be at least 50,000 geolocale_taxa country records. If not 0 is returned, that is a problem. Check literature records."
           , ""
-          //, "select count(*) from geolocale_taxon gt, geolocale g where gt.geolocale_id = g.id and g.georank = 'country' having count(*) > 50000;"
-            , "select if (count(*) < 50000, 'records missing!', 0) isLow from geolocale_taxon gt, geolocale g where gt.geolocale_id = g.id and g.georank = 'country'"
+          // The concat is because the resullts are scanned for "records missing"
+            , "select if (count(*) < 50000, concat('records', ' missing!'), 0) isLow from geolocale_taxon gt, geolocale g where gt.geolocale_id = g.id and g.georank = 'country'"
         ));
  
         queries.add(new NamedQuery(
