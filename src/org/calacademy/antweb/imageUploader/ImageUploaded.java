@@ -97,20 +97,23 @@ public class ImageUploaded {
   }
 
   // From the original file uploaded we derive the code, the shot and number.
-  public void init(String fileName) {
+  public String init(String fileName) {
+    String message = "success";
     int u1 = 0;
     int u2 = 0;
     int period = 0;
     try {
         if (fileName == null) {
-          setErrorMessage("Null filename");
-          return;
+          message = "Null filename";
+          setErrorMessage(message);
+          return message;
         }
         setFileName(fileName);
         u1 = fileName.indexOf("_");
         if (u1 <= 0) {
-          setErrorMessage("_ and shot type required.");         
-          return;
+          message = "_ and shot type required.";
+          setErrorMessage(message);
+          return message;
         }
 
         // handle underscore that could be early in the name.
@@ -128,43 +131,25 @@ public class ImageUploaded {
 
         String beforePeriod = fileName.substring(0, fileName.indexOf("."));
         if (!beforePeriod.equals(beforePeriod.toUpperCase())) {
-          setErrorMessage("Filename must be uppercase"); 
-          return;
+          message = "Filename must be uppercase";
+          setErrorMessage(message);
+          return message;
         }
-        
-/*
-        u2 = fileName.indexOf("_", u1 + 1);
-        period = fileName.indexOf(".");
-        if (u2 <= 0) {
-          setNumber(1);
-          String shot = fileName.substring(u1 + 1, period).toLowerCase();
-          if (!Arrays.asList(new String[]{"d", "p", "h", "l", "v"}).contains(shot)){
-             setErrorMessage("Unsupported shot type");
-             return;
-          }
-          setShot(shot);              
-        } else {
-          setShot(fileName.substring(u1 + 1, u2).toLowerCase());  
-          String num = fileName.substring(u2 + 1, period);
-          if (num != null) setNumber(new Integer(num).intValue());
-        }
-*/                        
-        
 
-//        setShot(shot.toLowerCase());         
-        
         u2 = fileName.indexOf("_", u1 + 1);
         period = fileName.indexOf(".");
         if (u2 <= 0) {
           setNumber(1);
           String shot = fileName.substring(u1 + 1, period);
           if (shot.contains(" ")){
-             setErrorMessage("Shot contains space");
-             return;
+             message = "Shot contains space";
+             setErrorMessage(message);
+             return message;
           }
           if (!Arrays.asList(new String[]{"D", "P", "H", "L", "V"}).contains(shot)){
-             setErrorMessage("Unsupported shot type");
-             return;
+             message = "Unsupported shot type";
+             setErrorMessage(message);
+             return message;
           }
           setShot(shot.toLowerCase());              
         } else {
@@ -179,15 +164,15 @@ public class ImageUploaded {
         setExt(ext);
         //A.log("populate() fileName:" + fileName + " u1:" + u1 + " u2:" + u2 + " period:" + period + " code:" + getCode() + " shot:" + getShot() + " number:" + getNumber() + " ext:" + ext);
 
-        //A.log("init() this:" + this.toString());
-
-        return;
+        return message;
     } catch (NumberFormatException e) {
       s_log.warn("populate() e:" + e);
     } catch (StringIndexOutOfBoundsException e) {
-      s_log.warn("populate() e:" + e);
-    }  
-    setErrorMessage("Invalid filename");
+      s_log.warn("populate() fileName:" + fileName + " e:" + e);
+    }
+    message = "Invalid filename:" + fileName;
+    setErrorMessage(message);
+    return message;
   }
 
   public String genImages() {

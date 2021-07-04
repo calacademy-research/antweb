@@ -83,7 +83,7 @@ public final class ImageUploaderAction extends Action {
                 ImageUpload imageUpload = null;
 
                 UploadAction.setIsInUploadProcess(accessLogin.getName() + ":" + accessGroup.getName());
-A.log(accessLogin.getName() + ":" + accessGroup.getName());
+                //A.log(accessLogin.getName() + ":" + accessGroup.getName());
 
                 ImageUploaded.tempDir.toFile().mkdirs();
                 // /usr/local/antweb/temp/images/
@@ -111,7 +111,23 @@ A.log(accessLogin.getName() + ":" + accessGroup.getName());
                 for (FileItem fileItem : fileItems) {
                     if (!fileItem.isFormField()) {
                         ImageUploaded imageUploaded = new ImageUploaded();
-                        imageUploaded.init(fileItem.getName()); // parse
+                        message = imageUploaded.init(fileItem.getName()); // parse
+
+                        if (!"success".equals(message)) {
+                            request.setAttribute("message", message);
+                            s_log.warn(message);
+                            return (mapping.findForward("message"));
+                        }
+
+                        String code = imageUploaded.getCode();
+                        boolean exists = (new SpecimenDb(connection)).exists(code);
+                        if (!exists) {
+                            message = "Specimen:" + code + " not found in the Antweb database.";
+                            request.setAttribute("message", message);
+                            s_log.warn(message);
+                            return (mapping.findForward("message"));
+                        }
+
                         boolean specimenDataExists = specimenDb.exists(imageUploaded.getCode());
                         imageUploaded.setIsSpecimenDataExists(specimenDataExists); // verify specimen existence.
                         imageUploaded.setFileItem(fileItem); // write to disk.
@@ -158,12 +174,13 @@ A.log(accessLogin.getName() + ":" + accessGroup.getName());
                 return (mapping.findForward("imageUploader"));         
             }
         } catch (Exception ex) {
-          AntwebUtil.logStackTrace(ex);
+          //AntwebUtil.logStackTrace(ex);
           AntwebUtil.log("ImageUploaderAction.execute() e:" + ex);
           message = "Error uploading images. ex:" + ex.toString();
           AdminAlertMgr.add(message, connection);
           request.setAttribute("message", message);
-          return (mapping.findForward("message")); 
+          s_log.warn(message + " temppDir:" + ImageUploaded.tempDir);
+          return (mapping.findForward("message"));
         } finally {
           DBUtil.close(connection, this, "ImageUploaderAction.execute()");
           UploadAction.setIsInUploadProcess(null);          

@@ -1,8 +1,8 @@
-Release 8.62.1
+Release 8.63
   serverStatus display
   geolocaleTaxaPresent flagging. 
   Specimen XML logging change.
-
+  Image upload error handling refinements.
 
 Release 8.62
   Fix css column display for Show Specimen Taxa feature.

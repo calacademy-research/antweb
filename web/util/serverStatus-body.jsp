@@ -135,6 +135,7 @@ String serverDetails = (String) request.getAttribute("serverDetails");
          out.println("<br>name:<b>" + name + "</b> value:" + session.getAttribute(name));
        } else {
          out.println("<br>name:<b>dummyForm</b>");
+         Antweb.org("serverStatus-body.jsp dummyForm:" +
        }
      }
  %>  
