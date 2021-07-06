@@ -48,6 +48,8 @@ services:
     hostname: antweb
     expose:
       - 8009
+    ports:
+      - "127.0.0.1:8080:8080"   # expose manager interface to local machine for monitoring
     environment:
       CATALINA_OPTS: "-XX:MaxRAMPercentage=40 -server -XX:+UseParallelGC"
     extra_hosts:

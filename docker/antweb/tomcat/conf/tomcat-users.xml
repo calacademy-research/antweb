@@ -45,6 +45,8 @@
 
     <role rolename="admin-gui"/>
     <role rolename="manager-gui"/>
+    <role rolename="manager-status"/>
     <user username="admin" password="formica" roles="admin-gui,manager-gui"/>
+    <user username="netdata_monitor" password="LepYJmQeBByUwLsTKyYxozgdYzZhWwRBdmrkZqPoWWHTmOrw" roles="manager-status"/>
 
 </tomcat-users>
