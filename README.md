@@ -124,6 +124,9 @@ mysqldump -h 127.0.0.1 -u antweb -p --all-databases --routines --single-transact
 # Enter password:
 
 scp user@antweb:/tmp/ant-currentDump.sql.gz ./
+
+#You can find the most recent database snapshot here:
+scp root@antweb.org:/root/ant-currentDump.sql.gz .
 ```
 
 Load the database into docker volume mounted by the mysql container

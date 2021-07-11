@@ -315,14 +315,30 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
      	    if (!Genus.isIndet(genusName)) {
      	        // Perhaps replace subfamilyName with the parent of the genus...
 			    Genus genus = TaxonMgr.getGenusFromName(genusName);
-			    //A.log("parseLine() not indet:" + genus);
-				if (genus != null) {
+			    //if (genus != null) A.log("parseLine() genusName:" + genusName + " genus:" + genus + " genusSubfamily:" + genus.getSubfamily());
+
+			    if (genus != null) {
                   // If we find it, use it.
 				  String subfamily = genus.getSubfamily();
+
+/*
+  If a specimen (perhaps a non-ant) is uploaded without family and is given the ant default: (formicidae)
+    Then how do we automate replacement when the problem is corrected?
+  if the specimen's subfamily is different (for instance: gryllinae) and the old one is '(formicidae)'
+    then delete that genus outright from the database
+
+    This problem manifested for specimen: MBCENT0000589 and was resolved with:
+      delete from taxon where taxon_name = "(formicidae)brachytrupes";
+
+    Could we automate this? There are other potentially troublesome past
+      select access_group, taxon_name, taxarank, family, subfamily, genus, species, created, source from taxon where line_num is null and taxarank = "genus" order by access_group, taxon_name;
+ */
+
+                    // Should this be: (formicidae) ?
                   if (!"(Formicidae)".equals(subfamilyName) && !subfamily.equals(subfamilyName)) {                  
  					  String displayTaxonName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + subfamily + genusName + "'>" + Taxon.displaySubfamilyGenus(subfamily, genusName) + "</a>";
 					  getMessageMgr().addToMapMessages(MessageMgr.preferredSubfamilyForGenusReplaced, subfamilyName, displayTaxonName);                  
-                      //A.log("parseLine() preferredSubfamilyForGenusReplaced: displayTaxonName:" + displayTaxonName);
+                      //A.log("parseLine() preferredSubfamilyForGenusReplaced: subfamily:" + subfamily + " subfamilyName:" + subfamilyName + " genus:" + genus + " genusName:" + genusName + " displayTaxonName:" + displayTaxonName);
                   }
                   subfamilyName = subfamily;
 				} else {

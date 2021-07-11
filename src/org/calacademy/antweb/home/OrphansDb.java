@@ -455,14 +455,16 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
           // A.log("deleteOrphanedTaxonsFromSource() max:" + maxDeleteOrphanSize + " orphanList:" + orphanList);
           boolean devException = AntwebProps.isDevMode() && false;
           if (devException || (!governed || (orphanList.size() < maxDeleteOrphanSize))) {
+            String notDeletedList = "";
             for (String taxonName : orphanList) {
               if (hasDescEdit(getConnection(), taxonName)) {
-                s_log.warn("deleteOrphanedSpeciesFromSource() not deleted due to description edits taxonName:" + taxonName);
+                notDeletedList += taxonName + ", ";
                 continue;
               }
               deleteTaxon(taxonName);
             }
-            s_log.warn("deleteOrphanedSpeciesFromSource() orphanList:" + orphanList);
+            s_log.warn("deleteOrphanedSpeciesFromSource() taxonNames not deleted due to description edits:" + notDeletedList);
+            //A.log("deleteOrphanedSpeciesFromSource() orphanList:" + orphanList);
 
           } else {  
             message = "Warning. Please check the inserted specimens count to verify that the full file was uploaded.";

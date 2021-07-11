@@ -205,8 +205,10 @@ public class SpecimenUpload extends SpecimenUploadParse {
                 // dbErrorSet added in AntwebUpload.saveSpecimen()
 
                 String source = "specimen" + accessGroup.getId();
-                String message = new OrphansDb(getConnection()).deleteOrphanedSpeciesFromSource(source, true); // Only if less than allowable size: governed.
-                A.log("OrphansDB.deleteOrphanedSpeciesFromSource() returns:" + message);
+                boolean governed = true;
+                if (AntwebProps.isDevMode()) governed = false;
+                String message = new OrphansDb(getConnection()).deleteOrphanedSpeciesFromSource(source, governed); // Only if less than allowable size: governed.
+                A.log("deleteOrphanedSpeciesFromSource() returns:" + message);
                 if (message != null && !AntwebProps.isDevMode()) {
                   getUploadDetails().setMessage(message);
                 }                
@@ -402,9 +404,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
             query = "select distinct subfamily, genus from taxon where (taxarank = 'species' or taxarank = 'subspecies') "
               + " and (subfamily, genus) in ( select subfamily, genus from taxon where taxarank = 'genus' and status = 'morphotaxon') "
-              + " and genus not like '(%' and access_group = " + group.getId();
+              + " and genus not like '(%' and status = 'morphotaxon' and access_group = " + group.getId();
 
-             //A.log("groupMorphoGenera() query:" + query);
+             A.log("groupMorphoGenera() query:" + query);
 
             rset = stmt.executeQuery(query);
             while (rset.next()) {

@@ -65,6 +65,7 @@
             otherProjectUrl = domainApp + "/" + strutsTarget + "?" + browserParams;
             otherViewUrl = domainApp + "/" + otherViewTarget + "?" + browserParams;
             targetName = format.capitalizeFirstLetter(taxon.getSubfamily());
+A.log("taxonomicHierarchy 1 targetName:" + targetName + " rank:" + taxon.getRank());
             if (Rank.SUBFAMILY.equals(taxon.getRank())) targetUrl = otherViewUrl; else targetUrl = descUrl;
             if (taxon.isAnt()) out.println("<li>Subfamily: <a href=\"" + targetUrl + "\">" + targetName + "</a></li>"); 
               else out.println("<li>Subfamily: " + targetName + "</li>");

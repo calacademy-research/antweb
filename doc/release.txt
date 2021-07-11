@@ -1,3 +1,6 @@
+Release 8.63.1
+  Resolve the non-ant subfamily issue for brachytrupes.
+
 Release 8.63
   serverStatus display
   geolocaleTaxaPresent flagging. 

@@ -298,17 +298,21 @@ public class UploadFile {
     
     public String backup() {
       String backupDirFile = null;
+
+      File file = new File(getFileLoc());
+      A.log("backup() exists:" + exists() + " fileLoc:" + getFileLoc() + " file:" + file + " exists:" + file.exists());
+
       if (!exists()) {
         s_log.warn("backup() file does not exist:" + getFileLoc());
       } else {
-        File file = new File(getFileLoc());
         if (file.exists()) {
           Utility util = new Utility();
           String fullWebDir = util.getDocRoot() + "web";
           String fullWebUploadDir = fullWebDir + "/upload";
           //String backupWorkingDir = util.getInputFileHome() + "/backup";
           util.makeDirTree(fullWebUploadDir);
-          //A.log("backup() makeDirTree:" + fullWebUploadDir);
+          A.log("backup() makeDirTree:" + fullWebUploadDir);
+
           this.backupFileName = util.getDateForFileName() + "-" + getShortFileName();
           String tempBackupDirFile = fullWebUploadDir + "/" + backupFileName;
           try {
