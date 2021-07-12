@@ -331,7 +331,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
       delete from taxon where taxon_name = "(formicidae)brachytrupes";
 
     Could we automate this? There are other potentially troublesome past
-      select access_group, taxon_name, taxarank, family, subfamily, genus, species, created, source from taxon where line_num is null and taxarank = "genus" order by access_group, taxon_name;
+      select access_group, taxon_name, taxarank, family, subfamily, genus, species, created, source from taxon where line_num is null and taxarank = "genus" order by source, created, taxon_name;
+
  */
 
                     // Should this be: (formicidae) ?

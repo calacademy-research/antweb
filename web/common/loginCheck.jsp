@@ -1,6 +1,6 @@
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
-<%@ page import="org.calacademy.antweb.Group" %>
+<%@ page import="org.calacademy.antweb.*" %>
 
 <%                                                                                                                   
     Login accessLogin2 = LoginMgr.getAccessLogin(request);

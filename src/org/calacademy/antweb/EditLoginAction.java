@@ -29,11 +29,17 @@ public final class EditLoginAction extends Action {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;
+  // We want this...
+  //        ActionForward c = Check.login(request, mapping); if (c != null) return c;
+
+
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
         HttpSession session = request.getSession();
         EditLoginForm editForm = (EditLoginForm) form;
+
+        A.log("execute() id:" + editForm.getId() + " accessLogin(): " + accessLogin);
+
         Login login = null;
         java.sql.Connection connection = null;
         try {
@@ -53,14 +59,21 @@ public final class EditLoginAction extends Action {
             return (mapping.findForward("error"));
           }
 
-          A.log("execute() 1 isSubmit:" + editForm.getIsSubmit());  
 
-          if ("true".equals(editForm.getIsSubmit())) {
-          
-            String message = validate(editForm, request);       
+          boolean isSubmit = "true".equals(editForm.getIsSubmit());
+          boolean isPost = HttpUtil.isPost(request);
+          A.log("execute() ContentType:" + request.getContentType());
+          A.log("execute() method:" + request.getMethod());
+          A.log("execute() isSubmit:" + editForm.getIsSubmit() + " isPost:" + isPost);
+
+          if (isSubmit || isPost) {
+
+            String message = validate(editForm, request);
             if (message != null) {
-               request.setAttribute("message", message);           
-               return (mapping.findForward("editLogin"));                  
+               A.log("execute() validate() failure message:" + message);
+               request.setAttribute("message", message);
+               request.getSession().setAttribute("thisLogin", login);
+               return (mapping.findForward("editLogin"));
             }
             
             //if (isNoChange(editForm, login)) 
@@ -73,15 +86,18 @@ public final class EditLoginAction extends Action {
             login.setFirstName(editForm.getFirstName());
             login.setLastName(editForm.getLastName());
             
-            A.log("execute() login.email:" + login.getEmail());             
+            A.log("execute() loginEmail:" + login.getEmail());
 
             request.setAttribute("message", "User Account Saved.");          
             loginDb.userUpdateLogin(login);
+          //} else {
+          //    A.log("execute() form must be submitted. Test with: https://localhost/editLogin.do?id=8564&isSubmit=true");
+          //    request.getSession().setAttribute("thisLogin", new Login());
           }
           
           A.log("execute() login:" + login);             
           request.getSession().setAttribute("thisLogin", login);
-
+          return mapping.findForward("editLogin");
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
             return (mapping.findForward("error"));
@@ -89,7 +105,7 @@ public final class EditLoginAction extends Action {
             DBUtil.close(connection, this, "EditLoginAction()");
         }
         
-        return mapping.findForward("goToLogin");
+        //return mapping.findForward("goToLogin");
     }
     
     private boolean isNoChange(EditLoginForm editForm, Login login) {
@@ -129,7 +145,7 @@ public final class EditLoginAction extends Action {
            ((password == null) || (password.equals(""))) ||
            ((retypePassword == null) || (retypePassword.equals("")))
            ) {
-            A.log("execute() password:" + password + " retype:" + retypePassword);                 
+            A.log("validate() password:" + password + " retype:" + retypePassword);
              message = "Password fields may not be empty";
         }  
         return message;  

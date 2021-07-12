@@ -8,7 +8,6 @@
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.upload.*" %>
 <%@ page import="org.calacademy.antweb.home.*" %>
-<%@ page import="org.calacademy.antweb.data.Plazi" %>
 
 <%@ page import="com.mchange.v2.c3p0.impl.*" %>
 
@@ -28,7 +27,7 @@
 <br><b><font color=red>X</font></b> means that the agent is a known bot.
 <br><b><font color=red><img src="<%= AntwebProps.getDomainApp() %>/image/greenCheck.png"></font></b> means that the user is logged in.
 
-<br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getStartTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getStartTime()) %>.
+<br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getInitTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) %>.
 
 <br><br><b>Summary:</b> <%= UserAgentTracker.htmlSummary() %>
 

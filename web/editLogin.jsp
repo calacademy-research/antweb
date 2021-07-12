@@ -10,7 +10,8 @@
 
 <%@include file="/common/antwebSecure-defs.jsp" %>
 
-<%@include file="/common/loginCheck.jsp" %>
+<% // Must be able to edit our own page %>
+<!-- % @ include file="/common/loginCheck.jsp" % -->
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
     <tiles:put name="title" value="Edit Login Info - AntWeb" />

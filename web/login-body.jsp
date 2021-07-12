@@ -33,7 +33,7 @@
 </html:messages>
 
 <!-- html:form action="login" -->
-<form name="loginForm" method="post" action="<%= AntwebProps.getSecureDomainApp() %>/login.do">
+<form name="loginForm" method="POST" action="<%= AntwebProps.getSecureDomainApp() %>/login.do">
 
 <%
 LoginForm loginForm = (LoginForm) request.getAttribute("loginForm");
@@ -44,6 +44,7 @@ if (target != null) {
   out.println("<input type=\"hidden\" name=\"target\" value=\"" + target + "\">");
 }
 %>
+<input type="hidden" name="isSubmit" value="true">
 
 <p>Username: 
 <!-- html :text property="userName" style="border: 1px solid #B9B9B9; font-family: inherit; padding: 2px; position: relative; top: -1px; width: 140px;" / -->

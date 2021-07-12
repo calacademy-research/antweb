@@ -163,6 +163,8 @@ public class SessionRequestFilter implements Filter {
 		  AntwebMgr.populate(connection, true, true); // Trusted to close the connection
         } catch (SQLException e) {
           s_log.error("init() e:" + e + " datasource:" + ds + " connection:" + connection);
+        } finally {
+          // Could we check on connections?
         }
 
         long freeSpace = AntwebSystem.getFreeSpace();        

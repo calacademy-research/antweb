@@ -72,26 +72,43 @@ public final class LoginAction extends Action {
         }
 
         if ("Create Account".equals(value)) {
-          login = createAccount(request, userNameOrEmail, password, messages);   
-          if (login == null) {
-            //s_log.warn("execute() createAccount login is null for userNameOrEmail:" + userNameOrEmail);
-            // bots do this.  Ignore.
-          }
 
-          if (login != null) {
-            message = "User Account created:" + userNameOrEmail;     
-            request.getSession().setAttribute("thisLogin", login);
-            //if (messages.isEmpty()) 
-            target = "/editLogin.do?id=" + login.getId();
-            A.log("createAccount() attempt " + userNameOrEmail + " login:" + login + " messages:" + messages.get());          
-          }
-        }
-        if ((value == null) || ("Login".equals(value))) {
-          login = login(request, userNameOrEmail, password, messages);
-          request.getSession().setAttribute("thisLogin", login);
-          //A.log("login() attempt name:" + userNameOrEmail + " login:" + login + " messages:" + messages.size() + " target:" + target);          
-        }          
+            /*
+            if (userNameOrEmail == null) {
+                ActionMessage msg = new ActionMessage("error.login.needName");
+                messages.add("message", msg);
+            } else {
+             */
 
+                login = createAccount(request, userNameOrEmail, password, messages);
+                if (login == null) {
+                    A.log("execute() createAccount login is null for userNameOrEmail:" + userNameOrEmail);
+                    // bots do this.  Ignore.
+                }
+
+                if (login != null) {
+                    message = "User Account created:" + userNameOrEmail;
+                    request.getSession().setAttribute("thisLogin", login);
+                    //if (messages.isEmpty())
+                    target = "/editLogin.do?id=" + login.getId();
+                    A.log("createAccount() attempt " + userNameOrEmail + " login:" + login + " messages:" + messages.get() + " isEmpty:" + messages.isEmpty());
+
+                    login = login(request, userNameOrEmail, password, messages);
+
+                    // If the user is editing their own.
+                    request.getSession().setAttribute("accessLogin", login);  // Log in the user.
+
+                    request.getSession().setAttribute("thisLogin", login);  // The one being edited.
+
+                    return new ActionForward(target, true);
+                }
+            }
+            if ((value == null) || ("Login".equals(value))) {
+                login = login(request, userNameOrEmail, password, messages);
+                request.getSession().setAttribute("thisLogin", login);
+                //A.log("login() attempt name:" + userNameOrEmail + " login:" + login + " messages:" + messages.size() + " target:" + target);
+            }
+        //}
         //request.setAttribute("message", message); 
 
         if (messages.isEmpty()) {
@@ -100,7 +117,6 @@ public final class LoginAction extends Action {
               s_log.error("execute() login is null for value:" + value);
             }
             session.setAttribute("accessLogin", login);
-            
             //s_log.warn("Successful login of " + userNameOrEmail + " target:" + target);
 
             if ((target != null) && (!target.equals("")) 
@@ -113,7 +129,6 @@ public final class LoginAction extends Action {
               }               
               return new ActionForward(target, true);  // target must be a physical page
             } else {
-
               // If logging in from the home page or the login page, go to the curate page.
               if ("".equals(target)) return new ActionForward(AntwebProps.getDomainApp() + "/index.do", true);
   
@@ -127,27 +142,7 @@ public final class LoginAction extends Action {
             return (mapping.findForward("failure"));
         }
     }
-    
 
-    
-/*
-    private Login browseAnonymously(HttpServletRequest request, ActionMessages messages) {
-        Login login = new Login();
-        login.setName("Anonymous");
-
-        login.setCreated(new java.util.Date());
-        login.setGroupId(-1);       
-        Group group = new Group();
-        group.setName("");
-        group.setId(-1);             
-        login.setGroup(group);
-        login.getGroup().setLogin(login);  // backwards, but allows code to remain unchanged.                    
-        login.setIsAdmin(false);
-            
-        return login;        
-    }
-    */
-        
     private Login createAccount(HttpServletRequest request, String userNameOrEmail, String password, ActionMessages messages) {
         ActionMessage msg = null;
 

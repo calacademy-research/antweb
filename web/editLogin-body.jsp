@@ -2,8 +2,7 @@
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
-<%@ page import="org.calacademy.antweb.Group" %>
-<%@ page import="org.calacademy.antweb.Login" %>
+<%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
@@ -14,6 +13,7 @@
     String secureDomainApp = AntwebProps.getSecureDomainApp();
     String domainApp = AntwebProps.getDomainApp();
     Login accessLogin = LoginMgr.getAccessLogin(request);
+    Login thisLogin = (Login) session.getAttribute("thisLogin");
     if (thisLogin == null) {
          out.println("No Login.");
          //AntwebUtil.logStackTrace();
@@ -34,6 +34,7 @@
     </font>
 </logic:messagesPresent>
 
+<br>
 <h2>Antweb User: <%= thisLogin.getDisplayName() %></h2>
 <br>
 
