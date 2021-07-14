@@ -87,6 +87,12 @@ mkdir -p data/web
 rclone sync --size-only -P --exclude "upload/**" minio:antweb/web/ data/web/
 
 ```
+If you want the upload history, use this to grab files created in the last 30 days. Without a filter, the upload files
+are 200G total. 
+```
+rclone sync --size-only -P --max-age=30d minio:antweb/web/upload data/web/upload
+
+```
 
 #### Images (~1.6 TB) (optional)
 ```bash
