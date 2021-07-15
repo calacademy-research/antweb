@@ -74,7 +74,7 @@ The WEB-INF/struts-configDb.xml softlink points to this one an antweb-dev, antwe
       <set-property property="testConnectionOnCheckout" value="true"/>
       <set-property property="autoCommitOnClose" value="true"/> 
 
-      <set-property property="unreturnedConnectionTimeout" value="6000"/> <!-- 4200 / 60 is 70 min -->  <!-- 6000 / 60 is 100 min -->
+      <set-property property="unreturnedConnectionTimeout" value="10800"/> <!-- 4200 / 60 is 70 min -->  <!-- 10800 / 60 is 3 hours -->
       <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
        
       <set-property property="testConnectionOnCheckin" value="true"/> 
