@@ -386,9 +386,10 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
     public static ArrayList<Geolocale> getAllCountries() {
       return GeolocaleMgr.getGeolocales("country");
     }
-    
+
     public static ArrayList<Geolocale> getValidCountries() {
-      ArrayList<Geolocale> validCountries = GeolocaleMgr.getGeolocales("country", true);
+        ArrayList<Geolocale> validCountries = GeolocaleMgr.getValidGeolocales("country");
+//      ArrayList<Geolocale> validCountries = GeolocaleMgr.getGeolocales("country", true);
       Collections.sort(validCountries);
       return validCountries;
     }
