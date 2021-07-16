@@ -625,23 +625,19 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     }
 
     public static ArrayList<Geolocale> getAdm1sWithSpecimen() {
-        ArrayList<Geolocale> adm1sWithSpecimen = new ArrayList<>();
-        ArrayList<Geolocale> adm1s = GeolocaleMgr.getGeolocales("adm1");
-        for (Geolocale adm1 : adm1s) {
-            if (adm1.getSpecimenCount() > 0) {
-                adm1sWithSpecimen.add(adm1);
-            }
-        }
-        return adm1sWithSpecimen;
+        return s_adm1s.stream()
+                .filter(adm1 -> adm1.getSpecimenCount() > 0)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static Geolocale inferCountry(String adm1Name) {
+    public static @Nullable Geolocale inferCountry(String adm1Name) {
         // Will only return if unique
-        ArrayList<Geolocale> adm1s = getAdm1s();
-        if (adm1s == null) return null; // Could happen due to server initialization.
+        if (s_adm1s == null) return null; // could be server initializing
+
+        if (adm1Name == null) return null;
+
         Geolocale adm1 = null;
-        for (Geolocale geolocale : adm1s) {
-            if (adm1Name == null) return null;
+        for (Geolocale geolocale : s_adm1s) {
             if (adm1Name.equals(geolocale.getName())) {
                 if (adm1 != null) return null; // Didn't find a unique adm1.
                 adm1 = geolocale;
@@ -660,9 +656,6 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
             s_log.warn("getAnyAdm1(" + adm1Name + ", " + countryName + ") must included countryName.");
             return null;
         }
-        List<Adm1> adm1s = s_adm1s;
-        if (adm1s == null) return null; // Could happen due to server initialization.
-
         return s_adm1_map.get(adm1Name, countryName);
     }
 
