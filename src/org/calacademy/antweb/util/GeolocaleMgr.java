@@ -79,7 +79,7 @@ public class GeolocaleMgr extends Manager {
 
       //A.log("populateShallow forceReload:" + forceReload + " s_geolocales:" + s_geolocales);
 
-      s_geolocales = new ArrayList<Geolocale>();
+      s_geolocales = new ArrayList<>();
       for (Region region : s_regions) {
         s_geolocales.add(region);
         for (Subregion subregion : region.getSubregions()) {
@@ -150,15 +150,17 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
       text = text.toLowerCase();
       //A.log("TaxonMgr.getPrettyTaxaNames(text) text:" + text + " prettyTaxaListSize:" + prettyTaxaNamesList.size());      
       String[] texts = text.split(" ");
-      List<String> placeNamesSubset = new ArrayList<String>();
+      List<String> placeNamesSubset = new ArrayList<>();
       int i = 0;
       for (String placeName : placeNamesList) {
         boolean containsAll = true;
-        for (int j=0 ; j < texts.length ; ++j) {
-          //log("getPlaceNames() text:" + text + " j:" + texts[j] + " placeName:" + placeName);
-          if (!placeName.toLowerCase().contains(texts[j])) containsAll = false;
-          if (!containsAll) break;
-        }
+          for (String s : texts) {
+              //log("getPlaceNames() text:" + text + " j:" + texts[j] + " placeName:" + placeName);
+              if (!placeName.toLowerCase().contains(s)) {
+                  containsAll = false;
+                  break;
+              }
+          }
         if (containsAll) {
           placeNamesSubset.add(placeName);
           ++i;
@@ -224,12 +226,9 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
       if (!AntwebMgr.isPopulated()) return null;
 //      try {
       if (Utility.isNumber(name)) {
-        Integer i = Integer.valueOf(name);
-        if (i != null) {
-          Geolocale geolocale = getGeolocale(i.intValue());
+        int i = Integer.parseInt(name);
           //A.log("GeolocaleMgr.getGeolocale(String) i:" + i + " geo:" + geolocale);
-          return geolocale;
-        }
+          return getGeolocale(i);
       }
 
       Geolocale geolocale = getRegion(name);
@@ -361,26 +360,21 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
 
       AntwebMgr.isPopulated();
 
-      // A non "true" value for isValid will return all.
-      ArrayList<Geolocale> geolocales = new ArrayList<Geolocale>();
-      if (s_geolocales == null) return null; // Could happen due to server initialization.      
-      for (Geolocale geolocale : s_geolocales) {
-        if ((georank == null) || geolocale.getGeorank().equals(georank)) {
+      if (s_geolocales == null) return null; // Could happen due to server initialization.
 
-          if ( !"true".equals(isValid) || geolocale.getIsValid()) {
-/*            
-            if ("Albania".equals(geolocale.toString())) {
-              A.log("getGeolocales(" + georank + ", " + isValid + ") IS " + geolocale.getName() + " " + geolocale.getId());
-            } else {
-              //A.log("getGeolocales(" + georank + ", " + isValid + ") NOT " + geolocale.getName() + " " + geolocale.getId());
-            }
-*/
-            geolocales.add(geolocale);
-          } 
+        Stream<Geolocale> geolocaleStream = s_geolocales.stream();
+
+        // A non "true" value for isValid will return all.
+        if ("true".equals(isValid)) {
+            geolocaleStream = geolocaleStream.filter(Geolocale::getIsValid);
         }
-      }
-      //A.log("getGeolocales(" + georank + ", " + isValid + ") geolocales:" + geolocales);
-      return geolocales;
+
+        // Filter by georank, or get all if null
+        if (georank != null) {
+            geolocaleStream = geolocaleStream.filter(geolocale -> geolocale.getGeorank().equals(georank));
+        }
+
+        return geolocaleStream.collect(Collectors.toCollection(ArrayList::new));
     }
 
     // Convenience methods:
@@ -428,12 +422,10 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
     
 // To Be deprecated. Replace with getDeepRegions()    
     public static ArrayList<Geolocale> getRegions() {
-      ArrayList<Geolocale> regionList = GeolocaleMgr.getGeolocales("region");
-      return regionList;
+        return GeolocaleMgr.getGeolocales("region");
     }
     public static ArrayList<Geolocale> getSubregions() {
-      ArrayList<Geolocale> subregionList = GeolocaleMgr.getGeolocales("subregion");
-      return subregionList;
+        return GeolocaleMgr.getGeolocales("subregion");
     }
         
     public static Subregion getSubregion(String name) {
@@ -539,7 +531,7 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
         
     public static ArrayList<String> getValidCountryList() {
       // Used by generic list.do and ListAction.java.  Better to use objects (getValidCountries()).
-      ArrayList<String> validCountryList = new ArrayList<String>();
+      ArrayList<String> validCountryList = new ArrayList<>();
 
       ArrayList<Geolocale> validCountries = GeolocaleMgr.getGeolocales("country", true);
       for (Geolocale country : validCountries) {
@@ -551,14 +543,14 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
     public static boolean isValid(String adm1Name, String countryName) {    
 		Geolocale adm1 = GeolocaleMgr.getAdm1(adm1Name, countryName);
 		if (adm1 != null) {
-		  if (adm1.getIsValid()) return true;
+            return adm1.getIsValid();
         }
         return false;
     }
     public static boolean isValid(String countryName) {    
 		Geolocale country = GeolocaleMgr.getCountry(countryName);
 		if (country != null) {
-		  if (country.getIsValid()) return true;
+            return country.getIsValid();
         }
         return false;
     }
@@ -584,18 +576,18 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     public static boolean isValidCountry(String name) {
       ArrayList<Geolocale> validCountries = getValidCountries();
       for (Geolocale geolocale : validCountries) {
-        if (geolocale.getName().equals(name)) 
+        if (geolocale.getName().equals(name))
           return true;
-      }      
-      return false; 
+      }
+      return false;
     }
     public static boolean isValidAdm1(String name) {
       ArrayList<Geolocale> validAdm1s = getValidAdm1s();
       for (Geolocale geolocale : validAdm1s) {
-        if (geolocale.getName().equals(name)) 
+        if (geolocale.getName().equals(name))
           return true;
-      }      
-      return false; 
+      }
+      return false;
     }
     
     public static ArrayList<Geolocale> getAdm1s() {
@@ -603,7 +595,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     }    
 
     public static ArrayList<Geolocale> getAdm1sWithSpecimen() {
-      ArrayList<Geolocale> adm1sWithSpecimen = new ArrayList<Geolocale>();
+      ArrayList<Geolocale> adm1sWithSpecimen = new ArrayList<>();
       ArrayList<Geolocale> adm1s = GeolocaleMgr.getGeolocales("adm1");
       for (Geolocale adm1 : adm1s) {
         if (adm1.getSpecimenCount() > 0) {
@@ -660,7 +652,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
           //A.log("getAdm1() adm1:" + adm1.getName() + " parent:" + adm1.getParent());
           continue;
         }
-        if (adm1.getName().equals(adm1Name) && adm1.getParent() != null && country != null && adm1.getParent().equals(country.getName())) {
+        if (adm1.getName().equals(adm1Name) && adm1.getParent() != null && adm1.getParent().equals(country.getName())) {
           //A.log("GeolocaleMgr.getAdm1() adm1:" + adm1.getName() + " parent:" + adm1.getParent() + " country:" + country);
           return adm1; 
         }
@@ -700,42 +692,42 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
 	public static String getRegionsDisplay() {
 	  String newLine = "\r\n";
 	  String indent = "  ";
-      String display = "";
+      StringBuilder display = new StringBuilder();
 	  for (Region region : s_regions) {
-        display += newLine + region;
+        display.append(newLine).append(region);
 	    for (Subregion subregion : region.getSubregions()) {
-          display += newLine + indent + subregion;
+          display.append(newLine).append(indent).append(subregion);
 	      for (Country country : subregion.getLiveCountries()) {
-            display += newLine + indent + indent + country;
+            display.append(newLine).append(indent).append(indent).append(country);
 	        for (Adm1 adm1 : country.getAllAdm1s()) {
-              display += newLine + indent + indent + indent + adm1;
+              display.append(newLine).append(indent).append(indent).append(indent).append(adm1);
 	        }
 	      }
 	    }
 	  }
-	  return display;
+	  return display.toString();
 	}
 
 	public static String getGeoregionsDisplayHtml() {
 	  String newLine = "<br>";
 	  String indent = "&nbsp;&nbsp;&nbsp;&nbsp;";
-      String display = "<h3>Georegions</h3><br>";
+      StringBuilder display = new StringBuilder("<h3>Georegions</h3><br>");
 	  for (Region region : s_regions) {
-        display += newLine + region.getTag();
+        display.append(newLine).append(region.getTag());
 	    for (Subregion subregion : region.getSubregions()) {
-          display += newLine + indent + subregion.getTag();
+          display.append(newLine).append(indent).append(subregion.getTag());
 	      for (Country country : subregion.getLiveCountries()) {
 	        if (country.getIsValid()) {
-              display += newLine + indent + indent + country.getTag();
-              display += " - " + country.getBioregion() + " + " + country.getSpecimenCount();
+              display.append(newLine).append(indent).append(indent).append(country.getTag());
+              display.append(" - ").append(country.getBioregion()).append(" + ").append(country.getSpecimenCount());
             }
 	        for (Adm1 adm1 : country.getValidAdm1s()) {
-              display += newLine + indent + indent + indent + adm1.getTag();
+              display.append(newLine).append(indent).append(indent).append(indent).append(adm1.getTag());
 	        }
 	      }
 	    }
 	  }
-	  return display;
+	  return display.toString();
 	}
 
 	public static String getGeolocaleBioregion(String countryName, String adm1Name) {
@@ -757,7 +749,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
       
 
 	public static String getAdm1CountryData() {
-      String adm1CountryData = "";
+      StringBuilder adm1CountryData = new StringBuilder();
 
       ArrayList<Geolocale> geolocales = GeolocaleMgr.getGeolocales();        
       ArrayList<Region> regions = GeolocaleMgr.getDeepRegions();
@@ -771,18 +763,18 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
             for (Adm1 adm1 : country.getAllAdm1s()) {
               if (adm1.getIsValid()) {
                 String line = adm1 + "\t" + country + "\r";
-                adm1CountryData += line;
+                adm1CountryData.append(line);
               }
             }
           }
         }
       }
-      return adm1CountryData;	
+      return adm1CountryData.toString();
 	}
 
 
 	public static String getAcceptedAdm1CountryData() {
-      String adm1CountryData = "";
+      StringBuilder adm1CountryData = new StringBuilder();
 
       ArrayList<Region> regions = GeolocaleMgr.getDeepRegions();
 
@@ -795,12 +787,12 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
             for (Adm1 adm1 : country.getAllAdm1s()) {
                 if (!adm1.isValid() && adm1.getValidName() == null) continue;
                 String line = adm1 + "\t" + country + "\r";
-                adm1CountryData += line;
+                adm1CountryData.append(line);
               }
           }
         }
       }
-      return adm1CountryData;	
+      return adm1CountryData.toString();
 	}
 
     public static boolean isAccepted(Adm1 candidate) {
@@ -827,7 +819,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         (stored in Geolocale table with georank = "country".
     */
     
-    private static ArrayList<Country> islands = new ArrayList<Country>();
+    private static ArrayList<Country> islands = new ArrayList<>();
     public static ArrayList<Country> getIslands() {
       return islands;
     }    
