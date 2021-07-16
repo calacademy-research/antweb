@@ -331,7 +331,13 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
         else return GeolocaleMgr.getGeolocales(georank, "false");
     }
 
-    public static ArrayList<Geolocale> getGeolocales(String georank, String isValid) {
+    /**
+     * Get all geolocales that match one or more conditions
+     * @param georank filter geolocales by georank. If null, get all georanks
+     * @param isValid "true" to select only valid geolocales, "false" or null to select all.
+     * @return An ArrayList of geolocales that match the parameters
+     */
+    public static @Nullable ArrayList<Geolocale> getGeolocales(String georank, String isValid) {
     
       //A.log("getGeolocales(" + georank + ", " + isValid + ") " + AntwebUtil.getShortStackTrace());    
 
