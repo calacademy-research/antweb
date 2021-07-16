@@ -624,6 +624,15 @@ public class AntwebUpload {
         }
         return false;
     }
+
+    void addMissingFields(Hashtable item) {
+        item.putIfAbsent("last_modified", currentDateFunction);
+
+        item.putIfAbsent("kingdom_name", "'animalia'");
+        item.putIfAbsent("phylum_name", "'arthropoda'");
+        item.putIfAbsent("class_name", "'insecta'");
+        item.putIfAbsent("order_name", "'hymenoptera'");
+    }
         
     void saveSpecimen(Hashtable item)
       throws SQLException {
@@ -666,6 +675,8 @@ public class AntwebUpload {
             String key = null;
             String value = null;
             Float floatValue = null;
+
+            addMissingFields(item);
             
             while (keys.hasMoreElements()) {
                 key = (String) keys.nextElement();
@@ -760,27 +771,6 @@ public class AntwebUpload {
                   }
                 }
             } // end while loop
-            if (!item.containsKey("last_modified")) {
-                fields.append("last_modified" + ",");
-                values.append(currentDateFunction + ",");
-            }
-            
-            if (!item.containsKey("kingdom_name")) {
-                fields.append("kingdom_name" + ",");
-                values.append("'animalia'" + ",");
-            }
-            if (!item.containsKey("phylum_name")) {
-                fields.append("phylum_name" + ",");
-                values.append("'arthropoda'" + ",");
-            }
-            if (!item.containsKey("class_name")) {
-                fields.append("class_name" + ",");
-                values.append("'insecta'" + ",");
-            }
-            if (!item.containsKey("order_name")) {
-                fields.append("order_name" + ",");
-                values.append("'hymenoptera'" + ",");
-            }
 
 
 			fields.append("upload_id" + ")");
