@@ -517,12 +517,11 @@ public class GeolocaleMgr extends Manager {
         return null;
     }
 
+    /**
+     * A country name may be for an invalid or non-UN country.  The (Antweb) valid country will be returned.
+     * I.E: "Iran (Islamic Republic of)" will return Iran.
+     */
     public static @Nullable Country getValidCountry(String country) {
-	  /*
-	    A country name may be for an invalid or non-UN country.  The (Antweb) valid country will be returned.
-        I.E: "Iran (Islamic Republic of)" will return Iran.
-	  */
-
         if (s_country_map == null) {
             return null;
         }
@@ -536,6 +535,7 @@ public class GeolocaleMgr extends Manager {
             return matchingCountry;
         }
 
+        // country is not valid, return the Country that this points to
         return s_country_map.get(matchingCountry.getValidName());
     }
 
