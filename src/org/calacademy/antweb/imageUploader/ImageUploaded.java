@@ -1,30 +1,32 @@
 package org.calacademy.antweb.imageUploader;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.io.*;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
-
-
-import java.io.*;
-//import java.util.*;
-import org.apache.commons.fileupload.*;
-//import org.apache.commons.fileupload.disk.*;
-//import org.apache.commons.fileupload.servlet.*;
-import org.apache.commons.io.output.*;
-
-import org.im4java.core.*;
-import org.im4java.process.*;
-//import org.im4java.core.ETOperation
-
+import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Utility;
+import org.calacademy.antweb.util.A;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.AntwebUtil;
+import org.calacademy.antweb.util.FileUtil;
+import org.im4java.core.ConvertCmd;
+import org.im4java.core.IM4JavaException;
+import org.im4java.core.IMOperation;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Set;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
+//import java.util.*;
+//import org.apache.commons.fileupload.disk.*;
+//import org.apache.commons.fileupload.servlet.*;
+//import org.im4java.core.ETOperation
 
 public class ImageUploaded {
 
@@ -45,16 +47,16 @@ public class ImageUploaded {
   boolean reUploaded = false;
   private String errorMessage = null;
   boolean isSpecimenDataExists = false;
-  
+
   private ImageUpload imageUpload = null;
 
-  public ImageUploaded() { 
+  public ImageUploaded() {
   }
-    
+
   public void setFileItem(FileItem fileItem) throws Exception {
-      
+
       if (!getIsContinueUpload()) return;
-      
+
       // Get the uploaded file parameters
       String fieldName = fileItem.getFieldName();
       String fileName = fileItem.getName();
@@ -92,16 +94,15 @@ public class ImageUploaded {
   public static String getTestString(String fileName) {
       ImageUploaded iu = new ImageUploaded();
       iu.init(fileName);
-      String val = "fileName:" + iu.getFileName() + " code:" + iu.getCode() + " shot:" + iu.getShot() + " number:" + iu.getNumber() + " ext:" + iu.getExt();
-      return val;
+      return "fileName:" + iu.getFileName() + " code:" + iu.getCode() + " shot:" + iu.getShot() + " number:" + iu.getNumber() + " ext:" + iu.getExt();
   }
 
   // From the original file uploaded we derive the code, the shot and number.
   public String init(String fileName) {
     String message = "success";
-    int u1 = 0;
-    int u2 = 0;
-    int period = 0;
+    int u1;
+    int u2;
+    int period;
     try {
         if (fileName == null) {
           message = "Null filename";
@@ -151,16 +152,18 @@ public class ImageUploaded {
              setErrorMessage(message);
              return message;
           }
-          setShot(shot.toLowerCase());              
+          setShot(shot.toLowerCase());
         } else {
-          setShot(fileName.substring(u1 + 1, u2).toLowerCase());  
+          setShot(fileName.substring(u1 + 1, u2).toLowerCase());
           String num = fileName.substring(u2 + 1, period);
-          if (num != null) setNumber(Integer.valueOf(num).intValue());
+          setNumber(Integer.parseInt(num));
         }
         String ext = fileName.substring(period + 1).toLowerCase();
         ext = ext.toLowerCase();
         //String[] extensions = new String[]{"jpg","tif"};
-        if (!Arrays.asList(new String[]{"jpg", "tif", "png"}).contains(ext)) setErrorMessage("Unsupported file type");
+//        if (!Arrays.asList(new String[]{"jpg", "tif", "png"}).contains(ext)) setErrorMessage("Unsupported file type");
+        Set<String> valid_extensions = Set.of("jpg", "tif", "png");
+        if (!valid_extensions.contains(ext)) setErrorMessage("Unsupported file type");
         setExt(ext);
         //A.log("populate() fileName:" + fileName + " u1:" + u1 + " u2:" + u2 + " period:" + period + " code:" + getCode() + " shot:" + getShot() + " number:" + getNumber() + " ext:" + ext);
 
