@@ -29,6 +29,10 @@ public class GeolocaleMgr extends Manager {
 
     private static Map<String, List<Adm1>> s_adm1s_by_name;
 
+    private static ArrayList<Adm1> s_adm1s;
+
+    private static Map<String, Country> s_country_map;
+
     // For Taxon Name Search Autocomplete    
     private static List<String> placeNamesList = null;
 
@@ -107,7 +111,9 @@ public class GeolocaleMgr extends Manager {
 
         // key is name, value is list of matching Adm1 objects.
         // Handles multiple adm1s with same name in different countries/bioregions
-        s_adm1s_by_name = geolocaleDb.getAdm1s().stream().collect(Collectors.groupingBy(Adm1::getName));
+        s_adm1s_by_name = s_adm1s.stream().collect(Collectors.groupingBy(Adm1::getName));
+
+        s_country_map = geolocaleDb.getCountries().stream().collect(Collectors.toMap(Country::getName, Function.identity()));
     }
 
     private static int countInstances(String instance, ArrayList<Geolocale> geolocales) {
@@ -394,7 +400,8 @@ public class GeolocaleMgr extends Manager {
     }
 
     public static ArrayList<Geolocale> getValidAdm1s() {
-        return GeolocaleMgr.getGeolocales("adm1", true);
+        return s_adm1s.stream().filter(Adm1::isValid).collect(Collectors.toCollection(ArrayList::new));
+//        return GeolocaleMgr.getGeolocales("adm1", true);
     }
 
     public static ArrayList<Geolocale> getAllAdm1s() {
@@ -516,20 +523,20 @@ public class GeolocaleMgr extends Manager {
         I.E: "Iran (Islamic Republic of)" will return Iran.
 	  */
 
-        ArrayList<Geolocale> geolocales = GeolocaleMgr.getGeolocales(Georank.country);
-        if (geolocales == null) return null;
-
-        Geolocale matchingCountry = getAnyCountry(country);
+        if (s_country_map == null) {
+            return null;
+        }
+        Country matchingCountry = s_country_map.get(country);
 
         if (matchingCountry == null) {
             return null;
         }
 
         if (matchingCountry.isValid()) {
-            return (Country) matchingCountry;
+            return matchingCountry;
         }
 
-        return (Country) getAnyCountry(matchingCountry.getValidName());
+        return s_country_map.get(matchingCountry.getValidName());
     }
 
     // Convenience method
@@ -565,9 +572,9 @@ public class GeolocaleMgr extends Manager {
         }
         return false;
     }
-    
-    
-    
+
+
+
 /*
 298 getCountries
 250 getValidCountries
@@ -579,18 +586,21 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if (geolocale.getName().equals(name)) {
           return true;
         }
-      }      
-      return false; 
+      }
+      return false;
     }
 */
 
     public static boolean isValidCountry(String name) {
-        ArrayList<Geolocale> validCountries = getValidCountries();
-        for (Geolocale geolocale : validCountries) {
-            if (geolocale.getName().equals(name))
-                return true;
-        }
-        return false;
+        Country country = s_country_map.get(name);
+        if (country == null) { return false; }
+        return country.isValid();
+//      ArrayList<Geolocale> validCountries = getValidCountries();
+//      for (Geolocale geolocale : validCountries) {
+//        if (geolocale.getName().equals(name))
+//          return true;
+//      }
+//      return false;
     }
 
     public static boolean isValidAdm1(String name) {
@@ -603,8 +613,9 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     }
 
     public static ArrayList<Geolocale> getAdm1s() {
-        return GeolocaleMgr.getGeolocales("adm1");
-    }
+        return s_adm1s.stream().map(adm1 -> (Geolocale) adm1).collect(Collectors.toCollection(ArrayList::new));
+//      return GeolocaleMgr.getGeolocales("adm1");
+    }    
 
     public static ArrayList<Geolocale> getAdm1sWithSpecimen() {
         ArrayList<Geolocale> adm1sWithSpecimen = new ArrayList<>();
