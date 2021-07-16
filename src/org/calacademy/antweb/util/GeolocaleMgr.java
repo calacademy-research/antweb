@@ -114,7 +114,9 @@ public class GeolocaleMgr extends Manager {
 
         Collections.sort(s_geolocales);
 
-        s_adm1s = (ArrayList<Adm1>) geolocaleDb.getAdm1s();
+        s_adm1s = s_geolocales.stream().filter(adm1 -> adm1.getGeorank().equals("adm1"))
+                .map(adm1 -> (Adm1) adm1)
+                .collect(Collectors.toCollection(ArrayList::new));
 
         s_adm1s.forEach(adm1 -> s_adm1_map.put(adm1.getName(), adm1.getCountry(), adm1));
 
