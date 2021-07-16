@@ -87,10 +87,8 @@ public class GeolocaleMgr extends Manager {
             if (country.isIsland()) islands.add(country);
             //A.log("populateShallow() country:" + country);
             //if ("Albania".equals(country.toString())) A.log("populateShallow() country:" + country + " id:" + country.getId());
-            for (Adm1 adm1 : country.getAllAdm1s()) {
               //if (adm1.getParent().equals("Venezuela")) A.log("populateShallow() country:" + country + " id:" + adm1.getId() + " adm1:" + adm1.getName());
-              s_geolocales.add(adm1);
-            }
+              s_geolocales.addAll(country.getAllAdm1s());
           }
         }      
       }
@@ -284,7 +282,7 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
       return null;
     }
     
-    public static Geolocale getGeolocale(String name, String georank) {   
+    public static Geolocale getGeolocale(String name, String georank) {
 
       if ("adm1".equals(georank)) {
 		  s_log.warn("getGeolocale(name, georank) Illegal adm1 need parent to be unique");
@@ -317,14 +315,11 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
       return s_geolocales;
     }
     public static ArrayList<Geolocale> getLiveGeolocales() {
-      ArrayList<Geolocale> geolocales = new ArrayList<Geolocale>();
       if (s_geolocales == null) return null; // Could happen due to server initialization.
-      for (Geolocale geolocale : s_geolocales) {
-        if (geolocale.isLive()) {
-          geolocales.add(geolocale);
-        }
-      }
-      return geolocales;
+
+        return s_geolocales.stream()
+                .filter(Geolocale::getIsLive)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
     public static ArrayList<Geolocale> getGeolocales(String georank) {
       return GeolocaleMgr.getGeolocales(georank, null);
@@ -332,8 +327,8 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
     public static ArrayList<Geolocale> getGeolocales(String georank, boolean isValid) {
       if (isValid) return GeolocaleMgr.getGeolocales(georank, "true");
         else return GeolocaleMgr.getGeolocales(georank, "false");
-    }    
-    
+    }
+
     public static ArrayList<Geolocale> getGeolocales(String georank, String isValid) {
     
       //A.log("getGeolocales(" + georank + ", " + isValid + ") " + AntwebUtil.getShortStackTrace());    
@@ -473,8 +468,7 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
     }
 
     public static ArrayList<Geolocale> getCountries() {
-      ArrayList<Geolocale> countryList = GeolocaleMgr.getGeolocales("country");
-      return countryList;
+        return GeolocaleMgr.getGeolocales("country");
     }
     // if (!AntwebMgr.isPopulated()) return null;
       
@@ -722,7 +716,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
 	  return display;
 	}
 
-	public static String getGeolocaleBioregion(String countryName, String adm1Name) { 	  
+	public static String getGeolocaleBioregion(String countryName, String adm1Name) {
       String useBioregion = null;
 
       Geolocale adm1 = getAdm1(adm1Name, countryName);
