@@ -155,22 +155,23 @@ public class LineNumMgr {
     private static String[] getComponents(String theLine) {
        //if (true) return getComponentsRE(theLine);
 
-       ArrayList<String> list = new ArrayList<String>();
-       int i = 0;
-       while (theLine.indexOf("\t") >= 0) {
-         ++i;
-         int tabIndex = theLine.indexOf("\t");
-         String value = theLine.substring(0, tabIndex);
-         list.add(value);
-         //A.log("getComponents() i:" + i + " tabIndex:" + tabIndex + " value:" + value);
-         theLine = theLine.substring(tabIndex + 1);       
-       }
-       //A.log("getComponents() i:" + (i+1) + " value:" + theLine);
-       list.add(theLine);
+        return theLine.split("\t");
 
-       //A.log("getComponents() size:" + list.size() + " list:" + list);
-       String[] components = list.toArray(new String[list.size()]);
-       return components;
+//       ArrayList<String> list = new ArrayList<String>();
+//       int i = 0;
+//       while (theLine.contains("\t")) {
+//         ++i;
+//         int tabIndex = theLine.indexOf("\t");
+//         String value = theLine.substring(0, tabIndex);
+//         list.add(value);
+//         //A.log("getComponents() i:" + i + " tabIndex:" + tabIndex + " value:" + value);
+//         theLine = theLine.substring(tabIndex + 1);
+//       }
+//       //A.log("getComponents() i:" + (i+1) + " value:" + theLine);
+//       list.add(theLine);
+//
+//       //A.log("getComponents() size:" + list.size() + " list:" + list);
+//        return list.toArray(new String[0]);
     }
 
 }
