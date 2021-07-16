@@ -673,15 +673,13 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         Country country = GeolocaleMgr.getValidCountry(countryName);
         if (country == null) return null; // Could be server initializing.
 
-        if (s_adm1_map == null) return null; // Could be server initializing
-
         Adm1 matching_adm1 = s_adm1_map.get(adm1Name, country.getName());
 
-        if (matching_adm1.isValid()) {
-            return matching_adm1;
+        if (matching_adm1 != null && matching_adm1.isValid()) {
+                return matching_adm1;
         }
-
         return null;
+
     }
 
     /**
@@ -698,6 +696,10 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     public static @Nullable Geolocale getValidAdm1(String adm1, String country) {
 
         Adm1 matching_adm1 = s_adm1_map.get(adm1, country);
+
+        if (matching_adm1 == null) {
+            return null;
+        }
 
         if (matching_adm1.isValid()) {return matching_adm1;}
 
@@ -750,7 +752,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         return display.toString();
     }
 
-    public static String getGeolocaleBioregion(String countryName, String adm1Name) {
+    public static @Nullable String getGeolocaleBioregion(String countryName, String adm1Name) {
         String useBioregion = null;
 
         Geolocale adm1 = getAdm1(adm1Name, countryName);
