@@ -665,19 +665,19 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     }
 
     // Only from valid countries!
-    public static Geolocale getAdm1(String adm1Name, String countryName) {
-        Geolocale country = GeolocaleMgr.getValidCountry(countryName);
+    public static @Nullable Geolocale getAdm1(String adm1Name, String countryName) {
+        Country country = GeolocaleMgr.getValidCountry(countryName);
         if (country == null) return null; // Could be server initializing.
-        ArrayList<Geolocale> adm1s = GeolocaleMgr.getAdm1s();
+
+        ArrayList<Adm1> adm1s = s_adm1s;
         if (adm1s == null) return null; // Could be server initializing
-        for (Geolocale adm1 : adm1s) {
-            if (adm1.getParent() == null) {
-                //A.log("getAdm1() adm1:" + adm1.getName() + " parent:" + adm1.getParent());
+
+        for (Adm1 matching_adm1 : s_adm1s_by_name.get(adm1Name)) {
+            if (matching_adm1.getParent() == null) {
                 continue;
             }
-            if (adm1.getName().equals(adm1Name) && adm1.getParent() != null && adm1.getParent().equals(country.getName())) {
-                //A.log("GeolocaleMgr.getAdm1() adm1:" + adm1.getName() + " parent:" + adm1.getParent() + " country:" + country);
-                return adm1;
+            if (matching_adm1.getParent().equals(country.getName())) {
+                return matching_adm1;
             }
         }
         return null;
