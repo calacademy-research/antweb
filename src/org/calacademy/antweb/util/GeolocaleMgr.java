@@ -15,6 +15,8 @@ import org.calacademy.antweb.home.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GeolocaleMgr extends Manager {
 
@@ -482,7 +484,7 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
       return null;
     }
     
-	public static Country getValidCountry(String country) {
+	public static @Nullable Country getValidCountry(String country) {
 	  /*
 	    A country name may be for an invalid or non-UN country.  The (Antweb) valid country will be returned.
         I.E: "Iran (Islamic Republic of)" will return Iran.
