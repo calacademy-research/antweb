@@ -265,7 +265,7 @@ public class GeolocaleMgr extends Manager {
     }
 
     // To be removed... because not unique.
-    public static Geolocale getAdm1(String adm1Name) {
+    public static @Nullable Geolocale getAdm1(String adm1Name) {
         for (Geolocale geolocale : s_geolocales) {
             if ("adm1".equals(geolocale.getGeorank()) && geolocale.getName().equals(adm1Name)) return geolocale;
         }
@@ -462,7 +462,7 @@ public class GeolocaleMgr extends Manager {
         return null;
     }
 
-    public static Country getCountry(String name) {
+    public static @Nullable Country getCountry(String name) {
         if (name == null) return null;
         if (s_regions == null) return null;
 //A.log("r:" + s_regions);
@@ -754,10 +754,11 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if (adm1 != null) {
             useBioregion = adm1.getTheOneBioregion();
         }
+        // useBioregion can be null if adm1 an altBioregion. in that case, use bioregion of country instead
         if (useBioregion == null) {
             Geolocale country = getCountry(countryName);
             if (country != null) {
-                useBioregion = country.getTheOneBioregion();
+                return country.getTheOneBioregion();
             }
         }
         //A.log("GeolocaleMgr.getGeolocaleBioregion() countryName:" + countryName + " adm1Name:" + adm1Name + " useBioregion:" + useBioregion);
