@@ -1,15 +1,15 @@
 
 # Problem found:
 
- 2021-07-03 13:00:10,642 ERROR ajp-nio-0.0.0.0-8009-exec-38 org.calacademy.antweb.LoginAction - Connection.process
- java.sql.SQLException: Illegal mix of collations (latin1_swedish_ci,IMPLICIT) and (utf8_general_ci,COERCIBLE) for operation '='
-	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:129)
-	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
-	at com.mysql.cj.jdbc.StatementImpl.executeQuery(StatementImpl.java:1198)
-	at com.mchange.v2.c3p0.impl.NewProxyStatement.executeQuery(NewProxyStatement.java:35)
-	at org.calacademy.antweb.home.LoginDb.getLoginByName(LoginDb.java:88)
-	at org.calacademy.antweb.LoginAction.login(LoginAction.java:238)
-	at org.calacademy.antweb.LoginAction.execute(LoginAction.java:90)
+#  2021-07-03 13:00:10,642 ERROR ajp-nio-0.0.0.0-8009-exec-38 org.calacademy.antweb.LoginAction - Connection.process
+#  java.sql.SQLException: Illegal mix of collations (latin1_swedish_ci,IMPLICIT) and (utf8_general_ci,COERCIBLE) for operation '='
+# 	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:129)
+# 	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+# 	at com.mysql.cj.jdbc.StatementImpl.executeQuery(StatementImpl.java:1198)
+# 	at com.mchange.v2.c3p0.impl.NewProxyStatement.executeQuery(NewProxyStatement.java:35)
+# 	at org.calacademy.antweb.home.LoginDb.getLoginByName(LoginDb.java:88)
+# 	at org.calacademy.antweb.LoginAction.login(LoginAction.java:238)
+# 	at org.calacademy.antweb.LoginAction.execute(LoginAction.java:90)
 
 
 
