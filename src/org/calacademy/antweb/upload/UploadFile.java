@@ -317,7 +317,8 @@ public class UploadFile {
           String tempBackupDirFile = fullWebUploadDir + "/" + backupFileName;
           try {
             s_log.warn("backup() " + getFileLoc() + " to " + tempBackupDirFile);
-            util.copyFile(getFileLoc(), tempBackupDirFile);
+//            util.copyFile(getFileLoc(), tempBackupDirFile);
+              Files.copy(Path.of(getFileLoc()), Path.of(tempBackupDirFile));
             backupDirFile = "upload/" + backupFileName;
           } catch (IOException e) {
             s_log.error("backup() e:" + e);
