@@ -487,26 +487,22 @@ private static int countInstances(String instance, ArrayList<Geolocale> geolocal
 	    A country name may be for an invalid or non-UN country.  The (Antweb) valid country will be returned.
         I.E: "Iran (Islamic Republic of)" will return Iran.
 	  */
-   
-      ArrayList<Geolocale> geolocales = GeolocaleMgr.getGeolocales(Georank.country, false);
-      if (geolocales == null) return null;
-      for (Geolocale geolocale : geolocales) {
-        if (geolocale.getName().equals(country)) {
-          if (geolocale.getIsValid()) {
-             return (Country) geolocale;          
-          } else {
-            for (Geolocale geolocale2 : geolocales) {
-              //A.log("getProjectNameFromValidCountry() 2 geolocale2.name:" + geolocale2.getName() + " validName:" + geolocale.getValidName());
-              if (geolocale2.getName().equals(geolocale.getValidName())) {
-                 return (Country) geolocale2;          
-              }
-            }
-          }
-        }      
-      }
-      return null;	  
-	}                  
 
+        ArrayList<Geolocale> geolocales = GeolocaleMgr.getGeolocales(Georank.country);
+        if (geolocales == null) return null;
+
+        Geolocale matchingCountry = getAnyCountry(country);
+
+        if (matchingCountry == null) {
+            return null;
+        }
+
+        if (matchingCountry.isValid()) {
+            return (Country) matchingCountry;
+        }
+
+        return (Country) getAnyCountry(matchingCountry.getValidName());
+    }
 
     // Convenience method
     public static int getCountryId(String name) {
