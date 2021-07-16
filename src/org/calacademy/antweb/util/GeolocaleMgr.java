@@ -1,19 +1,18 @@
 package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,10 +23,12 @@ public class GeolocaleMgr extends Manager {
 
     // This is a deep copy. Used for menus.
     private static ArrayList<Region> s_regions = null;
-    
+
     // Used for most of the getGeolocale() methods.
     private static ArrayList<Geolocale> s_geolocales = null;
-    
+
+    private static Map<String, List<Adm1>> s_adm1s_by_name;
+
     // For Taxon Name Search Autocomplete    
     private static List<String> placeNamesList = null;
 
@@ -103,6 +104,10 @@ public class GeolocaleMgr extends Manager {
       //A.log("populateShallow() 2 c:" + countInstances("Albania", s_geolocales));      
 
       Collections.sort(s_geolocales);
+
+        // key is name, value is list of matching Adm1 objects.
+        // Handles multiple adm1s with same name in different countries/bioregions
+        s_adm1s_by_name = geolocaleDb.getAdm1s().stream().collect(Collectors.groupingBy(Adm1::getName));
     }
 
 private static int countInstances(String instance, ArrayList<Geolocale> geolocales) {
@@ -661,32 +666,57 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     }
 
     // Will return the adm1, or the validName adm1 if the found adm1 is not valid.
-	public static Geolocale getValidAdm1(String adm1, String country) {
-      //A.log("getValidAdm1 adm1:" + adm1 + " country:" + country);
-      Geolocale foundValidAdm1 = null;
+	public static @Nullable Geolocale getValidAdm1(String adm1, String country) {
 
-      ArrayList<Geolocale> adm1s = GeolocaleMgr.getAdm1s();
-      for (Geolocale loopAdm1 : adm1s) {
-        //if ("Colorado".equals(loopAdm1.getName())) A.log("getValidAdm1() 1 name:" + loopAdm1.getName());
-        if (loopAdm1.getName().equals(adm1) && loopAdm1.getParent() != null && loopAdm1.getParent().equals(country)) {
-          //if ("Colorado".equals(loopAdm1.getName())) A.log("getValidAdm1() 2 parent:" + loopAdm1.getParent());
-          if (loopAdm1.getIsValid()) {
-             // if it is a valid adm1, return it.
-             foundValidAdm1 = loopAdm1;
-          } else {
-            for (Geolocale loop2Adm1 : adm1s) {
-              //A.log("getProjectNameFromValidCountry() 2 geolocale2.name:" + geolocale2.getName() + " validName:" + geolocale.getValidName());
-              if (loop2Adm1.getIsValid() && loop2Adm1.getName().equals(loopAdm1.getValidName()) && loopAdm1.getParent().equals(country)) {
-                 // This is the validName adm1.
-                 //A.log("getValidAdm1(" + adm1 + ", " + country + ") validAmd1(2):" + loop2Adm1);
-                  foundValidAdm1 = loop2Adm1;
-              }
+        List<Adm1> matching_adm1s = s_adm1s_by_name.get(adm1);
+
+        for (Adm1 matched_adm1 : matching_adm1s) {
+            if (matched_adm1.getParent() != null && matched_adm1.getParent().equals(country)) {
+                if (matched_adm1.isValid()) {
+                    return matched_adm1;
+                } else { // loop through all adm1s to find the one that matches the valid name of inputted adm1
+                    List<Adm1> valid_matches = s_adm1s_by_name.get(matched_adm1.getValidName());
+                    for (Adm1 valid_name_adm1 : valid_matches) {
+                        if (valid_name_adm1.isValid() && valid_name_adm1.getParent().equals(country)) {
+                            //todo original code checked matched_adm1.getParent().equals(country). I think that was a mistake
+                            // and they meant valid_name_adm1.getParent().equals(country) since we already checked that
+                            // matched_adm1.getParent() == country
+                            return valid_name_adm1;
+                        }
+                    }
+                }
             }
-          }
-        }      
-      }
-      //A.log("getValidAdm1(" + adm1 + ", " + country + ") found:" + foundValidAdm1);
-      return foundValidAdm1;
+        }
+
+        return null;
+
+//
+//
+//      //A.log("getValidAdm1 adm1:" + adm1 + " country:" + country);
+//      Geolocale foundValidAdm1 = null;
+//
+//      ArrayList<Geolocale> adm1s = GeolocaleMgr.getAdm1s();
+//      for (Geolocale loopAdm1 : adm1s) {
+//        //if ("Colorado".equals(loopAdm1.getName())) A.log("getValidAdm1() 1 name:" + loopAdm1.getName());
+//        if (loopAdm1.getName().equals(adm1) && loopAdm1.getParent() != null && loopAdm1.getParent().equals(country)) {
+//          //if ("Colorado".equals(loopAdm1.getName())) A.log("getValidAdm1() 2 parent:" + loopAdm1.getParent());
+//          if (loopAdm1.getIsValid()) {
+//             // if it is a valid adm1, return it.
+//             foundValidAdm1 = loopAdm1;
+//          } else {
+//            for (Geolocale loop2Adm1 : adm1s) {
+//              //A.log("getProjectNameFromValidCountry() 2 geolocale2.name:" + geolocale2.getName() + " validName:" + geolocale.getValidName());
+//              if (loop2Adm1.getIsValid() && loop2Adm1.getName().equals(loopAdm1.getValidName()) && loopAdm1.getParent().equals(country)) {
+//                 // This is the validName adm1.
+//                 //A.log("getValidAdm1(" + adm1 + ", " + country + ") validAmd1(2):" + loop2Adm1);
+//                  foundValidAdm1 = loop2Adm1;
+//              }
+//            }
+//          }
+//        }
+//      }
+//      //A.log("getValidAdm1(" + adm1 + ", " + country + ") found:" + foundValidAdm1);
+//      return foundValidAdm1;
     }
 
 	public static String getRegionsDisplay() {
