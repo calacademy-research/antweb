@@ -626,12 +626,10 @@ public class AntwebUpload {
     }
 
     private void addMissingFields(Hashtable<String, Object> item) {
-        item.putIfAbsent("last_modified", currentDateFunction);
-
-        item.putIfAbsent("kingdom_name", "'animalia'");
-        item.putIfAbsent("phylum_name", "'arthropoda'");
-        item.putIfAbsent("class_name", "'insecta'");
-        item.putIfAbsent("order_name", "'hymenoptera'");
+        item.putIfAbsent("kingdom_name", "animalia");
+        item.putIfAbsent("phylum_name", "arthropoda");
+        item.putIfAbsent("class_name", "insecta");
+        item.putIfAbsent("order_name", "hymenoptera");
     }
 
     /**
@@ -676,6 +674,12 @@ public class AntwebUpload {
             Float floatValue;
 
             addMissingFields(item);
+
+            // need to do this one separately, since we don't want to wrap it in quotes
+            if (!item.containsKey("last_modified")) {
+                fields.append("last_modified").append(",");
+                values.append("now()").append(",");
+            }
 
             for (Object keyObj: item.keySet()) {
                 key = (String) keyObj;
