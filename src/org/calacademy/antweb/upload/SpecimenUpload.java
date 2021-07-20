@@ -77,8 +77,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
         ArrayList<String> headerArrayList = getHeaderArrayList();       
         String[] headerArray = headerArrayList.toArray(new String[headerArrayList.size()]);
-        ArrayList goodSpecimenHeaders = new ArrayList(Arrays.asList(headerArray));  // Could we just use the headerArrayList here?
-        Hashtable columnTranslation = getColumnTranslations();
+        ArrayList<String> goodSpecimenHeaders = new ArrayList<>(Arrays.asList(headerArray));  // Could we just use the headerArrayList here?
+        Hashtable<String, String> columnTranslation = getColumnTranslations();
     
         try {
 
@@ -94,8 +94,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
             doPreliminaries(accessGroup);
                                 
             // Get the header values
-            ArrayList colList = getSpecimenColumns(theLine);
-            ArrayList otherColumns = getOtherColumns(theLine);
+            ArrayList<String> colList = getSpecimenColumns(theLine);
+            ArrayList<String> otherColumns = getOtherColumns(theLine);
 
             //s_log.info("importSpecimens() colList:" + colList.toString());
             theLine = in.readLine();
@@ -104,12 +104,12 @@ public class SpecimenUpload extends SpecimenUploadParse {
             int batchCount = 0;
                 
             String oldLine = null;
-            Hashtable specimenItem = null;
-            Hashtable taxonItem = null;
+            Hashtable<String, Object> specimenItem = null;
+            Hashtable <Object, Object> taxonItem = null;
             
             int buildLineTotal = 0;
             int processLineTotal = 0;
-            
+
             try {    
 				boolean processedSome = false;
 				
@@ -149,8 +149,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
                         // " bsc:" + getUploadDetails().getPassWorldantsSpeciesCheckSet().size()
                     }
 
-                    specimenItem = new Hashtable();
-                    taxonItem = new Hashtable();
+                    specimenItem = new Hashtable<>();
+                    taxonItem = new Hashtable<>();
 
                     String shortFileName = uploadFile.getShortFileName();
 

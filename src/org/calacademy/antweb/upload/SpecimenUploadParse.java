@@ -57,9 +57,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     private ArrayList<String> m_headerArrayList = null;
 
 	//  columns describing taxonomic rank.  This is used for lowercases, only.
-	String[] taxonomy = {"kingdom_name", "phylum_name", "class_name", "order_name", "specimencode", "family", "subfamily", "tribe", "genus",
+    private final String[] taxonomy = {"kingdom_name", "phylum_name", "class_name", "order_name", "specimencode", "family", "subfamily", "tribe", "genus",
 			"subgenus", "speciesgroup", "species", "subspecies" };
-	ArrayList taxonomyHeaders = new ArrayList(Arrays.asList(taxonomy));
+	private final List<String> taxonomyHeaders = Arrays.asList(taxonomy);
 
     SpecimenUploadParse(Connection connection) {
       
@@ -68,15 +68,15 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
     //public abstract boolean importSpecimens(UploadFile uploadFile, Group group) throws SQLException, TestException, AntwebException;
         
-    protected String parseLine(String theLine, int lineNum, Hashtable specimenItem, Hashtable taxonItem
-      , ArrayList otherColumns, ArrayList colList, String shortFileName, Login accessLogin) 
+    protected String parseLine(String theLine, int lineNum, Hashtable<String, Object> specimenItem, Hashtable<Object, Object> taxonItem
+      , ArrayList<String> otherColumns, ArrayList<String> colList, String shortFileName, Login accessLogin)
       throws SQLException, AntwebException {
 
         Group accessGroup = accessLogin.getGroup();
 
         Date startTime = new Date();
         String initLine = theLine;                                  
-        StringBuffer otherInfo = new StringBuffer();             
+        StringBuilder otherInfo = new StringBuilder();
         String otherColumn = null;
         String errorMessage = null;            
 		String code = null;
@@ -90,8 +90,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             Formatter formatter = new Formatter();
             ArrayList<String> elements = null;
 
-            Float lat = Float.valueOf(0);
-            Float lon = Float.valueOf(0);
+            float lat;
+            float lon;
 
             Iterator loopIter = null;
             if (otherInfo.length() > 0) {
@@ -113,7 +113,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             //s_log.warn("parseLine() theLine:" + theLine);
 
             String[] loopComponents = tab.split(theLine);
-            elements = new ArrayList<String>(Arrays.asList(loopComponents));
+            elements = new ArrayList<>(Arrays.asList(loopComponents));
             loopIter = elements.iterator();
             int colIndex = 0;
 
@@ -197,10 +197,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -180 && number <= 180) {
 								specimenItem.put("decimal_longitude", number);
-								lon = Float.valueOf(number.floatValue() * 1000);
-								if (lon.intValue() == 0) {
+								lon = number * 1000;
+								if ((int) lon == 0) {
 									element = "";
-									specimenItem.put("decimal_longitude",  Float.valueOf((float)-999.9));
+									specimenItem.put("decimal_longitude", (float) -999.9);
 								}
                             } else {                              
 						      //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
@@ -216,11 +216,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -90 && number <= 90) {
 								specimenItem.put("decimal_latitude", number);
-								lat = Float.valueOf(number.floatValue() * 1000);
+								lat = number * 1000;
 								//A.log("parseLine() lat:" + lat + " number:" + number);
-								if (lat.intValue() == 0) {
+								if ((int) lat == 0) {
 									element = "";
-									specimenItem.put("decimal_latitude", Float.valueOf((float)-999.9));
+									specimenItem.put("decimal_latitude", (float) -999.9);
 								}
                             } else {                              
 							  //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
@@ -424,8 +424,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				  country = validCountry.getName();  
 				  String region = validCountry.getRegion();
 				  String subregion = validCountry.getSubregion();
-                  specimenItem.put("region", region);
-                  specimenItem.put("subregion", subregion);			                        
+				  if (region != null) {
+                      specimenItem.put("region", region);
+                      specimenItem.put("subregion", subregion);
+                  }
 				}
 				boolean isValidCountry = GeolocaleMgr.isValidCountry(country);   // CountryDb.isValid(getConnection(), element);
 				boolean notBlank = (new Utility()).notBlank(country);
@@ -435,8 +437,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 specimenItem.put("country", country);
             }
 
-            String listedAdm1 = (String) specimenItem.get("adm1");
-            String adm1 = listedAdm1;
+            String adm1 = (String) specimenItem.get("adm1");
             if (adm1 == null) {
               if (validCountry != null && validCountry.hasLiveValidAdm1()) {
                 //A.log("parseLine() adm:" + adm1 + " validCountry:" + validCountry + " hasAdm1:" + validCountry.hasLiveValidAdm1());
@@ -870,7 +871,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
        if (m_headerArrayList != null) return m_headerArrayList;
 
-       m_headerArrayList = new ArrayList();
+       m_headerArrayList = new ArrayList<>();
        m_headerArrayList.add("specimencode");
        m_headerArrayList.add("subfamily");
        m_headerArrayList.add("tribe");
@@ -928,13 +929,13 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
       return m_headerArrayList; 
     }
 
-    protected Hashtable getColumnTranslations() {
+    protected Hashtable<String, String> getColumnTranslations() {
         // *Thau Note:  Somewhat goofy way to match specimen field names to  
         // the database schema.  There's a better way to do this, but I don't have time now!
         // Mark Note.  If the column in the specimen file differs from the database field, map it.
         // Add it here AND above to the headerArrayList!
 
-        Hashtable columnTranslations = new Hashtable();
+        Hashtable<String, String> columnTranslations = new Hashtable<>();
         //     put ( specimen header, db column name )
         columnTranslations.put("speciesgenus", "genus");
         columnTranslations.put("specimencode", "code");

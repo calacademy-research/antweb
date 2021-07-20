@@ -1,34 +1,11 @@
 package org.calacademy.antweb.upload;
 
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
 
-import javax.servlet.http.*;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import org.apache.avalon.framework.logger.ConsoleLogger;
-import org.apache.avalon.framework.logger.Logger;
-
-import org.apache.struts.action.*;
-
 import java.sql.*;
- 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
@@ -68,7 +45,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
     }
 
     // This is useful when various values depend on others. They are all loaded now.
-    boolean processLine(Hashtable specimenItem, Hashtable taxonItem, int lineNum, String shortFileName, Group group) 
+    boolean processLine(Hashtable<String, Object> specimenItem, Hashtable<Object, Object> taxonItem, int lineNum, String shortFileName, Group group)
       throws SQLException {
 
         //UploadHelper.setLineNum(lineNum);
@@ -101,14 +78,12 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 		(1) No new subfamilies accepted for family Formicidae, only subfamilies in Bolton World Cat. 
 		exceptions:   Incertae_sedis,  (Formicidae)  ACTION: do not upload
 		[note if not in family Formicidae, any subfamily can be uploaded)  * new feature - this would have prevented "Aldabra" as a new subfamily
-		*/                    
+		*/
 
-		if (skipRecord == null) {
-		  if ((code == null) || (code.length() == 0) ) {
-			s_log.warn("processLine() code is null or empty string line:" + lineNum + " taxon:" + taxonName);
-			getMessageMgr().addToMessages(MessageMgr.codeNotFound, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code);
-			skipRecord = "codeIsNull";
-		  }
+		if ((code == null) || (code.length() == 0) ) {
+		  s_log.warn("processLine() code is null or empty string line:" + lineNum + " taxon:" + taxonName);
+		  getMessageMgr().addToMessages(MessageMgr.codeNotFound, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code);
+		  skipRecord = "codeIsNull";
 		}
 
 		if (skipRecord == null) {
@@ -300,7 +275,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 			if (TaxonPropMgr.isIntroduced(useTaxonName, bioregion)) {
 				//A.log("processLine() useTaxonName:" + useTaxonName + " bioregion:" + bioregion);
 			  isIntroduced = true;
-			  specimenItem.put("is_introduced", Integer.valueOf(1));
+			  specimenItem.put("is_introduced", 1);
 			  getMessageMgr().flag("is_introduced");
 			}
 		}
