@@ -1,14 +1,15 @@
 package org.calacademy.antweb.util;
 
-import java.sql.*;
-import java.util.*;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.home.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.ProjTaxon;
+import org.calacademy.antweb.Project;
+import org.calacademy.antweb.home.ProjTaxonDb;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class AllAntwebMgr {
 
@@ -22,7 +23,7 @@ public class AllAntwebMgr {
     
     public static void populate(Connection connection, boolean forceReload) {
       if (!forceReload && (s_allAntwebMap != null)) return;      
-      s_allAntwebMap = new HashMap<String, ProjTaxon>();
+      s_allAntwebMap = new HashMap<>();
       
       ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
       try {
@@ -38,8 +39,7 @@ public class AllAntwebMgr {
     }
 
     public static ProjTaxon get(String taxonName) {
-      ProjTaxon projTaxon = (ProjTaxon) s_allAntwebMap.get(taxonName);
-      return projTaxon;
+        return s_allAntwebMap.get(taxonName);
     }
 }
 

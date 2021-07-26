@@ -1,21 +1,23 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
-import java.sql.*;
-
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Curator;
+import org.calacademy.antweb.Login;
+import org.calacademy.antweb.SpeciesListable;
+import org.calacademy.antweb.util.AntwebException;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.DBUtil;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.*;
+import javax.servlet.http.HttpSession;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 public class LoginDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(LoginDb.class);
+    private static final Log s_log = LogFactory.getLog(LoginDb.class);
         
     public LoginDb(Connection connection) {
       super(connection);
@@ -121,7 +123,7 @@ public class LoginDb extends AntwebDb {
     }
 
     public ArrayList<Login> getAllLogins() throws SQLException {
-        ArrayList<Login> loginList = new ArrayList<Login>();
+        ArrayList<Login> loginList = new ArrayList<>();
         String theQuery = "select * from login";
         Statement stmt = null;
         ResultSet rset = null;
@@ -140,53 +142,34 @@ public class LoginDb extends AntwebDb {
         }
         return loginList;
     }
-    
-    public ArrayList<Login> getAllLoginsOld() throws SQLException {
-        ArrayList<Login> loginList = new ArrayList<Login>();
-        String theQuery = "select id from login";
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getAllLogins()");
-            rset = stmt.executeQuery(theQuery);
-        
-            while (rset.next()) {
-                Login login = getLogin(rset.getInt("id"));
-                loginList.add(login);
-            }
-            Collections.sort(loginList);  
-        } finally {
-            DBUtil.close(stmt, rset, this, "getAllLogins()");
-        }
-        return loginList;      
-    }
 
-    public ArrayList<Curator> getAllCurators() throws SQLException {          
-        ArrayList<Curator> curatorList = new ArrayList<Curator>();
-        //String theQuery = "select id from login where is_upload_images = 1 or is_upload_images = 1;"; // or  + " and group_id > 0"
-        String theQuery = "select id from login where group_id > 0;"; // or  + " and group_id > 0"
+    public ArrayList<Curator> getAllCurators() throws SQLException {
+        ArrayList<Curator> curatorList = new ArrayList<>();
+
+        String query = "select * from login where group_id > 0";
         Statement stmt = null;
         ResultSet rset = null;
+
         try {
             stmt = DBUtil.getStatement(getConnection(), "getAllCurators()");
-            rset = stmt.executeQuery(theQuery);
-            // A.log("getAllCurators() theQuery:" + theQuery);
+            rset = stmt.executeQuery(query);
+
             while (rset.next()) {
-                Curator curator = getCurator(rset.getInt("id"));
+                Curator curator = instantiateCurator(rset);
                 curatorList.add(curator);
-                //if (curator.getId() == 1752) A.log("getAllCurators() curator Gibb:" + curator + " uploadSpecimens:" + curator.isUploadSpecimens());
             }
-            Collections.sort(curatorList);  
         } finally {
             DBUtil.close(stmt, rset, this, "getAllCurators()");
         }
-        return curatorList;      
+
+        Collections.sort(curatorList);
+        return curatorList;
     }
 
     private Curator instantiateCurator(ResultSet rset)
       throws SQLException {
         Curator curator = new Curator();
-        curator = (Curator) instantiate(curator, rset);
+        instantiate(curator, rset);
 
         setUploadCounts(curator);
       
@@ -203,13 +186,13 @@ public class LoginDb extends AntwebDb {
     private Login instantiateLogin(ResultSet rset)
       throws SQLException {
         Login login = new Login();
-        login = instantiate(login, rset);
+        instantiate(login, rset);
         if (login.getId() == 0) return null;
         return login;
     }
     
     // The login could be a Curator.
-    private Login instantiate(Login login, ResultSet rset)
+    private static void instantiate(Login login, ResultSet rset)
       throws SQLException {
         //A.log("instantiate() BEFORE login:" + login + " rset:" + rset);            
 
@@ -231,7 +214,6 @@ public class LoginDb extends AntwebDb {
             login.setIsUploadSpecimens(rset.getBoolean("is_upload_specimens"));
             login.setIsUploadImages(rset.getBoolean("is_upload_images"));
         }
-        return login;
     }
 
     // Expensive. Don't want to do this in the midst of server startup.
@@ -282,7 +264,7 @@ public class LoginDb extends AntwebDb {
 
       //  select count(*), upload_date, group_concat(distinct access_group) from image i, specimen s where i.image_of_id = s.code group by upload_date order by group_concat(distinct access_group);
       // Perhaps the best we can do. Not having uploader ID. Trusting that the owner of the specimen is the uploader of the image.
-      
+        //todo use PreparedStatement
       String query = "select count(*) count from image_upload, image_uploaded where image_upload.id = image_uploaded.image_upload_id and curator_id =" + curator.getId();
       
       ResultSet rset = null;
@@ -305,7 +287,7 @@ public class LoginDb extends AntwebDb {
     }            
     
     public void setUploadCounts(Curator curator) {
-
+      // todo use PreparedStatement here
       String query = "select count(*) uploadCount from upload where login_id = " + curator.getId();    
       ResultSet rset = null;
       Statement stmt = null;
@@ -330,7 +312,8 @@ public class LoginDb extends AntwebDb {
 
     public void setDescEditCounts(Curator curator) {
       int count = 0;
-      
+
+      // todo use PreparedStatement here
       String query = "select count(*) count from description_edit where access_login = " + curator.getId();    
       ResultSet rset = null;
       Statement stmt = null;
@@ -348,6 +331,7 @@ public class LoginDb extends AntwebDb {
         DBUtil.close(stmt, rset, "LoginDb", "getDescEditCounts()");
       }
 
+      //todo use PreparedStatement
       query = "select count(*) count from description_hist where access_login = " + curator.getId();    
       try {
         stmt = DBUtil.getStatement(getConnection(), "getDescEditCounts()");
@@ -367,7 +351,8 @@ public class LoginDb extends AntwebDb {
 
     // Doesn't really need curators. Logins are fetched more quickly.
     public ArrayList<Curator> getCurators(int groupId) throws SQLException {          
-        ArrayList<Curator> curators = new ArrayList<Curator>();
+        ArrayList<Curator> curators = new ArrayList<>();
+        //todo use PreparedStatement
         String theQuery = "select id from login where group_id = " + groupId;
         Statement stmt = null;
         ResultSet rset = null;
@@ -387,7 +372,7 @@ public class LoginDb extends AntwebDb {
     }
 
     public HashMap<Integer, Login> getCuratorMap() throws SQLException {          
-        HashMap<Integer, Login> curators = new HashMap<Integer, Login>();
+        HashMap<Integer, Login> curators = new HashMap<>();
         String theQuery = "select id from login where group_id >= 0";
         Statement stmt = null;
         ResultSet rset = null;
@@ -398,7 +383,7 @@ public class LoginDb extends AntwebDb {
             while (rset.next()) {
                 int id = rset.getInt("id");
                 Login login = getLogin(id);
-                curators.put(Integer.valueOf(id), login);
+                curators.put(id, login);
             } 
         } finally {
             DBUtil.close(stmt, rset, this, "getCuratorMap()");
@@ -407,6 +392,7 @@ public class LoginDb extends AntwebDb {
     }
 
     public int getNewLoginId() {
+        //todo shouldn't we let the database handle this with autoincrement?
         int newLoginId = 0;
         Statement stmt = null;
         ResultSet rset = null;
@@ -454,7 +440,8 @@ public class LoginDb extends AntwebDb {
             if (!isLegalLogin(login)) {
               throw new AntwebException("name or email already in use. id:" + login.getId() + " name:" + login.getName() + " email:" + login.getEmail());
             }
-        
+
+            //todo use PreparedStatement
             String theInsert = "insert into login (id, name, first_name, last_name, " +
               "email, password, group_id, is_admin, is_upload_specimens, is_upload_images) values ("+ login.getId() +", '" + login.getName() + "', " +
               "'" + login.getFirstName() + "', '" + login.getLastName() + "', '" + login.getEmail() 
@@ -489,7 +476,8 @@ public class LoginDb extends AntwebDb {
     
         Statement stmt = null;
         try {
-            stmt = getConnection().createStatement();            
+            stmt = getConnection().createStatement();
+            //todo use PreparedStatement
             String theUpdate = "update login set last_login = now() where id = " + login.getId();
             
             stmt.executeUpdate(theUpdate);
@@ -519,8 +507,9 @@ public class LoginDb extends AntwebDb {
             //s_log.warn("isUploadImages:" + login.isUploadImages());
             int uploadSpecimens = (login.isUploadSpecimens()) ? 1 : 0;
             int uploadImages = (login.isUploadImages()) ? 1 : 0;
-            int isAdmin = (login.isAdmin()) ? 1 : 0;        
+            int isAdmin = (login.isAdmin()) ? 1 : 0;
 
+            //todo use PreparedStatement
             String theUpdate = "update login " 
               + " set name='" + login.getName() + "'"
               + ", first_name='" + login.getFirstName() + "'"
@@ -568,6 +557,7 @@ public class LoginDb extends AntwebDb {
     }
    
     private void updateLoginProjects(Login login) throws SQLException {
+        //todo use PreparedStatement
       String theStatement = "delete from login_project where login_id=" + login.getId();
       
       if (login.isAdmin()) return; // Admins get all options automatically.  No need to store.                                                            
@@ -587,7 +577,7 @@ public class LoginDb extends AntwebDb {
         for (SpeciesListable project : projects) {
           if (project == null) continue;
           projectName = project.getName();
-
+          //todo use PreparedStatement
           theStatement = "insert into login_project (login_id, project_name) " 
             + " values (" + login.getId() + ",'" + projectName + "')";            
             //s_log.info("updateProjects() theStatement:" + theStatement);
@@ -603,7 +593,7 @@ public class LoginDb extends AntwebDb {
 
     private void updateLoginCountries(Login login) throws SQLException {      
       if (login.isAdmin()) return; // Admins get all options automatically.  No need to store.                                                            
-                                                                                                                         
+        //todo use PreparedStatement
       String theStatement = "delete from login_country where login_id=" + login.getId();
 	  Statement stmt = null;
 	  try {
@@ -691,6 +681,7 @@ public class LoginDb extends AntwebDb {
     }
 
     public String findInviteId(String email) throws SQLException {
+        //todo use PreparedStatement
         String theQuery = "select id from login " 
             + " where email='" + email + "' and password = '' "; 
         Statement stmt = null;
@@ -723,7 +714,8 @@ public class LoginDb extends AntwebDb {
 
         Statement stmt = null;
         try {
-            stmt = getConnection().createStatement();            
+            stmt = getConnection().createStatement();
+            //todo use PreparedStatement
             String theUpdate = "update login set password = '" + newPassword + "' where id = " + login.getId();
             
             stmt.executeUpdate(theUpdate);
@@ -736,6 +728,7 @@ public class LoginDb extends AntwebDb {
     }        
     
     public void deleteById(int id) throws SQLException {
+        //todo use PreparedStatement
         String theQuery = "delete from login where id = " + id;
         Statement stmt = null;
         try {
@@ -750,8 +743,8 @@ public class LoginDb extends AntwebDb {
 
     }        
     
-    public static ArrayList getUsrAdmList(Connection connection) throws SQLException { 
-        ArrayList<String> usrAdmList = new ArrayList();
+    public static ArrayList<String> getUsrAdmList(Connection connection) throws SQLException {
+        ArrayList<String> usrAdmList = new ArrayList<>();
         String theQuery = "select login.name, password, group_id, ant_group.name from login, ant_group where login.group_id = ant_group.id ";
 
         Statement stmt = null;

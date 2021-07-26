@@ -36,7 +36,9 @@ public class GeolocaleMgr extends Manager {
 
     private static ArrayList<Adm1> s_adm1s;
 
-    private static Map<String, Country> s_country_map;
+    private static Map<Integer, Geolocale> geolocaleIdMap;
+
+    private static Map<String, Country> countryNameMap;
 
     // For Taxon Name Search Autocomplete    
     private static List<String> placeNamesList = null;
@@ -114,13 +116,15 @@ public class GeolocaleMgr extends Manager {
 
         Collections.sort(s_geolocales);
 
+        geolocaleIdMap = s_geolocales.stream().collect(Collectors.toMap(Geolocale::getId, Function.identity()));
+
         s_adm1s = s_geolocales.stream().filter(adm1 -> adm1.getGeorank().equals("adm1"))
                 .map(adm1 -> (Adm1) adm1)
                 .collect(Collectors.toCollection(ArrayList::new));
 
         s_adm1s.forEach(adm1 -> s_adm1_map.put(adm1.getName(), adm1.getCountry(), adm1));
 
-        s_country_map = geolocaleDb.getCountries().stream().collect(Collectors.toMap(Country::getName, Function.identity()));
+        countryNameMap = geolocaleDb.getCountries().stream().collect(Collectors.toMap(Country::getName, Function.identity()));
     }
 
     private static int countInstances(String instance, ArrayList<Geolocale> geolocales) {
@@ -278,22 +282,10 @@ public class GeolocaleMgr extends Manager {
         return null;
     }
 
-    public static Geolocale getGeolocale(int geolocaleId) {
+    public static @Nullable Geolocale getGeolocale(int geolocaleId) {
         if (!AntwebMgr.isPopulated()) return null;
 
-        //A.log("getGeolocale() id:" + geolocaleId);
-
-        int c = 0;
-        for (Geolocale geolocale : s_geolocales) {
-            ++c;
-            //if (c % 1000 == 0) A.log("getGeolocale() c:" + c);
-
-
-            if (geolocaleId == geolocale.getId()) {
-                return geolocale;
-            }
-        }
-        return null;
+        return geolocaleIdMap.get(geolocaleId);
     }
 
     public static Geolocale getGeolocale(String name, String georank) {
@@ -462,20 +454,10 @@ public class GeolocaleMgr extends Manager {
         return null;
     }
 
-    public static @Nullable Country getCountry(String name) {
+    public static @Nullable Country getCountry(@Nullable String name) {
         if (name == null) return null;
-        if (s_regions == null) return null;
-//A.log("r:" + s_regions);
-        for (Region region : s_regions) {
-            for (Subregion subregion : region.getSubregions()) {
-//A.log("s:" + subregion);
-                for (Country country : subregion.getAllCountries()) {
-//A.log("c:" + country);
-                    if (name.equals(country.getName())) return country;
-                }
-            }
-        }
-        return null;
+
+        return countryNameMap.get(name);
     }
 
     /*
@@ -514,14 +496,9 @@ public class GeolocaleMgr extends Manager {
     }
     // if (!AntwebMgr.isPopulated()) return null;
 
-    public static Geolocale getAnyCountry(String countryName) {
+    public static @Nullable Geolocale getAnyCountry(@Nullable String countryName) {
         if (countryName == null) return null;
-        ArrayList<Geolocale> countries = getCountries();
-        if (countries == null) return null; // Could happen due to server initialization.
-        for (Geolocale geolocale : getCountries()) {
-            if (countryName.equals(geolocale.getName())) return geolocale;
-        }
-        return null;
+        return countryNameMap.get(countryName);
     }
 
     /**
@@ -529,10 +506,10 @@ public class GeolocaleMgr extends Manager {
      * I.E: "Iran (Islamic Republic of)" will return Iran.
      */
     public static @Nullable Country getValidCountry(String country) {
-        if (s_country_map == null) {
+        if (countryNameMap == null) {
             return null;
         }
-        Country matchingCountry = s_country_map.get(country);
+        Country matchingCountry = countryNameMap.get(country);
 
         if (matchingCountry == null) {
             return null;
@@ -543,7 +520,7 @@ public class GeolocaleMgr extends Manager {
         }
 
         // country is not valid, return the Country that this points to
-        return s_country_map.get(matchingCountry.getValidName());
+        return countryNameMap.get(matchingCountry.getValidName());
     }
 
     // Convenience method
@@ -599,7 +576,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
 */
 
     public static boolean isValidCountry(String name) {
-        Country country = s_country_map.get(name);
+        Country country = countryNameMap.get(name);
         if (country == null) { return false; }
         return country.isValid();
 //      ArrayList<Geolocale> validCountries = getValidCountries();

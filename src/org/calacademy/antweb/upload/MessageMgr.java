@@ -1,15 +1,14 @@
 package org.calacademy.antweb.upload;
 
-import java.util.*;
-import java.io.*;
-import org.calacademy.antweb.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Group;
-import org.calacademy.antweb.home.ProjectDb;
-import javax.servlet.http.*;
-import org.apache.struts.action.ActionForward;
+import org.calacademy.antweb.util.A;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.HttpUtil;
+import org.calacademy.antweb.util.LogMgr;
 
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;    
+import java.util.*;
     
 public class MessageMgr {
 
@@ -17,9 +16,9 @@ public class MessageMgr {
       init();
     }
 
-    private static Log s_log = LogFactory.getLog(MessageMgr.class);
+    private static final Log s_log = LogFactory.getLog(MessageMgr.class);
 
-    private Vector<String> s_messages = new Vector();
+    private Vector<String> s_messages = new Vector<>();
     public Vector<String> getMessages() {
       return s_messages;
     }
@@ -41,14 +40,14 @@ public class MessageMgr {
 
     // Flag system is different from messages. Will create a message but just include a count.
     // Customized code below. Anti-pattern.
-    private HashMap<String, Integer> flags = new HashMap<String, Integer>();
+    private final HashMap<String, Integer> flags = new HashMap<>();
     public void flag(String key) {
       //A.log("MessageMgr.flag() key:" + key);
       if (flags.get(key) == null) {
-        flags.put(key, Integer.valueOf(1));
+        flags.put(key, 1);
       } else {
         Integer v = flags.get(key);
-        flags.put(key, Integer.valueOf(v+1));
+        flags.put(key, v + 1);
       }
     }
 
@@ -117,7 +116,7 @@ public class MessageMgr {
     public static final String troubleParsingLines = "troubleParsingLines";
     public static final String duplicatedRecord = "duplicatedRecord";    
     public static final String multipleBioregionsForNonIntroducedTaxa = "multipleBioregionsForNonIntroducedTaxa";
-     public static final String parsingErrors = "parsingErrors";
+    public static final String parsingErrors = "parsingErrors";
     public static final String extraCarriageReturn = "extraCarriageReturn";
     public static final String groupMorphoGenera = "groupMorphoGenera";
 // These should be at the end of the report
@@ -239,34 +238,34 @@ public class MessageMgr {
     }
    
     public String getMessagesReport() {        
-      String logString = "";
+      StringBuilder logString = new StringBuilder();
       if (messageStr != null) {
-        logString += messageStr;
+        logString.append(messageStr);
       }
       
       Vector<String> messages = getMessages();
       boolean hasMessages = !messages.isEmpty();
       //if (!hasMessages) return logString += "<h3><font color=green>Data tests passed.</font></h3>";
 
-      logString += "<h3>Errors:</h3>"; //<pre>
+      logString.append("<h3>Errors:</h3>"); //<pre>
       int i = 0;
       for (String message : messages) {
   		  ++i;
 		  //A.log("getMessagesReport() i:" + i + " message:" + message);
-		  if (i > 1) logString += "<br><br>";
-		  logString += "\r\r<b>" + i + "</b>:" + message;
+		  if (i > 1) logString.append("<br><br>");
+		  logString.append("\r\r<b>").append(i).append("</b>:").append(message);
       }
 
-	  logString += "<h3>Passed Tests:</h3>";
+	  logString.append("<h3>Passed Tests:</h3>");
 	  i = 0;
 	  for (Test test : getTests()) {
 		  if (!test.isPassed()) continue;
 		  ++i;
-		  if (i > 1) logString += "<br>";
-		  logString += "\r\r&nbsp;<b> " + i + "</b>:" + test.getHeading();
+		  if (i > 1) logString.append("<br>");
+		  logString.append("\r\r&nbsp;<b> ").append(i).append("</b>:").append(test.getHeading());
 	  }          
 
-      return logString;
+      return logString.toString();
     }
 
     public void compileMessages(Group group) {
@@ -276,10 +275,8 @@ public class MessageMgr {
           getMessages().add(s_message);
         }
 
-        int i = 0;
         for (Test test : getTests()) {
-          ++i;
-          test.setGroup(group);
+            test.setGroup(group);
           String message = test.toString();
           //A.log("MessageMgr.compileMessages() i:" + i + " count:" + test.getCount() + " key:" + test.getKey() + " type:" +  test.getType() + " test:" + test + " message:" + message);
           if (message != null) {
@@ -332,11 +329,11 @@ public class MessageMgr {
       String getFlag() { return flag; }
       int count = 0;
 
-      HashMap<String, TreeSet<String>> messageStringHash = new HashMap();            
-      HashMap<String, HashSet<String>> messageSetsHash = new HashMap();        
-      HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap();        
+      HashMap<String, TreeSet<String>> messageStringHash = new HashMap<>();
+      HashMap<String, HashSet<String>> messageSetsHash = new HashMap<>();
+      HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap<>();
 
-      Vector<String> details = new Vector();
+      Vector<String> details = new Vector<>();
 
       Test(String key, String type, String heading, String flag) {
         this(key, type, heading);
@@ -420,11 +417,11 @@ public class MessageMgr {
 		  //A.log("addToMessageStrings() key:" + key + " value:" + value);
 		  if (!messageStringHash.containsKey(key)) {
     	 	++addCount;
-			TreeSet<String> valueSet = new TreeSet();
+			TreeSet<String> valueSet = new TreeSet<>();
 			valueSet.add(value);
 			messageStringHash.put(key, valueSet);
 		  } else {
-			TreeSet<String> valueSet = (TreeSet) messageStringHash.get(key);
+			TreeSet<String> valueSet = messageStringHash.get(key);
 		    if (!valueSet.contains(value)) ++addCount;
 			valueSet.add(value);
 		  }
@@ -434,11 +431,11 @@ public class MessageMgr {
 
 		  if (!messageSetsHash.containsKey(key)) {
       	    ++addCount;
-			HashSet<String> valueSet = new HashSet();
+			HashSet<String> valueSet = new HashSet<>();
 			valueSet.add(value);
 			messageSetsHash.put(key, valueSet);
 		  } else {
-			HashSet<String> valueSet = (HashSet) messageSetsHash.get(key);
+			HashSet<String> valueSet = messageSetsHash.get(key);
             if (!valueSet.contains(value)) ++addCount;
 			valueSet.add(value);
 		  }        
@@ -455,20 +452,20 @@ public class MessageMgr {
 	
 		  if (!messageMapsHash.containsKey(key)) {
             ++addCount;
-			HashMap<String, HashSet<String>> valueMap = new HashMap();
-			HashSet<String> valueSet = new HashSet();
+			HashMap<String, HashSet<String>> valueMap = new HashMap<>();
+			HashSet<String> valueSet = new HashSet<>();
 			valueSet.add(value);
 			valueMap.put(key2, valueSet);
 			messageMapsHash.put(key, valueMap);
 		  } else {
-			HashMap<String, HashSet<String>> valueMap = (HashMap) messageMapsHash.get(key);
+			HashMap<String, HashSet<String>> valueMap = messageMapsHash.get(key);
 			if (!valueMap.containsKey(key2)) {
               ++addCount;
-			  HashSet<String> valueSet = new HashSet(); 
+			  HashSet<String> valueSet = new HashSet<>();
 			  valueSet.add(value);
 			  valueMap.put(key2, valueSet);  
 			} else {        
-			  HashSet<String> valueSet = (HashSet) valueMap.get(key2);
+			  HashSet<String> valueSet = valueMap.get(key2);
 			  if (valueSet == null) {
 				s_log.error("addToMessageMaps() key:" + key + " key2:" + key2 + " value:" + value);
 			  } else { 
@@ -492,17 +489,17 @@ public class MessageMgr {
           if ("countryMissing".equals(getKey())) {
             A.log("MessageMgr.Test.toString() group:" + groupName);
             String countLink = "<a href='" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&country=null&groupName=" + groupName + "'>" + getCount() + "</a>";
-            returnStr += "<b>" + getHeading() + ":" + countLink + "</b>";          
+            returnStr += "<b>" + getHeading() + ":" + countLink + "</b>";
           } else {
-            returnStr += "<b>" + getHeading() + ":" + getCount() + "</b>";          
+            returnStr += "<b>" + getHeading() + ":" + getCount() + "</b>";
           }
         }
 
         // STR
         if (messageStringHash.size() > 0) {
-            returnStr = "";    
+            returnStr = "";
             Set<String> keySet = messageStringHash.keySet();
-            ArrayList<String> list = new ArrayList<String>(keySet);     
+            ArrayList<String> list = new ArrayList<>(keySet);
             Collections.sort(list);
             for (String key : list) {
                 TreeSet<String> values = messageStringHash.get(key);
@@ -525,25 +522,25 @@ public class MessageMgr {
                 for (String value : values) {
                     ++i;
                     if (i > 1) messages += delimiter;
-                    messages += value;                      
-                }                    
+                    messages += value;
+                }
                 if (key.contains("lines")) messages += "<br>* line numbers are approximate";
 
-				returnStr += messages;    
+				returnStr += messages;
             } 
         }
         
         // SET
         if (messageSetsHash.size() > 0) {
-            returnStr = "";    
+            returnStr = "";
             Set<String> keySet = messageSetsHash.keySet();
-            ArrayList<String> list = new ArrayList<String>(keySet);     
+            ArrayList<String> list = new ArrayList<>(keySet);
             //A.log("MessagMgr.toString() SET list:" + list + " size:" + list.size());            
             Collections.sort(list);
             for (String key : list) {
                 //This is hard to sort. Text string, with line numbers. 22 will come before 3.
                 HashSet<String> values = messageSetsHash.get(key);
-                ArrayList<String> list2 = new ArrayList<String>(values);     
+                ArrayList<String> list2 = new ArrayList<>(values);
                 //A.log("MessagMgr.toString() SET key:" + key + " list2:" + list2 + " size:" + list2.size());                 
 
                 Collections.sort(list2);
@@ -571,19 +568,19 @@ public class MessageMgr {
                     ++i;
                   }
                 }
-				returnStr += messages;    
+				returnStr += messages;
             } 
         }
         
         // MAP
         if (messageMapsHash.size() > 0) {
-            returnStr = "";    
+            returnStr = "";
             Set<String> keySet = messageMapsHash.keySet();
-            ArrayList<String> list = new ArrayList<String>(keySet);                 
+            ArrayList<String> list = new ArrayList<>(keySet);
             Collections.sort(list);
             for (String key1 : list) {
-                HashMap<String, HashSet<String>> valueMap = (HashMap) messageMapsHash.get(key1);
-                ArrayList<String> list2 = new ArrayList<String>(valueMap.keySet());     
+                HashMap<String, HashSet<String>> valueMap = messageMapsHash.get(key1);
+                ArrayList<String> list2 = new ArrayList<>(valueMap.keySet());
                 Collections.sort(list2);
 
                 String detailLink = getDetailLink();
@@ -593,7 +590,7 @@ public class MessageMgr {
                 String messages = "&nbsp;<b>" + getHeading() + detailLink + listSize + ": </b>";
                 for (String key2 : list2) {            
                     messages += "<br>&nbsp;&nbsp;<b>" + key2 + "</b>: ";
-                    HashSet<String> values = (HashSet) valueMap.get(key2);
+                    HashSet<String> values = valueMap.get(key2);
     				int i = 0;
                     for (String value : values) {
                        ++i;
@@ -602,7 +599,7 @@ public class MessageMgr {
                     }                    
                 }
                 A.log("compileMessages() 3 key1:" + key1);
-				returnStr += messages;    
+				returnStr += messages;
             }    
         }           
         return returnStr;

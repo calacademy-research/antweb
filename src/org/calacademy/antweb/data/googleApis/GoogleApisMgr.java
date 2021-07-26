@@ -18,7 +18,7 @@ import com.google.gson.*;
     
 public class GoogleApisMgr {
 
-    private static Log s_log = LogFactory.getLog(GoogleApisMgr.class);
+    private static final Log s_log = LogFactory.getLog(GoogleApisMgr.class);
       
 /*
 https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagascar&key=AntwebProps.getGoogleMapKey()	
@@ -34,10 +34,10 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
     }    
 */
 
-    static int apiCallCount = 0;      
-    static int maxDevApiCall = 10;
-    static int maxLiveApiCall = 1000;
-    static int maxApiCall = maxLiveApiCall;
+    private static int apiCallCount = 0;
+    private final static int maxDevApiCall = 10;
+    private final static int maxLiveApiCall = 1000;
+    private static int maxApiCall = maxLiveApiCall;
 
     public static String fetchData(Connection connection) {
 
@@ -87,7 +87,6 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 			} catch (AntwebException e) {
 				LogMgr.appendLog("googleApisAdm1Issue.html", "<br>" + e.getMessage() + " " + adm1.getNameCommaCountry() + " id:<a href='" + AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + adm1.getId() + "'>" + adm1.getId() + "</a>");			
 				s_log.warn("fetchData() 1 nameCommaCountry:" + adm1.getNameCommaCountry() + " id:" + adm1.getId() + " e:" + e.getMessage());
-				continue;
 			} catch (Exception e) {
 			  s_log.warn("fetchData() 2 adm1CommaCountry:" + adm1.getNameCommaCountry() + " id:" + adm1.getId() + " e:" + e);
 			  message = "GoogleApisMgr aborted. apiCallCount:" + apiCallCount;        
@@ -108,7 +107,7 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
     }
     
     public static String fetchData(Connection connection, int id) {
-        String message = "";
+        String message;
 	    GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 	            
         Adm1 adm1 = (Adm1) geolocaleDb.getGeolocale(id);
@@ -147,18 +146,15 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
         String encodeAdm1 = HttpUtil.encode(name) + georankTypeStr;
         String encodeCountry = HttpUtil.encode(country);
 		String fetchStr = "address=" + encodeAdm1 + ",%20" + encodeCountry + "&components=administrative_area_level_1:" + encodeAdm1 + "|Country:" + encodeCountry;
-    
-        String fetchUrl = "https://maps.googleapis.com/maps/api/geocode/json?" + fetchStr + "&key=" + AntwebProps.getGoogleMapKey();
-       
-        return fetchUrl;
+
+		return "https://maps.googleapis.com/maps/api/geocode/json?" + fetchStr + "&key=" + AntwebProps.getGoogleMapKey();
     }
 
     public static String getFetchCountryUrl(Geolocale geolocale) { 
         String country = geolocale.getName();
         String encodeCountry = HttpUtil.encode(country);
 		String fetchStr = "address=" + encodeCountry + "&components=Country:" + encodeCountry;
-        String fetchUrl = "https://maps.googleapis.com/maps/api/geocode/json?" + fetchStr + "&key=" + AntwebProps.getGoogleMapKey();
-        return fetchUrl;
+		return "https://maps.googleapis.com/maps/api/geocode/json?" + fetchStr + "&key=" + AntwebProps.getGoogleMapKey();
     }
 
     private static void fetchAdm1(Adm1 adm1, GeolocaleDb geolocaleDb) throws AntwebException {
@@ -168,11 +164,10 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 		++apiCallCount;
 
 		A.log("GoogleApisMgr.fetchAdm1() BEFORE adm1:" + adm1.getName() + ", " + adm1.getParent() + " box:" + adm1.getBoundingBox() + " centroid:" + adm1.getCentroid());
-	 
-		GoogleApisAdm1 googleAdm1 = new GoogleApisAdm1();
-		googleAdm1.fetch(fetchUrl);
 
-        if (googleAdm1.hasAdm2Data()) {
+		GoogleApisAdm1.fetch(fetchUrl);
+
+        if (GoogleApisAdm1.hasAdm2Data()) {
           String message = "<br>country:" + adm1.getParent() + " adm1:" + adm1.getName() + " <a href='" + fetchUrl + "'>link</a>";
           A.log("fetchAdm1() log to googleApisAdm1Adm2Data.html message:" + message);
 		  LogMgr.appendLog("googleApisAdm1Adm2Data.html", message);
@@ -180,8 +175,8 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 
 		AntwebUtil.sleep(.1);
 
-		String boundingBox = googleAdm1.getBoundingBox();
-		String centroid = googleAdm1.getCentroid();
+		String boundingBox = GoogleApisAdm1.getBoundingBox();
+		String centroid = GoogleApisAdm1.getCentroid();
 		A.log("fetchAdm1() adm1:" + adm1.getName() + ", " + adm1.getParent() + " centroid:" + centroid + " boundingBox:" + boundingBox);
 		  
 		if (boundingBox != null && centroid != null) {

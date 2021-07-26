@@ -43,7 +43,7 @@ public class GeolocaleDb extends AntwebDb {
 
     public Geolocale getAdm1(String adm1, String country) {
        int id = 0;
-               
+        //todo use PreparedStatement
        String query = "select id from geolocale where name = '" + Formatter.escapeQuotes(adm1) + "' and parent = '" + Formatter.escapeQuotes(country) + "'";
        Statement stmt = null;
        ResultSet rset = null;
@@ -72,6 +72,7 @@ public class GeolocaleDb extends AntwebDb {
 
         //name = AntFormatter.escapeQuotes(name);
         try {
+            //todo use PreparedStatement
             query = "select * "
 /*
               + "id, name, isoCode, iso3Code "
@@ -143,6 +144,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
         name = Formatter.escapeQuotes(name);
         try {
+            //todo use PreparedStatement
             query = "select * "
 /*
               + "id, name, isoCode, iso3Code, georank, is_valid, valid_name, is_un, source, bioregion, alt_bioregion "
@@ -742,7 +744,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       int loginId = login.getId();
       
       // A 0 adminId implies admin and will not restrict the search
-      ArrayList<SpeciesListable> speciesListList = new ArrayList<SpeciesListable>();
+      ArrayList<SpeciesListable> speciesListList = new ArrayList<>();
         
       //A.log("fetchSpeciesLists() groupId:" + loginId);        
       Statement stmt = null;
@@ -757,7 +759,8 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
                + " and g.is_valid = 1"
                + " order by g.name"
                ;
-          } else {            
+          } else {
+              // todo use PreparedStatement here
             theQuery = "select g.id, g.name, g.is_use_children from geolocale g, login_country lc"
                + " where lc.login_id = " + loginId
                + " and lc.country = g.name"
@@ -779,7 +782,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
               //type = rset.getString("type");
                 //s_log.info("fetchSpeciesLists() name:" + projectName);    
               
-    	      boolean isUseChildren = (rset.getInt("is_use_children") == 1) ? true : false;
+    	      boolean isUseChildren = rset.getInt("is_use_children") == 1;
 
 				//if ("Greece".equals(name)) A.log("GeolocaleDb 2 name:" + name + " isUseChildren:" + isUseChildren);
 
@@ -824,7 +827,8 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       ResultSet rset = null;
       try {
           stmt = DBUtil.getStatement(getConnection(), "fetchSubSpeciesLists()");
-        
+
+          // todo use PreparedStatement here
           String theQuery = "select g.id, g.name, g.parent from geolocale g"
                + " where g.georank = 'adm1'"
                + " and g.is_valid = 1"
@@ -863,7 +867,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       }
 
       return speciesListList;
-    }    
+    }
 
 
 // ------------- Get From Specimen Data ----------------------
@@ -1007,14 +1011,15 @@ public static int c = 0;
       try {
 
           stmt = DBUtil.getStatement(getConnection(), "updateBoundingBox()");
-          int x = 0;
+
+          //todo use PreparedStatement
 
           dml = "update geolocale " 
             + " set bounding_box = '" + boundingBox + "'"
             + " where id = " + geolocale.getId();
 
           //A.log("updateCentroid() dml:" + dml);
-          x = stmt.executeUpdate(dml);
+          stmt.executeUpdate(dml);
 
       } catch (SQLException e) {
           s_log.error("updateBoundingBox() e:" + e);
@@ -1104,15 +1109,14 @@ public static int c = 0;
       Statement stmt = null;      
       try {
           stmt = DBUtil.getStatement(getConnection(), "updateCountsFromSpecimenData()");
-          int x = 0;
-
+          //todo use PreparedStatement
           dml = "update geolocale " 
             + " set image_count = " + geolocale.getImageCount()
             + "  , specimen_count = " + geolocale.getSpecimenCount()
             + " where id = " + geolocale.getId();
 
           //A.log("updateCountsFromSpecimenData() dml:" + dml);
-          x = stmt.executeUpdate(dml);
+          stmt.executeUpdate(dml);
         
       } catch (SQLException e) {
           s_log.error("updateCountsFromSpecimenData() e:" + e);
@@ -1513,6 +1517,7 @@ public static int c = 0;
 
     private void updateColor(int id, String color) {    
       UtilDb utilDb = new UtilDb(getConnection());
+      //todo use PreparedStatement
       utilDb.updateField("geolocale", "chart_color", "'" + color + "'", "id = " + id );
     }
 
@@ -1628,13 +1633,15 @@ public static int c = 0;
     }
 
     private String getCountryList(Geolocale geolocale) {
-      String countryList = "";
+      StringBuilder countryList = new StringBuilder();
       String query = null;
       Statement stmt = null;
       ResultSet rset = null;
       try {
         stmt = DBUtil.getStatement(getConnection(), "getCountryList()");
 
+        // todo use PreparedStatement
+        // todo are the wildcards to exclude countries with apostrophes in them?
         if ("region".equals(geolocale.getGeorank())) {
           query = "select distinct country.name from geolocale region, geolocale subregion, geolocale country " 
             + " where region.name = subregion.parent and subregion.name = country.parent "
@@ -1663,13 +1670,13 @@ public static int c = 0;
       
         int i = 0;
         while (rset.next()) {
-          if (i == 0) countryList += "('";
-          if (i > 0) countryList += ",'";
-          countryList += rset.getString("name");
-          countryList += "'";
+          if (i == 0) countryList.append("('");
+          if (i > 0) countryList.append(",'");
+          countryList.append(rset.getString("name"));
+          countryList.append("'");
           ++i;
         }
-        countryList += ")";
+        countryList.append(")");
 
         if (i == 0) return null;
 
@@ -1679,7 +1686,7 @@ public static int c = 0;
       } finally {
         DBUtil.close(stmt, rset, "getCountryList()");
       } 
-      return countryList;    
+      return countryList.toString();
     }
 
     private void updateValidSpeciesCount(int geolocaleId) {
@@ -1696,6 +1703,7 @@ public static int c = 0;
         try {
             stmt = getConnection().createStatement();
 
+            // todo use PreparedStatement here
             query = "select count(*) count from taxon, geolocale_taxon gt where taxon.taxon_name = gt.taxon_name"
                     + " and taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0"
                     + " and geolocale_id = " + geolocaleId;
@@ -1736,29 +1744,27 @@ public static int c = 0;
     }
 
     public String getTaxonSubfamilyDistJsonQuery(String criteria) {
-      String query = "select subfamily, count(*) count, t.chart_color " 
-          + " from geolocale_taxon gt, taxon t, geolocale g " 
-          + " where gt.taxon_name = t.taxon_name " 
+        //if (AntwebProps.isDevMode()) s_log.info("getTaxonSubfamilyDistJsonQuery() query:" + query);
+      return "select subfamily, count(*) count, t.chart_color "
+          + " from geolocale_taxon gt, taxon t, geolocale g "
+          + " where gt.taxon_name = t.taxon_name "
           + " and g.id = gt.geolocale_id "
           + " and g." + criteria
-          + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and family = 'formicidae'" 
+          + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') "
+          + " and family = 'formicidae'"
           + " and taxarank = 'species'"
-          + " group by subfamily, t.chart_color"; 
-          //if (AntwebProps.isDevMode()) s_log.info("getTaxonSubfamilyDistJsonQuery() query:" + query);
-      return query;
+          + " group by subfamily, t.chart_color";
     }
     
     public String getSpecimenSubfamilyDistJsonQuery(String criteria) {
-      String query = "select subfamily, count(*) count " 
-          + " from geolocale_taxon gt, specimen s, geolocale g " 
-          + " where gt.taxon_name = s.taxon_name " 
-          + " and g.id = gt.geolocale_id "
-          + " and g." + criteria
-          + " and s.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and s.family = 'formicidae' " 
-          + " group by subfamily"; 
-      return query;
+        return "select subfamily, count(*) count "
+            + " from geolocale_taxon gt, specimen s, geolocale g "
+            + " where gt.taxon_name = s.taxon_name "
+            + " and g.id = gt.geolocale_id "
+            + " and g." + criteria
+            + " and s.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') "
+            + " and s.family = 'formicidae' "
+            + " group by subfamily";
     }     
              
     // To support Change View options
@@ -1826,7 +1832,8 @@ public static int c = 0;
         }
     }
 
-    public void deleteFetchedAdm1(Geolocale country, String source) {    
+    public void deleteFetchedAdm1(Geolocale country, String source) {
+        //todo use PreparedStatement
         String dml = "delete from geolocale where georank = 'adm1' and source = '" + source + "' and parent = '" + AntFormatter.escapeQuotes(country.getName()) + "'";
         Statement stmt = null;
         try {
@@ -2016,12 +2023,12 @@ public static int c = 0;
       // Nope. Only on insert.
       //clauseArray.add(" rev = " + AntwebProps.getRev());
       
-      String clauses = "";
+      StringBuilder clauses = new StringBuilder();
       int i = 0;
       for (String clause : clauseArray) {
         i++;
-        if (i > 1) clauses += ", ";
-        clauses += clause;
+        if (i > 1) clauses.append(", ");
+        clauses.append(clause);
       }
       if (i == 0) return;
 
@@ -2138,6 +2145,7 @@ public static int c = 0;
       if (geolocaleId <= 0) return;
 	  Statement stmt = null;
 	  String dml = null;
+	  //todo use PreparedStatement
 	  try {
 		stmt = DBUtil.getStatement(getConnection(), "setFlickrData()");
 		dml = "update geolocale set "
@@ -2172,6 +2180,7 @@ public static int c = 0;
 		  Statement stmt = null;
 		  String dml = null;
 		  try {
+		      //todo use PreparedStatement
 			stmt = DBUtil.getStatement(getConnection(), "updateBioregionFromCountry()");
 			dml = "update geolocale set bioregion = '" + bioregion + "'"
 			  + " where id = " + adm1.getId();
@@ -2199,6 +2208,7 @@ public static int c = 0;
 		  Statement stmt = null;
 		  String dml = null;
 		  try {
+		      //todo use PreparedStatement
 			stmt = DBUtil.getStatement(getConnection(), "updateRegionFromCountry()");
 			dml = "update geolocale set region = '" + region + "'"
 			  + " where id = " + adm1.getId();
@@ -2218,6 +2228,7 @@ public static int c = 0;
 	  Statement stmt = null;
 	  String dml = null;
 	  try {
+          //todo use PreparedStatement
 		stmt = DBUtil.getStatement(getConnection(), "updateRev()");
 		dml = "update geolocale set rev = " + rev + " where id = " + id;
 		stmt.executeUpdate(dml);
@@ -2234,6 +2245,7 @@ public static int c = 0;
 	  Statement stmt = null;
 	  String dml = null;
 	  try {
+          //todo use PreparedStatement
 		stmt = DBUtil.getStatement(getConnection(), "updateChildrenGeorankType()");
 		dml = "update geolocale set georank_type = '" + georankType + "' where parent = '" + country + "'";
 		stmt.executeUpdate(dml);
@@ -2286,6 +2298,7 @@ public static int c = 0;
 
         Statement stmt = null;
         ResultSet rset = null;
+        //todo use PreparedStatement
         String query = "select name, parent, georank from geolocale " 
           + " where name like '%" + text + "%'"
           + "   and is_live = 1"
@@ -2350,6 +2363,7 @@ public static int c = 0;
    }
    
     private void updateSubregion(int geolocaleId, String subregion) {
+        //todo use PreparedStatement
         String updateDml = "update geolocale set subregion = '" + subregion + "' where id = " + geolocaleId; 
             
         Statement stmt = null;
@@ -2363,6 +2377,7 @@ public static int c = 0;
         }
     }   
     private void updateRegion(int geolocaleId, String region) {
+        //todo use PreparedStatement
         String updateDml = "update geolocale set region = '" + region + "' where id = " + geolocaleId; 
             
         Statement stmt = null;

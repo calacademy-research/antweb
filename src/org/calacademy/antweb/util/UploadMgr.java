@@ -1,19 +1,12 @@
 package org.calacademy.antweb.util;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-
-import java.sql.*;
-import javax.sql.*;
-import com.mchange.v2.c3p0.*;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.upload.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.home.UploadDb;
+import org.calacademy.antweb.upload.Upload;
+
+import java.sql.Connection;
+import java.util.ArrayList;
 
 public class UploadMgr {
 

@@ -15,7 +15,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
-public class Login implements Comparable {
+public class Login implements Comparable<Login> {
 
     private static Log s_log = LogFactory.getLog(Login.class);
     
@@ -249,11 +249,8 @@ public class Login implements Comparable {
         this.created = created;
     }
 
-     public int compareTo(Object o) throws ClassCastException {
-         Login compareLogin = (Login)o;
-         int compareId = compareLogin.getId();
-         int result = getId() - compareId;
-         return result;
+     public int compareTo(Login other) {
+         return getId() - other.getId();
      }
      
 

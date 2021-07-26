@@ -87,7 +87,7 @@ public class LogMgr {
 
 
   public static void appendFile(String fullPath, String data) {
-    (new Utility()).makeDirTree(fullPath);
+    Utility.makeDirTree(fullPath);
     try {
       FileWriter fstream = new FileWriter(fullPath, true);
       BufferedWriter out = new BufferedWriter(fstream);
@@ -122,7 +122,7 @@ public class LogMgr {
     String logDir = AntwebProps.getDataRoot() + "log/";
     String bakDir = logDir + "bak/";
     String backupDir = bakDir + yearStr + "/" + dateStr + "/";
-    (new Utility()).makeDirTree(backupDir);
+    Utility.makeDirTree(backupDir);
     s_log.warn("archiveLogs() Make backupDir:" + backupDir);
 
     //String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";
@@ -134,16 +134,16 @@ public class LogMgr {
     String logFiles = logDir + "*.log";
     String htmlFiles = logDir + "*.html";
 
-    String logsNotFound = "";
+    StringBuilder logsNotFound = new StringBuilder();
     for (String fileToMove : filesToMove) {
       try {
         LogMgr.moveFile(logDir, fileToMove, backupDir);
       } catch (IOException e) {
-        logsNotFound += fileToMove + ", ";      
+        logsNotFound.append(fileToMove).append(", ");
       }
     }
 
-    if (!"".equals(logsNotFound)) 
+    if (!"".equals(logsNotFound.toString()))
       s_log.warn("archiveLogs() logsNotFound:" + logsNotFound.substring(0, logsNotFound.length() - 2) + ".");
 
     String message = "files backed up here:" + backupDir;
@@ -163,7 +163,7 @@ public class LogMgr {
   public static void make777(String file) {
     try {
         //using PosixFilePermission to set file permissions 777
-        Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>();
+        Set<PosixFilePermission> perms = new HashSet<>();
         //add owners permission
         perms.add(PosixFilePermission.OWNER_READ);
         perms.add(PosixFilePermission.OWNER_WRITE);
@@ -176,7 +176,7 @@ public class LogMgr {
         perms.add(PosixFilePermission.OTHERS_READ);
         perms.add(PosixFilePermission.OTHERS_WRITE);
         perms.add(PosixFilePermission.OTHERS_EXECUTE);
-         
+
         Files.setPosixFilePermissions(Paths.get(file), perms);    
     } catch (IOException e) {
         s_log.warn("e:" + e);
