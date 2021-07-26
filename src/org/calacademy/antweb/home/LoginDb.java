@@ -142,26 +142,6 @@ public class LoginDb extends AntwebDb {
         }
         return loginList;
     }
-    
-    public ArrayList<Login> getAllLoginsOld() throws SQLException {
-        ArrayList<Login> loginList = new ArrayList<Login>();
-        String theQuery = "select id from login";
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getAllLogins()");
-            rset = stmt.executeQuery(theQuery);
-        
-            while (rset.next()) {
-                Login login = getLogin(rset.getInt("id"));
-                loginList.add(login);
-            }
-            Collections.sort(loginList);  
-        } finally {
-            DBUtil.close(stmt, rset, this, "getAllLogins()");
-        }
-        return loginList;      
-    }
 
     public ArrayList<Curator> getAllCurators() throws SQLException {
         ArrayList<Curator> curatorList = new ArrayList<>();
@@ -183,28 +163,6 @@ public class LoginDb extends AntwebDb {
         }
 
         Collections.sort(curatorList);
-        return curatorList;
-    }
-
-    public ArrayList<Curator> getAllCuratorsOld() throws SQLException {
-        ArrayList<Curator> curatorList = new ArrayList<Curator>();
-        //String theQuery = "select id from login where is_upload_images = 1 or is_upload_images = 1;"; // or  + " and group_id > 0"
-        String theQuery = "select id from login where group_id > 0;"; // or  + " and group_id > 0"
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getAllCurators()");
-            rset = stmt.executeQuery(theQuery);
-            // A.log("getAllCurators() theQuery:" + theQuery);
-            while (rset.next()) {
-                Curator curator = getCurator(rset.getInt("id"));
-                curatorList.add(curator);
-                //if (curator.getId() == 1752) A.log("getAllCurators() curator Gibb:" + curator + " uploadSpecimens:" + curator.isUploadSpecimens());
-            }
-            Collections.sort(curatorList);
-        } finally {
-            DBUtil.close(stmt, rset, this, "getAllCurators()");
-        }
         return curatorList;
     }
 
