@@ -1,12 +1,13 @@
 package org.calacademy.antweb.curate.speciesList;
 
-import java.util.*;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Project;
+import org.calacademy.antweb.SpeciesListable;
+import org.calacademy.antweb.Taxon;
+import org.calacademy.antweb.Utility;
+import org.calacademy.antweb.util.GeolocaleMgr;
+import org.calacademy.antweb.util.ProjectMgr;
 
 public class SpeciesListMgr {
 
@@ -14,9 +15,9 @@ public class SpeciesListMgr {
 
     public static SpeciesListable getSpeciesList(String key) {
 		if (Project.isProjectName(key)) {
-		   return (SpeciesListable) ProjectMgr.getProject(key);
+		   return ProjectMgr.getProject(key);
 		} else {
-		   return (SpeciesListable) GeolocaleMgr.getGeolocale(key);
+		   return GeolocaleMgr.getGeolocale(key);
 		}		
     }
 

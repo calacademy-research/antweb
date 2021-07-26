@@ -1,40 +1,31 @@
-    package org.calacademy.antweb.util;
+package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
-
-import org.apache.struts.action.*;
-
-import javax.servlet.http.*;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.Formatter;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.*;
+import org.calacademy.antweb.home.TaxonDb;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 public class TaxonMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(TaxonMgr.class);
 
     private static ArrayList<Taxon> s_subfamilies = null;
-    
+
     private static HashMap<String, Taxon> s_genera = null;
-    
+
     private static HashMap<String, Taxon> s_species = null;
 
     // Shallow copies
     private static HashMap<String, Taxon> s_taxa = null;
 
-    private static HashMap<String, ArrayList<String>> s_subgenusHashMap = new HashMap<String, ArrayList<String>>();
+    private static HashMap<String, ArrayList<String>> s_subgenusHashMap = new HashMap<>();
 
     //private static List<String> taxaNamesList = null;
     private static List<String> prettyTaxaNamesList = null;
@@ -47,7 +38,7 @@ public class TaxonMgr extends Manager {
         //A.log("populate() subfamilies:" + s_subfamilies);
 
         ArrayList<Taxon> genera = taxonDb.getTaxa(Rank.GENUS);
-        s_genera = new HashMap<String, Taxon>();
+        s_genera = new HashMap<>();
 
         //A.log("populate() genera.size:" + genera.size());
         for (Taxon taxon : genera) {
@@ -55,7 +46,7 @@ public class TaxonMgr extends Manager {
         }
 
         // For Taxon Name Search Autocomplete
-        prettyTaxaNamesList = new ArrayList<String>();
+        prettyTaxaNamesList = new ArrayList<>();
         prettyTaxaNamesList.addAll(CommonNames.getNames());
 
         List<String> taxaNamesList = taxonDb.getTaxonNames();
@@ -64,7 +55,7 @@ public class TaxonMgr extends Manager {
         }
 
 //        TaxonDb taxonDb = new TaxonDb(connection);
-        s_taxa = new HashMap<String, Taxon>();
+        s_taxa = new HashMap<>();
         ArrayList<Taxon> taxa = taxonDb.getShallowTaxa();
         for (Taxon taxon : taxa) {
             s_taxa.put(taxon.getTaxonName(), taxon);
@@ -89,108 +80,110 @@ public class TaxonMgr extends Manager {
 
     // For Taxon Name Search Autocomplete
     public static List<String> getPrettyTaxaNames(String text) {
-      if (prettyTaxaNamesList == null) {
-        //A.log("getPrettyTaxaNames(text) initializing...");
-        return null;
-      }
-      if (text == null) {
-        s_log.warn("TaxonMgr.getPrettyTaxaNames(text) text is null");
-        return null;
-      }
-      text = text.toLowerCase();
-      //A.log("getPrettyTaxaNames(text) text:" + text + " prettyTaxaListSize:" + prettyTaxaNamesList.size());      
-      String[] texts = text.split(" ");
-      List<String> prettyTaxaNamesSubset = new ArrayList<String>();
-      int i = 0;
-
-      for (String taxonName : prettyTaxaNamesList) {
-        boolean containsAll = true;
-        for (int j=0 ; j < texts.length ; ++j) {
-          //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
-          if (!taxonName.toLowerCase().contains(texts[j])) containsAll = false;
-          if (!containsAll) break;
+        if (prettyTaxaNamesList == null) {
+            //A.log("getPrettyTaxaNames(text) initializing...");
+            return null;
         }
-        if (containsAll) {
-          prettyTaxaNamesSubset.add(taxonName);
-          ++i;
-          if (i > 5000) break; // Because there are 4600 species in genus Camponotus  
-        }  
-      } 
-      //A.log("getPrettyTaxaNames(q) returning size:" + prettyTaxaNamesSubset.size());
-      return prettyTaxaNamesSubset;
+        if (text == null) {
+            s_log.warn("TaxonMgr.getPrettyTaxaNames(text) text is null");
+            return null;
+        }
+        text = text.toLowerCase();
+        //A.log("getPrettyTaxaNames(text) text:" + text + " prettyTaxaListSize:" + prettyTaxaNamesList.size());
+        String[] texts = text.split(" ");
+        List<String> prettyTaxaNamesSubset = new ArrayList<>();
+        int i = 0;
+
+        for (String taxonName : prettyTaxaNamesList) {
+            boolean containsAll = true;
+            for (String s : texts) {
+                //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
+                if (!taxonName.toLowerCase().contains(s)) {
+                    containsAll = false;
+                    break;
+                }
+            }
+            if (containsAll) {
+                prettyTaxaNamesSubset.add(taxonName);
+                ++i;
+                if (i > 5000) break; // Because there are 4600 species in genus Camponotus
+            }
+        }
+        //A.log("getPrettyTaxaNames(q) returning size:" + prettyTaxaNamesSubset.size());
+        return prettyTaxaNamesSubset;
     }
-    
+
     public static ArrayList<Taxon> getSubfamilies() {
-      //A.log("getSubfamilies() TaxonMgr.subfamilies:" + s_subfamilies);
-      return s_subfamilies;
+        //A.log("getSubfamilies() TaxonMgr.subfamilies:" + s_subfamilies);
+        return s_subfamilies;
     }
-    
+
     public static Subfamily getSubfamily(String subfamilyName) {
-      if (subfamilyName == null) return null;
-      Subfamily subfamily = null;
-      for (Taxon taxon : getSubfamilies()) {
-        if (subfamilyName.equals(taxon.getSubfamily())) return (Subfamily) taxon;
-      }
-      return null;
+        if (subfamilyName == null) return null;
+        for (Taxon taxon : getSubfamilies()) {
+            if (subfamilyName.equals(taxon.getSubfamily())) return (Subfamily) taxon;
+        }
+        return null;
     }
 
     public static ArrayList<Genus> getGenera() {
-      ArrayList<Genus> genera = new ArrayList<Genus>();
-      for (Taxon genus : s_genera.values()) {
-        genera.add((Genus)genus);
-      }
-      Collections.sort(genera);
-      return genera;
+        ArrayList<Genus> genera = new ArrayList<>();
+        for (Taxon genus : s_genera.values()) {
+            genera.add((Genus) genus);
+        }
+        Collections.sort(genera);
+        return genera;
     }
-    
+
     // Used from Specimen upload and specimen-body.jsp
     public static Genus getGenus(String genusTaxonName) {
-      if (genusTaxonName == null) return null;
-      if (s_genera == null) return null; // Could happen due to server initialization.
-      return (Genus) s_genera.get(genusTaxonName);
+        if (genusTaxonName == null) return null;
+        if (s_genera == null) return null; // Could happen due to server initialization.
+        return (Genus) s_genera.get(genusTaxonName);
     }
-    public static Genus getGenusFromName(String genusName) {
-      if (genusName == null) return null;
-      //A.log("getGenus() s_genera:" + s_genera.size());
 
-      for (Taxon genus : s_genera.values()) {
-        //A.log("getGenus() genusTaxonName:" + genusName + " genus:" + genus.getName());
-        if (genusName.equals(genus.getName())) return (Genus) genus;    
-      }
-      return null;
+    public static Genus getGenusFromName(String genusName) {
+        if (genusName == null) return null;
+        //A.log("getGenus() s_genera:" + s_genera.size());
+
+        for (Taxon genus : s_genera.values()) {
+            //A.log("getGenus() genusTaxonName:" + genusName + " genus:" + genus.getName());
+            if (genusName.equals(genus.getName())) return (Genus) genus;
+        }
+        return null;
     }
 
     // !!! Only used by Specimen Upload. (First call will cause a 40 second delay).
     public static Species getSpecies(Connection connection, String taxonName) {
-      if (taxonName == null) return null;
+        if (taxonName == null) return null;
 
-      if (s_species == null) {
-        s_species = new HashMap<String, Taxon>();
-        TaxonDb taxonDb = new TaxonDb(connection);      
-        ArrayList<Taxon> species = taxonDb.getTaxa("taxarank in ('" + Rank.SPECIES + "', '" + Rank.SUBSPECIES + "')");
-        A.log("getSpecies() speciesCount:" + species.size());
-        for (Taxon taxon : species) {
-          s_species.put(taxon.getTaxonName(), taxon);
-        } 
-      }
-      return (Species) s_species.get(taxonName);
+        if (s_species == null) {
+            s_species = new HashMap<>();
+            TaxonDb taxonDb = new TaxonDb(connection);
+            ArrayList<Taxon> species = taxonDb.getTaxa("taxarank in ('" + Rank.SPECIES + "', '" + Rank.SUBSPECIES + "')");
+            A.log("getSpecies() speciesCount:" + species.size());
+            for (Taxon taxon : species) {
+                s_species.put(taxon.getTaxonName(), taxon);
+            }
+        }
+        return (Species) s_species.get(taxonName);
     }
 
     public static Taxon getTaxon(String taxonName) {
-      if (taxonName == null) return null;
-      if (s_taxa == null) {
-          A.log("getTaxon() returning null because s_taxa is null");
-          // Could happen due to serverinitialization.
-          return null;
-      }
+        if (taxonName == null) return null;
+        if (s_taxa == null) {
+            A.log("getTaxon() returning null because s_taxa is null");
+            // Could happen due to serverinitialization.
+            return null;
+        }
 
-      Taxon taxon = s_taxa.get(taxonName);
-      if (taxon == null) {
-          A.log("getTaxon() taxon not found:" + taxonName);
-          return null;
-      }
-      //A.log("getTaxon() returning taxon:" + taxon);
-      return taxon;
+        Taxon taxon = s_taxa.get(taxonName);
+        if (taxon == null) {
+            A.log("getTaxon() taxon not found:" + taxonName);
+            return null;
+        }
+        //A.log("getTaxon() returning taxon:" + taxon);
+        return taxon;
     }
 
     public static String getSubgenus(String taxonName) {
@@ -204,6 +197,6 @@ public class TaxonMgr extends Manager {
         if (s_subgenusHashMap == null) return null;
         return s_subgenusHashMap.get(genusName);
     }
-    
+
 }
 

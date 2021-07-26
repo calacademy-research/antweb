@@ -1,20 +1,12 @@
 package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.home.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Museum;
+import org.calacademy.antweb.home.MuseumDb;
+
+import java.sql.Connection;
+import java.util.ArrayList;
 
 public class MuseumMgr {
 

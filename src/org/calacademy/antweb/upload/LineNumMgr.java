@@ -1,27 +1,27 @@
 package org.calacademy.antweb.upload;
 
-import java.io.*;
-import java.util.*;
-import java.sql.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.home.UploadDb;
+import org.calacademy.antweb.util.AntwebProps;
 
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-
-import org.apache.regexp.*;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;  
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.util.ArrayList;
     
 public class LineNumMgr {
 
-    private static Log s_log = LogFactory.getLog(LineNumMgr.class);
+    private static final Log s_log = LogFactory.getLog(LineNumMgr.class);
 	private static ArrayList<Integer> badCarriageReturnLines = null;
 
 
 // --------------------------------------------------------------------------------------
 
     // Updated in real time as we progress through the specimen upload.
-	static int lineNum = 0;
+	private static int lineNum = 0;
 					
 	public static void setLineNum(int thisLineNum) {
 	  lineNum = thisLineNum;
@@ -43,29 +43,24 @@ public class LineNumMgr {
 		UploadDb uploadDb = new UploadDb(connection);
 		uploadDb.removeUploadLines(UploadHelper.getGroup());
 		
-  	    badCarriageReturnLines = new ArrayList<Integer>();
-		
-		int componentCountChanges = 0;
-		String[] components = null;
-		String theLine = null;
-		String theHeader = null;
-		String lastLine = null;
+  	    badCarriageReturnLines = new ArrayList<>();
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(uploadFile.getFileLoc()), uploadFile.getEncoding()));            
+		String[] components;
+		String theLine;
+
+		BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(uploadFile.getFileLoc()), uploadFile.getEncoding()));
         theLine = in.readLine();
         int lineNum = 1;
-        int componentCount = 0;
+        int componentCount;
         int lastComponentCount = 0;
-        int extraCarriageReturnCount = 0;
-        int minComponentCount = 0;
-		int headerComponentCount = 0;
+		int minComponentCount = 0;
+		int headerComponentCount;
         while (theLine != null) {
           components = getComponents(theLine);
           componentCount = components.length;
 
           if (lineNum == 1) {  // this is the header
-            theHeader = theLine; 
-            headerComponentCount = componentCount;
+			  headerComponentCount = componentCount;
             minComponentCount = headerComponentCount;
           }
 
@@ -80,9 +75,8 @@ public class LineNumMgr {
                )
              && componentCount < minComponentCount  
              ) {
-            ++componentCountChanges;
 
-			setIsBadCarriageReturnLine(lineNum);
+			  setIsBadCarriageReturnLine(lineNum);
 
 			// Persist this line in the database for retrieval from log file.
 			int displayLineNum = getDisplayLineNum(lineNum);
@@ -95,8 +89,7 @@ public class LineNumMgr {
 		  }          
           
           lastComponentCount = componentCount;
-          lastLine = theLine;
-          theLine = in.readLine();
+			theLine = in.readLine();
           ++lineNum; 
         }
 
@@ -104,7 +97,7 @@ public class LineNumMgr {
     }
 
 	public static void setIsBadCarriageReturnLine(int lineNum) {
-	  badCarriageReturnLines.add(Integer.valueOf(lineNum));
+	  badCarriageReturnLines.add(lineNum);
 	}
 
 	public static boolean isGoodCarriageReturnLine(int lineNum) {
@@ -112,7 +105,7 @@ public class LineNumMgr {
 	}
 	public static boolean isBadCarriageReturnLine(int lineNum) {
 	  for (Integer l : badCarriageReturnLines) {
-		if (l.intValue() == lineNum) return true;
+		if (l == lineNum) return true;
 	  }
 	  return false;
 	}        
@@ -120,7 +113,7 @@ public class LineNumMgr {
     public static int getBadLinesLessThan(int lineNum) {
       int c = 0;
 	  for (Integer l : badCarriageReturnLines) {
-		if (l.intValue() <= lineNum) ++c;
+		if (l <= lineNum) ++c;
 		//if (l.intValue() > lineNum) break;
 	  }
       //A.log("getBadLineLessThan() lineNum:" + lineNum + " c:" + c);
@@ -129,26 +122,23 @@ public class LineNumMgr {
     
     public static int getModifier(int lineNum) {
       int c = getBadLinesLessThan(lineNum);
-      int d = 0;
-      d = c / 2;
-      return d;
+		return c / 2;
     }
 
 	public static int getDisplayLineNum(int lineNum) {
-	  int displayLineNum = lineNum - getModifier(lineNum);
-	  //A.log("getDisplayLineNum() lineNum:" + lineNum + " display:" + displayLineNum + " bads:" + getBadLinesLessThan(lineNum) + " modifier:" + getModifier(lineNum));
-	  return displayLineNum;
+		//A.log("getDisplayLineNum() lineNum:" + lineNum + " display:" + displayLineNum + " bads:" + getBadLinesLessThan(lineNum) + " modifier:" + getModifier(lineNum));
+	  return lineNum - getModifier(lineNum);
 	}
 	
 	public static String report() {
-	  String report = "";
+	  StringBuilder report = new StringBuilder();
 	  int i = 0;
 	  for (Integer bad : badCarriageReturnLines) {
-        if (i > 0) report += ", ";
-	    report += bad;
+        if (i > 0) report.append(", ");
+	    report.append(bad);
         ++i;
 	  }
-	  return report;
+	  return report.toString();
 	}
     
 

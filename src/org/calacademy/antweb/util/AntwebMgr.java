@@ -1,34 +1,26 @@
 package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+import org.calacademy.antweb.Map;
+import org.calacademy.antweb.Museum;
+import org.calacademy.antweb.Overview;
+import org.calacademy.antweb.Project;
+import org.calacademy.antweb.geolocale.Bioregion;
+import org.calacademy.antweb.geolocale.Geolocale;
+import org.calacademy.antweb.home.UploadDb;
+import org.calacademy.antweb.imageUploader.ImageUploaderAction;
+import org.calacademy.antweb.upload.UploadAction;
+
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
 import java.util.Date;
-
-import javax.sql.*;
-import javax.naming.*;
-
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.imageUploader.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.upload.*;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.Map;
-
-import java.sql.*;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
 
 public class AntwebMgr {
 
@@ -312,8 +304,7 @@ public class AntwebMgr {
     }
 
     public static boolean isServerInitializing() {
-        if (isInitializing) return true;
-        return false;
+        return isInitializing;
     }
     
     public static void serverInitializing() {
@@ -353,9 +344,7 @@ public class AntwebMgr {
     */
 	public static boolean hasServerMessage() {
       // The message would be displayed on the curate page.
-	  if (ServerStatusAction.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBUtil.isServerBusy() || isInitializing) 
-		return true;
-	  else return false;
+        return ServerStatusAction.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBUtil.isServerBusy() || isInitializing;
 	}
     public static String getSimpleServerMessage() {
        if (isInitializing) {
