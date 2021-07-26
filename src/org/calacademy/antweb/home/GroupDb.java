@@ -1,48 +1,50 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
-import java.sql.*;
-
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Group;
+import org.calacademy.antweb.Utility;
+import org.calacademy.antweb.util.A;
+import org.calacademy.antweb.util.DBUtil;
+import org.calacademy.antweb.util.GroupMgr;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 
 public class GroupDb extends AntwebDb {
-    
-    private static Log s_log = LogFactory.getLog(GroupDb.class);
-        
+
+    private static final Log s_log = LogFactory.getLog(GroupDb.class);
+
     public GroupDb(Connection connection) {
-      super(connection);
+        super(connection);
     }
 
-    public ArrayList getAllGroups() throws SQLException {          
+    public ArrayList<Group> getAllGroups() throws SQLException {
         String theQuery = "select id from ant_group order by id";
-        ArrayList groupList = new ArrayList();
+        ArrayList<Group> groupList = new ArrayList<>();
 
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "getAllGroups()");   
+            stmt = DBUtil.getStatement(getConnection(), "getAllGroups()");
             rset = stmt.executeQuery(theQuery);
-                
+
             while (rset.next()) {
                 Group group = getGroup(rset.getInt("id"));
                 groupList.add(group);
             }
         } finally {
-            DBUtil.close(stmt, rset, this, "getAllGroups()");        
+            DBUtil.close(stmt, rset, this, "getAllGroups()");
         }
-        return groupList;      
+        return groupList;
     }
 
     public String getCuratorList(int groupId) throws SQLException {
         String curatorList = null;
+        //todo use PreparedStatement
         String theQuery = "select first_name, last_name from login where group_id = " + groupId;
         Statement stmt = null;
         ResultSet rset = null;
@@ -55,24 +57,25 @@ public class GroupDb extends AntwebDb {
                 ++i;
                 String curator = rset.getString("first_name") + " " + rset.getString("last_name");
                 if (i > 1) curatorList += ", " + curator;
-                  else curatorList = curator;
+                else curatorList = curator;
             }
         } finally {
-            DBUtil.close(stmt, rset, this, "getCuratorList()");        
+            DBUtil.close(stmt, rset, this, "getCuratorList()");
         }
-        return curatorList;      
+        return curatorList;
     }
 
     public void updateUploadSpecimens() {
-      ArrayList<Group> groups = GroupMgr.getGroups();
-      for (Group group : groups) {
-        //A.log("update group:" + group);
-        updateUploadSpecimens(group);
-      }
+        ArrayList<Group> groups = GroupMgr.getGroups();
+        for (Group group : groups) {
+            //A.log("update group:" + group);
+            updateUploadSpecimens(group);
+        }
     }
 
-    
+
     public void updateUploadSpecimens(Group group) {
+        //todo use PreparedStatement
         String dml = "update ant_group set upload_specimens = (select count(*) from specimen where access_group = " + group.getId() + ") where id = " + group.getId();
         Statement stmt = null;
         try {
@@ -80,39 +83,40 @@ public class GroupDb extends AntwebDb {
             stmt.executeUpdate(dml);
             A.log("updateUploadSpecimens() dml:" + dml);
         } catch (SQLException e) {
-          s_log.error("problem updating group:" + group.getName() + " e:" + e);
+            s_log.error("problem updating group:" + group.getName() + " e:" + e);
         } finally {
-          DBUtil.close(stmt, null, this, "updateUploadSpecimens()");
-        }    
+            DBUtil.close(stmt, null, this, "updateUploadSpecimens()");
+        }
     }
-    
-    public ArrayList<Group> getAllGroupsWithSpecimenData() throws SQLException {          
+
+    public ArrayList<Group> getAllGroupsWithSpecimenData() throws SQLException {
         //String theQuery = "select id from ant_group g where id in (select distinct access_group from specimen) order by name";
         String query = "select id from ant_group g where upload_specimens > 0 order by name";
-        ArrayList<Group> groupList = new ArrayList<Group>();
+        ArrayList<Group> groupList = new ArrayList<>();
 
         Statement stmt = null;
         ResultSet rset = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "getAllGroupsWithSpecimenData()");
             rset = stmt.executeQuery(query);
-                
+
             while (rset.next()) {
                 Group group = getGroup(rset.getInt("id"));
                 groupList.add(group);
             }
         } finally {
-            DBUtil.close(stmt, rset, this, "getAllGroupsWithSpecimenData()");        
+            DBUtil.close(stmt, rset, this, "getAllGroupsWithSpecimenData()");
         }
         //A.log("getAllGroupsWithSpecimenData() groupList:" + groupList);
-        return groupList;      
+        return groupList;
     }
 
     public Group getGroup(int id) throws SQLException {
-        Group group = null;
-        String theQuery = "select g.id, g.name, g.admin_login_id, g.abbrev "         
-          + " from ant_group g "
-          + " where g.id = " + id;
+        Group group;
+        //todo use PreparedStatement
+        String theQuery = "select g.id, g.name, g.admin_login_id, g.abbrev "
+                + " from ant_group g "
+                + " where g.id = " + id;
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -127,27 +131,28 @@ public class GroupDb extends AntwebDb {
         }
         return group;
     }
-    
+
     public Group getGroup(String name) throws SQLException {
         Group group = null;
-        if (name != null) {       
-            String theQuery = "select g.id, g.name, g.admin_login_id, g.abbrev " 
-              + " from ant_group g "
-              + " where g.name = '" + name + "'";
+        if (name != null) {
+            //todo use PreparedStatement
+            String theQuery = "select g.id, g.name, g.admin_login_id, g.abbrev "
+                    + " from ant_group g "
+                    + " where g.name = '" + name + "'";
 
-          Statement stmt = null;
-          ResultSet rset = null;
-          try {
-            stmt = DBUtil.getStatement(getConnection(), "getGroup()");
-            rset = stmt.executeQuery(theQuery);
+            Statement stmt = null;
+            ResultSet rset = null;
+            try {
+                stmt = DBUtil.getStatement(getConnection(), "getGroup()");
+                rset = stmt.executeQuery(theQuery);
 
-            // s_log.info("findByName() theQuery:" + theQuery);
-            group = instantiateGroup(rset);
+                // s_log.info("findByName() theQuery:" + theQuery);
+                group = instantiateGroup(rset);
 
-            // s_log.info("findByName() group:" + group);
-          } finally {
-            DBUtil.close(stmt, rset, this, "getGroup()");
-          }
+                // s_log.info("findByName() group:" + group);
+            } finally {
+                DBUtil.close(stmt, rset, this, "getGroup()");
+            }
         }
         return group;
     }
@@ -161,10 +166,10 @@ public class GroupDb extends AntwebDb {
             group.setAbbrev(rset.getString("g.abbrev"));
         }
 
-        return group;    
+        return group;
     }
-    
-    private int getMaxId() throws SQLException {          
+
+    private int getMaxId() throws SQLException {
         int maxId = 0;
         String theQuery = "select max(id) as maxId from ant_group ";
         Statement stmt = null;
@@ -174,7 +179,7 @@ public class GroupDb extends AntwebDb {
             rset = stmt.executeQuery(theQuery);
 
             while (rset.next()) {
-              maxId = rset.getInt("maxId");
+                maxId = rset.getInt("maxId");
             }
         } finally {
             DBUtil.close(stmt, rset, this, "getMaxId()");
@@ -182,20 +187,20 @@ public class GroupDb extends AntwebDb {
 
         return maxId;
     }
-    
 
-    public ArrayList<Group> getUploadGroups(String orderBy) throws SQLException {       
-        ArrayList<Group> groupList = new ArrayList<Group>();
 
-        String uploadIdList = "";
+    public ArrayList<Group> getUploadGroups(String orderBy) throws SQLException {
+        ArrayList<Group> groupList = new ArrayList<>();
+
+        StringBuilder uploadIdList = new StringBuilder();
         int u = 0;
         UploadDb uploadDb = new UploadDb(getConnection());
         for (Group group : getAllGroupsWithSpecimenData()) {
-          ++u;
-          int lastUploadId = uploadDb.getLastUploadId(group.getId());
-          if (u > 1) uploadIdList += ",";
-          uploadIdList += lastUploadId;
-          //A.log("getUploadGroups() groupId:" + group.getId() + " lastUploadId:" + lastUploadId);
+            ++u;
+            int lastUploadId = uploadDb.getLastUploadId(group.getId());
+            if (u > 1) uploadIdList.append(",");
+            uploadIdList.append(lastUploadId);
+            //A.log("getUploadGroups() groupId:" + group.getId() + " lastUploadId:" + lastUploadId);
         }
         if ("firstUpload".equals(orderBy)) orderBy = "first_specimen_upload";
         if ("lastUpload".equals(orderBy)) orderBy = "created desc"; //"last_specimen_upload";
@@ -227,78 +232,80 @@ public class GroupDb extends AntwebDb {
                 groupList.add(group);
             }
         } finally {
-            DBUtil.close(stmt, rset, this, "getUploadGroups()");        
+            DBUtil.close(stmt, rset, this, "getUploadGroups()");
         }
-        return groupList;      
-    }  
+        return groupList;
+    }
 
     public void saveGroup(Group group) throws SQLException {
 
         if (group.getId() == 0) {
-          s_log.warn("Attempt to save groupId = 0");
-          return;
+            s_log.warn("Attempt to save groupId = 0");
+            return;
         }
 
-        int id = getMaxId() + 1;      
+        int id = getMaxId() + 1;
         if (id == 0) {
-          s_log.error("saveGroup().  MaxId should not be 0");
-          return;
+            s_log.error("saveGroup().  MaxId should not be 0");
+            return;
         } else {
-          group.setId(id);
+            group.setId(id);
         }
-            
+        //todo use PreparedStatement
         String theInsert = "insert into ant_group (id, name, admin_login_id, abbrev) "
-            + " values ("+ group.getId() + ", '" + group.getName() + "', " + group.getAdminLoginId() + ", '" + group.getAbbrev() + "')";
+                + " values (" + group.getId() + ", '" + group.getName() + "', " + group.getAdminLoginId() + ", '" + group.getAbbrev() + "')";
         Statement stmt = null;
         try {
-          stmt = DBUtil.getStatement(getConnection(), "saveGroup()");
-                                                                                                                         
-          s_log.info(theInsert);
-          stmt.executeUpdate(theInsert);
+            stmt = DBUtil.getStatement(getConnection(), "saveGroup()");
+
+            s_log.info(theInsert);
+            stmt.executeUpdate(theInsert);
         } catch (SQLException e) {
-          s_log.error("problem saving to DB group:" + group.getName());
-          throw e;
+            s_log.error("problem saving to DB group:" + group.getName());
+            throw e;
         } finally {
-          DBUtil.close(stmt, null, this, "saveGroup()");
+            DBUtil.close(stmt, null, this, "saveGroup()");
         }
     }
 
     public void updateGroup(Group group) throws SQLException {
-        
+
         if (group.getId() != 0) {
+            //todo use PreparedStatement
             String theUpdate = "update ant_group set "
-              + " name='" + group.getName() + "', "
-              + " admin_login_id=" + group.getAdminLoginId() + ", " 
-              + " abbrev='" + group.getAbbrev() + "'"
-              + " where id=" + group.getId(); 
+                    + " name='" + group.getName() + "', "
+                    + " admin_login_id=" + group.getAdminLoginId() + ", "
+                    + " abbrev='" + group.getAbbrev() + "'"
+                    + " where id=" + group.getId();
             Statement stmt = null;
             try {
-              stmt = DBUtil.getStatement(getConnection(), "updateGroup()");          
-              s_log.info(theUpdate);
-              stmt.executeUpdate(theUpdate);
+                stmt = DBUtil.getStatement(getConnection(), "updateGroup()");
+                s_log.info(theUpdate);
+                stmt.executeUpdate(theUpdate);
             } catch (SQLException e) {
-              s_log.error("updateGroupInDb() " + group.getName() + ": ");
-              throw e;
+                s_log.error("updateGroupInDb() " + group.getName() + ": ");
+                throw e;
             } finally {
-              DBUtil.close(stmt, null, this, "updateGroup()");
+                DBUtil.close(stmt, null, this, "updateGroup()");
             }
         } else {
             s_log.error("Attempt to update groupId == 0");
         }
-    }    
-    
+    }
+
     public void deleteById(int id) throws SQLException {
         Statement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "deleteById()");          
+            stmt = DBUtil.getStatement(getConnection(), "deleteById()");
+            //todo use PreparedStatement
             String theQuery = "delete from ant_group where id = " + id;
-            int returnVal = stmt.executeUpdate(theQuery);
+            stmt.executeUpdate(theQuery);
         } catch (SQLException e) {
             s_log.error("deleteById(" + id + ") e:" + e);
             throw e;
         } finally {
             DBUtil.close(stmt, null, this, "deleteById()");
         }
-    }        
-    
+    }
+
 }
