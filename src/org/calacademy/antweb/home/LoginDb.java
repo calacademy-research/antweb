@@ -226,13 +226,13 @@ public class LoginDb extends AntwebDb {
     private Login instantiateLogin(ResultSet rset)
       throws SQLException {
         Login login = new Login();
-        login = instantiate(login, rset);
+        instantiate(login, rset);
         if (login.getId() == 0) return null;
         return login;
     }
     
     // The login could be a Curator.
-    private Login instantiate(Login login, ResultSet rset)
+    private static void instantiate(Login login, ResultSet rset)
       throws SQLException {
         //A.log("instantiate() BEFORE login:" + login + " rset:" + rset);            
 
@@ -254,7 +254,6 @@ public class LoginDb extends AntwebDb {
             login.setIsUploadSpecimens(rset.getBoolean("is_upload_specimens"));
             login.setIsUploadImages(rset.getBoolean("is_upload_images"));
         }
-        return login;
     }
 
     // Expensive. Don't want to do this in the midst of server startup.
