@@ -1,3 +1,6 @@
+Release 8.64
+  Optimize geolocale manager for faster imports
+
 Release 8.63.3
   Performance work.
   All database columns converted to utf8.
