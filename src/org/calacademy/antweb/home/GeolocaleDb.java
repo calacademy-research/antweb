@@ -469,6 +469,14 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return adm1s;
     }
 
+    public List<Adm1> getAdm1s() {
+        ArrayList<Adm1> adm1s = new ArrayList<>();
+        for (Geolocale geolocale : getGeolocales("adm1", null, false)) {
+            adm1s.add((Adm1) geolocale);
+        }
+        return adm1s;
+    }
+
     public ArrayList<Adm1> getAdm1s(String country, String orderBy) {
         //return getGeolocales("adm1", country, false);
 

@@ -64,6 +64,16 @@ services:
       - ./logbak:/usr/local/antweb/log/
       - antweb_genInc:/usr/local/antweb/web/genInc
 
+      - ./build.xml:/antweb/deploy/build.xml
+      - ./bin:/antweb/deploy/bin
+      - ./doc:/antweb/deploy/doc
+      - ./etc:/antweb/deploy/etc
+      - ./META-INF:/antweb/deploy/META-INF
+      - ./src:/antweb/deploy/src
+      - ./test:/antweb/deploy/test
+      - ./web:/antweb/deploy/web
+      - ./WEB-INF:/antweb/deploy/WEB-INF
+
 volumes:
   antweb_genInc:
   antweb_database:

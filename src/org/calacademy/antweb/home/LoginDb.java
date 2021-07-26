@@ -119,8 +119,29 @@ public class LoginDb extends AntwebDb {
         }
         return login;
     }
+
+    public ArrayList<Login> getAllLogins() throws SQLException {
+        ArrayList<Login> loginList = new ArrayList<Login>();
+        String theQuery = "select * from login";
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getAllLogins()");
+            rset = stmt.executeQuery(theQuery);
+
+            while (rset.next()) {
+
+                Login login = instantiateLogin(rset);
+                loginList.add(login);
+            }
+            Collections.sort(loginList);
+        } finally {
+            DBUtil.close(stmt, rset, this, "getAllLogins()");
+        }
+        return loginList;
+    }
     
-    public ArrayList<Login> getAllLogins() throws SQLException {          
+    public ArrayList<Login> getAllLoginsOld() throws SQLException {
         ArrayList<Login> loginList = new ArrayList<Login>();
         String theQuery = "select id from login";
         Statement stmt = null;
