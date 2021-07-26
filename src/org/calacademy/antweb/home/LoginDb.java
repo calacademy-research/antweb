@@ -161,7 +161,30 @@ public class LoginDb extends AntwebDb {
         return loginList;      
     }
 
-    public ArrayList<Curator> getAllCurators() throws SQLException {          
+    public ArrayList<Curator> getAllCurators() throws SQLException {
+        ArrayList<Curator> curatorList = new ArrayList<>();
+
+        String query = "select * from login where group_id > 0";
+        Statement stmt = null;
+        ResultSet rset = null;
+
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getAllCurators()");
+            rset = stmt.executeQuery(query);
+
+            while (rset.next()) {
+                Curator curator = instantiateCurator(rset);
+                curatorList.add(curator);
+            }
+        } finally {
+            DBUtil.close(stmt, rset, this, "getAllCurators()");
+        }
+
+        Collections.sort(curatorList);
+        return curatorList;
+    }
+
+    public ArrayList<Curator> getAllCuratorsOld() throws SQLException {
         ArrayList<Curator> curatorList = new ArrayList<Curator>();
         //String theQuery = "select id from login where is_upload_images = 1 or is_upload_images = 1;"; // or  + " and group_id > 0"
         String theQuery = "select id from login where group_id > 0;"; // or  + " and group_id > 0"
@@ -186,7 +209,7 @@ public class LoginDb extends AntwebDb {
     private Curator instantiateCurator(ResultSet rset)
       throws SQLException {
         Curator curator = new Curator();
-        curator = (Curator) instantiate(curator, rset);
+        instantiate(curator, rset);
 
         setUploadCounts(curator);
       
