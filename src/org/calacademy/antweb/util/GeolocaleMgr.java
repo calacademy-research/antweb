@@ -269,28 +269,14 @@ public class GeolocaleMgr extends Manager {
     }
 
 
-    public static Adm1 getAdm1(int geolocaleId) {
-        Geolocale geolocale = getGeolocale(geolocaleId);
-        if (geolocale != null) return (Adm1) geolocale;
-        return null;
+    public static @Nullable Adm1 getAdm1(int geolocaleId) {
+        return adm1List.stream().filter(geolocale -> geolocale.getId() == geolocaleId)
+                .findFirst().orElse(null);
     }
 
     public static Geolocale getGeolocale(int geolocaleId) {
-        if (!AntwebMgr.isPopulated()) return null;
-
-        //A.log("getGeolocale() id:" + geolocaleId);
-
-        int c = 0;
-        for (Geolocale geolocale : s_geolocales) {
-            ++c;
-            //if (c % 1000 == 0) A.log("getGeolocale() c:" + c);
-
-
-            if (geolocaleId == geolocale.getId()) {
-                return geolocale;
-            }
-        }
-        return null;
+        return s_geolocales.stream().filter(geolocale -> geolocale.getId() == geolocaleId)
+                .findFirst().orElse(null);
     }
 
     public static Geolocale getGeolocale(String name, String georank) {
@@ -326,15 +312,10 @@ public class GeolocaleMgr extends Manager {
         return s_geolocales;
     }
 
-    public static ArrayList<Geolocale> getLiveGeolocales() {
-        ArrayList<Geolocale> geolocales = new ArrayList<>();
+    public static @Nullable ArrayList<Geolocale> getLiveGeolocales() {
         if (s_geolocales == null) return null; // Could happen due to server initialization.
-        for (Geolocale geolocale : s_geolocales) {
-            if (geolocale.isLive()) {
-                geolocales.add(geolocale);
-            }
-        }
-        return geolocales;
+
+        return s_geolocales.stream().filter(Geolocale::getIsLive).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static ArrayList<Geolocale> getGeolocales(String georank) {
