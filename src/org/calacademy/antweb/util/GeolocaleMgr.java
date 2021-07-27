@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GeolocaleMgr extends Manager {
 
@@ -322,37 +323,35 @@ public class GeolocaleMgr extends Manager {
         return GeolocaleMgr.getGeolocales(georank, null);
     }
 
-    public static ArrayList<Geolocale> getGeolocales(String georank, boolean isValid) {
-        if (isValid) return GeolocaleMgr.getGeolocales(georank, "true");
-        else return GeolocaleMgr.getGeolocales(georank, "false");
+    public static ArrayList<Geolocale> getGeolocales(String georank) {
+        return GeolocaleMgr.getGeolocales(georank, false);
     }
 
-    private static ArrayList<Geolocale> getGeolocales(String georank, String isValid) {
-
-        //A.log("getGeolocales(" + georank + ", " + isValid + ") " + AntwebUtil.getShortStackTrace());
+    /**
+     * Get all geolocales that match one or more conditions
+     *
+     * @param georank filter geolocales by georank. If null, get all georanks
+     * @param onlyValid true if results should include only valid geolocales, false if invalid geolocales should be included
+     * @return An ArrayList of geolocales that match the parameters
+     */
+    public static @Nullable ArrayList<Geolocale> getGeolocales(String georank, boolean onlyValid) {
 
         AntwebMgr.isPopulated();
 
-        // A non "true" value for isValid will return all.
-        ArrayList<Geolocale> geolocales = new ArrayList<>();
         if (s_geolocales == null) return null; // Could happen due to server initialization.
-        for (Geolocale geolocale : s_geolocales) {
-            if ((georank == null) || geolocale.getGeorank().equals(georank)) {
 
-                if (!"true".equals(isValid) || geolocale.getIsValid()) {
-/*            
-            if ("Albania".equals(geolocale.toString())) {
-              A.log("getGeolocales(" + georank + ", " + isValid + ") IS " + geolocale.getName() + " " + geolocale.getId());
-            } else {
-              //A.log("getGeolocales(" + georank + ", " + isValid + ") NOT " + geolocale.getName() + " " + geolocale.getId());
-            }
-*/
-                    geolocales.add(geolocale);
-                }
-            }
+        Stream<Geolocale> geolocaleStream = s_geolocales.stream();
+
+        if (onlyValid) {
+            geolocaleStream = geolocaleStream.filter(Geolocale::getIsValid);
         }
-        //A.log("getGeolocales(" + georank + ", " + isValid + ") geolocales:" + geolocales);
-        return geolocales;
+
+        // Filter by georank, or get all if null
+        if (georank != null) {
+            geolocaleStream = geolocaleStream.filter(geolocale -> geolocale.getGeorank().equals(georank));
+        }
+
+        return geolocaleStream.collect(Collectors.toCollection(ArrayList::new));
     }
 
     // Convenience methods:
