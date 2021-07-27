@@ -487,29 +487,27 @@ public class GeolocaleMgr extends Manager {
         return null;
     }
 
-    public static Country getValidCountry(String country) {
-	  /*
-	    A country name may be for an invalid or non-UN country.  The (Antweb) valid country will be returned.
-        I.E: "Iran (Islamic Republic of)" will return Iran.
-	  */
 
-        ArrayList<Geolocale> geolocales = GeolocaleMgr.getGeolocales(Georank.country, false);
-        if (geolocales == null) return null;
-        for (Geolocale geolocale : geolocales) {
-            if (geolocale.getName().equals(country)) {
-                if (geolocale.getIsValid()) {
-                    return (Country) geolocale;
-                } else {
-                    for (Geolocale geolocale2 : geolocales) {
-                        //A.log("getProjectNameFromValidCountry() 2 geolocale2.name:" + geolocale2.getName() + " validName:" + geolocale.getValidName());
-                        if (geolocale2.getName().equals(geolocale.getValidName())) {
-                            return (Country) geolocale2;
-                        }
-                    }
-                }
-            }
+    /**
+     * A country name may be for an invalid or non-UN country.  The (Antweb) valid country will be returned.
+     * I.E: "Iran (Islamic Republic of)" will return Iran.
+     */
+    public static @Nullable Country getValidCountry(String country) {
+        if (countryNameMap == null) {
+            return null;
         }
-        return null;
+        Country matchingCountry = countryNameMap.get(country);
+
+        if (matchingCountry == null) {
+            return null;
+        }
+
+        if (matchingCountry.isValid()) {
+            return matchingCountry;
+        }
+
+        // country is not valid, return the Country that this points to
+        return countryNameMap.get(matchingCountry.getValidName());
     }
 
 
@@ -566,12 +564,9 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
 */
 
     public static boolean isValidCountry(String name) {
-        ArrayList<Geolocale> validCountries = getValidCountries();
-        for (Geolocale geolocale : validCountries) {
-            if (geolocale.getName().equals(name))
-                return true;
-        }
-        return false;
+        Country country = countryNameMap.get(name);
+        if (country == null) { return false; }
+        return country.isValid();
     }
 
     public static boolean isValidAdm1(String name) {
@@ -584,27 +579,23 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     }
 
     public static ArrayList<Geolocale> getAdm1s() {
-        return GeolocaleMgr.getGeolocales("adm1");
+        return new ArrayList<>(adm1List);
     }
 
     public static ArrayList<Geolocale> getAdm1sWithSpecimen() {
-        ArrayList<Geolocale> adm1sWithSpecimen = new ArrayList<>();
-        ArrayList<Geolocale> adm1s = GeolocaleMgr.getGeolocales("adm1");
-        for (Geolocale adm1 : adm1s) {
-            if (adm1.getSpecimenCount() > 0) {
-                adm1sWithSpecimen.add(adm1);
-            }
-        }
-        return adm1sWithSpecimen;
+        return adm1List.stream()
+                .filter(adm1 -> adm1.getSpecimenCount() > 0)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static Geolocale inferCountry(String adm1Name) {
+    public static @Nullable Geolocale inferCountry(String adm1Name) {
         // Will only return if unique
-        ArrayList<Geolocale> adm1s = getAdm1s();
-        if (adm1s == null) return null; // Could happen due to server initialization.
+        if (adm1List == null) return null; // could be server initializing
+
+        if (adm1Name == null) return null;
+
         Geolocale adm1 = null;
-        for (Geolocale geolocale : adm1s) {
-            if (adm1Name == null) return null;
+        for (Geolocale geolocale : adm1List) {
             if (adm1Name.equals(geolocale.getName())) {
                 if (adm1 != null) return null; // Didn't find a unique adm1.
                 adm1 = geolocale;
@@ -616,70 +607,61 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         return null;
     }
 
-    public static Geolocale getAnyAdm1(String adm1Name, String countryName) {
+    public static @Nullable Geolocale getAnyAdm1(String adm1Name, String countryName) {
         if (!AntwebMgr.isPopulated()) return null;
         if (adm1Name == null) return null;
         if (countryName == null) {
             s_log.warn("getAnyAdm1(" + adm1Name + ", " + countryName + ") must included countryName.");
             return null;
         }
-        ArrayList<Geolocale> adm1s = getAdm1s();
-        if (adm1s == null) return null; // Could happen due to server initialization.
-        for (Geolocale geolocale : adm1s) {
-            if (adm1Name.equals(geolocale.getName()) && countryName.equals(geolocale.getParent())) {
-                //A.log("getAnyAdm1(" + adm1Name + ", " + countryName + ") geolocale:" + geolocale + " bounds:" + geolocale.getBoundingBox());
-                return geolocale;
-            }
-        }
-        return null;
+        return adm1CountryMap.get(adm1Name, countryName);
     }
 
-    // Only from valid countries!
-    public static Geolocale getAdm1(String adm1Name, String countryName) {
-        Geolocale country = GeolocaleMgr.getValidCountry(countryName);
+    /** Only from valid countries!
+     * @param adm1Name The adm1 to search for
+     * @param countryName The country the Adm1 is in. Will be converted to valid country if invalid
+     * @return The matching Adm1 from the valid country or null if not found
+     */
+    public static @Nullable Geolocale getAdm1(String adm1Name, String countryName) {
+        Country country = GeolocaleMgr.getValidCountry(countryName);
         if (country == null) return null; // Could be server initializing.
-        ArrayList<Geolocale> adm1s = GeolocaleMgr.getAdm1s();
-        if (adm1s == null) return null; // Could be server initializing
-        for (Geolocale adm1 : adm1s) {
-            if (adm1.getParent() == null) {
-                //A.log("getAdm1() adm1:" + adm1.getName() + " parent:" + adm1.getParent());
-                continue;
-            }
-            if (adm1.getName().equals(adm1Name) && adm1.getParent() != null && adm1.getParent().equals(country.getName())) {
-                //A.log("GeolocaleMgr.getAdm1() adm1:" + adm1.getName() + " parent:" + adm1.getParent() + " country:" + country);
-                return adm1;
-            }
+
+        Adm1 matching_adm1 = adm1CountryMap.get(adm1Name, country.getName());
+
+        if (matching_adm1 != null && matching_adm1.isValid()) {
+            return matching_adm1;
         }
         return null;
+
     }
 
-    // Will return the adm1, or the validName adm1 if the found adm1 is not valid.
-    public static Geolocale getValidAdm1(String adm1, String country) {
-        //A.log("getValidAdm1 adm1:" + adm1 + " country:" + country);
-        Geolocale foundValidAdm1 = null;
+    /**
+     * Will return the adm1, or the validName adm1 if the found adm1 is not valid.
+     * <p>
+     * todo document what conditions will make this return null
+     * <p>
+     * todo should we match adm1's parent against getValidCountry?
+     *
+     * @param adm1    The name of the adm1 to search for
+     * @param country The country name to match from. Must exactly match the adm1's getParent()
+     * @return The valid adm1 or null if not found.
+     */
+    public static @Nullable Geolocale getValidAdm1(String adm1, String country) {
 
-        ArrayList<Geolocale> adm1s = GeolocaleMgr.getAdm1s();
-        for (Geolocale loopAdm1 : adm1s) {
-            //if ("Colorado".equals(loopAdm1.getName())) A.log("getValidAdm1() 1 name:" + loopAdm1.getName());
-            if (loopAdm1.getName().equals(adm1) && loopAdm1.getParent() != null && loopAdm1.getParent().equals(country)) {
-                //if ("Colorado".equals(loopAdm1.getName())) A.log("getValidAdm1() 2 parent:" + loopAdm1.getParent());
-                if (loopAdm1.getIsValid()) {
-                    // if it is a valid adm1, return it.
-                    foundValidAdm1 = loopAdm1;
-                } else {
-                    for (Geolocale loop2Adm1 : adm1s) {
-                        //A.log("getProjectNameFromValidCountry() 2 geolocale2.name:" + geolocale2.getName() + " validName:" + geolocale.getValidName());
-                        if (loop2Adm1.getIsValid() && loop2Adm1.getName().equals(loopAdm1.getValidName()) && loopAdm1.getParent().equals(country)) {
-                            // This is the validName adm1.
-                            //A.log("getValidAdm1(" + adm1 + ", " + country + ") validAmd1(2):" + loop2Adm1);
-                            foundValidAdm1 = loop2Adm1;
-                        }
-                    }
-                }
-            }
+        Adm1 matching_adm1 = adm1CountryMap.get(adm1, country);
+
+        if (matching_adm1 == null) {
+            return null;
         }
-        //A.log("getValidAdm1(" + adm1 + ", " + country + ") found:" + foundValidAdm1);
-        return foundValidAdm1;
+
+        if (matching_adm1.isValid()) {return matching_adm1;}
+
+        Adm1 valid_adm1 = adm1CountryMap.get(matching_adm1.getValidName(), country);
+
+        if (valid_adm1.isValid()) {     // todo is this really necessary? are there any adm1's whose validName isn't valid?
+            return valid_adm1;
+        }
+        return null;
     }
 
     public static String getRegionsDisplay() {
