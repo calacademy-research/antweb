@@ -238,7 +238,7 @@ public class GeolocaleMgr extends Manager {
         return geolocale.getId();
     }
 
-    public static Geolocale getGeolocale(String name) {
+    public static @Nullable Geolocale getGeolocale(String name) {
         if (!AntwebMgr.isPopulated()) return null;
 //      try {
         if (Utility.isNumber(name)) {
@@ -276,12 +276,12 @@ public class GeolocaleMgr extends Manager {
                 .findFirst().orElse(null);
     }
 
-    public static Geolocale getGeolocale(int geolocaleId) {
+    public static @Nullable Geolocale getGeolocale(int geolocaleId) {
         return s_geolocales.stream().filter(geolocale -> geolocale.getId() == geolocaleId)
                 .findFirst().orElse(null);
     }
 
-    public static Geolocale getGeolocale(String name, String georank) {
+    public static @Nullable Geolocale getGeolocale(String name, String georank) {
 
         if ("adm1".equals(georank)) {
             s_log.warn("getGeolocale(name, georank) Illegal adm1 need parent to be unique");
@@ -338,7 +338,7 @@ public class GeolocaleMgr extends Manager {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static ArrayList<Geolocale> getGeolocales(String georank) {
+    public static @Nullable ArrayList<Geolocale> getGeolocales(String georank) {
         return GeolocaleMgr.getGeolocales(georank, false);
     }
 
@@ -349,7 +349,7 @@ public class GeolocaleMgr extends Manager {
      * @param onlyValid true if results should include only valid geolocales, false if invalid geolocales should be included
      * @return An ArrayList of geolocales that match the parameters
      */
-    public static @Nullable ArrayList<Geolocale> getGeolocales(String georank, boolean onlyValid) {
+    public static @Nullable ArrayList<Geolocale> getGeolocales(@Nullable String georank, boolean onlyValid) {
 
         AntwebMgr.isPopulated();
 
@@ -374,7 +374,7 @@ public class GeolocaleMgr extends Manager {
         return GeolocaleMgr.getGeolocales("country");
     }
 
-    public static ArrayList<Geolocale> getValidCountries() {
+    public static @Nullable ArrayList<Geolocale> getValidCountries() {
         ArrayList<Geolocale> validCountries = GeolocaleMgr.getValidGeolocales("country");
         Collections.sort(validCountries);
         return validCountries;
@@ -477,7 +477,7 @@ public class GeolocaleMgr extends Manager {
     }
     // if (!AntwebMgr.isPopulated()) return null;
 
-    public static Geolocale getAnyCountry(String countryName) {
+    public static @Nullable Geolocale getAnyCountry(String countryName) {
         if (countryName == null) return null;
         ArrayList<Geolocale> countries = getCountries();
         if (countries == null) return null; // Could happen due to server initialization.
@@ -582,7 +582,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         return new ArrayList<>(adm1List);
     }
 
-    public static ArrayList<Geolocale> getAdm1sWithSpecimen() {
+    public static @NotNull ArrayList<Geolocale> getAdm1sWithSpecimen() {
         return adm1List.stream()
                 .filter(adm1 -> adm1.getSpecimenCount() > 0)
                 .collect(Collectors.toCollection(ArrayList::new));
