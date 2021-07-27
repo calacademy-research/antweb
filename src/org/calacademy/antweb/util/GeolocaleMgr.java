@@ -375,17 +375,17 @@ public class GeolocaleMgr extends Manager {
     }
 
     public static ArrayList<Geolocale> getValidCountries() {
-        ArrayList<Geolocale> validCountries = GeolocaleMgr.getGeolocales("country", true);
+        ArrayList<Geolocale> validCountries = GeolocaleMgr.getValidGeolocales("country");
         Collections.sort(validCountries);
         return validCountries;
     }
 
-    public static ArrayList<Geolocale> getValidAdm1s() {
-        return GeolocaleMgr.getGeolocales("adm1", true);
+    public static @NotNull ArrayList<Geolocale> getValidAdm1s() {
+        return adm1List.stream().filter(Adm1::isValid).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static ArrayList<Geolocale> getAllAdm1s() {
-        return GeolocaleMgr.getGeolocales("adm1", false);
+        return new ArrayList<>(adm1List);
     }
 
     // Return deep copies
@@ -435,20 +435,10 @@ public class GeolocaleMgr extends Manager {
         return null;
     }
 
-    public static Country getCountry(String name) {
+    public static @Nullable Country getCountry(String name) {
         if (name == null) return null;
         if (s_regions == null) return null;
-//A.log("r:" + s_regions);
-        for (Region region : s_regions) {
-            for (Subregion subregion : region.getSubregions()) {
-//A.log("s:" + subregion);
-                for (Country country : subregion.getAllCountries()) {
-//A.log("c:" + country);
-                    if (name.equals(country.getName())) return country;
-                }
-            }
-        }
-        return null;
+        return countryNameMap.get(name);
     }
 
     /*
