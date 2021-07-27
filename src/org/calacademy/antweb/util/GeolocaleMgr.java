@@ -7,6 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.GeolocaleDb;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
@@ -319,8 +320,22 @@ public class GeolocaleMgr extends Manager {
         return s_geolocales.stream().filter(Geolocale::getIsLive).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static ArrayList<Geolocale> getGeolocales(String georank) {
-        return GeolocaleMgr.getGeolocales(georank, null);
+    /**
+     * Get valid geolocales with a specific rank
+     *
+     * @param georank The rank to search for.
+     * @return An arraylist of valid geolocales with the specified rank
+     */
+    public static @Nullable ArrayList<Geolocale> getValidGeolocales(@NotNull String georank) {
+        // Ensure that antweb has loaded data
+        AntwebMgr.isPopulated();
+
+        if (s_geolocales == null) return null; // Could happen due to server initialization.
+
+        return s_geolocales.stream()
+                .filter(Geolocale::getIsValid)
+                .filter(geolocale -> geolocale.getGeorank().equals(georank))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static ArrayList<Geolocale> getGeolocales(String georank) {
