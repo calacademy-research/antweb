@@ -1,15 +1,18 @@
 package org.calacademy.antweb.util;
 
+import net.fortuna.ical4j.model.property.Geo;
+import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.GeolocaleDb;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class GeolocaleMgr extends Manager {
 
@@ -23,6 +26,15 @@ public class GeolocaleMgr extends Manager {
 
     // For Taxon Name Search Autocomplete    
     private static List<String> placeNamesList = null;
+
+    private static LinkedList<Adm1> adm1List = null;
+
+    private static Map<String, Country> countryNameMap = null;
+
+    /**
+     * key is pair of adm1Name, countryName, value is the Adm1 object
+     */
+    private static final MultiKeyMap<String, Adm1> adm1CountryMap = new MultiKeyMap<>();
 
     public static boolean isInitialized() {
         return s_regions != null;
@@ -94,6 +106,17 @@ public class GeolocaleMgr extends Manager {
         // Get all of the countries that don't have parents set, as we won't find them in the above process.
         s_geolocales.addAll(geolocaleDb.getGeolocales("country", "none", false));
         //A.log("populateShallow() 2 c:" + countInstances("Albania", s_geolocales));
+
+        adm1List = s_geolocales.stream()
+                .filter(Geolocale::isAdm1)
+                .map(adm1 -> (Adm1) adm1)
+                .collect(Collectors.toCollection(LinkedList::new));
+
+
+        adm1List.forEach(adm1 -> adm1CountryMap.put(adm1.getName(), adm1.getCountry(), adm1));
+
+        countryNameMap = s_geolocales.stream().filter(Geolocale::isCountry)
+            .map(country -> (Country) country).collect(Collectors.toMap(Country::getName, Function.identity()));
 
         Collections.sort(s_geolocales);
     }
