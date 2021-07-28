@@ -104,7 +104,7 @@ public abstract class AntwebProps {
         return value;
 	}
 
-	private static String getProp(String prop, String resource, ResourceBundle resources) {
+	private static @Nullable String getProp(String prop, String resource, ResourceBundle resources) {
       String propVal = null;
       if (resources == null) {
         s_log.error("getProp() resource:" + resource + " is null.");
@@ -244,15 +244,13 @@ public abstract class AntwebProps {
     }
 
     public static boolean isProtocolSecure() {
-      if ("https".equals(getProtocol())) return true;
-      return false;
+        return "https".equals(getProtocol());
     }
     
     public static String getProtocol() {
         // notice that this does not contain a follow / as does getSiteURL.  
-        String protocol = AntwebProps.getProp("site.protocol");
         //A.log("getProtocol() protocol:"+ protocol);
-        return protocol;
+        return AntwebProps.getProp("site.protocol");
     }
     
     // This is used for self reflexive requests. When the server calls itself, localhost:80 is not available since the
@@ -290,16 +288,18 @@ public abstract class AntwebProps {
         //A.log("getDomainApp() domainApp:" + domainApp);        
         return domainApp;
     }
-        
+
+    /** notice that this does not contain a follow / as does getSiteURL.   This
+     should always be used instead of getSiteURL()
+     <p>
+     This will return something like:
+     http://www.antweb.org
+     of http://localhost/antweb
+     or http://www.antweb.org/antweb_test
+     or http://10.2.22.106
+     */
     public static String getDomainApp() {
-        /** notice that this does not contain a follow / as does getSiteURL.   This 
-            should always be used instead of getSiteURL()
-            This will return something like: 
-                 http://www.antweb.org  
-              of http://localhost/antweb
-              or http://www.antweb.org/antweb_test
-              or http://10.2.22.106
-        */
+
 
         //if (true) s_log.warn("getDomainApp()");        
         //if (true) return "http://localhost/antweb";
@@ -372,7 +372,7 @@ public abstract class AntwebProps {
         
 	public static String getGoogleEarthURI() {
 	    if (true) return "googleEarth.do";
-	
+
 	    String googleEarthURI = AntwebProps.getProp("googleEarthURI");
         if ((googleEarthURI == null) || (googleEarthURI.equals(""))) googleEarthURI = "googleEarth/";
         return googleEarthURI;
@@ -380,24 +380,16 @@ public abstract class AntwebProps {
 		
 	public static Boolean isLocal() {
 		String localStr = AntwebProps.getProp("isLocal");
-        if (localStr != null && localStr.equals("true")) {
-          return true;
-        } else {
-          return false;
-        }
+        return localStr != null && localStr.equals("true");
 	}
-		
+
 	public static Boolean isDevMode() {
 	  return AntwebProps.getIsDevMode();
 	}
 
 	public static Boolean getIsDevMode() {
 		String devModeStr = AntwebProps.getProp("isDevMode");
-        if (devModeStr.equals("true")) {
-          return true;
-        } else {
-          return false;
-        }
+        return devModeStr.equals("true");
 	}
 
 	public static Boolean isStageMode() {
@@ -406,11 +398,7 @@ public abstract class AntwebProps {
 
 	public static Boolean getIsStageMode() {
 		String stageModeStr = AntwebProps.getProp("isStageMode");
-        if (stageModeStr.equals("true")) {
-          return true;
-        } else {
-          return false;
-        }
+        return stageModeStr.equals("true");
 	}
 	
 	public static Boolean isDevOrStageMode() {
@@ -422,26 +410,22 @@ public abstract class AntwebProps {
 	}
 
 	public static String report() {
-	  String report = "docRoot:" + getDocRoot() 
-	  // + " inputFileHome:" + getInputFileHome()
-	    + " googleKey:" + AntwebProps.getGoogleMapKey() 
-	    + " domainApp:" + getDomainApp() 
-	    + " devMode:" + getIsDevMode();
-	  return report;
+        return "docRoot:" + getDocRoot()
+        // + " inputFileHome:" + getInputFileHome()
+          + " googleKey:" + AntwebProps.getGoogleMapKey()
+          + " domainApp:" + getDomainApp()
+          + " devMode:" + getIsDevMode();
 	}
 
-	public static String htmlReport() {
-	  String report = 
-	      " <br>&nbsp;&nbsp;&nbsp;<b>DocRoot:</b> " + getDocRoot()
-        + " <br>&nbsp;&nbsp;&nbsp;<b>DataRoot:</b> " + getDataRoot()
-                // + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
-        + " <br>&nbsp;&nbsp;&nbsp;<b>ImagesDir:</b> " + getImagesDir()
-	    + " <br>&nbsp;&nbsp;&nbsp;<b>WebDir:</b> " + getWebDir()
-	    + " <br>&nbsp;&nbsp;&nbsp;<b>googleKey:</b> " + getGoogleMapKey()	
-	    ; 
-	    
-	  return report;
-	}	
+    public static String htmlReport() {
+
+        return " <br>&nbsp;&nbsp;&nbsp;<b>DocRoot:</b> " + getDocRoot()
+                + " <br>&nbsp;&nbsp;&nbsp;<b>DataRoot:</b> " + getDataRoot()
+// + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
+                + " <br>&nbsp;&nbsp;&nbsp;<b>ImagesDir:</b> " + getImagesDir()
+                + " <br>&nbsp;&nbsp;&nbsp;<b>WebDir:</b> " + getWebDir()
+                + " <br>&nbsp;&nbsp;&nbsp;<b>googleKey:</b> " + getGoogleMapKey();
+    }
 	
 	public static String getTechAdminContact() {
 	  return "re.mark.johnson@gmail.com";
