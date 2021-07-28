@@ -86,7 +86,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 		String subfamilyGenus = subfamily + genus;
 
         if (LineNumMgr.getDisplayLineNum(lineNum) == 130)
-          A.log("processLine() lineNum:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code + " taxonName:" + taxonName + " genus:" + genus + " rank:" + rank);
+          s_log.debug("processLine() lineNum:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code + " taxonName:" + taxonName + " genus:" + genus + " rank:" + rank);
 
 
 		//A.log("processLine() taxon_name:" + taxonName + " species:" + species + " rank:" + rank);
@@ -142,7 +142,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 		}
    
 		if ("casent0003145".equals(code)) {     
-		  A.log("processLine() code:" + code + " species:" + species + " subspecies:" + subspecies);
+		  s_log.debug("processLine() code:" + code + " species:" + species + " subspecies:" + subspecies);
 		}
 
 		if (skipRecord == null) {                   
@@ -369,7 +369,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
     private static int unfathomableElevation = 0;
 
     private void elevationReport() {
-      s_log.warn("FiguredElevations:" + figuredElevation
+      s_log.info("FiguredElevations:" + figuredElevation
               + " greaterThanElevation:" + greaterThanElevation
               + " decimalElevation:" + decimalElevation
               + " rangeElevation:" + rangeElevation

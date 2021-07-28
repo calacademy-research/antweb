@@ -60,7 +60,7 @@ public class SpecimenUploader {
       , Login login, String userAgent, String encoding) 
       throws SQLException, IOException, RESyntaxException, TestException, AntwebException
     {
-        A.log("uploadSpecimenFile() specimenFileName:" + formFileName + " encoding:" + encoding);
+        s_log.info("uploadSpecimenFile() specimenFileName:" + formFileName + " encoding:" + encoding);
 
         if ("default".equals(encoding)) encoding = null;
 
