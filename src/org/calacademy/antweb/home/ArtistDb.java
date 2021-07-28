@@ -1,21 +1,23 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
-import java.util.Collection;
-import java.io.Serializable;
-import java.sql.*;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Artist;
+import org.calacademy.antweb.Curator;
+import org.calacademy.antweb.Login;
+import org.calacademy.antweb.util.A;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.DBUtil;
 
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.Login.*;
-import org.calacademy.antweb.util.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ArtistDb extends AntwebDb {
 
@@ -66,8 +68,8 @@ public class ArtistDb extends AntwebDb {
         return null;
     }
 
-    public void postInstantiate(Artist artist) throws SQLException {
-        setArtistCounts(artist);
+    public void postInstantiate(ArrayList<Artist> artists) {
+        setAllArtistCounts(artists);
     }
     
     public ArrayList<Artist> getArtists() throws SQLException {
@@ -288,27 +290,30 @@ public class ArtistDb extends AntwebDb {
       }
       return 0;
     }
-        
-    public void setArtistCounts(Artist artist) {
-    
-      String query = "select count(id) images, count(distinct image_of_id) specimen from image where artist = " + artist.getId();    
-      ResultSet rset = null;
-      Statement stmt = null;
-      try {
-        stmt = DBUtil.getStatement(getConnection(), "getArtistCounts()");
-        stmt.executeQuery(query);
-        rset = stmt.getResultSet();
 
-        while (rset.next()) {
-            artist.setImageCount(rset.getInt("images"));
-            artist.setSpecimenCount(rset.getInt("specimen"));
+    private void setAllArtistCounts(List<Artist> artists) {
+
+        String query = "select artist, count(id) images, count(distinct image_of_id) specimen from image group by artist";
+        ResultSet rset = null;
+        Statement stmt = null;
+
+        Map<Integer, Artist> artistMap = artists.stream().collect(Collectors.toMap(Artist::getId, Function.identity()));
+
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getArtistCounts()");
+            stmt.executeQuery(query);
+            rset = stmt.getResultSet();
+
+            while (rset.next()) {
+                Artist artist = artistMap.get(rset.getInt("artist"));
+
+                artist.setImageCount(rset.getInt("images"));
+                artist.setSpecimenCount(rset.getInt("specimen"));
+            }
+        } catch (SQLException e) {
+            s_log.error("getArtistCounts() e:" + e + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "ImageDb", "getArtistCounts()");
         }
-      } catch (SQLException e) {
-          s_log.error("getArtistCounts() e:" + e + " query:" + query);
-      } finally {
-        DBUtil.close(stmt, rset, "ImageDb", "getArtistCounts()");
-      }
     }
-
-
 }
