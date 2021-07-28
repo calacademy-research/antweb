@@ -1,15 +1,13 @@
 package org.calacademy.antweb.util;
 
-import java.util.*;
-import java.io.File;
-import org.calacademy.antweb.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import org.apache.struts.action.*;
+import java.io.File;
+import java.util.HashMap;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 public abstract class AntwebProps {
 
@@ -77,9 +75,9 @@ public abstract class AntwebProps {
 
     private static HashMap<String, String> s_propMap = new HashMap<String, String>();
 
-	public static String getProp(String prop) {
+	public static @Nullable String getProp(String prop) {
 
-        String value = null;
+        String value;
 
         if (s_propMap.containsKey(prop)) {
           value = s_propMap.get(prop);
@@ -93,12 +91,13 @@ public abstract class AntwebProps {
 	    }
         
         value = getProp(prop, "app", getAppResources());
-        if (value != null) return value;
 
-        value = getProp(prop, "ant", getAntwebResources());
-        if (value != null) return value;
-
-        value = getProp(prop, "platform", getPlatformResources());
+	    if (value == null) {
+            value = getProp(prop, "ant", getAntwebResources());
+        }
+	    if (value == null) {
+            value = getProp(prop, "platform", getPlatformResources());
+        }
 
         s_propMap.put(prop, value);
 
