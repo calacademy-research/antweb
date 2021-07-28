@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.sql.Timestamp;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.regexp.*;
 
 import org.apache.struts.upload.FormFile;
@@ -614,18 +615,8 @@ public class Utility implements Serializable {
     }
     
     public void copyFile(String src, String dst) throws IOException {
-      //A.log("copyFile(" + src + ", " + dst + ")");
-      InputStream in = new FileInputStream(new File(src));
-      OutputStream out = new FileOutputStream(new File(dst));
-
-      // Transfer bytes from in to out
-      byte[] buf = new byte[1024];
-      int len;
-      while ((len = in.read(buf)) > 0) {
-        out.write(buf, 0, len);
-      }
-      in.close();
-      out.close();
+        //A.log("copyFile(" + src + ", " + dst + ")");
+        FileUtils.copyFile(new File(src), new File(dst));
     }
 
     // To be deprecated
