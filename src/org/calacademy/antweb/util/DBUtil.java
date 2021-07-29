@@ -15,6 +15,7 @@ import com.mchange.v2.c3p0.impl.*;
 
 import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.AntFormatter;
+import org.jetbrains.annotations.Nullable;
 
 public class DBUtil {
 
@@ -144,9 +145,12 @@ Or, if there are stmts and/or rsets...
 
     
     // These methods are for statements, include timing.    
-    public static Statement getStatement(Connection connection, String name)
+    public static @Nullable Statement getStatement(Connection connection, String name)
       throws SQLException  {
-        if (connection == null) s_log.error("getStatement() connection is null");
+        if (connection == null) {
+            s_log.error("getStatement() connection is null for name: " + name);
+            return null;
+        }
         Statement stmt = null;
         try {
           DBUtil.open(name);
