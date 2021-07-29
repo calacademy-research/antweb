@@ -76,7 +76,7 @@ public class SpecimenUploader {
         UploadFile uploadFile = new UploadFile(outputFileDir, specimenFileName, userAgent, encoding);
         String backupDirFile = uploadFile.backup();
 
-        A.log("uploadSpecimenFile() specimenFileName:" + specimenFileName + " specimenFileLoc:" + specimenFileLoc + " backupDirFile:" + backupDirFile);
+        s_log.info("uploadSpecimenFile() specimenFileName:" + specimenFileName + " specimenFileLoc:" + specimenFileLoc + " backupDirFile:" + backupDirFile);
         //s_antwebEventLog.info("backupDirFile:" + backupDirFile;
 
         String messageStr = null;

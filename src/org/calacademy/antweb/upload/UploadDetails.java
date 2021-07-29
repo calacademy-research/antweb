@@ -234,7 +234,7 @@ public class UploadDetails extends OperationDetails {
           s_log.warn("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
         }
 
-        s_log.warn("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
+        s_log.info("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
 
 
         if (postUploadStatistics != null) {
@@ -248,7 +248,7 @@ public class UploadDetails extends OperationDetails {
         logString += getMessageMgr().getMessagesReport();
         logString += "</body>";
 
-s_log.warn("logMessagesToFile() logFileDir:" + getLogFileDir() + " logFileName:" + getLogFileName());
+        s_log.info("logMessagesToFile() logFileDir:" + getLogFileDir() + " logFileName:" + getLogFileName());
         LogMgr.appendLog(getLogFileDir(), getLogFileName(), logString);
         
         String messageStr = getMessageMgr().getMessageStr();

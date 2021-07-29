@@ -300,7 +300,7 @@ public class UploadFile {
       String backupDirFile = null;
 
       File file = new File(getFileLoc());
-      A.log("backup() exists:" + exists() + " fileLoc:" + getFileLoc() + " file:" + file + " exists:" + file.exists());
+      s_log.info("backup() exists:" + exists() + " fileLoc:" + getFileLoc() + " file:" + file + " exists:" + file.exists());
 
       if (!exists()) {
         s_log.warn("backup() file does not exist:" + getFileLoc());
