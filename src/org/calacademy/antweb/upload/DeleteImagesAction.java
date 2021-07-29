@@ -60,16 +60,16 @@ public final class DeleteImagesAction extends Action {
                 javax.sql.DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, "DeleteImagesAction.execute()");
 
-                for (int loop = 0; loop < chosen.length; loop++) {
-                    thisResult = (ResultItem) results.get((Integer.valueOf(chosen[loop])).intValue());
-                    
+                for (String s : chosen) {
+                    thisResult = (ResultItem) results.get(Integer.parseInt(s));
+
                     ImageDb imageDb = new ImageDb(connection);
-                    int shot = Integer.valueOf(thisResult.getShotNumber()).intValue();
+                    int shot = Integer.parseInt(thisResult.getShotNumber());
                     imageDb.deleteImage(thisResult.getCode(), thisResult.getShotType(), shot);
                 }
             } catch (Exception e) {
                 s_log.error("execute() e:" + e);
-                message = "e:" + e.toString();
+                message = "e:" + e;
                 request.setAttribute("message", message);
                 return (mapping.findForward("message"));                
             } finally {

@@ -122,7 +122,7 @@ public class LoginDb extends AntwebDb {
     
     public ArrayList<Login> getAllLogins() throws SQLException {          
         ArrayList<Login> loginList = new ArrayList<Login>();
-        String theQuery = "select id from login";
+        String theQuery = "select * from login";
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -130,7 +130,7 @@ public class LoginDb extends AntwebDb {
             rset = stmt.executeQuery(theQuery);
         
             while (rset.next()) {
-                Login login = getLogin(rset.getInt("id"));
+                Login login = instantiateLogin(rset);
                 loginList.add(login);
             }
             Collections.sort(loginList);  

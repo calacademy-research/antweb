@@ -48,9 +48,7 @@ public class ArtistMgr extends Manager {
     public static void postInitialize(Connection connection) throws SQLException {
         ArtistDb artistDb = new ArtistDb(connection);
         ArrayList<Artist> artists = getArtists();
-        for (Artist artist : artists) {
-            artistDb.postInstantiate(artist);
-        }
+        artistDb.postInstantiate(artists);
     }
 
     public static boolean isInitialized() {

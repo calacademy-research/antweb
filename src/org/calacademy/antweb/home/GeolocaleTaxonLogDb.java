@@ -642,7 +642,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     }
 
 
-	ArrayList<TaxonSet> s_disputes = null;
+	private static ArrayList<TaxonSet> s_disputes = null;
 
     public TaxonSet getDispute(int geolocaleId, String taxonName) throws SQLException {
 

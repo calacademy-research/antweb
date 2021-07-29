@@ -40,7 +40,7 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
 		filter(part->"file".equals(part.getName())).collect(Collectors.toList());
 
 		for(Part filePart: fileParts){
-			filename=Paths.get(filePart.getSubmittedFileName()).
+			filename=Paths.get(filePart.getName()).
 			getFileName().toString();
 
 			filePart.write(savepath+File.separator+filename);
