@@ -1,20 +1,15 @@
 package org.calacademy.antweb.util;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.util.*;
+import java.time.*;
+import java.time.format.*;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.Year;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.text.*;
+
+import org.calacademy.antweb.util.AntwebUtil;
+
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 
 //import com.joestelmach.natty.*;
 //import com.joestelmach.natty.generated.*;
@@ -119,8 +114,9 @@ public abstract class DateUtil {
     } catch (ParseException e) {
       s_log.error("e:" + e + " theDate:" + dateStr);
     }
+    String formatDate = getFormatDateStr(theDate, "yyyy-MM-dd");
     //A.log("getFormatDateStr() dateStr:" + dateStr + " theDate:" + theDate + " formatDate:" + formatDate);
-    return getFormatDateStr(theDate, "yyyy-MM-dd");
+    return formatDate;
   }
 
 
@@ -140,8 +136,9 @@ public abstract class DateUtil {
 
   // Antweb Preferred format. How the String dates are stored in specimen table dateCollectedStart and dateCollectedEnd
   public static String getFormatDateStr(Date theDate) {
+    String formatDate = getFormatDateStr(theDate, "yyyy-MM-dd");
     //A.log("DateUtil.getFormatDateStr() theDate:" + theDate + " formatDate:" + formatDate);
-    return getFormatDateStr(theDate, "yyyy-MM-dd");
+    return formatDate;
   }
 
   public static String getFormatDateStr(Date theDate, String format) {
@@ -153,20 +150,14 @@ public abstract class DateUtil {
     if (dateStr == null) return null;
     Date date = constructDate(dateStr);
     if (date == null) return null;
-    return getFormatDateStr(date);
+    String formatString = getFormatDateStr(date);
+    return formatString;
   }
-
-  // Caches SimpleDateFormat parsers, so we don't need to create a new one for each date we test
-  private static final Map<String, SimpleDateFormat> dateParsers = new HashMap<>();
 
   private static Date format(String format, String dateStr) {
     Date returnDate = null;
     try {
-
-      // Returns preexisting parser, or creates new one and saves to the map
-      SimpleDateFormat parser = dateParsers.computeIfAbsent(format, SimpleDateFormat::new);
-
-      returnDate =  parser.parse(dateStr);
+      returnDate = (new SimpleDateFormat(format)).parse(dateStr);
     } catch (java.text.ParseException e) {
       //if ("2010/08/12".equals(dateStr)) A.log("format() NOT found:" + dateStr + " format:" + format + " e:" + e);
     }
@@ -195,7 +186,7 @@ public abstract class DateUtil {
     if (indexOfSecondHyphen < 6) return null;
     if (dateStr.length() > 9) return null;
     String shortYear = dateStr.substring(indexOfSecondHyphen + 1);
-    int year = Integer.parseInt(shortYear);
+    int year = Integer.valueOf(shortYear);
     if (year > 50) {
       year = year + 1900;
     } else {
@@ -203,7 +194,8 @@ public abstract class DateUtil {
     }
     dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
     //A.log("message-body.jsp i:" + indexOfSecondHyphen + " year:" + year + " dateStr:" + dateStr + " l:" + dateStr.length());
-    return format("dd-MMM-yyyy", dateStr);
+    Date date = format("dd-MMM-yyyy", dateStr);
+    return date;
   }
 
   private static int s_debugStep = 0;
@@ -214,17 +206,13 @@ public abstract class DateUtil {
     if (constructedDate == null) A.log("testConstructDateStr() dateStr:" + dateStr + " formatted:" + constructedDate + " step:" + s_debugStep);
     return constructedDate;
   }
-
   // Method designed to take scrappy user entered dates and return Antweb formatted Date
     public static Date constructDate(String dateStr) {
-      if (dateStr == null || dateStr.isEmpty()) {
-        return null;
-      }
 
       Date returnDate = null;
 
       // Antweb preferred format
-      returnDate = format("yyyy-MM-dd", dateStr);
+      if (returnDate == null) returnDate = format("yyyy-MM-dd", dateStr);
       if (returnDate == null) returnDate = format("dd-MMM-yyyy", dateStr);
       if (returnDate == null) returnDate = format("yyyy-MMM-dd", dateStr);
       if (returnDate == null) returnDate = format("dd MMM yyyy", dateStr);
@@ -325,7 +313,7 @@ public abstract class DateUtil {
       // This is the new way. Pretty cumbersome, right?
       if (returnDate == null) {
         try {
-          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z yyyy").withLocale(Locale.US);
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu").withLocale(Locale.US);
           ZonedDateTime zdt = ZonedDateTime.parse(dateStr, formatter);
           LocalDate ld = zdt.toLocalDate();
           DateTimeFormatter fLocalDate = DateTimeFormatter.ofPattern("dd/MM/uuuu");
@@ -411,7 +399,7 @@ public abstract class DateUtil {
     }
     dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
     String firstNum = dateStr.substring(0, indexOfFirstHyphen);
-    int firstNumInt = Integer.parseInt(firstNum);
+    int firstNumInt = Integer.valueOf(firstNum);
     Date date = null;
     if (firstNumInt <= 12) {
       date = format("MM/dd/yyyy", dateStr);
@@ -448,25 +436,27 @@ public abstract class DateUtil {
 
     // Perhaps it's like: 2003
     returnDate = getDate("1 Jan " + truncDatesCollected);
-    return returnDate;
+    if (returnDate != null) return returnDate;
+
+    return null;
   }
 
     private static String trimDay(String day) {
-      if (day == null) return null;
+      if (day == null) return day;
       if (day.contains("-")) day = day.substring(0, day.indexOf("-"));
       return day;
     }
 
     private static Date romanConvertDate(String theDate) {
       String dateStr = romanConvertDateStr(theDate);
-      return getDate(dateStr);
+      Date date = getDate(dateStr);
+      return date;
     }
     private static String romanConvertDateStr(String theDate) {
       if (theDate.contains(".")) {
         int firstPeriodI = theDate.indexOf(".");
         int secondPeriodI = theDate.indexOf(".", firstPeriodI + 1);
-        String day, mo, year;
-
+        String day = null, mo = null, year = null;
         if (secondPeriodI > 0) {
           day = theDate.substring(0, firstPeriodI);
           day = DateUtil.trimDay(day);
