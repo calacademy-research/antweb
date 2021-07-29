@@ -20,6 +20,7 @@ import org.calacademy.antweb.util.*;
 public class SpecimenUploadDb extends UploadDb {
 
     private static Log s_log = LogFactory.getLog(SpecimenUploadDb.class);
+    private static final Log uploadLog = LogFactory.getLog("uploadLog");
 
     //ArrayList goodHeaders = new ArrayList(Arrays.asList(biotaHeaders));    
 
@@ -43,12 +44,12 @@ public class SpecimenUploadDb extends UploadDb {
                 stmt = DBUtil.getStatement(getConnection(), "SpecimenUploadDb.deleteSpecimens()");
                 count = stmt.executeUpdate(query);
             } catch (SQLException e) {
-                s_log.error("problem in deleteSpecimens(connect, specimens) - queryLength:" + query.length() + " " + e);
+                uploadLog.error("problem in deleteSpecimens(connect, specimens) - queryLength:" + query.length() + " " + e);
             } finally {
                 DBUtil.close(stmt, "SpecimenUploadDb.deleteSpecimens()");
             }
 
-            s_log.info("deleteSpecimens() count:" + count + " query:" + query);
+            uploadLog.info("deleteSpecimens() count:" + count + " query:" + query);
         }   
     }
     
@@ -61,7 +62,7 @@ public class SpecimenUploadDb extends UploadDb {
             stmt = DBUtil.getStatement(getConnection(), "SpecimenUploadDb.uploadSpecimenUploadDate()");
             stmt.executeUpdate(query);
         } catch (SQLException e) {
-            s_log.error("updateSpecimenUploadDate() e: " + e);
+            uploadLog.error("updateSpecimenUploadDate() e: " + e);
         } finally {
             DBUtil.close(stmt, "SpecimenUploadDb.updateSpecimenUploadDate()");
         }        
@@ -75,7 +76,7 @@ public class SpecimenUploadDb extends UploadDb {
             stmt = DBUtil.getStatement(getConnection(), "SpecimenUploadDb.deleteSpecimen()");
             stmt.executeUpdate(query);
         } catch (SQLException e) {
-            s_log.error("problem deleteSpecimen() code:" + code + " " + e);
+            uploadLog.error("problem deleteSpecimen() code:" + code + " " + e);
         } finally {
             DBUtil.close(stmt, "SpecimenUploadDb.deleteSpecimen()");
         }
@@ -104,9 +105,9 @@ public class SpecimenUploadDb extends UploadDb {
 
           LogMgr.appendLog("taxonSet.log", "specimenUploadDb.dropSpecimens(" + group + "):" + count, true);
           
-          s_log.warn("dropSpecimens() count:" + count + " query completed");
+          uploadLog.info("dropSpecimens() count:" + count + " query completed");
         } catch (SQLException e) {
-          s_log.error("dropSpecimens() 1 e:" + e + " query:" + query);
+          uploadLog.error("dropSpecimens() 1 e:" + e + " query:" + query);
         } finally {
           DBUtil.close(stmt, "SpecimenUploadDb.dropSpecimens()");
         }
@@ -118,7 +119,7 @@ public class SpecimenUploadDb extends UploadDb {
           count = stmt.executeUpdate(query);
           //s_log.warn("dropSpecimens() count:" + count + " query completed");
         } catch (SQLException e) {
-          s_log.error("dropSpecimens() 2 e:" + e + " query:" + query);
+          uploadLog.error("dropSpecimens() 2 e:" + e + " query:" + query);
         } finally {
           DBUtil.close(stmt, "SpecimenUploadDb.dropSpecimens()");
         }
@@ -141,7 +142,7 @@ public class SpecimenUploadDb extends UploadDb {
             stmt.executeUpdate(query);
 
         } catch (SQLException e) {
-            s_log.error("problem removeTaxonOrphans e:" + e + " query:" + query);
+            uploadLog.error("problem removeTaxonOrphans e:" + e + " query:" + query);
             throw e;
         } finally {
             DBUtil.close(stmt, "SpecimenUploadDb.deleteTaxonOrphans()");
