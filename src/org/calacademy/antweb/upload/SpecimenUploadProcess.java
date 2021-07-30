@@ -540,7 +540,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
                     // currentValidName is a misnomer at this point.  As a homonym, new taxon created that is "Unrecoginzed" as a place holder for the homonym.
                     s_log.warn("setStatusAndCurrentValidName() taxon does not exist for homonym with specimen.  Create.  new taxon:" + currentValidName + " code:" + specimenItem.get("code") + " taxonItem:" + taxonItem + " specimenItem:" + specimenItem);
 
-                    DummyTaxon currentTaxon = (new HomonymDb(getConnection())).getDummyTaxon(currentValidName);
+//                    DummyTaxon currentTaxon = (new HomonymDb(getConnection())).getDummyTaxon(currentValidName);
 
 	                taxonItem.put("family", dummyTaxon.getFamily());
                     taxonItem.put("subfamily", dummyTaxon.getSubfamily());
