@@ -228,15 +228,12 @@ public final class MapResultsAction extends ResultsAction {
         return codeList;
     }
 
-    protected ArrayList<String> getLocalitiesFromSpecimens(ArrayList<String> chosenList, ArrayList<ResultItem> searchResults) 
+    private ArrayList<String> getLocalitiesFromSpecimens(ArrayList<String> chosenList, ArrayList<ResultItem> searchResults)
       throws IndexOutOfBoundsException {
         //A.slog("getLocalitiesFromSpecimens searchSize:" + searchResults.size() + " chosenSize:" + chosenList.size());
-        ArrayList<String> codeList = new ArrayList<String>();
-        ArrayList<String> localityList = new ArrayList<String>();
-        ResultItem thisItem = null;
-        int thisChosen = 0;
-        String testCode = "";
-        testCode = "fmnhins0000112290";
+        ArrayList<String> codeList = new ArrayList<>();
+        HashSet<String> localityList = new HashSet<>();
+        String testCode = "fmnhins0000112290";
         if (chosenList == null) {
           for (ResultItem item: searchResults) {
             String code = item.getCode();
@@ -251,14 +248,14 @@ public final class MapResultsAction extends ResultsAction {
         }
 
 
-        Hashtable resultsHash = new Hashtable();
+        Hashtable<String, ResultItem> resultsHash = new Hashtable<>();
         for (ResultItem item: searchResults) {
           resultsHash.put(item.getCode(), item);
         }
         
         for (String chosen : chosenList) {
             //AntwebUtil.logFirst("getLocalitiesFromSpecimens() chosen:" + chosen);
-            ResultItem item = (ResultItem) resultsHash.get(chosen);
+            ResultItem item = resultsHash.get(chosen);
             if (item != null) {
                 String t = "";
                 if (item.getAdm1() != null && item.getAdm1().equals("Minnesota")) {
