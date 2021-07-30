@@ -285,10 +285,6 @@
       forward="/web/homepage/documentation.jsp"/>
 
     <action
-      path="/participate"
-      forward="/participation.jsp"/>
-      
-    <action
       path="/rules"
       forward="/documentation/rules.jsp"/>
 
@@ -718,12 +714,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
       </action> 
       
       <!-- deprecated. Replaced by listSpecimenUploads -->
-      <action path="/listUploads"
+<!--      <action path="/listUploads"
               type = "org.calacademy.antweb.util.ListUploadsAction"
               name="dummyForm"
               scope="request">
           <forward name ="success" path="/util/listUploads.jsp"/>
-      </action>    
+      </action>-->
 
     <action
       path="/listUploads" 
@@ -820,13 +816,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
              name="deleteImagesForm">
        <forward name="success" path="/recentSearchResults.do?numToShow=100&amp;searchMethod=recentImageSearch" />
      </action>
-                                                         
-        <action path="/editCredit"
-            type="org.calacademy.antweb.EditCreditAction"
-            scope="request"
-            name="editCreditForm">
-      <forward name="success" path="/edit_credit.jsp" />
-    </action>
         
     <action path="/specimenImages"
             type="org.calacademy.antweb.SpecimenAction"
