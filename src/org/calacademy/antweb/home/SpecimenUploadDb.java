@@ -1,20 +1,16 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
-import java.util.Date;
-
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
-import org.apache.regexp.*;
-
-import java.sql.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Group;
+import org.calacademy.antweb.util.DBUtil;
+import org.calacademy.antweb.util.LogMgr;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 
 
 public class SpecimenUploadDb extends UploadDb {
@@ -53,14 +49,15 @@ public class SpecimenUploadDb extends UploadDb {
         }   
     }
     
-    public void updateSpecimenUploadDate(Group group) throws SQLException {
+    public void updateSpecimenUploadDate(Group group) {
         
         int id = group.getId();
-        String query = "update ant_group set last_specimen_upload=" + currentDateFunction + " where id =" +  id;
-        Statement stmt = null; 
+        String dml = "update ant_group set last_specimen_upload = now() where id = ?";
+        PreparedStatement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "SpecimenUploadDb.uploadSpecimenUploadDate()");
-            stmt.executeUpdate(query);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "SpecimenUploadDb.uploadSpecimenUploadDate()", dml);
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
         } catch (SQLException e) {
             uploadLog.error("updateSpecimenUploadDate() e: " + e);
         } finally {
@@ -69,12 +66,12 @@ public class SpecimenUploadDb extends UploadDb {
     }
     
     void deleteSpecimen(String code) throws SQLException {
-        String query = "";
-        Statement stmt = null; 
+        PreparedStatement stmt = null;
         try {
-            query = "delete from specimen where code ='" + code + "'";
-            stmt = DBUtil.getStatement(getConnection(), "SpecimenUploadDb.deleteSpecimen()");
-            stmt.executeUpdate(query);
+            String dml = "delete from specimen where code = ?";
+            stmt = DBUtil.getPreparedStatement(getConnection(), "SpecimenUploadDb.deleteSpecimen()", dml);
+            stmt.setString(1, code);
+            stmt.executeUpdate();
         } catch (SQLException e) {
             uploadLog.error("problem deleteSpecimen() code:" + code + " " + e);
         } finally {
@@ -83,9 +80,9 @@ public class SpecimenUploadDb extends UploadDb {
     }
     
     public void dropSpecimens(Group group) throws SQLException {
-        int count = 0;
+        int count;
         String query = "";
-        Statement stmt = null; 
+        PreparedStatement stmt = null;
         try {
         
         /*
@@ -98,10 +95,11 @@ public class SpecimenUploadDb extends UploadDb {
           }
           */
 
-          query = "delete from specimen where access_group = " + group.getId();
+          query = "delete from specimen where access_group = ?";
           //s_log.warn("dropSpecimens() why is this query so slow:" + query);                    
-          stmt = DBUtil.getStatement(getConnection(), "SpecimenUploadDb.dropSpecimens()");
-          count = stmt.executeUpdate(query);
+          stmt = DBUtil.getPreparedStatement(getConnection(), "SpecimenUploadDb.dropSpecimens()", query);
+          stmt.setInt(1, group.getId());
+          count = stmt.executeUpdate();
 
           LogMgr.appendLog("taxonSet.log", "specimenUploadDb.dropSpecimens(" + group + "):" + count, true);
           
@@ -113,10 +111,11 @@ public class SpecimenUploadDb extends UploadDb {
         }
 
         try {
-          query = "delete from taxon where access_group = " + group.getId() + " and insert_method in ('addMissingGenus', 'homononymMirroringTaxon')";
+          query = "delete from taxon where access_group = ? and insert_method in ('addMissingGenus', 'homononymMirroringTaxon')";
           //s_log.warn("dropSpecimens() query:" + query);                    
-          stmt = DBUtil.getStatement(getConnection(), "SpecimenUploadDb.dropSpecimens()");
-          count = stmt.executeUpdate(query);
+          stmt = DBUtil.getPreparedStatement(getConnection(), "SpecimenUploadDb.dropSpecimens()", query);
+          stmt.setInt(1, group.getId());
+          count = stmt.executeUpdate();
           //s_log.warn("dropSpecimens() count:" + count + " query completed");
         } catch (SQLException e) {
           uploadLog.error("dropSpecimens() 2 e:" + e + " query:" + query);
