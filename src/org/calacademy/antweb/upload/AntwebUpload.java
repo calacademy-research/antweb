@@ -650,7 +650,7 @@ public class AntwebUpload {
                || (code.equals("casent0813723"))
 */
              ) {
-            A.log("saveSpecimen() SPECIFIC CODE:" + code + " item:" + item);
+            s_log.debug("saveSpecimen() SPECIFIC CODE:" + code + " item:" + item);
             debugItem = true;
         }
         
@@ -804,7 +804,7 @@ public class AntwebUpload {
             }
 
             ++saveSpecimenCount;
-            if ((saveSpecimenCount % 25000 == 0)) s_log.warn("saveSpecimen() count" + saveSpecimenCount + " code:" + code);
+            if ((saveSpecimenCount % 25000 == 0)) s_log.info("saveSpecimen() count" + saveSpecimenCount + " code:" + code);
                                     
             // Only if successful insert, count and record the museum
             if (item.containsKey("ownedby")) {

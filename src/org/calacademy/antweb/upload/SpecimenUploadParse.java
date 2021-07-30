@@ -979,7 +979,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     private static int unfathomableElevation = 0;
 
     void elevationReport() {
-      s_log.warn("FiguredElevations:" + figuredElevation
+      s_log.info("FiguredElevations:" + figuredElevation
               + " greaterThanElevation:" + greaterThanElevation
               + " decimalElevation:" + decimalElevation
               + " rangeElevation:" + rangeElevation

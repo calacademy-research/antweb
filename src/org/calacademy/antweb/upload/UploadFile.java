@@ -222,7 +222,7 @@ public class UploadFile {
         /* This was added in, reasonably. In tricky release 6.9 (that included a wider rollout of the encoding selector,
            it caused uploads to be invalid. */
       }
-      s_log.warn("correctEncoding(" + encoding + ") found true in " + AntwebUtil.secsSince(startTime) + " seconds.  LineFound:" + aLineFound);
+      s_log.info("correctEncoding(" + encoding + ") found true in " + AntwebUtil.secsSince(startTime) + " seconds.  LineFound:" + aLineFound);
 
       return true;
     }
@@ -300,7 +300,7 @@ public class UploadFile {
       String backupDirFile = null;
 
       File file = new File(getFileLoc());
-      A.log("backup() exists:" + exists() + " fileLoc:" + getFileLoc() + " file:" + file + " exists:" + file.exists());
+      s_log.info("backup() exists:" + exists() + " fileLoc:" + getFileLoc() + " file:" + file + " exists:" + file.exists());
 
       if (!exists()) {
         s_log.warn("backup() file does not exist:" + getFileLoc());
@@ -311,12 +311,12 @@ public class UploadFile {
           String fullWebUploadDir = fullWebDir + "/upload";
           //String backupWorkingDir = util.getInputFileHome() + "/backup";
           util.makeDirTree(fullWebUploadDir);
-          A.log("backup() makeDirTree:" + fullWebUploadDir);
+          s_log.info("backup() makeDirTree:" + fullWebUploadDir);
 
           this.backupFileName = util.getDateForFileName() + "-" + getShortFileName();
           String tempBackupDirFile = fullWebUploadDir + "/" + backupFileName;
           try {
-            s_log.warn("backup() " + getFileLoc() + " to " + tempBackupDirFile);
+            s_log.info("backup() " + getFileLoc() + " to " + tempBackupDirFile);
             util.copyFile(getFileLoc(), tempBackupDirFile);
             backupDirFile = "upload/" + backupFileName;
           } catch (IOException e) {

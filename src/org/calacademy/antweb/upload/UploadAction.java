@@ -459,7 +459,7 @@ public class UploadAction extends Action {
 				action = "import:" + theFileName;
 
 				//logFileName += theFileName + UploadDetails.getLogExt();
-				s_log.warn("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
+				s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
 				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 

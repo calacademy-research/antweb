@@ -128,7 +128,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                   
                     if (theLine.contains("CASENT10156657")
                       || theLine.contains("JTL187227")) {
-                      A.log("importSpecimens() lineNum:" + lineNum + " is " + theLine);                    
+                      s_log.info("importSpecimens() lineNum:" + lineNum + " is " + theLine);
                     }
                     oldLine = new String(theLine);                    
                     
@@ -183,7 +183,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
 					theLine = in.readLine();
 					++lineNum;   
-					if ((lineNum % 5000) == 0) A.log("importSpecimens() lineNum:" + lineNum + " buildLineTotal:" + buildLineTotal + " processLineTotal:" + processLineTotal);    
+					if ((lineNum % 5000) == 0) s_log.debug("importSpecimens() lineNum:" + lineNum + " buildLineTotal:" + buildLineTotal + " processLineTotal:" + processLineTotal);
 				
 					//Profiler.profile("importSpecimenLoop", startTimeLoop);                     
 		
@@ -229,7 +229,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
               }
             }
 
-            s_log.warn("importSpecimens() final lineNum:" + lineNum);
+            s_log.info("importSpecimens() final lineNum:" + lineNum);
                 
             in.close();
             // finally, you have to get rid of stuff in the Taxon table which is marked
