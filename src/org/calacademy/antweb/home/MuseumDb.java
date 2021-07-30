@@ -1,23 +1,19 @@
 package org.calacademy.antweb.home;
 
 import java.util.*;
-import java.util.Date;
 import java.sql.*;
 
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
 //import org.apache.regexp.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
 public class MuseumDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(MuseumDb.class);
+    private static final Log s_log = LogFactory.getLog(MuseumDb.class);
 
     public MuseumDb(Connection connection) {
       super(connection);
@@ -29,7 +25,7 @@ public class MuseumDb extends AntwebDb {
 
     public ArrayList<Museum> getMuseums(boolean deepCopy) {
 
-      ArrayList<Museum> museums = new ArrayList<Museum>();
+      ArrayList<Museum> museums = new ArrayList<>();
       String theQuery = "select * "
           + " from museum"
           + " order by code";
@@ -45,7 +41,7 @@ public class MuseumDb extends AntwebDb {
            museum.setCode(rset.getString("code"));
            museum.setName(rset.getString("name"));
            museum.setTitle(rset.getString("title"));
-           museum.setIsActive((rset.getInt("active") == 1) ? true : false);
+           museum.setIsActive(rset.getInt("active") == 1);
            museum.setSubfamilyCount(rset.getInt("subfamily_count"));
            museum.setGenusCount(rset.getInt("genus_count"));
            museum.setSpeciesCount(rset.getInt("species_count"));
@@ -58,7 +54,7 @@ public class MuseumDb extends AntwebDb {
            museum.setChartColor(rset.getString("chart_color"));
            museum.setCreated(rset.getTimestamp("created"));
            if (deepCopy) {
-             Hashtable description = (new DescEditDb(getConnection())).getDescription(museum.getCode());
+             Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(museum.getCode());
              museum.setDescription(description);
 
              // museum.setTaxonSubfamilyDistJson(getSpecimenSubfamilyDistJson(museum.getCode()));
@@ -82,7 +78,7 @@ public class MuseumDb extends AntwebDb {
     public Museum getMuseum(String code) throws SQLException {
       return getMuseumWithClause(" code = '" + code + "'");
     }
-    public Museum getMuseumWithClause(String keyClause) throws SQLException {
+    private Museum getMuseumWithClause(String keyClause) throws SQLException {
       Museum museum = null;
       Statement stmt = null;
       ResultSet rset = null;
@@ -104,7 +100,7 @@ public class MuseumDb extends AntwebDb {
            museum.setChartColor(rset.getString("chart_color"));
            museum.setCreated(rset.getTimestamp("created"));
          
-           Hashtable description = (new DescEditDb(getConnection())).getDescription(museum.getCode());
+           Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(museum.getCode());
            museum.setDescription(description);         
         }
       } finally {
@@ -148,7 +144,7 @@ public class MuseumDb extends AntwebDb {
         return message;
     }
 
-    public String updateMuseum(Museum museum) throws SQLException {
+    private String updateMuseum(Museum museum) throws SQLException {
         String message = "";
         if (museum.getCode() != null) {
         
@@ -207,7 +203,7 @@ public class MuseumDb extends AntwebDb {
       return getFromSpecimenData(null);
     }
     
-    public Museum getFromSpecimenData(String museumCode) {
+    private Museum getFromSpecimenData(String museumCode) {
 
         Museum museum = new Museum();
         museum.setCode(museumCode);
@@ -221,7 +217,7 @@ public class MuseumDb extends AntwebDb {
 
 // Very different from the geolocale method. Verify!!!
 
-    public int getSpecimenCount(String museumCode) {
+    private int getSpecimenCount(String museumCode) {
       int count = 0;
       
       Statement stmt = null;
@@ -248,7 +244,7 @@ public class MuseumDb extends AntwebDb {
       return count;
     }
 
-    public int getImageCount(String museumCode) {
+    private int getImageCount(String museumCode) {
       int count = 0;
       Statement stmt = null;
       ResultSet rset = null;
@@ -277,12 +273,12 @@ public class MuseumDb extends AntwebDb {
 
     // ------ Population -----
     
-    private static int MIN_MUSEUM_COUNT_FOR_CALC = 0;
+    private final static int MIN_MUSEUM_COUNT_FOR_CALC = 0;
     
     public void populate(java.util.Map<String, Integer> museumMap) throws SQLException {
       // could run a query here and do the set of museums found.  Usually one, but not for CAS.
       // Better, faster by a minute, to collect the museums as we go through the upload.
-      ArrayList<String> museumCodes = new ArrayList<String>(museumMap.keySet());
+      ArrayList<String> museumCodes = new ArrayList<>(museumMap.keySet());
       for (String code : museumCodes) {
         Integer count = museumMap.get(code);
         if (count > MIN_MUSEUM_COUNT_FOR_CALC) {
@@ -710,7 +706,7 @@ public class MuseumDb extends AntwebDb {
       }  
     }     
 
-    public void makeCharts(String code) {
+    private void makeCharts(String code) {
       //A.log("makeCharts(" + code + ")");
       MuseumTaxonCountDb museumTaxonCountDb = new MuseumTaxonCountDb(getConnection());
       UtilDb utilDb = new UtilDb(getConnection());
@@ -721,31 +717,29 @@ public class MuseumDb extends AntwebDb {
       utilDb.updateField("museum", "specimen_subfamily_dist_json", "'" + museumTaxonCountDb.getSpecimenSubfamilyDistJson(specimenCountQuery) + "'", criteria);
     }    
 
-    public String getTaxonSubfamilyDistJsonQuery(String criteria) {
-      String query = "select t.subfamily, count(*) count, t2.chart_color " 
-          + " from museum_taxon mt, taxon t, taxon t2, museum m " 
-          + " where mt.taxon_name = t.taxon_name " 
+    private String getTaxonSubfamilyDistJsonQuery(String criteria) {
+        //A.log("getTaxonSubfamilyDistJsonQuery() query:" + query);
+      return "select t.subfamily, count(*) count, t2.chart_color "
+          + " from museum_taxon mt, taxon t, taxon t2, museum m "
+          + " where mt.taxon_name = t.taxon_name "
           + " and t.subfamily = t2.taxon_name "
           + " and m.code = mt.code "
-          + " and m." + criteria 
+          + " and m." + criteria
           + " and t.taxarank in ('species', 'subspecies') "
-          + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and t.family = 'formicidae' " 
-          + " group by t.subfamily"; 
-      //A.log("getTaxonSubfamilyDistJsonQuery() query:" + query);          
-      return query;
+          + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') "
+          + " and t.family = 'formicidae' "
+          + " group by t.subfamily";
     }
 
-    public String getSpecimenSubfamilyDistJsonQuery(String criteria) {
-      String query = "select subfamily, count(*) count " 
-          + " from museum_taxon mt, specimen s, museum m " 
-          + " where mt.taxon_name = s.taxon_name " 
-          + " and m.code = mt.code "
-          + " and m." + criteria 
-          + " and s.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and s.family = 'formicidae' " 
-          + " group by subfamily"; 
-      return query;
+    private String getSpecimenSubfamilyDistJsonQuery(String criteria) {
+        return "select subfamily, count(*) count "
+            + " from museum_taxon mt, specimen s, museum m "
+            + " where mt.taxon_name = s.taxon_name "
+            + " and m.code = mt.code "
+            + " and m." + criteria
+            + " and s.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') "
+            + " and s.family = 'formicidae' "
+            + " group by subfamily";
     }
 
 
