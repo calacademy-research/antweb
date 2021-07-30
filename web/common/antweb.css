@@ -221,15 +221,15 @@ a {
 }
 
 
-// From Josh Dec 2015
-/*
-Menus
-*/
-//.more {
-//    font-size: 9px;
-//    font-style: italic;
-//    color: #ccc !important;
-//}
+/*// From Josh Dec 2015*/
+/*!**/
+/*Menus*/
+/**!*/
+/*//.more {*/
+/*//    font-size: 9px;*/
+/*//    font-style: italic;*/
+/*//    color: #ccc !important;*/
+/*//}*/
 
 .more:hover {
     color: #666 !important;
@@ -283,15 +283,15 @@ Currently on live we show:
   padding-right:12px;
   background: url("../image/browse_options.png") no-repeat scroll center right transparent;
 }
-// From *Josh Dec 2015 background above commented out.
+/*// From *Josh Dec 2015 background above commented out.*/
 
 
-// From *Josh Dec 2015
-//.show_items > a:hover,
-//.has_items:hover, 
-//.country_list > li > a:hover {
-//    color: black !important;
-//}
+/*// From *Josh Dec 2015*/
+/*//.show_items > a:hover,*/
+/*//.has_items:hover, */
+/*//.country_list > li > a:hover {*/
+/*//    color: black !important;*/
+/*//}*/
 
 
 .region_list li ul li {
@@ -312,7 +312,7 @@ Currently on live we show:
     font-weight:normal;
     float:left;
     width:160px;
-    padding-bottom:20x;
+    padding-bottom: 20px;
 }
 
 #regions.subnav ul.region_list li.show_items.highlight ul.region_items li a {
@@ -344,7 +344,7 @@ Currently on live we show:
   background: url("../image/browse_options.png") no-repeat scroll center right transparent;
   
 }
-// From *Josh Dec 2015 above background commented out
+/*// From *Josh Dec 2015 above background commented out*/
 
 
 /* bioregion added by Mark Sep 2, 2015 */
@@ -836,7 +836,7 @@ Currently on live we show:
 
 
 #compare_tools_border {
-    font-weight:normal
+    font-weight:normal;
     margin-top:6px;
     border-left:1px solid #b9b9b9;
     background-color:#fff;    
@@ -993,8 +993,8 @@ input[type="checkbox"] {
     cursor:pointer;
 }
 
-#show_me a, {
-    color:fff !important;
+#show_me a. {
+    color:#fff !important;
 }
 
 #no_thanks {
