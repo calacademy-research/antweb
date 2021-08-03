@@ -1,0 +1,1 @@
+create index country_adm1_idx on specimen(country, adm1);
