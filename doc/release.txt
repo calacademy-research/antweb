@@ -1,3 +1,7 @@
+Release 8.64
+  Some optimizations to managers to improve upload and maintenance performance
+  Add separate detailed logging for uploads
+
 Release 8.63.3
   Performance work.
   All database columns converted to utf8.
