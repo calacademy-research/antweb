@@ -658,6 +658,11 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
 
         Adm1 valid_adm1 = adm1CountryMap.get(matching_adm1.getValidName(), country);
 
+        if (valid_adm1 == null) {
+            s_log.warn("getValidAdm1 " + adm1 + " with valid name: " + matching_adm1.getValidName() + " with country " + country + " not found in adm1CountryMap");
+            return null;
+        }
+
         if (valid_adm1.isValid()) {     // todo is this really necessary? are there any adm1's whose validName isn't valid?
             return valid_adm1;
         }
