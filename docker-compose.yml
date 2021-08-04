@@ -17,6 +17,17 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
 
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - antweb_caddy_data:/data
+      - caddy_config:/config
+
   httpd:
     build:
       context: .
@@ -24,8 +35,8 @@ services:
 
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "80"   # Caddy handles actual proxying to outside world. These ports just need to be accessible inside the docker network
+      - "443"
     environment:
       image_bucket_url: 'https://static.antweb.org'
 
@@ -77,4 +88,7 @@ services:
 volumes:
   antweb_genInc:
   antweb_database:
+    external: true
+  caddy_config:   # Don't need to prefix with antweb_ since it's an internal volume, docker-compose will do it automatically
+  antweb_caddy_data:
     external: true
