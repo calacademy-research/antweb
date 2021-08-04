@@ -6,6 +6,10 @@ services:
       args:
         ENV: STAGE
 
+  caddy:
+    volumes:
+      - ./docker/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+
   httpd:
     environment:
       ENV: 'STAGE'
