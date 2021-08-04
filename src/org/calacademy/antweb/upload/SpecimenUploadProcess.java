@@ -470,11 +470,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
         status = Status.MORPHOTAXON;
       } else {
           TaxonDb taxonDb = new TaxonDb(getConnection());
-          Taxon taxon = TaxonMgr.getTaxon(taxonName);
-          if (taxon == null) {
-			  taxon = taxonDb.getDummyTaxon(taxonName);
-		  }
-
+          DummyTaxon taxon = taxonDb.getDummyTaxon(taxonName);
           if (taxon != null) status = taxon.getStatus();
 
           if ((taxon == null) || (status == null) || (Status.UNRECOGNIZED.equals(status))) {
