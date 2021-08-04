@@ -165,6 +165,15 @@ This creates a temporary mysql container and loads the database dump into a dock
 \#### After sanitized database is available: create an admin antweb user
 
 
+#### Create caddy persistent data volume
+
+We use [Caddy](https://caddyserver.com/) to automatically manage tls certificates and https redirection.
+An external docker volume prevents it from being removed unintentionally. From the docs: 
+> Caddy stores TLS certificates, private keys, OCSP staples, and other necessary information to the data directory. It should not be purged without an understanding of the implications.
+
+```bash
+docker volume create antweb_caddy_data```
+
 Running
 ---
 

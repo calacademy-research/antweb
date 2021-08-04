@@ -25,7 +25,7 @@ services:
       - "443:443"
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
+      - antweb_caddy_data:/data
       - caddy_config:/config
 
   httpd:
@@ -89,6 +89,6 @@ volumes:
   antweb_genInc:
   antweb_database:
     external: true
-  caddy_config:
-  caddy_data:
+  caddy_config:   # Don't need to prefix with antweb_ since it's an internal volume, docker-compose will do it automatically
+  antweb_caddy_data:
     external: true
