@@ -11,8 +11,3 @@ services:
 
     extra_hosts:
       - "antcat-export:10.124.0.4"
-
-
-  httpd:
-    environment:
-      ENV: 'PROD'
