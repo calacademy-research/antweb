@@ -57,10 +57,6 @@ COPY --chown=tomcat docker/antweb/tomcat/webapps/host-manager/ webapps/host-mana
 
 
 WORKDIR /usr/local/tomcat/conf
-RUN keytool -genkeypair -alias tomcat -keyalg RSA -keystore keystore -storepass changeit \
-    -dname "CN=Mark, OU=Antweb.org, O=California Academy of Sciences, L=San Francisco, ST=CA, C=01"
-
-
 
 
 # Container must be built from base antweb dir, or have context set to base antweb dir
