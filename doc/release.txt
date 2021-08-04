@@ -1,3 +1,6 @@
+Release 8.64.2
+  Database and login enhancements
+
 Release 8.64.1
   Create index specimen(country, adm1).
 
