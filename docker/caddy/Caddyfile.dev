@@ -1,4 +1,66 @@
 localhost
-reverse_proxy httpd:80
+
+@static_images {
+    path_regexp image_file ^/images/(.+\..+)$
+}
+
+handle_path /v3.1/* {
+    reverse_proxy api:5000
+}
+
+reverse_proxy @static_images {
+    to {$IMAGE_BUCKET_DOMAIN}/{re.image_file.1}
+    header_down Cache-Control "max-age=31536000, public"
+}
+
+
+
+@image_root_dir {
+    path_regexp image_dir ^/images/?$
+}
+respond @image_root_dir "Access Denied" 403 {
+    close
+}
+
+
+@allowed_paths {
+    path /
+    path *.pdf
+    path *.xls
+    path *.xlsx
+    path *.html
+    path *.css
+    path *.ico
+    path *.jsp
+    path *.do
+    path *.jpg
+    path *.jpeg
+    path *.gif
+    path *.png
+    path *.js
+    path *.txt
+    path *.log
+    path *.js
+
+    # directories
+    # We proxy file requests to images/ to s3. If it's a folder, then we let tomcat handle it so it can show the directory listing
+    path /images/*
+
+    path /web/curator/*
+    path /web/log/*
+    path /specimen/*
+    path /web/bak/taxonSets/*
+}
+
+reverse_proxy @allowed_paths antweb:8080
+
+log {
+    output file /var/log/caddy/access.log
+    format console      # give one-liners, not json
+}
+
+# Any request that doesn't match one of the proxies gets a 404 response
+error "Not found" 404
+
 tls internal
 

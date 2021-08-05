@@ -28,3 +28,5 @@ services:
   caddy:
     volumes:
       - ./docker/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+    environment:
+      IMAGE_BUCKET_DOMAIN: "slevin.calacademy.org:9000/antweb"

@@ -28,6 +28,9 @@ services:
       - antweb_caddy_data:/data
       - caddy_config:/config
 
+    environment:
+      IMAGE_BUCKET_DOMAIN: 'static.antweb.org'
+
   httpd:
     build:
       context: .
