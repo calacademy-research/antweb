@@ -165,7 +165,35 @@ Or, if there are stmts and/or rsets...
       }
       return stmt;
     }
-    
+
+
+    /**
+     * Create a prepared statement to query the database
+     * @param connection
+     * @param name The name of the calling function, for logging and timing
+     * @param query The SQL query to prepare
+     * @return The generated PreparedStatement
+     */
+    public static @Nullable PreparedStatement getPreparedStatement(Connection connection, String name, String query) {
+        if (connection == null) {
+            s_log.error("getPreparedStatement() connection is null for name: " + name);
+            return null;
+        }
+        PreparedStatement stmt = null;
+        try {
+            DBUtil.open(name);
+            stmt = connection.prepareStatement(query);
+        } catch (Exception e) {
+            // Fail gracefully, without stacktrace, upon server shutdown
+            AntwebUtil.logShortStackTrace();
+            s_log.error("getPreparedStatement() name:" + name + " e:" + e);
+        }
+        if (stmt == null) {
+            s_log.error("getPreparedStatement() unable to getPreparedStatement:" + name + " from connection:" + connection);
+        }
+        return stmt;
+    }
+
     public static void open(String name) {
         java.util.Date startTime = new java.util.Date();       
         s_stmtTimeMap.put(name, startTime);          

@@ -1,3 +1,8 @@
-antweb.org
+antweb.org {
+    redir https://www.antweb.org{uri}
+}
 
-reverse_proxy httpd:80
+www.antweb.org {
+    reverse_proxy httpd:80
+}
+

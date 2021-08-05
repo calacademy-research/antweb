@@ -1,36 +1,32 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
-import java.sql.*;
-
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.search.ResultItem;
+import org.calacademy.antweb.upload.UploadUtil;
+import org.calacademy.antweb.util.*;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 
 public class TaxonDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(TaxonDb.class);
+    private static final Log s_log = LogFactory.getLog(TaxonDb.class);
         
     public TaxonDb(Connection connection) {
       super(connection);
     }
-    
+
     public static Taxon getTaxonFromShortTaxonName(Connection connection, String shortTaxonName) {
-      // If we don't know the subfamily, no worries.  We don't use this because it is slow for batches.
+        // If we don't know the subfamily, no worries.  We don't use this because it is slow for batches.
 
-      String taxonNameClause = " taxon_name like '%" + shortTaxonName + "'";
-      Taxon taxon = getInfoInstance(connection, "taxon", shortTaxonName, taxonNameClause);
-
-      return taxon;
+        String taxonNameClause = " taxon_name like '%" + shortTaxonName + "'";
+        return getInfoInstance(connection, "taxon", shortTaxonName, taxonNameClause);
     }
 
     public Taxon getTaxon(String taxonName) {
@@ -110,21 +106,21 @@ public class TaxonDb extends AntwebDb {
                 taxon.setInsertMethod(rset.getString("insert_method"));
                 taxon.setCreated(rset.getTimestamp("created"));
                 int fossil = rset.getInt("fossil");
-                taxon.setIsFossil((fossil == 1) ? true : false);
-                taxon.setIsType((rset.getInt("type") == 1) ? true : false);
-                taxon.setIsAntCat((rset.getInt("antcat") == 1) ? true : false);
-                taxon.setIsPending((rset.getInt("pending") == 1) ? true : false);
+                taxon.setIsFossil(fossil == 1);
+                taxon.setIsType(rset.getInt("type") == 1);
+                taxon.setIsAntCat(rset.getInt("antcat") == 1);
+                taxon.setIsPending(rset.getInt("pending") == 1);
                 taxon.setAntcatId(rset.getInt("antcat_id"));
                 taxon.setAuthorDate(rset.getString("author_date"));
                 taxon.setAuthorDateHtml(rset.getString("author_date_html"));
                 taxon.setAuthors(rset.getString("authors"));
                 taxon.setYear(rset.getString("year"));
                 taxon.setStatus(rset.getString("status"));
-                taxon.setIsAvailable((rset.getInt("available") == 1) ? true : false);
+                taxon.setIsAvailable(rset.getInt("available") == 1);
                 taxon.setCurrentValidName(rset.getString("current_valid_name"));
                 taxon.setCurrentValidRank(rset.getString("current_valid_rank"));
                 taxon.setCurrentValidParent(rset.getString("current_valid_parent"));
-                taxon.setIsOriginalCombination((rset.getInt("original_combination") == 1) ? true : false);
+                taxon.setIsOriginalCombination(rset.getInt("original_combination") == 1);
                 //taxon.setWasOriginalCombination((rset.getInt("was_original_combination") == 1) ? true : false);
                 taxon.setWasOriginalCombination(rset.getString("was_original_combination"));  
                 taxon.setChartColor(rset.getString("chart_color"));
@@ -226,7 +222,7 @@ public class TaxonDb extends AntwebDb {
                   }
                 }
                 if (query.contains("taxon.type")) {
-					taxon.setIsType((rset.getInt("taxon.type") == 1) ? true : false);            
+					taxon.setIsType(rset.getInt("taxon.type") == 1);
                 }
                 if (query.contains("taxon.status")) {
 					val = rset.getString("taxon.status");
@@ -281,21 +277,20 @@ public class TaxonDb extends AntwebDb {
 
     public HashMap<String, ArrayList<String>> getSubgenusHashMap() {
         HashMap<String, ArrayList<String>> subgenusHashMap = new HashMap<String, ArrayList<String>>();
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         String query = "select distinct genus, subgenus from taxon where subgenus is not null and status != 'morphotaxon'";
         try {
-            stmt = DBUtil.getStatement(getConnection(), "getShallowTaxa()");
-            rset = stmt.executeQuery(query);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getShallowTaxa()", query);
+            rset = stmt.executeQuery();
 
-            int count = 0;
             while (rset.next()) {
                 String genusName = rset.getString(1);
                 ArrayList<String> subgenusList = null;
                 if (subgenusHashMap.containsKey(genusName)) {
-                    subgenusList = (ArrayList<String>) subgenusHashMap.get(genusName);
+                    subgenusList = subgenusHashMap.get(genusName);
                 } else {
-                    subgenusList = new ArrayList<String>();
+                    subgenusList = new ArrayList<>();
                 }
                 String subgenusName = rset.getString(2);
                 subgenusList.add(subgenusName);
@@ -325,18 +320,17 @@ public class TaxonDb extends AntwebDb {
     }
 
     public ArrayList<Taxon> getShallowTaxa() {
-        ArrayList<Taxon> taxa = new ArrayList<Taxon>();
-        String taxonName = null;
+        ArrayList<Taxon> taxa = new ArrayList<>();
+        String taxonName;
 
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         String query = "select taxon_name from taxon";
         //A.log("getShallowTaxa() query:" + query);
         try {            
-            stmt = DBUtil.getStatement(getConnection(), "getShallowTaxa()");
-            rset = stmt.executeQuery(query);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getShallowTaxa()", query);
+            rset = stmt.executeQuery();
 
-            int count = 0;
             while (rset.next()) {
               taxonName = rset.getString("taxon_name");
               Taxon taxon = getInfoInstance(getConnection(), taxonName);
@@ -436,12 +430,12 @@ public class TaxonDb extends AntwebDb {
     }
     
     public int getWorldantsCount() {
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         String theQuery = "select count(*) count from taxon where source like '%worldants%'";
         try {            
-            stmt = DBUtil.getStatement(getConnection(), "getWorldantsCount()");
-            rset = stmt.executeQuery(theQuery);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getWorldantsCount()", theQuery);
+            rset = stmt.executeQuery();
 
             while (rset.next()) {
                 return rset.getInt("count");
@@ -755,17 +749,16 @@ public class TaxonDb extends AntwebDb {
       return getTaxonNames(text, false);
     }
     public List<String> getTaxonNames(String text, boolean asHtml) {
-        List<String> taxonNames = new ArrayList<String>();
+        List<String> taxonNames = new ArrayList<>();
         String taxonName = null;
 
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
-        String theQuery = "select taxon_name from taxon " 
-          + " where taxon_name like '%" + text + "%'"
-          + "   and status = 'valid'";
+        String theQuery = "select taxon_name from taxon where taxon_name like ? and status = 'valid'";
         try {            
-            stmt = DBUtil.getStatement(getConnection(), "getTaxonNames()");
-            rset = stmt.executeQuery(theQuery);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getTaxonNames()", theQuery);
+            stmt.setString(1, "%"+text+"%");
+            rset = stmt.executeQuery();
 
             int count = 0;
             while (rset.next()) {
@@ -791,12 +784,12 @@ public class TaxonDb extends AntwebDb {
 
       UtilDb utilDb = new UtilDb(getConnection());
 
-      Statement stmt = null;
+      PreparedStatement stmt = null;
       ResultSet rset = null;
       String query = "select taxon_name, author_date from taxon where author_date like '%>%'";
 	  try {            
-            stmt = DBUtil.getStatement(getConnection(), "fixHtmlAuthorDates()");
-            rset = stmt.executeQuery(query);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "fixHtmlAuthorDates()", query);
+            rset = stmt.executeQuery();
             int count = 0;
             while (rset.next()) {
                 ++count;

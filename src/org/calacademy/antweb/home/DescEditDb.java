@@ -2,24 +2,19 @@ package org.calacademy.antweb.home;
 
 import java.util.*;
 import java.util.Collection;
-import java.io.Serializable;
 import java.sql.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.Login.*;
 import org.calacademy.antweb.util.*;
 
 public class DescEditDb extends AntwebDb{
 
-    private static Log s_log = LogFactory.getLog(DescEditDb.class);
+    private static final Log s_log = LogFactory.getLog(DescEditDb.class);
     //private Connection connection = null;
     
     public DescEditDb(Connection connection) {
@@ -33,13 +28,13 @@ public class DescEditDb extends AntwebDb{
             
 // setDescription() was setDescription(false);
 // What was Taxon.setDescription(isManualEntry) is now 
-    public Hashtable getDescEdits(Taxon taxon, boolean isManualEntry) {
+    public Hashtable<String, String> getDescEdits(Taxon taxon, boolean isManualEntry) {
 		// We have removed project from description_edit table.  This method should work fine with this 
 		// property removed.  There will still be a collection of description records per taxon (title).
 		// We have aimed this method against description_edit instead of description.
 		// To do: Remove taxon_name from query and replace with id.  Include into this class.
 
-        Hashtable description = new Hashtable();
+        Hashtable<String, String> description = new Hashtable<>();
 
         String taxonName = null;
         Formatter formatter = new Formatter();
@@ -111,8 +106,8 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
         return description;
     }
 
-    public static String httpSecurify(String value) {
-      if (value == null) return value;
+    private static String httpSecurify(String value) {
+      if (value == null) return null;
       if (value.contains("http://")) {
           int initSize = value.length();
           int fixes = 0;
@@ -152,7 +147,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
     public ArrayList<DescEdit> getRecentDescEdits() throws SQLException {
         // Used in the Description Edit Report, linked off the home page.
         
-        ArrayList<DescEdit> descEdits = new ArrayList<DescEdit>();
+        ArrayList<DescEdit> descEdits = new ArrayList<>();
         
         Statement stmt = null;
         ResultSet rset = null;
@@ -219,10 +214,10 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
     }
     
     // Used for Project, Museum, etc...
-    public Hashtable getDescription(String objectName) {
+    public Hashtable<String, String> getDescription(String objectName) {
 
         Formatter formatter = new Formatter();
-        Hashtable description = new Hashtable();
+        Hashtable<String, String> description = new Hashtable<>();
         String theQuery = "";
         Statement stmt = null;
         ResultSet rset = null;
@@ -310,7 +305,6 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
         insert(insert);
 
         // s_log.warn("populateObjectEdit() project:" + projectName + " title:" + title + " value:" + value);      
-        return;
     }
 
     private void insertObjectEdit(Project project, String title, String value) {
@@ -331,7 +325,6 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
         insert(insert);
 
         // s_log.warn("populateObjectEdit() project:" + projectName + " title:" + title + " value:" + value);      
-        return;
     }
 
 
@@ -339,7 +332,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
     private static int insertions = 0;
 
     
-    public void insert(String insert) {
+    private void insert(String insert) {
       Statement stmt = null;
                
       try {
@@ -354,13 +347,13 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
       }   
     }
 
-    public void emptyObjectEdit() {
+    private void emptyObjectEdit() {
         
       String delete = null;
       ResultSet rset1 = null;
       Statement stmt1 = null;
       try {
-        stmt1 = DBUtil.getStatement(getConnection(), "emptyOjectEdit()");
+        stmt1 = DBUtil.getStatement(getConnection(), "emptyObjectEdit()");
 
         delete = "delete from object_edit "; 
         stmt1.executeUpdate(delete);
