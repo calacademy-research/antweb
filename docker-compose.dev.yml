@@ -21,10 +21,6 @@ services:
     command: ["--reload"]
 
 
-  httpd:
-    environment:
-      image_bucket_url: "https://slevin.calacademy.org:9000/antweb"
-
   caddy:
     volumes:
       - ./docker/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro

@@ -1,8 +1,9 @@
+
 antweb.org {
     redir https://www.antweb.org{uri}
 }
 
 www.antweb.org {
-    reverse_proxy httpd:80
+    import Caddyfile.common
 }
 

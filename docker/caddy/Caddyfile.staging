@@ -1,0 +1,4 @@
+staging.antweb.org {
+    import Caddyfile.common
+}
+
