@@ -1,0 +1,7 @@
+{
+    default_sni staging.antweb.org
+}
+
+staging.antweb.org {
+    import Caddyfile.common
+}

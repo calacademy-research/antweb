@@ -25,20 +25,12 @@ services:
       - "443:443"
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./docker/caddy/Caddyfile.common:/etc/caddy/Caddyfile.common:ro
       - antweb_caddy_data:/data
       - caddy_config:/config
 
-  httpd:
-    build:
-      context: .
-      dockerfile: docker/httpd/Dockerfile
-
-    restart: unless-stopped
-    ports:
-      - "80"   # Caddy handles actual proxying to outside world. These ports just need to be accessible inside the docker network
-      - "443"
     environment:
-      image_bucket_url: 'https://static.antweb.org'
+      IMAGE_BUCKET_DOMAIN: 'static.antweb.org'
 
   api:
     build:

@@ -1,4 +1,12 @@
+{
+    local_certs
+    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+
 localhost
-reverse_proxy httpd:80
+
+import Caddyfile.common
+
 tls internal
 

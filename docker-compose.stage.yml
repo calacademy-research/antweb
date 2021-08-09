@@ -8,4 +8,4 @@ services:
 
   caddy:
     volumes:
-      - ./docker/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      - ./docker/caddy/Caddyfile.staging:/etc/caddy/Caddyfile:ro

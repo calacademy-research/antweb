@@ -1,8 +1,11 @@
+{
+    default_sni www.antweb.org      # Sets a default TLS ServerName for when clients do not use SNI in their ClientHello
+}
+
 antweb.org {
     redir https://www.antweb.org{uri}
 }
 
 www.antweb.org {
-    reverse_proxy httpd:80
+    import Caddyfile.common
 }
-
