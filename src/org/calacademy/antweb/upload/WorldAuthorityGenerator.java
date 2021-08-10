@@ -198,9 +198,8 @@ public class WorldAuthorityGenerator {
         // add the synopsis info into the data
         HashMap<String, String> thisTaxon;
         String thisName;
-        Iterator<HashMap<String,String>> iter = data.iterator();
-        while (iter.hasNext()) {
-            thisTaxon = iter.next();
+        for (HashMap<String, String> datum : data) {
+            thisTaxon = datum;
             thisName = thisTaxon.get("subfamily") + ":" + thisTaxon.get("genus");
             //s_log.info("searching for " + thisName + " in the data ");
             if (synopsisInfo.containsKey(thisName)) {
@@ -859,11 +858,10 @@ public class WorldAuthorityGenerator {
         String key = null;
         String subfamily = null;
         String tribe = null;
-        Iterator<HashMap<String, String>> iter = subfamilies.iterator();
-        while (iter.hasNext()) {
+        for (HashMap<String, String> stringStringHashMap : subfamilies) {
             subfamily = "";
             tribe = "";
-            tempHash = iter.next();
+            tempHash = stringStringHashMap;
             key = tempHash.get("genus");
             subfamily = tempHash.get("subfamily");
             tribe = tempHash.get("tribe");
@@ -876,9 +874,8 @@ public class WorldAuthorityGenerator {
         
         Set<String> newSet = lookup.keySet();
         String tempKey;
-        Iterator<String> newIter = newSet.iterator();
-        while (newIter.hasNext()) {
-            tempKey = newIter.next();
+        for (String s : newSet) {
+            tempKey = s;
             //s_log.info(tempKey + " : " + lookup.get(tempKey).get(0) + " : " + lookup.get(tempKey).get(1));
         }
         return lookup;
@@ -1056,9 +1053,8 @@ public class WorldAuthorityGenerator {
     private String duplicatesToString(HashMap<String, ArrayList<String>> contents, String keyLabel, String valueLabel) {
         StringBuffer result = new StringBuffer();
         String key = "";
-        Iterator<String> iter = contents.keySet().iterator();
-        while (iter.hasNext()) {
-            key = iter.next();
+        for (String s : contents.keySet()) {
+            key = s;
             if ((key.length() > 0) && contents.get(key).size() > 1) {
                 result.append(keyLabel + " " + key + " has " + contents.get(key).size() + " instances of " + valueLabel + ":" + contents.get(key) + "<br>");
             }

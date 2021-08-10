@@ -40,33 +40,32 @@ public class FileUploader extends HttpServlet {
       } catch (FileUploadException e) {
         s_log.error("doGet() e:" + e);
       }
-      Iterator itr = items.iterator();
-      while (itr.hasNext()) {
-        FileItem item = (FileItem) itr.next();
-        if (item.isFormField()) {
-          // do nothing
-        } else {
-          try {
-            String itemName = item.getName();
+        for (Object o : items) {
+            FileItem item = (FileItem) o;
+            if (item.isFormField()) {
+                // do nothing
+            } else {
+                try {
+                    String itemName = item.getName();
 //            String docBase = request.getRealPath("/");
-            String docBase = AntwebProps.getDocRoot();
-            // could be: /Users/macpro/dev/apache-tomcat-7.0.21/webapps/antweb/
-            String toUploadDir = docBase + "web/toUpload/";
-            (new Utility()).makeDirTree(toUploadDir);
-s_log.warn("doPost() toUploadDir:" + toUploadDir);
-            File savedFile = new File(toUploadDir + itemName);
-            item.write(savedFile);
-            
-            response.setContentType("text/html");
-            Writer writer = response.getWriter();
-            
-            String output = "<tr><td><b>Your file has been saved at the loaction:</b></td></tr><tr><td><b>" + docBase + "uploadedFiles" + "\\" + itemName + "</td></tr>";
-            writer.write(output);
-          } catch (Exception e) {
-            s_log.error("doPost() e:" + e);
-          }
+                    String docBase = AntwebProps.getDocRoot();
+                    // could be: /Users/macpro/dev/apache-tomcat-7.0.21/webapps/antweb/
+                    String toUploadDir = docBase + "web/toUpload/";
+                    (new Utility()).makeDirTree(toUploadDir);
+                    s_log.warn("doPost() toUploadDir:" + toUploadDir);
+                    File savedFile = new File(toUploadDir + itemName);
+                    item.write(savedFile);
+
+                    response.setContentType("text/html");
+                    Writer writer = response.getWriter();
+
+                    String output = "<tr><td><b>Your file has been saved at the loaction:</b></td></tr><tr><td><b>" + docBase + "uploadedFiles" + "\\" + itemName + "</td></tr>";
+                    writer.write(output);
+                } catch (Exception e) {
+                    s_log.error("doPost() e:" + e);
+                }
+            }
         }
-      }
     }
   }
 }

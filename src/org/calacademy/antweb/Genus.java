@@ -38,9 +38,8 @@ public class Genus extends Subfamily implements Serializable {
             Taxon thisChild;
             List goodArrayList = Arrays.asList(goodList);
             ArrayList newChildren = new ArrayList();
-            Iterator iterator = children.iterator();
-            while (iterator.hasNext()) {
-                thisChild = (Taxon) iterator.next();
+            for (Taxon child : children) {
+                thisChild = child;
                 if (goodArrayList.contains(thisChild.getFullName())) {
                     newChildren.add(thisChild);
                 }

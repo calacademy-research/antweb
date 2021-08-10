@@ -42,11 +42,10 @@ public class GenericSearchResults implements Serializable {
         ArrayList<ResultItem> newList = new ArrayList<>();
         ResultItem thisItem = null;
         if (dataset != null) {
-            Iterator iterator = dataset.iterator();
-            while (iterator.hasNext()) {
-                thisItem = (ResultItem) iterator.next();
+            for (ResultItem resultItem : dataset) {
+                thisItem = resultItem;
                 if ("images".equals(property)) {
-                    if ((thisItem.isHasImages()) || ((thisItem.getSynonym() != null) &&  (thisItem.getSynonym().isHasImages()))) {
+                    if ((thisItem.isHasImages()) || ((thisItem.getSynonym() != null) && (thisItem.getSynonym().isHasImages()))) {
                         newList.add(thisItem);
                     }
                 } else if ("types".equals(property) && (thisItem.getType() != null) && (!thisItem.getType().equals(""))) {

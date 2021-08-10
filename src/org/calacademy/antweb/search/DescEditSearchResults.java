@@ -58,12 +58,10 @@ public final class DescEditSearchResults extends GenericSearchResults
         String species = null;
         SearchItem thisItem = null;
         int imageId = -1;
-        
-        Iterator rsetIter = rset.iterator();
-        
-        while (rsetIter.hasNext()) {
+
+        for (Object o : rset) {
             //System.out.println("adding to result item " + thisItem.getShotType());
-            thisItem = (SearchItem) rsetIter.next();
+            thisItem = (SearchItem) o;
             myResults.add(makeNewItem(thisItem.getCode(), thisItem.getName(), thisItem.getShotType(), thisItem.getShotNumber(), thisItem.getArtist(),
                     thisItem.getGroup(), thisItem.getGenus(), thisItem.getSpecies(), thisItem.getImageId(), thisItem.getUploadDate()));
         }

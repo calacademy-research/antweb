@@ -44,12 +44,11 @@ public final class RecentImageSearchResults extends GenericSearchResults
       }
       ArrayList<ResultItem> myResults = new ArrayList();
       ResultItem resultItem = null;
-      Iterator rsetIter = rset.iterator();
-      
-      //for (SearchItem searchItem : rset) {  
-      while (rsetIter.hasNext()) {
-        //System.out.println("adding to result item " + thisItem.getShotType());
-        resultItem = (ResultItem) rsetIter.next();
+
+        //for (SearchItem searchItem : rset) {
+        for (Object o : rset) {
+            //System.out.println("adding to result item " + thisItem.getShotType());
+            resultItem = (ResultItem) o;
         /*
         ResultItem resultItem = makeNewItem(
             resultItem.getCode(), resultItem.getName(), resultItem.getShotType()
@@ -61,9 +60,9 @@ public final class RecentImageSearchResults extends GenericSearchResults
           , resultItem.getImageId(), resultItem.getUploadDate()
         );
         */
-        //A.log("setResults() resultItem:" + resultItem.toDebugString() + " resultItem:" + resultItem.toDebugString());          
-        myResults.add(resultItem);
-      }
+            //A.log("setResults() resultItem:" + resultItem.toDebugString() + " resultItem:" + resultItem.toDebugString());
+            myResults.add(resultItem);
+        }
       this.results = myResults;
     }
 

@@ -161,14 +161,12 @@ public class TaxonPropDb extends AntwebDb {
           HashSet<String> bioregionSet = bioregionMaps.get(genus);
           String bioregionMapStr = "";
           int i = 0;
-          
-          Iterator<String> iterator = bioregionSet.iterator();
-          while (iterator.hasNext()) {
-            String bioregion = iterator.next();
-            ++i;
-            if (i > 1) bioregionMapStr += " ";
-            bioregionMapStr += bioregion + ":true";            
-          }
+
+            for (String bioregion : bioregionSet) {
+                ++i;
+                if (i > 1) bioregionMapStr += " ";
+                bioregionMapStr += bioregion + ":true";
+            }
           A.log("refreshBioregionMap() genus:" + genus + " bioregionMapStr:" + bioregionMapStr);
         
           // insert into taxon_props genus, bioregionMapStr

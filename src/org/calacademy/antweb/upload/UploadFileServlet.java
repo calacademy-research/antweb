@@ -51,9 +51,8 @@ public class UploadFileServlet extends HttpServlet {
 			String fieldName = "";
 			try {
 				List items = upload.parseRequest(request);
-				Iterator iterator = items.iterator();
-				while (iterator.hasNext()) {
-					item = (FileItem) iterator.next();
+				for (Object o : items) {
+					item = (FileItem) o;
 
 					if (fieldName.equals("description")) {
 						description = item.getString();

@@ -823,13 +823,11 @@ public abstract class AntwebUtil {
         Vector keysVector = AntwebUtil.getSortedKeyVector(hashMap);
         
         String sortedKeyList = "";
-        	
-        Iterator i = keysVector.iterator();
-        while (i.hasNext()) {
-          Object key = i.next();
-           sortedKeyList = sortedKeyList + key.toString() + ", ";
-          newVector.add(hashMap.get(key));
-        }          
+
+      for (Object key : keysVector) {
+        sortedKeyList = sortedKeyList + key.toString() + ", ";
+        newVector.add(hashMap.get(key));
+      }
         //s_log.warn("SortedKeyList: " + sortedKeyList);
         return newVector;  
     }

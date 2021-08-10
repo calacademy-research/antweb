@@ -141,10 +141,8 @@ public class GenericSearch implements Serializable {
                 resArray.add(rset.getString(1));
             }
 
-            Iterator newIter = currentList.iterator();
-
-            while (newIter.hasNext()) {
-                thisItem = (ResultItem) newIter.next();
+            for (ResultItem resultItem : currentList) {
+                thisItem = resultItem;
                 if (resArray.indexOf(thisItem.getName()) != -1) {
                     theList.add(thisItem);
                 }
@@ -257,13 +255,12 @@ public class GenericSearch implements Serializable {
             theQuery.append("select code, type_status from specimen where code in ");
             StringBuffer specString = new StringBuffer();
             Set specs = specimens.keySet();
-            Iterator codeIter = specs.iterator();
-            while (codeIter.hasNext()) {
+            for (Object spec : specs) {
                 if (specString.length() > 0) {
                     specString.append(",");
                 }
                 specString.append("'");
-                specString.append((String) codeIter.next());
+                specString.append((String) spec);
                 specString.append("'");
             }
             theQuery.append("(");
