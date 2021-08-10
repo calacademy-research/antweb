@@ -784,7 +784,7 @@ public class AntwebUpload {
 
 
 			fields.append("upload_id" + ")");
-			values.append(Integer.valueOf(AntwebMgr.getNextSpecimenUploadId()) + ")");
+			values.append(AntwebMgr.getNextSpecimenUploadId() + ")");
 			
 //            fields.setCharAt(fields.length() - 1, ')'); // here we remove final commas
 //            values.setCharAt(values.length() - 1, ')');
@@ -1205,7 +1205,7 @@ public class AntwebUpload {
 
     protected Float convertGeorefToDecimal(String latlon) {
         float decimal = 0;
-        Float result = Float.valueOf((float)0.0);
+        Float result = (float) 0.0;
         try {
             result = Float.valueOf(latlon);
             //s_log.info("convertGeorefToDecimal() result: " + result); 
@@ -1223,7 +1223,7 @@ public class AntwebUpload {
                     if ((direction.equals("s")) || (direction.equals("w"))) {
                         decimal = 0 - decimal;
                     }
-                    result = Float.valueOf(decimal);
+                    result = decimal;
                 }
             } catch (RESyntaxException e) {
                 s_log.error("convertGeorefToDecimal() e:" + e);

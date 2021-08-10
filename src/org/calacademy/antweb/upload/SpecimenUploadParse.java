@@ -90,8 +90,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             Formatter formatter = new Formatter();
             ArrayList<String> elements = null;
 
-            Float lat = Float.valueOf(0);
-            Float lon = Float.valueOf(0);
+            Float lat = (float) 0;
+            Float lon = (float) 0;
 
             Iterator loopIter = null;
             if (otherInfo.length() > 0) {
@@ -197,10 +197,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -180 && number <= 180) {
 								specimenItem.put("decimal_longitude", number);
-								lon = Float.valueOf(number.floatValue() * 1000);
+								lon = number.floatValue() * 1000;
 								if (lon.intValue() == 0) {
 									element = "";
-									specimenItem.put("decimal_longitude",  Float.valueOf((float)-999.9));
+									specimenItem.put("decimal_longitude", (float) -999.9);
 								}
                             } else {                              
 						      //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
@@ -216,11 +216,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -90 && number <= 90) {
 								specimenItem.put("decimal_latitude", number);
-								lat = Float.valueOf(number.floatValue() * 1000);
+								lat = number.floatValue() * 1000;
 								//A.log("parseLine() lat:" + lat + " number:" + number);
 								if (lat.intValue() == 0) {
 									element = "";
-									specimenItem.put("decimal_latitude", Float.valueOf((float)-999.9));
+									specimenItem.put("decimal_latitude", (float) -999.9);
 								}
                             } else {                              
 							  //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
@@ -609,13 +609,13 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 //if ("casent0187122".equals(code)) A.log("parseLine() 1");                  
             taxonItem.put("source", shortFileName);
             taxonItem.put("line_num", (Integer.valueOf(lineNum)).toString());
-            taxonItem.put("access_group", Integer.valueOf(accessGroup.getId()));
+            taxonItem.put("access_group", accessGroup.getId());
             
             //if (!taxonItem.containsKey("fossil")) taxonItem.put("fossil", 0);
 
             specimenItem.put("line_num", (Integer.valueOf(lineNum)).toString());
-            specimenItem.put("access_group", Integer.valueOf(accessGroup.getId()));
-            specimenItem.put("access_login", Integer.valueOf(accessLogin.getId()));
+            specimenItem.put("access_group", accessGroup.getId());
+            specimenItem.put("access_login", accessLogin.getId());
 
             // put a subfamily in front of the TOC
             if ((taxonItem.containsKey("toc")) && (!"".equals((String) taxonItem.get("toc")))) {

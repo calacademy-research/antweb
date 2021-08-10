@@ -213,7 +213,7 @@ public class ImageDb extends AntwebDb {
 				specimenImage.setCode(code);
 				specimenImage.setShot(shot);
 
-				specimenImage.setNumber(Integer.valueOf(number));
+				specimenImage.setNumber(number);
 
 				specimenImage.setDate(rset.getString("upload_date"));
 

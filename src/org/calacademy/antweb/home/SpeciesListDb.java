@@ -96,7 +96,7 @@ public class SpeciesListDb extends AntwebDb {
         int specimenCount = rset.getInt("specimen_count");
         Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
         if (taxon != null) {
-          taxon.setSpecimenCount(Integer.valueOf(specimenCount));
+          taxon.setSpecimenCount(specimenCount);
           speciesList.add(taxon); // These are dummyTaxons.
         } else {
           s_log.error("getSpeciesList() taxon is null for taxonName:" + taxonName); // + " query:" + query);

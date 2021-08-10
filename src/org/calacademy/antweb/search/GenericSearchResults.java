@@ -545,8 +545,8 @@ public class GenericSearchResults implements Serializable {
 						tempCombo = "genus:" + genus;
 						// this here deals with the special genus case
 						
-						updateHash(imageCheck, tempCombo, Boolean.valueOf(hasImages));
-						updateHash(typeCheck, tempCombo, Boolean.valueOf(hasTypes));
+						updateHash(imageCheck, tempCombo, hasImages);
+						updateHash(typeCheck, tempCombo, hasTypes);
 						
 						if ((!(tracker.contains(tempCombo)))
 							&& (fullName.length() > 2)) {
@@ -579,8 +579,8 @@ public class GenericSearchResults implements Serializable {
 
 					combo = thisRank + ":" + fullName;
 
-					updateHash(imageCheck, combo, Boolean.valueOf(hasImages));
-					updateHash(typeCheck, combo, Boolean.valueOf(hasTypes));
+					updateHash(imageCheck, combo, hasImages);
+					updateHash(typeCheck, combo, hasTypes);
 
 					if ((!(tracker.contains(combo)))
 						&& (fullName.length() > 2)) {

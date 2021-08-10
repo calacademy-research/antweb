@@ -201,7 +201,7 @@ public final class CompareResultsAction extends ResultsAction {
 				specimen = new Specimen(thisItem.getCode(), project, connection, true); // getImages! Needed?
 				//A.log("getSpecimenToCompare() specimen:" + specimen);
 
-				Integer chosenListGetCount = Integer.valueOf(0);
+				Integer chosenListGetCount = 0;
 				if (chosenList.size() > count) {
 				  chosenListGetCount = Integer.valueOf((String) chosenList.get(count));           
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);
@@ -265,7 +265,7 @@ public final class CompareResultsAction extends ResultsAction {
 				taxon.setImages(project);
 				taxon.setConnection(null);
 
-				Integer chosenListGetCount = Integer.valueOf(0);
+				Integer chosenListGetCount = 0;
 				if (chosenList.size() > count) {
 				  chosenListGetCount = Integer.valueOf((String) chosenList.get(count));
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);

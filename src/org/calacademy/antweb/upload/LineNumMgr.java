@@ -104,7 +104,7 @@ public class LineNumMgr {
     }
 
 	public static void setIsBadCarriageReturnLine(int lineNum) {
-	  badCarriageReturnLines.add(Integer.valueOf(lineNum));
+	  badCarriageReturnLines.add(lineNum);
 	}
 
 	public static boolean isGoodCarriageReturnLine(int lineNum) {

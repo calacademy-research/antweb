@@ -300,7 +300,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 			if (TaxonPropMgr.isIntroduced(useTaxonName, bioregion)) {
 				//A.log("processLine() useTaxonName:" + useTaxonName + " bioregion:" + bioregion);
 			  isIntroduced = true;
-			  specimenItem.put("is_introduced", Integer.valueOf(1));
+			  specimenItem.put("is_introduced", 1);
 			  getMessageMgr().flag("is_introduced");
 			}
 		}

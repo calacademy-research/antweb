@@ -34,7 +34,7 @@ public final class StatisticsAction extends Action {
         String isLinkStr = (String) request.getParameter("isLink");
         boolean isLink = true;
         if ("false".equals(isLinkStr)) isLink = false;
-        request.getSession().setAttribute("isLink", Boolean.valueOf(isLink));
+        request.getSession().setAttribute("isLink", isLink);
         String bodyStr = (String) request.getParameter("body");
         boolean body = ("true".equals(bodyStr));
 

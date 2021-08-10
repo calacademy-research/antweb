@@ -142,7 +142,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 
 		A.log("compareVals() fieldname:" + s_fieldName + " returnVal:" + returnVal + " a1:" + a1 + " a2:" + a2 + " count:" + s_count);
 
-		return Integer.valueOf(returnVal);
+		return returnVal;
 	}
 
 	public void sortBy(String fieldName) {

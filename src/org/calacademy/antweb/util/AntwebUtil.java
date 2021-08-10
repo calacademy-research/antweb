@@ -889,9 +889,9 @@ public abstract class AntwebUtil {
       Integer theCount = (Integer) countHash.get(key);  
       int theCountInt = theCount.intValue() + 1;
       //A.log("AntwebUtil.count() key:" + key + " count:" + theCountInt);
-      countHash.put(key, Integer.valueOf(theCountInt));
+      countHash.put(key, theCountInt);
     } else {
-      countHash.put(key, Integer.valueOf(1));
+      countHash.put(key, 1);
     }
   }
   public static int getCount(String key) {

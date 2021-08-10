@@ -59,7 +59,7 @@ public abstract class BadActorMgr {
         if (true || !"http://0:0:0:0:0:0:0:1".equals(ip)) {
           Integer count = (Integer) badActorMap.get(ip);
           if (count == null) {
-              badActorMap.put(ip, Integer.valueOf(1));
+              badActorMap.put(ip, 1);
           } else {
               badActorMap.put(ip, ++count);
           }

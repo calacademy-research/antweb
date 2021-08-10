@@ -291,9 +291,9 @@ public abstract class HttpUtil {
           && true
         // && can fetch a page, ping something, once, at startup, store it.
         ) {
-        s_isOnline = Boolean.valueOf(true);
+        s_isOnline = Boolean.TRUE;
       } else {
-        s_isOnline = Boolean.valueOf(false);
+        s_isOnline = Boolean.FALSE;
         s_log.warn("Warning... Running in Offline Mode.");
       }
       return s_isOnline.booleanValue();

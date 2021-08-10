@@ -45,10 +45,10 @@ public class MessageMgr {
     public void flag(String key) {
       //A.log("MessageMgr.flag() key:" + key);
       if (flags.get(key) == null) {
-        flags.put(key, Integer.valueOf(1));
+        flags.put(key, 1);
       } else {
         Integer v = flags.get(key);
-        flags.put(key, Integer.valueOf(v+1));
+        flags.put(key, v + 1);
       }
     }
 
