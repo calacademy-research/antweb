@@ -1,8 +1,5 @@
 package org.calacademy.antweb;
 
-import java.util.Hashtable;
-import java.sql.*;
-
 public interface SpeciesListable {
   // Implemented by Geolocale and Project
 

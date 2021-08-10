@@ -1,14 +1,9 @@
 package org.calacademy.antweb.util;
 
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.io.*;
-
 import javax.sql.DataSource;
 import java.sql.*;
 
-import javax.servlet.*;
 import javax.servlet.http.*;
 
 import org.apache.struts.action.*;

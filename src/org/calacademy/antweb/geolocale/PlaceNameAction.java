@@ -1,17 +1,12 @@
 package org.calacademy.antweb.geolocale;
 
-import java.io.IOException;
-import java.sql.*;
-import java.io.*; 
-import java.util.*;
+import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.*;
 
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.Formatter;
 

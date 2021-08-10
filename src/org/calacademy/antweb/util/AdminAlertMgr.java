@@ -1,11 +1,5 @@
 package org.calacademy.antweb.util;
 
-import java.io.IOException;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpServletResponse;
-import org.apache.struts.action.*;
 import java.util.*;
 
 import java.sql.*;
@@ -15,8 +9,6 @@ import org.calacademy.antweb.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.home.*;
-    
 public final class AdminAlertMgr {
 
     private static Log s_log = LogFactory.getLog(AdminAlertMgr.class);

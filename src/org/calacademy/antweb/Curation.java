@@ -1,16 +1,9 @@
 package org.calacademy.antweb;
 
-import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
-
-import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-        
-import org.calacademy.antweb.util.*;
 
 public class Curation extends GeolocaleTaxon {
 

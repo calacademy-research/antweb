@@ -1,20 +1,10 @@
 package org.calacademy.antweb.imageUploader;
 
 import java.util.*;
-import java.io.*;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-import java.io.*;
-import org.apache.commons.fileupload.*;
-import org.apache.commons.io.output.*;
-
-import org.im4java.core.*;
-import org.im4java.process.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class ImageUpload {

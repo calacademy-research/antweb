@@ -5,13 +5,11 @@ import java.util.Map;
 import java.sql.*;
 
 import javax.servlet.http.*;
-import javax.servlet.*;
 
 
 import javax.sql.DataSource;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

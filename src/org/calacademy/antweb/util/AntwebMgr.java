@@ -1,17 +1,7 @@
 package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
 import java.util.Date;
-
-import javax.sql.*;
-import javax.naming.*;
 
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
@@ -25,7 +15,6 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.Map;
 
 import java.sql.*;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

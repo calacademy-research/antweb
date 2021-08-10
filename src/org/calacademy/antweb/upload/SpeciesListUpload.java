@@ -1,37 +1,22 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Date;
 
-import javax.servlet.http.*;
-
-import org.apache.struts.action.*;
 import org.apache.regexp.*;
 
 import org.apache.struts.upload.FormFile;
 
 import java.sql.*;
 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.curate.speciesList.*;
-
-import org.apache.avalon.framework.logger.ConsoleLogger;
-import org.apache.avalon.framework.logger.Logger;
 
 /**
  * SpeciesListUpload is invoked by curate.do (UploadAction) to handle "project files".  For a given project -

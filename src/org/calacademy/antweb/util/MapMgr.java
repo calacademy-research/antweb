@@ -10,10 +10,6 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import org.apache.struts.action.*;
-
 public abstract class MapMgr {
 
     private static final Log s_log = LogFactory.getLog(MapMgr.class);

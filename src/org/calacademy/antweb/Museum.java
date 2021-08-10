@@ -4,13 +4,10 @@ import java.util.Date;
 import java.sql.*;
 import java.util.*;
 
-import java.text.DecimalFormat;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.geolocale.*;
 
 public class Museum extends LocalityOverview implements Countable {

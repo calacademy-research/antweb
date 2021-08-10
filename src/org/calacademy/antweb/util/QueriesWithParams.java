@@ -1,8 +1,5 @@
 package org.calacademy.antweb.util;
 
-import java.util.*;
-
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 

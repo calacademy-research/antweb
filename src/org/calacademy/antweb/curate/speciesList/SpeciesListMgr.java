@@ -1,7 +1,5 @@
 package org.calacademy.antweb.curate.speciesList;
 
-import java.util.*;
-
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 

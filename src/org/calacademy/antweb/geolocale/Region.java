@@ -1,11 +1,8 @@
 package org.calacademy.antweb.geolocale;
 
-import java.sql.*;
 import java.util.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;

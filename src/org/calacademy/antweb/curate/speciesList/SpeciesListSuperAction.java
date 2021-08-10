@@ -1,15 +1,8 @@
 package org.calacademy.antweb.curate.speciesList;
 
-import java.util.*;
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
-import java.sql.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.search.AdvancedSearchAction;
-import org.calacademy.antweb.util.*;
 
 public class SpeciesListSuperAction extends AdvancedSearchAction {
 

@@ -1,14 +1,7 @@
 package org.calacademy.antweb.util;
 
-import java.io.*;
-import java.net.*;
 import java.util.*;
-import java.text.*;
- 
-import javax.servlet.http.*;
-import javax.servlet.*;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 

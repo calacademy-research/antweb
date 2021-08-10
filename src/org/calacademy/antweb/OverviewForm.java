@@ -2,13 +2,11 @@ package org.calacademy.antweb;
 
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.util.*;
 
 public final class OverviewForm extends DescriptionForm {
 

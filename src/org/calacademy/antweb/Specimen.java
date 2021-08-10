@@ -13,8 +13,6 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-import org.apache.commons.httpclient.util.URIUtil;
-
 /** Class Species keeps track of the information about a specific taxon */
 public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  {
 

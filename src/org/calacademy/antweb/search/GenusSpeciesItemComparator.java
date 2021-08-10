@@ -2,7 +2,6 @@ package org.calacademy.antweb.search;
 
 import java.util.*;
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
 
 public class GenusSpeciesItemComparator extends ResultItemComparator {
  

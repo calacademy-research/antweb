@@ -1,8 +1,6 @@
 package org.calacademy.antweb.util;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.Date;
 import javax.servlet.http.*;
@@ -27,7 +25,6 @@ import org.calacademy.antweb.data.*;
 import org.calacademy.antweb.data.geonet.*;
 import org.calacademy.antweb.data.googleApis.*;
 import org.calacademy.antweb.curate.speciesList.*;
-import org.calacademy.antweb.search.AdvancedSearchAction;
 
 import com.google.gson.*;
 

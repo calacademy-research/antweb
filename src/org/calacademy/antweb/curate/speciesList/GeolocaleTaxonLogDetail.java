@@ -1,17 +1,10 @@
 package org.calacademy.antweb.curate.speciesList;
 
-import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
-
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-        
-import org.calacademy.antweb.util.*;
 
 public class GeolocaleTaxonLogDetail extends GeolocaleTaxon implements Comparable<GeolocaleTaxonLogDetail>  {
 

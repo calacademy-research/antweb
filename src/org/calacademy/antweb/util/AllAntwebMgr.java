@@ -4,7 +4,6 @@ import java.sql.*;
 import java.util.*;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
 
 import org.apache.commons.logging.Log; 

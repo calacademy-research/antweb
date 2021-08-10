@@ -2,7 +2,6 @@ package org.calacademy.antweb;
 
 import java.util.*;
 import java.io.*;
-import java.util.HashMap;
 
 import com.zonageek.jpeg.ExifBlock;
 import com.zonageek.jpeg.Jpeg;

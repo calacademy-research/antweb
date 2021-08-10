@@ -3,9 +3,7 @@ package org.calacademy.antweb.search;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
-import java.text.*;
 import java.io.*;
-import java.sql.*;
 import java.util.*;
 
 import org.apache.commons.logging.Log; 

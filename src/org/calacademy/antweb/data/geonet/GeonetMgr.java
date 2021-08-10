@@ -2,19 +2,15 @@ package org.calacademy.antweb.data.geonet;
 
 import java.sql.*;
 import java.util.*;
-import java.io.*;
 
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.data.*;
 import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;  
-  
-import com.google.gson.*;
-    
+import org.apache.commons.logging.LogFactory;
+
 public class GeonetMgr {
 
     private static Log s_log = LogFactory.getLog(GeonetMgr.class);

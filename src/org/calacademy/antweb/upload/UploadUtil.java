@@ -1,7 +1,6 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
-import java.util.Date;
 import java.util.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -9,10 +8,8 @@ import java.text.SimpleDateFormat;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.apache.struts.action.ActionForm;
 
 public class UploadUtil {
 

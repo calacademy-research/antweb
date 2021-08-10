@@ -3,9 +3,7 @@ package org.calacademy.antweb.util;
 import java.util.*;
 import java.util.Collection;
 
-import org.apache.struts.action.*;
 import javax.servlet.http.*;
-import org.calacademy.antweb.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

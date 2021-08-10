@@ -5,8 +5,6 @@ import java.io.Serializable;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
-
 
 /** Class ResultItem keeps track of the information about a search item */
 public final class ResultItem extends Item implements Serializable, Comparable<ResultItem> {

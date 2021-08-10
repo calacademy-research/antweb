@@ -1,10 +1,6 @@
 package org.calacademy.antweb.upload;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 
 import javax.servlet.ServletException;
@@ -15,9 +11,7 @@ import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.apache.regexp.*;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.search.ResultItem;

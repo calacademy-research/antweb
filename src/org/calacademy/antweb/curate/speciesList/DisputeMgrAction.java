@@ -1,16 +1,12 @@
 package org.calacademy.antweb.curate.speciesList;
 
-import java.util.*;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
-import java.io.*;
-import javax.servlet.ServletException;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 

@@ -13,7 +13,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.mchange.v2.c3p0.impl.*;
 
-import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.AntFormatter;
 import org.jetbrains.annotations.Nullable;
 

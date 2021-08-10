@@ -3,7 +3,6 @@ package org.calacademy.antweb.curate.geolocale;
 import java.util.*;
 import java.io.*;
 import java.sql.*;
-import javax.sql.DataSource;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;

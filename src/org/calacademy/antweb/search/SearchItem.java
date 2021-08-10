@@ -1,9 +1,6 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
-
 import java.io.Serializable;
-import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

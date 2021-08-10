@@ -1,18 +1,9 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.Formatter;
 
 public class CountryDb extends AntwebDb {
 

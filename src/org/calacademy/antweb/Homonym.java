@@ -3,14 +3,11 @@ package org.calacademy.antweb;
 import java.util.*;
 import java.io.Serializable;
 import java.sql.*;
-import java.math.BigDecimal;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-import java.sql.Connection;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
     
 public class Homonym extends Taxon implements Serializable {

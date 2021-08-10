@@ -10,9 +10,7 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.sort.*;
 
-import java.sql.Connection;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class Taxon implements Describable, Serializable, Comparable<Taxon> {

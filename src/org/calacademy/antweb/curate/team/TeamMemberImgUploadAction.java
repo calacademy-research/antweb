@@ -5,9 +5,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.upload.FormFile;
 
-import java.sql.Blob;
-
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 

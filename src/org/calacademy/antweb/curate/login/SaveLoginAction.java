@@ -1,9 +1,7 @@
 package org.calacademy.antweb.curate.login;
 
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 
 import javax.servlet.ServletException;

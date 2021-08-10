@@ -1,13 +1,11 @@
 package org.calacademy.antweb.search;
 
 import java.io.IOException;
-import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 

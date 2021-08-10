@@ -1,10 +1,6 @@
 package org.calacademy.antweb.curate.orphans;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-
-import java.sql.SQLException;
-import java.sql.Statement;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;

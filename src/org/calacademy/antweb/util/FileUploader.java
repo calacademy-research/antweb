@@ -2,12 +2,10 @@ package org.calacademy.antweb.util;
 
 import org.calacademy.antweb.*;
 import java.util.List;
-import java.util.Iterator;
+
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.*;
-
-import org.apache.commons.io.output.DeferredFileOutputStream;
 
 import javax.servlet.*;
 import javax.servlet.http.*;

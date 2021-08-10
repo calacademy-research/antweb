@@ -1,6 +1,5 @@
 package org.calacademy.antweb.geolocale;
 
-import java.sql.*;
 import java.util.*;
 
 import org.apache.commons.logging.Log; 

@@ -1,7 +1,5 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
-
 import java.io.*;
 
 /** The bean that handles the results information for a general search

@@ -1,13 +1,8 @@
 package org.calacademy.antweb.curate.project;
 
 import java.io.*;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
 
 import java.sql.*;
-import javax.sql.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;

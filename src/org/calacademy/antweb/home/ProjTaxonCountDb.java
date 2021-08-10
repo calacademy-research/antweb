@@ -3,18 +3,14 @@
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.upload.*;
 
-public class ProjTaxonCountDb extends CountDb {
+ public class ProjTaxonCountDb extends CountDb {
     
     private static Log s_log = LogFactory.getLog(ProjTaxonCountDb.class);
         

@@ -4,7 +4,6 @@ import java.sql.*;
 import java.util.ArrayList;
 
 import org.calacademy.antweb.search.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 

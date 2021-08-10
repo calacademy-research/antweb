@@ -9,7 +9,6 @@ import java.sql.*;
 
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.util.AntwebProps;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

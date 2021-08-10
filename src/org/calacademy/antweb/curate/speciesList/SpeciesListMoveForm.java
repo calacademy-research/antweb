@@ -2,7 +2,6 @@ package org.calacademy.antweb.curate.speciesList;
 
 import org.apache.struts.action.*;
 import javax.servlet.http.*;
-import org.apache.struts.upload.FormFile;
 
 public class SpeciesListMoveForm extends ActionForm {
 

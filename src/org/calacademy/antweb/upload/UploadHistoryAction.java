@@ -6,7 +6,6 @@ import org.apache.struts.action.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.*;
 
 // Used in View Archived Specimen List Files on curate-body.jsp
 /**

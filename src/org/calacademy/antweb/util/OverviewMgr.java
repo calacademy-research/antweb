@@ -1,14 +1,12 @@
 package org.calacademy.antweb.util;
 
 //import java.util.*;
-import java.sql.*;
 
 import org.apache.struts.action.*;
 import javax.servlet.http.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 

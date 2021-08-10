@@ -15,8 +15,6 @@ import org.apache.regexp.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
-
 public final class ChooseComparisonAction extends Action {
 
     private static Log s_log = LogFactory.getLog(ChooseComparisonAction.class);

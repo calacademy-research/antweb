@@ -1,9 +1,6 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
-
 import java.io.IOException;
-import java.sql.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;

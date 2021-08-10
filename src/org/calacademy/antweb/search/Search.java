@@ -1,6 +1,5 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import java.util.*;

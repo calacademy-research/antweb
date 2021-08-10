@@ -1,23 +1,17 @@
 package org.calacademy.antweb.curate.speciesList;
 
-import java.util.*;
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
 import java.sql.*;
 import java.io.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.search.AdvancedSearchAction;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.upload.*;
 
 import org.apache.struts.upload.FormFile;
 
-import java.sql.Connection;
-        
 public class SpeciesListUploader {
 
   private static Log s_log = LogFactory.getLog(SpeciesListUploader.class);

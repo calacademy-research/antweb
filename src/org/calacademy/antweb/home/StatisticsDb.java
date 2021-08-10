@@ -9,7 +9,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
 public class StatisticsDb extends AntwebDb {

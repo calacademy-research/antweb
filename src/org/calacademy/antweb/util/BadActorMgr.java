@@ -1,42 +1,11 @@
 package org.calacademy.antweb.util;
 	
-import java.io.*;
-import java.net.*;
 import java.util.*;
 
-import java.text.*;
-import java.io.IOException;
-
-import javax.net.ssl.HttpsURLConnection;
-
 import javax.servlet.http.*;
-import javax.servlet.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-
-
-import org.apache.struts.action.*;
-
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.transform.OutputKeys;
-import org.w3c.dom.Document;
-
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.AddressException;
-import org.calacademy.antweb.Utility;
-import org.calacademy.antweb.util.AntwebUtil;
-
-import javax.sql.DataSource;
-import java.sql.SQLException;
-
-import java.util.regex.*;
-
-import org.calacademy.antweb.AntFormatter;
-import org.apache.commons.httpclient.util.URIUtil;
 
 public abstract class BadActorMgr {
 

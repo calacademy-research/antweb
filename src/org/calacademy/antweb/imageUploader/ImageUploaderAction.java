@@ -1,9 +1,6 @@
 package org.calacademy.antweb.imageUploader;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.*;
 import org.apache.struts.action.*;
-import java.util.*;
 
 import java.sql.*;
 
@@ -14,7 +11,6 @@ import javax.servlet.http.*;
 import org.apache.commons.fileupload.*;
 import org.apache.commons.fileupload.disk.*;
 import org.apache.commons.fileupload.servlet.*;
-import org.apache.commons.io.output.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;

@@ -1,15 +1,8 @@
 package org.calacademy.antweb;
 
-import java.sql.*;
 import java.util.Date;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 
-import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

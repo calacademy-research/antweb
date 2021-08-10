@@ -3,17 +3,12 @@ package org.calacademy.antweb.util;
 import java.util.*;
 import java.sql.Connection;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import org.apache.struts.action.*;
 
 public abstract class TaxonPropMgr {
 

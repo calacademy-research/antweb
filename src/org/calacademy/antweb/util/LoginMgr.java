@@ -1,16 +1,10 @@
 package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
 
 

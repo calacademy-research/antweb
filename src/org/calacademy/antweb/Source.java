@@ -1,16 +1,7 @@
 package org.calacademy.antweb;
 
-import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory; 
-
-import org.calacademy.antweb.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class Source {
 

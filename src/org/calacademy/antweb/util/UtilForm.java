@@ -1,7 +1,6 @@
 package org.calacademy.antweb.util;
 
 import org.apache.struts.action.ActionForm;
-import org.apache.struts.upload.FormFile;
 
 public class UtilForm extends ActionForm {
   protected String action;

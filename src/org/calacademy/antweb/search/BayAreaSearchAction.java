@@ -12,8 +12,6 @@ import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-    
-import org.calacademy.antweb.util.AntwebProps;
 
 public final class BayAreaSearchAction extends Action {
 

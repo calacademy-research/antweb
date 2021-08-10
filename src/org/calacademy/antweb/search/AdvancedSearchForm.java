@@ -1,10 +1,7 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
-
 import javax.servlet.http.*;
 import org.apache.struts.action.ActionErrors;
-import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
 import org.calacademy.antweb.util.*;

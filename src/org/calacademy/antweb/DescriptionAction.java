@@ -8,7 +8,6 @@ import java.sql.*;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.upload.DescEditImageUploadAction;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

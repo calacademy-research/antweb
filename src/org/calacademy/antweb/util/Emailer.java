@@ -3,7 +3,6 @@ package org.calacademy.antweb.util;
 import java.util.*;
 import javax.mail.*;
 import javax.mail.internet.*;
-import javax.activation.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

@@ -2,7 +2,6 @@ package org.calacademy.antweb.search;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.Formatter;
 
 import java.util.*;
 import java.util.Date;
@@ -11,9 +10,7 @@ import java.util.regex.Pattern;
 import java.io.Serializable;
 import java.sql.*;
 
-import org.apache.regexp.RE;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**

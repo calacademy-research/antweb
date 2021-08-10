@@ -1,13 +1,11 @@
 package org.calacademy.antweb;
 
-import java.util.*;
 import java.io.Serializable;
 import java.sql.*;
  
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
 public class Tribe extends Genus implements Serializable {

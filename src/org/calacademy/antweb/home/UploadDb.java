@@ -1,11 +1,6 @@
 package org.calacademy.antweb.home;
 
 import java.util.*;
-import java.util.Date;
-
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
-import org.apache.regexp.*;
 
 import java.sql.*;
 
@@ -14,9 +9,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.AntwebUpload;
 
 
 public class UploadDb extends AntwebDb {

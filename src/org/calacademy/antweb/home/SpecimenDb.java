@@ -3,7 +3,6 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
 //import java.time.format.*;
 
 import org.apache.commons.logging.Log; 
@@ -12,7 +11,6 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.*;
 
 public class SpecimenDb extends AntwebDb {
     

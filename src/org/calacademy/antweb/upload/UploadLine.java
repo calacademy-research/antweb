@@ -2,9 +2,7 @@ package org.calacademy.antweb.upload;
 
 import java.util.*;
 
-import org.calacademy.antweb.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;    
     
 public class UploadLine {

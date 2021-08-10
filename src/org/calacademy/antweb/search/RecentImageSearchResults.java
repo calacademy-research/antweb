@@ -1,14 +1,8 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
-
 import java.io.*;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.ArrayList;
 
 import org.apache.commons.logging.Log; 

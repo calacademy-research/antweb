@@ -9,9 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.*;
 import java.sql.*;
 
-import com.mchange.v2.c3p0.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.home.*;

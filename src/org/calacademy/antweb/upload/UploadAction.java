@@ -1,12 +1,8 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.struts.action.*;
 import org.apache.regexp.*;
@@ -14,33 +10,16 @@ import org.apache.regexp.*;
 import org.apache.struts.upload.FormFile;
 
 import javax.servlet.http.*;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException; 
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import org.apache.avalon.framework.logger.ConsoleLogger;
-import org.apache.avalon.framework.logger.Logger;
-
-import com.zonageek.jpeg.Jpeg;
 
 import java.sql.*;
 import javax.sql.DataSource;
 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.data.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.curate.speciesList.*;
 

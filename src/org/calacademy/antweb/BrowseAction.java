@@ -1,7 +1,6 @@
 package org.calacademy.antweb;
 
-import java.io.*; 
-import java.util.*;
+import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
@@ -10,8 +9,6 @@ import java.sql.*;
 import javax.sql.DataSource;
 
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.upload.DescEditImageUploadAction;
 import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 

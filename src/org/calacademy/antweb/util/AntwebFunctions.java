@@ -1,15 +1,9 @@
 package org.calacademy.antweb.util;
 
 import java.io.*;
-import java.net.*;
 import java.util.*;
 
-import javax.servlet.http.*;
-import javax.servlet.*;
-
 import java.sql.*;
-import javax.sql.*;
-import com.mchange.v2.c3p0.*;
 
 import org.calacademy.antweb.*;
 

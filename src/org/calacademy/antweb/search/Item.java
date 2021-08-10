@@ -1,7 +1,5 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.util.*;
-
 class Item {
 	String name;
 	String status;

@@ -3,12 +3,9 @@ package org.calacademy.antweb.curate.team;
 import org.apache.struts.action.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.struts.upload.FormFile;
 import javax.servlet.ServletOutputStream;
-import java.sql.Blob;
 import java.io.InputStream;
 
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.*;
 
 import org.apache.commons.logging.Log;

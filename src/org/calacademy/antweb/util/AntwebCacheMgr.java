@@ -6,11 +6,8 @@ import java.util.*;
 import java.text.*;
 
 import javax.servlet.http.*;
-import javax.servlet.*;
 
 import java.sql.*;
-import javax.sql.*;
-import com.mchange.v2.c3p0.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;

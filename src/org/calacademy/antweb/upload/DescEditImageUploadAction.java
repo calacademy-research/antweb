@@ -4,10 +4,8 @@ import org.apache.struts.action.*;
 
 import java.io.*;
 import java.sql.*;
-import javax.sql.DataSource;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
 import javax.servlet.http.*;
