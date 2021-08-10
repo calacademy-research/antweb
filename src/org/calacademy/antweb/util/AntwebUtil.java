@@ -848,8 +848,8 @@ public abstract class AntwebUtil {
     public static boolean validEmail(String email) {
         if (email.equals(""))
             return false;
-        if (email.indexOf("@") == -1 ||
-            email.indexOf(".") == -1 ||
+        if (!email.contains("@") ||
+                !email.contains(".") ||
             email.length() < 6) {
             return false;
         }

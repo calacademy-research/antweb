@@ -1014,21 +1014,21 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                   //s_log.warn("getElevationFromString() has m elevation:" + element + " elemStr:" + elemStr);            
                 }
             }
-            if (elemStr.indexOf("ca ") >= 0) {
+            if (elemStr.contains("ca ")) {
                 elemStr = elemStr.substring(elemStr.indexOf("ca ") + 3);      
                 //s_log.warn("getElevationFromString() has ca elevation:" + element + " elemStr:" + elemStr);
             }
-            if (elemStr.indexOf("<") >= 0) {
+            if (elemStr.contains("<")) {
                 ++greaterThanElevation;
                 elemStr = elemStr.substring(elemStr.indexOf("<") + 1);
                 //s_log.warn("getElevationFromString() GreaterThan elevation:" + element + " elevation:" + elemStr);
             }
-            if (elemStr.indexOf(">") >= 0) {
+            if (elemStr.contains(">")) {
                 ++greaterThanElevation;
                 elemStr = elemStr.substring(elemStr.indexOf(">") + 1);
                 //s_log.warn("getElevationFromString() GreaterThan elevation:" + element + " elevation:" + elemStr);
             }
-            if (elemStr.indexOf("~") >= 0) {
+            if (elemStr.contains("~")) {
                 ++greaterThanElevation;
                 elemStr = elemStr.substring(elemStr.indexOf("~") + 1);
                 //s_log.warn("getElevationFromString() GreaterThan elevation:" + element + " elevation:" + elemStr);
@@ -1053,7 +1053,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 elemStr = (Integer.valueOf(averageElevInt)).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);
             }
-            if (elemStr.indexOf("+") >= 0) {
+            if (elemStr.contains("+")) {
                 ++greaterThanElevation;
                 elemStr = elemStr.substring(0, elemStr.indexOf("+"));
                 //s_log.warn("getElevationFromString() GreaterThan elevation:" + element + " elevation:" + elemStr);

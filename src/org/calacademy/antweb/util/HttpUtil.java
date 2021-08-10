@@ -523,9 +523,9 @@ public abstract class HttpUtil {
     public static boolean isPost(HttpServletRequest request) {
         if (request.getContentType() != null) {
           String contentType = request.getContentType().toLowerCase();
-          if ( (contentType.indexOf("multipart/form-data") > -1 ) 
-            || (contentType.indexOf("application/x-www-form-urlencoded") > -1 ) 
-            || (contentType.indexOf("text/plain") > -1 ) 
+          if ( (contentType.contains("multipart/form-data"))
+            || (contentType.contains("application/x-www-form-urlencoded"))
+            || (contentType.contains("text/plain"))
             )
           {
             //A.log("isPost:" + request.getContentType());        

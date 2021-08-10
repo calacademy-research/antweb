@@ -69,7 +69,7 @@ public final class PreviewHomePageAction extends Action {
             int end;
             while ((str = in.readLine()) != null) {
                 //do the substitutions one at a time
-                if ((str.indexOf("[%") != -1) && (str.indexOf("%]") != -1)) {
+                if ((str.contains("[%")) && (str.contains("%]"))) {
                     while (str.length() > 0) {
                         start = str.indexOf("[%");
                         end = str.indexOf("%]");

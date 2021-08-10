@@ -434,7 +434,7 @@ public class Utility implements Serializable {
             String fileName = "";
             for (String s : dirListing) {
                 s_log.info("copyAndUnzipFile() dir listing shows: *" + s + "*");
-                if (!(s.equals(".")) && !(s.equals("..")) && !(s.indexOf("__") != -1)) {
+                if (!(s.equals(".")) && !(s.equals("..")) && !(s.contains("__"))) {
                     fileName = s;
                 }
             }

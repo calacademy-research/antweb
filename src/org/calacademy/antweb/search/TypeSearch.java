@@ -40,7 +40,7 @@ public class TypeSearch implements Serializable {
         String theQuery;
         String genus = null;
         String species = null;
-        if (name.indexOf(" ") != -1) {
+        if (name.contains(" ")) {
           StringTokenizer toke = new StringTokenizer(name," ");
           genus = toke.nextToken();
           species = toke.nextToken();
@@ -116,7 +116,7 @@ public class TypeSearch implements Serializable {
         String theQuery;
         String genus = null;
         String species = null;
-        if (name.indexOf(" ") != -1) {
+        if (name.contains(" ")) {
           StringTokenizer toke = new StringTokenizer(name," ");
           genus = toke.nextToken();
           species = toke.nextToken();

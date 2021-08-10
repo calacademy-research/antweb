@@ -74,7 +74,7 @@ public final class ImageUploaderAction extends Action {
 
             String contentType = request.getContentType(); // Verify the content type
             //A.log("execute() contentType:" + contentType);        
-            if (contentType != null && contentType.indexOf("multipart/form-data") >= 0) {
+            if (contentType != null && contentType.contains("multipart/form-data")) {
 
                 String artist = null;
                 String license = "Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)";

@@ -200,8 +200,8 @@ public class BrowseAction extends DescriptionAction {
         String theParameter = mapping.getParameter(); 
           //s_log.warn("execute() theParameter:" + theParameter);
         if (theParameter != null) {
-          if (theParameter.indexOf("getChildImages") != -1) getChildImages = true;
-          if (theParameter.indexOf("getChildMaps") != -1) getChildMaps = true;
+          if (theParameter.contains("getChildImages")) getChildImages = true;
+          if (theParameter.contains("getChildMaps")) getChildMaps = true;
         }
 		//if (AntwebProps.isDevMode() || logTimes) { 
 		if ("browse".equals(cacheType)) {
