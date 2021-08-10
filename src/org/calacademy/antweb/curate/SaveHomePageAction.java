@@ -51,11 +51,11 @@ public final class SaveHomePageAction extends Action {
                 String fieldName;
                 String fieldValue;
                 Formatter format = new Formatter();
-                for (int loop = 0; loop < fields.length; loop++) {
-                    fieldName = fields[loop].getName();
-                    fieldValue = fields[loop].toString();
-                    update = "update homepage set content='" + AntFormatter.escapeQuotes((String) fields[loop].get(theForm)) + "' where content_type='" + fieldName + "'";
-                   //s_log.info("execute update:" + update);
+                for (Field field : fields) {
+                    fieldName = field.getName();
+                    fieldValue = field.toString();
+                    update = "update homepage set content='" + AntFormatter.escapeQuotes((String) field.get(theForm)) + "' where content_type='" + fieldName + "'";
+                    //s_log.info("execute update:" + update);
                     stmt.executeUpdate(update);
                 }
             } catch (IllegalAccessException e) {

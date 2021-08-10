@@ -105,11 +105,11 @@ public class TaxonMgr extends Manager {
 
       for (String taxonName : prettyTaxaNamesList) {
         boolean containsAll = true;
-        for (int j=0 ; j < texts.length ; ++j) {
-          //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
-          if (!taxonName.toLowerCase().contains(texts[j])) containsAll = false;
-          if (!containsAll) break;
-        }
+          for (String s : texts) {
+              //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
+              if (!taxonName.toLowerCase().contains(s)) containsAll = false;
+              if (!containsAll) break;
+          }
         if (containsAll) {
           prettyTaxaNamesSubset.add(taxonName);
           ++i;

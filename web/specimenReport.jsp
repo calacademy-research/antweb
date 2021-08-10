@@ -143,12 +143,12 @@ A.log("specimenReport.jsp sortedBy:" + sortedBy);
     Cookie the_cookies [] = request.getCookies ();
     Cookie reallyCookie = null;
        if (the_cookies != null) {
-           for (int i = 0; i < the_cookies.length; i++) {
-           if (the_cookies [i].getName().equals (the_cookie)) {
-               reallyCookie = the_cookies[i];
-               break;
+           for (Cookie theCookie : the_cookies) {
+               if (theCookie.getName().equals(the_cookie)) {
+                   reallyCookie = theCookie;
+                   break;
+               }
            }
-       }
     }
     if (reallyCookie == null) {
        use_thumb = "h";   

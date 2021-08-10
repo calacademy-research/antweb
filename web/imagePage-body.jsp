@@ -39,9 +39,9 @@
     Cookie cookies [] = request.getCookies ();
     Cookie myCookie = null;
     if (cookies != null) {
-        for (int i = 0; i < cookies.length; i++) {
-            if (cookies [i].getName().equals (cookieName)) {
-                myCookie = cookies[i];
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals(cookieName)) {
+                myCookie = cookie;
                 break;
             }
         }

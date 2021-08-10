@@ -1239,9 +1239,9 @@ public class WorldAuthorityGenerator {
         File f1 = new File (directory) ;
     
         File[] strFilesDirs = f1.listFiles();
-        for (int loop=0; loop < strFilesDirs.length; loop++) {
-            if (strFilesDirs[loop].getName().endsWith(".html")) {
-                results.add(authorityFilesDir + "/" + strFilesDirs[loop].getName());
+        for (File strFilesDir : strFilesDirs) {
+            if (strFilesDir.getName().endsWith(".html")) {
+                results.add(authorityFilesDir + "/" + strFilesDir.getName());
             }
         }
         return results;

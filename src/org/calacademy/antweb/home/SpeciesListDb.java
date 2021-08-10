@@ -434,32 +434,30 @@ public class SpeciesListDb extends AntwebDb {
 
         // if the chosen taxon is not in the oldChosen List, insert it.
 
-		for (int i = 0; i < chosen.length; i++) {
+        for (String taxonName : chosen) {
 
-		  String taxonName = chosen[i];
+            String genus = Taxon.getGenusTaxonNameFromName(taxonName);
+            String subfamily = Taxon.getSubfamilyFromName(taxonName);
 
-		  String genus = Taxon.getGenusTaxonNameFromName(taxonName);
-		  String subfamily = Taxon.getSubfamilyFromName(taxonName);
+            //A.log("saveTaxonSet() insert taxonName:" + taxonName + " taxonSetDb.class:" + taxonSetDb.getClass());
 
-		  //A.log("saveTaxonSet() insert taxonName:" + taxonName + " taxonSetDb.class:" + taxonSetDb.getClass());
-						  
-		  Overview overview = OverviewMgr.getOverview(speciesListName);				  
-						  
-		  taxonSetDb.insert(overview, taxonName, "speciesListTool");
-		  taxonSetLogDb.removeDispute(speciesListName, taxonName);
+            Overview overview = OverviewMgr.getOverview(speciesListName);
 
-          //A.log("saveTaxonSet() taxonName:" + taxonName + " contains:" + oldChosenList.contains(taxonName));
-          if (!oldChosenList.contains(taxonName)) {
-            A.log("saveTaxonSet() added:" + taxonName);
+            taxonSetDb.insert(overview, taxonName, "speciesListTool");
+            taxonSetLogDb.removeDispute(speciesListName, taxonName);
 
-            String prettySpeciesListName = SpeciesListMgr.getPrettyName(speciesListName);
+            //A.log("saveTaxonSet() taxonName:" + taxonName + " contains:" + oldChosenList.contains(taxonName));
+            if (!oldChosenList.contains(taxonName)) {
+                A.log("saveTaxonSet() added:" + taxonName);
 
-			LogMgr.appendLog("speciesListTool.txt", "saveProjectTaxa - " + DateUtil.getFormatDateTimeStr() + " curatorId:" + login.getId() 
-			 + " added taxonName:" + taxonName + " from speciesListName:" + prettySpeciesListName);
+                String prettySpeciesListName = SpeciesListMgr.getPrettyName(speciesListName);
 
-		    message += "<br>Taxon Project Mapping <font color=green>added</font>:<b>" + Taxon.getPrettyTaxonName(taxonName) + "</b> to " + prettySpeciesListName;
-          }
-		}
+                LogMgr.appendLog("speciesListTool.txt", "saveProjectTaxa - " + DateUtil.getFormatDateTimeStr() + " curatorId:" + login.getId()
+                        + " added taxonName:" + taxonName + " from speciesListName:" + prettySpeciesListName);
+
+                message += "<br>Taxon Project Mapping <font color=green>added</font>:<b>" + Taxon.getPrettyTaxonName(taxonName) + "</b> to " + prettySpeciesListName;
+            }
+        }
 
 		// if an oldChosen taxon is not in the chosenList, remove it.
 		int i = 0;

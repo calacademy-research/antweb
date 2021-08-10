@@ -33,8 +33,8 @@ public final class ChooseComparisonAction extends Action {
         if (chosen != null) {
 
             ArrayList theImages = new ArrayList();
-            for (int loop = 0; loop < chosen.length; loop++) {
-                theImages.add(createSpecimenImage(chosen[loop]));
+            for (String s : chosen) {
+                theImages.add(createSpecimenImage(s));
             }
 
             if ("request".equals(mapping.getScope())) {

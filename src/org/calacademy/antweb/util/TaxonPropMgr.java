@@ -69,14 +69,14 @@ public abstract class TaxonPropMgr {
      
         String[] mapArray = taxonPropMap.split(" ");
 
-        for (int c = 0;  c < mapArray.length  ; ++c ) {
-          String[] pair = mapArray[c].split(":");
-          try {
-            if (pair[0].equals(bioregion)) return "true".equals(pair[1]);
-          } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-            s_log.warn("isBioregionMapped() bioregionMap:" + taxonPropMap + " bioregion:" + bioregion + " e:" + e);
+          for (String s : mapArray) {
+              String[] pair = s.split(":");
+              try {
+                  if (pair[0].equals(bioregion)) return "true".equals(pair[1]);
+              } catch (ArrayIndexOutOfBoundsException e) {
+                  s_log.warn("isBioregionMapped() bioregionMap:" + taxonPropMap + " bioregion:" + bioregion + " e:" + e);
+              }
           }
-        }
       }
       return false; 
     }  

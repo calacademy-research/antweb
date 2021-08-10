@@ -307,10 +307,10 @@ public class Utility implements Serializable {
     public static String stripParams(String browserParams, String term) {
         String[] parts = browserParams.split("&");
         StringBuffer newParams = new StringBuffer();
-        for (int loop=0; loop < parts.length; loop++) {
-            if (!parts[loop].startsWith(term)) {
+        for (String part : parts) {
+            if (!part.startsWith(term)) {
                 newParams.append("&");
-                newParams.append(parts[loop]);
+                newParams.append(part);
             }
         }
         if (newParams.length() != 0) {
@@ -432,10 +432,10 @@ public class Utility implements Serializable {
             String dirListing[] = dir.list();
             s_log.info("copyAndUnzipFile() dir listing has length: " + dirListing.length);
             String fileName = "";
-            for (int loop = 0; loop < dirListing.length; loop++) {
-                s_log.info("copyAndUnzipFile() dir listing shows: *" + dirListing[loop] + "*");
-                if(!(dirListing[loop].equals(".")) && !(dirListing[loop].equals("..")) && !(dirListing[loop].indexOf("__")!=-1)) {
-                    fileName = dirListing[loop];
+            for (String s : dirListing) {
+                s_log.info("copyAndUnzipFile() dir listing shows: *" + s + "*");
+                if (!(s.equals(".")) && !(s.equals("..")) && !(s.indexOf("__") != -1)) {
+                    fileName = s;
                 }
             }
             try {
@@ -532,11 +532,11 @@ public class Utility implements Serializable {
         
         if ((dir.exists() && (dir.getName().length() > 1))) {
             File[] files = dir.listFiles();
-            for (int i=0; i < files.length; i++) {
-                if(files[i].isDirectory()) {
-                    deleteDirectory(files[i]);
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
                 } else {
-                    files[i].delete();
+                    file.delete();
                 }
             }
         }

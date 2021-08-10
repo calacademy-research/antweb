@@ -165,8 +165,7 @@ public abstract class AntwebUtil {
     if (aFile.isDirectory()) {
       File[] listOfFiles = aFile.listFiles();
       if(listOfFiles!=null) {
-        for (int i = 0; i < listOfFiles.length; i++)
-          dirFiles.add((listOfFiles[i]).getName());
+        for (File listOfFile : listOfFiles) dirFiles.add(listOfFile.getName());
       }
     }
     return dirFiles;
