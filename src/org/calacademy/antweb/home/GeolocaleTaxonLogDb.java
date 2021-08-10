@@ -384,7 +384,6 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
               + " and gtld.geolocale_id = " + geolocaleId
               + " and gtld.taxon_name = '" + taxonName + "'"
               + " order by created asc"; // get the first instance
-              ;
 
             //A.log("getCuration() query:" + query);
             rset = stmt.executeQuery(query);

@@ -658,7 +658,7 @@ public class UtilDataAction extends Action {
         // Very fast. Run occasionally to get adm1s in line with hierarchy. Should be rare. Unnecessary.
         if (action.equals("updateAdm1FromCountryData")) {   
           (new GeolocaleDb(connection)).updateAdm1FromCountryData();
-          message = "Update Adm1 From Country Data";;
+          message = "Update Adm1 From Country Data";
         }
 
         // Full set is 8.27 mins.  After transactions - 9.17 mins!

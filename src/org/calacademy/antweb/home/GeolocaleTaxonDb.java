@@ -1238,8 +1238,8 @@ select group_concat( distinct source) from geolocale_taxon order by source;
       Statement stmt = null;
 	  String taxonName = null;
 	  String currentValidName = null;
-	  int geolocaleId = 0;;
-	  String tableName = null;
+	  int geolocaleId = 0;
+        String tableName = null;
 	  String whereClause = null;      
 	  int c = 0;   
   
@@ -1513,7 +1513,6 @@ select group_concat( distinct source) from geolocale_taxon order by source;
                 + "where taxon_name = '" + genusName + "'"
                 + " and geolocale_id = " + geolocale.getId()
                 + " and species_count != " + taxonSetCount;
-                ;
         //A.log("testGeolocaleTaxon() query:" + query);
         try {
             stmt = DBUtil.getStatement(getConnection(), "geolocalesTaxonTest()");

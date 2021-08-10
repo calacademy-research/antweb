@@ -13,9 +13,9 @@ public final class AntWikiData {
 
     private String shortTaxonName = null;
     private String subfamily = null;
-	private String genus = null;;
-	private String species = null;;
-	private String subspecies = null;
+	private String genus = null;
+    private String species = null;
+    private String subspecies = null;
     private String country = null;
       
     public AntWikiData(String theLine) {

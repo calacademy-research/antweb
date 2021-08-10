@@ -130,7 +130,6 @@ See BioregionDb.java:77 where this call is commented out.
           + " and t.taxarank in ('species', 'subspecies')"
           + " and t.fossil = 0"
           + " order by source desc";
-          ;
 
           stmt = DBUtil.getStatement(getConnection(), "populateSpeciesFromGeolocaleTaxon()"); 
           rset = stmt.executeQuery(query);

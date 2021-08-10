@@ -3,23 +3,23 @@ package org.calacademy.antweb;
 public interface SpeciesListable {
   // Implemented by Geolocale and Project
 
-    public static String COUNTRY = "country";
-    public static String ADM1 = "adm1";
-    public static String PROJECT = "project";
+    String COUNTRY = "country";
+    String ADM1 = "adm1";
+    String PROJECT = "project";
 
-    public String getType();
-    public void setType(String type);
+    String getType();
+    void setType(String type);
 
-    public String getKey();
+    String getKey();
 
-    public String getName();
+    String getName();
     
-    public String getTitle();
+    String getTitle();
     
-    public boolean getIsUseChildren();
+    boolean getIsUseChildren();
 
-    public String getOverviewLink();
+    String getOverviewLink();
 
-    public String getListLink();
+    String getListLink();
  
 }

@@ -52,8 +52,8 @@ public class SpeciesListDownloadAction extends Action {
             taxa = taxonSetDb.getTaxa(overview.getName());
           } else
           if (overview instanceof Museum) {
-            taxonSetDb = new MuseumTaxonDb(connection);;
-            taxa = taxonSetDb.getTaxa(((Museum) overview).getCode());
+            taxonSetDb = new MuseumTaxonDb(connection);
+              taxa = taxonSetDb.getTaxa(((Museum) overview).getCode());
           }
 
           if (taxa == null || taxa.size() == 0) {

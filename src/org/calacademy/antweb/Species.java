@@ -228,7 +228,7 @@ these other _cf1 etc.
      
             A.log("setAllImages() genus image query: " + theQuery);
             
-            stmt = DBUtil.getStatement(getConnection(), "setAllImages()"); ;
+            stmt = DBUtil.getStatement(getConnection(), "setAllImages()");
             rset = stmt.executeQuery(theQuery);
 
                 String shot = null;

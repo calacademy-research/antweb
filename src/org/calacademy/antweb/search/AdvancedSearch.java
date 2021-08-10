@@ -363,8 +363,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
                 += " group by " + fieldList 
                 + " order by " + sortString
                 + " limit " + SearchAction.getSpecimenSearchLimit();
-                ;
-            
+
             s_query = theQuery;
             
             A.log("createInitialResults() theQuery:" + theQuery);
