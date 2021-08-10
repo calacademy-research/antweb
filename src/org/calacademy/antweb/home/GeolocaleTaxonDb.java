@@ -1098,7 +1098,6 @@ select group_concat( distinct source) from geolocale_taxon order by source;
                 if (d) A.log("checkGeolocaleParentage() " + message);
               }
               lastLine = message;
-              continue;
             } else {
               int parentGeolocaleId = parentGeolocale.getId();
               TaxonSet taxonSet = get(parentGeolocaleId, taxonName);

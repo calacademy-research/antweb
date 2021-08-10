@@ -87,8 +87,7 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 			} catch (AntwebException e) {
 				LogMgr.appendLog("googleApisAdm1Issue.html", "<br>" + e.getMessage() + " " + adm1.getNameCommaCountry() + " id:<a href='" + AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + adm1.getId() + "'>" + adm1.getId() + "</a>");			
 				s_log.warn("fetchData() 1 nameCommaCountry:" + adm1.getNameCommaCountry() + " id:" + adm1.getId() + " e:" + e.getMessage());
-				continue;
-			} catch (Exception e) {
+            } catch (Exception e) {
 			  s_log.warn("fetchData() 2 adm1CommaCountry:" + adm1.getNameCommaCountry() + " id:" + adm1.getId() + " e:" + e);
 			  message = "GoogleApisMgr aborted. apiCallCount:" + apiCallCount;        
 			  return message;              

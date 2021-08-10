@@ -157,7 +157,6 @@ public class TeamMemberDb extends AntwebDb {
           TeamMember existingTeamMember = findById(teamMember.getId());     
           if (existingTeamMember == null) {
             s_log.error("saveImage() TeamMember:" + teamMember.getId() + " not found.");
-            return;
           } else {
             try {
 

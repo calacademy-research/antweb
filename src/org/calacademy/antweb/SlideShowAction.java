@@ -92,7 +92,6 @@ public final class SlideShowAction extends Action {
                     (!taxon.getTaxonName().equals("myrmeciinaeprionomyrmex"))
                     //ecitoninae
                     ) {
-                  continue;
                 } else {
                   slides.remove(index);
                   --index;

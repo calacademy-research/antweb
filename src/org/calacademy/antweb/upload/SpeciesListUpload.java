@@ -1010,8 +1010,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
           } catch (IOException e) {
             s_log.error("copySpeciesListFile() e:" + e);
-            return;
-          }    
+        }
     }
 
     private String makeNameUpToSpecies(Hashtable taxonHash) {

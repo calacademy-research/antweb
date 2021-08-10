@@ -1123,14 +1123,12 @@ public abstract class HttpUtil {
           s_log.warn("fetchAndWrite() " + message);
           AdminAlertMgr.log(message);
         }
-        return;
   }
   
   public static void write(String output, HttpServletResponse response) throws IOException {
         response.setContentType("text/html");
         Writer writer = response.getWriter();
         writer.write(output);
-        return;
   }
 
   public static boolean s_beenReported = false;

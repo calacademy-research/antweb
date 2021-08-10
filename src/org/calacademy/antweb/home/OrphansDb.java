@@ -357,8 +357,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 			  
 			  Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
 			  orphanTaxonWithDescEditList.add(taxon);
-			  continue;
-			}
+            }
 		}
       } catch (SQLException e) {
           s_log.warn("getOrphanTaxonWithDescEditList() e:" + e);
