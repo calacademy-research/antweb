@@ -1280,7 +1280,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         //blankImage.setLowres("none");
         //blankImage.setMedres("none");
         //blankImage.setHighres("none");
-        String[] components = theSort.split("\\,");
+        String[] components = theSort.split(",");
         String thisComponent = "";
         int loop;
 

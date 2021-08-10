@@ -35,7 +35,7 @@ public class WorldAuthorityGenerator {
     private Pattern closeP = Pattern.compile("</p>",Pattern.CASE_INSENSITIVE);
     private Pattern startP = Pattern.compile("^<p",Pattern.CASE_INSENSITIVE);
     private Pattern italics = Pattern.compile("<i>(.*?)</i>",Pattern.CASE_INSENSITIVE);
-    private Pattern brackets = Pattern.compile("[\\(\\[](.*?)[\\)\\]]");
+    private Pattern brackets = Pattern.compile("[(\\[](.*?)[)\\]]");
     private Pattern incertae = Pattern.compile("incertae sedis in (.*)",Pattern.CASE_INSENSITIVE);
     private Pattern leadStar = Pattern.compile("^\\*+");
     private Pattern startItal = Pattern.compile("<i>",Pattern.CASE_INSENSITIVE);
@@ -1273,8 +1273,8 @@ public class WorldAuthorityGenerator {
         theString = theString.replaceAll("\\.", "\\\\.");
         theString = theString.replaceAll("\\*", "\\\\*");
         theString = theString.replaceAll("\\[", "\\\\[");
-        theString = theString.replaceAll("\\]", "\\\\]");
-        theString = theString.replaceAll("\\,", "\\\\,");
+        theString = theString.replaceAll("]", "\\\\]");
+        theString = theString.replaceAll(",", "\\\\,");
         theString = theString.replaceAll("\\?", "\\\\?");
         return theString;
     }
