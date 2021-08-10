@@ -113,7 +113,7 @@ public class UtilDb extends AntwebDb {
         int rowNum = 0;
         String columns = "";
         String rowData = "";
-        for (; rs.next(); ) {
+        while (rs.next()) {
             ++rowNum;
             String row = "";
             for (i = 0; i < colmax; ++i) {
