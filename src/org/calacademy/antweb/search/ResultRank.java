@@ -17,10 +17,7 @@ public final class ResultRank {
     public static String BAY_AREA = "bayArea";
 
     public static boolean isTaxonRank(String resultRank) {
-      if (SPECIES.equals(resultRank) || GENUS.equals(resultRank) || SUBFAMILY.equals(resultRank)) {
-        return true;
-      }
-      return false;
+        return SPECIES.equals(resultRank) || GENUS.equals(resultRank) || SUBFAMILY.equals(resultRank);
     }
 
  

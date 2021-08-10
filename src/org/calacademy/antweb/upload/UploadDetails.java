@@ -102,8 +102,7 @@ public class UploadDetails extends OperationDetails {
     public static boolean isLogJsp() {
       boolean jspTurnedOn = true;
       jspTurnedOn = false;
-      if (!jspTurnedOn) return false;
-      return true;
+        return jspTurnedOn;
     }    
     public static String getLogExt() {
       if (UploadDetails.isLogJsp()) {

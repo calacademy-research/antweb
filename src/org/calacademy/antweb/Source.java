@@ -46,23 +46,11 @@ Priorities:
         
         switch(aSource) {
 			case SPECIMEN:
-			  if (SPECIMEN.equals(bSource)) {
-				return false;
-			  } else {
-				return true;
-			  }
+                return !SPECIMEN.equals(bSource);
 			case ANTCAT:
-			  if (SPECIMEN.equals(bSource) || ANTCAT.equals(bSource)) {
-				return false;
-			  } else {
-				return true;
-			  }
+                return !SPECIMEN.equals(bSource) && !ANTCAT.equals(bSource);
 			case LITERATURE:
-			  if (SPECIMEN.equals(bSource) || ANTCAT.equals(bSource) || LITERATURE.equals(bSource)) {
-				return false;
-			  } else {
-				return true;
-			  }
+                return !SPECIMEN.equals(bSource) && !ANTCAT.equals(bSource) && !LITERATURE.equals(bSource);
 			case CURATOR:
 			  return false;
         }

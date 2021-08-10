@@ -140,8 +140,7 @@ public class Utility implements Serializable {
    public static boolean isASCII(String input) {
      if (input == null) return true;
      String ascii = getASCII(input);
-     if (input.equals(ascii)) return true;
-     return false;
+       return input.equals(ascii);
    }
 
    public static String getASCII(String input) {  // returns true, false or the fixed input
@@ -281,10 +280,7 @@ public class Utility implements Serializable {
    // by toggling this flag we can display empty fields on the specimen, collection and locality pages
    private static boolean isDisplayEmpty = true;
    public static boolean displayEmptyOrNotBlank(String theTerm) {
-     if (isDisplayEmpty || (Utility.notBlank(theTerm))) { 
-       return true;
-     }
-     return false;
+       return isDisplayEmpty || (Utility.notBlank(theTerm));
    }
    
    public static String andify(ArrayList theList) {

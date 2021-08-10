@@ -59,18 +59,16 @@ public class GroupMgr {
 	    return isCAS(accessGroup);
 	}
 	public static boolean isCAS(Group accessGroup) {
-	  if (accessGroup != null && accessGroup.getId() == 1) return true;
-	  return false;
-	}
+        return accessGroup != null && accessGroup.getId() == 1;
+    }
 
     public static boolean isDavis(HttpServletRequest request) {
         Group accessGroup = getAccessGroup(request);
 	    return isDavis(accessGroup);
 	}
 	public static boolean isDavis(Group accessGroup) {
-	  if (accessGroup != null && accessGroup.getId() == 16) return true;
-	  return false;
-	}
+        return accessGroup != null && accessGroup.getId() == 16;
+    }
 		
 		
 

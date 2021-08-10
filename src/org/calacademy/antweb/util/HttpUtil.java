@@ -201,9 +201,8 @@ public abstract class HttpUtil {
     public static boolean isInWhiteList(String input) {
       // This is used for validating query strings
       if (input == null) return true;
-      String clean = input.replaceAll("[^A-Za-z0-9\\[\\]=]", "");    
-      if (input.equals(clean)) return true;
-      return false;
+      String clean = input.replaceAll("[^A-Za-z0-9\\[\\]=]", "");
+        return input.equals(clean);
     }
 
     public static boolean isInWhiteListCheck(String input, HttpServletResponse response) {    
@@ -324,20 +323,16 @@ public abstract class HttpUtil {
     }
     
     public static boolean isDisallowedFileType(String fileName) {
-      if ( (fileName != null) &&
-         ( (fileName.contains(".jsp"))
-         || (fileName.contains(".JSP"))
-         || (fileName.contains(".php"))
-         || (fileName.contains(".PHP"))
-         || (fileName.contains(".pl"))
-         || (fileName.contains(".PL"))
-         || (fileName.contains(".sh"))
-         || (fileName.contains(".SH"))
-         )
-        ) {
-        return true; 
-      }
-      return false;   
+        return (fileName != null) &&
+                ((fileName.contains(".jsp"))
+                        || (fileName.contains(".JSP"))
+                        || (fileName.contains(".php"))
+                        || (fileName.contains(".PHP"))
+                        || (fileName.contains(".pl"))
+                        || (fileName.contains(".PL"))
+                        || (fileName.contains(".sh"))
+                        || (fileName.contains(".SH"))
+                );
     }
     
     public static boolean isAlphaNumeric(String str) {
@@ -372,16 +367,12 @@ public abstract class HttpUtil {
 
     public static boolean isIllegalStr(String string) {
         String str = string.toLowerCase();
-        if ( (str.contains("sleep") && !(str.contains("sleeping") || str.contains("kameelsleep")))
-          || str.contains("case%20")
-          || str.contains("select%20")
-          || (str.contains("order%20") && !str.contains("border"))
-          || str.contains("3ddbms_pipe.receive_message")
-          || str.contains("waitfor  ")
-          ) {
-            return true;
-        }
-        return false;
+        return (str.contains("sleep") && !(str.contains("sleeping") || str.contains("kameelsleep")))
+                || str.contains("case%20")
+                || str.contains("select%20")
+                || (str.contains("order%20") && !str.contains("border"))
+                || str.contains("3ddbms_pipe.receive_message")
+                || str.contains("waitfor  ");
     }
     private static final String[] HEADERS_TO_TRY = {
             "X-Forwarded-For",
@@ -419,14 +410,10 @@ public abstract class HttpUtil {
 
     public static boolean abortAction(String content) {
       // This method looks for jsp injection code.  True to abort.
-      if ( (content != null) &&
-           ( (content.contains("Loesch")) // This is the author of Browser.jsp
-          || (false) 
-           )
-         ) {
-         return true;
-      }    
-      return false;
+        return (content != null) &&
+                ((content.contains("Loesch")) // This is the author of Browser.jsp
+                        || (false)
+                );
     }
     
     public static void blockFishingAttack(HttpServletRequest request, ActionErrors errors) {
@@ -509,14 +496,10 @@ public abstract class HttpUtil {
     public static boolean isPost(HttpServletRequest request) {
         if (request.getContentType() != null) {
           String contentType = request.getContentType().toLowerCase();
-          if ( (contentType.contains("multipart/form-data"))
-            || (contentType.contains("application/x-www-form-urlencoded"))
-            || (contentType.contains("text/plain"))
-            )
-          {
-            //A.log("isPost:" + request.getContentType());        
-            return true;
-          }
+            //A.log("isPost:" + request.getContentType());
+            return (contentType.contains("multipart/form-data"))
+                    || (contentType.contains("application/x-www-form-urlencoded"))
+                    || (contentType.contains("text/plain"));
         }
         return false;
     }
@@ -617,8 +600,7 @@ public abstract class HttpUtil {
       if (LoginMgr.isDeveloper(request)) return true; // for testing
 
       if (HttpUtil.getTarget(request).contains("testMobile.do")) return true; // for testing
-      if (HttpUtil.getTarget(request).contains("mobile.do")) return true; // for testing
-      return false;
+        return HttpUtil.getTarget(request).contains("mobile.do"); // for testing
     }
     
     public static boolean isMobile(HttpServletRequest request) {
@@ -651,10 +633,7 @@ public abstract class HttpUtil {
 
     public static boolean isIphone(HttpServletRequest request) {
       String userAgent = request.getHeader("User-Agent");
-      if (userAgent != null && userAgent.contains("iPhone")) {
-        return true;
-      }
-      return false;
+        return userAgent != null && userAgent.contains("iPhone");
     }
   
     public static boolean isSecure(HttpServletRequest request) {
@@ -672,9 +651,7 @@ public abstract class HttpUtil {
         Object val = request.getParameter(param);
         if (val != null && !( val.equals("false") ))
             return true;
-        if (request.getParameter(param+".x") != null)
-            return true;
-        return false;
+        return request.getParameter(param + ".x") != null;
     }
 
   public static boolean redirectPostToGet(HttpServletRequest request
@@ -1046,26 +1023,19 @@ public abstract class HttpUtil {
 
         // This check added Oct 27, 2014.  Would have always returned true
 
-        if (isStaticCallException(request)) return false;
+          return !isStaticCallException(request);
 
         //s_log.warn("isStaticCall() requestInfo:" + HttpUtil.getRequestInfo(request));
         // This may happen from base= in taxonPage.jsp or specimen.jsp.  Not a problem.  Still works.
-        
-        return true;
       }
 
       if (request.getQueryString() == null) {
         // s_log.info("isStaticCall()  requestUrl:" + request.getRequestURL()); 
         // This check added Oct 27, 2014.  Would have always returned true
         String target = HttpUtil.getTarget(request);
-        if (target != null && target.contains(".jsp")) {
-
-          //A.log("isStaticCall()  target:" + target); 
-         
+          //A.log("isStaticCall()  target:" + target);
           //if (isStaticCallException(request)) return false;
-
-          return true;
-        }
+          return target != null && target.contains(".jsp");
       }
       return false;
   }
@@ -1088,14 +1058,11 @@ public abstract class HttpUtil {
         return true;
       }          
       */
-            
-      if (target.contains("speciesList") && "".equals(HttpUtil.getQueryString(request))) {
-      // This is allowed because Page.do will forward to a jsp, with no parameters.  
+
+      // This is allowed because Page.do will forward to a jsp, with no parameters.
       // This means we are safe from fishing and parameter attacks
-        return true;
-      }
+      return target.contains("speciesList") && "".equals(HttpUtil.getQueryString(request));
       //A.log("isStaticCall() exception made ? for:" + target);
-      return false;
   }
 
   public static void fetchAndWrite(String url, HttpServletResponse response) {  
@@ -1136,9 +1103,8 @@ public abstract class HttpUtil {
         A.log("urlExists() e:" + e);
         return false;
       }
-        if (content == null) return false;
+        return content != null;
         //A.log("urlExists() content:" + content);
-        return true;
     }
 
   

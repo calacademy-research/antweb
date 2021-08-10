@@ -89,11 +89,7 @@ public final class PictureLikeAction extends Action {
                id = rset.getInt("id");
                hasTiff = rset.getInt("has_tiff");
             }
-            if (hasTiff == 1) {
-                theImage.setHasTiff(true);
-            } else {
-                 theImage.setHasTiff(false);
-            }    
+            theImage.setHasTiff(hasTiff == 1);
             stmt.close();
             theSpecimen = new Specimen(code, connection, true);   // was "worldants"
 

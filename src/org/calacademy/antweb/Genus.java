@@ -24,10 +24,8 @@ public class Genus extends Subfamily implements Serializable {
       if (genusName != null) {
         if ("(indet)".equals(genusName)) return true;
         if (genusName.contains("(") && genusName.contains(")")) {
-          if (Subfamily.isValidAntSubfamily(genusName)) {
             //A.log("isIndet() true genusName:" + genusName);
-            return true;
-          }
+            return Subfamily.isValidAntSubfamily(genusName);
         }
       }
       return false;

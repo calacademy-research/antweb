@@ -161,11 +161,7 @@ public class ImageDb extends AntwebDb {
                     specImage.setCode(code);
                     specImage.setNumber(1);
                     hasTiff = rset.getInt(2);
-                    if (hasTiff == 1) {
-                        specImage.setHasTiff(true);
-                    } else {
-                        specImage.setHasTiff(false);
-                    }
+                    specImage.setHasTiff(hasTiff == 1);
                     //specImage.setPaths();
                     images.add(specImage);
                 }
@@ -222,11 +218,7 @@ public class ImageDb extends AntwebDb {
                 //s_log.warn("getSpecimenImage() not found code:" + code + " shot:" + shot + " number:" + number);
                 return null;
             }
-            if (hasTiff == 1) {
-                specimenImage.setHasTiff(true);
-            } else {
-                specimenImage.setHasTiff(false);
-            }
+            specimenImage.setHasTiff(hasTiff == 1);
         } catch (SQLException e) {
             s_log.error("getSpecimenImage() e:" + e + " query:" + query);
         } finally {

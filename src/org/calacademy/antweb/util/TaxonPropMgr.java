@@ -88,8 +88,7 @@ public abstract class TaxonPropMgr {
       //A.log("TaxonPropMgr.isBioregionNative() bioregion:" + bioregion + " bioregionsMap:" + bioregionsMap + " nativeBioregionsStr:" + nativeBioregionsStr);
 
       if (nativeBioregionsStr == null) return true;
-      if (nativeBioregionsStr.contains(bioregion)) return true;
-      return false;
+        return nativeBioregionsStr.contains(bioregion);
     }
      
    // was Bioregion.displayBioregionsMap()

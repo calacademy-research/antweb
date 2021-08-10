@@ -228,12 +228,8 @@ public class UtilDb extends AntwebDb {
         ResultSet rset = stmt.executeQuery(query);
         while (rset.next()) {
           value = rset.getString("value");
-          if (Utility.isBlank(value)) {
-            return true;
-          } else {
             //s_log.warn("isBlankField() false for query:" + query);
-            return false;
-          }
+            return Utility.isBlank(value);
           //A.log("isBlankField() from projectName:" + project_name + " to geolocaleId:" + geolocaleId);
         }
       } finally {

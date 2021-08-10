@@ -615,20 +615,12 @@ public class GenericSearchResults implements Serializable {
 		while (iterator.hasNext()) {
 			resItem = (ResultItem) iterator.next();
 		   thisCombo = resItem.getRank() + ":" + resItem.getFullName();
-					
-			if (((Boolean) imageCheck.get(thisCombo)).booleanValue()
-				== true) {
-				resItem.setHasImages(true);
-			} else {
-				resItem.setHasImages(false);
-			}
 
-			if (((Boolean) typeCheck.get(thisCombo)).booleanValue()
-				== true) {
-				resItem.setTypes(true);
-			} else {
-				resItem.setTypes(false);
-			}
+            resItem.setHasImages(((Boolean) imageCheck.get(thisCombo)).booleanValue()
+                    == true);
+
+            resItem.setTypes(((Boolean) typeCheck.get(thisCombo)).booleanValue()
+                    == true);
 		}
 
         Collections.sort(myResults, new ResultItemComparator());

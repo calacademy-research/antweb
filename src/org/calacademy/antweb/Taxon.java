@@ -137,7 +137,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       String thisTaxonName = getTaxonName();
       if (o == null) return false;
       String thatTaxonName = ((Taxon) o).getTaxonName();
-      if (thisTaxonName.equals(thatTaxonName)) return true;  else return false;
+        return thisTaxonName.equals(thatTaxonName);
     }
     
     protected String seeAlso = null;
@@ -1731,14 +1731,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
 		if (taxonDebug()) A.log("getUnpickedDefault() rank:" + getRank() + " taxonName:" + getTaxonName() + " caste:" + caste + " overview:" + overview + " chosenImageCode:" + chosenImageCode); // + " speciesNameSet:" + speciesNameSet + " speciesSetStr:" + speciesSetStr);
 
-        if (chosenImageCode != null) {
-
-		  //A.log("getUnpickedDefault() species caste:" + caste + " overview:" + overview + " speciesNameSet:" + speciesSetStr + " chosenImageCode:" + chosenImageCode + " speciesSetStr:" + speciesSetStr);
-		  //AntwebUtil.logStackTrace();
-        
-          return chosenImageCode;
-        }
-      return null;
+        //A.log("getUnpickedDefault() species caste:" + caste + " overview:" + overview + " speciesNameSet:" + speciesSetStr + " chosenImageCode:" + chosenImageCode + " speciesSetStr:" + speciesSetStr);
+        //AntwebUtil.logStackTrace();
+        return chosenImageCode;
     }
     
     // Used at all?
@@ -1882,24 +1877,15 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
     
     public boolean isAnt() {
-      if ("formicidae".equals(getFamily())) return true;
-      return false;
+        return "formicidae".equals(getFamily());
     }
 
     public static boolean isMorphoOrIndet(String taxonName) {
-      if (Taxon.isIndet(taxonName) || Taxon.isMorpho(taxonName)) {
-        return true;
-      } else {
-        return false;
-      }
+        return Taxon.isIndet(taxonName) || Taxon.isMorpho(taxonName);
     }
 
     public static boolean isIndet(String taxonName) {
-      if ((taxonName.contains("undet")) || (taxonName.contains("indet"))) {
-        return true;
-      } else {
-        return false;
-      }
+        return (taxonName.contains("undet")) || (taxonName.contains("indet"));
     }
     
     public static String getNotMorphoCriteria() {
@@ -1958,25 +1944,20 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           return true;
         }
 
-        if (   (taxonName.contains("1"))
-            || (taxonName.contains("2"))
-            || (taxonName.contains("3"))
-            || (taxonName.contains("4"))
-            || (taxonName.contains("5"))
-            || (taxonName.contains("6"))
-            || (taxonName.contains("7"))
-            || (taxonName.contains("8"))
-            || (taxonName.contains("9"))
-            || (taxonName.contains("-"))
-            || (taxonName.contains("_"))
-            || (taxonName.contains("("))
-            || (taxonName.contains(")"))
-            || (taxonName.contains("."))
-          ) {
-            isMorpho = true;
-        } else {
-            isMorpho = false;
-        }
+        isMorpho = (taxonName.contains("1"))
+                || (taxonName.contains("2"))
+                || (taxonName.contains("3"))
+                || (taxonName.contains("4"))
+                || (taxonName.contains("5"))
+                || (taxonName.contains("6"))
+                || (taxonName.contains("7"))
+                || (taxonName.contains("8"))
+                || (taxonName.contains("9"))
+                || (taxonName.contains("-"))
+                || (taxonName.contains("_"))
+                || (taxonName.contains("("))
+                || (taxonName.contains(")"))
+                || (taxonName.contains("."));
         //if ("myrmicinaecrematogaster jtl-022".equals(taxonName)) s_log.warn("isMorphoSpecies(" + taxonName + ") isMorpho:" + isMorpho);
         return isMorpho;
     }		
@@ -2062,11 +2043,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
     public boolean isBaseTaxon() {
       // Means that it can have specimens and should show the specimen report.  
-      if (isSpeciesOrSubspecies()) {
-        return true;
-      } else {
-        return false;
-      }
+        return isSpeciesOrSubspecies();
     }
 
     public String getSource() {
@@ -2124,12 +2101,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     } 
     
     public boolean addNotValidWarning() {
-      if (!isValid()
-       && !Status.EXCLUDED_FROM_FORMICIDAE.equals(getStatus())
-       && !Status.HOMONYM.equals(getStatus())
-       ) return true;
-       
-      return false;
+        return !isValid()
+                && !Status.EXCLUDED_FROM_FORMICIDAE.equals(getStatus())
+                && !Status.HOMONYM.equals(getStatus());
     }
  
     public boolean getIsAntCat() {
@@ -3042,8 +3016,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     
     public static boolean isSpeciesOrSubspecies(String taxonName) {
       String rank = Taxon.getRankFromName(taxonName);
-      if ("species".equals(rank) || "subspecies".equals(rank)) return true;
-      return false;
+        return "species".equals(rank) || "subspecies".equals(rank);
     }
         
     public static String getRankFromName(String taxonName) {

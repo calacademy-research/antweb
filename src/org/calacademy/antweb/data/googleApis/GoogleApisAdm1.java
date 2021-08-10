@@ -97,7 +97,7 @@ s_log.warn("6:" + adm1Response.results.get(0).address_components[0].types[0].toC
 
     public static boolean hasAdm2Data() {
       if (json != null) {
-        if (json.contains("administrative_area_level_2")) return true;
+          return json.contains("administrative_area_level_2");
       }
       return false;
     }

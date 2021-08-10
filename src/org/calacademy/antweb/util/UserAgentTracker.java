@@ -120,11 +120,8 @@ public class UserAgentTracker {
       }
       Object countInteger = agentsMap.get(userAgent);
       if (countInteger == null) return false;
-      int count = ((Integer) countInteger).intValue(); 
-      if (count > OVERACTIVE) {
-        return true;
-      }  
-      return false;
+      int count = ((Integer) countInteger).intValue();
+      return count > OVERACTIVE;
   }
 
   public static String summary() {

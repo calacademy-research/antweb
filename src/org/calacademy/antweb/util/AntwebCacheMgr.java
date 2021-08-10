@@ -537,8 +537,7 @@ A.log("cacheItem() dataFile:" + dataFile);
       message = " ServletException";
       s_log.info("badFileDontCache dataFile:" + dataFile);
     }
-    if (message != null) return true;
-    return false;  
+      return message != null;
   }
 
   private static void updateCachedItems(Connection connection, String url, long sinceStart)

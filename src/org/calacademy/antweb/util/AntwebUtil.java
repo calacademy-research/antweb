@@ -368,10 +368,7 @@ public abstract class AntwebUtil {
   
     public static boolean fileFound(String fileLoc) {
   	  File f = new File(fileLoc);
-      if (f.exists()) {
-        return true;
-      }
-      return false;      
+      return f.exists();
     }   
     
     public static boolean webFileFound(String fileLoc) {
@@ -867,11 +864,8 @@ public abstract class AntwebUtil {
         
     public static boolean isDeployed(HttpServletRequest request) {
       if (isDeployed) return true;
-      
-      if (LoginMgr.isAdmin(request)) {
-        return true;
-      }  
-      return false;
+
+      return LoginMgr.isAdmin(request);
     }
 
 

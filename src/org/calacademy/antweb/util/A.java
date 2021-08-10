@@ -75,10 +75,7 @@ public class A {
   }
   public static boolean loopCount(int divNum) {
     loopCounter = loopCounter + 1;
-    if (loopCounter == 1 || (loopCounter % divNum) == 0) {
-      return true;    
-    }
-    return false;
+      return loopCounter == 1 || (loopCounter % divNum) == 0;
   }
   
   private static int[] logCounter = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};

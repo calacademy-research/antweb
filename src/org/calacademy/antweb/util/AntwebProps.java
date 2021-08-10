@@ -22,10 +22,8 @@ public abstract class AntwebProps {
 
     public static boolean loadResources() {
       //s_log.warn("loadResources()");
-      
-      if (getAppResources() == null || getAntwebResources() == null || getPlatformResources() == null)
-        return false;
-      return true;
+
+        return getAppResources() != null && getAntwebResources() != null && getPlatformResources() != null;
     }
 
     private static ResourceBundle getBundle(String resourceName) {
@@ -66,11 +64,7 @@ public abstract class AntwebProps {
 
 	public static Boolean isProp(String isProp) {
 		String prop = AntwebProps.getProp(isProp);
-        if ("true".equals(prop)) {
-          return true;
-        } else {
-          return false;
-        }
+        return "true".equals(prop);
 	}
 
     private static HashMap<String, String> s_propMap = new HashMap<>();

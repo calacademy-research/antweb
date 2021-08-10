@@ -104,10 +104,7 @@ public class UploadFile {
     // This is used for Project upload, but not of Worldants
 
     public boolean isWorldAnts() {
-      if ((fileName != null) && (fileName.contains("worldants")) ) {
-          return true;
-      }    
-      return false;
+        return (fileName != null) && (fileName.contains("worldants"));
     }
 
     public static boolean isValidUTF8(String filePath) {
@@ -280,11 +277,7 @@ public class UploadFile {
     }
     
     public boolean getIsBioRegion() {
-      if (isWorldAnts() || this.isBioRegion) {
-        return true;
-      } else {
-        return false;
-      }
+        return isWorldAnts() || this.isBioRegion;
     }
     public void setIsBioRegion(boolean isBioRegion) {
       this.isBioRegion = isBioRegion;

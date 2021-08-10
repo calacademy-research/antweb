@@ -41,8 +41,7 @@ public abstract class BadActorMgr {
     public static boolean isBadActor(String ip) {
         int BAD_ACTOR_LIMIT = 10;
         Integer count = (Integer) badActorMap.get(ip);
-        if (count != null && count > BAD_ACTOR_LIMIT) return true;
-        return false;
+        return count != null && count > BAD_ACTOR_LIMIT;
     }
 
     public static String ifBadActorBlockedGetMessage(HttpServletRequest request) {

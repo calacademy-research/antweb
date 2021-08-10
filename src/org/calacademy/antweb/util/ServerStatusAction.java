@@ -77,12 +77,9 @@ static double getVersion () {
 	}
 
     public static boolean isReady() {
-      if (UploadAction.isInUploadProcess() 
-       || UptimeAction.isFailOnPurpose() 
-       || UtilDataAction.isInComputeProcess()) {
-         return false;
-      }
-      return true;
+        return !UploadAction.isInUploadProcess()
+                && !UptimeAction.isFailOnPurpose()
+                && !UtilDataAction.isInComputeProcess();
     }
 				
     public static String notReadyReason() {

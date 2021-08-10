@@ -543,11 +543,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                 specImage.setShot(shot);
                 specImage.setCode(getCode());
                 specImage.setNumber(shotNumber);
-                if (hasTiff == 1) {
-                    specImage.setHasTiff(true);
-                } else {
-                    specImage.setHasTiff(false);
-                }
+                specImage.setHasTiff(hasTiff == 1);
                 //specImage.setPaths();
                 myImages.put(combo, specImage);
 
@@ -1338,8 +1334,7 @@ For a locality name without code (this name has special characters):
     public boolean hasOriginalTaxonName() {
       //A.log("hasOriginalTaxonName() orig:" + getOriginalTaxonName() + " parentTaxonName:" + getParentTaxonName());
       if (getOriginalTaxonName() != null)
-        if (!getParentTaxonName().equals(getOriginalTaxonName()))
-          return true;
+          return !getParentTaxonName().equals(getOriginalTaxonName());
       return false;
     }
     public String getOriginalTaxonName() {

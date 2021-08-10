@@ -321,9 +321,7 @@ public class FlickrPlace extends DataPlace {
     public static boolean placeContainsParent(Place place, String parent) {
       if (place._content.contains(parent)) return true;
 
-      if (place._content.contains(FlickrPlace.getAlternate(parent))) return true;
-
-      return false;
+        return place._content.contains(FlickrPlace.getAlternate(parent));
     }
 
     public static String getAlternate(String parent) {

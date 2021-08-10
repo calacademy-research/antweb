@@ -434,9 +434,7 @@ public abstract class DateUtil {
 
     // Perhaps it's like: 2003
     returnDate = getDate("1 Jan " + truncDatesCollected);
-    if (returnDate != null) return returnDate;
-
-    return null;
+      return returnDate;
   }
 
     private static String trimDay(String day) {

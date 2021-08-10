@@ -113,15 +113,13 @@ public class Login implements Comparable {
         
         //if (getProjects() != null && getProjects().size() > 0) return true;
         //if (isUploadSpecimens() || isUploadImages()) return true;
-        
-        if (getGroupId() > 0) return true;
-        return false;
+
+        return getGroupId() > 0;
     }
     
     public boolean isDeveloper() {
         // This should probably be a field in the database.  But this is simpler.
-        if (getId() == 22) return true;
-        return false;
+        return getId() == 22;
     }
     
     public Boolean isUploadSpecimens() {

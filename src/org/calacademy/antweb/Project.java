@@ -94,12 +94,10 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 
     public boolean isCanShowSpeciesListTool(Login accessLogin) {
       A.log("isCanShowSpeciesListTool() isSpeciesListMappable:" + isSpeciesListMappable() + " useName:" + getUseName());
-      if (isSpeciesListMappable()
-        && accessLogin != null
-        && (accessLogin.getProjectNames().contains(getUseName()) || accessLogin.isAdmin())
         //  || PROJECT.equals(getBioregion()   // Now is scope.
-      ) return true;
-      return false;
+        return isSpeciesListMappable()
+                && accessLogin != null
+                && (accessLogin.getProjectNames().contains(getUseName()) || accessLogin.isAdmin());
     }
 
     public String toString() {
@@ -388,8 +386,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 	}    
 	
     public boolean isAntProject() {
-      if (PROJECT.equals(getScope())) return true;
-      return false;
+        return PROJECT.equals(getScope());
     }
 
 /*    
@@ -521,8 +518,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     }
 
     public boolean isAggregate() {
-      if ("Project".equals(getScope()) || "GLOBAL".equals(getScope())) return true;
-      return false;
+        return "Project".equals(getScope()) || "GLOBAL".equals(getScope());
     }
             
 	public String getTag() {
@@ -733,13 +729,11 @@ group by taxonName
       if (url.contains("taxonomicPage.do")) return true;
       if (url.contains("browse.do")) return true;
       if (url.contains("images.do")) return true;
-      if (url.contains("description.do")) return true;
-      return false;
+        return url.contains("description.do");
     }
     
     public static boolean isPerformanceSensitive(String url) {
-      if (url.contains("taxonomicPage.do?rank=species") && url.contains("images=true")) return true;
-      return false;
+        return url.contains("taxonomicPage.do?rank=species") && url.contains("images=true");
     }
 
     public static String getBoltonLi(String url) {
@@ -765,10 +759,7 @@ group by taxonName
       if (projectName == null || projectName.length() < 5) return false;
       if (projectName.contains(" ")) return false;
       if (!projectName.equals(projectName.toLowerCase())) return false;
-      if ("ants".equals(projectName.substring(projectName.length() - 4))) {
-        return true;
-      }
-      return false;
+        return "ants".equals(projectName.substring(projectName.length() - 4));
     }  
 }
 

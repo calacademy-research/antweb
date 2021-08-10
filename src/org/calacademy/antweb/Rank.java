@@ -30,8 +30,7 @@ public final class Rank implements Serializable {
 
     public static boolean isLegit(String rank) {
         int level = getRankLevel(rank);
-        if (level == 0) return false;
-        return true;
+        return level != 0;
     }
 
     public static int getRankLevel(String rank) {
@@ -54,8 +53,7 @@ public final class Rank implements Serializable {
     
     public static boolean isValid(String rank) {
       int rankLevel = getRankLevel(rank);
-      if (rankLevel <= 0) return false;
-      return true;
+        return rankLevel > 0;
     }
 	
 	public static String getPluralOf(String rank) {

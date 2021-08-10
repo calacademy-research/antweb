@@ -240,8 +240,7 @@ public class Map {
     }
 
     public boolean hasPoints() {
-        if ((getPoints() != null) && (getPoints().size() > 0)) return true;
-        return false;
+        return (getPoints() != null) && (getPoints().size() > 0);
     }
 
     public ArrayList<Coordinate> getPoints() {

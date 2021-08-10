@@ -437,10 +437,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     }        
         
     public boolean isCanShowSpecimenTaxa() {
-      if ((isCountry() && !getIsUseChildren()) || isAdm1()) {
-        return true;
-      }
-      return false;
+        return (isCountry() && !getIsUseChildren()) || isAdm1();
     }
 	public boolean isCountry() {
 	  return Georank.country.equals(getGeorank());

@@ -46,8 +46,7 @@ public class DescEdit {
     }
     
     public boolean isSpecimen() {
-      if (getCode() != null) return true;
-      return false;
+        return getCode() != null;
     }
     
     public String getTaxonName() {

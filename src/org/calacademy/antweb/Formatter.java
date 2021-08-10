@@ -527,10 +527,7 @@ public class Formatter implements Serializable {
     Pattern p = Pattern.compile(patternStr);
 
     Matcher m = p.matcher(str);
-    if (m.find()) {
-       return true;
-    }
-    return false;
+      return m.find();
   }
 
 // doesn't seem to need 0-9 in order to allow 0 in text.

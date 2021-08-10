@@ -42,10 +42,7 @@ public class DataPlace {
           "Lima (region)"
       };
       ArrayList<String> skipAdm1s = new ArrayList<>(Arrays.asList(adm1List));
-      if (skipAdm1s.contains(adm1)) {
-        return true;
-      }
-      return false;
+        return skipAdm1s.contains(adm1);
     }
 
     public static boolean skipCountry(String country) {
@@ -68,10 +65,7 @@ public class DataPlace {
         , "Wake Island"
       };
       ArrayList<String> skipCountries = new ArrayList<>(Arrays.asList(countryList));
-      if (skipCountries.contains(country)) {
-        return true;
-      }
-      return false;
+        return skipCountries.contains(country);
     }
 
     public static String cleanName(String name) {

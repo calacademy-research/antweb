@@ -58,11 +58,7 @@ public final class ResultItem extends Item implements Serializable, Comparable<R
 		//this.hasImages = hasImages;
 		
 		this.imageCount = imageCount;
-        if (imageCount > 0) {
-           hasImages = true;
-        } else {
-           hasImages = false;
-        }		
+        hasImages = imageCount > 0;
 		
 		this.type = type;
 		this.favoriteImage = favoriteImage;

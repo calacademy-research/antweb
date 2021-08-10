@@ -397,8 +397,7 @@ public final class SearchAction extends DispatchAction {
       }
     }
     public static boolean isTempSpecimenSearchLimit() {
-      if (tempSpecimenSearchLimit > 0) return true;
-      return false;
+        return tempSpecimenSearchLimit > 0;
     }    
 
 /*    private void finalizeOldResults(HttpSession session, String searchResultsType) {

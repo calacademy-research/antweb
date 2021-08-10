@@ -102,28 +102,22 @@ public class Status {
     
     // See: myrmicinaetetramorium sericeiventre colluta  status:unavailable.  Should be fixed.
     public static boolean usesCurrentValidName(String status) {
-        if (Status.ORIGINAL_COMBINATION.equals(status)
-         || Status.OBSOLETE_COMBINATION.equals(status)
-         || Status.OBSOLETE_CLASSIFICATION.equals(status)
-         || Status.UNAVAILABLE_UNCATEGORIZED.equals(status)
-         || Status.UNAVAILABLE_MISSPELLING.equals(status)
-         || Status.SYNONYM.equals(status)
         // || Status.UNAVAILABLE.equals(status)
         // || Status.UNIDENTIFIABLE.equals(status)
         // || Status.COLLECTIVE_GROUP_NAME.equals(status)
         // || Status.EXCLUDED_FROM_FORMICIDAE.equals(status)
-        ) return true;
-        return false;       
+        return Status.ORIGINAL_COMBINATION.equals(status)
+                || Status.OBSOLETE_COMBINATION.equals(status)
+                || Status.OBSOLETE_CLASSIFICATION.equals(status)
+                || Status.UNAVAILABLE_UNCATEGORIZED.equals(status)
+                || Status.UNAVAILABLE_MISSPELLING.equals(status)
+                || Status.SYNONYM.equals(status);
     }    
 
     public static boolean excludeFromImport(String status) {
-		if ( Status.UNAVAILABLE_UNCATEGORIZED.equals(status)
-		 // || Status.UNAVAILABLE_MISSPELLING.equals(status) 
-		 // || Status.ORIGINAL_COMBINATION.equals(status) 
-			) {
-            return true;
-        }
-        return false;
+        // || Status.UNAVAILABLE_MISSPELLING.equals(status)
+        // || Status.ORIGINAL_COMBINATION.equals(status)
+        return Status.UNAVAILABLE_UNCATEGORIZED.equals(status);
     }
 
     public boolean isPassWorldAntsSpeciesCheck() {
@@ -155,16 +149,14 @@ public class Status {
         if (status.equals(Status.UNAVAILABLE)) return true;
         if (status.equals(Status.UNAVAILABLE_MISSPELLING)) return true;
         if (status.equals(Status.UNIDENTIFIABLE)) return true;
-        if (status.equals(Status.EXCLUDED_FROM_FORMICIDAE)) return true;
-        return false;
+        return status.equals(Status.EXCLUDED_FROM_FORMICIDAE);
     }
 
     public static boolean isAllAntwebStatus(String status) {
         if (status == null) return false;
         if (status.equals(Status.INDETERMINED)) return true;
         if (status.equals(Status.UNIDENTIFIABLE)) return true;
-        if (status.equals(Status.MORPHOTAXON)) return true;
-        return false;
+        return status.equals(Status.MORPHOTAXON);
     }
 
     public String getCriteria() {      

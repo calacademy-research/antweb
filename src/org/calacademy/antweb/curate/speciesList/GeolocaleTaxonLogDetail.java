@@ -33,8 +33,7 @@ public class GeolocaleTaxonLogDetail extends GeolocaleTaxon implements Comparabl
         // This is a bit sloppy as we are testing for equality on taxonName and projectName, but not date, or log_id.
         GeolocaleTaxonLogDetail other = (GeolocaleTaxonLogDetail) o;
         if (other.getTaxonName().equals(getTaxonName()))
-            if (other.getGeolocaleId() == getGeolocaleId())
-                return true;
+            return other.getGeolocaleId() == getGeolocaleId();
 
         //s_log.warn("equals() taxonName:" + getTaxonName() + " other:" + other.getTaxonName() + " projectName:" + getProjectName() + " other:" + other.getProjectName());  
                 

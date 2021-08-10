@@ -301,8 +301,7 @@ public class AntwebMgr {
     }
 
     public static boolean isServerInitializing() {
-        if (isInitializing) return true;
-        return false;
+        return isInitializing;
     }
     
     public static void serverInitializing() {
@@ -342,9 +341,7 @@ public class AntwebMgr {
     */
 	public static boolean hasServerMessage() {
       // The message would be displayed on the curate page.
-	  if (ServerStatusAction.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBUtil.isServerBusy() || isInitializing) 
-		return true;
-	  else return false;
+        return ServerStatusAction.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBUtil.isServerBusy() || isInitializing;
 	}
     public static String getSimpleServerMessage() {
        if (isInitializing) {

@@ -602,10 +602,9 @@ public class AntwebUpload {
     private boolean enactExceptions(String key, Object value) {
       if ("author_date_html".equals(key)) return true;
       if ("taxonomichistory".equals(key)) return true;
-      if (("reference_id".equals(key)) && ("".equals((String) value))) return true;   // The ints are sometimes nil "".  
+        return ("reference_id".equals(key)) && ("".equals((String) value));   // The ints are sometimes nil "".
       //if ("country".equals(key)) return true;
       //if ("bioregion".equals(key)) return true;
-      return false;
     }
 
     private boolean enactExceptions(String key, Object value, Connection connection, String taxonName) 
@@ -615,10 +614,8 @@ public class AntwebUpload {
           // if taxon is already source == worldants, leave it.  Others don't update the source.
           Taxon dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
           if (dummyTaxon != null) {
-            String origSource = dummyTaxon.getSource(); 
-            if (origSource != null && origSource.contains(Project.WORLDANTS)) {
-              return true;
-            } 
+            String origSource = dummyTaxon.getSource();
+              return origSource != null && origSource.contains(Project.WORLDANTS);
           }
         }
         return false;
@@ -1047,8 +1044,7 @@ public class AntwebUpload {
     }
 
     private boolean isValidSubfamilyCheck(String subfamily) {
-      if (Subfamily.isValidAntSubfamily(subfamily)) return true;
-      return false;
+        return Subfamily.isValidAntSubfamily(subfamily);
     }
     
     public boolean isValidSubfamily(String family, String subfamily) throws SQLException {

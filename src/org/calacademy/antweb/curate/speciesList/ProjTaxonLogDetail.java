@@ -32,8 +32,7 @@ public class ProjTaxonLogDetail extends ProjTaxon implements Comparable<ProjTaxo
         // This is a bit sloppy as we are testing for equality on taxonName and projectName, but not date, or log_id.
         ProjTaxonLogDetail other = (ProjTaxonLogDetail) o;
         if (other.getTaxonName().equals(getTaxonName()))
-            if (other.getProjectName().equals(getProjectName()))
-                return true;
+            return other.getProjectName().equals(getProjectName());
 
 //s_log.warn("equals() taxonName:" + getTaxonName() + " other:" + other.getTaxonName() + " projectName:" + getProjectName() + " other:" + other.getProjectName());  
                 

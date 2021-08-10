@@ -203,11 +203,8 @@ public final class Caste {
     private static boolean endsWith(String casteNote, String str) {
       int casteNoteLength = casteNote.length() - 1;
       if (casteNoteLength <= 0) return false;
-      if (str.equals(casteNote.substring(casteNoteLength))) {
-		  //A.log(""endsWith() true caste:" + caste + " str:" + str);
-          return true;
-      }
-      return false;
+        //A.log(""endsWith() true caste:" + caste + " str:" + str);
+        return str.equals(casteNote.substring(casteNoteLength));
     }
         
     private static String getCasteNote(String casteNotes) { // casteNotes is the Life Stage field.
@@ -300,13 +297,11 @@ public final class Caste {
       return "alate";
     }    
     private static boolean isOther(String casteNote) {
-      if ( casteNote.contains("intercaste")
-        || casteNote.contains("gynandromorph")
-        || casteNote.contains("larva")
-        || casteNote.contains("pupa")
-        || casteNote.contains("brood")
-         ) return true;
-      return false;
+        return casteNote.contains("intercaste")
+                || casteNote.contains("gynandromorph")
+                || casteNote.contains("larva")
+                || casteNote.contains("pupa")
+                || casteNote.contains("brood");
     }
     public static String getOtherSubcaste(String casteNote) {
       if (casteNote.contains("intercaste")

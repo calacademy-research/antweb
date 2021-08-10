@@ -244,11 +244,7 @@ these other _cf1 etc.
                     specImage.setShot(shot);
                     specImage.setNumber(1);
                     specImage.setCode(thisCode);
-                    if (hasTiff == 1) {
-                        specImage.setHasTiff(true);
-                    } else {
-                        specImage.setHasTiff(false);
-                    }
+                    specImage.setHasTiff(hasTiff == 1);
                     //specImage.setPaths();
                     myImages.put(shot + i, specImage);
                 }
