@@ -144,7 +144,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
                 geolocaleTaxonLog.setCuratorId(rset.getInt("curator_id"));
 
                 int isCurrent = rset.getInt("is_current");
-                geolocaleTaxonLog.setIsCurrent((isCurrent == 1) ? true : false);
+                geolocaleTaxonLog.setIsCurrent(isCurrent == 1);
                 ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = null;
                 if (geolocaleTaxonLog.getIsCurrent()) {
                   geolocaleTaxonLogDetails = getGeolocaleTaxonLogDetailsFromGeo(geolocaleId, displaySubfamily);

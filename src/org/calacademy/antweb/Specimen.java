@@ -238,7 +238,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                 setOriginalTaxonName(rset.getString("original_taxon_name"));
                 setLineNum(rset.getInt("line_num"));
                 setCreated(rset.getTimestamp("created"));
-                setIsIntroduced((rset.getInt("is_introduced") == 1) ? true : false);
+                setIsIntroduced(rset.getInt("is_introduced") == 1);
                 //setIsEndemic((rset.getInt("is_endemic") == 1) ? true : false);                
                 setMuseumCode(rset.getString("museum"));
                 setBackupFileName(rset.getString("backup_file_name"));

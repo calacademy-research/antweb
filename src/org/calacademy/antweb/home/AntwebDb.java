@@ -147,7 +147,7 @@ public class AntwebDb {
               taxon.setInsertMethod(rset.getString("insert_method"));
               taxon.setLineNum(rset.getInt("line_num"));
               taxon.setGroupId(rset.getInt("access_group"));
-              taxon.setIsFossil((rset.getInt("fossil") == 1) ? true : false);
+              taxon.setIsFossil(rset.getInt("fossil") == 1);
 
               String currentValidName = rset.getString("current_valid_name");
               if (currentValidName != null && !taxonName.equals(currentValidName.toLowerCase())) {

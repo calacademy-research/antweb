@@ -37,7 +37,7 @@ public final class AdminAlertMgr {
             adminAlert.setId(rset.getInt("id")); 
             adminAlert.setAlert(rset.getString("alert")); 
             adminAlert.setCreated(rset.getTimestamp("created")); 
-            adminAlert.setIsAcknowledged(rset.getInt("acknowledged") == 1 ? true : false); 
+            adminAlert.setIsAcknowledged(rset.getInt("acknowledged") == 1);
     
             s_adminAlerts.add(adminAlert);
           }

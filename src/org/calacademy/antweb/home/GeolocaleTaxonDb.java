@@ -67,7 +67,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
                 geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
                 geolocaleTaxon.setSource((String) rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
-                geolocaleTaxon.setIsIntroduced((rset.getInt("is_introduced") == 1) ? true : false);
+                geolocaleTaxon.setIsIntroduced(rset.getInt("is_introduced") == 1);
 
                 if (geolocaleTaxon.getGeolocaleId() == 10) A.log(" get() Mayotte introduced:" + geolocaleTaxon.getIsIntroduced());
             }
@@ -104,7 +104,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
                 geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
                 geolocaleTaxon.setSource((String) rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
-                geolocaleTaxon.setIsIntroduced((rset.getInt("is_introduced") == 1) ? true : false);
+                geolocaleTaxon.setIsIntroduced(rset.getInt("is_introduced") == 1);
                 taxonSetList.add(geolocaleTaxon);
 
                 if (geolocaleTaxon.getGeolocaleId() == 10) A.log(" getTaxonSetList() Mayotte introduced:" + geolocaleTaxon.getIsIntroduced());

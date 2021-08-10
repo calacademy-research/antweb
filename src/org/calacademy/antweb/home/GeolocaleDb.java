@@ -311,9 +311,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 		  geolocale.setId(rset.getInt("id"));
 		  geolocale.setName(rset.getString("name"));
 	 
-		  geolocale.setIsValid((rset.getInt("is_valid") == 1) ? true : false);
+		  geolocale.setIsValid(rset.getInt("is_valid") == 1);
 		  geolocale.setValidName(rset.getString("valid_name"));
-		  geolocale.setIsUn((rset.getInt("is_un") == 1) ? true : false);
+		  geolocale.setIsUn(rset.getInt("is_un") == 1);
 		  geolocale.setIsoCode(rset.getString("isoCode"));
 		  geolocale.setIso3Code(rset.getString("iso3Code"));
 		  geolocale.setSource(rset.getString("source"));
@@ -324,7 +324,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 		  geolocale.setAltBioregion(rset.getString("alt_bioregion"));	  
 		  geolocale.setParent(rset.getString("parent"));
           //if ("Kansas".equals(geolocale.getName())) A.log("populate() Kansas " + geolocale.getCountry() + " parent:" + geolocale.getParent());
-		  geolocale.setIsLive((rset.getInt("is_live") == 1) ? true : false);
+		  geolocale.setIsLive(rset.getInt("is_live") == 1);
 		  geolocale.setExtent(rset.getString("extent"));
 		  geolocale.setCoords(rset.getString("coords"));
 		  geolocale.setMapImage(rset.getString("map"));
@@ -339,9 +339,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
 
 		  geolocale.setCreated(rset.getTimestamp("created"));
-		  geolocale.setIsUseChildren((rset.getInt("is_use_children") == 1) ? true : false);
-		  geolocale.setIsUseParentRegion((rset.getInt("is_use_parent_region") == 1) ? true : false);
-		  geolocale.setIsIsland((rset.getInt("is_island") == 1) ? true : false);
+		  geolocale.setIsUseChildren(rset.getInt("is_use_children") == 1);
+		  geolocale.setIsUseParentRegion(rset.getInt("is_use_parent_region") == 1);
+		  geolocale.setIsIsland(rset.getInt("is_island") == 1);
           //if ("Greece".equals(geolocale.getName())) A.log("GeolocaleDb 1 name:" + geolocale.getName() + " isUseChildren:" + geolocale.getIsUseChildren());
 
 		  if (withChildren && !("adm1".equals(geolocale.getGeorank()))) {
@@ -768,7 +768,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
               //type = rset.getString("type");
                 //s_log.info("fetchSpeciesLists() name:" + projectName);    
               
-    	      boolean isUseChildren = (rset.getInt("is_use_children") == 1) ? true : false;
+    	      boolean isUseChildren = rset.getInt("is_use_children") == 1;
 
 				//if ("Greece".equals(name)) A.log("GeolocaleDb 2 name:" + name + " isUseChildren:" + isUseChildren);
 

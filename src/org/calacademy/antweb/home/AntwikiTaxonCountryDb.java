@@ -198,7 +198,7 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
                 String originalTaxonName = rset.getString("original_taxon_name");
                 String taxonName = rset.getString("taxon_name");
                 String country = rset.getString("country");
-                boolean isIntroduced = (rset.getInt("is_introduced") == 1) ? true : false;
+                boolean isIntroduced = rset.getInt("is_introduced") == 1;
                 Timestamp created = rset.getTimestamp("created");
                 // String projectName = rset.getString("project_name");
                 AntwikiTaxonCountry taxonCountry = new AntwikiTaxonCountry();

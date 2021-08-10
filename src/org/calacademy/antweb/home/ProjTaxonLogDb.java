@@ -139,7 +139,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
                 projTaxonLog.setCuratorId(rset.getInt("curator_id"));
 
                 int isCurrent = rset.getInt("is_current");
-                projTaxonLog.setIsCurrent((isCurrent == 1) ? true : false);
+                projTaxonLog.setIsCurrent(isCurrent == 1);
                 ArrayList<ProjTaxonLogDetail> projTaxonLogDetails = null;
                 if (projTaxonLog.getIsCurrent()) {
                   projTaxonLogDetails = getProjTaxonLogDetails(projectName, displaySubfamily);

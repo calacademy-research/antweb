@@ -149,7 +149,7 @@ public class ProjectDb extends AntwebDb {
             project.setSpeciesListMappable(rset.getBoolean("species_list_mappable"));
 
             project.setScope(rset.getString("scope"));
-            project.setIsLive((rset.getInt("is_live") == 1) ? true : false);
+            project.setIsLive(rset.getInt("is_live") == 1);
 
             project.setDisplayKey(rset.getString("display_key"));
 

@@ -42,7 +42,7 @@ public class ImageUploadDb extends AntwebDb {
                 Copyright copyright = (new CopyrightDb(getConnection())).getCopyrightByYear(year);
                 imageUpload.setCopyright(copyright);
                 imageUpload.setLicense(rset.getString("license"));
-                imageUpload.setIsComplete((rset.getInt("complete") == 1) ? true : false);
+                imageUpload.setIsComplete(rset.getInt("complete") == 1);
                 imageUpload.setImages(getImagesUploaded(imageUpload));
             }
         } catch (SQLException e) {
@@ -73,8 +73,8 @@ public class ImageUploadDb extends AntwebDb {
                 imageUploaded.setCreated(rset.getTimestamp("created"));
                 imageUploaded.setShot(rset.getString("shot"));
                 imageUploaded.setExt(rset.getString("ext"));
-                imageUploaded.setIsReUploaded((rset.getInt("reuploaded") == 1) ? true : false);
-                imageUploaded.setIsSpecimenDataExists((rset.getInt("specimen_data_exists") == 1) ? true : false);
+                imageUploaded.setIsReUploaded(rset.getInt("reuploaded") == 1);
+                imageUploaded.setIsSpecimenDataExists(rset.getInt("specimen_data_exists") == 1);
                 imageUploaded.setErrorMessage(rset.getString("error_message"));
                 images.add(imageUploaded);
             }
@@ -115,7 +115,7 @@ public class ImageUploadDb extends AntwebDb {
                 int year = rset.getInt("copyright_year");
                 Copyright copyright = (new CopyrightDb(getConnection())).getCopyrightByYear(year);
                 imageUpload.setCopyright(copyright);
-                imageUpload.setIsComplete((rset.getInt("complete") == 1) ? true : false);
+                imageUpload.setIsComplete(rset.getInt("complete") == 1);
                 imageUploads.add(imageUpload);
             }
 

@@ -59,8 +59,8 @@ public class GeolocaleTaxon extends OverviewTaxon {
                 setImageCount(rset.getInt("image_count"));
                 setCreated(rset.getTimestamp("created"));
                 setSource(rset.getString("source"));
-                setIsIntroduced((rset.getInt("is_introduced") == 1) ? true : false);
-                setIsEndemic((rset.getInt("is_endemic") == 1) ? true : false);
+                setIsIntroduced(rset.getInt("is_introduced") == 1);
+                setIsEndemic(rset.getInt("is_endemic") == 1);
                              
                 ProjTaxon projTaxon = AllAntwebMgr.get(taxonName);
                 setGlobalChildCount(projTaxon);                                           

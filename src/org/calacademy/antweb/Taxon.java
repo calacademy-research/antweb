@@ -287,10 +287,10 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
                 setLineNum(rset.getInt("line_num"));
                 setInsertMethod(rset.getString("insert_method"));
                 setCreated(rset.getTimestamp("created"));
-                setIsFossil((rset.getInt("fossil") == 1) ? true : false);
-                setIsType((rset.getInt("type") == 1) ? true : false);
-                setIsAntCat((rset.getInt("antcat") == 1) ? true : false);
-                setIsPending((rset.getInt("pending") == 1) ? true : false);           
+                setIsFossil(rset.getInt("fossil") == 1);
+                setIsType(rset.getInt("type") == 1);
+                setIsAntCat(rset.getInt("antcat") == 1);
+                setIsPending(rset.getInt("pending") == 1);
 
                 setAntcatId(rset.getInt("antcat_id"));
                 setAuthorDate(rset.getString("author_date"));
@@ -298,11 +298,11 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
                 setAuthors(rset.getString("authors"));
                 setYear(rset.getString("year"));
                 setStatus(rset.getString("status"));
-                setIsAvailable((rset.getInt("available") == 1) ? true : false);
+                setIsAvailable(rset.getInt("available") == 1);
                 setCurrentValidName(rset.getString("current_valid_name"));
                 setCurrentValidRank(rset.getString("current_valid_rank"));
                 setCurrentValidParent(rset.getString("current_valid_parent"));                
-                setIsOriginalCombination((rset.getInt("original_combination") == 1) ? true : false);
+                setIsOriginalCombination(rset.getInt("original_combination") == 1);
                 setWasOriginalCombination(rset.getString("was_original_combination"));
                 //setCountry(rset.getString("country"));
                 //setBioregion(rset.getString("bioregion"));
@@ -1499,9 +1499,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         
             String code = rset.getString("code");
             String rsetCaste = rset.getString("caste");
-            boolean isMale = "male".equals(rsetCaste) ? true : false; 
-            boolean isWorker = "worker".equals(rsetCaste) ? true : false; 
-            boolean isQueen = "queen".equals(rsetCaste) ? true : false; 
+            boolean isMale = "male".equals(rsetCaste);
+            boolean isWorker = "worker".equals(rsetCaste);
+            boolean isQueen = "queen".equals(rsetCaste);
  
             // Set in case we don't find what we are looking for...
             if (firstMale == null && isMale) firstMale = code;
