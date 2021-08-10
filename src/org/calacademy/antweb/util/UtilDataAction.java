@@ -72,11 +72,11 @@ public class UtilDataAction extends Action {
         // Being called from a getUrl() by Schedule.do, Scheduler.java.
         if (!isAllow) { 
 
-          List<String> needNothingInit = new ArrayList<>(Arrays.asList(new String[]{"fetchGoogleApisData", "delGoogleMapFunction", "genGoogleMapFunction", "delGoogleMapFunction", "genObjectMaps"
+          List<String> needNothingInit = new ArrayList<>(Arrays.asList("fetchGoogleApisData", "delGoogleMapFunction", "genGoogleMapFunction", "delGoogleMapFunction", "genObjectMaps"
                   , "genGroupObjectMap", "genGroupObjectMaps", "updateGroupCounts", "updateGroupUploadStats", "exifData", "changeOwner", "changeOwnerAndPerms"
-                  , "adminAlertTest", "populateBioregion", "siteWarning", "imageUtil"}));
-          List<String> needLoginInit = new ArrayList<>(Arrays.asList(new String[]{"imageUtil"}));
-          List<String> needTaxonInit = new ArrayList<>(Arrays.asList(new String[]{"worldantsReload"}));
+                  , "adminAlertTest", "populateBioregion", "siteWarning", "imageUtil"));
+          List<String> needLoginInit = new ArrayList<>(Arrays.asList("imageUtil"));
+          List<String> needTaxonInit = new ArrayList<>(Arrays.asList("worldantsReload"));
 
           if (needNothingInit.contains(action)) { 
             // do nothing.
