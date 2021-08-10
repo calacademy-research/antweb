@@ -114,7 +114,7 @@ public class OperationDetails {
         String execTimeSec = execTime.substring(0, i);
         try {
           int secs = (Integer.valueOf(execTimeSec)).intValue();
-          double min = secs / 60;
+          double min = secs / 60d;
           return " (" + min + " min)";
         } catch (NumberFormatException e) {
           // do nothing.          

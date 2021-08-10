@@ -1016,7 +1016,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 ++rangeElevation;
                 String lowRange = elemStr.substring(0, elemStr.indexOf("-")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("-") + 1).trim();
-                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2;
+                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2d;
                 int averageElevInt = (Double.valueOf(averageElev)).intValue();
                 elemStr = (Integer.valueOf(averageElevInt)).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);
@@ -1026,7 +1026,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 ++rangeElevation;
                 String lowRange = elemStr.substring(0, elemStr.indexOf("to")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("to") + 2).trim();
-                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2;
+                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2d;
                 int averageElevInt = (Double.valueOf(averageElev)).intValue();
                 elemStr = (Integer.valueOf(averageElevInt)).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);

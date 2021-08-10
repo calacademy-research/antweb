@@ -117,7 +117,7 @@ public class FileUtil {
     long usableSpaceInMB = file.getUsableSpace() / 1024 / 1024 / 1024;
 
     String space = " Total:" + totalSpaceInMB + "GB Free:" + freeSpaceInMB + "GB Usable:" + usableSpaceInMB + "GB";
-    double percent = 100 - ((file.getUsableSpace() * 100) / file.getTotalSpace());
+    double percent = 100 - ((file.getUsableSpace() * 100d) / file.getTotalSpace());
     String stats = "<b>Disk:</b> <font color=red>"+percent +"%</font>.  " + space;
     return stats;
   }
