@@ -168,10 +168,8 @@ public class UserAgentTracker {
 
       report += "<br><br>DevMode:";
 
-      ArrayList<Integer> list = new ArrayList<>();
-      TreeSet treeSet = new TreeSet();
-      treeSet.addAll(countMap.keySet());
-      list.addAll(treeSet);
+      TreeSet treeSet = new TreeSet(countMap.keySet());
+      ArrayList<Integer> list = new ArrayList<>(treeSet);
 
       for (Integer count : list) {
           agent = (countMap.get(count));

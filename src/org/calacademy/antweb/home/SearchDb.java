@@ -59,8 +59,7 @@ public class SearchDb {
       }
 
       // remove duplicates
-      Set<String> set = new HashSet<>();
-	  set.addAll(adm1s);
+        Set<String> set = new HashSet<>(adm1s);
 	  adm1s.clear();
 	  adm1s.addAll(set);
 
