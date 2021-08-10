@@ -60,9 +60,7 @@ public class CommonNames {
     //nameMap.put("", "");
         
     namesList = new ArrayList<>();
-    for (String name : nameMap.keySet()) {
-      namesList.add(name);
-    }
+      namesList.addAll(nameMap.keySet());
     //A.log("CommonNames() namesList:" + namesList);
   }
 

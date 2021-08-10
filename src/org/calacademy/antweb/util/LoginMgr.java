@@ -48,9 +48,7 @@ public class LoginMgr extends Manager {
         s_curators = loginDb.getAllCurators();
 
         ArrayList<Curator> tempList = new ArrayList<>();
-        for (Curator curator : s_curators) {
-            tempList.add(curator);
-        }
+        tempList.addAll(s_curators);
 
         for (Curator curator : tempList) {
             loginDb.postInstantiate(curator);

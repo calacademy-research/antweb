@@ -2599,9 +2599,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
     public ArrayList<Geolocale> getGeolocales() {
       ArrayList<Geolocale> geolocales = new ArrayList<>();
-      for (Country country: getCountries()) {
-        geolocales.add(country);
-      }
+        geolocales.addAll(getCountries());
       return geolocales;
     }
     

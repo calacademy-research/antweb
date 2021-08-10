@@ -1465,10 +1465,8 @@ public abstract class HttpUtil {
       if (colors != null) return colors;
       ArrayList<String> colorList = new ArrayList<>();
       for (int i=0 ; i <=MAX_ITERATION ; ++i) {
-          for (String uniqueColor : uniqueColors) {
-              //A.log("getColors() i:" + i + " j:" + j + " color:" + uniqueColors[j]);
-              colorList.add(uniqueColor);
-          }
+          //A.log("getColors() i:" + i + " j:" + j + " color:" + uniqueColors[j]);
+          colorList.addAll(Arrays.asList(uniqueColors));
       }      
       colors = colorList.toArray(new String[colorList.size()]);
       //A.log("getColors:" + colorList);
