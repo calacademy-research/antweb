@@ -190,39 +190,44 @@ public class TaxaPage implements Serializable {
 			while (rset.next()) {
 				Taxon child = null;
 
-				if ("family".equals(rank)) {
-					child = new Family();
-					child.setFamily(rset.getString("family"));
-					child.setRank(rank);
-				} else if ("subfamily".equals(rank)) {
-					child = new Subfamily();
-					//child.setName(rset.getString("subfamily"));
-					child.setRank(rank);
-					child.setSubfamily(rset.getString("subfamily"));
-				} else if ("genus".equals(rank)) {
-					child = new Genus();
-					//child.setName(rset.getString("genus"));
-					child.setRank(rank);
-					child.setSubfamily(rset.getString("subfamily"));
-					child.setGenus(rset.getString("genus"));
-				} else if ("species".equals(rank)) {
-					String selectedRank = (rset.getString("taxarank"));
-                    if ("species".equals(selectedRank)) {
-	    				child = new Species();   
-                    } else { // Then it is subspecies
-                        child = new Subspecies();           
-                    }
-     				child.setRank(selectedRank);                     
-					//child.setName(rset.getString("species"));
-					child.setSubfamily(rset.getString("subfamily"));
-					child.setGenus(rset.getString("genus"));
-					String species = rset.getString("species");
-                    //if (species.contains("'")) s_log.warn("fetchChildren species with single quote:" + species);
-					child.setSpecies(species);
-					child.setSubspecies(rset.getString("subspecies"));
+                switch (rank) {
+                    case "family":
+                        child = new Family();
+                        child.setFamily(rset.getString("family"));
+                        child.setRank(rank);
+                        break;
+                    case "subfamily":
+                        child = new Subfamily();
+                        //child.setName(rset.getString("subfamily"));
+                        child.setRank(rank);
+                        child.setSubfamily(rset.getString("subfamily"));
+                        break;
+                    case "genus":
+                        child = new Genus();
+                        //child.setName(rset.getString("genus"));
+                        child.setRank(rank);
+                        child.setSubfamily(rset.getString("subfamily"));
+                        child.setGenus(rset.getString("genus"));
+                        break;
+                    case "species":
+                        String selectedRank = (rset.getString("taxarank"));
+                        if ("species".equals(selectedRank)) {
+                            child = new Species();
+                        } else { // Then it is subspecies
+                            child = new Subspecies();
+                        }
+                        child.setRank(selectedRank);
+                        //child.setName(rset.getString("species"));
+                        child.setSubfamily(rset.getString("subfamily"));
+                        child.setGenus(rset.getString("genus"));
+                        String species = rset.getString("species");
+                        //if (species.contains("'")) s_log.warn("fetchChildren species with single quote:" + species);
+                        child.setSpecies(species);
+                        child.setSubspecies(rset.getString("subspecies"));
 
-                    child.setIntroducedMap(TaxonPropMgr.getIntroducedMap(child.getTaxonName()));
-				}
+                        child.setIntroducedMap(TaxonPropMgr.getIntroducedMap(child.getTaxonName()));
+                        break;
+                }
 
                 if (child == null) {
                   s_log.warn("fetchChildren() not found for query:" + fetchChildrenQuery);

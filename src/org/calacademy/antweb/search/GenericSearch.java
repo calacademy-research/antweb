@@ -660,60 +660,90 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
 
     public String getOperator(String searchType) {
         String operator = null;
-        if (searchType.equals("equals") || searchType.equals("equal")) {
-            operator = "=";
-        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
-            operator = "!=";
-        } else if (searchType.equals("contains")) {
-            operator = "like";
-        } else if (searchType.equals("begins")) {
-            operator = "like";
-        } else if (searchType.equals("ends")) {
-            operator = "like";
-        } else if (searchType.equals("greaterThanOrEqual")) {
-            operator = ">=";
-        } else if (searchType.equals("lessThanOrEqual")) {
-            operator = "<=";
+        switch (searchType) {
+            case "equals":
+            case "equal":
+                operator = "=";
+                break;
+            case "notEquals":
+            case "notEqual":
+                operator = "!=";
+                break;
+            case "contains":
+                operator = "like";
+                break;
+            case "begins":
+                operator = "like";
+                break;
+            case "ends":
+                operator = "like";
+                break;
+            case "greaterThanOrEqual":
+                operator = ">=";
+                break;
+            case "lessThanOrEqual":
+                operator = "<=";
+                break;
         }
         return operator;
     }
 
     private String getLeftPercent(String searchType) {
         String leftPercent = null;
-        if (searchType.equals("equals") || searchType.equals("equal")) {
-            leftPercent = "";
-        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
-            leftPercent = "";
-        } else if (searchType.equals("contains")) {
-            leftPercent = "%";
-        } else if (searchType.equals("begins")) {
-            leftPercent = "";
-        } else if (searchType.equals("ends")) {
-            leftPercent = "%";
-        } else if (searchType.equals("greaterThanOrEqual")) {
-            leftPercent = "";
-        } else if (searchType.equals("lessThanOrEqual")) {
-            leftPercent = "";
+        switch (searchType) {
+            case "equals":
+            case "equal":
+                leftPercent = "";
+                break;
+            case "notEquals":
+            case "notEqual":
+                leftPercent = "";
+                break;
+            case "contains":
+                leftPercent = "%";
+                break;
+            case "begins":
+                leftPercent = "";
+                break;
+            case "ends":
+                leftPercent = "%";
+                break;
+            case "greaterThanOrEqual":
+                leftPercent = "";
+                break;
+            case "lessThanOrEqual":
+                leftPercent = "";
+                break;
         }
         return leftPercent;
     }
 
     private String getRightPercent(String searchType) {
         String rightPercent = null;
-        if (searchType.equals("equals") || searchType.equals("equal")) {
-            rightPercent = "";
-        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
-            rightPercent = "";
-        } else if (searchType.equals("contains")) {
-            rightPercent = "%";
-        } else if (searchType.equals("begins")) {
-            rightPercent = "%";
-        } else if (searchType.equals("ends")) {
-            rightPercent = "";
-        } else if (searchType.equals("greaterThanOrEqual")) {
-            rightPercent = "";
-        } else if (searchType.equals("lessThanOrEqual")) {
-            rightPercent = "";
+        switch (searchType) {
+            case "equals":
+            case "equal":
+                rightPercent = "";
+                break;
+            case "notEquals":
+            case "notEqual":
+                rightPercent = "";
+                break;
+            case "contains":
+                rightPercent = "%";
+                break;
+            case "begins":
+                rightPercent = "%";
+                break;
+            case "ends":
+                rightPercent = "";
+                break;
+            case "greaterThanOrEqual":
+                rightPercent = "";
+                break;
+            case "lessThanOrEqual":
+                rightPercent = "";
+                break;
         }
         return rightPercent;
     }

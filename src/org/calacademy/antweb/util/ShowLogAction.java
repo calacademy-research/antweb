@@ -85,22 +85,29 @@ public final class ShowLogAction extends Action {
 
 
         String tomcatDir = AntwebProps.getTomcatDir();
-        if (action.equals("tomcatLog")) {
-            log = tomcatDir + AntwebProps.getProp("site.tomcatLog");   
-        } else if (action.equals("apacheLog")) {
-            log = tomcatDir + AntwebProps.getProp("site.apacheLog");   
-        } else if (action.equals("antwebLog")) {
-            log = tomcatDir + AntwebProps.getProp("site.antwebLog");   
-        } else if (action.equals("antwebInfoLog")) {
-            log = tomcatDir + AntwebProps.getProp("site.antwebInfoLog");   
-        } else if (action.equals("queryStatsLog")) {
-            log = AntwebProps.getDocRoot() + AntwebProps.getProp("site.queryStatsLog");   
-        } else if (action.equals("get")) {
-            if (loc == null || "".equals(loc) || loc.equals("web")) {
-                log = AntwebProps.getDocRoot() + "web/log/" + fileName + "." + ext;
-            } else {
-                log = AntwebProps.getDataRoot() + "log/" + fileName + "." + ext;
-            }
+        switch (action) {
+            case "tomcatLog":
+                log = tomcatDir + AntwebProps.getProp("site.tomcatLog");
+                break;
+            case "apacheLog":
+                log = tomcatDir + AntwebProps.getProp("site.apacheLog");
+                break;
+            case "antwebLog":
+                log = tomcatDir + AntwebProps.getProp("site.antwebLog");
+                break;
+            case "antwebInfoLog":
+                log = tomcatDir + AntwebProps.getProp("site.antwebInfoLog");
+                break;
+            case "queryStatsLog":
+                log = AntwebProps.getDocRoot() + AntwebProps.getProp("site.queryStatsLog");
+                break;
+            case "get":
+                if (loc == null || "".equals(loc) || loc.equals("web")) {
+                    log = AntwebProps.getDocRoot() + "web/log/" + fileName + "." + ext;
+                } else {
+                    log = AntwebProps.getDataRoot() + "log/" + fileName + "." + ext;
+                }
+                break;
         }
 
         if (log == null) {

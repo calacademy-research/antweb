@@ -357,33 +357,46 @@ public class SpeciesListUpload extends AntwebUpload {
                 if (isGoodTaxonHeader) {
                     colList.add(theHead);
                     descriptionList.add(null);
-                    if (theHead.equals("subfamily")) {
-                        subfamilyHeader = headCount; 
-                    } else if (theHead.equals("genus")) {
-                        genusHeader = headCount;
-                    } else if (theHead.equals("species")) {
-                        speciesHeader = headCount;
-                    } else if (theHead.equals("subspecies")) {
-                        subspeciesHeader = headCount;
-                    } else if (theHead.equals("author_date")) {
-						// A.log("importSpeciesList authorDate header found");
-                        authorDateHeader = headCount;
+                    switch (theHead) {
+                        case "subfamily":
+                            subfamilyHeader = headCount;
+                            break;
+                        case "genus":
+                            genusHeader = headCount;
+                            break;
+                        case "species":
+                            speciesHeader = headCount;
+                            break;
+                        case "subspecies":
+                            subspeciesHeader = headCount;
+                            break;
+                        case "author_date":
+                            // A.log("importSpeciesList authorDate header found");
+                            authorDateHeader = headCount;
 
-                    } else if (theHead.equals("country")) {
-                        countryHeader = headCount;
-                    } else if (theHead.equals("bioregion")) {
-                        bioregionHeader = headCount;
-                    } else if (theHead.equals("reference_id")) {
-                        referenceIdHeader = headCount;
+                            break;
+                        case "country":
+                            countryHeader = headCount;
+                            break;
+                        case "bioregion":
+                            bioregionHeader = headCount;
+                            break;
+                        case "reference_id":
+                            referenceIdHeader = headCount;
 
-                    } else if (theHead.equals("status")) {
-                        statusHeader = headCount;
-                    } else if (theHead.equals("current_valid_rank")) {
-                        currentValidRankHeader = headCount;
-                    } else if (theHead.equals("antcat_id")) {
-                        antcatIdHeader = headCount;
-                    } else if (theHead.equals("fossil")) {
-                        fossilHeader = headCount;
+                            break;
+                        case "status":
+                            statusHeader = headCount;
+                            break;
+                        case "current_valid_rank":
+                            currentValidRankHeader = headCount;
+                            break;
+                        case "antcat_id":
+                            antcatIdHeader = headCount;
+                            break;
+                        case "fossil":
+                            fossilHeader = headCount;
+                            break;
                     }
                 } else {
                     descriptionList.add(theHead);

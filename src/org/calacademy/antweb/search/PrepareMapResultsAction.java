@@ -52,22 +52,32 @@ Request objects:
         String resultSetModifier = "unset";
         GenericSearchResults results = null;
         String forwardString = "failure";
-        if (resultRank.equals("specimen")) {
-            results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-			if (session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
-            forwardString = "advancedSearch"; 
-        } else if (resultRank.equals("locality")) {
-            results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-			if (session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
-            forwardString = "advancedSearch"; 
-        } else if ((resultRank.equals("species")) || (resultRank.equals("genus")) || (resultRank.equals("subfamily"))) {
-            results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-			if (session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
-            request.setAttribute("resultRank", resultRank);            
-            forwardString = "advancedSearchByTaxon";
-        } else if (resultRank.equals("bayArea")) { 
-            results = (BayAreaSearchResults) session.getAttribute("searchResults");
-            forwardString = "bayAreaSearch";
+        switch (resultRank) {
+            case "specimen":
+                results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
+                if (session.getAttribute("fullAdvancedSearchResults") != null)
+                    results.setResults((ArrayList) session.getAttribute("fullAdvancedSearchResults")); // added to fix session
+                forwardString = "advancedSearch";
+                break;
+            case "locality":
+                results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
+                if (session.getAttribute("fullAdvancedSearchResults") != null)
+                    results.setResults((ArrayList) session.getAttribute("fullAdvancedSearchResults")); // added to fix session
+                forwardString = "advancedSearch";
+                break;
+            case "species":
+            case "genus":
+            case "subfamily":
+                results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
+                if (session.getAttribute("fullAdvancedSearchResults") != null)
+                    results.setResults((ArrayList) session.getAttribute("fullAdvancedSearchResults")); // added to fix session
+                request.setAttribute("resultRank", resultRank);
+                forwardString = "advancedSearchByTaxon";
+                break;
+            case "bayArea":
+                results = (BayAreaSearchResults) session.getAttribute("searchResults");
+                forwardString = "bayAreaSearch";
+                break;
         }
          
         /* 

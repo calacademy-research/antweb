@@ -250,25 +250,30 @@ public class TypeSearch implements Serializable {
     //  return "";
     //}
 
-    if (searchType.equals("equals")) {
-      operator = "=";
-      leftPercent = "";
-      rightPercent = "";
-    } else if (searchType.equals("contains")) {
-      operator = "like";
-      leftPercent = "%";
-      rightPercent = "%";
-    } else if (searchType.equals("begins")) {
-      operator = "like";
-      leftPercent = "";
-      rightPercent = "%";
-    } else if (searchType.equals("ends")) {
-      operator = "like";
-      leftPercent = "%";
-      rightPercent = "";
-    } else {
-      return null;
-    }
+       switch (searchType) {
+           case "equals":
+               operator = "=";
+               leftPercent = "";
+               rightPercent = "";
+               break;
+           case "contains":
+               operator = "like";
+               leftPercent = "%";
+               rightPercent = "%";
+               break;
+           case "begins":
+               operator = "like";
+               leftPercent = "";
+               rightPercent = "%";
+               break;
+           case "ends":
+               operator = "like";
+               leftPercent = "%";
+               rightPercent = "";
+               break;
+           default:
+               return null;
+       }
 
     sb.append(property);
     sb.append(" ");

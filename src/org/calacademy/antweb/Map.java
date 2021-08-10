@@ -808,26 +808,33 @@ public class Map {
         for (Specimen specimen : specimens) {
 //            thisSpecimen = (Specimen) theIter.next();
             //i = i + 1;
-            if (field.equals("name")) {    
-                value = format.capitalizeFirstLetter(specimen.getGenus()) + " " + specimen.getSpecies();
-                if (specimen.getSubspecies() != null) value += " " + specimen.getSubspecies();
-            } else if (field.equals("code")) {
-                value = specimen.getCode();
-            } else if (field.equals("localitycode")) {
-                value = specimen.getLocalityCode();
-            } else if (field.equals("localityname")) {
-                value = specimen.getLocalityName();
-            } else if (field.equals("images")) {
-                if (specimen.getImages() != null) {
-                    specImage = (SpecimenImage) specimen.getImages().get("p1");
-                    if (specImage != null) {
-                        value = specImage.getLowres();
+            switch (field) {
+                case "name":
+                    value = format.capitalizeFirstLetter(specimen.getGenus()) + " " + specimen.getSpecies();
+                    if (specimen.getSubspecies() != null) value += " " + specimen.getSubspecies();
+                    break;
+                case "code":
+                    value = specimen.getCode();
+                    break;
+                case "localitycode":
+                    value = specimen.getLocalityCode();
+                    break;
+                case "localityname":
+                    value = specimen.getLocalityName();
+                    break;
+                case "images":
+                    if (specimen.getImages() != null) {
+                        specImage = (SpecimenImage) specimen.getImages().get("p1");
+                        if (specImage != null) {
+                            value = specImage.getLowres();
+                        }
+                    } else {
+                        value = "";
                     }
-                } else {
-                    value = "";
-                }
-            } else {
-              //i = i - 1; // because we didn't find something to add.
+                    break;
+                default:
+                    //i = i - 1; // because we didn't find something to add.
+                    break;
             }
             if (foundPoint == true) {
                 theArrayString.append(",");

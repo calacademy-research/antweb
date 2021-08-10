@@ -99,25 +99,35 @@ public final class Rank implements Serializable {
 		if (rank == null)
 			return null;
 		String singularRank;
-		if ("Families".equals(rank)) {
-			singularRank = "Family";
-		} else if ("Subfamilies".equals(rank)) {
-			singularRank = "Subfamily";
-		} else if ("Tribes".equals(rank)) {
-			singularRank = "Tribe";
-		} else if ("Genera".equals(rank)) {
-			singularRank = "Genus";
-		} else if ("Species".equals(rank)) {
-			singularRank = "Species";
-		} else if ("Subspecies".equals(rank)) {
-			singularRank = "Subspecies";
-		} else if ("Specimens".equals(rank)) {
-			singularRank = "Specimen";
-		} else if ("Localities".equals(rank)) {
-			singularRank = "Locality";
-		} else {
-			singularRank = rank;
-		}
+        switch (rank) {
+            case "Families":
+                singularRank = "Family";
+                break;
+            case "Subfamilies":
+                singularRank = "Subfamily";
+                break;
+            case "Tribes":
+                singularRank = "Tribe";
+                break;
+            case "Genera":
+                singularRank = "Genus";
+                break;
+            case "Species":
+                singularRank = "Species";
+                break;
+            case "Subspecies":
+                singularRank = "Subspecies";
+                break;
+            case "Specimens":
+                singularRank = "Specimen";
+                break;
+            case "Localities":
+                singularRank = "Locality";
+                break;
+            default:
+                singularRank = rank;
+                break;
+        }
 		return singularRank;
 	}
 	
