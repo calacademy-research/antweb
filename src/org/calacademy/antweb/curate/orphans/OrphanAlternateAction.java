@@ -89,7 +89,7 @@ public final class OrphanAlternateAction extends Action {
           orphanTaxonList = orphansDb.getOrphanAlternatesList();
           request.setAttribute("orphans", orphanTaxonList);
 
-          ArrayList<String> antwebSubfamilyList = new ArrayList<String>(); 
+          ArrayList<String> antwebSubfamilyList = new ArrayList<>();
           UploadDb uploadDb = new UploadDb(connection);
           for (Taxon orphan : orphanTaxonList) {
             String antwebSubfamily = uploadDb.getAntwebSubfamily(orphan.getGenus());
@@ -114,7 +114,7 @@ public final class OrphanAlternateAction extends Action {
     private void putLookupDataInRequest(HttpServletRequest request, Connection connection) 
         throws SQLException {
         Statement stmt = null;
-        ArrayList<String> subfamilies = new ArrayList<String>();
+        ArrayList<String> subfamilies = new ArrayList<>();
         try {        
           stmt = DBUtil.getStatement(connection, "OrphanAlternateAction.putLookupDataInRequest");
           String query = "select distinct subfamily from taxon where family='formicidae' and rank = 'subfamily' and status = 'valid'";

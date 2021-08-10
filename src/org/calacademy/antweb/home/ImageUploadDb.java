@@ -60,7 +60,7 @@ public class ImageUploadDb extends AntwebDb {
 
 
     public ArrayList<ImageUploaded> getImagesUploaded(ImageUpload imageUpload) {
-        ArrayList<ImageUploaded> images = new ArrayList<ImageUploaded>();
+        ArrayList<ImageUploaded> images = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String theQuery = "select * from image_uploaded where image_upload_id = " + imageUpload.getId();
@@ -93,7 +93,7 @@ public class ImageUploadDb extends AntwebDb {
     }    
     
     public ArrayList<ImageUpload> getImageUploads(String criteria) {
-        ArrayList<ImageUpload> imageUploads = new ArrayList<ImageUpload>();
+        ArrayList<ImageUpload> imageUploads = new ArrayList<>();
         Statement stmt = null;
         String query = null;
         ResultSet rset = null;

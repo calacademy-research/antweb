@@ -29,7 +29,7 @@ public class ResultsAction extends Action {
        based on the numbers */
     protected ArrayList<ResultItem> getChosenResultsFromResults(ArrayList<String> chosen, ArrayList<ResultItem> searchResults) {
     
-        ArrayList<ResultItem> chosenResults = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> chosenResults = new ArrayList<>();
 
         for (String choice : chosen) {
           int chosenInt = (Integer.valueOf(choice)).intValue();

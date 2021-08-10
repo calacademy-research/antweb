@@ -58,7 +58,7 @@ public abstract class Queries {
         return list;      
     }
     public static ArrayList<String> getIntegrityNamesArray() {
-      return new ArrayList<String>(Arrays.asList(getIntegrityNames()));
+      return new ArrayList<>(Arrays.asList(getIntegrityNames()));
     }        
     
     public static ArrayList<NamedQuery> getIntegrityQueries() {
@@ -79,7 +79,7 @@ public abstract class Queries {
         return list;
     }
     public static ArrayList<String> getCurateAntcatNamesArray() {
-      return new ArrayList<String>(Arrays.asList(getCurateAntcatNames()));
+      return new ArrayList<>(Arrays.asList(getCurateAntcatNames()));
     }        
     
     public static String[] getDevIntegrityNames() {
@@ -90,7 +90,7 @@ public abstract class Queries {
         return list;
     }
     public static ArrayList<String> getDevIntegrityNamesArray() {
-      return new ArrayList<String>(Arrays.asList(getDevIntegrityNames()));
+      return new ArrayList<>(Arrays.asList(getDevIntegrityNames()));
     }        
     
     // Highest priority. More so that Integrity queries.
@@ -128,7 +128,7 @@ public abstract class Queries {
         return list;    
     }        
     public static ArrayList<String> getCuriousNamesArray() {
-      return new ArrayList<String>(Arrays.asList(getCuriousNames()));
+      return new ArrayList<>(Arrays.asList(getCuriousNames()));
     }  
     
     public static ArrayList<NamedQuery> getCuriousQueries() {
@@ -160,7 +160,7 @@ public abstract class Queries {
         , "notValidProjectTaxonNames"
         , "worldantsUploads"
       };
-      ArrayList<String> names = new ArrayList<String>(Arrays.asList(list));
+      ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
       return names;
     }
 
@@ -177,7 +177,7 @@ public abstract class Queries {
         , "geolocaleTaxaInMultipleBioregions"        
         , "geolocaleTaxaWithoutTaxon"
       };
-      ArrayList<String> names = new ArrayList<String>(Arrays.asList(list));
+      ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
       return names;
     }
     
@@ -187,7 +187,7 @@ public abstract class Queries {
           "uploadingCurators"
         , "curatorEmails"
       };
-      ArrayList<String> names = new ArrayList<String>(Arrays.asList(list));
+      ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
       return names;
     }
 
@@ -197,14 +197,14 @@ public abstract class Queries {
           "groups"
         , "specimenGroups"
       };
-      ArrayList<String> names = new ArrayList<String>(Arrays.asList(list));
+      ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
       return names;
     }            
 
 // ----------------
 
     private static ArrayList<NamedQuery> getTaxaNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
             "brokenTaxaHierarchy"
@@ -472,7 +472,7 @@ public abstract class Queries {
     }
     
     private static ArrayList<NamedQuery> getHomonymNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
            "homonymWithoutTaxon"
@@ -484,7 +484,7 @@ public abstract class Queries {
     }
         
     private static ArrayList<NamedQuery> getSpecimenNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
               "notValidTaxaFromSpecimenList"
@@ -598,7 +598,7 @@ public abstract class Queries {
         
 
     private static ArrayList<NamedQuery> getFossilNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
            "validNonfossilSpeciesWithBioregions"
@@ -642,7 +642,7 @@ public abstract class Queries {
         
 
     private static ArrayList<NamedQuery> getLoginNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
                         
         queries.add(new NamedQuery(
             "loginProjectMapping"
@@ -676,7 +676,7 @@ public abstract class Queries {
     }        
    
     private static ArrayList<NamedQuery> getGroupsNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
          
         queries.add(new NamedQuery(
             "adminLoginIdIsZero"
@@ -697,7 +697,7 @@ public abstract class Queries {
     }                 
         
     private static ArrayList<NamedQuery> getGeolocaleNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
             "invalidValidNamelessCountries"
@@ -807,7 +807,7 @@ public abstract class Queries {
     }        
             
     private static ArrayList<NamedQuery> getProjectTaxaNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
             
         queries.add(new NamedQuery(
            "projTaxaWithoutTaxonWithoutHomonym"
@@ -946,7 +946,7 @@ public abstract class Queries {
     }        
 
     private static ArrayList<NamedQuery> getGeolocaleTaxaNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
  
         queries.add(new NamedQuery(
             "badGeolocaleTaxonParentTaxonName"
@@ -1051,7 +1051,7 @@ public abstract class Queries {
     }                 
 
     private static ArrayList<NamedQuery> getBioregionTaxaNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
  
          queries.add(new NamedQuery(
             "notValidBioregionTaxonNames"
@@ -1064,7 +1064,7 @@ public abstract class Queries {
     }     
 
     private static ArrayList<NamedQuery> getMuseumTaxaNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
     
         queries.add(new NamedQuery(
             "notValidMuseumTaxonNames"
@@ -1076,7 +1076,7 @@ public abstract class Queries {
     }         
 
     private static ArrayList<NamedQuery> getImageNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
  
         queries.add(new NamedQuery(
           "imageCountByOwner"
@@ -1097,7 +1097,7 @@ public abstract class Queries {
 
     private static ArrayList<NamedQuery> getAssortedNamedQueries() {
 
-        ArrayList<NamedQuery> queries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
                 "descriptionEditCountByOwner"
@@ -1191,7 +1191,7 @@ public abstract class Queries {
     // Invoke like: /util.do?action=curiousQuery&name=nonAsciiTaxonName
     public static ArrayList<NamedQuery> getNamedQueries() {        
         
-        ArrayList<NamedQuery> namedQueries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> namedQueries = new ArrayList<>();
 
         namedQueries.addAll(getTaxaNamedQueries());
         namedQueries.addAll(getHomonymNamedQueries());
@@ -1270,9 +1270,9 @@ public abstract class Queries {
     }    
     
     public static ArrayList<NamedQuery> getNamedQueryList(String[] list) {
-        ArrayList<NamedQuery> namedQueries = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> namedQueries = new ArrayList<>();
 
-        ArrayList<String> names = new ArrayList<String>(Arrays.asList(list));
+        ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
         
         for (String name : names) {
           for (NamedQuery namedQuery : getNamedQueries()) {

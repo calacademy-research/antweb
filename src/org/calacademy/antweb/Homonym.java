@@ -373,7 +373,7 @@ A.log("init() query:" + theQuery);
     }
 
     public void setHomonymAuthorDates() throws SQLException {
-      Vector<String> homonymAuthorDates = new Vector<String>();;
+      Vector<String> homonymAuthorDates = new Vector<>();;
       String taxonName = getTaxonName();
       Statement stmt = null;
       ResultSet rset = null;

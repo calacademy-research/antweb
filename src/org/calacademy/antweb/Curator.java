@@ -70,62 +70,62 @@ public class Curator extends Login {
     }  
     
 
-    public static Comparator<Curator> CuratorNameComparator = new Comparator<Curator>() {
+    public static Comparator<Curator> CuratorNameComparator = new Comparator<>() {
 
         public int compare(Curator a1, Curator a2) {
-           String name1 = a1.getDisplayName().toUpperCase();
-           String name2 = a2.getDisplayName().toUpperCase();
+            String name1 = a1.getDisplayName().toUpperCase();
+            String name2 = a2.getDisplayName().toUpperCase();
 
-           //ascending order
-           return name1.compareTo(name2);
+            //ascending order
+            return name1.compareTo(name2);
 
-           //descending order
-           //return name2.compareTo(name1);
+            //descending order
+            //return name2.compareTo(name1);
         }
     };
     
-    public static Comparator<Curator> CuratorGroupNameComparator = new Comparator<Curator>() {
+    public static Comparator<Curator> CuratorGroupNameComparator = new Comparator<>() {
 
         public int compare(Curator a1, Curator a2) {
-           String name1 = a1.getGroup().getName().toUpperCase();
-           String name2 = a2.getGroup().getName().toUpperCase();
+            String name1 = a1.getGroup().getName().toUpperCase();
+            String name2 = a2.getGroup().getName().toUpperCase();
 
-           //ascending order
-           return name1.compareTo(name2);
+            //ascending order
+            return name1.compareTo(name2);
 
-           //descending order
-           //return name2.compareTo(name1);
+            //descending order
+            //return name2.compareTo(name1);
         }
     };
     
-    public static Comparator<Curator> CuratorDescEditComparator = new Comparator<Curator>() {
+    public static Comparator<Curator> CuratorDescEditComparator = new Comparator<>() {
 
         public int compare(Curator a1, Curator a2) {
 
-           int count1 = a1.getDescEditCount();
-           int count2 = a2.getDescEditCount();
+            int count1 = a1.getDescEditCount();
+            int count2 = a2.getDescEditCount();
 
-           /*For ascending order*/
-           //return count1 - count2;
+            /*For ascending order*/
+            //return count1 - count2;
 
-           /*For descending order*/
-           return   count2 - count1;
-       }
+            /*For descending order*/
+            return count2 - count1;
+        }
     };    
 
-    public static Comparator<Curator> CuratorSpecimenUploadComparator = new Comparator<Curator>() {
+    public static Comparator<Curator> CuratorSpecimenUploadComparator = new Comparator<>() {
 
         public int compare(Curator a1, Curator a2) {
 
-           int count1 = a1.getSpecimenUploadCount();
-           int count2 = a2.getSpecimenUploadCount();
+            int count1 = a1.getSpecimenUploadCount();
+            int count2 = a2.getSpecimenUploadCount();
 
-           /*For ascending order*/
-           //return count1 - count2;
+            /*For ascending order*/
+            //return count1 - count2;
 
-           /*For descending order*/
-           return   count2 - count1;
-       }
+            /*For descending order*/
+            return count2 - count1;
+        }
     };      
     
 }

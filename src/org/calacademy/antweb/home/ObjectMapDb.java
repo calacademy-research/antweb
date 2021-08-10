@@ -184,7 +184,7 @@ public class ObjectMapDb extends AntwebDb {
     }
 
     public void genGroupObjectMaps() {
-      HashSet<Group> groups = new HashSet<Group>();
+      HashSet<Group> groups = new HashSet<>();
       ArrayList<Login> logins = LoginMgr.getLogins();
       for (Login login : logins) {
         if (login.isUploadSpecimens())

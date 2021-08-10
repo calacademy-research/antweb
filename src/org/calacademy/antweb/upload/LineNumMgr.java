@@ -43,7 +43,7 @@ public class LineNumMgr {
 		UploadDb uploadDb = new UploadDb(connection);
 		uploadDb.removeUploadLines(UploadHelper.getGroup());
 		
-  	    badCarriageReturnLines = new ArrayList<Integer>();
+  	    badCarriageReturnLines = new ArrayList<>();
 		
 		int componentCountChanges = 0;
 		String[] components = null;

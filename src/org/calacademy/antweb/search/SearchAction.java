@@ -174,7 +174,7 @@ public final class SearchAction extends DispatchAction {
         
         AdvancedSearchResults results = new AdvancedSearchResults();
         results.setRset(searchResults);
-        ArrayList<String> myFilters = new ArrayList<String>();
+        ArrayList<String> myFilters = new ArrayList<>();
         if ((imagesOnly != null) && (imagesOnly.equals("on"))) {
             myFilters.add("images");
         }

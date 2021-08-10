@@ -89,7 +89,7 @@ public class GroupDb extends AntwebDb {
     public ArrayList<Group> getAllGroupsWithSpecimenData() throws SQLException {          
         //String theQuery = "select id from ant_group g where id in (select distinct access_group from specimen) order by name";
         String query = "select id from ant_group g where upload_specimens > 0 order by name";
-        ArrayList<Group> groupList = new ArrayList<Group>();
+        ArrayList<Group> groupList = new ArrayList<>();
 
         PreparedStatement stmt = null;
         ResultSet rset = null;
@@ -188,7 +188,7 @@ public class GroupDb extends AntwebDb {
     
 
     public ArrayList<Group> getUploadGroups(String orderBy) throws SQLException {       
-        ArrayList<Group> groupList = new ArrayList<Group>();
+        ArrayList<Group> groupList = new ArrayList<>();
 
         String uploadIdList = "";
         int u = 0;

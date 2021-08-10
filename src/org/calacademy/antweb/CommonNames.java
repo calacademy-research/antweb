@@ -23,7 +23,7 @@ public class CommonNames {
 
   public static void init() {
     isInitialized = true;
-    nameMap = new HashMap<String, String>();
+    nameMap = new HashMap<>();
 
     nameMap.put("Argentine ant", "dolichoderinaelinepithema humile");
     nameMap.put("Fire ant", "myrmicinaesolenopsis");
@@ -67,7 +67,7 @@ public class CommonNames {
 
     //nameMap.put("", "");
         
-    namesList = new ArrayList<String>();   
+    namesList = new ArrayList<>();
     for (String name : nameMap.keySet()) {
       namesList.add(name);
     }

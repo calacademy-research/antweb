@@ -78,7 +78,7 @@ public class SpeciesListDb extends AntwebDb {
   }
 
   public ArrayList<Taxon> getSpeciesList(String query) {
-    ArrayList<Taxon> speciesList = new ArrayList<Taxon>();
+    ArrayList<Taxon> speciesList = new ArrayList<>();
 
     Statement stmt = null;
     ResultSet rset = null;
@@ -151,7 +151,7 @@ public class SpeciesListDb extends AntwebDb {
       Geolocale country = (GeolocaleMgr.getGeolocale(speciesListName));
       if (country == null) {
         s_log.info("getGeolocaleSpeciesList() null country for speciesListName:" + speciesListName);
-        return new ArrayList<Taxon>();
+        return new ArrayList<>();
       }
       int geolocaleId = country.getId();
       String speciesListCriteria = "(geolocale_id = " + geolocaleId + ")";
@@ -317,7 +317,7 @@ public class SpeciesListDb extends AntwebDb {
   public ArrayList<String> getRefListSubfamilies(String projectCriteria, String countryCriteria, ArrayList<Taxon> searchTaxa) 
     throws SQLException {
     
-    ArrayList<String> refListSubfamilies = new ArrayList<String>();
+    ArrayList<String> refListSubfamilies = new ArrayList<>();
 
     String projectQuery;
     String countryQuery;
@@ -516,7 +516,7 @@ public class SpeciesListDb extends AntwebDb {
       , String speciesList3Name, String refSpeciesList) 
       throws SQLException
     {
-        ArrayList<String> taxonNames = new ArrayList<String>();
+        ArrayList<String> taxonNames = new ArrayList<>();
         String query = "select t.taxon_name from taxon t join proj_taxon pt " 
             + " on t.taxon_name = pt.taxon_name "            
             + " where "

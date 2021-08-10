@@ -25,7 +25,7 @@ public class ProjectDb extends AntwebDb {
     public static int CALACADEMY = 1;
 
     public HashMap<String, Project> getAllProjects() {
-      HashMap<String, Project> projects = new HashMap<String, Project>();
+      HashMap<String, Project> projects = new HashMap<>();
 
       String query = "select project_name from project " 
         + " order by project_name"
@@ -56,7 +56,7 @@ public class ProjectDb extends AntwebDb {
     // This is used to populate the menus for GLOBAL.
     public ArrayList<Project> getProjects(String scope) {
 
-      ArrayList<Project> projects = new ArrayList<Project>();
+      ArrayList<Project> projects = new ArrayList<>();
 
       String query = "select project_name from project " 
          + " where scope = '" + scope + "'"
@@ -85,7 +85,7 @@ public class ProjectDb extends AntwebDb {
     }
 
     public ArrayList<Project> getSubProjects() {
-      ArrayList<Project> projects = new ArrayList<Project>();
+      ArrayList<Project> projects = new ArrayList<>();
 
       String query = "select project_name from project " 
         + " where project_name not in ('allantwebants', 'worldants')"
@@ -278,7 +278,7 @@ public class ProjectDb extends AntwebDb {
    // public ArrayList<SpeciesListable> fetchSpeciesLists(int loginId) throws SQLException {
     
       // A 0 adminId implies admin and will not restrict the search
-      ArrayList<SpeciesListable> speciesListList = new ArrayList<SpeciesListable>();
+      ArrayList<SpeciesListable> speciesListList = new ArrayList<>();
 
       //A.log("fetchProjects() groupId:" + loginId);        
       Statement stmt = null;

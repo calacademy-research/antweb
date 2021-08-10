@@ -47,7 +47,7 @@ public class BioregionMgr {
     }
     
     public static ArrayList<String> getBioregionNames() {
-      ArrayList<String> bioregionNames = new ArrayList<String>();
+      ArrayList<String> bioregionNames = new ArrayList<>();
       for (Bioregion bioregion : s_bioregions) {
         bioregionNames.add(bioregion.getName());      
       }

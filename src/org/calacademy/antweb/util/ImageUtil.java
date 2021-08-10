@@ -26,7 +26,7 @@ public class ImageUtil {
     
     private static Counter counter = new Counter();
     
-    private static ArrayList<SpecimenImage> notTifList = new ArrayList<SpecimenImage>();
+    private static ArrayList<SpecimenImage> notTifList = new ArrayList<>();
     
     public static ArrayList<SpecimenImage> getNotTifList() {
       return notTifList;

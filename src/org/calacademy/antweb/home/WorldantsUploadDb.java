@@ -120,7 +120,7 @@ public class WorldantsUploadDb extends AntwebDb {
           stmt = DBUtil.getStatement(getConnection(), "UploadDb.getWorldantsAlert()");
           stmt.execute(query);
           rset = stmt.getResultSet();
-          HashSet<Integer> intSet = new HashSet<Integer>();
+          HashSet<Integer> intSet = new HashSet<>();
           while (rset.next()) {
             int fileSize = rset.getInt("file_size");        
             intSet.add(fileSize);

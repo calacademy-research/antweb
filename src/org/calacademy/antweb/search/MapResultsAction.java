@@ -207,7 +207,7 @@ public final class MapResultsAction extends ResultsAction {
        based on the numbers */
     protected ArrayList<String> getSpecimensFromResults(ArrayList<String> chosenList, ArrayList<ResultItem> searchResults) 
       throws IndexOutOfBoundsException {
-        ArrayList<String> codeList = new ArrayList<String>();
+        ArrayList<String> codeList = new ArrayList<>();
 
         // Added to allow a null chosenList. Use all.
 		if (chosenList == null) {

@@ -92,7 +92,7 @@ public class CopyrightDb extends AntwebDb {
             rset = stmt.executeQuery(theQuery);
 
             while (rset.next()) {
-                copyrights = new ArrayList<Copyright>();
+                copyrights = new ArrayList<>();
                 copyright = new Copyright();
                 copyright.setId(rset.getInt("id"));
                 copyright.setCopyright(rset.getString("copyright"));

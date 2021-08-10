@@ -53,7 +53,7 @@ public class A {
   }
 
 
-  private static HashMap<String, Integer> s_logiSet = new HashMap<String, Integer>();
+  private static HashMap<String, Integer> s_logiSet = new HashMap<>();
   //Log only once. Enter a unique i. Best to use a contstant.
   public static void logi(String key, String message) {
       logi(key, 1, message);

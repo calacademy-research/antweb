@@ -39,7 +39,7 @@ public class Country extends Geolocale {
     }
 
     private ArrayList<Adm1> getAdm1s(boolean includeInvalids) {      
-        ArrayList<Adm1> adm1s = new ArrayList<Adm1>();
+        ArrayList<Adm1> adm1s = new ArrayList<>();
         for (Geolocale geolocale : getChildren()) {
           if (includeInvalids || geolocale.getIsValid())
             adm1s.add((Adm1) geolocale);
@@ -48,7 +48,7 @@ public class Country extends Geolocale {
     }
 
     public ArrayList<Adm1> getLiveAdm1s() {      
-        ArrayList<Adm1> adm1s = new ArrayList<Adm1>();
+        ArrayList<Adm1> adm1s = new ArrayList<>();
         for (Geolocale geolocale : getChildren()) {
           if (geolocale.getIsLive())
             adm1s.add((Adm1) geolocale);
@@ -57,7 +57,7 @@ public class Country extends Geolocale {
     }
 
     public ArrayList<Adm1> getAllAdm1s() {      
-        ArrayList<Adm1> adm1s = new ArrayList<Adm1>();
+        ArrayList<Adm1> adm1s = new ArrayList<>();
         for (Geolocale geolocale : getChildren()) {
           adm1s.add((Adm1) geolocale);
         }
@@ -113,7 +113,7 @@ public class Country extends Geolocale {
     
     
     public ArrayList<Specimen> sort(ArrayList children) {
-        ArrayList<Specimen> sortedChildren = new ArrayList<Specimen>();
+        ArrayList<Specimen> sortedChildren = new ArrayList<>();
 
         String name = getName();
         for (Object o : children) {

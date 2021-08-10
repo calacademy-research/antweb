@@ -53,7 +53,7 @@ public class LoginMgr extends Manager {
         LoginDb loginDb = new LoginDb(connection);
         s_curators = loginDb.getAllCurators();
 
-        ArrayList<Curator> tempList = new ArrayList<Curator>();
+        ArrayList<Curator> tempList = new ArrayList<>();
         for (Curator curator : s_curators) {
             tempList.add(curator);
         }
@@ -207,7 +207,7 @@ public class LoginMgr extends Manager {
 
 // ------------------------------------------------
 
-    private static HashMap<String, Counts> imageUploadCounts = new HashMap<String, Counts>();
+    private static HashMap<String, Counts> imageUploadCounts = new HashMap<>();
 
     static class Counts {
       int imageUploads = 0;

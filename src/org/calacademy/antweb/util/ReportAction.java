@@ -81,7 +81,7 @@ and adm1.bioregion != country.bioregion and adm1.bioregion is not null order by 
 */
 
     private ArrayList<HashMap<String, String>> getBioregionCountryList(HttpServletRequest request) {
-        ArrayList<HashMap<String, String>> bioregionCountryList = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> bioregionCountryList = new ArrayList<>();
 		boolean success = false;
 		java.sql.Connection connection = null;
         Statement stmt = null;
@@ -105,7 +105,7 @@ and adm1.bioregion != country.bioregion and adm1.bioregion is not null order by 
             
 			rset = stmt.executeQuery(query);	
 			while (rset.next()) {
-			    HashMap<String, String> map = new HashMap<String, String>();
+			    HashMap<String, String> map = new HashMap<>();
 				map.put("bioregion", rset.getString(1));
                 map.put("country", rset.getString(2));
                 map.put("adm1", rset.getString(3));

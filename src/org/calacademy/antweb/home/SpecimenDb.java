@@ -70,7 +70,7 @@ public class SpecimenDb extends AntwebDb {
     }
 
     public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family, String subfamily, String genus, String species, String subspecies) {
-        ArrayList<String> specimenCodes = new ArrayList<String>();
+        ArrayList<String> specimenCodes = new ArrayList<>();
         String code = null;
 
         String project = overview.getName();
@@ -152,7 +152,7 @@ public class SpecimenDb extends AntwebDb {
     }
 
     public ArrayList<String> getIntroducedByGroup(int groupId) {
-      ArrayList<String> introducedSpecimen = new ArrayList<String>();
+      ArrayList<String> introducedSpecimen = new ArrayList<>();
   	  introducedSpecimen.add("<tr><td>Group</td><td>Bioregion</td><td>Code</td><td>Taxon Name</td><td>Country</td></tr>");
 	  introducedSpecimen.add("<tr><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr>");
       Statement stmt = null;
@@ -191,7 +191,7 @@ public class SpecimenDb extends AntwebDb {
     }
 
     public ArrayList<String> getSpecimensWithMorphoGenera(int groupId) {
-        ArrayList<String> specimen = new ArrayList<String>();
+        ArrayList<String> specimen = new ArrayList<>();
   	    specimen.add("<tr><td>Code</td><td>Subfamily</td><td>Genus</td></tr>");
 	    specimen.add("<tr><td><hr></td><td><hr></td><td><hr></td></tr>");
         Statement stmt = null;
@@ -256,9 +256,9 @@ public class SpecimenDb extends AntwebDb {
     }
  
     public ArrayList<ArrayList<String>> getMultiBioregionTaxaList(int groupId) {
-        ArrayList<ArrayList<String>> multiBioregionTaxa = new ArrayList<ArrayList<String>>();
+        ArrayList<ArrayList<String>> multiBioregionTaxa = new ArrayList<>();
 
-		ArrayList<String> values = new ArrayList<String>();
+		ArrayList<String> values = new ArrayList<>();
 		values.add("Taxon Name");
 		values.add("Bioregions");
 		values.add("Count");
@@ -273,7 +273,7 @@ public class SpecimenDb extends AntwebDb {
             int i = 0;
             while (rset.next()) {
                 ++i;
-                values = new ArrayList<String>();
+                values = new ArrayList<>();
                 values.add(rset.getString("taxon_name"));
                 values.add(rset.getString("bioregions"));
                 values.add("" + rset.getInt("count"));
@@ -564,7 +564,7 @@ public class SpecimenDb extends AntwebDb {
       Invoked as: https://www.antweb.org/list.do?action=casentDAnamalies
     */
     public ArrayList<String> getCasentDAnamalies() {
-        ArrayList<String> bads = new ArrayList<String>();
+        ArrayList<String> bads = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = "select concat(substring_index(code, '-d', 1)) as codeFrag from specimen where code like '%-d%'";
@@ -663,7 +663,7 @@ public class SpecimenDb extends AntwebDb {
         queryReport.setName("RecentCASPinnedPonerinae");
         queryReport.setDesc("Most recent CAS pinned Ponerinae specimen not in the set of methods (pitfall, malaise, yellow pan, sifter, sifted, MW, sweeping, winkler, berlese) if available.");
 
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
 
@@ -937,7 +937,7 @@ public class SpecimenDb extends AntwebDb {
 
     // Currently testing. Fetch all of the type statuses to see how well we can handle them... Called from TestAction.java.
     public ArrayList<String> getTypeStatusList(int groupId) {
-        ArrayList<String> typeStatusList = new ArrayList<String>();
+        ArrayList<String> typeStatusList = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         int count = 0;

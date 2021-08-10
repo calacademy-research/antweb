@@ -122,7 +122,7 @@ public class TaxonPropDb extends AntwebDb {
         deleteBioregionMaps();
 
         // Select the distinct Bioregions for each genera in the specimen table.      
-        HashMap<String, HashSet<String>> bioregionMaps = new HashMap<String, HashSet<String>>();
+        HashMap<String, HashSet<String>> bioregionMaps = new HashMap<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = null;
@@ -230,7 +230,7 @@ public class TaxonPropDb extends AntwebDb {
     }    
 
     public HashMap<String, String> getTaxaIntroducedMaps() {
-        HashMap<String, String> taxaMap = new HashMap<String, String>();
+        HashMap<String, String> taxaMap = new HashMap<>();
         Statement stmt = null;
         ResultSet rset = null;
         String theQuery = "select taxon_name, value from taxon_prop where prop = 'introducedMap'";
@@ -252,7 +252,7 @@ public class TaxonPropDb extends AntwebDb {
     }
 
     public ArrayList<String> getIntroducedList(String orderBy) {
-        ArrayList<String> introducedList = new ArrayList<String>();
+        ArrayList<String> introducedList = new ArrayList<>();
 
         Statement stmt = null;
         ResultSet rset = null;

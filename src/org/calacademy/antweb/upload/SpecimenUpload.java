@@ -264,7 +264,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
          *
          * The above would return one to few items which would monkeywrench the works.
          */
-        ArrayList<String> headers = new ArrayList<String>(); 
+        ArrayList<String> headers = new ArrayList<>();
         int i = 0;
         int j = 0;
         String head = "";
@@ -302,7 +302,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
         //ArrayList<String> headers = new ArrayList<String>(Arrays.asList(stringArray));
         //A.log("getSpecimenColumns() header:" + header + " headers:" + headers);
         
-        ArrayList<String> colList = new ArrayList<String>();
+        ArrayList<String> colList = new ArrayList<>();
                 
         for (String theHead : headers) {
             theHead = theHead.trim();
@@ -327,7 +327,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
         // ArrayList<String> headers = new ArrayList<String>(Arrays.asList(header.split("\t")));
         ArrayList<String> headers = getArrayListEmptiesToo(header);
-        ArrayList<String> otherColumns = new ArrayList<String>();
+        ArrayList<String> otherColumns = new ArrayList<>();
         
         //s_log.info("getOtherColumns(" + header + ")");
         

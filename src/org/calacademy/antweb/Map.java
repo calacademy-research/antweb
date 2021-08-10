@@ -57,7 +57,7 @@ public class Map {
 
     private ArrayList<String> chosenList = null;
     public static int displayMapCount = 0;
-    private static HashMap<String, Integer> displayMapHash = new HashMap<String, Integer>();
+    private static HashMap<String, Integer> displayMapHash = new HashMap<>();
 
     private String title = null;
     private String subtitle = null;
@@ -65,7 +65,7 @@ public class Map {
     private String info = null;
 
     protected String staticMapParams = null;
-    protected ArrayList<Coordinate> points = new ArrayList<Coordinate>();
+    protected ArrayList<Coordinate> points = new ArrayList<>();
     protected ArrayList mapSpecimens = new ArrayList();
 
     protected String mapName = "";
@@ -254,7 +254,7 @@ public class Map {
 
     // MarkMap
     public void setPoints(Collection collection) {
-        this.points = new ArrayList<Coordinate>();
+        this.points = new ArrayList<>();
         Locality loc = collection.getLocality();
         if (loc == null) {
             //s_log.warn("setPoints() loc is null for collection:" + collection);
@@ -273,7 +273,7 @@ public class Map {
 
     // MarkMap
     public void setPoints(Locality locality) {
-        this.points = new ArrayList<Coordinate>();
+        this.points = new ArrayList<>();
 
         float thisLon = locality.getDecimalLongitude();
         float thisLat = locality.getDecimalLatitude();
@@ -303,7 +303,7 @@ public class Map {
 
     public void setPoints(ArrayList<String> specimens, int specimenCount, int localityCount, Connection connection) {
 
-        this.points = new ArrayList<Coordinate>();
+        this.points = new ArrayList<>();
         if (specimens.size() > 0) {
             String firstClause = SpecimenDb.getFlagCriteria();
             if (specimens.size() == 1) firstClause = " 1 = 1 ";

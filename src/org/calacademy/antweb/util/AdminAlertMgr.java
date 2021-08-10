@@ -21,13 +21,13 @@ public final class AdminAlertMgr {
 
     private static Log s_log = LogFactory.getLog(AdminAlertMgr.class);
 
-    public static List<AdminAlert> s_adminAlerts = new ArrayList<AdminAlert>();
+    public static List<AdminAlert> s_adminAlerts = new ArrayList<>();
 
     public static String s_queryAlerts = "";
     
     public static void populate(Connection connection) {
 
-        s_adminAlerts = new ArrayList<AdminAlert>();
+        s_adminAlerts = new ArrayList<>();
 
         // Get any alerts from the admin_alerts table.          
         String query = null;
@@ -128,7 +128,7 @@ public final class AdminAlertMgr {
           DBUtil.close(stmt, "AdminAlertMgr.removeAll()");        
         }
 
-        s_adminAlerts = new ArrayList<AdminAlert>();
+        s_adminAlerts = new ArrayList<>();
     }
 
     public static void remove(int id, Connection connection) {

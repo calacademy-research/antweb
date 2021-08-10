@@ -369,7 +369,7 @@ public class UploadDetails extends OperationDetails {
     }
     
     // Maintain a set of museums.  Could have been query but this done for performance.
-    private Map<String, Integer> museumMap = new HashMap<String, Integer>();
+    private Map<String, Integer> museumMap = new HashMap<>();
     
     public void addToMuseumMap(String element) {
       for (Museum museum : MuseumMgr.getMuseums()) {

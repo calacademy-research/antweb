@@ -25,7 +25,7 @@ public class Subregion extends Geolocale {
 // What was getCountries() is now getLiveCountries(). Fix codebase.
 
     public ArrayList<Country> getLiveCountries() {      
-        ArrayList<Country> countries = new ArrayList<Country>();
+        ArrayList<Country> countries = new ArrayList<>();
         for (Geolocale geolocale : getChildren()) {
           if (geolocale.getIsLive())
             countries.add((Country) geolocale);
@@ -34,7 +34,7 @@ public class Subregion extends Geolocale {
     }
 
     public ArrayList<Country> getAllCountries() {      
-        ArrayList<Country> countries = new ArrayList<Country>();
+        ArrayList<Country> countries = new ArrayList<>();
         for (Geolocale geolocale : getChildren()) {
           countries.add((Country) geolocale);
         }

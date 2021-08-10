@@ -169,7 +169,7 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
     //----------------------------------------------------------------------------------------
 
     public ArrayList<AntwikiTaxonCountry> getAntwikiTaxonCountries() {
-      ArrayList<AntwikiTaxonCountry> taxonCountries = new ArrayList<AntwikiTaxonCountry>();
+      ArrayList<AntwikiTaxonCountry> taxonCountries = new ArrayList<>();
 
         String query = "";
         ResultSet rset = null;

@@ -87,7 +87,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     }
 
     public ArrayList<TaxonSet> getTaxonSetList(String taxaRank, int geolocaleId) {
-        ArrayList<TaxonSet> taxonSetList = new ArrayList<TaxonSet>();
+        ArrayList<TaxonSet> taxonSetList = new ArrayList<>();
         String query = "";
         Statement stmt = null;
         ResultSet rset = null;
@@ -147,8 +147,8 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     // Doubly recursive. Will insert records for all taxon parents and all geolocale parents.
 
     public void resetQueryGovernors() {
-      s_queryInsertGovernor = new HashSet<String>();
-      s_queryUpdateGovernor = new HashSet<String>();      
+      s_queryInsertGovernor = new HashSet<>();
+      s_queryUpdateGovernor = new HashSet<>();
     }
     public void clearQueryGovernors() {
       s_queryInsertGovernor = null;
@@ -560,9 +560,9 @@ int s_notFound = 0;
     public String getTaxaOutsideOfNativeBioregion() {
         StringBuffer buffer = new StringBuffer();
         
-        ArrayList<String> taxaOutside = new ArrayList<String>();
-        HashSet<String> bioregionMapsNotFound = new HashSet<String>();
-        HashSet<String> genusNotFound = new HashSet<String>();
+        ArrayList<String> taxaOutside = new ArrayList<>();
+        HashSet<String> bioregionMapsNotFound = new HashSet<>();
+        HashSet<String> genusNotFound = new HashSet<>();
         
         // Loop through all geolocale...
         //String query = "select taxon_name, group_concat(distinct g.bioregion) bioregions from geolocale_taxon gt, geolocale g where gt.geolocale_id = g.id group by taxon_name";
@@ -831,8 +831,8 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
         Statement stmt = null;
         ResultSet rset = null;
 
-		HashSet<String> unfoundCountries = new HashSet<String>();
-		HashSet<String> unfoundAdm1s = new HashSet<String>();
+		HashSet<String> unfoundCountries = new HashSet<>();
+		HashSet<String> unfoundAdm1s = new HashSet<>();
 
         try {
             stmt = DBUtil.getStatement(getConnection(), "insertGeolocaleTaxaFromSpecimens()");
@@ -1301,7 +1301,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
     }    
 
     public ArrayList<Country> getCountries(String taxonName) throws SQLException {
-        ArrayList<Country> countries = new ArrayList<Country>();
+        ArrayList<Country> countries = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = null;
@@ -1359,7 +1359,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
 
         ResultSet resultSet = stmt.executeQuery(query);
 
-        ArrayList<ArrayList<String>> statistics = new ArrayList<ArrayList<String>>();
+        ArrayList<ArrayList<String>> statistics = new ArrayList<>();
 
         while (resultSet.next()) {
             String geolocaleName = resultSet.getString(1);
@@ -1372,7 +1372,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
     
     public static ArrayList<String> getStatistics(String geolocaleName, int geolocaleId, Connection connection) 
         throws SQLException {
-        ArrayList<String> statistics = new ArrayList<String>();
+        ArrayList<String> statistics = new ArrayList<>();
         //HashMap<String, String> stats = new HashMap<String, String>();
 
         String query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and taxon.fossil = 1 and geolocale_taxon.geolocale_id = '" + geolocaleId + "' and taxarank=\"subfamily\"";

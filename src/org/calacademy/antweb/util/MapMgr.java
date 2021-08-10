@@ -18,7 +18,7 @@ public abstract class MapMgr {
 
     private static final Log s_log = LogFactory.getLog(MapMgr.class);
 
-    private static HashMap<String, Map> s_maps = new HashMap<String, Map>();
+    private static HashMap<String, Map> s_maps = new HashMap<>();
     
     private static int skipped = 0;
 
@@ -60,7 +60,7 @@ public abstract class MapMgr {
 
     public static void refresh() {
       skipped = 0;
-      s_maps = new HashMap<String, Map>();
+      s_maps = new HashMap<>();
     }
     
     public static String report() {

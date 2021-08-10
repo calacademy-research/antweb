@@ -498,7 +498,7 @@ public abstract class HttpUtil {
     }
     
     public static Map<String, String> getHeadersInfo(HttpServletRequest request) {
-		Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map = new HashMap<>();
 
 		Enumeration headerNames = request.getHeaderNames();
 		while (headerNames.hasMoreElements()) {
@@ -1400,7 +1400,7 @@ public abstract class HttpUtil {
 
   public static ArrayList<String> getUtf8UrlLines(String theUrl) 
     throws IOException {  
-      ArrayList<String> lines = new ArrayList<String>();
+      ArrayList<String> lines = new ArrayList<>();
 
       StringBuffer strVal = new StringBuffer();
       URL url = new URL(theUrl) ;
@@ -1481,7 +1481,7 @@ public abstract class HttpUtil {
     private static String[] colors = null;    
     public static String[] getColors() {
       if (colors != null) return colors;
-      ArrayList<String> colorList = new ArrayList<String>();
+      ArrayList<String> colorList = new ArrayList<>();
       for (int i=0 ; i <=MAX_ITERATION ; ++i) {
           for (String uniqueColor : uniqueColors) {
               //A.log("getColors() i:" + i + " j:" + j + " color:" + uniqueColors[j]);

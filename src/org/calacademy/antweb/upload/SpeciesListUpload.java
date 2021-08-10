@@ -322,7 +322,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
             components = tab.split(theLine);
             //String theHead;
-            ArrayList<String> headers = new ArrayList<String>(Arrays.asList(components));
+            ArrayList<String> headers = new ArrayList<>(Arrays.asList(components));
             int headCount = 0;
             int homonymCount = 0;
             

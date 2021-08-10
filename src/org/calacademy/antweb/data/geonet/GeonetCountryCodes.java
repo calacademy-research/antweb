@@ -77,7 +77,7 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
 
     public static HashMap<String, String> getCountryHash() {
 
-        HashMap<String, String> countryHash = new HashMap<String, String>();
+        HashMap<String, String> countryHash = new HashMap<>();
 
         GeonetCountryResponse geonetCountryResponse = getCountryCodes();
           

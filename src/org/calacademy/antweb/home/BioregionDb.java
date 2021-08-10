@@ -83,7 +83,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     public ArrayList<Bioregion> getBioregions(boolean deep) {
-        ArrayList<Bioregion> bioregions = new ArrayList<Bioregion>();
+        ArrayList<Bioregion> bioregions = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -139,7 +139,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     public ArrayList<String> getBioregionNames() {
-        ArrayList<String> bioregionNames = new ArrayList<String>();
+        ArrayList<String> bioregionNames = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -162,7 +162,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     public ArrayList<String> getCountryNames(String bioregionName) {
-        ArrayList<String> countryNames = new ArrayList<String>();
+        ArrayList<String> countryNames = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         try {

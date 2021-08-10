@@ -34,8 +34,8 @@ public class AdvancedSearchResults extends GenericSearchResults
 
 	public ArrayList<ResultItem> getSubfamilyList() {
 		
-		ArrayList<ResultItem> subfamilyList = new ArrayList<ResultItem>();
-		HashMap<String, ResultItem> subfamilyHash = new HashMap<String, ResultItem>();
+		ArrayList<ResultItem> subfamilyList = new ArrayList<>();
+		HashMap<String, ResultItem> subfamilyHash = new HashMap<>();
 		
         for (ResultItem thisItem : getResults()) {
             String subfamily = thisItem.getSubfamily();
@@ -61,8 +61,8 @@ public class AdvancedSearchResults extends GenericSearchResults
 	
 	public ArrayList<ResultItem> getGenusList() {
 		
-		ArrayList<ResultItem> genusList = new ArrayList<ResultItem>();
-		HashMap<String, ResultItem> genusHash = new HashMap<String, ResultItem>();
+		ArrayList<ResultItem> genusList = new ArrayList<>();
+		HashMap<String, ResultItem> genusHash = new HashMap<>();
 		
 		Iterator<ResultItem> resIter = results.iterator();
 		
@@ -92,8 +92,8 @@ public class AdvancedSearchResults extends GenericSearchResults
 	 
 	public ArrayList<ResultItem> getSpeciesList() {
 		
-		ArrayList<ResultItem> specList = new ArrayList<ResultItem>();
-		HashMap<String, ResultItem> specHash = new HashMap<String, ResultItem>();
+		ArrayList<ResultItem> specList = new ArrayList<>();
+		HashMap<String, ResultItem> specHash = new HashMap<>();
 		
 		Iterator<ResultItem> resIter = results.iterator();
 		

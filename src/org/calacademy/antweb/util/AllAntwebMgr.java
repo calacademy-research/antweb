@@ -22,7 +22,7 @@ public class AllAntwebMgr {
     
     public static void populate(Connection connection, boolean forceReload) {
       if (!forceReload && (s_allAntwebMap != null)) return;      
-      s_allAntwebMap = new HashMap<String, ProjTaxon>();
+      s_allAntwebMap = new HashMap<>();
       
       ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
       try {

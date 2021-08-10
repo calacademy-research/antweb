@@ -37,7 +37,7 @@ public abstract class AntwebUtil {
   
   private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");  
   
-  private static HashMap<String, Integer> s_logHash = new HashMap<String,Integer>();
+  private static HashMap<String, Integer> s_logHash = new HashMap<>();
   
   public static void main(String[] args) { 
    // To execute:    ant antwebUtil    
@@ -161,7 +161,7 @@ public abstract class AntwebUtil {
 
   // pass in a directoy and get a list of all of the files.  Not recursive.
   static ArrayList<String> getDirFiles(File aFile) {
-    ArrayList<String> dirFiles = new ArrayList<String>();
+    ArrayList<String> dirFiles = new ArrayList<>();
     if (aFile.isDirectory()) {
       File[] listOfFiles = aFile.listFiles();
       if(listOfFiles!=null) {
@@ -202,7 +202,7 @@ public abstract class AntwebUtil {
   }
 
   public static ArrayList<String> getUploadDirFiles(String name) {
-    ArrayList<String> qualifiedFiles = new ArrayList<String>();    
+    ArrayList<String> qualifiedFiles = new ArrayList<>();
     ArrayList<String> files = getUploadDirFiles();
     for (String file : files) {
       String kind = file.substring(18); // everything after the date
@@ -248,7 +248,7 @@ public abstract class AntwebUtil {
 
     Date start = new Date();
 
-    s_uploadGroupList = new ArrayList<Integer>();
+    s_uploadGroupList = new ArrayList<>();
     ArrayList<String> files = getUploadDirFiles();
     for (String file : files) {
       if (file != null && file .length() < 18){
@@ -559,7 +559,7 @@ public abstract class AntwebUtil {
   }
 
   public static String getAntwebStackTrace(String trace) {
-    ArrayList<String> traceLines = new ArrayList<String>();
+    ArrayList<String> traceLines = new ArrayList<>();
     //traceLines.add("\r\n");
     String character = "at ";
     int i = 0;

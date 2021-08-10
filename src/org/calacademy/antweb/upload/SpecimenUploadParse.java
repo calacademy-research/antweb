@@ -113,7 +113,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             //s_log.warn("parseLine() theLine:" + theLine);
 
             String[] loopComponents = tab.split(theLine);
-            elements = new ArrayList<String>(Arrays.asList(loopComponents));
+            elements = new ArrayList<>(Arrays.asList(loopComponents));
             loopIter = elements.iterator();
             int colIndex = 0;
 
@@ -686,7 +686,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 	private static int s_withinBoundsCountryCount = 0;
 	private static int s_lastCountryCount = 0;
 
-    private static HashMap<String, String> latLonHash = new HashMap<String, String>();
+    private static HashMap<String, String> latLonHash = new HashMap<>();
 
     private static Coordinate getCoordinate(Hashtable specimenItem) {
 		Object latObj = specimenItem.get("decimal_latitude");

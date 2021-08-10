@@ -98,22 +98,22 @@ public final class Caste {
     }
         
     public static ArrayList<Taxon> sortSpecimenByCasteSubcaste(ArrayList<Taxon> theChildren) {  
-	  ArrayList<Taxon> majorSoldiers = new ArrayList<Taxon>();
-	  ArrayList<Taxon> normals = new ArrayList<Taxon>();
+	  ArrayList<Taxon> majorSoldiers = new ArrayList<>();
+	  ArrayList<Taxon> normals = new ArrayList<>();
   
-	  ArrayList<Taxon> ergatoidQueens = new ArrayList<Taxon>();        
-	  ArrayList<Taxon> alateDealateQueens = new ArrayList<Taxon>();        
-	  ArrayList<Taxon> brachypterousQueens = new ArrayList<Taxon>();        
+	  ArrayList<Taxon> ergatoidQueens = new ArrayList<>();
+	  ArrayList<Taxon> alateDealateQueens = new ArrayList<>();
+	  ArrayList<Taxon> brachypterousQueens = new ArrayList<>();
 
-	  ArrayList<Taxon> ergatoidMales = new ArrayList<Taxon>();
-	  ArrayList<Taxon> alateMales = new ArrayList<Taxon>();
+	  ArrayList<Taxon> ergatoidMales = new ArrayList<>();
+	  ArrayList<Taxon> alateMales = new ArrayList<>();
 	  
 	  //ArrayList<Taxon> other = new ArrayList<Taxon>();
-	  ArrayList<Taxon> intercastes = new ArrayList<Taxon>();
-	  ArrayList<Taxon> gynandromorphs = new ArrayList<Taxon>();
-	  ArrayList<Taxon> larvaPupas = new ArrayList<Taxon>();
+	  ArrayList<Taxon> intercastes = new ArrayList<>();
+	  ArrayList<Taxon> gynandromorphs = new ArrayList<>();
+	  ArrayList<Taxon> larvaPupas = new ArrayList<>();
 
-	  ArrayList<Taxon> undefined = new ArrayList<Taxon>();
+	  ArrayList<Taxon> undefined = new ArrayList<>();
 
 	  for (Taxon taxon : theChildren) {  
 		//if (taxon instanceof Genus) AntwebUtil.log("sortSpecimenByCasteSubcaste error XXX taxon:" + taxon.getTaxonName());
@@ -142,7 +142,7 @@ public final class Caste {
         }
 	  }
 
-	  theChildren = new ArrayList<Taxon>();
+	  theChildren = new ArrayList<>();
 
 	  theChildren.addAll(normals);
 	  theChildren.addAll(majorSoldiers);	  

@@ -256,7 +256,7 @@ public final class StatisticsAction extends Action {
 		boolean success = false;
         try {
 
-            ArrayList<ArrayList<String>> statistics = new ArrayList<ArrayList<String>>();
+            ArrayList<ArrayList<String>> statistics = new ArrayList<>();
             statistics.add(ProjTaxonDb.getProjectStatistics(project, connection));
             
             session.setAttribute("statistics", statistics);

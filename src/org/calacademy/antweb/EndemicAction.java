@@ -84,7 +84,7 @@ public final class EndemicAction extends Action {
     }
 
     private ArrayList<String> getGeolocaleEndemics(int geolocaleId, Connection connection) {
-        ArrayList<String> endemics = new ArrayList<String>();
+        ArrayList<String> endemics = new ArrayList<>();
 
 		String query = "select gt.taxon_name from geolocale_taxon gt, taxon where gt.taxon_name = taxon.taxon_name " 
 		  + " and gt.geolocale_id = " + geolocaleId 
@@ -112,7 +112,7 @@ public final class EndemicAction extends Action {
     }
 
     private ArrayList<String> getBioregionEndemics(String bioregionName, Connection connection) {
-        ArrayList<String> endemics = new ArrayList<String>();
+        ArrayList<String> endemics = new ArrayList<>();
 
         String query = "select bt.taxon_name from bioregion_taxon bt, taxon where bt.taxon_name = taxon.taxon_name "
                 + " and bt.bioregion_name = '" + bioregionName + "'"

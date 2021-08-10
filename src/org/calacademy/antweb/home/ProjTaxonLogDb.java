@@ -104,11 +104,11 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
     
     public ArrayList<ProjTaxonLog> getProjTaxonLogs(String projectName, int logId, String displaySubfamily) {
     
-        ArrayList<ProjTaxonLog> projTaxonLogs = new ArrayList<ProjTaxonLog>();
+        ArrayList<ProjTaxonLog> projTaxonLogs = new ArrayList<>();
         
         // The first ProjTaxonLog in the list will be the master list.
         ProjTaxonLog masterLog = new ProjTaxonLog();
-        ArrayList<ProjTaxonLogDetail> masterDetails = new ArrayList<ProjTaxonLogDetail>(); 
+        ArrayList<ProjTaxonLogDetail> masterDetails = new ArrayList<>();
         masterLog.setDetails(masterDetails);
         projTaxonLogs.add(masterLog);
 
@@ -175,7 +175,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
 
     public ArrayList<ProjTaxonLogDetail> getProjTaxonLogDetails(String projectName, String displaySubfamily) {
 
-        ArrayList<ProjTaxonLogDetail> projTaxonLogDetails = new ArrayList<ProjTaxonLogDetail>();
+        ArrayList<ProjTaxonLogDetail> projTaxonLogDetails = new ArrayList<>();
 
         String theQuery = "";
         ResultSet rset = null;
@@ -231,7 +231,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
          
     public ArrayList<ProjTaxonLogDetail> getProjTaxonLogDetails(int logId, String displaySubfamily) {
 
-        ArrayList<ProjTaxonLogDetail> projTaxonLogDetails = new ArrayList<ProjTaxonLogDetail>();
+        ArrayList<ProjTaxonLogDetail> projTaxonLogDetails = new ArrayList<>();
 
         String theQuery = "";
         ResultSet rset = null;
@@ -287,7 +287,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
     public ArrayList<Login> getCuratorLogins(Login login) {
         // Login is administrator or curator conducting the search.
 
-        ArrayList<Login> logins = new ArrayList<Login>();
+        ArrayList<Login> logins = new ArrayList<>();
 
         String theQuery = "";
         ResultSet rset = null;
@@ -409,7 +409,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
     }
         
     public ArrayList<TaxonSet> getDisputes(String projectName, String taxonName) throws SQLException {
-        ArrayList<TaxonSet> disputes = new ArrayList<TaxonSet>();
+        ArrayList<TaxonSet> disputes = new ArrayList<>();
 
         String query = "";
         Statement stmt = null;

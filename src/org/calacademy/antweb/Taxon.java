@@ -688,7 +688,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     }    
     
     public void setHomonymAuthorDates() throws SQLException {
-      Vector<String> homonymAuthorDates = new Vector<String>();;
+      Vector<String> homonymAuthorDates = new Vector<>();;
       String taxonName = getTaxonName();
       Statement stmt = null;
       ResultSet rset = null;
@@ -1275,9 +1275,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     // h|h1, that means if h is there show it, if not check if h1 is there
     // If you see something like * that means "everything else"
     public ArrayList<SpecimenImage> getImagesSorted(String theSort, boolean padding) {
-        ArrayList<SpecimenImage> thisList = new ArrayList<SpecimenImage>();
+        ArrayList<SpecimenImage> thisList = new ArrayList<>();
         Hashtable<String, SpecimenImage> theImages = getImages();
-        ArrayList<String> notProcessed = new ArrayList<String>(theImages.keySet());
+        ArrayList<String> notProcessed = new ArrayList<>(theImages.keySet());
         SpecimenImage blankImage = new SpecimenImage();
         //blankImage.setLowres("none");
         //blankImage.setMedres("none");
@@ -1322,7 +1322,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         }
         
         if (addRest) {
-            ArrayList<SpecimenImage> theRest = new ArrayList<SpecimenImage>();
+            ArrayList<SpecimenImage> theRest = new ArrayList<>();
             for (String nextStr : notProcessed) {
               theRest.add(theImages.get(nextStr));
             }
@@ -1610,7 +1610,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
     
     private ArrayList<String> getSpeciesNameSet(Overview overview) {
-      ArrayList<String> speciesNameSet = new ArrayList<String>();
+      ArrayList<String> speciesNameSet = new ArrayList<>();
       Statement stmt = null;
       ResultSet rset = null;
       String query = null;
@@ -1656,7 +1656,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         String chosenImageCode = null;
 
         if (caste == null) caste = Caste.DEFAULT;
-        ArrayList<String> speciesNameSet = new ArrayList<String>();
+        ArrayList<String> speciesNameSet = new ArrayList<>();
 
         /*
         Doubled http requests. It seems that if we let these queries run in getSpeciesNameSet() on a page such as:
@@ -2600,7 +2600,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     public ArrayList<Geolocale> getGeolocales() {
-      ArrayList<Geolocale> geolocales = new ArrayList<Geolocale>();
+      ArrayList<Geolocale> geolocales = new ArrayList<>();
       for (Country country: getCountries()) {
         geolocales.add(country);
       }

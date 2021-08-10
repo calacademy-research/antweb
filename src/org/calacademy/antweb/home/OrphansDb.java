@@ -371,7 +371,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     }
 
     public ArrayList<DummyTaxon> getPossibleValidNames(Taxon taxon) throws SQLException {
-		ArrayList<DummyTaxon> possibleValidNames = new ArrayList<DummyTaxon>();
+		ArrayList<DummyTaxon> possibleValidNames = new ArrayList<>();
 
         String commonPhrase = taxon.getSpecies();
         if (Rank.SUBSPECIES.equals(taxon.getRank())) commonPhrase = taxon.getSubspecies();
@@ -443,7 +443,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 
           A.log("deleteOrphanedSpeciesFromSource() source:" + source + " query:" + query);
 
-          ArrayList<String> orphanList = new ArrayList<String>();
+          ArrayList<String> orphanList = new ArrayList<>();
           stmt = DBUtil.getStatement(getConnection(), "OrphansDb.deleteOrphanedSpeciesFromSource()");
           rset = stmt.executeQuery(query);
           while (rset.next()) {

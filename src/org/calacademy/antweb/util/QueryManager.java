@@ -119,7 +119,7 @@ public abstract class QueryManager {
     } 
 
     public static ArrayList<NamedQuery> getBattery(String name) {
-        ArrayList<NamedQuery> battery = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> battery = new ArrayList<>();
 
         if ("projectTaxonCounts".equals(name)) {
           battery.add(Queries.getNamedQuery("projectTaxaCount"));

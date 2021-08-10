@@ -22,10 +22,10 @@ public class ProjTaxonLog extends ProjTaxon {
     private String projectName;
     private boolean isCurrent;
     
-    private ArrayList<ProjTaxonLogDetail> details = new ArrayList<ProjTaxonLogDetail>();
+    private ArrayList<ProjTaxonLogDetail> details = new ArrayList<>();
 
     public ProjTaxonLog() {
-       if (getDetails() == null) setDetails(new ArrayList<ProjTaxonLogDetail>());
+       if (getDetails() == null) setDetails(new ArrayList<>());
     }
     
     public String toString() {

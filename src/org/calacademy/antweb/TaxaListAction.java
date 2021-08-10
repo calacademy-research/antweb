@@ -99,7 +99,7 @@ public final class TaxaListAction extends Action {
         }
         query += " limit 1000";
 
-        ArrayList<String> taxaList = new ArrayList<String>();
+        ArrayList<String> taxaList = new ArrayList<>();
         Connection connection = null;
         Statement stmt = null;
         ResultSet rset = null;

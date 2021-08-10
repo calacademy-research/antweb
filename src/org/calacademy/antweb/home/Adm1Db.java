@@ -18,7 +18,7 @@ public class Adm1Db {
 
     private static Log s_log = LogFactory.getLog(Adm1Db.class);
     
-    private static ArrayList<String> adm1s = new ArrayList<String>();    
+    private static ArrayList<String> adm1s = new ArrayList<>();
     
     public static boolean isValid(Connection connection, String adm1){
       if (adm1s.size() == 0) {

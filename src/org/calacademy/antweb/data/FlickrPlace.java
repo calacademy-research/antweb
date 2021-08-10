@@ -415,7 +415,7 @@ public class FlickrPlace extends DataPlace {
 
     // Returns a list of strings that are woeId:adm1Name
     private static ArrayList<String> getChildren(String woeId) {
-      ArrayList<String> list = new ArrayList<String>();
+      ArrayList<String> list = new ArrayList<>();
       String output = "";
       try {
         output = HttpUtil.getUrl("https://www.flickr.com/places/info/" + woeId);  

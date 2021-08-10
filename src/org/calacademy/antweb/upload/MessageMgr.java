@@ -41,7 +41,7 @@ public class MessageMgr {
 
     // Flag system is different from messages. Will create a message but just include a count.
     // Customized code below. Anti-pattern.
-    private HashMap<String, Integer> flags = new HashMap<String, Integer>();
+    private HashMap<String, Integer> flags = new HashMap<>();
     public void flag(String key) {
       //A.log("MessageMgr.flag() key:" + key);
       if (flags.get(key) == null) {
@@ -59,7 +59,7 @@ public class MessageMgr {
     private final String MAP = "map";
     private final String NUM = "num";
 
-    ArrayList<Test> testList = new ArrayList<Test>();
+    ArrayList<Test> testList = new ArrayList<>();
     private ArrayList<Test> getTests() {
       return testList;
     }
@@ -502,7 +502,7 @@ public class MessageMgr {
         if (messageStringHash.size() > 0) {
             returnStr = "";    
             Set<String> keySet = messageStringHash.keySet();
-            ArrayList<String> list = new ArrayList<String>(keySet);     
+            ArrayList<String> list = new ArrayList<>(keySet);
             Collections.sort(list);
             for (String key : list) {
                 TreeSet<String> values = messageStringHash.get(key);
@@ -537,13 +537,13 @@ public class MessageMgr {
         if (messageSetsHash.size() > 0) {
             returnStr = "";    
             Set<String> keySet = messageSetsHash.keySet();
-            ArrayList<String> list = new ArrayList<String>(keySet);     
+            ArrayList<String> list = new ArrayList<>(keySet);
             //A.log("MessagMgr.toString() SET list:" + list + " size:" + list.size());            
             Collections.sort(list);
             for (String key : list) {
                 //This is hard to sort. Text string, with line numbers. 22 will come before 3.
                 HashSet<String> values = messageSetsHash.get(key);
-                ArrayList<String> list2 = new ArrayList<String>(values);     
+                ArrayList<String> list2 = new ArrayList<>(values);
                 //A.log("MessagMgr.toString() SET key:" + key + " list2:" + list2 + " size:" + list2.size());                 
 
                 Collections.sort(list2);
@@ -579,11 +579,11 @@ public class MessageMgr {
         if (messageMapsHash.size() > 0) {
             returnStr = "";    
             Set<String> keySet = messageMapsHash.keySet();
-            ArrayList<String> list = new ArrayList<String>(keySet);                 
+            ArrayList<String> list = new ArrayList<>(keySet);
             Collections.sort(list);
             for (String key1 : list) {
                 HashMap<String, HashSet<String>> valueMap = (HashMap) messageMapsHash.get(key1);
-                ArrayList<String> list2 = new ArrayList<String>(valueMap.keySet());     
+                ArrayList<String> list2 = new ArrayList<>(valueMap.keySet());
                 Collections.sort(list2);
 
                 String detailLink = getDetailLink();

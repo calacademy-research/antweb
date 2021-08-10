@@ -1146,7 +1146,7 @@ public class UploadAction extends Action {
             TaxonDb taxonDb = new TaxonDb(connection);
 
             ArrayList<Taxon> validSpecies = taxonDb.getTaxa("species", "valid");
-            HashMap<String, Taxon> validSpeciesMap = new HashMap<String, Taxon>();
+            HashMap<String, Taxon> validSpeciesMap = new HashMap<>();
             for (Taxon taxon : validSpecies) {
               validSpeciesMap.put(taxon.getTaxonName(), taxon);
             }
@@ -1304,7 +1304,7 @@ public class UploadAction extends Action {
         s_log.info("worldAuthGen() Extant subfamilies:" + extantSubfamilies.size());
         s_antwebEventLog.info("import worldAuthorityFiles");
 
-        ArrayList<HashMap<String, String>> allSubfamilies = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> allSubfamilies = new ArrayList<>();
         Iterator<HashMap<String,String>> iter = extinctSubfamilies.iterator();
         while (iter.hasNext()) {
           allSubfamilies.add(iter.next());

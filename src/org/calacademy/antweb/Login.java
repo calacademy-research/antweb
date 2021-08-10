@@ -54,9 +54,9 @@ public class Login implements Comparable {
         setPassword("");
         setFirstName("");
         setLastName("");
-        setProjects(new ArrayList<SpeciesListable>());
-        setCountries(new ArrayList<SpeciesListable>());
-        setGeolocales(new ArrayList<SpeciesListable>());
+        setProjects(new ArrayList<>());
+        setCountries(new ArrayList<>());
+        setGeolocales(new ArrayList<>());
     }
     public String getFullName() {
       return getFirstName() + " " + getLastName();
@@ -158,7 +158,7 @@ public class Login implements Comparable {
     }
     // Convenience method:
     public ArrayList<String> getProjectNames() {
-        ArrayList<String> projectNames = new ArrayList<String>();
+        ArrayList<String> projectNames = new ArrayList<>();
 		if (getProjects() != null) {
 			for (SpeciesListable project : getProjects()) {
 			  projectNames.add(project.getName());
@@ -208,7 +208,7 @@ public class Login implements Comparable {
     }
     // Convenience method:
     public ArrayList<String> getCountryNames() {
-        ArrayList<String> countryNames = new ArrayList<String>();
+        ArrayList<String> countryNames = new ArrayList<>();
         ArrayList<SpeciesListable> countries = getCountries();
         if (countries == null) {
           return countryNames;
@@ -232,7 +232,7 @@ public class Login implements Comparable {
 
     // This is used in the drop down lists of the curate page and the Species List Tool
     public ArrayList<SpeciesListable> getSpeciesListList() {
-        ArrayList<SpeciesListable> speciesLists = new ArrayList<SpeciesListable>();
+        ArrayList<SpeciesListable> speciesLists = new ArrayList<>();
         if (getProjects() != null) {
             speciesLists.addAll(getProjects());
         }

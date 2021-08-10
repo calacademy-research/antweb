@@ -73,7 +73,7 @@ public class ArtistDb extends AntwebDb {
     }
     
     public ArrayList<Artist> getArtists() throws SQLException {
-        ArrayList<Artist> artists = new ArrayList<Artist>();
+        ArrayList<Artist> artists = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         try {

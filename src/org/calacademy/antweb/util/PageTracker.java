@@ -23,7 +23,7 @@ possible moment - ideally in jsp footer.
 
     private static final Log s_log = LogFactory.getLog(PageTracker.class);
 
-    private static HashMap<String, Tracker> trackerMap = new HashMap<String, Tracker>();
+    private static HashMap<String, Tracker> trackerMap = new HashMap<>();
     
     public static void add(HttpServletRequest request) {    
       //if (AntwebProps.isDevMode() && getRequestCount() > 3) purge();
@@ -91,7 +91,7 @@ possible moment - ideally in jsp footer.
         String logString = tracker.getStartTime() + " " + tracker.getKey() + " " + tracker.getSinceStartTime();
         LogMgr.appendLog("pageTracker.log", logString); 
       }
-      trackerMap = new HashMap<String, Tracker>(); // was  .clear();
+      trackerMap = new HashMap<>(); // was  .clear();
     }
 
     public static Collection<Tracker> getTrackers() {

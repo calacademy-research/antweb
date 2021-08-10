@@ -219,7 +219,7 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
         String returnVal = "";
         String query = "show full processlist";
         String delim = " | ";
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         
         Statement stmt = null;
         ResultSet rset = null;

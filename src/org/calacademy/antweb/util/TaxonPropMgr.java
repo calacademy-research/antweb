@@ -129,7 +129,7 @@ public abstract class TaxonPropMgr {
       return TaxonPropMgr.getNativeBioregionsList("true", bioregionsMap);
     }             
     public static ArrayList<Bioregion> getNativeBioregionsList(String isNative, String bioregionsMap) {
-      ArrayList<Bioregion> list = new ArrayList<Bioregion>();
+      ArrayList<Bioregion> list = new ArrayList<>();
       if (bioregionsMap == null || "".equals(bioregionsMap)) return list;
       
       for (String bioregion : Bioregion.list) {

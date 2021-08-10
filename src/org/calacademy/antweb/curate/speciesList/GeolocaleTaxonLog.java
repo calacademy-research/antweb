@@ -24,10 +24,10 @@ public class GeolocaleTaxonLog extends GeolocaleTaxon {
     private int geolocaleId;
     private boolean isCurrent;
     
-    private ArrayList<GeolocaleTaxonLogDetail> details = new ArrayList<GeolocaleTaxonLogDetail>();
+    private ArrayList<GeolocaleTaxonLogDetail> details = new ArrayList<>();
 
     public GeolocaleTaxonLog() {
-       if (getDetails() == null) setDetails(new ArrayList<GeolocaleTaxonLogDetail>());
+       if (getDetails() == null) setDetails(new ArrayList<>());
     }
     
     public String toString() {

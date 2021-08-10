@@ -381,7 +381,7 @@ public class GenericSearch implements Serializable {
     protected ArrayList<ResultItem> getListFromRset(ResultSet rset, SearchItem synonymousItem, String theQuery, int numToShow) {
         //A.log("GenericSearch.getListFromRset(rset..)"); 
         ArrayList<ResultItem> bigList = getListFromRset(GENERIC, rset, synonymousItem, theQuery);
-        ArrayList<ResultItem> smallList = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> smallList = new ArrayList<>();
         int loop = 0;
         int bigListSize = bigList.size();
         while ((loop < numToShow) && (loop < bigListSize)) {
@@ -401,7 +401,7 @@ public class GenericSearch implements Serializable {
 
     protected ArrayList<ResultItem> getListFromRset(int searchType, ResultSet rset, SearchItem synonymousItem, String theQuery) {
         //A.log("GenericSearch.getListFromRset(searchType...)"); 
-        ArrayList<ResultItem> theList = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> theList = new ArrayList<>();
         String family = null;
         String subfamily = null;
         String genus = null;
@@ -749,7 +749,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         }
         //A.log("getSearchString() property:" + property + " value:" + value);
 
-        ArrayList<String> elements = new ArrayList<String>();
+        ArrayList<String> elements = new ArrayList<>();
         Matcher m = inQuotes.matcher(value);
         String thisElement = "";
         int length = 0;

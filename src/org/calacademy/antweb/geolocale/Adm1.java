@@ -77,7 +77,7 @@ public class Adm1 extends Geolocale {
     
     public ArrayList<Specimen> sort(ArrayList children) {
         // The logic here will sort with the specified museum at the top.
-        ArrayList<Specimen> sortedChildren = new ArrayList<Specimen>();
+        ArrayList<Specimen> sortedChildren = new ArrayList<>();
 
         String name = getName();
         for (Object o : children) {

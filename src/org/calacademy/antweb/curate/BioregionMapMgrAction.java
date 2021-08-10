@@ -45,7 +45,7 @@ public final class BioregionMapMgrAction extends Action {
         A.log("execute() orderBy:" + orderBy + " param:" + request.getParameter("orderBy"));
 
         //TreeMap<Taxon, String> genusBioregionMap = new TreeMap<String, String>();
-        ArrayList<Taxon> genusList = new ArrayList<Taxon>();
+        ArrayList<Taxon> genusList = new ArrayList<>();
 
         Connection connection = null;
         Statement stmt = null;

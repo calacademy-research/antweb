@@ -390,7 +390,7 @@ See BioregionDb.java:77 where this call is commented out.
     }
 
     public ArrayList<Bioregion> getBioregions(String taxonName) throws SQLException {
-        ArrayList<Bioregion> bioregions = new ArrayList<Bioregion>();
+        ArrayList<Bioregion> bioregions = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = null;
@@ -437,7 +437,7 @@ See BioregionDb.java:77 where this call is commented out.
     public static ArrayList<ArrayList<String>> getStatisticsByBioregion(Connection connection) //ArrayList<ArrayList<String>>
         throws SQLException {
 
-        ArrayList<ArrayList<String>> statistics = new ArrayList<ArrayList<String>>();
+        ArrayList<ArrayList<String>> statistics = new ArrayList<>();
         Statement stmt = DBUtil.getStatement(connection, "getStatisticsByBioregion()");
         ResultSet resultSet = null;
         String query = "select bioregion_name, count(*) from bioregion_taxon group by bioregion_name order by count(*) desc";
@@ -463,7 +463,7 @@ See BioregionDb.java:77 where this call is commented out.
     public static ArrayList<String> getStatistics(String bioregionName, Connection connection) 
         throws SQLException {
 
-        ArrayList<String> statistics = new ArrayList<String>();
+        ArrayList<String> statistics = new ArrayList<>();
 
         String query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"subfamily\"";
 

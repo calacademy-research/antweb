@@ -18,7 +18,7 @@ public class Region extends Geolocale {
     }
 
     public ArrayList<Subregion> getSubregions() {      
-        ArrayList<Subregion> subregions = new ArrayList<Subregion>();
+        ArrayList<Subregion> subregions = new ArrayList<>();
         for (Geolocale geolocale : getChildren()) {
           subregions.add((Subregion) geolocale);
         }

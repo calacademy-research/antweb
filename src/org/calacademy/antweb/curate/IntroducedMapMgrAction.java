@@ -36,7 +36,7 @@ public final class IntroducedMapMgrAction extends Action {
         orderBy = " order by genus, species, subspecies";
         A.log("execute() orderBy:" + orderBy + " param:" + request.getParameter("orderBy"));
 
-        ArrayList<Taxon> speciesList = new ArrayList<Taxon>();
+        ArrayList<Taxon> speciesList = new ArrayList<>();
 
         boolean reloadTaxonPropMgr = false;
 

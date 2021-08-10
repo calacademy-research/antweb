@@ -162,7 +162,7 @@ public class Museum extends LocalityOverview implements Countable {
      
     public ArrayList sort(ArrayList children) {
         // The logic here will sort with the specified museum at the top.
-        ArrayList<Specimen> sortedChildren = new ArrayList<Specimen>();
+        ArrayList<Specimen> sortedChildren = new ArrayList<>();
 
         String museumCode = getCode();
         for (Object o : children) {

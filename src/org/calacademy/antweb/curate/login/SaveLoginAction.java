@@ -81,7 +81,7 @@ public final class SaveLoginAction extends Action {
             String[] projects = form.getProjects();
             if (projects == null) projects = new String[0];
             ArrayList<String> projectsList = new ArrayList(Arrays.asList(projects));            
-            ArrayList<SpeciesListable> projectObjects = new ArrayList<SpeciesListable>();
+            ArrayList<SpeciesListable> projectObjects = new ArrayList<>();
             for (String projectName : projectsList) {
               Project project = ProjectMgr.getProject(projectName);
               projectObjects.add(project); 
@@ -92,7 +92,7 @@ public final class SaveLoginAction extends Action {
             String[] countries = form.getCountries();
             if (countries == null) countries = new String[0];
             ArrayList<String> countriesList = new ArrayList(Arrays.asList(countries));
-            ArrayList<SpeciesListable> countryObjects = new ArrayList<SpeciesListable>();
+            ArrayList<SpeciesListable> countryObjects = new ArrayList<>();
             for (String countryName : countriesList) {
               Geolocale country = GeolocaleMgr.getCountry(countryName);
               countryObjects.add(country);

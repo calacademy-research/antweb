@@ -127,7 +127,7 @@ public final class ListUploadsAction extends Action {
             loginIdInt = loginId.intValue();
         }
     
-        ArrayList<Upload> uploads = new ArrayList<Upload>();
+        ArrayList<Upload> uploads = new ArrayList<>();
         Connection connection = null; 
         Statement stmt = null;
         ResultSet rset = null;

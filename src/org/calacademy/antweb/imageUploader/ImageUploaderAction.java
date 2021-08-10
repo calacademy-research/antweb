@@ -99,7 +99,7 @@ public final class ImageUploaderAction extends Action {
                 ServletFileUpload upload = new ServletFileUpload(factory); // Create a new file upload handler                            
                 //upload.setSizeMax(MAX_REQUEST_SIZE); // maximum file size to be uploaded.
 
-                ArrayList<ImageUploaded> images = new ArrayList<ImageUploaded>();
+                ArrayList<ImageUploaded> images = new ArrayList<>();
           
                 List<FileItem> fileItems = upload.parseRequest(request); // Parse the request to get file items.
 
@@ -225,7 +225,7 @@ public final class ImageUploaderAction extends Action {
             String lastValue = "";
             int homepageMaxRecent = 5;
             Formatter format = new Formatter();
-            ArrayList<String> distinctTaxa = new ArrayList<String>();
+            ArrayList<String> distinctTaxa = new ArrayList<>();
             while (rset.next() && (currItems <= homepageMaxRecent)) {
                 code = rset.getString("code");
                 theGenus = rset.getString("genus");

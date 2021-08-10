@@ -17,7 +17,7 @@ public class QueryReport {
     private String subquery = null;
     private String desc;
     private String heading;
-    ArrayList<String> list = new ArrayList<String>();
+    ArrayList<String> list = new ArrayList<>();
     private String error;
 
     public QueryReport() {

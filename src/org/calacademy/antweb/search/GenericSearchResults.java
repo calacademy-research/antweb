@@ -39,7 +39,7 @@ public class GenericSearchResults implements Serializable {
     protected String taxonName;
     
     public ArrayList<ResultItem> filter(ArrayList<ResultItem> dataset, String property) {
-        ArrayList<ResultItem> newList = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> newList = new ArrayList<>();
         ResultItem thisItem = null;
         if (dataset != null) {
             Iterator iterator = dataset.iterator();
@@ -64,7 +64,7 @@ public class GenericSearchResults implements Serializable {
       Taxon dummyTaxon = new Taxon();      
       dummyTaxon.setRank("species");
       
-      ArrayList<Taxon> taxonList = new ArrayList<Taxon>();
+      ArrayList<Taxon> taxonList = new ArrayList<>();
  
       //AntwebUtil.logFirstStackTrace();
 
@@ -163,7 +163,7 @@ public class GenericSearchResults implements Serializable {
     }    
     
     public ArrayList<ResultItem> getResults() {
-        if (results == null) results = new ArrayList<ResultItem>();    
+        if (results == null) results = new ArrayList<>();
         return results;
     }
 
@@ -203,7 +203,7 @@ public class GenericSearchResults implements Serializable {
             project = "";
         }
 
-        ArrayList<ResultItem> myResults = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> myResults = new ArrayList<>();
         
             // figure out which column is which
             //ArrayList columns = getColumns(rset);
@@ -401,7 +401,7 @@ public class GenericSearchResults implements Serializable {
             project = "";
         }
 
-        ArrayList<ResultItem> myResults = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> myResults = new ArrayList<>();
 
 		ArrayList tracker = new ArrayList();
 		Hashtable imageCheck = new Hashtable();

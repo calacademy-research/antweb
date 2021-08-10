@@ -64,7 +64,7 @@ public class Status {
     };
 
     public static ArrayList<String> getAllStatuses() {
-      ArrayList<String> statusArrayList = new ArrayList<String>(Arrays.asList(allStatusArray));
+      ArrayList<String> statusArrayList = new ArrayList<>(Arrays.asList(allStatusArray));
       return statusArrayList;
     }    
 
@@ -74,7 +74,7 @@ public class Status {
     };
 	
     public static ArrayList<String> getMinimalStatuses() {
-      ArrayList<String> statusArrayList = new ArrayList<String>(Arrays.asList(minimalStatusArray));
+      ArrayList<String> statusArrayList = new ArrayList<>(Arrays.asList(minimalStatusArray));
       return statusArrayList;
     }    
     	

@@ -21,10 +21,10 @@ public class UserAgentTracker {
 
   private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);
 
-  private static Map<String, Integer> agentsMap = new HashMap<String, Integer>();
+  private static Map<String, Integer> agentsMap = new HashMap<>();
   private static int nullAgent = 0;
 
-  private static Set<String> knownAgentsSet = new HashSet<String>();      
+  private static Set<String> knownAgentsSet = new HashSet<>();
       
   private static int OVERACTIVE = 1000;
 
@@ -156,7 +156,7 @@ public class UserAgentTracker {
       String agent = "";
 
       // Used for sorting
-      Map<Integer, String> countMap = new HashMap<Integer, String>();
+      Map<Integer, String> countMap = new HashMap<>();
 
       for (String key : keySet) {
         int count = ((Integer) agentsMap.get(key)).intValue();
@@ -170,7 +170,7 @@ public class UserAgentTracker {
 
       report += "<br><br>DevMode:";
 
-      ArrayList<Integer> list = new ArrayList<Integer>();
+      ArrayList<Integer> list = new ArrayList<>();
       TreeSet treeSet = new TreeSet();
       treeSet.addAll(countMap.keySet());
       list.addAll(treeSet);

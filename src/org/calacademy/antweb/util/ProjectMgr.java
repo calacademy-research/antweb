@@ -44,7 +44,7 @@ public class ProjectMgr {
     }
 
     public static ArrayList<Project> getAntProjects() {    
-      ArrayList<Project> projects = new ArrayList<Project>();
+      ArrayList<Project> projects = new ArrayList<>();
       for (String key : s_allProjectsHash.keySet()) {
         Project project = s_allProjectsHash.get(key);
         if ("PROJECT".equals(project.getScope())) {
@@ -55,7 +55,7 @@ public class ProjectMgr {
     } 
 
     public static ArrayList<Project> getAllProjects() {
-      ArrayList<Project> projects = new ArrayList<Project>();
+      ArrayList<Project> projects = new ArrayList<>();
       for (String key : s_allProjectsHash.keySet()) {
         projects.add(s_allProjectsHash.get(key));
       }
@@ -78,7 +78,7 @@ public class ProjectMgr {
       return getLiveProjectsHash(true);
     }
     public static HashMap<String, Project> getLiveProjectsHash(boolean isLive) {
-      HashMap<String, Project> projects = new HashMap<String, Project>();
+      HashMap<String, Project> projects = new HashMap<>();
       for (String key : s_allProjectsHash.keySet()) {
         Project project = s_allProjectsHash.get(key);
         if (isLive == project.getIsLive()) {
@@ -90,7 +90,7 @@ public class ProjectMgr {
 
     public static ArrayList<Project> getLiveProjects() {
     
-      ArrayList<Project> projects = new ArrayList<Project>();
+      ArrayList<Project> projects = new ArrayList<>();
       for (String key : s_allProjectsHash.keySet()) {
         Project project = s_allProjectsHash.get(key);
         if (true == project.getIsLive()) {

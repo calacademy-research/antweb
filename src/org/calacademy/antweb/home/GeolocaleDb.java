@@ -206,7 +206,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         // Called during GeolocaleMgr.populate();  "none" is a valid value for parent.
         //A.log("getGeolocales(" + georank + ", " + parent + ", ...");
                 
-        ArrayList<Geolocale> geolocaleArray = new ArrayList<Geolocale>();
+        ArrayList<Geolocale> geolocaleArray = new ArrayList<>();
 
         //if ("Venezuela".equals(parent)) A.log("getGeolocales() georank:" + georank + " parent:" + parent);
 
@@ -427,7 +427,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return getRegions(false);
     }    
     public ArrayList<Region> getRegions(boolean withChildren) {
-        ArrayList<Region> regions = new ArrayList<Region>();
+        ArrayList<Region> regions = new ArrayList<>();
         for (Geolocale geolocale : getGeolocales("region", null, withChildren)) {
           regions.add((Region) geolocale);
         }        
@@ -438,7 +438,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return getSubregions(region, false);
     }   
     public ArrayList<Subregion> getSubregions(String region, boolean withChildren) {
-        ArrayList<Subregion> subregions = new ArrayList<Subregion>();
+        ArrayList<Subregion> subregions = new ArrayList<>();
         for (Geolocale geolocale : getGeolocales("subregion", region, withChildren)) {
           subregions.add((Subregion) geolocale);
         }
@@ -452,7 +452,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return getCountries(unSubregion, false);
     }
     public ArrayList<Country> getCountries(String unSubregion, boolean withChildren) {
-        ArrayList<Country> countries = new ArrayList<Country>();
+        ArrayList<Country> countries = new ArrayList<>();
         for (Geolocale geolocale : getGeolocales("country", unSubregion, withChildren)) {
           countries.add((Country) geolocale);
         }
@@ -462,7 +462,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     public ArrayList<Adm1> getAdm1s(String country) {
         //return getGeolocales("adm1", country, false);
 
-        ArrayList<Adm1> adm1s = new ArrayList<Adm1>();
+        ArrayList<Adm1> adm1s = new ArrayList<>();
         for (Geolocale geolocale : getGeolocales("adm1", country, false)) {
           adm1s.add((Adm1) geolocale);
         }
@@ -472,7 +472,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     public ArrayList<Adm1> getAdm1s(String country, String orderBy) {
         //return getGeolocales("adm1", country, false);
 
-        ArrayList<Adm1> adm1s = new ArrayList<Adm1>();
+        ArrayList<Adm1> adm1s = new ArrayList<>();
         for (Geolocale geolocale : getGeolocales("adm1", country, false, false, orderBy)) {
           adm1s.add((Adm1) geolocale);
         }
@@ -481,7 +481,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
     // Just Id and name, useful for drop down list.
     public ArrayList<Geolocale> getValidChildren(String parent) {
-        ArrayList<Geolocale> validChildren = new ArrayList<Geolocale>()	;
+        ArrayList<Geolocale> validChildren = new ArrayList<>()	;
 
         String query;
         Statement stmt = null;
@@ -519,7 +519,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return getGeolocaleNames(georank, -1);
     }    
     public ArrayList<String> getGeolocaleNames(String georank, int isValid) {
-        ArrayList<String> validGeolocales = new ArrayList<String>()	;
+        ArrayList<String> validGeolocales = new ArrayList<>()	;
  
         // isValid.  1:true, 0:false, -1:N/A.
         String isValidClause = "";
@@ -734,7 +734,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       int loginId = login.getId();
       
       // A 0 adminId implies admin and will not restrict the search
-      ArrayList<SpeciesListable> speciesListList = new ArrayList<SpeciesListable>();
+      ArrayList<SpeciesListable> speciesListList = new ArrayList<>();
         
       //A.log("fetchSpeciesLists() groupId:" + loginId);        
       Statement stmt = null;
@@ -1755,7 +1755,7 @@ public static int c = 0;
              
     // To support Change View options
 	public ArrayList<Geolocale> getChildrenWithTaxon(String taxonName, String georank, Geolocale parent) {
-        ArrayList<Geolocale> geolocales = new ArrayList<Geolocale>();
+        ArrayList<Geolocale> geolocales = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
 		String query = "select name, id, georank, parent"
@@ -1971,7 +1971,7 @@ public static int c = 0;
       // Leave as source="specimen" but set is_valid=1
       // Leave it. We can always see if it has a woe_id and bounds to see if flickr found it.
       
-      ArrayList<String> clauseArray = new ArrayList<String>();
+      ArrayList<String> clauseArray = new ArrayList<>();
       
       Geolocale oldGeolocale = getGeolocale(id);
           
@@ -2034,7 +2034,7 @@ public static int c = 0;
     }    
 
     public ArrayList<Geolocale> getParentlessCountries() {
-      ArrayList<Geolocale> parentlessCountries = new ArrayList<Geolocale>();
+      ArrayList<Geolocale> parentlessCountries = new ArrayList<>();
       Statement stmt = null;
       ResultSet rset = null;
       try {
@@ -2241,7 +2241,7 @@ public static int c = 0;
 
     // These are Geolocale with duplicate names.
     public ArrayList<Geolocale> getBlackList() {
-      ArrayList<Geolocale> blackList = new ArrayList<Geolocale>();
+      ArrayList<Geolocale> blackList = new ArrayList<>();
       Statement stmt = null;
       ResultSet rset = null;
       try {
@@ -2273,7 +2273,7 @@ public static int c = 0;
       return getPlaceNames(text, false);
     }
     public List<String> getPlaceNames(String text, boolean asHtml) {
-        List<String> placeNames = new ArrayList<String>();
+        List<String> placeNames = new ArrayList<>();
         String placeName = null;
 
         Statement stmt = null;

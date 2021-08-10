@@ -217,7 +217,7 @@ public class GeonamesPlace extends DataPlace {
 
             if (geonamesResponse == null) {
                A.log("getChildren() geonamesResponse is null. json:" + json);
-               return new ArrayList<GeonamesPlace>();
+               return new ArrayList<>();
             }
             if (geonamesResponse.geonames == null) {
                A.log("getChildren() geonames is null. geonamesResponse:" + geonamesResponse + " json:" + json + " url:" + url);
@@ -228,7 +228,7 @@ public class GeonamesPlace extends DataPlace {
 
             //A.log("GeonamesPlace.getChildren() geonameId:" + geonameId + " url:" + url + " list:" + geonamesList);
 			
-            ArrayList<GeonamesPlace> geonamesPlaceList = new ArrayList<GeonamesPlace>();
+            ArrayList<GeonamesPlace> geonamesPlaceList = new ArrayList<>();
 			for (Geoname geoname : geonamesList) {
 
               //A.log("GeonamesPlace.getChildren() name:" + geoname.name + " url:" + url + " size:" + geonamesPlaceList.size());

@@ -73,7 +73,7 @@ public abstract class AntwebProps {
         }
 	}
 
-    private static HashMap<String, String> s_propMap = new HashMap<String, String>();
+    private static HashMap<String, String> s_propMap = new HashMap<>();
 
 	public static @Nullable String getProp(String prop) {
 

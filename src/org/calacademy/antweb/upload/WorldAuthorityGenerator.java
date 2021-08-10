@@ -80,8 +80,8 @@ public class WorldAuthorityGenerator {
      * It returns an array of two values, a list of errors and a tsv file
      */ 
     public ArrayList<String> generateTSV(String type, ArrayList<HashMap<String, String>> allSubfamilies, ArrayList<HashMap<String, String>> theseSubfamilies) {
-        ArrayList<String> result = new ArrayList<String>();
-        ArrayList<String> headers = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
+        ArrayList<String> headers = new ArrayList<>();
         headers.add("subfamily");
         headers.add("tribe");
         headers.add("genus");
@@ -111,8 +111,8 @@ public class WorldAuthorityGenerator {
     }
     
     public ArrayList<String> generateTSVSynopsisOnly(String type, ArrayList<HashMap<String, String>> allSubfamilies, ArrayList<HashMap<String, String>> theseSubfamilies) {
-        ArrayList<String> result = new ArrayList<String>();
-        ArrayList<String> headers = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
+        ArrayList<String> headers = new ArrayList<>();
         headers.add("subfamily");
         headers.add("tribe");
         headers.add("genus");
@@ -142,7 +142,7 @@ public class WorldAuthorityGenerator {
     }
     
     public ArrayList<HashMap<String, String>> getSubfamilies(String type) {
-        ArrayList<HashMap<String, String>> result = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> result = new ArrayList<>();
         String fileName = authorityFilesDir + "/subfamily_genus.txt";
         s_log.info("getSubfamilies:" + fileName);
 
@@ -190,7 +190,7 @@ public class WorldAuthorityGenerator {
     
     public ArrayList<HashMap<String, String>> addSynposisInfo(ArrayList<HashMap<String, String>> data, String type) {
                 
-        ArrayList<HashMap<String, String>> result = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> result = new ArrayList<>();
         
         // read the synposis file
         HashMap<String, String> synopsisInfo = readSynopsisFile(type);
@@ -218,7 +218,7 @@ public class WorldAuthorityGenerator {
         while (synIter.hasNext()) {
             thisKey = synIter.next();
             if (thisKey.indexOf(":") == -1) {
-                thisTaxon = new HashMap<String, String>();
+                thisTaxon = new HashMap<>();
                 thisTaxon.put("subfamily", thisKey);
                 thisTaxon.put("taxonomic history", synopsisInfo.get(thisKey));
                 thisTaxon.put("valid", "TRUE");
@@ -256,7 +256,7 @@ public class WorldAuthorityGenerator {
 
         
     private HashMap<String, String> readSynopsisFile(String type) {
-        HashMap<String, String> result = new HashMap<String, String>();
+        HashMap<String, String> result = new HashMap<>();
         
         // right now this just reads genus information.
         // it'll have to be extended to also read subfamily information
@@ -328,7 +328,7 @@ public class WorldAuthorityGenerator {
     }
     
     private HashMap<String, String> getSynopsisTaxon(String line) {
-        HashMap<String, String> result = new HashMap<String,String>();
+        HashMap<String, String> result = new HashMap<>();
         String thisLine = removeAllTags(line);
         Formatter format = new Formatter();
         Matcher m = synSubfamily.matcher(thisLine);
@@ -389,7 +389,7 @@ public class WorldAuthorityGenerator {
     */
     
     private ArrayList<String> getLines(String fileName) {
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
         try {
             FileInputStream theFile = new FileInputStream(fileName);
             Scanner scan = new Scanner(theFile);
@@ -507,7 +507,7 @@ public class WorldAuthorityGenerator {
     
     private HashMap<String, String> getGenus(String line, boolean valid, boolean available) {
         
-        HashMap<String, String> result = new HashMap<String,String>();
+        HashMap<String, String> result = new HashMap<>();
         String genus = "", subfamily = "", tribe = "", currentValid = "";
         String notes = line;
         line = removeAllTagsButItalics(line);
@@ -614,7 +614,7 @@ public class WorldAuthorityGenerator {
         Matcher m = italics.matcher(line);
         
         if (m.find()) {
-            result = new HashMap<String,String>();
+            result = new HashMap<>();
             if (line.indexOf(test) != -1) {
                 s_log.info("italics matched");
             }
@@ -764,7 +764,7 @@ public class WorldAuthorityGenerator {
         Matcher m = italics.matcher(line);
 
         if (m.find()) {
-            result = new HashMap<String,String>();
+            result = new HashMap<>();
             subspecies = m.group(1);
             if (m.find()) {
                 String regExpItal = m.group(1);
@@ -852,7 +852,7 @@ public class WorldAuthorityGenerator {
     }
     
     public HashMap<String, ArrayList<String>> getSubfamilyLookup(ArrayList<HashMap<String, String>> subfamilies) {
-        HashMap<String, ArrayList<String>> lookup = new HashMap<String, ArrayList<String>>();
+        HashMap<String, ArrayList<String>> lookup = new HashMap<>();
         
         HashMap<String, String> tempHash;
         ArrayList<String> tempList;
@@ -867,7 +867,7 @@ public class WorldAuthorityGenerator {
             key = tempHash.get("genus");
             subfamily = tempHash.get("subfamily");
             tribe = tempHash.get("tribe");
-            tempList = new ArrayList<String>();
+            tempList = new ArrayList<>();
             tempList.add(subfamily);
             tempList.add(tribe);
             lookup.put(key, tempList);
@@ -886,7 +886,7 @@ public class WorldAuthorityGenerator {
     
     private ArrayList<HashMap<String, String>> getSpecies(ArrayList<HashMap<String, String>> subfamilies, String type) {
         
-        ArrayList<HashMap<String, String>> result = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> result = new ArrayList<>();
         HashMap<String, ArrayList<String>> subfamilyLookup = getSubfamilyLookup(subfamilies);
         
         HashMap<String, String> speciesResult = null;
@@ -1073,7 +1073,7 @@ public class WorldAuthorityGenerator {
     // not, the key has two different values
     //
     private String getDuplicates(ArrayList<HashMap<String, String>> contents, String key, String value) {
-        HashMap<String, ArrayList<String>> result = new HashMap<String, ArrayList<String>>();
+        HashMap<String, ArrayList<String>> result = new HashMap<>();
         Iterator<HashMap<String,String>> iter = contents.iterator();
         HashMap<String, String> temp;
         String keyString;
@@ -1086,7 +1086,7 @@ public class WorldAuthorityGenerator {
                     result.get(keyString).add(temp.get(value));
                 }
             } else {
-                result.put(keyString, new ArrayList<String>());
+                result.put(keyString, new ArrayList<>());
                 result.get(keyString).add(temp.get(value));
             }
         }
@@ -1130,8 +1130,8 @@ public class WorldAuthorityGenerator {
     private ArrayList<String> flatten(ArrayList<HashMap<String, String>> contents, ArrayList<String> header, char delim) {
         Iterator<HashMap<String, String>> contentsIter = contents.iterator();
         Iterator<String> headerIter;
-        ArrayList<String> resultArray = new ArrayList<String>();
-        ArrayList<String> tempArray = new ArrayList<String>();
+        ArrayList<String> resultArray = new ArrayList<>();
+        ArrayList<String> tempArray = new ArrayList<>();
         HashMap<String, String> temp;
         String thisHeader = "";
         // for each element in the array, go through the header list put the items in the right order,
@@ -1197,7 +1197,7 @@ public class WorldAuthorityGenerator {
     }
     */
     public ArrayList<HashMap<String, String>> getSubfamiliesForSynonyms(ArrayList<HashMap<String, String>> thisList, HashMap<String, ArrayList<String>> lookup) {
-        ArrayList<HashMap<String, String>> result = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> result = new ArrayList<>();
         Iterator<HashMap<String, String>> iter = thisList.iterator();
         HashMap<String, String> temp;
         String currentValid, currentSubfamily, tempGenus;
@@ -1235,7 +1235,7 @@ public class WorldAuthorityGenerator {
     }
     
     private ArrayList<String> getSpeciesFiles(String directory) {
-        ArrayList<String> results = new ArrayList<String>();
+        ArrayList<String> results = new ArrayList<>();
         File f1 = new File (directory) ;
     
         File[] strFilesDirs = f1.listFiles();

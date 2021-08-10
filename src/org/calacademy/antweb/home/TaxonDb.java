@@ -276,7 +276,7 @@ public class TaxonDb extends AntwebDb {
     }
 
     public HashMap<String, ArrayList<String>> getSubgenusHashMap() {
-        HashMap<String, ArrayList<String>> subgenusHashMap = new HashMap<String, ArrayList<String>>();
+        HashMap<String, ArrayList<String>> subgenusHashMap = new HashMap<>();
         PreparedStatement stmt = null;
         ResultSet rset = null;
         String query = "select distinct genus, subgenus from taxon where subgenus is not null and status != 'morphotaxon'";
@@ -366,7 +366,7 @@ public class TaxonDb extends AntwebDb {
       return getTaxaWithClause(rankClause,  statusClause);
     }
     private ArrayList<Taxon> getTaxaWithClause(String rankClause, String statusClause) {
-        ArrayList<Taxon> taxa = new ArrayList<Taxon>();
+        ArrayList<Taxon> taxa = new ArrayList<>();
         String taxonName = null;
 
         Statement stmt = null;
@@ -411,7 +411,7 @@ public class TaxonDb extends AntwebDb {
     public ArrayList<Taxon> getTaxa(ArrayList<ResultItem> speciesList, String subfamilyFilter) {
     /* To make fast, get a list of genera for a given subfamily.  Restrict prior to fetch */
     
-       ArrayList<Taxon> taxa = new ArrayList<Taxon>();
+       ArrayList<Taxon> taxa = new ArrayList<>();
        
        for (ResultItem item : speciesList) {
           String taxonName = item.getTaxonName();

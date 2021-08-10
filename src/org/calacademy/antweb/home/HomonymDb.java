@@ -22,7 +22,7 @@ public class HomonymDb extends AntwebDb {
     }
 
     public ArrayList<Taxon> getHomonyms() {
-        ArrayList<Taxon> homonyms = new ArrayList<Taxon>();
+        ArrayList<Taxon> homonyms = new ArrayList<>();
         String query = "select taxon_name from homonym order by taxon_name";
 
         Statement stmt = null;

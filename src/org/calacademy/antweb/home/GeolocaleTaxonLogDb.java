@@ -108,11 +108,11 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
           return null;
         }
         
-        ArrayList<GeolocaleTaxonLog> geolocaleTaxonLogs = new ArrayList<GeolocaleTaxonLog>();
+        ArrayList<GeolocaleTaxonLog> geolocaleTaxonLogs = new ArrayList<>();
 
         // The first GeolocaleTaxonLog in the list will be the master list.
         GeolocaleTaxonLog masterLog = new GeolocaleTaxonLog();
-        ArrayList<GeolocaleTaxonLogDetail> masterDetails = new ArrayList<GeolocaleTaxonLogDetail>(); 
+        ArrayList<GeolocaleTaxonLogDetail> masterDetails = new ArrayList<>();
         masterLog.setDetails(masterDetails);
         geolocaleTaxonLogs.add(masterLog);
 
@@ -179,7 +179,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
 
     private ArrayList<GeolocaleTaxonLogDetail> getGeolocaleTaxonLogDetailsFromGeo(int geolocaleId, String displaySubfamily) {
 
-        ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = new ArrayList<GeolocaleTaxonLogDetail>();
+        ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = new ArrayList<>();
 
         String query = "";
         ResultSet rset = null;
@@ -236,7 +236,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     
     public ArrayList<GeolocaleTaxonLogDetail> getGeolocaleTaxonLogDetails(int logId, String displaySubfamily) {
 
-        ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = new ArrayList<GeolocaleTaxonLogDetail>();
+        ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = new ArrayList<>();
 
         String query = "";
         ResultSet rset = null;
@@ -296,7 +296,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     public ArrayList<Login> getCuratorLogins(Login login) {
         // Login is administrator or curator conducting the search.
 
-        ArrayList<Login> logins = new ArrayList<Login>();
+        ArrayList<Login> logins = new ArrayList<>();
 
         String query = "";
         ResultSet rset = null;
@@ -418,7 +418,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     // If allowed to show up on the curator-body.jsp page it will NPE if you go here:
     // http://localhost/antweb/curator.do?id=1 
     public ArrayList<Curation> getCurations(int curatorId) {
-	  ArrayList<Curation> curations = new ArrayList<Curation>();
+	  ArrayList<Curation> curations = new ArrayList<>();
 
 	  String query = "";
 	  ResultSet rset = null;
@@ -454,7 +454,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
 
 
     public ArrayList<Curation> getCurations() {
-	  ArrayList<Curation> curations = new ArrayList<Curation>();
+	  ArrayList<Curation> curations = new ArrayList<>();
 
       String logIds = getFirstLogIdsPerGeolocale();
       
@@ -703,7 +703,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
 
         int geolocaleId = GeolocaleMgr.getGeolocaleId(speciesListName);
 
-        ArrayList<TaxonSet> disputes = new ArrayList<TaxonSet>();
+        ArrayList<TaxonSet> disputes = new ArrayList<>();
 
         String query = "";
         Statement stmt = null;

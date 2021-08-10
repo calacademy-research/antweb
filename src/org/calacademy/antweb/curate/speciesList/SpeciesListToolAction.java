@@ -305,7 +305,7 @@ To Do
     //ArrayList<OverviewTaxon> logDetails = null;
     if (projLogId != 0 || geoLogId != 0) {
       if (projLogId != 0) {
-		  refSpeciesList = new ArrayList<Taxon>();
+		  refSpeciesList = new ArrayList<>();
 		  ArrayList<ProjTaxonLogDetail> logDetails = (new ProjTaxonLogDb(connection)).getProjTaxonLogDetails(projLogId, displaySubfamily);  
 	  
 		  TaxonDb taxonDb = new TaxonDb(connection);
@@ -323,7 +323,7 @@ To Do
 			}
 		  }
       } else { // OK. GeoLogId:
-		  refSpeciesList = new ArrayList<Taxon>();
+		  refSpeciesList = new ArrayList<>();
 		  ArrayList<GeolocaleTaxonLogDetail> logDetails = (new GeolocaleTaxonLogDb(connection)).getGeolocaleTaxonLogDetails(geoLogId, displaySubfamily);  
 	  
 		  TaxonDb taxonDb = new TaxonDb(connection);
@@ -345,7 +345,7 @@ To Do
     }      
       
     if (advSearchTaxa != null) {      
-        refSpeciesList = new ArrayList<Taxon>();
+        refSpeciesList = new ArrayList<>();
         for (Taxon searchTaxon : advSearchTaxa) {  // displaySubfamily == null added recently.  Unreplicated or tested.
         String geoSubfamily = null;
         if (searchTaxon != null) geoSubfamily = searchTaxon.getSubfamily();
@@ -400,9 +400,9 @@ To Do
     
     if  (sumSpeciesList == null) s_log.warn("saveCheckedLists() sumSpeciesList:" + sumSpeciesList);
     
-    ArrayList<String> oldChosenList1 = new ArrayList<String>();
-    ArrayList<String> oldChosenList2 = new ArrayList<String>();
-    ArrayList<String> oldChosenList3 = new ArrayList<String>();
+    ArrayList<String> oldChosenList1 = new ArrayList<>();
+    ArrayList<String> oldChosenList2 = new ArrayList<>();
+    ArrayList<String> oldChosenList3 = new ArrayList<>();
   
     for (Taxon taxon : sumSpeciesList) { 
      if (taxon == null) s_log.warn("saveCheckedLists() taxon:null sumSpeciesList:" + sumSpeciesList);
@@ -514,7 +514,7 @@ To Do
       boolean debug = "myrmicinaeacanthognathus brevicornis".equals(taxonName);
       if (debug) A.log("setCountryLists() SLOW query:" + query);
       
-      ArrayList<String> countries = new ArrayList<String>();
+      ArrayList<String> countries = new ArrayList<>();
         rset = stmt.executeQuery(query);
         while (rset.next()) {
           String country = rset.getString("country");
@@ -548,7 +548,7 @@ To Do
         + " where taxon_name = '" + taxonName + "'"
         + " and " + adm1Criteria;
       //A.log("setAdm1Lists query:" + query);
-      ArrayList<String> adm1s = new ArrayList<String>();
+      ArrayList<String> adm1s = new ArrayList<>();
         rset = stmt.executeQuery(query);
         while (rset.next()) {
           String adm1 = rset.getString("adm1");

@@ -49,7 +49,7 @@ public final class Adm1MgrAction extends Action {
           return (mapping.findForward("message"));
         }
 
-        ArrayList<Geolocale> list = new ArrayList<Geolocale>();
+        ArrayList<Geolocale> list = new ArrayList<>();
         String codeStr = "";
 
         String escapeCountryName = AntFormatter.escapeQuotes(countryName);
