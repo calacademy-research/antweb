@@ -311,9 +311,6 @@ public class FlickrPlace extends DataPlace {
 
           //} catch (sun.security.validator.ValidatorException e) {
 
-        } catch (IOException e) {
-          s_log.warn("getPlaceJson() e:" + e + " for url:" + url);
-          return null;
         } catch (Exception e) {
           s_log.warn("getPlaceJson() e:" + e + " for url:" + url);
           return null;

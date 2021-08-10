@@ -49,11 +49,9 @@ public final class AdminAlertAction extends Action {
                 AdminAlertMgr.populate(connection);
             }             
         
-		} catch (SQLException e) {
+		} catch (SQLException | ClassCastException e) {
 			s_log.error("execute() e:" + e);
-		} catch (ClassCastException e) {
-			s_log.error("execute() e:" + e);
-		} finally {	
+		} finally {
 			DBUtil.close(connection, this, "AdminAlertAction.execute()");
 		}        
  

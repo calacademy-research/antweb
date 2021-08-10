@@ -28,16 +28,13 @@ public class UploadUtil {
                 // parse the header
                 theLine = in.readLine();
                 theLine = theLine.toLowerCase();
-            } catch (UnsupportedEncodingException e) {
-                s_log.error("getFirstLine(" + fileName + ", " + encoding + ") e: " + e);
-                //AntwebUtil.errorStackTrace(e);
             } catch (FileNotFoundException e) {
                 s_log.error("getFirstLine(" + fileName + ", " + encoding + ") e: " + e);
                 //AntwebUtil.errorStackTrace(e);
             } catch (IOException e) {
                 s_log.error("getFirstLine(" + fileName + ", " + encoding + ") e: " + e);
                 //AntwebUtil.errorStackTrace(e);
-            }        
+            }
         return theLine;
     }    
     

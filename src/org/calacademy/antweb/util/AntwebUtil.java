@@ -301,8 +301,6 @@ public abstract class AntwebUtil {
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         
         transformer.transform(source, result);
-      } catch (TransformerConfigurationException e) {
-        s_log.error("writeXml()  e:" + e);
       } catch (TransformerException e) {
         s_log.error("writeXml()  e:" + e);
       }

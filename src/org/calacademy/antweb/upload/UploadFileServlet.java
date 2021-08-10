@@ -76,12 +76,10 @@ public class UploadFileServlet extends HttpServlet {
 
 				} // END OF WHILE 
 				response.sendRedirect("welcome.jsp");
-			} catch (FileUploadException e) {
-				e.printStackTrace();
 			} catch (Exception e) {
 				e.printStackTrace();
-			} 
-		}   
+			}
+        }
     }
 
 }

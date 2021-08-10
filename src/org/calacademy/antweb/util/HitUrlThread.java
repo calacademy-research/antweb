@@ -20,12 +20,10 @@ public class HitUrlThread extends Thread {
 		  //for (int i = 0; i < 5; i++) {
 			
 			sleep((int) (Math.random() * 2000));
-		} catch (IOException e) {
-		  s_log.warn("run() e:" + e);
-		} catch (InterruptedException e) {
+		} catch (IOException | InterruptedException e) {
 		  s_log.warn("run() e:" + e);
 		}
-		//}
+        //}
 		A.log("hitUrl() Finished for: " + getName());
 	}
 }

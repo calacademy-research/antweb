@@ -617,11 +617,9 @@ To Do
         ArrayList<ResultItem> searchResults = null;
         try {
           searchResults = getSearchResults(request, searchParameters);
-        } catch (IOException e) {
+        } catch (IOException | ServletException e) {
           s_log.warn("doAdvancedSearch() e:" + e);
-        } catch (ServletException e) {
-          s_log.warn("doAdvancedSearch() e:" + e);
-        }        
+        }
         if (searchResults == null) {
             s_log.warn("doAdvancedSearch() null search results for searchParameters:" + searchParameters);
             return null;

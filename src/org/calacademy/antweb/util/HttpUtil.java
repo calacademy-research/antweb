@@ -1467,8 +1467,6 @@ public abstract class HttpUtil {
             A.log("writeUrlContents() url:" + theUrl + " toFile:" + fileName);
             return true;
  
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

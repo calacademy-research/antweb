@@ -64,11 +64,9 @@ public final class AntWikiDataAction extends Action {
 
 				message = AntWikiDataAction.checkForUpdates(connection);
 
-			} catch (SQLException e) {
+			} catch (SQLException | ClassCastException e) {
 				s_log.error("execute() e:" + e);
-			} catch (ClassCastException e) {
-				s_log.error("execute() e:" + e);
-			} finally {	
+			} finally {
 			    DBUtil.close(connection, this, "EditGeolocaleAction.execute()");
 			}        
 		

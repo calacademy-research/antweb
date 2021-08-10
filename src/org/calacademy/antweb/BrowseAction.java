@@ -659,9 +659,7 @@ We are showin the full map of ponerinae for every adm1.
 		  request.setAttribute("message", taxonName + " does not exist in the database");
 		  return (mapping.findForward("message"));
 		}
-	  } catch (IOException e) {
-		s_log.warn("execute() fetchTaxon e:" + e);
-	  } catch (SQLException e) {
+	  } catch (IOException | SQLException e) {
 		s_log.warn("execute() fetchTaxon e:" + e);
 	  } finally {
 		DBUtil.close(connection, this, "BrowseAction.taxonNameRedirect()");

@@ -579,10 +579,8 @@ public class Utility implements Serializable {
                 //close the stream
                 stream.close();
                 returnVal = true;
-            } catch (FileNotFoundException fnfe) {
+            } catch (IOException fnfe) {
                 s_log.error("copyFile() " + fnfe);
-            } catch (IOException ioe) {
-                s_log.error("copyFile() " + ioe);
             }
         } else {
           s_log.error("Can not copy null file to outName:" + outName);
