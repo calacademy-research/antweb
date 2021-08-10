@@ -140,7 +140,7 @@ public class GenericSearch implements Serializable {
 
             for (ResultItem resultItem : currentList) {
                 thisItem = resultItem;
-                if (resArray.indexOf(thisItem.getName()) != -1) {
+                if (resArray.contains(thisItem.getName())) {
                     theList.add(thisItem);
                 }
             }

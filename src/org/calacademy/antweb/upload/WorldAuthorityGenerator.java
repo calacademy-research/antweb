@@ -1202,7 +1202,7 @@ public class WorldAuthorityGenerator {
             if (temp.get("subfamily").contains(" ")) {
                 //s_log.info("subfamily is " + temp.get("subfamily"));
                 currentValid = temp.get("current valid name");
-                if ((currentValid != null) && (lookup.get(currentValid) != null) && (lookup.get(currentValid).indexOf(" ") != -1) && (lookup.get(currentValid).size() > 0)) {
+                if ((currentValid != null) && (lookup.get(currentValid) != null) && (lookup.get(currentValid).contains(" ")) && (lookup.get(currentValid).size() > 0)) {
                     currentSubfamily = lookup.get(currentValid).get(0);
                     temp.put("subfamily", currentSubfamily);
                     //s_log.info("from currentvalid, putting " + currentSubfamily + " into subfamily");
