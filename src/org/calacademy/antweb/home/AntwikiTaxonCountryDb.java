@@ -1,19 +1,16 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
-import java.sql.*;
-
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
+import org.calacademy.antweb.AntFormatter;
 import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.upload.*;
+import org.calacademy.antweb.Taxon;
+import org.calacademy.antweb.geolocale.AntwikiTaxonCountry;
+import org.calacademy.antweb.util.A;
+import org.calacademy.antweb.util.DBUtil;
+
+import java.sql.*;
+import java.util.ArrayList;
 
 public class AntwikiTaxonCountryDb extends AntwebDb {
     
@@ -53,7 +50,7 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
         int rev = 1;  // Get the max rev and increment.
 
         String sql = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
 
         country = AntFormatter.escapeQuotes(country);
 
@@ -62,16 +59,29 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
 
         try {
 
-          sql = "insert into antwiki_taxon_country (rev, short_taxon_name";
-          if (originalTaxonName != null) sql += ", original_taxon_name";
-          sql += ", taxon_name, country, region, is_introduced, source) VALUES (" + rev + ", '" + shortName + "', '";
-          if (originalTaxonName != null) sql += originalTaxonName + "', '";
-          sql += taxonName + "', '" + country + "', '" + region + "', " + isIntroduced + ", '" + source + "')";
+            sql = "insert into antwiki_taxon_country (rev, short_taxon_name, original_taxon_name, taxon_name, country, region, is_introduced, source, )" +
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+//          sql = "insert into antwiki_taxon_country (rev, short_taxon_name";
+//          if (originalTaxonName != null) sql += ", original_taxon_name";
+//          sql += ", taxon_name, country, region, is_introduced, source) VALUES (" + rev + ", '" + shortName + "', '";
+//          if (originalTaxonName != null) sql += originalTaxonName + "', '";
+//          sql += taxonName + "', '" + country + "', '" + region + "', " + isIntroduced + ", '" + source + "')";
 
           if (isIntroduced) A.log("storeTaxonCountry() sql: " + sql);
 
-          stmt = getConnection().createStatement();
-          c += stmt.executeUpdate(sql);
+          stmt = getConnection().prepareStatement(sql);
+
+            stmt.setInt(1, rev);
+            stmt.setString(2, shortName);
+            stmt.setString(3, taxonName);
+            stmt.setString(4, originalTaxonName);   // ok if string null, since column default is null
+            stmt.setString(5, country);
+            stmt.setString(6, region);
+            stmt.setBoolean(7, isIntroduced);
+            stmt.setString(8, source);
+
+          c += stmt.executeUpdate();
 
         } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             //s_log.error("storeTaxonCountry() e:" + e);        
@@ -108,6 +118,7 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
         Statement stmt = null;
 
         try {
+            // todo use prepared statement, skip escaping quotes
           taxonName = Formatter.escapeQuotes(taxonName);
           sql = "insert into antwiki_valid_taxa(taxon_name) values ('" + taxonName + "')";
           
@@ -249,17 +260,18 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
     }
 
     private void updateIntroducedSpecimen(String code) throws SQLException {
-      Statement stmt = null;
-      String dml = null;   
-      try {
-        stmt = DBUtil.getStatement(getConnection(), "updateIntroducedSpecimen()");
-        dml = "update specimen set is_introduced = 1 where code = '" + code + "'";
-        stmt.executeUpdate(dml);  
-      } catch (SQLException e) {
-        s_log.warn("updateIntroducedSpecimen() e:" + e);      
-      } finally {
-        DBUtil.close(stmt, "updateIntroducedSpecimen()");
-      }      
+        PreparedStatement stmt = null;
+        String dml = null;
+        try {
+            dml = "update specimen set is_introduced = 1 where code = ?";
+            stmt = DBUtil.getPreparedStatement(getConnection(), "updateIntroducedSpecimen()", dml);
+            stmt.setString(1, code);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            s_log.warn("updateIntroducedSpecimen() e:" + e);
+        } finally {
+            DBUtil.close(stmt, "updateIntroducedSpecimen()");
+        }
     }
     
 }

@@ -28,34 +28,32 @@ public class EventDb extends AntwebDb {
             
         //s_log.warn("addEvent() createdStr:" + createdStr + " created:" + operationLock.getCreated());            
 
-        String eventString = event.toQueryString(createdStr);
-
-        String theInsert = "insert into event(operation, curator_id, name, created) " 
-            + " values (" + eventString + ")";
+        String theInsert = "insert into event(operation, curator_id, name, created)  values (?, ?, ?, ?)";
                        
         A.log("addEvent() insert:" + theInsert);
-            
-        Statement stmt = null;
-        try {
-            stmt = getConnection().createStatement();
-            stmt.executeUpdate(theInsert);
+
+        try (PreparedStatement stmt = getConnection().prepareStatement(theInsert)) {
+            stmt.setString(1, event.getOperation());
+            stmt.setInt(2, event.getCuratorId());
+            stmt.setString(3, event.getName());
+            stmt.setString(4, createdStr);
+
+            stmt.executeUpdate();
         } catch (SQLException e) {
             s_log.error("addEvent() e:" + e);
             throw e;
-        } finally {
-            stmt.close();        
         }
     }
 
     public ArrayList<Event> getEvents() throws SQLException {
-      ArrayList<Event> events = new ArrayList<Event>();
-      Statement stmt = null;
+      ArrayList<Event> events = new ArrayList<>();
+      PreparedStatement stmt = null;
       ResultSet rset = null;           
       try {
         String query = "select id, operation, curator_id, name, created from event order by created desc";            
-        stmt = DBUtil.getStatement(getConnection(), "EventDb.getEvents()");  
-        rset = stmt.executeQuery(query);
-        Event event = null;
+        stmt = DBUtil.getPreparedStatement(getConnection(), "EventDb.getEvents()", query);
+        rset = stmt.executeQuery();
+        Event event;
         while (rset.next()) {
            event = new Event();
            event.setId(rset.getInt("id"));
