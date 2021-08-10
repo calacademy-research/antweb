@@ -74,7 +74,7 @@ public class UserAgentTracker {
       if (userAgent == null) {
          ++nullAgent;
       } else {
-          int count = agentsMap.containsKey(userAgent) ? agentsMap.get(userAgent) : 0;
+          int count = agentsMap.getOrDefault(userAgent, 0);
           count = count + 1;
           agentsMap.put(userAgent, count);   
           

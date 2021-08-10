@@ -375,7 +375,7 @@ public class UploadDetails extends OperationDetails {
       for (Museum museum : MuseumMgr.getMuseums()) {
         String code = museum.getCode();
         if (element.contains(code)) {
-          int count = museumMap.containsKey(code) ? museumMap.get(code) : 0;
+          int count = museumMap.getOrDefault(code, 0);
           museumMap.put(code, ++count);    
           //A.log("addToMuseumSet() element:" + element + " code:" + code + " count:" + count);      
         }
