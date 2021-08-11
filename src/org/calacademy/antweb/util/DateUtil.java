@@ -9,6 +9,8 @@ import java.text.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+
 //import com.joestelmach.natty.*;
 //import com.joestelmach.natty.generated.*;
 
@@ -90,18 +92,17 @@ public abstract class DateUtil {
     return getFormatDateStr(theDate, "dd/mon/yyyy:HH:mm:ss");
   }
 
+  private static final DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
   public static String getFormatDateTimeStr() {
-    Date theDate = new Date();
-    return getFormatDateStr(theDate, "yyyy-MM-dd HH:mm:ss");
+    return LocalDate.now().format(dateTimeFormat);
   }
 
   public static String getFormatDateStr() {
-    Date theDate = new Date();
-    return getFormatDateStr(theDate, "yyyy-MM-dd");
+    return LocalDate.now().format(ISO_LOCAL_DATE);
   }
 
   public static String getFormatDateTimeStr(Date theDate) {
-    return getFormatDateStr(theDate, "yyyy-MM-dd HH:mm:ss");
+    return dateTimeFormat.format(LocalDate.ofInstant(theDate.toInstant(), ZoneId.systemDefault()));
   }
 
   public static String getFormatDateStr(String dateStr) {
@@ -134,9 +135,10 @@ public abstract class DateUtil {
 
   // Antweb Preferred format. How the String dates are stored in specimen table dateCollectedStart and dateCollectedEnd
   public static String getFormatDateStr(Date theDate) {
-    String formatDate = getFormatDateStr(theDate, "yyyy-MM-dd");
-    //A.log("DateUtil.getFormatDateStr() theDate:" + theDate + " formatDate:" + formatDate);
-    return formatDate;
+    return ISO_LOCAL_DATE.format(LocalDate.ofInstant(theDate.toInstant(), ZoneId.systemDefault()));
+//    String formatDate = getFormatDateStr(theDate, "yyyy-MM-dd");
+//    //A.log("DateUtil.getFormatDateStr() theDate:" + theDate + " formatDate:" + formatDate);
+//    return formatDate;
   }
 
   public static String getFormatDateStr(Date theDate, String format) {
@@ -148,8 +150,7 @@ public abstract class DateUtil {
     if (dateStr == null) return null;
     Date date = constructDate(dateStr);
     if (date == null) return null;
-    String formatString = getFormatDateStr(date);
-    return formatString;
+    return getFormatDateStr(date);
   }
 
   private static Date format(String format, String dateStr) {
