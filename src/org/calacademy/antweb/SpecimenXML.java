@@ -8,6 +8,7 @@ import java.util.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 
@@ -16,20 +17,21 @@ import org.apache.commons.logging.LogFactory;
 
 public class SpecimenXML extends DefaultHandler {
 
-    private static Log s_log = LogFactory.getLog(SpecimenXML.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenXML.class);
 
-    Hashtable theHash = new Hashtable();
-    String currentElement = null;
+    private final Hashtable<String, String> theHash = new Hashtable<>();
+    private String currentElement = null;
+    private SAXParserFactory spf;
+    private SAXParser saxParser;
 
     public String isInvalid(String xmlString) {
         String isInvalid = null;
-        Hashtable description = null;
         try {
             //if (xmlString.contains(" ")) s_log.warn("weird xmlString:" + xmlString);   
             // If a file is saved as UTF - with BOM (in Text Wrangler go to save as and see default)
             // then the string may contain a space but it won't be visible in the logs! Cut and
             // paste from Terminal into Text Wrangler and you will see the space.     
-            description = parse(xmlString);
+            parse(xmlString);
         } catch (org.xml.sax.SAXParseException e) {
             String message = "";
         /*
@@ -73,10 +75,15 @@ public class SpecimenXML extends DefaultHandler {
         return description;        
     }
 
+
     public Hashtable parse(String theXML) throws Exception {
-        SAXParserFactory spf = SAXParserFactory.newInstance(); 
-        spf.setValidating(false);
-        SAXParser saxParser = spf.newSAXParser(); 
+        if (spf == null) {
+            spf = SAXParserFactory.newInstance();
+            spf.setValidating(false);
+        }
+        if (saxParser == null) {
+            saxParser = spf.newSAXParser();
+        }
         // create an XML reader
         XMLReader reader = saxParser.getXMLReader();
      
@@ -105,6 +112,11 @@ public class SpecimenXML extends DefaultHandler {
         s = (String) theHash.get(currentElement) + s;
       }
       theHash.put(currentElement, s);
+    }
+
+    public void reset() {
+        theHash.clear();
+        currentElement = null;
     }
       
 }
