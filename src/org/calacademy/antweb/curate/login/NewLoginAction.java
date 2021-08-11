@@ -1,9 +1,8 @@
 package org.calacademy.antweb.curate.login;
 
-import java.io.*;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
-import org.apache.regexp.*;
+
 import java.sql.*;
 import java.util.ArrayList;
 

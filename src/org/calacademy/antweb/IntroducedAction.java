@@ -9,7 +9,6 @@ import java.sql.*;
 
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.util.AntwebProps;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -92,7 +91,7 @@ native bioregions to genera.
     }
 
     private ArrayList<String> getGeolocaleIntroduced(int geolocaleId, Connection connection) {
-        ArrayList<String> introduced = new ArrayList<String>();
+        ArrayList<String> introduced = new ArrayList<>();
 
 		String query = "select gt.taxon_name from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name " 
 		  + " and gt.geolocale_id = " + geolocaleId + " and gt.is_introduced = 1 order by t.genus, t.species, t.subspecies";
@@ -118,7 +117,7 @@ native bioregions to genera.
     }
 
     private ArrayList<String> getBioregionIntroduced(String bioregionName, Connection connection) {
-        ArrayList<String> introduced = new ArrayList<String>();
+        ArrayList<String> introduced = new ArrayList<>();
 
         String query = "select bt.taxon_name from bioregion_taxon bt, taxon t where bt.taxon_name = t.taxon_name "
                 + " and bt.bioregion_name = '" + bioregionName + "' and bt.is_introduced = 1 order by t.genus, t.species, t.subspecies";

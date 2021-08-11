@@ -8,10 +8,9 @@ import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import org.apache.struts.actions.DispatchAction;
 
-import java.util.Date;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
+
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log;
@@ -35,7 +34,7 @@ public final class SearchAction extends DispatchAction {
         String requestInfo = AntwebUtil.getRequestInfo(request);
 
         //if (true || AntwebProps.isDevMode()) s_log.warn("execute() set activeSession.");
-        request.getSession().setAttribute("activeSession", Boolean.valueOf(true));
+        request.getSession().setAttribute("activeSession", Boolean.TRUE);
 
         // These needs to happen, if only because MapResults will use the project from the session.
         OverviewMgr.setOverview(request, null);
@@ -174,7 +173,7 @@ public final class SearchAction extends DispatchAction {
         
         AdvancedSearchResults results = new AdvancedSearchResults();
         results.setRset(searchResults);
-        ArrayList<String> myFilters = new ArrayList<String>();
+        ArrayList<String> myFilters = new ArrayList<>();
         if ((imagesOnly != null) && (imagesOnly.equals("on"))) {
             myFilters.add("images");
         }
@@ -398,8 +397,7 @@ public final class SearchAction extends DispatchAction {
       }
     }
     public static boolean isTempSpecimenSearchLimit() {
-      if (tempSpecimenSearchLimit > 0) return true;
-      return false;
+        return tempSpecimenSearchLimit > 0;
     }    
 
 /*    private void finalizeOldResults(HttpSession session, String searchResultsType) {

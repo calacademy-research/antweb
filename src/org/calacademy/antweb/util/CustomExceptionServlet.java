@@ -5,10 +5,7 @@ import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-import org.apache.struts.action.*;
-import org.apache.struts.config.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class CustomExceptionServlet extends HttpServlet {

@@ -3,17 +3,12 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.upload.*;
-import org.calacademy.antweb.search.ResultItem;
 
 
 public class TaxonPropDb extends AntwebDb {
@@ -122,7 +117,7 @@ public class TaxonPropDb extends AntwebDb {
         deleteBioregionMaps();
 
         // Select the distinct Bioregions for each genera in the specimen table.      
-        HashMap<String, HashSet<String>> bioregionMaps = new HashMap<String, HashSet<String>>();
+        HashMap<String, HashSet<String>> bioregionMaps = new HashMap<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = null;
@@ -161,14 +156,12 @@ public class TaxonPropDb extends AntwebDb {
           HashSet<String> bioregionSet = bioregionMaps.get(genus);
           String bioregionMapStr = "";
           int i = 0;
-          
-          Iterator<String> iterator = bioregionSet.iterator();
-          while (iterator.hasNext()) {
-            String bioregion = iterator.next();
-            ++i;
-            if (i > 1) bioregionMapStr += " ";
-            bioregionMapStr += bioregion + ":true";            
-          }
+
+            for (String bioregion : bioregionSet) {
+                ++i;
+                if (i > 1) bioregionMapStr += " ";
+                bioregionMapStr += bioregion + ":true";
+            }
           A.log("refreshBioregionMap() genus:" + genus + " bioregionMapStr:" + bioregionMapStr);
         
           // insert into taxon_props genus, bioregionMapStr
@@ -230,7 +223,7 @@ public class TaxonPropDb extends AntwebDb {
     }    
 
     public HashMap<String, String> getTaxaIntroducedMaps() {
-        HashMap<String, String> taxaMap = new HashMap<String, String>();
+        HashMap<String, String> taxaMap = new HashMap<>();
         Statement stmt = null;
         ResultSet rset = null;
         String theQuery = "select taxon_name, value from taxon_prop where prop = 'introducedMap'";
@@ -252,7 +245,7 @@ public class TaxonPropDb extends AntwebDb {
     }
 
     public ArrayList<String> getIntroducedList(String orderBy) {
-        ArrayList<String> introducedList = new ArrayList<String>();
+        ArrayList<String> introducedList = new ArrayList<>();
 
         Statement stmt = null;
         ResultSet rset = null;

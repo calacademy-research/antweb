@@ -1,12 +1,10 @@
 package org.calacademy.antweb.curate;
 
-import java.io.*;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
-import org.apache.regexp.*;
+
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -34,7 +32,7 @@ public class ManageMuseumsAction extends Action {
         String museumTitle = (String) df.get("title");   
            
         Boolean isActive = (Boolean) df.get("isActive"); 
-        if (isActive == null) isActive = Boolean.valueOf(false);
+        if (isActive == null) isActive = Boolean.FALSE;
         String action = (String) df.get("action");
         String step = (String) df.get("step");
 

@@ -1,15 +1,8 @@
 package org.calacademy.antweb;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.Date;
 
-import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
@@ -54,9 +47,9 @@ public class Login implements Comparable {
         setPassword("");
         setFirstName("");
         setLastName("");
-        setProjects(new ArrayList<SpeciesListable>());
-        setCountries(new ArrayList<SpeciesListable>());
-        setGeolocales(new ArrayList<SpeciesListable>());
+        setProjects(new ArrayList<>());
+        setCountries(new ArrayList<>());
+        setGeolocales(new ArrayList<>());
     }
     public String getFullName() {
       return getFirstName() + " " + getLastName();
@@ -120,15 +113,13 @@ public class Login implements Comparable {
         
         //if (getProjects() != null && getProjects().size() > 0) return true;
         //if (isUploadSpecimens() || isUploadImages()) return true;
-        
-        if (getGroupId() > 0) return true;
-        return false;
+
+        return getGroupId() > 0;
     }
     
     public boolean isDeveloper() {
         // This should probably be a field in the database.  But this is simpler.
-        if (getId() == 22) return true;
-        return false;
+        return getId() == 22;
     }
     
     public Boolean isUploadSpecimens() {
@@ -158,7 +149,7 @@ public class Login implements Comparable {
     }
     // Convenience method:
     public ArrayList<String> getProjectNames() {
-        ArrayList<String> projectNames = new ArrayList<String>();
+        ArrayList<String> projectNames = new ArrayList<>();
 		if (getProjects() != null) {
 			for (SpeciesListable project : getProjects()) {
 			  projectNames.add(project.getName());
@@ -208,7 +199,7 @@ public class Login implements Comparable {
     }
     // Convenience method:
     public ArrayList<String> getCountryNames() {
-        ArrayList<String> countryNames = new ArrayList<String>();
+        ArrayList<String> countryNames = new ArrayList<>();
         ArrayList<SpeciesListable> countries = getCountries();
         if (countries == null) {
           return countryNames;
@@ -232,7 +223,7 @@ public class Login implements Comparable {
 
     // This is used in the drop down lists of the curate page and the Species List Tool
     public ArrayList<SpeciesListable> getSpeciesListList() {
-        ArrayList<SpeciesListable> speciesLists = new ArrayList<SpeciesListable>();
+        ArrayList<SpeciesListable> speciesLists = new ArrayList<>();
         if (getProjects() != null) {
             speciesLists.addAll(getProjects());
         }

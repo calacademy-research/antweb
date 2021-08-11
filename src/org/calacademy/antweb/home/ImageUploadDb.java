@@ -1,19 +1,14 @@
 package org.calacademy.antweb.home;
 
 import java.util.*;
-import java.io.Serializable;
 import java.sql.*;
 import java.time.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.imageUploader.*;
-import org.calacademy.antweb.*;
 
 public class ImageUploadDb extends AntwebDb {
 
@@ -47,7 +42,7 @@ public class ImageUploadDb extends AntwebDb {
                 Copyright copyright = (new CopyrightDb(getConnection())).getCopyrightByYear(year);
                 imageUpload.setCopyright(copyright);
                 imageUpload.setLicense(rset.getString("license"));
-                imageUpload.setIsComplete((rset.getInt("complete") == 1) ? true : false);
+                imageUpload.setIsComplete(rset.getInt("complete") == 1);
                 imageUpload.setImages(getImagesUploaded(imageUpload));
             }
         } catch (SQLException e) {
@@ -60,7 +55,7 @@ public class ImageUploadDb extends AntwebDb {
 
 
     public ArrayList<ImageUploaded> getImagesUploaded(ImageUpload imageUpload) {
-        ArrayList<ImageUploaded> images = new ArrayList<ImageUploaded>();
+        ArrayList<ImageUploaded> images = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String theQuery = "select * from image_uploaded where image_upload_id = " + imageUpload.getId();
@@ -78,8 +73,8 @@ public class ImageUploadDb extends AntwebDb {
                 imageUploaded.setCreated(rset.getTimestamp("created"));
                 imageUploaded.setShot(rset.getString("shot"));
                 imageUploaded.setExt(rset.getString("ext"));
-                imageUploaded.setIsReUploaded((rset.getInt("reuploaded") == 1) ? true : false);
-                imageUploaded.setIsSpecimenDataExists((rset.getInt("specimen_data_exists") == 1) ? true : false);
+                imageUploaded.setIsReUploaded(rset.getInt("reuploaded") == 1);
+                imageUploaded.setIsSpecimenDataExists(rset.getInt("specimen_data_exists") == 1);
                 imageUploaded.setErrorMessage(rset.getString("error_message"));
                 images.add(imageUploaded);
             }
@@ -93,7 +88,7 @@ public class ImageUploadDb extends AntwebDb {
     }    
     
     public ArrayList<ImageUpload> getImageUploads(String criteria) {
-        ArrayList<ImageUpload> imageUploads = new ArrayList<ImageUpload>();
+        ArrayList<ImageUpload> imageUploads = new ArrayList<>();
         Statement stmt = null;
         String query = null;
         ResultSet rset = null;
@@ -120,7 +115,7 @@ public class ImageUploadDb extends AntwebDb {
                 int year = rset.getInt("copyright_year");
                 Copyright copyright = (new CopyrightDb(getConnection())).getCopyrightByYear(year);
                 imageUpload.setCopyright(copyright);
-                imageUpload.setIsComplete((rset.getInt("complete") == 1) ? true : false);
+                imageUpload.setIsComplete(rset.getInt("complete") == 1);
                 imageUploads.add(imageUpload);
             }
 

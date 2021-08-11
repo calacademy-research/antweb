@@ -1,16 +1,11 @@
 package org.calacademy.antweb.util;
 
 import java.io.*;
-import java.net.*;
 import java.util.*;
 
-import java.sql.Connection;
-
 import java.text.*;
-import java.io.IOException;
 
 import javax.servlet.http.*;
-import javax.servlet.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -21,8 +16,7 @@ import org.apache.struts.action.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.transform.OutputKeys;
+
 import org.w3c.dom.Document;
 
 import javax.mail.internet.InternetAddress;
@@ -37,7 +31,7 @@ public abstract class AntwebUtil {
   
   private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");  
   
-  private static HashMap<String, Integer> s_logHash = new HashMap<String,Integer>();
+  private static HashMap<String, Integer> s_logHash = new HashMap<>();
   
   public static void main(String[] args) { 
    // To execute:    ant antwebUtil    
@@ -161,12 +155,11 @@ public abstract class AntwebUtil {
 
   // pass in a directoy and get a list of all of the files.  Not recursive.
   static ArrayList<String> getDirFiles(File aFile) {
-    ArrayList<String> dirFiles = new ArrayList<String>();
+    ArrayList<String> dirFiles = new ArrayList<>();
     if (aFile.isDirectory()) {
       File[] listOfFiles = aFile.listFiles();
       if(listOfFiles!=null) {
-        for (int i = 0; i < listOfFiles.length; i++)
-          dirFiles.add((listOfFiles[i]).getName());
+        for (File listOfFile : listOfFiles) dirFiles.add(listOfFile.getName());
       }
     }
     return dirFiles;
@@ -203,7 +196,7 @@ public abstract class AntwebUtil {
   }
 
   public static ArrayList<String> getUploadDirFiles(String name) {
-    ArrayList<String> qualifiedFiles = new ArrayList<String>();    
+    ArrayList<String> qualifiedFiles = new ArrayList<>();
     ArrayList<String> files = getUploadDirFiles();
     for (String file : files) {
       String kind = file.substring(18); // everything after the date
@@ -249,7 +242,7 @@ public abstract class AntwebUtil {
 
     Date start = new Date();
 
-    s_uploadGroupList = new ArrayList<Integer>();
+    s_uploadGroupList = new ArrayList<>();
     ArrayList<String> files = getUploadDirFiles();
     for (String file : files) {
       if (file != null && file .length() < 18){
@@ -302,8 +295,6 @@ public abstract class AntwebUtil {
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         
         transformer.transform(source, result);
-      } catch (TransformerConfigurationException e) {
-        s_log.error("writeXml()  e:" + e);
       } catch (TransformerException e) {
         s_log.error("writeXml()  e:" + e);
       }
@@ -377,10 +368,7 @@ public abstract class AntwebUtil {
   
     public static boolean fileFound(String fileLoc) {
   	  File f = new File(fileLoc);
-      if (f.exists()) {
-        return true;
-      }
-      return false;      
+      return f.exists();
     }   
     
     public static boolean webFileFound(String fileLoc) {
@@ -560,7 +548,7 @@ public abstract class AntwebUtil {
   }
 
   public static String getAntwebStackTrace(String trace) {
-    ArrayList<String> traceLines = new ArrayList<String>();
+    ArrayList<String> traceLines = new ArrayList<>();
     //traceLines.add("\r\n");
     String character = "at ";
     int i = 0;
@@ -826,13 +814,11 @@ public abstract class AntwebUtil {
         Vector keysVector = AntwebUtil.getSortedKeyVector(hashMap);
         
         String sortedKeyList = "";
-        	
-        Iterator i = keysVector.iterator();
-        while (i.hasNext()) {
-          Object key = i.next();
-           sortedKeyList = sortedKeyList + key.toString() + ", ";
-          newVector.add(hashMap.get(key));
-        }          
+
+      for (Object key : keysVector) {
+        sortedKeyList = sortedKeyList + key.toString() + ", ";
+        newVector.add(hashMap.get(key));
+      }
         //s_log.warn("SortedKeyList: " + sortedKeyList);
         return newVector;  
     }
@@ -851,8 +837,8 @@ public abstract class AntwebUtil {
     public static boolean validEmail(String email) {
         if (email.equals(""))
             return false;
-        if (email.indexOf("@") == -1 ||
-            email.indexOf(".") == -1 ||
+        if (!email.contains("@") ||
+                !email.contains(".") ||
             email.length() < 6) {
             return false;
         }
@@ -878,11 +864,8 @@ public abstract class AntwebUtil {
         
     public static boolean isDeployed(HttpServletRequest request) {
       if (isDeployed) return true;
-      
-      if (LoginMgr.isAdmin(request)) {
-        return true;
-      }  
-      return false;
+
+      return LoginMgr.isAdmin(request);
     }
 
 
@@ -892,9 +875,9 @@ public abstract class AntwebUtil {
       Integer theCount = (Integer) countHash.get(key);  
       int theCountInt = theCount.intValue() + 1;
       //A.log("AntwebUtil.count() key:" + key + " count:" + theCountInt);
-      countHash.put(key, Integer.valueOf(theCountInt));
+      countHash.put(key, theCountInt);
     } else {
-      countHash.put(key, Integer.valueOf(1));
+      countHash.put(key, 1);
     }
   }
   public static int getCount(String key) {

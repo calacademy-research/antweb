@@ -2,13 +2,9 @@ package org.calacademy.antweb;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.geolocale.*;
 
 import java.util.Comparator;
 
@@ -183,17 +179,17 @@ public class Group implements Comparable {
     }    
 
 
-    public static Comparator<Group> getGroupNameComparator = new Comparator<Group>() {
+    public static Comparator<Group> getGroupNameComparator = new Comparator<>() {
 
         public int compare(Group a1, Group a2) {
-           String name1 = a1.getName().toUpperCase();
-           String name2 = a2.getName().toUpperCase();
+            String name1 = a1.getName().toUpperCase();
+            String name2 = a2.getName().toUpperCase();
 
-           //ascending order
-           return name1.compareTo(name2);
+            //ascending order
+            return name1.compareTo(name2);
 
-           //descending order
-           //return name2.compareTo(name1);
+            //descending order
+            //return name2.compareTo(name1);
         }
     };
     

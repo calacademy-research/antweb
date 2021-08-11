@@ -1,19 +1,14 @@
 package org.calacademy.antweb.home;
 
 import java.util.*;
-import java.util.Date;
 import java.sql.*;
 import java.time.*;
 
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
 //import org.apache.regexp.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
 public class CopyrightDb extends AntwebDb {
@@ -92,7 +87,7 @@ public class CopyrightDb extends AntwebDb {
             rset = stmt.executeQuery(theQuery);
 
             while (rset.next()) {
-                copyrights = new ArrayList<Copyright>();
+                copyrights = new ArrayList<>();
                 copyright = new Copyright();
                 copyright.setId(rset.getInt("id"));
                 copyright.setCopyright(rset.getString("copyright"));

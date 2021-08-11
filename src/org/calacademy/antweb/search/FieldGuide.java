@@ -207,14 +207,19 @@ public class FieldGuide {
         Formatter format = new Formatter();
         
         sb.append("");
-        if (rank.equals("subfamily")) {
-            sb.append("Subfamilies ");
-        } else if (rank.equals("genus")) {
-            sb.append("Genera ");
-        } else if (rank.equals("species")) {
-            sb.append("Species ");
-        } else if (rank.equals("subspecies")) {
-            sb.append("Subspecies ");
+        switch (rank) {
+            case "subfamily":
+                sb.append("Subfamilies ");
+                break;
+            case "genus":
+                sb.append("Genera ");
+                break;
+            case "species":
+                sb.append("Species ");
+                break;
+            case "subspecies":
+                sb.append("Subspecies ");
+                break;
         }
         if ((name != null) && (name.length() > 0)) {
 

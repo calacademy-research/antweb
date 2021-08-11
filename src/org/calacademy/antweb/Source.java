@@ -1,16 +1,7 @@
 package org.calacademy.antweb;
 
-import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory; 
-
-import org.calacademy.antweb.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class Source {
 
@@ -55,23 +46,11 @@ Priorities:
         
         switch(aSource) {
 			case SPECIMEN:
-			  if (SPECIMEN.equals(bSource)) {
-				return false;
-			  } else {
-				return true;
-			  }
+                return !SPECIMEN.equals(bSource);
 			case ANTCAT:
-			  if (SPECIMEN.equals(bSource) || ANTCAT.equals(bSource)) {
-				return false;
-			  } else {
-				return true;
-			  }
+                return !SPECIMEN.equals(bSource) && !ANTCAT.equals(bSource);
 			case LITERATURE:
-			  if (SPECIMEN.equals(bSource) || ANTCAT.equals(bSource) || LITERATURE.equals(bSource)) {
-				return false;
-			  } else {
-				return true;
-			  }
+                return !SPECIMEN.equals(bSource) && !ANTCAT.equals(bSource) && !LITERATURE.equals(bSource);
 			case CURATOR:
 			  return false;
         }

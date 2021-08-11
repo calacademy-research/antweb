@@ -1,6 +1,5 @@
 package org.calacademy.antweb;
 
-import java.io.IOException;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
@@ -10,9 +9,6 @@ import java.sql.*;
 import java.io.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.geolocale.*;
 
 import org.calacademy.antweb.util.*;
 

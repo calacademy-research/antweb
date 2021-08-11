@@ -1,18 +1,10 @@
 package org.calacademy.antweb;
 
 import java.util.*;
-import java.util.Collection;
 import java.util.Map;
-import java.io.Serializable;
-import java.sql.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory; 
-
-import org.calacademy.antweb.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class CommonNames {
 
@@ -23,7 +15,7 @@ public class CommonNames {
 
   public static void init() {
     isInitialized = true;
-    nameMap = new HashMap<String, String>();
+    nameMap = new HashMap<>();
 
     nameMap.put("Argentine ant", "dolichoderinaelinepithema humile");
     nameMap.put("Fire ant", "myrmicinaesolenopsis");
@@ -67,10 +59,8 @@ public class CommonNames {
 
     //nameMap.put("", "");
         
-    namesList = new ArrayList<String>();   
-    for (String name : nameMap.keySet()) {
-      namesList.add(name);
-    }
+    namesList = new ArrayList<>();
+      namesList.addAll(nameMap.keySet());
     //A.log("CommonNames() namesList:" + namesList);
   }
 

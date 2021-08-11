@@ -85,7 +85,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         return navLink;
     }
 
-    private transient ArrayList<Geolocale> children = new ArrayList<Geolocale>();
+    private transient ArrayList<Geolocale> children = new ArrayList<>();
 
     public static final String REGION = "region";
     public static final String SUBREGION = "subregion";
@@ -315,7 +315,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       this.children = children;
     }        
     public ArrayList<Geolocale> getValidChildren() {
-      ArrayList<Geolocale> validChildren = new ArrayList<Geolocale>();
+      ArrayList<Geolocale> validChildren = new ArrayList<>();
       for (Geolocale child : getChildren()) {
         if (child.getIsValid()) {
           validChildren.add(child);
@@ -437,10 +437,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     }        
         
     public boolean isCanShowSpecimenTaxa() {
-      if ((isCountry() && !getIsUseChildren()) || isAdm1()) {
-        return true;
-      }
-      return false;
+        return (isCountry() && !getIsUseChildren()) || isAdm1();
     }
 	public boolean isCountry() {
 	  return Georank.country.equals(getGeorank());

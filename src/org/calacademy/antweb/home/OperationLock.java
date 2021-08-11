@@ -6,8 +6,6 @@ import java.text.DecimalFormat;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
-
 public class OperationLock {
 
     private static Log s_log = LogFactory.getLog(OperationLock.class);

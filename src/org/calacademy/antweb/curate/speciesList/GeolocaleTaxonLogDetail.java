@@ -1,17 +1,10 @@
 package org.calacademy.antweb.curate.speciesList;
 
-import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
-
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-        
-import org.calacademy.antweb.util.*;
 
 public class GeolocaleTaxonLogDetail extends GeolocaleTaxon implements Comparable<GeolocaleTaxonLogDetail>  {
 
@@ -40,8 +33,7 @@ public class GeolocaleTaxonLogDetail extends GeolocaleTaxon implements Comparabl
         // This is a bit sloppy as we are testing for equality on taxonName and projectName, but not date, or log_id.
         GeolocaleTaxonLogDetail other = (GeolocaleTaxonLogDetail) o;
         if (other.getTaxonName().equals(getTaxonName()))
-            if (other.getGeolocaleId() == getGeolocaleId())
-                return true;
+            return other.getGeolocaleId() == getGeolocaleId();
 
         //s_log.warn("equals() taxonName:" + getTaxonName() + " other:" + other.getTaxonName() + " projectName:" + getProjectName() + " other:" + other.getProjectName());  
                 

@@ -3,7 +3,6 @@ package org.calacademy.antweb.curate.geolocale;
 import java.util.*;
 import java.io.*;
 import java.sql.*;
-import javax.sql.DataSource;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
@@ -12,7 +11,6 @@ import org.apache.struts.action.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
@@ -49,7 +47,7 @@ public final class Adm1MgrAction extends Action {
           return (mapping.findForward("message"));
         }
 
-        ArrayList<Geolocale> list = new ArrayList<Geolocale>();
+        ArrayList<Geolocale> list = new ArrayList<>();
         String codeStr = "";
 
         String escapeCountryName = AntFormatter.escapeQuotes(countryName);

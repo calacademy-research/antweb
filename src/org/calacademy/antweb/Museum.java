@@ -4,13 +4,10 @@ import java.util.Date;
 import java.sql.*;
 import java.util.*;
 
-import java.text.DecimalFormat;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.geolocale.*;
 
 public class Museum extends LocalityOverview implements Countable {
@@ -162,7 +159,7 @@ public class Museum extends LocalityOverview implements Countable {
      
     public ArrayList sort(ArrayList children) {
         // The logic here will sort with the specified museum at the top.
-        ArrayList<Specimen> sortedChildren = new ArrayList<Specimen>();
+        ArrayList<Specimen> sortedChildren = new ArrayList<>();
 
         String museumCode = getCode();
         for (Object o : children) {

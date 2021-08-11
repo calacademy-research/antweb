@@ -1,12 +1,10 @@
 package org.calacademy.antweb.curate.speciesList;
 
 import java.util.*;
-import java.io.Serializable;
 import java.sql.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -24,10 +22,10 @@ public class GeolocaleTaxonLog extends GeolocaleTaxon {
     private int geolocaleId;
     private boolean isCurrent;
     
-    private ArrayList<GeolocaleTaxonLogDetail> details = new ArrayList<GeolocaleTaxonLogDetail>();
+    private ArrayList<GeolocaleTaxonLogDetail> details = new ArrayList<>();
 
     public GeolocaleTaxonLog() {
-       if (getDetails() == null) setDetails(new ArrayList<GeolocaleTaxonLogDetail>());
+       if (getDetails() == null) setDetails(new ArrayList<>());
     }
     
     public String toString() {

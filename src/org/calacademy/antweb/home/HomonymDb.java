@@ -3,15 +3,11 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.*;
 
 public class HomonymDb extends AntwebDb {
     
@@ -22,7 +18,7 @@ public class HomonymDb extends AntwebDb {
     }
 
     public ArrayList<Taxon> getHomonyms() {
-        ArrayList<Taxon> homonyms = new ArrayList<Taxon>();
+        ArrayList<Taxon> homonyms = new ArrayList<>();
         String query = "select taxon_name from homonym order by taxon_name";
 
         Statement stmt = null;
@@ -137,10 +133,10 @@ public class HomonymDb extends AntwebDb {
                 taxon.setInsertMethod(rset.getString("insert_method"));
                 taxon.setCreated(rset.getTimestamp("created"));
                 int fossil = rset.getInt("fossil");
-                taxon.setIsFossil((fossil == 1) ? true : false);
-                taxon.setIsType((rset.getInt("type") == 1) ? true : false);
-                taxon.setIsAntCat((rset.getInt("antcat") == 1) ? true : false);
-                taxon.setIsPending((rset.getInt("pending") == 1) ? true : false);
+                taxon.setIsFossil(fossil == 1);
+                taxon.setIsType(rset.getInt("type") == 1);
+                taxon.setIsAntCat(rset.getInt("antcat") == 1);
+                taxon.setIsPending(rset.getInt("pending") == 1);
 
                 taxon.setAntcatId(rset.getInt("antcat_id"));
                 taxon.setAuthorDate(rset.getString("author_date"));
@@ -148,11 +144,11 @@ public class HomonymDb extends AntwebDb {
                 taxon.setAuthors(rset.getString("authors"));
                 taxon.setYear(rset.getString("year"));
                 taxon.setStatus(rset.getString("status"));
-                taxon.setIsAvailable((rset.getInt("available") == 1) ? true : false);
+                taxon.setIsAvailable(rset.getInt("available") == 1);
                 taxon.setCurrentValidName(rset.getString("current_valid_name"));
                 taxon.setCurrentValidRank(rset.getString("current_valid_rank"));
                 taxon.setCurrentValidParent(rset.getString("current_valid_parent"));
-                taxon.setIsOriginalCombination((rset.getInt("original_combination") == 1) ? true : false);
+                taxon.setIsOriginalCombination(rset.getInt("original_combination") == 1);
                 //taxon.setWasOriginalCombination((rset.getInt("was_original_combination") == 1) ? true : false);
                 taxon.setWasOriginalCombination(rset.getString("was_original_combination"));  
                 //taxon.setCountry(rset.getString("country"));
@@ -217,10 +213,10 @@ public class HomonymDb extends AntwebDb {
                 taxon.setInsertMethod(rset.getString("insert_method"));
                 taxon.setCreated(rset.getTimestamp("created"));
                 int fossil = rset.getInt("fossil");
-                taxon.setIsFossil((fossil == 1) ? true : false);
-                taxon.setIsType((rset.getInt("type") == 1) ? true : false);
-                taxon.setIsAntCat((rset.getInt("antcat") == 1) ? true : false);
-                taxon.setIsPending((rset.getInt("pending") == 1) ? true : false);
+                taxon.setIsFossil(fossil == 1);
+                taxon.setIsType(rset.getInt("type") == 1);
+                taxon.setIsAntCat(rset.getInt("antcat") == 1);
+                taxon.setIsPending(rset.getInt("pending") == 1);
 
                 taxon.setAntcatId(rset.getInt("antcat_id"));
                 taxon.setAuthorDate(rset.getString("author_date"));
@@ -228,11 +224,11 @@ public class HomonymDb extends AntwebDb {
                 taxon.setAuthors(rset.getString("authors"));
                 taxon.setYear(rset.getString("year"));
                 taxon.setStatus(rset.getString("status"));
-                taxon.setIsAvailable((rset.getInt("available") == 1) ? true : false);
+                taxon.setIsAvailable(rset.getInt("available") == 1);
                 taxon.setCurrentValidName(rset.getString("current_valid_name"));
                 taxon.setCurrentValidRank(rset.getString("current_valid_rank"));
                 taxon.setCurrentValidParent(rset.getString("current_valid_parent"));
-                taxon.setIsOriginalCombination((rset.getInt("original_combination") == 1) ? true : false);
+                taxon.setIsOriginalCombination(rset.getInt("original_combination") == 1);
                 //taxon.setWasOriginalCombination((rset.getInt("was_original_combination") == 1) ? true : false);
                 taxon.setWasOriginalCombination(rset.getString("was_original_combination"));  
                 //taxon.setCountry(rset.getString("country"));

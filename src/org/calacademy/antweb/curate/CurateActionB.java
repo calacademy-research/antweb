@@ -1,8 +1,6 @@
 package org.calacademy.antweb.curate;
 
 import java.io.IOException;
-import java.sql.Statement;
-import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -12,12 +10,7 @@ import org.apache.struts.action.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.*;
-
-import java.sql.*;
 
 public final class CurateActionB extends Action {
 

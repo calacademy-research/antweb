@@ -2,13 +2,10 @@ package org.calacademy.antweb.data.geonet;
 
 import java.sql.*;
 import java.util.*;
-import java.io.*;
 
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.data.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;  
@@ -77,7 +74,7 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
 
     public static HashMap<String, String> getCountryHash() {
 
-        HashMap<String, String> countryHash = new HashMap<String, String>();
+        HashMap<String, String> countryHash = new HashMap<>();
 
         GeonetCountryResponse geonetCountryResponse = getCountryCodes();
           

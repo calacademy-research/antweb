@@ -1,17 +1,12 @@
 package org.calacademy.antweb.util;
 
 import java.io.IOException;
-import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.upload.*;
-import org.calacademy.antweb.imageUploader.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -49,11 +44,9 @@ public final class AdminAlertAction extends Action {
                 AdminAlertMgr.populate(connection);
             }             
         
-		} catch (SQLException e) {
+		} catch (SQLException | ClassCastException e) {
 			s_log.error("execute() e:" + e);
-		} catch (ClassCastException e) {
-			s_log.error("execute() e:" + e);
-		} finally {	
+		} finally {
 			DBUtil.close(connection, this, "AdminAlertAction.execute()");
 		}        
  

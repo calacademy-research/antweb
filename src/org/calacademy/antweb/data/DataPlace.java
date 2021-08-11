@@ -1,11 +1,8 @@
 package org.calacademy.antweb.data;
     
 import java.util.*;
-import java.io.*;
 
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;  
     
 public class DataPlace {
@@ -44,11 +41,8 @@ public class DataPlace {
       String[] adm1List = {
           "Lima (region)"
       };
-      ArrayList<String> skipAdm1s = new ArrayList<String>(Arrays.asList(adm1List));
-      if (skipAdm1s.contains(adm1)) {
-        return true;
-      }
-      return false;
+      ArrayList<String> skipAdm1s = new ArrayList<>(Arrays.asList(adm1List));
+        return skipAdm1s.contains(adm1);
     }
 
     public static boolean skipCountry(String country) {
@@ -70,11 +64,8 @@ public class DataPlace {
         , "Undersea Features"
         , "Wake Island"
       };
-      ArrayList<String> skipCountries = new ArrayList<String>(Arrays.asList(countryList));
-      if (skipCountries.contains(country)) {
-        return true;
-      }
-      return false;
+      ArrayList<String> skipCountries = new ArrayList<>(Arrays.asList(countryList));
+        return skipCountries.contains(country);
     }
 
     public static String cleanName(String name) {
@@ -178,7 +169,7 @@ public class DataPlace {
         , "//"
         , ", The"
       };
-      ArrayList<String> cleanPhrases = new ArrayList<String>(Arrays.asList(list));
+      ArrayList<String> cleanPhrases = new ArrayList<>(Arrays.asList(list));
       for (String cleanPhrase : cleanPhrases) {
         if (name.contains(cleanPhrase)) {
           int i = name.indexOf(cleanPhrase);
@@ -193,7 +184,7 @@ public class DataPlace {
             } else {
               // There is text after the phrase. Abort if not in this set...
               String[] deleteAfterArray = {" [", " Oblast"};
-			  ArrayList<String> deleteAfterList = new ArrayList<String>(Arrays.asList(deleteAfterArray));
+			  ArrayList<String> deleteAfterList = new ArrayList<>(Arrays.asList(deleteAfterArray));
 			  for (String deleteAfter : deleteAfterList) {
                 if (cleanPhrase.equals(deleteAfter)) {
 				  cleanName = name.substring(0, i);               

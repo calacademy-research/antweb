@@ -7,9 +7,7 @@ import java.sql.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-import org.apache.regexp.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;  
     
 public class LineNumMgr {
@@ -43,7 +41,7 @@ public class LineNumMgr {
 		UploadDb uploadDb = new UploadDb(connection);
 		uploadDb.removeUploadLines(UploadHelper.getGroup());
 		
-  	    badCarriageReturnLines = new ArrayList<Integer>();
+  	    badCarriageReturnLines = new ArrayList<>();
 		
 		int componentCountChanges = 0;
 		String[] components = null;
@@ -104,7 +102,7 @@ public class LineNumMgr {
     }
 
 	public static void setIsBadCarriageReturnLine(int lineNum) {
-	  badCarriageReturnLines.add(Integer.valueOf(lineNum));
+	  badCarriageReturnLines.add(lineNum);
 	}
 
 	public static boolean isGoodCarriageReturnLine(int lineNum) {

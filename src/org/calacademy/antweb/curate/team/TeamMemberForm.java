@@ -1,12 +1,10 @@
 package org.calacademy.antweb.curate.team;
 
 import javax.servlet.http.HttpServletRequest;
-import org.apache.struts.action.ActionError;
+
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
-
-import org.calacademy.antweb.*;
 
 public class TeamMemberForm extends ActionForm {
 

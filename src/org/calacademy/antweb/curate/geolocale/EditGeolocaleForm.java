@@ -1,18 +1,14 @@
 package org.calacademy.antweb.curate.geolocale;
 
 
-import java.util.*;
 import java.sql.*;
 
 import org.apache.struts.action.*;
 import javax.servlet.http.*;
 
-import org.apache.struts.action.ActionForm;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 
 public final class EditGeolocaleForm extends ActionForm {

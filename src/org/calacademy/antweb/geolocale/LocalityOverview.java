@@ -205,8 +205,6 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
 //A.log("getDoubleListVal() val:" + val);
 
             return val;
-          } catch (org.apache.regexp.RESyntaxException e) {
-            A.log("getDoubleListVal() list:" + list + " val:" + val + " e:" + e);
           } catch (Exception e) {
             A.log("getDoubleListVal() list:" + list + " val:" + val + " e:" + e);
           }

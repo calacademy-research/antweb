@@ -3,17 +3,12 @@ package org.calacademy.antweb.util;
 import java.util.*;
 import java.sql.Connection;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import org.apache.struts.action.*;
 
 public abstract class TaxonPropMgr {
 
@@ -69,14 +64,14 @@ public abstract class TaxonPropMgr {
      
         String[] mapArray = taxonPropMap.split(" ");
 
-        for (int c = 0;  c < mapArray.length  ; ++c ) {
-          String[] pair = mapArray[c].split(":");
-          try {
-            if (pair[0].equals(bioregion)) return "true".equals(pair[1]);
-          } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-            s_log.warn("isBioregionMapped() bioregionMap:" + taxonPropMap + " bioregion:" + bioregion + " e:" + e);
+          for (String s : mapArray) {
+              String[] pair = s.split(":");
+              try {
+                  if (pair[0].equals(bioregion)) return "true".equals(pair[1]);
+              } catch (ArrayIndexOutOfBoundsException e) {
+                  s_log.warn("isBioregionMapped() bioregionMap:" + taxonPropMap + " bioregion:" + bioregion + " e:" + e);
+              }
           }
-        }
       }
       return false; 
     }  
@@ -93,8 +88,7 @@ public abstract class TaxonPropMgr {
       //A.log("TaxonPropMgr.isBioregionNative() bioregion:" + bioregion + " bioregionsMap:" + bioregionsMap + " nativeBioregionsStr:" + nativeBioregionsStr);
 
       if (nativeBioregionsStr == null) return true;
-      if (nativeBioregionsStr.contains(bioregion)) return true;
-      return false;
+        return nativeBioregionsStr.contains(bioregion);
     }
      
    // was Bioregion.displayBioregionsMap()
@@ -129,7 +123,7 @@ public abstract class TaxonPropMgr {
       return TaxonPropMgr.getNativeBioregionsList("true", bioregionsMap);
     }             
     public static ArrayList<Bioregion> getNativeBioregionsList(String isNative, String bioregionsMap) {
-      ArrayList<Bioregion> list = new ArrayList<Bioregion>();
+      ArrayList<Bioregion> list = new ArrayList<>();
       if (bioregionsMap == null || "".equals(bioregionsMap)) return list;
       
       for (String bioregion : Bioregion.list) {

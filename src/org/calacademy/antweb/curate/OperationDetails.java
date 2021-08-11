@@ -1,11 +1,9 @@
 package org.calacademy.antweb.curate;
 
-import java.util.Map;
 import java.util.*;
-import java.io.*;
+
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.ProjectDb;
+
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 
@@ -116,7 +114,7 @@ public class OperationDetails {
         String execTimeSec = execTime.substring(0, i);
         try {
           int secs = (Integer.valueOf(execTimeSec)).intValue();
-          double min = secs / 60;
+          double min = secs / 60d;
           return " (" + min + " min)";
         } catch (NumberFormatException e) {
           // do nothing.          

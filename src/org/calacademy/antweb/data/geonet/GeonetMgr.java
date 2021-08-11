@@ -2,19 +2,15 @@ package org.calacademy.antweb.data.geonet;
 
 import java.sql.*;
 import java.util.*;
-import java.io.*;
 
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.data.*;
 import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;  
-  
-import com.google.gson.*;
-    
+import org.apache.commons.logging.LogFactory;
+
 public class GeonetMgr {
 
     private static Log s_log = LogFactory.getLog(GeonetMgr.class);
@@ -166,7 +162,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
 
         HashMap<String, String> countryHash = GeonetCountryCodes.getCountryHash();
 
-        TreeMap<String, ArrayList<String>> countryAdm1Map = new TreeMap<String, ArrayList<String>>();
+        TreeMap<String, ArrayList<String>> countryAdm1Map = new TreeMap<>();
 
         GeonetAdm1Response geonetAdm1Response = GeonetAdm1Codes.getAdm1Codes();
 
@@ -182,7 +178,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
           ArrayList<String> adm1List = countryAdm1Map.get(countryName);
           if (adm1List == null) {
             // create it.
-            adm1List = new ArrayList<String>();
+            adm1List = new ArrayList<>();
           }
           adm1List.add(adm1Name);
           countryAdm1Map.put(countryName, adm1List);
@@ -195,7 +191,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
 
         HashMap<String, String> countryHash = GeonetCountryCodes.getCountryHash();
 
-        TreeMap<String, ArrayList<String>> countryAdm1Map = new TreeMap<String, ArrayList<String>>();
+        TreeMap<String, ArrayList<String>> countryAdm1Map = new TreeMap<>();
 
         GeonetAdm1CentroidResponse geonetAdm1CentroidResponse = GeonetAdm1Codes.getAdm1CentroidResponse();
 
@@ -211,7 +207,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
           ArrayList<String> adm1List = countryAdm1Map.get(countryName);
           if (adm1List == null) {
             // create it.
-            adm1List = new ArrayList<String>();
+            adm1List = new ArrayList<>();
           }
           adm1List.add(adm1Name);
           countryAdm1Map.put(countryName, adm1List);

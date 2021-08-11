@@ -2,15 +2,12 @@ package org.calacademy.antweb.upload;
 
 import java.util.Map;
 import java.util.*;
-import java.io.*;
 import java.sql.Connection;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.ProjectDb;
 import org.calacademy.antweb.curate.OperationDetails;
 import javax.servlet.http.*;
-import org.apache.struts.action.ActionForward;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;    
@@ -105,8 +102,7 @@ public class UploadDetails extends OperationDetails {
     public static boolean isLogJsp() {
       boolean jspTurnedOn = true;
       jspTurnedOn = false;
-      if (!jspTurnedOn) return false;
-      return true;
+        return jspTurnedOn;
     }    
     public static String getLogExt() {
       if (UploadDetails.isLogJsp()) {
@@ -369,13 +365,13 @@ public class UploadDetails extends OperationDetails {
     }
     
     // Maintain a set of museums.  Could have been query but this done for performance.
-    private Map<String, Integer> museumMap = new HashMap<String, Integer>();
+    private Map<String, Integer> museumMap = new HashMap<>();
     
     public void addToMuseumMap(String element) {
       for (Museum museum : MuseumMgr.getMuseums()) {
         String code = museum.getCode();
         if (element.contains(code)) {
-          int count = museumMap.containsKey(code) ? museumMap.get(code) : 0;
+          int count = museumMap.getOrDefault(code, 0);
           museumMap.put(code, ++count);    
           //A.log("addToMuseumSet() element:" + element + " code:" + code + " count:" + count);      
         }

@@ -1,14 +1,10 @@
 package org.calacademy.antweb;
 
 import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
 
 import javax.servlet.http.*;
 
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
         
 import org.calacademy.antweb.util.*;
@@ -98,22 +94,22 @@ public final class Caste {
     }
         
     public static ArrayList<Taxon> sortSpecimenByCasteSubcaste(ArrayList<Taxon> theChildren) {  
-	  ArrayList<Taxon> majorSoldiers = new ArrayList<Taxon>();
-	  ArrayList<Taxon> normals = new ArrayList<Taxon>();
+	  ArrayList<Taxon> majorSoldiers = new ArrayList<>();
+	  ArrayList<Taxon> normals = new ArrayList<>();
   
-	  ArrayList<Taxon> ergatoidQueens = new ArrayList<Taxon>();        
-	  ArrayList<Taxon> alateDealateQueens = new ArrayList<Taxon>();        
-	  ArrayList<Taxon> brachypterousQueens = new ArrayList<Taxon>();        
+	  ArrayList<Taxon> ergatoidQueens = new ArrayList<>();
+	  ArrayList<Taxon> alateDealateQueens = new ArrayList<>();
+	  ArrayList<Taxon> brachypterousQueens = new ArrayList<>();
 
-	  ArrayList<Taxon> ergatoidMales = new ArrayList<Taxon>();
-	  ArrayList<Taxon> alateMales = new ArrayList<Taxon>();
+	  ArrayList<Taxon> ergatoidMales = new ArrayList<>();
+	  ArrayList<Taxon> alateMales = new ArrayList<>();
 	  
 	  //ArrayList<Taxon> other = new ArrayList<Taxon>();
-	  ArrayList<Taxon> intercastes = new ArrayList<Taxon>();
-	  ArrayList<Taxon> gynandromorphs = new ArrayList<Taxon>();
-	  ArrayList<Taxon> larvaPupas = new ArrayList<Taxon>();
+	  ArrayList<Taxon> intercastes = new ArrayList<>();
+	  ArrayList<Taxon> gynandromorphs = new ArrayList<>();
+	  ArrayList<Taxon> larvaPupas = new ArrayList<>();
 
-	  ArrayList<Taxon> undefined = new ArrayList<Taxon>();
+	  ArrayList<Taxon> undefined = new ArrayList<>();
 
 	  for (Taxon taxon : theChildren) {  
 		//if (taxon instanceof Genus) AntwebUtil.log("sortSpecimenByCasteSubcaste error XXX taxon:" + taxon.getTaxonName());
@@ -142,7 +138,7 @@ public final class Caste {
         }
 	  }
 
-	  theChildren = new ArrayList<Taxon>();
+	  theChildren = new ArrayList<>();
 
 	  theChildren.addAll(normals);
 	  theChildren.addAll(majorSoldiers);	  
@@ -207,11 +203,8 @@ public final class Caste {
     private static boolean endsWith(String casteNote, String str) {
       int casteNoteLength = casteNote.length() - 1;
       if (casteNoteLength <= 0) return false;
-      if (str.equals(casteNote.substring(casteNoteLength))) {
-		  //A.log(""endsWith() true caste:" + caste + " str:" + str);
-          return true;
-      }
-      return false;
+        //A.log(""endsWith() true caste:" + caste + " str:" + str);
+        return str.equals(casteNote.substring(casteNoteLength));
     }
         
     private static String getCasteNote(String casteNotes) { // casteNotes is the Life Stage field.
@@ -304,13 +297,11 @@ public final class Caste {
       return "alate";
     }    
     private static boolean isOther(String casteNote) {
-      if ( casteNote.contains("intercaste")
-        || casteNote.contains("gynandromorph")
-        || casteNote.contains("larva")
-        || casteNote.contains("pupa")
-        || casteNote.contains("brood")
-         ) return true;
-      return false;
+        return casteNote.contains("intercaste")
+                || casteNote.contains("gynandromorph")
+                || casteNote.contains("larva")
+                || casteNote.contains("pupa")
+                || casteNote.contains("brood");
     }
     public static String getOtherSubcaste(String casteNote) {
       if (casteNote.contains("intercaste")

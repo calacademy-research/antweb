@@ -1,6 +1,5 @@
 package org.calacademy.antweb.upload;
 
-import org.calacademy.antweb.*;
 import org.apache.struts.action.ActionForm;
 
 public class UploadImagesForm extends ActionForm {

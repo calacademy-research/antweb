@@ -24,10 +24,8 @@ public class Genus extends Subfamily implements Serializable {
       if (genusName != null) {
         if ("(indet)".equals(genusName)) return true;
         if (genusName.contains("(") && genusName.contains(")")) {
-          if (Subfamily.isValidAntSubfamily(genusName)) {
             //A.log("isIndet() true genusName:" + genusName);
-            return true;
-          }
+            return Subfamily.isValidAntSubfamily(genusName);
         }
       }
       return false;
@@ -38,9 +36,8 @@ public class Genus extends Subfamily implements Serializable {
             Taxon thisChild;
             List goodArrayList = Arrays.asList(goodList);
             ArrayList newChildren = new ArrayList();
-            Iterator iterator = children.iterator();
-            while (iterator.hasNext()) {
-                thisChild = (Taxon) iterator.next();
+            for (Taxon child : children) {
+                thisChild = child;
                 if (goodArrayList.contains(thisChild.getFullName())) {
                     newChildren.add(thisChild);
                 }

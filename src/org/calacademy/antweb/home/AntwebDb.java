@@ -1,8 +1,5 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
-import java.util.Date;
-
 /*
 import java.io.*;
 import java.net.MalformedURLException;
@@ -13,18 +10,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 */
 
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
-import org.apache.regexp.*;
-
 import java.sql.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.util.*;
+        import org.calacademy.antweb.util.*;
 
 
 public class AntwebDb {
@@ -155,7 +147,7 @@ public class AntwebDb {
               taxon.setInsertMethod(rset.getString("insert_method"));
               taxon.setLineNum(rset.getInt("line_num"));
               taxon.setGroupId(rset.getInt("access_group"));
-              taxon.setIsFossil((rset.getInt("fossil") == 1) ? true : false);
+              taxon.setIsFossil(rset.getInt("fossil") == 1);
 
               String currentValidName = rset.getString("current_valid_name");
               if (currentValidName != null && !taxonName.equals(currentValidName.toLowerCase())) {

@@ -1,16 +1,9 @@
 package org.calacademy.antweb;
 
 import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory; 
-
-import org.calacademy.antweb.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class Status {
 
@@ -64,7 +57,7 @@ public class Status {
     };
 
     public static ArrayList<String> getAllStatuses() {
-      ArrayList<String> statusArrayList = new ArrayList<String>(Arrays.asList(allStatusArray));
+      ArrayList<String> statusArrayList = new ArrayList<>(Arrays.asList(allStatusArray));
       return statusArrayList;
     }    
 
@@ -74,7 +67,7 @@ public class Status {
     };
 	
     public static ArrayList<String> getMinimalStatuses() {
-      ArrayList<String> statusArrayList = new ArrayList<String>(Arrays.asList(minimalStatusArray));
+      ArrayList<String> statusArrayList = new ArrayList<>(Arrays.asList(minimalStatusArray));
       return statusArrayList;
     }    
     	
@@ -109,28 +102,22 @@ public class Status {
     
     // See: myrmicinaetetramorium sericeiventre colluta  status:unavailable.  Should be fixed.
     public static boolean usesCurrentValidName(String status) {
-        if (Status.ORIGINAL_COMBINATION.equals(status)
-         || Status.OBSOLETE_COMBINATION.equals(status)
-         || Status.OBSOLETE_CLASSIFICATION.equals(status)
-         || Status.UNAVAILABLE_UNCATEGORIZED.equals(status)
-         || Status.UNAVAILABLE_MISSPELLING.equals(status)
-         || Status.SYNONYM.equals(status)
         // || Status.UNAVAILABLE.equals(status)
         // || Status.UNIDENTIFIABLE.equals(status)
         // || Status.COLLECTIVE_GROUP_NAME.equals(status)
         // || Status.EXCLUDED_FROM_FORMICIDAE.equals(status)
-        ) return true;
-        return false;       
+        return Status.ORIGINAL_COMBINATION.equals(status)
+                || Status.OBSOLETE_COMBINATION.equals(status)
+                || Status.OBSOLETE_CLASSIFICATION.equals(status)
+                || Status.UNAVAILABLE_UNCATEGORIZED.equals(status)
+                || Status.UNAVAILABLE_MISSPELLING.equals(status)
+                || Status.SYNONYM.equals(status);
     }    
 
     public static boolean excludeFromImport(String status) {
-		if ( Status.UNAVAILABLE_UNCATEGORIZED.equals(status)
-		 // || Status.UNAVAILABLE_MISSPELLING.equals(status) 
-		 // || Status.ORIGINAL_COMBINATION.equals(status) 
-			) {
-            return true;
-        }
-        return false;
+        // || Status.UNAVAILABLE_MISSPELLING.equals(status)
+        // || Status.ORIGINAL_COMBINATION.equals(status)
+        return Status.UNAVAILABLE_UNCATEGORIZED.equals(status);
     }
 
     public boolean isPassWorldAntsSpeciesCheck() {
@@ -162,16 +149,14 @@ public class Status {
         if (status.equals(Status.UNAVAILABLE)) return true;
         if (status.equals(Status.UNAVAILABLE_MISSPELLING)) return true;
         if (status.equals(Status.UNIDENTIFIABLE)) return true;
-        if (status.equals(Status.EXCLUDED_FROM_FORMICIDAE)) return true;
-        return false;
+        return status.equals(Status.EXCLUDED_FROM_FORMICIDAE);
     }
 
     public static boolean isAllAntwebStatus(String status) {
         if (status == null) return false;
         if (status.equals(Status.INDETERMINED)) return true;
         if (status.equals(Status.UNIDENTIFIABLE)) return true;
-        if (status.equals(Status.MORPHOTAXON)) return true;
-        return false;
+        return status.equals(Status.MORPHOTAXON);
     }
 
     public String getCriteria() {      

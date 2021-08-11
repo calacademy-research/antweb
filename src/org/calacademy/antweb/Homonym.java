@@ -3,14 +3,11 @@ package org.calacademy.antweb;
 import java.util.*;
 import java.io.Serializable;
 import java.sql.*;
-import java.math.BigDecimal;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-import java.sql.Connection;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
     
 public class Homonym extends Taxon implements Serializable {
@@ -213,7 +210,7 @@ public class Homonym extends Taxon implements Serializable {
                 val = rset.getString("taxarank");
                 if (Utility.notBlank(val)) setRank(rank);
                 
-                setIsType((rset.getInt("type") == 1) ? true : false);            
+                setIsType(rset.getInt("type") == 1);
                 val = rset.getString("status");
                 if (Utility.notBlank(val)) setStatus(val);
                 val = rset.getString("author_date");
@@ -263,10 +260,10 @@ A.log("init() query:" + theQuery);
                 setLineNum(rset.getInt("line_num"));
                 setInsertMethod(rset.getString("insert_method"));
                 setCreated(rset.getTimestamp("created"));
-                setIsFossil((rset.getInt("fossil") == 1) ? true : false);
-                setIsType((rset.getInt("type") == 1) ? true : false);
-                setIsAntCat((rset.getInt("antcat") == 1) ? true : false);
-                setIsPending((rset.getInt("pending") == 1) ? true : false);           
+                setIsFossil(rset.getInt("fossil") == 1);
+                setIsType(rset.getInt("type") == 1);
+                setIsAntCat(rset.getInt("antcat") == 1);
+                setIsPending(rset.getInt("pending") == 1);
 
                 setAntcatId(rset.getInt("antcat_id"));
                 setAuthorDate(rset.getString("author_date"));
@@ -274,11 +271,11 @@ A.log("init() query:" + theQuery);
                 setAuthors(rset.getString("authors"));
                 setYear(rset.getString("year"));
                 setStatus(rset.getString("status"));
-                setIsAvailable((rset.getInt("available") == 1) ? true : false);
+                setIsAvailable(rset.getInt("available") == 1);
                 setCurrentValidName(rset.getString("current_valid_name"));
                 setCurrentValidRank(rset.getString("current_valid_rank"));
                 setCurrentValidParent(rset.getString("current_valid_parent"));                
-                setIsOriginalCombination((rset.getInt("original_combination") == 1) ? true : false);
+                setIsOriginalCombination(rset.getInt("original_combination") == 1);
                 setWasOriginalCombination(rset.getString("was_original_combination"));
                 //setCountry(rset.getString("country"));
                 //setBioregion(rset.getString("bioregion"));
@@ -373,8 +370,8 @@ A.log("init() query:" + theQuery);
     }
 
     public void setHomonymAuthorDates() throws SQLException {
-      Vector<String> homonymAuthorDates = new Vector<String>();;
-      String taxonName = getTaxonName();
+      Vector<String> homonymAuthorDates = new Vector<>();
+        String taxonName = getTaxonName();
       Statement stmt = null;
       ResultSet rset = null;
       try {

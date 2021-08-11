@@ -6,8 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
-import java.text.SimpleDateFormat;
-import com.mchange.v2.c3p0.*;
+
 import org.calacademy.antweb.home.*;
 
 import org.calacademy.antweb.util.*;
@@ -34,7 +33,7 @@ public final class StatisticsAction extends Action {
         String isLinkStr = (String) request.getParameter("isLink");
         boolean isLink = true;
         if ("false".equals(isLinkStr)) isLink = false;
-        request.getSession().setAttribute("isLink", Boolean.valueOf(isLink));
+        request.getSession().setAttribute("isLink", isLink);
         String bodyStr = (String) request.getParameter("body");
         boolean body = ("true".equals(bodyStr));
 
@@ -256,7 +255,7 @@ public final class StatisticsAction extends Action {
 		boolean success = false;
         try {
 
-            ArrayList<ArrayList<String>> statistics = new ArrayList<ArrayList<String>>();
+            ArrayList<ArrayList<String>> statistics = new ArrayList<>();
             statistics.add(ProjTaxonDb.getProjectStatistics(project, connection));
             
             session.setAttribute("statistics", statistics);

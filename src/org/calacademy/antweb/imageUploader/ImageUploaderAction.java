@@ -1,9 +1,6 @@
 package org.calacademy.antweb.imageUploader;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.*;
 import org.apache.struts.action.*;
-import java.util.*;
 
 import java.sql.*;
 
@@ -14,7 +11,6 @@ import javax.servlet.http.*;
 import org.apache.commons.fileupload.*;
 import org.apache.commons.fileupload.disk.*;
 import org.apache.commons.fileupload.servlet.*;
-import org.apache.commons.io.output.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;
@@ -74,7 +70,7 @@ public final class ImageUploaderAction extends Action {
 
             String contentType = request.getContentType(); // Verify the content type
             //A.log("execute() contentType:" + contentType);        
-            if (contentType != null && contentType.indexOf("multipart/form-data") >= 0) {
+            if (contentType != null && contentType.contains("multipart/form-data")) {
 
                 String artist = null;
                 String license = "Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)";
@@ -99,7 +95,7 @@ public final class ImageUploaderAction extends Action {
                 ServletFileUpload upload = new ServletFileUpload(factory); // Create a new file upload handler                            
                 //upload.setSizeMax(MAX_REQUEST_SIZE); // maximum file size to be uploaded.
 
-                ArrayList<ImageUploaded> images = new ArrayList<ImageUploaded>();
+                ArrayList<ImageUploaded> images = new ArrayList<>();
           
                 List<FileItem> fileItems = upload.parseRequest(request); // Parse the request to get file items.
 
@@ -225,7 +221,7 @@ public final class ImageUploaderAction extends Action {
             String lastValue = "";
             int homepageMaxRecent = 5;
             Formatter format = new Formatter();
-            ArrayList<String> distinctTaxa = new ArrayList<String>();
+            ArrayList<String> distinctTaxa = new ArrayList<>();
             while (rset.next() && (currItems <= homepageMaxRecent)) {
                 code = rset.getString("code");
                 theGenus = rset.getString("genus");

@@ -1,6 +1,5 @@
 package org.calacademy.antweb.curate.speciesList;
 
-import java.util.*;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;

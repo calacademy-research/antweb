@@ -1,11 +1,9 @@
 package org.calacademy.antweb.util;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;
 
 import java.util.*;
 import java.io.*;
-import java.nio.*;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
 
@@ -119,7 +117,7 @@ public class FileUtil {
     long usableSpaceInMB = file.getUsableSpace() / 1024 / 1024 / 1024;
 
     String space = " Total:" + totalSpaceInMB + "GB Free:" + freeSpaceInMB + "GB Usable:" + usableSpaceInMB + "GB";
-    double percent = 100 - ((file.getUsableSpace() * 100) / file.getTotalSpace());
+    double percent = 100 - ((file.getUsableSpace() * 100d) / file.getTotalSpace());
     String stats = "<b>Disk:</b> <font color=red>"+percent +"%</font>.  " + space;
     return stats;
   }

@@ -3,7 +3,6 @@ package org.calacademy.antweb.curate.geolocale;
 import java.util.*;
 import java.io.*;
 import java.sql.*;
-import javax.sql.DataSource;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
@@ -213,9 +212,7 @@ public final class EditGeolocaleAction extends Action {
 		  request.setAttribute("form", editGeolocaleForm);
 		  return (mapping.findForward("success"));
 
-		} catch (SQLException e) {
-			s_log.error("execute() e:" + e);
-		} catch (ClassCastException e) {
+		} catch (SQLException | ClassCastException e) {
 			s_log.error("execute() e:" + e);
 		} finally {
 			DBUtil.close(connection, this, "EditGeolocaleAction.execute()");

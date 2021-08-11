@@ -1,23 +1,10 @@
 package org.calacademy.antweb.search;
 
-import java.io.IOException;
-
 import java.util.*;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.Action;
-import org.apache.struts.action.ActionForm;
-import org.apache.struts.action.ActionForward;
-import org.apache.struts.action.ActionMapping;
-import java.sql.*;
 
-import org.calacademy.antweb.Map;
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class ResultsAction extends Action {
@@ -29,7 +16,7 @@ public class ResultsAction extends Action {
        based on the numbers */
     protected ArrayList<ResultItem> getChosenResultsFromResults(ArrayList<String> chosen, ArrayList<ResultItem> searchResults) {
     
-        ArrayList<ResultItem> chosenResults = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> chosenResults = new ArrayList<>();
 
         for (String choice : chosen) {
           int chosenInt = (Integer.valueOf(choice)).intValue();

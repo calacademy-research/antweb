@@ -1,18 +1,10 @@
 package org.calacademy.antweb.util;
 
-import java.io.*;
-import java.net.*;
 import java.util.*;
 import java.util.Date;
 
-import javax.servlet.http.*;
-import javax.servlet.*;
-
 import java.sql.*;
-import javax.sql.*;
-import com.mchange.v2.c3p0.*;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
@@ -119,7 +111,7 @@ public abstract class QueryManager {
     } 
 
     public static ArrayList<NamedQuery> getBattery(String name) {
-        ArrayList<NamedQuery> battery = new ArrayList<NamedQuery>();
+        ArrayList<NamedQuery> battery = new ArrayList<>();
 
         if ("projectTaxonCounts".equals(name)) {
           battery.add(Queries.getNamedQuery("projectTaxaCount"));

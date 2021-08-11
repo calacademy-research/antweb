@@ -1,16 +1,10 @@
 package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
 
 
@@ -53,10 +47,8 @@ public class LoginMgr extends Manager {
         LoginDb loginDb = new LoginDb(connection);
         s_curators = loginDb.getAllCurators();
 
-        ArrayList<Curator> tempList = new ArrayList<Curator>();
-        for (Curator curator : s_curators) {
-            tempList.add(curator);
-        }
+        ArrayList<Curator> tempList = new ArrayList<>();
+        tempList.addAll(s_curators);
 
         for (Curator curator : tempList) {
             loginDb.postInstantiate(curator);
@@ -105,9 +97,8 @@ public class LoginMgr extends Manager {
 	}
 	
 	public static boolean isAdmin(Login accessLogin) {
-	  if ((accessLogin != null) && (accessLogin.isAdmin())) return true;
-	  return false;
-	}
+        return (accessLogin != null) && (accessLogin.isAdmin());
+    }
 
     public static boolean isLoggedIn(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
@@ -119,39 +110,35 @@ public class LoginMgr extends Manager {
 	    return isCurator(accessLogin);
 	}
 	public static boolean isCurator(Login accessLogin) {
-	  if ((accessLogin != null) && (accessLogin.isCurator())) return true;
-	  return false;
-	}
+        return (accessLogin != null) && (accessLogin.isCurator());
+    }
 
     public static boolean isDeveloper(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
 	    return isDeveloper(accessLogin);
 	}
 	public static boolean isDeveloper(Login accessLogin) {
-	  if ((accessLogin != null) 
-	    // A specific list of Developer admins.
-	    && (
-	     (accessLogin.getId() == Login.MARK)
-         || (accessLogin.getId() == Login.TEST_LOGIN)
-	    )) return true;
-	  return false;
-	}    
+        return (accessLogin != null)
+                // A specific list of Developer admins.
+                && (
+                (accessLogin.getId() == Login.MARK)
+                        || (accessLogin.getId() == Login.TEST_LOGIN)
+        );
+    }
     
 
     public static boolean isMark(HttpServletRequest request) {
 	    return LoginMgr.isMark(getAccessLogin(request));
 	}
 	public static boolean isMark(Login accessLogin) {
-        if ((accessLogin != null) && (accessLogin.getId() == 22)) return true;
-        return false;
+        return (accessLogin != null) && (accessLogin.getId() == 22);
     }
 
     public static boolean isPeter(HttpServletRequest request) {
         return LoginMgr.isPeter(getAccessLogin(request));
     }
     public static boolean isPeter(Login accessLogin) {
-        if ((accessLogin != null) && (accessLogin.getId() == 36)) return true;
-        return false;
+        return (accessLogin != null) && (accessLogin.getId() == 36);
     }
 
     public static boolean isMichele(HttpServletRequest request) {
@@ -159,17 +146,15 @@ public class LoginMgr extends Manager {
 	    return isMichele(accessLogin);
 	}
 	public static boolean isMichele(Login accessLogin) {
-	  if ((accessLogin != null) && (accessLogin.getId() == 23)) return true;
-	  return false;
-	}	
+        return (accessLogin != null) && (accessLogin.getId() == 23);
+    }
     public static boolean isJack(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
 	    return isJack(accessLogin);
 	}
 	public static boolean isJack(Login accessLogin) {
-	  if ((accessLogin != null) && (accessLogin.getId() == 2)) return true;
-	  return false;
-	}	 	    
+        return (accessLogin != null) && (accessLogin.getId() == 2);
+    }
 
     public static boolean isInitialized() {
       return s_logins != null && s_curators != null;
@@ -207,7 +192,7 @@ public class LoginMgr extends Manager {
 
 // ------------------------------------------------
 
-    private static HashMap<String, Counts> imageUploadCounts = new HashMap<String, Counts>();
+    private static HashMap<String, Counts> imageUploadCounts = new HashMap<>();
 
     static class Counts {
       int imageUploads = 0;

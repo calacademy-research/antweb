@@ -1,7 +1,6 @@
 package org.calacademy.antweb;
 
-import java.io.*; 
-import java.util.*;
+import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
@@ -10,8 +9,6 @@ import java.sql.*;
 import javax.sql.DataSource;
 
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.upload.DescEditImageUploadAction;
 import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
@@ -200,8 +197,8 @@ public class BrowseAction extends DescriptionAction {
         String theParameter = mapping.getParameter(); 
           //s_log.warn("execute() theParameter:" + theParameter);
         if (theParameter != null) {
-          if (theParameter.indexOf("getChildImages") != -1) getChildImages = true;
-          if (theParameter.indexOf("getChildMaps") != -1) getChildMaps = true;
+          if (theParameter.contains("getChildImages")) getChildImages = true;
+          if (theParameter.contains("getChildMaps")) getChildMaps = true;
         }
 		//if (AntwebProps.isDevMode() || logTimes) { 
 		if ("browse".equals(cacheType)) {
@@ -659,9 +656,7 @@ We are showin the full map of ponerinae for every adm1.
 		  request.setAttribute("message", taxonName + " does not exist in the database");
 		  return (mapping.findForward("message"));
 		}
-	  } catch (IOException e) {
-		s_log.warn("execute() fetchTaxon e:" + e);
-	  } catch (SQLException e) {
+	  } catch (IOException | SQLException e) {
 		s_log.warn("execute() fetchTaxon e:" + e);
 	  } finally {
 		DBUtil.close(connection, this, "BrowseAction.taxonNameRedirect()");

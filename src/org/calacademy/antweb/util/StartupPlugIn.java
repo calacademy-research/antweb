@@ -3,15 +3,6 @@
  */
 package org.calacademy.antweb.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.ResourceBundle;
-import java.util.Enumeration;
-
-import javax.servlet.ServletException;
-
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.action.PlugIn;
 import org.apache.struts.config.ModuleConfig;

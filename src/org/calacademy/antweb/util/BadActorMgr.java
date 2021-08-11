@@ -1,42 +1,11 @@
 package org.calacademy.antweb.util;
 	
-import java.io.*;
-import java.net.*;
 import java.util.*;
 
-import java.text.*;
-import java.io.IOException;
-
-import javax.net.ssl.HttpsURLConnection;
-
 import javax.servlet.http.*;
-import javax.servlet.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-
-
-import org.apache.struts.action.*;
-
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.transform.OutputKeys;
-import org.w3c.dom.Document;
-
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.AddressException;
-import org.calacademy.antweb.Utility;
-import org.calacademy.antweb.util.AntwebUtil;
-
-import javax.sql.DataSource;
-import java.sql.SQLException;
-
-import java.util.regex.*;
-
-import org.calacademy.antweb.AntFormatter;
-import org.apache.commons.httpclient.util.URIUtil;
 
 public abstract class BadActorMgr {
 
@@ -59,7 +28,7 @@ public abstract class BadActorMgr {
         if (true || !"http://0:0:0:0:0:0:0:1".equals(ip)) {
           Integer count = (Integer) badActorMap.get(ip);
           if (count == null) {
-              badActorMap.put(ip, Integer.valueOf(1));
+              badActorMap.put(ip, 1);
           } else {
               badActorMap.put(ip, ++count);
           }
@@ -72,8 +41,7 @@ public abstract class BadActorMgr {
     public static boolean isBadActor(String ip) {
         int BAD_ACTOR_LIMIT = 10;
         Integer count = (Integer) badActorMap.get(ip);
-        if (count != null && count > BAD_ACTOR_LIMIT) return true;
-        return false;
+        return count != null && count > BAD_ACTOR_LIMIT;
     }
 
     public static String ifBadActorBlockedGetMessage(HttpServletRequest request) {

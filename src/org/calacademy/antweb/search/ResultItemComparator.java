@@ -1,7 +1,6 @@
 package org.calacademy.antweb.search;
 
 import java.util.*;
-import org.calacademy.antweb.util.*;
 
 public class ResultItemComparator implements Comparator {
  

@@ -13,8 +13,6 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-import org.apache.commons.httpclient.util.URIUtil;
-
 /** Class Species keeps track of the information about a specific taxon */
 public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  {
 
@@ -240,7 +238,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                 setOriginalTaxonName(rset.getString("original_taxon_name"));
                 setLineNum(rset.getInt("line_num"));
                 setCreated(rset.getTimestamp("created"));
-                setIsIntroduced((rset.getInt("is_introduced") == 1) ? true : false);
+                setIsIntroduced(rset.getInt("is_introduced") == 1);
                 //setIsEndemic((rset.getInt("is_endemic") == 1) ? true : false);                
                 setMuseumCode(rset.getString("museum"));
                 setBackupFileName(rset.getString("backup_file_name"));
@@ -545,11 +543,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                 specImage.setShot(shot);
                 specImage.setCode(getCode());
                 specImage.setNumber(shotNumber);
-                if (hasTiff == 1) {
-                    specImage.setHasTiff(true);
-                } else {
-                    specImage.setHasTiff(false);
-                }
+                specImage.setHasTiff(hasTiff == 1);
                 //specImage.setPaths();
                 myImages.put(combo, specImage);
 
@@ -1340,8 +1334,7 @@ For a locality name without code (this name has special characters):
     public boolean hasOriginalTaxonName() {
       //A.log("hasOriginalTaxonName() orig:" + getOriginalTaxonName() + " parentTaxonName:" + getParentTaxonName());
       if (getOriginalTaxonName() != null)
-        if (!getParentTaxonName().equals(getOriginalTaxonName()))
-          return true;
+          return !getParentTaxonName().equals(getOriginalTaxonName());
       return false;
     }
     public String getOriginalTaxonName() {

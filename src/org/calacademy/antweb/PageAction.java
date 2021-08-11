@@ -1,8 +1,6 @@
 package org.calacademy.antweb;
 
-import java.io.IOException;
-import java.sql.*;
-import java.io.*; 
+import java.io.*;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;

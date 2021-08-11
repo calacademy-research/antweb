@@ -1,20 +1,8 @@
 package org.calacademy.antweb.util;
 
-import java.io.*;
-import java.net.*;
 import java.util.*;
 
-import java.nio.file.*;
-import java.nio.file.attribute.PosixFilePermission;
-import static java.nio.file.StandardCopyOption.*;
-
-import javax.servlet.http.*;
-import javax.servlet.*;
-
 import java.text.*;
-import java.sql.*;
-import javax.sql.*;
-import com.mchange.v2.c3p0.*;
 
 import org.calacademy.antweb.*;
 
@@ -53,7 +41,7 @@ public class A {
   }
 
 
-  private static HashMap<String, Integer> s_logiSet = new HashMap<String, Integer>();
+  private static HashMap<String, Integer> s_logiSet = new HashMap<>();
   //Log only once. Enter a unique i. Best to use a contstant.
   public static void logi(String key, String message) {
       logi(key, 1, message);
@@ -87,10 +75,7 @@ public class A {
   }
   public static boolean loopCount(int divNum) {
     loopCounter = loopCounter + 1;
-    if (loopCounter == 1 || (loopCounter % divNum) == 0) {
-      return true;    
-    }
-    return false;
+      return loopCounter == 1 || (loopCounter % divNum) == 0;
   }
   
   private static int[] logCounter = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};

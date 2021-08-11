@@ -1,18 +1,9 @@
 package org.calacademy.antweb.data;
 
-import java.io.*;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-
-import org.apache.struts.action.*;
 import org.apache.regexp.*;
 
 
@@ -22,9 +13,9 @@ public final class AntWikiData {
 
     private String shortTaxonName = null;
     private String subfamily = null;
-	private String genus = null;;
-	private String species = null;;
-	private String subspecies = null;
+	private String genus = null;
+    private String species = null;
+    private String subspecies = null;
     private String country = null;
       
     public AntWikiData(String theLine) {

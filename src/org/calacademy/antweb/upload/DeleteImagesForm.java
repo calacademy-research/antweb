@@ -7,8 +7,6 @@ import org.apache.struts.action.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-    
-import org.calacademy.antweb.*;
 
 public final class DeleteImagesForm extends ActionForm {
 

@@ -1,12 +1,9 @@
 package org.calacademy.antweb.home;
 
 import java.util.*;
-import java.text.DecimalFormat;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.util.*;
 
 public class QueryReport {
 
@@ -17,7 +14,7 @@ public class QueryReport {
     private String subquery = null;
     private String desc;
     private String heading;
-    ArrayList<String> list = new ArrayList<String>();
+    ArrayList<String> list = new ArrayList<>();
     private String error;
 
     public QueryReport() {

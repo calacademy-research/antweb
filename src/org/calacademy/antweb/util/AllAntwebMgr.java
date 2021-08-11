@@ -4,7 +4,6 @@ import java.sql.*;
 import java.util.*;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
 
 import org.apache.commons.logging.Log; 
@@ -22,7 +21,7 @@ public class AllAntwebMgr {
     
     public static void populate(Connection connection, boolean forceReload) {
       if (!forceReload && (s_allAntwebMap != null)) return;      
-      s_allAntwebMap = new HashMap<String, ProjTaxon>();
+      s_allAntwebMap = new HashMap<>();
       
       ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
       try {

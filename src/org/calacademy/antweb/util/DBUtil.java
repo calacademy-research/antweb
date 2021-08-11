@@ -13,7 +13,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.mchange.v2.c3p0.impl.*;
 
-import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.AntFormatter;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,8 +93,8 @@ Or, if there are stmts and/or rsets...
     }
 
     private static final Log s_log = LogFactory.getLog(DBUtil.class);
-    private static HashMap<NewProxyConnection, String> connectionMap = new HashMap<NewProxyConnection, String>();
-    private static HashMap<NewProxyConnection, DbRequest> connectionRequestMap = new HashMap<NewProxyConnection, DbRequest>();
+    private static HashMap<NewProxyConnection, String> connectionMap = new HashMap<>();
+    private static HashMap<NewProxyConnection, DbRequest> connectionRequestMap = new HashMap<>();
 
     public static DataSource getDataSource() {
 		MysqlDataSource ds = null;
@@ -140,8 +139,8 @@ Or, if there are stmts and/or rsets...
       return getServerBusyConnectionCount() >= MAX_BUSY_CONNECTIONS;
     }
  
-    private static HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<String, java.util.Date>();
-    private static HashMap<String, QueryStats> s_queryStatsMap = new HashMap<String, QueryStats>();
+    private static HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<>();
+    private static HashMap<String, QueryStats> s_queryStatsMap = new HashMap<>();
 
     
     // These methods are for statements, include timing.    
@@ -251,7 +250,7 @@ Or, if there are stmts and/or rsets...
           String logData = name + " " + stats;
           LogMgr.appendLog("queryStats.log", logData);      
         }
-        s_queryStatsMap = new HashMap<String, QueryStats>();
+        s_queryStatsMap = new HashMap<>();
     }
     
     public static boolean close(Connection connection, String name) {

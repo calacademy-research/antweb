@@ -3,16 +3,11 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.curate.speciesList.*;
 
 public class MuseumTaxonDb extends TaxonSetDb {
     
@@ -65,7 +60,7 @@ public class MuseumTaxonDb extends TaxonSetDb {
 
     public static ArrayList<ArrayList<String>> getStatisticsByMuseum(Connection connection)
         throws SQLException {
-        ArrayList<ArrayList<String>> statistics = new ArrayList<ArrayList<String>>();
+        ArrayList<ArrayList<String>> statistics = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = "select code, count(*) from museum_taxon group by code order by count(*) desc";
@@ -85,7 +80,7 @@ public class MuseumTaxonDb extends TaxonSetDb {
     
     public static ArrayList<String> getStatistics(String museumCode, Connection connection) 
         throws SQLException {
-        ArrayList<String> statistics = new ArrayList<String>();
+        ArrayList<String> statistics = new ArrayList<>();
         int extinctSubfamily = 0;
         int extinctGenera= 0;
         int extinctSpecies = 0;

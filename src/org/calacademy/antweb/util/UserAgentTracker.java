@@ -5,13 +5,11 @@ import java.util.Map;
 import java.sql.*;
 
 import javax.servlet.http.*;
-import javax.servlet.*;
 
 
 import javax.sql.DataSource;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -21,10 +19,10 @@ public class UserAgentTracker {
 
   private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);
 
-  private static Map<String, Integer> agentsMap = new HashMap<String, Integer>();
+  private static Map<String, Integer> agentsMap = new HashMap<>();
   private static int nullAgent = 0;
 
-  private static Set<String> knownAgentsSet = new HashSet<String>();      
+  private static Set<String> knownAgentsSet = new HashSet<>();
       
   private static int OVERACTIVE = 1000;
 
@@ -74,7 +72,7 @@ public class UserAgentTracker {
       if (userAgent == null) {
          ++nullAgent;
       } else {
-          int count = agentsMap.containsKey(userAgent) ? agentsMap.get(userAgent) : 0;
+          int count = agentsMap.getOrDefault(userAgent, 0);
           count = count + 1;
           agentsMap.put(userAgent, count);   
           
@@ -122,11 +120,8 @@ public class UserAgentTracker {
       }
       Object countInteger = agentsMap.get(userAgent);
       if (countInteger == null) return false;
-      int count = ((Integer) countInteger).intValue(); 
-      if (count > OVERACTIVE) {
-        return true;
-      }  
-      return false;
+      int count = ((Integer) countInteger).intValue();
+      return count > OVERACTIVE;
   }
 
   public static String summary() {
@@ -156,7 +151,7 @@ public class UserAgentTracker {
       String agent = "";
 
       // Used for sorting
-      Map<Integer, String> countMap = new HashMap<Integer, String>();
+      Map<Integer, String> countMap = new HashMap<>();
 
       for (String key : keySet) {
         int count = ((Integer) agentsMap.get(key)).intValue();
@@ -170,10 +165,8 @@ public class UserAgentTracker {
 
       report += "<br><br>DevMode:";
 
-      ArrayList<Integer> list = new ArrayList<Integer>();
-      TreeSet treeSet = new TreeSet();
-      treeSet.addAll(countMap.keySet());
-      list.addAll(treeSet);
+      TreeSet treeSet = new TreeSet(countMap.keySet());
+      ArrayList<Integer> list = new ArrayList<>(treeSet);
 
       for (Integer count : list) {
           agent = (countMap.get(count));

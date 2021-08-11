@@ -1,11 +1,8 @@
 package org.calacademy.antweb;
 
 import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -43,7 +40,7 @@ public class StatusSet extends Status {
     };
 
     public static ArrayList<String> getAdminStatusSets() {
-      ArrayList<String> statusSets = new ArrayList<String>(Arrays.asList(allStatusSetArray));
+      ArrayList<String> statusSets = new ArrayList<>(Arrays.asList(allStatusSetArray));
       statusSets.addAll(getAllStatuses()); // call superclass
       return statusSets;
     }    
@@ -51,7 +48,7 @@ public class StatusSet extends Status {
       return StatusSet.getAdminStatusSets();
     }        
     public static ArrayList<String> getStatusSets() {
-      ArrayList<String> statusSets =  new ArrayList<String>();
+      ArrayList<String> statusSets = new ArrayList<>();
       statusSets.addAll(Arrays.asList(minimalStatusSetArray));
       statusSets.addAll(getMinimalStatuses()); 
       return statusSets;

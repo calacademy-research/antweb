@@ -9,9 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.*;
 import java.sql.*;
 
-import com.mchange.v2.c3p0.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.home.*;
@@ -79,12 +77,9 @@ static double getVersion () {
 	}
 
     public static boolean isReady() {
-      if (UploadAction.isInUploadProcess() 
-       || UptimeAction.isFailOnPurpose() 
-       || UtilDataAction.isInComputeProcess()) {
-         return false;
-      }
-      return true;
+        return !UploadAction.isInUploadProcess()
+                && !UptimeAction.isFailOnPurpose()
+                && !UtilDataAction.isInComputeProcess();
     }
 				
     public static String notReadyReason() {

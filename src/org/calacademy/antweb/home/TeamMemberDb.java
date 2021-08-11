@@ -3,15 +3,11 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.*;
 
 public class TeamMemberDb extends AntwebDb {
     
@@ -157,7 +153,6 @@ public class TeamMemberDb extends AntwebDb {
           TeamMember existingTeamMember = findById(teamMember.getId());     
           if (existingTeamMember == null) {
             s_log.error("saveImage() TeamMember:" + teamMember.getId() + " not found.");
-            return;
           } else {
             try {
 

@@ -3,7 +3,6 @@ package org.calacademy.antweb.curate.group;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -19,7 +18,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.util.*;
 
 public final class ViewGroupAction extends Action {
 

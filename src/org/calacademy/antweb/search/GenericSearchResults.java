@@ -3,9 +3,7 @@ package org.calacademy.antweb.search;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
-import java.text.*;
 import java.io.*;
-import java.sql.*;
 import java.util.*;
 
 import org.apache.commons.logging.Log; 
@@ -39,14 +37,13 @@ public class GenericSearchResults implements Serializable {
     protected String taxonName;
     
     public ArrayList<ResultItem> filter(ArrayList<ResultItem> dataset, String property) {
-        ArrayList<ResultItem> newList = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> newList = new ArrayList<>();
         ResultItem thisItem = null;
         if (dataset != null) {
-            Iterator iterator = dataset.iterator();
-            while (iterator.hasNext()) {
-                thisItem = (ResultItem) iterator.next();
+            for (ResultItem resultItem : dataset) {
+                thisItem = resultItem;
                 if ("images".equals(property)) {
-                    if ((thisItem.isHasImages()) || ((thisItem.getSynonym() != null) &&  (thisItem.getSynonym().isHasImages()))) {
+                    if ((thisItem.isHasImages()) || ((thisItem.getSynonym() != null) && (thisItem.getSynonym().isHasImages()))) {
                         newList.add(thisItem);
                     }
                 } else if ("types".equals(property) && (thisItem.getType() != null) && (!thisItem.getType().equals(""))) {
@@ -64,7 +61,7 @@ public class GenericSearchResults implements Serializable {
       Taxon dummyTaxon = new Taxon();      
       dummyTaxon.setRank("species");
       
-      ArrayList<Taxon> taxonList = new ArrayList<Taxon>();
+      ArrayList<Taxon> taxonList = new ArrayList<>();
  
       //AntwebUtil.logFirstStackTrace();
 
@@ -163,7 +160,7 @@ public class GenericSearchResults implements Serializable {
     }    
     
     public ArrayList<ResultItem> getResults() {
-        if (results == null) results = new ArrayList<ResultItem>();    
+        if (results == null) results = new ArrayList<>();
         return results;
     }
 
@@ -203,7 +200,7 @@ public class GenericSearchResults implements Serializable {
             project = "";
         }
 
-        ArrayList<ResultItem> myResults = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> myResults = new ArrayList<>();
         
             // figure out which column is which
             //ArrayList columns = getColumns(rset);
@@ -401,7 +398,7 @@ public class GenericSearchResults implements Serializable {
             project = "";
         }
 
-        ArrayList<ResultItem> myResults = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> myResults = new ArrayList<>();
 
 		ArrayList tracker = new ArrayList();
 		Hashtable imageCheck = new Hashtable();
@@ -545,8 +542,8 @@ public class GenericSearchResults implements Serializable {
 						tempCombo = "genus:" + genus;
 						// this here deals with the special genus case
 						
-						updateHash(imageCheck, tempCombo, Boolean.valueOf(hasImages));
-						updateHash(typeCheck, tempCombo, Boolean.valueOf(hasTypes));
+						updateHash(imageCheck, tempCombo, hasImages);
+						updateHash(typeCheck, tempCombo, hasTypes);
 						
 						if ((!(tracker.contains(tempCombo)))
 							&& (fullName.length() > 2)) {
@@ -579,8 +576,8 @@ public class GenericSearchResults implements Serializable {
 
 					combo = thisRank + ":" + fullName;
 
-					updateHash(imageCheck, combo, Boolean.valueOf(hasImages));
-					updateHash(typeCheck, combo, Boolean.valueOf(hasTypes));
+					updateHash(imageCheck, combo, hasImages);
+					updateHash(typeCheck, combo, hasTypes);
 
 					if ((!(tracker.contains(combo)))
 						&& (fullName.length() > 2)) {
@@ -618,20 +615,12 @@ public class GenericSearchResults implements Serializable {
 		while (iterator.hasNext()) {
 			resItem = (ResultItem) iterator.next();
 		   thisCombo = resItem.getRank() + ":" + resItem.getFullName();
-					
-			if (((Boolean) imageCheck.get(thisCombo)).booleanValue()
-				== true) {
-				resItem.setHasImages(true);
-			} else {
-				resItem.setHasImages(false);
-			}
 
-			if (((Boolean) typeCheck.get(thisCombo)).booleanValue()
-				== true) {
-				resItem.setTypes(true);
-			} else {
-				resItem.setTypes(false);
-			}
+            resItem.setHasImages(((Boolean) imageCheck.get(thisCombo)).booleanValue()
+                    == true);
+
+            resItem.setTypes(((Boolean) typeCheck.get(thisCombo)).booleanValue()
+                    == true);
 		}
 
         Collections.sort(myResults, new ResultItemComparator());

@@ -1,9 +1,6 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
-
 import java.io.Serializable;
-import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -57,17 +54,18 @@ public class SearchItem extends Item implements Serializable {
 
 
 	public String getNameOfRank(String rank) {
-		if (rank.equals("family")) {
-			return family;
-	    } else if (rank.equals("subfamily")) {
-			return subfamily;
-		} else if (rank.equals("genus")) {
-			return genus;
-		} else if (rank.equals("species")) {
-			return species;
-		} else {
-			return null;
-		}
+        switch (rank) {
+            case "family":
+                return family;
+            case "subfamily":
+                return subfamily;
+            case "genus":
+                return genus;
+            case "species":
+                return species;
+            default:
+                return null;
+        }
 	}
 
 	public String toString() {

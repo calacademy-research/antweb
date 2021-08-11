@@ -6,8 +6,6 @@ import java.util.HashSet;
 
 import java.sql.*;
 
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
 //import org.apache.regexp.*;
 
 import org.apache.commons.logging.Log; 
@@ -16,7 +14,6 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.search.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
 public class ObjectMapDb extends AntwebDb {
@@ -184,7 +181,7 @@ public class ObjectMapDb extends AntwebDb {
     }
 
     public void genGroupObjectMaps() {
-      HashSet<Group> groups = new HashSet<Group>();
+      HashSet<Group> groups = new HashSet<>();
       ArrayList<Login> logins = LoginMgr.getLogins();
       for (Login login : logins) {
         if (login.isUploadSpecimens())

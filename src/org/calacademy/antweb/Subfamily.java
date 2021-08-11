@@ -4,7 +4,6 @@ import java.util.*;
 import java.io.Serializable;
 import java.sql.*;
 
-import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.LocalityOverview;
 
 import org.apache.commons.logging.Log; 

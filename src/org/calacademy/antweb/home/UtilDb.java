@@ -3,14 +3,11 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.*;
 
 public class UtilDb extends AntwebDb {
     
@@ -113,7 +110,7 @@ public class UtilDb extends AntwebDb {
         int rowNum = 0;
         String columns = "";
         String rowData = "";
-        for (; rs.next(); ) {
+        while (rs.next()) {
             ++rowNum;
             String row = "";
             for (i = 0; i < colmax; ++i) {
@@ -231,12 +228,8 @@ public class UtilDb extends AntwebDb {
         ResultSet rset = stmt.executeQuery(query);
         while (rset.next()) {
           value = rset.getString("value");
-          if (Utility.isBlank(value)) {
-            return true;
-          } else {
             //s_log.warn("isBlankField() false for query:" + query);
-            return false;
-          }
+            return Utility.isBlank(value);
           //A.log("isBlankField() from projectName:" + project_name + " to geolocaleId:" + geolocaleId);
         }
       } finally {

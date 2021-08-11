@@ -34,8 +34,8 @@ public class AdvancedSearchResults extends GenericSearchResults
 
 	public ArrayList<ResultItem> getSubfamilyList() {
 		
-		ArrayList<ResultItem> subfamilyList = new ArrayList<ResultItem>();
-		HashMap<String, ResultItem> subfamilyHash = new HashMap<String, ResultItem>();
+		ArrayList<ResultItem> subfamilyList = new ArrayList<>();
+		HashMap<String, ResultItem> subfamilyHash = new HashMap<>();
 		
         for (ResultItem thisItem : getResults()) {
             String subfamily = thisItem.getSubfamily();
@@ -61,8 +61,8 @@ public class AdvancedSearchResults extends GenericSearchResults
 	
 	public ArrayList<ResultItem> getGenusList() {
 		
-		ArrayList<ResultItem> genusList = new ArrayList<ResultItem>();
-		HashMap<String, ResultItem> genusHash = new HashMap<String, ResultItem>();
+		ArrayList<ResultItem> genusList = new ArrayList<>();
+		HashMap<String, ResultItem> genusHash = new HashMap<>();
 		
 		Iterator<ResultItem> resIter = results.iterator();
 		
@@ -92,8 +92,8 @@ public class AdvancedSearchResults extends GenericSearchResults
 	 
 	public ArrayList<ResultItem> getSpeciesList() {
 		
-		ArrayList<ResultItem> specList = new ArrayList<ResultItem>();
-		HashMap<String, ResultItem> specHash = new HashMap<String, ResultItem>();
+		ArrayList<ResultItem> specList = new ArrayList<>();
+		HashMap<String, ResultItem> specHash = new HashMap<>();
 		
 		Iterator<ResultItem> resIter = results.iterator();
 		
@@ -142,7 +142,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 
 		A.log("compareVals() fieldname:" + s_fieldName + " returnVal:" + returnVal + " a1:" + a1 + " a2:" + a2 + " count:" + s_count);
 
-		return Integer.valueOf(returnVal);
+		return returnVal;
 	}
 
 	public void sortBy(String fieldName) {
@@ -158,215 +158,347 @@ public class AdvancedSearchResults extends GenericSearchResults
       A.log("sortBy() fieldName:" + fieldName + " sortOrder:" + sortOrder);
 
       try {
-		if (fieldName.equals("code")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-	            	if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getCode(), ((ResultItem) o2).getCode());	
-	            }
-	        });
-		} else if (fieldName.equals("country")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getCountry(), ((ResultItem) o2).getCountry());
-	            }
-	        });
-		} else if (fieldName.equals("images")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	            	// 2nd one first because reverse order
-	                return CompareUtil.compareIntNoZero(((ResultItem) o2).getImageCount(), ((ResultItem) o1).getImageCount());
-	            }
-	        });
-		} else if (fieldName.equals("location")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return compareVals(((ResultItem) o1).getLocalityString(), ((ResultItem) o2).getLocalityString());
-	            }
-	        });
-		} else if (fieldName.equals("type")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					a1 = ((ResultItem) o1).getType();
-					a2 = ((ResultItem) o2).getType();
-					// 2nd one first because reverse order
-					Integer returnVal = compareVals(a2, a1);
-					return returnVal.intValue();
-	            }
-	        });
+		  switch (fieldName) {
+			  case "code":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getCode(), ((ResultItem) o2).getCode());
+					  }
+				  });
+				  break;
+			  case "country":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getCountry(), ((ResultItem) o2).getCountry());
+					  }
+				  });
+				  break;
+			  case "images":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  // 2nd one first because reverse order
+						  return CompareUtil.compareIntNoZero(((ResultItem) o2).getImageCount(), ((ResultItem) o1).getImageCount());
+					  }
+				  });
+				  break;
+			  case "location":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return compareVals(((ResultItem) o1).getLocalityString(), ((ResultItem) o2).getLocalityString());
+					  }
+				  });
+				  break;
+			  case "type":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  a1 = ((ResultItem) o1).getType();
+						  a2 = ((ResultItem) o2).getType();
+						  // 2nd one first because reverse order
+						  Integer returnVal = compareVals(a2, a1);
+						  return returnVal.intValue();
+					  }
+				  });
 
-		// caste atually sorts by caste+subcaste
-		} else if (fieldName.equals("caste")) {
-			Collections.sort(results, new Comparator() {
-				public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					ResultItem resultItemO1 = (ResultItem) o1;
-					ResultItem resultItemO2 = (ResultItem) o2;
-					String casteSubcasteO1 = resultItemO1.getCaste() + resultItemO1.getSubcaste();
-					String casteSubcasteO2 = resultItemO2.getCaste() + resultItemO1.getSubcaste();
-					// 2nd one first because reverse order
-					return CompareUtil.compareString(casteSubcasteO2, casteSubcasteO1);
-				}
-			});
-		} else if (fieldName.equals("lifestage")) {
-			s_fieldName = "lifeStage";
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					//A.log("compare(lifestage) o1:" + o1 + " o2:" + o2);
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					// 2nd one first because reverse order
-	                return CompareUtil.compareString(((ResultItem) o2).getLifeStage(), ((ResultItem) o1).getLifeStage());
-	            }	 
-	        });
-		} else if (fieldName.equals("medium")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					a1 = ((ResultItem) o1).getMedium();
-					a2 = ((ResultItem) o2).getMedium();
+				  // caste atually sorts by caste+subcaste
+				  break;
+			  case "caste":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  ResultItem resultItemO1 = (ResultItem) o1;
+						  ResultItem resultItemO2 = (ResultItem) o2;
+						  String casteSubcasteO1 = resultItemO1.getCaste() + resultItemO1.getSubcaste();
+						  String casteSubcasteO2 = resultItemO2.getCaste() + resultItemO1.getSubcaste();
+						  // 2nd one first because reverse order
+						  return CompareUtil.compareString(casteSubcasteO2, casteSubcasteO1);
+					  }
+				  });
+				  break;
+			  case "lifestage":
+				  s_fieldName = "lifeStage";
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  //A.log("compare(lifestage) o1:" + o1 + " o2:" + o2);
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  // 2nd one first because reverse order
+						  return CompareUtil.compareString(((ResultItem) o2).getLifeStage(), ((ResultItem) o1).getLifeStage());
+					  }
+				  });
+				  break;
+			  case "medium":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  a1 = ((ResultItem) o1).getMedium();
+						  a2 = ((ResultItem) o2).getMedium();
 
-					Integer returnVal = compareVals(a1, a2);
-					return returnVal.intValue();
-	            }	 
-	        });
-		} else if (fieldName.equals("specimennotes")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					// 2nd one first because reverse order.
-	                return CompareUtil.compareString(((ResultItem) o2).getSpecimenNotes(), ((ResultItem) o1).getSpecimenNotes());
-	            }	 
-	        });
-		} else if (fieldName.equals("taxonname")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getFullName(), ((ResultItem) o2).getFullName());
-	            }
-	        });
-		} else if (fieldName.equals("ownedby")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getOwnedBy(), ((ResultItem) o2).getOwnedBy());
-	            }
-	        });
-		} else if (fieldName.equals("habitat")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					// 2nd one first because reverse order.
-	                return CompareUtil.compareString(((ResultItem) o2).getHabitat(), ((ResultItem) o1).getHabitat());
-	            }
-	        });
-		} else if (fieldName.equals("microhabitat")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					// 2nd one first because reverse order.
-	                return CompareUtil.compareString(((ResultItem) o2).getMicrohabitat(), ((ResultItem) o1).getMicrohabitat());
-	            }
-	        });
-		} else if (fieldName.equals("collectedby")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getCollectedBy(), ((ResultItem) o2).getCollectedBy());
-	            }
-	        });
-		} else if (fieldName.equals("museumCode") || fieldName.equals("museum")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getMuseumCode(), ((ResultItem) o2).getMuseumCode());
-	            }
-	        });
-		} else if (fieldName.equals("method")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getMethod(), ((ResultItem) o2).getMethod());
-	            }
-	        });
-		} else if (fieldName.equals("dna")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					// 2nd one first because reverse order.
-	                return CompareUtil.compareString(((ResultItem) o2).getDnaExtractionNotes(), ((ResultItem) o1).getDnaExtractionNotes());
-	            }
-	        });
-		} else if (fieldName.equals("determinedby")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getDeterminedBy(), ((ResultItem) o2).getDeterminedBy());
-	            }
-	        });
-		} else if (fieldName.equals("databy")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getGroupName(), ((ResultItem) o2).getGroupName());
-	            }
-	        });
-		} else if (fieldName.equals("datecollected")) {   // These could be backwards to sort backwards
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareStringDesc(((ResultItem) o1).getDateCollectedStart(), ((ResultItem) o2).getDateCollectedStart());
-	            }
-	        });
-		} else if (fieldName.equals("collection")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((ResultItem) o1).getCollectionCode(), ((ResultItem) o2).getCollectionCode());
-	            }
-	        });       
-		} else if (fieldName.equals("elevation")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					// 2nd one first because reverse order.
-	                return CompareUtil.compareIntString(((ResultItem) o2).getElevation(), ((ResultItem) o1).getElevation());
-	            }
-	        });
-		} else if (fieldName.equals("latitude")) {
-			Collections.sort(results, new Comparator() {				 
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					// 2nd one first because reverse order.
-	                return CompareUtil.compareFloat(((ResultItem) o2).getDecimalLatitude(), ((ResultItem) o1).getDecimalLatitude());
-	            }
-	        });
-		} else if (fieldName.equals("longitude")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-					// 2nd one first because reverse order.
-	                return CompareUtil.compareFloat(((ResultItem) o2).getDecimalLongitude(), ((ResultItem) o1).getDecimalLongitude());
-	            }
-	        });
-		} else if (fieldName.equals("created")) {   // These could be backwards to sort backwards
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareStringDesc(((ResultItem) o1).getCreated(), ((ResultItem) o2).getCreated());
-	            }
-	        });
-		} else if (fieldName.equals("uploadid")) {
-			Collections.sort(results, new Comparator() {
-	            public int compare(Object o1, Object o2) {
-					if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareInt(((ResultItem) o1).getUploadId(), ((ResultItem) o2).getUploadId());
-	            }
-	        });
-		}
+						  Integer returnVal = compareVals(a1, a2);
+						  return returnVal.intValue();
+					  }
+				  });
+				  break;
+			  case "specimennotes":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  // 2nd one first because reverse order.
+						  return CompareUtil.compareString(((ResultItem) o2).getSpecimenNotes(), ((ResultItem) o1).getSpecimenNotes());
+					  }
+				  });
+				  break;
+			  case "taxonname":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getFullName(), ((ResultItem) o2).getFullName());
+					  }
+				  });
+				  break;
+			  case "ownedby":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getOwnedBy(), ((ResultItem) o2).getOwnedBy());
+					  }
+				  });
+				  break;
+			  case "habitat":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  // 2nd one first because reverse order.
+						  return CompareUtil.compareString(((ResultItem) o2).getHabitat(), ((ResultItem) o1).getHabitat());
+					  }
+				  });
+				  break;
+			  case "microhabitat":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  // 2nd one first because reverse order.
+						  return CompareUtil.compareString(((ResultItem) o2).getMicrohabitat(), ((ResultItem) o1).getMicrohabitat());
+					  }
+				  });
+				  break;
+			  case "collectedby":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getCollectedBy(), ((ResultItem) o2).getCollectedBy());
+					  }
+				  });
+				  break;
+			  case "museumCode":
+			  case "museum":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getMuseumCode(), ((ResultItem) o2).getMuseumCode());
+					  }
+				  });
+				  break;
+			  case "method":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getMethod(), ((ResultItem) o2).getMethod());
+					  }
+				  });
+				  break;
+			  case "dna":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  // 2nd one first because reverse order.
+						  return CompareUtil.compareString(((ResultItem) o2).getDnaExtractionNotes(), ((ResultItem) o1).getDnaExtractionNotes());
+					  }
+				  });
+				  break;
+			  case "determinedby":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getDeterminedBy(), ((ResultItem) o2).getDeterminedBy());
+					  }
+				  });
+				  break;
+			  case "databy":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getGroupName(), ((ResultItem) o2).getGroupName());
+					  }
+				  });
+				  break;
+			  case "datecollected":    // These could be backwards to sort backwards
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareStringDesc(((ResultItem) o1).getDateCollectedStart(), ((ResultItem) o2).getDateCollectedStart());
+					  }
+				  });
+				  break;
+			  case "collection":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareString(((ResultItem) o1).getCollectionCode(), ((ResultItem) o2).getCollectionCode());
+					  }
+				  });
+				  break;
+			  case "elevation":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  // 2nd one first because reverse order.
+						  return CompareUtil.compareIntString(((ResultItem) o2).getElevation(), ((ResultItem) o1).getElevation());
+					  }
+				  });
+				  break;
+			  case "latitude":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  // 2nd one first because reverse order.
+						  return CompareUtil.compareFloat(((ResultItem) o2).getDecimalLatitude(), ((ResultItem) o1).getDecimalLatitude());
+					  }
+				  });
+				  break;
+			  case "longitude":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  // 2nd one first because reverse order.
+						  return CompareUtil.compareFloat(((ResultItem) o2).getDecimalLongitude(), ((ResultItem) o1).getDecimalLongitude());
+					  }
+				  });
+				  break;
+			  case "created":    // These could be backwards to sort backwards
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareStringDesc(((ResultItem) o1).getCreated(), ((ResultItem) o2).getCreated());
+					  }
+				  });
+				  break;
+			  case "uploadid":
+				  Collections.sort(results, new Comparator() {
+					  public int compare(Object o1, Object o2) {
+						  if ("down".equals(sortOrder)) {
+							  Object t = o1;
+							  o1 = o2;
+							  o2 = t;
+						  }
+						  return CompareUtil.compareInt(((ResultItem) o1).getUploadId(), ((ResultItem) o2).getUploadId());
+					  }
+				  });
+				  break;
+		  }
 	  } catch (IllegalArgumentException e) {
 		  s_log.warn("sortBy() fieldName:" + s_fieldName + " count:" + s_count + " a1:" + a1 + " a2:" + a2 + " e:" + e);
 		  s_count = 0;

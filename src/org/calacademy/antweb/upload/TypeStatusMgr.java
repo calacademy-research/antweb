@@ -1,27 +1,17 @@
 package org.calacademy.antweb.upload;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.struts.action.*;
 
 import javax.servlet.http.*;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 

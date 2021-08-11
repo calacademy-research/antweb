@@ -1,14 +1,9 @@
 package org.calacademy.antweb.util;
 
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.io.*;
-
 import javax.sql.DataSource;
 import java.sql.*;
 
-import javax.servlet.*;
 import javax.servlet.http.*;
 
 import org.apache.struts.action.*;
@@ -60,24 +55,24 @@ public class Check {
     public static ActionForward initLogin(HttpServletRequest request, ActionMapping mapping) {
         ActionForward a = null;
         a = Check.init(request, mapping); if (a != null) return a;
-        a = Check.login(request, mapping); if (a != null) return a;
-        return null;
+        a = Check.login(request, mapping);
+        return a;
     }
 
     // ActionForward a = Check.loginValid(request, mapping); if (a != null) return a;
     public static ActionForward loginValid(HttpServletRequest request, ActionMapping mapping) {
         ActionForward a = null;
         a = Check.login(request, mapping); if (a != null) return a;
-        a = Check.valid(request, mapping); if (a != null) return a;
-        return null;
+        a = Check.valid(request, mapping);
+        return a;
     }
 
     // ActionForward a = Check.initLoginValid(request, mapping); if (a != null) return a;
     public static ActionForward initLoginValid(HttpServletRequest request, ActionMapping mapping) {
         ActionForward a = null;
         a = Check.initLogin(request, mapping); if (a != null) return a;
-        a = Check.valid(request, mapping); if (a != null) return a;   
-        return null;
+        a = Check.valid(request, mapping);
+        return a;
     }
 
     // ActionForward a = Check.initLoginValidbusy(getDataSource(request, "conPool"), request, mapping); if (a != null) return a;
@@ -85,8 +80,7 @@ public class Check {
         ActionForward a = Check.initLoginValid(request, mapping); if (a != null) return a;
         if (a != null) return a;
         a = Check.busy(dataSource, request, mapping); if (a != null) return a;
-        if (a != null) return a;
-        return null;
+        return a;
     }
 
     // --------------------------------------------------------------------------------------

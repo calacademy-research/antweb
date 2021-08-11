@@ -1,22 +1,11 @@
     package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 
-import org.apache.struts.action.*;
-
-import javax.servlet.http.*;
-
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.Formatter;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -34,7 +23,7 @@ public class TaxonMgr extends Manager {
     // Shallow copies
     private static HashMap<String, Taxon> s_taxa = null;
 
-    private static HashMap<String, ArrayList<String>> s_subgenusHashMap = new HashMap<String, ArrayList<String>>();
+    private static HashMap<String, ArrayList<String>> s_subgenusHashMap = new HashMap<>();
 
     //private static List<String> taxaNamesList = null;
     private static List<String> prettyTaxaNamesList = null;
@@ -47,7 +36,7 @@ public class TaxonMgr extends Manager {
         //A.log("populate() subfamilies:" + s_subfamilies);
 
         ArrayList<Taxon> genera = taxonDb.getTaxa(Rank.GENUS);
-        s_genera = new HashMap<String, Taxon>();
+        s_genera = new HashMap<>();
 
         //A.log("populate() genera.size:" + genera.size());
         for (Taxon taxon : genera) {
@@ -55,7 +44,7 @@ public class TaxonMgr extends Manager {
         }
 
         // For Taxon Name Search Autocomplete
-        prettyTaxaNamesList = new ArrayList<String>();
+        prettyTaxaNamesList = new ArrayList<>();
         prettyTaxaNamesList.addAll(CommonNames.getNames());
 
         List<String> taxaNamesList = taxonDb.getTaxonNames();
@@ -64,7 +53,7 @@ public class TaxonMgr extends Manager {
         }
 
 //        TaxonDb taxonDb = new TaxonDb(connection);
-        s_taxa = new HashMap<String, Taxon>();
+        s_taxa = new HashMap<>();
         ArrayList<Taxon> taxa = taxonDb.getShallowTaxa();
         for (Taxon taxon : taxa) {
             s_taxa.put(taxon.getTaxonName(), taxon);
@@ -100,16 +89,16 @@ public class TaxonMgr extends Manager {
       text = text.toLowerCase();
       //A.log("getPrettyTaxaNames(text) text:" + text + " prettyTaxaListSize:" + prettyTaxaNamesList.size());      
       String[] texts = text.split(" ");
-      List<String> prettyTaxaNamesSubset = new ArrayList<String>();
+      List<String> prettyTaxaNamesSubset = new ArrayList<>();
       int i = 0;
 
       for (String taxonName : prettyTaxaNamesList) {
         boolean containsAll = true;
-        for (int j=0 ; j < texts.length ; ++j) {
-          //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
-          if (!taxonName.toLowerCase().contains(texts[j])) containsAll = false;
-          if (!containsAll) break;
-        }
+          for (String s : texts) {
+              //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
+              if (!taxonName.toLowerCase().contains(s)) containsAll = false;
+              if (!containsAll) break;
+          }
         if (containsAll) {
           prettyTaxaNamesSubset.add(taxonName);
           ++i;
@@ -135,7 +124,7 @@ public class TaxonMgr extends Manager {
     }
 
     public static ArrayList<Genus> getGenera() {
-      ArrayList<Genus> genera = new ArrayList<Genus>();
+      ArrayList<Genus> genera = new ArrayList<>();
       for (Taxon genus : s_genera.values()) {
         genera.add((Genus)genus);
       }
@@ -165,7 +154,7 @@ public class TaxonMgr extends Manager {
       if (taxonName == null) return null;
 
       if (s_species == null) {
-        s_species = new HashMap<String, Taxon>();
+        s_species = new HashMap<>();
         TaxonDb taxonDb = new TaxonDb(connection);      
         ArrayList<Taxon> species = taxonDb.getTaxa("taxarank in ('" + Rank.SPECIES + "', '" + Rank.SUBSPECIES + "')");
         A.log("getSpecies() speciesCount:" + species.size());

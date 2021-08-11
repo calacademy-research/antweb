@@ -4,10 +4,7 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
@@ -18,7 +15,7 @@ public class Adm1Db {
 
     private static Log s_log = LogFactory.getLog(Adm1Db.class);
     
-    private static ArrayList<String> adm1s = new ArrayList<String>();    
+    private static ArrayList<String> adm1s = new ArrayList<>();
     
     public static boolean isValid(Connection connection, String adm1){
       if (adm1s.size() == 0) {

@@ -2,22 +2,7 @@
 package org.calacademy.antweb.util;
 
 import java.io.*;
-import java.net.*;
-import java.util.Formatter;
-import java.util.*;
-import java.util.function.Consumer;
 import java.util.concurrent.Executors;
-
-import java.nio.file.*;
-import java.nio.file.attribute.PosixFilePermission;
-import static java.nio.file.StandardCopyOption.*;
-
-import javax.servlet.http.*;
-import javax.servlet.*;
-
-import java.sql.*;
-import javax.sql.*;
-import com.mchange.v2.c3p0.*;
 
 import org.calacademy.antweb.*;
 
@@ -60,9 +45,7 @@ public class AntwebSystem {
       //s_log.warn("countLines:" + countStr);
     
       count = (Integer.valueOf(countStr)).intValue();
-    } catch (NumberFormatException e) {
-      s_log.error("countLines e:" + e + " countStr:" + countStr);
-    } catch (StringIndexOutOfBoundsException e) {
+    } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
       s_log.error("countLines e:" + e + " countStr:" + countStr);
     }
     s_log.warn("countLines:" + countStr + " return:" + count + " spaceIndex:" + spaceIndex);

@@ -1,16 +1,10 @@
 package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
 
 
@@ -65,18 +59,16 @@ public class GroupMgr {
 	    return isCAS(accessGroup);
 	}
 	public static boolean isCAS(Group accessGroup) {
-	  if (accessGroup != null && accessGroup.getId() == 1) return true;
-	  return false;
-	}
+        return accessGroup != null && accessGroup.getId() == 1;
+    }
 
     public static boolean isDavis(HttpServletRequest request) {
         Group accessGroup = getAccessGroup(request);
 	    return isDavis(accessGroup);
 	}
 	public static boolean isDavis(Group accessGroup) {
-	  if (accessGroup != null && accessGroup.getId() == 16) return true;
-	  return false;
-	}
+        return accessGroup != null && accessGroup.getId() == 16;
+    }
 		
 		
 

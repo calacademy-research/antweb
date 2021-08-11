@@ -170,9 +170,9 @@ public class EditCreditAction extends Action {
 
 			int id = 0;
 			int maxId = 0;
-			for (int i = 0; i < children.length; i++) {
+			for (String child : children) {
 				// Get filename of file or directory
-				filename = children[i];
+				filename = child;
 				filename = filename.toLowerCase();
 
 				// get the specimen and shot type
@@ -193,17 +193,17 @@ public class EditCreditAction extends Action {
 				}
 
 				// if there's an image from this specimen with this shot, delete it
-                String query = null;
-                Statement stmt = null;
-                ResultSet rset = null;
-                Statement delstmt = null;
+				String query = null;
+				Statement stmt = null;
+				ResultSet rset = null;
+				Statement delstmt = null;
 				try {
 					query =
-						"select id from image "
-							+ " where image_of_id='" + specimen
-							+ "' and shot_type = '" + shot
-							+ "' and shot_number = " + shot_number
-							+ " and source_table='specimen'";
+							"select id from image "
+									+ " where image_of_id='" + specimen
+									+ "' and shot_type = '" + shot
+									+ "' and shot_number = " + shot_number
+									+ " and source_table='specimen'";
 
 					rset = stmt.executeQuery(query);
 					while (rset.next()) {
@@ -230,17 +230,17 @@ public class EditCreditAction extends Action {
 
 					// now stick this thing into the db
 					query =
-						"insert into image "
-							+ "(id, shot_type, source_table, image_of_id, shot_number, artist, copyright, license) " 
-							+ " values (" + maxId + ", '" + shot + "', 'specimen','" + specimen + "', "
-							+ shot_number + "," + artist + "," + copyright + "," + license + ")";
-                    stmt = DBUtil.getStatement(connection, "importImages"); 
+							"insert into image "
+									+ "(id, shot_type, source_table, image_of_id, shot_number, artist, copyright, license) "
+									+ " values (" + maxId + ", '" + shot + "', 'specimen','" + specimen + "', "
+									+ shot_number + "," + artist + "," + copyright + "," + license + ")";
+					stmt = DBUtil.getStatement(connection, "importImages");
 					stmt.executeUpdate(query);
 				} catch (Exception e) {
 					s_log.error("importImages() e:" + e);
 				} finally {
-                    DBUtil.close(stmt, rset, this, "importImages()");			
-			    }
+					DBUtil.close(stmt, rset, this, "importImages()");
+				}
 			}
 		}
 		return found_images;

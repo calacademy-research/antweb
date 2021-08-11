@@ -1,35 +1,13 @@
 package org.calacademy.antweb.upload;
 
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
 
-import javax.servlet.http.*;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import org.apache.avalon.framework.logger.ConsoleLogger;
-import org.apache.avalon.framework.logger.Logger;
-
-import org.apache.struts.action.*;
 import org.apache.regexp.*;
 
 import java.sql.*;
- 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
@@ -90,8 +68,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             Formatter formatter = new Formatter();
             ArrayList<String> elements = null;
 
-            Float lat = Float.valueOf(0);
-            Float lon = Float.valueOf(0);
+            Float lat = (float) 0;
+            Float lon = (float) 0;
 
             Iterator loopIter = null;
             if (otherInfo.length() > 0) {
@@ -113,7 +91,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             //s_log.warn("parseLine() theLine:" + theLine);
 
             String[] loopComponents = tab.split(theLine);
-            elements = new ArrayList<String>(Arrays.asList(loopComponents));
+            elements = new ArrayList<>(Arrays.asList(loopComponents));
             loopIter = elements.iterator();
             int colIndex = 0;
 
@@ -197,10 +175,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -180 && number <= 180) {
 								specimenItem.put("decimal_longitude", number);
-								lon = Float.valueOf(number.floatValue() * 1000);
+								lon = number.floatValue() * 1000;
 								if (lon.intValue() == 0) {
 									element = "";
-									specimenItem.put("decimal_longitude",  Float.valueOf((float)-999.9));
+									specimenItem.put("decimal_longitude", (float) -999.9);
 								}
                             } else {                              
 						      //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
@@ -216,11 +194,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -90 && number <= 90) {
 								specimenItem.put("decimal_latitude", number);
-								lat = Float.valueOf(number.floatValue() * 1000);
+								lat = number.floatValue() * 1000;
 								//A.log("parseLine() lat:" + lat + " number:" + number);
 								if (lat.intValue() == 0) {
 									element = "";
-									specimenItem.put("decimal_latitude", Float.valueOf((float)-999.9));
+									specimenItem.put("decimal_latitude", (float) -999.9);
 								}
                             } else {                              
 							  //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
@@ -609,13 +587,13 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 //if ("casent0187122".equals(code)) A.log("parseLine() 1");                  
             taxonItem.put("source", shortFileName);
             taxonItem.put("line_num", (Integer.valueOf(lineNum)).toString());
-            taxonItem.put("access_group", Integer.valueOf(accessGroup.getId()));
+            taxonItem.put("access_group", accessGroup.getId());
             
             //if (!taxonItem.containsKey("fossil")) taxonItem.put("fossil", 0);
 
             specimenItem.put("line_num", (Integer.valueOf(lineNum)).toString());
-            specimenItem.put("access_group", Integer.valueOf(accessGroup.getId()));
-            specimenItem.put("access_login", Integer.valueOf(accessLogin.getId()));
+            specimenItem.put("access_group", accessGroup.getId());
+            specimenItem.put("access_login", accessLogin.getId());
 
             // put a subfamily in front of the TOC
             if ((taxonItem.containsKey("toc")) && (!"".equals((String) taxonItem.get("toc")))) {
@@ -686,7 +664,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 	private static int s_withinBoundsCountryCount = 0;
 	private static int s_lastCountryCount = 0;
 
-    private static HashMap<String, String> latLonHash = new HashMap<String, String>();
+    private static HashMap<String, String> latLonHash = new HashMap<>();
 
     private static Coordinate getCoordinate(Hashtable specimenItem) {
 		Object latObj = specimenItem.get("decimal_latitude");
@@ -1014,21 +992,21 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                   //s_log.warn("getElevationFromString() has m elevation:" + element + " elemStr:" + elemStr);            
                 }
             }
-            if (elemStr.indexOf("ca ") >= 0) {
+            if (elemStr.contains("ca ")) {
                 elemStr = elemStr.substring(elemStr.indexOf("ca ") + 3);      
                 //s_log.warn("getElevationFromString() has ca elevation:" + element + " elemStr:" + elemStr);
             }
-            if (elemStr.indexOf("<") >= 0) {
+            if (elemStr.contains("<")) {
                 ++greaterThanElevation;
                 elemStr = elemStr.substring(elemStr.indexOf("<") + 1);
                 //s_log.warn("getElevationFromString() GreaterThan elevation:" + element + " elevation:" + elemStr);
             }
-            if (elemStr.indexOf(">") >= 0) {
+            if (elemStr.contains(">")) {
                 ++greaterThanElevation;
                 elemStr = elemStr.substring(elemStr.indexOf(">") + 1);
                 //s_log.warn("getElevationFromString() GreaterThan elevation:" + element + " elevation:" + elemStr);
             }
-            if (elemStr.indexOf("~") >= 0) {
+            if (elemStr.contains("~")) {
                 ++greaterThanElevation;
                 elemStr = elemStr.substring(elemStr.indexOf("~") + 1);
                 //s_log.warn("getElevationFromString() GreaterThan elevation:" + element + " elevation:" + elemStr);
@@ -1038,7 +1016,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 ++rangeElevation;
                 String lowRange = elemStr.substring(0, elemStr.indexOf("-")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("-") + 1).trim();
-                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2;
+                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2d;
                 int averageElevInt = (Double.valueOf(averageElev)).intValue();
                 elemStr = (Integer.valueOf(averageElevInt)).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);
@@ -1048,12 +1026,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 ++rangeElevation;
                 String lowRange = elemStr.substring(0, elemStr.indexOf("to")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("to") + 2).trim();
-                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2;
+                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2d;
                 int averageElevInt = (Double.valueOf(averageElev)).intValue();
                 elemStr = (Integer.valueOf(averageElevInt)).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);
             }
-            if (elemStr.indexOf("+") >= 0) {
+            if (elemStr.contains("+")) {
                 ++greaterThanElevation;
                 elemStr = elemStr.substring(0, elemStr.indexOf("+"));
                 //s_log.warn("getElevationFromString() GreaterThan elevation:" + element + " elevation:" + elemStr);

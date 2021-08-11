@@ -1,37 +1,22 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Date;
 
-import javax.servlet.http.*;
-
-import org.apache.struts.action.*;
 import org.apache.regexp.*;
 
 import org.apache.struts.upload.FormFile;
 
 import java.sql.*;
 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.curate.speciesList.*;
-
-import org.apache.avalon.framework.logger.ConsoleLogger;
-import org.apache.avalon.framework.logger.Logger;
 
 /**
  * SpeciesListUpload is invoked by curate.do (UploadAction) to handle "project files".  For a given project -
@@ -322,7 +307,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
             components = tab.split(theLine);
             //String theHead;
-            ArrayList<String> headers = new ArrayList<String>(Arrays.asList(components));
+            ArrayList<String> headers = new ArrayList<>(Arrays.asList(components));
             int headCount = 0;
             int homonymCount = 0;
             
@@ -357,33 +342,46 @@ public class SpeciesListUpload extends AntwebUpload {
                 if (isGoodTaxonHeader) {
                     colList.add(theHead);
                     descriptionList.add(null);
-                    if (theHead.equals("subfamily")) {
-                        subfamilyHeader = headCount; 
-                    } else if (theHead.equals("genus")) {
-                        genusHeader = headCount;
-                    } else if (theHead.equals("species")) {
-                        speciesHeader = headCount;
-                    } else if (theHead.equals("subspecies")) {
-                        subspeciesHeader = headCount;
-                    } else if (theHead.equals("author_date")) {
-						// A.log("importSpeciesList authorDate header found");
-                        authorDateHeader = headCount;
+                    switch (theHead) {
+                        case "subfamily":
+                            subfamilyHeader = headCount;
+                            break;
+                        case "genus":
+                            genusHeader = headCount;
+                            break;
+                        case "species":
+                            speciesHeader = headCount;
+                            break;
+                        case "subspecies":
+                            subspeciesHeader = headCount;
+                            break;
+                        case "author_date":
+                            // A.log("importSpeciesList authorDate header found");
+                            authorDateHeader = headCount;
 
-                    } else if (theHead.equals("country")) {
-                        countryHeader = headCount;
-                    } else if (theHead.equals("bioregion")) {
-                        bioregionHeader = headCount;
-                    } else if (theHead.equals("reference_id")) {
-                        referenceIdHeader = headCount;
+                            break;
+                        case "country":
+                            countryHeader = headCount;
+                            break;
+                        case "bioregion":
+                            bioregionHeader = headCount;
+                            break;
+                        case "reference_id":
+                            referenceIdHeader = headCount;
 
-                    } else if (theHead.equals("status")) {
-                        statusHeader = headCount;
-                    } else if (theHead.equals("current_valid_rank")) {
-                        currentValidRankHeader = headCount;
-                    } else if (theHead.equals("antcat_id")) {
-                        antcatIdHeader = headCount;
-                    } else if (theHead.equals("fossil")) {
-                        fossilHeader = headCount;
+                            break;
+                        case "status":
+                            statusHeader = headCount;
+                            break;
+                        case "current_valid_rank":
+                            currentValidRankHeader = headCount;
+                            break;
+                        case "antcat_id":
+                            antcatIdHeader = headCount;
+                            break;
+                        case "fossil":
+                            fossilHeader = headCount;
+                            break;
                     }
                 } else {
                     descriptionList.add(theHead);
@@ -997,8 +995,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
           } catch (IOException e) {
             s_log.error("copySpeciesListFile() e:" + e);
-            return;
-          }    
+        }
     }
 
     private String makeNameUpToSpecies(Hashtable taxonHash) {

@@ -1,7 +1,5 @@
 package org.calacademy.antweb.upload;
 
-import java.io.File;
-
 import javax.servlet.http.*;
 import javax.servlet.*;
 import java.io.*;
@@ -9,11 +7,9 @@ import java.io.*;
 import java.util.*;
 
 import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.disk.*;
 import org.apache.commons.fileupload.servlet.*;
 import org.apache.tomcat.util.http.fileupload.FileItem;
-import org.apache.tomcat.util.http.fileupload.FileUploadException;
 
 /**
  * Servlet implementation class UploadFileServlet. DEPRECATED. NOT USED.
@@ -51,9 +47,8 @@ public class UploadFileServlet extends HttpServlet {
 			String fieldName = "";
 			try {
 				List items = upload.parseRequest(request);
-				Iterator iterator = items.iterator();
-				while (iterator.hasNext()) {
-					item = (FileItem) iterator.next();
+				for (Object o : items) {
+					item = (FileItem) o;
 
 					if (fieldName.equals("description")) {
 						description = item.getString();
@@ -76,12 +71,10 @@ public class UploadFileServlet extends HttpServlet {
 
 				} // END OF WHILE 
 				response.sendRedirect("welcome.jsp");
-			} catch (FileUploadException e) {
-				e.printStackTrace();
 			} catch (Exception e) {
 				e.printStackTrace();
-			} 
-		}   
+			}
+        }
     }
 
 }

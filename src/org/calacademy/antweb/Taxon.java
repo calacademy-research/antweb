@@ -10,9 +10,7 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.sort.*;
 
-import java.sql.Connection;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class Taxon implements Describable, Serializable, Comparable<Taxon> {
@@ -139,7 +137,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       String thisTaxonName = getTaxonName();
       if (o == null) return false;
       String thatTaxonName = ((Taxon) o).getTaxonName();
-      if (thisTaxonName.equals(thatTaxonName)) return true;  else return false;
+        return thisTaxonName.equals(thatTaxonName);
     }
     
     protected String seeAlso = null;
@@ -289,10 +287,10 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
                 setLineNum(rset.getInt("line_num"));
                 setInsertMethod(rset.getString("insert_method"));
                 setCreated(rset.getTimestamp("created"));
-                setIsFossil((rset.getInt("fossil") == 1) ? true : false);
-                setIsType((rset.getInt("type") == 1) ? true : false);
-                setIsAntCat((rset.getInt("antcat") == 1) ? true : false);
-                setIsPending((rset.getInt("pending") == 1) ? true : false);           
+                setIsFossil(rset.getInt("fossil") == 1);
+                setIsType(rset.getInt("type") == 1);
+                setIsAntCat(rset.getInt("antcat") == 1);
+                setIsPending(rset.getInt("pending") == 1);
 
                 setAntcatId(rset.getInt("antcat_id"));
                 setAuthorDate(rset.getString("author_date"));
@@ -300,11 +298,11 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
                 setAuthors(rset.getString("authors"));
                 setYear(rset.getString("year"));
                 setStatus(rset.getString("status"));
-                setIsAvailable((rset.getInt("available") == 1) ? true : false);
+                setIsAvailable(rset.getInt("available") == 1);
                 setCurrentValidName(rset.getString("current_valid_name"));
                 setCurrentValidRank(rset.getString("current_valid_rank"));
                 setCurrentValidParent(rset.getString("current_valid_parent"));                
-                setIsOriginalCombination((rset.getInt("original_combination") == 1) ? true : false);
+                setIsOriginalCombination(rset.getInt("original_combination") == 1);
                 setWasOriginalCombination(rset.getString("was_original_combination"));
                 //setCountry(rset.getString("country"));
                 //setBioregion(rset.getString("bioregion"));
@@ -688,8 +686,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     }    
     
     public void setHomonymAuthorDates() throws SQLException {
-      Vector<String> homonymAuthorDates = new Vector<String>();;
-      String taxonName = getTaxonName();
+      Vector<String> homonymAuthorDates = new Vector<>();
+        String taxonName = getTaxonName();
       Statement stmt = null;
       ResultSet rset = null;
       try {
@@ -1275,14 +1273,14 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     // h|h1, that means if h is there show it, if not check if h1 is there
     // If you see something like * that means "everything else"
     public ArrayList<SpecimenImage> getImagesSorted(String theSort, boolean padding) {
-        ArrayList<SpecimenImage> thisList = new ArrayList<SpecimenImage>();
+        ArrayList<SpecimenImage> thisList = new ArrayList<>();
         Hashtable<String, SpecimenImage> theImages = getImages();
-        ArrayList<String> notProcessed = new ArrayList<String>(theImages.keySet());
+        ArrayList<String> notProcessed = new ArrayList<>(theImages.keySet());
         SpecimenImage blankImage = new SpecimenImage();
         //blankImage.setLowres("none");
         //blankImage.setMedres("none");
         //blankImage.setHighres("none");
-        String[] components = theSort.split("\\,");
+        String[] components = theSort.split(",");
         String thisComponent = "";
         int loop;
 
@@ -1322,7 +1320,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         }
         
         if (addRest) {
-            ArrayList<SpecimenImage> theRest = new ArrayList<SpecimenImage>();
+            ArrayList<SpecimenImage> theRest = new ArrayList<>();
             for (String nextStr : notProcessed) {
               theRest.add(theImages.get(nextStr));
             }
@@ -1501,9 +1499,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         
             String code = rset.getString("code");
             String rsetCaste = rset.getString("caste");
-            boolean isMale = "male".equals(rsetCaste) ? true : false; 
-            boolean isWorker = "worker".equals(rsetCaste) ? true : false; 
-            boolean isQueen = "queen".equals(rsetCaste) ? true : false; 
+            boolean isMale = "male".equals(rsetCaste);
+            boolean isWorker = "worker".equals(rsetCaste);
+            boolean isQueen = "queen".equals(rsetCaste);
  
             // Set in case we don't find what we are looking for...
             if (firstMale == null && isMale) firstMale = code;
@@ -1610,7 +1608,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
     
     private ArrayList<String> getSpeciesNameSet(Overview overview) {
-      ArrayList<String> speciesNameSet = new ArrayList<String>();
+      ArrayList<String> speciesNameSet = new ArrayList<>();
       Statement stmt = null;
       ResultSet rset = null;
       String query = null;
@@ -1656,7 +1654,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         String chosenImageCode = null;
 
         if (caste == null) caste = Caste.DEFAULT;
-        ArrayList<String> speciesNameSet = new ArrayList<String>();
+        ArrayList<String> speciesNameSet = new ArrayList<>();
 
         /*
         Doubled http requests. It seems that if we let these queries run in getSpeciesNameSet() on a page such as:
@@ -1733,14 +1731,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
 		if (taxonDebug()) A.log("getUnpickedDefault() rank:" + getRank() + " taxonName:" + getTaxonName() + " caste:" + caste + " overview:" + overview + " chosenImageCode:" + chosenImageCode); // + " speciesNameSet:" + speciesNameSet + " speciesSetStr:" + speciesSetStr);
 
-        if (chosenImageCode != null) {
-
-		  //A.log("getUnpickedDefault() species caste:" + caste + " overview:" + overview + " speciesNameSet:" + speciesSetStr + " chosenImageCode:" + chosenImageCode + " speciesSetStr:" + speciesSetStr);
-		  //AntwebUtil.logStackTrace();
-        
-          return chosenImageCode;
-        }
-      return null;
+        //A.log("getUnpickedDefault() species caste:" + caste + " overview:" + overview + " speciesNameSet:" + speciesSetStr + " chosenImageCode:" + chosenImageCode + " speciesSetStr:" + speciesSetStr);
+        //AntwebUtil.logStackTrace();
+        return chosenImageCode;
     }
     
     // Used at all?
@@ -1884,24 +1877,15 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
     
     public boolean isAnt() {
-      if ("formicidae".equals(getFamily())) return true;
-      return false;
+        return "formicidae".equals(getFamily());
     }
 
     public static boolean isMorphoOrIndet(String taxonName) {
-      if (Taxon.isIndet(taxonName) || Taxon.isMorpho(taxonName)) {
-        return true;
-      } else {
-        return false;
-      }
+        return Taxon.isIndet(taxonName) || Taxon.isMorpho(taxonName);
     }
 
     public static boolean isIndet(String taxonName) {
-      if ((taxonName.contains("undet")) || (taxonName.contains("indet"))) {
-        return true;
-      } else {
-        return false;
-      }
+        return (taxonName.contains("undet")) || (taxonName.contains("indet"));
     }
     
     public static String getNotMorphoCriteria() {
@@ -1960,25 +1944,20 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           return true;
         }
 
-        if (   (taxonName.contains("1"))
-            || (taxonName.contains("2"))
-            || (taxonName.contains("3"))
-            || (taxonName.contains("4"))
-            || (taxonName.contains("5"))
-            || (taxonName.contains("6"))
-            || (taxonName.contains("7"))
-            || (taxonName.contains("8"))
-            || (taxonName.contains("9"))
-            || (taxonName.contains("-"))
-            || (taxonName.contains("_"))
-            || (taxonName.contains("("))
-            || (taxonName.contains(")"))
-            || (taxonName.contains("."))
-          ) {
-            isMorpho = true;
-        } else {
-            isMorpho = false;
-        }
+        isMorpho = (taxonName.contains("1"))
+                || (taxonName.contains("2"))
+                || (taxonName.contains("3"))
+                || (taxonName.contains("4"))
+                || (taxonName.contains("5"))
+                || (taxonName.contains("6"))
+                || (taxonName.contains("7"))
+                || (taxonName.contains("8"))
+                || (taxonName.contains("9"))
+                || (taxonName.contains("-"))
+                || (taxonName.contains("_"))
+                || (taxonName.contains("("))
+                || (taxonName.contains(")"))
+                || (taxonName.contains("."));
         //if ("myrmicinaecrematogaster jtl-022".equals(taxonName)) s_log.warn("isMorphoSpecies(" + taxonName + ") isMorpho:" + isMorpho);
         return isMorpho;
     }		
@@ -2064,11 +2043,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
     public boolean isBaseTaxon() {
       // Means that it can have specimens and should show the specimen report.  
-      if (isSpeciesOrSubspecies()) {
-        return true;
-      } else {
-        return false;
-      }
+        return isSpeciesOrSubspecies();
     }
 
     public String getSource() {
@@ -2126,12 +2101,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     } 
     
     public boolean addNotValidWarning() {
-      if (!isValid()
-       && !Status.EXCLUDED_FROM_FORMICIDAE.equals(getStatus())
-       && !Status.HOMONYM.equals(getStatus())
-       ) return true;
-       
-      return false;
+        return !isValid()
+                && !Status.EXCLUDED_FROM_FORMICIDAE.equals(getStatus())
+                && !Status.HOMONYM.equals(getStatus());
     }
  
     public boolean getIsAntCat() {
@@ -2600,10 +2572,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     public ArrayList<Geolocale> getGeolocales() {
-      ArrayList<Geolocale> geolocales = new ArrayList<Geolocale>();
-      for (Country country: getCountries()) {
-        geolocales.add(country);
-      }
+      ArrayList<Geolocale> geolocales = new ArrayList<>();
+        geolocales.addAll(getCountries());
       return geolocales;
     }
     
@@ -3046,8 +3016,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     
     public static boolean isSpeciesOrSubspecies(String taxonName) {
       String rank = Taxon.getRankFromName(taxonName);
-      if ("species".equals(rank) || "subspecies".equals(rank)) return true;
-      return false;
+        return "species".equals(rank) || "subspecies".equals(rank);
     }
         
     public static String getRankFromName(String taxonName) {

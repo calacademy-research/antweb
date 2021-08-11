@@ -140,8 +140,7 @@ public class Utility implements Serializable {
    public static boolean isASCII(String input) {
      if (input == null) return true;
      String ascii = getASCII(input);
-     if (input.equals(ascii)) return true;
-     return false;
+       return input.equals(ascii);
    }
 
    public static String getASCII(String input) {  // returns true, false or the fixed input
@@ -281,10 +280,7 @@ public class Utility implements Serializable {
    // by toggling this flag we can display empty fields on the specimen, collection and locality pages
    private static boolean isDisplayEmpty = true;
    public static boolean displayEmptyOrNotBlank(String theTerm) {
-     if (isDisplayEmpty || (Utility.notBlank(theTerm))) { 
-       return true;
-     }
-     return false;
+       return isDisplayEmpty || (Utility.notBlank(theTerm));
    }
    
    public static String andify(ArrayList theList) {
@@ -307,10 +303,10 @@ public class Utility implements Serializable {
     public static String stripParams(String browserParams, String term) {
         String[] parts = browserParams.split("&");
         StringBuffer newParams = new StringBuffer();
-        for (int loop=0; loop < parts.length; loop++) {
-            if (!parts[loop].startsWith(term)) {
+        for (String part : parts) {
+            if (!part.startsWith(term)) {
                 newParams.append("&");
-                newParams.append(parts[loop]);
+                newParams.append(part);
             }
         }
         if (newParams.length() != 0) {
@@ -432,10 +428,10 @@ public class Utility implements Serializable {
             String dirListing[] = dir.list();
             s_log.info("copyAndUnzipFile() dir listing has length: " + dirListing.length);
             String fileName = "";
-            for (int loop = 0; loop < dirListing.length; loop++) {
-                s_log.info("copyAndUnzipFile() dir listing shows: *" + dirListing[loop] + "*");
-                if(!(dirListing[loop].equals(".")) && !(dirListing[loop].equals("..")) && !(dirListing[loop].indexOf("__")!=-1)) {
-                    fileName = dirListing[loop];
+            for (String s : dirListing) {
+                s_log.info("copyAndUnzipFile() dir listing shows: *" + s + "*");
+                if (!(s.equals(".")) && !(s.equals("..")) && !(s.contains("__"))) {
+                    fileName = s;
                 }
             }
             try {
@@ -532,11 +528,11 @@ public class Utility implements Serializable {
         
         if ((dir.exists() && (dir.getName().length() > 1))) {
             File[] files = dir.listFiles();
-            for (int i=0; i < files.length; i++) {
-                if(files[i].isDirectory()) {
-                    deleteDirectory(files[i]);
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
                 } else {
-                    files[i].delete();
+                    file.delete();
                 }
             }
         }
@@ -579,10 +575,8 @@ public class Utility implements Serializable {
                 //close the stream
                 stream.close();
                 returnVal = true;
-            } catch (FileNotFoundException fnfe) {
+            } catch (IOException fnfe) {
                 s_log.error("copyFile() " + fnfe);
-            } catch (IOException ioe) {
-                s_log.error("copyFile() " + ioe);
             }
         } else {
           s_log.error("Can not copy null file to outName:" + outName);

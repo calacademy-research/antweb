@@ -1,14 +1,6 @@
 package org.calacademy.antweb.data.googleApis;
 
-import java.sql.*;
-import java.util.*;
-import java.io.*;
-
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.data.*;
-import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;  
@@ -105,7 +97,7 @@ s_log.warn("6:" + adm1Response.results.get(0).address_components[0].types[0].toC
 
     public static boolean hasAdm2Data() {
       if (json != null) {
-        if (json.contains("administrative_area_level_2")) return true;
+          return json.contains("administrative_area_level_2");
       }
       return false;
     }

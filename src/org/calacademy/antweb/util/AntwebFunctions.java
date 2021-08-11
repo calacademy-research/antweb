@@ -1,15 +1,9 @@
 package org.calacademy.antweb.util;
 
 import java.io.*;
-import java.net.*;
 import java.util.*;
 
-import javax.servlet.http.*;
-import javax.servlet.*;
-
 import java.sql.*;
-import javax.sql.*;
-import com.mchange.v2.c3p0.*;
 
 import org.calacademy.antweb.*;
 
@@ -219,7 +213,7 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
         String returnVal = "";
         String query = "show full processlist";
         String delim = " | ";
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         
         Statement stmt = null;
         ResultSet rset = null;

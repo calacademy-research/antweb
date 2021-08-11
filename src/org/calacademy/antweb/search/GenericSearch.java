@@ -2,7 +2,6 @@ package org.calacademy.antweb.search;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.Formatter;
 
 import java.util.*;
 import java.util.Date;
@@ -11,9 +10,7 @@ import java.util.regex.Pattern;
 import java.io.Serializable;
 import java.sql.*;
 
-import org.apache.regexp.RE;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
@@ -141,11 +138,9 @@ public class GenericSearch implements Serializable {
                 resArray.add(rset.getString(1));
             }
 
-            Iterator newIter = currentList.iterator();
-
-            while (newIter.hasNext()) {
-                thisItem = (ResultItem) newIter.next();
-                if (resArray.indexOf(thisItem.getName()) != -1) {
+            for (ResultItem resultItem : currentList) {
+                thisItem = resultItem;
+                if (resArray.contains(thisItem.getName())) {
                     theList.add(thisItem);
                 }
             }
@@ -257,13 +252,12 @@ public class GenericSearch implements Serializable {
             theQuery.append("select code, type_status from specimen where code in ");
             StringBuffer specString = new StringBuffer();
             Set specs = specimens.keySet();
-            Iterator codeIter = specs.iterator();
-            while (codeIter.hasNext()) {
+            for (Object spec : specs) {
                 if (specString.length() > 0) {
                     specString.append(",");
                 }
                 specString.append("'");
-                specString.append((String) codeIter.next());
+                specString.append((String) spec);
                 specString.append("'");
             }
             theQuery.append("(");
@@ -335,7 +329,7 @@ public class GenericSearch implements Serializable {
         String subspecies = null;
 
         // if this query has more than one term assume the first is the genus and the rest is the species
-        if (name.indexOf(" ") != -1) {
+        if (name.contains(" ")) {
             StringTokenizer toke = new StringTokenizer(name, " ");
             genus = toke.nextToken();
             species = toke.nextToken();
@@ -381,7 +375,7 @@ public class GenericSearch implements Serializable {
     protected ArrayList<ResultItem> getListFromRset(ResultSet rset, SearchItem synonymousItem, String theQuery, int numToShow) {
         //A.log("GenericSearch.getListFromRset(rset..)"); 
         ArrayList<ResultItem> bigList = getListFromRset(GENERIC, rset, synonymousItem, theQuery);
-        ArrayList<ResultItem> smallList = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> smallList = new ArrayList<>();
         int loop = 0;
         int bigListSize = bigList.size();
         while ((loop < numToShow) && (loop < bigListSize)) {
@@ -401,7 +395,7 @@ public class GenericSearch implements Serializable {
 
     protected ArrayList<ResultItem> getListFromRset(int searchType, ResultSet rset, SearchItem synonymousItem, String theQuery) {
         //A.log("GenericSearch.getListFromRset(searchType...)"); 
-        ArrayList<ResultItem> theList = new ArrayList<ResultItem>();
+        ArrayList<ResultItem> theList = new ArrayList<>();
         String family = null;
         String subfamily = null;
         String genus = null;
@@ -663,60 +657,90 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
 
     public String getOperator(String searchType) {
         String operator = null;
-        if (searchType.equals("equals") || searchType.equals("equal")) {
-            operator = "=";
-        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
-            operator = "!=";
-        } else if (searchType.equals("contains")) {
-            operator = "like";
-        } else if (searchType.equals("begins")) {
-            operator = "like";
-        } else if (searchType.equals("ends")) {
-            operator = "like";
-        } else if (searchType.equals("greaterThanOrEqual")) {
-            operator = ">=";
-        } else if (searchType.equals("lessThanOrEqual")) {
-            operator = "<=";
+        switch (searchType) {
+            case "equals":
+            case "equal":
+                operator = "=";
+                break;
+            case "notEquals":
+            case "notEqual":
+                operator = "!=";
+                break;
+            case "contains":
+                operator = "like";
+                break;
+            case "begins":
+                operator = "like";
+                break;
+            case "ends":
+                operator = "like";
+                break;
+            case "greaterThanOrEqual":
+                operator = ">=";
+                break;
+            case "lessThanOrEqual":
+                operator = "<=";
+                break;
         }
         return operator;
     }
 
     private String getLeftPercent(String searchType) {
         String leftPercent = null;
-        if (searchType.equals("equals") || searchType.equals("equal")) {
-            leftPercent = "";
-        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
-            leftPercent = "";
-        } else if (searchType.equals("contains")) {
-            leftPercent = "%";
-        } else if (searchType.equals("begins")) {
-            leftPercent = "";
-        } else if (searchType.equals("ends")) {
-            leftPercent = "%";
-        } else if (searchType.equals("greaterThanOrEqual")) {
-            leftPercent = "";
-        } else if (searchType.equals("lessThanOrEqual")) {
-            leftPercent = "";
+        switch (searchType) {
+            case "equals":
+            case "equal":
+                leftPercent = "";
+                break;
+            case "notEquals":
+            case "notEqual":
+                leftPercent = "";
+                break;
+            case "contains":
+                leftPercent = "%";
+                break;
+            case "begins":
+                leftPercent = "";
+                break;
+            case "ends":
+                leftPercent = "%";
+                break;
+            case "greaterThanOrEqual":
+                leftPercent = "";
+                break;
+            case "lessThanOrEqual":
+                leftPercent = "";
+                break;
         }
         return leftPercent;
     }
 
     private String getRightPercent(String searchType) {
         String rightPercent = null;
-        if (searchType.equals("equals") || searchType.equals("equal")) {
-            rightPercent = "";
-        } else if (searchType.equals("notEquals") || searchType.equals("notEqual")) {
-            rightPercent = "";
-        } else if (searchType.equals("contains")) {
-            rightPercent = "%";
-        } else if (searchType.equals("begins")) {
-            rightPercent = "%";
-        } else if (searchType.equals("ends")) {
-            rightPercent = "";
-        } else if (searchType.equals("greaterThanOrEqual")) {
-            rightPercent = "";
-        } else if (searchType.equals("lessThanOrEqual")) {
-            rightPercent = "";
+        switch (searchType) {
+            case "equals":
+            case "equal":
+                rightPercent = "";
+                break;
+            case "notEquals":
+            case "notEqual":
+                rightPercent = "";
+                break;
+            case "contains":
+                rightPercent = "%";
+                break;
+            case "begins":
+                rightPercent = "%";
+                break;
+            case "ends":
+                rightPercent = "";
+                break;
+            case "greaterThanOrEqual":
+                rightPercent = "";
+                break;
+            case "lessThanOrEqual":
+                rightPercent = "";
+                break;
         }
         return rightPercent;
     }
@@ -749,7 +773,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         }
         //A.log("getSearchString() property:" + property + " value:" + value);
 
-        ArrayList<String> elements = new ArrayList<String>();
+        ArrayList<String> elements = new ArrayList<>();
         Matcher m = inQuotes.matcher(value);
         String thisElement = "";
         int length = 0;

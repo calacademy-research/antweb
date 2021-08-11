@@ -14,7 +14,6 @@ import javax.sql.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.Collection;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -141,8 +140,8 @@ public final class PrepareCompareResultsAction extends PrepareAction {
          are of specimens not necessarily in the region specified in the criteria.  */
          
         ArrayList<ResultItem> specList = ((AdvancedSearchResults) results).getSpeciesList();
- 	    ArrayList<ResultItem> imagedSpecList = new ArrayList<ResultItem>();		
-		HashMap<String, ResultItem> specHash = new HashMap<String, ResultItem>();
+ 	    ArrayList<ResultItem> imagedSpecList = new ArrayList<>();
+		HashMap<String, ResultItem> specHash = new HashMap<>();
 		
         //s_log.warn("getExtraSpeciesList() results.size:" + results.getResults().size());		
 		Iterator<ResultItem> resIter = specList.iterator();

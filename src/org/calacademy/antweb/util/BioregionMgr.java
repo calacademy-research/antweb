@@ -1,12 +1,6 @@
 package org.calacademy.antweb.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 
 import org.calacademy.antweb.*;
@@ -47,7 +41,7 @@ public class BioregionMgr {
     }
     
     public static ArrayList<String> getBioregionNames() {
-      ArrayList<String> bioregionNames = new ArrayList<String>();
+      ArrayList<String> bioregionNames = new ArrayList<>();
       for (Bioregion bioregion : s_bioregions) {
         bioregionNames.add(bioregion.getName());      
       }

@@ -1,6 +1,5 @@
 package org.calacademy.antweb.geolocale;
 
-import java.sql.*;
 import java.util.*;
 
 import org.apache.commons.logging.Log; 
@@ -24,8 +23,7 @@ public class Country extends Geolocale {
 
     public boolean hasAdm1() {
       //A.log("Country.hasAdm1() country:" + getName() + " getChildren:" + getChildren());
-      if (getChildren() == null || getChildren().isEmpty()) return false;
-      return true;
+        return getChildren() != null && !getChildren().isEmpty();
     }
 
     public boolean hasLiveValidAdm1() {
@@ -39,7 +37,7 @@ public class Country extends Geolocale {
     }
 
     private ArrayList<Adm1> getAdm1s(boolean includeInvalids) {      
-        ArrayList<Adm1> adm1s = new ArrayList<Adm1>();
+        ArrayList<Adm1> adm1s = new ArrayList<>();
         for (Geolocale geolocale : getChildren()) {
           if (includeInvalids || geolocale.getIsValid())
             adm1s.add((Adm1) geolocale);
@@ -48,7 +46,7 @@ public class Country extends Geolocale {
     }
 
     public ArrayList<Adm1> getLiveAdm1s() {      
-        ArrayList<Adm1> adm1s = new ArrayList<Adm1>();
+        ArrayList<Adm1> adm1s = new ArrayList<>();
         for (Geolocale geolocale : getChildren()) {
           if (geolocale.getIsLive())
             adm1s.add((Adm1) geolocale);
@@ -57,7 +55,7 @@ public class Country extends Geolocale {
     }
 
     public ArrayList<Adm1> getAllAdm1s() {      
-        ArrayList<Adm1> adm1s = new ArrayList<Adm1>();
+        ArrayList<Adm1> adm1s = new ArrayList<>();
         for (Geolocale geolocale : getChildren()) {
           adm1s.add((Adm1) geolocale);
         }
@@ -113,7 +111,7 @@ public class Country extends Geolocale {
     
     
     public ArrayList<Specimen> sort(ArrayList children) {
-        ArrayList<Specimen> sortedChildren = new ArrayList<Specimen>();
+        ArrayList<Specimen> sortedChildren = new ArrayList<>();
 
         String name = getName();
         for (Object o : children) {
@@ -136,11 +134,9 @@ public class Country extends Geolocale {
       if (accessLogin == null || !getIsValid()) return false;
       
       // A.log("Country.isCanShowSpeciesListTool() isUseChildren:" + getIsUseChildren() + " name:" + getName() + " names:" + accessGroup.getCountryNames());
-      
-      if (!getIsUseChildren()
-        && accessLogin.getCountryNames().contains(getName())
-      ) return true;
-      return false;
+
+        return !getIsUseChildren()
+                && accessLogin.getCountryNames().contains(getName());
     }
 
     

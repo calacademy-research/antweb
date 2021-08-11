@@ -378,14 +378,19 @@ public class MapLocality {
 		
 		while (theIter.hasNext()) {
 			thisLocality = (Locality) theIter.next();
-			if (field.equals("localityName")) {	
-				value = format.capitalizeFirstLetter(thisLocality.getLocalityName());
-			} else if (field.equals("localityCode")) {
-				value = thisLocality.getLocalityCode();
-			} else if (field.equals("elevation")) {
-				value = thisLocality.getElevation();
-			} else {
-				value = "";
+			switch (field) {
+				case "localityName":
+					value = format.capitalizeFirstLetter(thisLocality.getLocalityName());
+					break;
+				case "localityCode":
+					value = thisLocality.getLocalityCode();
+					break;
+				case "elevation":
+					value = thisLocality.getElevation();
+					break;
+				default:
+					value = "";
+					break;
 			}
 			
 			if (foundPoint == true) {

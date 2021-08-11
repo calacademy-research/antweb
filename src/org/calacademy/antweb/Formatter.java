@@ -3,12 +3,9 @@ package org.calacademy.antweb;
 import java.io.Serializable;
 import java.util.StringTokenizer;
 import java.util.Date;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.Locale;
 import org.apache.regexp.*;
 import java.text.*;
-import java.math.*;
 
 import org.apache.commons.text.*;
 
@@ -530,10 +527,7 @@ public class Formatter implements Serializable {
     Pattern p = Pattern.compile(patternStr);
 
     Matcher m = p.matcher(str);
-    if (m.find()) {
-       return true;
-    }
-    return false;
+      return m.find();
   }
 
 // doesn't seem to need 0-9 in order to allow 0 in text.

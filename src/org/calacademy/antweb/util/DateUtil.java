@@ -6,9 +6,7 @@ import java.time.format.*;
 
 import java.text.*;
 
-import org.calacademy.antweb.util.AntwebUtil;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 //import com.joestelmach.natty.*;
@@ -436,9 +434,7 @@ public abstract class DateUtil {
 
     // Perhaps it's like: 2003
     returnDate = getDate("1 Jan " + truncDatesCollected);
-    if (returnDate != null) return returnDate;
-
-    return null;
+      return returnDate;
   }
 
     private static String trimDay(String day) {

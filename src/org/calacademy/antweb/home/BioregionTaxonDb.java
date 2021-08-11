@@ -3,16 +3,12 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.curate.speciesList.*;
 
 public class BioregionTaxonDb extends TaxonSetDb {
     
@@ -134,7 +130,6 @@ See BioregionDb.java:77 where this call is commented out.
           + " and t.taxarank in ('species', 'subspecies')"
           + " and t.fossil = 0"
           + " order by source desc";
-          ;
 
           stmt = DBUtil.getStatement(getConnection(), "populateSpeciesFromGeolocaleTaxon()"); 
           rset = stmt.executeQuery(query);
@@ -390,7 +385,7 @@ See BioregionDb.java:77 where this call is commented out.
     }
 
     public ArrayList<Bioregion> getBioregions(String taxonName) throws SQLException {
-        ArrayList<Bioregion> bioregions = new ArrayList<Bioregion>();
+        ArrayList<Bioregion> bioregions = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = null;
@@ -437,7 +432,7 @@ See BioregionDb.java:77 where this call is commented out.
     public static ArrayList<ArrayList<String>> getStatisticsByBioregion(Connection connection) //ArrayList<ArrayList<String>>
         throws SQLException {
 
-        ArrayList<ArrayList<String>> statistics = new ArrayList<ArrayList<String>>();
+        ArrayList<ArrayList<String>> statistics = new ArrayList<>();
         Statement stmt = DBUtil.getStatement(connection, "getStatisticsByBioregion()");
         ResultSet resultSet = null;
         String query = "select bioregion_name, count(*) from bioregion_taxon group by bioregion_name order by count(*) desc";
@@ -463,7 +458,7 @@ See BioregionDb.java:77 where this call is commented out.
     public static ArrayList<String> getStatistics(String bioregionName, Connection connection) 
         throws SQLException {
 
-        ArrayList<String> statistics = new ArrayList<String>();
+        ArrayList<String> statistics = new ArrayList<>();
 
         String query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"subfamily\"";
 

@@ -1,18 +1,11 @@
 package org.calacademy.antweb.search;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.net.URL;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 
 import org.apache.struts.action.*;
-import org.w3c.dom.Document;
 
 import java.sql.*;
 import java.util.*;
@@ -20,7 +13,6 @@ import java.util.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.search.FieldGuide;
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Map;
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.geolocale.*;
 

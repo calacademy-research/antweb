@@ -5,8 +5,6 @@ import java.io.Serializable;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
-
 
 /** Class ResultItem keeps track of the information about a search item */
 public final class ResultItem extends Item implements Serializable, Comparable<ResultItem> {
@@ -60,11 +58,7 @@ public final class ResultItem extends Item implements Serializable, Comparable<R
 		//this.hasImages = hasImages;
 		
 		this.imageCount = imageCount;
-        if (imageCount > 0) {
-           hasImages = true;
-        } else {
-           hasImages = false;
-        }		
+        hasImages = imageCount > 0;
 		
 		this.type = type;
 		this.favoriteImage = favoriteImage;

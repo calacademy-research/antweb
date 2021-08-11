@@ -3,17 +3,12 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.curate.geolocale.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.Formatter;
 
 import org.calacademy.antweb.curate.speciesList.*;
 
@@ -78,7 +73,7 @@ public class SpeciesListDb extends AntwebDb {
   }
 
   public ArrayList<Taxon> getSpeciesList(String query) {
-    ArrayList<Taxon> speciesList = new ArrayList<Taxon>();
+    ArrayList<Taxon> speciesList = new ArrayList<>();
 
     Statement stmt = null;
     ResultSet rset = null;
@@ -96,7 +91,7 @@ public class SpeciesListDb extends AntwebDb {
         int specimenCount = rset.getInt("specimen_count");
         Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
         if (taxon != null) {
-          taxon.setSpecimenCount(Integer.valueOf(specimenCount));
+          taxon.setSpecimenCount(specimenCount);
           speciesList.add(taxon); // These are dummyTaxons.
         } else {
           s_log.error("getSpeciesList() taxon is null for taxonName:" + taxonName); // + " query:" + query);
@@ -151,7 +146,7 @@ public class SpeciesListDb extends AntwebDb {
       Geolocale country = (GeolocaleMgr.getGeolocale(speciesListName));
       if (country == null) {
         s_log.info("getGeolocaleSpeciesList() null country for speciesListName:" + speciesListName);
-        return new ArrayList<Taxon>();
+        return new ArrayList<>();
       }
       int geolocaleId = country.getId();
       String speciesListCriteria = "(geolocale_id = " + geolocaleId + ")";
@@ -317,7 +312,7 @@ public class SpeciesListDb extends AntwebDb {
   public ArrayList<String> getRefListSubfamilies(String projectCriteria, String countryCriteria, ArrayList<Taxon> searchTaxa) 
     throws SQLException {
     
-    ArrayList<String> refListSubfamilies = new ArrayList<String>();
+    ArrayList<String> refListSubfamilies = new ArrayList<>();
 
     String projectQuery;
     String countryQuery;
@@ -434,32 +429,30 @@ public class SpeciesListDb extends AntwebDb {
 
         // if the chosen taxon is not in the oldChosen List, insert it.
 
-		for (int i = 0; i < chosen.length; i++) {
+        for (String taxonName : chosen) {
 
-		  String taxonName = chosen[i];
+            String genus = Taxon.getGenusTaxonNameFromName(taxonName);
+            String subfamily = Taxon.getSubfamilyFromName(taxonName);
 
-		  String genus = Taxon.getGenusTaxonNameFromName(taxonName);
-		  String subfamily = Taxon.getSubfamilyFromName(taxonName);
+            //A.log("saveTaxonSet() insert taxonName:" + taxonName + " taxonSetDb.class:" + taxonSetDb.getClass());
 
-		  //A.log("saveTaxonSet() insert taxonName:" + taxonName + " taxonSetDb.class:" + taxonSetDb.getClass());
-						  
-		  Overview overview = OverviewMgr.getOverview(speciesListName);				  
-						  
-		  taxonSetDb.insert(overview, taxonName, "speciesListTool");
-		  taxonSetLogDb.removeDispute(speciesListName, taxonName);
+            Overview overview = OverviewMgr.getOverview(speciesListName);
 
-          //A.log("saveTaxonSet() taxonName:" + taxonName + " contains:" + oldChosenList.contains(taxonName));
-          if (!oldChosenList.contains(taxonName)) {
-            A.log("saveTaxonSet() added:" + taxonName);
+            taxonSetDb.insert(overview, taxonName, "speciesListTool");
+            taxonSetLogDb.removeDispute(speciesListName, taxonName);
 
-            String prettySpeciesListName = SpeciesListMgr.getPrettyName(speciesListName);
+            //A.log("saveTaxonSet() taxonName:" + taxonName + " contains:" + oldChosenList.contains(taxonName));
+            if (!oldChosenList.contains(taxonName)) {
+                A.log("saveTaxonSet() added:" + taxonName);
 
-			LogMgr.appendLog("speciesListTool.txt", "saveProjectTaxa - " + DateUtil.getFormatDateTimeStr() + " curatorId:" + login.getId() 
-			 + " added taxonName:" + taxonName + " from speciesListName:" + prettySpeciesListName);
+                String prettySpeciesListName = SpeciesListMgr.getPrettyName(speciesListName);
 
-		    message += "<br>Taxon Project Mapping <font color=green>added</font>:<b>" + Taxon.getPrettyTaxonName(taxonName) + "</b> to " + prettySpeciesListName;
-          }
-		}
+                LogMgr.appendLog("speciesListTool.txt", "saveProjectTaxa - " + DateUtil.getFormatDateTimeStr() + " curatorId:" + login.getId()
+                        + " added taxonName:" + taxonName + " from speciesListName:" + prettySpeciesListName);
+
+                message += "<br>Taxon Project Mapping <font color=green>added</font>:<b>" + Taxon.getPrettyTaxonName(taxonName) + "</b> to " + prettySpeciesListName;
+            }
+        }
 
 		// if an oldChosen taxon is not in the chosenList, remove it.
 		int i = 0;
@@ -518,7 +511,7 @@ public class SpeciesListDb extends AntwebDb {
       , String speciesList3Name, String refSpeciesList) 
       throws SQLException
     {
-        ArrayList<String> taxonNames = new ArrayList<String>();
+        ArrayList<String> taxonNames = new ArrayList<>();
         String query = "select t.taxon_name from taxon t join proj_taxon pt " 
             + " on t.taxon_name = pt.taxon_name "            
             + " where "

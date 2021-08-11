@@ -23,14 +23,12 @@ public class AntwebDebug {
   public static boolean isDebugCode(String debugCode) {
     if (!isDebug) return false;
 
-    if (code != null && code.equals(debugCode)) return true;
-    return false;
+      return code != null && code.equals(debugCode);
   }
 
   public static boolean isDebugTaxon(String debugTaxonName) {
      if (!isDebug) return false;
 
-    if (taxonName != null && taxonName.equals(debugTaxonName)) return true;
-    return false;
+      return taxonName != null && taxonName.equals(debugTaxonName);
   }
 }

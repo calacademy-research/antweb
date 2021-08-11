@@ -2,12 +2,8 @@ package org.calacademy.antweb;
 
 
 import javax.servlet.http.HttpServletRequest;
-import org.apache.struts.action.ActionError;
-import org.apache.struts.action.ActionErrors;
-import org.apache.struts.action.ActionForm;
-import org.apache.struts.action.ActionMapping;
 
-import org.calacademy.antweb.util.*;
+import org.apache.struts.action.ActionMapping;
 
 /**
  * Form bean for the specimen page.  This form has the following fields,

@@ -1,27 +1,15 @@
 package org.calacademy.antweb.data;
 
 import java.io.*;
-import java.net.URL;
 import javax.servlet.*;
 import javax.servlet.http.*;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.regexp.*;
 
 import org.apache.struts.action.*;
-import org.w3c.dom.Document;
-
-import javax.sql.DataSource;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.ResourceBundle;
-import java.util.Set;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -64,11 +52,9 @@ public final class AntWikiDataAction extends Action {
 
 				message = AntWikiDataAction.checkForUpdates(connection);
 
-			} catch (SQLException e) {
+			} catch (SQLException | ClassCastException e) {
 				s_log.error("execute() e:" + e);
-			} catch (ClassCastException e) {
-				s_log.error("execute() e:" + e);
-			} finally {	
+			} finally {
 			    DBUtil.close(connection, this, "EditGeolocaleAction.execute()");
 			}        
 		

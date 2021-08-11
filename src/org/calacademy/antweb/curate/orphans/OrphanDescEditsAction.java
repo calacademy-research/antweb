@@ -1,14 +1,9 @@
 package org.calacademy.antweb.curate.orphans;
 
 import java.io.*;
-import java.lang.reflect.Field;
-
-import java.sql.SQLException;
-import java.sql.Statement;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
@@ -22,7 +17,6 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import java.util.*;
-import java.util.Date;
 import java.sql.*;
 
 
@@ -127,9 +121,9 @@ public final class OrphanDescEditsAction extends Action {
     private void putLookupDataInRequest(HttpServletRequest request, Connection connection) 
         throws SQLException {
 
-        ArrayList<String> subfamilies = new ArrayList<String>();
-        ArrayList<String> genera = new ArrayList<String>();
-        ArrayList<String> speciesList = new ArrayList<String>();
+        ArrayList<String> subfamilies = new ArrayList<>();
+        ArrayList<String> genera = new ArrayList<>();
+        ArrayList<String> speciesList = new ArrayList<>();
         
         Statement stmt1 = connection.createStatement();
         String query = "select distinct subfamily from taxon where family = 'formicidae' and taxarank = 'subfamily' and status = 'valid'";

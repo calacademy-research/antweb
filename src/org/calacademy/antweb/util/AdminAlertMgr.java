@@ -1,11 +1,5 @@
 package org.calacademy.antweb.util;
 
-import java.io.IOException;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpServletResponse;
-import org.apache.struts.action.*;
 import java.util.*;
 
 import java.sql.*;
@@ -15,19 +9,17 @@ import org.calacademy.antweb.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.home.*;
-    
 public final class AdminAlertMgr {
 
     private static Log s_log = LogFactory.getLog(AdminAlertMgr.class);
 
-    public static List<AdminAlert> s_adminAlerts = new ArrayList<AdminAlert>();
+    public static List<AdminAlert> s_adminAlerts = new ArrayList<>();
 
     public static String s_queryAlerts = "";
     
     public static void populate(Connection connection) {
 
-        s_adminAlerts = new ArrayList<AdminAlert>();
+        s_adminAlerts = new ArrayList<>();
 
         // Get any alerts from the admin_alerts table.          
         String query = null;
@@ -45,7 +37,7 @@ public final class AdminAlertMgr {
             adminAlert.setId(rset.getInt("id")); 
             adminAlert.setAlert(rset.getString("alert")); 
             adminAlert.setCreated(rset.getTimestamp("created")); 
-            adminAlert.setIsAcknowledged(rset.getInt("acknowledged") == 1 ? true : false); 
+            adminAlert.setIsAcknowledged(rset.getInt("acknowledged") == 1);
     
             s_adminAlerts.add(adminAlert);
           }
@@ -128,7 +120,7 @@ public final class AdminAlertMgr {
           DBUtil.close(stmt, "AdminAlertMgr.removeAll()");        
         }
 
-        s_adminAlerts = new ArrayList<AdminAlert>();
+        s_adminAlerts = new ArrayList<>();
     }
 
     public static void remove(int id, Connection connection) {

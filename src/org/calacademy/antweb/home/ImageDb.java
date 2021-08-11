@@ -1,17 +1,10 @@
 package org.calacademy.antweb.home;
 
 import java.util.*;
-import java.io.Serializable;
 import java.sql.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.SpecimenImageForm;
-import org.calacademy.antweb.util.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
@@ -26,7 +19,7 @@ public class ImageDb extends AntwebDb {
     }
 
     public ArrayList<SpecimenImage> getExifImages() throws SQLException {
-        ArrayList<SpecimenImage> images = new ArrayList<SpecimenImage>();
+        ArrayList<SpecimenImage> images = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -143,7 +136,7 @@ public class ImageDb extends AntwebDb {
     }
 
     public ArrayList<SpecimenImage> getSpecimenImages(String code) throws SQLException {
-        ArrayList<SpecimenImage> images = new ArrayList<SpecimenImage>();
+        ArrayList<SpecimenImage> images = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -168,11 +161,7 @@ public class ImageDb extends AntwebDb {
                     specImage.setCode(code);
                     specImage.setNumber(1);
                     hasTiff = rset.getInt(2);
-                    if (hasTiff == 1) {
-                        specImage.setHasTiff(true);
-                    } else {
-                        specImage.setHasTiff(false);
-                    }
+                    specImage.setHasTiff(hasTiff == 1);
                     //specImage.setPaths();
                     images.add(specImage);
                 }
@@ -213,7 +202,7 @@ public class ImageDb extends AntwebDb {
 				specimenImage.setCode(code);
 				specimenImage.setShot(shot);
 
-				specimenImage.setNumber(Integer.valueOf(number));
+				specimenImage.setNumber(number);
 
 				specimenImage.setDate(rset.getString("upload_date"));
 
@@ -229,11 +218,7 @@ public class ImageDb extends AntwebDb {
                 //s_log.warn("getSpecimenImage() not found code:" + code + " shot:" + shot + " number:" + number);
                 return null;
             }
-            if (hasTiff == 1) {
-                specimenImage.setHasTiff(true);
-            } else {
-                specimenImage.setHasTiff(false);
-            }
+            specimenImage.setHasTiff(hasTiff == 1);
         } catch (SQLException e) {
             s_log.error("getSpecimenImage() e:" + e + " query:" + query);
         } finally {
@@ -354,7 +339,7 @@ public class ImageDb extends AntwebDb {
 // --------------------------------------------------------------------
 
     public static ArrayList<String> getLikesLinkList(Connection connection) throws SQLException {
-        ArrayList<String> imageList = new ArrayList<String>();
+        ArrayList<String> imageList = new ArrayList<>();
         String theQuery = "select image_id, count(image_id) likes from image_like group by image_id";
         imageList = new ArrayList();
 
@@ -377,7 +362,7 @@ public class ImageDb extends AntwebDb {
     }
 
     public static ArrayList<LikeObject> getLikesObjectList(Connection connection) throws SQLException {
-        ArrayList<LikeObject> likeObjectList = new ArrayList<LikeObject>();
+        ArrayList<LikeObject> likeObjectList = new ArrayList<>();
         String theQuery = "select image_id, count(image_id) likes, shot_type, shot_number, image_of_id,  s.taxon_name " 
             + " from specimen s, image_like il join image i on image_id = i.id " 
             + " where s.code = i.image_of_id " 
@@ -436,7 +421,7 @@ public class ImageDb extends AntwebDb {
     }
     
     public HashMap<String, int[]> getImageStats() throws SQLException {
-        HashMap<String, int[]> imageStats = new HashMap<String, int[]>();
+        HashMap<String, int[]> imageStats = new HashMap<>();
         String theQuery = "select "
           + " status "
           + ", count(*) total "

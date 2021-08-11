@@ -8,7 +8,6 @@ import java.nio.charset.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.Utility; 
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -105,10 +104,7 @@ public class UploadFile {
     // This is used for Project upload, but not of Worldants
 
     public boolean isWorldAnts() {
-      if ((fileName != null) && (fileName.contains("worldants")) ) {
-          return true;
-      }    
-      return false;
+        return (fileName != null) && (fileName.contains("worldants"));
     }
 
     public static boolean isValidUTF8(String filePath) {
@@ -281,11 +277,7 @@ public class UploadFile {
     }
     
     public boolean getIsBioRegion() {
-      if (isWorldAnts() || this.isBioRegion) {
-        return true;
-      } else {
-        return false;
-      }
+        return isWorldAnts() || this.isBioRegion;
     }
     public void setIsBioRegion(boolean isBioRegion) {
       this.isBioRegion = isBioRegion;

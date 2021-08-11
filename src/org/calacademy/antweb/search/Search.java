@@ -1,6 +1,5 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import java.util.*;
@@ -27,7 +26,7 @@ public class Search extends GenericSearch implements Serializable {
         // if this query has more than one term assume the first is the genus and 
         // the rest is the species
         //
-        if (name.indexOf(" ") != -1) {
+        if (name.contains(" ")) {
             //StringTokenizer toke = new StringTokenizer(name, " ");
             //genus = toke.nextToken();
             //species = toke.nextToken();

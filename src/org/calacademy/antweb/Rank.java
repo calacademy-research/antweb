@@ -2,14 +2,9 @@ package org.calacademy.antweb;
 
 import java.util.*;
 import java.io.Serializable;
-import java.sql.*;
 
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-        
-import org.calacademy.antweb.util.*;
 
 public final class Rank implements Serializable {
 
@@ -35,8 +30,7 @@ public final class Rank implements Serializable {
 
     public static boolean isLegit(String rank) {
         int level = getRankLevel(rank);
-        if (level == 0) return false;
-        return true;
+        return level != 0;
     }
 
     public static int getRankLevel(String rank) {
@@ -59,8 +53,7 @@ public final class Rank implements Serializable {
     
     public static boolean isValid(String rank) {
       int rankLevel = getRankLevel(rank);
-      if (rankLevel <= 0) return false;
-      return true;
+        return rankLevel > 0;
     }
 	
 	public static String getPluralOf(String rank) {
@@ -99,25 +92,35 @@ public final class Rank implements Serializable {
 		if (rank == null)
 			return null;
 		String singularRank;
-		if ("Families".equals(rank)) {
-			singularRank = "Family";
-		} else if ("Subfamilies".equals(rank)) {
-			singularRank = "Subfamily";
-		} else if ("Tribes".equals(rank)) {
-			singularRank = "Tribe";
-		} else if ("Genera".equals(rank)) {
-			singularRank = "Genus";
-		} else if ("Species".equals(rank)) {
-			singularRank = "Species";
-		} else if ("Subspecies".equals(rank)) {
-			singularRank = "Subspecies";
-		} else if ("Specimens".equals(rank)) {
-			singularRank = "Specimen";
-		} else if ("Localities".equals(rank)) {
-			singularRank = "Locality";
-		} else {
-			singularRank = rank;
-		}
+        switch (rank) {
+            case "Families":
+                singularRank = "Family";
+                break;
+            case "Subfamilies":
+                singularRank = "Subfamily";
+                break;
+            case "Tribes":
+                singularRank = "Tribe";
+                break;
+            case "Genera":
+                singularRank = "Genus";
+                break;
+            case "Species":
+                singularRank = "Species";
+                break;
+            case "Subspecies":
+                singularRank = "Subspecies";
+                break;
+            case "Specimens":
+                singularRank = "Specimen";
+                break;
+            case "Localities":
+                singularRank = "Locality";
+                break;
+            default:
+                singularRank = rank;
+                break;
+        }
 		return singularRank;
 	}
 	
@@ -180,19 +183,19 @@ public final class Rank implements Serializable {
             rank.add("family");
         }
 */
-        if ((subfamily != null) && (subfamily.indexOf(name) != -1)) {
+        if ((subfamily != null) && (subfamily.contains(name))) {
             rank.add("subfamily");
         }
 
-        if ((genus != null) && (genus.indexOf(name) != -1)) {
+        if ((genus != null) && (genus.contains(name))) {
             rank.add("genus");
         }
 
-        if ((species != null) && (species.indexOf(name) != -1)) {
+        if ((species != null) && (species.contains(name))) {
             rank.add("species");
         }
 
-        if ((subspecies != null) && (subspecies.indexOf(name) != -1)) {
+        if ((subspecies != null) && (subspecies.contains(name))) {
             rank.add("subspecies");
         }
         

@@ -3,16 +3,11 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.curate.speciesList.*;
 
 public class ProjTaxonDb extends EditableTaxonSetDb {
     
@@ -377,7 +372,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
           rankClause = " and t.taxarank in (" + rank + ")";
         }
 
-        ArrayList<ProjTaxon> projTaxa = new ArrayList<ProjTaxon>();        
+        ArrayList<ProjTaxon> projTaxa = new ArrayList<>();
         
         String theQuery = "";
         ResultSet rset = null;
@@ -424,7 +419,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }  
     
     public ArrayList<Taxon> getTaxa(String projectName) {
-        ArrayList<Taxon> taxa = new ArrayList<Taxon>();        
+        ArrayList<Taxon> taxa = new ArrayList<>();
         
         String theQuery = "";
         ResultSet rset = null;
@@ -528,7 +523,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
         ResultSet resultSet = stmt.executeQuery(query);
 
-        ArrayList<ArrayList<String>> statistics = new ArrayList<ArrayList<String>>();
+        ArrayList<ArrayList<String>> statistics = new ArrayList<>();
         //ArrayList<HashMap<String, String>> statsArray = new ArrayList<HashMap<String, String>>();
 
         while (resultSet.next()) {
@@ -543,7 +538,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     
     public static ArrayList<String> getProjectStatistics(String project, Connection connection) 
         throws SQLException {
-        ArrayList<String> statistics = new ArrayList<String>();
+        ArrayList<String> statistics = new ArrayList<>();
         //HashMap<String, String> stats = new HashMap<String, String>();
 
         String query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = \"" + project + "\" and taxarank=\"subfamily\"";
@@ -738,7 +733,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
       
       ArrayList<Project> projects = null;
       if (projectName != null) {
-        projects = new ArrayList<Project>();
+        projects = new ArrayList<>();
         Project tProject = ProjectMgr.getProject(projectName);
         projects.add(tProject); 
       } else {
@@ -749,7 +744,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
         //s_log.warn("testProjTaxon() project:" + project);
         
-        HashSet<String> messages = new HashSet<String>();
+        HashSet<String> messages = new HashSet<>();
       
         
         ArrayList<ProjTaxon> projTaxa = null;

@@ -9,7 +9,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
 public class StatisticsDb extends AntwebDb {
@@ -79,7 +78,7 @@ museum
 
 // Bioregion data
     public ArrayList<StatSet> getBioregionData() {
-      ArrayList<StatSet> statSets = new ArrayList<StatSet>();
+      ArrayList<StatSet> statSets = new ArrayList<>();
       ArrayList<Bioregion> bioregions = BioregionMgr.getBioregions();
       if (bioregions == null) return statSets;
       
@@ -108,7 +107,7 @@ museum
 
 // --- Museum Data ---
     public ArrayList<StatSet> getExtantMuseumData() {
-      ArrayList<StatSet> statSets = new ArrayList<StatSet>();
+      ArrayList<StatSet> statSets = new ArrayList<>();
       ArrayList<Museum> museums = MuseumMgr.getMuseums();
       if (museums == null) return statSets;
       for (Museum museum : museums) {
@@ -135,7 +134,7 @@ museum
     }
 
     public ArrayList<StatSet> getFossilMuseumData() {
-      ArrayList<StatSet> statSets = new ArrayList<StatSet>();
+      ArrayList<StatSet> statSets = new ArrayList<>();
       ArrayList<Museum> museums = MuseumMgr.getMuseums();
       if (museums == null) return statSets;      
       for (Museum museum : museums) {
@@ -307,7 +306,7 @@ museum
     public ArrayList<ArrayList<String>> getStatisticsByAProject(String project) {
 		ArrayList<ArrayList<String>> statistics = null;
         try {
-            statistics = new ArrayList<ArrayList<String>>();
+            statistics = new ArrayList<>();
             statistics.add(ProjTaxonDb.getProjectStatistics(project, getConnection()));
          
         } catch (SQLException e) {

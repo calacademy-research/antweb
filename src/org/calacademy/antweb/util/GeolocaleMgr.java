@@ -1,6 +1,5 @@
 package org.calacademy.antweb.util;
 
-import net.fortuna.ical4j.model.property.Geo;
 import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

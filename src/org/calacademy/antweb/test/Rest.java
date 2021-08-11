@@ -3,8 +3,6 @@ package org.calacademy.antweb.test;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
-
 //import io.restassured.RestAssured.*;
 //import io.restassured.matcher.RestAssuredMatchers.*;
 //import org.hamcrest.Matchers.*;

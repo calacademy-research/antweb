@@ -1,8 +1,6 @@
 package org.calacademy.antweb.util;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.Date;
 import javax.servlet.http.*;
@@ -27,7 +25,6 @@ import org.calacademy.antweb.data.*;
 import org.calacademy.antweb.data.geonet.*;
 import org.calacademy.antweb.data.googleApis.*;
 import org.calacademy.antweb.curate.speciesList.*;
-import org.calacademy.antweb.search.AdvancedSearchAction;
 
 import com.google.gson.*;
 
@@ -72,11 +69,11 @@ public class UtilDataAction extends Action {
         // Being called from a getUrl() by Schedule.do, Scheduler.java.
         if (!isAllow) { 
 
-          List<String> needNothingInit = new ArrayList<String>(Arrays.asList(new String[] {"fetchGoogleApisData", "delGoogleMapFunction", "genGoogleMapFunction", "delGoogleMapFunction", "genObjectMaps"
-                , "genGroupObjectMap", "genGroupObjectMaps", "updateGroupCounts", "updateGroupUploadStats", "exifData", "changeOwner", "changeOwnerAndPerms"
-                , "adminAlertTest", "populateBioregion", "siteWarning", "imageUtil"})); 
-          List<String> needLoginInit = new ArrayList<String>(Arrays.asList(new String[] {"imageUtil"}));          
-          List<String> needTaxonInit = new ArrayList<String>(Arrays.asList(new String[] {"worldantsReload"}));          
+          List<String> needNothingInit = new ArrayList<>(Arrays.asList("fetchGoogleApisData", "delGoogleMapFunction", "genGoogleMapFunction", "delGoogleMapFunction", "genObjectMaps"
+                  , "genGroupObjectMap", "genGroupObjectMaps", "updateGroupCounts", "updateGroupUploadStats", "exifData", "changeOwner", "changeOwnerAndPerms"
+                  , "adminAlertTest", "populateBioregion", "siteWarning", "imageUtil"));
+          List<String> needLoginInit = new ArrayList<>(Arrays.asList("imageUtil"));
+          List<String> needTaxonInit = new ArrayList<>(Arrays.asList("worldantsReload"));
 
           if (needNothingInit.contains(action)) { 
             // do nothing.
@@ -661,7 +658,7 @@ public class UtilDataAction extends Action {
         // Very fast. Run occasionally to get adm1s in line with hierarchy. Should be rare. Unnecessary.
         if (action.equals("updateAdm1FromCountryData")) {   
           (new GeolocaleDb(connection)).updateAdm1FromCountryData();
-          message = "Update Adm1 From Country Data";;
+          message = "Update Adm1 From Country Data";
         }
 
         // Full set is 8.27 mins.  After transactions - 9.17 mins!

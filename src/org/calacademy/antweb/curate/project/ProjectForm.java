@@ -1,12 +1,8 @@
 package org.calacademy.antweb.curate.project;
 
 
-import java.sql.Date;
-
 import javax.servlet.http.HttpServletRequest;
 import org.apache.struts.action.*;
-
-import org.calacademy.antweb.*;
 
 import org.calacademy.antweb.util.*;
 

@@ -2,7 +2,6 @@ package org.calacademy.antweb;
 
 import java.util.*;
 import java.io.*;
-import java.util.HashMap;
 
 import com.zonageek.jpeg.ExifBlock;
 import com.zonageek.jpeg.Jpeg;
@@ -210,7 +209,7 @@ public class SpecimenImage implements Serializable {
     }
 
     public ArrayList<String> getOrigAndDerivPaths() {
-      ArrayList<String> paths = new ArrayList<String>();
+      ArrayList<String> paths = new ArrayList<>();
       //String imgPath = "/data/antweb";
       String imgPath = AntwebProps.getDocRoot();  // Probably has extra slash. Remove from get methods.
       paths.add(imgPath + getOrigPath());

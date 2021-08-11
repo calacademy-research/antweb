@@ -1,11 +1,6 @@
 package org.calacademy.antweb.home;
 
 import java.util.*;
-import java.util.Date;
-
-import javax.servlet.http.*;
-import org.apache.struts.action.*;
-import org.apache.regexp.*;
 
 import java.sql.*;
 
@@ -14,9 +9,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.AntwebUpload;
 
 
 public class UploadDb extends AntwebDb {
@@ -67,7 +60,7 @@ public class UploadDb extends AntwebDb {
     
     public ArrayList<Upload> getUploads() {
         //A.log("UploadDb.getUploads()");
-        ArrayList<Upload> uploads = new ArrayList<Upload>();
+        ArrayList<Upload> uploads = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = "select * from upload";
@@ -142,7 +135,7 @@ public class UploadDb extends AntwebDb {
     
     public UploadLine getUploadLine(String fileName, int lineNum) {
         //A.log("UploadDb.getUploadLines()");
-        ArrayList<UploadLine> uploadLines = new ArrayList<UploadLine>();
+        ArrayList<UploadLine> uploadLines = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = "select * from upload_line where file_name = '" + fileName + "' and line_num = " + lineNum;
@@ -657,7 +650,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
     private static ArrayList<String> s_extantIndetSubfamilies = null;
     public ArrayList<String> getExtantIndetSubfamilies() throws SQLException {
       if (s_extantIndetSubfamilies == null) {
-        s_extantIndetSubfamilies = new ArrayList<String>();
+        s_extantIndetSubfamilies = new ArrayList<>();
         String query = "select distinct subfamily from taxon " 
             + " where taxarank = 'subfamily'"
             + " and taxon_name like '(%'";

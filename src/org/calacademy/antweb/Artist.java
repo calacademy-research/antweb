@@ -1,15 +1,8 @@
 package org.calacademy.antweb;
 
-import java.sql.*;
 import java.util.Date;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 
-import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -107,48 +100,48 @@ public class Artist {
       return link;
     }     
     
-    public static Comparator<Artist> ArtistNameComparator = new Comparator<Artist>() {
+    public static Comparator<Artist> ArtistNameComparator = new Comparator<>() {
 
         public int compare(Artist a1, Artist a2) {
-           String name1 = a1.getName().toUpperCase();
-           String name2 = a2.getName().toUpperCase();
+            String name1 = a1.getName().toUpperCase();
+            String name2 = a2.getName().toUpperCase();
 
-           //ascending order
-           return name1.compareTo(name2);
+            //ascending order
+            return name1.compareTo(name2);
 
-           //descending order
-           //return name2.compareTo(name1);
+            //descending order
+            //return name2.compareTo(name1);
         }
     };
 
     /*Comparator for sorting the list by roll no*/
-    public static Comparator<Artist> ArtistImageCountComparator = new Comparator<Artist>() {
+    public static Comparator<Artist> ArtistImageCountComparator = new Comparator<>() {
 
         public int compare(Artist a1, Artist a2) {
 
-           int count1 = a1.getImageCount();
-           int count2 = a2.getImageCount();
+            int count1 = a1.getImageCount();
+            int count2 = a2.getImageCount();
 
-           /*For ascending order*/
-           //return count1 - count2;
+            /*For ascending order*/
+            //return count1 - count2;
 
-           /*For descending order*/
-           return   count2 - count1;
-       }
+            /*For descending order*/
+            return count2 - count1;
+        }
     };    
 
-    public static Comparator<Artist> ArtistSpecimenCountComparator = new Comparator<Artist>() {
+    public static Comparator<Artist> ArtistSpecimenCountComparator = new Comparator<>() {
 
         public int compare(Artist a1, Artist a2) {
 
-           int count1 = a1.getSpecimenCount();
-           int count2 = a2.getSpecimenCount();
+            int count1 = a1.getSpecimenCount();
+            int count2 = a2.getSpecimenCount();
 
-           /*For ascending order*/
-           //return count1 - count2;
+            /*For ascending order*/
+            //return count1 - count2;
 
-           /*For descending order*/
-           return   count2 - count1;
-       }
+            /*For descending order*/
+            return count2 - count1;
+        }
     };     
 }

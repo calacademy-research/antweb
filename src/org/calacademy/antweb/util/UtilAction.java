@@ -2,47 +2,28 @@
 package org.calacademy.antweb.util;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
-import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apache.struts.upload.FormFile;
 
 import javax.servlet.http.*;
 
 //import org.apache.fop.apps.Driver;
 //import org.apache.fop.apps.FOPException;
 //import org.apache.fop.messaging.MessageHandler;
-import org.apache.avalon.framework.logger.ConsoleLogger;
-import org.apache.avalon.framework.logger.Logger;
 
 import org.apache.struts.action.*;
-import org.apache.regexp.*;
 
 import com.zonageek.jpeg.Jpeg;
 
 import java.sql.*;
 import javax.sql.DataSource;
 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.data.*;
-import org.calacademy.antweb.data.geonet.*;
-import org.calacademy.antweb.curate.speciesList.*;
-import org.calacademy.antweb.search.AdvancedSearchAction;
 
 import com.google.gson.*;
 

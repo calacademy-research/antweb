@@ -1,34 +1,11 @@
 package org.calacademy.antweb.upload;
 
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
 
-import javax.servlet.http.*;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import org.apache.avalon.framework.logger.ConsoleLogger;
-import org.apache.avalon.framework.logger.Logger;
-
-import org.apache.struts.action.*;
-
 import java.sql.*;
- 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
@@ -300,7 +277,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 			if (TaxonPropMgr.isIntroduced(useTaxonName, bioregion)) {
 				//A.log("processLine() useTaxonName:" + useTaxonName + " bioregion:" + bioregion);
 			  isIntroduced = true;
-			  specimenItem.put("is_introduced", Integer.valueOf(1));
+			  specimenItem.put("is_introduced", 1);
 			  getMessageMgr().flag("is_introduced");
 			}
 		}

@@ -1,13 +1,8 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
-
 import java.io.*;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.ArrayList;
 
 import org.apache.commons.logging.Log; 
@@ -58,12 +53,10 @@ public final class DescEditSearchResults extends GenericSearchResults
         String species = null;
         SearchItem thisItem = null;
         int imageId = -1;
-        
-        Iterator rsetIter = rset.iterator();
-        
-        while (rsetIter.hasNext()) {
+
+        for (Object o : rset) {
             //System.out.println("adding to result item " + thisItem.getShotType());
-            thisItem = (SearchItem) rsetIter.next();
+            thisItem = (SearchItem) o;
             myResults.add(makeNewItem(thisItem.getCode(), thisItem.getName(), thisItem.getShotType(), thisItem.getShotNumber(), thisItem.getArtist(),
                     thisItem.getGroup(), thisItem.getGenus(), thisItem.getSpecies(), thisItem.getImageId(), thisItem.getUploadDate()));
         }
@@ -104,81 +97,89 @@ public final class DescEditSearchResults extends GenericSearchResults
   public void sortBy(String fieldName) {
     
     s_log.info("sorting descriptionEdits with field " + fieldName);
-    if (fieldName.equals("code")) {
-        Collections.sort(results, new Comparator(){
-             
-            public int compare(Object o1, Object o2) {
-                ResultItem p1 = (ResultItem) o1;
-                ResultItem p2 = (ResultItem) o2;
-               return p1.getCode().compareToIgnoreCase(p2.getCode());
-            }
- 
-        });
+      switch (fieldName) {
+          case "code":
+              Collections.sort(results, new Comparator() {
 
-    } else if (fieldName.equals("shotType")) {
-        Collections.sort(results, new Comparator(){
-             
-            public int compare(Object o1, Object o2) {
-                ResultItem p1 = (ResultItem) o1;
-                ResultItem p2 = (ResultItem) o2;
-               return p1.getShotType().compareToIgnoreCase(p2.getShotType());
-            }
- 
-        });
-    } else if (fieldName.equals("shotNumber")) {
-        Collections.sort(results, new Comparator(){
-             
-            public int compare(Object o1, Object o2) {
-                ResultItem p1 = (ResultItem) o1;
-                ResultItem p2 = (ResultItem) o2;
-               return p1.getShotNumber().compareToIgnoreCase(p2.getShotNumber());
-            }
- 
-        });
-    } else if (fieldName.equals("name")) {
-        Collections.sort(results, new Comparator(){
-             
-            public int compare(Object o1, Object o2) {
-                ResultItem p1 = (ResultItem) o1;
-                ResultItem p2 = (ResultItem) o2;
-                String p1Name = p1.getGenus() + " " + p1.getSpecies();
-                String p2Name = p2.getGenus() + " " + p2.getSpecies();
-               return p1Name.compareToIgnoreCase(p2Name);
-            }
- 
-        });
-    } else if (fieldName.equals("artist")) {
-        Collections.sort(results, new Comparator(){
-             
-            public int compare(Object o1, Object o2) {
-                ResultItem p1 = (ResultItem) o1;
-                ResultItem p2 = (ResultItem) o2;
-               return p1.getArtist().compareToIgnoreCase(p2.getArtist());
-            }
- 
-        });
-    } else if (fieldName.equals("group")) {
-        Collections.sort(results, new Comparator(){
-             
-            public int compare(Object o1, Object o2) {
-                ResultItem p1 = (ResultItem) o1;
-                ResultItem p2 = (ResultItem) o2;
-               return p1.getGroup().compareToIgnoreCase(p2.getGroup());
-            }
- 
-        });
-    } else if (fieldName.equals("uploadDate")) {
-        Collections.sort(results, new Comparator(){
-             
-            public int compare(Object o1, Object o2) {
-                ResultItem p1 = (ResultItem) o1;
-                ResultItem p2 = (ResultItem) o2;
-                
-               return p2.getUploadDate().compareToIgnoreCase(p1.getUploadDate());
-            }
- 
-        });
-    }
+                  public int compare(Object o1, Object o2) {
+                      ResultItem p1 = (ResultItem) o1;
+                      ResultItem p2 = (ResultItem) o2;
+                      return p1.getCode().compareToIgnoreCase(p2.getCode());
+                  }
+
+              });
+
+              break;
+          case "shotType":
+              Collections.sort(results, new Comparator() {
+
+                  public int compare(Object o1, Object o2) {
+                      ResultItem p1 = (ResultItem) o1;
+                      ResultItem p2 = (ResultItem) o2;
+                      return p1.getShotType().compareToIgnoreCase(p2.getShotType());
+                  }
+
+              });
+              break;
+          case "shotNumber":
+              Collections.sort(results, new Comparator() {
+
+                  public int compare(Object o1, Object o2) {
+                      ResultItem p1 = (ResultItem) o1;
+                      ResultItem p2 = (ResultItem) o2;
+                      return p1.getShotNumber().compareToIgnoreCase(p2.getShotNumber());
+                  }
+
+              });
+              break;
+          case "name":
+              Collections.sort(results, new Comparator() {
+
+                  public int compare(Object o1, Object o2) {
+                      ResultItem p1 = (ResultItem) o1;
+                      ResultItem p2 = (ResultItem) o2;
+                      String p1Name = p1.getGenus() + " " + p1.getSpecies();
+                      String p2Name = p2.getGenus() + " " + p2.getSpecies();
+                      return p1Name.compareToIgnoreCase(p2Name);
+                  }
+
+              });
+              break;
+          case "artist":
+              Collections.sort(results, new Comparator() {
+
+                  public int compare(Object o1, Object o2) {
+                      ResultItem p1 = (ResultItem) o1;
+                      ResultItem p2 = (ResultItem) o2;
+                      return p1.getArtist().compareToIgnoreCase(p2.getArtist());
+                  }
+
+              });
+              break;
+          case "group":
+              Collections.sort(results, new Comparator() {
+
+                  public int compare(Object o1, Object o2) {
+                      ResultItem p1 = (ResultItem) o1;
+                      ResultItem p2 = (ResultItem) o2;
+                      return p1.getGroup().compareToIgnoreCase(p2.getGroup());
+                  }
+
+              });
+              break;
+          case "uploadDate":
+              Collections.sort(results, new Comparator() {
+
+                  public int compare(Object o1, Object o2) {
+                      ResultItem p1 = (ResultItem) o1;
+                      ResultItem p2 = (ResultItem) o2;
+
+                      return p2.getUploadDate().compareToIgnoreCase(p1.getUploadDate());
+                  }
+
+              });
+              break;
+      }
   }
 }
 

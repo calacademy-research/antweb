@@ -4,8 +4,8 @@ import java.util.Hashtable;
 
 public interface Describable {
 
-  public String getName();
-  public void setName(String name);
-  public Hashtable getDescription();
+  String getName();
+  void setName(String name);
+  Hashtable getDescription();
 
 }

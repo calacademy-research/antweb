@@ -2,8 +2,6 @@ package org.calacademy.antweb.search;
 
 import java.io.*;
 
-import java.net.URL;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -19,7 +17,6 @@ import java.util.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.search.*;
 import org.calacademy.antweb.geolocale.*;
 

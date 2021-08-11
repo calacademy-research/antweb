@@ -3,17 +3,11 @@ package org.calacademy.antweb.upload;
     
 import java.sql.*;
 import java.io.*;
-import java.util.Date;
-
-import javax.servlet.http.*;
-
-import org.apache.struts.action.*;
 
 import org.apache.regexp.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -43,7 +37,7 @@ public class SpecimenUploader {
         FileUtil.makeDir(outputFileDir);
         String specimenFileName = outputFileDir + "specimen" + group.getId() + ".txt";
 
-        if (formFileName.indexOf("zip") != -1) {
+        if (formFileName.contains("zip")) {
             util.copyAndUnzipFile(theForm.getBiota(), outputFileDir + "group" + group.getId(), specimenFileName);
         } else {
             // copy from uploader's fileName to the biotaFile name.
@@ -80,7 +74,7 @@ public class SpecimenUploader {
         //s_antwebEventLog.info("backupDirFile:" + backupDirFile;
 
         String messageStr = null;
-        if ((formFileName.indexOf(".txt") < 0) && (formFileName.indexOf(".TXT") < 0)) {
+        if ((!formFileName.contains(".txt")) && (!formFileName.contains(".TXT"))) {
             s_log.warn("uploadSpecimenFile() theFileName not txt.  formFileName:" + formFileName);
             messageStr = "Specimen File must be a .txt file.";
         } else if (!uploadFile.correctEncoding(encoding)) {
@@ -134,7 +128,7 @@ public class SpecimenUploader {
            
            if (theLine.contains("/")) {
               error = "Line contains /.  Must be pre-Antweb 4.13.  The header:" + theLine;
-            } if (theLine.indexOf("taxonomic history") >= 0) {
+            } if (theLine.contains("taxonomic history")) {
               error = "This specimen file contains taxonomic history.  Is it maybe a species file?";
               //s_log.warn(error);
             }

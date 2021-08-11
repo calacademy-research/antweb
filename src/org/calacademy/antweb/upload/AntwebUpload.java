@@ -3,7 +3,6 @@ package org.calacademy.antweb.upload;
 import java.util.Date;
 import java.util.*;
 import java.sql.*;
-import java.io.*;
 import java.text.*;
 
 import org.calacademy.antweb.*;
@@ -603,10 +602,9 @@ public class AntwebUpload {
     private boolean enactExceptions(String key, Object value) {
       if ("author_date_html".equals(key)) return true;
       if ("taxonomichistory".equals(key)) return true;
-      if (("reference_id".equals(key)) && ("".equals((String) value))) return true;   // The ints are sometimes nil "".  
+        return ("reference_id".equals(key)) && ("".equals((String) value));   // The ints are sometimes nil "".
       //if ("country".equals(key)) return true;
       //if ("bioregion".equals(key)) return true;
-      return false;
     }
 
     private boolean enactExceptions(String key, Object value, Connection connection, String taxonName) 
@@ -616,10 +614,8 @@ public class AntwebUpload {
           // if taxon is already source == worldants, leave it.  Others don't update the source.
           Taxon dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
           if (dummyTaxon != null) {
-            String origSource = dummyTaxon.getSource(); 
-            if (origSource != null && origSource.contains(Project.WORLDANTS)) {
-              return true;
-            } 
+            String origSource = dummyTaxon.getSource();
+              return origSource != null && origSource.contains(Project.WORLDANTS);
           }
         }
         return false;
@@ -669,95 +665,109 @@ public class AntwebUpload {
             
             while (keys.hasMoreElements()) {
                 key = (String) keys.nextElement();
-                if (key.equals("decimal_latitude")
-                        || key.equals("decimal_longitude")) {
-                    floatValue = (Float) item.get(key);
-                    fields.append(key + ",");
+                switch (key) {
+                    case "decimal_latitude":
+                    case "decimal_longitude":
+                        floatValue = (Float) item.get(key);
+                        fields.append(key + ",");
 
-                    String appendValue = "";
-                    if (floatValue.compareTo((float)-999.9) == 0) {
-                        appendValue = "null,";
-                    } else {
-                        appendValue = floatValue.floatValue() + ",";
-                    }
-                    values.append(appendValue); 
-                    //A.log("saveSpecimen() appendValue:" + appendValue);
+                        String appendValue = "";
+                        if (floatValue.compareTo((float) -999.9) == 0) {
+                            appendValue = "null,";
+                        } else {
+                            appendValue = floatValue.floatValue() + ",";
+                        }
+                        values.append(appendValue);
+                        //A.log("saveSpecimen() appendValue:" + appendValue);
 
-                } else if (key.equals("elevation")) {
-                    //s_log.warn("saveSpecimen elevation query:" + query);
-                    fields.append("elevation,");
-                    values.append(((Integer) item.get("elevation")).toString() + ",");
+                        break;
+                    case "elevation":
+                        //s_log.warn("saveSpecimen elevation query:" + query);
+                        fields.append("elevation,");
+                        values.append(((Integer) item.get("elevation")).toString() + ",");
 
-                } else if (key.equals("datecollectedstart")) {
-                    String dateStr = (String) item.get("datecollectedstart");
-                    String formatDate = DateUtil.getConstructDateStr(dateStr);
-                    fields.append("datecollectedstartstr,");
-                    values.append("'" + dateStr + "',");
-                    if (validDate("datecollectedstart", formatDate, code)) {
-                        fields.append("datecollectedstart,");
-                        values.append("'" + formatDate + "',");
-                    } else {
-                        getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedStart, dateStr);
-                        //LogMgr.appendLog("dateCollected.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
+                        break;
+                    case "datecollectedstart": {
+                        String dateStr = (String) item.get("datecollectedstart");
+                        String formatDate = DateUtil.getConstructDateStr(dateStr);
+                        fields.append("datecollectedstartstr,");
+                        values.append("'" + dateStr + "',");
+                        if (validDate("datecollectedstart", formatDate, code)) {
+                            fields.append("datecollectedstart,");
+                            values.append("'" + formatDate + "',");
+                        } else {
+                            getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedStart, dateStr);
+                            //LogMgr.appendLog("dateCollected.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
+                        }
+                        break;
                     }
-                } else if (key.equals("datecollectedend")) {
-                    String dateStr = (String) item.get("datecollectedend");
-                    String formatDate = DateUtil.getConstructDateStr(dateStr);
-                    fields.append("datecollectedendstr,");
-                    values.append("'" + dateStr + "',");
-                    if (validDate("datecollectedend", formatDate, code)) {
-                        fields.append("datecollectedend,");
-                        values.append("'" + formatDate + "',");
-                    } else {
-                        getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedEnd, dateStr);
-                        //LogMgr.appendLog("dateCollected.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
+                    case "datecollectedend": {
+                        String dateStr = (String) item.get("datecollectedend");
+                        String formatDate = DateUtil.getConstructDateStr(dateStr);
+                        fields.append("datecollectedendstr,");
+                        values.append("'" + dateStr + "',");
+                        if (validDate("datecollectedend", formatDate, code)) {
+                            fields.append("datecollectedend,");
+                            values.append("'" + formatDate + "',");
+                        } else {
+                            getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedEnd, dateStr);
+                            //LogMgr.appendLog("dateCollected.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
+                        }
+                        break;
                     }
-                } else if (key.equals("datedetermined")) { 
-                    String dateStr = (String) item.get("datedetermined");
-                    String formatDate = DateUtil.getConstructDateStr(dateStr);
-                    fields.append("datedeterminedstr,");
-                    values.append("'" + dateStr + "',");
-                    if (validDate("datedetermined", formatDate, code)) {
-                      fields.append("datedetermined,");
-                      values.append("'" + formatDate + "',");
-                    } else {
-                        getMessageMgr().addToMessages(MessageMgr.invalidDateDetermined, dateStr);
-                        LogMgr.appendLog("dateDetermined.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
+                    case "datedetermined": {
+                        String dateStr = (String) item.get("datedetermined");
+                        String formatDate = DateUtil.getConstructDateStr(dateStr);
+                        fields.append("datedeterminedstr,");
+                        values.append("'" + dateStr + "',");
+                        if (validDate("datedetermined", formatDate, code)) {
+                            fields.append("datedetermined,");
+                            values.append("'" + formatDate + "',");
+                        } else {
+                            getMessageMgr().addToMessages(MessageMgr.invalidDateDetermined, dateStr);
+                            LogMgr.appendLog("dateDetermined.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
+                        }
+                        break;
                     }
-                } else if (key.equals("access_group")) {
-                    fields.append("access_group,");
-                    values.append(((Integer) item.get("access_group")).intValue() + ",");
-                } else if (key.equals("access_login")) {
-                    fields.append("access_login,");
-                    values.append(((Integer) item.get("access_login")).intValue() + ",");
-                } else if (key.equals("is_introduced")) {
-                    fields.append("is_introduced,");
-                    values.append(((Integer) item.get("is_introduced")).intValue() + ",");
-                } else if (key.equals("backupFileName")) {
-                    fields.append("backup_file_name,");
-                    values.append("'" + item.get("backupFileName") + "',");
-                } else {                
-                  try {
-                    value = (String) item.get(key);
-                    fields.append(key + ",");
+                    case "access_group":
+                        fields.append("access_group,");
+                        values.append(((Integer) item.get("access_group")).intValue() + ",");
+                        break;
+                    case "access_login":
+                        fields.append("access_login,");
+                        values.append(((Integer) item.get("access_login")).intValue() + ",");
+                        break;
+                    case "is_introduced":
+                        fields.append("is_introduced,");
+                        values.append(((Integer) item.get("is_introduced")).intValue() + ",");
+                        break;
+                    case "backupFileName":
+                        fields.append("backup_file_name,");
+                        values.append("'" + item.get("backupFileName") + "',");
+                        break;
+                    default:
+                        try {
+                            value = (String) item.get(key);
+                            fields.append(key + ",");
 
-                    // Perhaps a more stringent check here is appropriate.  For now, if the
-                    // last letter of the string is a \ then it fouls up the SQL quoting.
-                    // This was happening for some of Jack's collectionnotes.                    
-                    String lastChar = null; 
-                    try {
-                      lastChar = value.substring(value.length() - 1, value.length());
-                      if (lastChar.equals("\\")) value += " ";
-                    } catch (Exception e) {
-                      // no action taken
-                    }
-                    value = AntFormatter.escapeSingleQuotes(value);                    
-                    
-                    //A.log("saveSpecimen() lastCHar:" + lastChar + " value:" + value); // AntFormatter.escapeQuotes(value));
-                    values.append("'" + value + "',");
-                  } catch (ClassCastException e) {
-                    A.log("AntwebUpload.saveSpecimen() key:" + key + " e:" + e);
-                  }
+                            // Perhaps a more stringent check here is appropriate.  For now, if the
+                            // last letter of the string is a \ then it fouls up the SQL quoting.
+                            // This was happening for some of Jack's collectionnotes.
+                            String lastChar = null;
+                            try {
+                                lastChar = value.substring(value.length() - 1, value.length());
+                                if (lastChar.equals("\\")) value += " ";
+                            } catch (Exception e) {
+                                // no action taken
+                            }
+                            value = AntFormatter.escapeSingleQuotes(value);
+
+                            //A.log("saveSpecimen() lastCHar:" + lastChar + " value:" + value); // AntFormatter.escapeQuotes(value));
+                            values.append("'" + value + "',");
+                        } catch (ClassCastException e) {
+                            A.log("AntwebUpload.saveSpecimen() key:" + key + " e:" + e);
+                        }
+                        break;
                 }
             } // end while loop
             if (!item.containsKey("last_modified")) {
@@ -784,7 +794,7 @@ public class AntwebUpload {
 
 
 			fields.append("upload_id" + ")");
-			values.append(Integer.valueOf(AntwebMgr.getNextSpecimenUploadId()) + ")");
+			values.append(AntwebMgr.getNextSpecimenUploadId() + ")");
 			
 //            fields.setCharAt(fields.length() - 1, ')'); // here we remove final commas
 //            values.setCharAt(values.length() - 1, ')');
@@ -1034,8 +1044,7 @@ public class AntwebUpload {
     }
 
     private boolean isValidSubfamilyCheck(String subfamily) {
-      if (Subfamily.isValidAntSubfamily(subfamily)) return true;
-      return false;
+        return Subfamily.isValidAntSubfamily(subfamily);
     }
     
     public boolean isValidSubfamily(String family, String subfamily) throws SQLException {
@@ -1205,7 +1214,7 @@ public class AntwebUpload {
 
     protected Float convertGeorefToDecimal(String latlon) {
         float decimal = 0;
-        Float result = Float.valueOf((float)0.0);
+        Float result = (float) 0.0;
         try {
             result = Float.valueOf(latlon);
             //s_log.info("convertGeorefToDecimal() result: " + result); 
@@ -1223,7 +1232,7 @@ public class AntwebUpload {
                     if ((direction.equals("s")) || (direction.equals("w"))) {
                         decimal = 0 - decimal;
                     }
-                    result = Float.valueOf(decimal);
+                    result = decimal;
                 }
             } catch (RESyntaxException e) {
                 s_log.error("convertGeorefToDecimal() e:" + e);

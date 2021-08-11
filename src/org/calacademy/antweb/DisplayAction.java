@@ -1,19 +1,15 @@
 package org.calacademy.antweb;
 
-import java.io.*; 
-import java.util.*;
+import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import java.sql.*;
 
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.upload.DescEditImageUploadAction;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

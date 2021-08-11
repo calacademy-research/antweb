@@ -3,13 +3,10 @@ package org.calacademy.antweb.home;
 import java.util.*;
 import java.sql.*;
 
-import javax.servlet.http.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.curate.speciesList.*;
@@ -108,11 +105,11 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
           return null;
         }
         
-        ArrayList<GeolocaleTaxonLog> geolocaleTaxonLogs = new ArrayList<GeolocaleTaxonLog>();
+        ArrayList<GeolocaleTaxonLog> geolocaleTaxonLogs = new ArrayList<>();
 
         // The first GeolocaleTaxonLog in the list will be the master list.
         GeolocaleTaxonLog masterLog = new GeolocaleTaxonLog();
-        ArrayList<GeolocaleTaxonLogDetail> masterDetails = new ArrayList<GeolocaleTaxonLogDetail>(); 
+        ArrayList<GeolocaleTaxonLogDetail> masterDetails = new ArrayList<>();
         masterLog.setDetails(masterDetails);
         geolocaleTaxonLogs.add(masterLog);
 
@@ -147,7 +144,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
                 geolocaleTaxonLog.setCuratorId(rset.getInt("curator_id"));
 
                 int isCurrent = rset.getInt("is_current");
-                geolocaleTaxonLog.setIsCurrent((isCurrent == 1) ? true : false);
+                geolocaleTaxonLog.setIsCurrent(isCurrent == 1);
                 ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = null;
                 if (geolocaleTaxonLog.getIsCurrent()) {
                   geolocaleTaxonLogDetails = getGeolocaleTaxonLogDetailsFromGeo(geolocaleId, displaySubfamily);
@@ -179,7 +176,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
 
     private ArrayList<GeolocaleTaxonLogDetail> getGeolocaleTaxonLogDetailsFromGeo(int geolocaleId, String displaySubfamily) {
 
-        ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = new ArrayList<GeolocaleTaxonLogDetail>();
+        ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = new ArrayList<>();
 
         String query = "";
         ResultSet rset = null;
@@ -236,7 +233,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     
     public ArrayList<GeolocaleTaxonLogDetail> getGeolocaleTaxonLogDetails(int logId, String displaySubfamily) {
 
-        ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = new ArrayList<GeolocaleTaxonLogDetail>();
+        ArrayList<GeolocaleTaxonLogDetail> geolocaleTaxonLogDetails = new ArrayList<>();
 
         String query = "";
         ResultSet rset = null;
@@ -296,7 +293,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     public ArrayList<Login> getCuratorLogins(Login login) {
         // Login is administrator or curator conducting the search.
 
-        ArrayList<Login> logins = new ArrayList<Login>();
+        ArrayList<Login> logins = new ArrayList<>();
 
         String query = "";
         ResultSet rset = null;
@@ -387,7 +384,6 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
               + " and gtld.geolocale_id = " + geolocaleId
               + " and gtld.taxon_name = '" + taxonName + "'"
               + " order by created asc"; // get the first instance
-              ;
 
             //A.log("getCuration() query:" + query);
             rset = stmt.executeQuery(query);
@@ -418,7 +414,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     // If allowed to show up on the curator-body.jsp page it will NPE if you go here:
     // http://localhost/antweb/curator.do?id=1 
     public ArrayList<Curation> getCurations(int curatorId) {
-	  ArrayList<Curation> curations = new ArrayList<Curation>();
+	  ArrayList<Curation> curations = new ArrayList<>();
 
 	  String query = "";
 	  ResultSet rset = null;
@@ -454,7 +450,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
 
 
     public ArrayList<Curation> getCurations() {
-	  ArrayList<Curation> curations = new ArrayList<Curation>();
+	  ArrayList<Curation> curations = new ArrayList<>();
 
       String logIds = getFirstLogIdsPerGeolocale();
       
@@ -703,7 +699,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
 
         int geolocaleId = GeolocaleMgr.getGeolocaleId(speciesListName);
 
-        ArrayList<TaxonSet> disputes = new ArrayList<TaxonSet>();
+        ArrayList<TaxonSet> disputes = new ArrayList<>();
 
         String query = "";
         Statement stmt = null;

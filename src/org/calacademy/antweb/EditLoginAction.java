@@ -3,7 +3,6 @@ package org.calacademy.antweb;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -109,16 +108,11 @@ public final class EditLoginAction extends Action {
     }
     
     private boolean isNoChange(EditLoginForm editForm, Login login) {
-        if ( (editForm.getEmail().equals(login.getEmail()))
-          && (editForm.getName().equals(login.getName()))
-          && (editForm.getPassword().equals(login.getPassword()))
-          && (editForm.getFirstName().equals(login.getFirstName()))
-          && (editForm.getLastName().equals(login.getLastName())) )
-        {
-          return true;
-        } else {
-          return false;
-        }
+        return (editForm.getEmail().equals(login.getEmail()))
+                && (editForm.getName().equals(login.getName()))
+                && (editForm.getPassword().equals(login.getPassword()))
+                && (editForm.getFirstName().equals(login.getFirstName()))
+                && (editForm.getLastName().equals(login.getLastName()));
     }
     
     private String validate(EditLoginForm editForm, HttpServletRequest request) {

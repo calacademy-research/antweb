@@ -1,8 +1,6 @@
 package org.calacademy.antweb.data.googleApis;
 
 import java.util.*;
-
-import org.calacademy.antweb.data.*;
 //import com.google.maps.model.AddressComponents;
 
 

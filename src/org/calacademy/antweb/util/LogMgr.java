@@ -1,19 +1,13 @@
 package org.calacademy.antweb.util;
 
 import java.io.*;
-import java.net.*;
 import java.util.*;
 
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermission;
 import static java.nio.file.StandardCopyOption.*;
 
-import javax.servlet.http.*;
-import javax.servlet.*;
-
 import java.sql.*;
-import javax.sql.*;
-import com.mchange.v2.c3p0.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
@@ -163,7 +157,7 @@ public class LogMgr {
   public static void make777(String file) {
     try {
         //using PosixFilePermission to set file permissions 777
-        Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>();
+        Set<PosixFilePermission> perms = new HashSet<>();
         //add owners permission
         perms.add(PosixFilePermission.OWNER_READ);
         perms.add(PosixFilePermission.OWNER_WRITE);

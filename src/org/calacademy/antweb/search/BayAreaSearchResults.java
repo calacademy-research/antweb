@@ -1,7 +1,5 @@
 package org.calacademy.antweb.search;
 
-import org.calacademy.antweb.*;
-
 import java.io.*;
 import java.util.*;
 
@@ -37,10 +35,9 @@ public final class BayAreaSearchResults
 		ResultItem thisItem = null;
 		String thisAdm2 = null;
 		SearchItem thisSearchItem = null;
-			
-		Iterator rsetIter = rset.iterator();
-		while (rsetIter.hasNext()) {
-			thisSearchItem = (SearchItem) rsetIter.next();
+
+		for (Object o : rset) {
+			thisSearchItem = (SearchItem) o;
 			subfamily = thisSearchItem.getSubfamily();
 			genus = thisSearchItem.getGenus();
 			species = thisSearchItem.getSpecies();
@@ -56,13 +53,13 @@ public final class BayAreaSearchResults
 			if (theNames.containsKey(fullName)) {
 				thisItem = (ResultItem) theNames.get(fullName);
 				thisAdm2 = thisItem.getAdm2();   // was county
-				if ((thisAdm2 != null) && (thisAdm2.indexOf(adm2) == -1)) {  // null check added - Mark, Oct 25
+				if ((thisAdm2 != null) && (!thisAdm2.contains(adm2))) {  // null check added - Mark, Oct 25
 					thisItem.setAdm2(thisAdm2 + ", " + adm2);
 				} else {
-				 s_log.info("thisAdm2:" + thisAdm2);
+					s_log.info("thisAdm2:" + thisAdm2);
 				}
 			} else {
-				item = makeNewItem( fullName, name, thisRank, subfamily, genus,
+				item = makeNewItem(fullName, name, thisRank, subfamily, genus,
 						species, adm2, pageParams, images);
 				myResults.add(item);
 				theNames.put(fullName, item);

@@ -1,13 +1,7 @@
 package org.calacademy.antweb.geolocale;
 
-import java.sql.*;
-import java.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.*;
 
 /*
 This class is not currently used except for documentation. Maybe some day.

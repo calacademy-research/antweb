@@ -5,10 +5,7 @@ import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
-import java.sql.*;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.AntwebUtil;
 
 import org.apache.commons.logging.Log; 

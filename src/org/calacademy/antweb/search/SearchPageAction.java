@@ -1,13 +1,11 @@
 package org.calacademy.antweb.search;
 
 import java.io.IOException;
-import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
@@ -33,7 +31,7 @@ public final class SearchPageAction extends Action {
           }			
           connection = DBUtil.getConnection(dataSource, "SearchPageAction.execute()");
 
-          session.setAttribute("activeSession", Boolean.valueOf(true));
+          session.setAttribute("activeSession", Boolean.TRUE);
 
           SearchIncludeFactory searchIncludeFactory = new SearchIncludeFactory(connection);
           request.setAttribute("bioregionGenInc", searchIncludeFactory.getBioregionGenInc(searchForm.getBioregion()));

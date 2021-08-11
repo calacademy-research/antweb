@@ -15,8 +15,6 @@ import org.apache.regexp.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
-
 public final class ChooseComparisonAction extends Action {
 
     private static Log s_log = LogFactory.getLog(ChooseComparisonAction.class);
@@ -33,8 +31,8 @@ public final class ChooseComparisonAction extends Action {
         if (chosen != null) {
 
             ArrayList theImages = new ArrayList();
-            for (int loop = 0; loop < chosen.length; loop++) {
-                theImages.add(createSpecimenImage(chosen[loop]));
+            for (String s : chosen) {
+                theImages.add(createSpecimenImage(s));
             }
 
             if ("request".equals(mapping.getScope())) {

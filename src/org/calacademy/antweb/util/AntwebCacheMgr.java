@@ -6,11 +6,8 @@ import java.util.*;
 import java.text.*;
 
 import javax.servlet.http.*;
-import javax.servlet.*;
 
 import java.sql.*;
-import javax.sql.*;
-import com.mchange.v2.c3p0.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
@@ -540,8 +537,7 @@ A.log("cacheItem() dataFile:" + dataFile);
       message = " ServletException";
       s_log.info("badFileDontCache dataFile:" + dataFile);
     }
-    if (message != null) return true;
-    return false;  
+      return message != null;
   }
 
   private static void updateCachedItems(Connection connection, String url, long sinceStart)

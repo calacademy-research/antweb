@@ -1,7 +1,6 @@
 package org.calacademy.antweb.curate.project;
 
 import java.io.IOException;
-import java.sql.Statement;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -13,10 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
-
-import java.sql.*;
 
 public final class ProjectMgrAction extends Action {
 

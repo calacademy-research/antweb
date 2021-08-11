@@ -1,13 +1,9 @@
 package org.calacademy.antweb.home;
 
 import java.util.*;
-import java.io.Serializable;
 import java.sql.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
@@ -83,7 +79,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     public ArrayList<Bioregion> getBioregions(boolean deep) {
-        ArrayList<Bioregion> bioregions = new ArrayList<Bioregion>();
+        ArrayList<Bioregion> bioregions = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -139,7 +135,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     public ArrayList<String> getBioregionNames() {
-        ArrayList<String> bioregionNames = new ArrayList<String>();
+        ArrayList<String> bioregionNames = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -162,7 +158,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     public ArrayList<String> getCountryNames(String bioregionName) {
-        ArrayList<String> countryNames = new ArrayList<String>();
+        ArrayList<String> countryNames = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         try {

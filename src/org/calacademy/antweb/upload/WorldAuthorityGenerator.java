@@ -3,7 +3,6 @@ package org.calacademy.antweb.upload;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -36,7 +35,7 @@ public class WorldAuthorityGenerator {
     private Pattern closeP = Pattern.compile("</p>",Pattern.CASE_INSENSITIVE);
     private Pattern startP = Pattern.compile("^<p",Pattern.CASE_INSENSITIVE);
     private Pattern italics = Pattern.compile("<i>(.*?)</i>",Pattern.CASE_INSENSITIVE);
-    private Pattern brackets = Pattern.compile("[\\(\\[](.*?)[\\)\\]]");
+    private Pattern brackets = Pattern.compile("[(\\[](.*?)[)\\]]");
     private Pattern incertae = Pattern.compile("incertae sedis in (.*)",Pattern.CASE_INSENSITIVE);
     private Pattern leadStar = Pattern.compile("^\\*+");
     private Pattern startItal = Pattern.compile("<i>",Pattern.CASE_INSENSITIVE);
@@ -80,8 +79,8 @@ public class WorldAuthorityGenerator {
      * It returns an array of two values, a list of errors and a tsv file
      */ 
     public ArrayList<String> generateTSV(String type, ArrayList<HashMap<String, String>> allSubfamilies, ArrayList<HashMap<String, String>> theseSubfamilies) {
-        ArrayList<String> result = new ArrayList<String>();
-        ArrayList<String> headers = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
+        ArrayList<String> headers = new ArrayList<>();
         headers.add("subfamily");
         headers.add("tribe");
         headers.add("genus");
@@ -111,8 +110,8 @@ public class WorldAuthorityGenerator {
     }
     
     public ArrayList<String> generateTSVSynopsisOnly(String type, ArrayList<HashMap<String, String>> allSubfamilies, ArrayList<HashMap<String, String>> theseSubfamilies) {
-        ArrayList<String> result = new ArrayList<String>();
-        ArrayList<String> headers = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
+        ArrayList<String> headers = new ArrayList<>();
         headers.add("subfamily");
         headers.add("tribe");
         headers.add("genus");
@@ -142,7 +141,7 @@ public class WorldAuthorityGenerator {
     }
     
     public ArrayList<HashMap<String, String>> getSubfamilies(String type) {
-        ArrayList<HashMap<String, String>> result = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> result = new ArrayList<>();
         String fileName = authorityFilesDir + "/subfamily_genus.txt";
         s_log.info("getSubfamilies:" + fileName);
 
@@ -190,7 +189,7 @@ public class WorldAuthorityGenerator {
     
     public ArrayList<HashMap<String, String>> addSynposisInfo(ArrayList<HashMap<String, String>> data, String type) {
                 
-        ArrayList<HashMap<String, String>> result = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> result = new ArrayList<>();
         
         // read the synposis file
         HashMap<String, String> synopsisInfo = readSynopsisFile(type);
@@ -198,9 +197,8 @@ public class WorldAuthorityGenerator {
         // add the synopsis info into the data
         HashMap<String, String> thisTaxon;
         String thisName;
-        Iterator<HashMap<String,String>> iter = data.iterator();
-        while (iter.hasNext()) {
-            thisTaxon = iter.next();
+        for (HashMap<String, String> datum : data) {
+            thisTaxon = datum;
             thisName = thisTaxon.get("subfamily") + ":" + thisTaxon.get("genus");
             //s_log.info("searching for " + thisName + " in the data ");
             if (synopsisInfo.containsKey(thisName)) {
@@ -217,8 +215,8 @@ public class WorldAuthorityGenerator {
         
         while (synIter.hasNext()) {
             thisKey = synIter.next();
-            if (thisKey.indexOf(":") == -1) {
-                thisTaxon = new HashMap<String, String>();
+            if (!thisKey.contains(":")) {
+                thisTaxon = new HashMap<>();
                 thisTaxon.put("subfamily", thisKey);
                 thisTaxon.put("taxonomic history", synopsisInfo.get(thisKey));
                 thisTaxon.put("valid", "TRUE");
@@ -232,21 +230,21 @@ public class WorldAuthorityGenerator {
     private boolean synStop(String line) {
         boolean result = false;
         Matcher m = red.matcher(line);
-        if (line.indexOf("</body>") != -1) {
+        if (line.contains("</body>")) {
             result = true;
-        } else if (line.indexOf("SUBFAMILY") != -1) {
+        } else if (line.contains("SUBFAMILY")) {
             result = true;
-        } else if (line.indexOf("SUBFAMILIES") != -1) {
+        } else if (line.contains("SUBFAMILIES")) {
             result = true;
         } else if (m.find()) {
-            if (line.indexOf("Genera of")!=-1) {
+            if (line.contains("Genera of")) {
                 result = true;
             } else {
                 String newLine = removeAllTags(line);
                 Matcher m2 = synTribe.matcher(newLine);
                 if (m2.find()) {
                     result = true;
-                } else if (newLine.indexOf("Genus incertae sedis in") != -1) {
+                } else if (newLine.contains("Genus incertae sedis in")) {
                     result = true;
                 }
             }
@@ -256,7 +254,7 @@ public class WorldAuthorityGenerator {
 
         
     private HashMap<String, String> readSynopsisFile(String type) {
-        HashMap<String, String> result = new HashMap<String, String>();
+        HashMap<String, String> result = new HashMap<>();
         
         // right now this just reads genus information.
         // it'll have to be extended to also read subfamily information
@@ -328,7 +326,7 @@ public class WorldAuthorityGenerator {
     }
     
     private HashMap<String, String> getSynopsisTaxon(String line) {
-        HashMap<String, String> result = new HashMap<String,String>();
+        HashMap<String, String> result = new HashMap<>();
         String thisLine = removeAllTags(line);
         Formatter format = new Formatter();
         Matcher m = synSubfamily.matcher(thisLine);
@@ -389,7 +387,7 @@ public class WorldAuthorityGenerator {
     */
     
     private ArrayList<String> getLines(String fileName) {
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
         try {
             FileInputStream theFile = new FileInputStream(fileName);
             Scanner scan = new Scanner(theFile);
@@ -459,12 +457,12 @@ public class WorldAuthorityGenerator {
     private boolean isValid(String line) {
         boolean result = false;
         if ((red.matcher(line).find() || blue.matcher(line).find()) && boldItalic.matcher(line).find()) {
-            if (line.indexOf("imorpho") != -1) {
+            if (line.contains("imorpho")) {
                 s_log.info("in isValid() imorpho is valid: " + line);
             }
             result = true;
         } else {
-            if (line.indexOf("imorpho") != -1) {
+            if (line.contains("imorpho")) {
                 s_log.info("in isValid() imorpho is not valid: " + line);
             }
         }
@@ -507,7 +505,7 @@ public class WorldAuthorityGenerator {
     
     private HashMap<String, String> getGenus(String line, boolean valid, boolean available) {
         
-        HashMap<String, String> result = new HashMap<String,String>();
+        HashMap<String, String> result = new HashMap<>();
         String genus = "", subfamily = "", tribe = "", currentValid = "";
         String notes = line;
         line = removeAllTagsButItalics(line);
@@ -519,7 +517,7 @@ public class WorldAuthorityGenerator {
         
         genus = genus.toLowerCase();
         
-        if (genus.indexOf("imorpho") != -1) {
+        if (genus.contains("imorpho")) {
             //s_log.info("in get genus dimorpho valid is " + valid);
             //s_log.info("in get genus dimorpho available is " + available);
         }
@@ -534,14 +532,14 @@ public class WorldAuthorityGenerator {
         bracketInfo = bracketInfo.replaceAll("</i>", "");
         
         //s_log.info("bracket info is " + bracketInfo);
-        if (bracketInfo.indexOf(":") != -1) {
+        if (bracketInfo.contains(":")) {
             String[] bracketParts = bracketInfo.split(":");
             subfamily = bracketParts[0].trim();
             tribe = bracketParts[1].trim();
-        } else if (bracketInfo.toLowerCase().indexOf("incertae sedis in formicidae") != -1) {
+        } else if (bracketInfo.toLowerCase().contains("incertae sedis in formicidae")) {
             subfamily = uncertain;
             tribe = "";
-        } else if (bracketInfo.toLowerCase().indexOf("incertae sedis in") != -1) {
+        } else if (bracketInfo.toLowerCase().contains("incertae sedis in")) {
             thisMatch = incertae.matcher(bracketInfo);
             if (thisMatch.find()) {
                 subfamily = thisMatch.group(1);
@@ -570,7 +568,7 @@ public class WorldAuthorityGenerator {
             currentValid = getCurrentValid(line);
         }
     
-        if (genus.indexOf("imorpho") != -1) {
+        if (genus.contains("imorpho")) {
             //s_log.info("out of get genus dimorpho valid is " + valid);
             //s_log.info("out of get genus dimorpho available is " + available);
         }
@@ -608,31 +606,31 @@ public class WorldAuthorityGenerator {
         
         line = removeAllTagsButItalics(line);
         line = removeSquareBrackets(line);
-        if (line.indexOf(test) != -1) {
+        if (line.contains(test)) {
             s_log.info("valid: " + valid + " available: " + available);
         }
         Matcher m = italics.matcher(line);
         
         if (m.find()) {
-            result = new HashMap<String,String>();
-            if (line.indexOf(test) != -1) {
+            result = new HashMap<>();
+            if (line.contains(test)) {
                 s_log.info("italics matched");
             }
             species = m.group(1);
-            if (line.indexOf(test) != -1) {
+            if (line.contains(test)) {
                 s_log.info("species is " + species);
             }
 
             if (valid || !available) {
-                if (line.indexOf(test) != -1) {
+                if (line.contains(test)) {
                     s_log.info("valid or not available");
                 }
                 if (m.find()) {
-                    if (line.indexOf(test) != -1) {
+                    if (line.contains(test)) {
                         s_log.info("second italics matched");
                     }
                     origGenus = m.group(1);
-                    if (line.indexOf(test) != -1) {
+                    if (line.contains(test)) {
                         s_log.info("orig genus found: " + origGenus);
                     }
                 }
@@ -656,7 +654,7 @@ public class WorldAuthorityGenerator {
             //  1908b: 41 (w.q.) COSTA RICA. <b>Unavailable name</b> (Bolton, 1995b: 54).</span></p>
             //  /\.\s+(.*?)\s+.*?\s(.*?)<\/i>(.*?)<i>(.*?)<\/i>(.*?)<i>(.*?)<\/i>/
             String tempLine = line;
-            if ((species.indexOf(".") != -1) && (!available)) {
+            if ((species.contains(".")) && (!available)) {
                 
                 tempLine = tempLine.replace("<i>","");
                 tempLine = tempLine.replace("</i>", "");
@@ -677,7 +675,7 @@ public class WorldAuthorityGenerator {
                 Matcher temp = firstCap.matcher(origGenus);
                 if (temp.find()) {
                     origGenus = temp.group();
-                    if (line.indexOf(test) != -1) {
+                    if (line.contains(test)) {
                         s_log.info("origgenus2 matched " + origGenus);
                     }
                 }
@@ -700,7 +698,7 @@ public class WorldAuthorityGenerator {
                 }
                 if (temp.find()) {
                     author = cleanAuthor(temp.group(1));
-                    if (line.indexOf(test) != -1) {
+                    if (line.contains(test)) {
                         //s_log.info("author: " + author);
                     }
                 }
@@ -710,7 +708,7 @@ public class WorldAuthorityGenerator {
                 originalCombination = getOriginalCombination(line);
             }
             if ((species.length() == 0) || (origGenus.length() == 0) || (author.length() == 0)) {  
-                if (line.indexOf(test) != -1) {
+                if (line.contains(test)) {
                     s_log.info("ERROR: *species:$species* *origGenus:$origGenus* *author:$author* line:$line\n");
                 }            
                 if ((notes.length() > 0) && (!knownProblem(notes))) {
@@ -731,7 +729,7 @@ public class WorldAuthorityGenerator {
                 result.put("available", Boolean.valueOf(available).toString());
                 result.put("original combination",originalCombination);
                 result.put("country", country);
-                if (line.indexOf(test) != -1) {
+                if (line.contains(test)) {
                     s_log.info("success: *" + genus + "* *" + species + "* *"+author + "* *"+valid);
                 }
             }        
@@ -764,7 +762,7 @@ public class WorldAuthorityGenerator {
         Matcher m = italics.matcher(line);
 
         if (m.find()) {
-            result = new HashMap<String,String>();
+            result = new HashMap<>();
             subspecies = m.group(1);
             if (m.find()) {
                 String regExpItal = m.group(1);
@@ -852,22 +850,21 @@ public class WorldAuthorityGenerator {
     }
     
     public HashMap<String, ArrayList<String>> getSubfamilyLookup(ArrayList<HashMap<String, String>> subfamilies) {
-        HashMap<String, ArrayList<String>> lookup = new HashMap<String, ArrayList<String>>();
+        HashMap<String, ArrayList<String>> lookup = new HashMap<>();
         
         HashMap<String, String> tempHash;
         ArrayList<String> tempList;
         String key = null;
         String subfamily = null;
         String tribe = null;
-        Iterator<HashMap<String, String>> iter = subfamilies.iterator();
-        while (iter.hasNext()) {
+        for (HashMap<String, String> stringStringHashMap : subfamilies) {
             subfamily = "";
             tribe = "";
-            tempHash = iter.next();
+            tempHash = stringStringHashMap;
             key = tempHash.get("genus");
             subfamily = tempHash.get("subfamily");
             tribe = tempHash.get("tribe");
-            tempList = new ArrayList<String>();
+            tempList = new ArrayList<>();
             tempList.add(subfamily);
             tempList.add(tribe);
             lookup.put(key, tempList);
@@ -876,9 +873,8 @@ public class WorldAuthorityGenerator {
         
         Set<String> newSet = lookup.keySet();
         String tempKey;
-        Iterator<String> newIter = newSet.iterator();
-        while (newIter.hasNext()) {
-            tempKey = newIter.next();
+        for (String s : newSet) {
+            tempKey = s;
             //s_log.info(tempKey + " : " + lookup.get(tempKey).get(0) + " : " + lookup.get(tempKey).get(1));
         }
         return lookup;
@@ -886,7 +882,7 @@ public class WorldAuthorityGenerator {
     
     private ArrayList<HashMap<String, String>> getSpecies(ArrayList<HashMap<String, String>> subfamilies, String type) {
         
-        ArrayList<HashMap<String, String>> result = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> result = new ArrayList<>();
         HashMap<String, ArrayList<String>> subfamilyLookup = getSubfamilyLookup(subfamilies);
         
         HashMap<String, String> speciesResult = null;
@@ -1056,9 +1052,8 @@ public class WorldAuthorityGenerator {
     private String duplicatesToString(HashMap<String, ArrayList<String>> contents, String keyLabel, String valueLabel) {
         StringBuffer result = new StringBuffer();
         String key = "";
-        Iterator<String> iter = contents.keySet().iterator();
-        while (iter.hasNext()) {
-            key = iter.next();
+        for (String s : contents.keySet()) {
+            key = s;
             if ((key.length() > 0) && contents.get(key).size() > 1) {
                 result.append(keyLabel + " " + key + " has " + contents.get(key).size() + " instances of " + valueLabel + ":" + contents.get(key) + "<br>");
             }
@@ -1073,7 +1068,7 @@ public class WorldAuthorityGenerator {
     // not, the key has two different values
     //
     private String getDuplicates(ArrayList<HashMap<String, String>> contents, String key, String value) {
-        HashMap<String, ArrayList<String>> result = new HashMap<String, ArrayList<String>>();
+        HashMap<String, ArrayList<String>> result = new HashMap<>();
         Iterator<HashMap<String,String>> iter = contents.iterator();
         HashMap<String, String> temp;
         String keyString;
@@ -1086,7 +1081,7 @@ public class WorldAuthorityGenerator {
                     result.get(keyString).add(temp.get(value));
                 }
             } else {
-                result.put(keyString, new ArrayList<String>());
+                result.put(keyString, new ArrayList<>());
                 result.get(keyString).add(temp.get(value));
             }
         }
@@ -1130,8 +1125,8 @@ public class WorldAuthorityGenerator {
     private ArrayList<String> flatten(ArrayList<HashMap<String, String>> contents, ArrayList<String> header, char delim) {
         Iterator<HashMap<String, String>> contentsIter = contents.iterator();
         Iterator<String> headerIter;
-        ArrayList<String> resultArray = new ArrayList<String>();
-        ArrayList<String> tempArray = new ArrayList<String>();
+        ArrayList<String> resultArray = new ArrayList<>();
+        ArrayList<String> tempArray = new ArrayList<>();
         HashMap<String, String> temp;
         String thisHeader = "";
         // for each element in the array, go through the header list put the items in the right order,
@@ -1197,17 +1192,17 @@ public class WorldAuthorityGenerator {
     }
     */
     public ArrayList<HashMap<String, String>> getSubfamiliesForSynonyms(ArrayList<HashMap<String, String>> thisList, HashMap<String, ArrayList<String>> lookup) {
-        ArrayList<HashMap<String, String>> result = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> result = new ArrayList<>();
         Iterator<HashMap<String, String>> iter = thisList.iterator();
         HashMap<String, String> temp;
         String currentValid, currentSubfamily, tempGenus;
         while (iter.hasNext()) {
             temp = iter.next();
             //if (temp.get("subfamily").indexOf("junior synonym of") != -1) {
-            if (temp.get("subfamily").indexOf(" ") != -1) {
+            if (temp.get("subfamily").contains(" ")) {
                 //s_log.info("subfamily is " + temp.get("subfamily"));
                 currentValid = temp.get("current valid name");
-                if ((currentValid != null) && (lookup.get(currentValid) != null) && (lookup.get(currentValid).indexOf(" ") != -1) && (lookup.get(currentValid).size() > 0)) {
+                if ((currentValid != null) && (lookup.get(currentValid) != null) && (lookup.get(currentValid).contains(" ")) && (lookup.get(currentValid).size() > 0)) {
                     currentSubfamily = lookup.get(currentValid).get(0);
                     temp.put("subfamily", currentSubfamily);
                     //s_log.info("from currentvalid, putting " + currentSubfamily + " into subfamily");
@@ -1235,13 +1230,13 @@ public class WorldAuthorityGenerator {
     }
     
     private ArrayList<String> getSpeciesFiles(String directory) {
-        ArrayList<String> results = new ArrayList<String>();
+        ArrayList<String> results = new ArrayList<>();
         File f1 = new File (directory) ;
     
         File[] strFilesDirs = f1.listFiles();
-        for (int loop=0; loop < strFilesDirs.length; loop++) {
-            if (strFilesDirs[loop].getName().endsWith(".html")) {
-                results.add(authorityFilesDir + "/" + strFilesDirs[loop].getName());
+        for (File strFilesDir : strFilesDirs) {
+            if (strFilesDir.getName().endsWith(".html")) {
+                results.add(authorityFilesDir + "/" + strFilesDir.getName());
             }
         }
         return results;
@@ -1278,15 +1273,15 @@ public class WorldAuthorityGenerator {
         theString = theString.replaceAll("\\.", "\\\\.");
         theString = theString.replaceAll("\\*", "\\\\*");
         theString = theString.replaceAll("\\[", "\\\\[");
-        theString = theString.replaceAll("\\]", "\\\\]");
-        theString = theString.replaceAll("\\,", "\\\\,");
+        theString = theString.replaceAll("]", "\\\\]");
+        theString = theString.replaceAll(",", "\\\\,");
         theString = theString.replaceAll("\\?", "\\\\?");
         return theString;
     }
     
     private boolean knownProblem(String line) {
         boolean result = false;
-        if (line.indexOf("see under") != -1) {
+        if (line.contains("see under")) {
             result = true;
         }
         return result;
@@ -1296,7 +1291,7 @@ public class WorldAuthorityGenerator {
         String newLine = line;
         
         // some lines have adjacent <i></i><i></i> tags which should really be merged
-        if (newLine.indexOf("</i><i>") != -1) {
+        if (newLine.contains("</i><i>")) {
             Matcher m = adjacentI.matcher(newLine);
             if (m.find()) {
                 String one = m.group(1);

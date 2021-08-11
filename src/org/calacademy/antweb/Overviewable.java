@@ -1,32 +1,31 @@
 package org.calacademy.antweb;
 
-import java.util.Hashtable;
 import java.sql.*;
 
 public interface Overviewable {
 
-    public String getTaxonSetTable();
-    public String getTable();
-    public String getHeading();
-    public String getPluralTargetDo();
-    public String getTargetDo();
-    public String getThisPageTarget();
+    String getTaxonSetTable();
+    String getTable();
+    String getHeading();
+    String getPluralTargetDo();
+    String getTargetDo();
+    String getThisPageTarget();
 
-    public String getName();
-    public String getDisplayName();
-    public String getShortDisplayName();
+    String getName();
+    String getDisplayName();
+    String getShortDisplayName();
 
-    public String getParams();
+    String getParams();
 
-    public String getSearchCriteria();
+    String getSearchCriteria();
   
-    public String getFetchChildrenClause();
-    public String getSpecimenTaxonSetClause();
+    String getFetchChildrenClause();
+    String getSpecimenTaxonSetClause();
 //    public String getChosenImageClause();
 
-    public String getImageCountQuery(String taxonName);
+    String getImageCountQuery(String taxonName);
 
-    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection);
+    TaxonSet getTaxonSet(String taxonName, String rank, Connection connection);
 
 
 }

@@ -3,12 +3,10 @@ package org.calacademy.antweb.curate.project;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
 
 
 import org.apache.struts.action.*;
@@ -17,7 +15,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 

@@ -5,7 +5,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
-import com.mchange.v2.c3p0.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

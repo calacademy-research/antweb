@@ -1,14 +1,7 @@
 package org.calacademy.antweb.util;
 
-import java.io.*;
-import java.net.*;
 import java.util.*;
-import java.text.*;
- 
-import javax.servlet.http.*;
-import javax.servlet.*;
 
-import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
@@ -23,7 +16,7 @@ public class Profiler {
 
     protected static Date firstOfPeriodTime = null;
 
-    protected static HashMap<String, Profile> profiles = new HashMap<String, Profile>();
+    protected static HashMap<String, Profile> profiles = new HashMap<>();
 
     private static final Log s_log = LogFactory.getLog(Profiler.class);
 

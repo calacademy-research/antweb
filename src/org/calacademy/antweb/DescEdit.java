@@ -1,10 +1,6 @@
 package org.calacademy.antweb;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.io.Serializable;
-import java.sql.*;
-import java.math.BigDecimal;
 
 import org.calacademy.antweb.util.*;
 
@@ -50,8 +46,7 @@ public class DescEdit {
     }
     
     public boolean isSpecimen() {
-      if (getCode() != null) return true;
-      return false;
+        return getCode() != null;
     }
     
     public String getTaxonName() {

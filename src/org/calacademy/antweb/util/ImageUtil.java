@@ -4,11 +4,7 @@ import java.io.*;
 
 import java.util.*;
 
-import javax.sql.*;
-import javax.naming.*;
-
 import java.sql.*;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -26,7 +22,7 @@ public class ImageUtil {
     
     private static Counter counter = new Counter();
     
-    private static ArrayList<SpecimenImage> notTifList = new ArrayList<SpecimenImage>();
+    private static ArrayList<SpecimenImage> notTifList = new ArrayList<>();
     
     public static ArrayList<SpecimenImage> getNotTifList() {
       return notTifList;

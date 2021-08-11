@@ -4,10 +4,8 @@ import org.apache.struts.action.*;
 
 import java.io.*;
 import java.sql.*;
-import javax.sql.DataSource;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
 import javax.servlet.http.*;
@@ -145,13 +143,10 @@ public class DescEditImageUploadAction extends Action {
                 return mapping.findForward("message");  
 
             }
-        } catch (IOException e) {
+        } catch (IOException | SQLException e) {
             s_log.error("execute() e:" + e);
             return (mapping.findForward("error"));
-        } catch (SQLException e) {
-            s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
-        } finally { 		
+        } finally {
             DBUtil.close(connection, this, "DescEditImageUploadAction");
         }
 

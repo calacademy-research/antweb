@@ -2,20 +2,14 @@ package org.calacademy.antweb.data.googleApis;
 
 import java.sql.*;
 import java.util.*;
-import java.io.*;
-import java.net.URLEncoder;
 
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.data.*;
 import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;  
-  
-import com.google.gson.*;
-    
+import org.apache.commons.logging.LogFactory;
+
 public class GoogleApisMgr {
 
     private static Log s_log = LogFactory.getLog(GoogleApisMgr.class);
@@ -87,8 +81,7 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 			} catch (AntwebException e) {
 				LogMgr.appendLog("googleApisAdm1Issue.html", "<br>" + e.getMessage() + " " + adm1.getNameCommaCountry() + " id:<a href='" + AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + adm1.getId() + "'>" + adm1.getId() + "</a>");			
 				s_log.warn("fetchData() 1 nameCommaCountry:" + adm1.getNameCommaCountry() + " id:" + adm1.getId() + " e:" + e.getMessage());
-				continue;
-			} catch (Exception e) {
+            } catch (Exception e) {
 			  s_log.warn("fetchData() 2 adm1CommaCountry:" + adm1.getNameCommaCountry() + " id:" + adm1.getId() + " e:" + e);
 			  message = "GoogleApisMgr aborted. apiCallCount:" + apiCallCount;        
 			  return message;              

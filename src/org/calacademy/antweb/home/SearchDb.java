@@ -23,7 +23,7 @@ public class SearchDb {
     }
     
     public ArrayList<String> getBioregionList() throws SQLException {
-      ArrayList<String> bioregions = new ArrayList<String>();
+      ArrayList<String> bioregions = new ArrayList<>();
       Statement stmt = null;
       ResultSet rset = null;
       try { 
@@ -40,7 +40,7 @@ public class SearchDb {
     }
 
     public ArrayList<String> getCountryList() throws SQLException {
-      ArrayList<String> countries = new ArrayList<String>();
+      ArrayList<String> countries = new ArrayList<>();
 
       ArrayList<Geolocale> geolocales = GeolocaleMgr.getValidCountries();
       for (Geolocale country : geolocales) {
@@ -51,7 +51,7 @@ public class SearchDb {
     }
 
     public ArrayList<String> getAdm1List() throws SQLException {    
-      ArrayList<String> adm1s = new ArrayList<String>();
+      ArrayList<String> adm1s = new ArrayList<>();
       
       ArrayList<Geolocale> geolocales = GeolocaleMgr.getAdm1s();
       for (Geolocale adm1 : geolocales) {
@@ -59,8 +59,7 @@ public class SearchDb {
       }
 
       // remove duplicates
-      Set<String> set = new HashSet<String>();
-	  set.addAll(adm1s);
+        Set<String> set = new HashSet<>(adm1s);
 	  adm1s.clear();
 	  adm1s.addAll(set);
 

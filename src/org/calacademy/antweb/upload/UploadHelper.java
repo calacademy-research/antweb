@@ -1,7 +1,5 @@
 package org.calacademy.antweb.upload;
 
-import java.util.*;
-
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;
 
