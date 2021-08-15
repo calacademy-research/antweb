@@ -6,10 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.Year;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
@@ -100,7 +97,7 @@ public abstract class DateUtil {
     private static final DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static String getFormatDateTimeStr() {
-        return LocalDate.now().format(dateTimeFormat);
+        return LocalDateTime.now().format(dateTimeFormat);
     }
 
     public static String getFormatDateStr() {
@@ -108,7 +105,7 @@ public abstract class DateUtil {
     }
 
     public static String getFormatDateTimeStr(Date theDate) {
-        return dateTimeFormat.format(LocalDate.ofInstant(theDate.toInstant(), ZoneId.systemDefault()));
+        return dateTimeFormat.format(LocalDateTime.ofInstant(theDate.toInstant(), ZoneId.systemDefault()));
     }
 
     public static String getFormatDateStr(String dateStr) {
