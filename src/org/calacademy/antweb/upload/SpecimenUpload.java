@@ -397,18 +397,21 @@ public class SpecimenUpload extends SpecimenUploadParse {
     private void groupMorphoGenera(Group group) {
 
         String query = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "groupMorphoGenera()");
 
             query = "select distinct subfamily, genus from taxon where (taxarank = 'species' or taxarank = 'subspecies') "
               + " and (subfamily, genus) in ( select subfamily, genus from taxon where taxarank = 'genus' and status = 'morphotaxon') "
-              + " and genus not like '(%' and status = 'morphotaxon' and access_group = " + group.getId();
+              + " and genus not like '(%' and status = 'morphotaxon' and access_group = ?";
+
+            stmt = DBUtil.getPreparedStatement(getConnection(), "groupMorphoGenera()", query);
 
              A.log("groupMorphoGenera() query:" + query);
 
-            rset = stmt.executeQuery(query);
+             stmt.setInt(1, group.getId());
+
+            rset = stmt.executeQuery();
             while (rset.next()) {
                 //String code = (String) rset.getObject("code");
                 String subfamily = (String) rset.getObject("subfamily");

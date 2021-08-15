@@ -1,0 +1,1 @@
+create index taxarank_status_idx on ant.taxon(taxarank, status);
