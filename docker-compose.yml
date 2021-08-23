@@ -80,8 +80,8 @@ services:
     logging:      # only store the last 50mb of logs. more may be captured in the mounted logs/ dir
       driver: "json-file"
       options:
-        max-file: 5
-        max-size: 10m
+        max-file: '5'
+        max-size: '10m'
 
 volumes:
   antweb_genInc:
