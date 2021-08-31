@@ -593,7 +593,7 @@ public class LoginDb extends AntwebDb {
             PreparedStatement stmt = null;
             try {
                 if (isAdminUpdate) {
-                    stmt = DBUtil.getPreparedStatement(getConnection(), "updateLogin()", adminUpdate);
+                    stmt = DBUtil.getPreparedStatement(getConnection(), "updateLogin()", userUpdate);
                     stmt.setString(1, login.getName());
                     stmt.setString(2, login.getFirstName());
                     stmt.setString(3, login.getLastName());
@@ -601,7 +601,7 @@ public class LoginDb extends AntwebDb {
                     stmt.setString(5, login.getPassword());
                     stmt.setInt(6, login.getId());
                 } else {
-                    stmt = DBUtil.getPreparedStatement(getConnection(), "updateLogin()", userUpdate);
+                    stmt = DBUtil.getPreparedStatement(getConnection(), "updateLogin()", adminUpdate);
                     stmt.setString(1, login.getName());
                     stmt.setString(2, login.getFirstName());
                     stmt.setString(3, login.getLastName());
