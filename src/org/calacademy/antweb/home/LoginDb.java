@@ -9,6 +9,7 @@ import org.calacademy.antweb.SpeciesListable;
 import org.calacademy.antweb.util.AntwebException;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.DBUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.servlet.http.HttpSession;
 import java.sql.*;
@@ -137,7 +138,7 @@ public class LoginDb extends AntwebDb {
             rset = stmt.executeQuery();
         
             while (rset.next()) {
-                Login login = instantiateLogin(rset);
+                Login login = instantiateLoginRow(rset);
                 loginList.add(login);
             }
             Collections.sort(loginList);  
@@ -172,6 +173,7 @@ public class LoginDb extends AntwebDb {
     private Curator instantiateCurator(ResultSet rset)
       throws SQLException {
         Curator curator = new Curator();
+        rset.next();
         curator = (Curator) instantiate(curator, rset);
 
         setUploadCounts(curator);
@@ -185,6 +187,37 @@ public class LoginDb extends AntwebDb {
         
         return curator;
     }
+
+    /**
+     * Instantiate a Login from a row of a ResultSet.
+     *
+     * The ResultSet cursor is not incremented in this method, it must be done prior to calling this function.
+     *
+     * @param rset The ResultSet to get data from
+     * @return A Login with data from the current ResultSet row
+     * @throws SQLException
+     */
+    private @Nullable Login instantiateLoginRow(ResultSet rset) throws SQLException {
+
+        Login login = new Login();
+
+        login.setId(rset.getInt("id"));
+        login.setName(rset.getString("name"));
+        login.setPassword(rset.getString("password"));
+        login.setFirstName(rset.getString("first_name"));
+        login.setLastName(rset.getString("last_name"));
+        login.setEmail(rset.getString("email"));
+        login.setCreated(rset.getDate("created"));
+        login.setIsAdmin(rset.getBoolean("is_admin"));
+        int groupId = rset.getInt("group_id");
+        login.setGroupId(groupId);
+
+        login.setIsUploadSpecimens(rset.getBoolean("is_upload_specimens"));
+        login.setIsUploadImages(rset.getBoolean("is_upload_images"));
+
+        if (login.getId() == 0) return null;
+        return login;
+    }
         
     private Login instantiateLogin(ResultSet rset)
       throws SQLException {
@@ -193,8 +226,18 @@ public class LoginDb extends AntwebDb {
         if (login.getId() == 0) return null;
         return login;
     }
-    
-    // The login could be a Curator.
+
+    /**
+     * Instantiate a single Login from a ResultSet.
+     *
+     * The ResultSet should have only one row. For instantiating multiple logins in a loop, see instantiateLoginRow
+     *
+     * @param login The login to add data to
+     * @param rset  The ResultSet to get data from
+     * @return  A Login with data from the ResultSet's row.
+     * @throws SQLException
+     */
+// The login could be a Curator.
     private Login instantiate(Login login, ResultSet rset)
       throws SQLException {
         //A.log("instantiate() BEFORE login:" + login + " rset:" + rset);            
