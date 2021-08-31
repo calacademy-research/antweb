@@ -689,8 +689,6 @@ public class LoginDb extends AntwebDb {
             stmt.setInt(1, login.getId());
             stmt.executeUpdate();
 
-            stmt.close();
-
 
             theStatement = "insert into login_country (login_id, country)  values (?, ?)";
             String name = null;
