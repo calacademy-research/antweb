@@ -173,7 +173,6 @@ public class LoginDb extends AntwebDb {
     private Curator instantiateCurator(ResultSet rset)
       throws SQLException {
         Curator curator = new Curator();
-        rset.next();
         curator = (Curator) instantiate(curator, rset);
 
         setUploadCounts(curator);
