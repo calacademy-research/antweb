@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class SpecimenFetch extends HttpServlet {
 
-  private static Log s_log = LogFactory.getLog(SpecimenFetch.class);
+  private static final Log s_log = LogFactory.getLog(SpecimenFetch.class);
     
   // Accessible as: http://localhost/antweb/specimen/CASENT0106322X    
   //   http://data.antweb.org/specimen/CASENT0078328  
@@ -21,7 +21,7 @@ public class SpecimenFetch extends HttpServlet {
     throws ServletException, IOException {
 
     String pathInfo = request.getPathInfo();
-    String specimenCode = pathInfo.substring(1);
+    String specimenCode = pathInfo.substring(1).trim();
 
     // String url = AntwebProps.getDomainApp() + "/specimen.do?name=" + specimenCode;
     
@@ -41,7 +41,7 @@ public class SpecimenFetch extends HttpServlet {
       // return an xml page
     } 
     
-    String output = null;
+    String output;
     try {
       output = HttpUtil.fetchUrl(url);
     } catch (Exception e) {
