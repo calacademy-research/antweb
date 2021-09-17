@@ -17,7 +17,7 @@ in SessionRequestFilter.doFilter() - pretty much all pages. And then removed at 
 possible moment - ideally in jsp footer.
 */
 
-    private static boolean isDebug = AntwebProps.isDevMode();
+    private static final boolean isDebug = AntwebProps.isDevMode();
 
     private static final Log s_log = LogFactory.getLog(PageTracker.class);
 
@@ -46,10 +46,8 @@ possible moment - ideally in jsp footer.
        || target.contains("adminAlert.do")
       ) return;
 
-      Tracker tracker = new Tracker();
-      tracker.setTarget(target);
-      tracker.setStartTime(new Date());    
-      tracker.setCode(AntwebUtil.getRandomNumber());
+      Tracker tracker = new Tracker(target, AntwebUtil.getRandomNumber());
+
       request.setAttribute("trackerKey", tracker.getKey());
       trackerMap.put(tracker.getKey(), tracker);
 
@@ -98,8 +96,7 @@ possible moment - ideally in jsp footer.
 
     public static Tracker getTracker(HttpServletRequest request) {
       String key = (String) request.getAttribute("trackerKey");
-      Tracker tracker = trackerMap.get(key);
-      return tracker;
+        return trackerMap.get(key);
     }
         
     public static Date getTime(HttpServletRequest request) {
@@ -128,16 +125,16 @@ possible moment - ideally in jsp footer.
     }
 
     public static String showRequests() {
-        String message = "";
+        StringBuilder message = new StringBuilder();
 
         Collection<Tracker> trackers = trackerMap.values();
         ArrayList<Tracker> trackerList = new ArrayList<>(trackers);
         Collections.sort(trackerList);
 
         for (Tracker tracker : trackerList) {
-            message += tracker.toString() + "\r\n";
+            message.append(tracker.toString()).append("\r\n");
         }
-        return message;
+        return message.toString();
     }
 }
 

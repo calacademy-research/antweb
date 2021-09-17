@@ -9,6 +9,12 @@ import org.apache.commons.logging.LogFactory;
 public class Tracker implements Comparable<Tracker> {
   private static final Log s_log = LogFactory.getLog(Tracker.class);
 
+  public Tracker(String target, int code) {
+    this.target = target;
+    this.code = code;
+    this.startTime = new Date();
+  }
+
   public int compareTo(Tracker other) {
     if (getMillis() > other.getMillis()) return 1;
     if (getMillis() == other.getMillis()) return 0;
@@ -16,7 +22,7 @@ public class Tracker implements Comparable<Tracker> {
     return 0;
   }
 
-  String target;  
+  private String target;
   public void setTarget(String target) {
     this.target = target;
   }
@@ -24,7 +30,7 @@ public class Tracker implements Comparable<Tracker> {
     return this.target;
   }
 
-  Date startTime = null;
+  private Date startTime = null;
   public void setStartTime(Date startTime) {
     this.startTime = startTime;
   }
@@ -32,7 +38,7 @@ public class Tracker implements Comparable<Tracker> {
     return this.startTime;
   }
   
-  int code = 0; // will be the request object's hashcode.
+  private int code = 0; // will be the request object's hashcode.
   public int getCode() {
     return this.code;
   }
@@ -40,7 +46,7 @@ public class Tracker implements Comparable<Tracker> {
     this.code = code;
   }    
   
-  String requestString = null;
+  private String requestString = null;
   public void setRequestString(String str) {
     this.requestString = str;
   }
@@ -53,12 +59,11 @@ public class Tracker implements Comparable<Tracker> {
   }
 
   public long getMillis() {
-    long millis = AntwebUtil.millisSince(startTime);
-    return millis;
+    return AntwebUtil.millisSince(startTime);
   }
 
   public String getSinceStartTime() {
-      String execTime = "";
+      String execTime;
       long millis = AntwebUtil.millisSince(startTime);
       if (millis > 2000) {
         execTime = AntwebUtil.secsSince(startTime) + " secs";
