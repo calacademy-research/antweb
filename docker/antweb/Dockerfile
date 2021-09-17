@@ -120,12 +120,11 @@ RUN ln -s /mnt/antweb/web/bak bak && \
     ln -s /mnt/antweb/web/upload upload && \
     ln -s /mnt/antweb/web/workingdir workingdir && \
     ln -s /mnt/antweb/web/log/specimen log/specimen && \
-    ln -s /mnt/antweb/web/log/worldants log/worldants
+    ln -s /mnt/antweb/web/log/worldants log/worldants && \
+    ln -s /mnt/backup /data/antweb/backup && \
+    ln -s /mnt/antweb/images /data/antweb/images
 
-# Add link to bucket for backups
-RUN ln -s /mnt/backup /data/antweb/backup
 
-RUN ln -s /mnt/antweb/images /data/antweb/images
 #    mkdir -p /data/antweb/images/temp      # Dash: temp folder should already be in bucket
 
 COPY --chown=antweb docker/antweb/platform.properties /data/antweb/WEB-INF/classes/
