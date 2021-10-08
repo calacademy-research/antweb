@@ -31,29 +31,32 @@
     path_regexp image_file ^/images/(.+\..+)$
 }
 
-reverse_proxy @static_images {
-    to {$IMAGE_BUCKET_DOMAIN}/{re.image_file.1}
-    header_down Cache-Control "max-age=31536000, public"
-}
-
 @image_root_dir {
     path_regexp image_dir ^/images/?$
 }
-respond @image_root_dir "Access Denied" 403 {
-    close
-}
 
-reverse_proxy @allowed_paths antweb:8080
+# Directive in route block are evaluated in order
+route {
+    respond @image_root_dir "Access Denied" 403 {
+        close
+    }
 
+    reverse_proxy @static_images {
+        to {$IMAGE_BUCKET_DOMAIN}/{re.image_file.1}
+        header_down Cache-Control "max-age=31536000, public"
+    }
 
-handle_path /v3.1/* {
-    reverse_proxy api:5000
+    handle_path /v3.1/* {
+        reverse_proxy api:5000
+    }
+
+    reverse_proxy @allowed_paths antweb:8080
+
+    # Any request that doesn't match one of the proxies gets a 404 response
+    error "Not found" 404
 }
 
 log {
     output file /var/log/caddy/access.log
     format console      # give one-liners, not json
 }
-
-# Any request that doesn't match one of the proxies gets a 404 response
-error "Not found" 404
