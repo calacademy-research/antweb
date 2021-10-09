@@ -190,16 +190,13 @@ public class GroupDb extends AntwebDb {
     public ArrayList<Group> getUploadGroups(String orderBy) throws SQLException {       
         ArrayList<Group> groupList = new ArrayList<>();
 
-        String uploadIdList = "";
-        int u = 0;
-        UploadDb uploadDb = new UploadDb(getConnection());
-        for (Group group : getAllGroupsWithSpecimenData()) {
-          ++u;
-          int lastUploadId = uploadDb.getLastUploadId(group.getId());
-          if (u > 1) uploadIdList += ",";
-          uploadIdList += lastUploadId;
-          //A.log("getUploadGroups() groupId:" + group.getId() + " lastUploadId:" + lastUploadId);
-        }
+        // create list of each group's most recent upload id (when the group has uploads)
+        String recentUploadIds = "select max(upload_id)" +
+                "from upload " +
+                "where group_id in (select id from ant_group where upload_specimens > 0) " +
+                "  and upload_id is not null " +
+                "group by group_id";
+
         if ("firstUpload".equals(orderBy)) orderBy = "first_specimen_upload";
         if ("lastUpload".equals(orderBy)) orderBy = "created desc"; //"last_specimen_upload";
         if ("uploads".equals(orderBy)) orderBy = "upload_count desc";
@@ -214,7 +211,7 @@ public class GroupDb extends AntwebDb {
 
         String orderClause = "";
         if (!Utility.isBlank(orderBy)) orderClause = " order by " + orderBy;
-        String query = "select g.id from ant_group g, upload u where g.id = u.group_id and u.upload_id in (" + uploadIdList + ") " + orderClause;
+        String query = "select g.id from ant_group g, upload u where g.id = u.group_id and u.upload_id in (" + recentUploadIds + ") " + orderClause;
         //A.log("getUploadGroups() query:" + query);
         Statement stmt = null;
         ResultSet rset = null;
