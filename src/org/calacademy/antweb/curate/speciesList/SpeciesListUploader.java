@@ -26,7 +26,7 @@ public class SpeciesListUploader {
    
 /*
    We download the antcat.antweb.txt file from the above link to here:
-     /data/antweb/web/speciesList/worldants/worldants_speciesList.txt
+     /data/antweb/web/speciesList/world/worldants_speciesList.txt
 */
 
   Connection connection = null;

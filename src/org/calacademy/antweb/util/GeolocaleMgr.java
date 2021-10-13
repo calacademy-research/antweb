@@ -658,7 +658,8 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         Adm1 valid_adm1 = adm1CountryMap.get(matching_adm1.getValidName(), country);
 
         if (valid_adm1 == null) {
-            s_log.warn("getValidAdm1 " + adm1 + " with valid name: " + matching_adm1.getValidName() + " with country " + country + " not found in adm1CountryMap");
+            // This will show up in the upload report.
+            //s_log.warn("getValidAdm1 " + adm1 + " with valid name: " + matching_adm1.getValidName() + " with country " + country + " not found in adm1CountryMap");
             return null;
         }
 

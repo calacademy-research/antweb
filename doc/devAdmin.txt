@@ -101,7 +101,70 @@ Copy over /data directory to antweb/
   Too low will cause failure of specimen upload as well as: 
     https://localhost/query.do?action=curiousQuery&name=lastSpecimenUpload
 
----Loading local Database
+
+
+
+### Download the (hopefully soon to be) sanitized database
+
+Create a full database dump from antweb and copy it to your machine
+
+```bash
+ssh user@antweb
+mysqldump -h 127.0.0.1 -u antweb -p --all-databases --routines --single-transaction --quick --column-statistics=0 | gzip > /tmp/ant-currentDump.sql.gz
+# Enter password:
+
+scp user@antweb:/mnt/backup/db/ant-currentDump.sql.gz ./
+
+Better yet: scp root@antweb.org:/mnt/backup/db/ant-currentDump.sql.gz ../bak/db/20210626.sql.gz
+ 
+```
+
+Load the database into docker volume mounted by the mysql container
+
+*Important: Bring down the antweb mysql container if it exists before continuing*
+
+```bash
+docker-compose down
+docker volume rm antweb_database
+docker volume create antweb_database
+
+CID=$(docker run -d --rm \
+	-e MYSQL_ALLOW_EMPTY_PASSWORD=1 \
+	-e MYSQL_DATABASE=ant \
+	--mount source=antweb_database,target=/var/lib/mysql \
+	 mysql:5)
+	
+sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
+gunzip -c ./ant-currentDump.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
+
+better yet:  gunzip -c ../bak/db/20210626.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
+
+# Run an optimize to regenerate index
+docker exec -it $CID sh -c "exec mysqlcheck --all-databases --analyze -uroot" && docker stop $CID
+
+# If ant-currentDump.sql.gz is in the antweb directory, remove the dump to reduce docker daemon build time
+rm ant-currentDump.sql.gz
+```
+
+This creates a temporary mysql container and loads the database dump into a docker-managed volume. This volume persists after the container is removed.  It'll take 5-10 minutes for the import to complete. 
+
+\#### After sanitized database is available: create an admin antweb user
+
+
+
+
+ 1023  docker volume rm antweb_caddy_1
+ 1024  docker volume rm antweb_caddy_data
+ 1025  docker volume create antweb_caddy_data
+ 1026  docker-compose up -d
+ 1030  docker-compose exec caddy sh
+ 
+docker-compose logs -f caddy
+
+
+
+
+---Loading local Database (Outdated? See above)
 
 # Fetch and unzip the current database dump from the server. Delete it when finished.
 
@@ -133,7 +196,9 @@ CID=$(docker run -d --rm \
 	--mount source=antweb_database,target=/var/lib/mysql \
 	 mysql:5)   
 
-docker exec -i $CID sh -c "exec mysql -uroot ant" < ant-currentDump.sql  
+#docker exec -i $CID sh -c "exec mysql -uroot ant" < ant-currentDump.sql  
+# Better yet, untar in a directory outside of the antweb dir and refer to it, as such:
+docker exec -i $CID sh -c "exec mysql -uroot ant" < ../bak/db/2021-06-23.sql
 
 -Repeaat the "*Process Check and Kill as needed" above.
     
@@ -158,7 +223,8 @@ To reference Antweb container specific addresses:
 # On server:
   ln -s /mnt/antweb /usr/local/antweb
 # On dev machine, something like:
-  sudo ln -s /Users/mark/volumes/antweb/data/ /usr/local/antweb
+ # Deprecated!
+ # sudo ln -s /Users/mark/volumes/antweb/data/ /usr/local/antweb
 
 --- Locations
 Antweb directories
@@ -181,7 +247,9 @@ These are here:
 
 
 
-
+More useful - Dash
+mark@iMark local % ls -vlah   Natural sort of numbers in text (linux only)
+mark@iMark local % ls -lath   time human all list
 
 
 

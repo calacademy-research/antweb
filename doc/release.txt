@@ -1,3 +1,10 @@
+Release 8.65
+Oct 13, 2021
+  Maintenance release.
+    Logging modifications.
+    Performance optimizations.
+    Configuration changes.
+
 Release 8.64.2
   Database and login enhancements
 
