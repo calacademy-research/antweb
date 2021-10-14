@@ -13,6 +13,7 @@ import org.apache.struts.action.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 
 public class LoginMgr extends Manager {
 
@@ -182,7 +183,7 @@ public class LoginMgr extends Manager {
       return s_curators;
     }
 
-    public static Curator getCurator(int id) {
+    public static @Nullable Curator getCurator(int id) {
         if (getCurators() == null) return null;
         for (Curator curator : getCurators()) {
             if (id == curator.getId()) return curator;

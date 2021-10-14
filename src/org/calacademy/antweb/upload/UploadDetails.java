@@ -197,7 +197,9 @@ public class UploadDetails extends OperationDetails {
         // Should load properly in the first place.
         Curator curator = LoginMgr.getCurator(accessLogin.getId());
 
-        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Login Id:</b> " + curator.getLink();
+        if (curator != null) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Login Id:</b> " + curator.getLink();
+        else logString += "<br>&nbsp;&nbsp;&nbsp;<b>Login Id:</b> " + accessLogin.getId();
+
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + accessGroup.getLink();
 
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Record Count:</b> " + getRecordCount();
