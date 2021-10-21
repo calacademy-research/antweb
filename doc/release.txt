@@ -1,3 +1,6 @@
+Release 8.65.1
+  Fix for caste queen, subcaste ergatoid, on the images page.
+
 Release 8.65
 Oct 13, 2021
   Maintenance release.

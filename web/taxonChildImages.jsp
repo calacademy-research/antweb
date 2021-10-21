@@ -3,7 +3,7 @@
 <%
 	ArrayList<Taxon> childrenList = taxon.getChildren();
 
-    // AntwebUtil.log("warn", " :" + taxon.getChildImagesCount());
+    //AntwebUtil.log(childrenList.toString());
     int totalImaged = taxon.getUniqueChildImagesCount("p", "h", "d");
     String optionalCaste = "";
     String tCaste = Caste.getDisplayCaste(request);
@@ -143,11 +143,20 @@
  <% }
     if (totalImaged > 0) {
         ArrayList<Taxon> theChildren = taxon.getChildren();
+
+        AntwebUtil.log("taxonChildImages.jsp total:" + totalImaged + " list:" + childrenList.toString());
+
         if (theChildren != null) {
 			// if children are specimen, re-order by caste.
+
+          //A.log("taxonChildImages.jsp size:" + theChildren.size());
+
 			if (taxon.isSpeciesOrSubspecies()) {
               theChildren = Caste.sortSpecimenByCasteSubcaste(theChildren);
 			}
+
+          //A.log("taxonChildImages.jsp size:" + theChildren.size());
+
 			int childCount = 0;
 			int rows = theChildren.size() / 4 + 1;
 			int index = 0;
@@ -158,10 +167,12 @@
 			int loop = 0;
 			int total = totalImaged;
 			while (loop < rows) {
-				int count = 1; 
+				int count = 1;
 				int innerLoop = 0;
 				boolean hasNext = childCount < theChildren.size();
-                //A.log("taxonChildImages.jsp size:" + theChildren.size());
+
+   	  	  	    //AntwebUtil.log("taxonChildImages loop:" + loop + " rows:" + rows + " innerLoop:" + innerLoop);
+
 				while ((innerLoop < 4) && (hasNext)) {
 				   if (hasNext) {
 					 try {

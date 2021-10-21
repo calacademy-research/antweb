@@ -149,8 +149,8 @@
 <% } 
   //A.log("imagePage-body.jsp taxon:" + taxon);
 %>
-  
-<%@include file="/taxonChildImages.jsp" %>  
+
+<%@include file="/taxonChildImages.jsp" %>
 
 <div class="clear"></div>
 <br /><br />

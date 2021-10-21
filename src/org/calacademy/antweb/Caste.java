@@ -123,9 +123,10 @@ public final class Caste {
           if (subcaste.equals("major/soldier")) majorSoldiers.add(specimen);          
           if (subcaste.equals("normal")) normals.add(specimen);          
 
-          if (subcaste.equals("ergatoid")) ergatoidQueens.add(specimen);          
-          if (subcaste.equals("alate/dealate")) alateDealateQueens.add(specimen);          
-          if (subcaste.equals("brachypterous")) brachypterousQueens.add(specimen);          
+          if ("queen".equals(caste) && subcaste.equals("ergatoid")) ergatoidQueens.add(specimen);
+          if (subcaste.equals("alate/dealate")) alateDealateQueens.add(specimen);
+
+          if (subcaste.equals("brachypterous")) brachypterousQueens.add(specimen);
 
           if ("male".equals(caste) && subcaste.equals("ergatoid")) ergatoidMales.add(specimen);          
           if ("male".equals(caste) && subcaste.equals("alate")) alateMales.add(specimen);          

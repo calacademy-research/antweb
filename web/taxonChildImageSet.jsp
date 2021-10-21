@@ -26,6 +26,9 @@ Examples of species with images that don't have h1 images:
 /description.do?name=beb002&genus=meranoplus&rank=species&project=allantwebants
 */
 
+    //AntwebUtil.log("child:" + thisChild);
+
+
     SpecimenImage img = null;
     boolean isSpecimen = "specimen".equals(thisChild.getRank());
     boolean isDefault = false;
