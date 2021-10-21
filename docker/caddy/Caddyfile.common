@@ -42,7 +42,8 @@ route {
     }
 
     reverse_proxy @static_images {
-        to {$IMAGE_BUCKET_DOMAIN}/{re.image_file.1}
+        to {$IMAGE_BUCKET_DOMAIN}
+        header_up -Host     # for some reason it fails with NoBucketError if host is set
         header_down Cache-Control "max-age=31536000, public"
     }
 

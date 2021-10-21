@@ -30,7 +30,7 @@ services:
       - caddy_config:/config
 
     environment:
-      IMAGE_BUCKET_DOMAIN: 'static.antweb.org'
+      IMAGE_BUCKET_DOMAIN: 'https://static.antweb.org'
 
   api:
     build:
