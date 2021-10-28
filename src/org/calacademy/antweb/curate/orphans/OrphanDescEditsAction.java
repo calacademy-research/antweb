@@ -192,11 +192,11 @@ public final class OrphanDescEditsAction extends Action {
         String newTaxonName = "";
         
         if (theForm.getToTaxonName() != null && !"".equals(theForm.getToTaxonName())) {
-          newTaxon = Taxon.getInfoInstance(connection, theForm.getToTaxonName());       
+          newTaxon = (new TaxonDb(connection)).getTaxon(theForm.getToTaxonName());
           if (newTaxon == null) return "taxon:" + theForm.getToTaxonName() + " does not exist.";
         } if (theForm.getSuggestedTaxonName() != null && !"".equals(theForm.getSuggestedTaxonName())) {
           A.log("transferEditsToTaxon() suggestedTaxonName:" + theForm.getSuggestedTaxonName());
-          newTaxon = Taxon.getInfoInstance(connection, theForm.getSuggestedTaxonName());
+          newTaxon = (new TaxonDb(connection)).getTaxon(theForm.getSuggestedTaxonName());
         } else {
           String subfamily = theForm.getSubfamily();
           String genus = theForm.getGenus();

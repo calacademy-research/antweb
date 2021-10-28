@@ -68,13 +68,12 @@ public final class SpecimenAction extends DescriptionAction {
                 Overview overview = OverviewMgr.getAndSetOverview(request);
                 if (overview == null) return OverviewMgr.returnMessage(request, mapping);
 
-                specimen.setConnection(connection);
-                specimenExists = specimen.isSpecimen(overview); // Uses overview?
+                specimenExists = specimen.isSpecimen(connection, overview); // Uses overview?
                 //A.log("execute() code:" + code + " isSpecimen:" + specimenExists);
 
                 if (specimenExists) {
-                    specimen.init();
-                    specimen.fullInit();
+                    specimen.init(connection);
+                    specimen.fullInit(connection);
                     //A.log("execute() uploadedBy:" + specimen.getAccessGroup());
                     boolean success = saveDescriptionEdit(specimenForm, specimen, accessLogin, request, connection);   
                     if (!success) return (mapping.findForward("message"));    

@@ -1,3 +1,6 @@
+Release 8.66
+  Refactor of Taxon, Specimen and Homonym to enhance database usage.
+
 Release 8.65.1
   Fix for caste queen, subcaste ergatoid, on the images page.
 

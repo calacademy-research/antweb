@@ -132,7 +132,7 @@ public final class BigMapAction extends Action {
         // Taxon map.  
         if ((taxonName != null) && (!"".equals(taxonName))) {
           //A.log("getMap() taxonName:" + taxonName);
-          Taxon taxon = Taxon.getInfoInstance(connection, taxonName);
+          Taxon taxon = (new TaxonDb(connection)).getTaxon(taxonName);
           if (taxon != null) {
           
             LocalityOverview localityOverview = project;

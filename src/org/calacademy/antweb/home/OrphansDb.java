@@ -130,7 +130,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
                 }
                  
                 //s_log.warn("orphan() q:" + query);
-                Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
+                Taxon taxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
                 orphanTaxonList.add(taxon);
             }
             stmt1.close();
@@ -154,7 +154,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 			}
 			 
 			//s_log.warn("orphan() q:" + query);
-			Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
+			Taxon taxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
 			orphanTaxonList.add(taxon);
 		}
 		rset1.close();
@@ -172,7 +172,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 			}
 			 
 			//s_log.warn("orphan() q:" + query);
-			Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
+			Taxon taxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
 			orphanTaxonList.add(taxon);
 		}
 		rset1.close();
@@ -212,7 +212,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 				while (rset3.next()) {                           
 					String taxonName = rset3.getString("taxon_name");                                  
 					//s_log.warn("orphan() q:" + query);
-					Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
+					Taxon taxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
 					orphanTaxonList.add(taxon);
 				}
 				stmt3.close();
@@ -249,7 +249,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
                 }
                  
                 //s_log.warn("orphan() q:" + query);
-                Taxon taxon = Taxon.getInfoInstance(getConnection(), subfamily);
+                Taxon taxon = (new TaxonDb(getConnection())).getTaxon(subfamily);
                 orphanTaxonList.add(taxon);
             }
         } catch (SQLException e) {
@@ -296,7 +296,6 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 	  orphan.setPossibleValidNames(possibleValidNames);
 	  A.log("getTaxonOrphanDescEditTaxon() possibleValidNames:" + possibleValidNames);
 
-      orphan.setConnection(null);              
       return orphan;
     }
         
@@ -355,7 +354,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 			if (hasDescEdit(getConnection(), taxonName)) {
 			  A.log("OrphansDb.getOrphanTaxonWithDescEditList() continue on " + taxonName);
 			  
-			  Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
+			  Taxon taxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
 			  orphanTaxonWithDescEditList.add(taxon);
             }
 		}
@@ -562,7 +561,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
                 String taxonName = rset.getString("taxon_name");
                  
                 //s_log.warn("orphan() q:" + query);
-                Taxon taxon = Taxon.getInfoInstance(getConnection(), taxonName);
+                Taxon taxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
                 orphanTaxonList.add(taxon);
             }
         } finally {

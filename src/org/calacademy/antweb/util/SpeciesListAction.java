@@ -11,6 +11,7 @@ import javax.sql.*;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.AntwebUtil;
 import org.calacademy.antweb.upload.UploadFile;
+import org.calacademy.antweb.home.TaxonDb;
 import org.calacademy.antweb.home.ProjectDb;
 
 import org.apache.commons.logging.Log; 
@@ -115,9 +116,9 @@ public final class SpeciesListAction extends Action {
                 while (rset.next()) {
                   ++specimenCount;
                   String taxonName = rset.getString(1);
-                  Species specie = (Species) Taxon.getInfoInstance(connection, taxonName);
+                  Species specie = (Species) (new TaxonDb(connection)).getTaxon(taxonName);
 
-                  data.append(specie.getData() + "\n");  
+                  data.append(specie.getData(connection) + "\n");
                 }
             } finally {
                 DBUtil.close(stmt, rset, this, "SpeciesListAction.createSpeciesListLink()");
@@ -167,9 +168,9 @@ public final class SpeciesListAction extends Action {
               while (rset.next()) {
                 ++specimenCount;
                 String taxonName = rset.getString(1);
-                Species specie = (Species) Taxon.getInfoInstance(connection, taxonName);
+                Species specie = (Species) (new TaxonDb(connection)).getTaxon(taxonName);
 
-                data.append(specie.getData() + "\n");  
+                data.append(specie.getData(connection) + "\n");
               }
 
             } finally {

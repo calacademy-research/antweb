@@ -149,12 +149,12 @@ public final class FieldGuideAction extends Action {
 				  request.setAttribute("message", message);
 				  return (mapping.findForward("message")); 				
 				}
-				taxon.setConnection(connection);
-				taxon.setTaxonomicInfo();			
+				//taxon.setConnection(connection);
+				taxon.setTaxonomicInfo(connection);
 				if (taxon.getRank().equals(Rank.SPECIES) || taxon.getRank().equals(Rank.SUBSPECIES)) {
-					taxon.setChildrenLocalized(overview);
+					taxon.setChildrenLocalized(connection, overview);
 				} else {
-					taxon.setChildren(overview);
+					taxon.setChildren(connection, overview);
 				}
 				theTaxa = taxon.getChildren();
                 A.log("execute() rank:" +  rank + " order:" + taxon.getOrderName() + " family:" + taxon.getFamily() + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " taxa.size:" + theTaxa.size());

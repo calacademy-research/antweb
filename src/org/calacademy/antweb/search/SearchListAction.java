@@ -65,7 +65,7 @@ public final class SearchListAction extends Action {
 
             Specimen specimen = new Specimen(code, null, connection, false); // Don't get images
             //data += specimen.getData() + "\n";
-		    data.append(specimen.getData() + "\n");
+		    data.append(specimen.getData(connection) + "\n");
 		  }
         } catch (SQLException e) {
           s_log.warn("execute() fetchTaxon e:" + e);

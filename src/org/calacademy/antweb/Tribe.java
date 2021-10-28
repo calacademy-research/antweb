@@ -20,12 +20,7 @@ public class Tribe extends Genus implements Serializable {
         return getTribe(); 
     }
     
-    public void setTaxonomicInfo(String project) throws SQLException {
-        s_log.warn("setTaxonomicInfo(project) is deprecated");
-        setTaxonomicInfo();
-    }
-    
-    public void setTaxonomicInfo() throws SQLException {
+    public void setTaxonomicInfo(Connection connection) throws SQLException {
         setTribe(name);
         
         String subfamilyClause = "";

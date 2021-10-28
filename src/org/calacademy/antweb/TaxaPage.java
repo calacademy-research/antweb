@@ -232,30 +232,20 @@ public class TaxaPage implements Serializable {
                 if (child == null) {
                   s_log.warn("fetchChildren() not found for query:" + fetchChildrenQuery);
                 } else {
-
-                  String projectName = null;
-                
                   //if (overview.getProject() != null) projectName = overview.getProject().getName();
                   child.generateBrowserParams(overview);
-                
-                  child.setConnection(connection);
                   child.setPrettyName();
-
                   //A.log("fetchChildren() details? child:" + child);                                        	
                   // Here we populate the fossil, author_date, status, type, and default_specimen fields in a separate query.
-                  child.setDetails(withImages);
-
+                  child.setDetails(connection, withImages);
                   if (withImages) {
-                    child.setImages(overview, caste); // Will be overriden?
+                    child.setImages(connection, overview, caste); // Will be overriden?
                     //A.log("fetchChildren(5) withImages:" + withImages + " caste:" + caste + " overview:" + overview + " child:" + child.getClass() + " imageCount:" + child.getImageCount() + " images:" + child.getImages());
                   }
-
-                  child.initTaxonSet(overview);
+                  child.initTaxonSet(connection, overview);
 
                   //A.log("fetchChildren() projTaxon:" + child.getProjTaxon().toString());
-                  //if (child.getImageCount() < 4) A.log("fetchChildren() class:" + child.getClass() + " withImages:" + withImages + " imageCount:" + child.getImageCount() + " child:" + child);                                        
-
-                  child.setConnection(null);
+                  //if (child.getImageCount() < 4) A.log("fetchChildren() class:" + child.getClass() + " withImages:" + withImages + " imageCount:" + child.getImageCount() + " child:" + child);
 
                   theseChildren.add(child);
                 }

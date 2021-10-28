@@ -93,47 +93,44 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     }    
 
     public Specimen(String code, Connection connection) throws SQLException {
-        this.setConnection(connection); // bad design
         this.setCode(code);
-        this.init();
+        this.init(connection);
     }
 
     // Used by PictureLikeAction
     public Specimen(String code, Connection connection, boolean getFullData) throws SQLException {
-        this.setConnection(connection); // bad design
         this.setCode(code);
-        this.init();
+        this.init(connection);
         if (getFullData) {
-           this.fullInit();
+           this.fullInit(connection);
         }
     }
     
     public Specimen(String code, Overview overview, Connection connection, boolean getFullData) throws SQLException {
-        this.setConnection(connection); // bad design
         this.setCode(code);
-        this.init();
-        this.setHasImages(overview);  // Need this?  Yes, for the count.  Could be worked around.
+        this.init(connection);
+        this.setHasImages(connection, overview);  // Need this?  Yes, for the count.  Could be worked around.
         if (getFullData) {
-           this.fullInit();
-           this.setHasImages(overview);  // Need this?  Yes, for the count.  Could be worked around.
+           this.fullInit(connection);
+           this.setHasImages(connection, overview);  // Need this?  Yes, for the count.  Could be worked around.
         }
     }
 
-    public void init() throws SQLException {
-        setTaxonomicInfo();
+    public void init(Connection connection) throws SQLException {
+        setTaxonomicInfo(connection);
         setRank("specimen");
     }
     
-    public void fullInit() throws SQLException {
+    public void fullInit(Connection connection) throws SQLException {
         //setFeatures();
 
-        setImages();
+        setImages(connection);
 
-        setSeeAlso();
+        setSeeAlso(connection);
 
-        setCountries(new GeolocaleTaxonDb(getConnection()).getCountries(getTaxonName()));
+        setCountries(new GeolocaleTaxonDb(connection).getCountries(getTaxonName()));
 
-        setDescription(true);
+        setDescription(connection, true);
     }
 
     public static Specimen getShallowInstance(String code, Connection connection) throws SQLException {
@@ -144,7 +141,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     }
 
 
-    public void setTaxonomicInfo() throws SQLException {
+    public void setTaxonomicInfo(Connection connection) throws SQLException {
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -314,8 +311,8 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
       return header;
     }
     
-    public String getData() throws SQLException {
-      if (getCode() == null) setTaxonomicInfo();
+    public String getData(Connection connection) throws SQLException {
+      if (getCode() == null) setTaxonomicInfo(connection);
 
       String data = "";
       String delimiter = "\t";   // ", ";
@@ -364,7 +361,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
       return getCode(); 
     }
 
-    public boolean isSpecimen() {
+    public boolean isSpecimen(Connection connection) {
         boolean isSpecimen = false;
   	    
   	    //A.log("isSpecimen() code:" + getCode() + " connection:" + connection);
@@ -390,8 +387,8 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     }
 
 // ! Not using overview
-    public boolean isSpecimen(Overview overview) {
-        if (overview == null) return isSpecimen();
+    public boolean isSpecimen(Connection connection, Overview overview) {
+        if (overview == null) return isSpecimen(connection);
     
         boolean isSpecimen = false;
 		Statement stmt = null;
@@ -426,11 +423,11 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         return isSpecimen;
     }
 
-    public void initTaxonSet(Overview overview) {
+    public void initTaxonSet(Connection connection, Overview overview) {
         // Called by setChildren()
         if (getTaxonSet() == null) { 
           
-          super.initTaxonSet(overview);
+          super.initTaxonSet(connection, overview);
 
           getTaxonSet().setImageCount(getImageCount());
 
@@ -455,7 +452,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
       return (ProjTaxon) getTaxonSet();
     }    
 
-    public void setSeeAlso()  throws SQLException {
+    public void setSeeAlso(Connection connection)  throws SQLException {
         // This could happen in a wrongly constructed description.do with a rank=specimen
         if (code == null) return;
       /* Voucher and DNA specimens ([casent]-dxx).  The voucher is the code without the -dxx */
@@ -495,19 +492,24 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         //A.log("setSeeAlso() seeAlsoLinks:" + seeAlsoLinks);        
         seeAlso = seeAlsoLinks;
         if ("".equals(seeAlso)) seeAlso = null;        
-    }           
-    
-    public void setImages(Overview overview) throws SQLException {
+    }
+
+
+    public void setImages(Connection connection, String whatever) throws SQLException {
+        setImages(connection);
+    }
+
+    public void setImages(Connection connection, Overview overview) throws SQLException {
       // We do not use the overview
-      setImages();
+      setImages(connection);
     }
      
-    public void setImages(Overview overview, String caste) throws SQLException {
+    public void setImages(Connection connection, Overview overview, String caste) throws SQLException {
       // We do not use the overview or caste.
-      setImages();
+      setImages(connection);
     }
             
-    public void setImages() throws SQLException {
+    public void setImages(Connection connection) throws SQLException {
 
         //if (getTaxonName().contains("insularis")) A.log("setImages() code:" + getCode());
 
@@ -565,7 +567,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     }
         
         
-    public void setHasImages(Overview overview) throws SQLException {
+    public void setHasImages(Connection connection, Overview overview) throws SQLException {
         // We don't use overview here
         boolean hasOne = false;
         String theQuery = null;
@@ -725,7 +727,7 @@ update specimen set other = '
 
     // This is NOT the Description field as presented on the specimen page.
     // This is description edits.
-    public void setDescription(boolean isManualEntry) {
+    public void setDescription(Connection connection, boolean isManualEntry) {
     /* 
      * All Specimen description_edits are manual entry
      */
@@ -985,10 +987,6 @@ For a locality name without code (this name has special characters):
 
         }
         return type;
-    }
-
-    public void setImages(String whatever) throws SQLException {
-        setImages();
     }
     
     public String getPrettyName() {

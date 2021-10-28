@@ -19,6 +19,7 @@ import java.util.Date;
 import java.sql.*;
 
 import org.calacademy.antweb.*;
+import org.calacademy.antweb.home.TaxonDb;
 import org.calacademy.antweb.util.*;
 
 public final class OrphanTaxonsAction extends Action {
@@ -78,7 +79,7 @@ public final class OrphanTaxonsAction extends Action {
                   //s_log.warn("orphan() q:" + query);
                   while (rset2.next()) {
                     String taxonName = rset2.getString(1);
-                    Taxon taxon = Taxon.getInfoInstance(connection, taxonName);
+                    Taxon taxon = (new TaxonDb(connection)).getTaxon(taxonName);
                     taxonList.add(taxon);
                   }
                   stmt2.close();

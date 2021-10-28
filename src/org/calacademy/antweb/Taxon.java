@@ -52,7 +52,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected ArrayList similar;
     protected String similarComparisonString;
     protected String test;
-    protected Connection connection;
+    private Connection connection;
 
     protected String kingdomName;
     protected String phylumName;
@@ -158,11 +158,9 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     This is a good lesson in how to write object oriented code backwards.  Thanks Thau.
 */
 
-    public static String getTaxonNameFromAntcatId(Connection connection, int antcatId) {
-        TaxonDb taxonDb = new TaxonDb(connection);
-        return taxonDb.getTaxonNameFromAntcatId(connection, "taxon", antcatId);
-    }
-
+/*
+ // Replace with:  taxon = (new TaxonDb(connection)).getTaxon(taxonName);
+    // Called 22 times from various Java classes
     public static Taxon getInfoInstance(Connection connection, String taxonName) {
         TaxonDb taxonDb = new TaxonDb(connection);
 
@@ -178,87 +176,37 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
         return t;
     }      
-    
-    public static Taxon getInfoInstance(Connection connection, String family, String subfamily, String genus
-      , String species, String subspecies, String rank) throws SQLException {
-     //This method gets taxonName from info (relatively) quickly.  Used to determine caching.
+*/
 
-        //if ("specimen".equals(Rank.SPECIMEN)) return null;              
 
-        Taxon taxon = Taxon.getTaxonOfRank(rank); 
-        taxon.setRank(rank);
-
-        if (family != null) taxon.setFamily(family);    
-        if ("formicidae".equals(taxon.getFamily())) taxon.setOrderName("hymenoptera");
-        //A.log("getInfoInstance() order:" + taxon.getOrderName() + " family:" + taxon.getFamily());
-        if (subfamily != null) taxon.setSubfamily(subfamily);     
-        if (genus != null) taxon.setGenus(genus);
-        if (species != null) taxon.setSpecies(species);
-        if (subspecies != null) taxon.setSubspecies(subspecies);              
-
-        taxon.setSubgenus(TaxonMgr.getSubgenus(taxon.getTaxonName()));
-
-        taxon.setConnection(connection);
-        taxon.setTaxonomicInfo();
-        
-        taxon.setSeeAlso();
-       
-        //taxon.setBioregionMap();
-
-        //A.log("getInfoInstance() taxon:" + taxon.getClass() + " isExtant:" + taxon.isExtant() + " taxonName:" + taxon.getTaxonName());
-        return taxon;
-    }
-    
-    public static Taxon getInstance(Connection connection, String family, String subfamily, String genus
-      , String species, String subspecies, String rank) throws SQLException {
-     // This version is called from BrowseAction.java, FieldGuideResultsAction.java 
-     // genus parameter is only not null in the case of a species.
-
-        //A.log("getInfoInstance() family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank);
-
-        Taxon taxon = Taxon.getInfoInstance(connection, family, subfamily, genus, species, subspecies, rank);
-        //if (taxon == null) return null;
-        
-        if (!taxon.isExtant()) return null;
-
-        taxon.finishInstance();
-
-        return taxon;
-    }
-
-    public void finishInstance() throws SQLException {    
+    // Called from getInstance() above.
+    public void finishInstance(Connection connection) throws SQLException {
             
         //A.log("getInstance() taxon:" + taxon.getClass() + " isExtant:" + taxon.isExtant() + " subfamily:" + taxon.getSubfamily());
 
-        init();
-        setDescription(new DescEditDb(getConnection()).getDescEdits(this, false)); // false is isManualEntry
-        setHabitats();
-        setMicrohabitats();
-        setMethods();
-        setTypes();      
+        init(connection);
+        setDescription(new DescEditDb(connection).getDescEdits(this, false)); // false is isManualEntry
+        setHabitats(connection);
+        setMicrohabitats(connection);
+        setMethods(connection);
+        setTypes(connection);
               
-        setElevations();
-        setCollectDateRange();
+        setElevations(connection);
+        setCollectDateRange(connection);
 
         //setGeolocales();
-        setCountries(new GeolocaleTaxonDb(getConnection()).getCountries(getTaxonName()));
-        setBioregions(new BioregionTaxonDb(getConnection()).getBioregions(getTaxonName()));
+        setCountries(new GeolocaleTaxonDb(connection).getCountries(getTaxonName()));
+        setBioregions(new BioregionTaxonDb(connection).getBioregions(getTaxonName()));
         
-        setHomonymAuthorDates();
-    }
-
-    public static Taxon getDummyInfoInstance(Connection connection, String taxonName) {
-        Taxon taxon = Taxon.getInfoInstance(connection, taxonName);
-        if (taxon == null) return null;
-        taxon.setConnection(null);
-        return taxon;
+        setHomonymAuthorDates(connection);
     }
 
     public boolean isDummy() {
       return false;
     }
-    
-    public void init() throws SQLException {
+
+    // Called from Taxon, Family, Subfamily and Genus.
+    public void init(Connection connection) throws SQLException {
         /* Beginning effort to consolidate initialization process.  Currently BrowseAction calls
            all sorts of methods to instantiate the taxon */
 
@@ -278,7 +226,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
               + " from taxon where taxon_name='" + taxonName + "'";
 
             // A.log("init() query:" + theQuery);
-            stmt = DBUtil.getStatement(getConnection(), "init()"); 
+            stmt = DBUtil.getStatement(connection, "init()");
             
             rset = stmt.executeQuery(theQuery);
             while (rset.next()) {
@@ -342,11 +290,11 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         }
     }
     
-    public void initTaxonSet(Overviewable overview) {
+    public void initTaxonSet(Connection connection, Overviewable overview) {
         // Overridden by Specimen only.
 
         if (taxonSet == null) { 
-          TaxonSet taxonSet = overview.getTaxonSet(getTaxonName(), rank, getConnection());
+          TaxonSet taxonSet = overview.getTaxonSet(getTaxonName(), rank, connection);
           
           //if ("Mayotte".equals(overview.getName())) A.log("initTaxonSet() overview:" + overview + " class:" + taxonSet.getClass() + " rank:" + rank + " taxonSet:" + taxonSet + " size:" + taxonSet.getNextSubtaxon());
 
@@ -685,7 +633,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       return displaySubfamilyGenus;    
     }    
     
-    public void setHomonymAuthorDates() throws SQLException {
+    public void setHomonymAuthorDates(Connection connection) throws SQLException {
       Vector<String> homonymAuthorDates = new Vector<>();
         String taxonName = getTaxonName();
       Statement stmt = null;
@@ -716,12 +664,13 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       return alsoDatabased;
     }
     
-    public void setAlsoDatabased() throws SQLException {
+    public void setAlsoDatabased(Connection connection) throws SQLException {
     
-    if (AntwebProps.isDevMode()) {
-      s_log.warn("setAlsoDatabased()");
-      AntwebUtil.logStackTrace();
-    }
+      if (AntwebProps.isDevMode()) {
+        s_log.warn("setAlsoDatabased()");
+        AntwebUtil.logStackTrace();
+      }
+
       // Was used by SetSeeAlso()
       String seeAlsoSynonyms = "";
       String taxonName = getTaxonName();
@@ -1108,7 +1057,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     }
     
 
-    public void setDetails(boolean withImages) throws SQLException {
+    public void setDetails(Connection connection, boolean withImages) throws SQLException {
         String taxonName = AntFormatter.escapeQuotes(getTaxonName());
      	String query = "select antcat_id, type, type, fossil, author_date, status" 
      	+ " from taxon where taxon_name = '" + taxonName + "'";
@@ -1196,10 +1145,10 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         this.hasImages = hasImages;
     }
 
-    public void setHasImages() throws SQLException{
-      setHasImages(null);
+    public void setHasImages(Connection connection) throws SQLException{
+      setHasImages(connection, null);
     }
-    public void setHasImages(Overview overview) throws SQLException {
+    public void setHasImages(Connection connection, Overview overview) throws SQLException {
     
         //if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();    
         String theQuery = null;
@@ -1547,7 +1496,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     // if Genus, see if we can get the pick from a species in our geolocale.
-    private String getDefaultFromSpeciesSet(String caste, ArrayList<String> speciesNameSet) {
+    private String getDefaultFromSpeciesSet(Connection connection, String caste, ArrayList<String> speciesNameSet) {
       //if (getTaxonName().contains("aenictogiton")) A.log("getDefaultFromSpeciesSet() caste:" + caste + " speciesNameSet:" + speciesNameSet);
      
       int maxLoop = 50;  // Some genera can have (camponotus has 1000+ species)... 
@@ -1567,16 +1516,16 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
 // ??? *** Shouldn't we pass in the view here. To default to H...?
 
-    private String getUnpickedFromSpeciesSet(String caste, String speciesSetStr) {
+    private String getUnpickedFromSpeciesSet(Connection connection, String caste, String speciesSetStr) {
       String shotClause = " and shot_type = 'h'";
-      return getUnpickedFromSpeciesSet(caste, speciesSetStr, shotClause);
+      return getUnpickedFromSpeciesSet(connection, caste, speciesSetStr, shotClause);
     }
-    private String getUnpickedFromSpeciesSetFlex(String caste, String speciesSetStr) {
+    private String getUnpickedFromSpeciesSetFlex(Connection connection, String caste, String speciesSetStr) {
       String shotClause = " and (shot_type = 'h' or shot_type = 'p' or shot_type = 'd' or shot_type = 'v')";
-      return getUnpickedFromSpeciesSet(caste, speciesSetStr, shotClause);
+      return getUnpickedFromSpeciesSet(connection, caste, speciesSetStr, shotClause);
     }
 
-    private String getUnpickedFromSpeciesSet(String caste, String speciesSetStr, String shotClause) {
+    private String getUnpickedFromSpeciesSet(Connection connection, String caste, String speciesSetStr, String shotClause) {
 	  String query = "select code, taxon_name, caste, subcaste "
 		  + " from specimen, image "
 		  + " where specimen.code = image.image_of_id "
@@ -1591,7 +1540,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       try {
         if (taxonDebug()) A.log("getUnpickedFromSpeciesSet() query:" + query);
 
-		stmt = DBUtil.getStatement(getConnection(), "getUnpickedFromSpeciesSet()");
+		stmt = DBUtil.getStatement(connection, "getUnpickedFromSpeciesSet()");
 		rset = stmt.executeQuery(query);
 
 		// now if we got a specimen, get its image information
@@ -1607,7 +1556,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       return null;
     }
     
-    private ArrayList<String> getSpeciesNameSet(Overview overview) {
+    private ArrayList<String> getSpeciesNameSet(Connection connection, Overview overview) {
       ArrayList<String> speciesNameSet = new ArrayList<>();
       Statement stmt = null;
       ResultSet rset = null;
@@ -1627,7 +1576,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		  // + " limit 100"  // Dropped. Myrmicinae still seems to perform (10 seconds).
 		  ;
 
-		  stmt = DBUtil.getStatement(getConnection(), "getSpeciesNameSet()");
+		  stmt = DBUtil.getStatement(connection, "getSpeciesNameSet()");
 		  rset = stmt.executeQuery(query);
 
           if (taxonDebug()) A.log("getSpeciesNameSet() this:" + this.getClass() + " query:" + query);
@@ -1650,7 +1599,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     // Should show all the genera and use images from the species. 
-    private String getUnpickedDefault(Overview overview, String caste) {
+    private String getUnpickedDefault(Connection connection, Overview overview, String caste) {
         String chosenImageCode = null;
 
         if (caste == null) caste = Caste.DEFAULT;
@@ -1666,12 +1615,12 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         if (overview instanceof Region || overview instanceof Subregion) {
             skipGetUnpickedDefault = true;
         }
-        if (!skipGetUnpickedDefault ) speciesNameSet = getSpeciesNameSet(overview); // Could just returned null here?
+        if (!skipGetUnpickedDefault ) speciesNameSet = getSpeciesNameSet(connection, overview); // Could just returned null here?
 
         // Subfamilies are different.
         if (Rank.SUBFAMILY.equals(getRank())) {
           //A.log("getUnpickedDefault() subfamily speciesNameSet:" + speciesNameSet);
-          chosenImageCode = getDefaultFromSpeciesSet(caste, speciesNameSet);
+          chosenImageCode = getDefaultFromSpeciesSet(connection, caste, speciesNameSet);
           if (chosenImageCode != null) {
   	 	    A.log("getUnpickedDefault() subfamily caste:" + caste + " overview:" + overview + " speciesNameSet:" + speciesNameSet + " chosenImageCode:" + chosenImageCode);
             return chosenImageCode;
@@ -1687,26 +1636,26 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
         if (Rank.GENUS.equals(getRank())) {
           if (Caste.DEFAULT.equals(caste)) {
-            chosenImageCode = getDefaultFromSpeciesSet(Caste.WORKER, speciesNameSet);
+            chosenImageCode = getDefaultFromSpeciesSet(connection, Caste.WORKER, speciesNameSet);
             if (chosenImageCode == null)
-              chosenImageCode = getUnpickedFromSpeciesSet(Caste.WORKER, speciesSetStr);
+              chosenImageCode = getUnpickedFromSpeciesSet(connection, Caste.WORKER, speciesSetStr);
             if (chosenImageCode == null)
-              chosenImageCode = getDefaultFromSpeciesSet(Caste.QUEEN, speciesNameSet);
+              chosenImageCode = getDefaultFromSpeciesSet(connection, Caste.QUEEN, speciesNameSet);
             if (chosenImageCode == null)
-              chosenImageCode = getUnpickedFromSpeciesSet(Caste.QUEEN, speciesSetStr);
+              chosenImageCode = getUnpickedFromSpeciesSet(connection, Caste.QUEEN, speciesSetStr);
             if (chosenImageCode == null)
-              chosenImageCode = getDefaultFromSpeciesSet(Caste.MALE, speciesNameSet);
+              chosenImageCode = getDefaultFromSpeciesSet(connection, Caste.MALE, speciesNameSet);
             if (chosenImageCode == null)
-              chosenImageCode = getUnpickedFromSpeciesSet(Caste.MALE, speciesSetStr);
+              chosenImageCode = getUnpickedFromSpeciesSet(connection, Caste.MALE, speciesSetStr);
 // DO WE NEED THESE?
 //            if (chosenImageCode == null) 
 //              chosenImageCode = getUnpickedFromSpeciesSetFlex(caste, speciesSetStr);
           } else {
             // ? Shouldn't do this if the caste represents a subcaste. For we won't find one. Image picking not supporting subcaste (yet). Performance.
-            chosenImageCode = getDefaultFromSpeciesSet(caste, speciesNameSet);
+            chosenImageCode = getDefaultFromSpeciesSet(connection, caste, speciesNameSet);
             if (taxonDebug()) A.log("getUnpickedDefault() chosenImageCode:" + chosenImageCode);
             if (chosenImageCode == null) 
-              chosenImageCode = getUnpickedFromSpeciesSet(caste, speciesSetStr);
+              chosenImageCode = getUnpickedFromSpeciesSet(connection, caste, speciesSetStr);
 // Need these?
 //            if (chosenImageCode == null) 
 //              chosenImageCode = getUnpickedFromSpeciesSetFlex(caste, speciesSetStr);
@@ -1718,7 +1667,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           return chosenImageCode;          
         }
 
-        chosenImageCode = getUnpickedFromSpeciesSet(caste, speciesSetStr);
+        chosenImageCode = getUnpickedFromSpeciesSet(connection, caste, speciesSetStr);
         // It would be nice here to know what the caste the retuned image code is, and
         // return the taxon's default for that caste if it is different. This would cause
         // us to use a default instead of a random in cases of species. If we request
@@ -1727,7 +1676,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         // This gets us a specimen even though there is no h image. See sculptinodis
         // on: http://localhost/antweb/taxonomicPage.do?rank=species&bioregionName=Malagasy&images=true&statusSetSize=max&statusSet=valid%20extant
         if (chosenImageCode == null) 
-          chosenImageCode = getUnpickedFromSpeciesSetFlex(caste, speciesSetStr);
+          chosenImageCode = getUnpickedFromSpeciesSetFlex(connection, caste, speciesSetStr);
 
 		if (taxonDebug()) A.log("getUnpickedDefault() rank:" + getRank() + " taxonName:" + getTaxonName() + " caste:" + caste + " overview:" + overview + " chosenImageCode:" + chosenImageCode); // + " speciesNameSet:" + speciesNameSet + " speciesSetStr:" + speciesSetStr);
 
@@ -1735,17 +1684,48 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         //AntwebUtil.logStackTrace();
         return chosenImageCode;
     }
-    
+
+    // Theses Defaults are Picked!
+    public String getDefaultSpecimenLink(String caste) {
+        String specimen = getDefaultSpecimen(caste);
+        if (specimen == null) return null;
+        String link = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimen + "'>" + specimen + "</a>";
+        return link;
+    }
+    public String getDefaultSpecimen(String caste) {
+        if (caste == null) return null;
+        if (Caste.DEFAULT.equals(caste)) {
+            return getDefaultSpecimen(Caste.WORKER);
+        }
+        if (Caste.MALE.equals(caste)) return maleSpecimen;
+        if (Caste.WORKER.equals(caste)) return workerSpecimen;
+        if (Caste.QUEEN.equals(caste)) return queenSpecimen;
+        return null;
+    }
+    public void setDefaultSpecimen(String caste, String specimen) {
+        if (caste == null || Caste.DEFAULT.equals(caste)) {
+            s_log.warn("Must specimen male, worker or queen");
+            return;
+        }
+        if (Caste.MALE.equals(caste)) this.maleSpecimen = specimen;
+        if (Caste.WORKER.equals(caste)) this.workerSpecimen = specimen;
+        if (Caste.QUEEN.equals(caste)) this.queenSpecimen = specimen;
+    }
+
+
+
+    /*
     // Used at all?
     public void setImages() throws SQLException {
     }
-    
-    public void setImages(Overview overview) throws SQLException {
-        setImages(overview, Caste.DEFAULT);
+*/
+
+    public void setImages(Connection connection, Overview overview) throws SQLException {
+        setImages(connection, overview, Caste.DEFAULT);
         //A.log("setImages(" + overview + ")");
     }
 
-    public void setImages(Overview overview, String caste) throws SQLException {
+    public void setImages(Connection connection, Overview overview, String caste) throws SQLException {
 
 // Break here, not doubled.
 
@@ -1801,7 +1781,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         
 		// well, no default Image, so try to find one good specimen for this family
         if (chosenImageCode == null) {
-          chosenImageCode = getUnpickedDefault(overview, caste);
+          chosenImageCode = getUnpickedDefault(connection, overview, caste);
           if (taxonDebug() && chosenImageCode != null) A.log("setImages(" + overview + "," + caste + ") unPickedDefault:" + chosenImageCode + " taxonName:" + getTaxonName());
         }
 
@@ -2270,7 +2250,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         Statement stmt = null;
         ResultSet rset = null;
         try {
-          stmt = DBUtil.getStatement(getConnection(), "isExists"); 
+          stmt = DBUtil.getStatement(connection, "isExists");
           theQuery = "select * from taxon where taxon_name='" + taxonName + "'";
           rset = stmt.executeQuery(theQuery);
           while (rset.next()) {
@@ -2299,28 +2279,32 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
     public void setHabitats(Vector habitats) {
         this.habitats = habitats;
-    }    
-    // These is to support the field guide.  Should not exist.  OO backwards.    
-    public void setHabitats(Connection connection) throws SQLException {
-      this.connection = connection;
-      setHabitats();
-      this.connection = null;
     }
-    public void setHabitats() {
-      // Override by Species
+
+    // These is to support the field guide.  Should not exist.  OO backwards.    
+    // Overriden by Species
+    public void setHabitats(Connection connection) throws SQLException {
+        // Override by Species
+
+        // A.log("setHabitats() this:" + getClass());
+      //AntwebUtil.logStackTrace();
+      //if (true) return;
+
+      //setHabitats(connection);
+      //this.connection = null;
     }
 
     public Vector getMicrohabitats() {
         return microhabitats;
     }    
     // These is to support the field guide.  Should not exist.  OO backwards.    
+    // Override by Species
     public void setMicrohabitats(Connection connection) throws SQLException {
-      this.connection = connection;
-      setMicrohabitats();
-      this.connection = null;
-    }
-    public void setMicrohabitats() {
-      // Override by Species
+        // Override by Species
+
+        // this.connection = connection;
+      //setMicrohabitats(connection);
+      //this.connection = null;
     }
 
     public Vector getMethods() {
@@ -2330,9 +2314,10 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         this.methods = methods;
     }
 
-    public void setTypes() {
+    public void setTypes(Connection connection) {
       // Override by Species
     }
+
     public String getTypes() {
         return types;
     }
@@ -2340,54 +2325,16 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         this.types = types;
     }
 
-    // Theses Defaults are Picked!
-    public String getDefaultSpecimenLink(String caste) {
-      String specimen = getDefaultSpecimen(caste);
-      if (specimen == null) return null;
-      String link = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimen + "'>" + specimen + "</a>";
-      return link;
-    }
-    public String getDefaultSpecimen(String caste) {
-        if (caste == null) return null;
-        if (Caste.DEFAULT.equals(caste)) {
-          return getDefaultSpecimen(Caste.WORKER);
-        }
-        if (Caste.MALE.equals(caste)) return maleSpecimen;
-        if (Caste.WORKER.equals(caste)) return workerSpecimen;
-        if (Caste.QUEEN.equals(caste)) return queenSpecimen;
-        return null;
-    }
-    public void setDefaultSpecimen(String caste, String specimen) {
-        if (caste == null || Caste.DEFAULT.equals(caste)) {
-          s_log.warn("Must specimen male, worker or queen");
-          return;
-        }
-        if (Caste.MALE.equals(caste)) this.maleSpecimen = specimen;
-        if (Caste.WORKER.equals(caste)) this.workerSpecimen = specimen;
-        if (Caste.QUEEN.equals(caste)) this.queenSpecimen = specimen;
-    }
-    
-    public void setElevations(Connection connection) throws SQLException {
-      this.connection = connection;
-      setElevations();
-      this.connection = null;
-    }
-
     // This is to support the field guide.  Should not exist.  OO backwards.
+    // override by Species.
     public void setMethods(Connection connection) throws SQLException {
-      this.connection = connection;
-      setMethods();
-      this.connection = null;
-    }
-
-    public void setMethods() {
-      // override by Species.
+        // Override by Species
     }
 
     public String getCollectDateRange() {
       return this.collectDateRange;
     }
-    public void setCollectDateRange() {
+    public void setCollectDateRange(Connection connection) {
         String collectDateRange = "";
         String taxonName = null;
         Statement stmt = null;
@@ -2402,13 +2349,12 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
               + " where taxon_name='" + taxonName + "'"
               + " and datecollectedstart is not null";
 
-            stmt = DBUtil.getStatement(getConnection(), "setCollectDateRange()"); 
+            stmt = DBUtil.getStatement(connection, "setCollectDateRange()");
             rset = stmt.executeQuery(theQuery);
 
             java.util.Date min = null;
             java.util.Date max = null;
             while (rset.next()) {
-//                recordCount++;
                 min = rset.getDate(1);
                 max = rset.getDate(2);
             }
@@ -2429,12 +2375,23 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         }
         this.collectDateRange = collectDateRange;
       }
-    
+
+/*
+    setElevations()
+        called by Homonym.setElevations()
+
+
+    public void setElevations(Connection connection) throws SQLException {
+        this.connection = connection;
+        setElevations();
+        this.connection = null;
+    }
+*/
     public String getElevations() {
       return this.elevations;
     }
-    
-    public void setElevations() throws SQLException {
+
+    public void setElevations(Connection connection) throws SQLException {
         //A.log("setElevations()");
         String elevations = "";
         String taxonName = null;
@@ -2450,7 +2407,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
               + " where taxon_name='" + taxonName + "'"
               + " and elevation is not null and elevation > 0";
 
-            stmt = DBUtil.getStatement(getConnection(), "setElevations()"); 
+            stmt = DBUtil.getStatement(connection, "setElevations()");
             rset = stmt.executeQuery(theQuery);
 
             int min = 0;
@@ -2530,7 +2487,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
     private String changeViewOptions = "";
     
-    public void setChangeViewOptions(Overview overview, String facet) {
+    public void setChangeViewOptions(Connection connection, Overview overview, String facet) {
 
       //if (overview instanceof Project) return;
 
@@ -2592,13 +2549,14 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       this.bioregions = bioregions;
     }
     
-
+/*
     public Connection getConnection() {
         return connection;
     }
     public void setConnection(Connection connection) {
         this.connection = connection;
     }
+*/
 
     public void filterChildren(String[] goodList) {
         if (getChildren() != null) {
@@ -2625,21 +2583,21 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         this.children = children;
     }
 
-    public void setChildren(String name, Connection connection) {
+    public void setChildren(Connection connection, String name) {
     }
 
-    public void setChildren(Overview overview) throws SQLException {
+    public void setChildren(Connection connection, Overview overview) throws SQLException {
         StatusSet statusSet = StatusSet.getInstance(overview.getName());
-        setChildren(overview, statusSet, false, false, Caste.DEFAULT, false, null);
+        setChildren(connection, overview, statusSet, false, false, Caste.DEFAULT, false, null);
     }
  
     // Overridden by the Subfamily, genus, species, subspecies.
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getImages, boolean getMaps, String caste, boolean global, String subgenus) throws SQLException {
+    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getImages, boolean getMaps, String caste, boolean global, String subgenus) throws SQLException {
         //A.log("setChildren(5) overview:" + overview + " getImages:" + getImages + " getMaps:" + getMaps + " caste:" + caste);
         this.children = new ArrayList();
     }
     
-    public void setChildrenLocalized(Overview overview) throws SQLException {
+    public void setChildrenLocalized(Connection connection, Overview overview) throws SQLException {
         
     }
 
@@ -2659,14 +2617,28 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 	public void setStatusSetSize(String statusSetSize) {
 		this.statusSetSize = statusSetSize;
 	}
-	
+
+/*
     public void setTaxonomicInfo(String project) throws SQLException {
-    /* This method should be abstract.  The whole class should be abstract.  But alas, not so. */
+    // This method should be abstract.  The whole class should be abstract.  But alas, not so.
     }
 
     public void setTaxonomicInfo() throws SQLException {
         setTaxonomicInfo("");
     }
+*/
+
+    /*
+    public void setTaxonomicInfo(Connection connection, String project) throws SQLException {
+        // This method should be abstract. It is overriden. The whole class should be abstract.  But alas, not so.
+    }
+*/
+    public void setTaxonomicInfo(Connection connection) throws SQLException {
+        // This method should be abstract. It is overriden. The whole class should be abstract.  But alas, not so.
+        //setTaxonomicInfo(connection, "");
+    }
+
+
 
     /* // Feb2020
     public void callFinalize() throws Throwable {
@@ -2688,6 +2660,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         }
     }
 */
+
     public Map getMap() {
         return map;
     }

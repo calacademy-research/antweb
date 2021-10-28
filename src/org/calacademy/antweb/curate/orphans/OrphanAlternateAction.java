@@ -58,7 +58,7 @@ public final class OrphanAlternateAction extends Action {
                }
                A.log("execute() browse newTaxonName:" + newTaxonName);                 
                
-               Taxon fetchTaxon = Taxon.getInfoInstance(connection, taxonName);
+               Taxon fetchTaxon = (new TaxonDb(connection)).getTaxon(taxonName);
                if (fetchTaxon != null) {
                   String url = fetchTaxon.getUrl();
                   response.sendRedirect(url);  

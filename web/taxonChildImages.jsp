@@ -126,7 +126,7 @@
       choice_is="Dorsal";
       String cookieStr = "";
       if (reallyCookie != null) cookieStr = reallyCookie.getValue();
-      A.log("taxonChildImages.jsp useShot:" + useShot + " use_thumb:" + use_thumb + " choice_is:" + choice_is + " reallyCookie:" + cookieStr + " totalImaged:" + totalImaged);
+      //A.log("taxonChildImages.jsp useShot:" + useShot + " use_thumb:" + use_thumb + " choice_is:" + choice_is + " reallyCookie:" + cookieStr + " totalImaged:" + totalImaged);
     }
 
 %>
@@ -144,7 +144,7 @@
     if (totalImaged > 0) {
         ArrayList<Taxon> theChildren = taxon.getChildren();
 
-        AntwebUtil.log("taxonChildImages.jsp total:" + totalImaged + " list:" + childrenList.toString());
+        //AntwebUtil.log("taxonChildImages.jsp total:" + totalImaged + " list:" + childrenList.toString());
 
         if (theChildren != null) {
 			// if children are specimen, re-order by caste.

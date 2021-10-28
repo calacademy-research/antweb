@@ -159,8 +159,7 @@ public final class PrepareCompareResultsAction extends PrepareAction {
             
             //Taxon fetchTaxon = Taxon.getInstance(connection, name);
             Taxon fetchTaxon = Taxon.getTaxonOfRank(thisItem.getSubfamily(), thisItem.getGenus(), thisItem.getSpecies(), null);
-            fetchTaxon.setConnection(connection);
-            fetchTaxon.setHasImages();
+            fetchTaxon.setHasImages(connection);
             if (fetchTaxon != null) {
                 if (fetchTaxon.isImaged()) {
                     //s_log.warn("getExtraSpeciesList() imaged name:" + name);

@@ -48,12 +48,14 @@ public class Subfamily extends Family implements Serializable {
    parent_taxon_id could be the parent of a genera.  Sloppy.  Why loop though all the 
    distinct rows below.  Only need one.  */        
 
+    /*
     public void setTaxonomicInfo(String project) throws SQLException {
         s_log.warn("setTaxonomicInfo(project) is deprecated");
         setTaxonomicInfo();
     }
-    
-    public void setTaxonomicInfo() throws SQLException {
+    */
+
+    public void setTaxonomicInfo(Connection connection) throws SQLException {
 		String theQuery = null;
 		theQuery = "select distinct taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name, taxon.family " 
 			+ " from taxon " 
@@ -86,7 +88,7 @@ public class Subfamily extends Family implements Serializable {
         return clause;
     }
 
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
+    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
 
         String fetchChildrenClause = "where 1 = 1";
         if (!global && overview != null) fetchChildrenClause = overview.getFetchChildrenClause();
@@ -122,10 +124,9 @@ public class Subfamily extends Family implements Serializable {
                 child.setSubfamily(subfamily);
                 child.setGenus(genus);
                 child.setRank("genus");
-                child.setConnection(connection);
-                child.init(); // added Oct 3, 2012 Mark
+                child.init(connection); // added Oct 3, 2012 Mark
                 if (getChildImages) {
-                    child.setImages(overview, caste);
+                    child.setImages(connection, overview, caste);
                 }// else {
                 //    child.setHasImages(overview);
                 //}
@@ -136,10 +137,9 @@ public class Subfamily extends Family implements Serializable {
                 }
 
                 //A.log("setChildren() overview:" + overview + " child:" + child.getTaxonName() + " + this:" + this);                                                
-                child.initTaxonSet(overview);
+                child.initTaxonSet(connection, overview);
                 child.generateBrowserParams(overview);
 
-                child.setConnection(null);
                 theseChildren.add(child);
             }
         } catch (SQLException e) {

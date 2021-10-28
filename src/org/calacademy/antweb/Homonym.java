@@ -15,123 +15,27 @@ public class Homonym extends Taxon implements Serializable {
     private static Log s_log = LogFactory.getLog(Homonym.class);
 
     private Taxon seniorHomonym = null;
-
-    // Without the authorDate, will be correct taxonName, but random homonym
-    public static Homonym getInfoInstance(Connection connection, String taxonName) {
-        TaxonDb taxonDb = new TaxonDb(connection);
-        Homonym homonym = (Homonym) taxonDb.getInfoInstance(connection, "homonym", taxonName); 
-        if (homonym == null) {
-          return null; 
-        }
-        try {
-          homonym.setSeniorHomonym();
-        } catch (SQLException e) {
-          s_log.warn("getInfoInstance() e:" + e);
-        }
-        A.log("getInfoInstance(conn, taxonName) taxonName:" + taxonName + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());  
-        return homonym;
-    }  
-       
-    public static Homonym getInfoInstance(Connection connection, String taxonName, String authorDate) {
-        TaxonDb taxonDb = new TaxonDb(connection);
-        Homonym homonym = (Homonym) HomonymDb.getInfoInstance(connection, taxonName, authorDate);  
-        if (homonym == null) {
-          return null; 
-        }
-        try {
-          homonym.setSeniorHomonym();
-        } catch (SQLException e) {
-          s_log.warn("getInfoInstance() e:" + e);
-        }
-        A.log("getInfoInstance(conn, taxonName, authorDate) taxonName:" + taxonName + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());  
-        return homonym;
-    }  
-                   
-    /*
-    // This does not carry the authorDate over from the antcat ID.  Will be correct taxonName, but could be wrong homonym
-    public static String getTaxonNameFromAntcatId(Connection connection, int antcatId) {
-        TaxonDb taxonDb = new TaxonDb(connection);
-        return taxonDb.getTaxonNameFromAntcatId(connection, "homonym", antcatId);
-    } */
-    public static Homonym getInfoInstance(Connection connection, int antcatId) {
-        HomonymDb homonymDb = new HomonymDb(connection);
-        Homonym homonym = (Homonym) homonymDb.getInfoInstance(connection, antcatId);  
-        try {
-          homonym.setSeniorHomonym();
-        } catch (SQLException e) {
-          s_log.warn("getInfoInstance() e:" + e);
-        }
-        A.log("getInfoInstance(conn, antcatId) antcatId:" + antcatId + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());  
-        return homonym;
-    }             
-
-    public static Homonym getInfoInstance(Connection connection, String family, String subfamily, String genus
-      , String species, String subspecies, String authorDate) throws SQLException {
-     //This method gets taxonName from info (relatively) quickly.  Used to determine caching.
-
-        Homonym homonym = new Homonym();
-
-        if (family != null) homonym.setFamily(family);     
-        if (subfamily != null) homonym.setSubfamily(subfamily);     
-        if (genus != null) homonym.setGenus(genus);
-        if (species != null) homonym.setSpecies(species); 
-        if (subspecies != null) homonym.setSubspecies(subspecies);
-                    
-        homonym.setAuthorDate(authorDate);                    
-        homonym.setConnection(connection);
-
-        //A.log("getInfoInstance() order:" + homonym.getOrderName() + " family:" + homonym.getFamily() 
-        //  + " subfamily:" + homonym.getSubfamily() + " genus:" + homonym.getGenus());
-
-        homonym.setTaxonomicInfo();
-
-        if (!homonym.isExtant()) {
-          A.log("getInfoInstance() homonym not extant:" + homonym + " isExtant:" + homonym.isExtant());
-          return null;        
-        }
-        
-        homonym.setSeeAlso();
-       
-        //A.log("getInfoInstance() taxon:" + homonym.getClass() + " isExtant:" + homonym.isExtant() 
-        //  + " homonym:" + homonym);
-          
-
-        return homonym;
-    }
     
-    public static Taxon getInstance(Connection connection, String family, String subfamily, String genus
-      , String species, String subspecies, String authorDate) throws SQLException {
 
-        Homonym homonym = Homonym.getInfoInstance(connection, family, subfamily, genus, species, subspecies, authorDate);
-        
-        if (homonym == null) return null;
-
-        homonym.finishInstance();
-
-        return homonym;
-    }
-
-    public void finishInstance() throws SQLException {    
+    public void finishInstance(Connection connection) throws SQLException {
         //A.log("getInstance() taxon:" + taxon.getClass() + " isExtant:" + taxon.isExtant() + " subfamily:" + taxon.getSubfamily());
 
-        init();
+        init(connection);
         setDescription(new HomonymDescEditDb(connection).getDescEdits(this, false));
-        setHabitats();
-        setMethods();
-        setTypes();      
+        setHabitats(connection);
+        setMethods(connection);
+        setTypes(connection);
               
-        setElevations();
-        setCollectDateRange();
+        setElevations(connection);
+        setCollectDateRange(connection);
         
-        setSeniorHomonym();
-        setHomonymAuthorDates();        
+        setSeniorHomonym(connection);
+        setHomonymAuthorDates(connection);
     }
 
     
-    public void setTaxonomicInfo() throws SQLException {
+    public void setTaxonomicInfo(Connection connection) throws SQLException {
         A.log("setTaxonomicInfo()");
-
-        //setSubspecies(name);
 
         String theQuery = null;
         
@@ -228,7 +132,7 @@ public class Homonym extends Taxon implements Serializable {
       return AntFormatter.escapeQuotes(authorDate);             
     }
         
-    public void init() throws SQLException {
+    public void init(Connection connection) throws SQLException {
         /* Beginning effort to consolidate initialization process.  Currently BrowseAction calls
            all sorts of methods to instantiate the taxon */
 
@@ -251,7 +155,7 @@ public class Homonym extends Taxon implements Serializable {
               + " and author_date = '" + getSqlAuthorDate() + "'"
               ;
 
-A.log("init() query:" + theQuery);
+            //A.log("init() query:" + theQuery);
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);
             while (rset.next()) {
@@ -304,7 +208,7 @@ A.log("init() query:" + theQuery);
         return fullName;
     }
 
-    public void setDescription(boolean isManualEntry) {
+    public void setDescription(Connection connection, boolean isManualEntry) {
     /* 
      * We have removed project from description_edit table.  This method should work fine with this 
      * property removed.  There will still be a collection of description records per taxon (title).
@@ -361,15 +265,15 @@ A.log("init() query:" + theQuery);
         this.description = description;
     }
 
-    public void setSeniorHomonym() throws SQLException {
-        seniorHomonym = Taxon.getInfoInstance(connection, getTaxonName());
+    public void setSeniorHomonym(Connection connection) throws SQLException {
+        seniorHomonym = (new TaxonDb(connection)).getTaxon(getTaxonName());
         A.log("setSeniorHomonym() homonym:" + getTaxonName() + " seniorHomonym:" + seniorHomonym);
     }
     public Taxon getSeniorHomonym() {
         return seniorHomonym;
     }
 
-    public void setHomonymAuthorDates() throws SQLException {
+    public void setHomonymAuthorDates(Connection connection) throws SQLException {
       Vector<String> homonymAuthorDates = new Vector<>();
         String taxonName = getTaxonName();
       Statement stmt = null;

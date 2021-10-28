@@ -22,15 +22,15 @@ public final class Subspecies extends Species implements Serializable {
     public String getName() { 
         return getSubspecies(); 
     }
-        
+
+/*
     public void setTaxonomicInfo(String project) throws SQLException {
         s_log.warn("setTaxonomicInfo(project) is deprecated");
         setTaxonomicInfo();
     }
-    
-    public void setTaxonomicInfo() throws SQLException {
-        //setSubspecies(name);
+   */
 
+    public void setTaxonomicInfo(Connection connection) throws SQLException {
         String theQuery = null;
         
 		String subfamilyClaus = "";
@@ -56,7 +56,7 @@ public final class Subspecies extends Species implements Serializable {
 		taxonDb.setTaxonomicInfo(theQuery, this);
 	}
     
-    public String getSeeAlsoSiblingSubspecies() throws SQLException {
+    public String getSeeAlsoSiblingSubspecies(Connection connection) throws SQLException {
       // Used by SetSeeAlso()    
         String siblingSubspecies = "";
         String query = "select taxon.taxon_name " 
@@ -100,7 +100,7 @@ public final class Subspecies extends Species implements Serializable {
         return clause;    
     }
 
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, String subgenus) throws SQLException {
+    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, String subgenus) throws SQLException {
       // This method does not seem to use project in it's criteria?!  SetChildrenLocalized below does...
 
         ArrayList theseChildren = new ArrayList();      
@@ -126,7 +126,6 @@ public final class Subspecies extends Species implements Serializable {
           while (rset.next()) {
             ++i;
             child = new Specimen();
-            child.setConnection(connection);
             child.setRank(Rank.SPECIMEN);
             child.setSubfamily(subfamily);
             child.setGenus(genus);
@@ -135,18 +134,17 @@ public final class Subspecies extends Species implements Serializable {
             child.setCode(rset.getString("code"));
             child.setStatus(getStatus());
             if (getChildImages) {
-                child.setImages(overview, caste);
+                child.setImages(connection, overview, caste);
             } else {
-                child.setHasImages(overview);
+                child.setHasImages(connection, overview);
             }                        
             if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
                 child.setMap(new Map(child, (LocalityOverview) overview, connection));
             }
-            child.setTaxonomicInfo();   // is this needed?  Yes, for now.
+            child.setTaxonomicInfo(connection);   // is this needed?  Yes, for now.
             child.generateBrowserParams(); 
             // child.init(); // added Oct 3, 2012 Mark.  No, can't.  Specimen has all in setTaxonomicInfo(), bad.            
-            child.initTaxonSet(overview);                 
-            child.setConnection(null);
+            child.initTaxonSet(connection, overview);
 
             // A.log("setChildren() overview:" + overview + " child:" + child.getTaxonName() + " code:" + child.getCode());                                
             theseChildren.add(child);
@@ -163,7 +161,7 @@ public final class Subspecies extends Species implements Serializable {
         setChildrenCount(theseChildren.size());
     }
     
-    public void setChildrenLocalized(Overview overview) throws SQLException {
+    public void setChildrenLocalized(Connection connection, Overview overview) throws SQLException {
     /* Called by FieldGuideAction.execute() in the case of species.
        This method uses project to figure the locality criteria does not seem to use project in it's criteria.
      */
@@ -208,18 +206,16 @@ public final class Subspecies extends Species implements Serializable {
             Specimen child = null;
             while (rset.next()) {
                 child = new Specimen();
-                child.setConnection(connection);
                 child.setRank(Rank.SPECIMEN);
                 child.setSubfamily(subfamily);
                 child.setGenus(genus);
                 child.setSpecies(species);
                 child.setSubspecies(subspecies);
                 child.setCode(rset.getString("code"));
-                child.setImages(overview);
-                child.setTaxonomicInfo();
+                child.setImages(connection, overview);
+                child.setTaxonomicInfo(connection);
                 child.generateBrowserParams(overview);
                 //child.setMap(new Map(child, project, connection));
-                child.setConnection(null);
                 theseChildren.add(child);
             }
         } finally {
@@ -277,8 +273,8 @@ public final class Subspecies extends Species implements Serializable {
       return header;
     }    
 
-    public String getData() throws SQLException {
-      setTaxonomicInfo();
+    public String getData(Connection connection) throws SQLException {
+      setTaxonomicInfo(connection);
 
       String data = "";
       String delimiter = "\t";   // ", ";

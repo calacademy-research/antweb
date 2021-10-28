@@ -190,11 +190,11 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
                 descEdit.setAccessLogin(accessLogin);
                 
                 if (descEdit.getCode() == null) {
-                  Taxon infoInstance = Taxon.getInfoInstance(getConnection(), descEdit.getTaxonName());
-                  if (infoInstance != null) {
+                  Taxon taxon = (new TaxonDb(getConnection())).getTaxon(descEdit.getTaxonName());
+                  if (taxon != null) {
                     //s_log.warn("getRecentDescEdits() taxonName:" + descEdit.getTaxonName() + " prettyName:" + infoInstance.getPrettyName() 
                     //  + " accessLoginId:" + descEdit.getAccessLoginId() + " title:" + descEdit.getTitle());                
-                    descEdit.setTaxonPrettyName(infoInstance.getPrettyName());
+                    descEdit.setTaxonPrettyName(taxon.getPrettyName());
                     descEdits.add(descEdit);
                   } else {
                     // Expected.  We should not display these.

@@ -66,9 +66,8 @@ public final class TaxaFromSearchAction extends Action {
 					theTaxon.setSpecies(species);  // was setName()
 					theTaxon.setRank("species");
 					theTaxon.setGenus(genus);
-					theTaxon.setConnection(connection);
-					theTaxon.setTaxonomicInfo(); //project);
-					theTaxon.setChildren(overview);
+					theTaxon.setTaxonomicInfo(connection); //project);
+					theTaxon.setChildren(connection, overview);
 					if (chosen != null) {
 						theTaxon.filterChildren(chosen);
 					}
@@ -83,8 +82,7 @@ public final class TaxaFromSearchAction extends Action {
 					
 					theTaxon.setBrowserParams(params);
 					//theTaxon.setDescription(project);  // was Dec 29, 2010 Mark
-					theTaxon.setImages(overview);
-					theTaxon.setConnection(null);  // Mark added July 4, 2013
+					theTaxon.setImages(connection, overview);
 					theTaxaList.add(theTaxon);
 				}
 

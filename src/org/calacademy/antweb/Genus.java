@@ -50,13 +50,14 @@ public class Genus extends Subfamily implements Serializable {
         return getGenus(); 
     }
 
-    
+/*
     public void setTaxonomicInfo(String project) throws SQLException {
         s_log.warn("setTaxonomicInfo(project) is deprecated");
         setTaxonomicInfo();
     }
-    
-    public void setTaxonomicInfo() throws SQLException {        
+ */
+
+    public void setTaxonomicInfo(Connection connection) throws SQLException {
         String subfamilyClause = "";
         if ((subfamily != null) && (!subfamily.equals("null"))) {
           subfamilyClause = " and taxon.subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "' ";
@@ -87,7 +88,7 @@ public class Genus extends Subfamily implements Serializable {
         return clause;    
     }    
 
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus)
+    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus)
             throws SQLException {
     
         // global is not used. Currently only in Species.java.
@@ -162,9 +163,7 @@ public class Genus extends Subfamily implements Serializable {
                 child.setSubgenus(rset.getString("subgenus"));
                 child.setSpeciesGroup(rset.getString("speciesgroup"));
                 child.setSpecies(rset.getString("species"));
-                child.setConnection(connection);
-
-                child.init();
+                child.init(connection);
 
                 // setupTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
                 //  s_log.info("setChildren setup time:" + setupTime);
@@ -187,7 +186,7 @@ public class Genus extends Subfamily implements Serializable {
                     if (i > Taxon.getMaxSafeChildrenCount()) {
                         // Do something?  or now, allow.
                     }
-                    child.setImages(overview, caste);
+                    child.setImages(connection, overview, caste);
                 }
 
 /*
@@ -201,13 +200,10 @@ We get both... that can't be right.
                 if (getTaxonName().contains("acanthobius"))
                     A.log("setChildren() getChildImages:" + getChildImages + " images:" + child.getHasImagesCount() + " imagess:" + child.getImages());
 
-                child.initTaxonSet(overview);
+                child.initTaxonSet(connection, overview);
 
                 child.generateBrowserParams(overview);
 
-                // imageTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
-                // now = (new GregorianCalendar()).getTimeInMillis();
-                child.setConnection(null);
                 //A.log("setChildren() project:" + project + " child:" + child.getTaxonName() + " + this:" + this);                                
                 theseChildren.add(child);
             }

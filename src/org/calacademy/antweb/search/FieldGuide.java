@@ -43,12 +43,8 @@ public class FieldGuide {
             //s_log.warn("getImages() taxonName:" + thisTaxon.getName() + " rank:" + thisTaxon.getRank());            
             //if (thisTaxon.getRank().equals("specimen")) {
 
-            thisTaxon.setConnection(connection);
-            
             //thisTaxon.setImages(overview, false);
-            thisTaxon.setImages(overview, Caste.DEFAULT);
-            
-            thisTaxon.setConnection(null);
+            thisTaxon.setImages(connection, overview, Caste.DEFAULT);
         }
     }
 

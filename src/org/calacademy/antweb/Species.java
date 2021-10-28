@@ -24,30 +24,31 @@ public class Species extends Genus implements Serializable {
         return getSpecies(); 
     }
 
+    /*
     public void setTaxonomicInfo(String project) throws SQLException {
         s_log.warn("setTaxonomicInfo(project) is deprecated");
         setTaxonomicInfo();
     }
-    
-    public void setTaxonomicInfo() throws SQLException {
-        //setSpecies(name);
-
-// Mark Jul 2013.  Remove oldSubfamily and add in subfamilyClaus
-        // remember the old stuff if it's around 
-        // Mark: What?  Why?  How and when is this a good idea?
-       // String oldSubfamily = subfamily;
-
-/*
-Mark, Feb4, 2011.  I have removed proj_taxon from this query because it only served to block the
-retrieval of taxon information in the case in which a project is entered.
-
-It would cause a page like this:
-  http://www.antweb.org/description.do?name=sabatra&genus=crematogaster&rank=species&project=
-When clicking on the species breadcrumb, would lead to the same page without description info
-because the subfamily was not retrieved, and so taxon_name was "crematogaster sabatra" instead
-of "myrmicinaecrematogaster sabatra", returning no description records.
 */
 
+    /*
+    // Mark Jul 2013.  Remove oldSubfamily and add in subfamilyClaus
+            // remember the old stuff if it's around
+            // Mark: What?  Why?  How and when is this a good idea?
+           // String oldSubfamily = subfamily;
+
+
+    Mark, Feb4, 2011.  I have removed proj_taxon from this query because it only served to block the
+    retrieval of taxon information in the case in which a project is entered.
+
+    It would cause a page like this:
+      http://www.antweb.org/description.do?name=sabatra&genus=crematogaster&rank=species&project=
+    When clicking on the species breadcrumb, would lead to the same page without description info
+    because the subfamily was not retrieved, and so taxon_name was "crematogaster sabatra" instead
+    of "myrmicinaecrematogaster sabatra", returning no description records.
+    */
+
+    public void setTaxonomicInfo(Connection connection) throws SQLException {
         String theQuery = null;
 
 		String subfamilyClaus = "";
@@ -84,7 +85,7 @@ the species name + and "_"  (that will get all the _cf, _nr, and any of
 these other _cf1 etc.
 */
 
-    public String getSeeAlsoCfAndNr() throws SQLException {
+    public String getSeeAlsoCfAndNr(Connection connection) throws SQLException {
       Statement stmt = null;
       ResultSet rset = null;
       try {
@@ -103,7 +104,7 @@ these other _cf1 etc.
             + "    or taxon.taxon_name like '" + nrTaxonName + "'"
             + notCfOrNrTaxonNameCondition
           ;
-        stmt = DBUtil.getStatement(getConnection(), "getSeeAlsoCfAndNr()"); 
+        stmt = DBUtil.getStatement(connection, "getSeeAlsoCfAndNr()");
         rset = stmt.executeQuery(query);
         //A.log("getSeeAlsoCfAndNr() query:" + query);
         while (rset.next()) {
@@ -121,7 +122,7 @@ these other _cf1 etc.
       }
     }
     
-    public String getSeeAlsoSiblingSubspecies() throws SQLException {
+    public String getSeeAlsoSiblingSubspecies(Connection connection) throws SQLException {
       // Used by SetSeeAlso()
       String siblingSubspecies = "";
       Statement stmt = null;
@@ -135,7 +136,7 @@ these other _cf1 etc.
             + "   and taxon.taxarank = 'subspecies'"
             + "   and taxon.status = 'valid'"
           ;
-        stmt = DBUtil.getStatement(getConnection(), "getSeeAlsoSiblingSubspecies()"); 
+        stmt = DBUtil.getStatement(connection, "getSeeAlsoSiblingSubspecies()");
         rset = stmt.executeQuery(query);
         while (rset.next()) {
             String taxonName = rset.getString("taxon.taxon_name");
@@ -151,19 +152,19 @@ these other _cf1 etc.
       return siblingSubspecies;
     }
 
-    public void setSeeAlso()  throws SQLException {
+    public void setSeeAlso(Connection connection)  throws SQLException {
         //super.setSeeAlso();
  
         // Don't do this now.  We have a separate section for current valid names       
         //setAlsoDatabased();
         boolean debug = false;
         
-        String cfAndNr = getSeeAlsoCfAndNr();
+        String cfAndNr = getSeeAlsoCfAndNr(connection);
         if (cfAndNr != null) seeAlso = cfAndNr;        
 
         if (debug) s_log.warn("setSeeAlso() cfAndNr:" + cfAndNr);
 
-        String siblingSubspecies = getSeeAlsoSiblingSubspecies();
+        String siblingSubspecies = getSeeAlsoSiblingSubspecies(connection);
 
         if (debug) s_log.warn("setSeeAlso() siblingSubspecies:" + siblingSubspecies);
 
@@ -207,7 +208,7 @@ these other _cf1 etc.
 
 
     // TODO after removing EOL, is this called anywhere?
-    public void setAllImages() {
+    public void setAllImages(Connection connection) {
        // called by EOL to get all images for a given genus
         Hashtable myImages = new Hashtable();
         String theQuery = null;
@@ -228,7 +229,7 @@ these other _cf1 etc.
      
             A.log("setAllImages() genus image query: " + theQuery);
             
-            stmt = DBUtil.getStatement(getConnection(), "setAllImages()");
+            stmt = DBUtil.getStatement(connection, "setAllImages()");
             rset = stmt.executeQuery(theQuery);
 
                 String shot = null;
@@ -278,7 +279,7 @@ these other _cf1 etc.
         return clause;    
     }
     
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
+    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
       // This method does not seem to use project in it's criteria?!  SetChildrenLocalized below does...
   
         ArrayList theseChildren = new ArrayList();
@@ -301,7 +302,7 @@ these other _cf1 etc.
         Statement stmt = null;
         ResultSet rset = null;
         try {
-          stmt = DBUtil.getStatement(getConnection(), "setChildren()"); 
+          stmt = DBUtil.getStatement(connection, "setChildren()");
           rset = stmt.executeQuery(query);
           Specimen child = null;
 
@@ -311,7 +312,6 @@ these other _cf1 etc.
           while (rset.next()) {
             ++i;
             child = new Specimen();
-            child.setConnection(connection);
             child.setRank(Rank.SPECIMEN);
             child.setSubfamily(subfamily);
             child.setGenus(genus);
@@ -319,20 +319,19 @@ these other _cf1 etc.
             child.setCode(rset.getString("code"));
             child.setStatus(getStatus());
             if (getChildImages) {
-                child.setImages(overview, caste);
+                child.setImages(connection, overview, caste);
             } else {
-                child.setHasImages(overview);
+                child.setHasImages(connection, overview);
             }
             if (AntwebDebug.isDebugTaxon(getTaxonName())) A.log("setChildren(7) setHasImages code:" + child.getCode() + " hasImages:" + child.getHasImages());
 
             if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
                 child.setMap(new Map(child, (LocalityOverview) overview, connection));
             }
-            child.setTaxonomicInfo();   // is this needed?  Yes, for now.
+            child.setTaxonomicInfo(connection);   // is this needed?  Yes, for now.
             child.generateBrowserParams(); 
             // child.init(); // added Oct 3, 2012 Mark.  No, can't.  Specimen has all in setTaxonomicInfo(), bad.            
-            child.initTaxonSet(overview);                 
-            child.setConnection(null);
+            child.initTaxonSet(connection, overview);
 
             //A.log("setChildren() overview:" + overview + " child:" + child.getTaxonName() + " code:" + child.getCode() + " bioregion:" + child.getBioregion());                                
             theseChildren.add(child);
@@ -349,7 +348,7 @@ these other _cf1 etc.
         //A.log("setChildren() size:" + getChildrenCount() + " query:" + query);
     }
     
-    public void setChildrenLocalized(Overview overview) throws SQLException {
+    public void setChildrenLocalized(Connection connection, Overview overview) throws SQLException {
     /* Called by FieldGuideAction.execute() in the case of species.
        ??? Used to be, this method uses project to figure the locality criteria does not use project in it's criteria.
      */      
@@ -379,22 +378,20 @@ these other _cf1 etc.
             }
             //A.log("setChildrenLocalized() query:" + query);
             
-            stmt = DBUtil.getStatement(getConnection(), "setChildrenLocalized()"); 
+            stmt = DBUtil.getStatement(connection, "setChildrenLocalized()");
             rset = stmt.executeQuery(query);
             Specimen child = null;
             while (rset.next()) {
                 child = new Specimen();
-                child.setConnection(connection);
                 child.setRank(Rank.SPECIMEN);
                 child.setSubfamily(subfamily);
                 child.setGenus(genus);
                 child.setSpecies(species);
                 child.setCode(rset.getString("code"));
-                child.setImages(overview);
-                child.setTaxonomicInfo();
+                child.setImages(connection, overview);
+                child.setTaxonomicInfo(connection);
                 child.generateBrowserParams(overview);
                 //child.setMap(new Map(child, overview, connection));
-                child.setConnection(null);
                 theseChildren.add(child);
             }
         } catch (java.sql.SQLIntegrityConstraintViolationException e) {
@@ -788,8 +785,8 @@ To fix this proper would involve rewriting Species.sort()
       return header;
     }    
 
-    public String getData() throws SQLException {
-      setTaxonomicInfo();
+    public String getData(Connection connection) throws SQLException {
+      setTaxonomicInfo(connection);
 
       String data = "";
       String delimiter = "\t";   // ", ";
@@ -820,7 +817,7 @@ To fix this proper would involve rewriting Species.sort()
         return hasSpecimenData;
     }
     
-    public void setHabitats() {
+    public void setHabitats(Connection connection) {
         //Formatter formatter = new Formatter();
         Vector habitats = new Vector();
         String taxonName = null;
@@ -841,7 +838,7 @@ To fix this proper would involve rewriting Species.sort()
               + " order by count(habitat) desc"
               + " limit 25";
 
-            stmt = DBUtil.getStatement(getConnection(), "setHabitats()"); 
+            stmt = DBUtil.getStatement(connection, "setHabitats()");
             rset = stmt.executeQuery(theQuery);
 
             String count = null;
@@ -865,7 +862,7 @@ To fix this proper would involve rewriting Species.sort()
         this.habitats = habitats;
     }
     
-    public void setMicrohabitats() {
+    public void setMicrohabitats(Connection connection) {
         //Formatter formatter = new Formatter();
         Vector microhabitats = new Vector();
         String taxonName = null;
@@ -888,7 +885,7 @@ To fix this proper would involve rewriting Species.sort()
 
 //A.log("setMicrohabitats() query:" + theQuery);
 
-            stmt = DBUtil.getStatement(getConnection(), "setMicrohabitats()"); 
+            stmt = DBUtil.getStatement(connection, "setMicrohabitats()");
             rset = stmt.executeQuery(theQuery);
 
             String count = null;
@@ -912,7 +909,7 @@ To fix this proper would involve rewriting Species.sort()
         this.microhabitats = microhabitats;
     }    
     
-    public void setMethods() {
+    public void setMethods(Connection connection) {
         Vector methods = new Vector();
         String taxonName = null;
         Statement stmt = null;
@@ -930,7 +927,7 @@ To fix this proper would involve rewriting Species.sort()
               + " order by count(method) desc"
               + " limit 25";
 
-            stmt = DBUtil.getStatement(getConnection(), "setMethods()"); 
+            stmt = DBUtil.getStatement(connection, "setMethods()");
             rset = stmt.executeQuery(theQuery);
 
             String count = null;
@@ -956,7 +953,7 @@ To fix this proper would involve rewriting Species.sort()
     }    
         
         
-    public void setTypes() {
+    public void setTypes(Connection connection) {
         //Formatter formatter = new Formatter();
         String typeString = "";
         String taxonName = null;
@@ -973,7 +970,7 @@ To fix this proper would involve rewriting Species.sort()
               + " and type_status is not null and type_status != ''"
               + " order by type_status";
 
-            stmt = DBUtil.getStatement(getConnection(), "setTypes()"); 
+            stmt = DBUtil.getStatement(connection, "setTypes()");
             rset = stmt.executeQuery(theQuery);
 
             String count = null;

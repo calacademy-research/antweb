@@ -261,9 +261,7 @@ public final class CompareResultsAction extends ResultsAction {
 				
 				taxon.setHasImages(true);
 				taxon.generateBrowserParams(project);
-				taxon.setConnection(connection);
-				taxon.setImages(project);
-				taxon.setConnection(null);
+				taxon.setImages(connection, project);
 
 				Integer chosenListGetCount = 0;
 				if (chosenList.size() > count) {

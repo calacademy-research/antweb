@@ -120,7 +120,8 @@ public final class SpecimenListAction extends Action {
               }		              
       
               connection = DBUtil.getConnection(dataSource, "SpecimenListAction.execute()");
-              Taxon taxon = Taxon.getInfoInstance(connection, taxonName);
+              Taxon taxon = (new TaxonDb(connection)).getTaxon(taxonName);
+
               if (taxon == null) {
                 s_log.warn("execute() taxon not found:" + taxonName);
                 return null;
@@ -239,8 +240,7 @@ public final class SpecimenListAction extends Action {
             ++specimenCount;
 
             Specimen specimen = Specimen.getShallowInstance(code, connection);
-            dataBuffer.append(specimen.getData() + "\n");  
-            specimen.setConnection(null);
+            dataBuffer.append(specimen.getData(connection) + "\n");
 
             // Write out
             if ((specimenCount % 10000) == 0) {
@@ -291,8 +291,7 @@ public final class SpecimenListAction extends Action {
                 ++specimenCount;
 
                 Specimen specimen = Specimen.getShallowInstance(code, connection);
-                dataBuffer.append(specimen.getData() + "\n");  
-                specimen.setConnection(null);
+                dataBuffer.append(specimen.getData(connection) + "\n");
 
                 if ((specimenCount % 10000) == 0) {
                     s_log.warn("generateAllAntwebAnts() specimenCount:" + specimenCount + " writing to:" + fullPath);

@@ -32,9 +32,10 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
       try {
         javax.sql.DataSource dataSource = getDataSource(request, "conPool");
         connection = DBUtil.getConnection(dataSource, "SpeciesListMoveAction.execute()");      
+        TaxonDb taxonDb = new TaxonDb(connection);
 
-        Taxon fromTaxon = Taxon.getDummyInfoInstance(connection, fromTaxonName);
-        Taxon toTaxon = Taxon.getDummyInfoInstance(connection, toTaxonName);
+        Taxon fromTaxon = taxonDb.getTaxon(fromTaxonName);
+        Taxon toTaxon = taxonDb.getTaxon(toTaxonName);
 
         if (fromTaxon == null) {
           String message = "fromTaxonName:" + fromTaxonName + " not found";
@@ -134,7 +135,8 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
         if (!confirm) {
             message = taxonDb.prepareMoveTaxon(fromTaxonName, toTaxonName);
         } else {
-          if (Taxon.getDummyInfoInstance(connection, toTaxonName) != null) {
+          Taxon taxon = taxonDb.getTaxon(toTaxonName);
+          if (taxon != null) {
               message = taxonDb.combineTaxa(fromTaxonName, toTaxonName);
           } else {
               message = taxonDb.renameTaxon(fromTaxonName, toTaxonName);

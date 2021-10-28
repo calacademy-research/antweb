@@ -93,12 +93,12 @@
     for (Taxon thisChild : theChildren) {
         //A.log("mapComparison-body.jsp Child:" + thisChild);
 
-          //AntwebUtil.log("mapComparison-body.jsp taxon:" + thisChild);
+        //AntwebUtil.log("mapComparison-body.jsp taxon:" + thisChild);
 
-          innerloop = 0;
+        innerloop = 0;
         while (innerloop < 3) {
 
-            // AntwebUtil.log("mapComparison-body.jsp taxon:" + thisChild + " innerloop:" + innerloop);
+            //AntwebUtil.log("mapComparison-body.jsp taxon:" + thisChild + " innerloop:" + innerloop);
 
             if ((thisChild.getMap() != null) && (thisChild.getMap().getGoogleMapFunction() != null)) {
         

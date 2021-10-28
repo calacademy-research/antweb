@@ -10,6 +10,7 @@ import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.*;
 
+import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.search.FieldGuide;
 import org.calacademy.antweb.*;
@@ -140,7 +141,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);
                 Taxon taxon = null;
 				if (ResultRank.SPECIES.equals(resultRank) || ResultRank.SPECIMEN.equals(resultRank)) {
-                    taxon = Taxon.getInstance(connection, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), resultItem.getSpecies(), null, "species");
+                    taxon = (new TaxonDb(connection)).getTaxon(TaxonDb.FULL, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), resultItem.getSpecies(), null, Rank.SPECIES);
                     if (taxon == null) {
                       s_log.error("getChoseTaxa() subfamily:" + resultItem.getSubfamily() + " species:" + resultItem.getSpecies() + " genus:" + resultItem.getGenus());
                       // Last time this happened (in dev env) it was a data problem, remedied by a production database reload.
@@ -149,9 +150,10 @@ public final class FieldGuideResultsAction extends ResultsAction {
              	// taxon.setChildrenLocalized(project);
 			} else {
   				 if (ResultRank.GENUS.equals(resultRank)) {
-                    taxon = Taxon.getInstance(connection, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), null, null, resultRank);
+                    taxon = (new TaxonDb(connection)).getTaxon(TaxonDb.FULL, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), null, null, resultRank);
                 } else if (ResultRank.SUBFAMILY.equals(resultRank)) {
-                    taxon = Taxon.getInstance(connection, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getSubfamily(), null, null, resultRank);                
+                    //taxon = Taxon.getInstance(connection, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getSubfamily(), null, null, resultRank);  // Subfamily mentionned twice was a bug?
+                    taxon = (new TaxonDb(connection)).getTaxon(TaxonDb.FULL, Family.FORMICIDAE, resultItem.getSubfamily(), null, null, null, resultRank);
                 }                  
 	   		      //taxon.setChildren(project);
 			}
@@ -159,7 +161,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             taxon.setMap(map);	  			  
 
             //taxon.setImages(overview, false);                 
-            taxon.setImages(overview, caste);
+            taxon.setImages(connection, overview, caste);
             chosenTaxa.add(taxon);
         }
         Collections.sort(chosenTaxa);

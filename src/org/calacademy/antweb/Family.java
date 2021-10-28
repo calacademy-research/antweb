@@ -28,12 +28,7 @@ public class Family extends Taxon implements Serializable {
         return "Subfamilies";
     }
 
-    public void setTaxonomicInfo(String project) throws SQLException {
-        s_log.warn("setTaxonomicInfo(project) is deprecated");
-        setTaxonomicInfo();
-    }
-    
-    public void setTaxonomicInfo() throws SQLException {
+    public void setTaxonomicInfo(Connection connection) throws SQLException {
         //s_log.warn("setTaxonomicInfo(" + project + ") family:" + getFamily());   
         String theQuery = null;
 
@@ -55,7 +50,7 @@ public class Family extends Taxon implements Serializable {
 		taxonDb.setTaxonomicInfo(theQuery, this);
     }                
 
-    public void setChildren(Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
+    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
 
         String fetchChildrenClause = "where 1 = 1";
         if (!global && overview != null) fetchChildrenClause = overview.getFetchChildrenClause();
@@ -76,7 +71,7 @@ public class Family extends Taxon implements Serializable {
                 + statusSet.getAndCriteria()
                 + " order by taxon.subfamily";
 
-            stmt = DBUtil.getStatement(getConnection(), "setChildren()"); 
+            stmt = DBUtil.getStatement(connection, "setChildren()");
             rset = stmt.executeQuery(theQuery);
 
             //A.log("setChildren() query:" + theQuery);
@@ -89,23 +84,19 @@ public class Family extends Taxon implements Serializable {
                 child = new Subfamily();
                 child.setRank(Rank.SUBFAMILY);
                 child.setSubfamily(rset.getString("subfamily"));
-                child.setConnection(connection);
-                
-                child.init();
+
+                child.init(connection);
                 
                 if (getChildImages) {
                     //A.log("setChildren() setImages(" + overview + ")");
-                    child.setImages(overview, caste);
-                }// else {
-                //    child.setHasImages(overview);
-                //}    
+                    child.setImages(connection, overview, caste);
+                }
                 
                 //A.log("setChildren(5) overview:" + overview + " child:" + child.getTaxonName() + " getChildMaps:" + getChildMaps + " getChildImages:" + getChildImages);
                 
-                child.initTaxonSet(overview);
+                child.initTaxonSet(connection, overview);
                 child.generateBrowserParams(overview);
                 
-                child.setConnection(null);
                 theseChildren.add(child);
             }
 

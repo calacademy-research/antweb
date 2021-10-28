@@ -140,15 +140,13 @@ public final class SlideShowAction extends Action {
     
     private Taxon getNextTaxon(ArrayList slides, int index, Connection connection, String rank) throws SQLException {
         Taxon taxon = Taxon.getTaxonOfRank(rank);
-        taxon.setConnection(connection);
         if (index >= slides.size()) return taxon;
         //taxon.setName((String) slides.get(index));
         taxon.setGenus((String) slides.get(index));
-        taxon.setTaxonomicInfo(); //project.getName()
+        taxon.setTaxonomicInfo(connection); //project.getName()
         Project worldants = ProjectMgr.getProject(Project.WORLDANTS);
-        taxon.setImages(worldants);
+        taxon.setImages(connection, worldants);
         String theParams = "genus=" + (String) slides.get(index) + "&rank=genus";
-        taxon.setConnection(null);
         taxon.setBrowserParams(theParams);
         taxon.setMap(new Map(taxon, worldants, connection));
         return taxon;

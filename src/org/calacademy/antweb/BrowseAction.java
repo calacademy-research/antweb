@@ -8,6 +8,9 @@ import java.sql.*;
 
 import javax.sql.DataSource;
 
+import org.calacademy.antweb.home.TaxonDb;
+import org.calacademy.antweb.home.HomonymDb;
+
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
@@ -252,6 +255,8 @@ public class BrowseAction extends DescriptionAction {
 		  connection = DBUtil.getConnection(dataSource, dbUtilName, HttpUtil.getTarget(request));
 		  if (connection == null) s_log.error("execute() Null connection !!!" + AntwebUtil.getRequestInfo(request));
 
+		  TaxonDb taxonDb = new TaxonDb(connection);
+
           // To be removed when threat of lost geolocale_taxa has passed.
           //(new GeolocaleTaxonDb(connection)).hasCalMorphos(); 
 
@@ -265,18 +270,17 @@ public class BrowseAction extends DescriptionAction {
 			  //s_log.warn("execute() getInstance()");
 			  
               //A.log("execute  () family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank);
-			  
-			  taxon = Taxon.getInstance(connection, family, subfamily, genus, species, subspecies, rank);
+
+			  //taxon = Taxon.getInstance(connection, family, subfamily, genus, species, subspecies, rank);
+			  taxon = taxonDb.getTaxon(TaxonDb.FULL, family, subfamily, genus, species, subspecies, rank);
               //A.log("execute() 1 desc:" + taxon.getDescription().size());
 
 			  //A.log("execute() taxon.getInstance():" + taxon);
-			} else {
-			  taxon.finishInstance();
 			}
 		  }
 		  if (taxon == null) {
 			// Perhaps it is a Homonym...
-			taxon = Homonym.getInstance(connection, family, subfamily, genus, species, subspecies, authorDate);
+			taxon = (new HomonymDb(connection)).getFullHomonym(family, subfamily, genus, species, subspecies, authorDate);
             //A.log("execute() homonym:" + taxon);
 			/* See the homonyms of /description.do?subfamily=formicinae&genus=camponotus
 			They are actually of rank: subgenus
@@ -304,7 +308,7 @@ public class BrowseAction extends DescriptionAction {
           }
           //A.log("execute() 2 desc:" + taxon.getDescription().size());
 
-		  taxon.initTaxonSet(overview);
+		  taxon.initTaxonSet(connection, overview);
 
 /*
           if (browseForm.getResetProject()) {
@@ -337,7 +341,7 @@ public class BrowseAction extends DescriptionAction {
 		  }
 
 		  String facet = HttpUtil.getFacet(request);
-		  taxon.setChangeViewOptions(overview, facet);
+		  taxon.setChangeViewOptions(connection, overview, facet);
 						
 		  //A.log("execute() saveDescriptionEdit accessGroup:" + accessGroup + " taxon:" + taxon); 
 		  boolean success = saveDescriptionEdit(browseForm, taxon, accessLogin, request, connection);   
@@ -365,7 +369,7 @@ public class BrowseAction extends DescriptionAction {
           String subgenus = browseForm.getSubgenus();
           //A.log("execute() subgenus:" + subgenus);
 
-  		  taxon.setImages(overview, caste);
+  		  taxon.setImages(connection, overview, caste);
 
 		  if (logTimes) s_log.warn("execute() statusSetStr:" + statusSetStr);
 
@@ -387,7 +391,7 @@ public class BrowseAction extends DescriptionAction {
    	  	        http://localhost/antweb/browse.do?subfamily=dolichoderinae&rank=subfamily&bioregionName=Neotropical		
 			*/
               
-			taxon.setChildren(overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
+			taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
 
             //A.log("execute() childrenSize:" + taxon.getChildren().size());
 
@@ -597,19 +601,19 @@ We are showin the full map of ponerinae for every adm1.
             //String commonName = Formatter.initCap(taxonName);
               //A.log("6 commonName:" + commonName);
               
-			fetchTaxon = Taxon.getInfoInstance(connection, taxonName);              
+			fetchTaxon = (new TaxonDb(connection)).getTaxon(taxonName);
 		  if (fetchTaxon == null) {
               //A.log("5");
 			if (authorDate == null) 
-			  fetchTaxon = Homonym.getInfoInstance(connection, taxonName);
+			  fetchTaxon = (new HomonymDb(connection)).getHomonym(taxonName);
 			else 
-			  fetchTaxon = Homonym.getInfoInstance(connection, taxonName, authorDate);
+			  fetchTaxon = (new HomonymDb(connection)).getHomonym(taxonName, authorDate);
 		  } 
 		  if (fetchTaxon == null) {
             String commonTaxonName = CommonNames.get(taxonName);
             if (commonTaxonName != null) {
               //A.log("6");
-              fetchTaxon = Taxon.getInfoInstance(connection, commonTaxonName);
+              fetchTaxon = (new TaxonDb(connection)).getTaxon(commonTaxonName);
             }		  
 		  }
 		}
@@ -620,15 +624,18 @@ We are showin the full map of ponerinae for every adm1.
 
 		// fetch with Antcat ID
 		if ((fetchTaxon == null) && (antcatId != 0)) {
-		  taxonName = Taxon.getTaxonNameFromAntcatId(connection, antcatId);
+
+		  TaxonDb taxonDb = new TaxonDb(connection);
+          taxonName = taxonDb.getTaxonNameFromAntcatId("taxon", antcatId);
+
 		  if (taxonName == null) {
 			request.setAttribute("message", "Taxon name not found for antcatId:" + antcatId);
 			return (mapping.findForward("message"));
 		  }
-		  fetchTaxon = Taxon.getInfoInstance(connection, taxonName);
+		  fetchTaxon = (new TaxonDb(connection)).getTaxon(taxonName);
 
 		  if (fetchTaxon == null) {
-			fetchTaxon = Homonym.getInfoInstance(connection, browseForm.getAntcatId());
+			fetchTaxon = (new HomonymDb(connection)).getHomonym(browseForm.getAntcatId());
 			taxonName = fetchTaxon.getTaxonName();
 		  }
 		}
