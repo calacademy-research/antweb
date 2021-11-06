@@ -71,15 +71,6 @@ public class AntwebMgr {
                 AntwebMgr.initializationComplete();
             } catch (Exception e) {
                 AntwebUtil.log("error running thread e:" + e.getMessage());
-            } finally {
-/*
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    AntwebUtil.log("populate() e:" + e);
-                }
- 
- */
             }
 
 // REFACTOR: Problematic. IsPopulated is not trustworthy. It is set before the thread completes.
@@ -225,7 +216,7 @@ public class AntwebMgr {
         }
     }
 
-    //Invoked from UtilAction to, in a separate thread, populate the curators with adm1.
+    //Invoked from UtilAction to, in a separate thread..
     public static void postInitialize(Connection connection) throws SQLException, IOException {
         Date start = new Date();
         s_log.warn("postInitialize() begin");

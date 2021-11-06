@@ -34,7 +34,12 @@ public class TaxonDb extends AntwebDb {
     }
 
     // Least data possible. Basically just a placeholder for a given taxon.
+    public static int s_dummyTaxonFetchCount = 0;
     public DummyTaxon getDummyTaxon(String taxonName) throws SQLException {
+        ++s_dummyTaxonFetchCount;
+
+        if (TaxonMgr.isUseRefresh()) AntwebUtil.logFirstStackTrace();
+
         return super.getDummyTaxon(taxonName, "taxon");
     }
 
@@ -758,6 +763,7 @@ public class TaxonDb extends AntwebDb {
       return count + " records updated";
     }          
 
+    public static int s_currentValidFetchCount = 0;
     private static String s_lastCurrentValidTaxonName = null;
     public static String getCurrentValidTaxonName(Connection connection, String currentValidName) {
         if (currentValidName == null) return null;
@@ -773,7 +779,8 @@ public class TaxonDb extends AntwebDb {
             rset = stmt.executeQuery(theQuery);
             while (rset.next()) {
                 taxonName = rset.getString("taxon_name");
-                s_lastCurrentValidTaxonName = taxonName; 
+                s_lastCurrentValidTaxonName = taxonName;
+                s_currentValidFetchCount = s_currentValidFetchCount + 1;
                 //A.log("getCurrentValidTaxonName() taxonName:" + taxonName);
             }
         } catch (SQLException e) {
@@ -787,7 +794,6 @@ public class TaxonDb extends AntwebDb {
         if (count > 1) s_log.error("getCurrentValidTaxonName() Investigate.  should not have multiple valid entries for currentValidName:" + currentValidName);
         return taxonName;
     }
-
 
     public boolean isExistingSubfamilyForAGenus(String family, String subfamily, String genus) 
       throws SQLException {

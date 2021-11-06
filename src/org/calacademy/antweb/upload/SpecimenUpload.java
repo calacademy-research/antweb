@@ -211,9 +211,14 @@ public class SpecimenUpload extends SpecimenUploadParse {
                 A.log("deleteOrphanedSpeciesFromSource() returns:" + message);
                 if (message != null && !AntwebProps.isDevMode()) {
                   getUploadDetails().setMessage(message);
-                }                
+                }
+
+                if (TaxonMgr.s_useRefreshedTaxonMgr) AntwebUtil.log("importSpecimens() TaxonDb.s_currentValidFetchCount = " + TaxonDb.s_currentValidFetchCount
+                        + " TaxonMgr.refreshTaxonCount:" + TaxonMgr.s_refreshTaxonCount + " TaxonDb.s_dummyFetchCount:" + TaxonDb.s_dummyTaxonFetchCount
+                        + " HomonymDb.s_dummyHomonymFetchCount:" + HomonymDb.s_dummyHomonymFetchCount+ " gottenTaxon:" + TaxonMgr.s_gottenTaxon);
+
             } catch (AntwebException e) {
-              s_log.warn("e:" + e);
+              s_log.warn("importSpecimens() e:" + e);
               getUploadDetails().getMessageMgr().addToMessages(MessageMgr.noRecordsProcessed, e.getMessage());
               //throw e;
             } catch (TestException e) {
@@ -225,7 +230,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                   getConnection().rollback();
                 }
               } catch (SQLException e2) {
-                s_log.error("execute() rollback e:" + e2);
+                s_log.error("importSpecimens() rollback e:" + e2);
               }
             }
 

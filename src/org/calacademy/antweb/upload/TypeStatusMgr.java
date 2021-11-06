@@ -52,7 +52,10 @@ public class TypeStatusMgr extends Action {
                     //String taxonName = "Anochetus daedalus";
                     //String taxonName = "ponerinaeanochetus daedalus";
                     if (taxonName != null) {
-                        Species species = TaxonMgr.getSpecies(connection, taxonName);
+                        Species species = TaxonMgr.getSpecies(connection, taxonName);  // This is slow. 40 seconds. Designed for specimen upload. Is this correct?
+
+                        // Should this be Species species = (Species) TaxonMgr.getTaxon(taxonName); // ?
+                        
                         if (species != null) {
                             HomonymDb homonymDb = new HomonymDb(connection);
                             boolean isHomonym = homonymDb.isHomonym(taxonName);

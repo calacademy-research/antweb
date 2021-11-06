@@ -49,8 +49,9 @@ public final class TestAction extends Action {
 				    String taxonName = "ponerinaeanochetus daedalus";
 					if (taxonName != null) {
 						++speciesFound;
-						Species species = TaxonMgr.getSpecies(connection, taxonName);
+						//Species species = TaxonMgr.getSpecies(connection, taxonName);
 
+						Taxon species = TaxonMgr.getTaxon(taxonName);
 						message = "execute() taxonName:" + taxonName + " speiciesFound:" + speciesFound + " species:" + species;
 						A.log(message);
 					}

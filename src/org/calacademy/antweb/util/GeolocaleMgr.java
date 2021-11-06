@@ -66,7 +66,7 @@ public class GeolocaleMgr extends Manager {
         logDeep(s_regions);
     }
 
-    //Called through UtilAction to, in a separate thread, populate the curators with adm1.
+    //Called through UtilAction to, in a separate thread.
     public static void postInitialize(Connection connection) {
         //
     }

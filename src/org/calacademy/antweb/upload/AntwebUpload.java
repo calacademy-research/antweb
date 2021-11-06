@@ -131,7 +131,15 @@ public class AntwebUpload {
 
         // if record already exists (in taxon table) then update, if valid.
         if ("taxon".equals(table)) {
-            DummyTaxon dummyTaxon = new TaxonDb(getConnection()).getDummyTaxon(taxonName, "taxon");
+
+            //DummyTaxon dummyTaxon = new TaxonDb(getConnection()).getDummyTaxon(taxonName, "taxon");
+            Taxon dummyTaxon = null;
+            if (TaxonMgr.s_useRefreshedTaxonMgr) {
+                dummyTaxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+            } else {
+                dummyTaxon = new TaxonDb(getConnection()).getDummyTaxon(taxonName, "taxon");
+            }
+
             if (dummyTaxon != null) {
                 if (isParent) {
                     return 0; // Already exists. Great.
@@ -212,16 +220,22 @@ public class AntwebUpload {
             }
 
             String query = getInsertionQuery(item, table);
+
             Statement stmt = null;
             try {
                 stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.saveTaxon()");
 
                 ++countUploaded;
                 if (table.equals("taxon")) taxonQueryHashMap.put(taxonName, query);
-                int rowCount = stmt.executeUpdate(query);
-                c += rowCount;
 
+                int rowCount = stmt.executeUpdate(query);
+
+                c += rowCount;
                 if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
+
+                // See TaxonMgr.refreshTaxon() for documentation.
+                if (TaxonMgr.s_useRefreshedTaxonMgr && c > 0) TaxonMgr.refreshTaxon(getConnection(), taxonName);
+
             } catch (java.sql.SQLIntegrityConstraintViolationException e) {
                 s_log.warn("saveTaxon() 4 e:" + e + " query:" + query);
             } catch (SQLException e) {
@@ -230,6 +244,7 @@ public class AntwebUpload {
             } finally {
                 DBUtil.close(stmt, "AntwebUpload.saveTaxon()");
             }
+
         }
 
         // New functionality. Parent taxons are handled.
@@ -503,7 +518,15 @@ public class AntwebUpload {
                   
                   // A.log("WE DON'T USE THIS CODE?"); Yes we do! Specimen uploads.
                   
-                  Taxon dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
+                    //Taxon dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
+                    Taxon dummyTaxon = null;
+                    if (TaxonMgr.s_useRefreshedTaxonMgr) {
+                        dummyTaxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+                    } else {
+                        dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
+                    }
+
+
                   if (dummyTaxon != null) {
                     status = new Status(dummyTaxon.getStatus(), dummyTaxon.getCurrentValidName());
                   } else {
@@ -612,7 +635,16 @@ public class AntwebUpload {
         if (enactExceptions(key, value)) return true;
         if ("source".equals(key)) {
           // if taxon is already source == worldants, leave it.  Others don't update the source.
-          Taxon dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
+
+
+          Taxon dummyTaxon = null; //(new TaxonDb(getConnection())).getDummyTaxon(taxonName);
+
+            if (TaxonMgr.s_useRefreshedTaxonMgr) {
+                dummyTaxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+            } else {
+                dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
+            }
+
           if (dummyTaxon != null) {
             String origSource = dummyTaxon.getSource();
               return origSource != null && origSource.contains(Project.WORLDANTS);
@@ -870,7 +902,7 @@ public class AntwebUpload {
 	  }
 	  return true;
 	}
-    
+	
 
     // Similar method implemented in SpecimenUpload 
     public String setStatusAndCurrentValidName(String taxonName, Hashtable taxonItem)
@@ -889,7 +921,15 @@ public class AntwebUpload {
         status = Status.INDETERMINED;  
       } else {
           TaxonDb taxonDb = new TaxonDb(getConnection());
-          DummyTaxon taxon = taxonDb.getDummyTaxon(taxonName);
+
+          Taxon taxon = null;
+          if (TaxonMgr.s_useRefreshedTaxonMgr) {
+              taxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+          } else {
+              taxon = taxonDb.getDummyTaxon(taxonName);
+          }
+
+
 
 		  //if (taxonName.contains("formicinaemyrma iperstriata")) A.log("setStatusAndCurrentValidName() taxonName:" + taxonName + " taxon:" + taxon);
 		  //A.log("AntwebUpload.setStatusAndCurrentValidName() taxonName:" + taxonName + " taxon:" + taxon);
@@ -936,7 +976,13 @@ public class AntwebUpload {
               } else {
                 skipTaxonEntry = true;
                 
-                String currentValidTaxonName = TaxonDb.getCurrentValidTaxonName(getConnection(), currentValidName);
+                String currentValidTaxonName = null;
+                if (AntwebProps.isDevMode()) {
+                    currentValidTaxonName = TaxonMgr.getTaxon(currentValidName).getTaxonName(); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+                } else {
+                    currentValidTaxonName = TaxonDb.getCurrentValidTaxonName(getConnection(), currentValidName);
+                }
+
                 if (currentValidTaxonName == null) {
                   A.log("AntwebUpload.setStatusAndCurrentValidName() No currentValidTaxonName for" 
                     + " currentValidName:" + currentValidName
@@ -947,7 +993,13 @@ public class AntwebUpload {
                     s_log.warn("AntwebUpload.setStatusAndCurrentValidTaxonName() currentValidName should be distinct from taxonName:" + taxonName);
                   } else {
                     // We found it.  Use it.
-                    DummyTaxon currentValidTaxon = taxonDb.getDummyTaxon(currentValidTaxonName);
+
+                      Taxon currentValidTaxon = null;
+                      if (TaxonMgr.s_useRefreshedTaxonMgr) {
+                          currentValidTaxon = TaxonMgr.getTaxon(currentValidTaxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+                      } else {
+                          currentValidTaxon = taxonDb.getDummyTaxon(currentValidTaxonName);
+                      }
 
                     status = Status.VALID;
                     originalTaxonName = taxonName;

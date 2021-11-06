@@ -329,8 +329,10 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
 			taxonItem.put("source", shortFileName);
 			taxonItem.put("insert_method", "specimenUpload");
-			saveTaxon(taxonItem);
-			Profiler.profile("saveTaxon", startTime2, code); 
+
+			saveTaxon(taxonItem);  // THE ACTION See AntwebUpload.saveTaxon();
+
+			Profiler.profile("saveTaxon", startTime2, code);
 			Profiler.profile("saveSpecimenAndTaxon", startTime1, code); 
 			return true;
 		} else {
@@ -447,7 +449,15 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
         status = Status.MORPHOTAXON;
       } else {
           TaxonDb taxonDb = new TaxonDb(getConnection());
-          DummyTaxon taxon = taxonDb.getDummyTaxon(taxonName);
+
+          //DummyTaxon taxon = taxonDb.getDummyTaxon(taxonName);
+		  Taxon taxon = null;
+		  if (TaxonMgr.s_useRefreshedTaxonMgr) {
+			  taxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+		  } else {
+			  taxon = taxonDb.getDummyTaxon(taxonName);
+		  }
+
           if (taxon != null) status = taxon.getStatus();
 
           if ((taxon == null) || (status == null) || (Status.UNRECOGNIZED.equals(status))) {
@@ -617,7 +627,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
         //specimenItem.put("status", currentTaxon.getStatus());
         //A.log("makeSpecimenUseTaxon() taxonItem.put:" + currentTaxon.getStatus());
-        
+
 /*
         taxonItem.put("family", currentTaxon.getFamily());
         taxonItem.put("subfamily", currentTaxon.getSubfamily());

@@ -45,7 +45,7 @@ public class HomonymDb extends AntwebDb {
         A.log("getHomonym(taxonName, authorDate) taxonName:" + taxonName + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());
         return homonym;
     }
-    
+
 
     /*
     // This does not carry the authorDate over from the antcat ID.  Will be correct taxonName, but could be wrong homonym
@@ -377,9 +377,10 @@ public class HomonymDb extends AntwebDb {
         return isSubfamilyForGenus(query, subfamily);  // In AntwebDb.java
     }         
 
+    public static int s_dummyHomonymFetchCount = 0;
     public DummyTaxon getDummyTaxon(String taxonName) 
       throws SQLException {
-      
+      ++s_dummyHomonymFetchCount;
       return super.getDummyTaxon(taxonName, "homonym");
     }
 

@@ -52,27 +52,16 @@ public class TaxonMgr extends Manager {
             prettyTaxaNamesList.add(Taxon.getPrettyTaxonName(taxonName));
         }
 
-//        TaxonDb taxonDb = new TaxonDb(connection);
         s_taxa = new HashMap<>();
         ArrayList<Taxon> taxa = taxonDb.getShallowTaxa();
         for (Taxon taxon : taxa) {
             s_taxa.put(taxon.getTaxonName(), taxon);
         }
 
-        if (!initialRun) {
-            try {
-                postInitialize(connection);
-            } catch (SQLException e) {
-                s_log.warn("populate() e:" + e);
-            }
-        }
-
-
         s_subgenusHashMap = taxonDb.getSubgenusHashMap();
     }
 
-    //Called through UtilAction to, in a separate thread, populate the curators with adm1.
-    // Time consuming. About 8 seconds.
+    //Called through UtilAction to, in a separate thread.
     public static void postInitialize(Connection connection) throws SQLException {
     }
 
@@ -148,8 +137,9 @@ public class TaxonMgr extends Manager {
       }
       return null;
     }
-
-    // !!! Only used by Specimen Upload. (First call will cause a 40 second delay).
+    
+    // Seems this has been changed. Only now used by TypeStatusMgr and TestAction.
+    // !!! Only used by Specimen Upload. (First call will cause a 40 second delay). Nope, used to be slow. Now fast.
     public static Species getSpecies(Connection connection, String taxonName) {
       if (taxonName == null) return null;
 
@@ -165,6 +155,66 @@ public class TaxonMgr extends Manager {
       return (Species) s_species.get(taxonName);
     }
 
+
+    public static boolean s_useRefreshedTaxonMgr = false; //AntwebProps.isDevMode();
+/*
+    Potential workaround for mid-upload process queries "getDummyTaxon()" necessary because we can't trust freshness.
+    Called from AntwebUpload.saveTaxon() immediately after saving the taxon. Should verify that other methods don't
+    modify taxa in the database that would also require refresh().
+    The gains are not as we much as we like because to rely on the TaxonMgr for DummyTaxa we need to update
+    The taxa when we save it.
+    If the taxon data wasn't held in a hashtable, we would simply insert it into the TaxonMgr. Could we reliably
+    construct taxon objects from the hashtable to serve the purpose of dummyTaxons? Would need source and taxonomic
+    data at least. Gains are recorded below.
+    This functionality might optimize methods AntwebUpload.setStatusAndCurrentValidName(), 
+    SpecimenUpload.setStatusAndCurrentValidName(), TaxonDb.getCurrentValidTaxonName(getConnection(), currentValidName);
+    Results report at the end of SpecimenUpload.importSpecimens();
+    Gains as getDummyTaxon() calls are replaced:
+    Exec Time: 502 secs (8.366666666666667 min)  // Without s_useRefreshedTaxonMgr
+    Exec Time: 459 secs (7.65 min)               // AntwebUpload.setStatusAndCurrentValidName()
+    Exec Time: 407 secs (6.783333333333333 min)  // SpecimenUploadProcess.setStatusAndCurrentValidName()
+    Exec Time: 377 secs (6.283333333333333 min)  // Added AntwebUpload.enactExceptions()
+    Recommenation: Option 1. Rewrite the upload process to use Taxon objects instead of Hashtables. Fairly major 
+      refactoring - Maybe 3-5 days. Option 2. This current "Refresh implementation" would need further testing to be 
+      sure that other methods don't update underlying data, and it must be tested with the Worldants upload". Currently
+      seems to cut upload times by 25%. Option 3. Generate taxon objects from hashtable for insertion into TaxonMgr. 
+      Might be fastest (because it doesn't require database requests to update, but would require care to ensure that
+      no errors are introduced.
+    Note: It would be good to refactor the two setStatusAndCurrentValidName() methods (AntwebUpload and SpecimenUpload).
+    */
+    public static int s_refreshTaxonCount = 0;
+    public static void refreshTaxon(Connection connection, String taxonName) throws SQLException {
+        if (taxonName == null) return;
+
+        s_log.warn("refreshCount() taxonName:" + taxonName);
+
+        TaxonDb taxonDb = new TaxonDb(connection);
+        Taxon taxon = taxonDb.getTaxon(taxonName);
+        if (taxon == null) {
+            A.log("refreshTaxon taxon:" + taxonName + " not found.");
+            return;
+        }
+
+        if (s_species != null) {
+            if (taxon instanceof Species) s_species.put(taxonName, taxon);  // Is species used?
+        }
+
+        A.log("refreshTaxon() taxon:" + taxon + " class:" + taxon.getClass());
+        // Is it ever a subclass? Is it actually ever a genus?
+
+        if (taxon instanceof Genus) s_genera.put(taxonName, taxon);
+        s_taxa.put(taxonName, taxon);
+
+        s_refreshTaxonCount = s_refreshTaxonCount + 1;
+    }
+
+
+
+
+// TaxonDb.s_currentValidFetchCount = 20 TaxonMgr.refreshTaxonCount:8 TaxonDb.s_dummyFetchCount:245055
+
+    public static int s_gottenTaxon = 0;
+
     public static Taxon getTaxon(String taxonName) {
       if (taxonName == null) return null;
       if (s_taxa == null) {
@@ -179,6 +229,8 @@ public class TaxonMgr extends Manager {
           return null;
       }
       //A.log("getTaxon() returning taxon:" + taxon);
+
+      ++s_gottenTaxon;
       return taxon;
     }
 
