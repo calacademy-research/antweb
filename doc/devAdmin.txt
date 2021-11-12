@@ -201,12 +201,17 @@ CID=$(docker run -d --rm \
 docker exec -i $CID sh -c "exec mysql -uroot ant" < ../bak/db/2021-06-23.sql
 
 -Repeaat the "*Process Check and Kill as needed" above.
+  # docker ps -a
+  # docker stop 3a  
     
 docker logs -f $CID
 
-docker-compose up -d    (d for daemon [or detached])
-docker-compose up --build   (--build to build dockers from scratch)
+docker-compose up --build -d  (-d for daemon [or detached]) (--build to build dockers from scratch)
 
+
+
+# Dash suggestion. Not sure how this might be useful.
+#To connect to the container via mysql, you need to pass the parameter -h 127.0.0.1 . Otherwise, mysql tries to connect via socket instead of TCP.
 
 
 --- Necesssary in dev environment?
@@ -250,6 +255,10 @@ These are here:
 More useful - Dash
 mark@iMark local % ls -vlah   Natural sort of numbers in text (linux only)
 mark@iMark local % ls -lath   time human all list
+
+Staging Server
+ssh  root@165.232.136.170
+https://165.232.136.170/
 
 
 

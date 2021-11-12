@@ -1,19 +1,25 @@
+Issues with the server impacting performance.
 
 
 
+1. The server has not been functioning as expected since moving to Docker - stability issues and performance issues. Could be concomitant.
 
-* The new server architecture does seem to work as expected (stability issues, performance issues, upload reports are not returned, some http requests are doubled). 
+2. Specimen upload reports are not returned.
 
-* The docker environment changes file locations. (Some of this might just need more clear documentation. but also finding features that fail):     
-    On the live server, working now but earlier today the "Specimen file reload" returned /usr/local/antweb/workingDir/specimen1.txt (No such file or directory)    
-    Locally, I had to recreate the /mnt/antweb/web/log and log/specimen and log/worldants dirs. 
-      The app used to do create directories if they were not present at install, but it can not do with the softlinks. /usr/local/antweb/web/upload    
-    I have already done a lot of massaging of Antweb custom log files.
+3. Some http requests are doubled. Http requests sometimes call themselves.  
 
-* Stage server. Still getting Service Unavailable for https://165.232.136.170/.
+4. The docker environment changes file locations. (Some of this might just need more clear documentation. but also finding features that fail):     
+  On the live server, working now but earlier today the "Specimen file reload" returned /usr/local/antweb/workingDir/specimen1.txt (No such file or directory)    
+  Locally, I had to recreate the /mnt/antweb/web/log and log/specimen and log/worldants dirs. 
+  The app used to do it but now their are softlinks. /usr/local/antweb/web/upload    
+  I have already done a lot of massaging of Antweb custom log files.
 
-* Database loading procedure remains very tedious. The README.md has not worked for me and my own process is faulty. 
+5. Stage server. Still getting Service Unavailable for https://165.232.136.170/.
 
-* Netdata warnings. Some days about 10/day. Not sure what to do with these. Some claim to be critical problems.
+6. Database loading procedure remains very tedious. The README.md has not worked for me and my own process is fragile. 
+
+7. Netdata warnings. Some days about 10/day. Not sure what to do with these. Some claim to be critical problems.
+
+8. JSP deployment, if "not very secure" is secure enough, it would be good to have back the ability to deploy jsps without restarting the server. Not only an inconvenience - taking minutes to deploy instead of seconds - but it will also not inconvenience our users (by breaking their requests, creating minutes of downtime, logging them out, etc...) every time we deploy. As for development, certain misbehaviours can be debugged on the live server by editing, deploying and querying jsp files. I feel that we need these efficiencies... Can we switch back?
 
 
