@@ -170,7 +170,7 @@ public final class AntWikiDataAction extends Action {
 
               //A.log("loadRegionalTaxonList() shortTaxonName:" + shortTaxonName + " genus:" + genus + " country:" + country);
 
-              Taxon taxon = taxonDb.getTaxon(genus, species, subspecies);              
+              Taxon taxon = getTaxon(connection, genus, species, subspecies);
               if (taxon == null) {
 
                 if ("(indet)".equals(species)) {
@@ -236,6 +236,45 @@ public final class AntWikiDataAction extends Action {
             s_log.error("getTaxonCountryPage() e:" + e);
         }
         return pageLines;
+    }
+
+
+    // Could be faster by being a single query, instead of just getting the taxonName here.
+    private Taxon getTaxon(Connection connection, String genus, String species, String subspecies) throws SQLException {
+        String taxonName = null;
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select taxon_name from taxon where genus = '" + genus + "'";
+        if (species != null && !"".equals(species)) {
+            query += " and species = '" + species + "'";
+        } else {
+            query += " and species is null";
+        }
+        if (subspecies != null && !"".equals(subspecies)) {
+            query += " and subspecies = '" + subspecies + "'";
+        } else {
+            query += " and subspecies is null";
+        }
+        try {
+            stmt = DBUtil.getStatement(connection, "getTaxon()");
+            rset = stmt.executeQuery(query);
+            int count = 0;
+            while (rset.next()) {
+                ++count;
+                taxonName = rset.getString("taxon_name");
+            }
+            //A.log("getTaxon(3) query:" + query + " count:" + count);
+
+        } catch (SQLException e) {
+            s_log.error("getTaxon() e:" + e + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "this", "getTaxon()");
+        }
+
+        //A.log("getTaxon() taxonName:" + taxonName + " query:" + query);
+
+        return (new TaxonDb(connection)).getTaxon(taxonName);
     }
 
 // ---------------------------------------------------------------------------------------

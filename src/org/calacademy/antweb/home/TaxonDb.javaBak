@@ -22,26 +22,119 @@ public class TaxonDb extends AntwebDb {
       super(connection);
     }
 
-    public static String DUMMY = "DUMMY";  // Minimal data. Can be constructed during code execution without database access.
-    public static String INFO = "INFO";    // Default. Standard. Just member data. Supporting queries are extra.
-    public static String FULL = "FULL";    // Includes: SeeAlso.
+    public static String DUMMY = "DUMMY";  // Minimal data.
+    public static String INFO = "INFO";    // Standard 
+    public static String FULL = "FULL";    // Includes:
 
-    // The standard access method
+    // ... until we rearchitecture so that we can usually use full taxons held in TaxonMgr.
+    // GetTaxon() is currently INFO. Maybe soon FULL taxa held in TaxonMgr.
+    // Good to use this in the codebase so that when changes are made, won't have to unspecify INFO.
     public Taxon getTaxon(String taxonName) throws SQLException {
-        return getInfoTaxon(taxonName);
+        return getTaxon(INFO, taxonName);
     }
+
+    // Least data possible. Basically just a placeholder for a given taxon.
+    public static int s_dummyTaxonFetchCount = 0;
+    public DummyTaxon getDummyTaxon(String taxonName) throws SQLException {
+        ++s_dummyTaxonFetchCount;
+
+        //if (TaxonMgr.isUseRefresh()) AntwebUtil.logFirstStackTrace();
+
+        return super.getDummyTaxon(taxonName, "taxon");
+    }
+
+    // Will contain all of the data items including countries and bioregions. Expensive.
+    public Taxon getFullTaxon(String taxonName) throws SQLException {
+        return getTaxon(FULL, taxonName);
+    }
+
+    private Taxon getTaxon(String depth, String taxonName) throws SQLException {
+        if (taxonName == null) return null;
+
+        if (taxonName.contains("be right back")) {
+            s_log.error("getInfoInstance() Error.  Investigate.  taxonName:" + taxonName);
+            AntwebUtil.logStackTrace();
+            return null;
+        }
+
+        if (DUMMY.equals(depth) || depth == null) {
+            return super.getDummyTaxon(taxonName, "taxon");
+        }
+        if (INFO.equals(depth) || depth == null) {
+            return TaxonDb.getInfoInstance(getConnection(), "taxon", taxonName);
+        }
+        if (FULL.equals(depth) || depth == null) {
+            Taxon taxon = TaxonDb.getInfoInstance(getConnection(), "taxon", taxonName);
+            taxon.finishInstance(getConnection());  // init() with source, line_num, insert_method, created, country...
+            return taxon;
+        }
+        return null;
+    }
+
+
+    // Called from BrowseAction and FieldGuideResultsAction. This logic was removed from Taxon class.
+    public Taxon getTaxon(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+        return getTaxon(INFO, family, subfamily, genus, species, subspecies, rank);
+    }
+    public Taxon getTaxon(String depth, String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+      Taxon taxon = null;
+      if (DUMMY.equals(depth)) {
+          // yet to be implemented.
+      }
+      if (INFO.equals(depth) || FULL.equals(depth)) {
+          //This method gets taxonName from info (relatively) quickly.  Used to determine caching.
+          taxon = Taxon.getTaxonOfRank(rank);
+          taxon.setRank(rank);
+
+          if (family != null) taxon.setFamily(family);
+          if ("formicidae".equals(taxon.getFamily())) taxon.setOrderName("hymenoptera");
+          //A.log("getInfoInstance() order:" + taxon.getOrderName() + " family:" + taxon.getFamily());
+
+          if (subfamily != null) taxon.setSubfamily(subfamily);
+          if (genus != null) taxon.setGenus(genus);
+          if (species != null) taxon.setSpecies(species);
+          if (subspecies != null) taxon.setSubspecies(subspecies);
+
+          // We can handle it. Probably should force inclusion of subfamily but since it is has already been sort of supported...
+          if (subfamily == null && genus != null) {
+             Genus genusObj = TaxonMgr.getGenusFromName(genus);
+             if (genusObj != null) {
+                 //A.log("getTaxon() trying to figure... genus:" + genus + " subfamily:" + " genus:" + genusObj.getSubfamily());
+                 taxon.setSubfamily(genusObj.getSubfamily());
+             } else {
+                 s_log.warn("getTaxon() trying to figure subfamily but genus not found:" + genus);
+             }
+          }
+
+          taxon.setSubgenus(TaxonMgr.getSubgenus(taxon.getTaxonName()));
+
+          //taxon.setConnection(getConnection());
+          taxon.setTaxonomicInfo(getConnection());
+
+          taxon.setSeeAlso();
+          //taxon.setBioregionMap();
+      }
+
+      if (!taxon.isExtant()) return null;
+
+      if (FULL.equals(depth)) {
+          taxon.finishInstance(getConnection());
+      }
+        //A.log("getInfoInstance() taxon:" + taxon.getClass() + " isExtant:" + taxon.isExtant() + " taxonName:" + taxon.getTaxonName());
+      return taxon;
+    }
+
    
-    private Taxon getInfoTaxon(String taxonName) {
-      return getInfoTaxon("taxon", taxonName);
+    public static Taxon getInfoInstance(Connection connection, String taxonName) {
+      return TaxonDb.getInfoInstance(connection, "taxon", taxonName);
     }
         
-    private Taxon getInfoTaxon(String tableName, String taxonName) {
+    public static Taxon getInfoInstance(Connection connection, String tableName, String taxonName) {
         String taxonNameClause = " taxon_name = '" + taxonName + "'";
-        return getInfoTaxon(tableName, taxonName, taxonNameClause);
+        return getInfoInstance(connection, tableName, taxonName, taxonNameClause);
     }
-
-    // Get Taxon with all member data.
-    private Taxon getInfoTaxon(String tableName, String taxonName, String taxonNameClause) {
+    
+    public static Taxon getInfoInstance(Connection connection, String tableName, String taxonName, String taxonNameClause) {
     
         /* New.  Mar 2012.  Mark */
         /* Used by OrphanTaxons and OrphanDescEdits, DescriptionAction, etc...   Useful, but because the 
@@ -53,7 +146,7 @@ public class TaxonDb extends AntwebDb {
         
         //taxonName = DBUtil.escapeQuotes(taxonName);
         if (taxonName.contains("'")) {
-          s_log.warn("getInfoTaxon() singleQuote found in taxonName:" + taxonName);
+          s_log.warn("getInfoInstance() singleQuote found in taxonName:" + taxonName);
           return null;
         }
 
@@ -62,11 +155,11 @@ public class TaxonDb extends AntwebDb {
         ResultSet rset = null;
         Statement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "getCurrentValidTaxonNamestance() taxonName:" + taxonName);
+            stmt = DBUtil.getStatement(connection, "getCurrentValidTaxonNamestance() taxonName:" + taxonName);
                   
             theQuery = " select taxarank, taxon_name, kingdom_name, phylum_name, order_name, class_name"
-              + ", family, subfamily, tribe, genus, subgenus, species, subspecies "
-              + ", status, line_num, access_group, source, insert_method, created, fossil, type, antcat, pending "
+              + ", family, subfamily, genus, subgenus, species, subspecies "
+              + ", source, insert_method, created, fossil, antcat, pending, type "
               + ", antcat_id, author_date, author_date_html, authors, year, status, available " 
               + ", current_valid_name, current_valid_rank, current_valid_parent, original_combination, was_original_combination "
               + ", country, bioregion, chart_color, parent_taxon_name" //, bioregion_map "              
@@ -76,7 +169,8 @@ public class TaxonDb extends AntwebDb {
 
             int count = 0;
             while (rset.next()) {
-                //A.log("getInfoTaxon() IN query:" + theQuery);
+
+                //A.log("getInfoInstance() IN query:" + theQuery);
 
                 ++count;
                 // Only one record expected
@@ -87,125 +181,75 @@ public class TaxonDb extends AntwebDb {
                   taxon = new Homonym();
                   taxon.setRank(rank);
                 }
-                //taxon.setTaxonName(rset.getString("taxon_name")); // taxonName is derived from data below.
+                //taxon.setTaxonName(rset.getString("taxon_name"));
+                // Taxon.getTaxonName() is weird.  It is constructed out of the comprising fields.  Can be bad.
                 taxon.setKingdomName(rset.getString("kingdom_name"));
                 taxon.setPhylumName(rset.getString("phylum_name"));
                 taxon.setOrderName(rset.getString("order_name"));
                 taxon.setClassName(rset.getString("class_name"));
                 taxon.setFamily(rset.getString("family"));
                 taxon.setSubfamily(rset.getString("subfamily"));
-                taxon.setTribe(rset.getString("tribe"));
                 taxon.setGenus(rset.getString("genus"));
                 taxon.setSubgenus(rset.getString("subgenus"));
                 taxon.setSpecies(rset.getString("species"));
-                taxon.setSubspecies(rset.getString("subspecies"));
+                taxon.setSubspecies(rset.getString("subspecies"));                                
 
-                taxon.setStatus(rset.getString("status"));
-                taxon.setGroupId(rset.getInt("access_group"));
                 taxon.setSource(rset.getString("source"));
-                taxon.setLineNum(rset.getInt("line_num"));
                 taxon.setInsertMethod(rset.getString("insert_method"));
                 taxon.setCreated(rset.getTimestamp("created"));
-                taxon.setIsFossil(rset.getInt("fossil") == 1);
+                int fossil = rset.getInt("fossil");
+                taxon.setIsFossil(fossil == 1);
                 taxon.setIsType(rset.getInt("type") == 1);
                 taxon.setIsAntCat(rset.getInt("antcat") == 1);
-                taxon.setAntcatId(rset.getInt("antcat_id"));
                 taxon.setIsPending(rset.getInt("pending") == 1);
+                taxon.setAntcatId(rset.getInt("antcat_id"));
                 taxon.setAuthorDate(rset.getString("author_date"));
                 taxon.setAuthorDateHtml(rset.getString("author_date_html"));
                 taxon.setAuthors(rset.getString("authors"));
                 taxon.setYear(rset.getString("year"));
+                taxon.setStatus(rset.getString("status"));
                 taxon.setIsAvailable(rset.getInt("available") == 1);
-                String currentValidName = rset.getString("current_valid_name");
-                if (currentValidName != null && !taxonName.equals(currentValidName.toLowerCase())) {
-                    taxon.setCurrentValidName(currentValidName);
-                }
+                taxon.setCurrentValidName(rset.getString("current_valid_name"));
                 taxon.setCurrentValidRank(rset.getString("current_valid_rank"));
                 taxon.setCurrentValidParent(rset.getString("current_valid_parent"));
                 taxon.setIsOriginalCombination(rset.getInt("original_combination") == 1);
-                taxon.setWasOriginalCombination(rset.getString("was_original_combination"));
-                taxon.setParentTaxonName(rset.getString("parent_taxon_name"));
-                // imageCount?
-                // HolId
+                //taxon.setWasOriginalCombination((rset.getInt("was_original_combination") == 1) ? true : false);
+                taxon.setWasOriginalCombination(rset.getString("was_original_combination"));  
                 taxon.setChartColor(rset.getString("chart_color"));
-                // old_speciesGroup
-
+                taxon.setParentTaxonName(rset.getString("parent_taxon_name"));
+                //taxon.setBioregionMap(rset.getString("bioregion_map"));
+                //taxon.setCountry(rset.getString("country"));
+                //taxon.setBioregion(rset.getString("bioregion"));
             }
 
-            if (count == 0) A.log("getInfoTaxon() not found taxonName:" + taxonName);
+            if (count == 0) A.log("getInfoInstance() not found taxonName:" + taxonName);
 
-            if (count > 1 && "taxon".equals(tableName)) s_log.error("getInfoTaxon() count:" + count + " should never be more than 1.  TaxonName:" + taxonName);
+            if (count > 1 && "taxon".equals(tableName)) s_log.error("getInfoInstance() count:" + count + " should never be more than 1.  TaxonName:" + taxonName);
 
         } catch (SQLException e) {
-            s_log.error("getInfoTaxon() taxonName:" + taxonName + " e:" + e + " theQuery:" + theQuery);
+            s_log.error("getInfoInstance() taxonName:" + taxonName + " e:" + e + " theQuery:" + theQuery);
         } finally {
-            DBUtil.close(stmt, rset, "this", "getInfoTaxon() taxonName:" + taxonName);
+            DBUtil.close(stmt, rset, "this", "getInfoInstance() taxonName:" + taxonName);
         }
         if (taxon == null) {
           //It may not be found during Worldants, for instance amblyoponinae, but after the cleanup process it will...
           String warning = " taxon not found taxonName:" + taxonName;
           //if (AntwebProps.isDevMode()) warning += " theQuery:" + theQuery;
-          A.log("getInfoTaxon() " + warning);
+          A.log("getInfoInstance() " + warning);
           return null;
         }
         
         if (AntwebProps.isDevMode()) {
-          //s_log.warn("getInfoTaxon() taxonName:" + taxonName + " taxon:" + taxon + " query:" + theQuery);
+        
+          //s_log.warn("getInfoInstance() taxonName:" + taxonName + " taxon:" + taxon + " query:" + theQuery);
         
           if ("myrmicinaestrumigenys emmae".equals("taxonName")) {
-            s_log.warn("getInfoTaxon() name:" + taxonName + " taxon:" + taxon.getTaxonName() + " query:" + theQuery);
+            s_log.warn("getInfoInstance() name:" + taxonName + " taxon:" + taxon.getTaxonName() + " query:" + theQuery);        
           }
         }
         return taxon;
-    }
-
-    // Will contain all of the data items including countries and bioregions. Expensive.
-    public Taxon getFullTaxon(String taxonName) throws SQLException {
-        Taxon taxon = getInfoTaxon("taxon", taxonName);
-        taxon.finishInstance(getConnection());  // init() with source, line_num, insert_method, created, country...
-        return taxon;
-    }
-
-    public Taxon getFullTaxon(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
-        Taxon taxon = null;
-
-        //This method gets taxonName from info (relatively) quickly.  Used to determine caching.
-        taxon = Taxon.getTaxonOfRank(rank);
-        taxon.setRank(rank);
-
-        if (family != null) taxon.setFamily(family);
-        if ("formicidae".equals(taxon.getFamily())) taxon.setOrderName("hymenoptera");
-        //A.log("getInfoTaxon() order:" + taxon.getOrderName() + " family:" + taxon.getFamily());
-        if (subfamily != null) taxon.setSubfamily(subfamily);
-        if (genus != null) taxon.setGenus(genus);
-        if (species != null) taxon.setSpecies(species);
-        if (subspecies != null) taxon.setSubspecies(subspecies);
-        taxon.setSubgenus(TaxonMgr.getSubgenus(taxon.getTaxonName()));
-
-        // We can handle it. Probably should force inclusion of subfamily but since it is has already been sort of supported...
-        if (subfamily == null && genus != null) {
-            Genus genusObj = TaxonMgr.getGenusFromName(genus);
-            if (genusObj != null) {
-                //A.log("getTaxon() trying to figure... genus:" + genus + " subfamily:" + " genus:" + genusObj.getSubfamily());
-                taxon.setSubfamily(genusObj.getSubfamily());
-            } else {
-                s_log.warn("getTaxon() trying to figure subfamily but genus not found:" + genus);
-            }
-        }
-
-        taxon.setTaxonomicInfo(getConnection());
-
-        taxon.setSeeAlso();
-        //taxon.setBioregionMap();
-
-        if (!taxon.isExtant()) return null;
-
-        taxon.finishInstance(getConnection());
-
-        //A.log("getInfoTaxon() taxon:" + taxon.getClass() + " isExtant:" + taxon.isExtant() + " taxonName:" + taxon.getTaxonName());
-        return taxon;
-    }
-
+    }       
+    
 
     public void setTaxonomicInfo(String query, Taxon taxon) throws SQLException {
 
@@ -284,6 +328,44 @@ public class TaxonDb extends AntwebDb {
         }
     }
 
+    // Could be faster by being a single query, instead of just getting the taxonName here.
+    public Taxon getTaxon(String genus, String species, String subspecies) {
+        String taxonName = null;
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select taxon_name from taxon where genus = '" + genus + "'";
+        if (species != null && !"".equals(species)) {
+          query += " and species = '" + species + "'";
+        } else {
+          query += " and species is null";
+        }
+        if (subspecies != null && !"".equals(subspecies)) {
+          query += " and subspecies = '" + subspecies + "'";
+        } else {
+          query += " and subspecies is null";
+        }
+        try {            
+            stmt = DBUtil.getStatement(getConnection(), "getTaxon()");
+            rset = stmt.executeQuery(query);
+            int count = 0;
+            while (rset.next()) {
+                ++count;
+                taxonName = rset.getString("taxon_name");
+            }
+            //A.log("getTaxon(3) query:" + query + " count:" + count);
+
+        } catch (SQLException e) {
+            s_log.error("getTaxon() e:" + e + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "this", "getTaxon()");
+        }
+        
+        //A.log("getTaxon() taxonName:" + taxonName + " query:" + query);        
+        
+        return getInfoInstance(getConnection(), taxonName);
+    }
+
     public HashMap<String, ArrayList<String>> getSubgenusHashMap() {
         HashMap<String, ArrayList<String>> subgenusHashMap = new HashMap<>();
         PreparedStatement stmt = null;
@@ -328,7 +410,7 @@ public class TaxonDb extends AntwebDb {
       }
     }
 
-    public ArrayList<Taxon> getTaxa() {
+    public ArrayList<Taxon> getShallowTaxa() {
         ArrayList<Taxon> taxa = new ArrayList<>();
         String taxonName;
 
@@ -342,9 +424,9 @@ public class TaxonDb extends AntwebDb {
 
             while (rset.next()) {
               taxonName = rset.getString("taxon_name");
-              Taxon taxon = getTaxon(taxonName);
+              Taxon taxon = getInfoInstance(getConnection(), taxonName);
               if (taxon == null) {
-                A.log("getTaxa() taxon not found:" + taxonName);
+                A.log("getShallowTaxa() taxon not found:" + taxonName);
                 continue;
               }
               taxa.add(taxon);
@@ -352,15 +434,14 @@ public class TaxonDb extends AntwebDb {
         } catch (SQLException e) {
             s_log.error("getShallowTaxa() e:" + e + " query:" + query);
         } finally {
-            DBUtil.close(stmt, rset, "this", "getTaxa()");
+            DBUtil.close(stmt, rset, "this", "getShallowTaxa()");
         }
         
-        //A.log("getTaxa() taxonName:" + taxonName + " query:" + query);
+        //A.log("getTaxon() taxonName:" + taxonName + " query:" + query);        
         
         return taxa;
-    }
-
-    // Info with bioregionMap for genus and introducedMap for species.
+    }    
+        
     public ArrayList<Taxon> getTaxa(String rank) {
       return getTaxa(rank, null);
     }
@@ -392,11 +473,19 @@ public class TaxonDb extends AntwebDb {
             int count = 0;
             while (rset.next()) {
               taxonName = rset.getString("taxon_name");
-              Taxon taxon = getTaxonForMgr(taxonName);
+              Taxon taxon = getInfoInstance(getConnection(), taxonName);
               if (taxon == null) {
                 A.log("getTaxaWithClause() taxon not found:" + taxonName);
                 continue;
               }
+              if (rankClause.contains(Rank.GENUS)) {  
+                taxon.setBioregionMap(new TaxonPropDb(getConnection()).getBioregionMap(taxonName));        
+              }
+              if (rankClause.contains(Rank.SPECIES)) {  
+                //A.log("getTaxon() introduced:" + getIntroducedMap(taxonName));
+                taxon.setIntroducedMap(new TaxonPropDb(getConnection()).getIntroducedMap(taxonName));        
+              }
+
               taxa.add(taxon);
             }
         } catch (SQLException e) {
@@ -405,25 +494,11 @@ public class TaxonDb extends AntwebDb {
             DBUtil.close(stmt, rset, "this", "getTaxaWithClause()");
         }
         
-        if ("subfamily".equals(rankClause)) A.log("getTaxon() taxonName:" + taxonName + " query:" + query + " taxa:" + taxa);
-
+        if ("subfamily".equals(rankClause)) A.log("getTaxon() taxonName:" + taxonName + " query:" + query + " taxa:" + taxa);        
+        
         return taxa;
-    }
+    }    
 
-    // Taxa for the TaxonMgr need a couple of extra things.
-    public Taxon getTaxonForMgr(String taxonName) throws SQLException {
-        Taxon taxon = getTaxon(taxonName);
-        if (Rank.GENUS.equals(taxon.getRank())) {
-            taxon.setBioregionMap(new TaxonPropDb(getConnection()).getBioregionMap(taxonName));
-        }
-        if (Rank.SPECIES.equals(taxon.getRank())) {
-            //A.log("getTaxon() introduced:" + getIntroducedMap(taxonName));
-            taxon.setIntroducedMap(new TaxonPropDb(getConnection()).getIntroducedMap(taxonName));
-        }
-        return taxon;
-    }
-
-    // Info level.
     public ArrayList<Taxon> getTaxa(ArrayList<ResultItem> speciesList, String subfamilyFilter) {
     /* To make fast, get a list of genera for a given subfamily.  Restrict prior to fetch */
     
@@ -433,7 +508,7 @@ public class TaxonDb extends AntwebDb {
           String taxonName = item.getTaxonName();
           //A.log("getTaxa() taxonName:" + taxonName + " item:" + item); 
          
-          Taxon taxon = getInfoTaxon("taxon", item.getTaxonName());
+          Taxon taxon = getInfoInstance(getConnection(), "taxon", item.getTaxonName());
           //A.log("TaxonDb.getTaxa() taxonName:" + taxonName + " taxon:" + taxon + " subfamilyFilter:" + subfamilyFilter);
 
           if (taxon != null) {
@@ -463,6 +538,13 @@ public class TaxonDb extends AntwebDb {
         }
         return 0;
     }
+
+/*
+    public static String XgetTaxonNameFromAntcatId(Connection connection, int antcatId) {
+        TaxonDb taxonDb = new TaxonDb(connection);
+        return taxonDb.getTaxonNameFromAntcatId(connection, "taxon", antcatId);
+    }
+    */
 
     public String getTaxonNameFromAntcatId(String tableName, int antcatId) {
         String taxonName = null;
@@ -511,6 +593,14 @@ public class TaxonDb extends AntwebDb {
         DBUtil.close(stmt, "deleteTaxon()");
       }
     }
+    
+    public static Taxon getTaxonFromShortTaxonName(Connection connection, String shortTaxonName) {
+        // If we don't know the subfamily, no worries.  We don't use this because it is slow for batches.
+
+        String taxonNameClause = " taxon_name like '%" + shortTaxonName + "'";
+        return getInfoInstance(connection, "taxon", shortTaxonName, taxonNameClause);
+    }
+    
     
     // Do Not update specimen records!?
 

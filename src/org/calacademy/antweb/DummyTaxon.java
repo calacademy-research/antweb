@@ -32,15 +32,7 @@ public class DummyTaxon extends Taxon {
       dummy.setRank(Taxon.getRankFromName(taxonName));
       return dummy;
     }
-/*
-    public static Taxon getInstance(Connection connection, String taxonName) {
-        Taxon taxon = new DummyTaxon();
-        taxon.setConnection(connection);
-        taxon.name = taxonName;        
-        // A.log("DummyTaxon.getInstance() taxonName:" + taxonName);
-        return taxon;
-    }
-*/
+
     public String getTaxonName() {
         //A.log("getTaxonName() taxonName:" + name);
         return name;

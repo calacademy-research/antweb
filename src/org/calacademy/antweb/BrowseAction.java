@@ -272,7 +272,7 @@ public class BrowseAction extends DescriptionAction {
               //A.log("execute  () family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank);
 
 			  //taxon = Taxon.getInstance(connection, family, subfamily, genus, species, subspecies, rank);
-			  taxon = taxonDb.getTaxon(TaxonDb.FULL, family, subfamily, genus, species, subspecies, rank);
+			  taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
               //A.log("execute() 1 desc:" + taxon.getDescription().size());
 
 			  //A.log("execute() taxon.getInstance():" + taxon);

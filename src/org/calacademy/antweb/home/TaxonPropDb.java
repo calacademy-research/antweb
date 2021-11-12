@@ -193,15 +193,6 @@ public class TaxonPropDb extends AntwebDb {
     }  
 
     public String getIntroducedMap(String taxonName) {
-
-/*
-        // is this better? It is used in TaxonDb.getInfoInstance()
-        if (taxonName.contains("'")) {
-          s_log.warn("getInfoInstance() singleQuote found in taxonName:" + taxonName);
-          return null;
-        }
-*/
-
         taxonName = DBUtil.escapeQuotes(taxonName);
 
         Statement stmt = null;

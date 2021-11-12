@@ -165,7 +165,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getProjTaxonLogs() projectName:" + projectName);
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + theQuery);        
+        //if (AntwebProps.isDevMode()) s_log.info("getProjTaxonLogs() name:" + taxonName + " query:" + theQuery);
         return projTaxonLogs;
     }       
 
@@ -203,7 +203,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
                 projTaxonLogDetail.setProjectName(rset.getString("project_name"));
                 String taxonName = rset.getString("taxon_name");
                 projTaxonLogDetail.setTaxonName(taxonName);
-                //projTaxonLogDetail.setTaxon(TaxonDb.getInfoInstance(getConnection(), taxonName));
+                //projTaxonLogDetail.setTaxon(new TaxonDb(getConnection()).getTaxon(taxonName));
                 projTaxonLogDetail.setCreated(rset.getTimestamp("created"));
                 projTaxonLogDetail.setSubfamilyCount(rset.getInt("subfamily_count"));
                 projTaxonLogDetail.setGenusCount(rset.getInt("genus_count"));
@@ -221,7 +221,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getProjTaxonLogDetails() projectName:" + projectName);
         }
 
-        //A.log("getInfoInstance() name:" + taxonName + " query:" + theQuery);        
+        //A.log("getProjTaxonLogDetails() name:" + taxonName + " query:" + theQuery);
         return projTaxonLogDetails;
     }    
          
@@ -256,7 +256,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
                 projTaxonLogDetail.setProjectName(rset.getString("project_name"));
                 String taxonName = rset.getString("taxon_name");
                 projTaxonLogDetail.setTaxonName(taxonName);
-                //projTaxonLogDetail.setTaxon(TaxonDb.getInfoInstance(getConnection(), taxonName));
+                //projTaxonLogDetail.setTaxon(new TaxonDb(getConnection()).getTaxon(taxonName));
                 projTaxonLogDetail.setCreated(rset.getTimestamp("created"));
                 projTaxonLogDetail.setSubfamilyCount(rset.getInt("subfamily_count"));
                 projTaxonLogDetail.setGenusCount(rset.getInt("genus_count"));
@@ -275,7 +275,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getProjTaxonLogDetails() logId:" + logId);
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + theQuery);        
+        //if (AntwebProps.isDevMode()) s_log.info("getProjTaxonLogDetails() name:" + taxonName + " query:" + theQuery);
         return projTaxonLogDetails;
     }                  
     

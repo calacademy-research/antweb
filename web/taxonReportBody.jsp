@@ -123,7 +123,7 @@
 	  Taxon thisChild = child;
 	  //AntwebUtil.iLog("thisChild");
 	  String browserParams = child.getBrowserParams();
-
+      //A.log("BROWSER PARAMS:" + browserParams);
 	  ++k;
   
 	 if ((!isOnlyShowUnImaged) || (!child.getHasImages())) {

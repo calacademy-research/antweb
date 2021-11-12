@@ -69,7 +69,7 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
   imageUploadLock = "<font color=\"green\">false</font>";
 }
 %>
-<br>&nbsp;&nbsp;&nbsp;Is Image Upload locked: <%= imageUploadLock %>  
+<br>&nbsp;&nbsp;&nbsp;Is Image Upload locked: <%= imageUploadLock %>
 
 <br><br><b>CPU:</b> <%= AntwebSystem.getCpuLoad() %>
 <br>
@@ -100,6 +100,7 @@ message += topReport;
 
 <br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
 <br><b>Bad Actor Report:</b> <%= BadActorMgr.getBadActorReport() %>
+<br><b>ProfileCount:</b> <%= ProfileCount.getReport() %>
 
 <br><br><br>
 <h3>Server Properties </h3>

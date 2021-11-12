@@ -70,7 +70,7 @@ public class AntwebDb {
         
         if (false && AntwebProps.isDevMode() && !isValidSubfamilyForGenus) s_log.warn("isSubfamilyForGenus() false for subfamily:" + subfamily + ".  Found:" + selectedSubfamilies); // + " query:" + query);
 
-        if (!isValidSubfamilyForGenus) A.log("isValidSubfamilyForGenus() isValid:" + isValidSubfamilyForGenus + " query:" + query);
+        if (!isValidSubfamilyForGenus) A.log("isSubfamilyForGenus() isValid:" + isValidSubfamilyForGenus + " subfamily:" + subfamily + " query:" + query);
         return isValidSubfamilyForGenus;
     }    
         
@@ -112,69 +112,7 @@ public class AntwebDb {
         return 0;
     }
 
-    public DummyTaxon getDummyTaxon(String taxonName) throws SQLException{
-        return getDummyTaxon(taxonName, "taxon");
-    }
-    public DummyTaxon getDummyTaxon(String taxonName, String table) 
-      throws SQLException {
-    
-      // Not a fully instantiated one.  Just contains...
-        DummyTaxon taxon = null;
-        String query = "select family, subfamily, tribe, genus, subgenus, species, subspecies, status, " 
-          + " source, insert_method, line_num, access_group, current_valid_name, parent_taxon_name, fossil " 
-          + " from " + table + " where taxon_name = '" + taxonName + "'";
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-          Connection connection = getConnection();
-          stmt = DBUtil.getStatement(connection, "AntwebDb.getDummyTaxon()");      
-          stmt.execute(query);
 
-          rset = stmt.getResultSet();
-
-          while (rset.next()) {
-              taxon = new DummyTaxon();              
-              taxon.setTaxonName(taxonName);
-              taxon.setFamily(rset.getString("family"));
-              taxon.setSubfamily(rset.getString("subfamily"));
-              taxon.setTribe(rset.getString("tribe"));
-              taxon.setGenus(rset.getString("genus"));
-              taxon.setSubgenus(rset.getString("subgenus"));
-              taxon.setSpecies(rset.getString("species"));
-              taxon.setSubspecies(rset.getString("subspecies"));
-              taxon.setStatus(rset.getString("status"));
-              taxon.setSource(rset.getString("source"));
-              taxon.setInsertMethod(rset.getString("insert_method"));
-              taxon.setLineNum(rset.getInt("line_num"));
-              taxon.setGroupId(rset.getInt("access_group"));
-              taxon.setIsFossil(rset.getInt("fossil") == 1);
-
-              String currentValidName = rset.getString("current_valid_name");
-              if (currentValidName != null && !taxonName.equals(currentValidName.toLowerCase())) {
-                taxon.setCurrentValidName(currentValidName);
-              }
-              taxon.setParentTaxonName(rset.getString("parent_taxon_name"));
-              
-          }
-
-          if (AntwebProps.isDevMode()
-            && false
-            // && taxon.getIsFossil()
-               // && "myrmicinaecrematogaster jtl-022".equals(taxonName)
-             ) s_log.warn("getDummyTaxon() 1 taxonName:" + taxonName + " query:" + query);              
-
-
-        } catch (Exception e) {
-          s_log.warn("getDummyTaxon() taxonName:" + taxonName + " table:" + table + " e:" + e);
-        } finally {
-          DBUtil.close(stmt, "AntwebDb.getDummyTaxon()");        
-        }
-
-        //if (AntwebProps.isDevMode() && "myrmicinaecrematogaster jtl-022".equals(taxonName)) s_log.warn("getDummyTaxon() 3 taxonName:" + taxonName + " taxon:" + taxon);              
-
-        return taxon;
-    }            
-        
     public boolean isCurrentInLookup(Connection connection, String key, String value) {
         String query = null;
         Statement stmt = null;

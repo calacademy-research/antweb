@@ -17,23 +17,24 @@ public class HomonymDb extends AntwebDb {
       super(connection);
     }
 
+    // table name? getInfoInstance
     // Without the authorDate, will be correct taxonName, but random homonym
     public Homonym getHomonym(String taxonName) {
-        Homonym homonym = (Homonym) getInfoInstance(getConnection(), "homonym", taxonName);
+        Homonym homonym = (Homonym) new HomonymDb(getConnection()).getInfoHomonym("homonym", taxonName);
         if (homonym == null) {
           return null;
         }
         try {
           homonym.setSeniorHomonym(getConnection());
         } catch (SQLException e) {
-          s_log.warn("getInfoInstance() e:" + e);
+          s_log.warn("getHomonym() e:" + e);
         }
         A.log("getHomonym(taxonName) taxonName:" + taxonName + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());
         return homonym;
     }
 
     public Homonym getHomonym(String taxonName, String authorDate) {
-        Homonym homonym = (Homonym) HomonymDb.getInfoInstance(getConnection(), taxonName, authorDate);
+        Homonym homonym = (Homonym) new HomonymDb(getConnection()).getInfoHomonym(taxonName, authorDate);
         if (homonym == null) {
           return null;
         }
@@ -54,7 +55,7 @@ public class HomonymDb extends AntwebDb {
         return taxonDb.getTaxonNameFromAntcatId(connection, "homonym", antcatId);
     } */
     public Homonym getHomonym(int antcatId) {
-        Homonym homonym = (Homonym) getInfoInstance(getConnection(), antcatId);
+        Homonym homonym = (Homonym) getInfoHomonym(antcatId);
         try {
             homonym.setSeniorHomonym(getConnection());
         } catch (SQLException e) {
@@ -78,18 +79,18 @@ public class HomonymDb extends AntwebDb {
 
         homonym.setAuthorDate(authorDate);
 
-        //A.log("getInfoInstance() order:" + homonym.getOrderName() + " family:" + homonym.getFamily()
+        //A.log("getHomonym() order:" + homonym.getOrderName() + " family:" + homonym.getFamily()
         //  + " subfamily:" + homonym.getSubfamily() + " genus:" + homonym.getGenus());
 
         homonym.setTaxonomicInfo(getConnection());
 
         if (!homonym.isExtant()) {
-            A.log("getInfoInstance() homonym not extant:" + homonym + " isExtant:" + homonym.isExtant());
+            A.log("getHomonym() homonym not extant:" + homonym + " isExtant:" + homonym.isExtant());
             return null;
         }
         homonym.setSeeAlso();
 
-        //A.log("getInfoInstance() taxon:" + homonym.getClass() + " isExtant:" + homonym.isExtant()
+        //A.log("getHomonym() taxon:" + homonym.getClass() + " isExtant:" + homonym.isExtant()
         //  + " homonym:" + homonym);
 
         return homonym;
@@ -106,8 +107,6 @@ public class HomonymDb extends AntwebDb {
 
         return homonym;
     }
-
-
 
 
     public ArrayList<Taxon> getHomonyms() {
@@ -173,35 +172,48 @@ public class HomonymDb extends AntwebDb {
             DBUtil.close(stmt, rset, "this", "getTaxonNameFromAntcatId() antcatId:" + antcatId);
         }
         
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + theQuery);        
+        //if (AntwebProps.isDevMode()) s_log.info("getTaxonNameFromAntcatId() name:" + taxonName + " query:" + theQuery);
         return taxonName;
     }
 
-    public static Taxon getInfoInstance(Connection connection, String taxonName, String authorDate) {
+    private Taxon getInfoHomonym(String taxonName, String authorDate) {
         /* New.  Mar 2012.  Mark */
-        /* Used by OrphanTaxons and OrphanDescEdits, DescriptionAction, etc...   Useful, but because the 
+        /* Used by OrphanTaxons and OrphanDescEdits, DescriptionAction, etc...   Useful, but because the
            return object is not created as the appropriate subclass, of limited utility.
-           Also see: DummyTaxon.getInstance()
            */
         Taxon taxon = null;
         if (taxonName == null) return null;
 
+        String criterion = " taxon_name = '" + taxonName + "'"
+        + " and author_date = '" + authorDate + "'";
+
+        return getInfoHomonym(criterion);
+    }
+
+    private Taxon getInfoHomonym(int antcatId) {
+        String criterion = " antcat_id = '" + antcatId + "'";
+
+        return getInfoHomonym(criterion);
+    }
+
+    private Taxon getInfoHomonym(String criterion) {
+        Homonym taxon = null;
         String theQuery = "";
         Statement stmt = null;
         ResultSet rset = null;
-        try {            
+        try {
             theQuery = " select taxarank, taxon_name, kingdom_name, phylum_name, order_name, class_name"
               + ", family, subfamily, genus, species, subspecies " 
               + ", source, insert_method, created, fossil, antcat, pending, type "
               + ", antcat_id, author_date, author_date_html, authors, year, status, available " 
               + ", current_valid_name, current_valid_rank, current_valid_parent, original_combination, was_original_combination "
-              + ", country, bioregion "              
-              + " from homonym where taxon_name='" + taxonName + "'"
-              + " and author_date = '" + authorDate + "'";
+              + ", country, bioregion "
+              + " from homonym "
+              + " where " + criterion;
 
-            A.log("getInfoInstance() query:" + theQuery);
+            A.log("getInfoHomonym() query:" + theQuery);
 
-            stmt = connection.createStatement();
+            stmt = getConnection().createStatement();
             rset = stmt.executeQuery(theQuery);
 
             int count = 0;
@@ -248,97 +260,18 @@ public class HomonymDb extends AntwebDb {
                 //taxon.setBioregion(rset.getString("bioregion"));
             }
 
-            if (AntwebProps.isDevMode()) if (count == 0) s_log.error("getInfoInstance() not found taxonName:" + taxonName + " authorDate:" + authorDate);
-            if (count > 1) s_log.error("getInfoInstance() count:" + count + " should never be more than 1.  TaxonName:" + taxonName+ " authorDate:" + authorDate);
+            if (AntwebProps.isDevMode()) if (count == 0) s_log.error("getInfoHomonym() not found. criterion:" + criterion); // taxonName:" + taxonName + " authorDate:" + authorDate);
+            if (count > 1) s_log.error("getInfoHomonym() count:" + count + " should never be more than 1. criterion:" + criterion); // TaxonName:" + taxonName + " authorDate:" + authorDate);
 
         } catch (SQLException e) {
-            s_log.error("getInfoInstance() taxonName:" + taxonName + " exception:" + e + " theQuery:" + theQuery);
+            s_log.error("getInfoHomonym() criterion: " + criterion + " exception:" + e);
         } finally {
-            DBUtil.close(stmt, rset, "this", "getInfoInstance()");
+            DBUtil.close(stmt, rset, "this", "getInfoHomonym()");
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + theQuery);        
+        //if (AntwebProps.isDevMode()) s_log.info("getInfoHomonym() name:" + taxonName + " query:" + theQuery);
         return taxon;
     }       
-    
-    public static Taxon getInfoInstance(Connection connection, int antcatId) {
-        Taxon taxon = null;
-
-        String theQuery = "";
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {            
-            theQuery = " select taxarank, taxon_name, kingdom_name, phylum_name, order_name, class_name"
-              + ", family, subfamily, genus, species, subspecies " 
-              + ", source, insert_method, created, fossil, antcat, pending, type "
-              + ", antcat_id, author_date, author_date_html, authors, year, status, available " 
-              + ", current_valid_name, current_valid_rank, current_valid_parent, original_combination, was_original_combination "
-              + ", country, bioregion "              
-              + " from homonym where antcat_id ='" + antcatId + "'";
-
-            A.log("getInfoInstance() query:" + theQuery);
-
-            stmt = connection.createStatement();
-            rset = stmt.executeQuery(theQuery);
-
-            int count = 0;
-            while (rset.next()) {
-                ++count;
-                // Only one record expected
-                String rank = rset.getString("taxarank");
-
-                taxon = new Homonym();
-                taxon.setRank(rank);
-
-                //taxon.setTaxonName(rset.getString("taxon_name"));
-                taxon.setKingdomName(rset.getString("kingdom_name"));
-                taxon.setPhylumName(rset.getString("phylum_name"));
-                taxon.setOrderName(rset.getString("order_name"));
-                taxon.setClassName(rset.getString("class_name"));
-                taxon.setFamily(rset.getString("family"));
-                taxon.setSubfamily(rset.getString("subfamily"));
-                taxon.setGenus(rset.getString("genus"));
-                taxon.setSpecies(rset.getString("species"));  
-                taxon.setSubspecies(rset.getString("subspecies"));                                
-                taxon.setSource(rset.getString("source"));
-                taxon.setInsertMethod(rset.getString("insert_method"));
-                taxon.setCreated(rset.getTimestamp("created"));
-                int fossil = rset.getInt("fossil");
-                taxon.setIsFossil(fossil == 1);
-                taxon.setIsType(rset.getInt("type") == 1);
-                taxon.setIsAntCat(rset.getInt("antcat") == 1);
-                taxon.setIsPending(rset.getInt("pending") == 1);
-
-                taxon.setAntcatId(rset.getInt("antcat_id"));
-                taxon.setAuthorDate(rset.getString("author_date"));
-                taxon.setAuthorDateHtml(rset.getString("author_date_html"));
-                taxon.setAuthors(rset.getString("authors"));
-                taxon.setYear(rset.getString("year"));
-                taxon.setStatus(rset.getString("status"));
-                taxon.setIsAvailable(rset.getInt("available") == 1);
-                taxon.setCurrentValidName(rset.getString("current_valid_name"));
-                taxon.setCurrentValidRank(rset.getString("current_valid_rank"));
-                taxon.setCurrentValidParent(rset.getString("current_valid_parent"));
-                taxon.setIsOriginalCombination(rset.getInt("original_combination") == 1);
-                //taxon.setWasOriginalCombination((rset.getInt("was_original_combination") == 1) ? true : false);
-                taxon.setWasOriginalCombination(rset.getString("was_original_combination"));  
-                //taxon.setCountry(rset.getString("country"));
-                //taxon.setBioregion(rset.getString("bioregion"));
-            }
-
-            if (AntwebProps.isDevMode()) if (count == 0) s_log.error("getInfoInstance() not found antcatId:" + antcatId);
-            if (count > 1) s_log.error("getInfoInstance() count:" + count + " should never be more than 1.  antcatId:" + antcatId);
-
-        } catch (SQLException e) {
-            s_log.error("getInfoInstance() antcatId:" + antcatId + " exception:" + e + " theQuery:" + theQuery);
-        } finally {
-            DBUtil.close(stmt, rset, "this", "getInfoInstance() antcatId:" + antcatId);
-        }
-
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + theQuery);        
-        return taxon;
-    }       
-     
 
     public boolean isExistingSubfamilyForAGenus(String family, String subfamily, String genus) 
       throws SQLException {
@@ -375,14 +308,6 @@ public class HomonymDb extends AntwebDb {
         query += "   genus = '" + genus + "'";
 
         return isSubfamilyForGenus(query, subfamily);  // In AntwebDb.java
-    }         
-
-    public static int s_dummyHomonymFetchCount = 0;
-    public DummyTaxon getDummyTaxon(String taxonName) 
-      throws SQLException {
-      ++s_dummyHomonymFetchCount;
-      return super.getDummyTaxon(taxonName, "homonym");
     }
-
      
 }

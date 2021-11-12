@@ -295,11 +295,16 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 			    Genus genus = TaxonMgr.getGenusFromName(genusName);
 			    //if (genus != null) A.log("parseLine() genusName:" + genusName + " genus:" + genus + " genusSubfamily:" + genus.getSubfamily());
 
+                if ("antweb1008548".equals(code)) AntwebUtil.log("parseLine() 1 code:" + code + " not ant? genus:" + genusName + " genus:" + genus);
+
 			    if (genus != null) {
                   // If we find it, use it.
 				  String subfamily = genus.getSubfamily();
 
-/*
+                  // Note that below we report (for dev) about nonAntTaxa. There are nonAntTaxa where we do find the genus as well. Ex: antweb1008548
+                  //if ("antweb1008548".equals(code)) AntwebUtil.log("parseLine() 2 code:" + code + " not ant? subfamily:" + subfamily);
+
+                    /*
   If a specimen (perhaps a non-ant) is uploaded without family and is given the ant default: (formicidae)
     Then how do we automate replacement when the problem is corrected?
   if the specimen's subfamily is different (for instance: gryllinae) and the old one is '(formicidae)'

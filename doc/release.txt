@@ -1,3 +1,15 @@
+Release 8.67
+  Refactor of TaxonDb, HomonymDB and the DummyTaxon facilities.
+  Refactor of Taxon.getTaxonName().
+  Create ProfileCounter utility.
+  TaxonMgr refresh work.
+
+Nov 9th. 4 hrs.
+  Re-introduce changes for bug resolution.    
+  Handle case/bug where subfamily is not entered on browse.do page.
+  Extensive testing. Reload database. Attempt on stage.
+
+
 Release 8.66
   Refactor of Taxon, Specimen and Homonym to enhance database usage.
 

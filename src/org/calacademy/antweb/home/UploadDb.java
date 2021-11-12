@@ -496,7 +496,7 @@ public class UploadDb extends AntwebDb {
         return new Status(Status.INDETERMINED);  
       } else {
       
-        Taxon dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
+        Taxon dummyTaxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
         String status = dummyTaxon.getStatus();
         String currentValidName = dummyTaxon.getCurrentValidName();
       

@@ -587,8 +587,7 @@ public class LoginDb extends AntwebDb {
              if (!isAdminUpdate && !isLegalLogin(login)) {
                throw new SQLException("name:" + login.getName() + " or email:" + login.getEmail() + " already in use.");
              }
-
- 
+             
             PreparedStatement stmt = null;
             try {
                 if (isAdminUpdate) {

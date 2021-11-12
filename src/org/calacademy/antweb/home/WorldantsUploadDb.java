@@ -28,6 +28,8 @@ public class WorldantsUploadDb extends AntwebDb {
      http://ibss-info/antcat.antweb.txt   <- This is the worldants download file.
      http://ibss-info/download_results.log   <- log file?
 
+     // Why is this linked on the curate page: http://antcat-export:9090/antcat.antweb.txt
+
      Located here:
        /home/antcat-download/antcat.antweb.txt
 

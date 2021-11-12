@@ -701,7 +701,7 @@ public class SpeciesListUpload extends AntwebUpload {
                           String t = (String) taxonHash.get("current_valid_name");
                           if (t != null && !t.equals("") && !t.equals(taxonName)) {
                           
-                            DummyTaxon currentValidTaxon = (new TaxonDb(getConnection())).getDummyTaxon(t);
+                            DummyTaxon currentValidTaxon = (new DummyTaxonDb(getConnection())).getDummyTaxon(t);
                             if (currentValidTaxon != null) {
 								currentValidName = t;                            
                             } else {

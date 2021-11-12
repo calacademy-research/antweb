@@ -565,7 +565,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
              String subfamily = rset.getString("subfamily");
              int count = rset.getInt("count");
              
-             Taxon theSubfamily = TaxonDb.getInfoInstance(getConnection(), subfamily);
+             Taxon theSubfamily = new TaxonDb(getConnection()).getTaxon(subfamily);
              String chartColor = null;
              if (theSubfamily != null) {
                chartColor = theSubfamily.getChartColor();

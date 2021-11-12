@@ -141,7 +141,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);
                 Taxon taxon = null;
 				if (ResultRank.SPECIES.equals(resultRank) || ResultRank.SPECIMEN.equals(resultRank)) {
-                    taxon = (new TaxonDb(connection)).getTaxon(TaxonDb.FULL, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), resultItem.getSpecies(), null, Rank.SPECIES);
+                    taxon = (new TaxonDb(connection)).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), resultItem.getSpecies(), null, Rank.SPECIES);
                     if (taxon == null) {
                       s_log.error("getChoseTaxa() subfamily:" + resultItem.getSubfamily() + " species:" + resultItem.getSpecies() + " genus:" + resultItem.getGenus());
                       // Last time this happened (in dev env) it was a data problem, remedied by a production database reload.
@@ -150,10 +150,10 @@ public final class FieldGuideResultsAction extends ResultsAction {
              	// taxon.setChildrenLocalized(project);
 			} else {
   				 if (ResultRank.GENUS.equals(resultRank)) {
-                    taxon = (new TaxonDb(connection)).getTaxon(TaxonDb.FULL, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), null, null, resultRank);
+                    taxon = (new TaxonDb(connection)).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), null, null, resultRank);
                 } else if (ResultRank.SUBFAMILY.equals(resultRank)) {
                     //taxon = Taxon.getInstance(connection, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getSubfamily(), null, null, resultRank);  // Subfamily mentionned twice was a bug?
-                    taxon = (new TaxonDb(connection)).getTaxon(TaxonDb.FULL, Family.FORMICIDAE, resultItem.getSubfamily(), null, null, null, resultRank);
+                    taxon = (new TaxonDb(connection)).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), null, null, null, resultRank);
                 }                  
 	   		      //taxon.setChildren(project);
 			}

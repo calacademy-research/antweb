@@ -170,7 +170,6 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getGeolocaleTaxonLogs()");
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + query);        
         return geolocaleTaxonLogs;
     }       
 
@@ -208,7 +207,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
                 geolocaleTaxonLogDetail.setGeolocaleId(rset.getInt("geolocale_id"));
                 String taxonName = rset.getString("taxon_name");
                 geolocaleTaxonLogDetail.setTaxonName(taxonName);
-                //geolocaleTaxonLogDetail.setTaxon(TaxonDb.getInfoInstance(getConnection(), taxonName));
+                //geolocaleTaxonLogDetail.setTaxon(TaxonDb.getTaxon(getConnection(), taxonName));
                 geolocaleTaxonLogDetail.setCreated(rset.getTimestamp("created"));
                 geolocaleTaxonLogDetail.setSubfamilyCount(rset.getInt("subfamily_count"));
                 geolocaleTaxonLogDetail.setGenusCount(rset.getInt("genus_count"));
@@ -227,7 +226,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getGeolocaleTaxonLogDetailsFromGeo()");
         }
 
-        //A.log("getInfoInstance() name:" + taxonName + " query:" + query);        
+        //A.log("getGeolocaleTaxonLogDetailsFromGeo() name:" + taxonName + " query:" + query);
         return geolocaleTaxonLogDetails;
     }     
     
@@ -266,7 +265,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
                 geolocaleTaxonLogDetail.setGeolocaleId(rset.getInt("geolocale_id"));
                 String taxonName = rset.getString("taxon_name");
                 geolocaleTaxonLogDetail.setTaxonName(taxonName);
-                //geolocaleTaxonLogDetail.setTaxon(TaxonDb.getInfoInstance(getConnection(), taxonName));
+                //geolocaleTaxonLogDetail.setTaxon(new TaxonDb(getConnection()).getTaxon(taxonName));
                 geolocaleTaxonLogDetail.setCreated(rset.getTimestamp("created"));
                 geolocaleTaxonLogDetail.setSubfamilyCount(rset.getInt("subfamily_count"));
                 geolocaleTaxonLogDetail.setGenusCount(rset.getInt("genus_count"));
@@ -285,7 +284,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getGeolocaleTaxonLogDetails()");
         }
 
-        //A.log("getInfoInstance() name:" + taxonName + " query:" + query);        
+        //A.log("getGeolocaleTaxonLogDetails() name:" + taxonName + " query:" + query);
         return geolocaleTaxonLogDetails;
     }       
 
@@ -325,7 +324,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getCuratorLogins()");
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + query);        
+        //if (AntwebProps.isDevMode()) s_log.info("getCuratorLogins() name:" + taxonName + " query:" + query);
         return logins;
     }        
 
@@ -364,7 +363,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getCuration()");
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + query);
+        //if (AntwebProps.isDevMode()) s_log.info("getGeolocaleTaxon() name:" + taxonName + " query:" + query);
         return geolocaleTaxon;
     } 
     
@@ -405,7 +404,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getCuration()");
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + query);
+        //if (AntwebProps.isDevMode()) s_log.info("getCuration() name:" + taxonName + " query:" + query);
         return curation;
     } 
        
@@ -443,7 +442,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getCurations()");
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + query);
+        //if (AntwebProps.isDevMode()) s_log.info("getCurations() name:" + taxonName + " query:" + query);
         return curations;
     }
 
@@ -485,7 +484,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getCurations()");
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + query);
+        //if (AntwebProps.isDevMode()) s_log.info("getCurations() name:" + taxonName + " query:" + query);
         return curations;
     } 
 
@@ -546,7 +545,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getCurationsByGeolocale()");
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + query);
+        //if (AntwebProps.isDevMode()) s_log.info("getCurationsByGeolocale() name:" + taxonName + " query:" + query);
         return curations;
     }   
         
@@ -578,7 +577,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getCurationsByGeolocale()");
         }
 
-        //if (AntwebProps.isDevMode()) s_log.info("getInfoInstance() name:" + taxonName + " query:" + query);
+        //if (AntwebProps.isDevMode()) s_log.info("() name:" + taxonName + " query:" + query);
         return curations;
     }       
      */  

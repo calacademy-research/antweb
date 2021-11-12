@@ -185,6 +185,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 			 */
 			  //boolean isExistingSubfamilyForAGenus = getSpecimenUploadDb().isExistingSubfamilyForAGenus(family, subfamily, genus);
 			  //A.log("processLine() Not existing subfamily:" + subfamily + " for genus:" + genus);
+				ProfileCounter.add("SpecimenUploadProcessIsExistingSubfamilyForGenus");
 			  boolean isExistingTaxonSubfamilyForAGenus = (new TaxonDb(getConnection())).isExistingSubfamilyForAGenus(family, subfamily, genus);
 			  boolean isExistingHomonymSubfamilyForAGenus = false;
 			  if (!isExistingTaxonSubfamilyForAGenus) {
@@ -423,7 +424,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
     }
 
 	private static int s_statusAndCurrentValidNameCount = 0;    
-    
+
     // Similar method in AntwebUpload.
     public String setStatusAndCurrentValidName(String taxonName, Hashtable taxonItem, Hashtable specimenItem, String source)
       throws SQLException
@@ -448,14 +449,14 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
       } else if (Taxon.isMorpho(taxonName)) {
         status = Status.MORPHOTAXON;
       } else {
+		  ProfileCounter.add("SpecimenUploadProcess.SetStatusAndCurrentValidName()A"); // CAS:158,415 X
           TaxonDb taxonDb = new TaxonDb(getConnection());
-
           //DummyTaxon taxon = taxonDb.getDummyTaxon(taxonName);
 		  Taxon taxon = null;
-		  if (TaxonMgr.s_useRefreshedTaxonMgr) {
-			  taxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+		  if (TaxonMgr.isUseRefreshing()) {
+			  taxon = TaxonMgr.getTaxon(taxonName);
 		  } else {
-			  taxon = taxonDb.getDummyTaxon(taxonName);
+			  taxon = taxonDb.getTaxon(taxonName);
 		  }
 
           if (taxon != null) status = taxon.getStatus();
@@ -509,13 +510,14 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
                 originalTaxonName = taxonName;
                 taxonName = currentValidName;
                 skipTaxonEntry = true;
-                                
+
+    	   	    ProfileCounter.add("SpecimenUploadProcess.SetStatusAndCurrentValidName()B"); // CAS:42 X
                 String currentValidTaxonName = TaxonDb.getCurrentValidTaxonName(getConnection(), currentValidName);  // Does not look in Homonym table.
 
                 String newTaxonStr = null;
                 
                 if (currentValidTaxonName == null) {
-                  DummyTaxon dummyTaxon = (new HomonymDb(getConnection())).getDummyTaxon(currentValidName);
+                  Taxon dummyTaxon = (new HomonymDb(getConnection())).getHomonym(currentValidName);
                   boolean isHomonym = false;
                   if (dummyTaxon != null) isHomonym = true;
                   if (isHomonym) {
@@ -526,8 +528,6 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
                     // currentValidName is a misnomer at this point.  As a homonym, new taxon created that is "Unrecoginzed" as a place holder for the homonym.
                     s_log.warn("setStatusAndCurrentValidName() taxon does not exist for homonym with specimen.  Create.  new taxon:" + currentValidName + " code:" + specimenItem.get("code") + " taxonItem:" + taxonItem + " specimenItem:" + specimenItem);
-
-//                    DummyTaxon currentTaxon = (new HomonymDb(getConnection())).getDummyTaxon(currentValidName);
 
 	                taxonItem.put("family", dummyTaxon.getFamily());
                     taxonItem.put("subfamily", dummyTaxon.getSubfamily());
@@ -567,7 +567,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
                   getUploadDetails().getMessageMgr().addToMessages(MessageMgr.recognizedInvalidSpecies, newTaxonStr);
 
               } // Check for null currentValidName
-            } else if (Status.VALID.equals(status)) {
+            } else if (Status.VALID.equals(status) || Status.UNAVAILABLE.equals(status) || Status.UNIDENTIFIABLE.equals(status)) {
               // do nothing
             } else {
               A.log("setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
@@ -611,7 +611,8 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
         
         Date startTime = new Date();
 
-        DummyTaxon currentTaxon = taxonDb.getDummyTaxon(currentTaxonName);
+        ProfileCounter.add("SpecimenUploadProcess.makeSpecimenUseTaxon()");
+        Taxon currentTaxon = taxonDb.getTaxon(currentTaxonName);
         if (currentTaxon == null) {
           s_log.warn("makeSpecimenUseTaxon() taxon not found:" + currentTaxonName);
           return null;
@@ -627,16 +628,6 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
         //specimenItem.put("status", currentTaxon.getStatus());
         //A.log("makeSpecimenUseTaxon() taxonItem.put:" + currentTaxon.getStatus());
-
-/*
-        taxonItem.put("family", currentTaxon.getFamily());
-        taxonItem.put("subfamily", currentTaxon.getSubfamily());
-        if (currentTaxon.getTribe() != null) taxonItem.put("tribe", currentTaxon.getTribe());
-        taxonItem.put("genus", currentTaxon.getGenus());
-        if (currentTaxon.getSubgenus() != null) taxonItem.put("subgenus", currentTaxon.getSubgenus());
-        taxonItem.put("species", currentTaxon.getSpecies());
-        if (currentTaxon.getSubspecies() != null) taxonItem.put("subspecies", currentTaxon.getSubspecies());
-*/
         //A.log("makeSpecimenUseTaxon() taxonItem.put:" + currentTaxon.getSpecies());
 
         //String heading = "<b>Recognized invalid species.  Submission replaced with current valid name from AntCat.org <font color=green>(uploaded)</font></b>";

@@ -308,9 +308,9 @@ To Do
 		  refSpeciesList = new ArrayList<>();
 		  ArrayList<ProjTaxonLogDetail> logDetails = (new ProjTaxonLogDb(connection)).getProjTaxonLogDetails(projLogId, displaySubfamily);  
 	  
-		  TaxonDb taxonDb = new TaxonDb(connection);
+		  //TaxonDb taxonDb = new TaxonDb(connection);
 		  for (ProjTaxonLogDetail  logDetail : logDetails) {  // was: ProjTaxonLogDetail 
-			Taxon detailTaxon = taxonDb.getInfoInstance(connection, logDetail.getTaxonName());
+			Taxon detailTaxon = new TaxonDb(connection).getTaxon(logDetail.getTaxonName());
 
 			//A.log("setSpeciesListMappings() projLogId:" + projLogId + " detailTaxon:" + detailTaxon);        
 			if (detailTaxon == null) {
@@ -326,9 +326,9 @@ To Do
 		  refSpeciesList = new ArrayList<>();
 		  ArrayList<GeolocaleTaxonLogDetail> logDetails = (new GeolocaleTaxonLogDb(connection)).getGeolocaleTaxonLogDetails(geoLogId, displaySubfamily);  
 	  
-		  TaxonDb taxonDb = new TaxonDb(connection);
+//		  TaxonDb taxonDb = new TaxonDb(connection);
 		  for (GeolocaleTaxonLogDetail  logDetail : logDetails) {  // was: ProjTaxonLogDetail 
-			Taxon detailTaxon = taxonDb.getInfoInstance(connection, logDetail.getTaxonName());
+			Taxon detailTaxon = new TaxonDb(connection).getTaxon(logDetail.getTaxonName());
 
 			//A.log("setSpeciesListMappings() geoLogId:" + geoLogId + " detailTaxon:" + detailTaxon);        
 			if (detailTaxon == null) {

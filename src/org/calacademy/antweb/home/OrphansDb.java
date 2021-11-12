@@ -284,9 +284,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 
     public DummyTaxon getOrphanDescEditTaxon(String taxonName) throws SQLException {
       DummyTaxon orphan = null;
-      
-      //orphan = new DummyTaxonDb(getConnection()).getInstance(taxonName);
-      //orphan = new DummyTaxonDb(getConnection()).getDummyTaxon(taxonName);
+
       orphan = DummyTaxon.makeDummyTaxon(taxonName);
       
       if (orphan == null) A.log("getOrphanDescEditTaxon() taxonName:" + taxonName + " is null");

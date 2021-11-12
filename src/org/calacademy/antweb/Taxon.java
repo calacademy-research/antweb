@@ -27,7 +27,6 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         }
         if (other.getFullName() == null) return 1;
         return getFullName().compareTo(other.getFullName());
-        //return getTaxonName().compareTo(other.getTaxonName());
     }
 
     private static Log s_log = LogFactory.getLog(Taxon.class);
@@ -158,27 +157,6 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     This is a good lesson in how to write object oriented code backwards.  Thanks Thau.
 */
 
-/*
- // Replace with:  taxon = (new TaxonDb(connection)).getTaxon(taxonName);
-    // Called 22 times from various Java classes
-    public static Taxon getInfoInstance(Connection connection, String taxonName) {
-        TaxonDb taxonDb = new TaxonDb(connection);
-
-        if (taxonName.contains("be right back")) {
-          s_log.error("getInfoInstance() Error.  Investigate.  taxonName:" + taxonName);
-          AntwebUtil.logStackTrace();
-          return null;
-        }
-
-        Taxon t = taxonDb.getInfoInstance(connection, "taxon", taxonName);
-
-        // A.log("getInfoInstance() taxonName:" + taxonName + " taxon:" + t.getTaxonName());
-
-        return t;
-    }      
-*/
-
-
     // Called from getInstance() above.
     public void finishInstance(Connection connection) throws SQLException {
             
@@ -230,7 +208,10 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             
             rset = stmt.executeQuery(theQuery);
             while (rset.next()) {
-                // should return only one record             
+                // should return only one record
+
+                setStatus(rset.getString("status"));
+                setGroupId(rset.getInt("access_group"));
                 setSource(rset.getString("source"));
                 setLineNum(rset.getInt("line_num"));
                 setInsertMethod(rset.getString("insert_method"));
@@ -238,29 +219,23 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
                 setIsFossil(rset.getInt("fossil") == 1);
                 setIsType(rset.getInt("type") == 1);
                 setIsAntCat(rset.getInt("antcat") == 1);
-                setIsPending(rset.getInt("pending") == 1);
-
                 setAntcatId(rset.getInt("antcat_id"));
+                setIsPending(rset.getInt("pending") == 1);
                 setAuthorDate(rset.getString("author_date"));
                 setAuthorDateHtml(rset.getString("author_date_html"));
                 setAuthors(rset.getString("authors"));
                 setYear(rset.getString("year"));
-                setStatus(rset.getString("status"));
                 setIsAvailable(rset.getInt("available") == 1);
                 setCurrentValidName(rset.getString("current_valid_name"));
                 setCurrentValidRank(rset.getString("current_valid_rank"));
                 setCurrentValidParent(rset.getString("current_valid_parent"));                
                 setIsOriginalCombination(rset.getInt("original_combination") == 1);
                 setWasOriginalCombination(rset.getString("was_original_combination"));
-                //setCountry(rset.getString("country"));
-                //setBioregion(rset.getString("bioregion"));
-                
                 setParentTaxonName(rset.getString("parent_taxon_name"));                
                 setImageCount(rset.getInt("image_count"));
                 setHolId(rset.getInt("hol_id"));
-                setGroupId(rset.getInt("access_group"));
-
                 setChartColor(rset.getString("chart_color"));
+                // old_speciesGroup
             }
 
             if (Rank.SUBFAMILY.equals(getRank()) || isSpeciesOrSubspecies()) {
@@ -289,7 +264,110 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             DBUtil.close(stmt, rset, this, "init()");
         }
     }
-    
+
+    public static Taxon getTaxon(Hashtable item) {
+        String rank = (String) item.get("rank");
+        Taxon taxon = getTaxonOfRank(rank);
+        taxon.setKingdomName((String) item.get("kingdom_name"));
+        taxon.setPhylumName((String) item.get("phylum_name"));
+        taxon.setOrderName((String) item.get("order_name"));
+        taxon.setClassName((String) item.get("class_name"));
+        taxon.setFamily((String) item.get("family"));
+        taxon.setSubfamily((String) item.get("subfamily"));
+
+        taxon.setTribe((String) item.get("tribe"));
+        taxon.setGenus((String) item.get("genus"));
+        taxon.setSubgenus((String) item.get("subgenus"));
+        taxon.setSpecies((String) item.get("species"));
+        taxon.setSubspecies((String) item.get("subspecies"));
+
+        taxon.setStatus((String) item.get("status"));
+        taxon.setGroupId((Integer) item.get("access_group"));   // Why not this one?
+        taxon.setSource((String) item.get("source"));
+
+        //taxon.setLineNum((Integer) item.get("line_num"));
+        //String lineNum = (String) item.get("line_num");
+        //taxon.setLineNum(Integer.valueOf(lineNum).intValue());
+        taxon.setLineNum(getIntFor(item, "line_num"));
+
+        taxon.setInsertMethod((String) item.get("insert_method"));
+        taxon.setCreated((Timestamp) item.get("created"));
+
+        //taxon.setIsFossil((Integer) item.get("fossil") == 1);
+        //String isFossilStr = (String) item.get("fossil");
+        //int isFossil = 0; // arbitary default?
+        //if (isFossilStr != null) isFossil = Integer.valueOf(isFossilStr).intValue();
+        //taxon.setIsFossil(isFossil == 1);
+        taxon.setIsFossil(getBoolFor(item, "fossil"));
+
+
+        // taxon.setIsType((Integer) item.get("type") == 1);
+        //String isTypeStr = (String) item.get("type");
+        //int isType = Integer.valueOf(isTypeStr).intValue();
+        //taxon.setIsType(isType == 1);
+        taxon.setIsType(getBoolFor(item, "type"));
+
+        //taxon.setIsAntCat((Integer) item.get("antcat") == 1);
+        //String isAntCatStr = (String) item.get("antcat");
+        //int isAntCat = Integer.valueOf(isAntCatStr).intValue();
+        //taxon.setIsAntCat(isAntCat == 1);
+        taxon.setIsAntCat(getBoolFor(item, "antcat"));
+
+        //taxon.setAntcatId((Integer) item.get("antcat_id"));
+        //String antcatId = (String) item.get("antcat_id");
+        //taxon.setAntcatId(Integer.valueOf(antcatId).intValue());
+        taxon.setAntcatId(getIntFor(item, "antcat_id"));
+
+        //taxon.setIsPending((Integer) item.get("pending") == 1);
+        //String isPendingStr = (String) item.get("pending");
+        //int isPending = Integer.valueOf(isPendingStr).intValue();
+        //taxon.setIsPending(isPending == 1);
+        taxon.setIsPending(getBoolFor(item, "pending"));
+
+        taxon.setAuthorDate((String) item.get("author_date"));
+        taxon.setAuthorDateHtml((String) item.get("author_date_html"));
+        taxon.setAuthors((String) item.get("authors"));
+        taxon.setYear((String) item.get("year"));
+
+        //taxon.setIsAvailable((Integer) item.get("available") == 1);
+        //String isAvailableStr = (String) item.get("available");
+        //int isAvailable = Integer.valueOf(isAvailableStr).intValue();
+        //taxon.setIsAvailable(isAvailable == 1);
+        taxon.setIsAvailable(getBoolFor(item, "available"));
+
+        taxon.setCurrentValidName((String) item.get("current_valid_name"));
+        taxon.setCurrentValidRank((String) item.get("current_valid_rank"));
+        taxon.setCurrentValidParent((String) item.get("current_valid_parent"));
+
+        //taxon.setIsOriginalCombination((Integer) item.get("original_combination") == 1);
+        //String isOriginalCombinationStr = (String) item.get("original_combination");
+        //int isOriginalCombination = Integer.valueOf(isOriginalCombinationStr).intValue();
+        //taxon.setIsOriginalCombination(isOriginalCombination == 1);
+        taxon.setIsOriginalCombination(getBoolFor(item, "original_combination"));
+
+        taxon.setWasOriginalCombination((String) item.get("was_original_combination"));
+        taxon.setParentTaxonName((String) item.get("parent_taxon_name"));
+        //taxon.setImageCount((Integer) item.get("image_count") == 1);
+        //taxon.setHolId((Integer) item.get("hol_id") == 1);
+        taxon.setChartColor((String) item.get("chart_color"));
+        // old_speciesGroup
+
+        return taxon;
+    }
+
+    private static boolean getBoolFor(Hashtable item, String key) {
+        String valueStr = (String) item.get(key);
+        int intValue = 0; // arbitary default?
+        if (valueStr != null) intValue = Integer.valueOf(valueStr).intValue();
+        return intValue == 1;
+    }
+    private static int getIntFor(Hashtable item, String key) {
+        String strValue = (String) item.get(key);
+        int intValue = 0;
+        if (strValue != null) intValue = Integer.valueOf(strValue).intValue();
+        return intValue;
+    }
+
     public void initTaxonSet(Connection connection, Overviewable overview) {
         // Overridden by Specimen only.
 
@@ -812,11 +890,36 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       return "species".equals(getRank()) || "subspecies".equals(getRank());
     }
 
-    /** Wacky code here Thau.  I (Mark) moved this code from Utility class and simplified.  Further
-      work is to get rid of the inane hashtable business. */
-    public String getTaxonName() {
-      // This is what gets persisted in the taxon_name field of the taxon table.
+    private boolean validNameKey(String value) {
+        boolean valid = true;
 
+        if (value == null) return false;
+
+        if (value.equals("null")) valid = false;
+        if (value.equals("")) valid = false;
+
+        if (!valid) {
+            if (AntwebProps.isDevMode()) {
+                if (!value.equals("")) s_log.warn("validNameKey(" + value + ") is not valid");
+            }
+        }
+        return valid;
+    }
+
+    /** Wacky code here Thau.  I (Mark) moved this code from Utility class and simplified. Strange it is not
+     * just a get/set method with construction happening in the appropriate place.
+     * First called from TaxonMgr.populate(TaxonMgr.java:43
+     * */
+    private String taxonName = null;
+    public String getTaxonName() {
+        if (taxonName == null) {
+            taxonName = makeTaxonName();
+        }
+        return taxonName;
+    }
+
+    public String makeTaxonName() {
+      // This is what gets persisted in the taxon_name field of the taxon table.
 
       if (getRank() != null) {
         String returnVal = null;
@@ -826,53 +929,36 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         if (getRank().equals("order")) returnVal = getOrderName(); 
         if (getRank().equals("family")) returnVal = getFamily(); 
         if (returnVal != null) {
-          //A.log("getTaxonName() rank:" + getRank() + " returnVal:" + returnVal);
-          //AntwebUtil.logStackTrace();
           return returnVal;
         }
       }
-      
-      Hashtable taxonomy = new Hashtable();
-    
-      if (getFamily() != null) taxonomy.put("family", getFamily());
-      if (getSubfamily() != null) taxonomy.put("subfamily", getSubfamily());
-// if (getTribe() != null) taxonomy.put("tribe", getTribe());
-      if (getGenus() != null) taxonomy.put("genus", getGenus());
-      if (getSpecies() != null) taxonomy.put("species", getSpecies());
-      if (getSubspecies() != null) taxonomy.put("subspecies", getSubspecies());
-  //    if (getSubgenus() != null) taxonomy.put("subgenus", getSubgenus());
-  //    if (getSpeciesGroup() != null) taxonomy.put("speciesgroup", getSpeciesGroup());
 
-      return makeName(taxonomy);
+      StringBuffer sb = new StringBuffer();
+      if (validNameKey(getSubfamily())) {
+          sb.append(getSubfamily());
+      }
+      if (validNameKey(getGenus())) {
+          sb.append(getGenus());
+      }
+      if (validNameKey(getSpecies())) {
+          sb.append(" " + getSpecies());
+      }
+      if (validNameKey(getSubspecies())) {
+          sb.append(" " + getSubspecies());
+      }
+
+      String returnVal =  sb.toString();
+
+      //if ("apterogyna".equals(getGenus()) && "za01".equals(getSpecies())) {
+      //    A.log("makeTaxonName() returnVal:" + returnVal + " subfamily:" + getSubfamily());
+      //    AntwebUtil.logShortStackTrace();
+      //}
+
+      return returnVal;
     }
+
 
     public void setName(String name) {  } // implements Describable
-
-
-    private String makeName(Hashtable item) {
-
-      if (item == null) return null;
-      
-      StringBuffer sb = new StringBuffer();
-
-      if (validNameKey("subfamily", item)) {
-        sb.append((String) item.get("subfamily"));
-      }
- 
-      if (validNameKey("genus", item)) {
-        sb.append((String) item.get("genus"));
-      }
-
-      if (validNameKey("species", item)) {
-        sb.append(" " + (String) item.get("species"));     
-      }
- 
-      if (validNameKey("subspecies", item)) {
-        sb.append(" " + (String) item.get("subspecies"));     
-      }
-
-      return sb.toString();
-    }
 
     public String getSimpleName() {
         // Used in site_nav.jsp.  Useful for species or specimen only.
@@ -1000,6 +1086,61 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     public String toString() {
         return getName();
     }
+
+    public String toFullString() {
+        String fullString = "";
+
+        fullString += " taxarank:" + getRank()
+                + " taxonName:" + getTaxonName()
+                + " kindgom:" + getKingdomName()
+                + " phylum:" + getPhylumName()
+                + " order:" + getOrderName()
+                + " class:" + getClassName()
+                + " family:" + getFamily()
+                + " subfamily:" + getSubfamily()
+                + " tribe:" + getTribe()
+                + " genus:" + getGenus()
+                + " subgenus:" + getSubgenus()
+                + " species:" + getSpecies()
+                + " subspecies:" + getSubspecies();
+
+        // These come from the init method.
+        fullString += " status:" + getStatus()
+          + " groupId:" + getGroupId()
+          + " source:" + getSource()
+          + " lineNum:" + getLineNum()
+          + " insertMethod:" + getInsertMethod()
+          + " created:" + getCreated()
+          + " fossil:" + getIsFossil()
+          + " isType:" + getIsType()
+          + " isAntCat:" + getIsAntCat()
+          + " antcatId:" + getAntcatId()
+          + " isPending:" + getIsPending()
+          + " authorDate:" + getAuthorDate()
+          + " authorDateHtml:" + getAuthorDateHtml()
+          + " authors:" + getAuthors()
+          + " year:" + getYear()
+          + " isAvailable:" + getIsAvailable()
+          + " currentValidName:" + getCurrentValidName()
+          + " currentValidRank:" + getCurrentValidRank()
+          + " currentValidParent:" + getCurrentValidParent()
+          + " isOriginalCombination:" + getIsOriginalCombination()
+          + " wasOriginalCombination:" + getWasOriginalCombination()
+          + " parentTaxonName:" + getParentTaxonName()
+          + " imageCount:" + getImageCount()
+          + " holidId:" + getHolId()
+          + " chartColor:" + getChartColor();
+        // old_speciesGroup
+
+        fullString += " defaultMale:" + getDefaultSpecimen(Caste.MALE)
+          + " defaultWorker:" + getDefaultSpecimen(Caste.WORKER)
+          + " defaultQueen:" + getDefaultSpecimen(Caste.QUEEN)
+          + " bioregionMap:" + getBioregionMap()
+          + " introduceMap:" + getIntroducedMap();
+
+        return fullString;
+    }
+
 
     // This accessor/mutator is used by GenericSearchResults and specimenReport.jsp
     public String getUploadDate() {
@@ -1967,7 +2108,6 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         return browserParams;
     }
     public void setBrowserParams(String browserParams) {
-      //A.log("setBrowserParams() browserParams:" + browserParams);    
         if (browserParams != null) {
           String stripString = "&genCache=true";
           browserParams = Formatter.stripString(browserParams, stripString);
@@ -3095,35 +3235,6 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         subspecies = taxonName.substring(secondSpace + 1);
       }
       return subspecies;
-    }
-
-
-    private boolean validNameKey(String key, Hashtable item) {
-  	  boolean valid = true;
-
- 	 if (!item.containsKey(key)) {
- 	    //s_log.info("validNameKey not found key:" + key);
-	    return false;
-	  }
- 
-	  String val = (String) item.get(key);
-	  if (val.equals("null")) valid = false;
-	  if (val.equals("")) valid = false;
-
-	  if (!valid) {
-	    if (AntwebProps.isDevMode()) {
-	      if (!val.equals("")) s_log.warn("! validNameKey(" + key + ", " + val + ")");
-	      /*
-	      //AntwebUtil.logStackTrace();
-			at org.calacademy.antweb.Taxon.validNameKey(Taxon.java:2990)
-			at org.calacademy.antweb.Taxon.makeName(Taxon.java:808)
-			at org.calacademy.antweb.Taxon.getTaxonName(Taxon.java:787)
-			at org.calacademy.antweb.util.TaxonMgr.getGenus(TaxonMgr.java:67)
-			at org.calacademy.antweb.upload.SpecimenUpload.setStatusAndCurrentValidName(SpecimenUpload.java:1359)
-	       */	      
-        } 
-	  }
-	  return valid;
     }
 
 	public void logData() {

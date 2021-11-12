@@ -16,11 +16,15 @@ public class SpecimenUploadSupport extends AntwebUpload {
     private ArrayList<String> m_badRankTaxonList = new ArrayList(); 
     
     SpecimenUploadSupport(Connection connection) {
-      super(connection, "specimenUpload");    
+
+        super(connection, "specimenUpload");
+
     }
 
     public ArrayList<String> getBadRankTaxonList() {
-      return m_badRankTaxonList;
+
+        return m_badRankTaxonList;
+
     }
       
 }

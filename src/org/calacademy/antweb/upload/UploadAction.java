@@ -225,8 +225,8 @@ public class UploadAction extends Action {
 				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theFileName, formFileName
 				  , submitLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 
-                if (false && AntwebProps.isDevMode()) {
-					A.log("BECAUSE IN DEV MODE, post specimen processing aborted.");
+                if (AntwebProps.isDevMode()) {
+					A.log("DEV SKIPPING, post specimen processing aborted.");
 					uploadDetails.finish(accessLogin, request, connection);
 					return uploadDetails.findForward(mapping, request);
 				}
@@ -526,29 +526,6 @@ public class UploadAction extends Action {
 			  }
 			}
 
-/*
-			String ancFileDir = theForm.getAncFileDirectory();
-			if ((ancFileDir != null) &&
-			   (ancFileDir.length() > 0) &&
-			   !(ancFileDir.equals("none"))) {
-			   // Create an ancillary page for:
-
-                A.log("execute() setNewAncFile:" + ancFileDir);
-
-				s_antwebEventLog.info("setNewAncFile:" + ancFileDir);
-
-				if (!(ancFileDir.equals("curator"))) {
-				  setNewAncFile(ancFileDir, accessLogin, session, connection);
-				} else {
-				  // looks like a curator anc file
-				  setNewAncFile(accessLogin, session, connection);
-				}
-
-                uploadDetails.setForwardPage("newAncFile");
-
-				//A.log("ancillaryFile details:" + uploadDetails);
-			}
-*/
 			if ((theForm.getSuccessKey() != null) && (theForm.getSuccessKey().equals("worldAuthorityFiles"))) {
 			    A.log("execute() worldauth successKey:" + theForm.getSuccessKey());
                 worldAuthGen(request);
@@ -996,7 +973,7 @@ public class UploadAction extends Action {
               // insert taxonName into Antwiki_valid_taxa
               // then report on select valid taxa from taxon where not in (select taxon_name from antwiki_valid_taxa.
 
-              Taxon dummyTaxon = taxonDb.getDummyTaxon(taxonName);
+              Taxon dummyTaxon = taxonDb.getTaxon(taxonName); //TEMP08
               String validStr = "null";
               if (dummyTaxon != null) validStr = dummyTaxon.getStatus();
               //A.log("testFileValid() taxonName:" + taxonName + " valid:" + validStr);
@@ -1072,7 +1049,7 @@ public class UploadAction extends Action {
               // insert taxonName into Antwiki_fossil_taxa
               // then report on select fossil taxa from taxon where not in (select taxon_name from antwiki_fossil_taxa.
 
-              Taxon dummyTaxon = taxonDb.getDummyTaxon(taxonName);
+              Taxon dummyTaxon = taxonDb.getTaxon(taxonName); //TEMP08
               if (dummyTaxon != null) {
                 if (dummyTaxon.getIsFossil()) {
                   ++fossilTaxonCount;
@@ -1160,7 +1137,7 @@ public class UploadAction extends Action {
 
               validSpeciesMap.remove(taxonName);
 
-              Taxon dummyTaxon = taxonDb.getDummyTaxon(taxonName);
+              Taxon dummyTaxon = taxonDb.getTaxon(taxonName);
               String antwebCurrentValidName = null;
               if (dummyTaxon != null) {
 /*
@@ -1241,7 +1218,7 @@ public class UploadAction extends Action {
               String taxonName = subfamily + genus + " " + species;
               if (subspecies != null) taxonName += " " + subspecies;
 
-              Taxon dummyTaxon = taxonDb.getDummyTaxon(taxonName);
+              Taxon dummyTaxon = taxonDb.getTaxon(taxonName);
               String antwebCurrentValidName = null;
               if (dummyTaxon != null) {
                 antwebCurrentValidName = dummyTaxon.getCurrentValidName();

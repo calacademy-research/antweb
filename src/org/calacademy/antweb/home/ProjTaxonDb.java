@@ -718,10 +718,10 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
 // ------------------------------------------------------------------------------------
 
-    public void testProjTaxon() {
+    public void testProjTaxon() throws SQLException {
       fixProjTaxonParentage();
     }
-    public void fixProjTaxonParentage() {   
+    public void fixProjTaxonParentage() throws SQLException {
       // Get all the ProjTaxon.  Verify that each proj_taxon's taxon parent exists in proj_taxon for that project.
 
       String projectName = null;
@@ -756,7 +756,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         }
         for (ProjTaxon projTaxon : projTaxa) {
           projectName = projTaxon.getProjectName();
-          Taxon taxon = TaxonDb.getInfoInstance(getConnection(), projTaxon.getTaxonName());
+          Taxon taxon = new TaxonDb(getConnection()).getTaxon(projTaxon.getTaxonName());
           if (taxon != null) {
             String parent = taxon.getParentTaxonName();
             if (! exists(projectName, parent)) {
