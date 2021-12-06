@@ -37,6 +37,13 @@ services:
       context: .
       dockerfile: docker/api/Dockerfile
 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 5m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+      
     restart: unless-stopped
     expose:
       - 5000
