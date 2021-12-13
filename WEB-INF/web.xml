@@ -201,6 +201,7 @@
       <url-pattern>/images/*</url-pattern>
       <url-pattern>/common/*</url-pattern>
       <url-pattern>/search/*</url-pattern>
+      <url-pattern>/ckeditor/*</url-pattern>
        <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
