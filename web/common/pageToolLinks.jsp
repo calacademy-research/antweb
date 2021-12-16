@@ -52,7 +52,7 @@
 <% }
 
   if (LoginMgr.isAdmin(request)) {
-  A.log("pageToolLinks.jsp target:" + HttpUtil.getTarget(request));
+    //A.log("pageToolLinks.jsp target:" + HttpUtil.getTarget(request));
     if (Rank.GENUS.equals(taxon.getRank()) && HttpUtil.getTarget(request).contains("images.do")) { 
       String overviewCriteria = "&" + overview.getSearchCriteria();
       if (!overviewCriteria.contains("museum=") || (!overviewCriteria.contains("project=") || overviewCriteria.contains("project=allantwebants"))) {

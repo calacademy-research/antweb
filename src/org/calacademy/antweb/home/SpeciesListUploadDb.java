@@ -84,9 +84,9 @@ equals:
 
 */
     
-    public void modifyProjectData(String project) {
+    public void prepareDatabase(String project) {
         if (!"worldants".equals(project)) {
-          s_log.warn("modifyProjectData(). BIG PROBLEM! Only worldants should be uploaded via species list.");
+          s_log.warn("prepareDatabase(). BIG PROBLEM! Only worldants should be uploaded via species list.");
           return;
         }
         String log = "";
@@ -99,6 +99,7 @@ equals:
 			dmlstmt = getConnection().createStatement();
 			log += "taxa:" + dmlstmt.executeUpdate(query);
 			dmlstmt.close();
+			A.log("prepareDatabase() query:" + query);
 
 			dmlstmt = getConnection().createStatement();
 			query = "delete from homonym where antcat = 1";    // all records
@@ -123,7 +124,7 @@ equals:
             count = dmlstmt.executeUpdate(query);
             log += " proj_taxon:" + count;
             dmlstmt.close();
-            LogMgr.appendLog("taxonSet.log", "SpeciesListUploadDb.modifyProjectData(" + project + ") proj_taxon:" + project + " del:" + count, true);
+            LogMgr.appendLog("taxonSet.log", "SpeciesListUploadDb.prepareDatabase(" + project + ") proj_taxon:" + project + " del:" + count, true);
 
             // then delete everything from the geolocale_taxon table with this source
             dmlstmt = getConnection().createStatement();
@@ -131,7 +132,7 @@ equals:
             count = dmlstmt.executeUpdate(query);
             log += " geolocale_taxon:" + count;
             dmlstmt.close();
-            LogMgr.appendLog("taxonSet.log", "SpeciesListUploadDb.modifyProjectData(" + project + ") geolocale_taxon source:antcat del:" + count, true);
+            LogMgr.appendLog("taxonSet.log", "SpeciesListUploadDb.prepareDatabase(" + project + ") geolocale_taxon source:antcat del:" + count, true);
 
             // then delete everything from the proj_taxon table with this source
             dmlstmt = getConnection().createStatement();
@@ -139,35 +140,15 @@ equals:
             count = dmlstmt.executeUpdate(query);
             log += " proj_taxon:" + count;
             dmlstmt.close();
-            LogMgr.appendLog("taxonSet.log", "SpeciesListUploadDb.modifyProjectData(" + project + ") proj_taxon source:antcat project:fossilants del:" + count, true);
+            LogMgr.appendLog("taxonSet.log", "SpeciesListUploadDb.prepareDatabase(" + project + ") proj_taxon source:antcat project:fossilants del:" + count, true);
  
-            A.log("modifyProjectData() log:" + log);       
+            A.log("prepareDatabase() log:" + log);
             
         } catch (Exception e) {
-            s_log.error("modifyProjectData() problem for project:" + project + " e:" + e);
+            s_log.error("prepareDatabase() problem for project:" + project + " e:" + e);
         }
     }
 
-/*
-    public void deletePendingData() {
-        String dml = null;
-        try {
-            Statement stmt = getConnection().createStatement();
-            dml = "delete from taxon where pending = 1"; 
-            
-            //s_log.warn("deletePendingData() dml:" + dml);
-            stmt.executeUpdate(dml);
-            stmt.close();
-
-            stmt = getConnection().createStatement();
-            stmt.executeUpdate(dml);
-            stmt.close();
-        } catch (SQLException e) {
-            s_log.error("deletePendingData() e:" + e + " dml:" + dml);
-        }
-    }
-    */
-    
     public static int reportTaxonCountryPrimaryKeyViolations() {
       int returnVal = s_taxonCountryPrimaryKeyViolations;
       s_taxonCountryPrimaryKeyViolations = 0;

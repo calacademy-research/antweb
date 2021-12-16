@@ -109,6 +109,8 @@ public class UploadAction extends Action {
             connection = DBUtil.getConnection(dataSource, "UploadAction.execute()", HttpUtil.getTarget(request));
             connection.setAutoCommit(false);
 
+            A.log("execute() using longConPool:" + dataSource);
+
 			LoginDb loginDb = new LoginDb(connection);
 
             AntwebMgr.incrementSpecimenUploadId(connection);
@@ -149,29 +151,41 @@ public class UploadAction extends Action {
 
 			if (action != null) {
  			  if (action.equals("uploadSpeciesList")) {
-
  			    // This functionality should probably be inside of SpeciesListUploader.java
 
-                // Do we need to create /data/antweb/web/workingdir if it does not exist?
-                // Worldants should not be hardcoded. Get from file... (2 times)
-                UploadFile uploadFile = new UploadFile(AntwebProps.getDocRoot() + "web/workingdir/", "worldants.txt", request.getHeader("User-Agent"), null);
-                uploadFile.setRoot(AntwebProps.getDocRoot());
-                A.log("execute() root:" + uploadFile.getRoot());
+				try {
+					TaxonMgr.setIsInWorldants(true);
+					A.log("setIsInWorldants(true)");
 
-                uploadDetails = (new SpeciesListUploader(connection)).uploadWorldants(theForm.getTheFile(), uploadFile, accessGroup);
-                if (uploadDetails.getErrorForward(mapping) != null) {
-                  request.setAttribute("message", uploadDetails.getMessage());
-                  return uploadDetails.getErrorForward(mapping);
-                }
+					// Do we need to create /data/antweb/web/workingdir if it does not exist?
+					// Worldants should not be hardcoded. Get from file... (2 times)
+					UploadFile uploadFile = new UploadFile(AntwebProps.getDocRoot() + "web/workingdir/", "worldants.txt", request.getHeader("User-Agent"), null);
+					uploadFile.setRoot(AntwebProps.getDocRoot());
+					A.log("execute() root:" + uploadFile.getRoot());
 
-				if ("on".equals(theForm.getRecrawl())) {
-					runCountCrawls = true;
-                }
+					Date startTime = new Date();
 
-                runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
+					uploadDetails = (new SpeciesListUploader(connection)).uploadWorldants(theForm.getTheFile(), uploadFile, accessGroup);
 
-                A.log("uploadSpeciesList uploadDetails:" + uploadDetails);
-/*
+                    uploadDetails.setStartTime(startTime);
+					if (uploadDetails.getErrorForward(mapping) != null) {
+						request.setAttribute("message", uploadDetails.getMessage());
+						return uploadDetails.getErrorForward(mapping);
+					}
+
+					if ("on".equals(theForm.getRecrawl())) {
+						runCountCrawls = true;
+					}
+
+					runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
+					//runStatistics(action, dataSource, request, accessLogin.getId(), uploadDetails);
+
+					A.log("uploadSpeciesList uploadDetails:" + uploadDetails);
+				} finally {
+					TaxonMgr.setIsInWorldants(false);
+					A.log("setIsInWorldants(false)");
+				}
+                /*
  			  } else if (action.equals("reloadSpeciesLists")) {
 				util.deleteFile(AntwebProps.getWebDir() + "log/passBoltonSpeciesCheck.txt");
 				SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
@@ -628,7 +642,7 @@ public class UploadAction extends Action {
 
     private ActionForward doAction(String action, Connection connection, HttpServletRequest request
         , ActionMapping mapping, Login accessLogin)
-        throws SQLException {
+        throws SQLException, IOException {
 
 
 		int loginId = 0;
@@ -1347,12 +1361,12 @@ public class UploadAction extends Action {
     }
 
     private void runStatistics(String action, java.sql.Connection connection, HttpServletRequest request, int loginId)
-      throws SQLException {
+      throws SQLException, IOException {
       runStatistics(action, connection, request, loginId, null);
     }
 
     private void runStatistics(String action, java.sql.Connection connection, HttpServletRequest request, int loginId, UploadDetails uploadDetails)
-     throws SQLException {
+     throws SQLException, IOException {
 
 
         if (false && AntwebProps.isDevOrStageMode()) {
@@ -1370,5 +1384,30 @@ public class UploadAction extends Action {
 
         (new StatisticsDb(connection)).populateStatistics(action, loginId, execTime, docBase);
     }
+/*
+    // Same as above but get a new connection.
+	private void runStatistics(String action, DataSource dataSource, HttpServletRequest request, int loginId, UploadDetails uploadDetails)
+			throws SQLException, IOException {
+
+    	dataSource = DBUtil.getDataSource();
+
+		Connection connection = DBUtil.getConnection(dataSource, "UploadAction.runStatistics()", HttpUtil.getTarget(request));
+
+		if (false && AntwebProps.isDevOrStageMode()) {
+			s_log.warn("runStatistics() not executing because of test mode.");
+			return;
+		}
+
+		s_log.warn("runStatistics()");
+
+		//String docBase = request.getRealPath("/");
+		String docBase = AntwebProps.getDocRoot();
+
+		String execTime = "N/A";
+		if (uploadDetails != null) execTime = uploadDetails.getExecTime();
+
+		(new StatisticsDb(connection)).populateStatistics(action, loginId, execTime, docBase);
+	}
+*/
 
 }

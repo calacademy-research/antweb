@@ -177,6 +177,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         setBioregions(new BioregionTaxonDb(connection).getBioregions(getTaxonName()));
         
         setHomonymAuthorDates(connection);
+
+        // setSeeAlso()?
     }
 
     public boolean isDummy() {
@@ -912,9 +914,16 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
      * */
     private String taxonName = null;
     public String getTaxonName() {
+
         if (taxonName == null) {
             taxonName = makeTaxonName();
         }
+
+        if (AntwebProps.isDevMode() && AntwebMgr.isPopulated() && taxonName.contains("ahngeri")) {
+            A.log("getTaxonName() taxonName:" + getTaxonName());
+            AntwebUtil.getShortStackTrace();
+        }
+
         return taxonName;
     }
 
@@ -949,10 +958,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
       String returnVal =  sb.toString();
 
-      //if ("apterogyna".equals(getGenus()) && "za01".equals(getSpecies())) {
-      //    A.log("makeTaxonName() returnVal:" + returnVal + " subfamily:" + getSubfamily());
-      //    AntwebUtil.logShortStackTrace();
-      //}
+        if (taxonName.contains("ahngeri")) A.log("makeTaxonName() subfamily:" + getSubfamily() + " genus:" + getGenus() + " species:" + getSpecies() + " subspecies:" + getSubspecies() + " returnVal:" + returnVal);
 
       return returnVal;
     }
@@ -1141,6 +1147,59 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         return fullString;
     }
 
+    public String diff(Taxon otherTaxon) {
+        if (otherTaxon == null) return null;
+        StringBuffer strBuf = new StringBuffer();
+
+        if (!Utility.equal(getTaxonName(), otherTaxon.getTaxonName())) strBuf.append(" taxonName:" + getTaxonName() + "/" + otherTaxon.getTaxonName());
+        if (!Utility.equal(getRank(), otherTaxon.getRank())) strBuf.append(" taxarank:" + getRank() + "/" + otherTaxon.getRank());
+        if (!Utility.equal(getKingdomName(), otherTaxon.getKingdomName())) strBuf.append(" kingdom:" + getKingdomName() + "/" + otherTaxon.getKingdomName());
+        if (!Utility.equal(getPhylumName(), otherTaxon.getPhylumName())) strBuf.append(" phylumName:" + getPhylumName() + "/" + otherTaxon.getPhylumName());
+        if (!Utility.equal(getOrderName(), otherTaxon.getOrderName())) strBuf.append(" order:" + getOrderName() + "/" + otherTaxon.getOrderName());
+        if (!Utility.equal(getClassName(), otherTaxon.getClassName())) strBuf.append(" class:" + getClassName() + "/" + otherTaxon.getClassName());
+        if (!Utility.equal(getFamily(), otherTaxon.getFamily())) strBuf.append(" family:" + getFamily() + "/" + otherTaxon.getFamily());
+        if (!Utility.equal(getSubfamily(), otherTaxon.getSubfamily())) strBuf.append(" subfamaly:" + getSubfamily() + "/" + otherTaxon.getSubfamily());
+        if (!Utility.equal(getTribe(), otherTaxon.getTribe())) strBuf.append(" tribe:" + getTribe() + "/" + otherTaxon.getTribe());
+        if (!Utility.equal(getGenus(), otherTaxon.getGenus())) strBuf.append(" genus:" + getGenus() + "/" + otherTaxon.getGenus());
+        if (!Utility.equal(getSubgenus(), otherTaxon.getSubgenus())) strBuf.append(" subgenus:" + getSubgenus() + "/" + otherTaxon.getSubgenus());
+        if (!Utility.equal(getSpecies(), otherTaxon.getSpecies())) strBuf.append(" species:" + getSpecies() + "/" + otherTaxon.getSpecies());
+        if (!Utility.equal(getSubspecies(), otherTaxon.getSubspecies())) strBuf.append(" subspecies:" + getSubspecies() + "/" + otherTaxon.getSubspecies());
+        if (!Utility.equal(getStatus(), otherTaxon.getStatus())) strBuf.append(" status:" + getStatus() + "/" + otherTaxon.getStatus());
+        if (!Utility.equal(getGroupId(), otherTaxon.getGroupId())) strBuf.append(" groupIdd:" + getGroupId() + "/" + otherTaxon.getGroupId());
+        if (!Utility.equal(getSource(), otherTaxon.getSource())) strBuf.append(" source:" + getSource() + "/" + otherTaxon.getSource());
+        //if (!Utility.equal(getLineNum(), otherTaxon.getLineNum())) strBuf.append(" lineNum:" + getLineNum() + "/" + otherTaxon.getLineNum());
+        //if (!Utility.equal(getInsertMethod(), otherTaxon.getInsertMethod())) strBuf.append(" insertMethod:" + getInsertMethod() + "/" + otherTaxon.getInsertMethod());
+        //if (!Utility.equal(getCreated(), otherTaxon.getCreated())) strBuf.append(" created:" + getCreated() + "/" + otherTaxon.getCreated());
+        if (!Utility.equal(getIsFossil(), otherTaxon.getIsFossil())) strBuf.append(" isFossil:" + getIsFossil() + "/" + otherTaxon.getIsFossil());
+        if (!Utility.equal(getIsType(), otherTaxon.getIsType())) strBuf.append(" isType:" + getIsType() + "/" + otherTaxon.getIsType());
+        if (!Utility.equal(getIsAntCat(), otherTaxon.getIsAntCat())) strBuf.append(" isAntcat:" + getIsAntCat() + "/" + otherTaxon.getIsAntCat());
+        if (!Utility.equal(getAntcatId(), otherTaxon.getAntcatId())) strBuf.append(" antcatId:" + getAntcatId() + "/" + otherTaxon.getAntcatId());
+        if (!Utility.equal(getIsPending(), otherTaxon.getIsPending())) strBuf.append(" pending:" + getIsPending() + "/" + otherTaxon.getIsPending());
+        if (!Utility.equal(getAuthorDate(), otherTaxon.getAuthorDate())) strBuf.append(" authorDate:" + getAuthorDate() + "/" + otherTaxon.getAuthorDate());
+        if (!Utility.equal(getAuthorDateHtml(), otherTaxon.getAuthorDateHtml())) strBuf.append(" authorDateHtml:" + getAuthorDateHtml() + "/" + otherTaxon.getAuthorDateHtml());
+        if (!Utility.equal(getAuthors(), otherTaxon.getAuthors())) strBuf.append(" authors:" + getAuthors() + "/" + otherTaxon.getAuthors());
+        if (!Utility.equal(getYear(), otherTaxon.getYear())) strBuf.append(" year:" + getYear() + "/" + otherTaxon.getYear());
+        if (!Utility.equal(getIsAvailable(), otherTaxon.getIsAvailable())) strBuf.append(" isAvailable:" + getIsAvailable() + "/" + otherTaxon.getIsAvailable());
+        if (!Utility.equal(getCurrentValidName(), otherTaxon.getCurrentValidName())) strBuf.append(" currentValidName:" + getCurrentValidName() + "/" + otherTaxon.getCurrentValidName());
+        if (!Utility.equal(getCurrentValidRank(), otherTaxon.getCurrentValidRank())) strBuf.append(" currentValidRank:" + getCurrentValidRank() + "/" + otherTaxon.getCurrentValidRank());
+        if (!Utility.equal(getCurrentValidParent(), otherTaxon.getCurrentValidParent())) strBuf.append(" currentValidParent:" + getCurrentValidParent() + "/" + otherTaxon.getCurrentValidParent());
+        if (!Utility.equal(getIsOriginalCombination(), otherTaxon.getIsOriginalCombination())) strBuf.append(" originalCombination:" + getIsOriginalCombination() + "/" + otherTaxon.getIsOriginalCombination());
+        if (!Utility.equal(getWasOriginalCombination(), otherTaxon.getWasOriginalCombination())) strBuf.append(" originalCombination:" + getWasOriginalCombination() + "/" + otherTaxon.getWasOriginalCombination());
+        if (!Utility.equal(getParentTaxonName(), otherTaxon.getParentTaxonName())) strBuf.append(" parentTaxonName:" + getParentTaxonName() + "/" + otherTaxon.getParentTaxonName());
+        if (!Utility.equal(getImageCount(), otherTaxon.getImageCount())) strBuf.append(" imageCount:" + getImageCount() + "/" + otherTaxon.getImageCount());
+        if (!Utility.equal(getHolId(), otherTaxon.getHolId())) strBuf.append(" holId:" + getHolId() + "/" + otherTaxon.getHolId());
+        if (!Utility.equal(getChartColor(), otherTaxon.getChartColor())) strBuf.append(" chartColor:" + getChartColor() + "/" + otherTaxon.getChartColor());
+
+        if (!Utility.equal(getDefaultSpecimen(Caste.MALE), otherTaxon.getDefaultSpecimen(Caste.MALE))) strBuf.append(" defaultMale:" + getDefaultSpecimen(Caste.MALE) + "/" + otherTaxon.getDefaultSpecimen(Caste.MALE));
+        if (!Utility.equal(getDefaultSpecimen(Caste.WORKER), otherTaxon.getDefaultSpecimen(Caste.WORKER))) strBuf.append(" defaultWorker:" + getDefaultSpecimen(Caste.WORKER) + "/" + otherTaxon.getDefaultSpecimen(Caste.WORKER));
+        if (!Utility.equal(getDefaultSpecimen(Caste.QUEEN), otherTaxon.getDefaultSpecimen(Caste.QUEEN))) strBuf.append(" defaultQueen:" + getDefaultSpecimen(Caste.QUEEN) + "/" + otherTaxon.getDefaultSpecimen(Caste.QUEEN));
+        if (!Utility.equal(getBioregionMap(), otherTaxon.getBioregionMap())) strBuf.append(" bioregionMap:" + getBioregionMap() + "/" + otherTaxon.getBioregionMap());
+        if (!Utility.equal(getIntroducedMap(), otherTaxon.getIntroducedMap())) strBuf.append(" introducedMap:" + getIntroducedMap() + "/" + otherTaxon.getIntroducedMap());
+
+        String retVal = strBuf.toString();
+        if (!"".equals(retVal)) return retVal;
+        return null;
+    }
 
     // This accessor/mutator is used by GenericSearchResults and specimenReport.jsp
     public String getUploadDate() {
@@ -2198,7 +2257,14 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public void setCreated(Timestamp created) {
       this.created = created;
     }
-    
+
+    public boolean isWorldAnts() {
+        if (getSource() != null) {
+            return Project.WORLDANTS.equals(getSource());
+        }
+        return false;
+    }
+
     public boolean isValid() {
       // for convenience
       return getIsValid();
@@ -2758,26 +2824,12 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		this.statusSetSize = statusSetSize;
 	}
 
-/*
-    public void setTaxonomicInfo(String project) throws SQLException {
-    // This method should be abstract.  The whole class should be abstract.  But alas, not so.
-    }
 
-    public void setTaxonomicInfo() throws SQLException {
-        setTaxonomicInfo("");
-    }
-*/
-
-    /*
-    public void setTaxonomicInfo(Connection connection, String project) throws SQLException {
-        // This method should be abstract. It is overriden. The whole class should be abstract.  But alas, not so.
-    }
-*/
+    // This method should be abstract. It is overriden. The whole class should be abstract.  But alas, not so.
     public void setTaxonomicInfo(Connection connection) throws SQLException {
         // This method should be abstract. It is overriden. The whole class should be abstract.  But alas, not so.
         //setTaxonomicInfo(connection, "");
     }
-
 
 
     /* // Feb2020

@@ -1683,7 +1683,7 @@ public static int c = 0;
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = getConnection().createStatement();
+            stmt = DBUtil.getStatement(getConnection(), "getValidSpeciesCount()");
 
             query = "select count(*) count from taxon, geolocale_taxon gt where taxon.taxon_name = gt.taxon_name"
                     + " and taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0"

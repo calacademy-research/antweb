@@ -12,6 +12,15 @@ Then it can either be logged as such:
 ProfileCounter.report();
 
 or for real time access, visit /serverStatus.do and look for "ProfileCounter:"
+
+------------------
+
+Nice way to figure what bit of code is calling a method, and how many times, is to add this:
+
+        ProfileCounter.add("[methodName]()]" + AntwebUtil.getShortStackTrace());
+
+      ... and then look at the serverStatus.do report for ProfileCounter:
+
  */
 
 public class ProfileCounter {
@@ -40,7 +49,7 @@ public class ProfileCounter {
         String report = "";
         Set<String> keys = s_countMap.keySet();
         for (String key : keys) {
-            report += "\n" + key + ":" + s_countMap.get(key);
+            report += "<br><br>\n\n" + key + ":" + s_countMap.get(key);
         }
         return report;
     }

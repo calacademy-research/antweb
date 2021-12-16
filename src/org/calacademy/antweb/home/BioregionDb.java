@@ -432,7 +432,7 @@ public class BioregionDb extends AntwebDb {
       Statement stmt = null;
       ResultSet rset = null;
       try {
-        stmt = getConnection().createStatement();
+        stmt = DBUtil.getStatement(getConnection(), "getImagedSpecimenCount()");
 
         query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and bioregion = '" + bioregion + "'";
 

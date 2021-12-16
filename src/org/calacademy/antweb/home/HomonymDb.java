@@ -158,8 +158,8 @@ public class HomonymDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         String theQuery = "select taxon_name from homonym where antcat_id = " + antcatId;
-        try {            
-            stmt = connection.createStatement();
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getTaxonNameFromAntcatId() antcatId:" + antcatId);
             rset = stmt.executeQuery(theQuery);
 
             int count = 0;
@@ -212,8 +212,7 @@ public class HomonymDb extends AntwebDb {
               + " where " + criterion;
 
             A.log("getInfoHomonym() query:" + theQuery);
-
-            stmt = getConnection().createStatement();
+            stmt = DBUtil.getStatement(getConnection(), "getInfoHomonym()");
             rset = stmt.executeQuery(theQuery);
 
             int count = 0;

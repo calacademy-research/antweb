@@ -328,7 +328,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				} else {
 				  // If we don't find it, maybe it is not an ant. Then insert it, no error message.
 				  if (!("(Formicidae)".equals(subfamilyName) || Subfamily.isValidAntSubfamily(subfamilyName))) {
-					if (AntwebProps.isDevMode()) {
+					if (false && AntwebProps.isDevMode()) {
 					  String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
 					  getMessageMgr().addToMessages(MessageMgr.nonAntTaxa, displayCode); 
 					  // No error code. Allowed.                 

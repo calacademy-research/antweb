@@ -244,7 +244,8 @@ public class TaxonPropDb extends AntwebDb {
             String query = "select proj_taxon.taxon_name from proj_taxon, taxon where proj_taxon.taxon_name = taxon.taxon_name " 
               + " and (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') and project_name = 'introducedants' "
               + orderBy;
-            stmt = getConnection().createStatement();
+
+            stmt = DBUtil.getStatement(getConnection(), "getIntroducedList()");
             rset = stmt.executeQuery(query);
             while (rset.next()) {
               String taxonName = rset.getString("taxon_name");
@@ -289,7 +290,7 @@ public class TaxonPropDb extends AntwebDb {
         int i = 0;
         try {
             String query = "select tp.taxon_name, tp.prop, tp.value, tp.created, tp.login_id, specimen.taxon_name from taxon_prop tp, specimen where tp.value = code and tp.prop like '%Specimen' and tp.taxon_name != specimen.taxon_name";
-            stmt = getConnection().createStatement();
+            stmt = DBUtil.getStatement(getConnection(), "deleteConflictedDefaultImages()");
             rset = stmt.executeQuery(query);
             while (rset.next()) {
               String taxonName = rset.getString("tp.taxon_name");

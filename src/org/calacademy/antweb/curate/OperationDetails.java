@@ -104,7 +104,10 @@ public class OperationDetails {
         return execTime;
     }
     public void setExecTime(String execTime) {
+
+        //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
         this.execTime = execTime;
+
     }
     
     public String getExecTimeMin() {

@@ -339,7 +339,7 @@ public class ProjectDb extends AntwebDb {
       return speciesListList;
     }
     
-    public void getStats(Project project) {
+    public void xgetStats(Project project) {
 
         String query = "";
         
@@ -366,7 +366,7 @@ public class ProjectDb extends AntwebDb {
             rset.next();
             project.setNumSubfamilies(rset.getInt(1));
 
-            DBUtil.close(stmt, rset, this, "getStatsFromDB() 1");
+            DBUtil.close(stmt, rset, this, "getStats() 1");
 
             query = "select count(taxon.genus) from taxon, proj_taxon " 
                 + " where proj_taxon.project_name = '" + project.getName() + "'"
@@ -380,7 +380,7 @@ public class ProjectDb extends AntwebDb {
             rset.next();
             project.setNumGenera(rset.getInt(1));
 
-            DBUtil.close(stmt, rset, this, "getStatsFromDB() 2");
+            DBUtil.close(stmt, rset, this, "getStats() 2");
        
             query = "select count(taxon.species) "
                     + " from taxon, proj_taxon "
@@ -409,15 +409,16 @@ public class ProjectDb extends AntwebDb {
                   + " and taxon.species != ''"
                   + statusSet.getAndCriteria()
                     ;
-
-            stmt = getConnection().createStatement();                
+            stmt = getConnection().createStatement();
             rset = stmt.executeQuery(query);
             rset.next();
-            project.setNumSpeciesImaged(rset.getInt(1));
+            int totalImagedSpecies = rset.getInt(1);
+            A.log("getStats() Total Imaged Species:" + totalImagedSpecies + " query:" + query);
+            project.setNumSpeciesImaged(totalImagedSpecies);
         } catch (Exception e) {
-            s_log.error("getStatsFromDb() e:" + e + " query:" + query);
+            s_log.error("getStats() e:" + e + " query:" + query);
         } finally {
-            DBUtil.close(stmt, rset, this, "getStatsFromDb() 4");
+            DBUtil.close(stmt, rset, this, "getStats() 4");
         }
     }
     
@@ -434,12 +435,11 @@ public class ProjectDb extends AntwebDb {
     }    
           
     public void updateProjects(Login login) throws SQLException {
+      if (login.isAdmin()) return; // Admins get all options automatically.  No need to store.
       String dml = "delete from login_project where login_id=" + login.getId();
-      
-      if (login.isAdmin()) return; // Admins get all options automatically.  No need to store.                                                            
-                                                                                                                         
+      Statement stmt = null;
       try {
-        Statement stmt = getConnection().createStatement();
+        stmt = DBUtil.getStatement(getConnection(), "updateProjects");
         stmt.executeUpdate(dml);
 
         //From SaveLoginAction, the list of projects comes from a form.  They are strings.
@@ -462,7 +462,9 @@ public class ProjectDb extends AntwebDb {
       } catch (SQLException e) {
         s_log.error("updateProjects() for login:" + login.getName() + " dml:" + dml);
         throw e;
-      }                                                                                                           
+      } finally {
+          DBUtil.close(stmt, "updateProjects()");
+      }
     }
     
     public void deleteSpeciesList(String speciesList) {
@@ -557,17 +559,22 @@ public class ProjectDb extends AntwebDb {
     public static boolean isSpeciesListMappingProject(Connection connection, String projectName)
       // SpeciesListMappable means that it is available to be used by the UI.
       throws SQLException {
+
       boolean isSpeciesListMappingProject = false;
-        Statement stmt1 = connection.createStatement();
-        String query = "select project_name from project" 
-          + " where project_name = '" + projectName + "' and species_list_mappable = 1";
-        ResultSet rset1 = stmt1.executeQuery(query);
-        while (rset1.next()) {
-            isSpeciesListMappingProject = true;
-        }        
-        stmt1.close();
-     
-        return isSpeciesListMappingProject;
+      Statement stmt = null;
+      try {
+          stmt = DBUtil.getStatement(connection, "isSpeciesListMappingProject()");
+
+          String query = "select project_name from project"
+                  + " where project_name = '" + projectName + "' and species_list_mappable = 1";
+          ResultSet rset1 = stmt.executeQuery(query);
+          while (rset1.next()) {
+              isSpeciesListMappingProject = true;
+          }
+      } finally {
+          DBUtil.close(stmt, null, "isSpeciesListMappingProject()");
+      }
+      return isSpeciesListMappingProject;
     }     
     
     
@@ -745,7 +752,7 @@ public class ProjectDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = getConnection().createStatement();
+            stmt = DBUtil.getStatement(getConnection(), "getValidSpeciesCount()");
 
             query = "select count(*) count from taxon, proj_taxon pt where taxon.taxon_name = pt.taxon_name"
                     + " and taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0"

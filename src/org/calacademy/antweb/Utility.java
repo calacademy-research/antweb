@@ -24,7 +24,25 @@ public class Utility implements Serializable {
   
   private static Log s_log = LogFactory.getLog(Utility.class);
 
-    
+
+    public static boolean equal(int o1, int o2) {
+        return o1 == o2;
+    }
+    public static boolean equal(boolean o1, boolean o2) {
+        return o1 == o2;
+    }
+    public static boolean equal(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 == null && o2 != null) return false;
+        if (o2 == null && o1 != null) return false;
+        if (o1 instanceof String && o2 instanceof String) {
+            String s1 = (String) o1;
+            String s2 = (String) o2;
+            if (s1.equals(s2)) return true;
+        }
+        return false;
+    }
+
 
   public static boolean isNumber(String number) {
     try {

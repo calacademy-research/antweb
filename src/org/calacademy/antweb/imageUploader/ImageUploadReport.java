@@ -38,7 +38,7 @@ public final class ImageUploadReport extends Action {
         Connection connection = null;
         try {
             javax.sql.DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");        
+            connection = DBUtil.getConnection(dataSource, "ImageUploadReport.execute()");
         
             ImageUploadDb imageUploadDb = new ImageUploadDb(connection);        
 

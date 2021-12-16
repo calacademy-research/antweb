@@ -181,7 +181,7 @@ public class TaxonCountDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-          stmt = getConnection().createStatement();
+          stmt = DBUtil.getStatement(getConnection(), "countSpecimenImages()");
           rset = stmt.executeQuery(query);
         
           int count = -1;
@@ -210,7 +210,7 @@ public class TaxonCountDb extends AntwebDb {
            query = "select sum(image_count) theSum, taxon_name from specimen " 
              + " group by taxon_name";
 
-            stmt = getConnection().createStatement();
+            stmt = DBUtil.getStatement(getConnection(), "countSpeciesImages()");
             rset = stmt.executeQuery(query);
         
            int theSum = -1;
@@ -245,7 +245,7 @@ public class TaxonCountDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = getConnection().createStatement();
+            stmt = DBUtil.getStatement(getConnection(), "countTaxonImages()");
             rset = stmt.executeQuery(query);
          int count = -1;
          String parentTaxonName = null;
@@ -267,8 +267,8 @@ public class TaxonCountDb extends AntwebDb {
        throws SQLException {
         Statement stmt = null;
         try {
-          stmt = getConnection().createStatement();
-        
+          stmt = DBUtil.getStatement(getConnection(), "updateSpecimenImageCount()");
+
           String updateSql = "update specimen set image_count = '" + count + "'" 
             + " where code = '" + code + "'";
 
@@ -283,8 +283,7 @@ public class TaxonCountDb extends AntwebDb {
        throws SQLException {
         Statement stmt = null;
         try {
-          stmt = getConnection().createStatement();
-          //String taxonName = getTaxonName(taxonId);
+          stmt = DBUtil.getStatement(getConnection(), "countTaxonImageCount()");
         
           String updateSql = "update taxon set image_count = '" + count + "'" 
             + " where taxon_name = '" + taxonName + "'";

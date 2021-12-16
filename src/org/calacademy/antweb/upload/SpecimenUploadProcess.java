@@ -283,6 +283,8 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 			}
 		}
 
+		//A.log("processLine() isIntroduced:" + isIntroduced + " bioregion:" + bioregion + " skipRecord:" + skipRecord + " useTaxonName:" + useTaxonName);
+
 		if (skipRecord == null) {
 		  if (!isIntroduced) {
 			//if (!Taxon.isMorpho(useTaxonName)) {
@@ -290,15 +292,17 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 			  // Verify the Bioregion. Must have a legal bioregion for the given genus.
 			  boolean isInvalidBioregion = invalidGenusBioregion(useTaxonName, bioregion);
 
-			  //if (code.contains("casent0103752") || code.contains("csironc0202")) A.log("processLine() bioregion:" + bioregion + " taxonName:" + useTaxonName + " code:" + code + " isInvalidBioregion:" + isInvalidBioregion);
+			  if (AntwebProps.isDevMode() && code.contains("casent0170541")) A.log("processLine() bioregion:" + bioregion + " useTaxonName:" + useTaxonName + " code:" + code + " isInvalidBioregion:" + isInvalidBioregion);
+
 			  if (isInvalidBioregion) {
 			    
 			    boolean isFossil = false;
 			    Taxon t = TaxonMgr.getTaxon(useTaxonName);
 			    if (t != null && t.getIsFossil()) isFossil = true;
- 	 	 	    //A.log("processLine() isInvalidBioregion:" + isInvalidBioregion + " bioregion:" + bioregion + " useTaxonName:" + useTaxonName + " isFossil:" + isFossil);
 
 			    if (!isFossil) {
+   	  	  	      //A.log("processLine() isInvalidBioregion:" + isInvalidBioregion + " bioregion:" + bioregion + " useTaxonName:" + useTaxonName + " isFossil:" + isFossil);
+
 				  String message = Formatter.initCap(Taxon.getGenusFromName(taxonName)) + " not native to " + bioregion + " Region";
 				  String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
 				  getMessageMgr().addToMapMessages(MessageMgr.genusOutsideNativeBioregion, message, displayCode);   
@@ -358,58 +362,58 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
 
     public boolean invalidGenusBioregion(String taxonName, String bioregion) {
-    
+
       if (taxonName == null || bioregion == null) return false;
 
-/*
-//if (taxonName.contains("wroughtoni") && bioregion.contains("australasia")) {
-  A.log("invalidGenusBioregion() introduced:" + TaxonPropMgr.isIntroduced(taxonName, bioregion) 
-    + " introducedSomewhere:" + TaxonPropMgr.isIntroducedSomewhere(taxonName)
-    + " genusTaxonName:" + Taxon.getGenusTaxonNameFromName(taxonName)
-    + " genus:" + TaxonMgr.getGenus(Taxon.getGenusTaxonNameFromName(taxonName))
-    );
-//} 
+	  boolean debug = false; //AntwebProps.isDevMode() && "formicinaebrachymyrmex afr001".equals(taxonName);
+
+      //A.log("invalidGenusBioreegion() taxonName:" + taxonName + " bioregion:" + bioregion + " debug:" + debug);
+      /*
 	  if (TaxonPropMgr.isNativeNowhere(taxonName)) {
-		  //s_log.warn("invalidGenusBioregion() INTRODUCED taxonName:" + taxonName);
+		  if (debug) A.log("invalidGenusBioregion() isNativeNowhere taxonName:" + taxonName);
 		  return false;
 	  }
-*/
+      */
+
 	  if (TaxonPropMgr.isIntroducedSomewhere(taxonName)) {
-		  //s_log.warn("invalidGenusBioregion() INTRODUCED taxonName:" + taxonName);
+		  if (debug) A.log("invalidGenusBioregion() isIntroduceSomewhere() taxonName:" + taxonName);
 		  return false;
 	  }
 
-	  if (TaxonPropMgr.isIntroducedSomewhere(taxonName)) {
-		  //s_log.warn("invalidGenusBioregion() INTRODUCED taxonName:" + taxonName);
-		  return false;
-	  }
 	  String genusTaxonName = Taxon.getGenusTaxonNameFromName(taxonName);
 	  if (genusTaxonName == null) {
-		  //A.log("invalidGenusBioregion() genusName is null for taxonName:" + taxonName);
+		  if (debug) A.log("invalidGenusBioregion() genusTaxonNameFromName is null for taxonName:" + taxonName);
           return false;          
       }
       String firstChar = genusTaxonName.substring(0,1);
 	  if ("(".equals(firstChar)) {
-		  //A.log("invalidGenusBioregion() taxonName:" + taxonName + " genusTaxonName:" + genusTaxonName);
+		  if (debug) A.log("invalidGenusBioregion() ( is first char of taxonName:" + taxonName + " genusTaxonName:" + genusTaxonName);
 		  return false;
 	  }
+
 	  Date startTimeBio = new Date();
 	  //if (genusName != null) A.log("invalidGenusBioregione() genusName[0]:" + genusName.substring(0,1));
 	  Genus genus = TaxonMgr.getGenus(genusTaxonName); // Really should use taxonName. Not distinct in a couple cases. See Integrity Queries (generaInMultipleSubfamilies & generaInMultipleSubfamilies2).
-
 	  if (genus == null) {
-		//A.log("invalidGenusBioregion() genus:" + genusTaxonName + " not found for taxon:" + taxonName);  
+		if (debug) A.log("invalidGenusBioregion() genus not fouund for genusTaxonName:" + genusTaxonName + " taxon:" + taxonName);
         return false;
 	  }
 
       if (!genus.isValid()) {
+        if (debug) A.log("invalidGenusBioregion() genus not valid:" + genus);
         return false;
       }
 
 	  boolean legitBioregion = bioregion != null && !"null".equals(bioregion);
+      if (debug) A.log("invalidGenusBioregion() legitBioregion:" + legitBioregion);
+
 	  if (legitBioregion) {
-	    if (genus.getBioregionMap() == null) return false; // For instance, fossil genera are not even listed.
+	    if (genus.getBioregionMap() == null) {
+			if (debug) A.log("invalidGenusBioregion() bioregionMap is null");
+	    	return false; // For instance, fossil genera are not even listed.
+		}
 		boolean bioregionMapped = TaxonPropMgr.isMapped(genus.getBioregionMap(), bioregion);
+	    if (debug) A.log("invalidGenusBioregion() bioregionMapped:" + bioregionMapped);
 		if (!bioregionMapped) {
           //A.iLog(7, "SpecimenUpload.invalidGenusBioregion() INVALID taxonName:" + taxonName + " bioregion:" + bioregion + " genusTaxonName:" + genusTaxonName + " genus:" + genus + " bioregionMap:" + genus.getBioregionMap(), 100);
 		  return true;
@@ -418,8 +422,9 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 		}
 	  }
   
-	  Profiler.profile("genusBioregion", startTimeBio, genusTaxonName);      
+	  Profiler.profile("genusBioregion", startTimeBio, genusTaxonName);
 
+      if (debug) A.log("invalidGenusBioregion() default is false");
       return false;
     }
 

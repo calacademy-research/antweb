@@ -1289,7 +1289,9 @@ select group_concat( distinct source) from geolocale_taxon order by source;
           }        
       } catch (SQLException e) {
         s_log.error("HasCalMorphos() e:" + e);
-      }      
+      } finally {
+          DBUtil.close(stmt, null, "hasCalMorphos()");
+      }
       s_log.warn("HasCalMorphos() no morphos found in California");
       AdminAlertMgr.add("No California Morphos", getConnection());
       return false;

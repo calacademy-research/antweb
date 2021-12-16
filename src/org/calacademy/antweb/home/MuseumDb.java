@@ -454,7 +454,7 @@ public class MuseumDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = getConnection().createStatement();
+            stmt = DBUtil.getStatement(getConnection(), "getValidSpeciesCount()");
 
             query = "select count(*) count from taxon, museum_taxon mt where taxon.taxon_name = mt.taxon_name"
                     + " and taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0"
@@ -741,7 +741,4 @@ public class MuseumDb extends AntwebDb {
             + " and s.family = 'formicidae' "
             + " group by subfamily";
     }
-
-
-
 }

@@ -8,6 +8,8 @@ For local work use struts-configDb.xml.
 
 The WEB-INF/struts-configDb.xml softlink points to this one an antweb-dev, antweb-stg and antweb-prod. 
 
+Another connectiono is defined in DBUtil.getDataSource()
+
 -->
 
 <!DOCTYPE struts-config PUBLIC

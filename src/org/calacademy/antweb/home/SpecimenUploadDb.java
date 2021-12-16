@@ -61,7 +61,7 @@ public class SpecimenUploadDb extends UploadDb {
         } catch (SQLException e) {
             uploadLog.error("updateSpecimenUploadDate() e: " + e);
         } finally {
-            DBUtil.close(stmt, "SpecimenUploadDb.updateSpecimenUploadDate()");
+            DBUtil.close(stmt, "SpecimenUploadDb.uploadSpecimenUploadDate()");
         }        
     }
     
@@ -84,17 +84,6 @@ public class SpecimenUploadDb extends UploadDb {
         String query = "";
         PreparedStatement stmt = null;
         try {
-        
-        /*
-          if ((AntwebProps.isDevMode()) && (group.getId() == 2) && (false)) {
-            query = "delete from specimen where code = " + "\"CASENT0625035\"";
-            stmt = DBUtil.getStatement(getConnection(), "SpecimenUploadDb.dropSpecimens()");
-            stmt.executeUpdate(query);
-            s_log.warn("dropSpecimens() just deleting specimen CASENT0625035.");
-            return;
-          }
-          */
-
           query = "delete from specimen where access_group = ?";
           //s_log.warn("dropSpecimens() why is this query so slow:" + query);                    
           stmt = DBUtil.getPreparedStatement(getConnection(), "SpecimenUploadDb.dropSpecimens()", query);
@@ -113,14 +102,14 @@ public class SpecimenUploadDb extends UploadDb {
         try {
           query = "delete from taxon where access_group = ? and insert_method in ('addMissingGenus', 'homononymMirroringTaxon')";
           //s_log.warn("dropSpecimens() query:" + query);                    
-          stmt = DBUtil.getPreparedStatement(getConnection(), "SpecimenUploadDb.dropSpecimens()", query);
+          stmt = DBUtil.getPreparedStatement(getConnection(), "SpecimenUploadDb.dropSpecimens2()", query);
           stmt.setInt(1, group.getId());
           count = stmt.executeUpdate();
           //s_log.warn("dropSpecimens() count:" + count + " query completed");
         } catch (SQLException e) {
           uploadLog.error("dropSpecimens() 2 e:" + e + " query:" + query);
         } finally {
-          DBUtil.close(stmt, "SpecimenUploadDb.dropSpecimens()");
+          DBUtil.close(stmt, "SpecimenUploadDb.dropSpecimens2()");
         }
     }
 

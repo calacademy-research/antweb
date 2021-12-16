@@ -342,137 +342,77 @@ museum
 	}
 
     // Called by the Scheduler (or at startup?)
-    public void populateStatistics() throws SQLException {
+    public void populateStatistics() throws SQLException, IOException {
         populateStatistics("routine", 0, null, AntwebProps.getDocRoot());
     }
 
-    public void populateStatistics(String action, int loginId, String execTime, String docBase) throws SQLException {
-    
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
+    public void populateStatistics(String action, int loginId, String execTime, String docBase)
+            throws SQLException, IOException {
 
-            stmt = DBUtil.getStatement(getConnection(), "populateStatistics()");
-            String query;
+            UtilDb utilDb = new UtilDb(getConnection());
 
             // number of specimens imaged
-            query = "select count(distinct specimen.code) from specimen,image where "
+            String query = "select count(distinct specimen.code) from specimen,image where "
                     + " specimen.code = image.image_of_id";
-            int imagedSpecimens = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                imagedSpecimens = rset.getInt(1);
-            }
+            int imagedSpecimens = utilDb.getCount(query);
             AntwebMgr.setImagedSpecimensCount(imagedSpecimens);
-            
+            A.log("populateStatistics 1 query:" + query);
+
             // number of specimen records
             query = "select count(*) from specimen";
-            int specimenRecords = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                specimenRecords = rset.getInt(1);
-            }
+            int specimenRecords = utilDb.getCount(query);
             AntwebMgr.setSpecimensCount(specimenRecords);
+            A.log("populateStatistics 2 query:" + query);
 
             // number of species + spp. imaged
-            int imagedSpecies = 0;
             query = "select distinct genus, species, subspecies from specimen, image where"
                     + " specimen.code = image.image_of_id";
             // and then find the number of rows in result
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                imagedSpecies++;
-            }
+            int imagedSpecies = utilDb.getCountFromQuery(query);
             AntwebMgr.setImagedSpeciesCount(imagedSpecies);
-/**/
 
-//s_log.warn("valid species imaged");
-            // number of valid species + spp. imaged
-            int validSpeciesImaged = 0;
-            query = "select distinct specimen.genus, specimen.species, specimen.subspecies from specimen, image, taxon " 
-                    + "where taxon.taxon_name = specimen.taxon_name"
-                    + " and specimen.code = image.image_of_id"
-                    + " and taxon.status = 'valid'";
-            // and then find the number of rows in result
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                validSpeciesImaged++;
-            }
-//s_log.warn("valid species imaged end");
-            
+            A.log("populateStatistics 3 query:" + query);
+            query = "select count(*) from image where image_of_id in "
+                + " (select s.code from specimen s, taxon t where s.taxon_name = t.taxon_name and t.status = 'valid')";
+            int validSpeciesImaged = utilDb.getCount(query);
+            A.log("populateStatistics 4 query:" + query);
+
             // total number of image records
             query = "select count(*) from image";
-            int totalImages = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                totalImages = rset.getInt(1);
-            }
+            int totalImages = utilDb.getCount(query);
             AntwebMgr.setTotalImagesCount(totalImages);
+            A.log("populateStatistics 5 query:" + query);
 
-            // number of species in database
-            // was: query = "select distinct  genus, species from specimen where genus != '' and species != '' ";
-            // could be: query = "select distinct taxon_name from taxon where species != '' and status = 'valid'";
-            // query = "select distinct taxon.taxon_name from taxon, proj_taxon " 
-            //   + "where taxon.taxon_name = proj_taxon.taxon_name " 
-            //   + " and proj_taxon.project_name='worldants' and taxon.species != '' and taxon.status = 'valid'";
-//            query = "select distinct taxon_name from taxon where rank=\"species\" and antcat=1 and valid=1";
+            // number of valid species in database
             query = "select count(taxon_name) from taxon where status = 'valid' and taxarank in ('species', 'subspecies')";
             //A.log("runStatistics() query:" + query);            
-            int validTaxa = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                validTaxa = rset.getInt(1);
-            }
-            AntwebMgr.setValidTaxaCount(validTaxa);
+            int validSpecies = utilDb.getCount(query);
+            AntwebMgr.setValidSpeciesCount(validSpecies);
+
+            A.log("populateStatistics 6 query:" + query);
 
             query = "select count(*) from taxon where taxarank in ('species', 'subspecies')";
-            int numberTotalTaxa = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                numberTotalTaxa = rset.getInt(1);
-            }            
+            int numberTotalTaxa = utilDb.getCount(query);
 
             query = "select count(*) from proj_taxon";
-            int numberProjTaxa = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                numberProjTaxa = rset.getInt(1);
-            }
+            int numberProjTaxa = utilDb.getCount(query);
             //if (numberProjTaxa < 78000) AdminAlertMgr.add("Project_taxa below expected count:" + numberProjTaxa, getConnection());
 
             query = "select count(*) from bioregion_taxon";
-            int numberBioregionTaxa = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                numberBioregionTaxa = rset.getInt(1);
-            }
+            int numberBioregionTaxa = utilDb.getCount(query);
 
             query = "select count(*) from museum_taxon";
-            int numberMuseumTaxa = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                numberMuseumTaxa = rset.getInt(1);
-            }
-            
+            int numberMuseumTaxa = utilDb.getCount(query);
+
             query = "select count(*) from geolocale_taxon";
-            int numberGeolocaleTaxa = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                numberGeolocaleTaxa = rset.getInt(1);
-            }
-            
+            int numberGeolocaleTaxa = utilDb.getCount(query);
+
             query = "select count(*) from geolocale_taxon where is_introduced = 1";
-            int numberGeolocaleTaxaIntroduced = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                numberGeolocaleTaxaIntroduced = rset.getInt(1);
-            }
+            int numberGeolocaleTaxaIntroduced = utilDb.getCount(query);
+
             query = "select count(*) from geolocale_taxon where is_endemic = 1";
-            int numberGeolocaleTaxaEndemic = 0;
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                numberGeolocaleTaxaEndemic = rset.getInt(1);
-            }
+            int numberGeolocaleTaxaEndemic = utilDb.getCount(query);
+            A.log("populateStatistics query:" + query);
 
             if (docBase != null) {
 
@@ -482,7 +422,7 @@ museum
                 // here write out the results
                 //outFile.write("number of types imaged: " + imagedTypes + "<br>\n");
             
-                outFile.write("<span class=\"numbers\">" + validTaxa + "</span> valid species + ssp.<br/>\n");
+                outFile.write("<span class=\"numbers\">" + validSpecies + "</span> valid species + ssp.<br/>\n");
                 //outFile.write("<span class=\"numbers\">" + numberTotalTaxa + "</span> total species + ssp.<br/>\n");            
                 outFile.write("<span class=\"numbers\">" + specimenRecords + "</span> specimen records<br/>\n");
                 outFile.write("<span class=\"numbers\">" + imagedSpecies + "</span> species + ssp. imaged <br/>\n");
@@ -492,27 +432,14 @@ museum
                 outFile.close();
             }
 
-
             String update = "insert into statistics "
                     + " (action, specimens, extant_taxa, total_taxa, proj_taxa, bioregion_taxa, museum_taxa, geolocale_taxa, geolocale_taxa_introduced, geolocale_taxa_endemic " 
                     + " , total_images, specimens_imaged, species_imaged, valid_species_imaged, login_id, exec_time) "  //
-                    + " values ('" + action + "'," +  specimenRecords + "," + validTaxa + "," + numberTotalTaxa 
+                    + " values ('" + action + "'," +  specimenRecords + "," + validSpecies + "," + numberTotalTaxa
                     + "," + numberProjTaxa + "," + numberBioregionTaxa + "," + numberMuseumTaxa + "," + numberGeolocaleTaxa + "," + numberGeolocaleTaxaIntroduced + "," + numberGeolocaleTaxaEndemic
                     + "," + totalImages + "," + imagedSpecimens 
-                    + "," + imagedSpecies + "," + validSpeciesImaged + "," + loginId + ", '" + execTime + "')";         
-           //s_log.warn("populateStatistics() query:" + update);   
-            stmt.executeUpdate(update);
-            
-        } catch (SQLException e) {
-            s_log.error("populateStatistics() e:" + e);
-            throw e;
-        } catch (Exception e) {
-            s_log.error("populateStatistics() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, this, "populateStatistics()");
-        }    
+                    + "," + imagedSpecies + "," + validSpeciesImaged + "," + loginId + ", '" + execTime + "')";
+            int c = utilDb.runDml(update);
     }
-
-        
 }
         

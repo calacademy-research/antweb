@@ -96,10 +96,11 @@ Or, if there are stmts and/or rsets...
     private static HashMap<NewProxyConnection, String> connectionMap = new HashMap<>();
     private static HashMap<NewProxyConnection, DbRequest> connectionRequestMap = new HashMap<>();
 
+    // Called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
     public static DataSource getDataSource() {
 		MysqlDataSource ds = null;
 		String jdbcUrl = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&characterSetResults=utf8&connectionCollation=utf8_general_ci";
-		ds = new MysqlDataSource();				
+		ds = new MysqlDataSource();
 		ds.setURL(jdbcUrl);
 		ds.setUser("antweb");
 		ds.setPassword(AntwebProps.getDbPwd());
@@ -124,10 +125,12 @@ Or, if there are stmts and/or rsets...
       }
 
       if (connection != null) {
-        connectionMap.put((NewProxyConnection) connection, name + " " + (new java.util.Date()));
-        
-        DbRequest dbRequest = new DbRequest(name, queryString, new java.util.Date());        
-        connectionRequestMap.put((NewProxyConnection) connection, dbRequest);
+          if (connection instanceof NewProxyConnection) {
+              connectionMap.put((NewProxyConnection) connection, name + " " + (new java.util.Date()));
+
+              DbRequest dbRequest = new DbRequest(name, queryString, new java.util.Date());
+              connectionRequestMap.put((NewProxyConnection) connection, dbRequest);
+          }
       } else {
         s_log.warn("open() connection is null.  data:" + name);
       }
@@ -229,7 +232,7 @@ Or, if there are stmts and/or rsets...
             s_log.error("rollback() rollback()");
             connection.rollback();
         } catch (Exception e) {
-            s_log.error("execute() rollback failure e:" + e);
+            s_log.error("rollback() failure e:" + e);
         }    
     }
 

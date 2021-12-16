@@ -55,7 +55,7 @@ public class ImageCountDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-          stmt = getConnection().createStatement();
+          stmt = DBUtil.getStatement(getConnection(), "countSpecimenImages()");
           rset = stmt.executeQuery(query);
         
           int count = -1;
@@ -84,7 +84,8 @@ public class ImageCountDb extends AntwebDb {
            query = "select sum(image_count) theSum, taxon_name from specimen " 
              + " group by taxon_name";
 
-            stmt = getConnection().createStatement();
+            stmt = DBUtil.getStatement(getConnection(), "countSpeciesImages()");
+
             rset = stmt.executeQuery(query);
         
            int theSum = -1;
@@ -119,7 +120,7 @@ public class ImageCountDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = getConnection().createStatement();
+            stmt = DBUtil.getStatement(getConnection(), "countTaxonImages()");
             rset = stmt.executeQuery(query);
          int count = -1;
          String parentTaxonName = null;

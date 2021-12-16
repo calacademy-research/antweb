@@ -43,8 +43,8 @@ public class AntwebUpload {
     };
 
     // Set to null for no action.
-    private static String s_testTaxonName = null; //"myrmicinaenesomyrmex hirtellus";
-    //private static String s_testTaxonName = "myrmicinaemonomorium";
+    //private static String s_testTaxonName = null; //"myrmicinaenesomyrmex hirtellus";
+    private static String s_testTaxonName = "myrmicinaestrumigenys dicomas";
 
     private TaxonQueryHashMap taxonQueryHashMap = new TaxonQueryHashMap();
     private String lastTaxonName = null;
@@ -136,11 +136,12 @@ public class AntwebUpload {
             // When called from line 99. CAS: 86606
             // DummyTaxon dummyTaxon = new TaxonDb(getConnection()).getDummyTaxon(taxonName, "taxon");
             Taxon dummyTaxon = null;
-            if (TaxonMgr.isUseRefreshing()) {
-                dummyTaxon = TaxonMgr.getTaxon(taxonName);
-            } else {
+            // Always look to the database. This determines if we insert or update.
+            //if (TaxonMgr.isUseRefreshing()) {
+            //    dummyTaxon = TaxonMgr.getTaxon(taxonName);
+            //} else {
                 dummyTaxon = new TaxonDb(getConnection()).getTaxon(taxonName);
-            }
+            //}
 
             if (dummyTaxon != null) {
                 if (isParent) {
@@ -214,7 +215,7 @@ public class AntwebUpload {
 
             // if we have a new taxon and we have not already inserted it, then insert it.
             if (true) {
-                String message = "saveTaxon() 3 taxonName:" + taxonName + " rank:" + rank + " isParent:" + isParent + " lineNum:" + lineNum + " hash.size:" + taxonQueryHashMap.size() + " descCounter.size:" + getDescCounter().size();
+                String message = "AntwebUpload.saveTaxon() 3 taxonName:" + taxonName + " rank:" + rank + " isParent:" + isParent + " lineNum:" + lineNum + " hash.size:" + taxonQueryHashMap.size() + " descCounter.size:" + getDescCounter().size();
                 A.iLog(1, message, 5000);
                 //AntwebUtil.logShortStackTrace();
                 //return 0;
@@ -302,7 +303,6 @@ public class AntwebUpload {
             //A.log("getInsertionQuery() key:" + key + " value:" + value);
             if (enactExceptions(key, value)) continue;
 
-
             fields.append(translateKeyToColumn(key) + ",");
 
             if (value instanceof String) {
@@ -353,35 +353,56 @@ public class AntwebUpload {
       throws SQLException
     {
 
-        String query = "update " + table + " set ";
-        StringBuffer sets = new StringBuffer();
         String taxonName = (String) item.get("taxon_name");
+        String source = (String) item.get("source");
         String rank = (String) item.get("rank");
-        String key = null;
-        Object value = null;
-        try {
-            // prepare the fields and values
-            Enumeration keys = item.keys();
-            StringBuffer fields = new StringBuffer();
-            StringBuffer values = new StringBuffer();
-            Float floatValue = null;
 
-            while (keys.hasMoreElements()) {
-                key = (String) keys.nextElement();
-                value = item.get(key);
+        Taxon referenceTaxon = TaxonMgr.getTaxon(taxonName);
 
-                //A.log("updateTaxon() key:" + key + " value:" + value);
-                if (enactExceptions(key, value, getConnection(), taxonName)) continue;
-                // species list or specimen upload name will not overwrite worldants, but insert_method, line_num, etc... will
+        if (referenceTaxon == null) A.log("updateTaxon() no referenceTaxon found:" + taxonName);
+            /*
+            Taxon referenceTaxon = null; //(new TaxonDb(getConnection())).getDummyTaxon(taxonName);
+            // CAS:86,598 x
+            if (TaxonMgr.isUseRefreshing()) {
+                dummyTaxon = TaxonMgr.getTaxon(taxonName);
+            } else {
+                dummyTaxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
+            }
+            */
 
-                if (key.equals("decimal_latitude") || key.equals("decimal_longitude")) {
-                    floatValue = (Float) item.get(key);
-                    String setStr = key + "=" + floatValue.floatValue() + ",";
-                    sets.append(setStr);
-                   //A.log("updateTaxon():" + setStr);
-                } else {
-                    if (value instanceof String) {
-                      String valueStr = (String) value;
+        boolean skip = referenceTaxon != null && referenceTaxon.isWorldAnts() && !"worldants".equals(source);  // A taxon from a specimen record source.
+        if (!skip) {
+
+            String query = "update " + table + " set ";
+            StringBuffer sets = new StringBuffer();
+            String key = null;
+            Object value = null;
+            try {
+                // prepare the fields and values
+                Enumeration keys = item.keys();
+                StringBuffer fields = new StringBuffer();
+                StringBuffer values = new StringBuffer();
+                Float floatValue = null;
+
+                while (keys.hasMoreElements()) {
+                    key = (String) keys.nextElement();
+                    value = item.get(key);
+
+                    //if (!"worldants".equals(source)) {  // A taxon from a specimen record source.
+                        // species list or specimen upload name will not overwrite worldants, but insert_method, line_num, etc... will
+                        //boolean enactExceptions = enactExceptions(key, value, referenceTaxon);
+                        //A.log("updateTaxon() key:" + key + " value:" + value + " source:" + source + " enactException:" + enactExceptions + " taxonName:" + taxonName);
+                        //if (enactExceptions) continue;
+                    //}
+
+                    if (key.equals("decimal_latitude") || key.equals("decimal_longitude")) {
+                        floatValue = (Float) item.get(key);
+                        String setStr = key + "=" + floatValue.floatValue() + ",";
+                        sets.append(setStr);
+                        //A.log("updateTaxon():" + setStr);
+                    } else {
+                        if (value instanceof String) {
+                            String valueStr = (String) value;
 
 					/* // Nothing seems to test for: C�te d'Ivoire                    
 					  String original = (String) value; //new String("A" + "\u00ea" + "\u00f1" + "\u00fc" + "C");
@@ -400,55 +421,58 @@ public class AntwebUpload {
                       // This works... AsciiUtils.test();
 
                       if (valueStr.contains("Ivoire")) if (AsciiUtils.isNonAscii(valueStr)) A.log("updateTaxon() 2hasDiacritics:" + valueStr);
-					*/                    
-                    
+					*/
 
-                      if (valueStr.contains("\"") || valueStr.contains("\'")) {
-                        //A.log("updateTaxon() key:" + key + " value:" + value);                    
-                        value = AntFormatter.escapeQuotes(valueStr);                  
-                      }
 
-                      if (((String) value).equals("true")) value = "1";
-                      if (((String) value).equals("false")) value = "0";
-                    
-                      sets.append(translateKeyToColumn(key) + "='" + value + "',");
-                    } else {
-                      sets.append(translateKeyToColumn(key) + "=" + value + ",");
-                    }                                   
+                            if (valueStr.contains("\"") || valueStr.contains("\'")) {
+                                //A.log("updateTaxon() key:" + key + " value:" + value);
+                                value = AntFormatter.escapeQuotes(valueStr);
+                            }
+
+                            if (((String) value).equals("true")) value = "1";
+                            if (((String) value).equals("false")) value = "0";
+
+                            sets.append(translateKeyToColumn(key) + "='" + value + "',");
+                        } else {
+                            sets.append(translateKeyToColumn(key) + "=" + value + ",");
+                        }
+                    }
                 }
+                if (sets.length() > 0) {
+                    sets.setLength(sets.length() - 1);
+                }
+
+                query += " " + sets.toString();
+                query += ", pending=0";
+                if (!query.contains("parent_taxon_name"))
+                    query += ", parent_taxon_name='" + Taxon.getParentTaxonNameFromName(taxonName) + "'";
+                query += " where taxon_name = '" + taxonName + "'";
+
+                if (!query.contains("insert_method")) {
+                    A.log("updateTaxon() Somewhere in the following stacktrace should have been put an insert_method into item."); // + " query:" + query);
+                    AntwebUtil.logShortStackTrace(8);
+                }
+
+                if (AntwebProps.isDevMode() && taxonName.equals(s_testTaxonName))
+                    s_log.warn("updateTaxon() taxonName:" + taxonName + " query:" + query);
+
+                Statement stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.updateTaxon()");
+
+                //if (query.contains("country")) A.log("updateTaxon() query:" + query);
+
+                int c = stmt.executeUpdate(query);
+                DBUtil.close(stmt, "AntwebUpload.updateTaxon()");
+
+                if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
+
+                if (TaxonMgr.isUseRefreshing() && c > 0) {
+                    TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);
+                }
+
+            } catch (SQLException e) {
+                s_log.error("updateTaxon() e:" + e + " query:" + query);
+                throw e;
             }
-            if (sets.length() > 0) {
-                sets.setLength(sets.length() - 1);
-            }
-
-            query += " " + sets.toString();
-            query += ", pending=0";
-            if (!query.contains("parent_taxon_name")) query += ", parent_taxon_name='" + Taxon.getParentTaxonNameFromName(taxonName) + "'";
-            query += " where taxon_name = '" + taxonName + "'";
-
-              if (!query.contains("insert_method")) {
-                 A.log("updateTaxon() Somewhere in the following stacktrace should have been put an insert_method into item."); // + " query:" + query);
-                 AntwebUtil.logShortStackTrace(8);
-              }             
-            
-            if (AntwebProps.isDevMode() && taxonName.equals(s_testTaxonName)) s_log.warn("updateTaxon() taxonName:" + taxonName + " query:" + query);
-
-            Statement stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.updateTaxon()");
-
-            //if (query.contains("country")) A.log("updateTaxon() query:" + query);
-            
-            int c = stmt.executeUpdate(query);
-            DBUtil.close(stmt, "AntwebUpload.updateTaxon()");
-            
-            if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
-
-            if (TaxonMgr.isUseRefreshing() && c > 0) {
-                TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);
-            }
-
-        } catch (SQLException e) {
-            s_log.error("updateTaxon() e:" + e + " query:" + query);
-            throw e;
         }
     }  
     
@@ -616,37 +640,36 @@ public class AntwebUpload {
     }
 
     private boolean enactExceptions(String key, Object value) {
+        // We don't update these. These are never included for specimen taxa.
       if ("author_date_html".equals(key)) return true;
       if ("taxonomichistory".equals(key)) return true;
-        return ("reference_id".equals(key)) && ("".equals((String) value));   // The ints are sometimes nil "".
+
       //if ("country".equals(key)) return true;
       //if ("bioregion".equals(key)) return true;
+
+      return ("reference_id".equals(key)) && ("".equals((String) value));   // The ints are sometimes nil "".
     }
 
-    private boolean enactExceptions(String key, Object value, Connection connection, String taxonName) 
-      throws SQLException {
+    // If an exception, value will not be updated. Only runs on specimen record taxa.
+    // The referenceTaxon comes from the TaxonMgr. If it is worldants, we will make exceptions.
+    private boolean enactExceptions(String key, Object value, Taxon referenceTaxon) {
         if (enactExceptions(key, value)) return true;
-        if ("source".equals(key)) {
-          // if taxon is already source == worldants, leave it.  Others don't update the source.
+        // Should this be here? Probably. Worldants deletes before insertion, so updates don't happen.
 
-
-          Taxon dummyTaxon = null; //(new TaxonDb(getConnection())).getDummyTaxon(taxonName);
-
-          // CAS:86,598 x
-          if (TaxonMgr.isUseRefreshing()) {
-              dummyTaxon = TaxonMgr.getTaxon(taxonName);
-          } else {
-              dummyTaxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
-          }
-
-          if (dummyTaxon != null) {
-            String origSource = dummyTaxon.getSource();
-              return origSource != null && origSource.contains(Project.WORLDANTS);
-          }
+        if (referenceTaxon == null) {
+            //s_log.warn("enactExceptioon() Why no referenceTaxon? It is an update. Should exist in taxonMgr.");
+            return false; // If not worldants, then OK. But is that concerning?
+        } else if (!referenceTaxon.isWorldAnts()) {
+            return false;
         }
-        return false;
+
+        // There is a referenceTaxon and it is worldants
+        Set<String> values = Set.of("insert_method", "line_num");  // Allow these
+        if (values.contains(key)) return false;
+
+        return true;
     }
-        
+
     void saveSpecimen(Hashtable item)
       throws SQLException {
       //throws com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException {

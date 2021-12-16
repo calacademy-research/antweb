@@ -259,7 +259,7 @@ public abstract class AntwebUtil {
         //A.log("groupIdInteger:" + groupIdInteger);
         if (!s_uploadGroupList.contains(groupIdInteger)) s_uploadGroupList.add(groupIdInteger);
       } else {
-        A.log("getUploadGroupList() specIndex:" + specIndex + " file:" + file + " kind:" + kind);
+        if (kind != null && !kind.contains("worldants")) A.log("getUploadGroupList() ! specIndex:" + specIndex + " file:" + file + " kind:" + kind);
       }
     }
     Collections.sort(s_uploadGroupList);
@@ -570,7 +570,7 @@ public abstract class AntwebUtil {
   }
 
 
-  private static int s_shortStackLines = 6;
+  private static int s_shortStackLines = 7  ;
 
   public static String getShortStackTrace() {
     return AntwebUtil.getShortStackTrace(s_shortStackLines);

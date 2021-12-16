@@ -50,6 +50,12 @@
 <!-- taxonPage-body.jsp -->
 
 <%
+//A.log("taxonPage-body.jsp genus:" + TaxonMgr.getGenus("myrmicinaemyrmica"));
+//A.log("taxonPage-body.jsp subspecies:" + TaxonMgr.getTaxon("myrmica scabrinodis ahngeri"));
+//Taxon t = TaxonMgr.getTaxon("myrmicinaemyrmica scabrinodis ahngeri");
+//A.log("taxonPage-body.jsp taxonName:" + t.getTaxonName() + " name:" + t.getName() + " species:" + t.getSpecies() + " source:" + t.getSource());
+//A.log("taxonPage-body.jsp taxon.source:" + taxon.getSource());
+
   String dagger = "";
   if (taxon.getIsFossil()) dagger = "&dagger;";
 
@@ -76,7 +82,7 @@
                 <li><a href="images.do?<%= taxon.getBrowserParams() %>">Images</a></li>
 				<% 
 
-                  A.log("taxonPage-body.jsp map:" + taxon.getMap() + " hasMap:" + taxon.hasMap() + " map:" + map);
+                  //A.log("taxonPage-body.jsp map:" + taxon.getMap() + " hasMap:" + taxon.hasMap() + " map:" + map);
 	
 				  if (taxon.hasMap() && map != null) { %>
                   <li><a href="<%= AntwebProps.getDomainApp() %>/bigMap.do?taxonName=<%= taxon.getTaxonName() %>&<%= overview.getParams() %>">Map</a></li>

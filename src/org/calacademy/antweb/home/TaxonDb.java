@@ -26,23 +26,48 @@ public class TaxonDb extends AntwebDb {
     public static String INFO = "INFO";    // Default. Standard. Just member data. Supporting queries are extra.
     public static String FULL = "FULL";    // Includes: SeeAlso.
 
+    public boolean exists(String taxonName) throws SQLException {
+        return getTaxon(taxonName) != null;
+    }
+
     // The standard access method
     public Taxon getTaxon(String taxonName) throws SQLException {
-        return getInfoTaxon(taxonName);
+        return getTaxon("taxon", taxonName);
     }
-   
-    private Taxon getInfoTaxon(String taxonName) {
-      return getInfoTaxon("taxon", taxonName);
-    }
-        
-    private Taxon getInfoTaxon(String tableName, String taxonName) {
+
+    private Taxon getTaxon(String tableName, String taxonName) {
         String taxonNameClause = " taxon_name = '" + taxonName + "'";
-        return getInfoTaxon(tableName, taxonName, taxonNameClause);
+        return getTaxon(tableName, taxonName, taxonNameClause);
+    }
+
+    private int getAntcatCount() {
+        String countStr = null;
+        ResultSet rset = null;
+        Statement stmt = null;
+        String theQuery = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getAntcatCount()");
+
+            theQuery = " select count(*) count from taxon where antcat = 1";
+            rset = stmt.executeQuery(theQuery);
+
+            while (rset.next()) {
+                countStr = rset.getString("count");
+            }
+        } catch (SQLException e) {
+            s_log.error("getAntcatCount)");
+        } finally {
+            DBUtil.close(stmt, rset, "this", "getAntcatCount()");
+        }
+        if (countStr == null) return 0;
+        return Integer.valueOf(countStr);
     }
 
     // Get Taxon with all member data.
-    private Taxon getInfoTaxon(String tableName, String taxonName, String taxonNameClause) {
-    
+    private Taxon getTaxon(String tableName, String taxonName, String taxonNameClause) {
+
+        ProfileCounter.add("getTaxon() " + AntwebUtil.getShortStackTrace(9));
+
         /* New.  Mar 2012.  Mark */
         /* Used by OrphanTaxons and OrphanDescEdits, DescriptionAction, etc...   Useful, but because the 
            return object is not created as the appropriate subclass, of limited utility.
@@ -53,16 +78,18 @@ public class TaxonDb extends AntwebDb {
         
         //taxonName = DBUtil.escapeQuotes(taxonName);
         if (taxonName.contains("'")) {
-          s_log.warn("getInfoTaxon() singleQuote found in taxonName:" + taxonName);
+          s_log.warn("getTaxon() singleQuote found in taxonName:" + taxonName);
           return null;
         }
 
         String theQuery = "";
 
+        boolean log = true && "myrmicinaetetramorium vernicosum".equals(taxonName);
+        
         ResultSet rset = null;
         Statement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "getCurrentValidTaxonNamestance() taxonName:" + taxonName);
+            stmt = DBUtil.getStatement(getConnection(), "getTaxon() taxonName:" + taxonName);
                   
             theQuery = " select taxarank, taxon_name, kingdom_name, phylum_name, order_name, class_name"
               + ", family, subfamily, tribe, genus, subgenus, species, subspecies "
@@ -76,7 +103,7 @@ public class TaxonDb extends AntwebDb {
 
             int count = 0;
             while (rset.next()) {
-                //A.log("getInfoTaxon() IN query:" + theQuery);
+                if (log) A.log("getTaxon() IN query:" + theQuery);
 
                 ++count;
                 // Only one record expected
@@ -132,36 +159,32 @@ public class TaxonDb extends AntwebDb {
 
             }
 
-            if (count == 0) A.log("getInfoTaxon() not found taxonName:" + taxonName);
+            //if (count == 0) A.log("getTaxon() not found taxonName:" + taxonName);
 
-            if (count > 1 && "taxon".equals(tableName)) s_log.error("getInfoTaxon() count:" + count + " should never be more than 1.  TaxonName:" + taxonName);
+            if (count > 1 && "taxon".equals(tableName)) s_log.error("getTaxon() count:" + count + " should never be more than 1.  TaxonName:" + taxonName);
 
         } catch (SQLException e) {
-            s_log.error("getInfoTaxon() taxonName:" + taxonName + " e:" + e + " theQuery:" + theQuery);
+            s_log.error("getTaxon() taxonName:" + taxonName + " e:" + e + " theQuery:" + theQuery);
         } finally {
-            DBUtil.close(stmt, rset, "this", "getInfoTaxon() taxonName:" + taxonName);
+            DBUtil.close(stmt, rset, "this", "getTaxon() taxonName:" + taxonName);
         }
-        if (taxon == null) {
+        if (taxon == null && log) {
           //It may not be found during Worldants, for instance amblyoponinae, but after the cleanup process it will...
           String warning = " taxon not found taxonName:" + taxonName;
           //if (AntwebProps.isDevMode()) warning += " theQuery:" + theQuery;
-          A.log("getInfoTaxon() " + warning);
+          A.log("getTaxon() " + warning + " query:" + theQuery + " taxonFromMgr:" + TaxonMgr.getTaxon(taxonName) + " antcatCount:" + getAntcatCount());
           return null;
         }
         
-        if (AntwebProps.isDevMode()) {
-          //s_log.warn("getInfoTaxon() taxonName:" + taxonName + " taxon:" + taxon + " query:" + theQuery);
-        
-          if ("myrmicinaestrumigenys emmae".equals("taxonName")) {
-            s_log.warn("getInfoTaxon() name:" + taxonName + " taxon:" + taxon.getTaxonName() + " query:" + theQuery);
-          }
+        if (AntwebProps.isDevMode() && "myrmicinaestrumigenys emmae".equals("taxonName")) {
+            s_log.warn("getTaxon() name:" + taxonName + " taxon:" + taxon.getTaxonName() + " query:" + theQuery);
         }
         return taxon;
     }
 
     // Will contain all of the data items including countries and bioregions. Expensive.
     public Taxon getFullTaxon(String taxonName) throws SQLException {
-        Taxon taxon = getInfoTaxon("taxon", taxonName);
+        Taxon taxon = getTaxon("taxon", taxonName);
         taxon.finishInstance(getConnection());  // init() with source, line_num, insert_method, created, country...
         return taxon;
     }
@@ -175,16 +198,19 @@ public class TaxonDb extends AntwebDb {
 
         if (family != null) taxon.setFamily(family);
         if ("formicidae".equals(taxon.getFamily())) taxon.setOrderName("hymenoptera");
-        //A.log("getInfoTaxon() order:" + taxon.getOrderName() + " family:" + taxon.getFamily());
+        //A.log("getFullTaxon() order:" + taxon.getOrderName() + " family:" + taxon.getFamily());
         if (subfamily != null) taxon.setSubfamily(subfamily);
         if (genus != null) taxon.setGenus(genus);
         if (species != null) taxon.setSpecies(species);
         if (subspecies != null) taxon.setSubspecies(subspecies);
         taxon.setSubgenus(TaxonMgr.getSubgenus(taxon.getTaxonName()));
 
-        // We can handle it. Probably should force inclusion of subfamily but since it is has already been sort of supported...
+        // If subfamily is not inclulded, we can handle it. 
+        // Probably should force inclusion of subfamily but since it is has already been sort of supported...
+        // For instance: /description.do?genus=myrmica&species=scabrinodis&subspecies=ahngeri&rank=subspecies
+        Genus genusObj = null;
         if (subfamily == null && genus != null) {
-            Genus genusObj = TaxonMgr.getGenusFromName(genus);
+            genusObj = TaxonMgr.getGenusFromName(genus);
             if (genusObj != null) {
                 //A.log("getTaxon() trying to figure... genus:" + genus + " subfamily:" + " genus:" + genusObj.getSubfamily());
                 taxon.setSubfamily(genusObj.getSubfamily());
@@ -193,6 +219,8 @@ public class TaxonDb extends AntwebDb {
             }
         }
 
+        A.log("getFullTaxon() taxonName:" + taxon.getTaxonName() + " genus:" + genus + " genusObj:" + genusObj + " subfamiy:" + taxon.getSubfamily());
+    
         taxon.setTaxonomicInfo(getConnection());
 
         taxon.setSeeAlso();
@@ -202,7 +230,7 @@ public class TaxonDb extends AntwebDb {
 
         taxon.finishInstance(getConnection());
 
-        //A.log("getInfoTaxon() taxon:" + taxon.getClass() + " isExtant:" + taxon.isExtant() + " taxonName:" + taxon.getTaxonName());
+        A.log("getFullTaxon() taxon:" + taxon.getClass() + " isExtant:" + taxon.isExtant() + " taxonName:" + taxon.getTaxonName() + " source:" + taxon.getSource());
         return taxon;
     }
 
@@ -290,7 +318,7 @@ public class TaxonDb extends AntwebDb {
         ResultSet rset = null;
         String query = "select distinct genus, subgenus from taxon where subgenus is not null and status != 'morphotaxon'";
         try {
-            stmt = DBUtil.getPreparedStatement(getConnection(), "getShallowTaxa()", query);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getSubgenusHashMap()", query);
             rset = stmt.executeQuery();
 
             while (rset.next()) {
@@ -335,9 +363,9 @@ public class TaxonDb extends AntwebDb {
         PreparedStatement stmt = null;
         ResultSet rset = null;
         String query = "select taxon_name from taxon";
-        //A.log("getShallowTaxa() query:" + query);
+        //A.log("getTaxa() query:" + query);
         try {            
-            stmt = DBUtil.getPreparedStatement(getConnection(), "getShallowTaxa()", query);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getTaxa()", query);
             rset = stmt.executeQuery();
 
             while (rset.next()) {
@@ -350,7 +378,7 @@ public class TaxonDb extends AntwebDb {
               taxa.add(taxon);
             }
         } catch (SQLException e) {
-            s_log.error("getShallowTaxa() e:" + e + " query:" + query);
+            s_log.error("getTaxa() e:" + e + " query:" + query);
         } finally {
             DBUtil.close(stmt, rset, "this", "getTaxa()");
         }
@@ -416,10 +444,12 @@ public class TaxonDb extends AntwebDb {
         if (Rank.GENUS.equals(taxon.getRank())) {
             taxon.setBioregionMap(new TaxonPropDb(getConnection()).getBioregionMap(taxonName));
         }
+/* Not gotten in the first placee, so not gotten when refetched.
         if (Rank.SPECIES.equals(taxon.getRank())) {
             //A.log("getTaxon() introduced:" + getIntroducedMap(taxonName));
             taxon.setIntroducedMap(new TaxonPropDb(getConnection()).getIntroducedMap(taxonName));
         }
+*/
         return taxon;
     }
 
@@ -433,7 +463,7 @@ public class TaxonDb extends AntwebDb {
           String taxonName = item.getTaxonName();
           //A.log("getTaxa() taxonName:" + taxonName + " item:" + item); 
          
-          Taxon taxon = getInfoTaxon("taxon", item.getTaxonName());
+          Taxon taxon = getTaxon("taxon", item.getTaxonName());
           //A.log("TaxonDb.getTaxa() taxonName:" + taxonName + " taxon:" + taxon + " subfamilyFilter:" + subfamilyFilter);
 
           if (taxon != null) {

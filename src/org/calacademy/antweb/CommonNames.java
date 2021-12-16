@@ -56,7 +56,8 @@ public class CommonNames {
     nameMap.put("Tocandiras", "ponerinaedinoponera");
     nameMap.put("Giant Amazonian ant", "ponerinaedinoponera");
     nameMap.put("exploding ant", "formicinaecolobopsis saundersi");
-
+    nameMap.put("turtle ant", "myrmicinaecephalotes");
+    
     //nameMap.put("", "");
         
     namesList = new ArrayList<>();

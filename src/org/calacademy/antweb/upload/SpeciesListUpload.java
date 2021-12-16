@@ -163,6 +163,19 @@ public class SpeciesListUpload extends AntwebUpload {
         return uploadDetails;
     }                  
     
+    /*
+    Two primary access methods. Would be good if they shared more code.
+    UploadAction - uploadSpeciesList
+      (new SpeciesListUploader(connection)).uploadWorldants()
+        speciesListUpload.uploadSpeciesList(4)   (will regenerateAllAntweb())
+          speciesListUpload.importSpeciesList()
+    UtilDataAction (called from scheduler)
+      SpeciesListUploader(connection)).worldantsFetchAndReload();	
+      SpeciesListUploader.worldantsReload()
+        speciesListUpload.reloadSpeciesList()
+          speciesListUpload.importSpeciesList(4)
+    */
+    
     private UploadDetails importSpeciesList(String project, UploadFile uploadFile, int accessGroupId) {
         UploadDetails uploadDetails = null;
         String fileLoc = uploadFile.getFileLoc();
@@ -233,7 +246,7 @@ public class SpeciesListUpload extends AntwebUpload {
         // first flag the records that will be updated.  We did delete.  Now we update the 
         // pending flag, and the delete the ones that remain pending after import, so as to 
         // not lose the valid or antcat properties from the bolton upload.
-        getSpeciesListUploadDb().modifyProjectData(project); 
+        getSpeciesListUploadDb().prepareDatabase(project);
 
         uploadDetails = importSpeciesList(project, uploadFile, accessGroupId);
 
@@ -244,7 +257,13 @@ public class SpeciesListUpload extends AntwebUpload {
 
         // getSpeciesListUploadDb().deletePendingData(); 
 
+        // CLEAN UP METHODS.
         TaxonSetDb.updateTaxonSetTaxonNames(getConnection());
+
+
+        new WorldantsUploadDb(getConnection()).deleteHomonymsWithoutTaxa();
+
+        TaxonMgr.populate(getConnection(), true, false);
 
         try {
           if (singleUpload)
@@ -490,9 +509,10 @@ public class SpeciesListUpload extends AntwebUpload {
                         
                         // Here we populate vars from data for use below...
                         if (index == statusHeader) status = element;
-                        if (index == currentValidRankHeader) { 
+                        if (index == currentValidRankHeader) {
                           currentValidRank = element;                    
                           //A.log("currentValidRank:" + currentValidRank);      
+                            A.iLog("importSpeciesList() index:" + index + " currentValidRank:" + currentValidRank);
                         }
                         if (index == speciesHeader) {
                           thisSpecies = element.toLowerCase();
@@ -621,7 +641,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         if (currentValidRank != null) {
                           taxonHash.put("rank", currentValidRank);
                         } else {
-                          A.log("Was NVE. null currentValidRank.");
+                          A.log("Was NPE. null currentValidRank.");
                         } 
                     }                    
                 } else {  // other species lists
@@ -649,7 +669,7 @@ public class SpeciesListUpload extends AntwebUpload {
                     taxonHash.put("taxon_name", taxonName);
                     taxonHash.put("line_num", lineNum);
                     // String debugTaxonName = "dorylinaecerapachys mayri brachynodus"; // "dolichoderinaecolobopsis macrocephala";
-                    String debugTaxonName = "formicinaephasmomyrmex";
+                    String debugTaxonName = "myrmicinaetetramorium vernicosum"; // "formicinaephasmomyrmex";
                     //String debugTaxonName = taxonName; // Debug all lines...
                     // A.log("importSpeciesList() lineNum:" + lineNum + " taxonName:" + taxonName);
 
@@ -754,7 +774,6 @@ public class SpeciesListUpload extends AntwebUpload {
 							  //if (taxonName.contains(debugTaxonName))
 							  if (taxonName.contains(debugTaxonName)) A.log("importSpeciesList() 10 taxonName:" + taxonName + " thisCountry:" + thisCountry + " country:" + country + " currentValidName:" + currentValidName);
 							  //if (taxonName.contains("achycondyla") && country.getName() != null) && country.getName().contains("adagascar")) A.log("importSpeciesList() madagascar taxonName:" + taxonName + "   pachycondyla currentValidName:" + currentValidName);
-
                               //if (taxonName.contains("dorylinaecerapachys") || currentValidName.contains("dorylinaecerapachys")) A.log("importSpeciesList() taxonName:" + taxonName + " currentValidName:" + currentValidName + " status:" + status + " ignoreTaxon:" + ignoreTaxon);
 
                               Taxon current = TaxonMgr.getTaxon(currentValidName);

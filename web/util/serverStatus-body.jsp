@@ -100,7 +100,7 @@ message += topReport;
 
 <br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
 <br><b>Bad Actor Report:</b> <%= BadActorMgr.getBadActorReport() %>
-<br><b>ProfileCount:</b> <%= ProfileCount.getReport() %>
+<br><b>ProfileCounter:</b> <%= ProfileCounter.getReport() %>
 
 <br><br><br>
 <h3>Server Properties </h3>
@@ -132,10 +132,10 @@ String serverDetails = (String) request.getAttribute("serverDetails");
  <%  //HttpSession session = request.getSession();
      for (Enumeration e = session.getAttributeNames() ; e.hasMoreElements() ;) {
        String name = (String) e.nextElement();
-       if (!"dummyForm".equals(name)) {
+       if (!"dummyForm".equals(name) && !"statistics".equals(name)) {
          out.println("<br>name:<b>" + name + "</b> value:" + session.getAttribute(name));
        } else {
-         out.println("<br>name:<b>dummyForm</b>");
+         out.println("<br>name:<b>" + name + "</b>");
          A.log("serverStatus-body.jsp dummyForm:" + session.getAttribute(name));
        }
      }

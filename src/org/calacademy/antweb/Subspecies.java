@@ -23,13 +23,6 @@ public final class Subspecies extends Species implements Serializable {
         return getSubspecies(); 
     }
 
-/*
-    public void setTaxonomicInfo(String project) throws SQLException {
-        s_log.warn("setTaxonomicInfo(project) is deprecated");
-        setTaxonomicInfo();
-    }
-   */
-
     public void setTaxonomicInfo(Connection connection) throws SQLException {
         String theQuery = null;
         
@@ -46,11 +39,11 @@ public final class Subspecies extends Species implements Serializable {
 		  + " genus ='" + AntFormatter.escapeQuotes(genus) + "'"
 		  + " and species ='" + AntFormatter.escapeQuotes(species) + "'" 
 		  + " and subspecies ='" + AntFormatter.escapeQuotes(subspecies) + "'" 
-		  + " and taxarank = \"subspecies\"";
+		  + " and taxarank = 'subspecies'";
 
 		// theQuery += " and proj_taxon.project_name = '" + project + "'";
 
-		if (AntwebProps.isDevMode()) s_log.info("setTaxonomicInfo() theQuery:" + theQuery);
+		A.log("setTaxonomicInfo() theQuery:" + theQuery);
 
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
@@ -69,7 +62,7 @@ public final class Subspecies extends Species implements Serializable {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = connection.createStatement();
+            stmt = DBUtil.getStatement(connection, "getSeeAlsoSiblingSubspecies()");
             rset = stmt.executeQuery(query);
             
             //s_log.warn("getSiblingSubspecies() query:" + query);
@@ -116,7 +109,7 @@ public final class Subspecies extends Species implements Serializable {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-          stmt = connection.createStatement();
+          stmt = DBUtil.getStatement(connection, "setChildren()");
           rset = stmt.executeQuery(theQuery);
           Specimen child = null;
           

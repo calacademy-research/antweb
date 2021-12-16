@@ -189,7 +189,7 @@ public final class ListAction extends Action {
                         }
                     }
 
-                    request.setAttribute("message", "action:" + action + " not found.");
+                    request.setAttribute("message", "action:" + action + " not found. Be sure you are logged in.");
                     return (mapping.findForward("message"));
 
             }

@@ -123,28 +123,53 @@ public class UtilDb extends AntwebDb {
         }
         results = newLine + columns + rowData;
         return results;
-    }    
+    }
 
-    public int getCount(String fromWhere) {
-      int count = 0;
-      String query = "";
-      Statement stmt = null;
-      ResultSet rset = null;
-      try {
-          stmt = DBUtil.getStatement(getConnection(), "getCount()");            
+    // Accept a full query. Count rows returned
+    public int getCountFromQuery(String query) {
+        if (query == null || !query.contains("select ")) {
+            s_log.error("getCountFromQuery() Improper query:" + query);
+            return 0;
+        }
+        int count = 0;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getCountFromQuery()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                ++count;
+            }
+        } catch (SQLException e) {
+            s_log.error("getCountFromQuery() e:" + e + " query:" + query);
+        } finally {
+            DBUtil.close(stmt, rset, "getCountFromQuery()");
+        }
+        return count;
+    }
 
-          query = "select count(*) " + fromWhere;            
-          rset = stmt.executeQuery(query);
-          while (rset.next()) {
-              count = rset.getInt(1);
-          }            
-      } catch (SQLException e) {
-          s_log.error("getCount() e:" + e + " query:" + query);
-      } finally {
+    // Accept a full query.
+    public int getCount(String query) {
+        if (query == null || !query.contains("select ")) {
+            s_log.error("getCount() Improper query:" + query);
+            return 0;
+        }
+        int count = 0;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getCount()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                count = rset.getInt(1);
+            }
+        } catch (SQLException e) {
+            s_log.error("getCount() e:" + e + " query:" + query);
+        } finally {
             DBUtil.close(stmt, rset, "getCount()");
-      }   
-      return count;      
-    } 
+        }
+        return count;
+    }
     
     public String executeDmls(ArrayList<String> dmls) { // throws SQLException {     
         String returnVal = "success";

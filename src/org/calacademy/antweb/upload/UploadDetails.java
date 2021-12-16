@@ -190,7 +190,7 @@ public class UploadDetails extends OperationDetails {
             + "<br>&nbsp;&nbsp;&nbsp;<b>This Log File:</b> " + getLogFileAnchor() 
             + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + (new Date()).toString()     
             + "<br>&nbsp;&nbsp;&nbsp;<b>Encoding:</b> " + encoding   
-            + "<br>&nbsp;&nbsp;&nbsp;<b>Antweb version:</b> " + AntwebUtil.getReleaseNum()  
+            + "<br>&nbsp;&nbsp;&nbsp;<b>Antweb version:</b> " + AntwebUtil.getReleaseNum()
             + "<br>&nbsp;&nbsp;&nbsp;<b>Uploaded File:</b> " + getBackupFileAnchor();
 
         // AccessGroup should have a getCurator link. Will always be a curator.
@@ -233,10 +233,8 @@ public class UploadDetails extends OperationDetails {
         }
 
         s_log.info("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
-
-
+        
         if (postUploadStatistics != null) {
-
           if (countInsertedSpecies > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> " + countInsertedSpecies + ".";
           if (countUpdatedSpecies > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Updated Species:</b> " + countUpdatedSpecies + ".";        
 

@@ -264,7 +264,11 @@ public class SpecimenDb extends AntwebDb {
 
         Statement stmt = null;
         ResultSet rset = null;
-        String query = "select taxon_name, group_concat(distinct bioregion) bioregions, count(distinct bioregion) count from specimen where bioregion is not null and taxon_name not like '%indet%' and country != 'Port of Entry' and access_group = " + groupId + " and taxon_name not in (select distinct taxon_name from proj_taxon where project_name = 'introducedants') group by taxon_name having count(distinct bioregion) > 1 order by count(distinct bioregion) desc, taxon_name";
+        String query = "select taxon_name, group_concat(distinct bioregion) bioregions, count(distinct bioregion) count" 
+                + " from specimen where bioregion is not null and taxon_name not like '%indet%' and country != 'Port of Entry'" 
+                + " and access_group = " + groupId + " and taxon_name not in (select distinct taxon_name from proj_taxon" 
+                + " where project_name = 'introducedants') group by taxon_name having count(distinct bioregion) > 1" 
+                + " order by count(distinct bioregion) desc, taxon_name";
         try {
             stmt = DBUtil.getStatement(getConnection(), "getMultiBioregionTaxaList()");
             rset = stmt.executeQuery(query);
@@ -367,7 +371,7 @@ public class SpecimenDb extends AntwebDb {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "updateSpecimenStatus()");
+            stmt = DBUtil.getStatement(getConnection(), "updateCaste()");
             String dml = "update specimen s set s.caste = '" + caste + "', s.subcaste = '" + subcaste + "' where s.code = '" + code + "'";
         
             //A.log("updateCaste dml:" + dml);

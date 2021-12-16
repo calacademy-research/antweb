@@ -28,6 +28,8 @@ public class TaxonMgr extends Manager {
     //private static List<String> taxaNamesList = null;
     private static List<String> prettyTaxaNamesList = null;
 
+    private static Date s_populateTime = null;
+
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
         if (!forceReload && (s_subfamilies != null)) return;
 
@@ -61,7 +63,13 @@ public class TaxonMgr extends Manager {
 
         s_subgenusHashMap = taxonDb.getSubgenusHashMap();
 
-        A.log("populate generaSize:" + s_genera.size());
+        s_populateTime = new Date();
+
+        A.log("populate() " + report());
+    }
+
+    public static String report() {
+        return "TaxonMgr last loaded:" + s_populateTime + " genera:" + s_genera.size() + " taxa:" + s_taxa.size();
     }
 
     //Called through UtilAction to, in a separate thread.
@@ -182,6 +190,20 @@ public class TaxonMgr extends Manager {
       return (Species) s_species.get(taxonName);
     }
 
+    /*
+    // Deprecated.
+    public static Species getSpecies(String taxonName) {
+        ProfileCounter.add("TaxonMgr.getSpecies()");
+
+        if (taxonName == null) return null;
+
+        if (s_species == null) {
+          A.log("getSpecies() species not loaded. Improper use.");
+          return null;
+        }
+        return (Species) s_species.get(taxonName);
+    }
+*/
 
     /*
      2021-11-09 21:50:42,494 WARN http-nio-8080-exec-11 org.calacademy.antweb.util.TaxonMgr - getGenusFromName(). AMBIGUOUS! Found a second genus with genusName:leptanilloides
@@ -323,9 +345,19 @@ public class TaxonMgr extends Manager {
 //   subfamily, genus, status, source, isQudranomial, isAnt, currentValidName, bioregionMap, isIndet,
     */
 
+    // Unless we know we need to refresh, refrain.
     public static boolean s_useRefreshingTaxonMgr = false; //AntwebProps.isDevMode();
     public static boolean isUseRefreshing() {
-        return s_useRefreshingTaxonMgr;
+        boolean val = (s_useRefreshingTaxonMgr && !isInWorldants());
+        //A.log("isUseRefreshing() s_use:" + s_useRefreshingTaxonMgr + " isIn:" + isInWorldants() + " val:" + val);
+        return val;
+    }
+
+    // This is a rough but effective solution. Set true during worldants upload (in UploadAction) and false at the end.
+    private static boolean s_isInWorldants = false;
+    public static boolean isInWorldants() { return s_isInWorldants; }
+    public static void setIsInWorldants(boolean isInWorldants) {
+        s_isInWorldants = isInWorldants;
     }
 
     public static int s_refreshTaxonCount = 0;
@@ -345,9 +377,10 @@ public class TaxonMgr extends Manager {
         ProfileCounter.add("totalRefreshTaxon-" + operation);
 
         // We either want to do the dbRefresh method, or construct a taxon for the TaxonMgr from the hashtable.
-        // For production use have one or the other set to true.
+        // For production use have one or the other set to true. If both true, debug testing for equality.
+        // Look at the code to be sure of implementation.
         boolean hashtableRefresh = false;
-        boolean dbRefresh = true;
+        boolean dbRefresh = false; //true;
 
         // updates can not use the hashtableRefresh method.
         if ("update".equals(operation)) {
@@ -358,40 +391,51 @@ public class TaxonMgr extends Manager {
         Taxon hashTaxon = null;
         if (hashtableRefresh) {
             hashTaxon = Taxon.getTaxon(item);
-
             taxon = hashTaxon;
         }
 
         Taxon dbTaxon = null;
         if (dbRefresh) {
             if (taxonName == null) return;
-
             TaxonDb taxonDb = new TaxonDb(connection);
             dbTaxon = taxonDb.getTaxonForMgr(taxonName);
             if (dbTaxon == null) {
                 s_log.error("refreshTaxon() from DB taxon:" + taxonName + " not found.");
                 return;
             }
-
             taxon = dbTaxon;
         }
 
         // If we care to compare them for validity
-        if (AntwebProps.isDevMode() && dbRefresh && hashtableRefresh) {
-            String hashTaxonStr = hashTaxon.toFullString();
-            String dbTaxonStr = dbTaxon.toFullString();
-            boolean equal = hashTaxonStr.equals(dbTaxonStr);
-            A.log("refreshTaxon() equal:" + equal + " FROM HASHTABLE:" + hashTaxonStr + " FROM DATABASE:" + dbTaxonStr);
+        if (AntwebProps.isDevMode() && dbRefresh) { // && hashtableRefresh) {
+            //String hashTaxonStr = hashTaxon.toFullString();
+            //String dbTaxonStr = dbTaxon.toFullString();
+            //boolean equal = hashTaxonStr.equals(dbTaxonStr);
+            Taxon mgrTaxon = getTaxon(taxonName);
+            if (mgrTaxon == null) {
+                s_log.error("refreshTaxon() mgrTaxon not found:" + mgrTaxon);
+            } else {
+                String diff = mgrTaxon.diff(dbTaxon);
+                if (diff != null) A.log("refreshTaxon() taxonName:" + taxonName + " diff(mgr/db):" + diff);
+            }
         }
 
+        // Created was null for hashtable.  CurrentValidName was null for hashtable but empty for db.
+
+        //A.log("refreshTaxon() operation:" + operation);
+        add(taxonName, taxon);
+    }
+
+    public static void add(String taxonName, Taxon taxon) {
+
         if (s_species != null) {
-            if (taxon instanceof Species) s_species.put(taxonName, taxon);  // Is species used?
+            if (taxon instanceof Species) s_species.replace(taxonName, taxon);  // Is species used?
         }
 
         String className = taxon.getClass().toString();
         if (!"class org.calacademy.antweb.Species".equals(className)
                 && !"class org.calacademy.antweb.Subspecies".equals(className)) {
-            A.log("refreshTaxon() operation:" + operation + " taxon:" + taxon + " class:" + taxon.getClass());
+            A.log("refreshTaxon() taxon:" + taxon + " class:" + taxon.getClass());
         }
         // Is it ever a subclass? Is it actually ever a genus?
 
@@ -400,7 +444,7 @@ public class TaxonMgr extends Manager {
 
         s_refreshTaxonCount = s_refreshTaxonCount + 1;
     }
-/*
+    /*
 TaxonMgr.refreshTaxon() equal:false
   FROM HASHTABLE: taxarank:species taxonName:myrmicinaestrumigenys dicomas kindgom:animalia phylum:arthropoda order:hymenoptera class:insecta family:formicidae subfamily:myrmicinae tribe:dacetini genus:strumigenys subgenus:null species:dicomas subspecies:null status:valid groupId:1 source:specimen1.txt lineNum:1 insertMethod:specimenUpload created:null                  fossil:false isType:false isAntCat:false antcatId:0 isPending:false authorDate:null authorDateHtml:null authors:null year:null isAvailable:false currentValidName:null currentValidRank:null currentValidParent:null isOriginalCombination:false wasOriginalCombination:null parentTaxonName:null imageCount:0 holidId:0 chartColor:null defaultMale:null defaultWorker:null defaultQueen:null bioregionMap:null introduceMap:null
   FROM DATABASE:  taxarank:species taxonName:myrmicinaestrumigenys dicomas kindgom:animalia phylum:arthropoda order:hymenoptera class:insecta family:formicidae subfamily:myrmicinae tribe:dacetini genus:strumigenys subgenus:null species:dicomas subspecies:null status:valid groupId:1 source:worldants     lineNum:1 insertMethod:specimenUpload created:2021-09-11 22:01:28.0 fossil:false isType:true  isAntCat:true antcatId:448489 isPending:false authorDate:Fisher, 2000 authorDateHtml:null authors:Fisher year:2000 isAvailable:true currentValidName: currentValidRank:species currentValidParent:strumigenys isOriginalCombination:true wasOriginalCombination:null parentTaxonName:myrmicinaestrumigenys imageCount:0 holidId:0 chartColor:null defaultMale:null defaultWorker:null defaultQueen:null bioregionMap:null introduceMap:null

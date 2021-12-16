@@ -118,8 +118,6 @@ public class SpeciesListUploader {
 	SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
 	UploadDetails uploadDetails = speciesListUpload.reloadSpeciesList(Project.WORLDANTS, Group.TESTGROUP);
 
-    WorldantsUploadDb worldantsUploadDb = new WorldantsUploadDb(connection);
-
     int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
     String fileLoc = worldDir + "worldants_speciesList.txt";
     String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
@@ -127,9 +125,6 @@ public class SpeciesListUploader {
     
     String backupDirFile = record(validateMessage, fileLoc, origWorldantsCount, true);
     uploadDetails.setBackupDirFile(backupDirFile);
-
-    A.log("Calling deleteHomonymsWithoutTaxa()");
-    worldantsUploadDb.deleteHomonymsWithoutTaxa();
 
     A.log("worldantsReload message:" + uploadDetails.getMessage());
 

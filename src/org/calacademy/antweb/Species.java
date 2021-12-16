@@ -23,14 +23,7 @@ public class Species extends Genus implements Serializable {
     public String getName() { 
         return getSpecies(); 
     }
-
-    /*
-    public void setTaxonomicInfo(String project) throws SQLException {
-        s_log.warn("setTaxonomicInfo(project) is deprecated");
-        setTaxonomicInfo();
-    }
-*/
-
+    
     /*
     // Mark Jul 2013.  Remove oldSubfamily and add in subfamilyClaus
             // remember the old stuff if it's around
@@ -69,6 +62,8 @@ public class Species extends Genus implements Serializable {
             // theQuery += " and proj_taxon.project_name = '" + project + "'";
             //if (AntwebProps.isDevMode()) s_log.info("setTaxonomicInfo() theQuery:" + theQuery);
 
+        A.log("setTaxonomicInfo() theQuery:" + theQuery);
+        
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
     }

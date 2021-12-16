@@ -185,6 +185,7 @@ public class UtilDataAction extends Action {
                 message = "set1 - ";
                 message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
+                AntwebMgr.populate(connection, true);
             }
 
             // Dev: 31.50 mins and 25.75 mins. Prod: 43.93

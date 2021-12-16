@@ -170,7 +170,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                     + " from specimen where code='" + AntFormatter.escapeQuotes(getCode())
                     + "'";
 
-            stmt = connection.createStatement();
+            stmt = DBUtil.getStatement(connection, "setTaxonomicInfo()");
             rset = stmt.executeQuery(theQuery);
 
             while (rset.next()) {
@@ -371,7 +371,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
             ResultSet rset = null;
             try {
                 String query = "select code from specimen where code = '" + AntFormatter.escapeQuotes(getCode()) + "'";
-                stmt = connection.createStatement();
+                stmt = DBUtil.getStatement(connection, "isSpecimen()");
                 rset = stmt.executeQuery(query);
  
                 if (rset.next()) {
@@ -472,7 +472,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         Statement stmt = null;        
         ResultSet rset = null;
         try {
-          stmt = connection.createStatement();
+          stmt = DBUtil.getStatement(connection, "setSeeAlso()");
           rset = stmt.executeQuery(query);
 
           //A.log("setSeeAlso() query:" + query);
@@ -526,7 +526,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                     + " image_of_id='" + AntFormatter.escapeQuotes(getCode()) + "'" 
                     + " and source_table = 'specimen'";
 
-            stmt = connection.createStatement();
+            stmt = DBUtil.getStatement(connection, "setImages()");
             rset = stmt.executeQuery(query);
             String shot = null;
             int shotNumber = 0;
@@ -749,7 +749,7 @@ update specimen set other = '
               theQuery += " and is_manual_entry = 1";
             }
 
-            stmt = connection.createStatement();
+            stmt = DBUtil.getStatement(connection, "setDescription()");
             rset = stmt.executeQuery(theQuery);
 
             String key = null;

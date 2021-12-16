@@ -66,7 +66,11 @@ public class AntwebMgr {
             try {
                 AntwebMgr.serverInitializing();
 
+                A.log("AntwebMgr.populate() 1");
+
                 AntwebMgr.populateMgrs(connection, forceReload);
+
+                A.log("AntwebMgr.populate() 2");
 
                 AntwebMgr.initializationComplete();
             } catch (Exception e) {
@@ -229,9 +233,6 @@ public class AntwebMgr {
 
         TaxonMgr.postInitialize(connection);
 
-        //isInitializationComplete = true;
-
-//        AntwebUtil.getUploadDirKinds();
         AntwebUtil.getUploadGroupList();
 
         AntwebMgr.genRecentContent(connection); // Takes about a second. Mostly redundant but good for new installations.
@@ -402,7 +403,7 @@ public class AntwebMgr {
     static int imagedSpecimensCount = 0;
     static int imagedSpeciesCount = 0;
     static int totalImagesCount = 0;
-    static int validTaxaCount = 0;  
+    static int validSpeciesCount = 0;
 
     public static void setSpecimensCount(int c) {
       specimenCount = c;
@@ -411,11 +412,11 @@ public class AntwebMgr {
       return specimenCount;
     }
     
-    public static void setValidTaxaCount(int c) {
-      validTaxaCount = c;
+    public static void setValidSpeciesCount(int c) {
+      validSpeciesCount = c;
     }      
-    public static int getValidTaxaCount() {
-      return validTaxaCount;
+    public static int getValidSpeciesCount() {
+      return validSpeciesCount;
     }
     
     public static void setTotalImagesCount(int c) {
@@ -463,7 +464,7 @@ public class AntwebMgr {
 
             while (rset.next()) {
               setSpecimensCount(rset.getInt("specimens"));
-              setValidTaxaCount(rset.getInt("extant_taxa"));
+              setValidSpeciesCount(rset.getInt("extant_taxa"));
               setTotalImagesCount(rset.getInt("total_images"));
               setImagedSpecimensCount(rset.getInt("specimens_imaged"));
               setImagedSpeciesCount(rset.getInt("species_imaged"));
