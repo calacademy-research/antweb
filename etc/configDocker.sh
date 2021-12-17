@@ -11,7 +11,7 @@ elif [ -z "$ENV" ]; then
     ENV=PROD
 fi
 
-cp etc/log4jAntweb.properties WEB-INF/classes/log4j.properties
+cp etc/log4j2.xml WEB-INF/classes/log4j2.xml
 cp WEB-INF/struts-configDbAnt.xml WEB-INF/struts-configDb.xml
 
 case $ENV in

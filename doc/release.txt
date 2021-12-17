@@ -26,6 +26,9 @@ Nov 9th. 4 hrs.
   Extensive testing. Reload database. Attempt on stage.
 
 
+Release 8.66.1
+  Security patch for log4j.
+
 Release 8.66
   Refactor of Taxon, Specimen and Homonym to enhance database usage.
 

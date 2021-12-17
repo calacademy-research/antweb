@@ -3,6 +3,7 @@ package org.calacademy.antweb.upload;
 import java.util.*;
 import java.util.Date;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.regexp.*;
 
 import java.sql.*;
@@ -34,10 +35,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
     private ArrayList<String> m_headerArrayList = null;
 
-	//  columns describing taxonomic rank.  This is used for lowercases, only.
-	String[] taxonomy = {"kingdom_name", "phylum_name", "class_name", "order_name", "specimencode", "family", "subfamily", "tribe", "genus",
-			"subgenus", "speciesgroup", "species", "subspecies" };
-	ArrayList taxonomyHeaders = new ArrayList(Arrays.asList(taxonomy));
+    private final HashSet<String> taxonomyHeaders = new HashSet<>(Arrays.asList(
+            "kingdom_name", "phylum_name", "class_name", "order_name", "specimencode", "family", "subfamily", "tribe",
+            "genus", "subgenus", "speciesgroup", "species", "subspecies"));
+
+    private final SpecimenXML specimenXML = new SpecimenXML();
 
     SpecimenUploadParse(Connection connection) {
       
@@ -66,16 +68,14 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             RE multipleQuotes = new RE("\"{3}");
             RE badXML = new RE("['\"&/<>]");          
             Formatter formatter = new Formatter();
-            ArrayList<String> elements = null;
+            ArrayList<String> elements;
 
-            Float lat = (float) 0;
-            Float lon = (float) 0;
+            float lat;
+            float lon;
 
-            Iterator loopIter = null;
             if (otherInfo.length() > 0) {
                 otherInfo.delete(0, otherInfo.length());
             }
-            otherColumn = "";
             otherInfo.append("<features>");
 
             boolean debugLine = false;
@@ -92,7 +92,6 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
             String[] loopComponents = tab.split(theLine);
             elements = new ArrayList<>(Arrays.asList(loopComponents));
-            loopIter = elements.iterator();
             int colIndex = 0;
 
             for (String next : elements) {
@@ -176,7 +175,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             if (number >= -180 && number <= 180) {
 								specimenItem.put("decimal_longitude", number);
 								lon = number.floatValue() * 1000;
-								if (lon.intValue() == 0) {
+								if ((int) lon == 0) {
 									element = "";
 									specimenItem.put("decimal_longitude", (float) -999.9);
 								}
@@ -196,7 +195,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 								specimenItem.put("decimal_latitude", number);
 								lat = number.floatValue() * 1000;
 								//A.log("parseLine() lat:" + lat + " number:" + number);
-								if (lat.intValue() == 0) {
+								if ((int) lat == 0) {
 									element = "";
 									specimenItem.put("decimal_latitude", (float) -999.9);
 								}
@@ -513,7 +512,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 			
             otherInfo.append("</features>");
             //A.log("parseLine() otherInfo:" + otherInfo);            
-            String isInvalid = (new SpecimenXML()).isInvalid(otherInfo.toString());
+            String isInvalid = specimenXML.isInvalid(otherInfo.toString());
+            specimenXML.reset();
             if (isInvalid != null) {
               //s_log.warn("importSpeciments() invalid is null.  otherInfo:" + otherInfo.toString());
               throw new AntwebException("<b>Invalid Column<font color=red>(Not uploaded)</font>:</b>" + "  " + isInvalid);
