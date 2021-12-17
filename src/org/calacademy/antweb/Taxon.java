@@ -958,7 +958,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
       String returnVal =  sb.toString();
 
-        if (taxonName.contains("ahngeri")) A.log("makeTaxonName() subfamily:" + getSubfamily() + " genus:" + getGenus() + " species:" + getSpecies() + " subspecies:" + getSubspecies() + " returnVal:" + returnVal);
+//        if (taxonName.contains("ahngeri")) A.log("makeTaxonName() subfamily:" + getSubfamily() + " genus:" + getGenus() + " species:" + getSpecies() + " subspecies:" + getSubspecies() + " returnVal:" + returnVal);
 
       return returnVal;
     }

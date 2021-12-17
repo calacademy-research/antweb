@@ -390,8 +390,8 @@ public class AntwebMgr {
       try {
           if (!s_isPopulated) {
             String page = AntwebProps.getThisDomainApp() + "/uptime.do";
-            s_log.warn("isPopulated() calling:" + page); 
-            String results = HttpUtil.getUrl(page);
+            s_log.warn("isPopulated() calling:" + page);
+            if (false) { String results = HttpUtil.getUrl(page); }
           }
       } catch (IOException e) {
           s_log.warn("isPopulated() e:" + e);
