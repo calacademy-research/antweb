@@ -102,14 +102,15 @@ public class TaxonMgr extends Manager {
     private static boolean s_ambiguousGenusReported = false;
     // Used from Specimen upload and specimen-body.jsp
     public static Genus getGenus(String genusTaxonName) {
-        ProfileCounter.add("TaxonMgr.getGenus()" + AntwebUtil.getShortStackTrace());
+        //ProfileCounter.add("TaxonMgr.getGenus()" + AntwebUtil.getShortStackTrace());
 
       if (genusTaxonName == null) return null;
       if (s_genera == null) return null; // Could happen due to server initialization.
       return (Genus) s_genera.get(genusTaxonName);
     }
+
     public static Genus getGenusFromName(String genusName) {
-      ProfileCounter.add("TaxonMgr.getGenusFromName()" + AntwebUtil.getShortStackTrace());
+      //ProfileCounter.add("TaxonMgr.getGenusFromName()" + AntwebUtil.getShortStackTrace());
 
       if (genusName == null) return null;
 
@@ -140,7 +141,7 @@ public class TaxonMgr extends Manager {
     public static int s_getTaxonCount = 0;
     public static Taxon getTaxon(String taxonName) {
 
-        ProfileCounter.add("TaxonMgr.getTaxon()" + AntwebUtil.getShortStackTrace());
+        //ProfileCounter.add("TaxonMgr.getTaxon()" + AntwebUtil.getShortStackTrace());
 
         if (taxonName == null) return null;
         if (s_taxa == null) {
@@ -151,7 +152,7 @@ public class TaxonMgr extends Manager {
 
         Taxon taxon = s_taxa.get(taxonName);
         if (taxon == null) {
-            A.log("getTaxon() taxon not found:" + taxonName);
+            //A.log("getTaxon() taxon not found:" + taxonName);
             return null;
         }
         //A.log("getTaxon() returning taxon:" + taxon);

@@ -487,7 +487,7 @@ public class MessageMgr {
           String groupName = group.getName();
           if (groupName != null) groupName = HttpUtil.encode(groupName);
           if ("countryMissing".equals(getKey())) {
-            A.log("MessageMgr.Test.toString() group:" + groupName);
+            //A.log("MessageMgr.Test.toString() group:" + groupName);
             String countLink = "<a href='" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&country=null&groupName=" + groupName + "'>" + getCount() + "</a>";
             returnStr += "<b>" + getHeading() + ":" + countLink + "</b>";          
           } else {
@@ -598,7 +598,7 @@ public class MessageMgr {
                        messages += value; 
                     }                    
                 }
-                A.log("compileMessages() 3 key1:" + key1);
+                //A.log("compileMessages() 3 key1:" + key1);
 				returnStr += messages;    
             }    
         }           

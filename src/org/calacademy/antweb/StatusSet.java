@@ -179,7 +179,7 @@ public class StatusSet extends Status {
 
       String singleStatusCriteria = super.getCriteria(table);
       if (singleStatusCriteria != null) {
-          A.log("getCriteria() table:" + table + " singleStatusCriteria = " + criteria);
+          //A.log("getCriteria() table:" + table + " singleStatusCriteria = " + criteria);
           return singleStatusCriteria;
       }
 

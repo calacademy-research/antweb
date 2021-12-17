@@ -66,7 +66,7 @@ public class TaxonDb extends AntwebDb {
     // Get Taxon with all member data.
     private Taxon getTaxon(String tableName, String taxonName, String taxonNameClause) {
 
-        ProfileCounter.add("getTaxon() " + AntwebUtil.getShortStackTrace(9));
+        //ProfileCounter.add("getTaxon() " + AntwebUtil.getShortStackTrace(9));
 
         /* New.  Mar 2012.  Mark */
         /* Used by OrphanTaxons and OrphanDescEdits, DescriptionAction, etc...   Useful, but because the 
@@ -84,7 +84,7 @@ public class TaxonDb extends AntwebDb {
 
         String theQuery = "";
 
-        boolean log = true && "myrmicinaetetramorium vernicosum".equals(taxonName);
+        boolean log = false; //true && "myrmicinaetetramorium vernicosum".equals(taxonName);
         
         ResultSet rset = null;
         Statement stmt = null;
@@ -189,6 +189,8 @@ public class TaxonDb extends AntwebDb {
         return taxon;
     }
 
+
+    // This method might be refactored away in favor of the one above. Just get the taxonName and go from there.
     public Taxon getFullTaxon(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
         Taxon taxon = null;
 
@@ -203,7 +205,6 @@ public class TaxonDb extends AntwebDb {
         if (genus != null) taxon.setGenus(genus);
         if (species != null) taxon.setSpecies(species);
         if (subspecies != null) taxon.setSubspecies(subspecies);
-        taxon.setSubgenus(TaxonMgr.getSubgenus(taxon.getTaxonName()));
 
         // If subfamily is not inclulded, we can handle it. 
         // Probably should force inclusion of subfamily but since it is has already been sort of supported...
@@ -218,6 +219,8 @@ public class TaxonDb extends AntwebDb {
                 s_log.warn("getTaxon() trying to figure subfamily but genus not found:" + genus);
             }
         }
+
+        taxon.setSubgenus(TaxonMgr.getSubgenus(taxon.getTaxonName())); // This has to be done after the subfamily work above to get a proper taxonName.
 
         A.log("getFullTaxon() taxonName:" + taxon.getTaxonName() + " genus:" + genus + " genusObj:" + genusObj + " subfamiy:" + taxon.getSubfamily());
     

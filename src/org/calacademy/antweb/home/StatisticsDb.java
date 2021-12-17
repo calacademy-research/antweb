@@ -356,13 +356,13 @@ museum
                     + " specimen.code = image.image_of_id";
             int imagedSpecimens = utilDb.getCount(query);
             AntwebMgr.setImagedSpecimensCount(imagedSpecimens);
-            A.log("populateStatistics 1 query:" + query);
+            //A.log("populateStatistics 1 query:" + query);
 
             // number of specimen records
             query = "select count(*) from specimen";
             int specimenRecords = utilDb.getCount(query);
             AntwebMgr.setSpecimensCount(specimenRecords);
-            A.log("populateStatistics 2 query:" + query);
+            //A.log("populateStatistics 2 query:" + query);
 
             // number of species + spp. imaged
             query = "select distinct genus, species, subspecies from specimen, image where"
@@ -371,17 +371,17 @@ museum
             int imagedSpecies = utilDb.getCountFromQuery(query);
             AntwebMgr.setImagedSpeciesCount(imagedSpecies);
 
-            A.log("populateStatistics 3 query:" + query);
+            //A.log("populateStatistics 3 query:" + query);
             query = "select count(*) from image where image_of_id in "
                 + " (select s.code from specimen s, taxon t where s.taxon_name = t.taxon_name and t.status = 'valid')";
             int validSpeciesImaged = utilDb.getCount(query);
-            A.log("populateStatistics 4 query:" + query);
+            //A.log("populateStatistics 4 query:" + query);
 
             // total number of image records
             query = "select count(*) from image";
             int totalImages = utilDb.getCount(query);
             AntwebMgr.setTotalImagesCount(totalImages);
-            A.log("populateStatistics 5 query:" + query);
+            //A.log("populateStatistics 5 query:" + query);
 
             // number of valid species in database
             query = "select count(taxon_name) from taxon where status = 'valid' and taxarank in ('species', 'subspecies')";
@@ -389,7 +389,7 @@ museum
             int validSpecies = utilDb.getCount(query);
             AntwebMgr.setValidSpeciesCount(validSpecies);
 
-            A.log("populateStatistics 6 query:" + query);
+            //A.log("populateStatistics 6 query:" + query);
 
             query = "select count(*) from taxon where taxarank in ('species', 'subspecies')";
             int numberTotalTaxa = utilDb.getCount(query);

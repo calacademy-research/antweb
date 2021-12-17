@@ -5,11 +5,13 @@
 
 --- Compilation ---
 
-# To bring up docker
-docker-compose up
+# To bring up docker.  -d is for daemon.
+docker-compose up --build -d
 
 docker-compose up --build
   # This will also do an ant build
+
+docker-compose up --build antweb
 
 # To compile
 docker-compose exec antweb ant deploy
@@ -17,9 +19,6 @@ docker-compose exec antweb ant deploy
 # To restart tomcat (without rebuilding docker)
 docker-compose restart antweb
 
-docker-compose up --build antweb
-
-docker-compose up --build -d
 
 --- Database Stuff ---
   * Some of this old. See below: Loading local Database
@@ -118,7 +117,7 @@ Copy over /data directory to antweb/
 
 
 
-# DB load instructions
+--- DB load instructions
 ### Download the (hopefully soon to be) sanitized database
 
 Create a full database dump from antweb and copy it to your machine
@@ -128,9 +127,11 @@ ssh user@antweb
 mysqldump -h 127.0.0.1 -u antweb -p --all-databases --routines --single-transaction --quick --column-statistics=0 | gzip > /tmp/ant-currentDump.sql.gz
 # Enter password:
 
-scp user@antweb:/mnt/backup/db/ant-currentDump.sql.gz ./
 
-Better yet: scp root@antweb.org:/mnt/backup/db/ant-currentDump.sql.gz ../bak/db/20210626.sql.gz
+/mnt/backup/db/ant-current.sql.gz stays up to date.
+
+scp root@antweb.org:/mnt/backup/db/ant-currentDump.sql.gz ../bak/db/20220101.sql.gz     # Use today's date.
+
  
 ```
 
@@ -139,8 +140,6 @@ Load the database into docker volume mounted by the mysql container
 *Important: Bring down the antweb mysql container if it exists before continuing*
 
 ```bash
-
-download database sql.gz file into ../bak/db/
 
 docker-compose down
 docker volume rm antweb_database
@@ -154,16 +153,21 @@ CID=$(docker run -d --rm \
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
 
-gunzip -c ../bak/db/20211111.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
+gunzip -c ../bak/db/20220101.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
 
 docker ps -a
   docker stop 3a (if non-"antweb_" resuults, kill process with something like...)
 
+# Kill with abbreviated ID.
+docker stop 3a   
 
-# Run an optimize to regenerate index
+# Run an optimize to regenerate index.  THIS DOES NOT SEEM TO WORK.
 docker exec -it $CID sh -c "exec mysqlcheck --all-databases --analyze -uroot" && docker stop $CID
 
 docker-compose up &
+
+
+
 
 
 This creates a temporary mysql container and loads the database dump into a docker-managed volume. This volume persists after the container is removed.  It'll take 5-10 minutes for the import to complete. 

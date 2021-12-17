@@ -25,18 +25,23 @@ public class GroupMgr {
     }
     
     public static void populate(Connection connection, boolean forceReload) {
-      if (!forceReload && (s_groups != null)) return;      
-      
+        A.log("populate()");
+
+      if (!forceReload && (s_groups != null)) return;
+
       GroupDb groupDb = (new GroupDb(connection));
       try {
         //A.log("populate()");
         s_groups = groupDb.getAllGroups();
-        //A.log("populate() getAllGroups");
-        s_uploadGroups = groupDb.getAllGroupsWithSpecimenData();        
+
+          //A.log("populate() getAllGroups");
+        s_uploadGroups = groupDb.getAllGroupsWithSpecimenData();
+
         //A.log("=populate() getAllGroupsWithSpecimenData");
       } catch (SQLException e) {
         s_log.warn("populate() e:" + e);
       }
+
       //A.log("GroupMgr.populate() groups:" + s_groups);
     }
 

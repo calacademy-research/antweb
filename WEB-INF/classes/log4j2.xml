@@ -6,7 +6,7 @@
             <PatternLayout pattern="%d{ISO8601} %p %t %c - %m%n"/>
             <SizeBasedTriggeringPolicy size="10M"/>
             <DefaultRolloverStrategy max="10" fileIndex="min"/>
-            <ThresholdFilter level="warn"/>
+            <ThresholdFilter level="error"/>
         </RollingFile>
 
 

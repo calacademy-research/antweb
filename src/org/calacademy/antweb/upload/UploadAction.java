@@ -155,13 +155,13 @@ public class UploadAction extends Action {
 
 				try {
 					TaxonMgr.setIsInWorldants(true);
-					A.log("setIsInWorldants(true)");
+
+					A.log("setIsInWorldants(true) + root:" + AntwebProps.getDocRoot());
 
 					// Do we need to create /data/antweb/web/workingdir if it does not exist?
 					// Worldants should not be hardcoded. Get from file... (2 times)
 					UploadFile uploadFile = new UploadFile(AntwebProps.getDocRoot() + "web/workingdir/", "worldants.txt", request.getHeader("User-Agent"), null);
 					uploadFile.setRoot(AntwebProps.getDocRoot());
-					A.log("execute() root:" + uploadFile.getRoot());
 
 					Date startTime = new Date();
 

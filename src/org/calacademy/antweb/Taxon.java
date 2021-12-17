@@ -919,10 +919,10 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             taxonName = makeTaxonName();
         }
 
-        if (AntwebProps.isDevMode() && AntwebMgr.isPopulated() && taxonName.contains("ahngeri")) {
-            A.log("getTaxonName() taxonName:" + getTaxonName());
-            AntwebUtil.getShortStackTrace();
-        }
+        //if (AntwebProps.isDevMode() && taxonName != null && taxonName.contains("ahngeri")) {
+        //    A.log("getTaxonName() taxonName:" + taxonName);
+        //    AntwebUtil.logShortStackTrace();
+        //}
 
         return taxonName;
     }
@@ -958,7 +958,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
       String returnVal =  sb.toString();
 
-//        if (taxonName.contains("ahngeri")) A.log("makeTaxonName() subfamily:" + getSubfamily() + " genus:" + getGenus() + " species:" + getSpecies() + " subspecies:" + getSubspecies() + " returnVal:" + returnVal);
+      //if (taxonName != null && taxonName.contains("ahngeri")) A.log("makeTaxonName() subfamily:" + getSubfamily() + " genus:" + getGenus() + " species:" + getSpecies() + " subspecies:" + getSubspecies() + " returnVal:" + returnVal);
 
       return returnVal;
     }

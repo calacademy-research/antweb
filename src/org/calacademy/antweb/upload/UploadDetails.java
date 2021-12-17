@@ -157,7 +157,7 @@ public class UploadDetails extends OperationDetails {
         
         String encoding = "";
 
-        A.log("logMessagesToFile() backupDirFile:" + getBackupDirFile());
+        //A.log("logMessagesToFile() backupDirFile:" + getBackupDirFile());
                 
         if (uploadFile != null) {
           encoding = uploadFile.getEncoding();
@@ -175,7 +175,7 @@ public class UploadDetails extends OperationDetails {
 
         String warning = "";
         if (getMessage() != null) warning = "<h3><font color=red>" + getMessage() + "</font></h3><br>";
-        A.log("logMessagesToFile() warning:" + warning);
+        //A.log("logMessagesToFile() warning:" + warning);
         
         logString +=
             "<head><title>" + getLogFileName() + "</title>" 
@@ -229,10 +229,10 @@ public class UploadDetails extends OperationDetails {
             logString += "<br>Prior to Upload:<br>" + ProjectDb.getProjectTableHeader() +  ProjectDb.getProjectStatisticsHtml(preUploadStatistics, false) + "</table>";                                       
           }  
         } else {
-          s_log.warn("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
+          //s_log.warn("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
         }
 
-        s_log.info("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
+        //s_log.info("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
         
         if (postUploadStatistics != null) {
           if (countInsertedSpecies > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> " + countInsertedSpecies + ".";
@@ -244,7 +244,7 @@ public class UploadDetails extends OperationDetails {
         logString += getMessageMgr().getMessagesReport();
         logString += "</body>";
 
-        s_log.info("logMessagesToFile() logFileDir:" + getLogFileDir() + " logFileName:" + getLogFileName());
+        //s_log.info("logMessagesToFile() logFileDir:" + getLogFileDir() + " logFileName:" + getLogFileName());
         LogMgr.appendLog(getLogFileDir(), getLogFileName(), logString);
         
         String messageStr = getMessageMgr().getMessageStr();

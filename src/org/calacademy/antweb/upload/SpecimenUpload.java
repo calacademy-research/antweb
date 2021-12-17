@@ -247,8 +247,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
             if (AntwebProps.isDevMode()) { A.log("DEV SKIPPING regenerateAllAntweb"); } else
             (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
             //Profiler.profile("regenerateAllAntweb", startTimex);
-                
-            // s_log.info("importSpecimens() removing orphans");                
+
+            TaxonMgr.populate(getConnection(), true, false);
+
             //getSpecimenUploadDb().deleteTaxonOrphans();
             //(new OrphansDb(getConnection())).deleteOrphanViloma();
 
