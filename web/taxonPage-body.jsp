@@ -50,7 +50,8 @@
 <!-- taxonPage-body.jsp -->
 
 <%
-//A.log("taxonPage-body.jsp genus:" + TaxonMgr.getGenus("myrmicinaemyrmica"));
+A.log("taxonPage-body.jsp subfamilyCount:" + TaxonMgr.getSubfamilies().size());
+A.log("taxonPage-body.jsp genus:" + TaxonMgr.getGenus("myrmicinaemyrmica"));
 //A.log("taxonPage-body.jsp subspecies:" + TaxonMgr.getTaxon("myrmica scabrinodis ahngeri"));
 //Taxon t = TaxonMgr.getTaxon("myrmicinaemyrmica scabrinodis ahngeri");
 //A.log("taxonPage-body.jsp taxonName:" + t.getTaxonName() + " name:" + t.getName() + " species:" + t.getSpecies() + " source:" + t.getSource());

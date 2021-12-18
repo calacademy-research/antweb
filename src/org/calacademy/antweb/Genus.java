@@ -50,35 +50,6 @@ public class Genus extends Subfamily implements Serializable {
         return getGenus(); 
     }
 
-/*
-    public void setTaxonomicInfo(String project) throws SQLException {
-        s_log.warn("setTaxonomicInfo(project) is deprecated");
-        setTaxonomicInfo();
-    }
- */
-
-    public void setTaxonomicInfo(Connection connection) throws SQLException {
-        String subfamilyClause = "";
-        if ((subfamily != null) && (!subfamily.equals("null"))) {
-          subfamilyClause = " and taxon.subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "' ";
-        }
-		String theQuery = null;
-
-		theQuery = "select distinct taxon.taxarank, taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name "
-		  + ", taxon.family, taxon.subfamily, taxon.tribe from taxon"
-		  // + ", proj_taxon "
-		  + " where 1 = 1 " 
-		  // + " taxon.taxon_name = proj_taxon.taxon_name and"
-		  + subfamilyClause
-		  + " and taxarank = 'genus'"
-		  + " and taxon.genus='" + AntFormatter.escapeQuotes(genus) + "'";
-		 // + " and status = 'valid'";
-		
-		TaxonDb taxonDb = new TaxonDb(connection);
-		taxonDb.setTaxonomicInfo(theQuery, this);
-		A.log("setTaxonomicInfo() order:" + this.getOrderName() + " query:" + theQuery);
-    }
-    
     protected String getThisWhereClause() {
       return getThisWhereClause("");
     }
@@ -104,7 +75,7 @@ public class Genus extends Subfamily implements Serializable {
         } else {
             subgenusClause = " and subgenus = '" + subgenus + "' ";
         }
-        A.log("subgenus clause added:" + subgenusClause);
+        //A.log("subgenus clause added:" + subgenusClause);
 
         long now = (new GregorianCalendar()).getTimeInMillis();
         
@@ -129,7 +100,7 @@ public class Genus extends Subfamily implements Serializable {
 //            if (!"default".equals(project))                        
 //              query += " and proj_taxon.project_name = '" + project + "'";
 
-            //A.log("setChildren(5) overview:" + overview + " query:" + query);
+            A.log("setChildren(8) overview:" + overview + " query:" + query);
 
             //s_log.info("setChildren() getChildMaps:" + getChildMaps + " query:" + query);
 
@@ -151,19 +122,13 @@ public class Genus extends Subfamily implements Serializable {
             while (rset.next()) {
                 ++i;
                 String rank = rset.getString("taxarank");
+
+                TaxonDb taxonDb = new TaxonDb(connection);
                 if (Rank.SPECIES.equals(rank)) {
-                    child = new Species();
+                    child = taxonDb.getSpecies(subfamily, genus, rset.getString("species"));
                 } else {
-                    child = new Subspecies();
-                    child.setSubspecies(rset.getString("subspecies"));
+                    child = taxonDb.getSubspecies(subfamily, genus, rset.getString("species"), rset.getString("subspecies"));
                 }
-                child.setRank(rank);
-                child.setSubfamily(subfamily);
-                child.setGenus(genus);
-                child.setSubgenus(rset.getString("subgenus"));
-                child.setSpeciesGroup(rset.getString("speciesgroup"));
-                child.setSpecies(rset.getString("species"));
-                child.init(connection);
 
                 // setupTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
                 //  s_log.info("setChildren setup time:" + setupTime);

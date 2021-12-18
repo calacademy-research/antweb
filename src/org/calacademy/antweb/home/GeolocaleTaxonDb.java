@@ -107,7 +107,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
                 geolocaleTaxon.setIsIntroduced(rset.getInt("is_introduced") == 1);
                 taxonSetList.add(geolocaleTaxon);
 
-                if (geolocaleTaxon.getGeolocaleId() == 10) A.log(" getTaxonSetList() Mayotte introduced:" + geolocaleTaxon.getIsIntroduced());
+                //if (geolocaleTaxon.getGeolocaleId() == 10) A.log(" getTaxonSetList() Mayotte introduced:" + geolocaleTaxon.getIsIntroduced());
 
             }
         } catch (SQLException e) {

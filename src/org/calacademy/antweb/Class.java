@@ -24,6 +24,8 @@ public class Class extends Taxon implements Serializable {
         setTaxonomicInfo();
     }
 */
+
+/*
     public void setTaxonomicInfo(Connection connection) throws SQLException {
         setClassName(name);    
 
@@ -42,5 +44,5 @@ public class Class extends Taxon implements Serializable {
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
     }
-
+*/
 }

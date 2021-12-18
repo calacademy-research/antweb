@@ -23,51 +23,6 @@ public class Species extends Genus implements Serializable {
     public String getName() { 
         return getSpecies(); 
     }
-    
-    /*
-    // Mark Jul 2013.  Remove oldSubfamily and add in subfamilyClaus
-            // remember the old stuff if it's around
-            // Mark: What?  Why?  How and when is this a good idea?
-           // String oldSubfamily = subfamily;
-
-
-    Mark, Feb4, 2011.  I have removed proj_taxon from this query because it only served to block the
-    retrieval of taxon information in the case in which a project is entered.
-
-    It would cause a page like this:
-      http://www.antweb.org/description.do?name=sabatra&genus=crematogaster&rank=species&project=
-    When clicking on the species breadcrumb, would lead to the same page without description info
-    because the subfamily was not retrieved, and so taxon_name was "crematogaster sabatra" instead
-    of "myrmicinaecrematogaster sabatra", returning no description records.
-    */
-
-    public void setTaxonomicInfo(Connection connection) throws SQLException {
-        String theQuery = null;
-
-		String subfamilyClaus = "";
-		if (subfamily != null) subfamilyClaus = " subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "' and ";
-
-		theQuery = "select distinct taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name " 
-		  + ", taxon.family, taxon.subfamily, taxon.tribe, taxon.subgenus, taxon.speciesgroup " 
-		  + ", taxon.type, taxon.status "
-		  + " from taxon " //, proj_taxon " 
-		 // + " where taxon.taxon_name = proj_taxon.taxon_name " 
-		  + " where " 
-		  + subfamilyClaus
-		  + " genus ='" + AntFormatter.escapeQuotes(genus) + "'"
-		  + " and species ='" + AntFormatter.escapeQuotes(species) + "'" 
-		  // + " and status = 'valid'"
-		  + " and taxarank = 'species'";
-
-            // theQuery += " and proj_taxon.project_name = '" + project + "'";
-            //if (AntwebProps.isDevMode()) s_log.info("setTaxonomicInfo() theQuery:" + theQuery);
-
-        A.log("setTaxonomicInfo() theQuery:" + theQuery);
-        
-		TaxonDb taxonDb = new TaxonDb(connection);
-		taxonDb.setTaxonomicInfo(theQuery, this);
-    }
-
 
 /*
    Stenamma punctatoventre_cf1
@@ -198,6 +153,7 @@ these other _cf1 etc.
             fullName.append(" " + subspecies);
         }
 
+        A.log("getFullName() fullName:" + fullName + " genus:" + genus + " subgenus:" + subgenus);
         return fullName.toString();
     }
 
@@ -328,7 +284,7 @@ these other _cf1 etc.
             // child.init(); // added Oct 3, 2012 Mark.  No, can't.  Specimen has all in setTaxonomicInfo(), bad.            
             child.initTaxonSet(connection, overview);
 
-            //A.log("setChildren() overview:" + overview + " child:" + child.getTaxonName() + " code:" + child.getCode() + " bioregion:" + child.getBioregion());                                
+            //A.log("setChildren() overview:" + overview + " child:" + child.getTaxonName() + " code:" + child.getCode() + " bioregion:" + child.getBioregion());
             theseChildren.add(child);
           }
         } catch (SQLException e) {
@@ -780,9 +736,8 @@ To fix this proper would involve rewriting Species.sort()
       return header;
     }    
 
-    public String getData(Connection connection) throws SQLException {
-      setTaxonomicInfo(connection);
 
+    public String getData() throws SQLException {
       String data = "";
       String delimiter = "\t";   // ", ";
       
@@ -795,6 +750,7 @@ To fix this proper would involve rewriting Species.sort()
       data += Utility.notBlankValue(getSubspecies()) + delimiter;
       return data;
     }  
+
 
     public boolean hasSpecimenDataSummary() {
         boolean hasSpecimenData = false;

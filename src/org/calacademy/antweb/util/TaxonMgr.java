@@ -101,6 +101,7 @@ public class TaxonMgr extends Manager {
 
     private static boolean s_ambiguousGenusReported = false;
     // Used from Specimen upload and specimen-body.jsp
+    // genusTaxonName is [subfamily][genus]
     public static Genus getGenus(String genusTaxonName) {
         //ProfileCounter.add("TaxonMgr.getGenus()" + AntwebUtil.getShortStackTrace());
 

@@ -611,7 +611,7 @@ public class SpeciesListUpload extends AntwebUpload {
                   s_log.warn("Not inserting line:" + lineNum + " " + goodLineStatus);
                   continue;    
                 }
-                    
+
                 taxonHash.put("insert_method", "speciesListUpload");                                     
                 taxonHash.put("source", project);
                 taxonHash.put("access_group", accessGroupId);

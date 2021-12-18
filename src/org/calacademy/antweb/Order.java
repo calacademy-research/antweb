@@ -18,6 +18,7 @@ public class Order extends Taxon implements Serializable {
         return "Families";
     }
 
+    /*
     public void setTaxonomicInfo(Connection connection) throws SQLException {
         setOrderName(name); 
         //s_log.warn("setTaxonomicInfo(" + project + ") family:" + getFamily());   
@@ -37,5 +38,5 @@ public class Order extends Taxon implements Serializable {
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
     }
-
+*/
 }

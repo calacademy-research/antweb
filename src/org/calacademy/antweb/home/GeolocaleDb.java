@@ -1542,7 +1542,7 @@ public static int c = 0;
         int genusCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "genus");
         int speciesCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "species");
 
-		A.log("updatedCountableTaxonData(" + geolocaleId + ") speciesCount:" + speciesCount);
+		//A.log("updatedCountableTaxonData(" + geolocaleId + ") speciesCount:" + speciesCount);
 
         criteria = "id = " + geolocaleId;
         geolocaleTaxonCountDb.updateCountableTaxonCounts("geolocale", criteria, subfamilyCount, genusCount, speciesCount);                  

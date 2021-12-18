@@ -19,7 +19,7 @@ public class Tribe extends Genus implements Serializable {
     public String getName() { 
         return getTribe(); 
     }
-    
+    /*
     public void setTaxonomicInfo(Connection connection) throws SQLException {
         setTribe(name);
         
@@ -45,7 +45,8 @@ public class Tribe extends Genus implements Serializable {
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
     }
-    
+    */
+
     public String getTaxonomicBrowserParams() {
         String theParams = "rank=tribe&name=" + this.getName();
         theParams += "&subfamily=" + this.getSubfamily();

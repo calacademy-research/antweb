@@ -16,6 +16,7 @@ import java.sql.*;
 import java.util.*;
 
 import org.calacademy.antweb.*;
+import org.calacademy.antweb.home   .*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.search.*;
 import org.calacademy.antweb.geolocale.*;
@@ -142,15 +143,18 @@ public final class FieldGuideAction extends Action {
 
 			if ((subfamily != null) || (genus != null) || (species != null)) {
     		    // Taxon Field Guides
-				Taxon taxon = Taxon.getTaxonOfRank(subfamily, genus, species, subspecies);
+                Taxon taxon = (new TaxonDb(connection)).getFullTaxon(subfamily, genus, species, subspecies, rank);
+                // Taxon taxon = Taxon.getTaxonOfRank(subfamily, genus, species, subspecies)
+
                 if (taxon == null) {
-                  String message = "taxon not found for subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subfamily:" + subfamily;
-                  s_log.error("execute() " + message); 
-				  request.setAttribute("message", message);
-				  return (mapping.findForward("message")); 				
-				}
-				//taxon.setConnection(connection);
-				taxon.setTaxonomicInfo(connection);
+                    String message = "taxon not found for subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subfamily:" + subfamily;
+                    s_log.error("execute() " + message);
+                    request.setAttribute("message", message);
+                    return (mapping.findForward("message"));
+                }
+
+                // taxon.setTaxonomicInfo(connection);
+
 				if (taxon.getRank().equals(Rank.SPECIES) || taxon.getRank().equals(Rank.SUBSPECIES)) {
 					taxon.setChildrenLocalized(connection, overview);
 				} else {

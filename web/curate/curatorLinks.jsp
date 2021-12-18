@@ -200,6 +200,18 @@
       </ul>
 <%   } %> 
 
+<%   if (LoginMgr.isMark(request)) { %>
+      <h3 align=left>Scheduler</h3>
+      <ul align=left>
+	    <li><a href="<%= domainApp %>/schedule.do?action=run"> Full Scheduler</a>
+	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=1"> Schedule 1 </a>
+	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=2"> Schedule 2 </a>
+	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=3"> Schedule 3 </a>
+	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=4"> Schedule 4 </a>
+	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=5"> Schedule 5 </a>
+      </ul>
+<%   } %> 
+
 <%
    if (false) {
      if (AntwebProps.isDevOrStageMode()) { %>

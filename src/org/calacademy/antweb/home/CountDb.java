@@ -445,7 +445,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
       Statement stmt = null;
       ResultSet rset = null;
       
-      debug = true && AntwebProps.isDevMode() && !s_isBulk;
+      debug = false && AntwebProps.isDevMode() && !s_isBulk;
       
       try {
         stmt = DBUtil.getStatement(getConnection(), "getCountableTaxonCount()");

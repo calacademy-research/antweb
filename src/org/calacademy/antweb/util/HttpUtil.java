@@ -1100,7 +1100,7 @@ public abstract class HttpUtil {
 
           content = fetchUrl(url);
       } catch (IOException e) {
-        A.log("urlExists() e:" + e);
+        A.log("urlExists() e:" + e + " url:" + url);
         return false;
       }
         return content != null;

@@ -43,42 +43,6 @@ public class Subfamily extends Family implements Serializable {
     }
 
 
-/* June 25, 2013.  Performance concern.  We have add the second line of the sql query and the rank = subfamily.
-   This restricts the number or rows and excludes records.  Without the rank criteria, the
-   parent_taxon_id could be the parent of a genera.  Sloppy.  Why loop though all the 
-   distinct rows below.  Only need one.  */        
-
-    /*
-    public void setTaxonomicInfo(String project) throws SQLException {
-        s_log.warn("setTaxonomicInfo(project) is deprecated");
-        setTaxonomicInfo();
-    }
-    */
-
-    public void setTaxonomicInfo(Connection connection) throws SQLException {
-		String theQuery = null;
-		theQuery = "select distinct taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name, taxon.family " 
-			+ " from taxon " 
-			//+ " , proj_taxon "
-			 + " where " 
-			//+ " taxon.taxon_name = proj_taxon.taxon_name and ";
-		 + " subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'"
-		 + " and taxarank = 'subfamily'";
-		 // and status = 'valid' ";
-
-		if (AntwebProps.isDevMode()) {
-		  A.log("setTaxonomicInfo(String) family:" + family + " subfamily:" + subfamily + " query:" + theQuery);
-		  //AntwebUtil.logStackTrace();
-		}
-		
-		//if ((project != null) && (!(project.equals("")))) {
-		//	theQuery = theQuery + " and proj_taxon.project_name = '" + project + "'";
-		//}
-		
-		TaxonDb taxonDb = new TaxonDb(connection);
-		taxonDb.setTaxonomicInfo(theQuery, this);
-    }
-
     protected String getThisWhereClause() {
       return getThisWhereClause("");
     }
@@ -119,12 +83,9 @@ public class Subfamily extends Family implements Serializable {
             int i = 0;
             while (rset.next()) {
                 ++i;
-                genus = rset.getString("genus");
-                child = new Genus();
-                child.setSubfamily(subfamily);
-                child.setGenus(genus);
-                child.setRank("genus");
-                child.init(connection); // added Oct 3, 2012 Mark
+
+                child = (new TaxonDb(connection)).getGenus(subfamily, rset.getString("species"));
+
                 if (getChildImages) {
                     child.setImages(connection, overview, caste);
                 }// else {

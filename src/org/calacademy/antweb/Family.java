@@ -28,27 +28,6 @@ public class Family extends Taxon implements Serializable {
         return "Subfamilies";
     }
 
-    public void setTaxonomicInfo(Connection connection) throws SQLException {
-        //s_log.warn("setTaxonomicInfo(" + project + ") family:" + getFamily());   
-        String theQuery = null;
-
-		theQuery = "select distinct taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name " 
-		  + " from taxon"
-		  // + ", proj_taxon"
-		  + " where " 
-		  // + " taxon.taxon_name = proj_taxon.taxon_name and " 
-		  + " family='" + AntFormatter.escapeQuotes(family) + "' " 
-		  //+ " and status = 'valid' "
-		  + " and taxarank = 'family'"
-		  ;
-
-		//if ((project != null) && (!(project.equals("")))) {
-		//	theQuery = theQuery + " and proj_taxon.project_name = '" + project + "'";
-		//}
-                
-		TaxonDb taxonDb = new TaxonDb(connection);
-		taxonDb.setTaxonomicInfo(theQuery, this);
-    }                
 
     public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
 
@@ -76,17 +55,13 @@ public class Family extends Taxon implements Serializable {
 
             //A.log("setChildren() query:" + theQuery);
 
-            String subfamily = null;
             Subfamily child = null;
             String theParams = null;
             
             while (rset.next()) {
-                child = new Subfamily();
-                child.setRank(Rank.SUBFAMILY);
-                child.setSubfamily(rset.getString("subfamily"));
+                String subfamily = rset.getString("subfamily");
+                child = (new TaxonDb(connection)).getSubfamily(subfamily);
 
-                child.init(connection);
-                
                 if (getChildImages) {
                     //A.log("setChildren() setImages(" + overview + ")");
                     child.setImages(connection, overview, caste);

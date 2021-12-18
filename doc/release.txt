@@ -1,14 +1,6 @@
-Release 8.67
-  Refactor of TaxonDb, HomonymDB and the DummyTaxon facilities.
-  Refactor of Taxon.getTaxonName().
-  Create ProfileCounter utility.
-  TaxonMgr refresh work.
-  StatisticsDb refactor and inefficient query fixed.
-  Remove statistics from serverStatus page.	
-  Refactor & performance work in AntwebUpload.updateTaxon()
-  Report TaxonMgr populateDate and size after startup and data modificaation procedures.
-  Add TaxonMgr.populate() into reloads of species lists and specimen data.
-	
+Release 8.67: 
+  Refactor of Taxon object & database facilities with performance enhancements.
+
 Release 8.66.1
   Security patch for log4j.
 

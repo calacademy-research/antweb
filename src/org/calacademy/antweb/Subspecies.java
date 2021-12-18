@@ -23,6 +23,7 @@ public final class Subspecies extends Species implements Serializable {
         return getSubspecies(); 
     }
 
+    /*
     public void setTaxonomicInfo(Connection connection) throws SQLException {
         String theQuery = null;
         
@@ -48,7 +49,8 @@ public final class Subspecies extends Species implements Serializable {
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
 	}
-    
+    */
+
     public String getSeeAlsoSiblingSubspecies(Connection connection) throws SQLException {
       // Used by SetSeeAlso()    
         String siblingSubspecies = "";
@@ -113,7 +115,7 @@ public final class Subspecies extends Species implements Serializable {
           rset = stmt.executeQuery(theQuery);
           Specimen child = null;
           
-          //A.log("Subspecies.setChildren(5) overview:" + overview + " getChildImages:" + getChildImages + " query:" + theQuery);
+          A.log("Subspecies.setChildren(5) overview:" + overview + " getChildImages:" + getChildImages + " query:" + theQuery);
 
           int i = 0;
           while (rset.next()) {
@@ -266,9 +268,7 @@ public final class Subspecies extends Species implements Serializable {
       return header;
     }    
 
-    public String getData(Connection connection) throws SQLException {
-      setTaxonomicInfo(connection);
-
+    public String getData() throws SQLException {
       String data = "";
       String delimiter = "\t";   // ", ";
       
@@ -281,7 +281,7 @@ public final class Subspecies extends Species implements Serializable {
       data += Utility.notBlankValue(getSubspecies()) + delimiter;
       return data;
     }  
-       
+
 }
 
 

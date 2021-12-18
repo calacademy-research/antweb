@@ -118,7 +118,7 @@ public final class SpeciesListAction extends Action {
                   String taxonName = rset.getString(1);
                   Species specie = (Species) (new TaxonDb(connection)).getTaxon(taxonName);
 
-                  data.append(specie.getData(connection) + "\n");
+                  data.append(specie.getData() + "\n");
                 }
             } finally {
                 DBUtil.close(stmt, rset, this, "SpeciesListAction.createSpeciesListLink()");
@@ -170,7 +170,7 @@ public final class SpeciesListAction extends Action {
                 String taxonName = rset.getString(1);
                 Species specie = (Species) (new TaxonDb(connection)).getTaxon(taxonName);
 
-                data.append(specie.getData(connection) + "\n");
+                data.append(specie.getData() + "\n");
               }
 
             } finally {

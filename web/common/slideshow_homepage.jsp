@@ -21,6 +21,9 @@
     int i = 0;
     for (Taxon subfamily : subfamilies) {
       boolean include = subfamily.isValid();
+      
+      if (subfamily.getName() == null) A.log("slideShow subfamily:" + subfamily);
+      
       String subfamilyName = subfamily.getName();
       String imgFile = AntwebProps.getDomainApp() + "/image/" + subfamilyName + ".jpg";
       String imgLoc = AntwebProps.getDocRoot() + "image/" + subfamilyName + ".jpg";

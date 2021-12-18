@@ -18,6 +18,7 @@ public class Phylum extends Taxon implements Serializable {
         return "Classes";
     }
 
+    /*
     public void setTaxonomicInfo(Connection connection) throws SQLException {
         setPhylumName(name);
         //s_log.warn("setTaxonomicInfo(" + project + ") family:" + getFamily());   
@@ -33,5 +34,5 @@ public class Phylum extends Taxon implements Serializable {
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
     }
-
+*/
 }

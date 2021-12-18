@@ -183,7 +183,7 @@ public class StatusSet extends Status {
           return singleStatusCriteria;
       }
 
-      A.log("getCriteria() table:" + table + " default:" + defaultVal);
+      //A.log("getCriteria() table:" + table + " default:" + defaultVal);
       return defaultVal;
     }
 

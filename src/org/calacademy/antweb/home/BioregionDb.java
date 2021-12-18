@@ -600,7 +600,7 @@ public class BioregionDb extends AntwebDb {
                 updateBioregionFieldCount("introduced", lastBioregionName, count);
             }
 
-            A.log("calcIntroduced() count:" + count + " query:" + query);
+            //A.log("calcIntroduced() count:" + count + " query:" + query);
 
 
         } catch (SQLException e) {

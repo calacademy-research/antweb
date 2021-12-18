@@ -180,7 +180,8 @@ public class UtilDataAction extends Action {
                 message += " " + doAction("set3", form, accessLogin, accessGroup, connection, request, mapping);
             }
 
-            // dev: 11.68 mins  Or 24.98 mins? Prod: 11.23 mins  Must be followed with the Count Crawls
+            //Must be followed with the Count Crawls
+            // dev: 11.68 mins  Or 24.98 mins? Prod: 11.23 mins. Dev2: 0.90 mins (presumably failure to access worldants file)
             if ("set1".equals(action)) {
                 message = "set1 - ";
                 message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
@@ -188,7 +189,7 @@ public class UtilDataAction extends Action {
                 AntwebMgr.populate(connection, true);
             }
 
-            // Dev: 31.50 mins and 25.75 mins. Prod: 43.93
+            // Dev: 31.50 mins and 25.75 mins. Prod: 43.93. Dev2: 26.87 mins
             if ("set2".equals(action)) {
                 message = "set2 - ";
                 message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);
@@ -198,7 +199,7 @@ public class UtilDataAction extends Action {
                 doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
             }
 
-            // dev: 7.05 mins. Prod: 14.52 mins
+            // dev: 7.05 mins. Prod: 14.52 mins. Dev2: 12.85
             if ("set3".equals(action)) {
                 message = "set3 - ";
                 message += " " + doAction("ProjectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins
@@ -208,7 +209,7 @@ public class UtilDataAction extends Action {
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
             }
 
-            // dev: 6.58 mins. Prod: 15.17 mins
+            // dev: 6.58 mins. Prod: 15.17 mins. Dev2: 12.97
             if ("set4".equals(action)) {
                 message = "set4 - ";
                 // message += doAction("allCountCrawls", form, accessLogin, accessGroup, connection, request, mapping);
@@ -217,7 +218,7 @@ public class UtilDataAction extends Action {
                 // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
             }
 
-            // dev: 15.22 mins. Prod: 50.98 mins
+            // dev: 15.22 mins. Prod: 50.98 mins. Dev2: 3.98 mins
             if ("set5".equals(action)) {
                 message = "set5 - ";
                 message += " " + doAction("deleteConflictedDefaultImages", form, accessLogin, accessGroup, connection, request, mapping);

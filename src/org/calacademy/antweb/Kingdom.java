@@ -18,7 +18,8 @@ public class Kingdom extends Taxon implements Serializable {
     public String getNextRank() {
         return "Phyla";
     }
-    
+
+    /*
     public void setTaxonomicInfo(Connection connection) throws SQLException {
         setKingdomName(name);    
 
@@ -41,5 +42,5 @@ public class Kingdom extends Taxon implements Serializable {
 		TaxonDb taxonDb = new TaxonDb(connection);
 		taxonDb.setTaxonomicInfo(theQuery, this);
     }
-
+*/
 }

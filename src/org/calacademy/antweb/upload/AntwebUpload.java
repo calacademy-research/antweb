@@ -135,13 +135,10 @@ public class AntwebUpload {
             // When called from line 103. CAS: 8
             // When called from line 99. CAS: 86606
             // DummyTaxon dummyTaxon = new TaxonDb(getConnection()).getDummyTaxon(taxonName, "taxon");
-            Taxon dummyTaxon = null;
             // Always look to the database. This determines if we insert or update.
-            //if (TaxonMgr.isUseRefreshing()) {
-            //    dummyTaxon = TaxonMgr.getTaxon(taxonName);
-            //} else {
-                dummyTaxon = new TaxonDb(getConnection()).getTaxon(taxonName);
-            //}
+
+            Taxon dummyTaxon = new TaxonDb(getConnection()).getTaxon(taxonName);
+            //A.log("saveTaxon() dummyTaxon:" + dummyTaxon + " source:" + source + " taxonName:" + taxonName);
 
             if (dummyTaxon != null) {
                 if (isParent) {
@@ -152,13 +149,13 @@ public class AntwebUpload {
                     // Unresolved junior homonyms from worldants are getting inserted (technically updated).
                     if ("worldants".equals(source)) {
                         String status = (String) item.get("status");
+
                         if (!Status.VALID.equals(status) && !Status.UNRECOGNIZED.equals(dummyTaxon.getStatus())) {
                             // log. Nope. Won't update a non-valid taxon from worldants.
                             String display = taxonName + " " + status;
                             getMessageMgr().addToMessages(MessageMgr.nonValidWorldantsDup, display);
 
                             if (Status.HOMONYM.equals(status) || Status.SYNONYM.equals(status)) {
-                                //A.log("saveTaxon() save:" + display);
                                 saveTaxon(item, "homonym", false);
                             } else {
                                 //A.log("saveTaxon() do nothing with duplicate original combination:" + display);
@@ -167,6 +164,7 @@ public class AntwebUpload {
                             return 0;
                         }
                     }
+                    //A.log("saveTaxon() dummyTaxon:" + dummyTaxon + " item:" + item + " table:" + table);
 
                     updateTaxon(item, table);
                     return 0;
@@ -208,7 +206,7 @@ public class AntwebUpload {
                 item.put("parent_taxon_name", parentTaxonName);
             }
         }
-        
+
         if (table.equals("taxon") && taxonQueryHashMap.containsKey(taxonName)) {
             ++uploadSkipped;
         } else {
@@ -360,7 +358,8 @@ public class AntwebUpload {
         Taxon referenceTaxon = TaxonMgr.getTaxon(taxonName);
 
         if (referenceTaxon == null) A.log("updateTaxon() no referenceTaxon found:" + taxonName);
-            /*
+
+        /*
             Taxon referenceTaxon = null; //(new TaxonDb(getConnection())).getDummyTaxon(taxonName);
             // CAS:86,598 x
             if (TaxonMgr.isUseRefreshing()) {

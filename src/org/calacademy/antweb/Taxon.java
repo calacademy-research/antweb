@@ -144,19 +144,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
     //private static String debugCode = null;
     private static String debugCode = "ponerinaethaumatomyrmex zeteki";
-    
-/*
-    For Taxon construction, see BrowseAction.java:153.  It is a dirty process in that
-    the outside class does all of the business of creating the taxon in a very messy
-    manner.  
-    
-    Generally a getTaxonOfRank() method is called to get the right class type.  Then
-    parameters are set on it.  Init() is probably called.  Eventually, a setTaxonomicInfo() 
-    will be invoked upon the appropriate subclass.  Other method calls are optional.
 
-    This is a good lesson in how to write object oriented code backwards.  Thanks Thau.
-*/
-
+    /*
     // Called from getInstance() above.
     public void finishInstance(Connection connection) throws SQLException {
             
@@ -180,7 +169,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
         // setSeeAlso()?
     }
-
+*/
     public boolean isDummy() {
       return false;
     }
@@ -197,15 +186,15 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         ResultSet rset = null;
         try {        
             taxonName = AntFormatter.escapeQuotes(getTaxonName());            
-            theQuery = "select source, line_num, insert_method, created, fossil, antcat, pending " 
-              + ", parent_taxon_name, image_count, type"
-              + ", antcat_id, author_date, author_date_html, authors, year, status, available " 
-              + ", current_valid_name, current_valid_rank, current_valid_parent, original_combination, was_original_combination "
-              + ", country, bioregion "    
-              + ", hol_id, access_group, chart_color "
+            theQuery = "select status, access_group, source, line_num, insert_method, created, fossil, type, antcat"
+              + ", antcat_id, pending, author_date, author_date_html, authors, year, available"
+              + ", current_valid_name, current_valid_rank, current_valid_parent, original_combination, was_original_combination"
+              + ", parent_taxon_name, image_count, hol_id, chart_color"
               + " from taxon where taxon_name='" + taxonName + "'";
 
+            //             + ", country, bioregion"
             // A.log("init() query:" + theQuery);
+
             stmt = DBUtil.getStatement(connection, "init()");
             
             rset = stmt.executeQuery(theQuery);
@@ -447,12 +436,6 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 		String nativeStr = TaxonPropMgr.getNativeBioregionsStr(introducedMap);
 		return nativeStr;
     }
-    
-    public String getFullName() {  // !! What?  get and set are operating on different elements.  Thau!
-        // Overridden
-        return getName();
-    }
-
 
     public String getPrettyConciseName() {
       String name = getPrettyName();
@@ -850,7 +833,6 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         Taxon taxon = null;
         if ((genus != null) && (species != null) && (subspecies != null)) {
             taxon = new Subspecies();
-            //taxon.setName(subspecies);
             taxon.setRank("subspecies");
             taxon.setSubfamily(subfamily);
             taxon.setGenus(genus);
@@ -859,7 +841,6 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             taxon.setSubspecies(subspecies);
         } else if ((genus != null) && (species != null)) {
             taxon = new Species();
-            //taxon.setName(species);
             taxon.setRank("species");
             taxon.setSubfamily(subfamily);
             taxon.setGenus(genus);
@@ -867,13 +848,11 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             taxon.setSpecies(species);
         } else if (genus != null) {
             taxon = new Genus();
-            //taxon.setName(genus);
             taxon.setRank("genus");
             taxon.setSubfamily(subfamily);
             taxon.setGenus(genus);
         } else if (subfamily != null) {
             taxon = new Subfamily();
-            //taxon.setName(subfamily);
             taxon.setRank("subfamily");
             taxon.setSubfamily(subfamily);
         }
@@ -962,9 +941,6 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
       return returnVal;
     }
-
-
-    public void setName(String name) {  } // implements Describable
 
     public String getSimpleName() {
         // Used in site_nav.jsp.  Useful for species or specimen only.
@@ -1073,21 +1049,24 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         this.parent = parent;
     }
 
-    public String getName() {
-        return name;
-    }
-    //public void setName() {
-      // just a stub
-    //}
-    
-        /* This gets called from the subclass.setTaxonomicInfo() method.
-         * It will be the family name for a family, subfamily name for subfamily, etc..
-         */
-/*
+    // For Taxon objects... getName() knows what to do.
     public void setName(String name) {
-         this.name = name;
+    } // implements Describable
+
+    public String getName() {
+        if (Rank.FAMILY.equals(getRank())) return getFamily();
+        if (Rank.SUBFAMILY.equals(getRank())) return getSubfamily();
+        if (Rank.GENUS.equals(getRank())) return getGenus();
+        if (Rank.SPECIES.equals(getRank())) return getSpecies();
+        if (Rank.SUBSPECIES.equals(getRank())) return getSubspecies();
+        s_log.error("getName() no rank:" + getRank());
+        return null;
     }
-*/
+
+    public String getFullName() {
+        // Overridden
+        return getName();
+    }
 
     public String toString() {
         return getName();
@@ -1377,7 +1356,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
                 setHasImagesCount(imageCount);
             }
 
-            A.log("setHasImages() XXX imageCount:" + imageCount + " overview:" + overview + " query:" + theQuery);  //  && (theQuery.contains("acanthobius"))
+            //A.log("setHasImages() imageCount:" + imageCount + " overview:" + overview + " query:" + theQuery);  //  && (theQuery.contains("acanthobius"))
 
         } catch (SQLException e) {
             s_log.error("setHasImages(" + overview + ") e:" + e + " query:" + theQuery);
@@ -1822,7 +1801,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           //A.log("getUnpickedDefault() subfamily speciesNameSet:" + speciesNameSet);
           chosenImageCode = getDefaultFromSpeciesSet(connection, caste, speciesNameSet);
           if (chosenImageCode != null) {
-  	 	    A.log("getUnpickedDefault() subfamily caste:" + caste + " overview:" + overview + " speciesNameSet:" + speciesNameSet + " chosenImageCode:" + chosenImageCode);
+  	 	    //A.log("getUnpickedDefault() subfamily caste:" + caste + " overview:" + overview + " speciesNameSet:" + speciesNameSet + " chosenImageCode:" + chosenImageCode);
             return chosenImageCode;
           }
         }
@@ -2824,14 +2803,6 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		this.statusSetSize = statusSetSize;
 	}
 
-
-    // This method should be abstract. It is overriden. The whole class should be abstract.  But alas, not so.
-    public void setTaxonomicInfo(Connection connection) throws SQLException {
-        // This method should be abstract. It is overriden. The whole class should be abstract.  But alas, not so.
-        //setTaxonomicInfo(connection, "");
-    }
-
-
     /* // Feb2020
     public void callFinalize() throws Throwable {
       finalize();
@@ -3084,7 +3055,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         String url = AntwebProps.getDomainApp() + "/description.do?";
         String uri = null;        
        
-        A.log("makeUrl() rank:" + rank + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies);  
+        //A.log("makeUrl() rank:" + rank + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies);
         if (rank.equals(Rank.FAMILY)) {
           uri = "family=" + family 
               + "&rank=" + rank;           

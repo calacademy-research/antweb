@@ -33,16 +33,6 @@ public class BrowseAction extends DescriptionAction {
       imagePickImageGetter, descriptionEdit,
     */
 
-    private String inferredRank(String queryString) {
-      if(queryString.contains("subspecies"))return Rank.SUBSPECIES;
-      if(queryString.contains("species"))return Rank.SPECIES;
-      if(queryString.contains("genus")&&!queryString.contains("subgenus"))return Rank.GENUS;
-      if(queryString.contains("subgenus"))return Rank.SUBGENUS;
-      if(queryString.contains("subfamily"))return Rank.SUBFAMILY;
-      if(queryString.contains("family"))return Rank.FAMILY;
-      return null;
-    }
-
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
@@ -267,15 +257,10 @@ public class BrowseAction extends DescriptionAction {
 
 		  if (!"homonym".equals(browseForm.getStatus()) && (browseForm.getAuthorDate() == null)) {
 			if (taxon == null) {
-			  //s_log.warn("execute() getInstance()");
-			  
               //A.log("execute  () family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank);
 
-			  //taxon = Taxon.getInstance(connection, family, subfamily, genus, species, subspecies, rank);
 			  taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
               A.log("execute() taxon.getSource:" + taxon.getSource() + " desc:" + taxon.getDescription().size());
-
-			  //A.log("execute() taxon.getInstance():" + taxon);
 			}
 		  }
 		  if (taxon == null) {
@@ -284,12 +269,6 @@ public class BrowseAction extends DescriptionAction {
             //A.log("execute() homonym:" + taxon);
 			/* See the homonyms of /description.do?subfamily=formicinae&genus=camponotus
 			They are actually of rank: subgenus
-			if (!taxon.getRank().equals(rank)) {
-			  String message = "Taxon not found.";
-			  s_log.warn("execute() taxon not found.  Not settling for homonym:" + taxon.getTaxonName());
-			  request.setAttribute("message", message);
-			  return (mapping.findForward("message"));
-			}
 			*/
 		  }              
 		  //if (taxon != null) A.log("execute() authorDate:" + browseForm.getAuthorDate() + " class:" + taxon.getClass());
@@ -310,15 +289,6 @@ public class BrowseAction extends DescriptionAction {
 
 		  taxon.initTaxonSet(connection, overview);
 
-/*
-          if (browseForm.getResetProject()) {
-            if (Status.VALID.equals(taxon.getStatus())) {
-              OverviewMgr.setOverview(request, ProjectMgr.getProject(Project.WORLDANTS));
-            } else {
-              OverviewMgr.setOverview(request, ProjectMgr.getProject(Project.ALLANTWEBANTS));
-            }
-          }
-*/
           // This is only used to specify homonym.
           String statusStr = browseForm.getStatus();
           String statusSetStr = StatusSet.getStatusSet(browseForm.getStatusSet(), request, overview);
@@ -479,7 +449,22 @@ We are showin the full map of ponerinae for every adm1.
         }
 
         if (taxon == null) {
-		    return (mapping.findForward("failure"));
+            String message = "Taxon not found";
+            if (!overview.getName().equals(Project.ALLANTWEBANTS)) {
+                message += " for overview:" + overview.getName();
+            } else {
+                message += ".";
+            }
+            if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
+                // An upload is currently in process.  Request that this process be re-attempted shortly.
+                message += "  A curator is currently in the process of an Upload.  Please try again shortly.";
+                s_log.info("execute() " + message);
+            } else {
+                s_log.info("execute() " + message + "  No upload in process.");
+            }
+            request.setAttribute("message", message);
+            LogMgr.appendLog("noExists.txt", (new java.util.Date()).toString() + " - " + AntwebUtil.getRequestInfo(request));
+            return (mapping.findForward("message"));
         }
 
         if ("oneView".equals(cacheType)) chosen = (String[]) session.getAttribute("chosen");
@@ -487,25 +472,6 @@ We are showin the full map of ponerinae for every adm1.
         //A.log("execute() scope:" + mapping.getScope() + " showTaxon:" + taxon + " chosen:" + chosen + " cacheType:" + cacheType);
         if (chosen != null) {
 			taxon.filterChildren(chosen);
-        }
-                      
-        if (!taxon.isExtant()) {
-			String message = "Taxon:" + taxon.getPrettyName() + " of rank:" + rank + " is not in the AntWeb database";
-			if (!overview.getName().equals(Project.ALLANTWEBANTS)) {
-			  message += " for overview:" + overview.getName();
-			} else {
-			  message += ".";
-			}
-			if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
-				// An upload is currently in process.  Request that this process be re-attempted shortly.
-                message += "  A curator is currently in the process of an Upload.  Please try again shortly.";
-                s_log.info("execute() " + message);
-            } else {
-                s_log.info("execute() " + message + "  No upload in process.");
-            }                
-            request.setAttribute("message", message);
-            LogMgr.appendLog("noExists.txt", (new java.util.Date()).toString() + " - " + AntwebUtil.getRequestInfo(request));
-            return (mapping.findForward("message"));
         }
 
         // A.log("execute() scope:" + mapping.getScope() + " rank:" + taxon.getRank());
@@ -671,4 +637,13 @@ We are showin the full map of ponerinae for every adm1.
 	  return mapping.findForward("error");
     }
 
+    private String inferredRank(String queryString) {
+        if(queryString.contains("subspecies"))return Rank.SUBSPECIES;
+        if(queryString.contains("species"))return Rank.SPECIES;
+        if(queryString.contains("genus")&&!queryString.contains("subgenus"))return Rank.GENUS;
+        if(queryString.contains("subgenus"))return Rank.SUBGENUS;
+        if(queryString.contains("subfamily"))return Rank.SUBFAMILY;
+        if(queryString.contains("family"))return Rank.FAMILY;
+        return null;
+    }
 }
