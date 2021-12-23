@@ -570,7 +570,7 @@ public class UploadAction extends Action {
         } finally {
         	String finishMessage = "Completion of the Upload Process.";
         	if (errorMessage != null) finishMessage = errorMessage;
-            s_log.warn("execute() finished action:" + action + " group:" + accessGroup.getAbbrev() + "
+            s_log.warn("execute() finished action:" + action + " group:" + accessGroup.getAbbrev()
                + " in " + AntwebUtil.getMinsPassed(uploadDetails.getStartTime()) );
             setIsInUploadProcess(null);
 
