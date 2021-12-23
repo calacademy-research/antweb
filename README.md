@@ -182,7 +182,8 @@ An external docker volume prevents it from being removed unintentionally. From t
 > Caddy stores TLS certificates, private keys, OCSP staples, and other necessary information to the data directory. It should not be purged without an understanding of the implications.
 
 ```bash
-docker volume create antweb_caddy_data```
+docker volume create antweb_caddy_data
+```
 
 Running
 ---
@@ -209,6 +210,12 @@ Before building the containers, set the following environment variables:
 ```bash
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
+```
+
+Alternatively, add the following lines to the `.env` file in the root of the project:
+```bash
+DOCKER_BUILDKIT=1
+COMPOSE_DOCKER_CLI_BUILD=1
 ```
 
 
