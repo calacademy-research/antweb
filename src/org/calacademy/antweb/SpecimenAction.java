@@ -139,10 +139,10 @@ public final class SpecimenAction extends DescriptionAction {
 			  SpecimenImage headShot = (SpecimenImage) specimen.getImages().get("p1");
 			  if (headShot != null) {
 				ogImage = headShot.getHighres();
-				A.log("execute() ogImage:" + ogImage);
+				s_log.debug("execute() ogImage:" + ogImage);
 				request.setAttribute("ogImage", ogImage);
 			  } else {
-			    A.log("execute() No Open Graph Image set.");
+			    s_log.debug("execute() No Open Graph Image set.");
 		      }
 			}
 		    //if (AntwebProps.isDeveloper(request)) s_log.warn("execute() ogTitle:" + ogTitle + " ogImage:" + ogImage + " ogDesc:" + ogDesc);

@@ -87,7 +87,7 @@ public final class Subspecies extends Species implements Serializable {
           rset = stmt.executeQuery(theQuery);
           Specimen child = null;
           
-          A.log("Subspecies.setChildren(5) overview:" + overview + " getChildImages:" + getChildImages + " query:" + theQuery);
+          s_log.debug("Subspecies.setChildren(5) overview:" + overview + " getChildImages:" + getChildImages + " query:" + theQuery);
 
           int i = 0;
           while (rset.next()) {
@@ -148,7 +148,7 @@ public final class Subspecies extends Species implements Serializable {
 
 		if (overview instanceof LocalityOverview) {
 		  String locality = ((LocalityOverview) overview).getLocality();                    
-		  A.log("setChildrenLocalized() locality:" + locality);
+		  s_log.debug("setChildrenLocalized() locality:" + locality);
 		  if ((locality != null) && (locality.length() > 0) && (!locality.equals("null")))  {
 			if ("country".equals(locality.substring(0, 7))) {
 				locality = "specimen." + locality;
@@ -156,7 +156,7 @@ public final class Subspecies extends Species implements Serializable {
 			query += " and " + locality;
 		  }
 		}
-		A.log("setChildrenLocalized() query:" + query);
+		s_log.debug("setChildrenLocalized() query:" + query);
 /*
 		String locality = ProjectMgr.getProject(project).getLocality();
 		

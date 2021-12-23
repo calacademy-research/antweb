@@ -25,7 +25,7 @@ public class GroupMgr {
     }
     
     public static void populate(Connection connection, boolean forceReload) {
-        A.log("populate()");
+        s_log.debug("populate()");
 
       if (!forceReload && (s_groups != null)) return;
 

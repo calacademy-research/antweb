@@ -51,7 +51,7 @@ public class CollectionDb extends AntwebDb {
             + ", groupname, ownedby" 
             ;
 
-        A.log("getCollection() code:" + code + " query:" + query);
+        s_log.debug("getCollection() code:" + code + " query:" + query);
         ResultSet rset = null;
         Statement stmt = null;
         try {
@@ -114,7 +114,7 @@ public class CollectionDb extends AntwebDb {
             throw e1;
         } catch (NullPointerException e2) {
             s_log.error("getCollection() e:" + e2 + " query:" + query);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e2);
+            AntwebUtil.logStackTrace(e2);
             throw e2;
         } finally {
             DBUtil.close(stmt, rset, this, "getCollection()");

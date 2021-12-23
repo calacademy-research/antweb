@@ -95,7 +95,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
                         s_log.warn("getDescEdits() key:" + key + " value:" + value);
             }
 
-            A.log("setDescription() recordCount:" + recordCount + " query:" + theQuery);
+            s_log.debug("setDescription() recordCount:" + recordCount + " query:" + theQuery);
             
         } catch (SQLException e) {
             s_log.error("getDescEdits() for taxonName:" + taxonName + " exception:" + e + " theQuery:" + theQuery);
@@ -130,16 +130,16 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
                       String oldUrl = oldEndString.substring(0, oldEndString.indexOf(delimiter));
                       boolean oldExists = HttpUtil.urlExists(oldUrl);
 
-                      A.log("httpSecurify() newExists:" + newExists + " oldExists:" + oldExists + " oldUrl:" + oldUrl);
+                      s_log.debug("httpSecurify() newExists:" + newExists + " oldExists:" + oldExists + " oldUrl:" + oldUrl);
                   } else {
                       ++fixes;
-                      A.log("httpSecurify() newExists:" + newExists);
+                      s_log.debug("httpSecurify() newExists:" + newExists);
                   }
               }
 
               value = beginString + newEndString;
           }
-          A.log("httpSecurify() contains http. fixes:" + fixes + " notFixes:" + notFixes + " initSize:" + initSize + " postSize:" + value.length());
+          s_log.debug("httpSecurify() contains http. fixes:" + fixes + " notFixes:" + notFixes + " initSize:" + initSize + " postSize:" + value.length());
       }
       return value;
     }

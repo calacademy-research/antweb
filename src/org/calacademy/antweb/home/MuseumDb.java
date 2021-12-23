@@ -164,7 +164,7 @@ public class MuseumDb extends AntwebDb {
               stmt = DBUtil.getStatement(getConnection(), "updateMuseum()");           
               s_log.info(dml);
               int c = stmt.executeUpdate(dml);
-              A.log("updateMuseum() dml:" + dml);
+              s_log.debug("updateMuseum() dml:" + dml);
               message = c + " record updated.";
             } catch (SQLException e) {
               s_log.error("updateMuseum() e:" + e + " dml:" + dml);
@@ -235,7 +235,7 @@ public class MuseumDb extends AntwebDb {
           count = rset.getInt("specimen_count");
         }
 
-          A.log("getMuseumSpecimenCount() count:" + count + " query:" + theQuery);
+          s_log.debug("getMuseumSpecimenCount() count:" + count + " query:" + theQuery);
 
       } catch (SQLException e) {
         s_log.error("MuseumDb.getSpecimenCount() e:" + e);
@@ -261,7 +261,7 @@ public class MuseumDb extends AntwebDb {
           count = rset.getInt("image_count");
         }
 
-        A.log("getMuseumImageCount() count:" + count + " query:" + theQuery);
+        s_log.debug("getMuseumImageCount() count:" + count + " query:" + theQuery);
 
       } catch (SQLException e) {
         s_log.error("MuseumDb.getImageCount() e:" + e);
@@ -347,7 +347,7 @@ public class MuseumDb extends AntwebDb {
 
           c = stmt.executeUpdate(dml);        
           
-          A.log("populateFromSpecimenData() c:" + c + " dml:" + dml);
+          s_log.debug("populateFromSpecimenData() c:" + c + " dml:" + dml);
       } catch (SQLException e) {
         s_log.error("MuseumDb.populateFromSpecimenData() 1 e:" + e);
         throw e;
@@ -471,13 +471,13 @@ public class MuseumDb extends AntwebDb {
         } finally {
             DBUtil.close(stmt, rset, "getValidSpeciesCount()");
         }
-        A.log("getValidSpeciesCount() code:" + code + " count:" + validSpeciesCount);
+        s_log.debug("getValidSpeciesCount() code:" + code + " count:" + validSpeciesCount);
         return validSpeciesCount;
     }
 
     // Populate the museum field of the specimen table if can be determined from the ownedby field.
     private void populateSpecimenMuseum(String museumCode) throws SQLException {
-      A.log("populateSpecimenMuseum(" + museumCode + ")");
+      s_log.debug("populateSpecimenMuseum(" + museumCode + ")");
       String whereClause = "museum = '" + museumCode + "'";
       
       (new UtilDb(getConnection())).updateField("specimen", "museum", null, whereClause);
@@ -492,7 +492,7 @@ public class MuseumDb extends AntwebDb {
 
           int c = stmt.executeUpdate(dml);
 
-          if ("AFRC".equals(museumCode)) A.log("populateSpecimenMuseum() updated:" + c + " dml:" + dml);
+          if ("AFRC".equals(museumCode)) s_log.debug("populateSpecimenMuseum() updated:" + c + " dml:" + dml);
           
       } catch (SQLException e) {
         s_log.error("MuseumDb.populateSpecimenMuseum() e:" + e);

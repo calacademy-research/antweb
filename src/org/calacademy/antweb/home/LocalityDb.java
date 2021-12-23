@@ -23,7 +23,7 @@ public class LocalityDb extends AntwebDb {
       Locality locality = getLocalityByCode(value);
       if (locality != null) return locality;
       locality = getLocalityByName(value);      
-      A.log("getLocalityByCodeOrName() value:" + value);
+      s_log.debug("getLocalityByCodeOrName() value:" + value);
       return locality;
     }
   

@@ -45,7 +45,7 @@ public final class PlaceNameAction extends Action {
           if ("Florida".equals(placeName)) placeName = "Florida, United States";
 
 		  Geolocale geolocale = GeolocaleMgr.getGeolocale(placeName);
-          A.log("execute() placeName:" + placeName + " geolocale:" + geolocale);
+          s_log.debug("execute() placeName:" + placeName + " geolocale:" + geolocale);
 		  if (geolocale == null) {
 		    int commaPos = placeName.indexOf(", ");
 		    if (commaPos > 0) {

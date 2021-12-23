@@ -125,7 +125,7 @@ static double getVersion () {
         try {
             getIsDownTime(connection);
         } catch (SQLException e) {
-            A.log("populate() e:" + e);
+            s_log.debug("populate() e:" + e);
         }
     }	
 
@@ -146,7 +146,7 @@ static double getVersion () {
 
         boolean downTime = ServerStatusAction.getIsDownTime(connection);
         if (downTime) message = ServerStatusAction.getDownTimeMessage();
-        A.log("isDownTime() downTime:" + downTime);
+        s_log.debug("isDownTime() downTime:" + downTime);
 
 /*
         if ("".equals(message)) {

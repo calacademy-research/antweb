@@ -53,7 +53,7 @@ public final class LocalityAction extends Action {
             //A.log("execute() code:" + code + " locality:" + locality);
             if (locality == null) {
               locality = localityDb.getLocalityByCodeOrName(name);
-              A.log("execute() code:" + code + " name:" + name + " locality:" + locality);
+              s_log.debug("execute() code:" + code + " name:" + name + " locality:" + locality);
             } // else A.log("NOT");
 		} catch (SQLException e) {
 			s_log.error("execute() e:" + e);

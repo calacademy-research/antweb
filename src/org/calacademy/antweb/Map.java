@@ -904,7 +904,7 @@ public class Map {
         if (i > 1) counts += ", ";
         counts += key + ":" + displayMapHash.get(key);
       }
-      A.log("getDisplayMapHashCounts() counts:" + counts);    
+      s_log.debug("getDisplayMapHashCounts() counts:" + counts);
       return counts;
     }    
 

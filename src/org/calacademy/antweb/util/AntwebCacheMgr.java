@@ -8,6 +8,7 @@ import java.text.*;
 import javax.servlet.http.*;
 
 import java.sql.*;
+import java.util.Date;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
@@ -71,7 +72,7 @@ public class AntwebCacheMgr {
       HttpUtil.finish(request, startTime);
       
       long millis = AntwebUtil.millisSince(startTime);
-      A.log("finish() millis:" + millis);
+      s_log.debug("finish() millis:" + millis);
 
       if (CACHING_OFF) return;
       
@@ -108,7 +109,7 @@ public class AntwebCacheMgr {
         if ((subfamily == null) && (genus == null)) {
           dirFile = "data/" + cacheType + "/" + overview.getName() + "/" + rank + ".txt";
         }
-        A.log("finish() fieldGuide insert into longRequest table dirFile:" + dirFile);
+        s_log.debug("finish() fieldGuide insert into longRequest table dirFile:" + dirFile);
       }
     }
         
@@ -170,7 +171,7 @@ public class AntwebCacheMgr {
          + " order by max(millis) desc, created desc " 
          + limitClause; 
          	
-      A.log("theQuery:" + theQuery);
+      s_log.debug("theQuery:" + theQuery);
       return theQuery;
     }
 
@@ -375,10 +376,10 @@ public class AntwebCacheMgr {
     cached.  Either a new item, or an item to recache because it has expired.
     */
     
-      A.log("getCacheItem()");
+      s_log.debug("getCacheItem()");
 
       boolean itemCached = false;
-      java.util.Date startTime = new java.util.Date();                        
+      Date startTime = new Date();
 
       //AntwebCacheMgr.deleteOldLongRequests(connection);
 
@@ -454,7 +455,7 @@ public class AntwebCacheMgr {
       try {
         stmt = DBUtil.getStatement(connection, "reCacheItem");
         int result = stmt.executeUpdate(theUpdate);
-        A.log("reCacheItem() result:" + result + " query:" + theUpdate);
+        s_log.debug("reCacheItem() result:" + result + " query:" + theUpdate);
       } finally {
         DBUtil.close(stmt, null, "AntwebCacheMgr", "reCacheItem");
       }
@@ -467,7 +468,7 @@ public class AntwebCacheMgr {
     //String theUrl ="http://localhost:8080/PGAC/Jsps/JSP/PGACMultiItemCriteriaPage.jsp";
 
 
-    A.log("cacheItem() caching:" + theUrl);
+    s_log.debug("cacheItem() caching:" + theUrl);
         
     boolean didCache = false;
 
@@ -484,21 +485,21 @@ public class AntwebCacheMgr {
       String dataRoot = docRoot + "web/";
       dataFile = dataRoot + dirFile;
 
-A.log("cacheItem() dataRoot:" + dataRoot);
-A.log("cacheItem() dataFile:" + dataFile);
+s_log.debug("cacheItem() dataRoot:" + dataRoot);
+s_log.debug("cacheItem() dataFile:" + dataFile);
 
       ++s_isCachingCount;
       s_lastCacheItem = dataFile;
 
       tempDataFile = dataFile + "T";
       (new Utility()).makeDirTree(dataFile); 
-      A.log("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + dataFile);
+      s_log.debug("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + dataFile);
 
       BufferedWriter out = new BufferedWriter(new FileWriter(tempDataFile, false));
 
       theUrl += "&genCache=true";
       
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " Caching:" + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " Caching:" + theUrl);
       
       URL url = new URL(theUrl) ;
       InputStream is = url.openConnection().getInputStream();
@@ -511,7 +512,7 @@ A.log("cacheItem() dataFile:" + dataFile);
       if (!AntwebCacheMgr.badFileDontCache(tempDataFile)) {
         utility.copyFile(tempDataFile, dataFile);
         didCache = true;
-        A.log("cacheItem() caching:" + dataFile);
+        s_log.debug("cacheItem() caching:" + dataFile);
       } else {
         //s_log.warn("cacheItem() url not cached due to error file:" + theUrl);
         didCache = false;
@@ -545,7 +546,7 @@ A.log("cacheItem() dataFile:" + dataFile);
         String theUpdate = "update long_request set cached = now(), cache_millis = " + sinceStart 
           + " where url = '" + url + "'";
 
-        A.log("updateCachedItems() query:" + theUpdate);
+        s_log.debug("updateCachedItems() query:" + theUpdate);
 
         Statement stmt = null;
         try {

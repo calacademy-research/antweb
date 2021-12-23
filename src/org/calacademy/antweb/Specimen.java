@@ -22,7 +22,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
       String thisOne = getTaxonName() + getFullName();
       String theOther = other.getTaxonName() + other.getFullName();
 
-      A.log("compareTo() compare:" + thisOne + " 2:" + theOther);        
+      s_log.debug("compareTo() compare:" + thisOne + " 2:" + theOther);
       return (thisOne).compareTo(theOther);
     }
 
@@ -880,7 +880,7 @@ update specimen set other = '
             //String encodeName = HttpUtil.encodePath(localityName);
             localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + localityName + "\">" + localityName + "</a>"; // was name = target
         }
-        A.log("getLocalityInfo() localityLink:" + localityLink + " encodeCode:" + encodeCode + " localityName:" + localityName);
+        s_log.debug("getLocalityInfo() localityLink:" + localityLink + " encodeCode:" + encodeCode + " localityName:" + localityName);
 
         if (localityLink == null) localityLink = "";
 
@@ -1003,7 +1003,7 @@ For a locality name without code (this name has special characters):
         return getTaxonName();
       }
       String prettyName = taxon.getPrettyName();
-      A.log("getTaxonPrettyName() rank:" + taxon.getRank() + " prettyName:" + prettyName);
+      s_log.debug("getTaxonPrettyName() rank:" + taxon.getRank() + " prettyName:" + prettyName);
       return prettyName;
     }
 
@@ -1324,7 +1324,7 @@ For a locality name without code (this name has special characters):
 
                setCreated(createdTs);
            } catch (ParseException e) {
-               A.log("setCreated() e:" + e);
+               s_log.debug("setCreated() e:" + e);
                // no action taken.
            }              
     }

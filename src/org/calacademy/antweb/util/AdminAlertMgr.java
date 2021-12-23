@@ -73,7 +73,7 @@ public final class AdminAlertMgr {
         try {
           stmt = DBUtil.getStatement(connection, "AdminAlertMgr.add()");  
           stmt.executeUpdate(dml);
-          A.log("add() dml:" + dml);
+          s_log.debug("add() dml:" + dml);
 
         } catch (Exception e) {
           s_log.warn("add() e:" + e + " dml:" + dml);
@@ -108,7 +108,7 @@ public final class AdminAlertMgr {
     }
 
     public static void removeAll(Connection connection) {
-        A.log("AdminAlertMgr.removeAll()");
+        s_log.debug("AdminAlertMgr.removeAll()");
         Statement stmt = null;
         String dml = "update admin_alerts set acknowledged = 1";
         try {

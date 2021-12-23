@@ -57,17 +57,17 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
 
           
           if (country == null) {
-           A.log("a");
+           s_log.debug("a");
             notFound += countryName + ", ";
           }
           
-          A.log("feature:" + feature.attributes + " cc:" + countryCode + " name:" + countryName + " country:" + countryName);
+          s_log.debug("feature:" + feature.attributes + " cc:" + countryCode + " name:" + countryName + " country:" + countryName);
         }  			
 
-        A.log("fetchCountryData() notFound:" + notFound);
+        s_log.debug("fetchCountryData() notFound:" + notFound);
           
         //A.log("fetchData(1) cleanCount:" + s_cleanCount + " FoundCleanNameInFlickr:" + s_cleanedFlickrNameCount);
-        A.log("fetchCountryData() geonetResponse:" + geonetCountryResponse);
+        s_log.debug("fetchCountryData() geonetResponse:" + geonetCountryResponse);
         message = "Geonet Country Codes fetched.";        
         return message;
     }
@@ -119,7 +119,7 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
 	          AntwebUtil.logShortStackTrace();
 			}
             if (geonetCountryResponse == null) {
-               A.log("GeonetPlace.getPlace() geonamesResponse is null. json:" + json);
+               s_log.debug("GeonetPlace.getPlace() geonamesResponse is null. json:" + json);
                return null;
             }
 

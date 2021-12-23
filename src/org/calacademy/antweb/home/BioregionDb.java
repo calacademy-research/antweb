@@ -197,7 +197,7 @@ public class BioregionDb extends AntwebDb {
         getSpecimenCount(bioregion);
         getImageCount(bioregion);
         
-        A.log("getFromSpecimenData() bioregion:" + bioregion.getName() + " s:" + bioregion.getSpecimenCount() + " i:" + bioregion.getImageCount());
+        s_log.debug("getFromSpecimenData() bioregion:" + bioregion.getName() + " s:" + bioregion.getSpecimenCount() + " i:" + bioregion.getImageCount());
     
         return bioregion;
     }
@@ -340,7 +340,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     private String populateSpecies() throws SQLException {
-      A.log("populateSpecies()");
+      s_log.debug("populateSpecies()");
     
       for (String bioregionName : BioregionMgr.getBioregionNames()) {
           populateSpecies(bioregionName);
@@ -487,7 +487,7 @@ public class BioregionDb extends AntwebDb {
         } finally {
             DBUtil.close(stmt, rset, "getValidSpeciesCount()");
         }
-        A.log("getValidSpeciesCount() bioregion:" + bioregion + " count:" + validSpeciesCount);
+        s_log.debug("getValidSpeciesCount() bioregion:" + bioregion + " count:" + validSpeciesCount);
         return validSpeciesCount;
     }
 
@@ -689,7 +689,7 @@ public class BioregionDb extends AntwebDb {
                 c += updateBioregionFieldCount("endemic", lastBioregionName, count);
             }
 
-            A.log("calcEndemism() count:" + count + " query:" + query);
+            s_log.debug("calcEndemism() count:" + count + " query:" + query);
 
         } catch (SQLException e) {
             s_log.error("calcEndemism() query:" + query + " e:" + e.toString());

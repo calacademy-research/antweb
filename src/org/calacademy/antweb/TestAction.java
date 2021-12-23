@@ -53,7 +53,7 @@ public final class TestAction extends Action {
 
 						Taxon species = TaxonMgr.getTaxon(taxonName);
 						message = "execute() taxonName:" + taxonName + " speiciesFound:" + speciesFound + " species:" + species;
-						A.log(message);
+						s_log.debug(message);
 					}
 				}
 			}

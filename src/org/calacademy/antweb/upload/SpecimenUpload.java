@@ -208,7 +208,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                 boolean governed = true;
                 if (AntwebProps.isDevMode()) governed = false;
                 String message = new OrphansDb(getConnection()).deleteOrphanedSpeciesFromSource(source, governed); // Only if less than allowable size: governed.
-                A.log("deleteOrphanedSpeciesFromSource() returns:" + message);
+                s_log.debug("deleteOrphanedSpeciesFromSource() returns:" + message);
                 if (message != null && !AntwebProps.isDevMode()) {
                   getUploadDetails().setMessage(message);
                 } else {
@@ -246,7 +246,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
             s_log.info("importSpecimens() regenerateAllAntwebProject");
             // Date startTimex = new Date();
 
-            if (AntwebProps.isDevMode()) { A.log("DEV SKIPPING regenerateAllAntweb"); } else
+            if (AntwebProps.isDevMode()) { s_log.debug("DEV SKIPPING regenerateAllAntweb"); } else
             (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
             //Profiler.profile("regenerateAllAntweb", startTimex);
 
@@ -416,7 +416,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
               + " and (subfamily, genus) in ( select subfamily, genus from taxon where taxarank = 'genus' and status = 'morphotaxon') "
               + " and genus not like '(%' and status = 'morphotaxon' and access_group = " + group.getId();
 
-             A.log("groupMorphoGenera() query:" + query);
+             s_log.debug("groupMorphoGenera() query:" + query);
 
             rset = stmt.executeQuery(query);
             while (rset.next()) {

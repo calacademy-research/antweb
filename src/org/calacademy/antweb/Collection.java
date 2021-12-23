@@ -195,7 +195,7 @@ public class Collection extends AdvancedSearchResults {
     if (getGroupList().size() == 1) {
       amissEmail = ((Group) getGroupList().get(0)).getAdminEmail();
     }
-    A.log("getAmissEmail() size:" + getGroupList().size() + " amissEmail:" + amissEmail);
+    s_log.debug("getAmissEmail() size:" + getGroupList().size() + " amissEmail:" + amissEmail);
     return amissEmail;
   }
 

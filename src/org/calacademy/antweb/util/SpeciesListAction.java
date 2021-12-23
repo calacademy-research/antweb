@@ -111,7 +111,7 @@ public final class SpeciesListAction extends Action {
 
                 data.append(Species.getDataHeader() + "\n");
 
-                A.log("createSpeciesListLink() query:" + theQuery);
+                s_log.debug("createSpeciesListLink() query:" + theQuery);
 
                 while (rset.next()) {
                   ++specimenCount;
@@ -124,7 +124,7 @@ public final class SpeciesListAction extends Action {
                 DBUtil.close(stmt, rset, this, "SpeciesListAction.createSpeciesListLink()");
             }
 
-            A.log("createSpeciesListLink() fullPath:" + fullPath);
+            s_log.debug("createSpeciesListLink() fullPath:" + fullPath);
             AntwebUtil.writeFile(fullPath, data.toString());
         }
         String message = "<b>\'Right-click\' and \'Save Link As\' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
@@ -163,7 +163,7 @@ public final class SpeciesListAction extends Action {
 
               data.append(Species.getDataHeader() + "\n");
 
-              A.log("query:" + theQuery);
+              s_log.debug("query:" + theQuery);
 
               while (rset.next()) {
                 ++specimenCount;

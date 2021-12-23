@@ -28,7 +28,7 @@ public class Region extends Geolocale {
       
       for (Subregion subregion : getSubregions()) {
         fullReport += subregion.fullReport();
-        A.log("fullReport() fullReport:" + fullReport + " subregion.fullReport:" + subregion.fullReport());      
+        s_log.debug("fullReport() fullReport:" + fullReport + " subregion.fullReport:" + subregion.fullReport());
       }
       fullReport += "\r\n}";
       return fullReport;

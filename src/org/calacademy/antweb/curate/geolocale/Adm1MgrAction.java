@@ -6,6 +6,7 @@ import java.sql.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
 
@@ -38,7 +39,7 @@ public final class Adm1MgrAction extends Action {
         if (groupIdInt != null) {
           groupId = groupIdInt.intValue();
         }
-        A.log("adm1:" + adm1 + " country:" + countryName);
+        s_log.debug("adm1:" + adm1 + " country:" + countryName);
         Geolocale country = GeolocaleMgr.getValidCountry(countryName);
 
         if (countryName == null || adm1 == null || country == null) {
@@ -57,13 +58,13 @@ public final class Adm1MgrAction extends Action {
         if (groupId > 0) groupClause = " and access_group = " + groupId;
         String query2 = "select code from specimen where adm1 = '" + escapeAdm1 + "' and country = '" + escapeCountryName + "' " + groupClause + " limit 20";
         
-        A.log("Adm1MgrAction execute() query1:" + query1);
+        s_log.debug("Adm1MgrAction execute() query1:" + query1);
 
         Connection connection = null;
         Statement stmt = null;
         ResultSet rset = null;
         try {         
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SpeciesListToolAction.execute()");
 
             stmt = connection.createStatement();

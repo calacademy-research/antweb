@@ -55,8 +55,8 @@ public abstract class DateUtil {
     DateUtil.testConstructDateStr("4/2/69");
     DateUtil.testConstructDateStr("04/02/69");
     DateUtil.testConstructDateStr("1995-08-31");
-    A.log(DateUtil.getConstructDateStr("1962-08-28"));
-    A.log(DateUtil.getConstructDateStr("7/28/1958"));
+    s_log.debug(DateUtil.getConstructDateStr("1962-08-28"));
+    s_log.debug(DateUtil.getConstructDateStr("7/28/1958"));
   }
 
   public static Date getFormatDateShort(String dateStr) {
@@ -126,7 +126,7 @@ public abstract class DateUtil {
       // A.log("formatDateStr() dateCollectedStartStr:" + dateCollectedStartStr + " utilDate:" + utilDate);
       return (utilDate.toString());
     } catch (ParseException e) {
-      A.log("formatDateStr() theDate:" + theDate + " e:" + e);
+      s_log.debug("formatDateStr() theDate:" + theDate + " e:" + e);
       // no action taken.
     }
     return null;
@@ -201,7 +201,7 @@ public abstract class DateUtil {
     if (dateStr == null) return null;
     // try {
     String constructedDate = getConstructDateStr(dateStr);
-    if (constructedDate == null) A.log("testConstructDateStr() dateStr:" + dateStr + " formatted:" + constructedDate + " step:" + s_debugStep);
+    if (constructedDate == null) s_log.debug("testConstructDateStr() dateStr:" + dateStr + " formatted:" + constructedDate + " step:" + s_debugStep);
     return constructedDate;
   }
   // Method designed to take scrappy user entered dates and return Antweb formatted Date
@@ -320,7 +320,7 @@ public abstract class DateUtil {
           s_debugStep = 13;
         } catch (java.time.format.DateTimeParseException e) {
         } catch (Exception e) {
-          A.log("constructDate() 1 dateStr:" + dateStr + " e:" + e);
+          s_log.debug("constructDate() 1 dateStr:" + dateStr + " e:" + e);
         }
       }
 
@@ -404,7 +404,7 @@ public abstract class DateUtil {
     } else {
       date = format("dd/MM/yyyy", dateStr);
     }
-    A.log("handleDMYy() i:" + indexOfSecondHyphen + " year:" + year + " dateStr:" + dateStr + " l:" + dateStr.length() + " firstNum:" + firstNum + " date:" + date);
+    s_log.debug("handleDMYy() i:" + indexOfSecondHyphen + " year:" + year + " dateStr:" + dateStr + " l:" + dateStr.length() + " firstNum:" + firstNum + " date:" + date);
     return date;
   }
 

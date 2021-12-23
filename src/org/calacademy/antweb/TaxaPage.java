@@ -3,6 +3,7 @@ package org.calacademy.antweb;
 import java.util.*;
 import java.io.Serializable;
 import java.sql.*;
+import java.util.Date;
 
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
@@ -51,7 +52,7 @@ public class TaxaPage implements Serializable {
 	}
 
 	public void setChildren(ArrayList<Taxon> children) {
-    	A.log("setChildren(ArrayLIst) children:" + children);
+    	s_log.debug("setChildren(ArrayLIst) children:" + children);
 		this.children = children;
 	}
 
@@ -67,7 +68,7 @@ public class TaxaPage implements Serializable {
           String message = "fetchChildren() Expensive query averted. overview:" + overview + " rank:" + rank + " withImages:" + withImages + " withTaxa:" + withTaxa
 				  + " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet;
           message += " target:" + HttpUtil.getTarget(getRequest()) + " referrer:" + HttpUtil.getReferrerUrl(getRequest());
-		  A.log(message);
+		  s_log.debug(message);
           //AntwebUtil.logShortStackTrace();
 			// at org.calacademy.antweb.TaxaPage.fetchChildren(TaxaPage.java:67)
 			// at org.calacademy.antweb.TaxaPageAction.execute(TaxaPageAction.java:179)
@@ -123,7 +124,7 @@ public class TaxaPage implements Serializable {
 		  }
 
           fetchChildrenQuery = taxaQuery;
-          A.log("FetchChildren() overview:" + overview.getClass() + " query:" + taxaQuery);
+          s_log.debug("FetchChildren() overview:" + overview.getClass() + " query:" + taxaQuery);
         }
         //A.log("fetchChildren() withSpecimen:" + withSpecimen + " overview:" + overview.getClass());
 
@@ -177,9 +178,9 @@ public class TaxaPage implements Serializable {
             stmt = DBUtil.getStatement(connection, "fetchChildren()");
             rset = stmt.executeQuery(fetchChildrenQuery);
 
-            A.log("fetchChidren() query:" + fetchChildrenQuery);
+            s_log.debug("fetchChidren() query:" + fetchChildrenQuery);
         				
-    		long again = new java.util.Date().getTime();
+    		long again = new Date().getTime();
 
 			// A.log("fetchChildren(5) overview:" + overview + " rank:" + rank + " caste:" + caste + " withImages:" + withImages + " taxaQuery:" + fetchChildrenQuery);
 			//A.log("fetchChildren() statusSetValue:" + statusSet.getValue() + " statusSet:" + statusSet.getStatusSets());
@@ -251,8 +252,8 @@ public class TaxaPage implements Serializable {
                 }
 			}
 
-			again = new java.util.Date().getTime();
-			now = new java.util.Date().getTime();
+			again = new Date().getTime();
+			now = new Date().getTime();
 			//s_log.error("basic query took " + (again-now) + " millis");
 
 		} catch (SQLException e) {

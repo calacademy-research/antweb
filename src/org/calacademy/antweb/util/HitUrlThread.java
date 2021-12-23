@@ -13,7 +13,7 @@ public class HitUrlThread extends Thread {
 		super(str);
 	} 
 	public void run() {
-		A.log("name: " + getName());
+		s_log.debug("name: " + getName());
 		try {
 
   		  HttpUtil.getUrl(getName());
@@ -24,6 +24,6 @@ public class HitUrlThread extends Thread {
 		  s_log.warn("run() e:" + e);
 		}
         //}
-		A.log("hitUrl() Finished for: " + getName());
+		s_log.debug("hitUrl() Finished for: " + getName());
 	}
 }

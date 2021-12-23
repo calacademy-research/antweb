@@ -189,7 +189,7 @@ public abstract class AntwebUtil {
   // Still in use. 
   public static ArrayList<String> getUploadDirFiles() {
     String dir = AntwebProps.getWebDir()+ "upload/";
-    A.log("getUploadDirFiles() dir:" + dir);
+    s_log.debug("getUploadDirFiles() dir:" + dir);
     File aFile = new File(dir);
     ArrayList<String> dirFiles = getDirFiles(aFile);
     return dirFiles;
@@ -219,7 +219,7 @@ public abstract class AntwebUtil {
     ArrayList<String> files = getUploadDirFiles();
     for (String file : files) {
       if (file != null && file .length() < 18){
-        A.log("getUploadGroupList() File is short:" + file);
+        s_log.debug("getUploadGroupList() File is short:" + file);
         continue;
       }
       String kind = file.substring(18); // everything after the date
@@ -232,12 +232,12 @@ public abstract class AntwebUtil {
         //A.log("groupIdInteger:" + groupIdInteger);
         if (!s_uploadGroupList.contains(groupIdInteger)) s_uploadGroupList.add(groupIdInteger);
       } else {
-        if (kind != null && !kind.contains("worldants")) A.log("getUploadGroupList() ! specIndex:" + specIndex + " file:" + file + " kind:" + kind);
+        if (kind != null && !kind.contains("worldants")) s_log.debug("getUploadGroupList() ! specIndex:" + specIndex + " file:" + file + " kind:" + kind);
       }
     }
     Collections.sort(s_uploadGroupList);
 
-    A.log("getUploadGroupList() done in " + AntwebUtil.reportTime(start));
+    s_log.debug("getUploadGroupList() done in " + AntwebUtil.reportTime(start));
     return s_uploadGroupList;
   }
 
@@ -278,7 +278,7 @@ public abstract class AntwebUtil {
       String dataRoot = docRoot + "web/data/";
       String dataFile = dataRoot + file;
       (new Utility()).makeDirTree(dataFile); 
-      A.log("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + file);
+      s_log.debug("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + file);
       AntwebUtil.writeFile(dataFile, stringData);
   }
 
@@ -346,7 +346,7 @@ public abstract class AntwebUtil {
     
     public static boolean webFileFound(String fileLoc) {
       String webFileLoc = AntwebProps.getDocRoot() + fileLoc;
-      A.log("webFileLoc:" + webFileLoc);
+      s_log.debug("webFileLoc:" + webFileLoc);
       return AntwebUtil.fileFound(webFileLoc);
     }
   
@@ -362,13 +362,13 @@ public abstract class AntwebUtil {
     if (fileExists) {
       lastModified = file.lastModified();
       expireTime = lastModified + expirePeriod;
-      if ((new java.util.Date()).getTime() > expireTime) {
+      if ((new Date()).getTime() > expireTime) {
         isExpired = true;        
         AntwebUtil.remove(fullFileName);
       }
-      A.log("isExpired() expired:" + isExpired + " fullFileName:" + fullFileName + " expireTime:" + expireTime + " lastModified:" + lastModified);
+      s_log.debug("isExpired() expired:" + isExpired + " fullFileName:" + fullFileName + " expireTime:" + expireTime + " lastModified:" + lastModified);
     } else {
-      A.log("isExpired() " + fullFileName + " exists: false");
+      s_log.debug("isExpired() " + fullFileName + " exists: false");
     }
     return isExpired;
   }

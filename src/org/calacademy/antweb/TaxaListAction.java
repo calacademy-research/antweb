@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
@@ -104,12 +106,12 @@ public final class TaxaListAction extends Action {
         Statement stmt = null;
         ResultSet rset = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, "TaxaListAction.execute()");
 
             stmt = connection.createStatement();
             rset = stmt.executeQuery(query);
-            A.log("execute() query:" + query);
+            s_log.debug("execute() query:" + query);
 
             while (rset.next()) {
                 String taxonName = rset.getString(1);

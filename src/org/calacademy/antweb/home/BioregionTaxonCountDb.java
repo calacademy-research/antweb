@@ -55,7 +55,7 @@ public class BioregionTaxonCountDb extends CountDb {
      
      public void imageCountCrawl() 
        throws SQLException {
-          A.log("startImageCountCrawl()");
+          s_log.debug("startImageCountCrawl()");
 
           ArrayList<Bioregion> bioregions = BioregionMgr.getBioregions();
           for (Bioregion bioregion : bioregions) {

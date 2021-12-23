@@ -354,7 +354,7 @@ public final class Caste {
     }
 
     private static void debug(String casteNotes, String[] casteValues, String test) {
-      if (casteNotes.equals(test)) A.log("degug() casteNotes:" + test + " isWorker:" + isWorker(casteNotes) + " isQueen:" + isQueen(casteNotes) + " casteValues[0]:" + casteValues[0] + " casteValues[1]:" + casteValues[1]);    
+      if (casteNotes.equals(test)) s_log.debug("degug() casteNotes:" + test + " isWorker:" + isWorker(casteNotes) + " isQueen:" + isQueen(casteNotes) + " casteValues[0]:" + casteValues[0] + " casteValues[1]:" + casteValues[1]);
     }
     
 }

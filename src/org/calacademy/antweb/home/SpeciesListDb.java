@@ -265,7 +265,7 @@ public class SpeciesListDb extends AntwebDb {
             //A.log("getGeolocaleCriteria() geolocale:" + geolocale);
 
             if (geolocale == null) {
-              A.log("getGeolocaleCriteria() refSpeciesListName:" + refSpeciesListName + " geolocale:" + geolocale);
+              s_log.debug("getGeolocaleCriteria() refSpeciesListName:" + refSpeciesListName + " geolocale:" + geolocale);
             } else {
               geolocaleCriteria += " or geolocale_id = " + geolocale.getId();
             }
@@ -353,8 +353,8 @@ public class SpeciesListDb extends AntwebDb {
       query = projectQuery + " union " + countryQuery
         + " order by subfamily ";
       
-      A.log("getRefListSubfamilies() projectCriteria:" + projectCriteria + " countryCriteria:" + countryCriteria);
-      A.log("getRefListSubfamilies() query:" + query);
+      s_log.debug("getRefListSubfamilies() projectCriteria:" + projectCriteria + " countryCriteria:" + countryCriteria);
+      s_log.debug("getRefListSubfamilies() query:" + query);
       rset = stmt.executeQuery(query);
 
       while (rset.next()) {
@@ -394,7 +394,7 @@ public class SpeciesListDb extends AntwebDb {
         }
 
         if (Utility.sameList(oldChosenList, chosen)) {
-          A.log("saveTaxonSet() 2 speciesListName:" + speciesListName + " chosen:" + chosen.length + " oldChosen:" + oldChosenList.size());
+          s_log.debug("saveTaxonSet() 2 speciesListName:" + speciesListName + " chosen:" + chosen.length + " oldChosen:" + oldChosenList.size());
           return "";
         }
 
@@ -445,7 +445,7 @@ public class SpeciesListDb extends AntwebDb {
 
             //A.log("saveTaxonSet() taxonName:" + taxonName + " contains:" + oldChosenList.contains(taxonName));
             if (!oldChosenList.contains(taxonName)) {
-                A.log("saveTaxonSet() added:" + taxonName);
+                s_log.debug("saveTaxonSet() added:" + taxonName);
 
                 String prettySpeciesListName = SpeciesListMgr.getPrettyName(speciesListName);
 
@@ -493,7 +493,7 @@ public class SpeciesListDb extends AntwebDb {
 			}
 			boolean hasGenera = taxonSetDb.hasTaxonSetGenera(speciesListName, subfamily);
 			if (!hasGenera) {
-              A.log("saveTaxonSet() removeFromTaxonSet subfamily:" + subfamily);
+              s_log.debug("saveTaxonSet() removeFromTaxonSet subfamily:" + subfamily);
 			  taxonSetDb.delete(speciesListName, subfamily);
 			}  
 

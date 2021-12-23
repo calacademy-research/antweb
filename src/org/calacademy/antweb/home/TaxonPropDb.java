@@ -101,7 +101,7 @@ public class TaxonPropDb extends AntwebDb {
 			dml = "insert into taxon_prop (taxon_name, prop, value) values ('" + taxonName + "', 'bioregionMap', '" + bioregionMap + "')";
 			i = stmt.executeUpdate(dml);
         } else {
-          A.log("updateBioregionMap i:" + i); 
+          s_log.debug("updateBioregionMap i:" + i);
         }
 
 		//A.log("updateRev() dml:" + dml);
@@ -140,7 +140,7 @@ public class TaxonPropDb extends AntwebDb {
                   bioregionMaps.put(genus, bioregionSet);
                 } else {
                   if (bioregion != null) {
-                    A.log("refreshBioregionMap() illegal bioregion:" + bioregion);
+                    s_log.debug("refreshBioregionMap() illegal bioregion:" + bioregion);
                   }
                 }
             }
@@ -162,7 +162,7 @@ public class TaxonPropDb extends AntwebDb {
                 if (i > 1) bioregionMapStr += " ";
                 bioregionMapStr += bioregion + ":true";
             }
-          A.log("refreshBioregionMap() genus:" + genus + " bioregionMapStr:" + bioregionMapStr);
+          s_log.debug("refreshBioregionMap() genus:" + genus + " bioregionMapStr:" + bioregionMapStr);
         
           // insert into taxon_props genus, bioregionMapStr
           updateBioregionMap(genus, bioregionMapStr);
@@ -316,7 +316,7 @@ public class TaxonPropDb extends AntwebDb {
 		int i = stmt.executeUpdate(dml);
 
 		returnVal = "deleted:" + i;
-        A.log("deleteTaxonProp() returnVal:" + returnVal + " dml:" + dml);
+        s_log.debug("deleteTaxonProp() returnVal:" + returnVal + " dml:" + dml);
 	  } catch (SQLException e) {
 		s_log.warn("deleteTaxonProp() e:" + e);
 	  } finally {

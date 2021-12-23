@@ -318,7 +318,7 @@ public class UploadDetails extends OperationDetails {
     
     
     public void finish(Login accessLogin, HttpServletRequest request, Connection connection) throws SQLException {
-        A.log("finish() operation:" +  getOperation());
+        s_log.debug("finish() operation:" +  getOperation());
         String execTime = HttpUtil.finish(request, getStartTime());
         setExecTime(execTime);
 
@@ -341,14 +341,14 @@ public class UploadDetails extends OperationDetails {
     }
     
     public void setPreUploadStatistics(ArrayList stats) {
-      A.log("preUploadStats:" + stats);
+      s_log.debug("preUploadStats:" + stats);
       preUploadStatistics = stats;
     }
     public ArrayList getPreUploadStatistics() {
       return preUploadStatistics;
     }
     public void setPostUploadStatistics(ArrayList stats) {
-      A.log("postUploadStats:" + stats);
+      s_log.debug("postUploadStats:" + stats);
       postUploadStatistics = stats;
     }
     public ArrayList getPostUploadStatistics() {

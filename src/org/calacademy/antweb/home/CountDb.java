@@ -58,7 +58,7 @@ public class CountDb extends AntwebDb {
     private static String s_report = "";
     private static boolean s_debug = false;
     protected String childrenCountReport(Countable countable) throws SQLException {
-        if (countable == null) A.log("childrenCountReport() why is countable null?");
+        if (countable == null) s_log.debug("childrenCountReport() why is countable null?");
         debug = AntwebProps.isDevMode();
         s_query = null;
         s_report = "";
@@ -69,7 +69,7 @@ public class CountDb extends AntwebDb {
 
     // Countables include Geolocale, Bioregion, Museum, Project.
     protected void childrenCountCrawl(Countable countable) throws SQLException {
-      if (countable == null) A.log("childrenCountCrawl() why is countable null?");
+      if (countable == null) s_log.debug("childrenCountCrawl() why is countable null?");
         debug = AntwebProps.isDevMode();
 		int specimenCount = countSpecimens(countable);
 
@@ -102,7 +102,7 @@ public class CountDb extends AntwebDb {
 		        "Alabama".equals(countable.toString())
              || "Alaska".equals(countable.toString())
              || "Colorado".equals(countable.toString())
-                )) A.log("chilrenCountCrawl() message:" + message);
+                )) s_log.debug("chilrenCountCrawl() message:" + message);
     }
     
     protected int countSpecimens(Countable countable) 
@@ -120,7 +120,7 @@ public class CountDb extends AntwebDb {
       int sum = 0;
       
       if (countable == null) {
-        A.log("countSpecimens() countable is null");
+        s_log.debug("countSpecimens() countable is null");
         return 0;
       }  
       String query = countable.getCountSpecimensQuery();
@@ -153,7 +153,7 @@ public class CountDb extends AntwebDb {
             //A.log("countSpecimens() update countable:" + countable + " taxonName:" + taxonName + " count:" + count);
             if (taxonName.contains(debugTaxonName)) {
 	 		  if (query.contains("geolocale_id = " + debugGeolocaleId + " ")) {
-                A.log("countSpecimens() countable:" + countable + " taxonName:" + taxonName + " count:" + count + " query:" + query);
+                s_log.debug("countSpecimens() countable:" + countable + " taxonName:" + taxonName + " count:" + count + " query:" + query);
               }
             }
           }            
@@ -174,7 +174,7 @@ public class CountDb extends AntwebDb {
         int count = -1;
 
         if (countable == null) {
-          A.log("countChildren() countable is null");
+          s_log.debug("countChildren() countable is null");
           return 0;
         }  
 
@@ -194,7 +194,7 @@ public class CountDb extends AntwebDb {
 			  parentTaxonName = rset.getString("parentTaxonName");
 
               if (true && "Channel Islands".equals(countable.toString())) {
-                A.log("countChildren() rank:" + rank + " count:" + count + " sum:" + sum + " parentTaxonName:" + parentTaxonName + " query:" + query);
+                s_log.debug("countChildren() rank:" + rank + " count:" + count + " sum:" + sum + " parentTaxonName:" + parentTaxonName + " query:" + query);
               }
 
               // For diagnosing if counts are off. Consider invoking with: http://localhost/antweb/utilData.do?action=countReport&num=768  (geolocaleId)
@@ -237,7 +237,7 @@ public class CountDb extends AntwebDb {
        throws SQLException {
        
         if (countable == null) {
-          A.log("countGrandChildren() countable:" + countable + " rank:" + rank + " column:" + column);
+          s_log.debug("countGrandChildren() countable:" + countable + " rank:" + rank + " column:" + column);
           //AntwebUtil.logShortStackTrace();
           return 0;
         }
@@ -575,7 +575,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
                //A.log("getSpecimenSubfamilyDistJSon() subfamily:" + subfamily + " chartColor:" + chartColor);
                distJson += HttpUtil.getJsonElement(i, Formatter.initCap(subfamily), count, chartColor);
              } else {
-               A.log("getSpecimenSubfamilyDistJson() subfamily not found:" + subfamily);
+               s_log.debug("getSpecimenSubfamilyDistJson() subfamily not found:" + subfamily);
              }
              
           }           

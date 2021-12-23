@@ -71,7 +71,7 @@ public abstract class QueriesWithParams {
                   + " and g.georank = '" + georank + "' and g.name = '" + geolocaleName + "' order by t.subfamily, t.genus, t.species, t.subspecies"
         );
 
-        A.log("getNamedQuery() geolocale:" + geolocale + " query:" + query);
+        s_log.debug("getNamedQuery() geolocale:" + geolocale + " query:" + query);
 
         return query; // end getQueryWithParam()
     }
@@ -97,7 +97,7 @@ public abstract class QueriesWithParams {
                 + " and g.name = '" + geolocaleName + "' group by t.status, gt.is_introduced, gt.is_endemic"
         );
 
-        A.log("getNamedQuery() geolocale:" + geolocale + " query:" + query);
+        s_log.debug("getNamedQuery() geolocale:" + geolocale + " query:" + query);
 
         return query; // end getQueryWithParam()
     }
@@ -118,7 +118,7 @@ public abstract class QueriesWithParams {
                 + " and b.name = '" + bioregionName + "' order by t.subfamily, t.genus, t.species, t.subspecies"
         );
 
-        A.log("getNamedQuery() bioregion:" + bioregion + " query:" + query);
+        s_log.debug("getNamedQuery() bioregion:" + bioregion + " query:" + query);
 
         return query;
     }
@@ -142,7 +142,7 @@ public abstract class QueriesWithParams {
                 + " and b.name = '" + bioregionName + "' group by t.status, bt.is_introduced, bt.is_endemic"
         );
 
-        A.log("getNamedQuery() bioregion:" + bioregion + " query:" + query);
+        s_log.debug("getNamedQuery() bioregion:" + bioregion + " query:" + query);
 
         return query;
     }

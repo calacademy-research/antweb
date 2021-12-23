@@ -136,7 +136,7 @@ public class ObjectMapDb extends AntwebDb {
 	  //A.log("setMap(int, str, map) id:" + id);
       String googleMapFunction = map.getGoogleMapFunction();
       if (googleMapFunction == null) {
-        A.log("setMap(int, str, map) googleMapFunction is null for " + keyCol + ":" + id);
+        s_log.debug("setMap(int, str, map) googleMapFunction is null for " + keyCol + ":" + id);
         return;
       }
       googleMapFunction = HttpUtil.encode(googleMapFunction);
@@ -155,10 +155,10 @@ public class ObjectMapDb extends AntwebDb {
     }
     
     public void setMap(String key, String keyCol, Map map) {
-	  A.log("setMap(str, str, map) key:" + key);
+	  s_log.debug("setMap(str, str, map) key:" + key);
       String googleMapFunction = map.getGoogleMapFunction();
       if (googleMapFunction == null) {
-        A.log("setMap(str, str, map) googleMapFunction is null for " + keyCol + ":" + key);
+        s_log.debug("setMap(str, str, map) googleMapFunction is null for " + keyCol + ":" + key);
         return;
       }
       googleMapFunction = HttpUtil.encode(googleMapFunction);

@@ -92,7 +92,7 @@ public final class AntWikiDataAction extends Action {
              //String shortTaxonName = antwikiData.getShortTaxonName();
              country = antWikiData.getCountry();	 //null; //columns[i];
 
-             A.log("parseTaxonCountryPage()  country:" + country + " introduced:" + introduced);
+             s_log.debug("parseTaxonCountryPage()  country:" + country + " introduced:" + introduced);
 
              //s_log.warn("parseTaxonCountryPage() shortTaxonName:" + shortTaxonName + " country:" + country + " introduced:" + introduced);
 
@@ -182,7 +182,7 @@ public final class AntWikiDataAction extends Action {
                   content.append("Taxon not found.  line:" + lineNum + " taxonName:" + antWikiData.getShortTaxonName() + "<br>\n");
                 }                  
                 ++notFoundCount;
-                A.log("loadRegionalTaxonList() not found shortTaxonName:" + antWikiData.getTaxonName());
+                s_log.debug("loadRegionalTaxonList() not found shortTaxonName:" + antWikiData.getTaxonName());
                 continue;
               }
              
@@ -191,7 +191,7 @@ public final class AntWikiDataAction extends Action {
 
               //if (AntwebProps.isDevOrStageMode()) s_log.warn("load() taxonName:" + taxonName + " status:" + taxon.getStatus());
 
-              if (taxonName.equals("myrmicinaetrichomyrmex destructor")) A.log("load() taxonName:" + taxonName + " country:" + country); // + " isIntroduced:" + isIntroduced + " source:" + source);
+              if (taxonName.equals("myrmicinaetrichomyrmex destructor")) s_log.debug("load() taxonName:" + taxonName + " country:" + country); // + " isIntroduced:" + isIntroduced + " source:" + source);
 
               if (taxon.getStatus().equals(Status.VALID) || !Status.usesCurrentValidName(taxon.getStatus())) { //   taxon.getStatus().equals(Status.UNAVAILABLE)) {
                   insertCount += antwikiTaxonCountryDb.storeTaxonCountry(antWikiData.getShortTaxonName(), null, taxon.getTaxonName(), country, region, isIntroduced, source);
@@ -407,13 +407,13 @@ public final class AntWikiDataAction extends Action {
       //boolean isCurrent = antwebDb.isCurrentInLookup(connection, "validSpeciesListUpDate", upDate);
       // Update lookup table. set upDate to validSpeciesUpDate      
       
-      A.log("isCurrent:" + isCurrent + " upDate:" + upDate);
+      s_log.debug("isCurrent:" + isCurrent + " upDate:" + upDate);
        
       String prefix = "";
       if (!isCurrent) {
         // create an Admin message.  
         prefix = "Updated!  ";    
-        A.log("checkForValidSpeciesListUpdate() upDate:" + upDate);
+        s_log.debug("checkForValidSpeciesListUpdate() upDate:" + upDate);
         AdminAlertMgr.add("Antwiki Valid Species List Upload:" + upDate, connection);
       }
           
@@ -432,7 +432,7 @@ public final class AntWikiDataAction extends Action {
 
         int i = output.indexOf("List of valid species (names in use)");
         String validSpeciesListUpDate = output.substring(i + 69, i + 69 + 10);
-        A.log("AntWikiDataAction.getValidSpeciesListUpDate() i:" + i + " validSpeciesUpDate:" + validSpeciesListUpDate);
+        s_log.debug("AntWikiDataAction.getValidSpeciesListUpDate() i:" + i + " validSpeciesUpDate:" + validSpeciesListUpDate);
         return validSpeciesListUpDate;
     }
 
@@ -450,7 +450,7 @@ public final class AntWikiDataAction extends Action {
       if (!isCurrent) {
         prefix = "Updated!  ";
         // create an Admin message.      
-        A.log("checkForFossilSpeciesListUpdate() upDate:" + upDate);
+        s_log.debug("checkForFossilSpeciesListUpdate() upDate:" + upDate);
         AdminAlertMgr.add("Antwiki Fossil Species List Upload:" + upDate, connection);
       }
           
@@ -467,7 +467,7 @@ public final class AntWikiDataAction extends Action {
       }
       int i = output.indexOf("List of valid fossil species (names in use)</a> (tab-delimited text) (Date: ");
       String fossilSpeciesListUpDate = output.substring(i + 76, i + 76 + 10);
-      A.log("AntWikiDataAction.getFossilSpeciesListUpDate() validSpeciesUpDate:" + fossilSpeciesListUpDate);
+      s_log.debug("AntWikiDataAction.getFossilSpeciesListUpDate() validSpeciesUpDate:" + fossilSpeciesListUpDate);
  
       return fossilSpeciesListUpDate;
     }    

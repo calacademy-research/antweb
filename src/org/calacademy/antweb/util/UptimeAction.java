@@ -63,7 +63,7 @@ public final class UptimeAction extends Action {
           return false;
         }
         if (!uptimeTxt.contains("success")) {
-          A.log("isWebDirAccessible() uptimeTxt:" + uptimeTxt);
+          s_log.debug("isWebDirAccessible() uptimeTxt:" + uptimeTxt);
           return false;
         }
         return true;

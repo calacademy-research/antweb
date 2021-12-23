@@ -52,7 +52,7 @@ public class SessionRequestFilter implements Filter {
 
           // Log insecure links.
           if (!HttpUtil.isSecure(request)) {
-              A.log("doFilter() insecure");
+              s_log.debug("doFilter() insecure");
               String message = "req:" + target + " scheme:" + request.getScheme()
                       + " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
               LogMgr.appendLog("insecure.log", message, true);
@@ -144,7 +144,7 @@ public class SessionRequestFilter implements Filter {
             MAX_REQUEST_TIME = 1;
         }
 
-        A.log("finish() millis:" + millis + " info:" + HttpUtil.getRequestInfo(request));
+        s_log.debug("finish() millis:" + millis + " info:" + HttpUtil.getRequestInfo(request));
         if (millis > MAX_REQUEST_TIME) LogMgr.appendDataLog("longRequest.log", message);
         return execTime;
     }

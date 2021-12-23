@@ -29,7 +29,7 @@ public class HomonymDb extends AntwebDb {
         } catch (SQLException e) {
           s_log.warn("getHomonym() e:" + e);
         }
-        A.log("getHomonym(taxonName) taxonName:" + taxonName + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());
+        s_log.debug("getHomonym(taxonName) taxonName:" + taxonName + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());
         return homonym;
     }
 
@@ -43,7 +43,7 @@ public class HomonymDb extends AntwebDb {
         } catch (SQLException e) {
           s_log.warn("getHomonym() e:" + e);
         }
-        A.log("getHomonym(taxonName, authorDate) taxonName:" + taxonName + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());
+        s_log.debug("getHomonym(taxonName, authorDate) taxonName:" + taxonName + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());
         return homonym;
     }
 
@@ -61,7 +61,7 @@ public class HomonymDb extends AntwebDb {
         } catch (SQLException e) {
             s_log.warn("getHomonym() e:" + e);
         }
-        A.log("getHomonym(conn, antcatId) antcatId:" + antcatId + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());
+        s_log.debug("getHomonym(conn, antcatId) antcatId:" + antcatId + " homonym:" + homonym + " currentValidName:" + homonym.getCurrentValidName());
         return homonym;
     }
 
@@ -85,7 +85,7 @@ public class HomonymDb extends AntwebDb {
         homonym.setTaxonomicInfo(getConnection());
 
         if (!homonym.isExtant()) {
-            A.log("getHomonym() homonym not extant:" + homonym + " isExtant:" + homonym.isExtant());
+            s_log.debug("getHomonym() homonym not extant:" + homonym + " isExtant:" + homonym.isExtant());
             return null;
         }
         homonym.setSeeAlso();
@@ -211,7 +211,7 @@ public class HomonymDb extends AntwebDb {
               + " from homonym "
               + " where " + criterion;
 
-            A.log("getInfoHomonym() query:" + theQuery);
+            s_log.debug("getInfoHomonym() query:" + theQuery);
             stmt = DBUtil.getStatement(getConnection(), "getInfoHomonym()");
             rset = stmt.executeQuery(theQuery);
 
@@ -287,7 +287,7 @@ public class HomonymDb extends AntwebDb {
         isSubfamilyForGenus = isSubfamilyForGenus(query, subfamily);        
 
         if (isSubfamilyForGenus) {
-          A.log("isExistingSubfamilyForAGenus() subfamily:" + subfamily + " query:" + query);
+          s_log.debug("isExistingSubfamilyForAGenus() subfamily:" + subfamily + " query:" + query);
         }
         return isSubfamilyForGenus;
     }

@@ -1,6 +1,11 @@
 package org.calacademy.antweb.util;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public class AsciiUtils {
+  private final static Log s_log = LogFactory.getLog(AsciiUtils.class);
+
   private static final String PLAIN_ASCII =
       "AaEeIiOoUu"    // grave
     + "AaEeIiOoUuYy"  // acute
@@ -29,7 +34,7 @@ public class AsciiUtils {
   public static boolean isNonAscii(String s) {
     if (s == null) return false;
     String ascii = convertNonAscii(s);
-    A.log("isNonAscii() s:" + s + " ascii:" + ascii);
+    s_log.debug("isNonAscii() s:" + s + " ascii:" + ascii);
     return s.equals(ascii);
   }
 
@@ -41,7 +46,7 @@ public class AsciiUtils {
       for (int i = 0; i < n; i++) {
         char c = s.charAt(i);
         int pos = UNICODE.indexOf(c);
-        A.log("convertNonAscii pos:" + pos + " c:" + c);
+        s_log.debug("convertNonAscii pos:" + pos + " c:" + c);
         if (pos > -1){
           sb.append(PLAIN_ASCII.charAt(pos));
         }
@@ -49,12 +54,12 @@ public class AsciiUtils {
           sb.append(c);
         }
      }
-    A.log("convertNonAscii sb:" + sb.toString());
+    s_log.debug("convertNonAscii sb:" + sb.toString());
      return sb.toString();
   }
 
   public static void test() {
     String s = "The result : È,É,Ê,Ë,Û,Ù,Ï,Î,À,Â,Ô,è,é,ê,ë,û,ù,ï,î,à,â,ô,ç";
-    A.log("test() " + AsciiUtils.convertNonAscii(s));
+    s_log.debug("test() " + AsciiUtils.convertNonAscii(s));
   }
 }

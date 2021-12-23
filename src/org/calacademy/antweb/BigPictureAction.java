@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -46,13 +48,13 @@ public final class BigPictureAction extends Action {
         ResultSet rset = null;
         Statement stmt = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             
             if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
             
             connection = DBUtil.getConnection(dataSource, "BigPictureAction.execute()");
             
-            A.log("execute() imageId:" + form.getImageId());
+            s_log.debug("execute() imageId:" + form.getImageId());
             if (form.getImageId() != null) {
               // Poor design. Antipattern.
               ImageDb.getFormProps(form, connection);

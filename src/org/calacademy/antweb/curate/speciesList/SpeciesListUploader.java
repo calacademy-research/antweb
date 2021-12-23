@@ -113,7 +113,7 @@ public class SpeciesListUploader {
   }
 
   public UploadDetails worldantsReload() throws IOException, SQLException {
-    A.log("worldantsReload start");
+    s_log.debug("worldantsReload start");
 
 	SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
 	UploadDetails uploadDetails = speciesListUpload.reloadSpeciesList(Project.WORLDANTS, Group.TESTGROUP);
@@ -126,7 +126,7 @@ public class SpeciesListUploader {
     String backupDirFile = record(validateMessage, fileLoc, origWorldantsCount, true);
     uploadDetails.setBackupDirFile(backupDirFile);
 
-    A.log("worldantsReload message:" + uploadDetails.getMessage());
+    s_log.debug("worldantsReload message:" + uploadDetails.getMessage());
 
     return uploadDetails;
   }
@@ -162,7 +162,7 @@ public class SpeciesListUploader {
       //message = "Worldants download must be within " + allowedPercentage + "% of original.";
       //message += " original:" + origWorldantsCount + " new:" + worldantsCount;
       
-      A.log("validateWorldantsFile() message:" + message); //allowedPercentage:" + allowedPercentage + " max:" + max + " min:" + min + " isWithin:" + newIsWithinTenPercent + " multiplier:" + multiplier);
+      s_log.debug("validateWorldantsFile() message:" + message); //allowedPercentage:" + allowedPercentage + " max:" + max + " min:" + min + " isWithin:" + newIsWithinTenPercent + " multiplier:" + multiplier);
 
     } else if (worldantsCount < min_reasonable_worldants_count) {
       message = "WorldantsCount is too small:" + worldantsCount;

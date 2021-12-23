@@ -124,7 +124,7 @@ public class AdvancedSearchResults extends GenericSearchResults
             }
         });
 
-        A.log("getSpeciesList() specList.size():" + specList.size() + " from " + results.size());		
+        s_log.debug("getSpeciesList() specList.size():" + specList.size() + " from " + results.size());
 		return specList;
 	}
 
@@ -140,7 +140,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 
 		int returnVal = CompareUtil.compareString(a1, a2);
 
-		A.log("compareVals() fieldname:" + s_fieldName + " returnVal:" + returnVal + " a1:" + a1 + " a2:" + a2 + " count:" + s_count);
+		s_log.debug("compareVals() fieldname:" + s_fieldName + " returnVal:" + returnVal + " a1:" + a1 + " a2:" + a2 + " count:" + s_count);
 
 		return returnVal;
 	}
@@ -155,7 +155,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 
       s_count = 0;
       s_fieldName = fieldName;
-      A.log("sortBy() fieldName:" + fieldName + " sortOrder:" + sortOrder);
+      s_log.debug("sortBy() fieldName:" + fieldName + " sortOrder:" + sortOrder);
 
       try {
 		  switch (fieldName) {

@@ -31,11 +31,11 @@ public class UploadMgr {
       AntwebMgr.isPopulated();
       for (Upload upload : s_uploads) {
           if (id == upload.getUploadId()) {
-              A.log("UploadMgr.getUpload(" + id + ") logFileName:" + upload.getLogFileName());
+              s_log.debug("UploadMgr.getUpload(" + id + ") logFileName:" + upload.getLogFileName());
               return upload;
           }
       }
-      A.log("getUpload(" + id + ") not found");
+      s_log.debug("getUpload(" + id + ") not found");
       return null;
     }  
   
@@ -51,7 +51,7 @@ public class UploadMgr {
   
   
     public static void log() {
-      A.log("UploadMgr.log() s_uploads.size():" + s_uploads.size());
+      s_log.debug("UploadMgr.log() s_uploads.size():" + s_uploads.size());
     }  
   
 }

@@ -403,7 +403,7 @@ public class MessageMgr {
       void add(String value) {
       
         if (value == null) {
-          A.log("MessageMgr.set() ignoring null");
+          s_log.debug("MessageMgr.set() ignoring null");
         }
             
         isPassed = false;

@@ -154,7 +154,7 @@ public class SpecimenImage implements Serializable {
           }
         }
 
-        A.log("getTiffPath() found:" + found + " docPath:" + docPath);
+        s_log.debug("getTiffPath() found:" + found + " docPath:" + docPath);
 
         return path;
 	}
@@ -311,7 +311,7 @@ public class SpecimenImage implements Serializable {
     public String getOrigFileData() {
       String origFileData = null;
       try {
-          A.log("origFilePath:" + getOrigPath() + " origFileData:" + origFileData);
+          s_log.debug("origFilePath:" + getOrigPath() + " origFileData:" + origFileData);
           origFileData = FileUtil.getFileAttributesHtml(getOrigPath());
           return origFileData;
       } catch (Exception e) { // java.nio.file.NoSuchFileException is not explicitly thrown

@@ -40,7 +40,7 @@ public class ImagePickDb extends AntwebDb {
 			+ " and value in (select code from specimen " + casteClause + ")"
 			;
 
-        if (taxonClause.contains("adeto")) A.log("ImagePickDb.getDefaultSpecimenWithClause(str, str) query:" + query);
+        if (taxonClause.contains("adeto")) s_log.debug("ImagePickDb.getDefaultSpecimenWithClause(str, str) query:" + query);
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -142,7 +142,7 @@ public class ImagePickDb extends AntwebDb {
 
 			stmt.executeUpdate(dml);
 
-            A.log("setDefaultSpecimen() dml:" + dml);
+            s_log.debug("setDefaultSpecimen() dml:" + dml);
 		} catch (SQLException e) {
 			s_log.error("setDefaultSpecimen() dml" + dml + " e:" + e);
 		} finally { 		

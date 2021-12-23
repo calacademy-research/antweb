@@ -413,7 +413,7 @@ public class ProjectDb extends AntwebDb {
             rset = stmt.executeQuery(query);
             rset.next();
             int totalImagedSpecies = rset.getInt(1);
-            A.log("getStats() Total Imaged Species:" + totalImagedSpecies + " query:" + query);
+            s_log.debug("getStats() Total Imaged Species:" + totalImagedSpecies + " query:" + query);
             project.setNumSpeciesImaged(totalImagedSpecies);
         } catch (Exception e) {
             s_log.error("getStats() e:" + e + " query:" + query);
@@ -768,7 +768,7 @@ public class ProjectDb extends AntwebDb {
         } finally {
             DBUtil.close(stmt, rset, "getValidSpeciesCount()");
         }
-        A.log("getValidSpeciesCount() name:" + project.getName() + " count:" + validSpeciesCount);
+        s_log.debug("getValidSpeciesCount() name:" + project.getName() + " count:" + validSpeciesCount);
         return validSpeciesCount;
     }
 

@@ -6,6 +6,7 @@ import java.sql.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
 
@@ -45,7 +46,7 @@ public final class EditGeolocaleAction extends Action {
 
 		int id = editGeolocaleForm.getId();
         
-        A.log("execute() action:" + action + " name:" + name + " country:" + country + " parent:" + parent + " id:" + id + " isFast:" + editGeolocaleForm.getIsFast());
+        s_log.debug("execute() action:" + action + " name:" + name + " country:" + country + " parent:" + parent + " id:" + id + " isFast:" + editGeolocaleForm.getIsFast());
 
         if ((name == null || "".equals(name)) && editGeolocaleForm.getIsCreate()) {
 			request.setAttribute("message", "Enter an Adm1 Name in the URL bar...");
@@ -57,9 +58,9 @@ public final class EditGeolocaleAction extends Action {
         }
 
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
 		  connection = DBUtil.getConnection(dataSource, "EditGeolocaleAction.execute()");
           GeolocaleDb geolocaleDb = new GeolocaleDb(connection);              
         
@@ -74,14 +75,14 @@ public final class EditGeolocaleAction extends Action {
             }
 	      }
 
-          A.log("execute() name:" + name + " georank:" + georank + " tempGeolocale:" + tempGeolocale + " isSubmit:" + editGeolocaleForm.getIsSubmit() + " isUn:" + editGeolocaleForm.isUn());
+          s_log.debug("execute() name:" + name + " georank:" + georank + " tempGeolocale:" + tempGeolocale + " isSubmit:" + editGeolocaleForm.getIsSubmit() + " isUn:" + editGeolocaleForm.isUn());
 
           String message = null;
           boolean forwardToMessage = false;  
 
           if (editGeolocaleForm.getIsSubmit() || editGeolocaleForm.getIsCreate()) {
           
-			A.log("execute() name:" + name + " isPost:" + HttpUtil.isPost(request));
+			s_log.debug("execute() name:" + name + " isPost:" + HttpUtil.isPost(request));
 			if (editGeolocaleForm.getIsCreate()) {
 			  if (editGeolocaleForm.getSource() == null) editGeolocaleForm.setSource("geolocaleMgr");
 			  String createMessage = geolocaleDb.createGeolocale(editGeolocaleForm);
@@ -91,7 +92,7 @@ public final class EditGeolocaleAction extends Action {
 				  createGeolocale = geolocaleDb.getGeolocale(name, georank);
 				} else {
 				  createGeolocale = geolocaleDb.getAdm1(name, parent);
-				  A.log("execute() getAdm1(" + name + ", " + parent + ") createGeolocale:" + createGeolocale);
+				  s_log.debug("execute() getAdm1(" + name + ", " + parent + ") createGeolocale:" + createGeolocale);
 				}
 				if (createGeolocale == null) {
 				  forwardToMessage = true;
@@ -105,7 +106,7 @@ public final class EditGeolocaleAction extends Action {
 				  message = "Failed to create:" + name + ". " + createMessage;
 			  }
 			} else { // if not create
-	   	      A.log("execute() form:" + editGeolocaleForm);
+	   	      s_log.debug("execute() form:" + editGeolocaleForm);
 			
 			  message = geolocaleDb.updateGeolocale(editGeolocaleForm);
 			  
@@ -194,7 +195,7 @@ public final class EditGeolocaleAction extends Action {
 		
 		  if (message != null) {
 		    request.setAttribute("message", message);
-		    A.log("EditGeolocaleAction message:" + message);
+		    s_log.debug("EditGeolocaleAction message:" + message);
 		  }
 		
 		  if (geolocale == null) {

@@ -7,6 +7,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -33,7 +35,7 @@ public final class CompareResultsAction extends ResultsAction {
         // A.log("CompareResultsAction.execute() session:" + session.getAttribute("activeSession"));
 
         if (session.getAttribute("activeSession") == null) {
-          A.log("CompareResultsAction.execute() no activeSession");
+          s_log.debug("CompareResultsAction.execute() no activeSession");
           return mapping.findForward("sessionExpired");
         }
         
@@ -185,14 +187,14 @@ public final class CompareResultsAction extends ResultsAction {
 		java.sql.Connection connection = null;
 
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, "CompareResultsAction.getSpecimenToCompare()");
 			String rank;
 			
 			//This did not seem to do the trick... later, specimens are (were?) getting ordered.
-			A.log("getSpecimenToCompare() chosenResults:" + chosenResults);
+			s_log.debug("getSpecimenToCompare() chosenResults:" + chosenResults);
 			//Collections.sort(chosenResults);
-			A.log("getSpecimenToCompare() after sort:" + chosenResults);
+			s_log.debug("getSpecimenToCompare() after sort:" + chosenResults);
 
 			int count = 0;
 			String lastTaxonName = "";
@@ -230,15 +232,15 @@ public final class CompareResultsAction extends ResultsAction {
 		java.sql.Connection connection = null;
 
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, "CompareResultsAction.getTaxaToCompare()");
 			String rank;
 			
 			//This did not seem to do the trick...
 			
-			A.log("getTaxaToCompare() chosenResults:" + chosenResults);
+			s_log.debug("getTaxaToCompare() chosenResults:" + chosenResults);
 			//Collections.sort(chosenResults);
-			A.log("getTaxaToCompare() after sort:" + chosenResults);
+			s_log.debug("getTaxaToCompare() after sort:" + chosenResults);
 
 			int count = 0;
 			String lastTaxonName = "";

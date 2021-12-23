@@ -61,7 +61,7 @@ public final class LoginAction extends Action {
 */
         String value = loginForm.getValue();
         
-        A.log("execute() value:" + value + " target:" + target + " userNameOrEmail:" + userNameOrEmail);
+        s_log.debug("execute() value:" + value + " target:" + target + " userNameOrEmail:" + userNameOrEmail);
         //AntwebUtil.logShortStackTrace(10);
 
         Login login = null;
@@ -82,7 +82,7 @@ public final class LoginAction extends Action {
 
                 login = createAccount(request, userNameOrEmail, password, messages);
                 if (login == null) {
-                    A.log("execute() createAccount login is null for userNameOrEmail:" + userNameOrEmail);
+                    s_log.debug("execute() createAccount login is null for userNameOrEmail:" + userNameOrEmail);
                     // bots do this.  Ignore.
                 }
 
@@ -91,7 +91,7 @@ public final class LoginAction extends Action {
                     request.getSession().setAttribute("thisLogin", login);
                     //if (messages.isEmpty())
                     target = "/editLogin.do?id=" + login.getId();
-                    A.log("createAccount() attempt " + userNameOrEmail + " login:" + login + " messages:" + messages.get() + " isEmpty:" + messages.isEmpty());
+                    s_log.debug("createAccount() attempt " + userNameOrEmail + " login:" + login + " messages:" + messages.get() + " isEmpty:" + messages.isEmpty());
 
                     login = login(request, userNameOrEmail, password, messages);
 
@@ -136,7 +136,7 @@ public final class LoginAction extends Action {
 //              return (mapping.findForward("success"));
             }
         } else {
-            A.log("execute() Has messages  user:" + userNameOrEmail + " message:" + message + " messages:" + messages.size());
+            s_log.debug("execute() Has messages  user:" + userNameOrEmail + " message:" + message + " messages:" + messages.size());
             saveMessages(request, messages);        
             LoginMgr.removeAccessLogin(request);
             return (mapping.findForward("failure"));
@@ -184,7 +184,7 @@ public final class LoginAction extends Action {
             } catch (AntwebException e) {
                 if (e.toString().contains("already in use")) { 
                   msg = new ActionMessage("error.login.nameInUse");
-                  A.log("createAccount() msg:" + msg.toString());
+                  s_log.debug("createAccount() msg:" + msg.toString());
                   messages.add("message",msg);
                 }
                 return null;
@@ -192,7 +192,7 @@ public final class LoginAction extends Action {
                 s_log.warn("Login.createAccount() e:" + e);
                 if (e.toString().contains("already in use")) { 
                   msg = new ActionMessage("error.login.nameInUse");
-                  A.log("createAccount() msg:" + msg.toString());
+                  s_log.debug("createAccount() msg:" + msg.toString());
                   messages.add("message",msg);
                 } else {
                   msg = new ActionMessage("error.login.dbFailure");
@@ -214,13 +214,13 @@ public final class LoginAction extends Action {
         if ((userNameOrEmail == null) || (userNameOrEmail.length() == 0)) {
             msg = new ActionMessage("error.login.needName");
             messages.add("message", msg);
-            A.log("login() 1 msg:" + msg);
+            s_log.debug("login() 1 msg:" + msg);
         }
         
         if ((password == null) || (password.length() == 0)) {
             msg = new ActionMessage("error.login.needPassword");
             messages.add("message", msg);
-            A.log("login() 2 msg:" + msg);
+            s_log.debug("login() 2 msg:" + msg);
         }
 
         if (messages.isEmpty()) {
@@ -247,7 +247,7 @@ public final class LoginAction extends Action {
             } catch (Exception sqle) {
                 msg = new ActionMessage("error.login.dbFailure");
                 messages.add("message",msg);
-                A.log("login() 4 msg:" + msg);
+                s_log.debug("login() 4 msg:" + msg);
                 s_log.error("Connection.process", sqle);
             } finally {
                 DBUtil.close(connection, this, connName);

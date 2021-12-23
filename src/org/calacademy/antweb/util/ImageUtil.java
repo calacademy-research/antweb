@@ -99,7 +99,7 @@ public class ImageUtil {
         Process process = pb.start();
         //errorCode = process.waitFor();
         if (errorCode != 0) {
-          A.log("runExifProcess() path:" + path + " errors:" + (errorCode == 0 ? "No" : "Yes")); // + " output:\n" + output(process.getInputStream()));    
+          s_log.debug("runExifProcess() path:" + path + " errors:" + (errorCode == 0 ? "No" : "Yes")); // + " output:\n" + output(process.getInputStream()));
         }    
         return errorCode;
     }

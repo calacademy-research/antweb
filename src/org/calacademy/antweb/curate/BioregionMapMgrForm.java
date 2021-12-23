@@ -77,7 +77,7 @@ public final class BioregionMapMgrForm extends ActionForm {
         return isOceania;
     }
     public void setIsOceania(boolean isOceania) {
-A.log("setIsOceania() val:" + isOceania);
+s_log.debug("setIsOceania() val:" + isOceania);
         this.isOceania = isOceania;
     }    
     

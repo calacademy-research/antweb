@@ -63,7 +63,7 @@ public class DescEditImageUploadAction extends Action {
                   objectType = "overview";
                 }
 
-                A.log("execute() outputFileDir:" + outputFileDir + " objectType:" + objectType + " editField:" + theForm.getEditField());
+                s_log.debug("execute() outputFileDir:" + outputFileDir + " objectType:" + objectType + " editField:" + theForm.getEditField());
 
                 if (theForm.getTheFile2() != null) {
                   // Upload a File to Folder:
@@ -107,7 +107,7 @@ public class DescEditImageUploadAction extends Action {
                       + " dirFileName:" + dirFileName 
                       + " outputFileName:" + outputFileName
                       + " outputFileName2:" + outputFileName2;
-                    A.log(logMessage);
+                    s_log.debug(logMessage);
  
                     String imageUrl = AntwebProps.getDomainApp() + "/" + dirFileName;
                     messageStr = "Your uploaded file is here: <a href=\"" + imageUrl + "\">" + imageUrl + "</a>";
@@ -122,7 +122,7 @@ public class DescEditImageUploadAction extends Action {
                        messageStr += "<br><br>You may embed this image in a web page with this html tag: " + tag;
                     }
                     
-                    A.log("execute() done importing objectType:" + objectType + " file:" + outputFileName2 + " tag:" + tag);   
+                    s_log.debug("execute() done importing objectType:" + objectType + " file:" + outputFileName2 + " tag:" + tag);
                     request.setAttribute("imageUrl", imageUrl);
                     request.setAttribute("descEditImageUploadForm", theForm);
                     if ("taxon".equals(objectType)) {

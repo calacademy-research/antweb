@@ -44,7 +44,7 @@ public abstract class QueryManager {
         ArrayList<NamedQuery> queryList = Queries.getAdminCheckQueries();       
         // Above, due to scrappy groups/login design, it is possible to not specify a admin_login for a group, and when the group is created
         // and used for insertion of records (SpecimenUpload.java:309) there is no access_login created, causing problems at loadAllSpecimenFiles times.
-        A.log("Running adminAlerts:" + queryList);
+        s_log.debug("Running adminAlerts:" + queryList);
         for (NamedQuery namedQuery : queryList) {
           String results = runNamedQueryHtml(namedQuery, connection);
           //A.log("namedQuery:" + namedQuery + " results:" + results);

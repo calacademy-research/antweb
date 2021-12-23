@@ -101,7 +101,7 @@ public final class BigMapAction extends Action {
 
           if (map != null) {
             String title = map.getTitle();
-            A.log("BigMapAction.execute() title:" + title);
+            s_log.debug("BigMapAction.execute() title:" + title);
 			session.setAttribute("title", title);          
             session.setAttribute("map", map);
             return (mapping.findForward("success"));
@@ -127,7 +127,7 @@ public final class BigMapAction extends Action {
         , int geolocaleId, String museumCode, boolean geolocaleFocus, Connection connection, HttpSession session) throws SQLException {
         
         Map thisMap = null;
-        A.log("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName);
+        s_log.debug("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName);
                      
         // Taxon map.  
         if ((taxonName != null) && (!"".equals(taxonName))) {

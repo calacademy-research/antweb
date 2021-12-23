@@ -774,7 +774,7 @@ public abstract class HttpUtil {
       //A.log("getQueryString() 3 queryString:" + queryString);
 
       if("null".equals(queryString)) {
-        A.log("getQueryString() queryString:" + queryString);      
+        s_log.debug("getQueryString() queryString:" + queryString);
         queryString = "";
       }    
       
@@ -800,7 +800,7 @@ public abstract class HttpUtil {
         int questionMark = target.indexOf("?");
         if (questionMark < 1) return null;
         queryString = target.substring(questionMark + 1);
-        A.log("getQueryString(String)"); // queryString:" + queryString);
+        s_log.debug("getQueryString(String)"); // queryString:" + queryString);
         return queryString;
     }
     /**/
@@ -987,7 +987,7 @@ public abstract class HttpUtil {
       if (HttpUtil.isStaticCall(request)) {
         try {
           out.println("Invalid URL.  Direct JSP calls unsupported.");
-          A.log("isStaticCallCheck() target:" + HttpUtil.getTarget(request));
+          s_log.debug("isStaticCallCheck() target:" + HttpUtil.getTarget(request));
           //AntwebUtil.logStackTrace();
         } catch (IOException e) {
           s_log.error("isStaticCallCheck() e:" + e);
@@ -1100,7 +1100,7 @@ public abstract class HttpUtil {
 
           content = fetchUrl(url);
       } catch (IOException e) {
-        A.log("urlExists() e:" + e + " url:" + url);
+        s_log.debug("urlExists() e:" + e + " url:" + url);
         return false;
       }
         return content != null;
@@ -1407,14 +1407,14 @@ public abstract class HttpUtil {
             int count = 0;
 			while ((inputLine = br.readLine()) != null) {
                 ++count;
-                if ((count % 10000 == 0)) A.log("writeUrlContents() count" + count);
+                if ((count % 10000 == 0)) s_log.debug("writeUrlContents() count" + count);
 				bw.write(inputLine + "\n");
 			}
  
 			bw.close();
 			br.close();
  
-            A.log("writeUrlContents() url:" + theUrl + " toFile:" + fileName);
+            s_log.debug("writeUrlContents() url:" + theUrl + " toFile:" + fileName);
             return true;
  
 		} catch (IOException e) {
@@ -1491,7 +1491,7 @@ public abstract class HttpUtil {
 		 ) {
 		  facet = slash + "images.do";
 	  } else {
-		A.log("getFacet() not found.  requestURI:" + requestURI + " queryString:" + queryString);
+		s_log.debug("getFacet() not found.  requestURI:" + requestURI + " queryString:" + queryString);
 	  }
 	  return facet;  
     }

@@ -5,6 +5,8 @@ import java.util.*;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.io.Writer;
@@ -25,12 +27,12 @@ public final class ReportAction extends Action {
 
 		HttpUtil.setUtf8(request, response);
 
-        A.log("ReportAction.execute() target:" + target);
+        s_log.debug("ReportAction.execute() target:" + target);
 
         DynaActionForm df = (DynaActionForm) form;
         String action = (String) df.get("action");
         if ("antwebAdm1s".equals(action)) {
-          A.log("Action:" + action);
+          s_log.debug("Action:" + action);
           //return (mapping.findForward("countryAdm1Data"));
           String adm1CountryData = GeolocaleMgr.getAdm1CountryData();
           response.setContentType("application/json;charset=UTF-8");
@@ -43,7 +45,7 @@ public final class ReportAction extends Action {
 		  return null;
         }
         if ("acceptedAdm1s".equals(action)) {
-          A.log("Action:" + action);
+          s_log.debug("Action:" + action);
           //return (mapping.findForward("countryAdm1Data"));
           String adm1CountryData = GeolocaleMgr.getAcceptedAdm1CountryData();
           response.setContentType("application/json;charset=UTF-8");
@@ -86,7 +88,7 @@ and adm1.bioregion != country.bioregion and adm1.bioregion is not null order by 
         Statement stmt = null;
         ResultSet rset = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, "getBioregionCountryList()");
 			stmt = connection.createStatement();
 			
@@ -100,7 +102,7 @@ and adm1.bioregion != country.bioregion and adm1.bioregion is not null order by 
               + "   and adm1.bioregion != country.bioregion and adm1.bioregion is not null"
               + " order by bioregion, country, adm1 ";
             
-            A.log("getBioregionCountryList() query:" + query);
+            s_log.debug("getBioregionCountryList() query:" + query);
             
 			rset = stmt.executeQuery(query);	
 			while (rset.next()) {

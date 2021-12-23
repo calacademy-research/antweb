@@ -25,7 +25,7 @@ public class EventDb extends AntwebDb {
 
         String theInsert = "insert into event(operation, curator_id, name, created)  values (?, ?, ?, ?)";
                        
-        A.log("addEvent() insert:" + theInsert);
+        s_log.debug("addEvent() insert:" + theInsert);
 
         try (PreparedStatement stmt = getConnection().prepareStatement(theInsert)) {
             stmt.setString(1, event.getOperation());

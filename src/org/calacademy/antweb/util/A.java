@@ -58,7 +58,7 @@ public class A {
       } else {
          s_logiSet.put(key, nth);
       }
-      A.log("A.logi(" + key + ") nth:" + nth + " " + message);
+      s_log.debug("A.logi(" + key + ") nth:" + nth + " " + message);
   }
 
   

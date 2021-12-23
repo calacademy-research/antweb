@@ -91,11 +91,11 @@ public class SaveLoginForm extends ActionForm {
     }
 
     public Boolean isUploadSpecimens() {
-      A.log("SaveLoginForm() isUploadSpecimens:" + this.isUploadSpecimens);
+      s_log.debug("SaveLoginForm() isUploadSpecimens:" + this.isUploadSpecimens);
         return this.isUploadSpecimens;
     }
     public void setIsUploadSpecimens(boolean isUploadSpecimens) {
-      A.log("SaveLoginForm() setIsUploadSpecimens:" + isUploadSpecimens);
+      s_log.debug("SaveLoginForm() setIsUploadSpecimens:" + isUploadSpecimens);
       this.isUploadSpecimens = isUploadSpecimens;
     }
     

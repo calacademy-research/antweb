@@ -68,7 +68,7 @@ public class OperationDetails {
       ActionForward forward = null;
 
       if (request == null) {
-        A.log("findForward() request is null");
+        s_log.debug("findForward() request is null");
         return null;
       }
 
@@ -79,7 +79,7 @@ public class OperationDetails {
       }
       request.setAttribute("message", getMessage());
 
-      A.log("findForward() forward:" + forward + " forwardPage:" + getForwardPage() + " request:" + request + " message:" + getMessage());
+      s_log.debug("findForward() forward:" + forward + " forwardPage:" + getForwardPage() + " request:" + request + " message:" + getMessage());
       return forward;    
     }
 

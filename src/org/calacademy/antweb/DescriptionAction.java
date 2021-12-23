@@ -5,6 +5,7 @@ import java.util.*;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
@@ -31,7 +32,7 @@ public class DescriptionAction extends Action {
               String imageUrl = form.getImageUrl();
               String guiDefaultContent = AntwebProps.getProp("gui.default.content");
                   
-              A.log("saveDescriptionEdit() descriptionEdit.  contents:" + contents + " imageUrl:" + imageUrl);                  
+              s_log.debug("saveDescriptionEdit() descriptionEdit.  contents:" + contents + " imageUrl:" + imageUrl);
                   
               if ((contents.equals(guiDefaultContent)) && (imageUrl == null)) {
                 // The user hit Done but did not modify the default text
@@ -43,11 +44,11 @@ public class DescriptionAction extends Action {
                 if (contents.equals(guiDefaultContent) || "null".equals(contents)) contents = "";
                 // A.log("saveDescriptionEdit() 1 contents:" + contents);
                 contents = HttpUtil.decode(contents);
-                A.log("saveDescriptionEdit() 2 contents:" + contents);
+                s_log.debug("saveDescriptionEdit() 2 contents:" + contents);
                 String tag = "<a href=\"" + imageUrl + "\"><img class=\"taxon_page_img\" src=\"" + imageUrl + "\"></a>";
-                A.log("saveDescriptionEdit() 3 tag:" + tag);
+                s_log.debug("saveDescriptionEdit() 3 tag:" + tag);
                 contents += "<br>" + tag;
-                A.log("saveDescriptionEdit() 4 editField:" + editField + " contents:" + contents);
+                s_log.debug("saveDescriptionEdit() 4 editField:" + editField + " contents:" + contents);
                 //A.log("saveDescriptionEdit() editField:" + editField + " imageUrl:" + imageUrl + " contents:" + contents);
               }
 
@@ -101,7 +102,7 @@ public class DescriptionAction extends Action {
             //insert into description_hist (taxon_name, title, content, edit_id, access_group) select taxon_name, title, content, edit_id, 'me' from description_edit where taxon_name = "formicinaecamponotus atriceps" and title = "textauthor";
             stmt = connection.createStatement();
             rowCount = stmt.executeUpdate(backupCommand);
-            A.log("saveOrUpdateDescription() insert hist backup:" + rowCount + " for backupString" + backupCommand);
+            s_log.debug("saveOrUpdateDescription() insert hist backup:" + rowCount + " for backupString" + backupCommand);
 
             if ("".equals(contents)) {
               // delete from description_edit.
@@ -120,7 +121,7 @@ public class DescriptionAction extends Action {
                 // Could we use edit_id here?  
                 // May need to escape content properly?
               rowCount = stmt.executeUpdate(updateString);
-              A.log("saveOrUpdateDescription() updateString:" + updateString + " rowCount:" + rowCount);
+              s_log.debug("saveOrUpdateDescription() updateString:" + updateString + " rowCount:" + rowCount);
             
               if (rowCount == 0) {
                 // record does not exist.  So no record backed up.  Let's insert instead...
@@ -128,7 +129,7 @@ public class DescriptionAction extends Action {
                 String insertString = "insert into object_edit (object_key, title, content, is_manual_entry, access_group, access_login) "
                   + " values ('" + describable.getName() + "', '" + title + "', '" + contents + "', 1, " + accessGroup.getId() + "," + accessLogin.getId() + ")";
 
-                A.log("saveOrUpdateDescription() insertString is:" + insertString);
+                s_log.debug("saveOrUpdateDescription() insertString is:" + insertString);
                 currentDML = insertString;
                 stmt.executeUpdate(insertString);
               }
@@ -164,11 +165,11 @@ public class DescriptionAction extends Action {
          || Event.TAXON_PAGE_OVERVIEW.equals(title)
            ) {
           EventDb eventDb = new EventDb(connection);
-          A.log("saveOrUpdateDescription() "
+          s_log.debug("saveOrUpdateDescription() "
             + " taxonName:" + taxon.getTaxonName()
             + " title:" + title + " curatorId:" + accessLogin.getId());
 
-          eventDb.addEvent(new Event(title, accessLogin.getId(), taxon.getTaxonName(), new java.util.Date()));
+          eventDb.addEvent(new Event(title, accessLogin.getId(), taxon.getTaxonName(), new Date()));
         }
         
         String accessGroupStr = accessGroup.getName();
@@ -199,7 +200,7 @@ public class DescriptionAction extends Action {
             //insert into description_hist (taxon_name, title, content, edit_id, access_group) select taxon_name, title, content, edit_id, 'me' from description_edit where taxon_name = "formicinaecamponotus atriceps" and title = "textauthor";
             stmt = connection.createStatement();
             rowCount = stmt.executeUpdate(backupCommand);
-            A.log("saveOrUpdateDescription() insert hist backup:" + rowCount + " for backupString" + backupCommand);
+            s_log.debug("saveOrUpdateDescription() insert hist backup:" + rowCount + " for backupString" + backupCommand);
 
             if ("".equals(contents)) {
               // delete from description_edit.
@@ -218,7 +219,7 @@ public class DescriptionAction extends Action {
                 // Could we use edit_id here?  
                 // May need to escape content properly?
               rowCount = stmt.executeUpdate(updateString);
-              A.log("saveOrUpdateDescription() updateString:" + updateString + " rowCount:" + rowCount);
+              s_log.debug("saveOrUpdateDescription() updateString:" + updateString + " rowCount:" + rowCount);
             
               if (rowCount == 0) {
                 // record does not exist.  So no record backed up.  Let's insert instead...
@@ -226,7 +227,7 @@ public class DescriptionAction extends Action {
                 String insertString = "insert into description_edit (taxon_name, title, code, content, is_manual_entry, access_group, access_login) "
                   + " values ('" + taxonName + "', '" + title + "', " + code + ", '" + contents + "', 1, " + accessGroup.getId() + "," + accessLogin.getId() + ")";
 
-                A.log("saveOrUpdateDescription() insertString is:" + insertString);
+                s_log.debug("saveOrUpdateDescription() insertString is:" + insertString);
                 currentDML = insertString;
                 stmt.executeUpdate(insertString);
               }
@@ -241,7 +242,7 @@ public class DescriptionAction extends Action {
               return false;
             }
             
-            A.log("saveOrUpdateDescription() taxon:" + taxon);
+            s_log.debug("saveOrUpdateDescription() taxon:" + taxon);
             taxon.getDescription().put(title, contents);
             
         } catch (SQLException e) {

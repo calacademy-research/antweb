@@ -3,7 +3,7 @@
     <Appenders>
         <RollingFile name="ant_err" fileName="${sys:catalina.home}/logs/antweb.log"
                      filePattern="${sys:catalina.home}/logs/antweb.log.%i">
-            <PatternLayout pattern="%d{DEFAULT} %p %t %c{1} %M():%L - %m%n"/>
+            <PatternLayout pattern="%d{DEFAULT} %p %t %c{1}.%M():%L - %m%n"/>
             <SizeBasedTriggeringPolicy size="10M"/>
             <DefaultRolloverStrategy max="10" fileIndex="min"/>
             <ThresholdFilter level="warn"/>
@@ -13,7 +13,7 @@
         <RollingFile name="ant" fileName="${sys:catalina.home}/logs/antwebInfo.log"
                      filePattern="${sys:catalina.home}/logs/antwebInfo.log.%i">
 
-            <PatternLayout pattern="%d{DEFAULT} %p %t %c{1} %M():%L - %m%n"/>
+            <PatternLayout pattern="%d{DEFAULT} %p %t %c{1}.%M():%L - %m%n"/>
             <SizeBasedTriggeringPolicy size="10M"/>
             <DefaultRolloverStrategy max="10" fileIndex="min"/>
             <ThresholdFilter level="${sys:logging.level:-info}"/>

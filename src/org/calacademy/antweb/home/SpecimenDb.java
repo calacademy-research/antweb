@@ -46,7 +46,7 @@ public class SpecimenDb extends AntwebDb {
       try {
           specimen = new Specimen(code, getConnection());
       } catch (SQLException e) {
-          A.log("getSpecimen() code:" + code + " e:" + e);
+          s_log.debug("getSpecimen() code:" + code + " e:" + e);
       }
       return specimen;
     }
@@ -101,7 +101,7 @@ public class SpecimenDb extends AntwebDb {
         if (subspecies != null) {
           query += " and subspecies = '" + subspecies + "'";
         }
-        A.log("getAntwebSpecimenCodes() query:" + query);        
+        s_log.debug("getAntwebSpecimenCodes() query:" + query);
         try {
             stmt = DBUtil.getStatement(getConnection(), "getAntwebSpecimenCodes()");
             rset = stmt.executeQuery(query);
@@ -112,7 +112,7 @@ public class SpecimenDb extends AntwebDb {
                 code = rset.getString("code");
                 specimenCodes.add(code);
             }
-            A.log("getAntwebSpecimenCodes() count:" + count);
+            s_log.debug("getAntwebSpecimenCodes() count:" + count);
 
         } catch (SQLException e) {
             s_log.error("getAntwebSpecimenCodes() e:" + e + " query:" + query);
@@ -177,7 +177,7 @@ public class SpecimenDb extends AntwebDb {
                 String taxonLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.getPrettyTaxonName(taxonName) + "</a>";
                 introducedSpecimen.add("<tr><td>" + group + "</td><td>" + bioregion + "</td><td>" + codeLink + "</td><td>" + taxonLink + "</td><td>" + country + "</td></tr>");
             }
-            A.log("getIntroducedByGroup() count:" + count + " query:" + query);
+            s_log.debug("getIntroducedByGroup() count:" + count + " query:" + query);
 
         } catch (SQLException e) {
             s_log.error("getIntroducedByGroup() e:" + e);
@@ -214,7 +214,7 @@ public class SpecimenDb extends AntwebDb {
                 String codeLink = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
                 specimen.add("<tr><td>" + codeLink + "</td><td>" + subfamily + "</td><td>" + genus + "</td></tr>");
             }
-            A.log("getSpecimensWithMorphoGenera() count:" + count + " query:" + query);
+            s_log.debug("getSpecimensWithMorphoGenera() count:" + count + " query:" + query);
 
         } catch (SQLException e) {
             s_log.error("getSpecimensWithMorphoGenera() e:" + e);
@@ -318,7 +318,7 @@ public class SpecimenDb extends AntwebDb {
     }
 
     public void calcCaste(String code) {
-      A.log("calcCaste() for code:" + code);
+      s_log.debug("calcCaste() for code:" + code);
       String clause = " code = '" + code + "'";
       calcCasteQuery(clause);
     }
@@ -337,7 +337,7 @@ public class SpecimenDb extends AntwebDb {
             int count = 0;
             while (rset.next()) {
               ++count;
-              if (count % 10000 == 0) A.log("calcCasteQuery() count:" + count);
+              if (count % 10000 == 0) s_log.debug("calcCasteQuery() count:" + count);
 
               String code = rset.getString("code");
               String casteNotes = rset.getString("life_stage");
@@ -346,7 +346,7 @@ public class SpecimenDb extends AntwebDb {
 
               if (casteNotes != null) {
                 String[] casteValues = Caste.getCasteValues(casteNotes);
-                A.log("calcCasteQuery() casteValues[0]:" + casteValues[0] + " casteValues[1]:" + casteValues[1]);
+                s_log.debug("calcCasteQuery() casteValues[0]:" + casteValues[0] + " casteValues[1]:" + casteValues[1]);
                 updateCaste(dmlStmt, code, casteValues[0], casteValues[1]);    
               } else {
                 if (caste != null || subcaste != null) {
@@ -394,7 +394,7 @@ public class SpecimenDb extends AntwebDb {
 			dmlStmt.setString(2, subcaste);
             dmlStmt.setString(3, code);
 			int count = dmlStmt.executeUpdate();            
-            A.log("updateCaste() count:" + count);
+            s_log.debug("updateCaste() count:" + count);
         } catch (SQLException e) {
           s_log.error("updateCaste() code:" + code + " e:" + e);
         }  
@@ -426,7 +426,7 @@ public class SpecimenDb extends AntwebDb {
             String dml = "update specimen s set s.status = (select status from taxon where taxon_name = s.taxon_name)"
               + groupClause;
             c = stmt.executeUpdate(dml);    
-            A.log("updateSpecimenStatus(" + groupId + ") c:" + c + " dml:" + dml);    
+            s_log.debug("updateSpecimenStatus(" + groupId + ") c:" + c + " dml:" + dml);
         } catch (SQLException e) {
             s_log.error("updateSpecimenStatus() " + e);
             throw e;
@@ -584,7 +584,7 @@ public class SpecimenDb extends AntwebDb {
                     bads.add(getDups(codeFrag));
                 }
             }
-            A.log("getBads() count:" + count);
+            s_log.debug("getBads() count:" + count);
 
         } catch (SQLException e) {
             s_log.error("getBads() e:" + e);
@@ -805,7 +805,7 @@ public class SpecimenDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "dateParse()");
             rset = stmt.executeQuery(query);
-            A.log("parseDates() query:" + query);
+            s_log.debug("parseDates() query:" + query);
             while (rset.next()) {
                 //++count;
                 count = 0;
@@ -840,12 +840,12 @@ public class SpecimenDb extends AntwebDb {
                 // We have an old value. mem222072 |            8 | 0000-04-24             | 0000-04-24
                 if ((startNew != null && start == null) || ("mem222072".equals(code))) {
                     newNulls1 += updateCollectedStartAsNull(code);
-                    A.log("parseDates() code:" + code + " start:" + start + " startNew:" + startNew);
+                    s_log.debug("parseDates() code:" + code + " start:" + start + " startNew:" + startNew);
                 }
                 //ex: | sam-hym-c005977   | pseudomyrmecinaetetraponera natalensis | 1947/12/              | 1947/12/-00-00
                 if ((start != null && startNew == null)) {
                     newNulls2 += updateCollectedStartAsNull(code);
-                    A.log("parseDates() WTF code:" + code + " start:" + start + " startStr:" + startStr + " startNew:" + startNew);
+                    s_log.debug("parseDates() WTF code:" + code + " start:" + start + " startStr:" + startStr + " startNew:" + startNew);
                 }
 
 /*
@@ -906,7 +906,7 @@ public class SpecimenDb extends AntwebDb {
 
                 count = stmt.executeUpdate(dml);
                 count = 1;
-            } else A.log("updateParsedDates() updateStart:" + updateStart + " updateEnd:" + updateEnd);
+            } else s_log.debug("updateParsedDates() updateStart:" + updateStart + " updateEnd:" + updateEnd);
         } catch (SQLException e) {
             s_log.error("updateParsedDates() " + e);
             throw e;
@@ -958,7 +958,7 @@ public class SpecimenDb extends AntwebDb {
         } finally {
             DBUtil.close(stmt, rset, "this", "getTypeStatusList()");
         }
-        A.log("getTypeStatusList() total type_status selected:" + count);
+        s_log.debug("getTypeStatusList() total type_status selected:" + count);
         return typeStatusList;
     }
 

@@ -107,7 +107,7 @@ native bioregions to genera.
             taxonName = rset.getString("taxon_name");
               introduced.add(taxonName);
           }
-          A.log("execute() query:" + query);                        
+          s_log.debug("execute() query:" + query);
         } catch (SQLException e) {
           s_log.warn("getGeolocaleIntroduced() query:" + query + " e:" + e);
         } finally {
@@ -133,7 +133,7 @@ native bioregions to genera.
                 taxonName = rset.getString("taxon_name");
                 introduced.add(taxonName);
             }
-            A.log("execute() query:" + query);
+            s_log.debug("execute() query:" + query);
         } catch (SQLException e) {
             s_log.warn("getBioregionIntroduced() query:" + query + " e:" + e);
         } finally {

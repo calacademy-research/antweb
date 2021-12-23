@@ -71,7 +71,7 @@ import org.calacademy.antweb.home.*;
     // ------------------------- Project Taxon Image Count Crawl -------------------------
 
      private void fixExceptions() {
-       A.log("fixExceptions()");
+       s_log.debug("fixExceptions()");
         String query = "";
         try {
             Statement stmt;

@@ -5,6 +5,8 @@ import java.io.*;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import org.calacademy.antweb.util.*;
@@ -33,13 +35,13 @@ public class SpeciesListDownloadAction extends Action {
         java.sql.Connection connection = null;
         try {
 
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "SpeciesListDownloadAction.execute()");
 
           ArrayList<Taxon> taxa = null;
           String message = null;
 
-          A.log("execute() overview:" + overview); //projectName:" + projectName + " museumCode:" + museumCode);
+          s_log.debug("execute() overview:" + overview); //projectName:" + projectName + " museumCode:" + museumCode);
 
           TaxonSetDb taxonSetDb = null;
           

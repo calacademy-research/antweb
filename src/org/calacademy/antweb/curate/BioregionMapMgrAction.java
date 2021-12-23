@@ -6,6 +6,7 @@ import java.sql.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
 
@@ -40,7 +41,7 @@ public final class BioregionMapMgrAction extends Action {
         //String orderBy = request.getParameter("orderBy");
         if ("genus".equals(orderBy)) orderBy = " order by genus";
           else orderBy = " order by subfamily, genus";
-        A.log("execute() orderBy:" + orderBy + " param:" + request.getParameter("orderBy"));
+        s_log.debug("execute() orderBy:" + orderBy + " param:" + request.getParameter("orderBy"));
 
         //TreeMap<Taxon, String> genusBioregionMap = new TreeMap<String, String>();
         ArrayList<Taxon> genusList = new ArrayList<>();
@@ -49,16 +50,16 @@ public final class BioregionMapMgrAction extends Action {
         Statement stmt = null;
         ResultSet rset = null;
         try {         
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "BioregionMgrAction.execute()");
 
 			if (HttpUtil.isPost(request)) {
-			  A.log("execute POST values:" + bioregionMapMgrForm);
+			  s_log.debug("execute POST values:" + bioregionMapMgrForm);
 			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
               taxonPropDb.updateBioregionMap(bioregionMapMgrForm.getTaxonName(), bioregionMapMgrForm.getValues());
 			}
 
-			A.log("execute() refresh:" + bioregionMapMgrForm.isRefresh());
+			s_log.debug("execute() refresh:" + bioregionMapMgrForm.isRefresh());
             if (bioregionMapMgrForm.isRefresh() == true) {
 			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
               taxonPropDb.refreshBioregionMap();

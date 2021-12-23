@@ -43,9 +43,9 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Yolo, California&key=A
 		try {
 			adm1Response = new Gson().fromJson(json, Adm1Response.class);
 
-            A.log("GoogleApisAdm1.fetch() adm1Response:" + adm1Response);
+            s_log.debug("GoogleApisAdm1.fetch() adm1Response:" + adm1Response);
             if (adm1Response == null) {
-              A.log("fetch() nullResults. adm1Response:" + adm1Response + " json:" + json);
+              s_log.debug("fetch() nullResults. adm1Response:" + adm1Response + " json:" + json);
               //s_log.warn("fetch("+ adm1CommaCountry + ") null adm1Response for json:" + json);
               throw new AntwebException("nullResults");
             }
@@ -76,7 +76,7 @@ s_log.warn("6:" + adm1Response.results.get(0).address_components[0].types[0].toC
               throw new AntwebException("zeroResults");
 			}
 
-            A.log("fetch() c:" + adm1Response.results.size());
+            s_log.debug("fetch() c:" + adm1Response.results.size());
 
 			centroid = getCentroid(adm1Response);
 			boundingBox = getBoundingBox(adm1Response);

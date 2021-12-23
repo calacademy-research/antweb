@@ -6,6 +6,7 @@ import java.nio.*;
 import java.nio.file.*;
 import java.nio.charset.*;
 
+import org.apache.commons.httpclient.util.URIUtil;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
@@ -162,8 +163,8 @@ public class UploadFile {
             int startLocCodePos = theLine.indexOf("Mont Copolia") - 5;
             int endLocCodePos = startLocCodePos + 21;
             String localityCode = theLine.substring(startLocCodePos, endLocCodePos); // was (211, 232);
-            String localityEncoded = org.apache.commons.httpclient.util.URIUtil.encodePath(localityCode, "ISO-8859-1");
-            A.log("correctEncoding(): 0160810 localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded);
+            String localityEncoded = URIUtil.encodePath(localityCode, "ISO-8859-1");
+            s_log.debug("correctEncoding(): 0160810 localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded);
             //s_log.warn("correctEncoding(): substring:" + theLine.substring(277, 298);
             if (!localityEncoded.equals("Mah%E9%20Mont%20Copolia%20520")) {   // MahÈ Island, Mont Copolia
               s_log.error("correctEncoding() found false in " + AntwebUtil.secsSince(startTime) + " seconds.  Should be encoded: Mah%E9%20Mont%20Copolia%20520");
@@ -187,8 +188,8 @@ public class UploadFile {
             int startLocCodePos = theLine.indexOf("Reg");
             int endLocCodePos = startLocCodePos + 33;  // 33 if UTF.  36 in ...
             String localityCode = theLine.substring(startLocCodePos, endLocCodePos); // was (211, 232);
-            String localityEncoded = org.apache.commons.httpclient.util.URIUtil.encodePath(localityCode, "ISO-8859-1");
-            A.log("correctEncoding(): 0625035 encoding:" + encoding + " localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded
+            String localityEncoded = URIUtil.encodePath(localityCode, "ISO-8859-1");
+            s_log.debug("correctEncoding(): 0625035 encoding:" + encoding + " localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded
     + " theLine:" + theLine);
 
             //if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();

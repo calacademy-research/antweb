@@ -68,7 +68,7 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
 //          if (originalTaxonName != null) sql += originalTaxonName + "', '";
 //          sql += taxonName + "', '" + country + "', '" + region + "', " + isIntroduced + ", '" + source + "')";
 
-          if (isIntroduced) A.log("storeTaxonCountry() sql: " + sql);
+          if (isIntroduced) s_log.debug("storeTaxonCountry() sql: " + sql);
 
           stmt = getConnection().prepareStatement(sql);
 
@@ -187,7 +187,7 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
               + " order by country, taxon_name "
               ;
 
-            A.log("getAntwikiTaxonCountries() query:" + query);
+            s_log.debug("getAntwikiTaxonCountries() query:" + query);
 
             rset = stmt.executeQuery(query);
 
@@ -242,7 +242,7 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
             ProjectDb projectDb = new ProjectDb(getConnection());
             stmt = DBUtil.getStatement(getConnection(), "setIntroducedSpecimen()");
             query = "select s.code from antwiki_taxon_country a, specimen s where a.taxon_name = s.taxon_name and a.country = s.country and a.is_introduced = 1;";
-            A.log("updateIntroducedSpecimen() query:" + query);
+            s_log.debug("updateIntroducedSpecimen() query:" + query);
             rset = stmt.executeQuery(query);
 
             while (rset.next()) {

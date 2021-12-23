@@ -37,7 +37,7 @@ public abstract class TaxonSetDb extends AntwebDb {
               + " and taxon.taxarank in ('species', 'subspecies')";
             theQuery += " order by subfamily, genus, species, subspecies, author_date";
 
-            A.log("getTaxa() query:" + theQuery);
+            s_log.debug("getTaxa() query:" + theQuery);
             rset = stmt.executeQuery(theQuery);
 
             int count = 0;
@@ -78,7 +78,7 @@ public abstract class TaxonSetDb extends AntwebDb {
       message += " " + geolocaleTaxonDb.deleteGeolocaleTaxaWithoutTaxon();     
 
       int c = (new UtilDb(connection)).deleteFrom("proj_taxon", "where taxon_name not in (select taxon_name from taxon) and project_name not in ('worldants')");
-      A.log("dataCleanup() records deleted:" + c);
+      s_log.debug("dataCleanup() records deleted:" + c);
 
       return message;   
     }

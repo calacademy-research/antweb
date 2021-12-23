@@ -72,7 +72,7 @@ public final class ArtistAction extends Action {
 
             if (isCreate) {
                 if (name != null && artistId == 0) {
-                  A.log("Create artist. isCreate:" + isCreate);
+                  s_log.debug("Create artist. isCreate:" + isCreate);
                 }
                 Artist test = ArtistMgr.getArtist(name);
                 if (test != null) {
@@ -81,7 +81,7 @@ public final class ArtistAction extends Action {
                 }
 
                 Curator curator = LoginMgr.getCurator(accessLogin.getId());
-                A.log("execute() curator:" + curator + " accessGroup.loginId:" + accessLogin.getId());                
+                s_log.debug("execute() curator:" + curator + " accessGroup.loginId:" + accessLogin.getId());
                 String retVal = artistDb.createArtist(name, curator);
                 if (retVal.contains("error")) {
                   request.setAttribute("message", "<font color=red>Artist " + name + " added.</font>");                  

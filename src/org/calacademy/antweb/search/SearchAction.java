@@ -5,6 +5,8 @@ import org.calacademy.antweb.*;
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import org.apache.struts.actions.DispatchAction;
 
@@ -60,7 +62,7 @@ public final class SearchAction extends DispatchAction {
                 return HttpUtil.sendMessage(request, mapping, message);
               }
               String nextChar = target.substring(ampersandIndex, ampersandIndex + 1);
-              A.log("execute() nextChar:" + nextChar);
+              s_log.debug("execute() nextChar:" + nextChar);
               if ("&".equals(nextChar)) {
                 searchType = "recentImageSearch";
               } else {
@@ -71,7 +73,7 @@ public final class SearchAction extends DispatchAction {
           }
 
           if (form instanceof RecentImagesForm && HttpUtil.isPost(request)) {
-            A.log("execute() form is RecentImagesForm");
+            s_log.debug("execute() form is RecentImagesForm");
             searchType = "recentImageSearch";
           }
           
@@ -113,7 +115,7 @@ public final class SearchAction extends DispatchAction {
         String resultRank = advancedSearchForm.getResultRank();
         if (!Rank.isLegit(resultRank)) resultRank = "specimen";
         String output = advancedSearchForm.getOutput();
-        A.log("advancedSearch() resultRank:" + resultRank + " output:" + output); // statusSet:" + searchParameters.getStatusSet());
+        s_log.debug("advancedSearch() resultRank:" + resultRank + " output:" + output); // statusSet:" + searchParameters.getStatusSet());
 
         /* Just use specimen as default. See above 3 lines.
         if (!Rank.isLegit(resultRank)) {
@@ -142,7 +144,7 @@ public final class SearchAction extends DispatchAction {
       try {
         if (LoginMgr.isAdmin(request)) {
           SearchAction.setTempSpecimenSearchLimit(noSpecimenSearchLimit);   
-          A.log("doAdvancedSearch() use limit:" + noSpecimenSearchLimit);
+          s_log.debug("doAdvancedSearch() use limit:" + noSpecimenSearchLimit);
         }
 
         HttpSession session = request.getSession();
@@ -244,7 +246,7 @@ public final class SearchAction extends DispatchAction {
 			Map map = null;
 			Connection connection = null;
 			try {
-				javax.sql.DataSource dataSource = getDataSource(request,"conPool");
+				DataSource dataSource = getDataSource(request,"conPool");
 				connection = DBUtil.getConnection(dataSource, "SearchAction.doAdvancedSearch()");  
 				title = "Mapping Search Results";
 				map = (new MapResultsAction()).getMap(results.getResults(), null, null, resultRank, output, title, connection); // nulls are taxonList, chosenList
@@ -255,19 +257,19 @@ public final class SearchAction extends DispatchAction {
 			  return mapping.findForward("message");                   
 			} catch (SQLException e) {
 				s_log.error("execute() e:" + e);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
 				DBUtil.close(connection, this, "SearchAction.doAdvancedSearch()");
 			}  
 			
 			String sizeStr = (map.getChosenList() == null) ? "null" : "" + map.getChosenList().size();
-			A.log("SearchAction.doAdvancedSearch() resultRank:" + resultRank + " title:" + map.getTitle() + " chosenList.size:" + sizeStr + " map:" + map);
+			s_log.debug("SearchAction.doAdvancedSearch() resultRank:" + resultRank + " title:" + map.getTitle() + " chosenList.size:" + sizeStr + " map:" + map);
 
             String pageTitle = "";
             //if (Output.MAP_LOCALITY.equals(output)) pageTitle += map.getPointCounter() + " localities.";
             //if (Output.MAP_SPECIMEN.equals(output)) pageTitle += map.getPointCounter() + " specimen.";
 
-            A.log("SearchAction.doAdvancedSearch() title:" + title + " pageTitle:" + pageTitle);
+            s_log.debug("SearchAction.doAdvancedSearch() title:" + title + " pageTitle:" + pageTitle);
 
             pageTitle = " " + map.getTitle();
             

@@ -60,7 +60,7 @@ public class SpecimenXML extends DefaultHandler {
         if (xmlString.indexOf(">", spaceI) < xmlString.indexOf(">")) {
           hasSpace = true;
         }
-	    A.log("hasSpaceWithinTags() hasSpace:" + hasSpace);
+	    s_log.debug("hasSpaceWithinTags() hasSpace:" + hasSpace);
       }
       return hasSpace;
     }

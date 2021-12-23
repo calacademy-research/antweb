@@ -197,7 +197,7 @@ public class Group implements Comparable {
          Group compareGroup = (Group) o;
          int compareId = compareGroup.getId();
          int result = getId() - compareId;
-         A.log("compareTo() compareId:" + compareId + " id:" + getId());
+         s_log.debug("compareTo() compareId:" + compareId + " id:" + getId());
          return result;
      }
 
@@ -208,7 +208,7 @@ public class Group implements Comparable {
     public boolean equals(Object o) {
         Group compareGroup = (Group) o;
         int compareId = compareGroup.getId(); 
-        A.log("equals() compareId:" + compareId + " id:" + getId());
+        s_log.debug("equals() compareId:" + compareId + " id:" + getId());
         return compareGroup.getId() == getId();
     }     
 

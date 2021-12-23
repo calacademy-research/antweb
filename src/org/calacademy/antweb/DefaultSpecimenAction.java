@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -44,7 +46,7 @@ public final class DefaultSpecimenAction extends Action {
       //String target = HttpUtil.getTarget(request); 
       String target = request.getHeader("referer");
 
-      A.log("execute() taxonName:" + taxonName + " command:" + command + " isPost:" + isPost + " caste:" + caste + " code:" + specimenCode + " target:" + target);
+      s_log.debug("execute() taxonName:" + taxonName + " command:" + command + " isPost:" + isPost + " caste:" + caste + " code:" + specimenCode + " target:" + target);
 
       if ("cancel".equals(command)) {
 	    session.setAttribute("defaultSpecimenTaxon", null);
@@ -53,9 +55,9 @@ public final class DefaultSpecimenAction extends Action {
         return null;
       }
 
-      java.sql.Connection connection = null;
+      Connection connection = null;
       try {
-        javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+        DataSource dataSource = getDataSource(request, "conPool");
         connection = DBUtil.getConnection(dataSource, "updateDefaultSpecimen()");
 		ImagePickDb imagePickDb = new ImagePickDb(connection);
 

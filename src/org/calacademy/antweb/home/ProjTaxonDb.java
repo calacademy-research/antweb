@@ -220,7 +220,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
               + " and taxon_name = '" + taxonName + "'";
             count = stmt.executeUpdate(dml);
 	    } catch (SQLException e) {
-          A.log("updateItem e:" + e + " source:" + source);
+          s_log.debug("updateItem e:" + e + " source:" + source);
           throw e;
         } finally {
             DBUtil.close(stmt, "updateItem()");
@@ -260,9 +260,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         boolean hasOtherProjects = getProjectCount(taxonName) > 0;
         boolean hasSpecimen = getSpecimenCount(taxonName) > 0;
         
-        A.log("delete() taxonName:" + taxonName + " isSubfamily:" + isSubfamily + " hasOtherProjects:" + hasOtherProjects + " hasSpecimen:" + hasSpecimen); 
+        s_log.debug("delete() taxonName:" + taxonName + " isSubfamily:" + isSubfamily + " hasOtherProjects:" + hasOtherProjects + " hasSpecimen:" + hasSpecimen);
 
-        if ("incertae_sedis".equals(taxonName)) A.log("delete() EXISTS:" + exists("fossilants", taxonName));
+        if ("incertae_sedis".equals(taxonName)) s_log.debug("delete() EXISTS:" + exists("fossilants", taxonName));
 
         if (isSubfamily) return c;
         if (hasOtherProjects) return c;
@@ -452,7 +452,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 taxa.add(taxon);
             }
 
-            if (count == 0) A.log("getTaxa() not found project:" + projectName);
+            if (count == 0) s_log.debug("getTaxa() not found project:" + projectName);
         } catch (SQLException e) {
             s_log.error("getTaxa() projectName:" + projectName + " exception:" + e + " theQuery:" + theQuery);
         } finally {
@@ -667,7 +667,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         UtilDb utilDb = new UtilDb(getConnection());
         int deleteCount = utilDb.deleteFrom("proj_taxon", "where (project_name, taxon_name) in (select project_name, taxon_name from proj_taxon_dispute)");
         int updateCount = utilDb.updateField("proj_taxon", "source", "'specimen'", "project_name = 'allantwebants' and specimen_count > 0");
-        A.log("regenerateAllAntweb() deleteCount:" + deleteCount + " updateCount:" + updateCount);
+        s_log.debug("regenerateAllAntweb() deleteCount:" + deleteCount + " updateCount:" + updateCount);
 
         // This was in the UtilData.java regenerateAllAntweb
 
@@ -689,7 +689,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
         //int updateCount = 0;
         //updateCount = utilDb.updateField("proj_taxon", "source", "'specimen'", "project_name = 'allantwebants' and specimen_count > 0");
-        A.log("finishRegenerateAllAntweb() deleteCount:" + deleteCount); // + " updateCount:" + updateCount);
+        s_log.debug("finishRegenerateAllAntweb() deleteCount:" + deleteCount); // + " updateCount:" + updateCount);
 
         // LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "after finishRegenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "after finishRegenerateAllAntweb Proj_taxon worldants counts");

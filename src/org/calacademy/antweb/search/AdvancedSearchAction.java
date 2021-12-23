@@ -148,7 +148,7 @@ public class AdvancedSearchAction extends Action {
         ArrayList<ResultItem> searchResults = null;
         try {
           searchResults = getSearchResults(connection, searchParameters);
-          if (searchResults != null) A.log("getGoogleMap() searchResults:" + searchResults.size());
+          if (searchResults != null) s_log.debug("getGoogleMap() searchResults:" + searchResults.size());
         } catch (IOException e) {
             s_log.error("getGoogleMap() 1b e:" + e);                
         } catch (ServletException e) {

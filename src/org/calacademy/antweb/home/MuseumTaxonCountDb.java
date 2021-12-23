@@ -62,7 +62,7 @@ public class MuseumTaxonCountDb extends CountDb {
      
      public void imageCountCrawl()
        throws SQLException {
-          A.log("imageCountCrawl()");
+          s_log.debug("imageCountCrawl()");
                 
           ArrayList<Museum> museums = (new MuseumDb(getConnection())).getMuseums();
           for (Museum museum : museums) {            

@@ -66,15 +66,15 @@ public class AntwebMgr {
             try {
                 AntwebMgr.serverInitializing();
 
-                A.log("AntwebMgr.populate() 1");
+                s_log.debug("AntwebMgr.populate() 1");
 
                 AntwebMgr.populateMgrs(connection, forceReload);
 
-                A.log("AntwebMgr.populate() 2");
+                s_log.debug("AntwebMgr.populate() 2");
 
                 AntwebMgr.initializationComplete();
             } catch (Exception e) {
-                AntwebUtil.log("error running thread e:" + e.getMessage());
+                s_log.error("error running thread e:" + e.getMessage(), e);
             }
 
 // REFACTOR: Problematic. IsPopulated is not trustworthy. It is set before the thread completes.
@@ -214,7 +214,7 @@ public class AntwebMgr {
         String url = AntwebProps.getThisDomainApp() + "/util.do?action=postInstantiate";
         //if (AntwebProps.isDevMode()) url = "https://localhost:8080/util.do?action=postInstantiate";
 
-        A.log("callPostInitialize() url:" + url);
+        s_log.debug("callPostInitialize() url:" + url);
         //s_log.warn("callPostInitialize() url:" + url);
         try {
             HttpUtil.hitUrl(url);
@@ -252,7 +252,7 @@ public class AntwebMgr {
 
         (new ImageUploaderAction()).writeRecentImages(connection);
 
-        A.log("genRecentContent() secs:" + AntwebUtil.secsSince(startTime));
+        s_log.debug("genRecentContent() secs:" + AntwebUtil.secsSince(startTime));
         // (new StatisticsDb(connection)).populateStatistics();
     }
 
@@ -278,7 +278,7 @@ public class AntwebMgr {
         if (overview instanceof Project && isProjectPopulated) return false;
         if (overview instanceof Bioregion && isBioregionPopulated) return false;        
         boolean isIt = isServerInitializing();
-        A.log("isServerInitializing() isIt:" + isIt);
+        s_log.debug("isServerInitializing() isIt:" + isIt);
         return isIt;
     }
 

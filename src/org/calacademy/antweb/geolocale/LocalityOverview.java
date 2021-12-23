@@ -1,5 +1,7 @@
 package org.calacademy.antweb.geolocale;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.*;
 //import javax.media.j3d.*;
@@ -35,6 +37,8 @@ Flickr
 
 // LocalityOverview objects are Bioregion, Geolocale and Project.
 public abstract class LocalityOverview extends Overview {
+
+    private final static Log s_log = LogFactory.getLog(LocalityOverview.class);
 
     private String extent;
     private String coords;
@@ -206,7 +210,7 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
 
             return val;
           } catch (Exception e) {
-            A.log("getDoubleListVal() list:" + list + " val:" + val + " e:" + e);
+            s_log.debug("getDoubleListVal() list:" + list + " val:" + val + " e:" + e);
           }
         }
         return 0;
@@ -340,7 +344,7 @@ Out of bounds:
          && false
   		  ) {
   		  //if (longitude == 109.23999786376953) 
-            A.log("LocalityOverview.isWithinBounds() isWithin:" + isWithin + " left:" + left + " bottom:" + bottom + " right:" + right + " top:" + top + " lat:" + latitude + " lon:" + longitude); // + " lonModified:" + lonModified);
+            s_log.debug("LocalityOverview.isWithinBounds() isWithin:" + isWithin + " left:" + left + " bottom:" + bottom + " right:" + right + " top:" + top + " lat:" + latitude + " lon:" + longitude); // + " lonModified:" + lonModified);
         }
 
         //if ("R".equals(lonModified))
@@ -366,7 +370,7 @@ Out of bounds:
 		if (zoomLevel < 1)
 			zoomLevel = 1;
 	  }
-	  A.log("calculateZoomLevel() zoomLevel:" + zoomLevel);
+	  s_log.debug("calculateZoomLevel() zoomLevel:" + zoomLevel);
       return zoomLevel;
     }    
     

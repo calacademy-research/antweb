@@ -35,7 +35,7 @@ public class Homonym extends Taxon implements Serializable {
 
     
     public void setTaxonomicInfo(Connection connection) throws SQLException {
-        A.log("setTaxonomicInfo()");
+        s_log.debug("setTaxonomicInfo()");
 
         String theQuery = null;
         
@@ -78,7 +78,7 @@ public class Homonym extends Taxon implements Serializable {
 
             // theQuery += " and proj_taxon.project_name = '" + project + "'";
 
-            A.log("setTaxonomicInfo() exthant:" + isExtant() + " theQuery:" + theQuery);
+            s_log.debug("setTaxonomicInfo() exthant:" + isExtant() + " theQuery:" + theQuery);
 
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);
@@ -254,7 +254,7 @@ public class Homonym extends Taxon implements Serializable {
                         s_log.warn("setDescription() key:" + key + " value:" + value);
             }
 
-            A.log("setDescription() recordCount:" + recordCount + " query:" + theQuery);
+            s_log.debug("setDescription() recordCount:" + recordCount + " query:" + theQuery);
             
         } catch (SQLException e) {
             s_log.error("setDescription() for taxonName:" + taxonName + " exception:" + e + " theQuery:" + theQuery);
@@ -267,7 +267,7 @@ public class Homonym extends Taxon implements Serializable {
 
     public void setSeniorHomonym(Connection connection) throws SQLException {
         seniorHomonym = (new TaxonDb(connection)).getTaxon(getTaxonName());
-        A.log("setSeniorHomonym() homonym:" + getTaxonName() + " seniorHomonym:" + seniorHomonym);
+        s_log.debug("setSeniorHomonym() homonym:" + getTaxonName() + " seniorHomonym:" + seniorHomonym);
     }
     public Taxon getSeniorHomonym() {
         return seniorHomonym;
@@ -286,12 +286,12 @@ public class Homonym extends Taxon implements Serializable {
             ;
         stmt = DBUtil.getStatement(connection, "getHomonymAuthorDates()");
         rset = stmt.executeQuery(query);
-        A.log("getHomonymAuthorDates() query:" + query);
+        s_log.debug("getHomonymAuthorDates() query:" + query);
         while (rset.next()) {
             String authorDate = rset.getString("author_date");
             homonymAuthorDates.add(authorDate);
         }
-        A.log("getHomonymAuthorDates() homonymAuthorDates:" + homonymAuthorDates);        
+        s_log.debug("getHomonymAuthorDates() homonymAuthorDates:" + homonymAuthorDates);
       } finally {
         DBUtil.close(stmt, rset, this, "getHomonymAuthorDates()");
       }

@@ -58,7 +58,7 @@ public class AntwebSystem {
     s_log.warn("restartAntweb() invoked by:" + accessLogin.getName());
     if (AntwebProps.isDevMode()) {
       message = "restartAntweb does not run in dev.";
-      A.log("restartAntweb() message:" + message);
+      s_log.debug("restartAntweb() message:" + message);
     } else {
       // None of these have worked...
       // NOPE: (new AntwebSystem()).exec("systemctl restart tomcat");
@@ -180,7 +180,7 @@ public class AntwebSystem {
   public String launchProcess(String command, boolean getRetVal) {
     String retVal = "";
     try {
-      A.log("launchProcess() Running command: " + command);
+      s_log.debug("launchProcess() Running command: " + command);
       //AntwebUtil.logShortStackTrace(3);
 
       //s_log.warn("launchProcess() Running command: " + command);
@@ -200,7 +200,7 @@ public class AntwebSystem {
       String someData = retVal;
       if (retVal != null && retVal.length() > 30) someData = retVal.substring(0, 30) + "...";
       
-      A.log("AntwebSystem.launchProcess() Running command: " + command + " retVal:" + someData);
+      s_log.debug("AntwebSystem.launchProcess() Running command: " + command + " retVal:" + someData);
 
       p.waitFor();
     } catch (Exception e) {
@@ -270,7 +270,7 @@ public class AntwebSystem {
       int v = p.exitValue();
       return true;
     } catch (IllegalThreadStateException e) {
-      A.log("procDone() e:" + e);
+      s_log.debug("procDone() e:" + e);
       //if (AntwebProps.isDevOrStageMode()) s_log.warn("procDone() e:" + e);
       return false; 
     }
@@ -358,7 +358,7 @@ public class AntwebSystem {
           }
         }
       } catch (IOException e) {
-        A.log("top() e:" + e);
+        s_log.debug("top() e:" + e);
       }
 
       return processLine;

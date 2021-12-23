@@ -6,8 +6,11 @@ import java.io.*;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
@@ -37,9 +40,9 @@ public final class SpecimenListAction extends Action {
         ActionForward a = Check.loginValid(request, mapping); if (a != null) return a; 
         Login accessLogin = LoginMgr.getAccessLogin(request);
         
-        A.log("execute() request:" + HttpUtil.getTarget(request));
+        s_log.debug("execute() request:" + HttpUtil.getTarget(request));
         
-        java.util.Date startTime = new java.util.Date();        
+        Date startTime = new Date();
         
         specimenCount = 0;
  
@@ -61,7 +64,7 @@ public final class SpecimenListAction extends Action {
 
           String url = AntwebProps.getDomainApp() + dir + fileName;
           String dataLink = "&middot; <a href=\"" + url + "\" target=\"new\">Tab-delimited data</a>";
-          A.log("execute() taxon:" + taxonName + " specimenCount:" + specimenCount + " rightClickSave:" + rightClickSave + " dataLink:" + dataLink);
+          s_log.debug("execute() taxon:" + taxonName + " specimenCount:" + specimenCount + " rightClickSave:" + rightClickSave + " dataLink:" + dataLink);
           request.setAttribute("dataLink", dataLink);
 
           //String data = null;
@@ -70,7 +73,7 @@ public final class SpecimenListAction extends Action {
           // want to know if it is there.  We just create a link to it if it exists.
            
           boolean isGetCache = "true".equals((String) df.get("getCache"));
-          A.log("execute() getCache:" + isGetCache);                    
+          s_log.debug("execute() getCache:" + isGetCache);
           boolean isGenCache = "true".equals((String) df.get("genCache"));
           if (!isGenCache) {
             boolean fetchFromCache = AntwebCacheMgr.isFetchFromCache(accessLogin, isGetCache);
@@ -105,7 +108,7 @@ public final class SpecimenListAction extends Action {
 
             String rank = null;
           
-            java.sql.Connection connection = null;                
+            Connection connection = null;
             try {
 
               // To skip the whole business and just generate a full specimen list...
@@ -113,7 +116,7 @@ public final class SpecimenListAction extends Action {
               //    return generateAllAntwebAnts(mapping, request);
               //}
 
-              javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+              DataSource dataSource = getDataSource(request, "conPool");
               
               if (DBUtil.isServerBusy(dataSource, request)) {
                 return mapping.findForward("message");            
@@ -252,7 +255,7 @@ public final class SpecimenListAction extends Action {
                 s_log.warn("getAllAntwebSpecimenData() specimenCount:" + specimenCount);
             }
         }
-        A.log("geneateAntwebSpecimenData() fullPath:" + fullPath + " data:" + dataBuffer.toString());
+        s_log.debug("geneateAntwebSpecimenData() fullPath:" + fullPath + " data:" + dataBuffer.toString());
         LogMgr.appendFile(fullPath, dataBuffer.toString());
         //return dataBuffer;
     }
@@ -267,15 +270,15 @@ public final class SpecimenListAction extends Action {
         String fullDir = AntwebProps.getDocRoot() + dir;          
         String fullPath = AntwebProps.getDocRoot() + dir + fileName;          
 
-        A.log("execute() writing:" + fullPath);
+        s_log.debug("execute() writing:" + fullPath);
         AntwebUtil.remove(fullPath);
 
         StringBuffer dataBuffer = new StringBuffer();
         dataBuffer.append(Specimen.getDataHeader() + "\n");
 
-        java.sql.Connection connection = null;                
+        Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
               
             if (DBUtil.isServerBusy(dataSource, request)) {
                 request.setAttribute("message", "Server Busy");
