@@ -2,6 +2,7 @@ package org.calacademy.antweb.upload;
 
 import java.util.Map;
 import java.util.*;
+import java.sql.SQLException;
 import java.sql.Connection;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
@@ -163,7 +164,7 @@ public class UploadDetails extends OperationDetails {
           encoding = uploadFile.getEncoding();
         }
 
-        s_log.warn("logMessagesToFile() uploadFile:" + uploadFile 
+        s_log.info("logMessagesToFile() uploadFile:" + uploadFile
           //+ " serverDir:" + getServerDir() + " backupFileName:" + backupFileName 
           + " accessLogin:" + accessLogin);
 
@@ -316,7 +317,7 @@ public class UploadDetails extends OperationDetails {
     }
     
     
-    public void finish(Login accessLogin, HttpServletRequest request, Connection connection) {
+    public void finish(Login accessLogin, HttpServletRequest request, Connection connection) throws SQLException {
         A.log("finish() operation:" +  getOperation());
         String execTime = HttpUtil.finish(request, getStartTime());
         setExecTime(execTime);

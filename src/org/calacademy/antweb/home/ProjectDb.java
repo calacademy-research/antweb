@@ -324,7 +324,7 @@ public class ProjectDb extends AntwebDb {
               //project.setRoot(root);      
               speciesListList.add(project);
             } else {
-              s_log.warn("fetchSpeciesLists() 2 name:" + name + " root:" + root + " title:" + title);
+              s_log.info("fetchSpeciesLists() 2 name:" + name + " root:" + root + " title:" + title);
             }  
           }
 
@@ -454,7 +454,7 @@ public class ProjectDb extends AntwebDb {
           dml = "insert into login_project (login_id, project_name) " 
             + " values (" + login.getId() + ",'" + projectName + "')";            
 
-          if ("worldants".equals(projectName)) s_log.warn("updateProjects() dml:" + dml);
+          if ("worldants".equals(projectName)) s_log.info("updateProjects() dml:" + dml);
 
           stmt.executeUpdate(dml);        
         }       
@@ -484,7 +484,7 @@ public class ProjectDb extends AntwebDb {
           s_log.error("deleteSpeciesList(" + speciesList + ") e:" + e);
         }  
 
-        s_log.warn("deleteSpeciesList speciesList:" + speciesList);                     
+        s_log.info("deleteSpeciesList speciesList:" + speciesList);
     }
 
     public static String getProjectTableHeader() {
@@ -605,7 +605,7 @@ public class ProjectDb extends AntwebDb {
           + " and t.taxarank in ('species', 'subspecies')"
           + " and pt.project_name = '" + project.getName() + "'";
 
-        if ("worldants".equals(project.getName())) s_log.warn("getSpecimenAndImageCount() query:" + query);  
+        if ("worldants".equals(project.getName())) s_log.info("getSpecimenAndImageCount() query:" + query);
           
         ResultSet rset = stmt.executeQuery(query);
         while (rset.next()) {          
@@ -639,7 +639,7 @@ public class ProjectDb extends AntwebDb {
             + " where project_name = '" + project.getName() + "'";
 
           x = stmt.executeUpdate(dml);
-          if ("worldants".equals(projectName)) s_log.warn("updateCountsFromSpecimenData() x:" + x + " dml:" + dml);        
+          if ("worldants".equals(projectName)) s_log.info("updateCountsFromSpecimenData() x:" + x + " dml:" + dml);
       } catch (SQLException e) {
           s_log.error("updateCountsFromSpecimenData() e:" + e);
       } finally {
@@ -677,7 +677,7 @@ public class ProjectDb extends AntwebDb {
       finish(project); 
     }
 
-    private void freshStart(Project project) {
+    private void freshStart(Project project) throws SQLException {
       String projectName = project.getName();
       UtilDb utilDb = new UtilDb(getConnection());
       utilDb.updateField("project", "subfamily_count", null, "project_name = '" + projectName + "'");    
@@ -691,10 +691,10 @@ public class ProjectDb extends AntwebDb {
       utilDb.updateField("project", "specimen_subfamily_dist_json", null, "project_name = '" + projectName + "'");    
     }        
    
-    public void updateProject() {
+    public void updateProject() throws SQLException {
       updateColors();
     }
-    private void updateColors() {    
+    private void updateColors() throws SQLException {
       String[] colors = HttpUtil.getColors();
       ArrayList<Project> projectList = ProjectMgr.getLiveProjects();    
       int i = 0;
@@ -704,19 +704,19 @@ public class ProjectDb extends AntwebDb {
         ++i;      
       }
     }   
-    private void updateColor(String projectName, String color) {    
+    private void updateColor(String projectName, String color) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
       utilDb.updateField("project", "chart_color", "'" + color + "'", "project_name = '" + projectName + "'" );
     }
 
-    public String finish() {
+    public String finish() throws SQLException {
       for (Project project : ProjectMgr.getLiveProjects()) {
         finish(project);
       }  
       return "Projects Finished";
     }
 
-    private String finish(Project project) {     
+    private String finish(Project project) throws SQLException {
       updateCountableTaxonData(project);
       //updateImagedSpecimenCount(project);
       updateValidSpeciesCount(project);
@@ -724,7 +724,7 @@ public class ProjectDb extends AntwebDb {
       return "Project Finished:" + project;
     }       
 
-    private void updateCountableTaxonData(Project project) {        
+    private void updateCountableTaxonData(Project project) throws SQLException {
         ProjTaxonCountDb projTaxonCountDb = new ProjTaxonCountDb(getConnection());
         String criteria = "project_name = '" + project + "'";
         int subfamilyCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "subfamily");
@@ -736,11 +736,11 @@ public class ProjectDb extends AntwebDb {
           //s_log.warn("updateCountableTaxonData(" + project + ") subfamilyCount:" + subfamilyCount);
           projTaxonCountDb.updateCountableTaxonCounts("project", criteria, subfamilyCount, genusCount, speciesCount);                  
         } else {
-          s_log.warn("updateCountableTaxonData(" + project + ") Not updating subfamilyCount:" + subfamilyCount);
+          s_log.info("updateCountableTaxonData(" + project + ") Not updating subfamilyCount:" + subfamilyCount);
         }
     }
 
-    private void updateValidSpeciesCount(Project project) {
+    private void updateValidSpeciesCount(Project project) throws SQLException {
         int count = getValidSpeciesCount(project);
         UtilDb utilDb = new UtilDb(getConnection());
         utilDb.updateField("project", "valid_species_count", (Integer.valueOf(count)).toString(), "project_name = '" + project.getName() + "'");
@@ -774,13 +774,13 @@ public class ProjectDb extends AntwebDb {
 
     // --- Charts ---
         
-    public void makeCharts() {
+    public void makeCharts() throws SQLException {
       for (Project project : ProjectMgr.getLiveProjects()) {
         makeCharts(project);
       }  
     }         
             
-    public void makeCharts(Project project) {
+    public void makeCharts(Project project) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
       ProjTaxonCountDb projTaxonCountDb = new ProjTaxonCountDb(getConnection());
       String criteria = "project_name = '" + project + "'";

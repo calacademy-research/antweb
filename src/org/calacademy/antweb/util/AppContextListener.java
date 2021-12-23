@@ -48,14 +48,13 @@ public final class AppContextListener
         String stats = AntwebUtil.getMemoryStats();
         s_log.warn("Memory stats - " + stats);
 
-        s_log.warn("GarbageCollection: " + AntwebUtil.timedGC());
-        s_log.warn("Memory stats - " + AntwebUtil.getMemoryStats());
+        s_log.info("GarbageCollection: " + AntwebUtil.timedGC());
+        s_log.info("Memory stats - " + AntwebUtil.getMemoryStats());
 
         // Apparently we have to explicitly release some references in
         // the Apache Commons Logging library, otherwise it will hold onto
         // memory on each webapp unload/reload
-        s_log.warn("Terminating Antweb application.");
-        s_log.warn("---------------------------");    
+        s_log.warn("------------- Terminating --------------");
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         LogFactory.release(contextClassLoader);
 
@@ -86,12 +85,9 @@ public final class AppContextListener
         boolean resourcesLoaded = AntwebProps.loadResources();
         if (resourcesLoaded == false) contextDestroyed(event);
 
-        s_log.warn("++++++++++++++++++++++++++++++++++++++");    
-        s_log.warn("Initializing Antweb application context...");
-
         String stats = AntwebUtil.getMemoryStats();
-        s_log.warn("Context Initialized - Server Up. Antweb Version: " + AntwebProps.getAntwebVersion());  
-        s_log.warn("Memory stats - " + stats);
+        s_log.warn("+++++ Server Initialized. Antweb Version: " + AntwebProps.getAntwebVersion() + "+++++");
+        s_log.info("Memory stats - " + stats);
 
         s_antwebEventLog.info("Antweb Startup.  Stats:" + stats);
 
@@ -100,9 +96,6 @@ public final class AppContextListener
         LogMgr.startup();
 
         String message = LogMgr.archiveLogs();
-
-        // Preliminary actions
-        //FileUtil.makeDir();
     }
         
 

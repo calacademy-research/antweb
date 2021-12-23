@@ -234,9 +234,9 @@ public class AntwebUpload {
                 if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
 
                 // See TaxonMgr.refreshTaxon() for documentation.
-                if (TaxonMgr.isUseRefreshing() && c > 0) {
-                    TaxonMgr.refreshTaxon(getConnection(), "save", table, taxonName, item);
-                }
+                //if (TaxonMgr.isUseRefreshing() && c > 0) {
+                //    TaxonMgr.refreshTaxon(getConnection(), "save", table, taxonName, item);
+                //}
 
             } catch (java.sql.SQLIntegrityConstraintViolationException e) {
                 s_log.warn("saveTaxon() 4 e:" + e + " query:" + query);
@@ -457,16 +457,16 @@ public class AntwebUpload {
 
                 Statement stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.updateTaxon()");
 
-                //if (query.contains("country")) A.log("updateTaxon() query:" + query);
-
                 int c = stmt.executeUpdate(query);
+                A.log("updateTaxon() c:" + c + " query:" + query);
+
                 DBUtil.close(stmt, "AntwebUpload.updateTaxon()");
 
                 if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
 
-                if (TaxonMgr.isUseRefreshing() && c > 0) {
-                    TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);
-                }
+                //if (TaxonMgr.isUseRefreshing() && c > 0) {
+                //    TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);
+                //}
 
             } catch (SQLException e) {
                 s_log.error("updateTaxon() e:" + e + " query:" + query);

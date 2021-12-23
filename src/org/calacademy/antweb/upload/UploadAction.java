@@ -68,14 +68,14 @@ public class UploadAction extends Action {
         //A.log("execute() up:" + theForm.isUp());
 
         String domainApp = AntwebProps.getDomainApp();
-
+        String errorMessage = null;
         boolean httpPostOK = false;
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
         Group accessGroup = GroupMgr.getAccessGroup(request);
 
         if (accessLogin == null && !"genAll".equals(theForm.getAction())) {
-            s_log.warn("execute() login failure.  No accessGroup.");
+            s_log.info("execute() login failure.  No accessGroup.");
             return mapping.findForward("goToLogin");
         }
 
@@ -96,7 +96,7 @@ public class UploadAction extends Action {
         // For instance, ReloadSpeciesList, ...
 
         String action = theForm.getAction();
-        A.log("execute() action:" + action);
+        s_log.warn("execute() action:" + action);
 
         boolean runCountCrawls = true;
 
@@ -144,7 +144,7 @@ public class UploadAction extends Action {
 		        || "genRecentDescEdits".equals(action)
 		        )) {
                 String message = "action:" + action + " must be submitted through an http post.";
-		        s_log.warn(message);
+		        s_log.info(message);
 			    request.setAttribute("message", message);
 			    return (mapping.findForward("message"));
             }
@@ -225,7 +225,7 @@ public class UploadAction extends Action {
 			  } else if (action.equals("reloadSpecimenList")) {
                 String abbrev = submitLogin.getGroup().getAbbrev();
 
-                s_log.warn("action:" + action + " submitGroup:" + submitLogin.getGroup());
+                s_log.info("action:" + action + " submitGroup:" + submitLogin.getGroup());
 
   // Happening in Uploader now.
   // LogMgr.logQuery(connection, "Before specimen upload Proj_taxon worldants counts", "select project_name, source, count(*) from proj_taxon where source = 'worldants' group by project_name, source");
@@ -252,9 +252,11 @@ public class UploadAction extends Action {
 
          		specimenPostProcess(connection, submitLogin, uploadDetails);
 
-				if (!AntwebProps.isDevMode())
-				  runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
-
+				if (!AntwebProps.isDevMode()) {
+					runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
+				} else {
+					s_log.warn("execute() DEV MODE SKIPPING runStatistics.");
+				}
 				httpPostOK = true;
 
                 uploadDetails.finish(accessLogin, request, connection);
@@ -281,7 +283,7 @@ public class UploadAction extends Action {
 				String formFileName = (new Date()).toString() + "specimenTest" + accessGroup + ".txt";
 
 				//logFileName += accessGroup.getAbbrev() + "SpecimenTest" + UploadDetails.getLogExt();
-				s_log.warn("execute() specimenTest " );
+				s_log.info("execute() specimenTest");
 				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(accessGroup.getAbbrev() + "specimenTest", formFileName
 				  , accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 
@@ -294,7 +296,7 @@ public class UploadAction extends Action {
 
 				return uploadDetails.findForward(mapping, request);
 
-				//  Yes it should, unless there are errors.  s_log.warn("execute() specimenTest.  This should not happen");
+				//  Yes it should, unless there are errors.  s_log.info("execute() specimenTest.  This should not happen");
 			  } else if ("allSpecimenFiles".equals(action)) {
 				/*
 				// All specimen*.txt files should be downloaded to the machine from the production site, prior to this command.
@@ -307,7 +309,7 @@ public class UploadAction extends Action {
 
 				  if ((new File(formFileName)).exists()) {
 
-					s_log.warn("-+-+-+-+-+-+-+-+-+ reloading:" + formFileName + "+-+-+-+-+-+-+-+-+-+-+-+");
+					s_log.info("-+-+-+-+-+-+-+-+-+ reloading:" + formFileName + "+-+-+-+-+-+-+-+-+-+-+-+");
 
 					boolean beAbbreviated = false;
 					if (AntwebProps.isDevMode()) beAbbreviated = true;
@@ -317,7 +319,7 @@ public class UploadAction extends Action {
 					  Login submitAsLogin = submitAsGroup.getAdminLogin();
 
 					  if (submitAsGroup.getAdminLoginId() == 0) {
-						s_log.warn("allSpecimenFiles accessLoginId == 0.  Update database.");
+						s_log.info("allSpecimenFiles accessLoginId == 0.  Update database.");
 						// Perhaps the most recent database snapshot has not been loaded?
 					  }
 
@@ -327,7 +329,7 @@ public class UploadAction extends Action {
 					  connection = DBUtil.getConnection(dataSource, "UploadAction.execute()", HttpUtil.getTarget(request));  // must keep the same name to close at the end.
 					  connection.setAutoCommit(false);
 
-					  //s_log.warn("formFileName:" + formFileName + " accessGroup:" + accessGroup + " logFileName:" + logFileName);
+					  //s_log.info("formFileName:" + formFileName + " accessGroup:" + accessGroup + " logFileName:" + logFileName);
 
 					  uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile("allSpecimenFiles", formFileName
 						, submitAsLogin, request.getHeader("User-Agent"), theForm.getEncoding());
@@ -338,7 +340,7 @@ public class UploadAction extends Action {
 
 					  connection.commit();
 					} else {
-					//s_log.warn("execute() not exists:" + formFileName);
+					//s_log.info("execute() not exists:" + formFileName);
 					}
 				  }
 				}
@@ -370,7 +372,7 @@ public class UploadAction extends Action {
 
 				ActionForward forward = doAction(action, connection, request, mapping, accessLogin);
 				if (forward != null) {
-  			  	    s_log.warn("execute() forward:" + forward);
+  			  	    s_log.info("execute() forward:" + forward);
    		   	        return forward;
 				} else {
 				  request.setAttribute("message", "Action not found.");
@@ -389,7 +391,7 @@ public class UploadAction extends Action {
 				loginDb.refreshLogin(session);
 
 				String message = "Species List deleted:" + deleteProject + ".";
-				s_log.warn("execute() " + message);
+				s_log.info("execute() " + message);
 
 				ProjectMgr.populate(connection, true);
 
@@ -409,7 +411,7 @@ public class UploadAction extends Action {
 				String url = AntwebProps.getDomainApp() + "/editProject.do?projectName=" + createProject;
 				String anchorTag = "<a href='" + url + "'>Here</a>";
 				String message = "To create project <b>" + createProject + "</b> click: <b>" + anchorTag + "</b>. <br><br>&nbsp;&nbsp;&nbsp;Once you click 'Done', the project will be created.";
-				//s_log.warn("execute() " + message);
+				//s_log.into("execute() " + message);
 
 				request.setAttribute("message", message);
 				return mapping.findForward("message");
@@ -417,7 +419,7 @@ public class UploadAction extends Action {
 
 			if (!(theForm.getEditSpeciesList().equals("none"))) {
 				String editSpeciesList = ((theForm.getEditSpeciesList()));
-				s_log.warn("execute() editSpeciesList:" + editSpeciesList);
+				s_log.info("execute() editSpeciesList:" + editSpeciesList);
 				request.setAttribute("mapSpeciesList1Name", editSpeciesList);
 				request.setAttribute("isFreshen", "true");
 				return mapping.findForward("speciesListTool");
@@ -425,7 +427,7 @@ public class UploadAction extends Action {
 
 			if (!HttpUtil.isPost(request) && !httpPostOK) {
 			   String message = "Must use Http Post.  Group:" + accessGroup.getId();
-			   s_log.warn("execute() " + message);
+			   s_log.info("execute() " + message);
 			   request.setAttribute("message", message);
 			   return mapping.findForward("message");
 			}
@@ -465,16 +467,15 @@ public class UploadAction extends Action {
 				try {
 				  session.setAttribute("museumMap", uploadDetails.getMuseumMap());
 				} catch (java.lang.IllegalStateException e) {
-				  s_log.warn("execute() handled:" + e);
+				  s_log.info("execute() handled:" + e);
 				}
 
-				//if (!AntwebProps.isDevMode()) {
-  	 			  runCountCrawls = true;
-				  //runCountCrawls(connection);
-				//}
+  			    runCountCrawls = true;
 
 				if (!AntwebProps.isDevMode()) {
                     runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
+				} else {
+					s_log.warn("execute() DEV MODE SKIPPING runStatistics");
 				}
 			}
 
@@ -491,7 +492,7 @@ public class UploadAction extends Action {
 /*
 				action = "upload:" + file2.getFileName();
 
-				s_log.warn("file upload:" + action);
+				s_log.info("file upload:" + action);
 				uploadDetails = uploadFileToFolder(theForm, request, accessLogin);
 
                 ActionForward forward = uploadDetails.findForward(mapping, request);
@@ -510,8 +511,8 @@ public class UploadAction extends Action {
 			if (testFile != null) {
 			  if (!testFile.getFileName().equals("")) {
 				action = "upload:" + testFile.getFileName();
-				//s_log.warn("execute() Upload a test file logFileName:" + logFileName);
-				//s_log.warn("execute() testFile:" + testFile.getFileName());
+				//s_log.info("execute() Upload a test file logFileName:" + logFileName);
+				//s_log.info("execute() testFile:" + testFile.getFileName());
 
 				uploadDetails = uploadDataFile(theForm, request, mapping, connection);
 				return uploadDetails.findForward(mapping, request);
@@ -555,39 +556,26 @@ public class UploadAction extends Action {
 			if (runCountCrawls) {
 				uploadDetails.setOfferRunCountCrawlLink(true);
 			}
-            /* // No. Don't run it or call it here. Indicate to UploadReport a link should be presented.
-				String url = null;
-				try {
-					url = AntwebProps.getThisDomainApp() + "/utilData.do?action=runCountCrawls&param=allow";
-					s_log.warn("execute() url:" + url);
-					String output = HttpUtil.fetchUrl(url);
-					s_log.warn("execute() output:" + output);
-				} catch (IOException e) {
-					s_log.warn("execute() e:" + e + " url:" + url);
-				}
-			}
-        */
 
 			return mapping.findForward(uploadDetails.getForwardPage());
         } catch (Exception e) {
-            s_log.error("execute() action:" + action + " e:" + e + " trace:" + AntwebUtil.getShortStackTrace(e, 7));
-            if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace(e);
+        	int caseNumber = AntwebUtil.getCaseNumber();
+        	A.log("e:" + e);
+            errorMessage = "Error. Case number:" + caseNumber + ". No changes made. e:" + e.toString();
+            s_log.error("execute() errorMessage:" + errorMessage + " action:" + action);
             DBUtil.rollback(connection);
-
-			request.setAttribute("message", "Unexpected error.  Please contact administrator.");
-			s_log.error("execute() Returning Error.  This should not happen.");
+			request.setAttribute("message", errorMessage);
 			return mapping.findForward("message");
-
         } finally {
-            s_log.warn("execute() Completion of the Upload Process.  Group:" + accessGroup.getAbbrev() + " action:" + action
-               + " in " + AntwebUtil.getMinsPassed(uploadDetails.getStartTime())
-               );
+        	String finishMessage = "Completion of the Upload Process.";
+        	if (errorMessage != null) finishMessage = errorMessage;
+            s_log.warn("execute() finished action:" + action + " group:" + accessGroup.getAbbrev() + "
+               + " in " + AntwebUtil.getMinsPassed(uploadDetails.getStartTime()) );
             setIsInUploadProcess(null);
 
             UploadMgr.populate(connection, true); // Repopulate UploadMgr.
 
             DBUtil.close(connection, this, "UploadAction.execute() 1");
-            s_log.warn("execute() finally finished.");
 
 			Profiler.profile("uploadAction", uploadDetails.getStartTime());
             Profiler.report();
@@ -654,7 +642,7 @@ public class UploadAction extends Action {
 			return (mapping.findForward("statisticsDo"));
 		}
 		if (action.equals("runCountCrawls")) {
-			s_log.warn("doAction() Run Count Crawl should be done through UtilData.do.");
+			s_log.info("doAction() Run Count Crawl should be done through UtilData.do.");
 			//runCountCrawls(connection);
 			//return (mapping.findForward("success"));
 		}
@@ -728,15 +716,13 @@ public class UploadAction extends Action {
 		  //+ " dirFileName:" + dirFileName
 		  + " outputFileName:" + outputFileName
 		  + " outputFileName2:" + outputFileName2;
-		s_log.warn(logMessage);
+		s_log.info(logMessage);
 
 		util.backupFile(outputFileName2);
 		boolean isSuccess = util.copyFile(theForm.getTheFile2(), outputFileName2);
 		if (!isSuccess) {
 		  messageStr = "uploadFileToFolder() copyFile failure";
 		  return new UploadDetails("uploadFile", messageStr, "message");
-		  //s_log.warn("uploadFileToFolder() copyFile failure");
-		  //return mapping.findForward("error");
 		}
 
 		s_antwebEventLog.info(logMessage);
@@ -754,7 +740,7 @@ public class UploadAction extends Action {
 			String fileLoc = dir + "/" + newDirName; // was "/uploaded"
 			String unzipDir = docBase + fileLoc;
 			String command = util.unzipFile(outputFileName2, unzipDir);
-			s_log.warn("uploadFileToFolder() unzipping: " + outputFileName2);
+			s_log.info("uploadFileToFolder() unzipping: " + outputFileName2);
 
 			String url = AntwebProps.getDomainApp() + "/" + fileLoc;
 
@@ -785,9 +771,9 @@ public class UploadAction extends Action {
 		}
 
 		// runStatistics = true;
-		s_log.warn("uploadFileToFolder() done importing file:" + outputFileName2);
+		s_log.info("uploadFileToFolder() done importing file:" + outputFileName2);
 
-		s_log.warn("uploadFileToFolder() " + messageStr);
+		s_log.info("uploadFileToFolder() " + messageStr);
 
 		UploadDetails uploadDetails = new UploadDetails(file2.getFileName(), messageStr, request);
         uploadDetails.setForwardPage("adminMessage");
@@ -843,7 +829,7 @@ public class UploadAction extends Action {
             if (theLine == null) {
                 messageStr = "uploadDataFile() null line.  Perhaps empty file:" + fileName + "?";
             } else {
-                s_log.warn("uploadDataFile() header:" + theLine);
+                s_log.info("uploadDataFile() header:" + theLine);
             }
 
 
@@ -1091,7 +1077,7 @@ public class UploadAction extends Action {
               ;
 
         } catch (RESyntaxException e) {
-          s_log.warn("testFileFossil() e:" + e);
+          s_log.info("testFileFossil() e:" + e);
         }
         return messageStr;
     }
@@ -1176,7 +1162,6 @@ public class UploadAction extends Action {
               awContent.append("<br>" + c2 + ". <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxon.getTaxonName() + "'>" + Taxon.getPrettyTaxonName(taxon.getTaxonName()) + "</a>");
             }
 
-            //s_log.warn("testFileSynonyms() currentValidFound:" + currentValidFound + " currentValidNotFound:" + currentValidNotFound + " taxonNotFound:" + taxonNotFound);
             messageStr = "<h2>Valid Species List</h2>"
               + "<br>Lines in Antcat valid species file: " + (lineNum - 1)  // minus 1 for the header
               + "<br>Antcat valid species Count not in Antweb: " + c
@@ -1189,7 +1174,7 @@ public class UploadAction extends Action {
 
 
         } catch (RESyntaxException e) {
-          s_log.warn("testValidSpeciesList() e:" + e);
+          s_log.error("testValidSpeciesList() e:" + e);
         }
         return messageStr;
     }
@@ -1248,14 +1233,13 @@ public class UploadAction extends Action {
               }
             } // end while loop through lines
 
-            //s_log.warn("testFileSynonyms() currentValidFound:" + currentValidFound + " currentValidNotFound:" + currentValidNotFound + " taxonNotFound:" + taxonNotFound);
             messageStr = "<h3>Synonym Test</h3><br><br>"
               + " currentValidFound:" + currentValidFound + " currentValidNotFound:" + currentValidNotFound + " taxonNotFound:" + taxonNotFound + "\n"
               + "<br><br><h3>Current Valid Name in Question:</h3><br><br>" + cvnfContent.toString()
               + "<br><br><h3>Taxa Not Found</h3><br><br>" + tnfContent.toString();
 
         } catch (RESyntaxException e) {
-          s_log.warn("testFileSynonyms() e:" + e);
+          s_log.error("testFileSynonyms() e:" + e);
         }
         return messageStr;
     }
@@ -1264,7 +1248,7 @@ public class UploadAction extends Action {
 
         HttpSession session = request.getSession();
 
-        s_log.warn("worldAuthGen() generating world authority files");
+        s_log.info("worldAuthGen() generating world authority files");
         WorldAuthorityGenerator worldGen = new WorldAuthorityGenerator();
 
         ArrayList<HashMap<String, String>> extinctSubfamilies = worldGen.getSubfamilies("extinct");
@@ -1308,9 +1292,9 @@ public class UploadAction extends Action {
         session.setAttribute("extinct", extinct.get(1));
         session.setAttribute("extant", extant.get(1));
         session.setAttribute("problems",problems);
-        s_log.warn("worldAuthGen() done generating world authority files");
+        s_log.info("worldAuthGen() done generating world authority files");
 
-        s_log.warn("World Authority File upload not running statistics.  Correct?  Struts Forward correct?");
+        s_log.info("World Authority File upload not running statistics.  Correct?  Struts Forward correct?");
         return "worldAuthorityFiles";
     }
 
@@ -1356,7 +1340,7 @@ public class UploadAction extends Action {
              break;
          }
       }
-      if (returnVal == null) s_log.warn("getProjectForDirectory() returnVal is null for directory:" + directory);
+      if (returnVal == null) s_log.info("getProjectForDirectory() returnVal is null for directory:" + directory);
       return returnVal;
     }
 
@@ -1374,7 +1358,7 @@ public class UploadAction extends Action {
           return;
         }
 
-        s_log.warn("runStatistics()");
+        s_log.info("runStatistics()");
 
         //String docBase = request.getRealPath("/");
 		String docBase = AntwebProps.getDocRoot();
@@ -1384,30 +1368,5 @@ public class UploadAction extends Action {
 
         (new StatisticsDb(connection)).populateStatistics(action, loginId, execTime, docBase);
     }
-/*
-    // Same as above but get a new connection.
-	private void runStatistics(String action, DataSource dataSource, HttpServletRequest request, int loginId, UploadDetails uploadDetails)
-			throws SQLException, IOException {
-
-    	dataSource = DBUtil.getDataSource();
-
-		Connection connection = DBUtil.getConnection(dataSource, "UploadAction.runStatistics()", HttpUtil.getTarget(request));
-
-		if (false && AntwebProps.isDevOrStageMode()) {
-			s_log.warn("runStatistics() not executing because of test mode.");
-			return;
-		}
-
-		s_log.warn("runStatistics()");
-
-		//String docBase = request.getRealPath("/");
-		String docBase = AntwebProps.getDocRoot();
-
-		String execTime = "N/A";
-		if (uploadDetails != null) execTime = uploadDetails.getExecTime();
-
-		(new StatisticsDb(connection)).populateStatistics(action, loginId, execTime, docBase);
-	}
-*/
 
 }

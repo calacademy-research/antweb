@@ -126,6 +126,7 @@ message += topReport;
 String serverDetails = (String) request.getAttribute("serverDetails");
 %>
 <br><b>Server Details:</b> <%= serverDetails %>
+<br><b>TaxonMgr</b><%= TaxonMgr.report() %>
 
 <br><br><br>
 <h3>Session Attributes Names:</h3>

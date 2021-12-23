@@ -1705,8 +1705,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     private String getUnpickedFromSpeciesSet(Connection connection, String caste, String speciesSetStr, String shotClause) {
+        String forceIndex = " FORCE INDEX (specimen_taxon_name)";
 	  String query = "select code, taxon_name, caste, subcaste "
-		  + " from specimen, image "
+		  + " from specimen " +  forceIndex + ", image "
 		  + " where specimen.code = image.image_of_id "
 		  + shotClause
 		  + " and shot_number = 1 "

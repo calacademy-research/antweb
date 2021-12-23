@@ -19,10 +19,10 @@ public class BioregionDb extends AntwebDb {
       super(connection);
     }
 
-    public Bioregion getBioregion(String bioregionName) {
+    public Bioregion getBioregion(String bioregionName) throws SQLException {
       return getBioregionWithClause(" name = '" + bioregionName + "'");
     }
-    public Bioregion getBioregionWithClause(String keyClause) {
+    public Bioregion getBioregionWithClause(String keyClause) throws SQLException {
       Bioregion bioregion = null;
       Statement stmt = null;
       ResultSet rset = null;
@@ -66,7 +66,8 @@ public class BioregionDb extends AntwebDb {
 
         //A.log("getBioregionWithClause() query:" + theQuery);   
       } catch (SQLException e) {
-        s_log.warn("getBioregionWithClause() e:" + e);            
+        s_log.warn("getBioregionWithClause() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, rset, "getBioregionWithClause()");        
       }      
@@ -74,11 +75,11 @@ public class BioregionDb extends AntwebDb {
     }
 
 
-    public ArrayList<Bioregion> getBioregions() {
+    public ArrayList<Bioregion> getBioregions()throws SQLException  {
       return getBioregions(false);
     }
 
-    public ArrayList<Bioregion> getBioregions(boolean deep) {
+    public ArrayList<Bioregion> getBioregions(boolean deep) throws SQLException {
         ArrayList<Bioregion> bioregions = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
@@ -127,6 +128,7 @@ public class BioregionDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.warn("getBioregions() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "BioregionDb.getBioregions()");        
         }
@@ -134,7 +136,7 @@ public class BioregionDb extends AntwebDb {
         return bioregions;
     }
 
-    public ArrayList<String> getBioregionNames() {
+    public ArrayList<String> getBioregionNames() throws SQLException {
         ArrayList<String> bioregionNames = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
@@ -151,13 +153,14 @@ public class BioregionDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.warn("getBioregionNames() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "BioregionDb.getBioregionNames()");        
         }
         return bioregionNames;
     }
 
-    public ArrayList<String> getCountryNames(String bioregionName) {
+    public ArrayList<String> getCountryNames(String bioregionName) throws SQLException {
         ArrayList<String> countryNames = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
@@ -176,6 +179,7 @@ public class BioregionDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.warn("getCountryNames() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "BioregionDb.getCountryNames()");        
         }
@@ -185,7 +189,7 @@ public class BioregionDb extends AntwebDb {
     
 // ------------- Get From Specimen Data ----------------------
     
-    public Bioregion getFromSpecimenData(String bioregionName) {
+    public Bioregion getFromSpecimenData(String bioregionName) throws SQLException {
 
         Bioregion bioregion = new Bioregion();
         bioregion.setName(bioregionName);
@@ -198,7 +202,7 @@ public class BioregionDb extends AntwebDb {
         return bioregion;
     }
 
-    private void getSpecimenCount(Bioregion bioregion) {
+    private void getSpecimenCount(Bioregion bioregion) throws SQLException {
 
       Statement stmt = null;
       ResultSet rset = null;
@@ -218,12 +222,13 @@ public class BioregionDb extends AntwebDb {
 
       } catch (SQLException e) {
         s_log.error("getSpecimenCount() e:" + e);
+         throw e;
       } finally {
         DBUtil.close(stmt, rset, "getSpecimenCount()");
       }
     }
 
-    public void getImageCount(Bioregion bioregion) {
+    public void getImageCount(Bioregion bioregion) throws SQLException {
 
       Statement stmt = null;
       ResultSet rset = null;
@@ -244,12 +249,13 @@ public class BioregionDb extends AntwebDb {
 
       } catch (SQLException e) {
         s_log.error("getImageCount() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, rset, "getImageCount()");
       } 
     }           
   
-    private void populateFromSpecimenData(String bioregionName) {
+    private void populateFromSpecimenData(String bioregionName) throws SQLException {
       
       Bioregion bioregion = getFromSpecimenData(bioregionName);
       if (bioregion == null) {
@@ -274,6 +280,7 @@ public class BioregionDb extends AntwebDb {
         
       } catch (SQLException e) {
           s_log.error("populateFromSpecimenData() e:" + e);
+          throw e;
       } finally {
           DBUtil.close(stmt, null, "populateFromSpecimenData()");
       }      
@@ -318,7 +325,7 @@ public class BioregionDb extends AntwebDb {
       finish(bioregion); 
     }
 
-    private void freshStart(String bioregionName) {
+    private void freshStart(String bioregionName) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
       utilDb.updateField("bioregion", "subfamily_count", null, "name = '" + bioregionName + "'");    
       utilDb.updateField("bioregion", "genus_count", null, "name = '" + bioregionName + "'");    
@@ -332,7 +339,7 @@ public class BioregionDb extends AntwebDb {
       int count = utilDb.deleteFrom("bioregion_taxon", " where bioregion_name = '" + bioregionName + "' and source != 'antcat'");    
     }
 
-    private String populateSpecies() {
+    private String populateSpecies() throws SQLException {
       A.log("populateSpecies()");
     
       for (String bioregionName : BioregionMgr.getBioregionNames()) {
@@ -341,7 +348,7 @@ public class BioregionDb extends AntwebDb {
       return "Bioregion_Taxon populated";
     }
 
-    public void populateSpecies(String bioregionName) {
+    public void populateSpecies(String bioregionName) throws SQLException {
 
       Bioregion bioregion = null;
       
@@ -365,11 +372,11 @@ public class BioregionDb extends AntwebDb {
       //s_log.warn("populateSpecies(" + bioregionName + " fromSpecimenCount:" + fromSpecimenCount + " fromGeolocaleTaxonCount:" + fromGeolocaleTaxonCount);
     }
 
-    public void updateBioregion() {
+    public void updateBioregion() throws SQLException {
       updateColors();
     }
     
-    private void updateColors() {    
+    private void updateColors() throws SQLException {
       String[] colors = HttpUtil.getColors();
       ArrayList<Bioregion> bioregionList = BioregionMgr.getBioregions();    
       int i = 0;
@@ -379,19 +386,19 @@ public class BioregionDb extends AntwebDb {
       }
     }
 
-    private void updateColor(String bioregionName, String color) {    
+    private void updateColor(String bioregionName, String color) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
       utilDb.updateField("bioregion", "chart_color", "'" + color + "'", "name = '" + bioregionName + "'" );
     }
 
-    public String finish() {
+    public String finish() throws SQLException {
       for (Bioregion bioregion : BioregionMgr.getBioregions()) {
         finish(bioregion);
       }  
       return "Bioregion Finished";
     }
 
-    private String finish(Bioregion bioregion) {
+    private String finish(Bioregion bioregion) throws SQLException {
       updateCountableTaxonData(bioregion);
       updateImagedSpecimenCount(bioregion);
       updateValidSpeciesCount(bioregion);
@@ -400,7 +407,7 @@ public class BioregionDb extends AntwebDb {
     }       
     
 
-    private void updateCountableTaxonData(Bioregion bioregion) {        
+    private void updateCountableTaxonData(Bioregion bioregion) throws SQLException {
         BioregionTaxonCountDb bioregionTaxonCountDb = new BioregionTaxonCountDb(getConnection());
         String criteria = "bioregion_name = '" + bioregion + "'";
         int subfamilyCount = bioregionTaxonCountDb.getCountableTaxonCount("bioregion_taxon", criteria, "subfamily");
@@ -414,19 +421,19 @@ public class BioregionDb extends AntwebDb {
         bioregionTaxonCountDb.updateCountableTaxonCounts("bioregion", criteria, subfamilyCount, genusCount, speciesCount);                  
     }    
 
-    private void updateImagedSpecimen() {
+    private void updateImagedSpecimen() throws SQLException {
       for (Bioregion bioregion : BioregionMgr.getBioregions()) {
         updateImagedSpecimenCount(bioregion);
       }  
     }
 
-    private void updateImagedSpecimenCount(Bioregion bioregion) {
+    private void updateImagedSpecimenCount(Bioregion bioregion) throws SQLException {
         int count = getImagedSpecimenCount(bioregion);
         UtilDb utilDb = new UtilDb(getConnection());
         utilDb.updateField("bioregion", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "name = '" + bioregion + "'");
     }
 
-    private int getImagedSpecimenCount(Bioregion bioregion) {
+    private int getImagedSpecimenCount(Bioregion bioregion) throws SQLException {
       int imagedSpecimenCount = 0;
       String query = null;
       Statement stmt = null;
@@ -442,21 +449,22 @@ public class BioregionDb extends AntwebDb {
         }
 
         //A.log("getImagedSpecimenCount() query:" + query + " imagedSpecimenCount:" + imagedSpecimenCount);       
-      } catch (SQLException e2) {
-        s_log.error("getImagedSpecimenCount() e:" + e2);
+      } catch (SQLException e) {
+        s_log.error("getImagedSpecimenCount() e:" + e);
+        throw e;
       } finally {
           DBUtil.close(stmt, rset, "getImagedSpecimenCount()");
       }  
       return imagedSpecimenCount;
     }
 
-    private void updateValidSpeciesCount(Bioregion bioregion) {
+    private void updateValidSpeciesCount(Bioregion bioregion) throws SQLException {
         int count = getValidSpeciesCount(bioregion);
         UtilDb utilDb = new UtilDb(getConnection());
         utilDb.updateField("bioregion", "valid_species_count", (Integer.valueOf(count)).toString(), "name = '" + bioregion + "'");
     }
 
-    private int getValidSpeciesCount(Bioregion bioregion) {
+    private int getValidSpeciesCount(Bioregion bioregion) throws SQLException {
         int validSpeciesCount = 0;
         String query = null;
         Statement stmt = null;
@@ -473,8 +481,9 @@ public class BioregionDb extends AntwebDb {
                 validSpeciesCount = rset.getInt("count");
             }
 
-        } catch (SQLException e2) {
-            s_log.error("getValidSpeciesCount() e:" + e2 + " query:" + query);
+        } catch (SQLException e) {
+            s_log.error("getValidSpeciesCount() e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "getValidSpeciesCount()");
         }
@@ -484,13 +493,13 @@ public class BioregionDb extends AntwebDb {
 
     // --- Charts ---
         
-    public void makeCharts() {
+    public void makeCharts() throws SQLException {
       for (Bioregion bioregion : BioregionMgr.getBioregions()) {
         makeCharts(bioregion);
       }  
     }     
             
-    public void makeCharts(Bioregion bioregion) {
+    public void makeCharts(Bioregion bioregion) throws SQLException {
       //A.log("makeCharts(" + bioregion + ")");
       UtilDb utilDb = new UtilDb(getConnection());
       BioregionTaxonCountDb bioregionTaxonCountDb = new BioregionTaxonCountDb(getConnection());
@@ -503,7 +512,7 @@ public class BioregionDb extends AntwebDb {
     }
 
 // Add SpecimenDb.getFlagCriteria() ?
-    public String getTaxonSubfamilyDistJsonQuery(String criteria) {
+    public String getTaxonSubfamilyDistJsonQuery(String criteria) throws SQLException {
       String query = "select t.subfamily, count(*) count, t2.chart_color " 
           + " from bioregion_taxon bt, taxon t, taxon t2, bioregion b " 
           + " where bt.taxon_name = t.taxon_name " 
@@ -516,7 +525,7 @@ public class BioregionDb extends AntwebDb {
       return query;
     }
 
-    public String getSpecimenSubfamilyDistJsonQuery(String criteria) {
+    public String getSpecimenSubfamilyDistJsonQuery(String criteria) throws SQLException {
       String query = "select subfamily, count(*) count " 
           + " from bioregion_taxon bt, specimen s, bioregion b " 
           + " where bt.taxon_name = s.taxon_name " 
@@ -532,7 +541,7 @@ public class BioregionDb extends AntwebDb {
 
     /* THIS CODE IS INCOMPLETE. CLOSE TO CORRECT BUT THE QUERY IS STRAIGNT COPIED FROM GeolocaleDb */
 
-    public int calcIntroduced() {
+    public int calcIntroduced() throws SQLException {
         int sum = 0;
         ArrayList<Bioregion> bioregionList = BioregionMgr.getBioregions();
         for (Bioregion bioregion : bioregionList) {
@@ -540,7 +549,7 @@ public class BioregionDb extends AntwebDb {
         }
         return sum;
     }
-    public int calcIntroduced(Bioregion bioregion) {
+    public int calcIntroduced(Bioregion bioregion) throws SQLException {
         // Set all to false prior to setting specifics to true below...
         updateBioregionTaxonField("introduced", bioregion.getName(), null);
         updateBioregionFieldCount("introduced", bioregion.getName(), 0);
@@ -605,6 +614,7 @@ public class BioregionDb extends AntwebDb {
 
         } catch (SQLException e) {
             s_log.error("calcIntroduced() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "calcIntroduced()");
         }
@@ -624,7 +634,7 @@ public class BioregionDb extends AntwebDb {
     }
     */
 
-    public int calcEndemic() { //Bioregion bioregion) {
+    public int calcEndemic() throws SQLException { //Bioregion bioregion) {
         int c = 0;
         // Set all to false prior to setting specifics to true below...
         c += updateBioregionTaxonField("endemic", null, null); //bioregion.getName()
@@ -645,7 +655,7 @@ public class BioregionDb extends AntwebDb {
         return calcEndemism(query);
     }
 
-    private int calcEndemism(String query) {
+    private int calcEndemism(String query) throws SQLException {
         int c = 0;
         Statement stmt = null;
         ResultSet rset = null;
@@ -683,13 +693,14 @@ public class BioregionDb extends AntwebDb {
 
         } catch (SQLException e) {
             s_log.error("calcEndemism() query:" + query + " e:" + e.toString());
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "calcEndemism()");
         }
         return c;
     }
 
-    private int updateBioregionFieldCount(String field, String bioregionName, int count) {
+    private int updateBioregionFieldCount(String field, String bioregionName, int count) throws SQLException {
         int c = 0;
         String updateDml = "update bioregion set " + field + "_species_count = ";
         if (bioregionName == null) {
@@ -704,6 +715,7 @@ public class BioregionDb extends AntwebDb {
             c = stmt.executeUpdate(updateDml);
         } catch (SQLException e) {
             s_log.error("updateBioregionFieldCount() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, null, this, "updateBioregionFieldCount()");
         }
@@ -711,7 +723,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     // Will set to true (1)
-    private int updateBioregionTaxonField(String field, String bioregionName, String taxonName) {
+    private int updateBioregionTaxonField(String field, String bioregionName, String taxonName) throws SQLException {
         int c = 0;
         String updateDml = "update bioregion_taxon set is_" + field + " = "; // will be is_endemic or is_introduced
         if (bioregionName == null) {
@@ -726,6 +738,7 @@ public class BioregionDb extends AntwebDb {
             c = stmt.executeUpdate(updateDml);
         } catch (SQLException e) {
             s_log.error("updateBioregionTaxonField() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, null, this, "updateBioregionTaxonField()");
         }

@@ -229,7 +229,7 @@ Or, if there are stmts and/or rsets...
     public static void rollback(Connection connection) {
         //AntwebUtil.errorStackTrace(e);
         try {
-            s_log.error("rollback() rollback()");
+            s_log.error("rollback() No changes made.");
             connection.rollback();
         } catch (Exception e) {
             s_log.error("rollback() failure e:" + e);

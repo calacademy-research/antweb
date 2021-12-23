@@ -23,34 +23,6 @@ public final class Subspecies extends Species implements Serializable {
         return getSubspecies(); 
     }
 
-    /*
-    public void setTaxonomicInfo(Connection connection) throws SQLException {
-        String theQuery = null;
-        
-		String subfamilyClaus = "";
-		if (subfamily != null) subfamilyClaus = " subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "' and ";
-
-		theQuery = "select distinct taxon.kingdom_name, taxon.phylum_name, taxon.class_name, taxon.order_name " 
-		  + ", taxon.family, taxon.subfamily, taxon.tribe, taxon.subgenus, taxon.speciesgroup, taxon.species " 
-		  + ", taxon.type, taxon.status "
-		  + " from taxon " //, proj_taxon " 
-		 // + " where taxon.taxon_name = proj_taxon.taxon_name " 
-		  + " where " 
-		  + subfamilyClaus
-		  + " genus ='" + AntFormatter.escapeQuotes(genus) + "'"
-		  + " and species ='" + AntFormatter.escapeQuotes(species) + "'" 
-		  + " and subspecies ='" + AntFormatter.escapeQuotes(subspecies) + "'" 
-		  + " and taxarank = 'subspecies'";
-
-		// theQuery += " and proj_taxon.project_name = '" + project + "'";
-
-		A.log("setTaxonomicInfo() theQuery:" + theQuery);
-
-		TaxonDb taxonDb = new TaxonDb(connection);
-		taxonDb.setTaxonomicInfo(theQuery, this);
-	}
-    */
-
     public String getSeeAlsoSiblingSubspecies(Connection connection) throws SQLException {
       // Used by SetSeeAlso()    
         String siblingSubspecies = "";

@@ -16,6 +16,6 @@ public class AntwebException extends Exception {
   }
   
   public String toString() {
-    return super.toString() + " " + getMessage();
-  }  
+    return getMessage();
+  } // return super.toString() + " " +
 }

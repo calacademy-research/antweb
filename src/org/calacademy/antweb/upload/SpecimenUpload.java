@@ -211,6 +211,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
                 A.log("deleteOrphanedSpeciesFromSource() returns:" + message);
                 if (message != null && !AntwebProps.isDevMode()) {
                   getUploadDetails().setMessage(message);
+                } else {
+                    s_log.warn("importSpecimens() DEV MODE SKIPPING governed=false and uploadDetails.setMessaage()");
                 }
 
                 // For debugging purposes. See log file.

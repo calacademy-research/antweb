@@ -204,10 +204,11 @@ public class TaxonDb extends AntwebDb {
         return taxon;
     }
 
-        public Taxon getFullTaxon(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
-            return getFullTaxon(null, subfamily, genus, species, subspecies, rank);
-        }
-        public Taxon getFullTaxon(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+    public Taxon getFullTaxon(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+        return getFullTaxon("Formicidae", subfamily, genus, species, subspecies, rank);
+    }
+
+    public Taxon getFullTaxon(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
         Taxon taxon = null;
 
         String taxonName = getTaxonName(family, subfamily, genus, species, subspecies, rank);
@@ -219,12 +220,13 @@ public class TaxonDb extends AntwebDb {
 
         taxon = getFullTaxon(taxonName);
         return taxon;
+    }
 
 
-    public String getTaxonName(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+    private String getTaxonName(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
         return getTaxonName(null, subfamily, genus, species, subspecies, rank);
     }
-    public String getTaxonName(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+    private String getTaxonName(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
         String taxonName = null;
 
         String familyClause = "";
@@ -260,9 +262,12 @@ public class TaxonDb extends AntwebDb {
                 i = i + 1;
                 taxonName = rset.getString("taxon_name");
             }
-            if (i > 1) s_log.warn("getTaxonName() did not get unique result." + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank
-              + " query:" + theQuery);
-
+            if (i > 1) {
+                s_log.warn("getTaxonName() did not get unique result." + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank
+                        + " query:" + theQuery);
+                s_log.info("getTaxonName() " + AntwebUtil.getShortStackTrace());
+                return null;
+            }
         } catch (SQLException e) {
             s_log.error("getTaxonName() e:" + e);
             throw e;
@@ -272,6 +277,7 @@ public class TaxonDb extends AntwebDb {
 
         return taxonName;
     }
+
 
     public ArrayList<Taxon> getTaxa() {
         ArrayList<Taxon> taxa = new ArrayList<>();
@@ -638,7 +644,7 @@ public class TaxonDb extends AntwebDb {
         (new UtilDb(getConnection())).updateField("taxon", "type", "null"); //, "status = 'morphotaxon'");      
       
         stmt = DBUtil.getStatement(getConnection(), "crawlForType()");
-        s_log.warn("crawlForType()");
+        s_log.info("crawlForType()");
         
         String dml = "update taxon " 
           + " set type = 1 where taxarank = 'species' and status != 'morphotaxon' and taxon_name in "
@@ -791,18 +797,18 @@ public class TaxonDb extends AntwebDb {
     }       
     
     // Called in Specimen post process.
-    public void removeIndetWithoutSpecimen() {
+    public void removeIndetWithoutSpecimen() throws SQLException {
       (new UtilDb(getConnection())).deleteFrom("taxon", "where source like 'specimen%' and status in ('indetermined', 'unrecognized') and taxon_name not in (select taxon_name from specimen)");
     }
 
-    public static String deleteSpeciesWithoutSpecimenOrAntcatSource(Connection connection) {
+    public static String deleteSpeciesWithoutSpecimenOrAntcatSource(Connection connection) throws SQLException {
       String dmlWhereClause = "where taxon_name not in (select taxon_name from proj_taxon where project_name = 'worldants') "
         + " and taxon_name not in (select taxon_name from specimen) "
         + " and taxarank in ('species', 'subspecies')";
       int retVal = (new UtilDb(connection)).deleteFrom("taxon", dmlWhereClause);
       return retVal + " deleteSpeciesWithoutSpecimenOrAntcatSource. ";
     }
-    public static String deleteGeneraWithoutSpecimenOrAntcatSource(Connection connection) {
+    public static String deleteGeneraWithoutSpecimenOrAntcatSource(Connection connection) throws SQLException {
       String dmlWhereClause = "where taxon_name not in (select taxon_name from proj_taxon where project_name = 'worldants') "
         + " and (subfamily, genus) not in (select subfamily, genus from specimen) "
         + " and taxarank in ('genus')";
@@ -811,7 +817,7 @@ public class TaxonDb extends AntwebDb {
     }
 
 
-    public HashMap<String, ArrayList<String>> getSubgenusHashMap() {
+    public HashMap<String, ArrayList<String>> getSubgenusHashMap() throws SQLException {
         HashMap<String, ArrayList<String>> subgenusHashMap = new HashMap<>();
         PreparedStatement stmt = null;
         ResultSet rset = null;
@@ -835,6 +841,7 @@ public class TaxonDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getSubgenusHashMap() e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getSubgenusHashMap()");
         }
@@ -842,7 +849,7 @@ public class TaxonDb extends AntwebDb {
     }
 
 
-    public void setSubfamilyChartColor() {
+    public void setSubfamilyChartColor() throws SQLException {
         UtilDb utilDb = new UtilDb(getConnection());
         String[] colors = HttpUtil.getColors();
         ArrayList<Taxon> taxa = getTaxa("subfamily");

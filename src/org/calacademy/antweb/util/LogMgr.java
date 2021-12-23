@@ -117,7 +117,7 @@ public class LogMgr {
     String bakDir = logDir + "bak/";
     String backupDir = bakDir + yearStr + "/" + dateStr + "/";
     (new Utility()).makeDirTree(backupDir);
-    s_log.warn("archiveLogs() Make backupDir:" + backupDir);
+    s_log.info("archiveLogs() Make backupDir:" + backupDir);
 
     //String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";
 
@@ -137,8 +137,9 @@ public class LogMgr {
       }
     }
 
-    if (!"".equals(logsNotFound)) 
-      s_log.warn("archiveLogs() logsNotFound:" + logsNotFound.substring(0, logsNotFound.length() - 2) + ".");
+    if (!"".equals(logsNotFound)) {
+      s_log.info("archiveLogs() logsNotFound:" + logsNotFound.substring(0, logsNotFound.length() - 2) + ".");
+    }
 
     String message = "files backed up here:" + backupDir;
     A.log("archiveLogs() message:" + message);
@@ -177,13 +178,13 @@ public class LogMgr {
     }    
   }
 
-  public static void logQuery(Connection connection, String note, String query) {
+  public static void logQuery(Connection connection, String note, String query) throws SQLException {
     String results = (new UtilDb(connection)).runQuery(query);
     s_log.warn("logQuery() note:" + note + " results:" + results);  
   }
 
   // Use this one. Unless you don't want to persist the query in Queries.java.
-  public static void logAntQuery(Connection connection, String name, String note) {
+  public static void logAntQuery(Connection connection, String name, String note) throws SQLException {
     NamedQuery namedQuery = Queries.getNamedQuery(name);
     if (namedQuery != null) {
       String query = namedQuery.getQuery();
@@ -194,7 +195,7 @@ public class LogMgr {
     } 
   }
 
-  public static void logAntBattery(Connection connection, String name, String note) {
+  public static void logAntBattery(Connection connection, String name, String note) throws SQLException {
     ArrayList<NamedQuery> battery = QueryManager.getBattery(name);
     String results = "";
     int i = 0;

@@ -20,28 +20,23 @@ public class ImageCountDb extends AntwebDb {
 
      // These methods to count taxon and images are completely project independent
      public void imageCountCrawls() throws SQLException {
-       
-          s_log.warn("imageCountCrawl()");
-          countSpecimenImages();
-          s_log.warn("done countSpecimenImages()");
-          countSpeciesImages();
-          s_log.warn("done countSpeciesImages()");
-          countTaxonImages("genus");
-          s_log.warn("done countTaxonImages('genus')");
-          countTaxonImages("subfamily");
-          s_log.warn("done countTaxonImages('subfamily')");
-          countTaxonImages("family");     
-          s_log.warn("done countTaxonImages('family')");
 
+         s_log.info("imageCountCrawl()");
+         countSpecimenImages();
+         s_log.info("done countSpecimenImages()");
+         countSpeciesImages();
+         s_log.info("done countSpeciesImages()");
+         countTaxonImages("genus");
+         s_log.info("done countTaxonImages('genus')");
+         countTaxonImages("subfamily");
+         s_log.info("done countTaxonImages('subfamily')");
+         countTaxonImages("family");
+         s_log.info("done countTaxonImages('family')");
 
-         //if (!debugMode) {
-             // All together these crawls will be about 18 minutes.
-             // We don't want to wait for these to test on dev...
-             new GeolocaleTaxonCountDb(getConnection()).imageCountCrawl();
-             new ProjTaxonCountDb(getConnection()).imageCountCrawl();
-             new BioregionTaxonCountDb(getConnection()).imageCountCrawl();
-             new MuseumTaxonCountDb(getConnection()).imageCountCrawl();
-         //}
+         new GeolocaleTaxonCountDb(getConnection()).imageCountCrawl();
+         new ProjTaxonCountDb(getConnection()).imageCountCrawl();
+         new BioregionTaxonCountDb(getConnection()).imageCountCrawl();
+         new MuseumTaxonCountDb(getConnection()).imageCountCrawl();
 
   	      LogMgr.appendLog("compute.log", "  Image Count Crawl completed", true);                              
      }
@@ -75,8 +70,7 @@ public class ImageCountDb extends AntwebDb {
         }
      }     
 
-     private void countSpeciesImages() 
-       throws SQLException {
+     private void countSpeciesImages() throws SQLException {
        String query = "";
         Statement stmt = null;
         ResultSet rset = null;

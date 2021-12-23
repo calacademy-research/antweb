@@ -18,13 +18,13 @@ public class BioregionTaxonDb extends TaxonSetDb {
       super(connection);
     }
 
-    public ArrayList<Taxon> getTaxa(String name) {
+    public ArrayList<Taxon> getTaxa(String name) throws SQLException {
         Bioregion bioregion = BioregionMgr.getBioregion(name);
         A.log("getTaxa() name:" + name);
         return super.getTaxa(bioregion);
     }
 
-    String updateTaxonNames() {
+    String updateTaxonNames() throws SQLException {
       // For each of the following bioregion_taxon, update the taxon_name with the current_valid_name.
       Statement stmt = null;
       ResultSet rset = null;
@@ -52,6 +52,7 @@ public class BioregionTaxonDb extends TaxonSetDb {
           }       
       } catch (SQLException e) {
         s_log.error("updateTaxonNames() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, rset, "updateTaxonNames()");
       }
@@ -147,7 +148,7 @@ See BioregionDb.java:77 where this call is commented out.
             lastTaxonName = taxonName;
 
 			if (AntwebProps.isDevMode() && taxonName.equals("myrmicinaemelissotarsus ethiopiensis")) {
-			  s_log.warn("populateSpeciesFromGeolocaleTaxon() query:" + query);
+			  s_log.info("populateSpeciesFromGeolocaleTaxon() query:" + query);
 			}  
 
             insertSpecies(bioregion, taxonName, 0, 0, source);
@@ -220,7 +221,7 @@ See BioregionDb.java:77 where this call is commented out.
           int x = stmt.executeUpdate(dml);
           
       } catch (java.sql.SQLIntegrityConstraintViolationException e) {
-        A.log("insertSpecies() expected integrity exception. bioregion:" + bioregion.getName() + " taxonName:" + taxonName + " source:" + source); //e:" + e);
+        s_log.info("insertSpecies() expected integrity exception. bioregion:" + bioregion.getName() + " taxonName:" + taxonName + " source:" + source); //e:" + e);
 
         // expected. Can we do an update here instead?  
       } catch (SQLException e) {

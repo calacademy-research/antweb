@@ -17,13 +17,13 @@ public class MuseumTaxonDb extends TaxonSetDb {
       super(connection);
     }
 
-    public ArrayList<Taxon> getTaxa(String name) {
+    public ArrayList<Taxon> getTaxa(String name) throws SQLException {
         Museum museum = MuseumMgr.getMuseum(name);
         
         return super.getTaxa(museum);
     }
 
-    String updateTaxonNames() {
+    String updateTaxonNames() throws SQLException {
       // For each of the following museum_taxon, update the taxon_name with the current_valid_name.
       Statement stmt = null;
 	  String taxonName = null;
@@ -58,8 +58,7 @@ public class MuseumTaxonDb extends TaxonSetDb {
     
 
 
-    public static ArrayList<ArrayList<String>> getStatisticsByMuseum(Connection connection)
-        throws SQLException {
+    public static ArrayList<ArrayList<String>> getStatisticsByMuseum(Connection connection) throws SQLException {
         ArrayList<ArrayList<String>> statistics = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;

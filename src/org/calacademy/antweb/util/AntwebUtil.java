@@ -87,7 +87,7 @@ public abstract class AntwebUtil {
     }
 
     public static void log(String message) {
-      s_log.error(message);
+      s_log.info(message);
     }
   
   public static void log(String level, String message) {
@@ -209,33 +209,6 @@ public abstract class AntwebUtil {
     return qualifiedFiles;
   }
 
-  /*
-  // To Be replaced by getUploadGroupList()
-  private static ArrayList s_uploadDirKinds = null;
-  public static ArrayList<String> getUploadDirKinds() {
-    if (s_uploadDirKinds != null) return s_uploadDirKinds;
-
-    Date start = new Date();
-
-    s_uploadDirKinds = new ArrayList<String>();
-    //ArrayList<String> kinds = new ArrayList<String>();
-    ArrayList<String> files = getUploadDirFiles();
-    for (String file : files) {
-      if (file != null && file .length() < 18){
-         A.log("getUploadDirKinds() File is short:" + file);
-         continue;
-      }
-      String kind = file.substring(18); // everything after the date
-      kind = kind.substring(0, kind.indexOf(".txt"));
-      if (!s_uploadDirKinds.contains(kind)) s_uploadDirKinds.add(kind);
-    }
-    Collections.sort(s_uploadDirKinds);
-
-    s_log.warn("getUploadDirKinds() done in " + AntwebUtil.reportTime(start));
-
-    return s_uploadDirKinds;
-  }
-*/
   private static ArrayList<Integer> s_uploadGroupList = null;
   public static ArrayList<Integer> getUploadGroupList() {
     if (s_uploadGroupList != null) return s_uploadGroupList;
@@ -264,7 +237,7 @@ public abstract class AntwebUtil {
     }
     Collections.sort(s_uploadGroupList);
 
-    s_log.warn("getUploadGroupList() done in " + AntwebUtil.reportTime(start));
+    A.log("getUploadGroupList() done in " + AntwebUtil.reportTime(start));
     return s_uploadGroupList;
   }
 

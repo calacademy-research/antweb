@@ -65,6 +65,10 @@ public class UtilDataAction extends Action {
 
         boolean isAllow = "allow".equals(theForm.getParam()); // Used by scheduler.
 
+        String loginName = "Undefined";
+        if (isAllow) loginName = "Scheduler";
+        if (accessLogin != null) loginName = accessLogin.getName();
+
         String message = null;
         // Being called from a getUrl() by Schedule.do, Scheduler.java.
         if (!isAllow) { 
@@ -88,60 +92,74 @@ public class UtilDataAction extends Action {
           if (accessGroup == null) {
               message = "Not Logged in";
           }
-          if (message != null) {
-              request.setAttribute("message", message);
-              return (mapping.findForward("message"));
-          }
         }
-		
+
+        if (message == null) {
+            try {
+                UtilDataAction.setInComputeProcess(action);
+
+                DataSource dataSource = getDataSource(request, "longConPool");
+                connection = DBUtil.getConnection(dataSource, "UtilAction.execute()", HttpUtil.getTarget(request));
+                connection.setAutoCommit(false);
+
+                if (action != null) {
+
+                    s_log.info("execute() " + form.toString());
+
+                    //if (AntwebProps.isDevMode()) throw new AntwebException("Test! XXX");
+
+                    OperationDetails operationDetails = doAction(action, theForm, accessLogin, accessGroup, connection, request, mapping);
+
+                    if (operationDetails instanceof UploadDetails) {
+                        ((UploadDetails) operationDetails).finish(accessLogin, request, connection);
+                    }
+
+                    connection.commit();
+
+                    ActionForward forward = operationDetails.findForward(mapping, request);
+                    A.log("execute() action:" + action + " operationDetails:" + operationDetails + " forward:" + forward);
+                    if (forward != null) return forward;
+                }
+
+                if (!isAllow) { // Scheduler will manage it's own reloading.
+                    String t = AntwebMgr.reload(reload, true, connection);
+                    // No need to log.
+                }
+
+                request.setAttribute("message", "action not found:" + action);
+                return (mapping.findForward("message"));
+
+            } catch (SQLException e) {
+                message = handleException(e, connection, action, loginName);
+            } catch (IOException e) {
+                message = handleException(e, connection, action, loginName);
+            } catch (AntwebException e) {
+                message = handleException(e, connection, action, loginName);
+            } catch (Exception e) {
+                message = handleException(e, connection, action, loginName);
+            } finally {
+                UtilDataAction.setInComputeProcess(null);
+                DBUtil.close(connection, this, "UploadAction.execute() 1");
+            }
+        }
+        request.setAttribute("message", message);
+        return (mapping.findForward("message"));
+    }
+
+    private String handleException(Exception e, Connection connection, String action, String loginName) {
+        String message = "Error. No changes made for action:" + action + " user:" + loginName + " e:" + e;
+        s_log.error("handleException() " + message);
         try {
-            UtilDataAction.setInComputeProcess(action);   
-
-            DataSource dataSource = getDataSource(request, "longConPool");
-            connection = DBUtil.getConnection(dataSource, "UtilAction.execute()", HttpUtil.getTarget(request));
-            connection.setAutoCommit(false);
-            
-            if (action != null) {
-            
-              s_log.warn("execute() " + form.toString());
-              OperationDetails operationDetails = doAction(action, theForm, accessLogin, accessGroup, connection, request, mapping);
-
-              if (operationDetails instanceof UploadDetails) {
-                ((UploadDetails) operationDetails).finish(accessLogin, request, connection);
-              }
-
-              connection.commit();
-                           
-              ActionForward forward = operationDetails.findForward(mapping, request);
-              A.log("execute() action:" + action + " operationDetails:" + operationDetails + " forward:" + forward);  
-              if (forward != null) return forward;
-
-            } // end if action != null
-
-			String t = AntwebMgr.reload(reload, true, connection);
-			// No need to log.
-            
-			request.setAttribute("message", "action not found:" + action);
-			return (mapping.findForward("message")); 
-        } catch (SQLException e) {
-            s_log.error("execute() action:" + action + " e:" + e);
-//            DBUtil.rollback(connection);
-            AntwebUtil.errorStackTrace(e);         
-        } catch (IOException e) {
-            s_log.error("execute() action:" + action + " e:" + e);
-            AntwebUtil.errorStackTrace(e);         
-        } finally {
-            UtilDataAction.setInComputeProcess(null);
-            DBUtil.close(connection, this, "UploadAction.execute() 1");
+            if (connection != null) connection.rollback();
+        } catch (SQLException e2) {
+            s_log.error("handleException() e2:" + e2 + " for action:" + action + " user:" + loginName);
+            AntwebUtil.logStackTrace(e2);
         }
-
-        //this shouldn't happen in this example
-        s_log.error("execute()  This should not happen");
-        return mapping.findForward("failure");
+        return message;
     }
 
     private OperationDetails doAction(String action, UtilForm form, Login accessLogin, Group accessGroup, Connection connection, HttpServletRequest request, ActionMapping mapping) 
-      throws IOException, SQLException {
+      throws AntwebException, IOException, SQLException {
       
         OperationDetails operationDetails = new OperationDetails(action);
         
@@ -161,7 +179,7 @@ public class UtilDataAction extends Action {
 
         boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
         boolean isSecure = AntwebUtil.isSecureCode(secureCode) || isAdmin;
-        s_log.warn("doAction() " + action + " request:" + request + " isSecure:" + isSecure + " secureCode:" + secureCode + " isAdmin:" + isAdmin);
+        //s_log.info("doAction() " + action + " request:" + request + " isSecure:" + isSecure + " secureCode:" + secureCode + " isAdmin:" + isAdmin);
 
         if (isSecure) {
             if ("allSets".equals(action)) {
@@ -186,7 +204,7 @@ public class UtilDataAction extends Action {
                 message = "set1 - ";
                 message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
-                AntwebMgr.populate(connection, true);
+                TaxonMgr.populate(connection, true, false);
             }
 
             // Dev: 31.50 mins and 25.75 mins. Prod: 43.93. Dev2: 26.87 mins
@@ -194,15 +212,15 @@ public class UtilDataAction extends Action {
                 message = "set2 - ";
                 message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 12.30 mins
-                message += " " + doAction("GeolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
-                GeolocaleMgr.populate(connection, true, true);
+                message += " " + doAction("geolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
                 doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
+                GeolocaleMgr.populate(connection, true, false);
             }
 
             // dev: 7.05 mins. Prod: 14.52 mins. Dev2: 12.85
             if ("set3".equals(action)) {
                 message = "set3 - ";
-                message += " " + doAction("ProjectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins
+                message += " " + doAction("projectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins
                 message += " " + doAction("populateMuseum", form, accessLogin, accessGroup, connection, request, mapping);  // was 12.05 mins now 22.68 mins. Prod: 8.17
                 message += " " + doAction("populateBioregion", form, accessLogin, accessGroup, connection, request, mapping); // was 6.80 mins. Now 15.63 mins. // Prod: 5.52 mins
                 message += doAction("updateTaxonSetTaxonNames", form, accessLogin, accessGroup, connection, request, mapping);
@@ -367,7 +385,7 @@ public class UtilDataAction extends Action {
 		}
 			  
 		// Geolocale counts updated 6.30 mins	  
-		if (action.equals("GeolocaleCountCrawl")) {
+		if (action.equals("geolocaleCountCrawl")) {
 		  int geolocaleId = form.getNum();
 		  if (geolocaleId > 0) {
 			(new GeolocaleDb(connection)).updateCounts(geolocaleId);
@@ -443,7 +461,7 @@ public class UtilDataAction extends Action {
 
 		// Fast.  0.40 min.
 		// http://localhost/antweb/utilData.do?action=updateProjectCounts&name=allantwebants
-		if (action.equals("ProjectCountCrawl")) {
+		if (action.equals("projectCountCrawl")) {
 		  String projectName = form.getName();
 		  String appendStr = "";
 		  ProjectDb projectDb = new ProjectDb(connection);
@@ -473,7 +491,7 @@ public class UtilDataAction extends Action {
 		if (action.equals("geolocaleTaxonCountCrawl")) {
 		  GeolocaleTaxonCountDb geolocaleTaxonCountDb = (new GeolocaleTaxonCountDb(connection));
           if (num == 0) {
-            s_log.warn("countCrawl expecting num:" + num + ". Running ChildrenCountCrawls for all geolocales.");
+            s_log.info("countCrawl expecting num:" + num + ". Running ChildrenCountCrawls for all geolocales.");
 		    geolocaleTaxonCountDb.childrenCountCrawl();
 		  } else {
 		    geolocaleTaxonCountDb.childrenCountCrawl(num);
@@ -486,7 +504,7 @@ public class UtilDataAction extends Action {
 		if (action.equals("museumTaxonCountCrawl")) {
 		  MuseumTaxonCountDb museumTaxonCountDb = (new MuseumTaxonCountDb(connection));
           if (code == null || "".equals(code)) {
-            s_log.warn("countCrawl expecting num:" + code + ". Running ChildrenCountCrawls for all museum.");
+            s_log.info("countCrawl expecting num:" + code + ". Running ChildrenCountCrawls for all museum.");
 		    museumTaxonCountDb.childrenCountCrawl();
 		  } else {
 		    museumTaxonCountDb.childrenCountCrawl(code);
@@ -497,7 +515,7 @@ public class UtilDataAction extends Action {
 		if (action.equals("bioregionTaxonCountCrawl")) {
 		  BioregionTaxonCountDb bioregionTaxonCountDb = (new BioregionTaxonCountDb(connection));
           if (name == null || "".equals(name)) {
-            s_log.warn("countCrawl expecting name:" + name + ". Running ChildrenCountCrawls for all bioregions.");
+            s_log.info("countCrawl expecting name:" + name + ". Running ChildrenCountCrawls for all bioregions.");
 		    bioregionTaxonCountDb.childrenCountCrawl();
 		  } else {
 		    bioregionTaxonCountDb.childrenCountCrawl(name);
@@ -510,7 +528,7 @@ public class UtilDataAction extends Action {
 		  GeolocaleTaxonCountDb geolocaleTaxonCountDb = (new GeolocaleTaxonCountDb(connection));
           if (num == 0) {
             message = "countCrawl expecting num:" + num + ". Running ChildrenCountCrawls for all geolocales.";
-            s_log.warn(message);
+            s_log.info(message);
 		  } else {
 		    message = "Finished Geolocale Count Report (" + form.getNum() + ") " + geolocaleTaxonCountDb.countReport(num);
 		  }
@@ -536,7 +554,7 @@ public class UtilDataAction extends Action {
 
         // 37 sec.  Called following specimen upload.
 		if (action.equals("crawlForType")) {
-		  s_log.warn("execute() crawlForType");
+		  s_log.info("execute() crawlForType");
 		  (new TaxonDb(connection)).crawlForType();
 		  message = "Finished crawl for type";
 		}
@@ -715,7 +733,7 @@ public class UtilDataAction extends Action {
 
             //HttpUtil.getUrl(AntwebProps.getDomainApp() + "/utilData.do?action=genGoogleMapFunction&num=" + id + "&param=allow");
   
-            s_log.warn("action=genGoogleMapFunction id:" + id + " country:" + country + " adm1:" + adm1);
+            s_log.info("action=genGoogleMapFunction id:" + id + " country:" + country + " adm1:" + adm1);
             Geolocale geolocale = null;
             if (adm1 != null) {
               geolocale = GeolocaleMgr.getAdm1(adm1, country);
@@ -850,7 +868,7 @@ public class UtilDataAction extends Action {
         }
 */
         if (action.equals("imageUtil")) {
-          s_log.warn("execute() imageUtil");  //"CASENT0101586";
+          s_log.info("execute() imageUtil");  //"CASENT0101586";
           try {
             if ("updateExif".equals(form.getName())) ImageUtil.execute("updateExif", connection);
             if ("count".equals(form.getName())) ImageUtil.execute("count", connection);
@@ -873,15 +891,15 @@ public class UtilDataAction extends Action {
 // ----------- Deprecated -------------
 
         if (action.equals("moveImages")) {
-          s_log.warn("execute() moveImages code:" + code);  //"CASENT0101586";
+          s_log.info("execute() moveImages code:" + code);  //"CASENT0101586";
           message = AntwebFunctions.moveImages(code);
         }     
         if (action.equals("changeOwner")) {
-          s_log.warn("execute() changeOwner code:" + code);  //"CASENT0101586";
+          s_log.info("execute() changeOwner code:" + code);  //"CASENT0101586";
           message = AntwebFunctions.changeOwner(code);
         }     
         if (action.equals("changeOwnerAndPerms")) {
-          s_log.warn("execute() changeOwnerAndPerms code:" + code);
+          s_log.info("execute() changeOwnerAndPerms code:" + code);
           message = AntwebFunctions.changeOwnerAndPerms(code);
         }
 /*
@@ -898,13 +916,13 @@ public class UtilDataAction extends Action {
 */
 	   
         if ("".equals(message) || message == null) {
-          s_log.warn("doAction() message:" + message + " for action:" + action);
+          s_log.info("doAction() message:" + message + " for action:" + action);
           operationDetails.setMessage("action:" + action + " not found");
           return operationDetails;
         }
 
 		message += "<br><br> in " + AntwebUtil.getMinsPassed(startTime) + ". ";	   
-	    s_log.warn("doAction() action:" + action + " message:" + message);
+	    s_log.info("doAction() Completed action:" + action + " message:" + message);
         operationDetails.setMessage(message);
         operationDetails.setForwardPage(null);
         return operationDetails;

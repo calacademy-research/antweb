@@ -20,16 +20,16 @@ public abstract class EditableTaxonSetDb extends TaxonSetDb {
 
     public abstract int delete(String speciesListName, String taxonName) throws SQLException;
 
-    public abstract TaxonSet get(String speciesListName, String taxonName);
+    public abstract TaxonSet get(String speciesListName, String taxonName) throws SQLException;
 
     public abstract int insert(Overview overview, String taxonName, String source) throws SQLException;
 
-    public abstract boolean hasTaxonSetSpecies(String speciesListName, String genus);   
-    public abstract boolean hasTaxonSetGenera(String speciesListName, String subfamily);
+    public abstract boolean hasTaxonSetSpecies(String speciesListName, String genus) throws SQLException ;
+    public abstract boolean hasTaxonSetGenera(String speciesListName, String subfamily) throws SQLException ;
 
 // ---
 
-    public boolean hasTaxonSetSpecies(String speciesListName, String genus, String fromWhereClause) {
+    public boolean hasTaxonSetSpecies(String speciesListName, String genus, String fromWhereClause) throws SQLException {
 
         boolean exists = false;
         String query = "";
@@ -46,6 +46,7 @@ public abstract class EditableTaxonSetDb extends TaxonSetDb {
             }
         } catch (SQLException e) {
             s_log.error("hasTaxonSetSpecies:" + speciesListName + ", " + genus);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "hasTaxonSetSpecies()");
         }
@@ -53,7 +54,7 @@ public abstract class EditableTaxonSetDb extends TaxonSetDb {
         return exists;
     }
     
-    public boolean hasTaxonSetGenera(String speciesListName, String subfamily, String fromWhereClause) {
+    public boolean hasTaxonSetGenera(String speciesListName, String subfamily, String fromWhereClause) throws SQLException {
         
         boolean exists = false;
         String query = "";
@@ -72,6 +73,7 @@ public abstract class EditableTaxonSetDb extends TaxonSetDb {
             }
         } catch (SQLException e) {
             s_log.error("hasTaxonSetGenera:" + speciesListName + ", " + subfamily);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "hasTaxonSetGenera()");
         }

@@ -1,3 +1,9 @@
+
+Release 8.68
+  Exception handling refinement in Scheduled tasks and species list upload.
+  Dual log file utilization.
+  Dev exempted tasks always logged.
+
 Release 8.67: 
   Refactor of Taxon object & database facilities with performance enhancements.
 

@@ -42,12 +42,12 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
     // --------------------------------------------------------------------------------------
     // Satisfies the abstract method of EditableTaxonSetDb.
-    public TaxonSet get(String speciesListName, String taxonName) {
+    public TaxonSet get(String speciesListName, String taxonName) throws SQLException {
         int geolocaleId = GeolocaleMgr.getGeolocaleId(speciesListName);
         return get(geolocaleId, taxonName);
     }
 
-    public TaxonSet get(int geolocaleId, String taxonName) {
+    public TaxonSet get(int geolocaleId, String taxonName) throws SQLException {
         String query = "";
         GeolocaleTaxon geolocaleTaxon = null;
         Statement stmt = null;
@@ -76,13 +76,14 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
         } catch (SQLException e) {
             s_log.error("get() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, "get()");
         }
         return geolocaleTaxon;
     }
 
-    public ArrayList<TaxonSet> getTaxonSetList(String taxaRank, int geolocaleId) {
+    public ArrayList<TaxonSet> getTaxonSetList(String taxaRank, int geolocaleId) throws SQLException {
         ArrayList<TaxonSet> taxonSetList = new ArrayList<>();
         String query = "";
         Statement stmt = null;
@@ -112,6 +113,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             }
         } catch (SQLException e) {
             s_log.error("getTaxonSetList() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, "getTaxonSetList()");
         }
@@ -338,6 +340,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
         }        
       } catch (SQLException e) {
         s_log.error("delete() geolocaleId:" + geolocaleId + " e:" + e + " delete:" + delete);
+        throw e;
       } finally {
         DBUtil.close(stmt1, rset1, "this", "delete()");
       }  
@@ -345,13 +348,13 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     }    
 
     // Satisfies the abstract method of EditableTaxonSetDb.
-    public boolean hasTaxonSetSpecies(String speciesListName, String genus) {
+    public boolean hasTaxonSetSpecies(String speciesListName, String genus) throws SQLException {
         int geolocaleId = GeolocaleMgr.getGeolocaleId(speciesListName);
         String fromWhereClause = "from geolocale_taxon where geolocale_id = " + geolocaleId;
         return super.hasTaxonSetSpecies(speciesListName, genus, fromWhereClause);
     }
     // Satisfies the abstract method of EditableTaxonSetDb.
-    public boolean hasTaxonSetGenera(String speciesListName, String subfamily) {
+    public boolean hasTaxonSetGenera(String speciesListName, String subfamily) throws SQLException {
         int geolocaleId = GeolocaleMgr.getGeolocaleId(speciesListName);
         String fromWhereClause = "from geolocale_taxon where geolocale_id = " + geolocaleId;
         return super.hasTaxonSetGenera(speciesListName, subfamily, fromWhereClause);
@@ -376,6 +379,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             stmt.close();
         } catch (SQLException e) {
             s_log.error("hasItem() id:" + id + " taxonName:" + taxonName);
+            throw e;
         } finally {
             DBUtil.close(stmt, "hasItem()");
         }
@@ -384,8 +388,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     }
     
     // Only to be used by the recursive insert above, which takes care of parents.
-    private int insertItem(Geolocale geolocale, String taxonName, String source) 
-      throws SQLException {
+    private int insertItem(Geolocale geolocale, String taxonName, String source) throws SQLException {
 
         /*
         if (taxonName.contains("podzolica")) {
@@ -456,8 +459,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 	}
 	
 	// *** SHOULD ONLY BE USED BY RECURSIVE ABOVE. NEED TO UPDATE PARENT SOURCE TO BE PROXY...
-    private int updateItem(int id, String taxonName, String source) 
-        throws SQLException {
+    private int updateItem(int id, String taxonName, String source) throws SQLException {
         String dml = null;
         Statement stmt = null;
         int count = 0;
@@ -499,7 +501,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     	 
 
     // Satisfies TaxonSetDb abstract method.
-    public ArrayList<Taxon> getTaxa(String name) {
+    public ArrayList<Taxon> getTaxa(String name) throws SQLException {
         Geolocale geolocale = GeolocaleMgr.getGeolocale(name);  
         
         return super.getTaxa(geolocale);
@@ -515,7 +517,7 @@ int s_other = 0;
 int s_found = 0;
 int s_notFound = 0;
 
-    private void reportOnTaxonSetItem(String speciesListName, String taxonName) {
+    private void reportOnTaxonSetItem(String speciesListName, String taxonName) throws SQLException {
 
         int geolocaleId = GeolocaleMgr.getGeolocaleId(speciesListName);
             
@@ -548,12 +550,13 @@ int s_notFound = 0;
 
         } catch (SQLException e) {
             s_log.error("reportOnTaxonSet() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, "reportOnTaxonSet()");
         }
     }
     
-    public String getTaxaOutsideOfNativeBioregion() {
+    public String getTaxaOutsideOfNativeBioregion() throws SQLException {
         StringBuffer buffer = new StringBuffer();
         
         ArrayList<String> taxaOutside = new ArrayList<>();
@@ -644,6 +647,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
         } catch (SQLException e) {
             s_log.error("getTaxaOutsideOfNativeBioregion() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, "getTaxaOutsideOfNativeBioregion()");
         }
@@ -653,44 +657,18 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
 // --------------------------------------------------------------------------------------
 
-	public String generateGeolocaleTaxaFromSpecimens() {
+	public String generateGeolocaleTaxaFromSpecimens() throws SQLException {
 
-	  Date startTime = new Date();
-      int deleteTotal = 0;
-      String deleteMorphoStr = null;
-      int insertTotal = 0;
-      try {
-          getConnection().setAutoCommit(false);
+        Date startTime = new Date();
+        int deleteTotal = 0;
+        String deleteMorphoStr = null;
+        int insertTotal = 0;
 
-          deleteTotal = deleteGeolocaleTaxaFromSpecimens();
-          deleteMorphoStr += deleteUncuratedMorphosWithoutSpecimen();
-          insertTotal = insertGeolocaleTaxaFromSpecimens();
-          
-          getConnection().commit();
-    
-      } catch (AntwebException e) {
-          s_log.error("generateGeolocaleTaxaFromSpecimens() e:" + e);       
+        deleteTotal = deleteGeolocaleTaxaFromSpecimens();
+        deleteMorphoStr += deleteUncuratedMorphosWithoutSpecimen();
+        insertTotal = insertGeolocaleTaxaFromSpecimens();
 
-		  // If there is an error then rollback the changes.
-		  A.log("Rolling back data....");
-		  try{
-			 if(getConnection() != null) getConnection().rollback();
-		  }catch(SQLException se2){
-			 AntwebUtil.logStackTrace(se2);
-		  }
-      } catch (SQLException e) {
-          s_log.error("generateGeolocaleTaxaFromSpecimens() e:" + e);       
-
-		  // If there is an error then rollback the changes.
-		  A.log("Rolling back data....");
-		  try{
-			 if(getConnection() != null) getConnection().rollback();
-		  }catch(SQLException se2){
-			 AntwebUtil.logStackTrace(se2);
-		  }
-      }
-
-      (new UtilDb(getConnection())).deleteFrom("geolocale_taxon", "where (geolocale_id, taxon_name) in (select geolocale_id, taxon_name from geolocale_taxon_dispute)");
+        (new UtilDb(getConnection())).deleteFrom("geolocale_taxon", "where (geolocale_id, taxon_name) in (select geolocale_id, taxon_name from geolocale_taxon_dispute)");
 
       return "deleteTotal:" + deleteTotal + " insertTotal:" + insertTotal + " " + deleteMorphoStr;
 	}
@@ -723,7 +701,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
     /*
     DML below uses an alias to allow deletion from a table that is also in the subquery.
     */    
-    String deleteUncuratedMorphosWithoutSpecimen() {
+    String deleteUncuratedMorphosWithoutSpecimen() throws SQLException {
         String dml 
           = " delete from geolocale_taxon where taxon_name in ("
           + "   select taxon_name from ("
@@ -745,6 +723,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
             c = stmt.executeUpdate(dml);
         } catch (SQLException e) {
             s_log.error("deleteUncuratedMorphosWithoutSpecimen() e:" + e + " dml:" + dml);
+            throw e;
         } finally {
             DBUtil.close(stmt, "deleteUncuratedMorphosWithoutSpecimen()");
         }
@@ -752,7 +731,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
         return message;
     }
 
-    public String deleteGeolocaleTaxaWithoutTaxon() {
+    public String deleteGeolocaleTaxaWithoutTaxon() throws SQLException {
       String dmlWhereClause = "where taxon_name not in (select taxon_name from taxon)";
       int retVal = (new UtilDb(getConnection())).deleteFrom("geolocale_taxon", dmlWhereClause);
       return retVal + " deleteGeolocaleTaxaWithoutTaxon. ";
@@ -764,58 +743,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
     private static int s_insertCount = 0;
     private static int s_constraintCount = 0;
 
-/*
-    private int deleteMorphosWithoutSpecimen() throws SQLException {
-		int count = 0;
-  	    Date startTime = new Date();
-        String message = "";
-
-        // This query will fetch geolocale_taxon records if the taxon is a morpho and not in the specimen table 
-        //   or, if the parent_taxon_name, geolocale_id pair are not in geolocale_taxon - so it can be recreated. 
-		String query = "select gt.taxon_name, gt.geolocale_id, '' as name from geolocale_taxon gt, taxon t " 
-		  + " where gt.taxon_name = t.taxon_name " 
-		  + " and t.status = 'morphotaxon' " 
-		  + " and gt.source = '" + Source.SPECIMEN + "'"
-		  + " and (t.taxon_name not in (select taxon_name from specimen) " 
-		  + " or (t.parent_taxon_name, gt.geolocale_id) not in (select taxon_name, geolocale_id from geolocale_taxon))";
-        count += deleteGeolocaleTaxa(query);
-        message += "adm1Count:" + count;
-  
-        double timePassed = AntwebUtil.doubleMinsSince(startTime);
-        DecimalFormat formatter = new DecimalFormat("#0.00");
-        message += " mins:" + formatter.format(timePassed);
-
-        //s_log.warn("deleteMorphosWithoutSpecimen() " + message);
-
-        return count;
-    }
-    
-    private int deleteGeolocaleTaxa(String query) throws SQLException {
-        int count = 0;
-
-        Statement stmt = null;
-        ResultSet rset = null;
-        Connection connection = getConnection();
-        try {
-            stmt = DBUtil.getStatement(connection, "deleteGeolocaleTaxa()");
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-              int geolocaleId = rset.getInt("geolocale_id");
-              String taxonName = rset.getString("taxon_name");   
-              String name = rset.getString("name");   // geolocale name.
-              //A.log("deleteGeolocaleTaxa(query) geolocaleId:" + geolocaleId + " taxonName:" + taxonName + " name:" + name);
-              count += deleteItem(geolocaleId, taxonName);
-            }            
-        } catch (SQLException e) {
-            s_log.error("deleteGeolocaleTaxa() e:" + e);
-        } finally {
-            DBUtil.close(stmt, "deleteGeolocaleTaxa()");
-        }
-        return count;
-    }
-       */
-
-    private int insertGeolocaleTaxaFromSpecimens() throws SQLException, AntwebException {
+    private int insertGeolocaleTaxaFromSpecimens() throws SQLException {
         
         s_updateCount = 0;
         s_insertCount = 0;
@@ -832,23 +760,23 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
         try {
             stmt = DBUtil.getStatement(getConnection(), "insertGeolocaleTaxaFromSpecimens()");
-			
-			String clause = "";
-			//if (AntwebProps.isDevMode()) clause = " and country = 'Chile'";
 
-            query = "select distinct country, adm1, taxon_name " 
-              + " from specimen where (status = 'valid')"
-              + " and " + SpecimenDb.getFlagCriteria() + " and country is not null"
-              + clause
+            String clause = "";
+            //if (AntwebProps.isDevMode()) clause = " and country = 'Chile'";
 
-              + " union "
+            query = "select distinct country, adm1, taxon_name "
+                    + " from specimen where (status = 'valid')"
+                    + " and " + SpecimenDb.getFlagCriteria() + " and country is not null"
+                    + clause
 
-              + "select distinct island_country, adm1, taxon_name " // adm1 will generally be null
+                    + " union "
+
+                    + "select distinct island_country, adm1, taxon_name " // adm1 will generally be null
                     + " from specimen where (status = 'valid')"
                     + " and " + SpecimenDb.getFlagCriteria() + " and island_country is not null"
                     + clause
 
-              + " order by country, adm1, taxon_name"
+                    + " order by country, adm1, taxon_name"
             ;
             A.log("insertGeolocaleTaxaFromSpecimens() 1 query:" + query);
             rset = stmt.executeQuery(query);
@@ -858,10 +786,11 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
             String lastCountryName = null;
             String lastTaxonName = null;
             int count = 0;
-            
+
             while (rset.next()) {
                 ++specimenCount;
-                if ((specimenCount % 10000) == 0) s_log.warn("insertGeolocaleTaxaFromSpecimens() specimenCount:" + specimenCount);
+                if ((specimenCount % 10000) == 0)
+                    s_log.info("insertGeolocaleTaxaFromSpecimens() specimenCount:" + specimenCount);
 
                 //if (AntwebProps.isDevMode() && (specimenCount % 2000) == 0) throw new AntwebException("test");
 
@@ -870,7 +799,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
                 String adm1Name = rset.getString("adm1");
 
                 if (false && AntwebProps.isDevMode()) {
-                    if ("Colorado".equals(adm1Name)) A.log("country:"+ countryName + " adm1:" + adm1Name);
+                    if ("Colorado".equals(adm1Name)) A.log("country:" + countryName + " adm1:" + adm1Name);
                     if (!"Colorado".equals(adm1Name)) continue;
                 }
 
@@ -879,41 +808,44 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
                 if (countryChanged) resetQueryGovernors();
 
                 // Update the country records
-				country = GeolocaleMgr.getValidCountry(countryName);
-  			    if (country == null) {
-  		          unfoundCountries.add(adm1Name);
-				  //A.log("insertGeolocaleTaxaFromSpecimens() Country not found:" + countryName);
-				  continue;
-			    }
+                country = GeolocaleMgr.getValidCountry(countryName);
+                if (country == null) {
+                    unfoundCountries.add(adm1Name);
+                    //A.log("insertGeolocaleTaxaFromSpecimens() Country not found:" + countryName);
+                    continue;
+                }
 
-  			    //if ("Colorado".equals(adm1Name)) A.log("insertGeolcoaleTaxaFromSpecimen() country:" + country + " adm1Name:" + adm1Name);
-			    count += insert(country, taxonName, "specimen");
-			    //A.log("insertGeolocaleTaxaFromSpecimens() country:" + country + " taxonName:" + taxonName + " count:" + count);
-			    insertCount += count;
+                //if ("Colorado".equals(adm1Name)) A.log("insertGeolcoaleTaxaFromSpecimen() country:" + country + " adm1Name:" + adm1Name);
+                count += insert(country, taxonName, "specimen");
+                //A.log("insertGeolocaleTaxaFromSpecimens() country:" + country + " taxonName:" + taxonName + " count:" + count);
+                insertCount += count;
 
                 // Update the Adm1 records
-			    if (adm1Name != null) {
-				  adm1 = GeolocaleMgr.getValidAdm1(adm1Name, countryName);
+                if (adm1Name != null) {
+                    adm1 = GeolocaleMgr.getValidAdm1(adm1Name, countryName);
 
-                  //if ("Colorado".equals(adm1Name)) A.log("insertGeolocaleTaxaFromSpecimens() 1 adm1:" + adm1 + " taxonName:" + taxonName + " count:" + count);
+                    //if ("Colorado".equals(adm1Name)) A.log("insertGeolocaleTaxaFromSpecimens() 1 adm1:" + adm1 + " taxonName:" + taxonName + " count:" + count);
 
-				  if (adm1 == null) {
-				    unfoundAdm1s.add(adm1Name);
-				    //A.log("insertGeolocaleTaxaFromSpecimens() Adm1 not found:" + adm1Name);
-				    continue;
-                  }				  
-				  if (adm1 != null && taxonName != null) {
-                    //if ("Colorado".equals(adm1Name)) A.log("insertGeolocaleTaxaFromSpecimens() 2 adm1:" + adm1 + " taxonName:" + taxonName + " count:" + count);
-				    count += insert(adm1, taxonName, "specimen");
-				    insertCount += count;
-				  }
-			    }
+                    if (adm1 == null) {
+                        unfoundAdm1s.add(adm1Name);
+                        //A.log("insertGeolocaleTaxaFromSpecimens() Adm1 not found:" + adm1Name);
+                        continue;
+                    }
+                    if (adm1 != null && taxonName != null) {
+                        //if ("Colorado".equals(adm1Name)) A.log("insertGeolocaleTaxaFromSpecimens() 2 adm1:" + adm1 + " taxonName:" + taxonName + " count:" + count);
+                        count += insert(adm1, taxonName, "specimen");
+                        insertCount += count;
+                    }
+                }
 
                 //if (count > 1) return "testing";
                 //A.log("insertGeolocaleTaxonSpecimens() insertCount:" + insertCount + " country:" + country + " adm1:" + adm1 + " taxonName:" + taxonName);              
-			    
-			    //reportOnTaxonSetItem(countryName, taxonName);            
+
+                //reportOnTaxonSetItem(countryName, taxonName);
             }
+        } catch (SQLException e) {
+            s_log.warn("insertGeolocaleTaxaFromSpecimen() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, "insertGeolocaleTaxaFromSpecimens()");
         }
@@ -998,6 +930,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
             
         } catch (SQLException e) {
             s_log.error("undoPopulate() e:" + e + " dml:" + dml);
+            throw e;
         } finally {
             DBUtil.close(stmt, "undoPopulate()");
         }     
@@ -1021,7 +954,7 @@ mysql> select gt.taxon_name, gt.geolocale_id, gt.source from geolocale_taxon gt,
 
 */
 
-    public String testGeolocaleTaxonParentage() {
+    public String testGeolocaleTaxonParentage() throws SQLException {
       boolean fixIt = false;
 
       String message = "";
@@ -1031,7 +964,7 @@ mysql> select gt.taxon_name, gt.geolocale_id, gt.source from geolocale_taxon gt,
       return message;
     }
     
-    public String fixGeolocaleTaxonParentage() {
+    public String fixGeolocaleTaxonParentage() throws SQLException {
       boolean fixIt = true;
       //boolean fixIt = false;
       
@@ -1044,6 +977,7 @@ mysql> select gt.taxon_name, gt.geolocale_id, gt.source from geolocale_taxon gt,
           }
         } catch (SQLException e) {
           A.log("geolocaleTaxonParentage() e:" + e);
+          throw e;
         }
       }
       String message = "";
@@ -1060,7 +994,7 @@ If this order by source and updates all, shouldn't we run in reverse order. No c
 select group_concat( distinct source) from geolocale_taxon order by source;
   antwiki,curator,proxyantwiki,proxycurator,proxyproxyspecimen,proxyspeciesList,proxyspeciesListTool,proxyspecimen,speciesList,speciesListTool,specimen
 */    
-    public String checkGeolocaleParentage(boolean fixIt) {
+    public String checkGeolocaleParentage(boolean fixIt) throws SQLException {
       // Verify that all geolocale_taxon records have a record present for the geolocale's parent, with the taxon_name.
       int outOfIntegrity = 0;
       int fixed = 0;      
@@ -1114,6 +1048,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
 
       } catch (SQLException e) {
         s_log.error("checkGeolocaleParentage() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, null, "checkGeolocaleParentage()");
       }
@@ -1123,7 +1058,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
       return message;    
     }
 
-    public String checkTaxonParentage(boolean fixIt) {
+    public String checkTaxonParentage(boolean fixIt) throws SQLException {
       // Verify that all geolocale_taxon records have a record present for the geolocale's parent, with the taxon_name.
       int outOfIntegrity = 0;
       int fixed = 0;
@@ -1167,6 +1102,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
           
       } catch (SQLException e) {
         s_log.error("checkTaxonParentage() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, null, "checkTaxonParentage()");
       }
@@ -1181,7 +1117,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
 
     static int s_fixed = 0;
 
-    public String setSpecimenSource() {
+    public String setSpecimenSource() throws SQLException {
       int outOfIntegrity = 0;
       s_fixed = 0;      
       String query = "select distinct country, subfamily, genus from specimen where country is not null";
@@ -1220,6 +1156,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
 
       } catch (SQLException e) {
         s_log.error("setSpecimenSource() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, null, "setSpecimenSource()");
       }
@@ -1233,7 +1170,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
 // -----
 
 
-    String updateTaxonNames() {
+    String updateTaxonNames() throws SQLException {
       // For each of the following geolocale_taxon, update the taxon_name with the current_valid_name.
       Statement stmt = null;
 	  String taxonName = null;
@@ -1265,6 +1202,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
           }        
       } catch (SQLException e) {
         s_log.error("updateTaxonNames() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, null, "updateTaxonNames()");
       }
@@ -1276,7 +1214,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
 
     // To be called like
     // (new GeolocaleTaxonDb(connection)).hasCalMorphos();
-    public boolean hasCalMorphos() {
+    public boolean hasCalMorphos() throws SQLException {
       boolean retVal = false;
       String query = "select taxon_name from geolocale_taxon where geolocale_id = 392 and taxon_name = 'myrmicinaeaphaenogaster us-ca01'";
       Statement stmt = null;
@@ -1289,6 +1227,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
           }        
       } catch (SQLException e) {
         s_log.error("HasCalMorphos() e:" + e);
+        throw e;
       } finally {
           DBUtil.close(stmt, null, "hasCalMorphos()");
       }
@@ -1543,7 +1482,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         return message;
     }
 
-    private void fixGeolocaleTaxonSpeciesCount(Geolocale geolocale, String taxonName, int taxonSetCount) {
+    private void fixGeolocaleTaxonSpeciesCount(Geolocale geolocale, String taxonName, int taxonSetCount) throws SQLException {
         String dml = null;
         Statement stmt = null;
         try {
@@ -1554,6 +1493,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             stmt.executeUpdate(dml);
         } catch (SQLException e) {
             s_log.error("fixGeolocaleTaxonCount() e:" + e + " dml:" + dml);
+            throw e;
         } finally {
             DBUtil.close(stmt, "fixGeolocaleTaxonCount()");
         }

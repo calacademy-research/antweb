@@ -1,6 +1,6 @@
 package org.calacademy.antweb.util;
 
-import java.sql.Connection;
+import java.sql.*;
 import java.util.*;
 
 import org.calacademy.antweb.*;
@@ -15,11 +15,11 @@ public class MuseumMgr {
 
     private static ArrayList<Museum> s_museums = null;
         
-    public static void populate(Connection connection) {
+    public static void populate(Connection connection) throws SQLException {
       populate(connection, false);
     }
     
-    public static void populate(Connection connection, boolean forceReload) {
+    public static void populate(Connection connection, boolean forceReload) throws SQLException {
       if (!forceReload && (s_museums != null)) return;      
       
       MuseumDb museumDb = (new MuseumDb(connection));

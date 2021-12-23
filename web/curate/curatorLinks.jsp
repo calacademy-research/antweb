@@ -194,8 +194,13 @@
 	    <li><a href="<%= domainApp %>/utilData.do?action=countCrawls"> Count </a> Crawls
 	    <li><a href="<%= domainApp %>/utilData.do?action=parentCrawl"> Crawl </a> for Parents
 	    <li><a href="<%= domainApp %>/utilData.do?action=imageCountCrawl"> Crawl </a> Image Counts
+	    <!-- 7.10 min -->
 	    <li><a href="<%= domainApp %>/utilData.do?action=projTaxonChildCountCrawl"> Crawl </a> Project Taxon Child Counts
 	    <li><a href="<%= domainApp %>/utilData.do?action=projTaxonImageCountCrawl"> Crawl </a> Project Taxon Image Counts
+
+	    <li><a href="<%= domainApp %>/utilData.do?action=projectCountCrawl"> Crawl </a> Project Taxon Counts
+	    <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl"> Crawl </a> Geolocale Taxon Counts
+
 	    <li><a href="<%= domainApp %>/utilData.do?action=worldantsFetchAndReload"> Worldants Fetch and Reload</a>
       </ul>
 <%   } %> 

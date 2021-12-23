@@ -459,7 +459,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
               }
               deleteTaxon(taxonName);
             }
-            s_log.warn("deleteOrphanedSpeciesFromSource() taxonNames not deleted due to description edits:" + notDeletedList);
+            s_log.info("deleteOrphanedSpeciesFromSource() taxonNames not deleted due to description edits:" + notDeletedList);
             //A.log("deleteOrphanedSpeciesFromSource() orphanList:" + orphanList);
 
           } else {  

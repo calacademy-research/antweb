@@ -30,7 +30,7 @@ public class TaxonMgr extends Manager {
 
     private static Date s_populateTime = null;
 
-    public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
+    public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
         if (!forceReload && (s_subfamilies != null)) return;
 
         TaxonDb taxonDb = new TaxonDb(connection);
@@ -65,11 +65,20 @@ public class TaxonMgr extends Manager {
 
         s_populateTime = new Date();
 
-        A.log("populate() " + report());
+        s_log.warn("populate() " + report());
+       // if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
     }
 
     public static String report() {
-        return "TaxonMgr last loaded:" + s_populateTime + " genera:" + s_genera.size() + " taxa:" + s_taxa.size();
+        return "TaxonMgr last loaded:" + s_populateTime + " subfamily:" + getSubfamilies().size() + " genera:" + s_genera.size() + " species:" + getSpeciesCount() + " taxa:" + s_taxa.size();
+    }
+
+    public static int getSpeciesCount() {
+        int c = 0;
+        for (Taxon t : s_taxa.values()) {
+            if ("species".equals(t.getRank())) c = c + 1;
+        }
+        return c;
     }
 
     //Called through UtilAction to, in a separate thread.
@@ -347,13 +356,6 @@ public class TaxonMgr extends Manager {
 //   subfamily, genus, status, source, isQudranomial, isAnt, currentValidName, bioregionMap, isIndet,
     */
 
-    // Unless we know we need to refresh, refrain.
-    public static boolean s_useRefreshingTaxonMgr = false; //AntwebProps.isDevMode();
-    public static boolean isUseRefreshing() {
-        boolean val = (s_useRefreshingTaxonMgr && !isInWorldants());
-        //A.log("isUseRefreshing() s_use:" + s_useRefreshingTaxonMgr + " isIn:" + isInWorldants() + " val:" + val);
-        return val;
-    }
 
     // This is a rough but effective solution. Set true during worldants upload (in UploadAction) and false at the end.
     private static boolean s_isInWorldants = false;
@@ -362,15 +364,26 @@ public class TaxonMgr extends Manager {
         s_isInWorldants = isInWorldants;
     }
 
+    public static boolean isUseRefreshing() {
+        return false;
+    }
+
+/*
+    // Unless we know we need to refresh, refrain.
+    public static boolean s_useRefreshingTaxonMgr = false; //AntwebProps.isDevMode();
+    public static boolean isUseRefreshing() {
+        boolean val = (s_useRefreshingTaxonMgr && !isInWorldants());
+        //A.log("isUseRefreshing() s_use:" + s_useRefreshingTaxonMgr + " isIn:" + isInWorldants() + " val:" + val);
+        return val;
+    }
+
     public static int s_refreshTaxonCount = 0;
     public static void refreshTaxon(Connection connection, String operation, String table, String taxonName, Hashtable item) throws SQLException {
         Taxon taxon = null;
 
-        /*
-        Really what we want is neither to refresh the taxon from the database OR update it from the hashtable values.
-        We want to update the member data that is needed during the upload process. We can refresh the whole TaxonMgr
-        at the end of the upload.
-        */
+        //Really what we want is neither to refresh the taxon from the database OR update it from the hashtable values.
+        //We want to update the member data that is needed during the upload process. We can refresh the whole TaxonMgr
+        //at the end of the upload.
 
         if (!"update".equals(operation) && !("save".equals(operation))) {
           return;
@@ -428,6 +441,8 @@ public class TaxonMgr extends Manager {
         add(taxonName, taxon);
     }
 
+
+
     public static void add(String taxonName, Taxon taxon) {
 
         if (s_species != null) {
@@ -446,6 +461,8 @@ public class TaxonMgr extends Manager {
 
         s_refreshTaxonCount = s_refreshTaxonCount + 1;
     }
+     */
+
     /*
 TaxonMgr.refreshTaxon() equal:false
   FROM HASHTABLE: taxarank:species taxonName:myrmicinaestrumigenys dicomas kindgom:animalia phylum:arthropoda order:hymenoptera class:insecta family:formicidae subfamily:myrmicinae tribe:dacetini genus:strumigenys subgenus:null species:dicomas subspecies:null status:valid groupId:1 source:specimen1.txt lineNum:1 insertMethod:specimenUpload created:null                  fossil:false isType:false isAntCat:false antcatId:0 isPending:false authorDate:null authorDateHtml:null authors:null year:null isAvailable:false currentValidName:null currentValidRank:null currentValidParent:null isOriginalCombination:false wasOriginalCombination:null parentTaxonName:null imageCount:0 holidId:0 chartColor:null defaultMale:null defaultWorker:null defaultQueen:null bioregionMap:null introduceMap:null

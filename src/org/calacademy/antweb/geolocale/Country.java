@@ -117,7 +117,7 @@ public class Country extends Geolocale {
         for (Object o : children) {
           Specimen s = (Specimen) o;
           if (name.equals(s.getCountry())) {
-            A.log("sort() name:" + name + " s:" + s.getCountry());
+            //A.log("sort() name:" + name + " s:" + s.getCountry());
             sortedChildren.add(s);
           }
         }

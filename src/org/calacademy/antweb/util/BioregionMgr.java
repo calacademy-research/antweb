@@ -1,7 +1,7 @@
 package org.calacademy.antweb.util;
 
-import java.sql.Connection;
 import java.util.*;
+import java.sql.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
@@ -17,11 +17,11 @@ public class BioregionMgr {
     private static ArrayList<Bioregion> s_bioregions = null;
     private static ArrayList<String> s_bioregionProjectNames = null;
         
-    public static void populate(Connection connection) {
+    public static void populate(Connection connection) throws SQLException {
       populate(connection, false);
     }
     
-    public static void populate(Connection connection, boolean forceReload) {
+    public static void populate(Connection connection, boolean forceReload) throws SQLException {
     
       if (AntwebProps.isDevMode()) {
         //s_log.warn("populate()");

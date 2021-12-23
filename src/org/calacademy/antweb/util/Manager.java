@@ -1,6 +1,6 @@
 package org.calacademy.antweb.util;
 
-import java.sql.Connection;
+import java.sql.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -18,7 +18,7 @@ public abstract class Manager {
       populate(connection, forceReload, false);
     }
 */
-    public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
+    public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
       // Effectively abstract.
       s_log.error("populate() should not be overridden, not executed.");
       AntwebUtil.logStackTrace();
