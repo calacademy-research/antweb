@@ -171,7 +171,7 @@ public class AntwebUpload {
                 }
             } else {
                 if (isParent) {
-                    A.log("saveTaxon() 1 parent doesn't exist rank:" + rank + " taxonName:" + taxonName + " so creating it.");
+                    s_log.debug("saveTaxon() 1 parent doesn't exist rank:" + rank + " taxonName:" + taxonName + " so creating it.");
                 }
             }
         }
@@ -192,7 +192,7 @@ public class AntwebUpload {
         String parentTaxonName = null;
         String currentValidName = (String) item.get("current_valid_name");
         if (taxonName.contains("dolichoderinaecolobopsis macrocephala"))
-            A.log("saveTaxon() 2 CURRENT VALID NAME:" + currentValidName + " taxonName:" + taxonName);
+            s_log.debug("saveTaxon() 2 CURRENT VALID NAME:" + currentValidName + " taxonName:" + taxonName);
         if (currentValidName != null && !taxonName.equals(currentValidName)) {
             parentTaxonName = Taxon.getParentTaxonNameFromName(currentValidName);
         } else {
@@ -253,7 +253,7 @@ public class AntwebUpload {
 
 
             if (taxonName.contains("formicinaemyrma iperstriata"))
-                A.log("saveTaxon() 5 BAD currentValidName:" + currentValidName + " taxonName:" + taxonName);
+                s_log.debug("saveTaxon() 5 BAD currentValidName:" + currentValidName + " taxonName:" + taxonName);
             // if we save a taxon, we make sure it's parent exists, or we create it.
             item.put("taxon_name", parentTaxonName);
             String grandParentTaxonName = Taxon.getParentTaxonNameFromName(parentTaxonName);
@@ -276,7 +276,7 @@ public class AntwebUpload {
 
                 saveTaxon(item, table, true);
             } else {
-                A.log("saveTaxon() 6 grandParentTaxonName null for parentTaxonName:" + parentTaxonName);
+                s_log.debug("saveTaxon() 6 grandParentTaxonName null for parentTaxonName:" + parentTaxonName);
             }
         }
 
@@ -357,7 +357,7 @@ public class AntwebUpload {
 
         Taxon referenceTaxon = TaxonMgr.getTaxon(taxonName);
 
-        if (referenceTaxon == null) A.log("updateTaxon() no referenceTaxon found:" + taxonName);
+        if (referenceTaxon == null) s_log.debug("updateTaxon() no referenceTaxon found:" + taxonName);
 
         /*
             Taxon referenceTaxon = null; //(new TaxonDb(getConnection())).getDummyTaxon(taxonName);
@@ -448,7 +448,7 @@ public class AntwebUpload {
                 query += " where taxon_name = '" + taxonName + "'";
 
                 if (!query.contains("insert_method")) {
-                    A.log("updateTaxon() Somewhere in the following stacktrace should have been put an insert_method into item."); // + " query:" + query);
+                    s_log.debug("updateTaxon() Somewhere in the following stacktrace should have been put an insert_method into item."); // + " query:" + query);
                     AntwebUtil.logShortStackTrace(8);
                 }
 
@@ -505,12 +505,12 @@ public class AntwebUpload {
 
 				// XXX without genus null check this seems to fail on worldants without a rollback.
 				if (genus != null && (taxonName.equals(s_testTaxonName))) {
-				  A.log("saveTaxonAndProjTaxon() taxonName:" + taxonName + " family:" + family + " project:" + project + " genus:" + genus + " authorDate:" + item.get("author_date"));
+				  s_log.debug("saveTaxonAndProjTaxon() taxonName:" + taxonName + " family:" + family + " project:" + project + " genus:" + genus + " authorDate:" + item.get("author_date"));
 				  //AntwebUtil.logStackTrace();
 				}
 
                 if (taxonName.equals("formicidae"))
-                    A.log("saveTaxonAndProjTaxon() taxonName:formicidae project:" + project + " family:" + family); // item:" + item + "     
+                    s_log.debug("saveTaxonAndProjTaxon() taxonName:formicidae project:" + project + " family:" + family); // item:" + item + "
                             
                 if (!isValidSubfamily(family, subfamily)) {
                 
@@ -521,7 +521,7 @@ public class AntwebUpload {
                   } else {              
                     // add to the nonLegit subfamily list
                     getMessageMgr().addToMessages(MessageMgr.invalidSubfamily, subfamily);
-                    A.log("saveTaxonAndProjTaxon() isValidSubfamily failure.  taxonName:" + taxonName);
+                    s_log.debug("saveTaxonAndProjTaxon() isValidSubfamily failure.  taxonName:" + taxonName);
                     return 0;
                   }  
                 }
@@ -554,7 +554,7 @@ public class AntwebUpload {
                   }
 
 				  if (taxonName.equals(s_testTaxonName)) {
-				    A.log("saveTaxonAndProjTaxon() taxonName:" + taxonName + " dummyTaxon:" + dummyTaxon + " status:" + status.getValue());
+				    s_log.debug("saveTaxonAndProjTaxon() taxonName:" + taxonName + " dummyTaxon:" + dummyTaxon + " status:" + status.getValue());
 				    //AntwebUtil.logStackTrace();
 				  } 
 
@@ -562,7 +562,7 @@ public class AntwebUpload {
                   boolean isValidSubfamilyForGenus = (new TaxonDb(getConnection())).isValidSubfamilyForGenus(family, subfamily, genus);
 
                   if ((!isValid) && !isValidSubfamilyForGenus) {
-                    A.log("saveTaxonAndProjTaxon() isValidSubfamilyForGenus failure.  Add to list.  taxonName:" + taxonName);
+                    s_log.debug("saveTaxonAndProjTaxon() isValidSubfamilyForGenus failure.  Add to list.  taxonName:" + taxonName);
                     // add to the Invalid Subfamily for Genus list. - to avoid duplicates
 
                     isValidSubfamilyForGenus = (new HomonymDb(getConnection())).isValidSubfamilyForGenus(family, subfamily, genus);
@@ -588,7 +588,7 @@ public class AntwebUpload {
                   }
                   
 				  if (taxonName.equals(s_testTaxonName)) {
-				    A.log("saveTaxonAndProjTaxon() taxonName:" + taxonName + " dummyTaxon:" + dummyTaxon + " status:" + status);
+				    s_log.debug("saveTaxonAndProjTaxon() taxonName:" + taxonName + " dummyTaxon:" + dummyTaxon + " status:" + status);
 				    //AntwebUtil.logStackTrace();
  				  }
 
@@ -612,10 +612,10 @@ public class AntwebUpload {
 
                 c = saveTaxon(item);
                 if (taxonName.contains("formicinaemyrma iperstriata"))
-				  if (c <= 0) A.log("saveTaxonAndProjTaxon() c:" + c + " taxonName:" + taxonName);
+				  if (c <= 0) s_log.debug("saveTaxonAndProjTaxon() c:" + c + " taxonName:" + taxonName);
 
             } else {
-              A.log("saveTaxonAndProjTaxon() taxonName:" + taxonName);
+              s_log.debug("saveTaxonAndProjTaxon() taxonName:" + taxonName);
             }
         } catch (SQLException e) {
             if (e instanceof java.sql.DataTruncation) {
@@ -813,7 +813,7 @@ public class AntwebUpload {
                             //A.log("saveSpecimen() lastCHar:" + lastChar + " value:" + value); // AntFormatter.escapeQuotes(value));
                             values.append("'" + value + "',");
                         } catch (ClassCastException e) {
-                            A.log("AntwebUpload.saveSpecimen() key:" + key + " e:" + e);
+                            s_log.debug("AntwebUpload.saveSpecimen() key:" + key + " e:" + e);
                         }
                         break;
                 }
@@ -858,7 +858,7 @@ public class AntwebUpload {
             if (retVal != 0) {
               getUploadDetails().countInsertedSpecimen();
             } else {
-              A.log("saveSpecimen() failed dml:" + dml);
+              s_log.debug("saveSpecimen() failed dml:" + dml);
             }
 
             ++saveSpecimenCount;
@@ -876,7 +876,7 @@ public class AntwebUpload {
         } catch (java.sql.SQLSyntaxErrorException e) {
             s_log.error("saveSpecimen() dml:" + dml + " e:" + e);
             String message = "Specimen jdbc exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e; // + " query:" + query;
-            A.log("saveSpecimen() " + message);
+            s_log.debug("saveSpecimen() " + message);
             getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
         } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             String message = "Specimen code:" + code;
@@ -970,7 +970,7 @@ public class AntwebUpload {
                 if (!Taxon.isAnt(taxonName)) {
 					String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
 					//displayName += " (line:" + (String) specimenItem.get("lineNum") + ")";
-					A.log("AntwebUpload.setStatusAndCurrentValidName() displayName:" + displayName);
+					s_log.debug("AntwebUpload.setStatusAndCurrentValidName() displayName:" + displayName);
 					getMessageMgr().addToMessages(MessageMgr.nameNotInFamilyFormicidae, displayName);
                 } else {              
 					// Currently we allow these to be uploaded.  In the future we won't.
@@ -988,7 +988,7 @@ public class AntwebUpload {
 
             if (Status.usesCurrentValidName(status)) {
               if (currentValidName == null) {
-                A.log("AntwebUpload.setStatusAndCurrentValidName() shouldn't status:" + status + " have a current valid name?");
+                s_log.debug("AntwebUpload.setStatusAndCurrentValidName() shouldn't status:" + status + " have a current valid name?");
                 // Shouldn't a status that uses a current valid name have a current valid name?
               } else {
                 skipTaxonEntry = true;
@@ -1002,10 +1002,9 @@ public class AntwebUpload {
                 }
 
                 if (currentValidTaxonName == null) {
-                  A.log("AntwebUpload.setStatusAndCurrentValidName() No currentValidTaxonName for" 
+                  s_log.debug("AntwebUpload.setStatusAndCurrentValidName() No currentValidTaxonName for"
                     + " currentValidName:" + currentValidName
-                    + " taxonName:" + taxonName
-                    );
+                    + " taxonName:" + taxonName);
                 } else {
                   if (currentValidTaxonName.equals(taxonName)) {
                     s_log.warn("AntwebUpload.setStatusAndCurrentValidTaxonName() currentValidName should be distinct from taxonName:" + taxonName);
@@ -1048,7 +1047,7 @@ public class AntwebUpload {
             } else if (Status.VALID.equals(status)) {
               // do nothing
             } else {
-              A.log("AntwebUpload.setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
+              s_log.debug("AntwebUpload.setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
             }            
           }
       }
@@ -1131,7 +1130,7 @@ public class AntwebUpload {
         String taxonName = subfamily;
         
         // add to Proj_taxon?
-        A.log("addMissingSubfamily() subfamily:" + subfamily + " source:" + source + " insertMethod:" + insertMethod);
+        s_log.debug("addMissingSubfamily() subfamily:" + subfamily + " source:" + source + " insertMethod:" + insertMethod);
         
         getUploadDb().insertSubfamily(taxonName, "formicidae", subfamily, source, insertMethod, Status.UNRECOGNIZED); // This is a PLACEHOLDER taxon.
     }

@@ -115,7 +115,7 @@ public class UserAgentTracker {
       if (userAgent.contains("(login:")) return false;
 
       if (knownAgentsSet.contains(userAgent)) {
-        A.log("KNOWN AGENT:" + userAgent);
+        s_log.debug("KNOWN AGENT:" + userAgent);
         return true;
       }
       Object countInteger = agentsMap.get(userAgent);
@@ -170,7 +170,7 @@ public class UserAgentTracker {
 
       for (Integer count : list) {
           agent = (countMap.get(count));
-          A.log("htmlReport() count:" + count + " agent:" + agent);
+          s_log.debug("htmlReport() count:" + count + " agent:" + agent);
           report += agent;
       }
 

@@ -98,7 +98,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
 		if (skipRecord == null) {
 		  if (Utility.isBlank(genus)) {
-			  A.log("processLine() genus is empty string line:" + lineNum + " displayLineNum:" + LineNumMgr.getDisplayLineNum(lineNum) + " genus:" + genus + " taxon:" + taxonName);
+			  s_log.debug("processLine() genus is empty string line:" + lineNum + " displayLineNum:" + LineNumMgr.getDisplayLineNum(lineNum) + " genus:" + genus + " taxon:" + taxonName);
 			  getMessageMgr().addToMessages(MessageMgr.emptyStringGenus, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code + " taxon:" + taxonName);
 			  skipRecord = "genusEmptyString";
 		  }
@@ -292,7 +292,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 			  // Verify the Bioregion. Must have a legal bioregion for the given genus.
 			  boolean isInvalidBioregion = invalidGenusBioregion(useTaxonName, bioregion);
 
-			  if (AntwebProps.isDevMode() && code.contains("casent0170541")) A.log("processLine() bioregion:" + bioregion + " useTaxonName:" + useTaxonName + " code:" + code + " isInvalidBioregion:" + isInvalidBioregion);
+			  if (AntwebProps.isDevMode() && code.contains("casent0170541")) s_log.debug("processLine() bioregion:" + bioregion + " useTaxonName:" + useTaxonName + " code:" + code + " isInvalidBioregion:" + isInvalidBioregion);
 
 			  if (isInvalidBioregion) {
 			    
@@ -341,7 +341,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 			Profiler.profile("saveSpecimenAndTaxon", startTime1, code); 
 			return true;
 		} else {
-		    A.log("processLine() false skipRecord:" + skipRecord);
+		    s_log.debug("processLine() false skipRecord:" + skipRecord);
 		    return false;
 		}
     }
@@ -376,18 +376,18 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
       */
 
 	  if (TaxonPropMgr.isIntroducedSomewhere(taxonName)) {
-		  if (debug) A.log("invalidGenusBioregion() isIntroduceSomewhere() taxonName:" + taxonName);
+		  if (debug) s_log.debug("invalidGenusBioregion() isIntroduceSomewhere() taxonName:" + taxonName);
 		  return false;
 	  }
 
 	  String genusTaxonName = Taxon.getGenusTaxonNameFromName(taxonName);
 	  if (genusTaxonName == null) {
-		  if (debug) A.log("invalidGenusBioregion() genusTaxonNameFromName is null for taxonName:" + taxonName);
+		  if (debug) s_log.debug("invalidGenusBioregion() genusTaxonNameFromName is null for taxonName:" + taxonName);
           return false;          
       }
       String firstChar = genusTaxonName.substring(0,1);
 	  if ("(".equals(firstChar)) {
-		  if (debug) A.log("invalidGenusBioregion() ( is first char of taxonName:" + taxonName + " genusTaxonName:" + genusTaxonName);
+		  if (debug) s_log.debug("invalidGenusBioregion() ( is first char of taxonName:" + taxonName + " genusTaxonName:" + genusTaxonName);
 		  return false;
 	  }
 
@@ -395,25 +395,25 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 	  //if (genusName != null) A.log("invalidGenusBioregione() genusName[0]:" + genusName.substring(0,1));
 	  Genus genus = TaxonMgr.getGenus(genusTaxonName); // Really should use taxonName. Not distinct in a couple cases. See Integrity Queries (generaInMultipleSubfamilies & generaInMultipleSubfamilies2).
 	  if (genus == null) {
-		if (debug) A.log("invalidGenusBioregion() genus not fouund for genusTaxonName:" + genusTaxonName + " taxon:" + taxonName);
+		if (debug) s_log.debug("invalidGenusBioregion() genus not fouund for genusTaxonName:" + genusTaxonName + " taxon:" + taxonName);
         return false;
 	  }
 
       if (!genus.isValid()) {
-        if (debug) A.log("invalidGenusBioregion() genus not valid:" + genus);
+        if (debug) s_log.debug("invalidGenusBioregion() genus not valid:" + genus);
         return false;
       }
 
 	  boolean legitBioregion = bioregion != null && !"null".equals(bioregion);
-      if (debug) A.log("invalidGenusBioregion() legitBioregion:" + legitBioregion);
+      if (debug) s_log.debug("invalidGenusBioregion() legitBioregion:" + legitBioregion);
 
 	  if (legitBioregion) {
 	    if (genus.getBioregionMap() == null) {
-			if (debug) A.log("invalidGenusBioregion() bioregionMap is null");
+			if (debug) s_log.debug("invalidGenusBioregion() bioregionMap is null");
 	    	return false; // For instance, fossil genera are not even listed.
 		}
 		boolean bioregionMapped = TaxonPropMgr.isMapped(genus.getBioregionMap(), bioregion);
-	    if (debug) A.log("invalidGenusBioregion() bioregionMapped:" + bioregionMapped);
+	    if (debug) s_log.debug("invalidGenusBioregion() bioregionMapped:" + bioregionMapped);
 		if (!bioregionMapped) {
           //A.iLog(7, "SpecimenUpload.invalidGenusBioregion() INVALID taxonName:" + taxonName + " bioregion:" + bioregion + " genusTaxonName:" + genusTaxonName + " genus:" + genus + " bioregionMap:" + genus.getBioregionMap(), 100);
 		  return true;
@@ -424,7 +424,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
   
 	  Profiler.profile("genusBioregion", startTimeBio, genusTaxonName);
 
-      if (debug) A.log("invalidGenusBioregion() default is false");
+      if (debug) s_log.debug("invalidGenusBioregion() default is false");
       return false;
     }
 
@@ -468,11 +468,10 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
           if ((taxon == null) || (status == null) || (Status.UNRECOGNIZED.equals(status))) {
           
-            if (false && taxonName.contains("gryllinaegryllus")) A.log("setStatusAndCurrentValidName() taxon:" + taxon 
+            if (false && taxonName.contains("gryllinaegryllus")) s_log.debug("setStatusAndCurrentValidName() taxon:" + taxon
               + " status:" + status + " statusAndCurrentValidNameCount:" + s_statusAndCurrentValidNameCount
               + " quad:" + Taxon.isQuadrinomial(taxonName)
-              + " ant:" + Taxon.isAnt(taxonName)
-              );
+              + " ant:" + Taxon.isAnt(taxonName));
 
 			/*
 			If it is unrecognized, it could have a parent specified which is a synonym.  In this case
@@ -508,7 +507,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
  
             if (Status.usesCurrentValidName(status)) {
               if (currentValidName == null) {
-                A.log("setStatusAndCurrentValidName() shouldn't status:" + status + " have a current valid name?");
+                s_log.debug("setStatusAndCurrentValidName() shouldn't status:" + status + " have a current valid name?");
                 // Shouldn't a status that uses a current valid name have a current valid name?
               } else {
 
@@ -575,7 +574,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
             } else if (Status.VALID.equals(status) || Status.UNAVAILABLE.equals(status) || Status.UNIDENTIFIABLE.equals(status)) {
               // do nothing
             } else {
-              A.log("setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
+              s_log.debug("setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
             }            
           }
       } // end if/else
@@ -583,7 +582,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 	  if (!Taxon.isAnt(taxonName)) {
 		String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
         if (taxonName.contains("odontomachus cephalotes")) {
-		  A.log("setStatusAndCurrentValidName() NOT ANT taxonName:" + taxonName + " displayName:" + displayName);
+		  s_log.debug("setStatusAndCurrentValidName() NOT ANT taxonName:" + taxonName + " displayName:" + displayName);
           //AntwebUtil.logStackTrace();
         }
         // displayName += " (line:" + (String) specimenItem.get("lineNum") + ")";
@@ -591,7 +590,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
   	  }
       
       if ("formicinaeforelophilus philippinensis_cf".equals(taxonName)) {
-        A.log("setStatusAndCurrentValidName() taxonName:" + taxonName + " status:" + status + " skip:" + skipTaxonEntry);      
+        s_log.debug("setStatusAndCurrentValidName() taxonName:" + taxonName + " status:" + status + " skip:" + skipTaxonEntry);
         //AntwebUtil.logShortStackTrace();
       }
       

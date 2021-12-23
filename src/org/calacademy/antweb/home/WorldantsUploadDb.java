@@ -72,7 +72,7 @@ public class WorldantsUploadDb extends AntwebDb {
             update = "update worldants_upload set log_file_name = '" + logFileName + "', exec_time = '" + execTime + "', operation = '" + uploadDetails.getOperation() + "' where id = " + id; 
             stmt.executeUpdate(update);
 
-            A.log("updateWorldantsUpload() update:" + update);
+            s_log.debug("updateWorldantsUpload() update:" + update);
 
             getConnection().commit();
         } catch (SQLException e) {
@@ -130,7 +130,7 @@ public class WorldantsUploadDb extends AntwebDb {
         } finally {
           DBUtil.close(stmt, rset, "UploadDb.getWorldantsAlert()");
         }      
-        A.log("getWorldantsAlert() count:" + count);
+        s_log.debug("getWorldantsAlert() count:" + count);
         return count;
     }
 

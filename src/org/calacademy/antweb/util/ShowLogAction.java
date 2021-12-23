@@ -118,7 +118,7 @@ public final class ShowLogAction extends Action {
         String command = null;
         if (grep != null && !"".equals(grep)) {
             command = "grep " + grep + " " + log;
-            A.log(" command:" + command);
+            s_log.debug(" command:" + command);
               // Must: docker-compose exec antweb bash
               // to see the logs here: /usr/local/antweb/web/log/
         } else {
@@ -184,7 +184,7 @@ public final class ShowLogAction extends Action {
                 message += "<tr><td>" + key + "</td><td>" + value + "</td></tr>";
                 ++i;
             } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                A.log("parseXMLIntoHtmlMessage.getUploadLog() i:" + i + " key:" + key + " e:" + e);
+                s_log.debug("parseXMLIntoHtmlMessage.getUploadLog() i:" + i + " key:" + key + " e:" + e);
             }
         }
         message += "</table>";
@@ -278,7 +278,7 @@ public final class ShowLogAction extends Action {
 				}
 				++i;
 			  } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-				A.log("ShowLogAction.getUploadLog() i:" + i + " col:" + col + " e:" + e);
+				s_log.debug("ShowLogAction.getUploadLog() i:" + i + " col:" + col + " e:" + e);
 			  }			      
 			}
 			message += "</table>";

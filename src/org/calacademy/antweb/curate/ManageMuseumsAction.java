@@ -1,6 +1,8 @@
 package org.calacademy.antweb.curate;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
@@ -23,7 +25,7 @@ public class ManageMuseumsAction extends Action {
 
         ArrayList<Museum> museumList = null;
         Museum museum = null;
-        java.sql.Connection connection = null;
+        Connection connection = null;
         HttpSession session = request.getSession();
 
         DynaActionForm df = (DynaActionForm) form;        
@@ -49,10 +51,10 @@ public class ManageMuseumsAction extends Action {
               
         String message = "";
         
-        A.log("execute() action:" + action + " code:" + museumCode + " museumName:" + museumName + " isActive:" + isActive);
+        s_log.debug("execute() action:" + action + " code:" + museumCode + " museumName:" + museumName + " isActive:" + isActive);
                             
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "ManageMuseumsAction");
 
             MuseumDb museumDb = new MuseumDb(connection);

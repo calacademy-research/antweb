@@ -20,7 +20,7 @@ public class BioregionTaxonDb extends TaxonSetDb {
 
     public ArrayList<Taxon> getTaxa(String name) throws SQLException {
         Bioregion bioregion = BioregionMgr.getBioregion(name);
-        A.log("getTaxa() name:" + name);
+        s_log.debug("getTaxa() name:" + name);
         return super.getTaxa(bioregion);
     }
 
@@ -77,7 +77,7 @@ public class BioregionTaxonDb extends TaxonSetDb {
             + " and " + SpecimenDb.getFlagCriteria()
             + " group by taxon_name";
 
-          A.log("populateSpeciesFromSpecimen() query:" + query);
+          s_log.debug("populateSpeciesFromSpecimen() query:" + query);
 
           stmt = DBUtil.getStatement(getConnection(), "populateSpeciesFromSpecimen()"); 
           rset = stmt.executeQuery(query);

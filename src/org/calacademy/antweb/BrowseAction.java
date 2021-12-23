@@ -116,7 +116,7 @@ public class BrowseAction extends DescriptionAction {
         boolean hasQueryString = (queryString != null);
         if (((browseForm.getTaxonName() != null) && (!"".equals(browseForm.getTaxonName()))) || (browseForm.getAntcatId() != 0)) {
           //session.setAttribute("statusSet", StatusSet.ALL);
-          A.log("execute() redirect taxonName:" + browseForm.getTaxonName() + " antcatId:" + browseForm.getAntcatId());
+          s_log.debug("execute() redirect taxonName:" + browseForm.getTaxonName() + " antcatId:" + browseForm.getAntcatId());
           return taxonNameRedirect(browseForm, mapping, request, response);
         } else if (hasQueryString && request.getQueryString().contains("antcatId=")) {
             request.setAttribute("message", "Enter an AntCat ID in the url.");
@@ -260,7 +260,7 @@ public class BrowseAction extends DescriptionAction {
               //A.log("execute  () family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank);
 
 			  taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
-              A.log("execute() taxon.getSource:" + taxon.getSource() + " desc:" + taxon.getDescription().size());
+              s_log.debug("execute() taxon.getSource:" + taxon.getSource() + " desc:" + taxon.getDescription().size());
 			}
 		  }
 		  if (taxon == null) {
@@ -297,11 +297,10 @@ public class BrowseAction extends DescriptionAction {
           taxon.setStatusSetStr(statusSetStr);
           taxon.setStatusSetSize(statusSetSize);
 	
-          if (true) A.log("execute() family:" + family + " subfamily:" + subfamily + " genus:" + genus 
+          if (true) s_log.debug("execute() family:" + family + " subfamily:" + subfamily + " genus:" + genus
             + " species:" + species + " subspecies:" + subspecies + " rank:" + rank + " overview:" + overview
             + " statusStr:" + statusStr + " statusSetStr:" + statusSetStr + " resetProject:" + browseForm.getResetProject()
-            + " taxon.status:" + taxon.getStatus()
-          );
+            + " taxon.status:" + taxon.getStatus());
 
 		  if (taxon.getTaxonSet() == null) {
               // if (!ProjectDb.projectHasTaxon(projectName, taxon, connection)) {
@@ -505,9 +504,9 @@ We are showin the full map of ponerinae for every adm1.
 			//A.log("execute() ogImg:" + ogImg);
 			//OpenGraphMgr.setOGImage(ogImg);
     		request.setAttribute("ogImage", ogImage);
-		  } else A.log("No Open Graph Image set. No headshot");
+		  } else s_log.debug("No Open Graph Image set. No headshot");
 
-          if (AntwebDebug.isDebugTaxon(taxon.getTaxonName())) A.log("has d image:" + taxon.getImages().get("d"));
+          if (AntwebDebug.isDebugTaxon(taxon.getTaxonName())) s_log.debug("has d image:" + taxon.getImages().get("d"));
 
         }
         
@@ -586,7 +585,7 @@ We are showin the full map of ponerinae for every adm1.
 
 		String fetchStr = "null";
 		if (fetchTaxon != null) fetchStr = fetchTaxon.getTaxonName();
-		A.log("taxonNameRedirect() antcatId:" + antcatId + " taxonName:" + taxonName + " fetchStr:" + fetchStr + " resetProject:" + browseForm.getResetProject());
+		s_log.debug("taxonNameRedirect() antcatId:" + antcatId + " taxonName:" + taxonName + " fetchStr:" + fetchStr + " resetProject:" + browseForm.getResetProject());
 
 		// fetch with Antcat ID
 		if ((fetchTaxon == null) && (antcatId != 0)) {
@@ -615,13 +614,13 @@ We are showin the full map of ponerinae for every adm1.
 		  
 		  String url = fetchTaxon.getUrl(targetDo);
           if (browseForm.getResetProject()) url += "&resetProject=true";
-		  A.log("taxonNameRedirect() resetProject:" + browseForm.getResetProject() + " taxon:" + fetchTaxon + " url:" + url);
+		  s_log.debug("taxonNameRedirect() resetProject:" + browseForm.getResetProject() + " taxon:" + fetchTaxon + " url:" + url);
 		  HttpUtil.sendRedirect(url, request, response);  
 		  return null;
 		} else if (possibleSpecimen.contains("casent") || possibleSpecimen.contains("blf") || possibleSpecimen.contains("jtl") 
 		    || possibleSpecimen.contains("lacm") || possibleSpecimen.contains("sam-") || possibleSpecimen.contains("fmnhi") 
 		    || possibleSpecimen.contains("inb00") || possibleSpecimen.contains("kbve")) {  
-          A.log("execute() taxonName" + taxonName);
+          s_log.debug("execute() taxonName" + taxonName);
           String url = AntwebProps.getDomainApp() + "/specimen.do?code=" + taxonName;
 		  HttpUtil.sendRedirect(url, request, response);  
           return null;

@@ -6,6 +6,7 @@ import java.sql.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
 
@@ -32,7 +33,7 @@ public final class IntroducedMapMgrAction extends Action {
         String orderBy = bioregionMapMgrForm.getOrderBy();
 
         orderBy = " order by genus, species, subspecies";
-        A.log("execute() orderBy:" + orderBy + " param:" + request.getParameter("orderBy"));
+        s_log.debug("execute() orderBy:" + orderBy + " param:" + request.getParameter("orderBy"));
 
         ArrayList<Taxon> speciesList = new ArrayList<>();
 
@@ -42,11 +43,11 @@ public final class IntroducedMapMgrAction extends Action {
         Statement stmt = null;
         ResultSet rset = null;
         try {         
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "IntroducedMapMgrAction.execute()");
 
 			if (HttpUtil.isPost(request)) {
-			  A.log("execute POST values:" + bioregionMapMgrForm);
+			  s_log.debug("execute POST values:" + bioregionMapMgrForm);
 			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
               taxonPropDb.updateIntroducedMap(bioregionMapMgrForm.getTaxonName(), bioregionMapMgrForm.getValues());
               reloadTaxonPropMgr = true;

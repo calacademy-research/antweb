@@ -6,6 +6,8 @@ import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import org.calacademy.antweb.util.*;
@@ -39,7 +41,7 @@ public final class OverviewAction extends DescriptionAction {
       java.sql.Connection connection = null;
       
       try {
-        javax.sql.DataSource dataSource = null;
+        DataSource dataSource = null;
         
         if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
         
@@ -56,7 +58,7 @@ public final class OverviewAction extends DescriptionAction {
         String name = overviewForm.getName();    
         int id = overviewForm.getId();
            
-        A.log("execute() name:" + name + " uri:" + uri);          
+        s_log.debug("execute() name:" + name + " uri:" + uri);
 
 //A.log("execute() 1 statusSet:" + (String) request.getSession().getAttribute("statusSet"));
 
@@ -327,7 +329,7 @@ public final class OverviewAction extends DescriptionAction {
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
 			GeolocaleMgr.populate(connection, true, false);
-			A.log("execute() AntwebMgr.populate()");
+			s_log.debug("execute() AntwebMgr.populate()");
 		  }
 
           if (geolocale != null) {
@@ -414,7 +416,7 @@ public final class OverviewAction extends DescriptionAction {
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
 			GeolocaleMgr.populate(connection, true, false);
-			A.log("execute() geolocale:" + geolocale.getName() + " recalculated.");
+			s_log.debug("execute() geolocale:" + geolocale.getName() + " recalculated.");
 		  }
 		            
           if (geolocale != null) {

@@ -172,7 +172,7 @@ public final class ListAction extends Action {
                             SpecimenDb specimenDb = new SpecimenDb(connection);
                             int groupId = (Integer) df.get("groupId");
                             ArrayList<String> list = specimenDb.getSpecimensWithMorphoGenera(groupId);
-                            A.log("ListAction list:" + list);
+                            s_log.debug("ListAction list:" + list);
                             request.setAttribute("listTable", list);
                             return (mapping.findForward("listTable"));
                         }

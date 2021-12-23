@@ -7,6 +7,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -32,7 +33,7 @@ public final class MapResultsAction extends ResultsAction {
         HttpSession session = request.getSession();
 
         if (session.getAttribute("activeSession") == null) {
-          A.log("MapResultsAction no activeSession.");
+          s_log.debug("MapResultsAction no activeSession.");
           return mapping.findForward("sessionExpired");
         }
         
@@ -53,7 +54,7 @@ public final class MapResultsAction extends ResultsAction {
         if (output == null) output = (String) session.getAttribute("output");
         if (output == null) output = Output.LIST;
 
-        A.log("MapResultsAction.execute() formVal:" + taxaForm.getResultRank() + " resultRank:" + resultRank);          
+        s_log.debug("MapResultsAction.execute() formVal:" + taxaForm.getResultRank() + " resultRank:" + resultRank);
                
 		AdvancedSearchResults advancedSearchResults = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
 		ArrayList<ResultItem> searchResults = advancedSearchResults.getResults();
@@ -63,7 +64,7 @@ public final class MapResultsAction extends ResultsAction {
 		Map map = null;
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request,"conPool");
+            DataSource dataSource = getDataSource(request,"conPool");
             connection = DBUtil.getConnection(dataSource, "MapResultsAction.execute()");  
             String title = "Mapping Search Results";
             map = getMap(searchResults, taxonList, chosenList, resultRank, output, title, connection);
@@ -74,13 +75,13 @@ public final class MapResultsAction extends ResultsAction {
 		  return mapping.findForward("message");                   
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         } finally {
 			DBUtil.close(connection, this, "MapResultsAction.execute()");
 		}  
 		        
         String sizeStr = (map.getChosenList() == null) ? "null" : "" + map.getChosenList().size();
-        A.log("MapResultsAction.execute() resultRank:" + resultRank + " title:" + map.getTitle() + " chosenList.size:" + sizeStr + " map:" + map);
+        s_log.debug("MapResultsAction.execute() resultRank:" + resultRank + " title:" + map.getTitle() + " chosenList.size:" + sizeStr + " map:" + map);
 
         session.setAttribute("title", map.getTitle());  // now redundant. Could change the client code as well.
         session.setAttribute("map", map);
@@ -125,7 +126,7 @@ public final class MapResultsAction extends ResultsAction {
             info += " chosenList(specimen):" + chosenList.size();
    		    // If too many results, then map one from each location.
 			int maxChosenListSize = 1000;
-			A.log("getMap(searchResults... chosenListSize:" + chosenList.size());
+			s_log.debug("getMap(searchResults... chosenListSize:" + chosenList.size());
 			if (chosenList.size() > maxChosenListSize) {
 				mapLocalities = true; 
 				int beforeChosenListSize = chosenList.size();
@@ -217,7 +218,7 @@ public final class MapResultsAction extends ResultsAction {
 		}
         ResultItem thisItem = null;
         int thisChosen = 0;
-        A.log("getSpecimensFromResults()");
+        s_log.debug("getSpecimensFromResults()");
         for (String chosen : chosenList) {
             thisChosen = (Integer.valueOf(chosen)).intValue();
             thisItem = (ResultItem) searchResults.get(thisChosen);

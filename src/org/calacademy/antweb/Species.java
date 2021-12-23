@@ -178,7 +178,7 @@ these other _cf1 etc.
                 + " and proj_taxon.project_name = 'worldants'"
                 + " and source_table = 'specimen' and shot_number = 1"; 
      
-            A.log("setAllImages() genus image query: " + theQuery);
+            s_log.debug("setAllImages() genus image query: " + theQuery);
             
             stmt = DBUtil.getStatement(connection, "setAllImages()");
             rset = stmt.executeQuery(theQuery);
@@ -248,7 +248,7 @@ these other _cf1 etc.
           + " and " + Caste.getSpecimenClause(caste)
           ;
             
-        A.log("setChildren() query:" + query);
+        s_log.debug("setChildren() query:" + query);
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -274,7 +274,7 @@ these other _cf1 etc.
             } else {
                 child.setHasImages(connection, overview);
             }
-            if (AntwebDebug.isDebugTaxon(getTaxonName())) A.log("setChildren(7) setHasImages code:" + child.getCode() + " hasImages:" + child.getHasImages());
+            if (AntwebDebug.isDebugTaxon(getTaxonName())) s_log.debug("setChildren(7) setHasImages code:" + child.getCode() + " hasImages:" + child.getHasImages());
 
             if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
                 child.setMap(new Map(child, (LocalityOverview) overview, connection));
@@ -319,7 +319,7 @@ these other _cf1 etc.
 
             if (overview instanceof LocalityOverview) {
               String locality = ((LocalityOverview) overview).getLocality();                    
-			  A.log("setChildrenLocalized() locality:" + locality);
+			  s_log.debug("setChildrenLocalized() locality:" + locality);
               if ((locality != null) && (locality.length() > 0) && (!locality.equals("null")))  {
                 if ("country".equals(locality.substring(0, 7))) {
                     locality = "specimen." + locality;
@@ -376,7 +376,7 @@ To fix this proper would involve rewriting Species.sort()
 	
 	    //s_log.warn("sortBy() field		:" + fieldName + " children:" + children);
 
-        A.log("sortBy() fieldName:" + fieldName);
+        s_log.debug("sortBy() fieldName:" + fieldName);
 
       try {
 

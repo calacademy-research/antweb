@@ -8,6 +8,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -42,7 +44,7 @@ public final class EditLoginAction extends Action {
         Login login = null;
         java.sql.Connection connection = null;
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");        
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "updateDefaultSpecimen()");
 
           String idStr = editForm.getId();
@@ -61,15 +63,15 @@ public final class EditLoginAction extends Action {
 
           boolean isSubmit = "true".equals(editForm.getIsSubmit());
           boolean isPost = HttpUtil.isPost(request);
-          A.log("execute() ContentType:" + request.getContentType());
-          A.log("execute() method:" + request.getMethod());
-          A.log("execute() isSubmit:" + editForm.getIsSubmit() + " isPost:" + isPost);
+          s_log.debug("execute() ContentType:" + request.getContentType());
+          s_log.debug("execute() method:" + request.getMethod());
+          s_log.debug("execute() isSubmit:" + editForm.getIsSubmit() + " isPost:" + isPost);
 
           if (isSubmit || isPost) {
 
             String message = validate(editForm, request);
             if (message != null) {
-               A.log("execute() validate() failure message:" + message);
+               s_log.debug("execute() validate() failure message:" + message);
                request.setAttribute("message", message);
                request.getSession().setAttribute("thisLogin", login);
                return (mapping.findForward("editLogin"));
@@ -85,7 +87,7 @@ public final class EditLoginAction extends Action {
             login.setFirstName(editForm.getFirstName());
             login.setLastName(editForm.getLastName());
             
-            A.log("execute() loginEmail:" + login.getEmail());
+            s_log.debug("execute() loginEmail:" + login.getEmail());
 
             request.setAttribute("message", "User Account Saved.");          
             loginDb.userUpdateLogin(login);
@@ -94,7 +96,7 @@ public final class EditLoginAction extends Action {
           //    request.getSession().setAttribute("thisLogin", new Login());
           }
           
-          A.log("execute() login:" + login);             
+          s_log.debug("execute() login:" + login);
           request.getSession().setAttribute("thisLogin", login);
           return mapping.findForward("editLogin");
         } catch (SQLException e) {
@@ -139,7 +141,7 @@ public final class EditLoginAction extends Action {
            ((password == null) || (password.equals(""))) ||
            ((retypePassword == null) || (retypePassword.equals("")))
            ) {
-            A.log("validate() password:" + password + " retype:" + retypePassword);
+            s_log.debug("validate() password:" + password + " retype:" + retypePassword);
              message = "Password fields may not be empty";
         }  
         return message;  

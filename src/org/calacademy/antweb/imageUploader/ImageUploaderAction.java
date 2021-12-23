@@ -6,6 +6,7 @@ import java.sql.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.Date;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import org.apache.commons.fileupload.*;
@@ -140,7 +141,7 @@ public final class ImageUploaderAction extends Action {
                 if (artist != null) {
                   imageUpload.setArtistId(Integer.valueOf(artist).intValue());
                 }
-                imageUpload.setCreated(new java.util.Date());
+                imageUpload.setCreated(new Date());
                 Copyright copyright = (new CopyrightDb(connection)).getCurrentCopyright();
                 imageUpload.setCopyright(copyright);
                 imageUpload.setLicense(ImageUpload.LICENSE);
@@ -162,11 +163,11 @@ public final class ImageUploaderAction extends Action {
                 writeRecentImages(connection);
                 
                 request.setAttribute("imageUpload", imageUpload);
-                A.log("go to report");    
+                s_log.debug("go to report");
                 return (mapping.findForward("report"));           
 
             } else {        
-                A.log("go to imageUploader");    
+                s_log.debug("go to imageUploader");
                 return (mapping.findForward("imageUploader"));         
             }
         } catch (Exception ex) {

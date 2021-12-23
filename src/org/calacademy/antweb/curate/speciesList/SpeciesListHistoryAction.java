@@ -2,6 +2,8 @@ package org.calacademy.antweb.curate.speciesList;
 
 import java.util.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -30,7 +32,7 @@ public class SpeciesListHistoryAction extends SpeciesListToolAction {
 
     java.sql.Connection connection = null;
     try {
-       javax.sql.DataSource dataSource = getDataSource(request, "mediumConPool");
+       DataSource dataSource = getDataSource(request, "mediumConPool");
        connection = DBUtil.getConnection(dataSource, "SpeciesListHistoryAction.execute()");
 
        ProjTaxonLogDb projTaxonLogDb = new ProjTaxonLogDb(connection);
@@ -43,12 +45,12 @@ public class SpeciesListHistoryAction extends SpeciesListToolAction {
          projTaxonLogDb.deleteAllLogs();
          geolocaleTaxonLogDb.deleteAllLogs();
 
-         A.log("execute() all logs deleted");
+         s_log.debug("execute() all logs deleted");
          //return mapping.findForward("speciesListHistory");
        }
          
        String displaySubfamily = (String) request.getSession().getAttribute("displaySubfamily");
-       A.log("execute() form:" + form + " speciesListName:" + speciesListName + " projLogId:" + projLogId + " geoLogId:" + geoLogId + " displaySubfamily:" + displaySubfamily);
+       s_log.debug("execute() form:" + form + " speciesListName:" + speciesListName + " projLogId:" + projLogId + " geoLogId:" + geoLogId + " displaySubfamily:" + displaySubfamily);
        
        if (speciesListName != null) {
          if (Project.isProjectName(speciesListName)) {

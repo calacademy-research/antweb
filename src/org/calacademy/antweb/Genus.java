@@ -100,7 +100,7 @@ public class Genus extends Subfamily implements Serializable {
 //            if (!"default".equals(project))                        
 //              query += " and proj_taxon.project_name = '" + project + "'";
 
-            A.log("setChildren(8) overview:" + overview + " query:" + query);
+            s_log.debug("setChildren(8) overview:" + overview + " query:" + query);
 
             //s_log.info("setChildren() getChildMaps:" + getChildMaps + " query:" + query);
 
@@ -163,7 +163,7 @@ We get both... that can't be right.
 */
 
                 if (getTaxonName().contains("acanthobius"))
-                    A.log("setChildren() getChildImages:" + getChildImages + " images:" + child.getHasImagesCount() + " imagess:" + child.getImages());
+                    s_log.debug("setChildren() getChildImages:" + getChildImages + " images:" + child.getHasImagesCount() + " imagess:" + child.getImages());
 
                 child.initTaxonSet(connection, overview);
 
@@ -177,12 +177,12 @@ We get both... that can't be right.
             //s_log.info("setChildren() total time:" + (((new GregorianCalendar()).getTimeInMillis()) - now));
             now = (new GregorianCalendar()).getTimeInMillis();
         } catch (SQLException e) {
-            A.log("setChildren() query:" + query + " e:" + e);
+            s_log.debug("setChildren() query:" + query + " e:" + e);
             throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "setChildren()");
         }
-        A.log("setChildren() size:" + theseChildren.size());
+        s_log.debug("setChildren() size:" + theseChildren.size());
         //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
         this.children = theseChildren;
     }

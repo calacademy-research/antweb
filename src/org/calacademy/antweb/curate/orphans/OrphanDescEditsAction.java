@@ -5,6 +5,8 @@ import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -35,7 +37,7 @@ public final class OrphanDescEditsAction extends Action {
         java.sql.Connection connection = null;
                 
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "OrphanDescEditsAction.execute()");
             
             if (connection == null) s_log.error("execute() connection is null.");            
@@ -103,7 +105,7 @@ public final class OrphanDescEditsAction extends Action {
             putLookupDataInRequest(request, connection);
 
             list = orphansDb.getSpecimenOrphanDescEditTaxons();
-            A.log("execute(XXX)");
+            s_log.debug("execute(XXX)");
             list.addAll(orphansDb.getTaxonOrphanDescEditTaxons());
             request.setAttribute("orphanDescEditTaxons", list);        
 
@@ -195,7 +197,7 @@ public final class OrphanDescEditsAction extends Action {
           newTaxon = (new TaxonDb(connection)).getTaxon(theForm.getToTaxonName());
           if (newTaxon == null) return "taxon:" + theForm.getToTaxonName() + " does not exist.";
         } if (theForm.getSuggestedTaxonName() != null && !"".equals(theForm.getSuggestedTaxonName())) {
-          A.log("transferEditsToTaxon() suggestedTaxonName:" + theForm.getSuggestedTaxonName());
+          s_log.debug("transferEditsToTaxon() suggestedTaxonName:" + theForm.getSuggestedTaxonName());
           newTaxon = (new TaxonDb(connection)).getTaxon(theForm.getSuggestedTaxonName());
         } else {
           String subfamily = theForm.getSubfamily();

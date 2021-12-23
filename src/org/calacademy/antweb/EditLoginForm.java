@@ -40,7 +40,7 @@ public class EditLoginForm extends ActionForm {
         return id;
     }
     public void setId(String id) {
-    A.log("setId(" + id + ")");
+    s_log.debug("setId(" + id + ")");
         this.id = id;
     }
 

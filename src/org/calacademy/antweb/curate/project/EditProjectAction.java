@@ -7,6 +7,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 
 
 import org.apache.struts.action.*;
@@ -40,7 +41,7 @@ public final class EditProjectAction extends Action {
         ActionForward forward = (mapping.findForward("error"));
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "EditProjectAction.execute()");
 
             if ("delete".equals(editProjectForm.getAction())) {
@@ -72,10 +73,10 @@ public final class EditProjectAction extends Action {
               String displayKey = ProjectMgr.getDisplayKey(projectName);
               if (displayKey == null || "null".equals(displayKey)) displayKey = projectName;
               
-              A.log("execute() displayKey:" + displayKey + " projectName:" + projectName);
+              s_log.debug("execute() displayKey:" + displayKey + " projectName:" + projectName);
               
               String url = AntwebProps.getDomainApp() + "/project.do?name=" + displayKey;
-              A.log("execute() url:" + url);
+              s_log.debug("execute() url:" + url);
 
 			  ProjectMgr.populate(connection, true);
 			
@@ -88,7 +89,7 @@ public final class EditProjectAction extends Action {
               thisProject = editProjectForm.freshProject();
             }
 
-            A.log("execute() Putting in request thisProject:" + thisProject);
+            s_log.debug("execute() Putting in request thisProject:" + thisProject);
 
             request.setAttribute("thisProject", thisProject);
             forward = mapping.findForward("success");
@@ -131,7 +132,7 @@ public final class EditProjectAction extends Action {
     
         Project project = editProjectForm.getProject();
 
-        A.log("handlePost() form.isLive:" + editProjectForm.getIsLive() + " Project.isLive:" + project.getIsLive());
+        s_log.debug("handlePost() form.isLive:" + editProjectForm.getIsLive() + " Project.isLive:" + project.getIsLive());
 
         saveProject(project, connection, request);
     

@@ -70,7 +70,7 @@ public class AntwebDb {
         
         if (false && AntwebProps.isDevMode() && !isValidSubfamilyForGenus) s_log.warn("isSubfamilyForGenus() false for subfamily:" + subfamily + ".  Found:" + selectedSubfamilies); // + " query:" + query);
 
-        if (!isValidSubfamilyForGenus) A.log("isSubfamilyForGenus() isValid:" + isValidSubfamilyForGenus + " subfamily:" + subfamily + " query:" + query);
+        if (!isValidSubfamilyForGenus) s_log.debug("isSubfamilyForGenus() isValid:" + isValidSubfamilyForGenus + " subfamily:" + subfamily + " query:" + query);
         return isValidSubfamilyForGenus;
     }    
         
@@ -92,7 +92,7 @@ public class AntwebDb {
         } finally {
           DBUtil.close(stmt, "AntwebDb.isExists()");        
         }    
-        if ("leptanillinaeprotanilla".equals(taxonName)) A.log("isExists() taxonName:" + taxonName + " retVal:" + retVal + " query:" + query);
+        if ("leptanillinaeprotanilla".equals(taxonName)) s_log.debug("isExists() taxonName:" + taxonName + " retVal:" + retVal + " query:" + query);
         return retVal;
     }
             
@@ -156,7 +156,7 @@ public class AntwebDb {
           DBUtil.close(stmt, "AntwebDb.isCurrentInLookup()");        
         }        
         
-        A.log("isCurrentInLookup() dml:" + dml);
+        s_log.debug("isCurrentInLookup() dml:" + dml);
         
         return false;
     }	

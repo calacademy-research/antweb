@@ -341,14 +341,14 @@ public class UploadDetails extends OperationDetails {
     }
     
     public void setPreUploadStatistics(ArrayList stats) {
-      A.log("preUploadStats:" + stats);
+      s_log.debug("preUploadStats:" + stats);
       preUploadStatistics = stats;
     }
     public ArrayList getPreUploadStatistics() {
       return preUploadStatistics;
     }
     public void setPostUploadStatistics(ArrayList stats) {
-      A.log("postUploadStats:" + stats);
+      s_log.debug("postUploadStats:" + stats);
       postUploadStatistics = stats;
     }
     public ArrayList getPostUploadStatistics() {

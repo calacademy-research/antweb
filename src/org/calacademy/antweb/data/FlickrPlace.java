@@ -228,11 +228,11 @@ public class FlickrPlace extends DataPlace {
 			PlacesResponse placesResponse = new Gson().fromJson(json, PlacesResponse.class);
 
             if (placesResponse == null) {
-               A.log("getPlace() placesResponse is null. json:" + json);
+               s_log.debug("getPlace() placesResponse is null. json:" + json);
                return null;
             }
             if (placesResponse.places == null) {
-               A.log("getPlace() places is null. placesResponse:" + placesResponse + " json:" + json);
+               s_log.debug("getPlace() places is null. placesResponse:" + placesResponse + " json:" + json);
 			   return null;
 			}
 			
@@ -453,7 +453,7 @@ public class FlickrPlace extends DataPlace {
 	      link = "Flickr place: Not found<a href='https://www.flickr.com/places/info/'>.</a>";
 	    }
 	  } catch (Exception e) {
-		A.log("FlickrPace.getLink() e:" + e);
+		s_log.debug("FlickrPace.getLink() e:" + e);
 	  }
       return link;
     }

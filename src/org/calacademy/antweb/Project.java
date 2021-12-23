@@ -93,7 +93,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     }
 
     public boolean isCanShowSpeciesListTool(Login accessLogin) {
-      A.log("isCanShowSpeciesListTool() isSpeciesListMappable:" + isSpeciesListMappable() + " useName:" + getUseName());
+      s_log.debug("isCanShowSpeciesListTool() isSpeciesListMappable:" + isSpeciesListMappable() + " useName:" + getUseName());
         //  || PROJECT.equals(getBioregion()   // Now is scope.
         return isSpeciesListMappable()
                 && accessLogin != null
@@ -209,7 +209,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
         authorImageTag = "";
         if ((authorImage != null) && !(authorImage.equals(""))) {
           authorImageTag = "<img src=\"" + AntwebProps.getImgDomainApp() + "/" + Project.getSpeciesListDir() + getRoot() + "/" + getAuthorImage() + "\">";
-          A.log("setAuthorImage() authorImageTag:" + authorImageTag);
+          s_log.debug("setAuthorImage() authorImageTag:" + authorImageTag);
         }        
     }
     

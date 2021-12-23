@@ -4,12 +4,14 @@ import java.io.IOException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
 
 import java.sql.*;
 import java.util.*;
 
+import org.calacademy.antweb.Map;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.search.FieldGuide;
@@ -55,7 +57,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 			String caste = taxaForm.getCaste();
 			if (caste == null) caste = Caste.DEFAULT;
 			caste = Caste.QUEEN;
-            A.log("FieldGuideResultsAction.execute() caste:" + caste);			
+            s_log.debug("FieldGuideResultsAction.execute() caste:" + caste);
 		
 			AdvancedSearchResults searchResults = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");      
 			if (searchResults == null) {
@@ -67,7 +69,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 				chosenResults = getChosenResultsFromResults(chosenList, searchResults.getResults());
 				forward = mapping.findForward("fieldGuideByTaxon");
 				title = "Species Field Guide";  
-				A.log("execute() chosenResults (specimens) count:" + chosenResults.size());                    
+				s_log.debug("execute() chosenResults (specimens) count:" + chosenResults.size());
 			} else if (ResultRank.isTaxonRank(resultRank)) {
 			    // The taxaList is the list of taxons for which we want to see specimens.
 				// The chosenList is the selected values from the taxaList
@@ -82,7 +84,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 				//if (ResultRank.SUBFAMILY.equals(resultRank)) chosenResults = getSpecimensForTaxaFromResults(chosenList, taxonList, searchResults.getResults());
 				forward = mapping.findForward("fieldGuideByTaxon");
 				title = (new Formatter()).capitalizeFirstLetter(resultRank) + " Field Guide";                    
-				A.log("execute() chosenResults (taxon) count:" + chosenResults.size());   // For Bay Area ants Marin: 383          
+				s_log.debug("execute() chosenResults (taxon) count:" + chosenResults.size());   // For Bay Area ants Marin: 383
 			} else {
 			    String message = "Unsupported Result Rank for Field Guide:" + resultRank;
 			    s_log.error("execute() " + message);
@@ -90,9 +92,9 @@ public final class FieldGuideResultsAction extends ResultsAction {
 			    return (mapping.findForward("message"));            				
             }
             FieldGuide fieldGuide = new FieldGuide();
-            java.sql.Connection connection = null;
+            Connection connection = null;
             try {
-              javax.sql.DataSource dataSource = getDataSource(request, "conPool");              
+              DataSource dataSource = getDataSource(request, "conPool");
               connection = DBUtil.getConnection(dataSource, "FieldGuideResultsAction.execute()");			
     		  fieldGuide.setOverview(localityOverview);
     		  String fgRank = "species"; if (ResultRank.SPECIES.equals(resultRank)) fgRank = "genus";
@@ -102,7 +104,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 			  
 			  fieldGuide.setExtent(localityOverview.getExtent());
               chosenTaxa = getChosenTaxa(request, chosenResults, resultRank, caste, localityOverview, connection);    
-              A.log("execute() (chosenTaxa) count:" + chosenTaxa.size());    // For Bay Area ants Marin: 81           
+              s_log.debug("execute() (chosenTaxa) count:" + chosenTaxa.size());    // For Bay Area ants Marin: 81
 			  fieldGuide.setTaxa(chosenTaxa);			  
 		  	  fieldGuide.setTitle((String) session.getAttribute("searchTitle"));	
             } catch (SQLException e) {
@@ -111,7 +113,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             } finally {
                DBUtil.close(connection, this, "FieldGuideResultsAction.execute()");
             }
-            A.log("chosenTaxa count:" + chosenTaxa.size() + " chosenTaxa field guide taxa count:" + fieldGuide.getTaxa().size());
+            s_log.debug("chosenTaxa count:" + chosenTaxa.size() + " chosenTaxa field guide taxa count:" + fieldGuide.getTaxa().size());
 
             request.setAttribute("fieldGuide", fieldGuide);
             request.setAttribute("title", title);                
@@ -132,7 +134,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             , String resultRank, String caste, Overview overview, Connection connection) throws SQLException {
         ArrayList<Taxon> chosenTaxa = new ArrayList();
 
-        A.log("getChosenTaxa() chosenResults:" + chosenResults.size() + " resultRank:" + resultRank + " overview:" + overview);
+        s_log.debug("getChosenTaxa() chosenResults:" + chosenResults.size() + " resultRank:" + resultRank + " overview:" + overview);
         String distinctTaxonName = "";
         Collections.sort(chosenResults);  // Must be sorted here in order to remove duplicates
         for (ResultItem resultItem : chosenResults) {
@@ -157,7 +159,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
                 }                  
 	   		      //taxon.setChildren(project);
 			}
-            org.calacademy.antweb.Map map = new org.calacademy.antweb.Map(taxon, (LocalityOverview) overview, connection);
+            Map map = new Map(taxon, (LocalityOverview) overview, connection);
             taxon.setMap(map);	  			  
 
             //taxon.setImages(overview, false);                 
@@ -186,10 +188,10 @@ public final class FieldGuideResultsAction extends ResultsAction {
                 }
             }    
         }   
-        A.log("getSpecimensForTaxaFromResults() chosenList:" + chosenList.size()
+        s_log.debug("getSpecimensForTaxaFromResults() chosenList:" + chosenList.size()
             + " theTaxa:" + theTaxa.size()
             + " searchResults:" + searchResults.size()
-            + " theSpecimens:" + theSpecimens.size());  
+            + " theSpecimens:" + theSpecimens.size());
           // for Bay Area Ants Marin: chosenList:63 theTaxa:63 searchResults:333 theSpecimens:383
         return theSpecimens;
     }

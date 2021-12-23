@@ -6,6 +6,9 @@ services:
       args:
         ENV: STAGE
 
+  mysql:
+    volumes:
+      - ./docker/mysql/mysql_stage.cnf:/etc/mysql/conf.d/custom.cnf
   caddy:
     volumes:
       - ./docker/caddy/Caddyfile.staging:/etc/caddy/Caddyfile:ro

@@ -2,4 +2,3 @@
 0 21 * * * root /antweb/deploy/bin/admin.sh > /data/antweb/web/log/adminTask.log
 0 23 1 * * root /antweb/deploy/bin/db-monthly-dump.sh
 50 3 * * 4 root /antweb/deploy/bin/taxonSetBackup.sh >> /data/antweb/web/log/taxonSetBackup.log
-#*/5 * * * * root php /antweb/deploy/bin/appCheck.php >> /data/antweb/web/log/appCheckOutput.log     # docker handles restarting on failure

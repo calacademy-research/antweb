@@ -273,7 +273,7 @@ public class FieldGuide {
     public void setExtent(String extentStr) {
         if (extentStr == null || "".equals(extentStr)) return;
         Extent extent = new Extent(extentStr);
-        A.log("setExtent(" + extent + ") maxLat is " + extent.getMaxLat());
+        s_log.debug("setExtent(" + extent + ") maxLat is " + extent.getMaxLat());
         setExtent(extent);
     }
 }

@@ -52,7 +52,7 @@ public abstract class OverviewTaxon extends TaxonSet {
                 if (projTaxon != null) {
                   setGlobalChildCount(projTaxon);                              
                 } else {
-                  A.log("init() not found in allantweb taxon:" + taxonName);
+                  s_log.debug("init() not found in allantweb taxon:" + taxonName);
                 }
             }             
             //A.log("init() warn() taxonName:" + taxonName + " projectName:" + projectName + " imageCount:" + imageCount);
@@ -77,6 +77,6 @@ public abstract class OverviewTaxon extends TaxonSet {
       if (projTaxon.getRank().equals(Rank.SPECIES)) setGlobalChildCount(projTaxon.getSpecimenCount());      
       if (projTaxon.getRank().equals(Rank.SUBSPECIES)) setGlobalChildCount(projTaxon.getSpecimenCount());      
       //A.log("setGlobalChildCount() rank:" + projTaxon.getRank() + " sfc:" + projTaxon.getSubfamilyCount() + " gc:" + projTaxon.getGenusCount() + " sc:" + projTaxon.getSpeciesCount());
-      if (taxonName.contains("myrmicinaepheidole minima catella")) A.log("init() taxonName:" + taxonName + " childCount:" + projTaxon.getGlobalChildCount());
+      if (taxonName.contains("myrmicinaepheidole minima catella")) s_log.debug("init() taxonName:" + taxonName + " childCount:" + projTaxon.getGlobalChildCount());
     }          
 }

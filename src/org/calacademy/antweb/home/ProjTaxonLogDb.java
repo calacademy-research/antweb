@@ -40,7 +40,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
 
     public void archiveSpeciesList(String projectName, Login curatorLogin) throws SQLException {
 
-      A.log("archiveSpeciesList() projectName:" + projectName + " curatorLogin:" + curatorLogin);
+      s_log.debug("archiveSpeciesList() projectName:" + projectName + " curatorLogin:" + curatorLogin);
 
       boolean debug = false; //true;            
       Statement stmt = null;
@@ -315,7 +315,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             DBUtil.close(stmt, rset, "this", "getCuratorLogins()");
         }
  
-        A.log("getCuratorLogins() login:" + login);        
+        s_log.debug("getCuratorLogins() login:" + login);
         return logins;
     }        
      

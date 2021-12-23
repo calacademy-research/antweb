@@ -55,7 +55,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         query += " and source like '%" + source + "%'";
       }
       query += " order by source desc, taxon_name";
-      A.log("getOrphanedGeneraQuery() query:" + query );        
+      s_log.debug("getOrphanedGeneraQuery() query:" + query);
       return query;
     }
     
@@ -79,7 +79,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         query += " and source like '%" + source + "%'";
       }
       query += " order by source desc, taxon_name";
-      A.log("getOrphanedSubfamiliesQuery() query:" + query );        
+      s_log.debug("getOrphanedSubfamiliesQuery() query:" + query);
       return query;
     }
 
@@ -119,13 +119,13 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
             String query = OrphansDb.getOrphanedSpeciesQuery();
             
             ResultSet rset1 = stmt1.executeQuery(query);
-            A.log("getOrphanSpeciesList() query:" + query);
+            s_log.debug("getOrphanSpeciesList() query:" + query);
             while (rset1.next()) {
                 String taxonName = rset1.getString("taxon_name");
                 String source = rset1.getString("source");
 
                 if (hasDescEdit(getConnection(), taxonName)) {
-                  A.log("execute() continue on " + taxonName);
+                  s_log.debug("execute() continue on " + taxonName);
                   continue;
                 }
                  
@@ -143,13 +143,13 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 		Statement stmt1 = getConnection().createStatement();
 		String query = OrphansDb.getOrphanedGeneraQuery();
 		ResultSet rset1 = stmt1.executeQuery(query);
-		A.log("getOrphanGeneraList() 1 query:" + query);
+		s_log.debug("getOrphanGeneraList() 1 query:" + query);
 		while (rset1.next()) {
 			String taxonName = rset1.getString("taxon_name");
 			String source = rset1.getString("source");
 
 			if (hasDescEdit(getConnection(), taxonName)) {
-			  A.log("execute() continue on " + taxonName);
+			  s_log.debug("execute() continue on " + taxonName);
 			  continue;
 			}
 			 
@@ -161,13 +161,13 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 		
 		query = OrphansDb.getOtherOrphanedGeneraQuery();            
 		rset1 = stmt1.executeQuery(query);
-		A.log("getOrphanGeneraList() 2 query:" + query);
+		s_log.debug("getOrphanGeneraList() 2 query:" + query);
 		while (rset1.next()) {
 			String taxonName = rset1.getString("taxon_name");
 			String source = rset1.getString("source");
 
 			if (hasDescEdit(getConnection(), taxonName)) {
-			  A.log("execute() continue on " + taxonName);
+			  s_log.debug("execute() continue on " + taxonName);
 			  continue;
 			}
 			 
@@ -191,7 +191,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 			+ " group by genus having count(distinct subfamily) > 1 " 
 			+ " order by count(distinct subfamily), genus";
 		ResultSet rset1 = stmt1.executeQuery(query);
-		A.log("execute() 1 query:" + query);
+		s_log.debug("execute() 1 query:" + query);
 		while (rset1.next()) {
 			String genus = rset1.getString("genus");
 			Statement stmt2 = getConnection().createStatement();
@@ -199,7 +199,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 				+ " where genus = '" + genus 
 				+ "' group by subfamily order by count(subfamily) limit 1";
 			ResultSet rset2 = stmt2.executeQuery(query);
-			A.log("execute() 2 query:" + query);
+			s_log.debug("execute() 2 query:" + query);
 			while (rset2.next()) {
 				String subfamily = rset2.getString("subfamily");
 				Statement stmt3 = getConnection().createStatement();
@@ -208,7 +208,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 				  + "   and subfamily = '" + subfamily + "'"
 				  + "   and source != 'worldants.txt'";
 				ResultSet rset3 = stmt3.executeQuery(query);
-				A.log("execute() 3 query:" + query);
+				s_log.debug("execute() 3 query:" + query);
 				while (rset3.next()) {                           
 					String taxonName = rset3.getString("taxon_name");                                  
 					//s_log.warn("orphan() q:" + query);
@@ -232,7 +232,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 		try {
 	        stmt = DBUtil.getStatement(getConnection(), "OrphansDb.getOrphanSubfamiliesList()");
 	 	    rset = stmt.executeQuery(query);
-		    A.log("execute query:" + query);
+		    s_log.debug("execute query:" + query);
         
             while (rset.next()) {
                 String subfamily = rset.getString("subfamily");
@@ -269,9 +269,9 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 		// This gets the set of Description edits for specimen upload taxons without specimens.
 		ArrayList<Taxon> orphanTaxonWithDescEditList = new ArrayList();
 		orphanTaxonWithDescEditList = getOrphanTaxonWithDescEditList();
-	    A.log("execute() orphanTaxonWithDescEditList:" + orphanTaxonWithDescEditList.size());
+	    s_log.debug("execute() orphanTaxonWithDescEditList:" + orphanTaxonWithDescEditList.size());
 		for (Taxon taxon : orphanTaxonWithDescEditList) {
-		  A.log("getOrphanDescEditTaxons() taxon:" + taxon.getTaxonName());
+		  s_log.debug("getOrphanDescEditTaxons() taxon:" + taxon.getTaxonName());
 		  taxon.setDescription(new DescEditDb(getConnection()).getDescEdits(taxon, false));
 		  list.add(taxon);
 		}
@@ -287,12 +287,12 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 
       orphan = DummyTaxon.makeDummyTaxon(taxonName);
       
-      if (orphan == null) A.log("getOrphanDescEditTaxon() taxonName:" + taxonName + " is null");
+      if (orphan == null) s_log.debug("getOrphanDescEditTaxon() taxonName:" + taxonName + " is null");
       orphan.setDescription(new DescEditDb(getConnection()).getDescEdits(orphan, false));
 
 	  ArrayList<DummyTaxon> possibleValidNames = getPossibleValidNames(orphan);
 	  orphan.setPossibleValidNames(possibleValidNames);
-	  A.log("getTaxonOrphanDescEditTaxon() possibleValidNames:" + possibleValidNames);
+	  s_log.debug("getTaxonOrphanDescEditTaxon() possibleValidNames:" + possibleValidNames);
 
       return orphan;
     }
@@ -330,7 +330,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         }		
 
 		Collections.sort(list);
-		A.log("execute() 2 list.size:" + list.size());
+		s_log.debug("execute() 2 list.size:" + list.size());
         return list;    
     }    
     
@@ -344,13 +344,13 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 		String query = getOrphanedSpeciesQuery("specimen", " order by taxon_name");
 		stmt = DBUtil.getStatement(getConnection(), "OrphansDb.getOrphanTaxonWithDescEditList()");
 		rset = stmt.executeQuery(query);
-		A.log("getOrphanTaxonWithDescEditList() query:" + query);
+		s_log.debug("getOrphanTaxonWithDescEditList() query:" + query);
 		while (rset.next()) {
 			String taxonName = rset.getString("taxon_name");
 			String source = rset.getString("source");
 
 			if (hasDescEdit(getConnection(), taxonName)) {
-			  A.log("OrphansDb.getOrphanTaxonWithDescEditList() continue on " + taxonName);
+			  s_log.debug("OrphansDb.getOrphanTaxonWithDescEditList() continue on " + taxonName);
 			  
 			  Taxon taxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
 			  orphanTaxonWithDescEditList.add(taxon);
@@ -381,7 +381,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 		try {
 	        stmt = DBUtil.getStatement(getConnection(), "OrphansDb.getPossibleValidNames()");
 	 	    rset = stmt.executeQuery(query);
-		    A.log("execute query:" + query);
+		    s_log.debug("execute query:" + query);
         
             while (rset.next()) {
                 String possibleTaxonName = rset.getString("taxon_name");
@@ -437,7 +437,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         String query = OrphansDb.getOrphanedSpeciesQuery(source);
         try {    
 
-          A.log("deleteOrphanedSpeciesFromSource() source:" + source + " query:" + query);
+          s_log.debug("deleteOrphanedSpeciesFromSource() source:" + source + " query:" + query);
 
           ArrayList<String> orphanList = new ArrayList<>();
           stmt = DBUtil.getStatement(getConnection(), "OrphansDb.deleteOrphanedSpeciesFromSource()");
@@ -493,7 +493,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
               continue;
             }            
             
-            A.log("deleteOrphanednGeneraFromSource() taxonName:" + taxonName);
+            s_log.debug("deleteOrphanednGeneraFromSource() taxonName:" + taxonName);
             deleteTaxon(taxonName);
           }
         } catch (SQLException e) {
@@ -520,7 +520,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
               continue;
             }            
             
-            A.log("deleteOrphanedSubfamiliesFromSource() subfamily:" + subfamily);
+            s_log.debug("deleteOrphanedSubfamiliesFromSource() subfamily:" + subfamily);
             deleteTaxon(subfamily);
           }     
       } catch (SQLException e) {
@@ -554,7 +554,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
             String query = OrphansDb.getOrphanAlternatesQuery();
             stmt = DBUtil.getStatement(getConnection(), "OrphansDb.getOrphanAlternatesList()");            
             rset = stmt.executeQuery(query);
-            A.log("OrphansDb.getOrphanAlternatesQuery() query:" + query);
+            s_log.debug("OrphansDb.getOrphanAlternatesQuery() query:" + query);
             while (rset.next()) {
                 String taxonName = rset.getString("taxon_name");
                  
@@ -570,7 +570,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
             
     /* This code is called from SpecimenUploadFull in the case where a taxon has moved due to taxon name change.  */
     public void moveTaxonSupportingDataToAlternate(String taxonName, String oldTaxonName) throws SQLException {
-        A.log("moveTaxonAndSupportingData() taxon:" + taxonName + " oldTaxonName:" + oldTaxonName);
+        s_log.debug("moveTaxonAndSupportingData() taxon:" + taxonName + " oldTaxonName:" + oldTaxonName);
         //moveSupportingDataGeneric(taxonName, oldTaxonName, "favorite_images", "specimen", "project_name");
         moveSupportingDataGeneric(taxonName, oldTaxonName, "description_edit", "title");
         moveSupportingDataGeneric(taxonName, oldTaxonName, "proj_taxon", "project_name");
@@ -587,12 +587,12 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         Statement stmt = null;
         String update = null;
         try {
-          A.log("nowDeleteTaxon() taxon:" + taxonName);
+          s_log.debug("nowDeleteTaxon() taxon:" + taxonName);
           stmt = DBUtil.getStatement(getConnection(), "OrphansDb.nowDeleteTaxon()");
           try {
             update = "delete from taxon where taxon_name = '" + taxonName + "'";
             stmt.executeUpdate(update);    
-          } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+          } catch (SQLIntegrityConstraintViolationException e) {
             // ignore.
           }
         } finally {

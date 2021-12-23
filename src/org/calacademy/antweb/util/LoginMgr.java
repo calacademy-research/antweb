@@ -80,7 +80,7 @@ public class LoginMgr extends Manager {
     // See the Check.java for how to invoke...
     public static ActionForward mustLogIn(HttpServletRequest request, ActionMapping mapping) {
 		if (LoginMgr.getAccessLogin(request) == null) {
-		    A.log("mustLogin() login:" + LoginMgr.getAccessLogin(request));
+		    s_log.debug("mustLogin() login:" + LoginMgr.getAccessLogin(request));
 			return (mapping.findForward("notLoggedIn"));
 		}
         return null;
@@ -232,7 +232,7 @@ public class LoginMgr extends Manager {
       Counts counts = imageUploadCounts.get("" + groupId);
       if (counts == null) return 0;
 
-      A.log("getImageUploadCount() curator:" + curator + " " + counts);
+      s_log.debug("getImageUploadCount() curator:" + curator + " " + counts);
 
       return counts.imageUploads;
     }

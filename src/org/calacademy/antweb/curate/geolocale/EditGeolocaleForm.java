@@ -166,7 +166,7 @@ public final class EditGeolocaleForm extends ActionForm {
         return region;
     }
     public void setRegion(String region) {
-        A.log("setRegion() region:" + region);
+        s_log.debug("setRegion() region:" + region);
         this.region = region;
     }
 
@@ -205,7 +205,7 @@ public final class EditGeolocaleForm extends ActionForm {
           String right = getLoc(boundingBoxFixed, 3);
           String left = getLoc(boundingBoxFixed, 4);
           String newBoundingBoxFixed = left + ", " + bottom + ", " + right + ", " + top;          
-          A.log("EditGeolocaleForm.setBoundingBoxFixed() was: boundingBoxFixed:" + boundingBoxFixed + " newBoundingBoxFixed:" + newBoundingBoxFixed);
+          s_log.debug("EditGeolocaleForm.setBoundingBoxFixed() was: boundingBoxFixed:" + boundingBoxFixed + " newBoundingBoxFixed:" + newBoundingBoxFixed);
           boundingBoxFixed = newBoundingBoxFixed;
         }   
         this.boundingBoxFixed = boundingBoxFixed;
@@ -226,7 +226,7 @@ public final class EditGeolocaleForm extends ActionForm {
           } else {
             thisLoc = box.substring(thisLocColon + 2);
           }
-		  A.log("EditGeolocaleForm.getLoc() i:" + i + " thisLocColon:" + thisLocColon + " endOfLoc:" + endOfLoc + " thisLoc:" + thisLoc);
+		  s_log.debug("EditGeolocaleForm.getLoc() i:" + i + " thisLocColon:" + thisLocColon + " endOfLoc:" + endOfLoc + " thisLoc:" + thisLoc);
       } catch (Exception e) {
         s_log.warn("getLoc() e:" + e);
       }

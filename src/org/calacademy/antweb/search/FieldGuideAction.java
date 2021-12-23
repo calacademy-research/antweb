@@ -6,6 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
@@ -14,6 +15,7 @@ import org.apache.struts.action.ActionMapping;
 
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home   .*;
@@ -40,7 +42,7 @@ public final class FieldGuideAction extends Action {
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
-		java.util.Date startTime = new java.util.Date(); // for AntwebUtil.finish(request, startTime);
+		Date startTime = new Date(); // for AntwebUtil.finish(request, startTime);
 
         HttpSession session = request.getSession();
         //if (session.getAttribute("activeSession") == null) return mapping.findForward("sessionExpired");
@@ -80,10 +82,10 @@ public final class FieldGuideAction extends Action {
 		if (AntwebProps.isDevMode() && Caste.DEFAULT.equals(caste)) {
 		  caste = Caste.QUEEN;
         }
-        A.log("FieldGuideAction.execute() caste:" + caste);
+        s_log.debug("FieldGuideAction.execute() caste:" + caste);
         
         if (s_simultaneousExecutes > MAX_SIMULTANEOUS_EXECUTES) {
-            LogMgr.appendLog("throttle.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + AntwebUtil.getRequestInfo(request));
+            LogMgr.appendLog("throttle.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + AntwebUtil.getRequestInfo(request));
             String message = "Only " + s_simultaneousExecutes + " simultaneous field guide creation requests allowed at a time... try again shortly or log in for unrestricted access.";
             request.setAttribute("message", message);
             return (mapping.findForward("message")); 
@@ -92,9 +94,9 @@ public final class FieldGuideAction extends Action {
 
 		String results = null;
 		ArrayList<Taxon> theTaxa = null;
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			
             if (DBUtil.isServerBusy(dataSource, request)) {
               return mapping.findForward("message");            
@@ -110,7 +112,7 @@ public final class FieldGuideAction extends Action {
             if (!isGenCache) {
               // Return a cache paged if not logged in, and cached.              
               boolean fetchFromCache = AntwebCacheMgr.isFetchFromCache(accessLogin, isGetCache);              
-              A.log("execute() fetchFromCache:" + fetchFromCache);
+              s_log.debug("execute() fetchFromCache:" + fetchFromCache);
               if (fetchFromCache) {
                 data = AntwebCacheMgr.fetchFromCache("fieldGuide", subfamily, genus, rank, overview);
                 if (data != null) {
@@ -139,7 +141,7 @@ public final class FieldGuideAction extends Action {
                 fieldGuide.setExtent(localityOverview.getExtent());
             }
             
-            A.log("execute() overview:" + overview + " subfamily:" + subfamily);
+            s_log.debug("execute() overview:" + overview + " subfamily:" + subfamily);
 
 			if ((subfamily != null) || (genus != null) || (species != null)) {
     		    // Taxon Field Guides
@@ -161,7 +163,7 @@ public final class FieldGuideAction extends Action {
 					taxon.setChildren(connection, overview);
 				}
 				theTaxa = taxon.getChildren();
-                A.log("execute() rank:" +  rank + " order:" + taxon.getOrderName() + " family:" + taxon.getFamily() + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " taxa.size:" + theTaxa.size());
+                s_log.debug("execute() rank:" +  rank + " order:" + taxon.getOrderName() + " family:" + taxon.getFamily() + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " taxa.size:" + theTaxa.size());
 
 
 				fieldGuide.setTitle(subfamily, genus, species, overview.getName());
@@ -170,7 +172,7 @@ public final class FieldGuideAction extends Action {
 				fieldGuide.setMembers(connection, overview);
 			} else { 
 			    // Regional Field Guides
-                A.log("execute() rank:" + rank + " overview:" + overview + " caste:" + caste);			
+                s_log.debug("execute() rank:" + rank + " overview:" + overview + " caste:" + caste);
          		
          		TaxaPage taxaPage = new TaxaPage();
 
@@ -187,7 +189,7 @@ public final class FieldGuideAction extends Action {
 				fieldGuide.setTitle("of " + Rank.getPluralRank(rank) + " in " + overview.getTitle());				
 				fieldGuide.setTaxa(taxaPage.getChildren());
 				fieldGuide.setMembers(connection, overview);                
-                A.log("after");			
+                s_log.debug("after");
 			}
 
    		    // Caching Logic Part II

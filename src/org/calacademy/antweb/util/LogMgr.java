@@ -142,7 +142,7 @@ public class LogMgr {
     }
 
     String message = "files backed up here:" + backupDir;
-    A.log("archiveLogs() message:" + message);
+    s_log.debug("archiveLogs() message:" + message);
     return message;
   }
 

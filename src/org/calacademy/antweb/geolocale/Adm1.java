@@ -102,7 +102,7 @@ public class Adm1 extends Geolocale {
       ArrayList<String> countryNames = accessLogin.getCountryNames();
 
       if (!countryNames.contains(getCountry())) {
-        A.log("isCanShowSpeciesListTool() can't edit country:" + getCountry() + " so can edit adm1:" + getName());
+        s_log.debug("isCanShowSpeciesListTool() can't edit country:" + getCountry() + " so can edit adm1:" + getName());
         return false;
       }  // If you can't edit the country, you can't edit the adm1. True?
 

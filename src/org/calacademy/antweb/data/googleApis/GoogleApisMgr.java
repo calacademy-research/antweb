@@ -95,7 +95,7 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 		  	
       if (!aRecordUpdated) AdminAlertMgr.add("GoogleApiMgr.fetchData() complete.", connection);
 		  	
-      A.log("fetchData() apiCallCount:" + apiCallCount);
+      s_log.debug("fetchData() apiCallCount:" + apiCallCount);
       message = "GoogleApids Data fetched. apiCallCount:" + apiCallCount;        
       return message;
     }
@@ -125,7 +125,7 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 		}
 
 
-      A.log("fetchData() apiCallCount:" + apiCallCount);
+      s_log.debug("fetchData() apiCallCount:" + apiCallCount);
       message = "GoogleApids Data fetched. apiCallCount:" + apiCallCount;        
       return message;
     }
@@ -160,14 +160,14 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 
 		++apiCallCount;
 
-		A.log("GoogleApisMgr.fetchAdm1() BEFORE adm1:" + adm1.getName() + ", " + adm1.getParent() + " box:" + adm1.getBoundingBox() + " centroid:" + adm1.getCentroid());
+		s_log.debug("GoogleApisMgr.fetchAdm1() BEFORE adm1:" + adm1.getName() + ", " + adm1.getParent() + " box:" + adm1.getBoundingBox() + " centroid:" + adm1.getCentroid());
 	 
 		GoogleApisAdm1 googleAdm1 = new GoogleApisAdm1();
 		googleAdm1.fetch(fetchUrl);
 
         if (googleAdm1.hasAdm2Data()) {
           String message = "<br>country:" + adm1.getParent() + " adm1:" + adm1.getName() + " <a href='" + fetchUrl + "'>link</a>";
-          A.log("fetchAdm1() log to googleApisAdm1Adm2Data.html message:" + message);
+          s_log.debug("fetchAdm1() log to googleApisAdm1Adm2Data.html message:" + message);
 		  LogMgr.appendLog("googleApisAdm1Adm2Data.html", message);
         }
 
@@ -175,7 +175,7 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 
 		String boundingBox = googleAdm1.getBoundingBox();
 		String centroid = googleAdm1.getCentroid();
-		A.log("fetchAdm1() adm1:" + adm1.getName() + ", " + adm1.getParent() + " centroid:" + centroid + " boundingBox:" + boundingBox);
+		s_log.debug("fetchAdm1() adm1:" + adm1.getName() + ", " + adm1.getParent() + " centroid:" + centroid + " boundingBox:" + boundingBox);
 		  
 		if (boundingBox != null && centroid != null) {
 		  adm1.setBoundingBox(boundingBox);

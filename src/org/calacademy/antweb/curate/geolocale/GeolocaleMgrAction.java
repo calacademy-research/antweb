@@ -6,6 +6,7 @@ import java.sql.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
 
@@ -45,13 +46,13 @@ public final class GeolocaleMgrAction extends Action {
 		
         java.sql.Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
 		    connection = DBUtil.getConnection(dataSource, "GeolocaleMgrAction.execute()");
 
             GeolocaleDb geolocaleDb = new GeolocaleDb(connection);              
 
 			if (HttpUtil.isPost(request) && editGeolocaleForm.getId() > 0) {
-			  A.log("GeolocaleMgrAction.execute() POST form:" + editGeolocaleForm);
+			  s_log.debug("GeolocaleMgrAction.execute() POST form:" + editGeolocaleForm);
 			  geolocaleDb.adjustGeolocale(editGeolocaleForm);
 			}
 
@@ -59,7 +60,7 @@ public final class GeolocaleMgrAction extends Action {
             String parent = editGeolocaleForm.getParent();
             
             ArrayList<Geolocale> geolocaleArray = geolocaleDb.getGeolocales(georank, parent, false, orderBy);
-A.log("GeolocaleMgrAction.execute() geolocaleArray.size:" + geolocaleArray.size());            
+s_log.debug("GeolocaleMgrAction.execute() geolocaleArray.size:" + geolocaleArray.size());
             request.setAttribute("georank", georank);
             request.setAttribute("parent", parent);
             request.setAttribute("geolocaleArray", geolocaleArray);
@@ -67,7 +68,7 @@ A.log("GeolocaleMgrAction.execute() geolocaleArray.size:" + geolocaleArray.size(
             request.setAttribute("validChildren", validChildren);
 
             
-            A.log("execute() success");                          
+            s_log.debug("execute() success");
             return (mapping.findForward("success"));
 
 		} catch (SQLException e) {

@@ -21,7 +21,7 @@ public class ApiFetch extends HttpServlet {
   public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
 
-    A.log("ApiFetch.doGet() requestInfo:" + HttpUtil.getTarget(request));     
+    s_log.debug("ApiFetch.doGet() requestInfo:" + HttpUtil.getTarget(request));
 
     String apiServer = "http://10.2.22.50";
     String apiV = "apiV3";

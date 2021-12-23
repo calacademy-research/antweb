@@ -86,7 +86,7 @@ public class ImageUploaded {
           setIsReUploaded(true);
         }
       } catch (FileNotFoundException e) {
-        A.log(" setFileItem() e:" + e + " backupDir:" + backupDir);
+        s_log.debug(" setFileItem() e:" + e + " backupDir:" + backupDir);
       }
       fileItem.write(file);
   }

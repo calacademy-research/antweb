@@ -6,6 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
@@ -36,7 +37,7 @@ public final class SearchListAction extends Action {
 		GenericSearchResults results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
 
 		if (results == null) {
-          A.log("execute() advancedSearchResults not found in session");
+          s_log.debug("execute() advancedSearchResults not found in session");
 		  //return mapping.findForward("permissionDenied"); //sessionExpired
           request.setAttribute("message", "Your session seems to have expired. Perhaps re-login.");
           return mapping.findForward("message");
@@ -78,13 +79,13 @@ public final class SearchListAction extends Action {
         }
 
         String dir = "/web/data/search/";
-        String fileName = DateUtil.getFormatDateTimeStr(new java.util.Date()) + "search.txt";          
+        String fileName = DateUtil.getFormatDateTimeStr(new Date()) + "search.txt";
         AntwebUtil.writeDataFile(dir, fileName, data.toString());
         String url = AntwebProps.getDomainApp() + dir + fileName;
         String message = "<li>&middot; <a href=\"" + url + "\" target=\"new\">Tab-delimited data</a></li>";
         //String message = data.toString();
         
-        A.log("execute() url:" + url + " message:" + message);
+        s_log.debug("execute() url:" + url + " message:" + message);
 
         request.setAttribute("message", message);
         return mapping.findForward("bareMessage");

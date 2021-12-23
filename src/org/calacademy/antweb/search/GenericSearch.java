@@ -63,7 +63,7 @@ public class GenericSearch implements Serializable {
         ArrayList<ResultItem> initialResults = createInitialResults();
 
         Date now = new Date();
-        A.log("setResults() took " + (now.getTime() - startDate.getTime()) + " initialSize:" + initialResults.size());
+        s_log.debug("setResults() took " + (now.getTime() - startDate.getTime()) + " initialSize:" + initialResults.size());
 
         // for each invalid name, get the valid version
         //ArrayList validResults = getValidVersion(initialResults);
@@ -356,7 +356,7 @@ public class GenericSearch implements Serializable {
         }
         theQuery += " group by sp.taxon_name, sp.family, sp.subfamily, sp.genus, sp.species, sp.type_status, sp.code, sp.status"
                 + " , sp.life_stage, sp.caste, sp.subcaste, sp.medium, sp.specimennotes ";
-        A.log("createInitialResults() query:" + theQuery);
+        s_log.debug("createInitialResults() query:" + theQuery);
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -511,7 +511,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                 }
                 if (theQuery.contains("code")) {
                     code = rset.getString(rset.findColumn("code"));
-                    if ("fmnhins0000049526".equals(code)) A.log("getListFromRSet() code:" + code);
+                    if ("fmnhins0000049526".equals(code)) s_log.debug("getListFromRSet() code:" + code);
                 }
                 if (theQuery.contains("country"))
                     country = rset.getString(rset.findColumn("country"));
@@ -768,7 +768,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
 
         //A.log("getSearchString() property:" + property + " ");
         if ("sp.taxon_name".equals(property) && value != null && "(".equals(value.substring(0, 1))) {
-            A.log("getSearchString() value:" + value);
+            s_log.debug("getSearchString() value:" + value);
             return property + " in " + value;
         }
         //A.log("getSearchString() property:" + property + " value:" + value);
@@ -818,7 +818,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         // debugging
         if ("sp.caste like '%male%'".equals(returnStr)) {
             returnStr = "sp.caste = 'male'";
-            A.log("getSearchString() returnStr:" + returnStr);
+            s_log.debug("getSearchString() returnStr:" + returnStr);
         }
         if ("sp.caste like '%worker%'".equals(returnStr))
             returnStr = "sp.caste = 'worker'";

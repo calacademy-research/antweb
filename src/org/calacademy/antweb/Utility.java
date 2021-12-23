@@ -494,7 +494,7 @@ public class Utility implements Serializable {
           try {
             isSuccess = (dirFile).mkdir();
             if (isSuccess) {
-                if (debug) A.log("makeDirTree() Success creating dir:" + thisDir);
+                if (debug) s_log.debug("makeDirTree() Success creating dir:" + thisDir);
             } else {
                 //if (debug)
                 s_log.warn("makeDirTree() Failure creating dir:" + thisDir);
@@ -505,7 +505,7 @@ public class Utility implements Serializable {
           }
         } else {
             if (debug) {
-                A.log("makeDirTree() already exists:" + thisDir);
+                s_log.debug("makeDirTree() already exists:" + thisDir);
             }
         }
       }

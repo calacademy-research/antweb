@@ -262,7 +262,7 @@ public class UtilDataAction extends Action {
 		  operationDetails = new UploadDetails("testWorldantsLog", "Testing Worldants Log");	
           operationDetails.setMessage("success");
 
-          A.log("testWorldantsLog");
+          s_log.debug("testWorldantsLog");
 		  
           ((UploadDetails) operationDetails).finish(accessLogin, request, connection);
     		  
@@ -284,14 +284,14 @@ public class UtilDataAction extends Action {
 		  operationDetails = (new SpeciesListUploader(connection)).worldantsReload();
 		  if ("success".equals(operationDetails.getMessage())) message = "worldantsReload";		
 		  LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " worldantsReload: " + operationDetails.getMessage());
-          A.log("doAction() operationDetails:" + operationDetails + " message:" + operationDetails.getMessage());  
+          s_log.debug("doAction() operationDetails:" + operationDetails + " message:" + operationDetails.getMessage());
           return operationDetails;
 		}
 
 		if (action.equals("adminAlertTest")) { 
             int worldantsChangeCount = (new WorldantsUploadDb(connection)).getWorldantsChangeCount();
             
-            A.log("adminAlertTest: " + worldantsChangeCount);
+            s_log.debug("adminAlertTest: " + worldantsChangeCount);
             if (worldantsChangeCount == 0) {
               AdminAlertMgr.addIfFresh(AdminAlertMgr.noWorldantsChanges, AdminAlertMgr.noWorldantsChangesContains, AdminAlertMgr.WEEK, connection);
             }  
@@ -703,7 +703,7 @@ public class UtilDataAction extends Action {
         }
         
         if (action.equals("siteWarning")) {
-          A.log("text:" + text);
+          s_log.debug("text:" + text);
           AntwebMgr.createSiteWarning(text);
           message = "SiteWarning set:" + text;
         }
@@ -747,12 +747,12 @@ public class UtilDataAction extends Action {
                 country = geolocale.getParent();
                 adm1 = geolocale.getName();                  
               }
-              A.log("UtilDataAction.genGoogleMapFunction georank:" + geolocale.getGeorank() + " geolocale:" + geolocale + " country:" + country + " adm1:" + adm1);
+              s_log.debug("UtilDataAction.genGoogleMapFunction georank:" + geolocale.getGeorank() + " geolocale:" + geolocale + " country:" + country + " adm1:" + adm1);
             }
             if (geolocale == null || !("country".equals(geolocale.getGeorank()) || "adm1".equals(geolocale.getGeorank()))) {
               message = "Geolocale not found for num(id):" + num + " param(country):" + param + " param2(adm1):" + param2;
             } else {
-              A.log("UtilData.genGoogleMapFunction() id:" + id + " country:" + country + " adm1:" + adm1 + " geolocale:" + geolocale);
+              s_log.debug("UtilData.genGoogleMapFunction() id:" + id + " country:" + country + " adm1:" + adm1 + " geolocale:" + geolocale);
               SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
 
               Map map = (new AdvancedSearchAction()).getGoogleMap(country, adm1, ResultRank.SPECIMEN, Output.MAP_LOCALITY, connection);
@@ -828,7 +828,7 @@ public class UtilDataAction extends Action {
 
         if (action.equals("checkAntwikiForUpdates")) {
 			message = AntWikiDataAction.checkForUpdates(connection);			
-			A.log("doAction() Check For Antwiki Species and Fossil List Updates output:" + message);
+			s_log.debug("doAction() Check For Antwiki Species and Fossil List Updates output:" + message);
         }
 
 // ----------- Debug -------------
@@ -873,7 +873,7 @@ public class UtilDataAction extends Action {
             if ("updateExif".equals(form.getName())) ImageUtil.execute("updateExif", connection);
             if ("count".equals(form.getName())) ImageUtil.execute("count", connection);
           } catch (InterruptedException e) {
-            A.log("e:" + e);
+            s_log.debug("e:" + e);
           }
         }
 

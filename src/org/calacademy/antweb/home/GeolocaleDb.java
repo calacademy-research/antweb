@@ -266,7 +266,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 			//A.log("getGeolocales(" + georank + ", " + parent + ", " + withChildren + ", " + liveOnly + ", " + orderBy + " query:" + query);
 
             //String testParent = "Eastern Asia";
-            if (query.equals("United States")) A.log("GeolocaleDb.getGeolocale(5) query:" + query);
+            if (query.equals("United States")) s_log.debug("GeolocaleDb.getGeolocale(5) query:" + query);
 
             stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.getGeolocales()");
             rset = stmt.executeQuery(query);
@@ -623,7 +623,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         String query;
         Statement stmt = null;
 
-        if (false) A.log("updateGeolocale() id:" + form.getId() + " name:" + form.getName() + " georank:" + form.getGeorank() + " isValid:" + form.isValid() 
+        if (false) s_log.debug("updateGeolocale() id:" + form.getId() + " name:" + form.getName() + " georank:" + form.getGeorank() + " isValid:" + form.isValid()
           + " isUn:" + form.isUn() + " isLive:" + form.isLive() + " isValid:" + form.isValid() + " source:" + form.getSource() + " validName:"+ form.getValidName() + " region:" + form.getRegion()
           + " centroidFixed:" + form.getCentroidFixed() + " boundingBoxFixed:" + form.getBoundingBoxFixed());
 
@@ -1160,7 +1160,7 @@ public static int c = 0;
           + "        and project_name = 'introducedants')"
 		  + " order by geolocale_id";
 
-		A.log("calcIntroducedGeolocales() query:" + query);
+		s_log.debug("calcIntroducedGeolocales() query:" + query);
 
         // Break on geolocale to record the count.
         int lastGeolocaleId = 0;
@@ -1250,7 +1250,7 @@ public static int c = 0;
 		+ " group by gt.taxon_name having count(*) = 1 " 
 		+ " order by geolocale_id";
       
-      A.log("calcCountryEndemism() query:" + query);
+      s_log.debug("calcCountryEndemism() query:" + query);
     
       return calcEndemism(query);
     }
@@ -1377,11 +1377,11 @@ public static int c = 0;
 
         // select all of the geolocale_taxa where endemism = 1
         int a = calcHigherEndemismAdm1();
-        A.log("calcHigherEndemism() country:" + a);
+        s_log.debug("calcHigherEndemism() country:" + a);
         int b = calcHigherEndemismCountry();
-        A.log("calcHigherEndemism() subregion:" + b);
+        s_log.debug("calcHigherEndemism() subregion:" + b);
         int c = calcHigherEndemismSubregion();
-        A.log("calcHigherEndemism() region:" + c);
+        s_log.debug("calcHigherEndemism() region:" + c);
 
         return a + b + c;
     }
@@ -1409,7 +1409,7 @@ public static int c = 0;
 
                 //A.log("calcHigherEndemismAdm1() c:" + c + " country:" + country + " taxonName:" + taxonName + " updated:" + updated);
             }
-            A.log("calcHigherEndemismAdm1() c:" + c);
+            s_log.debug("calcHigherEndemismAdm1() c:" + c);
         } catch (SQLException e) {
             s_log.error("calcHigherEndemismAdm1() query:" + query + " e:" + e.toString());
         } finally {
@@ -1441,7 +1441,7 @@ public static int c = 0;
 
                 //A.log("calcHigherEndemismAdm1() c:" + c + " subregion:" + subregion + " taxonName:" + taxonName + " updated:" + updated);
             }
-            A.log("calcHigherEndemismCountry() c:" + c);
+            s_log.debug("calcHigherEndemismCountry() c:" + c);
         } catch (SQLException e) {
             s_log.error("calcHigherEndemismCountry() query:" + query + " e:" + e.toString());
         } finally {
@@ -1473,7 +1473,7 @@ public static int c = 0;
 
                 //A.log("calcHigherEndemismAdm1() c:" + c + " region:" + region + " taxonName:" + taxonName + " updated:" + updated);
             }
-            A.log("calcHigherEndemismSubregion() c:" + c);
+            s_log.debug("calcHigherEndemismSubregion() c:" + c);
         } catch (SQLException e) {
             s_log.error("calcHigherEndemismSubregion() query:" + query + " e:" + e.toString());
         } finally {
@@ -1703,7 +1703,7 @@ public static int c = 0;
         } finally {
             DBUtil.close(stmt, rset, "getValidSpeciesCount()");
         }
-        if (geolocaleId == 172) A.log("getValidSpeciesCount() id:" + geolocaleId + " count:" + validSpeciesCount);
+        if (geolocaleId == 172) s_log.debug("getValidSpeciesCount() id:" + geolocaleId + " count:" + validSpeciesCount);
 
         return validSpeciesCount;
     }
@@ -1977,7 +1977,7 @@ public static int c = 0;
       Geolocale oldGeolocale = getGeolocale(id);
           
       if (oldGeolocale == null) {
-        A.log("updateGeoData() how can old be null and update? id:" + id + " validName:" + validName + " source:" + source);
+        s_log.debug("updateGeoData() how can old be null and update? id:" + id + " validName:" + validName + " source:" + source);
       }
       
       String isValidClause = null;

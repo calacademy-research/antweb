@@ -69,7 +69,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setIsIntroduced(rset.getInt("is_introduced") == 1);
 
-                if (geolocaleTaxon.getGeolocaleId() == 10) A.log(" get() Mayotte introduced:" + geolocaleTaxon.getIsIntroduced());
+                if (geolocaleTaxon.getGeolocaleId() == 10) s_log.debug(" get() Mayotte introduced:" + geolocaleTaxon.getIsIntroduced());
             }
           //A.log("getTaxonSet() query:" + query);
 
@@ -196,7 +196,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 		  if (!"adm1".equals(geolocale.getGeorank()) && !"region".equals(geolocale.getGeorank())) {
 			Geolocale parentGeolocale = GeolocaleMgr.getGeolocale(geolocale.getParent());
 			if (parentGeolocale == null) {
-			  A.log("insert() parent is null for parent:" + geolocale.getName() + "!");
+			  s_log.debug("insert() parent is null for parent:" + geolocale.getName() + "!");
 			  return insertCount;
 			}
 			insertCount += insert(parentGeolocale, taxonName, source); // parent geolocale recursive call.
@@ -217,7 +217,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 		  insertCount += insert(geolocale, parentTaxonName, source); // parent taxon recursive call
 
       } catch (Exception e) {      
-        A.log("insert() e:" + e);
+        s_log.debug("insert() e:" + e);
         throw e;
       }
       
@@ -256,7 +256,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 		  if (!"adm1".equals(geolocale.getGeorank()) && !"region".equals(geolocale.getGeorank())) {
 			Geolocale parentGeolocale = GeolocaleMgr.getGeolocale(geolocale.getParent());
 			if (parentGeolocale == null) {
-			  A.log("update() parent is null for parent:" + geolocale.getName() + "!");
+			  s_log.debug("update() parent is null for parent:" + geolocale.getName() + "!");
 			  return updateCount;
 			}
 			updateCount += update(parentGeolocale, taxonName, source); // parent geolocale recursive call.
@@ -277,7 +277,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 		  updateCount += update(geolocale, parentTaxonName, source); // parent taxon recursive call
 
       } catch (Exception e) {      
-        A.log("update() e:" + e);
+        s_log.debug("update() e:" + e);
         throw e;
       }
       
@@ -427,7 +427,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             count = stmt.executeUpdate(dml);
             //A.log("insertItem() id:" + id + " taxonName:" + taxonName + " source:" + source + " count:" + count);
 	    } catch (SQLException e) {
-          A.log("insertItem() e:" + e + " source:" + source);
+          s_log.debug("insertItem() e:" + e + " source:" + source);
           throw e;
         } finally {
             DBUtil.close(stmt, "insertItem()");
@@ -450,7 +450,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
       } else {
         if (!source.equals(taxonSet.getSource())) {
           if (Source.aTrumpsB(source, taxonSet.getSource())) {
-            A.log("setTaxonSet() calling updateItem (SHOULD BE RECURSIVE?) with geolocaleId:" + geolocaleId + " taxonName:" + taxonName + " source:" + source);
+            s_log.debug("setTaxonSet() calling updateItem (SHOULD BE RECURSIVE?) with geolocaleId:" + geolocaleId + " taxonName:" + taxonName + " source:" + source);
             c = updateItem(geolocaleId, taxonName, source); // *** SHOULD BE RECURSIVE.
           }
         }
@@ -474,7 +474,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 //else A.log("updateItem() id:" + id + " taxonName:" + taxonName + " source:" + source + " count:" + count);
 
 	    } catch (SQLException e) {
-          A.log("updateItem e:" + e + " source:" + source);
+          s_log.debug("updateItem e:" + e + " source:" + source);
           throw e;
         } finally {
             DBUtil.close(stmt, "updateItem()");
@@ -542,7 +542,7 @@ int s_notFound = 0;
 			  } else {
 			    ++s_other;
 			  }
-              A.log("reportOnTaxonSet() taxonName:" + taxonName + " source:" + source);
+              s_log.debug("reportOnTaxonSet() taxonName:" + taxonName + " source:" + source);
            }
            //A.log("reportOnTaxonSet() query:" + query);
 
@@ -629,21 +629,21 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
                   String taxonLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + taxonName + "</a>"; 
 				  String message = "geolocale:" + name + "(" + idLink + ") taxonName:" + taxonLink;
 				  buffer.append("<br>" + message);
-				  A.log("getTaxaOutsideOfNativeBioregion() " + message);
+				  s_log.debug("getTaxaOutsideOfNativeBioregion() " + message);
 				  //bioregion:" + bioregion + " is not native for genus:" + genus + " bioregionMap:" + bioregionMap);		    
 			  }
            }
            String totalStr = "total:" + total;
            buffer.append("<br><br>" + totalStr);
-           A.log("getTaxaOutsideOfNativeBioregion() " + totalStr);
+           s_log.debug("getTaxaOutsideOfNativeBioregion() " + totalStr);
 
            String bioregionsNotFound = "bioregionMapsNotFound:" + bioregionMapsNotFound;
            buffer.append("<br><br>" + bioregionsNotFound);           
-           A.log("getTaxaOutsideOfNativeBioregion() " + bioregionsNotFound);
+           s_log.debug("getTaxaOutsideOfNativeBioregion() " + bioregionsNotFound);
 
            String genusNotFoundStr = "genusNotFound:" + genusNotFound;
            buffer.append("<br><br>" + genusNotFoundStr);
-           A.log("getTaxaOutsideOfNativeBioregion() " + genusNotFoundStr);
+           s_log.debug("getTaxaOutsideOfNativeBioregion() " + genusNotFoundStr);
 
         } catch (SQLException e) {
             s_log.error("getTaxaOutsideOfNativeBioregion() e:" + e);
@@ -693,7 +693,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 	private int deleteGeolocaleTaxaFromSpecimens() throws SQLException {
 	
       int deleteTotal = deleteSource("specimen");
-      A.log("specimen deleteTotal:" + deleteTotal);	
+      s_log.debug("specimen deleteTotal:" + deleteTotal);
 
       return deleteTotal;
 	}
@@ -778,7 +778,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
                     + " order by country, adm1, taxon_name"
             ;
-            A.log("insertGeolocaleTaxaFromSpecimens() 1 query:" + query);
+            s_log.debug("insertGeolocaleTaxaFromSpecimens() 1 query:" + query);
             rset = stmt.executeQuery(query);
 
             Geolocale country = null;
@@ -849,9 +849,9 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
         } finally {
             DBUtil.close(stmt, "insertGeolocaleTaxaFromSpecimens()");
         }
-        A.log("insertGeolocaleTaxaFromSpecimens() unfoundCountries:" + unfoundCountries);
+        s_log.debug("insertGeolocaleTaxaFromSpecimens() unfoundCountries:" + unfoundCountries);
         //A.log("insertGeolocaleTaxaFromSpecimens() unfoundAdm1:" + unfoundAdm1s);
-        A.log("insertGeolocaleTaxaFromSpecimens() s_constraintCount:" + s_constraintCount);
+        s_log.debug("insertGeolocaleTaxaFromSpecimens() s_constraintCount:" + s_constraintCount);
         return insertCount;
     }
     
@@ -1003,7 +1003,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         + " where gt.geolocale_id = g.id " 
         + " order by gt.source, gt.geolocale_id"        
         ; 
-      A.log("checkGeolocaleParentage() query:" + query);
+      s_log.debug("checkGeolocaleParentage() query:" + query);
         
       Statement stmt = null;      
       try {
@@ -1025,7 +1025,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             if (parentGeolocale == null) {
               String message = "null parentGeolocale for geolocaleId:" + geolocaleId + " name:" + geolocale.getName() + " parent:" + geolocale.getParent();
               if (!message.equals(lastLine)) {
-                if (d) A.log("checkGeolocaleParentage() " + message);
+                if (d) s_log.debug("checkGeolocaleParentage() " + message);
               }
               lastLine = message;
             } else {
@@ -1037,9 +1037,9 @@ select group_concat( distinct source) from geolocale_taxon order by source;
                   fixed += insert(parentGeolocale, taxonName, TaxonSet.PROXY + source);
                   //fixed += insert(parentGeolocale, taxonName, "fixGeolocaleParentage");
                 } else {
-                  A.log("checkGeolocaleParentage() outOfIntegrity:" + outOfIntegrity + " fixed:" + fixed + " parentGeolocale:" + parentGeolocaleId + " (" + parentGeolocale.getName() + ") taxonName:" + taxonName + " source:" + source);              
+                  s_log.debug("checkGeolocaleParentage() outOfIntegrity:" + outOfIntegrity + " fixed:" + fixed + " parentGeolocale:" + parentGeolocaleId + " (" + parentGeolocale.getName() + ") taxonName:" + taxonName + " source:" + source);
                 }
-                if(d) A.log("checkGeolocaleParentage() outOfIntegrity:" + outOfIntegrity + " fixed:" + fixed + " parentGeolocale:" + parentGeolocaleId + " (" + parentGeolocale.getName() + ") taxonName:" + taxonName + " source:" + source);              
+                if(d) s_log.debug("checkGeolocaleParentage() outOfIntegrity:" + outOfIntegrity + " fixed:" + fixed + " parentGeolocale:" + parentGeolocaleId + " (" + parentGeolocale.getName() + ") taxonName:" + taxonName + " source:" + source);
               }
             }
           }
@@ -1068,7 +1068,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         + " and (t.parent_taxon_name, gt.geolocale_id) not in (select taxon_name, geolocale_id from geolocale_taxon) " 
         + " order by gt.source, gt.taxon_name"
         ; 
-      A.log("checkTaxonParentage() query:" + query);
+      s_log.debug("checkTaxonParentage() query:" + query);
       Statement stmt = null;      
       try {
           resetQueryGovernors();     
@@ -1092,9 +1092,9 @@ select group_concat( distinct source) from geolocale_taxon order by source;
               fixed += insert(geolocale, taxonName, TaxonSet.PROXY + source);			
               //fixed += insert(geolocale, parentTaxonName, "fixTaxonParentage");
             } else {
-              A.log("checkTaxonParentage() outOfIntegrity:" + outOfIntegrity + " parentTaxonName:" + parentTaxonName + " geolocaleId:" + geolocaleId + "(" + geolocaleName + ") source:" + source);
+              s_log.debug("checkTaxonParentage() outOfIntegrity:" + outOfIntegrity + " parentTaxonName:" + parentTaxonName + " geolocaleId:" + geolocaleId + "(" + geolocaleName + ") source:" + source);
             }
-            if (d) A.log("checkTaxonParentage() outOfIntegrity:" + outOfIntegrity + " parentTaxonName:" + parentTaxonName + " geolocaleId:" + geolocaleId + "(" + geolocaleName + ") source:" + source);
+            if (d) s_log.debug("checkTaxonParentage() outOfIntegrity:" + outOfIntegrity + " parentTaxonName:" + parentTaxonName + " geolocaleId:" + geolocaleId + "(" + geolocaleName + ") source:" + source);
 
           }
           
@@ -1121,7 +1121,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
       int outOfIntegrity = 0;
       s_fixed = 0;      
       String query = "select distinct country, subfamily, genus from specimen where country is not null";
-      A.log("setSpecimenSource() query:" + query);
+      s_log.debug("setSpecimenSource() query:" + query);
         
       Statement stmt = null;      
       try {
@@ -1137,7 +1137,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             
             Country country = GeolocaleMgr.getCountry(countryName);
             if (country == null) {
-              A.log("setSpecimenSource() country:" + countryName + " not found.");
+              s_log.debug("setSpecimenSource() country:" + countryName + " not found.");
               continue;
             }
             String subregionName = country.getSubregion();

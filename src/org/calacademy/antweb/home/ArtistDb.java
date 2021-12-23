@@ -153,7 +153,7 @@ public class ArtistDb extends AntwebDb {
                   + ")";
 
     	    stmt.executeUpdate(dml);
-    	    A.log("insertImage() 1 dml:" + dml);
+    	    s_log.debug("insertImage() 1 dml:" + dml);
     	    artist = new Artist(artistId, name);
             return "Created artist:" + artist.getLink() + ".";
 		} catch (SQLException e) {
@@ -192,7 +192,7 @@ public class ArtistDb extends AntwebDb {
 
             dml = "update artist set name = '" + artist.getName() + "' where id = " + artist.getId();
     	    int i = stmt.executeUpdate(dml); 
-            A.log("saveArtist() dml:" + dml + " i:" + i + " returnVal:" + returnVal);
+            s_log.debug("saveArtist() dml:" + dml + " i:" + i + " returnVal:" + returnVal);
 		} catch (SQLException e) {
 			s_log.error("saveArtist() dml" + dml + " e:" + e);
 			return "e:" + e;
@@ -215,7 +215,7 @@ public class ArtistDb extends AntwebDb {
                     String moveToArtistLink = "<a href='" + AntwebProps.getDomainApp() + "/artist.do?id=" + moveToArtist.getId() + "'>" + moveToArtist + "</a>";            
                     if (i == 1) returnVal = i + " image attributed to " + moveToArtistLink + ".";
                     if (i > 1) returnVal = i + " images attributed to " + moveToArtistLink + ".";
-                    A.log("moveToArtist() dml:" + dml + " i:" + i + " returnVal:" + returnVal);
+                    s_log.debug("moveToArtist() dml:" + dml + " i:" + i + " returnVal:" + returnVal);
                 }
             }
 
@@ -259,7 +259,7 @@ public class ArtistDb extends AntwebDb {
     	    int i = stmt.executeUpdate(dml);
     	    if (i == 0) return false; 
         
-            A.log("deleteArtist() dml:" + dml + " i:" + i);    	    
+            s_log.debug("deleteArtist() dml:" + dml + " i:" + i);
 
             return true;
 		} catch (SQLException e) {
@@ -279,7 +279,7 @@ public class ArtistDb extends AntwebDb {
         stmt = DBUtil.getStatement(getConnection(), "getArtistImageCount()");
         stmt.executeQuery(query);
         rset = stmt.getResultSet();
-        A.log("getArtistImageCount() query:" + query);
+        s_log.debug("getArtistImageCount() query:" + query);
         while (rset.next()) {
             return rset.getInt("count");
         }

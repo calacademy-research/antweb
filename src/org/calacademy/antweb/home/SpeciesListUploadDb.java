@@ -99,7 +99,7 @@ equals:
 			dmlstmt = getConnection().createStatement();
 			log += "taxa:" + dmlstmt.executeUpdate(query);
 			dmlstmt.close();
-			A.log("prepareDatabase() query:" + query);
+			s_log.debug("prepareDatabase() query:" + query);
 
 			dmlstmt = getConnection().createStatement();
 			query = "delete from homonym where antcat = 1";    // all records
@@ -142,7 +142,7 @@ equals:
             dmlstmt.close();
             LogMgr.appendLog("taxonSet.log", "SpeciesListUploadDb.prepareDatabase(" + project + ") proj_taxon source:antcat project:fossilants del:" + count, true);
  
-            A.log("prepareDatabase() log:" + log);
+            s_log.debug("prepareDatabase() log:" + log);
             
         } catch (Exception e) {
             s_log.error("prepareDatabase() problem for project:" + project + " e:" + e);

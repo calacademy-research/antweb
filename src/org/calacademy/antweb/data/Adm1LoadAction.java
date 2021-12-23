@@ -113,7 +113,7 @@ Not sure if this functionality here is being used.
 
                 if (geolocaleNameInt < 0 || geolocaleNameEndInt < 0) {
                   String logLine = "lineNum:" + lineNum + " line:" + line + " i1:" + geolocaleNameInt + " i2:" + geolocaleNameEndInt + " SKIPPING";
-                  A.log("Adm1LoadAction.load() " + logLine);
+                  s_log.debug("Adm1LoadAction.load() " + logLine);
                   LogMgr.appendLog("adm1Load.txt", logLine); 
                   continue;
                 } else {

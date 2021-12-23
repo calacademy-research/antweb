@@ -278,7 +278,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       //  return " region = '" + getRegion() + "'";
       //}
 
-        A.log("getLocality() isIsland:" + isIsland());
+        s_log.debug("getLocality() isIsland:" + isIsland());
 
         if (isIsland()) {
           return " island_country = '" + getName() + "'";
@@ -432,7 +432,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         authorImageTag = "";
         if ((authorImage != null) && !(authorImage.equals(""))) {
           authorImageTag = "<img src=\"" + AntwebProps.getImgDomainApp() + "/" + Project.getSpeciesListDir() + getRoot() + "/" + getAuthorImage() + "\">";
-          A.log("setAuthorImage() authorImageTag:" + authorImageTag);
+          s_log.debug("setAuthorImage() authorImageTag:" + authorImageTag);
         }        
     }        
         

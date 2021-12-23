@@ -114,7 +114,7 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
       return ignoreInsufficientCriteria;
     }
     public void setIsIgnoreInsufficientCriteria(boolean ignoreInsufficientCriteria) {
-      A.log("setIsIgnoreInsufficientCriteria() val:" + ignoreInsufficientCriteria);
+      s_log.debug("setIsIgnoreInsufficientCriteria() val:" + ignoreInsufficientCriteria);
       this.ignoreInsufficientCriteria = ignoreInsufficientCriteria;
     }
 

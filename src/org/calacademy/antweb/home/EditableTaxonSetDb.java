@@ -50,7 +50,7 @@ public abstract class EditableTaxonSetDb extends TaxonSetDb {
         } finally {
             DBUtil.close(stmt, rset, "hasTaxonSetSpecies()");
         }
-        A.log("hasTaxonSetSpecies() exists:" + exists + " query:" + query);
+        s_log.debug("hasTaxonSetSpecies() exists:" + exists + " query:" + query);
         return exists;
     }
     
@@ -77,7 +77,7 @@ public abstract class EditableTaxonSetDb extends TaxonSetDb {
         } finally {
             DBUtil.close(stmt, rset, "hasTaxonSetGenera()");
         }
-        A.log("hasTaxonSetGenus() exists:" + exists + " query:" + query);               
+        s_log.debug("hasTaxonSetGenus() exists:" + exists + " query:" + query);
         return exists;
     }     
     

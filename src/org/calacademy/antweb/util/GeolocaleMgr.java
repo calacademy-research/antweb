@@ -158,7 +158,7 @@ public class GeolocaleMgr extends Manager {
     // For Taxon Name Search Autocomplete
     public static List<String> getPlaceNames(String text) {
         if (placeNamesList == null) {
-            A.log("GeolocaleMgr.getPlaceNames(text) initializing...");
+            s_log.debug("GeolocaleMgr.getPlaceNames(text) initializing...");
             return null;
         }
         if (text == null) {

@@ -155,7 +155,7 @@ public class TaxonMgr extends Manager {
 
         if (taxonName == null) return null;
         if (s_taxa == null) {
-            A.log("getTaxon() returning null because s_taxa is null");
+            s_log.debug("getTaxon() returning null because s_taxa is null");
             // Could happen due to serverinitialization.
             return null;
         }
@@ -193,7 +193,7 @@ public class TaxonMgr extends Manager {
         s_species = new HashMap<>();
         TaxonDb taxonDb = new TaxonDb(connection);      
         ArrayList<Taxon> species = taxonDb.getTaxa("taxarank in ('" + Rank.SPECIES + "', '" + Rank.SUBSPECIES + "')");
-        A.log("getSpecies() speciesCount:" + species.size());
+        s_log.debug("getSpecies() speciesCount:" + species.size());
         for (Taxon taxon : species) {
           s_species.put(taxon.getTaxonName(), taxon);
         } 
@@ -431,7 +431,7 @@ public class TaxonMgr extends Manager {
                 s_log.error("refreshTaxon() mgrTaxon not found:" + mgrTaxon);
             } else {
                 String diff = mgrTaxon.diff(dbTaxon);
-                if (diff != null) A.log("refreshTaxon() taxonName:" + taxonName + " diff(mgr/db):" + diff);
+                if (diff != null) s_log.debug("refreshTaxon() taxonName:" + taxonName + " diff(mgr/db):" + diff);
             }
         }
 
@@ -452,7 +452,7 @@ public class TaxonMgr extends Manager {
         String className = taxon.getClass().toString();
         if (!"class org.calacademy.antweb.Species".equals(className)
                 && !"class org.calacademy.antweb.Subspecies".equals(className)) {
-            A.log("refreshTaxon() taxon:" + taxon + " class:" + taxon.getClass());
+            s_log.debug("refreshTaxon() taxon:" + taxon + " class:" + taxon.getClass());
         }
         // Is it ever a subclass? Is it actually ever a genus?
 

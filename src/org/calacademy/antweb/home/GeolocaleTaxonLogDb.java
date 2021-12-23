@@ -356,7 +356,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
                 //curation.setCuratorId(rset.getInt("curator_id"));
                 //curation.setCreated(rset.getTimestamp("created"));
             }
-            if (count > 1) A.log("getCuration() count over 1?");
+            if (count > 1) s_log.debug("getCuration() count over 1?");
         } catch (SQLException e) {
             s_log.error("getCuration() e:" + e + " query:" + query);
         } finally {

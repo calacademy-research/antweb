@@ -64,7 +64,7 @@ public class FileUtil {
       String pattern = "";
 
       String deleteCommand = "rm -rf " + webUploadDir.getAbsolutePath() + year + "*";
-      A.log("clearWebUploadDir() command:" + deleteCommand);
+      s_log.debug("clearWebUploadDir() command:" + deleteCommand);
 //      Runtime runtime = Runtime.getRuntime();
 //      Process process = runtime.exec( deleteCommand );
 //      process.waitFor();
@@ -87,16 +87,16 @@ public class FileUtil {
       if (slashI < 0) return -1;
       int spaceI = diskFree.indexOf(" ", slashI - 8);
       String percentStr = diskFree.substring(spaceI, slashI);
-      A.log("isDiskLow() slashI:" + slashI + " spaceI:" + spaceI + " percentStr:" + percentStr);
+      s_log.debug("isDiskLow() slashI:" + slashI + " spaceI:" + spaceI + " percentStr:" + percentStr);
 
       int percentI = percentStr.indexOf("%");
       percent = percentStr.substring(0, percentI);
       percent = percent.trim();
-      A.log("isDiskLow() percentI:" + percentI + " percent:" + percent);
+      s_log.debug("isDiskLow() percentI:" + percentI + " percent:" + percent);
 
       num = Integer.valueOf(percent);
     } catch (java.lang.StringIndexOutOfBoundsException e) {
-      A.log("isDiskLow() e:" + e);
+      s_log.debug("isDiskLow() e:" + e);
       return -2;
     }
     return num.intValue();
@@ -185,7 +185,7 @@ public class FileUtil {
         fileData += "<b>lastModifiedTime:</b> " + attr.lastModifiedTime();
         return fileData;
       } catch (IOException e) {
-        A.log("getLastModified() e:" + e);
+        s_log.debug("getLastModified() e:" + e);
       }
       //A.log("getFileAttributesHtml() fileData:" + fileData);
       return fileData;
@@ -199,7 +199,7 @@ public class FileUtil {
         fileSize = Long.valueOf(attr.size()).intValue();
         //fileSize = new Integer(size).intValue();
       } catch (IOException e) {
-        A.log("getFileSize() e:" + e);
+        s_log.debug("getFileSize() e:" + e);
       }
       //A.log("getFileAttributesHtml() fileData:" + fileData);
       return fileSize;

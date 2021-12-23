@@ -33,7 +33,7 @@ public abstract class BadActorMgr {
               badActorMap.put(ip, ++count);
           }
         } else {
-          A.log("Not adding ip:" + ip + " to bad actor list");
+          s_log.debug("Not adding ip:" + ip + " to bad actor list");
         }
       }
     }

@@ -27,7 +27,7 @@ public class QueryAction extends Action {
         response.setCharacterEncoding("UTF-8");
       
         HttpSession session = request.getSession();                
-        java.sql.Connection connection = null;
+        Connection connection = null;
 		ActionForward returnLoc = null;                
 
 		UtilForm theForm = (UtilForm) form;
@@ -36,7 +36,7 @@ public class QueryAction extends Action {
 		int num = theForm.getNum();
 		String name = theForm.getName();
 
-        A.log("execute() start action:" + action + " name:" + name + " param:" + param);
+        s_log.debug("execute() start action:" + action + " name:" + name + " param:" + param);
 		
         try {
             DataSource dataSource = getDataSource(request, "longConPool");
@@ -148,7 +148,7 @@ public class QueryAction extends Action {
 			}
 
 			if (returnLoc != null) {
-			  A.log("execute() end name:" + name + " param:" + param);
+			  s_log.debug("execute() end name:" + name + " param:" + param);
 
 			  return returnLoc;
 			}
@@ -158,7 +158,7 @@ public class QueryAction extends Action {
         } catch (SQLException e) {
             s_log.error("execute() action:" + action + " e:" + e);
             //AntwebUtil.errorStackTrace(e);
-            A.log(AntwebUtil.getAntwebStackTrace(e));
+            s_log.debug(AntwebUtil.getAntwebStackTrace(e));
         } finally {
             DBUtil.close(connection, this, "UploadAction.execute() 1");
         }

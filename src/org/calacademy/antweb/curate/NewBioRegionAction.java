@@ -8,6 +8,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -52,7 +54,7 @@ public final class NewBioRegionAction extends Action {
         if ((title != null) && (title.length() > 0) && (root != null) && (root.length() > 0)) {
         
             try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, "NewBioRegionAction");
           
                 connection.setAutoCommit(true);
@@ -66,7 +68,7 @@ public final class NewBioRegionAction extends Action {
                 //boolean success = createDirectory(theForm.getRoot());
                 //if (! success) return (mapping.findForward("failure"));
                 
-                A.log("execute() bioregion:" + bioregion);
+                s_log.debug("execute() bioregion:" + bioregion);
                 request.setAttribute("project", bioregion);
                 
             } catch (SQLException e) {

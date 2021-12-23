@@ -5,6 +5,15 @@ services:
     build:
       args:
         ENV: DEV
+    ports:
+      - "5005:5005"
+    environment:
+      # >- = YAML block chomp operator -- join lines together with space, remove trailing newline (newline breaks JVM)
+      JAVA_OPTS: >-
+        -Dlogging.level=debug
+        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+        -Xshare:off
+
     volumes:
       - ".:/antweb/deploy"
       # These files are normally copied to final folder, since ant deploy doesn't follow symlinks

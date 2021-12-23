@@ -142,7 +142,7 @@ public class UploadDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "getUploadLines()");
             rset = stmt.executeQuery(query);
-            A.log("getUploadLine() query:" + query);
+            s_log.debug("getUploadLine() query:" + query);
             
             while (rset.next()) {
               UploadLine uploadLine = new UploadLine();
@@ -699,7 +699,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         } finally {
           DBUtil.close(stmt, rset, "UploadDb.getAntwebSubfamily()");
         }      
-        A.log("getAntwebSubfamily() genus:" + genus + " subfamily:" + subfamily);
+        s_log.debug("getAntwebSubfamily() genus:" + genus + " subfamily:" + subfamily);
         return subfamily;
     }
 

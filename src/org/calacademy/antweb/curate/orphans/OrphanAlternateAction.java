@@ -56,7 +56,7 @@ public final class OrphanAlternateAction extends Action {
                if (taxonName.contains("inae")) {
                  newTaxonName = subfamily + taxonName.substring(inaeIndex + 4);
                }
-               A.log("execute() browse newTaxonName:" + newTaxonName);                 
+               s_log.debug("execute() browse newTaxonName:" + newTaxonName);
                
                Taxon fetchTaxon = (new TaxonDb(connection)).getTaxon(taxonName);
                if (fetchTaxon != null) {
@@ -73,7 +73,7 @@ public final class OrphanAlternateAction extends Action {
 			    }
 			    String statusMessage = null;
 			    if (newTaxonName != null) {
-				  A.log("execute() moving taxonName:" + taxonName + " to :" + newTaxonName);                 
+				  s_log.debug("execute() moving taxonName:" + taxonName + " to :" + newTaxonName);
 				  orphansDb.moveTaxonSupportingDataToAlternate(newTaxonName, taxonName);                   
 				  statusMessage = "<b>" + taxonName + " moved to <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + newTaxonName + "'>" + newTaxonName + "</a></b><br><br>";
 			    } else {

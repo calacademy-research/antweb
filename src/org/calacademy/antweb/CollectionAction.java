@@ -5,9 +5,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
 
+import org.calacademy.antweb.upload.UploadAction;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.upload.UploadUtil;
 import org.calacademy.antweb.home.*;
@@ -29,7 +33,7 @@ public final class CollectionAction extends Action {
 
         DynaActionForm df = (DynaActionForm) form;
         String name = (String) df.get("name"); 
-        A.log("CollectionAction.execute() name:" + name);
+        s_log.debug("CollectionAction.execute() name:" + name);
 
         String message = null;
         if (name == null) {
@@ -39,14 +43,14 @@ public final class CollectionAction extends Action {
         } 
         
         String queryString = request.getQueryString();
-        A.log("CollectionAction.execute() queryString:" + queryString + " p:" + request.getParameter("name"));
+        s_log.debug("CollectionAction.execute() queryString:" + queryString + " p:" + request.getParameter("name"));
         		
 		Collection collection = null;
-		java.sql.Connection connection = null;
-        java.util.Date startTime = new java.util.Date();
+		Connection connection = null;
+        Date startTime = new Date();
 
 		try {
-	 		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+	 		DataSource dataSource = getDataSource(request, "conPool");
 
             if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
@@ -55,7 +59,7 @@ public final class CollectionAction extends Action {
 
             collection = (new CollectionDb(connection)).getCollection(name);
 
-			A.log("collection:" + collection + " size:" + collection.getSpecimenResults().getResults().size());
+			s_log.debug("collection:" + collection + " size:" + collection.getSpecimenResults().getResults().size());
 
 			//if (!success) {
 			if (collection == null || 0 == collection.getSpecimenResults().getResults().size()) {
@@ -69,12 +73,12 @@ public final class CollectionAction extends Action {
 				return (mapping.findForward("message"));
 			  }
         			  
-              if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
+              if (UploadAction.isInUploadProcess()) {
                         // An upload is currently in process.  Request that this process be re-attempted shortly.
                 message += "  A curator is currently in the process of an Upload.";
 			  }	else {
 			    message += "  No upload in process.  RequestInfo:" + AntwebUtil.getRequestInfo(request);
-                A.log("execute() " + message); 
+                s_log.debug("execute() " + message);
                 LogMgr.appendLog("badRequest.log", message);
 			  }
               request.setAttribute("message", message);

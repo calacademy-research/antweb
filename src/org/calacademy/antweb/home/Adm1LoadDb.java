@@ -62,7 +62,7 @@ public class Adm1LoadDb extends AntwebDb {
             stmt = DBUtil.getStatement(getConnection(), "putAdm1()");
             int x = stmt.executeUpdate(dml);
         } catch (java.sql.SQLSyntaxErrorException e) {
-            A.log("Adm1LoadDb.putAdm1() failed to insert country:" + country + " adm1:" + adm1);
+            s_log.debug("Adm1LoadDb.putAdm1() failed to insert country:" + country + " adm1:" + adm1);
         } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             // no problem. Already there.
             //A.log("Adm1LoadDb.putAdm1() exists: " + country + " " + adm1);
@@ -80,7 +80,7 @@ public class Adm1LoadDb extends AntwebDb {
         String dml = null;
         try {
             dml = "delete from geolocale where source = 'adm1Load'";
-            A.log("deleteGeolocale() dml:" + dml);
+            s_log.debug("deleteGeolocale() dml:" + dml);
 
             stmt = DBUtil.getStatement(getConnection(), "Adm1LoadDb.deleteAdm1LoadedAdm1()");
             int x = stmt.executeUpdate(dml);

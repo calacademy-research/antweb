@@ -1,5 +1,8 @@
 package org.calacademy.antweb.util;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.util.*;
 
 /*
@@ -25,6 +28,8 @@ Nice way to figure what bit of code is calling a method, and how many times, is 
 
 public class ProfileCounter {
     private static HashMap<String, Integer> s_countMap = new HashMap<String, Integer>();
+
+    private final static Log s_log = LogFactory.getLog(ProfileCounter.class);
     
     public static void add(String label) {
         Integer count = s_countMap.get(label);
@@ -42,7 +47,7 @@ public class ProfileCounter {
 
     public static void report() {
         String report = getReport();
-        A.log(report);
+        s_log.debug(report);
     }
 
     public static String getReport() {

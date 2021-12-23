@@ -520,7 +520,7 @@ public class Formatter implements Serializable {
 
   public static boolean hasSpecialCharacter(String str, String patternStr) {
     if (str == null || str.trim().isEmpty()) {
-        A.log("Incorrect format of string");
+        s_log.debug("Incorrect format of string");
         return false;
     }
     

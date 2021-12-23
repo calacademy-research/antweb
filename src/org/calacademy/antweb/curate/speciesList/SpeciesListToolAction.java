@@ -6,6 +6,7 @@ import org.apache.struts.action.*;
 import java.sql.*;
 import java.io.*;
 import javax.servlet.ServletException;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -92,7 +93,7 @@ To Do
     String message = "";
     java.sql.Connection connection = null;
     try {
-      javax.sql.DataSource dataSource = getDataSource(request, "longConPool");
+      DataSource dataSource = getDataSource(request, "longConPool");
       connection = DBUtil.getConnection(dataSource, "SpeciesListToolAction.execute()");
       connection.setAutoCommit(false);
       SpeciesListDb speciesListDb = (new SpeciesListDb(connection));
@@ -184,7 +185,7 @@ To Do
 
       toolProps.setNoPassWorldantsSpeciesList(speciesListDb.noPassWorldantsSpeciesList(mapSpeciesList1Name, mapSpeciesList2Name, mapSpeciesList3Name, toolProps.getRefSpeciesListName())); 
 
-      A.log("execute() toolProps:" + toolProps);
+      s_log.debug("execute() toolProps:" + toolProps);
  
     } catch (SQLException e) {
       s_log.error("execute() e:" + e);
@@ -280,7 +281,7 @@ To Do
     if (maxListSize > s_maxSpeciesListSizeBeforeDisplaySubfamily) {
       toolProps.setDisplaySubfamily("amblyoponinae");
       setSpeciesListMappings(toolForm, toolProps, connection);
-      A.log("returning with displaySubfamily:" + displaySubfamily);
+      s_log.debug("returning with displaySubfamily:" + displaySubfamily);
       return;
     } else {
       toolProps.setDisplaySubfamily("none");
@@ -365,7 +366,7 @@ To Do
 
     // Slow!  setCountryLists and setAdm1Lists are slow.  
     String countryLocalityCriteria = getCountryLocalityCriteria(mapSpeciesList1Name, mapSpeciesList2Name, mapSpeciesList3Name);
-    A.log("setSpeciesListMappings() countryLocalityCriteria:" + countryLocalityCriteria);
+    s_log.debug("setSpeciesListMappings() countryLocalityCriteria:" + countryLocalityCriteria);
     setCountryLists(connection, sumSpeciesList, countryLocalityCriteria);
 
     String adm1LocalityCriteria = getAdm1LocalityCriteria(mapSpeciesList1Name, mapSpeciesList2Name, mapSpeciesList3Name);
@@ -512,7 +513,7 @@ To Do
         + " and " + countryCriteria;
       
       boolean debug = "myrmicinaeacanthognathus brevicornis".equals(taxonName);
-      if (debug) A.log("setCountryLists() SLOW query:" + query);
+      if (debug) s_log.debug("setCountryLists() SLOW query:" + query);
       
       ArrayList<String> countries = new ArrayList<>();
         rset = stmt.executeQuery(query);
@@ -520,7 +521,7 @@ To Do
           String country = rset.getString("country");
           countries.add(country);
         }
-        if (debug) A.log("setCountryLists() taxonName:" + taxonName + " countries:" + countries);
+        if (debug) s_log.debug("setCountryLists() taxonName:" + taxonName + " countries:" + countries);
         taxon.setCountryList(countries);
       }
     } catch (Exception e) {

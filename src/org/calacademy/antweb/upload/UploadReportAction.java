@@ -35,11 +35,11 @@ public final class UploadReportAction extends Action {
         if (uploadId > 0) {
           Upload upload = UploadMgr.getUpload(uploadId);
           if (upload == null) {
-            A.log("execute() upload not found:" + uploadId);
+            s_log.debug("execute() upload not found:" + uploadId);
             UploadMgr.log();
           } else {
             String url = AntwebProps.getDomainApp() + "/web/log/" + upload.getUploadDir() + "/" + upload.getLogFileName();
-            A.log("execute() redirect to url:" + url);
+            s_log.debug("execute() redirect to url:" + url);
 		
 	    	response.sendRedirect(url);  
 	    	return null;

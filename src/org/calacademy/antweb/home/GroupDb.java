@@ -78,7 +78,7 @@ public class GroupDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateUploadSpecimens()");
             stmt.executeUpdate(dml);
-            A.log("updateUploadSpecimens() dml:" + dml);
+            s_log.debug("updateUploadSpecimens() dml:" + dml);
         } catch (SQLException e) {
           s_log.error("problem updating group:" + group.getName() + " e:" + e);
         } finally {

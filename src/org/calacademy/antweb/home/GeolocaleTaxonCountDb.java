@@ -54,7 +54,7 @@ public class GeolocaleTaxonCountDb extends CountDb {
          //s_log.warn("startChildrenCountCrawl()");
           ArrayList<Geolocale> geolocales = GeolocaleMgr.getLiveGeolocales();
           for (Geolocale geolocale : geolocales) {
-            if (geolocale.isIsland()) A.log("childrenCountCrawl() island geolocale:" + geolocale);
+            if (geolocale.isIsland()) s_log.debug("childrenCountCrawl() island geolocale:" + geolocale);
             if (geolocale.getIsValid()) {
               childrenCountCrawl(geolocale);
             }

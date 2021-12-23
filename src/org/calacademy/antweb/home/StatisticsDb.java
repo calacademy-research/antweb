@@ -417,7 +417,7 @@ museum
 
             query = "select count(*) from geolocale_taxon where is_endemic = 1";
             int numberGeolocaleTaxaEndemic = utilDb.getCount(query);
-            A.log("populateStatistics query:" + query);
+            s_log.debug("populateStatistics query:" + query);
 
             if (docBase != null) {
 

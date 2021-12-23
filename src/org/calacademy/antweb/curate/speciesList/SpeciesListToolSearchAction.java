@@ -1,6 +1,8 @@
 package org.calacademy.antweb.curate.speciesList;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -21,12 +23,12 @@ public class SpeciesListToolSearchAction extends Action { //extends SpeciesListT
     ActionForward c = Check.login(request, mapping); if (c != null) return c; 
 
     SpeciesListToolForm toolForm = (SpeciesListToolForm) form;
-    A.log("SpeciesListToolSearchAction.execute() toolForm:" + toolForm);
+    s_log.debug("SpeciesListToolSearchAction.execute() toolForm:" + toolForm);
 
     String message = "";
-    java.sql.Connection connection = null;
+    Connection connection = null;
     try {
-      javax.sql.DataSource dataSource = getDataSource(request, "longConPool");
+      DataSource dataSource = getDataSource(request, "longConPool");
       connection = DBUtil.getConnection(dataSource, "SpeciesListToolSearchAction.execute()");
 
       boolean goToSearch = "changeRefSpeciesList".equals(toolForm.getAction());
@@ -40,7 +42,7 @@ public class SpeciesListToolSearchAction extends Action { //extends SpeciesListT
 
       if (message != null) request.setAttribute("message", message);
 
-      A.log("execute() toolForm:" + toolForm);
+      s_log.debug("execute() toolForm:" + toolForm);
  
     } catch (SQLException e) {
       s_log.error("execute() e:" + e);

@@ -68,25 +68,28 @@ public class TaxonDb extends AntwebDb {
 
         boolean log = true && "myrmicinaetetramorium vernicosum".equals(taxonName);
         ResultSet rset = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "getTaxon() taxonName:" + taxonName);
-                  
-            theQuery = " select taxon_name, taxarank, kingdom_name, phylum_name, order_name, class_name"
+
+            theQuery = "select taxon_name, taxarank, kingdom_name, phylum_name, order_name, class_name"
               + ", family, subfamily, tribe, genus, subgenus, species, subspecies "
               + ", status, access_group, source, line_num, insert_method, created, fossil, type, antcat, antcat_id"
               + ", pending , author_date, author_date_html, authors, year, available "
               + ", current_valid_name, current_valid_rank, current_valid_parent, original_combination, was_original_combination "
               + ", parent_taxon_name, image_count, hol_id, chart_color"
               // country, bioregion,  // These not used. Could be in multiple. See bioregion_taxon and taxon_country. And bioregion_map.
-              + " from " + tableName + " where " + taxonNameClause;
+              + " from taxon where taxon_name = ?";
+
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getTaxon() taxonName:" + taxonName, theQuery);
+
+            stmt.setString(1, taxonName);
 
             //if (log) A.log("getTaxon() query:" + theQuery);
-            rset = stmt.executeQuery(theQuery);
+            rset = stmt.executeQuery();
 
             int count = 0;
             while (rset.next()) {
-                if (log) A.log("getTaxon() IN query:" + theQuery);
+                if (log) s_log.debug("getTaxon() IN query:" + theQuery);
 
                 ++count; // Only one record expected
 
@@ -168,7 +171,7 @@ public class TaxonDb extends AntwebDb {
           //It may not be found during Worldants, for instance amblyoponinae, but after the cleanup process it will...
           String warning = " taxon not found taxonName:" + taxonName;
           //if (AntwebProps.isDevMode()) warning += " theQuery:" + theQuery;
-          A.log("getTaxon() " + warning + " query:" + theQuery + " taxonFromMgr:" + TaxonMgr.getTaxon(taxonName) + " antcatCount:" + getAntcatCount());
+          s_log.debug("getTaxon() " + warning + " query:" + theQuery + " taxonFromMgr:" + TaxonMgr.getTaxon(taxonName) + " antcatCount:" + getAntcatCount());
           return null;
         }
         
@@ -214,7 +217,7 @@ public class TaxonDb extends AntwebDb {
         String taxonName = getTaxonName(family, subfamily, genus, species, subspecies, rank);
 
         if (taxonName == null) {
-            A.log("getFullTaxon() taxon not found for:" + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank);
+            s_log.debug("getFullTaxon() taxon not found for:" + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank);
             return null;
         }
 
@@ -295,7 +298,7 @@ public class TaxonDb extends AntwebDb {
               taxonName = rset.getString("taxon_name");
               Taxon taxon = getTaxon(taxonName);
               if (taxon == null) {
-                A.log("getTaxa() taxon not found:" + taxonName);
+                s_log.debug("getTaxa() taxon not found:" + taxonName);
                 continue;
               }
               taxa.add(taxon);
@@ -345,7 +348,7 @@ public class TaxonDb extends AntwebDb {
               taxonName = rset.getString("taxon_name");
               Taxon taxon = getTaxonForMgr(taxonName);
               if (taxon == null) {
-                A.log("getTaxaWithClause() taxon not found:" + taxonName);
+                s_log.debug("getTaxaWithClause() taxon not found:" + taxonName);
                 continue;
               }
               taxa.add(taxon);
@@ -356,7 +359,7 @@ public class TaxonDb extends AntwebDb {
             DBUtil.close(stmt, rset, "this", "getTaxaWithClause()");
         }
         
-        if ("subfamily".equals(rankClause)) A.log("getTaxon() taxonName:" + taxonName + " query:" + query + " taxa:" + taxa);
+        if ("subfamily".equals(rankClause)) s_log.debug("getTaxon() taxonName:" + taxonName + " query:" + query + " taxa:" + taxa);
 
         return taxa;
     }
@@ -476,14 +479,14 @@ public class TaxonDb extends AntwebDb {
         // Delete the taxon
         String delete = "delete from taxon " 
           + " where taxon_name = '" + taxonName + "'"; 
-        A.log("TaxonDb.deleteTaxon() delete:" + delete);
+        s_log.debug("TaxonDb.deleteTaxon() delete:" + delete);
         stmt.executeUpdate(delete);
  
         // Delete the allantwebants projTaxon
         delete = "delete from proj_taxon " 
           + " where taxon_name = '" + taxonName + "'";
         stmt.executeUpdate(delete);
-        A.log("TaxonDb.deleteTaxon() delete:" + delete);    
+        s_log.debug("TaxonDb.deleteTaxon() delete:" + delete);
       } finally {
         DBUtil.close(stmt, "deleteTaxon()");
       }
@@ -552,7 +555,7 @@ public class TaxonDb extends AntwebDb {
         String subspecies = Taxon.getSubspeciesFromName(toTaxonName);
         if (subspecies != null) updateTaxon += " , subspecies = '" + subspecies + "'";
         updateTaxon += " where taxon_name = '" + fromTaxonName + "'"; 
-        A.log("moveTaxon() update:" + updateTaxon);
+        s_log.debug("moveTaxon() update:" + updateTaxon);
         int taxonUpdateCount = stmt.executeUpdate(updateTaxon);
 
         String setStatement = " set taxon_name = '" + toTaxonName + "' where taxon_name = '" + fromTaxonName + "'";
@@ -652,7 +655,7 @@ public class TaxonDb extends AntwebDb {
 
         count = stmt.executeUpdate(dml);
 
-        A.log("crawlForType() count:" + count + " dml:" + dml);
+        s_log.debug("crawlForType() count:" + count + " dml:" + dml);
 
       } finally {
         DBUtil.close(stmt, "crawlForType()");
@@ -724,7 +727,7 @@ public class TaxonDb extends AntwebDb {
 
         boolean isValid = isSubfamilyForGenus(query, subfamily);
         
-        if (!isValid) A.log("isValidSubfamilyForGenus() isValid:" + isValid + " subfamily:" + subfamily + " query:" + query);
+        if (!isValid) s_log.debug("isValidSubfamilyForGenus() isValid:" + isValid + " subfamily:" + subfamily + " query:" + query);
         return isValid;
     }
 
@@ -788,7 +791,7 @@ public class TaxonDb extends AntwebDb {
                 utilDb.updateField("taxon", "author_date", "'" + newAuthorDate + "'", " taxon_name = '" + taxonName + "'");
                 utilDb.updateField("homonym", "author_date", "'" + newAuthorDate + "'", " taxon_name = '" + taxonName + "'");
             }
-            A.log("fixHtmlAuthorDates() count:" + count);
+            s_log.debug("fixHtmlAuthorDates() count:" + count);
 	  } catch (SQLException e) {
 		  s_log.error("fixHtmlAuthorDates() exception:" + e + " query:" + query);
 	  } finally {

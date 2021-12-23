@@ -48,10 +48,10 @@ public class GeonamesPlace extends DataPlace {
             String countryName = country.getName();
                         
             String fetchMsg = GeonamesPlace.fetchData(connection, countryName);
-            A.log("fetchData() message:" + fetchMsg);
+            s_log.debug("fetchData() message:" + fetchMsg);
           }		
           			
-        A.log("fetchData(1) cleanCount:" + s_cleanCount + " FoundCleanNameInFlickr:" + s_cleanedFlickrNameCount);
+        s_log.debug("fetchData(1) cleanCount:" + s_cleanCount + " FoundCleanNameInFlickr:" + s_cleanedFlickrNameCount);
         message = "Geonames data fetched.";        
         return message;
     }
@@ -73,7 +73,7 @@ public class GeonamesPlace extends DataPlace {
 
 			GeonamesPlace countryPlace = GeonamesPlace.getPlace(countryName);
 
-			A.log("fetchData(2) countryName:" + countryName + " countryPlace:" + countryPlace);
+			s_log.debug("fetchData(2) countryName:" + countryName + " countryPlace:" + countryPlace);
 
 			String prefix = "  ";
 			if (country.getIsValid()) prefix = "v ";
@@ -91,7 +91,7 @@ public class GeonamesPlace extends DataPlace {
             }
 
             if (children == null) {
-              A.log("GeonamesPlace.fetchData(2) no children found for " + countryName);
+              s_log.debug("GeonamesPlace.fetchData(2) no children found for " + countryName);
               return null;			
 			}
 			LogMgr.appendLog("geonames.log", "" + countryName);
@@ -108,7 +108,7 @@ public class GeonamesPlace extends DataPlace {
             DBUtil.rollback(connection); 
         }
 
-        A.log("fetchData(2) cleanCount:" + s_cleanCount + " FoundCleanNameInFlickr:" + s_cleanedFlickrNameCount);
+        s_log.debug("fetchData(2) cleanCount:" + s_cleanCount + " FoundCleanNameInFlickr:" + s_cleanedFlickrNameCount);
         return message;
     }
 
@@ -121,7 +121,7 @@ public class GeonamesPlace extends DataPlace {
       String cleanAdm1Name = DataPlace.cleanName(adm1Name);
 
       if (!adm1Name.equals(cleanAdm1Name)) {
-        A.log("geoname:" + adm1Name + " cleanName:" + cleanAdm1Name + " for countryPlace:" + countryPlace.getName());				  
+        s_log.debug("geoname:" + adm1Name + " cleanName:" + cleanAdm1Name + " for countryPlace:" + countryPlace.getName());
         s_cleanCount++;
       }
       
@@ -172,11 +172,11 @@ public class GeonamesPlace extends DataPlace {
 	          AntwebUtil.logShortStackTrace();
 			}
             if (geonamesResponse == null) {
-               A.log("GeonamesPlace.getPlace() geonamesResponse is null. json:" + json);
+               s_log.debug("GeonamesPlace.getPlace() geonamesResponse is null. json:" + json);
                return null;
             }
             if (geonamesResponse.geonames == null) {
-               A.log("GeonamesPlace.getPlace() geonames is null. geonamesResponse:" + geonamesResponse + " json:" + json + " url:" + url);
+               s_log.debug("GeonamesPlace.getPlace() geonames is null. geonamesResponse:" + geonamesResponse + " json:" + json + " url:" + url);
 			   return null;
 			}
 			
@@ -190,7 +190,7 @@ public class GeonamesPlace extends DataPlace {
               if (placeName.equals(geoname.name) || placeName.equals(Formatter.stripAccents(geoname.name))) {
 
                 found = true;
-                A.log("GeonamesPlace.getPlace() country:" + placeName + " name:" + geoname.name); // + " json:" + json);
+                s_log.debug("GeonamesPlace.getPlace() country:" + placeName + " name:" + geoname.name); // + " json:" + json);
 				geonamesPlace.name = placeName;
 				geonamesPlace.geonameId = geoname.geonameId;
 				geonamesPlace.latitude = geoname.lat;
@@ -216,11 +216,11 @@ public class GeonamesPlace extends DataPlace {
 			GeonamesResponse geonamesResponse = new Gson().fromJson(json, GeonamesResponse.class);
 
             if (geonamesResponse == null) {
-               A.log("getChildren() geonamesResponse is null. json:" + json);
+               s_log.debug("getChildren() geonamesResponse is null. json:" + json);
                return new ArrayList<>();
             }
             if (geonamesResponse.geonames == null) {
-               A.log("getChildren() geonames is null. geonamesResponse:" + geonamesResponse + " json:" + json + " url:" + url);
+               s_log.debug("getChildren() geonames is null. geonamesResponse:" + geonamesResponse + " json:" + json + " url:" + url);
 			   return null;
 			}
 
@@ -249,18 +249,18 @@ public class GeonamesPlace extends DataPlace {
     }
 
     public static String getLink(Geolocale geolocale) {
-      A.log("getLink() name:" + geolocale.getName() + " parent:" + geolocale.getParent() + " georank:" + geolocale.getGeorank());
+      s_log.debug("getLink() name:" + geolocale.getName() + " parent:" + geolocale.getParent() + " georank:" + geolocale.getGeorank());
       String link = "";
 	  try {
 		GeonamesPlace place = null;
   	    place = GeonamesPlace.getPlace(geolocale.getName());   
 		if (place != null) {
-		  A.log("getLink() woeId:" + place.getGeonameId() + "-");
+		  s_log.debug("getLink() woeId:" + place.getGeonameId() + "-");
 		  link = "Geonames place (suggestion): <a href='http://www.geonames.org/" + place.getGeonameId() + "'>" + geolocale.getName() + "</a>";
 
 	    }
 	  } catch (Exception e) {
-		A.log("GeonamesPlace.getLink() e:" + e);
+		s_log.debug("GeonamesPlace.getLink() e:" + e);
 	  }
       return link;
     }

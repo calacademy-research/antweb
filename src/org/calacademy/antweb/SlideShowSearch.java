@@ -37,7 +37,7 @@ public class SlideShowSearch implements Serializable {
 				+ "and taxon.status = 'valid' "
 				+ "order by sp." + rank;
 //		}
-A.log("getSlides() query:" + theQuery);
+s_log.debug("getSlides() query:" + theQuery);
 
 
         Statement stmt = null;

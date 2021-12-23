@@ -48,7 +48,7 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
 	          AntwebUtil.logShortStackTrace();
 			}
             if (geonetAdm1Response == null) {
-               A.log("GeonetPlace.getPlace() geonamesResponse is null. json:" + json);
+               s_log.debug("GeonetPlace.getPlace() geonamesResponse is null. json:" + json);
                return null;
             }
 
@@ -77,7 +77,7 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
 	          AntwebUtil.logShortStackTrace();
 			}
             if (geonetAdm1CentroidResponse == null) {
-               A.log("GeonetPlace.getPlace() geonetAdm1CentroidResponse is null. json:" + json);
+               s_log.debug("GeonetPlace.getPlace() geonetAdm1CentroidResponse is null. json:" + json);
                return null;
             }
 

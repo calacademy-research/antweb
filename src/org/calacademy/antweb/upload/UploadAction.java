@@ -12,6 +12,7 @@ import org.apache.struts.upload.FormFile;
 import javax.servlet.http.*;
 
 import java.sql.*;
+import java.util.Map;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
@@ -109,7 +110,7 @@ public class UploadAction extends Action {
             connection = DBUtil.getConnection(dataSource, "UploadAction.execute()", HttpUtil.getTarget(request));
             connection.setAutoCommit(false);
 
-            A.log("execute() using longConPool:" + dataSource);
+            s_log.debug("execute() using longConPool:" + dataSource);
 
 			LoginDb loginDb = new LoginDb(connection);
 
@@ -156,7 +157,7 @@ public class UploadAction extends Action {
 				try {
 					TaxonMgr.setIsInWorldants(true);
 
-					A.log("setIsInWorldants(true) + root:" + AntwebProps.getDocRoot());
+					s_log.debug("setIsInWorldants(true) + root:" + AntwebProps.getDocRoot());
 
 					// Do we need to create /data/antweb/web/workingdir if it does not exist?
 					// Worldants should not be hardcoded. Get from file... (2 times)
@@ -180,10 +181,10 @@ public class UploadAction extends Action {
 					runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
 					//runStatistics(action, dataSource, request, accessLogin.getId(), uploadDetails);
 
-					A.log("uploadSpeciesList uploadDetails:" + uploadDetails);
+					s_log.debug("uploadSpeciesList uploadDetails:" + uploadDetails);
 				} finally {
 					TaxonMgr.setIsInWorldants(false);
-					A.log("setIsInWorldants(false)");
+					s_log.debug("setIsInWorldants(false)");
 				}
                 /*
  			  } else if (action.equals("reloadSpeciesLists")) {
@@ -240,7 +241,7 @@ public class UploadAction extends Action {
 				  , submitLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 
                 if (AntwebProps.isDevMode()) {
-					A.log("DEV SKIPPING, post specimen processing aborted.");
+					s_log.debug("DEV SKIPPING, post specimen processing aborted.");
 					uploadDetails.finish(accessLogin, request, connection);
 					return uploadDetails.findForward(mapping, request);
 				}
@@ -262,7 +263,7 @@ public class UploadAction extends Action {
                 uploadDetails.finish(accessLogin, request, connection);
 
                 ActionForward forward = uploadDetails.findForward(mapping, request);
-                A.log("execute() action:" + action + " uploadDetails:" + uploadDetails + " forward:" + forward);
+                s_log.debug("execute() action:" + action + " uploadDetails:" + uploadDetails + " forward:" + forward);
                 if (forward != null) return forward;
 
 			  } else if (action.equals("specimenTest")) {
@@ -355,7 +356,7 @@ public class UploadAction extends Action {
                 if (uploadDetails.getErrorForward(mapping) != null) return uploadDetails.getErrorForward(mapping);
 
 			  } else if (action.equals("museumCalc")) {
-				java.util.Map<String, Integer> museumMap = (java.util.Map<String, Integer>) session.getAttribute("museumMap");
+				Map<String, Integer> museumMap = (Map<String, Integer>) session.getAttribute("museumMap");
 
 				if (museumMap == null) {
 				  String message = "Museum Map not found in session";
@@ -542,7 +543,7 @@ public class UploadAction extends Action {
 			}
 
 			if ((theForm.getSuccessKey() != null) && (theForm.getSuccessKey().equals("worldAuthorityFiles"))) {
-			    A.log("execute() worldauth successKey:" + theForm.getSuccessKey());
+			    s_log.debug("execute() worldauth successKey:" + theForm.getSuccessKey());
                 worldAuthGen(request);
                 uploadDetails.setForwardPage(theForm.getSuccessKey());
             }
@@ -589,20 +590,20 @@ public class UploadAction extends Action {
 
 		SpecimenDb specimenDb = new SpecimenDb(connection);
 		specimenDb.updateSpecimenStatus(group.getId());
-		A.log("execute() updateSpecimenStatus:");
+		s_log.debug("execute() updateSpecimenStatus:");
 
 		GroupDb groupDb = new GroupDb(connection);
 		groupDb.updateUploadSpecimens(group);
-		A.log("specimenPostProcess() updateUploadSpecimens");
+		s_log.debug("specimenPostProcess() updateUploadSpecimens");
 
 		ObjectMapDb objectMapDb = new ObjectMapDb(connection);
 		objectMapDb.genGroupObjectMap(group);
-		A.log("specimenPostProcess() genGroupObjectMap");
+		s_log.debug("specimenPostProcess() genGroupObjectMap");
 
 		UploadDb uploadDb = new UploadDb(connection);
 		uploadDb.updateUpload(login, uploadDetails.getLogFileName());
 		uploadDb.updateGroup(group);
-		A.log("specimenPostProcess() updateUpload");
+		s_log.debug("specimenPostProcess() updateUpload");
 
         // Perhaps not best here. This will remove historically bad records not necessarily from this upload.
         // Hail mary.
@@ -683,14 +684,14 @@ public class UploadAction extends Action {
 
 		String serverDir = null;
 
-		A.log("uploadFileToFolder() serverDir:" + serverDir + " dir:" + dir);
+		s_log.debug("uploadFileToFolder() serverDir:" + serverDir + " dir:" + dir);
 
 		// Create the curator's directory if it does not already exist.
 		if (dir.equals("curator")) {
 		  serverDir = "curator/" + accessLogin.getId();
 		  dir = "web/" + serverDir;
 		  String fullDir = AntwebProps.getDocRoot() + dir;
-		  A.log("uploadFileToFolder() mk:" + fullDir);
+		  s_log.debug("uploadFileToFolder() mk:" + fullDir);
 		  util.makeDirTree(fullDir);
 		} else if (!"homepage".equals(dir)) {
 		  dir = Project.getSpeciesListDir() + dir;
@@ -809,7 +810,7 @@ public class UploadAction extends Action {
           return new UploadDetails(operation, messageStr, request);
         }
 
-        A.log("uploadDataFile() dir:" + dir + " docBase:" + docBase + " fileName:" + fileName);
+        s_log.debug("uploadDataFile() dir:" + dir + " docBase:" + docBase + " fileName:" + fileName);
         // project:worldants fileName:/Users/mark/dev/calAcademy/workingdir/worldants.txt shortFileName:worldants.txt encoding:UTF-8 isBioRegion:true
 
 		BufferedReader in = null;
@@ -863,7 +864,7 @@ public class UploadAction extends Action {
             request.setAttribute("message", messageStr);
             uploadDetails = new UploadDetails(operation, messageStr, request);
             uploadDetails.setForwardPage("adminMessage");
-        } catch (java.io.FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             messageStr = "uploadDataFile() e" + e;
             s_log.error(messageStr);
         } catch (IndexOutOfBoundsException e) {
@@ -896,7 +897,7 @@ public class UploadAction extends Action {
         String outputPath = "/parsedBoltonNGC.txt";
         String fullPath = fullDir + outputPath;
         String fullUrl = AntwebProps.getDomainApp() + dir + outputPath;
-        A.log("boltonNewGeneraCatalog() outputPath is:" + fullPath + " fullUrl:" + fullUrl);
+        s_log.debug("boltonNewGeneraCatalog() outputPath is:" + fullPath + " fullUrl:" + fullUrl);
 
         while (line != null) {
           line = in.readLine();
@@ -924,7 +925,7 @@ public class UploadAction extends Action {
             if (parsedLines < 20)
               content.append(p1 + "\t" + p2 + "<br>\n");
 
-            if (p1.equals("striatus")) A.log("striatus " + p2);
+            if (p1.equals("striatus")) s_log.debug("striatus " + p2);
 
             LogMgr.appendFile(fullPath, p1 + "\t" + p2);
 
@@ -932,7 +933,7 @@ public class UploadAction extends Action {
 
         } // end while loop through lines
 
-        A.log("boltonNewGeneraCatalog() lineNum:" + lineNum + " parsedLines:" + parsedLines);
+        s_log.debug("boltonNewGeneraCatalog() lineNum:" + lineNum + " parsedLines:" + parsedLines);
 
         messageStr = "<h3>Parsed Bolton New Genera Catalog</h3><br><br>";
 
@@ -991,7 +992,7 @@ public class UploadAction extends Action {
 
             } // end while loop through lines
 
-            A.log("testFileValid() validTaxonCount:" + validTaxonCount + " notValidTaxonCount:" + notValidTaxonCount);
+            s_log.debug("testFileValid() validTaxonCount:" + validTaxonCount + " notValidTaxonCount:" + notValidTaxonCount);
             messageStr = "<h3>AntWiki Regional Taxon List Load</h3><br><br>"
               + "validTaxonCount:" + validTaxonCount + " notValidTaxonCount:" + notValidTaxonCount + "\n"
               + "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Report: <a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=antwebUniqueValidTaxa'>Antweb Unique Valid Taxa</a>"
@@ -1066,7 +1067,7 @@ public class UploadAction extends Action {
 
             } // end while loop through lines
 
-            A.log("testFileFossil() fossilTaxonCount:" + fossilTaxonCount + " notFossilTaxonCount:" + notFossilTaxonCount);
+            s_log.debug("testFileFossil() fossilTaxonCount:" + fossilTaxonCount + " notFossilTaxonCount:" + notFossilTaxonCount);
             messageStr = "<h3>Fossil Test</h3><br><br>"
               + "These taxa were found in the file but not on Antweb, or they were found but were not flagged as a fossil...<br><br><br>"
               + "fossilTaxonCount:" + fossilTaxonCount + " notFossilTaxonCount:" + notFossilTaxonCount + "\n"
@@ -1334,7 +1335,7 @@ public class UploadAction extends Action {
       for (SpeciesListable speciesList : speciesLists) {
          Project project = ProjectMgr.getProject(speciesList.getName());
          Project thisProj = (new ProjectDb(connection)).getProject(project.getName());
-         A.log("getProjectForDirectory() proj:" + thisProj + " name:" + project.getName() + " root:" + thisProj.getRoot() + " dir:" + directory);
+         s_log.debug("getProjectForDirectory() proj:" + thisProj + " name:" + project.getName() + " root:" + thisProj.getRoot() + " dir:" + directory);
          if ((thisProj != null) && (thisProj.getRoot() != null) && (directory.contains(thisProj.getRoot()))) {
              returnVal = thisProj;
              break;

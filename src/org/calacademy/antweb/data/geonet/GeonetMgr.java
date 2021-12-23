@@ -48,7 +48,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
 
         HashMap<String, String> countryHash = GeonetCountryCodes.getCountryHash();
         GeonetAdm1CentroidResponse geonetAdm1CentroidResponse = GeonetAdm1Codes.getAdm1CentroidResponse();
-        A.log("fetchCentroidData() response:" + geonetAdm1CentroidResponse);
+        s_log.debug("fetchCentroidData() response:" + geonetAdm1CentroidResponse);
 
         int i = 0;
         int cIsNull = 0;
@@ -65,7 +65,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
           // So that we can run on a single country if we want.
           if (country != null && !country.equals(countryName)) continue;
 
-          A.log("fetchCentroidData()country:" + countryName);
+          s_log.debug("fetchCentroidData()country:" + countryName);
 
           Geolocale adm1 = GeolocaleMgr.getAdm1(useAdm1Name, countryName);
           if (adm1 != null) {
@@ -81,7 +81,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
           }
         }
 
-        A.log("fetchCentroidData() a:" + GeolocaleDb.a + " b:" + GeolocaleDb.b + " c:" + GeolocaleDb.c);
+        s_log.debug("fetchCentroidData() a:" + GeolocaleDb.a + " b:" + GeolocaleDb.b + " c:" + GeolocaleDb.c);
         message = "Geonet Centroid Data fetched. i:" + i + " cIsNull:" + cIsNull;        
         return message;
     }
@@ -107,7 +107,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
           
           String validName = DataPlace.getValidName(country);
           
-          A.log("GeonetMgr.fetchData() country:" + country + " validName:" + validName);
+          s_log.debug("GeonetMgr.fetchData() country:" + country + " validName:" + validName);
           if (validName != null) {
             // Then we will insert two. The valid will use the validName. The invalid will use country and have a validName of validName.
             processCountry(validName, null, geolocaleDb); // Parent?
@@ -148,11 +148,11 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
     
     private static void logCountryAdm1Map(TreeMap<String, ArrayList<String>> countryAdm1Map) {
         for (String countryName : countryAdm1Map.keySet()) {
-          A.log("country:" + countryName);
+          s_log.debug("country:" + countryName);
           LogMgr.appendLog("geonetAdm1.log", countryName);
           ArrayList<String> adm1List = countryAdm1Map.get(countryName);
           for (String adm1Name : adm1List) {
-            A.log("  adm1:" + adm1Name);
+            s_log.debug("  adm1:" + adm1Name);
             LogMgr.appendLog("geonetAdm1.log", "    " + adm1Name);
           }
         }    
@@ -173,7 +173,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
           adm1Name = DataPlace.cleanName(adm1Name);
  		  String countryName = countryHash.get(countryCode);
           
-          A.log("getAdm1CountryMap() countryCode:" + countryCode + " countryName:" + countryName + " adm1Name:" + adm1Name);          
+          s_log.debug("getAdm1CountryMap() countryCode:" + countryCode + " countryName:" + countryName + " adm1Name:" + adm1Name);
 
           ArrayList<String> adm1List = countryAdm1Map.get(countryName);
           if (adm1List == null) {
@@ -202,7 +202,7 @@ This gives us the equivalence of what we could scrape from http://geonames.nga.m
           adm1Name = DataPlace.cleanName(adm1Name);
  		  String countryName = countryHash.get(countryCode);
           
-          A.log("getAdm1CountryMap() countryCode:" + countryCode + " countryName:" + countryName + " adm1Name:" + adm1Name);          
+          s_log.debug("getAdm1CountryMap() countryCode:" + countryCode + " countryName:" + countryName + " adm1Name:" + adm1Name);
 
           ArrayList<String> adm1List = countryAdm1Map.get(countryName);
           if (adm1List == null) {

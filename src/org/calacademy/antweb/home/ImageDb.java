@@ -74,7 +74,7 @@ public class ImageDb extends AntwebDb {
                 whereClause += " and shot_number = " + image.getShotNumber();
                 whereClause += " and shot_type = '" + image.getShotType() + "'";
                 dml += whereClause;
-                A.log("updateHasTif() dml:" + dml);
+                s_log.debug("updateHasTif() dml:" + dml);
                 int c = stmt.executeUpdate(dml); 
                 ++ImageUtil.hasTifCorrected;
             }
@@ -100,7 +100,7 @@ public class ImageDb extends AntwebDb {
             stmt = DBUtil.getStatement(getConnection(), "getExifData()");
 
             rset = stmt.executeQuery(query);
-            A.log("getExifData() query:" + query);
+            s_log.debug("getExifData() query:" + query);
 
             int i = 0;
             while (rset.next()) {
@@ -117,7 +117,7 @@ public class ImageDb extends AntwebDb {
                 String highres = specimenImage.getHighres();
                 if (highres != null && !"null".equals(highres)) {             
                     String imagePath = AntwebProps.getDocRoot() + specimenImage.getHighres();
-                    A.log("getExifData() imagePath:" + imagePath);
+                    s_log.debug("getExifData() imagePath:" + imagePath);
                     Exif exif = new Exif(imagePath);
                     if (exif.isFound()) {
                       String artistName = exif.getArtist();
