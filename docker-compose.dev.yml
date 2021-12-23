@@ -10,6 +10,7 @@ services:
     environment:
       # >- = YAML block chomp operator -- join lines together with space, remove trailing newline (newline breaks JVM)
       JAVA_OPTS: >-
+        -Dlogging.level=debug
         -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
         -Xshare:off
 

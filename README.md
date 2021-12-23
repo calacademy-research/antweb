@@ -11,6 +11,16 @@ See doc/toDo.txt
 
 See doc/install.txt
 
+Configuration
+---
+###Logging levels
+`logs/antwebInfo.log` is configured to show `INFO` and above in production, and `DEBUG` in development. 
+
+The `JAVA_OPTS=-Dlogging.level` system property controls the level. If not provided, the level defaults to `INFO`.
+It is set in `docker-compose.dev.yml` for development environments. 
+
+
+
 Installation
 ---
 [Docker Engine](https://docs.docker.com/engine/install/)
