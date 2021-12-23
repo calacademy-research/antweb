@@ -87,6 +87,7 @@ public abstract class AntwebFunctions {
       String logDir = AntwebProps.getDocRoot() + "web/log/imageCheck/";
       String logFile = logDir + DateUtil.getFormatDateStr() + ".log";
       String command = pyInstall + "python3.6 " + pyLoc + "imageCheck.py > " + logFile;
+      s_log.error("imageCheck() location needs to be corrected. Not:" + command);
       s_log.warn("imageCheck() command:" + command);
       (new AntwebSystem()).launchProcess(command, true);
     }

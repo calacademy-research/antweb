@@ -153,7 +153,7 @@ these other _cf1 etc.
             fullName.append(" " + subspecies);
         }
 
-        A.log("getFullName() fullName:" + fullName + " genus:" + genus + " subgenus:" + subgenus);
+        //A.log("getFullName() fullName:" + fullName + " genus:" + genus + " subgenus:" + subgenus);
         return fullName.toString();
     }
 

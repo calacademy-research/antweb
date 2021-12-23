@@ -72,7 +72,7 @@ public class Subfamily extends Family implements Serializable {
                     + statusSet.getAndCriteria()
             ;
 
-            A.log("setChildren(5) overview:" + overview + " query:" + query);
+            //A.log("setChildren(5) overview:" + overview + " query:" + query);
 
             stmt = connection.createStatement();
             rset = stmt.executeQuery(query);

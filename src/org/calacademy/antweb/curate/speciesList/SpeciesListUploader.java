@@ -43,7 +43,7 @@ public class SpeciesListUploader {
     }
   }
 
-  public UploadDetails worldantsFetchAndReload() throws IOException {
+  public UploadDetails worldantsFetchAndReload() throws IOException, SQLException {
   
     UploadDetails fetchDetails = fetchWorldantsList();
     if (!"success".equals(fetchDetails.getMessage())) {
@@ -62,7 +62,7 @@ public class SpeciesListUploader {
     return uploadDetails;    
   }
 
-  public UploadDetails uploadWorldants(FormFile theFile, UploadFile uploadFile, Group accessGroup) throws IOException {
+  public UploadDetails uploadWorldants(FormFile theFile, UploadFile uploadFile, Group accessGroup) throws IOException, SQLException {
     UploadDetails uploadDetails = null;
     UploadHelper.init(uploadFile, accessGroup);   
 
@@ -80,7 +80,7 @@ public class SpeciesListUploader {
     return uploadDetails;  
   }
 
-  public UploadDetails fetchWorldantsList() throws IOException {
+  public UploadDetails fetchWorldantsList() throws IOException, SQLException {
 
     UploadDetails uploadDetails = new UploadDetails("Fetch");  // This one will be thrown away but useful for return values.
     // A.log("execute()  in action:" + action);
@@ -112,7 +112,7 @@ public class SpeciesListUploader {
     return uploadDetails;
   }
 
-  public UploadDetails worldantsReload() throws IOException {
+  public UploadDetails worldantsReload() throws IOException, SQLException {
     A.log("worldantsReload start");
 
 	SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
@@ -175,7 +175,7 @@ public class SpeciesListUploader {
   }
 
   private String record(String validateMessage, String fileLoc, int origWorldantsCount, boolean persistToDb) 
-    throws IOException {
+    throws IOException, SQLException {
     // The uploaded files are dumped here: http://localhost/antweb/web/upload/
     String backupDirFile = null;
     

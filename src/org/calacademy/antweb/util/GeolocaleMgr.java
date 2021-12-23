@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class GeolocaleMgr extends Manager {
 
     private static boolean s_oneAtATime = false;
 
-    public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
+    public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
         if (!forceReload && (s_regions != null)) return;
 
         java.util.Date startTime = new java.util.Date();
@@ -71,7 +72,7 @@ public class GeolocaleMgr extends Manager {
         //
     }
 
-    private static void populateDeep(Connection connection, boolean forceReload) {
+    private static void populateDeep(Connection connection, boolean forceReload) throws SQLException {
         if (!forceReload && (s_regions != null)) return;
 
         GeolocaleDb geolocaleDb = new GeolocaleDb(connection);

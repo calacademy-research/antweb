@@ -19,11 +19,11 @@ public class MuseumDb extends AntwebDb {
       super(connection);
     }
 
-    public ArrayList<Museum> getMuseums() {
+    public ArrayList<Museum> getMuseums()throws SQLException  {
       return getMuseums(false);
     }
 
-    public ArrayList<Museum> getMuseums(boolean deepCopy) {
+    public ArrayList<Museum> getMuseums(boolean deepCopy) throws SQLException {
 
       ArrayList<Museum> museums = new ArrayList<>();
       String theQuery = "select * "
@@ -67,7 +67,8 @@ public class MuseumDb extends AntwebDb {
         }
 
       } catch (SQLException e) {
-          s_log.warn("getMuseums() e:" + e);
+          s_log.error("getMuseums() e:" + e);
+          throw e;
       } finally {
           DBUtil.close(stmt, rset, "MuseumDb.getMuseums()");        
       }
@@ -116,7 +117,7 @@ public class MuseumDb extends AntwebDb {
         String message = "";
         if (museum.getCode() == null) {
           message = "Attempt to save museum with null code";
-          s_log.warn("saveMuseum() message:" + message);
+          s_log.info("saveMuseum() message:" + message);
           return message;
         }
         int activeInt = 1;
@@ -286,7 +287,7 @@ public class MuseumDb extends AntwebDb {
           populate(code);      
         }
       }
-      if (museumMap.size() > 1) s_log.warn("populate(Map) multiple museums:" + museumMap);      
+      if (museumMap.size() > 1) s_log.info("populate(Map) multiple museums:" + museumMap);
     }
 
     public void populate() throws SQLException {
@@ -296,7 +297,7 @@ public class MuseumDb extends AntwebDb {
       LogMgr.appendLog("compute.log", "  Museums populated", true);   
     }
 
-    private void freshStart(String code) {
+    private void freshStart(String code) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
       utilDb.deleteFrom("museum_taxon", " where code = '" + code + "'");    
     }
@@ -325,7 +326,7 @@ public class MuseumDb extends AntwebDb {
     }
 
 
-    private void populateFromSpecimenData(String museumCode) {
+    private void populateFromSpecimenData(String museumCode) throws SQLException {
       Museum museum = getFromSpecimenData(museumCode);
       if (museum == null) {
         s_log.error("populateFromSpecimenData() Museum not found:" + museumCode);
@@ -349,6 +350,7 @@ public class MuseumDb extends AntwebDb {
           A.log("populateFromSpecimenData() c:" + c + " dml:" + dml);
       } catch (SQLException e) {
         s_log.error("MuseumDb.populateFromSpecimenData() 1 e:" + e);
+        throw e;
       } finally {
           DBUtil.close(stmt, null, "MuseumDb.populateFromSpecimenData()");
       }      
@@ -356,11 +358,11 @@ public class MuseumDb extends AntwebDb {
     
 
     // Lightweight.
-    public void updateMuseum() {
+    public void updateMuseum() throws SQLException {
       updateColors(); 
     }
 
-    private void updateColors() {    
+    private void updateColors() throws SQLException {
       String[] colors = HttpUtil.getColors();
     
       int i = 0;
@@ -369,30 +371,30 @@ public class MuseumDb extends AntwebDb {
         ++i;      
       }
     }   
-    private void updateColor(String code, String color) {    
+    private void updateColor(String code, String color) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
       utilDb.updateField("museum", "chart_color", "'" + color + "'", "code = '" + code + "'");
     }
 
-    public String finish() {
+    public String finish() throws SQLException {
       for (Museum museum : MuseumMgr.getMuseums()) {
         finish(museum.getCode());
       }  
       return "Museum Finished";
     }
-    private void finish(String code) {    
+    private void finish(String code) throws SQLException {
       updateCountableTaxonData(code);      
       updateImagedSpecimenCount(code);
       updateValidSpeciesCount(code);
       makeCharts(code);
     }    
     
-    private void updateCountableTaxonData() {
+    private void updateCountableTaxonData() throws SQLException {
         for (Museum museum : MuseumMgr.getMuseums()) {
             updateCountableTaxonData(museum.getCode());
         }          
     }
-    private void updateCountableTaxonData(String code) {        
+    private void updateCountableTaxonData(String code) throws SQLException {
         MuseumTaxonCountDb museumTaxonCountDb = new MuseumTaxonCountDb(getConnection());
 
         String criteria = "code = '" + code + "'";
@@ -406,14 +408,13 @@ public class MuseumDb extends AntwebDb {
         museumTaxonCountDb.updateCountableTaxonCounts("museum", criteria, subfamilyCount, genusCount, speciesCount);                  
     }
 
-
-    private void updateImagedSpecimen() {
+    private void updateImagedSpecimen() throws SQLException {
       for (Museum museum : MuseumMgr.getMuseums()) {
         updateImagedSpecimenCount(museum.getCode());
       }  
     }
 
-    private void updateImagedSpecimenCount(String code) {
+    private void updateImagedSpecimenCount(String code) throws SQLException {
         int count = getImagedSpecimenCount(code);
         UtilDb utilDb = new UtilDb(getConnection());
         utilDb.updateField("museum", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "code = '" + code + "'");
@@ -442,7 +443,7 @@ public class MuseumDb extends AntwebDb {
       return imagedSpecimenCount;
     }
 
-    private void updateValidSpeciesCount(String code) {
+    private void updateValidSpeciesCount(String code) throws SQLException {
         int count = getValidSpeciesCount(code);
         UtilDb utilDb = new UtilDb(getConnection());
         utilDb.updateField("museum", "valid_species_count", (Integer.valueOf(count)).toString(), "code = '" + code + "'");
@@ -474,22 +475,8 @@ public class MuseumDb extends AntwebDb {
         return validSpeciesCount;
     }
 
-
-/*
-    private void populateSpecimenMuseum() {
-      A.log("populateSpecimenMuseum()");
-      
-	  // update all specimen.museum values to null.
-      (new UtilDb(getConnection())).updateField("specimen", "museum", "null");
-
-      for (String code : MuseumMgr.getMuseumList()) {
-        populateSpecimenMuseum(code);
-      }  
-    }
-*/
-
     // Populate the museum field of the specimen table if can be determined from the ownedby field.
-    private void populateSpecimenMuseum(String museumCode) {
+    private void populateSpecimenMuseum(String museumCode) throws SQLException {
       A.log("populateSpecimenMuseum(" + museumCode + ")");
       String whereClause = "museum = '" + museumCode + "'";
       
@@ -577,11 +564,11 @@ public class MuseumDb extends AntwebDb {
       }
     }
 
-    private void populateHigherTaxa() {
+    private void populateHigherTaxa()throws SQLException  {
         populateHigherTaxa(null);
     }
     
-    private void populateHigherTaxa(String code) {
+    private void populateHigherTaxa(String code) throws SQLException {
         String codeClause = "";
         if (code != null) codeClause = " and code = '" + code + "'";
         String query = "";
@@ -615,6 +602,7 @@ public class MuseumDb extends AntwebDb {
 
         } catch (SQLException e) {
             s_log.error("populateHigherTaxa() e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "populateHigherTaxa()");
         }
@@ -626,7 +614,7 @@ public class MuseumDb extends AntwebDb {
     private String s_lastGenus = "";
     private String s_lastCode = "";
 
-    private void insertHigherTaxon(String code, String taxonName) {
+    private void insertHigherTaxon(String code, String taxonName) throws SQLException {
         // On break of subfamily, create and insert a subfamily musuem record.
         String thisSubfamily = Taxon.getSubfamilyFromName(taxonName);
         String thisGenus = Taxon.getGenusFromName(taxonName);
@@ -657,7 +645,7 @@ public class MuseumDb extends AntwebDb {
         }    
     }
 
-    private boolean insertTaxon(String code, String taxonName, String insertMethod) {
+    private boolean insertTaxon(String code, String taxonName, String insertMethod) throws SQLException {
         // for each record, insert into proj_taxon.  Ignore constraint conflicts.    
         String dml = null;
         Statement stmt = null;
@@ -672,13 +660,14 @@ public class MuseumDb extends AntwebDb {
             return false;
         } catch (SQLException e) {
             s_log.error("insertTaxon() e:" + e + " dml:" + dml);
+            throw e;
         } finally {
             DBUtil.close(stmt, "insertTaxon()");
         }     
         return true;
     }     
     
-    private void insertSpecies(Museum museum, String taxonName, int specimenCount, int imageCount) {
+    private void insertSpecies(Museum museum, String taxonName, int specimenCount, int imageCount) throws SQLException {
       Statement stmt = null;
       try {
           
@@ -691,6 +680,7 @@ public class MuseumDb extends AntwebDb {
           
       } catch (SQLException e) {
         s_log.error("MuseumDb.insertSpecies() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, null, "MuseumDb.insertSpecies()");
       }
@@ -700,13 +690,13 @@ public class MuseumDb extends AntwebDb {
     // --- Charts ---
         
         
-    public void makeCharts() {
+    public void makeCharts() throws SQLException {
       for (Museum museum : MuseumMgr.getMuseums()) {
         makeCharts(museum.getCode());
       }  
     }     
 
-    private void makeCharts(String code) {
+    private void makeCharts(String code) throws SQLException {
       //A.log("makeCharts(" + code + ")");
       MuseumTaxonCountDb museumTaxonCountDb = new MuseumTaxonCountDb(getConnection());
       UtilDb utilDb = new UtilDb(getConnection());

@@ -56,17 +56,23 @@ public class Scheduler extends Action {
 
         // Verify that the request is written as antweb:antweb.
         // Test: ls -al  /data/antweb/web/data/t.log
-        s_log.warn("execute() see test file here:/data/antweb/web/data/t.txt");
-        AntwebUtil.writeDataFile("t.log", "test");  
+        //s_log.warn("execute() see test file here:/data/antweb/web/data/t.txt");
+        //AntwebUtil.writeDataFile("t.log", "test");
 
-		s_log.warn("execute() target:" + HttpUtil.getTarget(request) + " action:" + action + " num:" + num);
+		s_log.warn("execute() action:" + action + " num:" + num + " target:" + HttpUtil.getTarget(request));
 
         int secureCode = AntwebUtil.getSecureCode();
 
+        if (!AntwebMgr.isInitialized() || AntwebMgr.isServerInitializing()) {
+            String message = "Scheduler failed because isInitialized:" + AntwebMgr.isInitialized() + " isInitializing:" + AntwebMgr.isServerInitializing();
+            s_log.error("execute() " + message);
+			request.setAttribute("message", message);
+			return (mapping.findForward("adminMessage"));
+		}
+
         String message = doAction(action, num, secureCode);
 
-        s_log.warn("execute() " + message);
-        LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete: " + message);
+        LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete. "); // + 	" mesage:" + message);
 		request.setAttribute("message", message);
 		return (mapping.findForward("adminMessage")); 	  
     }
@@ -123,45 +129,51 @@ public class Scheduler extends Action {
 				try {
 					int i = 0;  // This will invoke all of them.
 					if (num > 0) i = num;    // This would invoke one of them
- 
+
 					// if (AntwebProps.isDevMode()) i = 1;
 					//s_log.warn("doAction() action:" + action + " i:" + i + " num:" + num);
 
 					if (i == 0 || i == 1) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow" + codeParam;
-					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.fetchUrl(url); 
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow" + codeParam;
+						//A.log("doAction() url:" + url);
+						output += HttpUtil.fetchUrl(url);
+						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 2) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow" + codeParam;
-					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.fetchUrl(url); 
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow" + codeParam;
+						//A.log("doAction() url:" + url);
+						output += HttpUtil.fetchUrl(url);
+						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 3) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow" + codeParam;
-					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.fetchUrl(url); 
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow" + codeParam;
+						//A.log("doAction() url:" + url);
+						output += HttpUtil.fetchUrl(url);
+						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 4) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow" + codeParam;
-					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.fetchUrl(url); 
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow" + codeParam;
+						//A.log("doAction() url:" + url);
+						output += HttpUtil.fetchUrl(url);
+						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 5) {
-					  url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all" + codeParam;
-					  s_log.warn("doAction() url:" + url);
-					  output += HttpUtil.fetchUrl(url); 
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all" + codeParam;
+						//A.log("doAction() url:" + url);
+						output += HttpUtil.fetchUrl(url);
+						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
-					
-					s_log.warn("doAction() scheduler complete.");
-			
+				} catch (AntwebException e) {
+					s_log.error("doAction Scheduler failed. Investigate log files. e:" + e + " url:" + url);
 				} catch (IOException e) {
-				  s_log.warn("doAction e:" + e + " url:" + url);
+				  s_log.error("doAction Scheduler failed. Investigate log files. e:" + e + " url:" + url);
 				}
-			
-				return "Scheduler " + action + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". output:" + output;
+
+				message = "Scheduler " + action + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
+				s_log.warn("doAction() " + message);
+				return message + " output:" + output;
 		    }     
-		
+
 		} finally {
 		  UtilDataAction.setInComputeProcess(null);
 

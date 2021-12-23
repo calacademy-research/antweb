@@ -252,8 +252,9 @@ class CustomTask extends TimerTask  {
       // Scheduler launch.
       AntwebUtil.log("SessionRequestFilter.CustomTask.run()");
       if (!AntwebProps.isDevMode()) {
-      
         (new Scheduler()).doAction();
+      } else {
+          AntwebUtil.log("warn", "CustomTask.run() DEV MODE SKIPPING scheduler.doAction()");
       }
 
     } catch (Exception ex) {

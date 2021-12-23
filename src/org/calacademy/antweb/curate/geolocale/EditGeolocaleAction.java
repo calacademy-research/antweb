@@ -133,8 +133,7 @@ public final class EditGeolocaleAction extends Action {
 						message = "Flickr and Geonames data removed from country:" + tempGeolocale.getName();
 					}
 					if ("fetchGeoData".equals(action)) {
-					  message = GeonamesPlace.fetchData(connection, tempGeolocale.getName());  
-					  //AntwebMgr.populate(connection, true); 
+					  message = GeonamesPlace.fetchData(connection, tempGeolocale.getName());
 					  message += " " + FlickrPlace.fetchAdm1Data(connection, tempGeolocale.getName());
 					}
 					if ("fetchFlickrCountryData".equals(action)) {
@@ -150,7 +149,7 @@ public final class EditGeolocaleAction extends Action {
 
 					//if (action != null && action.contains("fetch")) {
 					//    forwardToMessage = true;
-					//	AntwebMgr.populate(connection, true);  
+					//	AntwebMgr.populate(connection, true);   // Maybe reload GeolocaleMgr?
 					//}
 			
 				  }

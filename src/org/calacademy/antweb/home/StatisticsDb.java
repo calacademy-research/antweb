@@ -42,7 +42,7 @@ museum
 */
 
 
-    public StatSet getExtantData() {
+    public StatSet getExtantData() throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
     
       int extantValidSubfamilies = utilDb.getCount("taxon", "fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
@@ -59,7 +59,7 @@ museum
       return statSet;      
     }
 
-    public StatSet getFossilData() {
+    public StatSet getFossilData() throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
 
       int fossilValidSubfamilies = utilDb.getCount("taxon", "fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
@@ -77,7 +77,7 @@ museum
     }
 
 // Bioregion data
-    public ArrayList<StatSet> getBioregionData() {
+    public ArrayList<StatSet> getBioregionData() throws SQLException {
       ArrayList<StatSet> statSets = new ArrayList<>();
       ArrayList<Bioregion> bioregions = BioregionMgr.getBioregions();
       if (bioregions == null) return statSets;
@@ -88,7 +88,7 @@ museum
       return statSets;
     }
     
-    public StatSet getBioregionData(Bioregion bioregion) {
+    public StatSet getBioregionData(Bioregion bioregion) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
 
       int extantValidSubfamilies = utilDb.getCount("from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
@@ -106,7 +106,7 @@ museum
     }
 
 // --- Museum Data ---
-    public ArrayList<StatSet> getExtantMuseumData() {
+    public ArrayList<StatSet> getExtantMuseumData() throws SQLException {
       ArrayList<StatSet> statSets = new ArrayList<>();
       ArrayList<Museum> museums = MuseumMgr.getMuseums();
       if (museums == null) return statSets;
@@ -116,7 +116,7 @@ museum
       return statSets;
     }
     
-    public StatSet getExtantMuseumData(Museum museum) {
+    public StatSet getExtantMuseumData(Museum museum) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
 
       int extantValidSubfamilies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
@@ -133,7 +133,7 @@ museum
       return statSet;
     }
 
-    public ArrayList<StatSet> getFossilMuseumData() {
+    public ArrayList<StatSet> getFossilMuseumData() throws SQLException {
       ArrayList<StatSet> statSets = new ArrayList<>();
       ArrayList<Museum> museums = MuseumMgr.getMuseums();
       if (museums == null) return statSets;      
@@ -143,7 +143,7 @@ museum
       return statSets;
     }
 
-    public StatSet getFossilMuseumData(Museum museum) {
+    public StatSet getFossilMuseumData(Museum museum) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
 
       int extantValidSubfamilies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
@@ -160,7 +160,7 @@ museum
       return statSet;
     }
 
-    public StatSet getImageData(Museum museum) {
+    public StatSet getImageData(Museum museum) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
 
       int extantValidSubfamilies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
@@ -180,7 +180,7 @@ museum
 
     // Everything below is not used and unnecessary. Oops. Really?
     // for statistics.do
-    public String getStatistics() {
+    public String getStatistics() throws SQLException {
         String statistics = null;
         try {
             Statement stmt = getConnection().createStatement();              
@@ -254,7 +254,8 @@ museum
 
             stmt.close();
         } catch (SQLException e) {
-          s_log.error("execute() e:" + e);        
+          s_log.error("execute() e:" + e);
+          throw e;
         }
         return statistics;
 	}
@@ -271,52 +272,55 @@ museum
         return statistics;
 	}
 
-    public ArrayList<ArrayList<String>> getStatisticsByBioregion() {
+    public ArrayList<ArrayList<String>> getStatisticsByBioregion() throws SQLException {
         ArrayList<ArrayList<String>> statistics = null; 
         try {
             statistics = BioregionTaxonDb.getStatisticsByBioregion(getConnection());
         } catch (SQLException e) {
-          s_log.error("getStatisticsByBioregion() e:" + e);        
+          s_log.error("getStatisticsByBioregion() e:" + e);
+          throw e;
         }
         return statistics;
 	}
 
-    public ArrayList<ArrayList<String>> getStatisticsByMuseum() {
+    public ArrayList<ArrayList<String>> getStatisticsByMuseum() throws SQLException {
 		ArrayList<ArrayList<String>> statistics = null;		
         Connection connection = null;
         try {
             statistics = MuseumTaxonDb.getStatisticsByMuseum(getConnection());          
         } catch (SQLException e) {
-          s_log.error("getStatisticsByMuseum() e:" + e);        
+          s_log.error("getStatisticsByMuseum() e:" + e);
+          throw e;
         }
         return statistics;
 	}
 
-    public ArrayList<ArrayList<String>> getStatisticsByGeolocale() {
+    public ArrayList<ArrayList<String>> getStatisticsByGeolocale() throws SQLException {
         ArrayList<ArrayList<String>> statistics = null;
         try {
-            statistics = GeolocaleTaxonDb.getStatisticsByGeolocale(getConnection());       
+            statistics = GeolocaleTaxonDb.getStatisticsByGeolocale(getConnection());
         } catch (SQLException e) {
-          s_log.error("getStatisticsByGeolocale() e:" + e);        
+            s_log.error("getStatisticsByGeolocale() e:" + e);
+            throw e;
         }
-        
         return statistics;
-	}
-			
-    public ArrayList<ArrayList<String>> getStatisticsByAProject(String project) {
+    }
+
+    public ArrayList<ArrayList<String>> getStatisticsByAProject(String project) throws SQLException {
 		ArrayList<ArrayList<String>> statistics = null;
         try {
             statistics = new ArrayList<>();
             statistics.add(ProjTaxonDb.getProjectStatistics(project, getConnection()));
          
         } catch (SQLException e) {
-          s_log.error("execute() e:" + e);        
+          s_log.error("execute() e:" + e);
+          throw e;
         }
         
         return statistics;
 	}
 	
-    public String getStatisticsByUpload() {
+    public String getStatisticsByUpload() throws SQLException {
         String statistics = null;
         try {
             Statement stmt = getConnection().createStatement();              
@@ -335,7 +339,8 @@ museum
             
             stmt.close();         
         } catch (SQLException e) {
-          s_log.error("execute() e:" + e);        
+          s_log.error("execute() e:" + e);
+          throw e;
         }
         
         return statistics;

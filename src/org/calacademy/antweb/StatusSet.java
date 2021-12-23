@@ -61,6 +61,10 @@ public class StatusSet extends Status {
       this.value = value;
     }
 
+    public String toString() {
+        return "StatusSet:" + value;
+    }
+
     public static StatusSet getInstance(String project) {
         StatusSet statusSet = null;
         if (Project.WORLDANTS.equals(project)) {

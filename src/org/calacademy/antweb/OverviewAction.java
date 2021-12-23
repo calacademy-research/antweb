@@ -28,7 +28,6 @@ public final class OverviewAction extends DescriptionAction {
 		  return mapping.findForward("message");
       }
 
-
       HttpUtil.setUtf8(request, response);       
 
       Login accessLogin = LoginMgr.getAccessLogin(request);
@@ -50,7 +49,7 @@ public final class OverviewAction extends DescriptionAction {
         connection = DBUtil.getConnection(dataSource, "OverviewAction.execute()", HttpUtil.getTarget(request));
         AntwebMgr.populate(connection);
 
-        // Like to check AntewbMgr.isPopulated()?  Otherwise sometimes... NPE
+        // Like to check AntewbMgr.isPopulated()?  Otherwise sometimes... NPE. When?
 
         String uri = HttpUtil.getRequestURI(request);
 
@@ -436,12 +435,13 @@ public final class OverviewAction extends DescriptionAction {
           }          
         }   
       } catch (SQLException e) {
-          s_log.warn("execute() e:" + e);
+          s_log.error("execute() e:" + e);
       } finally {
           DBUtil.close(connection, this, "OverviewAction.execute()");
       }
 
       // This will not happen
-      return null;
+        s_log.error("execute() This shouold not happen.");
+        return null;
     }
 }

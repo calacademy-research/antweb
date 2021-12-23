@@ -36,7 +36,7 @@ public class A {
         //s_log.warn("className:" + className);
       }
       if (className.contains("_jsp")) include = " (or include)";
-	  s_log.warn(className + include + "." + message);   
+	  AntwebUtil.log(className + include + "." + message);
     }
   }
 
@@ -65,7 +65,7 @@ public class A {
   // Short for stg log.
   public static void slog(String message) {
     if (AntwebProps.isDevOrStageMode()) {
-      s_log.warn(message);      
+      s_log.info(message);
     }
   }
   
@@ -93,7 +93,7 @@ public class A {
 
     logCounter[log] = logCounter[log] + 1;
     if (logCounter[log] == 1 || (logCounter[log] % divNum) == 0) {
-      s_log.warn("log:" + log + " " + message + " i:" + logCounter[log]);      
+      s_log.info("log:" + log + " " + message + " i:" + logCounter[log]);
     }
   }
 
@@ -101,7 +101,7 @@ public class A {
   // This one will log on the live site for developers.
   public static void log(String message, Login login) {
     if (AntwebProps.isDevMode() || LoginMgr.isDeveloper(login)) {
-      s_log.warn(message);      
+      s_log.info(message);
     }
   }
   

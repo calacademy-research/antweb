@@ -294,7 +294,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 			    Genus genus = TaxonMgr.getGenusFromName(genusName);
 			    //if (genus != null) A.log("parseLine() genusName:" + genusName + " genus:" + genus + " genusSubfamily:" + genus.getSubfamily());
 
-                if ("antweb1008548".equals(code)) AntwebUtil.log("parseLine() 1 code:" + code + " not ant? genus:" + genusName + " genus:" + genus);
+                //if ("antweb1008548".equals(code)) AntwebUtil.log("parseLine() 1 code:" + code + " not ant? genus:" + genusName + " genus:" + genus);
 
 			    if (genus != null) {
                   // If we find it, use it.

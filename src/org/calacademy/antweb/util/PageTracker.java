@@ -38,7 +38,7 @@ possible moment - ideally in jsp footer.
 
       int targetCount = PageTracker.getTargetCount(target);
       if (targetCount > 0) {
-          s_log.warn("add() targetCount:" + targetCount + " target:" + target);
+          s_log.info("add() targetCount:" + targetCount + " target:" + target);
       }
 
       // Curator pages can go in here. Things that an admin would notice going wrong may be exempt.
@@ -53,7 +53,7 @@ possible moment - ideally in jsp footer.
 
       if (isDebug) {
           if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
-              s_log.warn("add() request:" + (String) request.getAttribute("trackerKey"));
+              s_log.info("add() request:" + (String) request.getAttribute("trackerKey"));
 
           //A.log("add() request:" + (String) request.getAttribute("trackerKey"));
           //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();

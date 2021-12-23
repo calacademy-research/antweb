@@ -104,7 +104,7 @@ public class CollectionDb extends AntwebDb {
                 //s_log.warn("getCollection() access_group: " + rset.getInt(rset.findColumn("access_group")) + " query:" + query);                    
 
                 ResultItem resultItem = Collection.makeResultItem(rset);
-                A.log("getCollection() add rset:" + rset + " resultItem:" + resultItem);
+                //A.log("getCollection() add rset:" + rset + " resultItem:" + resultItem);
                 resultsList.add(resultItem);
               }
             }
@@ -120,7 +120,7 @@ public class CollectionDb extends AntwebDb {
             DBUtil.close(stmt, rset, this, "getCollection()");
         }
         collection.getSpecimenResults().setResults(resultsList);
-        A.log("getCollection() collection:" + collection + " size:" + collection.getSpecimenResults().getResults().size());
+        //A.log("getCollection() collection:" + collection + " size:" + collection.getSpecimenResults().getResults().size());
         return collection;
     }
 }

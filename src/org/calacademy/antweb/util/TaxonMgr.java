@@ -30,7 +30,7 @@ public class TaxonMgr extends Manager {
 
     private static Date s_populateTime = null;
 
-    public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
+    public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
         if (!forceReload && (s_subfamilies != null)) return;
 
         TaxonDb taxonDb = new TaxonDb(connection);
@@ -65,7 +65,8 @@ public class TaxonMgr extends Manager {
 
         s_populateTime = new Date();
 
-        A.log("populate() " + report());
+        s_log.warn("populate() " + report());
+       // if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
     }
 
     public static String report() {

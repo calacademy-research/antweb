@@ -67,7 +67,7 @@ public class TaxaPage implements Serializable {
           String message = "fetchChildren() Expensive query averted. overview:" + overview + " rank:" + rank + " withImages:" + withImages + " withTaxa:" + withTaxa
 				  + " withSpecimen:" + withSpecimen + " withFossil:" + withFossil + " caste:" + caste + " statusSet:" + statusSet;
           message += " target:" + HttpUtil.getTarget(getRequest()) + " referrer:" + HttpUtil.getReferrerUrl(getRequest());
-		  s_log.warn(message);
+		  A.log(message);
           //AntwebUtil.logShortStackTrace();
 			// at org.calacademy.antweb.TaxaPage.fetchChildren(TaxaPage.java:67)
 			// at org.calacademy.antweb.TaxaPageAction.execute(TaxaPageAction.java:179)

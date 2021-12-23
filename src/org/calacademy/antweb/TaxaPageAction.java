@@ -37,6 +37,11 @@ public final class TaxaPageAction extends Action {
         if (ProjectMgr.hasMoved(request, response)) return null;
 
         boolean withImages = ("true".equals(request.getParameter("images")));     // Mark.  Temp.  True creates performance problems;    
+
+        if (AntwebProps.isDevMode() && withImages) {  // If the server is struggling, this would be good functionality to restrict.
+            ActionForward c = Check.loginValid(request, mapping); if (c != null) return c;
+        }
+
         boolean withTaxa = true;
 
         boolean withSpecimen = false;

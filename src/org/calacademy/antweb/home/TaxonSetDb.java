@@ -20,9 +20,9 @@ public abstract class TaxonSetDb extends AntwebDb {
       super(connection);
     }
 
-    public abstract ArrayList<Taxon> getTaxa(String name);
+    public abstract ArrayList<Taxon> getTaxa(String name) throws SQLException ;
     
-    public ArrayList<Taxon> getTaxa(Overview overview) {
+    public ArrayList<Taxon> getTaxa(Overview overview) throws SQLException {
         ArrayList<Taxon> taxa = new ArrayList<>();
         
         String theQuery = "";
@@ -55,6 +55,7 @@ public abstract class TaxonSetDb extends AntwebDb {
             if (AntwebProps.isDevMode()) if (count == 0) s_log.error("getTaxa() not found overview:" + overview);
         } catch (SQLException e) {
             s_log.error("getTaxa() overview:" + overview + " exception:" + e + " theQuery:" + theQuery);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getTaxa()");
         }
@@ -68,7 +69,7 @@ public abstract class TaxonSetDb extends AntwebDb {
 
     // This should only need to be run once. Run from UtilData.
     // Retained in scheduler because a specimen could be removed from a specimen list.
-    public static String dataCleanup(Connection connection) {
+    public static String dataCleanup(Connection connection) throws SQLException {
       String message = "";
       // Only operating on the Editable ones.
       GeolocaleTaxonDb geolocaleTaxonDb = new GeolocaleTaxonDb(connection);
@@ -83,8 +84,8 @@ public abstract class TaxonSetDb extends AntwebDb {
     }
 
     //update the taxon_names with the current_valid_names
-    abstract String updateTaxonNames();
-    public static String updateTaxonSetTaxonNames(Connection connection) {
+    abstract String updateTaxonNames() throws SQLException;
+    public static String updateTaxonSetTaxonNames(Connection connection) throws SQLException {
       String message = "";
       message += new MuseumTaxonDb(connection).updateTaxonNames();
       message += " " + new BioregionTaxonDb(connection).updateTaxonNames();
@@ -94,7 +95,7 @@ public abstract class TaxonSetDb extends AntwebDb {
       return message;   
     }
         
-    protected int updateTaxonSetTaxonName(String tableName, String taxonName, String currentValidName, String whereClause) {
+    protected int updateTaxonSetTaxonName(String tableName, String taxonName, String currentValidName, String whereClause) throws SQLException {
       int c = 0;
       Statement stmt = null;
 	  String dml = "update " + tableName + " set taxon_name = '" + currentValidName + "' where taxon_name = '" + taxonName + "' and " + whereClause;
@@ -109,13 +110,14 @@ public abstract class TaxonSetDb extends AntwebDb {
         deleteTaxonSetTaxonName(tableName, taxonName, whereClause);
       } catch (SQLException e) {
         s_log.error("TaxonSetDb.updateTaxonSetTaxonName() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, null, "TaxonSetDb.updateTaxonSetTaxonName()");
       }
       return c;
     }
 
-    protected void deleteTaxonSetTaxonName(String tableName, String taxonName, String whereClause) {
+    protected void deleteTaxonSetTaxonName(String tableName, String taxonName, String whereClause) throws SQLException {
       Statement stmt = null;
       try {
           String dml = "delete from " + tableName + " where taxon_name = '" + taxonName + "' and " + whereClause;
@@ -123,26 +125,11 @@ public abstract class TaxonSetDb extends AntwebDb {
           int x = stmt.executeUpdate(dml);
       } catch (SQLException e) {
         s_log.error("TaxonSetDb.deleteTaxonSetTaxonName() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, null, "TaxonSetDb.deleteTaxonSetTaxonName()");
       }
     }
 
-// ---------------------------------------------------------------
-
-
-/*
-    public static String fixSpeciesLists(ArrayList<SpeciesListable> speciesListList, Connection connection) {
-      String message = "";      
-      //A.log("fixSpeciesLists() speciesListList:" + speciesListList);
-      for (SpeciesListable speciesList : speciesListList) {  	
-        if ("geolocale".equals(speciesList.getType()) || "country".equals(speciesList.getType()) || "adm1".equals(speciesList.getType())) {
-          message += (new GeolocaleTaxonDb(connection)).fixSpeciesList((Geolocale) speciesList);
-        }
-        //message += (new ProjTaxonDb(connection)).fixSpeciesLists();
-      }
-      return message;
-    }
-*/
        
 }

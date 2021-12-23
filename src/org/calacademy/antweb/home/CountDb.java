@@ -439,7 +439,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
         }
      }  
     
-    protected int getCountableTaxonCount(String table, String criteria, String rank) {
+    protected int getCountableTaxonCount(String table, String criteria, String rank) throws SQLException {
       int taxonCount = 0;
       String query = null;
       Statement stmt = null;
@@ -467,8 +467,9 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
 
         if (debug) s_log.warn("getCountableTaxonCount() taxonCount:" + taxonCount + " query:" + query);       
 
-      } catch (SQLException e2) {
-        s_log.error("getCountableTaxonCount() 2 e:" + e2);
+      } catch (SQLException e) {
+        s_log.error("getCountableTaxonCount() 2 e:" + e);
+        throw e;
       } finally {
           DBUtil.close(stmt, rset, this, "getCountableTaxonCount()");
       }
@@ -483,7 +484,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
 	at org.calacademy.antweb.home.GeolocaleDb.populate(GeolocaleDb.java:1135)
 	at org.calacademy.antweb.OverviewAction.execute(OverviewAction.java:241)
 */                
-    protected void updateCountableTaxonCounts(String table, String criteria, int subfamilyCount, int genusCount, int speciesCount) {
+    protected void updateCountableTaxonCounts(String table, String criteria, int subfamilyCount, int genusCount, int speciesCount) throws SQLException {
         String dml = null;
         Statement stmt = null;
         try {
@@ -499,8 +500,9 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
           //if (true && criteria.contains("formicinaeplagiolepis europa_sp1"))
             if (debug) s_log.warn("updateCountableTaxonCounts() dml:" + dml);
 
-        } catch (SQLException e2) {
-            s_log.error("updateCountableTaxonCounts() e:" + e2);
+        } catch (SQLException e) {
+            s_log.error("updateCountableTaxonCounts() e:" + e);
+            throw e;
         } finally {
           DBUtil.close(stmt, null, this, "updateCountableTaxonCounts()");
         } 
@@ -509,7 +511,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
 
 // -------------  Charts -------------------
 
-    protected String getTaxonSubfamilyDistJson(String query) {
+    protected String getTaxonSubfamilyDistJson(String query) throws SQLException {
       String distJson = "";
 
       Statement stmt = null;      
@@ -542,6 +544,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
           }           
       } catch (SQLException e) {
           s_log.warn("getTaxonSubfamilyDistJson() e:" + e + " query:" + query);
+          throw e;
       } finally {
           DBUtil.close(stmt, rset, "getTaxonSubfamilyDistJson()");        
       }
@@ -549,7 +552,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
       return distJson;
     }
 
-    protected String getSpecimenSubfamilyDistJson(String query) {
+    protected String getSpecimenSubfamilyDistJson(String query) throws SQLException {
       String distJson = "";
 
       Statement stmt = null;      
@@ -578,6 +581,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
           }           
       } catch (SQLException e) {
           s_log.warn("getSpecimenSubfamilyDistJson() e:" + e + " query:" + query);
+          throw e;
       } finally {
           DBUtil.close(stmt, rset, "getSpecimenSubfamilyDistJson()");        
       }

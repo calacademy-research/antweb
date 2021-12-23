@@ -17,7 +17,7 @@ public class UtilDb extends AntwebDb {
       super(connection);
     }
     
-    public int getCount(String table, String where) {
+    public int getCount(String table, String where) throws SQLException {
       int count = 0;
       String fromWhere = "from " + table + " where " + where;
       count = getCount(fromWhere);
@@ -25,7 +25,7 @@ public class UtilDb extends AntwebDb {
     }
 
     // Should return a single value. Will return the first if a list.
-    public String XgetValue(String query) {
+    public String XgetValue(String query) throws SQLException {
         String result = null;
         Statement stmt = null;
         ResultSet rset = null;
@@ -36,6 +36,7 @@ public class UtilDb extends AntwebDb {
             result = rset.getString(1);
         } catch (SQLException e) {
             s_log.error("getValue() e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "getValue()");
         }
@@ -43,7 +44,7 @@ public class UtilDb extends AntwebDb {
     }
 
     // Should return a single value. Will return the first if a list.
-    public String getDateValue(String query) {
+    public String getDateValue(String query) throws SQLException {
         String result = null;
         Statement stmt = null;
         ResultSet rset = null;
@@ -57,13 +58,14 @@ public class UtilDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getDateValue() e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "getDateValue()");
         }
         return result;
     }
 
-    public String runQuery(String query) {
+    public String runQuery(String query) throws SQLException {
       String results = "[results]";
       Statement stmt = null;
       ResultSet rset = null;
@@ -74,13 +76,14 @@ public class UtilDb extends AntwebDb {
           results = getResultString(rset, "\n");          
       } catch (SQLException e) {
           s_log.error("runQuery() e:" + e + " query:" + query);
+          throw e;
       } finally {
           DBUtil.close(stmt, rset, "runQuery()");
       }   
       return results;
     }
 
-    public int runDml (String dml) {
+    public int runDml (String dml) throws SQLException {
         int count = 0;
         Statement stmt = null;
         try {
@@ -88,6 +91,7 @@ public class UtilDb extends AntwebDb {
             count = stmt.executeUpdate(dml);
         } catch (SQLException e) {
             s_log.error("runDml() e:" + e + " dml:" + dml);
+            throw e;
         } finally {
             DBUtil.close(stmt, null, this, "runDml()");
         }
@@ -126,7 +130,7 @@ public class UtilDb extends AntwebDb {
     }
 
     // Accept a full query. Count rows returned
-    public int getCountFromQuery(String query) {
+    public int getCountFromQuery(String query) throws SQLException {
         if (query == null || !query.contains("select ")) {
             s_log.error("getCountFromQuery() Improper query:" + query);
             return 0;
@@ -142,6 +146,7 @@ public class UtilDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getCountFromQuery() e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "getCountFromQuery()");
         }
@@ -149,7 +154,7 @@ public class UtilDb extends AntwebDb {
     }
 
     // Accept a full query.
-    public int getCount(String query) {
+    public int getCount(String query) throws SQLException {
         if (query == null || !query.contains("select ")) {
             s_log.error("getCount() Improper query:" + query);
             return 0;
@@ -165,13 +170,14 @@ public class UtilDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getCount() e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "getCount()");
         }
         return count;
     }
     
-    public String executeDmls(ArrayList<String> dmls) { // throws SQLException {     
+    public String executeDmls(ArrayList<String> dmls) throws SQLException { // throws SQLException {
         String returnVal = "success";
         Statement stmt = null;
         String thisDml = "";
@@ -185,19 +191,19 @@ public class UtilDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("executeDmls() e:" + e + " dml:" + thisDml);
-            returnVal = e.toString();
+            throw e;
         } finally {
             DBUtil.close(stmt, null, "executeDmls()");
         }   
         return returnVal;
     }
 
-    public int deleteFrom(String table) {
+    public int deleteFrom(String table) throws SQLException {
       return deleteFrom(table, null);
     }
 
     // DO include "where" in whereClause.
-    public int deleteFrom(String table, String whereClause) {
+    public int deleteFrom(String table, String whereClause) throws SQLException {
         Statement stmt = null;
         String dml = "delete from " + table;
         if (whereClause != null) dml = dml + " " + whereClause;
@@ -212,19 +218,19 @@ public class UtilDb extends AntwebDb {
             return count;
         } catch (SQLException e) {
             s_log.error("deleteFrom() e:" + e + " dml:" + dml);
+            throw e;
         } finally {
             DBUtil.close(stmt, null, "deleteFrom()");
-        }   
-        return 0;
+        }
     }
 
-    public void updateField(String table, String field, String value) {
+    public void updateField(String table, String field, String value) throws SQLException {
       updateField(table, field, value, null);
     }
     
     // If the value is a string include it in single quotes as such: "'x'" !
     // Don't include "where" or "and" in the clause. Just the clause.
-    public int updateField(String table, String field, String value, String whereClause) {
+    public int updateField(String table, String field, String value, String whereClause) throws SQLException {
         int count = 0;
         Statement stmt = null;
         if (value == null) return 0;
@@ -238,6 +244,7 @@ public class UtilDb extends AntwebDb {
             //A.log("updateField() count:" + count + " dml:" + dml);
         } catch (SQLException e) {
             s_log.error("updateField() e:" + e + " dml:" + dml);
+            throw e;
         } finally {
             DBUtil.close(stmt, null, "updateField()");
         }  

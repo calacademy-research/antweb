@@ -94,7 +94,7 @@ public class SpeciesListUpload extends AntwebUpload {
     
 // WOULD BE GOOD TO REMOVE PROJECT AS IT IS ALWAYS WORLDANTS
 // RENAME UPLOADSPECIESLIST TO uploadWorldants
-    public UploadDetails uploadSpeciesList(String project, FormFile theFile, UploadFile uploadFile, int accessGroupId) {
+    public UploadDetails uploadSpeciesList(String project, FormFile theFile, UploadFile uploadFile, int accessGroupId) throws SQLException, IOException {
     /* Called by UplaodAction in the case of an project file
 
        UploadFile in this case is the file being created on the server.  So if a bolton010112.txt file is uploaded
@@ -131,7 +131,7 @@ public class SpeciesListUpload extends AntwebUpload {
           return uploadDetails;
         }
 
-        s_log.warn("uploadSpeciesList() uploadFile.fileName:" + uploadFile.getFileLoc());
+        A.log("uploadSpeciesList() uploadFile.fileName:" + uploadFile.getFileLoc());
 
         uploadDetails = importSpeciesList(project, uploadFile, accessGroupId, true); 
         uploadDetails.setOperation("uploadWorldants");
@@ -178,7 +178,7 @@ public class SpeciesListUpload extends AntwebUpload {
         return uploadDetails;
     }
         
-    private UploadDetails importSpeciesList(String project, UploadFile uploadFile, int accessGroupId, boolean singleUpload) {
+    private UploadDetails importSpeciesList(String project, UploadFile uploadFile, int accessGroupId, boolean singleUpload)  throws SQLException {
         // isBioGeoRegion = isWorldAnts on first call
 
         /* 
@@ -201,7 +201,7 @@ public class SpeciesListUpload extends AntwebUpload {
           return new UploadDetails("importWorldants", returnStr);
         }
         
-        s_log.warn("importSpeciesList(" + singleUpload + ") - importing " + project + " fileName:" + fileName + " fileLoc: " + fileLoc + " isBioGeoRegion:" + uploadFile.getIsBioRegion());   
+        s_log.warn("importSpeciesList(" + singleUpload + ") - importing " + project + " fileLoc: " + fileLoc);   //  " fileName:" + fileName + " isBioGeoRegion:" + uploadFile.getIsBioRegion()
 
   //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before worldants upload Proj_taxon worldants counts");
   //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "before worldants upload Proj_taxon worldants counts");
@@ -219,7 +219,8 @@ public class SpeciesListUpload extends AntwebUpload {
 
         } catch (SQLException e) {
             s_log.error("importSpeciesList(" + singleUpload + ") unable to setPreUploadStatistics e:" + e); // XXX was regen
-        } 
+            throw e;
+        }
 
 		// Worldants is a special case.  Download the file and load it.
 		if ("worldants".equals(project)) {
@@ -251,13 +252,12 @@ public class SpeciesListUpload extends AntwebUpload {
             try {
                 (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
             } catch (SQLException e) {
-                s_log.error("uploadSpeciesList() unable to regenerateAllAntwebProject due to e:" + e); // XXX
+                s_log.error("uploadSpeciesList() unable to regenerateAllAntwebProject due to e:" + e);
+                throw e;
             }
         } else {
             A.log("Warning ProjTaxonDb.regenerateAllAntweb() is skipped in Dev. See SpeciesListUpload.java:169");
         }
-
-        TaxonMgr.populate(getConnection(), true, false);
 
         A.log("uploadSpeciesList() fossils:" + totalFossils);
         A.log("uploadSpeciesList() NOT fossils:" + totalNotFossils);
@@ -271,6 +271,7 @@ public class SpeciesListUpload extends AntwebUpload {
             uploadDetails.setPostUploadStatistics(ProjTaxonDb.getProjectStatistics(project, getConnection()));
         } catch (SQLException e) {
             s_log.error("importSpeciesList() singleUpload:" + singleUpload + "  unable to setPostUploadStatistics" + e); // XXX was regen
+            throw e;
         }
 
         if (uploadDetails.getMessage().equals("success")) {        
@@ -868,7 +869,7 @@ public class SpeciesListUpload extends AntwebUpload {
     
     private static int fossilCount = 0;
 
-    public UploadDetails reloadSpeciesList(String project, int accessGroupId) {
+    public UploadDetails reloadSpeciesList(String project, int accessGroupId) throws SQLException {
       // Called only from UploadAction. This is half of the fetch and reload process.
       // This is only ever done for Worldants anymore.
 
@@ -891,6 +892,7 @@ public class SpeciesListUpload extends AntwebUpload {
 			uploadDetails = reloadSpeciesList(root, project, accessGroupId, true);
         } catch (SQLException e) {
           s_log.error("reloadSpeciesList(" + project + ") e:" + e);
+          throw e;
         } finally {
           DBUtil.close(stmt, rset, "SpeciesListUpload.reloadSpeciesList()");
         }
@@ -898,7 +900,7 @@ public class SpeciesListUpload extends AntwebUpload {
         return uploadDetails;
     }
         
-    public UploadDetails reloadSpeciesList(String root, String project, int accessGroupId, boolean singleUpload) {
+    public UploadDetails reloadSpeciesList(String root, String project, int accessGroupId, boolean singleUpload) throws SQLException {
       /* Generally the file is fetched from the project directory.  In dev, they can be
          fetched from the working dir (to enable rapid update with server.
          On dev machine: cd workingdir/
@@ -910,21 +912,15 @@ public class SpeciesListUpload extends AntwebUpload {
         return reloadSpeciesList(baseDir, root, project, UploadFile.getSpeciesListTail(), accessGroupId, singleUpload);
     }
 
-    public UploadDetails reloadSpeciesList(String baseDir, String root, String project, String tail, int accessGroupId, boolean singleUpload) {
+    public UploadDetails reloadSpeciesList(String baseDir, String root, String project, String tail, int accessGroupId, boolean singleUpload) throws SQLException {
         // Can be called directly below in dev mode, for rapid reload of all projects from workingdir
         String fileName = project + tail;
 
         fileName = root + "/" + fileName;  // For reloads, the root, is the projectName
 
         String fileLoc = baseDir + fileName;
-        UploadFile uploadFile = null;
-        try { 
-          uploadFile = new UploadFile(baseDir, fileName, "", null);
-        } catch (Exception e) {
-          s_log.error("reloadSpeciesList(6) Upload File not created for baseDir:" + baseDir + " fileName:" + fileName);
-          s_log.warn("reloadSpeciesList(6) e:" + e);
-        }        
-        
+        UploadFile uploadFile = new UploadFile(baseDir, fileName, "", null);
+
         uploadFile.setRoot(AntwebProps.getDocRoot()); 
         uploadFile.setIsReload(true);   
 
@@ -996,16 +992,16 @@ public class SpeciesListUpload extends AntwebUpload {
       }
     } 
     
-    private void copySpeciesListFile(String project, UploadFile uploadFile) {    
+    private void copySpeciesListFile(String project, UploadFile uploadFile) throws IOException {
         Utility util = new Utility();
         try {
             // copy project file to home directory
 
             String projectRoot = ProjectMgr.getProject(project).getRoot();
 
-            String speciesListFile = uploadFile.getRoot() + Project.getSpeciesListDir() + projectRoot +  "/" + project + UploadFile.getSpeciesListTail();
-            String message = "   copy:" + uploadFile.getFileLoc() + " to:" + speciesListFile;
-            s_log.warn("copySpeciesListFile()" + message);
+                String speciesListFile = uploadFile.getRoot() + Project.getSpeciesListDir() + projectRoot +  "/" + project + UploadFile.getSpeciesListTail();
+            String message = " copy " + uploadFile.getFileLoc() + " to " + speciesListFile;
+            s_log.info("copySpeciesListFile()" + message);
             util.copyFile(uploadFile.getFileLoc(), speciesListFile);
 
             LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + message);
@@ -1014,9 +1010,8 @@ public class SpeciesListUpload extends AntwebUpload {
             String webWorkingDir = uploadFile.getRoot() + "web/workingdir/";
             util.makeDirTree(webWorkingDir); // Didn't work on dev
             String webWorkingDirCopy = webWorkingDir + project + UploadFile.getSpeciesListTail();
-            s_log.warn("copySpeciesListFile() webWorkingDirCopy:" + webWorkingDirCopy);        
+            s_log.info("copySpeciesListFile() copy " + uploadFile.getFileLoc() + " to " + webWorkingDirCopy);
             util.copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
-
           } catch (IOException e) {
             s_log.error("copySpeciesListFile() e:" + e);
         }
@@ -1073,7 +1068,7 @@ public class SpeciesListUpload extends AntwebUpload {
               return false;
             }
 
-            s_log.warn("isCurrentProjectFileFormat() testLine:" + theLine);
+            s_log.info("isCurrentProjectFileFormat() testLine:" + theLine);
 
             if ((!theLine.contains("Subfamily")) && (!theLine.contains("subfamily"))) {
               s_log.error("isCurrentProjectFileFormat() " + fileName + " does not contain Subfamily");

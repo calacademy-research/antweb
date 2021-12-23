@@ -90,7 +90,7 @@ public class GeolocaleDb extends AntwebDb {
 
 
             if (false && AntwebProps.isDevMode() && 7 == id) {  // Madagascar
-              s_log.warn("getGeolocale(" + id + ") query:" + query);
+              s_log.info("getGeolocale(" + id + ") query:" + query);
               AntwebUtil.logStackTrace();
             }
 /*
@@ -124,7 +124,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     // if Adm1, must have the country to be unique. Use getAdm1(name, parent).
     public Geolocale getGeolocale(String name, String georank) {   
         if ("adm1".equals(georank)) {
-          s_log.warn("getGeolocale(name, georank) needs parent to adequately specify and adm1:" + name);
+          s_log.info("getGeolocale(name, georank) needs parent to adequately specify and adm1:" + name);
           return null;
         }
         // Alternate.  Be aware of diacritic issue. Mexico (country is not México (adm1).
@@ -392,7 +392,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     }
     
     // Just Id and name, useful for drop down list.
-    public String getAlternatives(String name, String georank) {
+    public String getAlternatives(String name, String georank) throws SQLException {
         String alternatives = "";
         String query;
         Statement stmt = null;
@@ -414,6 +414,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             }
         } catch (SQLException e) {
             s_log.error("getAlternatives() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "GeolocaleDb.getAlternatives()");
         }
@@ -477,7 +478,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     }
 
     // Just Id and name, useful for drop down list.
-    public ArrayList<Geolocale> getValidChildren(String parent) {
+    public ArrayList<Geolocale> getValidChildren(String parent) throws SQLException {
         ArrayList<Geolocale> validChildren = new ArrayList<>()	;
 
         String query;
@@ -503,6 +504,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             }
         } catch (SQLException e) {
             s_log.error("getValidChildren() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "GeolocaleDb.getValidChildren()");
         }
@@ -549,7 +551,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return validGeolocales;
     }
 
-    public String createGeolocale(EditGeolocaleForm form) {
+    public String createGeolocale(EditGeolocaleForm form) throws SQLException {
         String message = null;
         Statement stmt = null;
 
@@ -587,13 +589,14 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             if (x > 0) message = "success";
         } catch (SQLException e) {
             s_log.error("createGeolocale() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, null, "GeolocaleDb.createGeolocale()");
         }   
         return message;
     }    
     
-    public boolean deleteGeolocale(int id) {
+    public boolean deleteGeolocale(int id) throws SQLException {
         boolean success = false;
         Statement stmt = null;
 
@@ -608,13 +611,14 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             if (x > 0) success = true;
         } catch (SQLException e) {
             s_log.error("deleteGeolocale() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, null, "GeolocaleDb.deleteGeolocale()");
         }   
         return success;
     }   
 
-    public String updateGeolocale(EditGeolocaleForm form) {
+    public String updateGeolocale(EditGeolocaleForm form) throws SQLException {
         String returnVal = "Update successful.";
         String query;
         Statement stmt = null;
@@ -716,7 +720,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
         } catch (SQLException e) {
             s_log.error("updateGeolocale() e:" + e + " dml:" + dml);
-            returnVal = e.toString();
+            throw e;
         } finally {
             DBUtil.close(stmt, null, "GeolocaleDb.updateGeolocale()");
         }   
@@ -882,7 +886,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
           + " and t.taxarank in ('species', 'subspecies')"
           + " and gt.geolocale_id = " + geolocale.getId();
 
-        if (AntwebProps.isDevMode() && geolocale.getId() == 284) s_log.warn("getSpecimenCount() query:" + query);  
+        //if (geolocale.getId() == 284) A.log("getSpecimenCount() query:" + query);
           
         rset = stmt.executeQuery(query);
         while (rset.next()) {          
@@ -909,7 +913,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
           + " and t.taxarank in ('species', 'subspecies')"
           + " and gt.geolocale_id = " + geolocale.getId();
 
-        if (AntwebProps.isDevMode() && geolocale.getId() == 284) s_log.warn("getImageCount() query:" + query);  
+        if (geolocale.getId() == 284) A.log("getImageCount() query:" + query);
           
         rset = stmt.executeQuery(query);
         while (rset.next()) {
@@ -1029,16 +1033,16 @@ public static int c = 0;
     
   	  LogMgr.appendLog("compute.log", "  Populating Geolocales", true);    
   	      
-      s_log.warn("updateCounts() Adm1s..."); // This stage is way slow. 1hr+
+      s_log.info("updateCounts() Adm1s..."); // This stage is way slow. 1hr+
       updateAdm1Counts();
 
-      s_log.warn("updateCounts() Countries...");
+      s_log.info("updateCounts() Countries...");
       updateCountryCounts();
 
-      s_log.warn("updateCounts() Subregions...");
+      s_log.info("updateCounts() Subregions...");
       updateSubregionCounts();
 
-      s_log.warn("updateCounts() Regions...");
+      s_log.info("updateCounts() Regions...");
       updateRegionCounts();
 
       // These really should be in GeolocaleTaxonDb, though they operate on both.
@@ -1478,7 +1482,7 @@ public static int c = 0;
         return c;
     }
     	
-    private void updateColors() {    
+    private void updateColors() throws SQLException {
       String[] colors = HttpUtil.getColors();
 
       ArrayList<Geolocale> subregionList = GeolocaleMgr.getGeolocales("subregion");    
@@ -1500,12 +1504,12 @@ public static int c = 0;
       }
     }
 
-    private void updateColor(int id, String color) {    
+    private void updateColor(int id, String color) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
       utilDb.updateField("geolocale", "chart_color", "'" + color + "'", "id = " + id );
     }
 
-    public String finish() {
+    public String finish() throws SQLException {
         for (Geolocale region : GeolocaleMgr.getGeolocales("region")) {
             updateValidSpeciesCount(region.getId());
         }
@@ -1528,14 +1532,14 @@ public static int c = 0;
         return "Geolocale Finished";
     }
 
-    private String finish(int geolocaleId) {
+    private String finish(int geolocaleId) throws SQLException {
         updateCountableTaxonData(geolocaleId);
         updateImagedSpecimenCount(geolocaleId);
         makeCharts(geolocaleId);
       return "Geolocale Finished:" + geolocaleId;
     }
 
-    private void updateCountableTaxonData(int geolocaleId) {        
+    private void updateCountableTaxonData(int geolocaleId) throws SQLException {
         GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(getConnection());
         String criteria = "geolocale_id = " + geolocaleId;
         int subfamilyCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "subfamily");
@@ -1548,13 +1552,13 @@ public static int c = 0;
         geolocaleTaxonCountDb.updateCountableTaxonCounts("geolocale", criteria, subfamilyCount, genusCount, speciesCount);                  
     }    
       
-    private void updateImagedSpecimen() {
+    private void updateImagedSpecimen() throws SQLException {
       for (Geolocale subregion : GeolocaleMgr.getGeolocales("subregion")) {
         updateImagedSpecimenCount(subregion.getId());
       }  
     }
 
-    private void updateImagedSpecimenCount(int geolocaleId) {
+    private void updateImagedSpecimenCount(int geolocaleId) throws SQLException {
         Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId);        
         int count = getImagedSpecimenCount(geolocale);
         UtilDb utilDb = new UtilDb(getConnection());
@@ -1573,7 +1577,7 @@ public static int c = 0;
                 
         String specimenLocaleClause = getSpecimenLocaleClause(geolocale);
         if (specimenLocaleClause == null) {
-          s_log.warn("getImagedSpecimenCount() geolocale:" + geolocale + " id:" + geolocale.getId() + " No specimenLocaleClause.");
+          s_log.info("getImagedSpecimenCount() geolocale:" + geolocale + " id:" + geolocale.getId() + " No specimenLocaleClause.");
           return 0;
         }
         
@@ -1608,7 +1612,7 @@ public static int c = 0;
 
         String countryList = getCountryList(geolocale);
         if (countryList == null) {
-          s_log.warn("getImagedSpecimenCount() geolocale:" + geolocale + " id:" + geolocale.getId() + " No Country List.");
+          s_log.info("getImagedSpecimenCount() geolocale:" + geolocale + " id:" + geolocale.getId() + " No Country List.");
           return null;
         }
         clause = " country in " + countryList;
@@ -1671,7 +1675,7 @@ public static int c = 0;
       return countryList;    
     }
 
-    private void updateValidSpeciesCount(int geolocaleId) {
+    private void updateValidSpeciesCount(int geolocaleId) throws SQLException {
         int count = getValidSpeciesCount(geolocaleId);
         UtilDb utilDb = new UtilDb(getConnection());
         utilDb.updateField("geolocale", "valid_species_count", (Integer.valueOf(count)).toString(), "id = '" + geolocaleId + "'");
@@ -1706,13 +1710,13 @@ public static int c = 0;
         
     // --- Charts ---
         
-    public void makeCharts() {
+    public void makeCharts() throws SQLException {
       for (Geolocale subregion : GeolocaleMgr.getGeolocales("subregion")) {
         makeCharts(subregion.getId());
       }  
     }     
             
-    public void makeCharts(int geolocaleId) {
+    public void makeCharts(int geolocaleId) throws SQLException {
       //A.log("makeCharts(" + geolocaleId + ")");
       UtilDb utilDb = new UtilDb(getConnection());
       GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(getConnection());
@@ -1882,7 +1886,7 @@ public static int c = 0;
     public void insertAdm1(String adm1Name, String countryName, String validName, FlickrPlace place, String source) {
 
         if (adm1Name == null || countryName == null) {
-          s_log.warn("insertAdm1() adm1Name:" + adm1Name + " countryName:" + countryName);
+          s_log.info("insertAdm1() adm1Name:" + adm1Name + " countryName:" + countryName);
           return;
         }
 
@@ -2024,7 +2028,7 @@ public static int c = 0;
 
         //if (AntwebProps.isStageMode() && dml.contains("valid_name")) s_log.warn("updateGeoData() dml" + dml);      
       } catch (SQLException e) {
-        s_log.warn("updateGeoData() e:" + e + " dml:" + dml);
+        s_log.info("updateGeoData() e:" + e + " dml:" + dml);
       } finally {
         DBUtil.close(stmt, "updateGeoData()");
       }   
@@ -2306,9 +2310,8 @@ public static int c = 0;
     }
 
 // --------------- End AutoComplete -----------------
-     
- 
-   public void updateGeolocaleParentHierarchy() {
+
+   public void updateGeolocaleParentHierarchy() throws SQLException {
 
      // First update the subregions of Adm1.
      if (!AntwebProps.isDevMode()) {
@@ -2321,6 +2324,8 @@ public static int c = 0;
          updateSubregion(adm1.getId(), subregion);    
        }
        GeolocaleMgr.populate(getConnection(), true, false); // force reload, initalRun
+     } else {
+         s_log.warn("uppdateGeolocaleParentHierarchy() DEV MODE SKIPPING");
      }
           
      // Update all geolocale_taxa where the region is null;

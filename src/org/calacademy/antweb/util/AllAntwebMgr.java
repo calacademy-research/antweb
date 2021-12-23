@@ -41,16 +41,3 @@ public class AllAntwebMgr {
       return projTaxon;
     }
 }
-
-/*
-class TaxonInfo {
-  private int childCount = 0;
-  
-  public int getChildCount() {
-    return this.childCount;
-  }
-  public void setChildCount(int childCount) {
-    this.childCount = childCount;
-  }
-}
-*/

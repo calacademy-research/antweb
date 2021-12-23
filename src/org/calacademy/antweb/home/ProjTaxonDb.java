@@ -284,7 +284,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }    
     
     // Satisfies the TaxonSetDb abstract method.
-    String updateTaxonNames() {
+    String updateTaxonNames() throws SQLException {
       // For each of the following proj_taxon, update the taxon_name with the current_valid_name.
     
       Statement stmt = null;
@@ -317,6 +317,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
    
       } catch (SQLException e) {
         s_log.error("updateTaxonNames() e:" + e + " tableName:" + tableName + " projectName:" + projectName + " whereClause:" + whereClause);
+        throw e;
       } finally {
         DBUtil.close(stmt, rset, "updateTaxonNames()");
       }
@@ -324,20 +325,20 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }
 
     // Satisfies the EditableTaxonSetDb abstract method.
-    public boolean hasTaxonSetSpecies(String speciesListName, String genus) {
+    public boolean hasTaxonSetSpecies(String speciesListName, String genus) throws SQLException {
         String fromWhereClause = "from proj_taxon where project_name = '" + speciesListName + "'";
 		//A.log("ProjTaxonDb.hasTaxonSetSpecies() fromWhereClause:" + fromWhereClause);
         return super.hasTaxonSetSpecies(speciesListName, genus, fromWhereClause);
     }
     // Satisfies the EditableTaxonSetDb abstract method.
-    public boolean hasTaxonSetGenera(String speciesListName, String subfamily) {
+    public boolean hasTaxonSetGenera(String speciesListName, String subfamily) throws SQLException {
         String fromWhereClause = "from proj_taxon where project_name = '" + speciesListName + "'";
 		//A.log("ProjTaxonDb.hasTaxonSetGenera() fromWhereClause:" + fromWhereClause);
         return super.hasTaxonSetGenera(speciesListName, subfamily, fromWhereClause);
     }
     
 
-    String deleteUncuratedMorphosWithoutSpecimen() {
+    String deleteUncuratedMorphosWithoutSpecimen() throws SQLException {
         String dml = "delete from proj_taxon where taxon_name in (select taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon' and taxon_name not in (select taxon_name from specimen))";
         Statement stmt = null;
         int c = 0;
@@ -346,6 +347,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             c = stmt.executeUpdate(dml);            
         } catch (SQLException e) {
             s_log.error("deleteUncuratedMorphosWithoutSpecimen() e:" + e + " dml:" + dml);
+            throw e;
         } finally {
             DBUtil.close(stmt, "deleteUncuratedMorphosWithoutSpecimen()");
         }
@@ -680,7 +682,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "after regenerateAllAntweb Proj_taxon worldants counts");
     }
 
-    public void finishRegenerateAllAntweb() {
+    public void finishRegenerateAllAntweb() throws SQLException {
 
         UtilDb utilDb = new UtilDb(getConnection());
         int deleteCount = utilDb.deleteFrom("proj_taxon", "where (project_name, taxon_name) in (select project_name, taxon_name from proj_taxon_dispute)");

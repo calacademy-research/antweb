@@ -38,7 +38,7 @@ public class WorldantsUploadDb extends AntwebDb {
 
     */    
     
-    public void insertWorldantsUpload(String backupFileName, int backupFileSize, int origWorldantsCount, String validateMessage, int fileSize) {
+    public void insertWorldantsUpload(String backupFileName, int backupFileSize, int origWorldantsCount, String validateMessage, int fileSize) throws SQLException {
 
         String insert = null;
         Statement stmt = null;
@@ -53,12 +53,13 @@ public class WorldantsUploadDb extends AntwebDb {
             getConnection().commit();
         } catch (SQLException e) {
             s_log.error("insertWorldantsUpload() e:" + e);
+            throw e;
         } finally {
            DBUtil.close(stmt, null, this, "insertWorldantsUpload()");        
         }    
     }
 
-    public void updateWorldantsUpload(UploadDetails uploadDetails) {
+    public void updateWorldantsUpload(UploadDetails uploadDetails) throws SQLException {
         //AntwebUtil.logStackTrace();
         int id = getMaxWorldantsId(); 
         String logFileName = uploadDetails.getLogFileName();
@@ -76,14 +77,14 @@ public class WorldantsUploadDb extends AntwebDb {
             getConnection().commit();
         } catch (SQLException e) {
             s_log.error("updateWorldantsUpload() e:" + e + " update:" + update);
+            throw e;
         } finally {
            DBUtil.close(stmt, null, this, "updateWorldantsUpload()");        
         }    
     }
 
         
-    public int getMaxWorldantsId()
-    {
+    public int getMaxWorldantsId() throws SQLException {
       int maxWorldantsId = 0;
       Statement stmt = null;
       ResultSet rset = null;
@@ -97,6 +98,7 @@ public class WorldantsUploadDb extends AntwebDb {
         }        
       } catch (SQLException e) {
         s_log.warn("getMaxUploadId() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, rset, "UploadDb.getMaxWorldantsId()");      
       }
@@ -105,7 +107,7 @@ public class WorldantsUploadDb extends AntwebDb {
     }
             
     // The number of times that the worldants upload file has changed in the last week.        
-    public int getWorldantsChangeCount() {
+    public int getWorldantsChangeCount() throws SQLException {
         int count = 0;
         String query = "SELECT file_size, backup_file_size FROM worldants_upload WHERE created >= curdate() - INTERVAL DAYOFWEEK(curdate())+6 DAY";
         Statement stmt = null;
@@ -124,6 +126,7 @@ public class WorldantsUploadDb extends AntwebDb {
           count = intSet.size() - 1;
         } catch (SQLException e) {
           s_log.warn("getWorldantsAlert() e:" + e);
+          throw e;
         } finally {
           DBUtil.close(stmt, rset, "UploadDb.getWorldantsAlert()");
         }      
@@ -131,7 +134,7 @@ public class WorldantsUploadDb extends AntwebDb {
         return count;
     }
 
-    public void deleteHomonymsWithoutTaxa() {
+    public void deleteHomonymsWithoutTaxa() throws SQLException {
         // Delete from the proj_taxon table.
         // Should we also delete from the homonym table?
         UtilDb utilDb = new UtilDb(getConnection());
