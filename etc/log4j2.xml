@@ -3,7 +3,7 @@
     <Appenders>
         <RollingFile name="ant_err" fileName="${sys:catalina.home}/logs/antweb.log"
                      filePattern="${sys:catalina.home}/logs/antweb.log.%i">
-            <PatternLayout pattern="%d{DEFAULT} %p %t %c{1}.%M():%L - %m%n"/>
+            <PatternLayout pattern="%d{ISO8601} %p %t %c - %m%n"/>
             <SizeBasedTriggeringPolicy size="10M"/>
             <DefaultRolloverStrategy max="10" fileIndex="min"/>
             <ThresholdFilter level="warn"/>
@@ -12,17 +12,16 @@
 
         <RollingFile name="ant" fileName="${sys:catalina.home}/logs/antwebInfo.log"
                      filePattern="${sys:catalina.home}/logs/antwebInfo.log.%i">
-
-            <PatternLayout pattern="%d{DEFAULT} %p %t %c{1}.%M():%L - %m%n"/>
+            <PatternLayout pattern="%d{ISO8601} %p %t %c - %m%n"/>
             <SizeBasedTriggeringPolicy size="10M"/>
             <DefaultRolloverStrategy max="10" fileIndex="min"/>
-            <ThresholdFilter level="${sys:logging.level:-info}"/>
+            <ThresholdFilter level="debug"/>
         </RollingFile>
 
         <!-- Google earth appender -->
         <RollingFile name="googleEarth" fileName="${sys:catalina.home}/logs/detail/googleEarth.log"
                      filePattern="${sys:catalina.home}/logs/detail/googleEarth.log.%i">
-            <PatternLayout pattern="%d{DEFAULT} %p %t %c - %m%n"/>
+            <PatternLayout pattern="%d{ISO8601} %p %t %c - %m%n"/>
             <SizeBasedTriggeringPolicy size="10M"/>
             <DefaultRolloverStrategy max="1"/>
             <ThresholdFilter level="info"/>
@@ -31,7 +30,7 @@
         <!-- search log appender -->
         <RollingFile name="search" fileName="${sys:catalina.home}/logs/detail/search.log"
                      filePattern="${sys:catalina.home}/logs/detail/search.log.%i">
-            <PatternLayout pattern="%d{DEFAULT} %p %t %c - %m%n"/>
+            <PatternLayout pattern="%d{ISO8601} %p %t %c - %m%n"/>
             <SizeBasedTriggeringPolicy size="10M"/>
             <DefaultRolloverStrategy max="1"/>
             <ThresholdFilter level="info"/>
@@ -40,7 +39,7 @@
         <!-- antwebEvent log appender -->
         <RollingFile name="antwebEvent" fileName="${sys:catalina.home}/logs/detail/antwebEvent.log"
                      filePattern="${sys:catalina.home}/logs/detail/antwebEvent.log.%i">
-            <PatternLayout pattern="%d{DEFAULT} %p %t %c - %m%n"/>
+            <PatternLayout pattern="%d{ISO8601} %p %t %c - %m%n"/>
             <SizeBasedTriggeringPolicy size="10M"/>
             <DefaultRolloverStrategy max="1"/>
             <ThresholdFilter level="info"/>
@@ -49,7 +48,7 @@
         <!-- upload log appender -->
         <RollingFile name="upload" fileName="${sys:catalina.home}/logs/detail/upload.log"
                      filePattern="${sys:catalina.home}/logs/detail/upload.log.%i">
-            <PatternLayout pattern="%d{DEFAULT} %p %c{1}.%M() - %m%n"/>
+            <PatternLayout pattern="%d{ISO8601} %p %c{1}.%M() - %m%n"/>
             <SizeBasedTriggeringPolicy size="10M"/>
             <DefaultRolloverStrategy max="1"/>
             <ThresholdFilter level="info"/>
@@ -57,23 +56,10 @@
     </Appenders>
 
     <Loggers>
-
-        <!--Send info-level messages from all packages -->
-        <Root level="info" additivity="false">
+        <Root level="info">
             <AppenderRef ref="ant_err"/>
             <AppenderRef ref="ant"/>
         </Root>
-
-        <!--Send debug messages to antwebInfo.log
-            Setting additivity to false means that the debug-level messages from this logger don't get forwarded to
-            the root logger, but the root logger has its own AppenderRef for antwebInfo.log at the info level.
-            As a result, the only debug-level messages included in antwebInfo are from the antweb package. All other
-            packages log at info level.-->
-        <!--        -->
-        <Logger name="org.calacademy.antweb" level="debug" additivity="false">
-            <AppenderRef ref="ant_err"/>
-            <AppenderRef ref="ant"/>
-        </Logger>
 
         <Logger name="googleEarthLog" level="info">
             <AppenderRef ref="googleEarth"/>

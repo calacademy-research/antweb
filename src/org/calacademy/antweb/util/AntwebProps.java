@@ -257,7 +257,7 @@ public abstract class AntwebProps {
 
        //if (AntwebProps.isDevMode()) domainApp = "http://127.0.0.1";
 
-        s_log.debug("domainApp:" + domainApp);
+        s_log.info("domainApp:" + domainApp);
         return domainApp;
     }
        

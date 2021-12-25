@@ -239,7 +239,9 @@ public class AntwebUpload {
                 //}
 
             } catch (java.sql.SQLIntegrityConstraintViolationException e) {
-                s_log.warn("saveTaxon() 4 e:" + e + " query:" + query);
+                String message = "e:" + e + " query:" + query;
+                s_log.warn("saveTaxon() 4 " + message);
+                MessageMgr.addToErrors(message);
             } catch (SQLException e) {
                 s_log.error("saveTaxon() 5 e:" + e + " query:" + query);
                 throw e;

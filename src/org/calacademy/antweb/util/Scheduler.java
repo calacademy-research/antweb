@@ -135,45 +135,48 @@ public class Scheduler extends Action {
 
 					if (i == 0 || i == 1) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow" + codeParam;
-						//A.log("doAction() url:" + url);
 						output += HttpUtil.fetchUrl(url);
+						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
+						s_log.info("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 2) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow" + codeParam;
-						//A.log("doAction() url:" + url);
 						output += HttpUtil.fetchUrl(url);
+						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
+						s_log.info("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 3) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow" + codeParam;
-						//A.log("doAction() url:" + url);
 						output += HttpUtil.fetchUrl(url);
+						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
+						s_log.info("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 4) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow" + codeParam;
-						//A.log("doAction() url:" + url);
 						output += HttpUtil.fetchUrl(url);
+						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
+						s_log.info("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 5) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all" + codeParam;
-						//A.log("doAction() url:" + url);
 						output += HttpUtil.fetchUrl(url);
+						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
+						s_log.info("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 				} catch (AntwebException e) {
-					s_log.error("doAction Scheduler failed. Investigate log files. e:" + e + " url:" + url);
+					s_log.error("doAction() Scheduler failed. Investigate log files. e:" + e + " url:" + url);
 				} catch (IOException e) {
-				  s_log.error("doAction Scheduler failed. Investigate log files. e:" + e + " url:" + url);
+				    s_log.error("doAction() Scheduler failed. Investigate log files. e:" + e + " url:" + url);
 				}
-
 				message = "Scheduler " + action + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
 				s_log.warn("doAction() " + message);
 				return message + " output:" + output;
-		    }     
-
+		    }
 		} finally {
 		  UtilDataAction.setInComputeProcess(null);
 

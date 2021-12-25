@@ -122,8 +122,10 @@ public class UtilDataAction extends Action {
                 }
 
                 if (!isAllow) { // Scheduler will manage it's own reloading.
+                    s_log.info("execute() AntwebMgr.reload: " + reload);
                     String t = AntwebMgr.reload(reload, true, connection);
-                    // No need to log.
+                } else {
+                    s_log.info("execute() AntwebMgr.reload NOT reloaded because allow.");
                 }
 
                 request.setAttribute("message", "action not found:" + action);

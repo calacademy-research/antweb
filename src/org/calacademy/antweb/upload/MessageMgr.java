@@ -47,11 +47,11 @@ public class MessageMgr {
     }
     private static int maxI = 20;
     public static String getErrorsReport() {
-        String errorReport = "<br>&nbsp;&nbsp;&nbsp;<b>Errors</b>: ";
+        String errorReport = "<br>&nbsp;&nbsp;&nbsp;<h3>Errors:</h3> ";
         int i = 0;
         for (String error : getErrors()) {
           i = i + 1;
-          if (i <= maxI) errorReport += "<br>" + error;
+          if (i <= maxI) errorReport += "<br><br>" + error;
           if (i == maxI) errorReport += "<br>...";
         }
         return errorReport;
@@ -93,7 +93,6 @@ public class MessageMgr {
     private ArrayList<Test> getTests() {
       return testList;
     }
-    
 
     // Tests
     public static final String invalidSubfamily = "invalidSubfamily";
@@ -164,6 +163,11 @@ public class MessageMgr {
      
     // All of the tests below should have constants above, and vice versa.
     public void init() {
+        s_message = null;
+        s_messages = new Vector();
+        s_errors = new Vector<String>();
+        flags = new HashMap<>();
+
       testList.add(new Test(noRecordsProcessed, STR, "<b>Rollback occurred. <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(duplicateEntries, SET, "<b>Duplicate Entries <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(invalidSubfamily, SET, "<b>Invalid Subfamily <font color=red>(not uploaded)</font></b>"));
@@ -607,7 +611,7 @@ public class MessageMgr {
                 }
 				returnStr += messages;    
             } 
-        }
+    }
         
         // MAP
         if (messageMapsHash.size() > 0) {

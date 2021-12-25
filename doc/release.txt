@@ -1,7 +1,8 @@
-Release 8.68
+Release 8.68.1
   Modifications for stage.
   Redundant worldants validation removed.
   Upload reports are context specific (Worldants vs specimen).
+  Worldants errors logged (max of 20).
 
 Release 8.68
   Exception handling refinement in Scheduled tasks and species list upload.
