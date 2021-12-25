@@ -559,14 +559,18 @@ public class UploadAction extends Action {
 			}
 
 			return mapping.findForward(uploadDetails.getForwardPage());
-        } catch (Exception e) {
-        	int caseNumber = AntwebUtil.getCaseNumber();
-        	A.log("e:" + e);
-            errorMessage = "Error. Case number:" + caseNumber + ". No changes made. e:" + e.toString();
-            s_log.error("execute() errorMessage:" + errorMessage + " action:" + action);
-            DBUtil.rollback(connection);
-			request.setAttribute("message", errorMessage);
-			return mapping.findForward("message");
+
+
+		} catch (TestException e) {
+			return handleException(e, action, connection, mapping, request);
+		} catch (RESyntaxException e) {
+            return handleException(e, action, connection, mapping, request);
+		} catch (AntwebException e) {
+			return handleException(e, action, connection, mapping, request);
+		} catch (IOException e) {
+			return handleException(e, action, connection, mapping, request);
+        } catch (SQLException e) {
+			return handleException(e, action, connection, mapping, request);
         } finally {
         	String finishMessage = "Completion of the Upload Process.";
         	if (errorMessage != null) finishMessage = errorMessage;
@@ -582,6 +586,16 @@ public class UploadAction extends Action {
             Profiler.report();
         }
     }
+
+    private ActionForward handleException(Exception e, String action, Connection connection, ActionMapping mapping, HttpServletRequest request) {
+		int caseNumber = AntwebUtil.getCaseNumber();
+		A.log("e:" + e);
+		String errorMessage = "Error. Case number:" + caseNumber + ". No changes made. e:" + e.toString();
+		s_log.error("execute() errorMessage:" + errorMessage + " action:" + action);
+		DBUtil.rollback(connection);
+		request.setAttribute("message", errorMessage);
+		return mapping.findForward("message");
+	}
 
     private void specimenPostProcess(Connection connection, Login login, UploadDetails uploadDetails) throws SQLException {
         (new GeolocaleDb(connection)).calcEndemic();
