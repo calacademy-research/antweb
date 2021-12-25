@@ -227,6 +227,8 @@ public class SpeciesListUpload extends AntwebUpload {
         getSpeciesListUploadDb().prepareDatabase(project);
 
         uploadDetails = importSpeciesList(project, uploadFile, accessGroupId);
+        if (AntwebProps.isDevOrStageMode()) s_log.info("importSpeciesList(4) 1 uploadDetails:" + uploadDetails);
+
         if (uploadDetails == null) {
             s_log.error("uploadSpeciesList() uploadDetails is null");
         }
@@ -263,7 +265,7 @@ public class SpeciesListUpload extends AntwebUpload {
           if (singleUpload)
             uploadDetails.setPostUploadStatistics(ProjTaxonDb.getProjectStatistics(project, getConnection()));
         } catch (SQLException e) {
-            s_log.error("importSpeciesList() singleUpload:" + singleUpload + "  unable to setPostUploadStatistics" + e); // XXX was regen
+            s_log.error("importSpeciesList(4) singleUpload:" + singleUpload + "  unable to setPostUploadStatistics" + e); // XXX was regen
             throw e;
         }
 
@@ -273,6 +275,7 @@ public class SpeciesListUpload extends AntwebUpload {
         } else {
           s_log.error("importSpeciesList(" + singleUpload + ") No success at importing project:" + project + " fileLoc:" + fileLoc);
         }
+        if (AntwebProps.isDevOrStageMode()) s_log.info("importSpeciesList() 2 uploadDetails:" + uploadDetails);
         return uploadDetails;
     }
 

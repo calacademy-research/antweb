@@ -571,6 +571,9 @@ public class UploadAction extends Action {
 			return handleException(e, action, connection, mapping, request);
         } catch (SQLException e) {
 			return handleException(e, action, connection, mapping, request);
+		} catch (Exception e) {
+        	s_log.error("execute() e:" + e + " " + AntwebUtil.getShortStackTrace(e));
+			return handleException(e, action, connection, mapping, request);
         } finally {
         	String finishMessage = "Completion of the Upload Process.";
         	if (errorMessage != null) finishMessage = errorMessage;
