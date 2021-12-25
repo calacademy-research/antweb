@@ -167,7 +167,7 @@ public class SpeciesListUploader {
       //message = "Worldants download must be within " + allowedPercentage + "% of original.";
       //message += " original:" + origWorldantsCount + " new:" + worldantsCount;
       
-      s_log.debug("validateWorldantsFile() message:" + message); //allowedPercentage:" + allowedPercentage + " max:" + max + " min:" + min + " isWithin:" + newIsWithinTenPercent + " multiplier:" + multiplier);
+      s_log.warn("validateWorldantsFile() message:" + message); //allowedPercentage:" + allowedPercentage + " max:" + max + " min:" + min + " isWithin:" + newIsWithinTenPercent + " multiplier:" + multiplier);
 
     } else if (worldantsCount < min_reasonable_worldants_count) {
       message = "WorldantsCount is too small:" + worldantsCount;

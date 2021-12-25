@@ -133,7 +133,10 @@ public class SpeciesListUpload extends AntwebUpload {
 
         A.log("uploadSpeciesList() uploadFile.fileName:" + uploadFile.getFileLoc());
 
-        uploadDetails = importSpeciesList(project, uploadFile, accessGroupId, true); 
+        uploadDetails = importSpeciesList(project, uploadFile, accessGroupId, true);
+        if (uploadDetails == null) {
+          s_log.error("uploadSpeciesList() uploadDetails not returned from importSpeciesList");
+        }
         uploadDetails.setOperation("uploadWorldants");
         if (!uploadDetails.getMessage().equals("success")) {
           uploadDetails.setMessage(message);
@@ -218,7 +221,10 @@ public class SpeciesListUpload extends AntwebUpload {
 		if ("worldants".equals(project)) {
 		    int origWorldantsCount = (new TaxonDb(getConnection())).getWorldantsCount();
 		    String message = (new SpeciesListUploader(getConnection())).validateWorldantsFile(fileLoc, origWorldantsCount);
-            if (!"success".equals(message)) return new UploadDetails(message); 
+            if (!"success".equals(message)) {
+                s_log.error("importSpeciesList(4) validateWorldantsFile not success. Message:" + message);
+                return new UploadDetails(message);
+            }
 		}
 
         // first flag the records that will be updated.  We did delete.  Now we update the 
