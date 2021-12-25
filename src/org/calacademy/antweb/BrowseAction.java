@@ -260,7 +260,7 @@ public class BrowseAction extends DescriptionAction {
               //A.log("execute  () family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank);
 
 			  taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
-              s_log.debug("execute() taxon.getSource:" + taxon.getSource() + " desc:" + taxon.getDescription().size());
+              if (taxon != null) s_log.info("execute() taxon.getSource:" + taxon.getSource() + " desc:" + taxon.getDescription().size());
 			}
 		  }
 		  if (taxon == null) {

@@ -25,6 +25,39 @@ public class MessageMgr {
       s_messages = vector;
     }
 
+    // Used by Worldants
+    private static Vector<String> s_errors = new Vector<String>();
+    public static Vector<String> getErrors() {
+        return s_errors;
+    }
+    // called with an empty vector by UploadAction.
+    //public void setErrors(Vector<String> vector) {
+    //    s_errors = vector;
+    //}
+    public static void addToErrors(String error) {
+        if (getErrorCount() <= maxI)
+          getErrors().add(error);
+    }
+    public static int getErrorCount() {
+        return getErrors().size();
+    }
+    public static boolean hasErrors() {
+        if (getErrors().size() > 0) return true;
+        return false;
+    }
+    private static int maxI = 20;
+    public static String getErrorsReport() {
+        String errorReport = "<br>&nbsp;&nbsp;&nbsp;<b>Errors</b>: ";
+        int i = 0;
+        for (String error : getErrors()) {
+          i = i + 1;
+          if (i <= maxI) errorReport += "<br>" + error;
+          if (i == maxI) errorReport += "<br>...";
+        }
+        return errorReport;
+    }
+
+
     public static String s_message = null;
     // This is for a show stopper.  Bad column for instance.
     public void addMessage(String message) {
@@ -240,7 +273,11 @@ public class MessageMgr {
       if (messageStr != null) {
         logString += messageStr;
       }
-      
+
+      if (hasErrors()) {
+          logString += getErrorsReport();
+      }
+
       Vector<String> messages = getMessages();
       boolean hasMessages = !messages.isEmpty();
       //if (!hasMessages) return logString += "<h3><font color=green>Data tests passed.</font></h3>";

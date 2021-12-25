@@ -467,7 +467,9 @@ public class AntwebUpload {
                 //if (TaxonMgr.isUseRefreshing() && c > 0) {
                 //    TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);
             } catch (com.mysql.cj.jdbc.exceptions.MysqlDataTruncation e) {
-                s_log.error("updateTaxon() 1 e:" + e + " query:" + query);
+                String message = "e:" + e + " query:" + query;
+                s_log.error("updateTaxon() 1" + message);
+                MessageMgr.addToErrors(message);
             } catch (SQLException e) {
                 s_log.error("updateTaxon() 2 e:" + e + " query:" + query);
                 throw e;

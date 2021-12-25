@@ -225,10 +225,9 @@ public class SpeciesListUpload extends AntwebUpload {
 		if ("worldants".equals(project)) {
 		    int origWorldantsCount = (new TaxonDb(getConnection())).getWorldantsCount();
 		    String message = (new SpeciesListUploader(getConnection())).validateWorldantsFile(fileLoc, origWorldantsCount);
-		    validateMessage = message;
+            setValidateMessage(message);
             if (!"success".equals(message)) {
                 s_log.error("importSpeciesList(4) validateWorldantsFile not success. Message:" + message);
-                setValidateMessage(message);
                 uploadDetails.setMessage(message);
                 return uploadDetails;
             }
@@ -239,6 +238,7 @@ public class SpeciesListUpload extends AntwebUpload {
         // not lose the valid or antcat properties from the bolton upload.
         getSpeciesListUploadDb().prepareDatabase(project);
 
+		// Not ideal, but the uploadDetails is created here. Validate info from above is not present.
         uploadDetails = importSpeciesList(project, uploadFile, accessGroupId);
         if (AntwebProps.isDevOrStageMode()) s_log.info("importSpeciesList(4) 1 uploadDetails:" + uploadDetails);
 
@@ -297,6 +297,9 @@ public class SpeciesListUpload extends AntwebUpload {
         , String encoding, int accessGroupId) throws AntwebException, IOException, SQLException {
           
         UploadDetails uploadDetails = new UploadDetails("failure");
+
+        int lineNum = 1;
+
         String returnStr = null;   
         //A.log("importSpeciesList() project:" + project + " fileName:" + fileName + " shortFileName:" + shortFileName + " encoding:" + encoding);          
         LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " import:" + fileName);
@@ -441,7 +444,6 @@ public class SpeciesListUpload extends AntwebUpload {
 
             //s_log.warn("importSpeciesListByValidity() project:" + project);
 
-            int lineNum = 1;
             while (theLine != null) {            
                 theLine = in.readLine();
                 ++lineNum;
@@ -878,7 +880,10 @@ public class SpeciesListUpload extends AntwebUpload {
                 + " totalTaxonCountryPrimaryKeyViolations:" + totalTaxonCountryPrimaryKeyViolations);
             }
         }      
-        return new UploadDetails("importWorldants", returnStr);
+
+        uploadDetails = new UploadDetails("importWorldants", returnStr);
+        uploadDetails.setRecordCount(lineNum-2);
+        return uploadDetails;
     }
     
     private static int fossilCount = 0;

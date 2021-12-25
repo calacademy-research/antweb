@@ -188,6 +188,7 @@ public class UploadDetails extends OperationDetails {
             + warning
             + "<h3>Upload Details:</h3>"
             + "&nbsp;&nbsp;&nbsp;<b>Upload ID:</b> <a href='" + AntwebProps.getDomainApp() + "/uploadReport.do?uploadId=" + AntwebMgr.getNextSpecimenUploadId() + "'>" + AntwebMgr.getNextSpecimenUploadId() + "</a>"
+            + "<br> &nbsp;&nbsp;&nbsp;<b>Operation:" + getOperation() + "</a>"
             + "<br>&nbsp;&nbsp;&nbsp;<b>This Log File:</b> " + getLogFileAnchor() 
             + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + (new Date()).toString()     
             + "<br>&nbsp;&nbsp;&nbsp;<b>Encoding:</b> " + encoding   
@@ -205,17 +206,23 @@ public class UploadDetails extends OperationDetails {
 
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Record Count:</b> " + getRecordCount();
 
-		logString += "<br>&nbsp;&nbsp;&nbsp;<b>Parsed:</b> " + getBuildLineTotal();
-		logString += "<br>&nbsp;&nbsp;&nbsp;<b>Processed:</b> " + getProcessLineTotal();
-		logString += "<br>&nbsp;&nbsp;&nbsp;<b>Museums:</b> <a href='' title='" +  getMuseumMap().toString() + "'>" + getMuseumMap().size() + "</a>";
+        if ("specimen".equals(getOperation())) {
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Parsed:</b> " + getBuildLineTotal();
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Processed:</b> " + getProcessLineTotal();
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Museums:</b> <a href='' title='" + getMuseumMap().toString() + "'>" + getMuseumMap().size() + "</a>";
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Specimens:</b> " + countInsertedSpecimens;
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Red Flagged Specimens:</b> " + getMessageMgr().getRedFlagCount();
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Advanced Search:</b><a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?"
+                    + "searchMethod=advancedSearch&advanced=true&uploadId=" + AntwebMgr.getNextSpecimenUploadId()
+                    //+ "&groupName=" + accessGroup.getName()
+                    + "\"> This Upload</a><a href='' title='Could be affected/limited by subsequent uploads. No red flagged specimen included in results.'>*</a>";
+        }
 
-        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Specimens:</b> " + countInsertedSpecimens;        
-        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Red Flagged Specimens:</b> " + getMessageMgr().getRedFlagCount();
-
-        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Advanced Search:</b><a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?"
-                + "searchMethod=advancedSearch&advanced=true&uploadId=" + AntwebMgr.getNextSpecimenUploadId()
-                //+ "&groupName=" + accessGroup.getName()
-                + "\"> This Upload</a><a href='' title='Could be affected/limited by subsequent uploads. No red flagged specimen included in results.'>*</a>";
+        if ("uploadWorldants".equals(getOperation())) {
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Worldants </b><a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=subfamily&project=worldants'>Subfamilies</a>";
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Worldants </b><a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=genus&project=worldants'>Genera</a>";
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Worldants </b><a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&project=worldants'>Species</a>";
+        }
 
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Exec Time:</b> " + getExecTime() + getExecTimeMin();
         
@@ -241,8 +248,13 @@ public class UploadDetails extends OperationDetails {
 
           logString += "<br><br>Current Taxa Counts:<br>" + ProjectDb.getProjectTableHeader() + ProjectDb.getProjectStatisticsHtml(postUploadStatistics, true) + "</table>"; 
         }
-                
-        logString += getMessageMgr().getMessagesReport();
+
+        if ("uploadWorldants".equals(getOperation())) {
+            logString += getMessageMgr().getErrorsReport();
+        } else {
+            logString += getMessageMgr().getMessagesReport();
+        }
+
         logString += "</body>";
 
         //s_log.info("logMessagesToFile() logFileDir:" + getLogFileDir() + " logFileName:" + getLogFileName());
