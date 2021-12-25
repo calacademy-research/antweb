@@ -74,6 +74,7 @@ public class SpeciesListUploader {
     int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
     String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
     String backupDirFile = record(validateMessage, fileLoc, origWorldantsCount, true);
+    if (AntwebProps.isDevOrStageMode()) s_log.info("uploadWorldants() orig:" + origWorldantsCount + " validateMessage:" + validateMessage + " backupDirFile:" + backupDirFile + " fileLoc:" + fileLoc);
     uploadDetails.setBackupDirFile(backupDirFile);
     uploadDetails.setMessage(validateMessage);
                 
