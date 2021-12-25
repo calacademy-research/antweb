@@ -169,7 +169,7 @@ public class UploadAction extends Action {
 					uploadDetails = (new SpeciesListUploader(connection)).uploadWorldants(theForm.getTheFile(), uploadFile, accessGroup);
 
                     uploadDetails.setStartTime(startTime);
-					if (uploadDetails.getErrorForward(mapping) != null) {
+                    if (uploadDetails.isErrorForward()) {
 						request.setAttribute("message", uploadDetails.getMessage());
 						return uploadDetails.getErrorForward(mapping);
 					}

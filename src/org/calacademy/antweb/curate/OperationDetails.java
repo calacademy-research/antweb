@@ -93,13 +93,18 @@ public class OperationDetails {
 
     public ActionForward getErrorForward(ActionMapping mapping) {    
         if (!"success".equals(getMessage())) {
-          s_log.warn("execute() " + getMessage());
-          if (AntwebProps.isDevOrStageMode()) AntwebUtil.logShortStackTrace();
+          s_log.error("execute() " + getMessage());
+          //if (AntwebProps.isDevOrStageMode()) AntwebUtil.logShortStackTrace();
           return mapping.findForward("message");
         }
         return null;
     }    
-    
+
+    public boolean isErrorForward() {
+        if (!"success".equals(getMessage())) return true;
+        return false;
+    }
+
     private String execTime;
     public String getExecTime() {
         return execTime;
