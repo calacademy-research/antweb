@@ -134,12 +134,8 @@ public class SpeciesListUpload extends AntwebUpload {
         A.log("uploadSpeciesList() uploadFile.fileName:" + uploadFile.getFileLoc());
 
         uploadDetails = importSpeciesList(project, uploadFile, accessGroupId, true);
-        if (uploadDetails == null) {
-          s_log.error("uploadSpeciesList() uploadDetails not returned from importSpeciesList");
-        }
         uploadDetails.setOperation("uploadWorldants");
         if (!uploadDetails.getMessage().equals("success")) {
-          uploadDetails.setMessage(message);
           return uploadDetails;
         }
         
@@ -223,7 +219,8 @@ public class SpeciesListUpload extends AntwebUpload {
 		    String message = (new SpeciesListUploader(getConnection())).validateWorldantsFile(fileLoc, origWorldantsCount);
             if (!"success".equals(message)) {
                 s_log.error("importSpeciesList(4) validateWorldantsFile not success. Message:" + message);
-                return new UploadDetails(message);
+                uploadDetails.setMessage(message);
+                return uploadDetails;
             }
 		}
 
