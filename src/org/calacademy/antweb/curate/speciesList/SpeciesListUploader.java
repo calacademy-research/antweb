@@ -72,7 +72,8 @@ public class SpeciesListUploader {
    // (new WorldantsUploadDb(connection)).insertWorldantsUpload(backupFileName, backupFileSize, origWorldantsCount, validateMessage, fileSize);
     String fileLoc = worldDir + "worldants_speciesList.txt";
     int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
-    String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
+    //String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
+    String validateMessage = speciesListUpload.getValidateMessage();
     String backupDirFile = record(validateMessage, fileLoc, origWorldantsCount, true);
     if (AntwebProps.isDevOrStageMode()) s_log.info("uploadWorldants() orig:" + origWorldantsCount + " validateMessage:" + validateMessage + " backupDirFile:" + backupDirFile + " fileLoc:" + fileLoc);
     uploadDetails.setBackupDirFile(backupDirFile);

@@ -170,7 +170,15 @@ public class SpeciesListUpload extends AntwebUpload {
         uploadDetails = importSpeciesList(project, fileLoc, shortFileName, encoding, accessGroupId);
         return uploadDetails;
     }
-        
+
+    String validateMessage = null;
+    public void setValidateMessage(String message) {
+        validateMessage = message;
+    }
+    public String getValidateMessage() {
+        return validateMessage;
+    }
+
     private UploadDetails importSpeciesList(String project, UploadFile uploadFile, int accessGroupId, boolean singleUpload)  throws AntwebException, SQLException, IOException {
         // isBioGeoRegion = isWorldAnts on first call
 
@@ -217,8 +225,10 @@ public class SpeciesListUpload extends AntwebUpload {
 		if ("worldants".equals(project)) {
 		    int origWorldantsCount = (new TaxonDb(getConnection())).getWorldantsCount();
 		    String message = (new SpeciesListUploader(getConnection())).validateWorldantsFile(fileLoc, origWorldantsCount);
+		    validateMessage = message;
             if (!"success".equals(message)) {
                 s_log.error("importSpeciesList(4) validateWorldantsFile not success. Message:" + message);
+                setValidateMessage(message);
                 uploadDetails.setMessage(message);
                 return uploadDetails;
             }
