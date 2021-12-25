@@ -27,12 +27,16 @@ public class AntwebSystem {
   public static int countLines(String fileName) {
     String command = "wc " + fileName;
     String countLinesStr = (new AntwebSystem()).launchProcess(command, true);
-    if (countLinesStr.length() <= 4) {
-      s_log.warn("countLines() countlines too short:" + countLinesStr + " for command:" + command);
-      s_log.warn("Warning this should only happen on Mac! returning 0!");
-      return 0;
-    }
-    countLinesStr = countLinesStr.substring(4).trim();
+    if (countLinesStr.length() <= 0) {
+      s_log.error("countLines() Empty string returned from command:" + command);
+    } else {
+      if (countLinesStr.length() <= 4) {
+        s_log.warn("countLines() countlines too short:" + countLinesStr + " for command:" + command);
+        s_log.warn("Warning this should only happen on Mac! returning 0!");
+        //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
+        return 0;
+      }
+    }    countLinesStr = countLinesStr.substring(4).trim();
     //s_log.warn("countLines:" + countLinesStr);
 
     int count = 0;
@@ -180,7 +184,7 @@ public class AntwebSystem {
   public String launchProcess(String command, boolean getRetVal) {
     String retVal = "";
     try {
-      s_log.debug("launchProcess() Running command: " + command);
+      s_log.info("launchProcess() Running command: " + command);
       //AntwebUtil.logShortStackTrace(3);
 
       //s_log.warn("launchProcess() Running command: " + command);
@@ -200,12 +204,13 @@ public class AntwebSystem {
       String someData = retVal;
       if (retVal != null && retVal.length() > 30) someData = retVal.substring(0, 30) + "...";
       
-      s_log.debug("AntwebSystem.launchProcess() Running command: " + command + " retVal:" + someData);
+      s_log.info("AntwebSystem.launchProcess() Running command: " + command + " retVal:" + someData);
 
       p.waitFor();
     } catch (Exception e) {
       s_log.error("AntwebSystem e:" + e);
     }
+    s_log.info("AntwebSystem.launchProcess() Returning:" + retVal);
     return retVal;
   }
 	

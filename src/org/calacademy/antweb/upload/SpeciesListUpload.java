@@ -227,7 +227,9 @@ public class SpeciesListUpload extends AntwebUpload {
         getSpeciesListUploadDb().prepareDatabase(project);
 
         uploadDetails = importSpeciesList(project, uploadFile, accessGroupId);
-
+        if (uploadDetails == null) {
+            s_log.error("uploadSpeciesList() uploadDetails is null");
+        }
         uploadDetails.setPreUploadStatistics(preStats);
 
         // LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "After worldants upload Proj_taxon worldants counts");

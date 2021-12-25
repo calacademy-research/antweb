@@ -132,12 +132,16 @@ public class SpeciesListUploader {
   }
 
   public String validateWorldantsFile(String fileLoc, int origWorldantsCount) {
-    if (AntwebProps.isDevMode()) return "success";
+    if (AntwebProps.isDevMode()) {
+      A.log("validateWorldantsFile() DEV MODE SKIPPING");
+      return "success";
+    }
     
     String message = "";
     int min_reasonable_worldants_count = 1000;
     
     int worldantsCount = (new AntwebSystem()).countLines(fileLoc);
+    A.log("validateWorldantsFile() worldantsCount:" + worldantsCount);
     boolean countIsLow = true;
 
     int WORLDANTS_LOW_COUNT = 29000;

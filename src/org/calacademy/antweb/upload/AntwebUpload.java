@@ -388,10 +388,10 @@ public class AntwebUpload {
                     value = item.get(key);
 
                     //if (!"worldants".equals(source)) {  // A taxon from a specimen record source.
-                        // species list or specimen upload name will not overwrite worldants, but insert_method, line_num, etc... will
-                        //boolean enactExceptions = enactExceptions(key, value, referenceTaxon);
-                        //A.log("updateTaxon() key:" + key + " value:" + value + " source:" + source + " enactException:" + enactExceptions + " taxonName:" + taxonName);
-                        //if (enactExceptions) continue;
+                    // species list or specimen upload name will not overwrite worldants, but insert_method, line_num, etc... will
+                    //boolean enactExceptions = enactExceptions(key, value, referenceTaxon);
+                    //A.log("updateTaxon() key:" + key + " value:" + value + " source:" + source + " enactException:" + enactExceptions + " taxonName:" + taxonName);
+                    //if (enactExceptions) continue;
                     //}
 
                     if (key.equals("decimal_latitude") || key.equals("decimal_longitude")) {
@@ -448,7 +448,7 @@ public class AntwebUpload {
                 query += " where taxon_name = '" + taxonName + "'";
 
                 if (!query.contains("insert_method")) {
-                    s_log.debug("updateTaxon() Somewhere in the following stacktrace should have been put an insert_method into item."); // + " query:" + query);
+                    s_log.error("updateTaxon() Somewhere in the following stacktrace should have been put an insert_method into item."); // + " query:" + query);
                     AntwebUtil.logShortStackTrace(8);
                 }
 
@@ -466,10 +466,10 @@ public class AntwebUpload {
 
                 //if (TaxonMgr.isUseRefreshing() && c > 0) {
                 //    TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);
-                //}
-
+            } catch (com.mysql.cj.jdbc.exceptions.MysqlDataTruncation e) {
+                s_log.error("updateTaxon() 1 e:" + e + " query:" + query);
             } catch (SQLException e) {
-                s_log.error("updateTaxon() e:" + e + " query:" + query);
+                s_log.error("updateTaxon() 2 e:" + e + " query:" + query);
                 throw e;
             }
         }
