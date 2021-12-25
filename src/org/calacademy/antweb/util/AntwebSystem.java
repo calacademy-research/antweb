@@ -34,8 +34,7 @@ public class AntwebSystem {
       return 0;
     } else {
       if (countLinesStr.length() <= 4) {
-        s_log.warn("countLines() countlines too short:" + countLinesStr + " for command:" + command);
-        s_log.warn("Warning this should only happen on Mac! returning 0!");
+        s_log.warn("countLines() countlines too short:" + countLinesStr + " for command:" + command + ". Warning this should only happen during testing in development! returning 0!");
         //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
         return 0;
       }
@@ -55,7 +54,7 @@ public class AntwebSystem {
     } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
       s_log.error("countLines e:" + e + " countStr:" + countStr);
     }
-    s_log.warn("countLines:" + countStr + " return:" + count + " spaceIndex:" + spaceIndex);
+    s_log.info("countLines:" + countStr + " return:" + count + " spaceIndex:" + spaceIndex);
     return count;
   }	
 
@@ -187,10 +186,10 @@ public class AntwebSystem {
   public String launchProcess(String command, boolean getRetVal) {
     String retVal = "";
     try {
-      if (AntwebProps.isDevOrStageMode()) {
-        s_log.info("launchProcess() Running command: " + command);
-        AntwebUtil.logShortStackTrace(9);
-      }
+      //if (AntwebProps.isDevOrStageMode()) {
+        //s_log.info("launchProcess() Running command: " + command);
+        //AntwebUtil.logShortStackTrace(9);
+      //}
       Process p = Runtime.getRuntime().exec(command);
       if (! getRetVal) {
         handleStdOut(p);
@@ -207,13 +206,13 @@ public class AntwebSystem {
       String someData = retVal;
       if (retVal != null && retVal.length() > 30) someData = retVal.substring(0, 30) + "...";
       
-      s_log.info("AntwebSystem.launchProcess() Running command: " + command + " retVal:" + someData);
+      //s_log.info("AntwebSystem.launchProcess() Running command: " + command + " retVal:" + someData);
 
       p.waitFor();
     } catch (Exception e) {
       s_log.error("AntwebSystem e:" + e);
     }
-    s_log.info("AntwebSystem.launchProcess() Returning:" + retVal);
+    //s_log.info("AntwebSystem.launchProcess() Returning:" + retVal);
     return retVal;
   }
 	

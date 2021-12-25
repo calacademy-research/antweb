@@ -201,7 +201,7 @@ public class SpeciesListUpload extends AntwebUpload {
           //return new UploadDetails("importWorldants", returnStr);
         }
         
-        s_log.warn("importSpeciesList(" + singleUpload + ") - importing " + project + " fileLoc: " + fileLoc);   //  " fileName:" + fileName + " isBioGeoRegion:" + uploadFile.getIsBioRegion()
+        s_log.info("importSpeciesList(" + singleUpload + ") - importing " + project + " fileLoc: " + fileLoc);   //  " fileName:" + fileName + " isBioGeoRegion:" + uploadFile.getIsBioRegion()
 
   //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before worldants upload Proj_taxon worldants counts");
   //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "before worldants upload Proj_taxon worldants counts");
