@@ -131,6 +131,8 @@ public class SpeciesListUploader {
     return uploadDetails;
   }
 
+  public static int WORLDANTS_LOW_COUNT = 29000;
+
   public String validateWorldantsFile(String fileLoc, int origWorldantsCount) {
     if (AntwebProps.isDevMode()) {
       A.log("validateWorldantsFile() DEV MODE SKIPPING");
@@ -144,7 +146,6 @@ public class SpeciesListUploader {
     A.log("validateWorldantsFile() worldantsCount:" + worldantsCount);
     boolean countIsLow = true;
 
-    int WORLDANTS_LOW_COUNT = 29000;
     if (worldantsCount > WORLDANTS_LOW_COUNT) countIsLow = false;
           
     /*

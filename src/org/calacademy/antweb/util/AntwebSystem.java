@@ -5,6 +5,7 @@ import java.io.*;
 import java.util.concurrent.Executors;
 
 import org.calacademy.antweb.*;
+import org.calacademy.antweb.curate.speciesList.*;
 
 import java.lang.management.ManagementFactory;
 import com.sun.management.OperatingSystemMXBean;
@@ -29,6 +30,8 @@ public class AntwebSystem {
     String countLinesStr = (new AntwebSystem()).launchProcess(command, true);
     if (countLinesStr.length() <= 0) {
       s_log.error("countLines() Empty string returned from command:" + command);
+      //if (AntwebProps.isDevOrStageMode()) return SpeciesListUploader.WORLDANTS_LOW_COUNT;
+      return 0;
     } else {
       if (countLinesStr.length() <= 4) {
         s_log.warn("countLines() countlines too short:" + countLinesStr + " for command:" + command);
