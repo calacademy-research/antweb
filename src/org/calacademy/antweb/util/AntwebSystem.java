@@ -189,7 +189,7 @@ public class AntwebSystem {
     try {
       if (AntwebProps.isDevOrStageMode()) {
         s_log.info("launchProcess() Running command: " + command);
-        AntwebUtil.logShortStackTrace();
+        AntwebUtil.logShortStackTrace(9);
       }
       Process p = Runtime.getRuntime().exec(command);
       if (! getRetVal) {
