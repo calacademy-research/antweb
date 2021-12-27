@@ -231,11 +231,10 @@ public class SessionRequestFilter implements Filter {
       }
 
       Timer timer = new Timer();
+      s_log.warn("runTask() time:" + calendar.getTime());  // calendar:" + calendar + "
+      //if (AntwebProps.isDevMode()) return;  // Don't run on dev
+
       // if you want to run the task immediately, set the 2nd parameter to 0
-      s_log.warn("runTask() calendar:" + calendar + " time:" + calendar.getTime());
-      
-      //if (AntwebProps.isDevMode()) return;
-      
       timer.schedule(new CustomTask(), calendar.getTime(), TimeUnit.HOURS.toMillis(24));
     }    
 }

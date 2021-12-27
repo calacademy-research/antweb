@@ -205,17 +205,12 @@ production: additional networking configuration
 
 This project uses [Docker BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) for some non-backwards compatible features.
 
-Before building the containers, set the following environment variables:
+Before building the containers, set the following environment variables (you can put the lines in `~/.bashrc` 
+to set them automatically):
 
 ```bash
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
-```
-
-Alternatively, add the following lines to the `.env` file in the root of the project:
-```bash
-DOCKER_BUILDKIT=1
-COMPOSE_DOCKER_CLI_BUILD=1
 ```
 
 

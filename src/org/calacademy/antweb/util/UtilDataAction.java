@@ -215,7 +215,7 @@ public class UtilDataAction extends Action {
                 message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 12.30 mins
                 message += " " + doAction("geolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
-                doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
+                message += " " + doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
                 GeolocaleMgr.populate(connection, true, false);
             }
 
@@ -225,7 +225,7 @@ public class UtilDataAction extends Action {
                 message += " " + doAction("projectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins
                 message += " " + doAction("populateMuseum", form, accessLogin, accessGroup, connection, request, mapping);  // was 12.05 mins now 22.68 mins. Prod: 8.17
                 message += " " + doAction("populateBioregion", form, accessLogin, accessGroup, connection, request, mapping); // was 6.80 mins. Now 15.63 mins. // Prod: 5.52 mins
-                message += doAction("updateTaxonSetTaxonNames", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("updateTaxonSetTaxonNames", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
             }
 
@@ -242,9 +242,13 @@ public class UtilDataAction extends Action {
             if ("set5".equals(action)) {
                 message = "set5 - ";
                 message += " " + doAction("deleteConflictedDefaultImages", form, accessLogin, accessGroup, connection, request, mapping);
+                s_log.info("deleteConflictedDefaultImages done. Starting genObjectMaps");
                 message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 48.93 mins
+                s_log.info("genObjectMaps done. Starting deleteOldSpecimenUploadTaxa");
                 message += " " + doAction("deleteOldSpecimenUploadTaxa", form, accessLogin, accessGroup, connection, request, mapping);
+                s_log.info("deleteOldSpecimenUploadTaxa done. Starting checkAntwiki");
                 message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
+                s_log.info("Done checkAntwiki");
             }
 
             if ("restart".equals(action)) {
