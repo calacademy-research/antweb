@@ -1675,7 +1675,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     // if Genus, see if we can get the pick from a species in our geolocale.
-    private String getDefaultFromSpeciesSet(Connection connection, String caste, ArrayList<String> speciesNameSet) {
+    private String getDefaultFromSpeciesSet(Connection connection, String caste, ArrayList<String> speciesNameSet) throws SQLException {
       //if (getTaxonName().contains("aenictogiton")) A.log("getDefaultFromSpeciesSet() caste:" + caste + " speciesNameSet:" + speciesNameSet);
      
       int maxLoop = 50;  // Some genera can have (camponotus has 1000+ species)... 
@@ -1779,7 +1779,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     // Should show all the genera and use images from the species. 
-    private String getUnpickedDefault(Connection connection, Overview overview, String caste) {
+    private String getUnpickedDefault(Connection connection, Overview overview, String caste) throws SQLException {
         String chosenImageCode = null;
 
         if (caste == null) caste = Caste.DEFAULT;

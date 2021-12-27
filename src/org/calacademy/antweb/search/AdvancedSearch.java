@@ -379,7 +379,9 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
             }
 
   		    Statement stmt = connection.createStatement();
+            Date startTime = new Date();
 		    rset = stmt.executeQuery(theQuery);
+            DBUtil.profileQuery("AdvancedSearch", startTime, theQuery);
 		    ArrayList<ResultItem> itemList = getListFromRset(GenericSearch.ADVANCED, rset, null, theQuery);
 		    String message = " listSize:" + itemList.size();
 		    if (itemList != null && !itemList.isEmpty()) message += " 1st:" + itemList.get(0);

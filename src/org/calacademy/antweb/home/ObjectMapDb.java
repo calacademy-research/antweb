@@ -24,7 +24,7 @@ public class ObjectMapDb extends AntwebDb {
       super(connection);
     }
 
-    public void genObjectMaps() {
+    public void genObjectMaps() throws SQLException {
       genCountryObjectMaps();
       
       genMuseumObjectMaps();
@@ -34,29 +34,32 @@ public class ObjectMapDb extends AntwebDb {
      // genGroupObjectMaps();
     }
 
-    public void genMuseumObjectMaps() {
-	  //s_log.warn("execute() genCountryObjectMaps()");    
-      ArrayList<Museum> museums = MuseumMgr.getMuseums();
-      if (museums == null) {
-        s_log.warn("genMuseumObjectMaps() aborted. Perhaps server initializing?");
-        return;
-      }
-      for (Museum museum : museums) {
+    public void genMuseumObjectMaps() throws SQLException {
+	    //s_log.warn("execute() genCountryObjectMaps()");
+        ArrayList<Museum> museums = MuseumMgr.getMuseums();
+        if (museums == null) {
+            s_log.warn("genMuseumObjectMaps() aborted. Perhaps server initializing?");
+            return;
+        }
+
+        boolean skip = AntwebProps.isDevMode() && false;
+        if (skip) s_log.info("genMuseumObjectMaps() DEV MODE SKIPPING genMuseumObjectMap(). Only gen for museum:AFRC.");
+        for (Museum museum : museums) {
         if (museum.getIsActive()) {
-          if (AntwebProps.isDevMode()) { 
-            if ("AFRC".equals(museum.getCode())) {
-              //  || "JTLC".equals(museum.getCode())) {
-              genMuseumObjectMap(museum);
+            if (skip) {
+                if ("AFRC".equals(museum.getCode())) {
+                    //  || "JTLC".equals(museum.getCode())) {
+                    genMuseumObjectMap(museum);
+                }
+            } else {
+                genMuseumObjectMap(museum);
             }
-          } else {
-            genMuseumObjectMap(museum);
-          }
         }
       }      
       //s_log.warn("done genMuseumObjectMap()");
     }
 
-    public void genMuseumObjectMap(Museum museum) {
+    public void genMuseumObjectMap(Museum museum) throws SQLException {
         //s_log.warn("getMuseumObjectMap() generating map:" + museum.getMap());
         String code = museum.getCode();
 
@@ -72,15 +75,15 @@ public class ObjectMapDb extends AntwebDb {
 		}
     }
     
-    public Map getMuseumMap(String museumCode) {
+    public Map getMuseumMap(String museumCode) throws SQLException {
       String clause = " museum_code = '" + museumCode + "'";
       return getMap(clause);
     }
-    public void setMuseumMap(String code, Map map) {
+    public void setMuseumMap(String code, Map map) throws SQLException {
       setMap(code, "museum_code", map);
     } 
     
-    public void genCountryObjectMaps() {
+    public void genCountryObjectMaps() throws SQLException {
 	  //s_log.warn("execute() genCountryObjectMaps()");    
       ArrayList<Geolocale> countries = GeolocaleMgr.getCountries();
       for (Geolocale country : countries) {
@@ -90,7 +93,7 @@ public class ObjectMapDb extends AntwebDb {
       //s_log.warn("done genCountryObjectMap()");
     }
 
-    public void genAdm1ObjectMaps() {
+    public void genAdm1ObjectMaps() throws SQLException {
 	  //s_log.warn("execute() genAdm1ObjectMaps()");    
       ArrayList<Geolocale> adm1s = GeolocaleMgr.getAdm1s();
       for (Geolocale adm1 : adm1s) {
@@ -100,7 +103,7 @@ public class ObjectMapDb extends AntwebDb {
       //s_log.warn("done genAdm1ObjectMap()");
     }
     
-    public void genGeolocaleObjectMap(Geolocale geolocale) {
+    public void genGeolocaleObjectMap(Geolocale geolocale) throws SQLException {
         int id = geolocale.getId();
 
         // We won't redo done ones.        
@@ -128,11 +131,11 @@ public class ObjectMapDb extends AntwebDb {
 		}
     }
     
-    public void setGeolocaleMap(int id, Map map) {
+    public void setGeolocaleMap(int id, Map map) throws SQLException {
       setMap(id, "geolocale_id", map);
     }    
 
-    public void setMap(int id, String keyCol, Map map) {
+    public void setMap(int id, String keyCol, Map map) throws SQLException {
 	  //A.log("setMap(int, str, map) id:" + id);
       String googleMapFunction = map.getGoogleMapFunction();
       if (googleMapFunction == null) {
@@ -150,11 +153,12 @@ public class ObjectMapDb extends AntwebDb {
       try {
         insertMap(fields, values);    
       } catch (SQLException e) {
-        s_log.error("setMap(int, str, map) e:" + e);        
+        s_log.error("setMap(int, str, map) e:" + e);
+        throw e;
       }
     }
     
-    public void setMap(String key, String keyCol, Map map) {
+    public void setMap(String key, String keyCol, Map map) throws SQLException {
 	  s_log.debug("setMap(str, str, map) key:" + key);
       String googleMapFunction = map.getGoogleMapFunction();
       if (googleMapFunction == null) {
@@ -171,16 +175,17 @@ public class ObjectMapDb extends AntwebDb {
       try {
         insertMap(fields, values);    
       } catch (SQLException e) {
-        s_log.error("setMap(str, str, map) e:" + e);        
+        s_log.error("setMap(str, str, map) e:" + e);
+        throw e;
       }
     }    
     
-    public Map getGeolocaleMap(int id) {
+    public Map getGeolocaleMap(int id) throws SQLException {
       String clause = " geolocale_id = " + id;
       return getMap(clause);
     }
 
-    public void genGroupObjectMaps() {
+    public void genGroupObjectMaps() throws SQLException {
       HashSet<Group> groups = new HashSet<>();
       ArrayList<Login> logins = LoginMgr.getLogins();
       for (Login login : logins) {
@@ -194,7 +199,7 @@ public class ObjectMapDb extends AntwebDb {
       //s_log.warn("done genGroupObjectMap()");
     } 
 
-    public void genGroupObjectMap(Group group) {
+    public void genGroupObjectMap(Group group) throws SQLException {
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
 
 		Map map = (new AdvancedSearchAction()).getGoogleMap(group, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
@@ -207,7 +212,7 @@ public class ObjectMapDb extends AntwebDb {
 		}
     }
     
-    public void genGroupObjectMap(int groupId) {
+    public void genGroupObjectMap(int groupId) throws SQLException {
       Group group = GroupMgr.getGroup(groupId);
       if (group == null) {
         s_log.warn("genGroupObjectMap() group not found for id:" + groupId);
@@ -218,12 +223,12 @@ public class ObjectMapDb extends AntwebDb {
                  
                  
                  
-    public Map getGroupMap(int id) {
+    public Map getGroupMap(int id) throws SQLException {
       String clause = " group_id = " + id;
       return getMap(clause);
     }
         
-    private Map getMap(String clause) {
+    private Map getMap(String clause) throws SQLException {
         Map map = null;
         
         String query = "select google_map_function, title, subtitle, info " 
@@ -252,6 +257,7 @@ public class ObjectMapDb extends AntwebDb {
           }   
 		} catch (SQLException e) {
 			s_log.error("getMap() query:" + query);
+			throw e;
 		} finally {
             DBUtil.close(stmt, rset, this, "getMap()");		
 		}
@@ -276,7 +282,7 @@ public class ObjectMapDb extends AntwebDb {
 		}
     }
     
-    public void updateGeolocaleMap(int geolocaleId, Map map) {
+    public void updateGeolocaleMap(int geolocaleId, Map map) throws SQLException {
 
         String clause = "geolocale_id = " + geolocaleId;
 
@@ -295,12 +301,13 @@ public class ObjectMapDb extends AntwebDb {
 			stmt.executeUpdate(dml);
 		} catch (SQLException e) {
 			s_log.error("setGeolocaleMap() theInsert:" + dml + " e:" + e);
+			throw e;
 		} finally {
 		    DBUtil.close(stmt, "updateGeolocaleMap()");
 		}
     }
            
-    public void deleteMap(String clause) {
+    public void deleteMap(String clause) throws SQLException {
 		//String createdStr = DateUtil.getFormatDateTimeStr(operationLock.getCreated());		
 		//A.slog("deleteMap() clause:" + clause);
 
@@ -313,6 +320,7 @@ public class ObjectMapDb extends AntwebDb {
 			stmt.executeUpdate(dml);
 		} catch (SQLException e) {
 			s_log.error("deleteMap() dml:" + dml + " e:" + e);
+			throw e;
 		} finally {
 		    DBUtil.close(stmt, "deleteMap()");
 		}

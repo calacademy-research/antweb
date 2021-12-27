@@ -423,6 +423,27 @@ Or, if there are stmts and/or rsets...
       }
     }
 
+    private static int s_threshold = 8;
+    private static String s_lastMethod;
+    private static int s_sameMethod = 0;
+    public static void profileQuery(String method, Date startTime, String query) {
+      long secs = AntwebUtil.secsSince(startTime);
+      if (secs < s_threshold) return;
+      if (method.equals(s_lastMethod)) {
+          ++s_sameMethod;
+          if ((s_sameMethod % 10) == 0) {
+              s_log.info("profileQuery sameMethod:" + s_sameMethod + " method:" + method);
+          }
+          return;
+      } else {
+          s_sameMethod = 0;
+      }
+      s_lastMethod = method;
+      if (secs > s_threshold) {
+        s_log.info("profileQuery() method:" + method + " secs:" + secs + " query:" + query);
+      }
+    }
+
 	public static int getNumBusyConnections(javax.sql.DataSource dataSource) {
         int numBusy = 0;
         String cpDiagnostics = null;

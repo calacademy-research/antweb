@@ -181,7 +181,8 @@ public class UtilDataAction extends Action {
 
         boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
         boolean isSecure = AntwebUtil.isSecureCode(secureCode) || isAdmin;
-        //s_log.info("doAction() " + action + " request:" + request + " isSecure:" + isSecure + " secureCode:" + secureCode + " isAdmin:" + isAdmin);
+        
+        s_log.info("doAction() " + action + " request:" + request + " isSecure:" + isSecure + " secureCode:" + secureCode + " isAdmin:" + isAdmin);
 
         if (isSecure) {
             if ("allSets".equals(action)) {
@@ -242,11 +243,11 @@ public class UtilDataAction extends Action {
             if ("set5".equals(action)) {
                 message = "set5 - ";
                 message += " " + doAction("deleteConflictedDefaultImages", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done deleteConflictedDefaultImages. Starting genObjectMaps");
+                s_log.info("Done deleteConflictedDefaultImages. Starting genObjectMaps...");
                 message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 48.93 mins
-                s_log.info("Done genObjectMaps. Starting deleteOldSpecimenUploadTaxa");
+                s_log.info("Done genObjectMaps. Starting deleteOldSpecimenUploadTaxa...");
                 message += " " + doAction("deleteOldSpecimenUploadTaxa", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done deleteOldSpecimenUploadTaxa. Starting checkAntwiki");
+                s_log.info("Done deleteOldSpecimenUploadTaxa. Starting checkAntwiki...");
                 message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
                 s_log.info("Done checkAntwiki.");
             }

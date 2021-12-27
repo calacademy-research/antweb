@@ -18,14 +18,14 @@ public class ImagePickDb extends AntwebDb {
     }
 
 
-    public String getDefaultSpecimen(String caste, ArrayList<String> taxaNameSet) {
+    public String getDefaultSpecimen(String caste, ArrayList<String> taxaNameSet) throws SQLException {
         String setStr = SqlUtil.getSetStr(taxaNameSet);
         if (setStr == null) return null;
         String taxonClause = " taxon_name in " + setStr;
         return getDefaultSpecimenWithClause(caste, taxonClause);
     }
 
-    private String getDefaultSpecimenWithClause(String caste, String taxonClause) {
+    private String getDefaultSpecimenWithClause(String caste, String taxonClause) throws SQLException {
         String defaultSpecimen = null;
 
         String casteClause = " where " + Caste.getSpecimenClause(caste);
@@ -53,13 +53,14 @@ public class ImagePickDb extends AntwebDb {
             }
         } catch (Exception e) {
             s_log.error("getDefaultSpecimenWithClause() e:" + e);
+            throw e;
         } finally {
           DBUtil.close(stmt, rset, this, "getDefaultSpecimenWithClause()");
         }   
         return defaultSpecimen;
     }
 
-    public String getDefaultSpecimen(String caste, Taxon taxon) {
+    public String getDefaultSpecimen(String caste, Taxon taxon) throws SQLException {
       if (taxon == null) return null;
       String taxonNameClause = "";
       
@@ -74,12 +75,12 @@ public class ImagePickDb extends AntwebDb {
       }
       return getDefaultSpecimen(caste, taxonNameClause);
     }
-    public String getDefaultSpecimenForTaxon(String caste, String taxonName) {
+    public String getDefaultSpecimenForTaxon(String caste, String taxonName) throws SQLException {
       
       String taxonNameClause = " taxon_name = '" + AntFormatter.escapeQuotes(taxonName) + "'";
       return getDefaultSpecimen(caste, taxonNameClause);
     }
-    private String getDefaultSpecimen(String caste, String taxonNameClause) {
+    private String getDefaultSpecimen(String caste, String taxonNameClause) throws SQLException {
 
         String defaultSpecimen = null;
         String query = "select value from taxon_prop where "
@@ -100,19 +101,20 @@ public class ImagePickDb extends AntwebDb {
             }
         } catch (Exception e) {
             s_log.error("getDefaultSpecimen() e:" + e + " query:" + query);
+            throw e;
         } finally {
           DBUtil.close(stmt, rset, this, "getDefaultSpecimen()");
         }   
         return defaultSpecimen;
     }
 
-    public void unsetDefaultSpecimen(String caste, String taxonName, Login accessLogin) {
+    public void unsetDefaultSpecimen(String caste, String taxonName, Login accessLogin) throws SQLException {
       setDefaultSpecimen(caste, taxonName, null, accessLogin);
     }
-    public void setDefaultSpecimen(String caste, String taxonName, String specimenCode) {
+    public void setDefaultSpecimen(String caste, String taxonName, String specimenCode) throws SQLException {
       setDefaultSpecimen(caste, taxonName, specimenCode, null);
     }    
-    public void setDefaultSpecimen(String caste, String taxonName, String specimenCode, Login accessLogin) {
+    public void setDefaultSpecimen(String caste, String taxonName, String specimenCode, Login accessLogin) throws SQLException {
         String message = "no message";
         
         int loginId = 0;
@@ -145,6 +147,7 @@ public class ImagePickDb extends AntwebDb {
             s_log.debug("setDefaultSpecimen() dml:" + dml);
 		} catch (SQLException e) {
 			s_log.error("setDefaultSpecimen() dml" + dml + " e:" + e);
+			throw e;
 		} finally { 		
 			DBUtil.close(stmt, "setDefaultSpecimen()");
 		}

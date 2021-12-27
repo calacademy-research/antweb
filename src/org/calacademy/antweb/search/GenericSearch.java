@@ -131,7 +131,9 @@ public class GenericSearch implements Serializable {
         ResultSet rset = null;
         try {
             stmt = connection.createStatement();
+            Date startTime = new Date();
             rset = stmt.executeQuery(theQuery);
+            DBUtil.profileQuery("filterByProject", startTime, theQuery);
 
             ArrayList resArray = new ArrayList();
             while (rset.next()) {
