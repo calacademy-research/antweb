@@ -92,14 +92,18 @@ public class Scheduler extends Action {
     
 		String message = "";
 
+		int waitI = 0;
         while (!ServerStatusAction.isReady()) {
-          s_log.warn("doAction() not ready:" + ServerStatusAction.notReadyReason());          
+          ++waitI;
+          int seconds = 10;
+          int milliseconds = 1000;
+          int waitTime = seconds * milliseconds;
+		  if (!AntwebProps.isDevOrStageMode()) {
+			  waitTime = 60 * waitTime;
+		  }
+		  s_log.warn("doAction() not ready to action:" + action + " num:" + num + " because:" + ServerStatusAction.notReadyReason() + " waitTime:" + waitTime + ". waitI:" + waitI);
           try {            
-            if (AntwebProps.isDevMode()) {
-              Thread.sleep(10 * 1000);  // seconds * milliseconds
-            } else {
-              Thread.sleep(10 * 60 * 1000);  // minutes * seconds * milliseconds
-            }
+            Thread.sleep(waitTime);
           } catch (InterruptedException e) {
             s_log.warn("doAction() e:" + e);          
           }
