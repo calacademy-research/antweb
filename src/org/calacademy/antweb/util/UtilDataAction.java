@@ -242,13 +242,13 @@ public class UtilDataAction extends Action {
             if ("set5".equals(action)) {
                 message = "set5 - ";
                 message += " " + doAction("deleteConflictedDefaultImages", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("deleteConflictedDefaultImages done. Starting genObjectMaps");
+                s_log.info("Done deleteConflictedDefaultImages. Starting genObjectMaps");
                 message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 48.93 mins
-                s_log.info("genObjectMaps done. Starting deleteOldSpecimenUploadTaxa");
+                s_log.info("Done genObjectMaps. Starting deleteOldSpecimenUploadTaxa");
                 message += " " + doAction("deleteOldSpecimenUploadTaxa", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("deleteOldSpecimenUploadTaxa done. Starting checkAntwiki");
+                s_log.info("Done deleteOldSpecimenUploadTaxa. Starting checkAntwiki");
                 message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done checkAntwiki");
+                s_log.info("Done checkAntwiki.");
             }
 
             if ("restart".equals(action)) {

@@ -40,8 +40,9 @@ public class Scheduler extends Action {
 
 		Login accessLogin = LoginMgr.getAccessLogin(request);
 		if (accessLogin == null || !accessLogin.isAdmin()) {
-			s_log.warn("Scheduler attempted to be launched by non-admin process.");
-			request.setAttribute("message", "Scheduler can only be launched by administrative login");
+   		    String mesage = "Scheduler can only be launched by administrative login";
+			s_log.warn(message);
+			request.setAttribute("message", message);
 			return (mapping.findForward("message"));
 		}
 
