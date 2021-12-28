@@ -94,8 +94,7 @@ public class AntwebUpload {
         saveTaxon(item, "homonym");  //source, 
     }
 
-    protected int saveTaxon(Hashtable item)  //, String source
-            throws SQLException {
+    protected int saveTaxon(Hashtable item) throws SQLException {
         return saveTaxon(item, "taxon");  //source, 
     }
 
@@ -104,8 +103,7 @@ public class AntwebUpload {
     }
 
     // Method is recursively inserting parent records.
-    private int saveTaxon(Hashtable item, String table, boolean isParent)
-            throws SQLException {
+    private int saveTaxon(Hashtable item, String table, boolean isParent) throws SQLException {
         //Called from both SpeciesListUpload and SpecimenUpload.
         int c = 0;
 
@@ -460,7 +458,7 @@ public class AntwebUpload {
                 Statement stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.updateTaxon()");
 
                 int c = stmt.executeUpdate(query);
-                A.log("updateTaxon() c:" + c + " query:" + query);
+                A.log("updateTaxon() c:" + c + " taxonName:" + taxonName); //query:" + query);
 
                 DBUtil.close(stmt, "AntwebUpload.updateTaxon()");
 

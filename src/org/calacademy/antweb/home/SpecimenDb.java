@@ -16,11 +16,11 @@ public class SpecimenDb extends AntwebDb {
     
     private static Log s_log = LogFactory.getLog(SpecimenDb.class);
         
-    public SpecimenDb(Connection connection) {
+    public SpecimenDb(Connection connection) throws SQLException {
       super(connection);
     }
     
-    public boolean exists(String code) {
+    public boolean exists(String code) throws SQLException {
       Statement stmt = null;
       ResultSet rset = null;
       String query = "select count(*) count from specimen where code = '" + code + "'";
@@ -35,39 +35,41 @@ public class SpecimenDb extends AntwebDb {
             //A.log("isDuplicatedTaxonName() count:" + count);
         } catch (SQLException e) {
             s_log.error("exists() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "exists()");
         }
         return false;
     }
 
-    public Specimen getSpecimen(String code) {
+    public Specimen getSpecimen(String code) throws SQLException {
       Specimen specimen = null;
       try {
           specimen = new Specimen(code, getConnection());
       } catch (SQLException e) {
           s_log.debug("getSpecimen() code:" + code + " e:" + e);
+          throw e;
       }
       return specimen;
     }
 
-    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family) {
+    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family) throws SQLException {
         return getAntwebSpecimenCodes(overview, family, null);
     }
 
-    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family, String subfamily) {
+    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family, String subfamily) throws SQLException {
         return getAntwebSpecimenCodes(overview, family, subfamily, null);
     }
 
-    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family, String subfamily, String genus) {
+    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family, String subfamily, String genus) throws SQLException {
         return getAntwebSpecimenCodes(overview, family, subfamily, genus, null);
     }
 
-    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family, String subfamily, String genus, String species) {
+    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family, String subfamily, String genus, String species) throws SQLException {
         return getAntwebSpecimenCodes(overview, family, subfamily, genus, species, null);
     }
 
-    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family, String subfamily, String genus, String species, String subspecies) {
+    public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family, String subfamily, String genus, String species, String subspecies) throws SQLException {
         ArrayList<String> specimenCodes = new ArrayList<>();
         String code = null;
 
@@ -116,6 +118,7 @@ public class SpecimenDb extends AntwebDb {
 
         } catch (SQLException e) {
             s_log.error("getAntwebSpecimenCodes() e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getAntwebSpecimenCodes()");
         }
@@ -149,7 +152,7 @@ public class SpecimenDb extends AntwebDb {
         return formatter.dequote(theXML);
     }
 
-    public ArrayList<String> getIntroducedByGroup(int groupId) {
+    public ArrayList<String> getIntroducedByGroup(int groupId) throws SQLException {
       ArrayList<String> introducedSpecimen = new ArrayList<>();
   	  introducedSpecimen.add("<tr><td>Group</td><td>Bioregion</td><td>Code</td><td>Taxon Name</td><td>Country</td></tr>");
 	  introducedSpecimen.add("<tr><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr>");
@@ -181,6 +184,7 @@ public class SpecimenDb extends AntwebDb {
 
         } catch (SQLException e) {
             s_log.error("getIntroducedByGroup() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getIntroducedByGroup()");
         }
@@ -188,7 +192,7 @@ public class SpecimenDb extends AntwebDb {
       return introducedSpecimen;
     }
 
-    public ArrayList<String> getSpecimensWithMorphoGenera(int groupId) {
+    public ArrayList<String> getSpecimensWithMorphoGenera(int groupId) throws SQLException {
         ArrayList<String> specimen = new ArrayList<>();
   	    specimen.add("<tr><td>Code</td><td>Subfamily</td><td>Genus</td></tr>");
 	    specimen.add("<tr><td><hr></td><td><hr></td><td><hr></td></tr>");
@@ -218,6 +222,7 @@ public class SpecimenDb extends AntwebDb {
 
         } catch (SQLException e) {
             s_log.error("getSpecimensWithMorphoGenera() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getSpecimensWithMorphoGenera()");
         }
@@ -226,13 +231,13 @@ public class SpecimenDb extends AntwebDb {
     }
 
  // *** island_country?
-    public boolean hasSpecimen(String taxonName, String country) {
+    public boolean hasSpecimen(String taxonName, String country) throws SQLException {
       return hasSpecimenWithClause(taxonName, " and country = '" + country + "'");
     }
-    public boolean hasSpecimen(String taxonName, String adm1, String country) {
+    public boolean hasSpecimen(String taxonName, String adm1, String country) throws SQLException {
       return hasSpecimenWithClause(taxonName, " and country = '" + country + "' and adm1 = '" + adm1 + "'");
     }
-    public boolean hasSpecimenWithClause(String taxonName, String clause) {
+    public boolean hasSpecimenWithClause(String taxonName, String clause) throws SQLException {
       String dups = "";
       Statement stmt = null;
       ResultSet rset = null;
@@ -247,13 +252,14 @@ public class SpecimenDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("hasSpecimenWithClause() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "hasSpecimenWithClause()");
         }
         return false;
     }
  
-    public ArrayList<ArrayList<String>> getMultiBioregionTaxaList(int groupId) {
+    public ArrayList<ArrayList<String>> getMultiBioregionTaxaList(int groupId) throws SQLException {
         ArrayList<ArrayList<String>> multiBioregionTaxa = new ArrayList<>();
 
 		ArrayList<String> values = new ArrayList<>();
@@ -283,6 +289,7 @@ public class SpecimenDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getMultiBioregionTaxaList() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getMultiBioregionTaxaList()");
         }
@@ -291,7 +298,7 @@ public class SpecimenDb extends AntwebDb {
 
 // ------ Calc Caste. Male, worker, queen.
     
-    public void calcCaste() {
+    public void calcCaste() throws SQLException {
       Statement stmt = null;
       ResultSet rset = null;
       String query = "select distinct access_group groupId from specimen"; 
@@ -306,24 +313,25 @@ public class SpecimenDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("calcCaste() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "calcCaste()");
         }
     }
        
-    public void calcCaste(int groupId) {
+    public void calcCaste(int groupId) throws SQLException {
       //A.log("calcCaste() for groupId:" + groupId);
       String clause = " access_group = " + groupId;
       calcCasteQuery(clause);
     }
 
-    public void calcCaste(String code) {
+    public void calcCaste(String code) throws SQLException {
       s_log.debug("calcCaste() for code:" + code);
       String clause = " code = '" + code + "'";
       calcCasteQuery(clause);
     }
     
-    private void calcCasteQuery(String clause) {
+    private void calcCasteQuery(String clause) throws SQLException {
       Statement stmt = null;
       ResultSet rset = null;          
       String query = "select code, caste, subcaste, life_stage from specimen where "  + clause;
@@ -361,13 +369,13 @@ public class SpecimenDb extends AntwebDb {
             
         } catch (SQLException e) {
             s_log.error("calcCasteQuery() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "calcCasteQuery()");
         }
     }
 
-    private void updateCaste(String code, String caste, String subcaste) 
-     throws SQLException {
+    private void updateCaste(String code, String caste, String subcaste) throws SQLException {
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -378,6 +386,7 @@ public class SpecimenDb extends AntwebDb {
             stmt.executeUpdate(dml);   
         } catch (SQLException e) {
             s_log.error("updateCaste() " + e);
+            throw e;
         } finally {
           DBUtil.close(stmt, "updateCaste()");
         }         
@@ -397,17 +406,16 @@ public class SpecimenDb extends AntwebDb {
             s_log.debug("updateCaste() count:" + count);
         } catch (SQLException e) {
           s_log.error("updateCaste() code:" + code + " e:" + e);
+            throw e;
         }  
     }
 
 
     // To be called following specimen upload (via UtilData.do).
-    public String updateSpecimenStatus()      
-     throws SQLException {
+    public String updateSpecimenStatus() throws SQLException {
       return updateSpecimenStatus(0);
     }
-    public String updateSpecimenStatus(int groupId) 
-     throws SQLException {
+    public String updateSpecimenStatus(int groupId) throws SQLException {
         // This function maintains the denormalized (taxon) status in the specimen record.
         int c = 0;
             
@@ -483,7 +491,7 @@ public class SpecimenDb extends AntwebDb {
 */
 
     // --------- Update locality codes to avoid null -----------
-    public int updateNullLocalityCodes() {
+    public int updateNullLocalityCodes() throws SQLException {
         int i = 0;
         Statement stmt = null;
         ResultSet rset = null;
@@ -514,6 +522,7 @@ public class SpecimenDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("updateNullLocalityCodes() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "updateNullLocalityCodes()");
         }
@@ -521,8 +530,7 @@ public class SpecimenDb extends AntwebDb {
         return i;
     }
     
-    public void updateSpecimenLocalityCode(String code, String localityCode) 
-     throws SQLException {
+    public void updateSpecimenLocalityCode(String code, String localityCode) throws SQLException {
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -565,7 +573,7 @@ public class SpecimenDb extends AntwebDb {
       Where casent and casent-dxx have different taxon names.
       Invoked as: https://www.antweb.org/list.do?action=casentDAnamalies
     */
-    public ArrayList<String> getCasentDAnamalies() {
+    public ArrayList<String> getCasentDAnamalies() throws SQLException {
         ArrayList<String> bads = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
@@ -588,6 +596,7 @@ public class SpecimenDb extends AntwebDb {
 
         } catch (SQLException e) {
             s_log.error("getBads() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getBads()");
         }
@@ -595,7 +604,7 @@ public class SpecimenDb extends AntwebDb {
         return bads;
     }
 
-    public boolean isDuplicatedTaxonName(String codeFrag) {
+    public boolean isDuplicatedTaxonName(String codeFrag) throws SQLException {
         Statement stmt = null;
         ResultSet rset = null;
         String query = "select count(distinct taxon_name) as c from specimen where code like '" + codeFrag + "%'";
@@ -611,13 +620,14 @@ public class SpecimenDb extends AntwebDb {
             //A.log("isDuplicatedTaxonName() count:" + count);
         } catch (SQLException e) {
             s_log.error("getBads() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "isDuplicatedTaxonName()");
         }
         return false;
     }
 
-    public String getDups(String codeFrag) {
+    public String getDups(String codeFrag) throws SQLException {
         String dups = "";
         Statement stmt = null;
         ResultSet rset = null;
@@ -635,6 +645,7 @@ public class SpecimenDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getDups() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getDups()");
         }
@@ -660,7 +671,7 @@ public class SpecimenDb extends AntwebDb {
     select code, max(created), subfamily, genus, species  from specimen where subfamily = "ponerinae" group by subfamily, genus, species, created;
     */
 
-    public QueryReport getRecentCASPinnedPonerinaeQueryReport() {
+    public QueryReport getRecentCASPinnedPonerinaeQueryReport() throws SQLException {
         QueryReport queryReport = new QueryReport();
         queryReport.setName("RecentCASPinnedPonerinae");
         queryReport.setDesc("Most recent CAS pinned Ponerinae specimen not in the set of methods (pitfall, malaise, yellow pan, sifter, sifted, MW, sweeping, winkler, berlese) if available.");
@@ -730,6 +741,7 @@ public class SpecimenDb extends AntwebDb {
         } catch (SQLException e) {
             s_log.error("getRecentCASPinnedPonerinaeQueryReport() e:" + e);
             queryReport.setError(e.toString());
+            throw e;
         } finally {
             DBUtil.close(stmt, "getRecentCASPinnedPonerinaeQueryReport()");
         }
@@ -738,7 +750,7 @@ public class SpecimenDb extends AntwebDb {
         return queryReport;
     }
 
-    public String getMostRecentIdealMethodRecord(int i, String taxonName, QueryReport queryReport) {
+    public String getMostRecentIdealMethodRecord(int i, String taxonName, QueryReport queryReport) throws SQLException {
         String record = null;
         Statement stmt = null;
         ResultSet rset = null;
@@ -781,13 +793,14 @@ public class SpecimenDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getMostRecentIdealMethodRecord() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, "getMostRecentIdealMethodRecord()");
         }
         return record;
     }
 
-    public String parseDates() {
+    public String parseDates() throws SQLException {
         String message = "";
         int count = 0;
         int updated = 0;
@@ -876,6 +889,7 @@ public class SpecimenDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("dateParse() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "dateParse()");
         }
@@ -884,8 +898,7 @@ public class SpecimenDb extends AntwebDb {
     }
 
     // http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=true&isIgnoreInsufficientCriteria=false&sortBy=taxonname&collGroupOpen=none&specGroupOpen=none&geoGroupOpen=none&typeGroupOpen=none&typeGroupOpen=none&searchType=contains&name=&familySearchType=equals&family=Formicidae&subfamilySearchType=equals&subfamily=none&genusSearchType=equals&genus=anochetus&speciesSearchType=contains&species=&subspeciesSearchType=contains&subspecies=&bioregion=&country=&adm1=&adm2SearchType=contains&adm2=&localityNameSearchType=contains&localityName=&localityCodeSearchType=contains&localityCode=&habitatSearchType=contains&habitat=&elevationSearchType=greaterThanOrEqual&elevation=&methodSearchType=contains&method=&microhabitatSearchType=equals&microhabitat=&collectedBySearchType=equals&collectedBy=&collectionCodeSearchType=contains&collectionCode=&dateCollectedSearchType=greaterThanOrEqual&dateCollected=&specimenCodeSearchType=contains&specimenCode=&locatedAtSearchType=contains&locatedAt=&lifeStageSearchType=contains&lifeStage=&casteSearchType=contains&caste=&mediumSearchType=contains&medium=&specimenNotesSearchType=contains&specimenNotes=&dnaExtractionNotesSearchType=contains&dnaExtractionNotes=&museumCodeSearchType=equals&museumCode=&ownedBySearchType=contains&ownedBy=&createdSearchType=equals&created=&groupName=&uploadId=0&type=&types=off&statusSet=all&imagesOnly=off&resultRank=specimen&output=list&x=27&y=14
-    private int updateParsedDates(String code, String start, String end)
-         throws SQLException {
+    private int updateParsedDates(String code, String start, String end) throws SQLException {
         int count = 0;
         Statement stmt = null;
         ResultSet rset = null;
@@ -916,8 +929,7 @@ public class SpecimenDb extends AntwebDb {
         return count;
     }
 
-    private int updateCollectedStartAsNull(String code)
-            throws SQLException {
+    private int updateCollectedStartAsNull(String code) throws SQLException {
         int count = 0;
         Statement stmt = null;
         ResultSet rset = null;
@@ -938,7 +950,7 @@ public class SpecimenDb extends AntwebDb {
     }
 
     // Currently testing. Fetch all of the type statuses to see how well we can handle them... Called from TestAction.java.
-    public ArrayList<String> getTypeStatusList(int groupId) {
+    public ArrayList<String> getTypeStatusList(int groupId) throws SQLException {
         ArrayList<String> typeStatusList = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
@@ -955,6 +967,7 @@ public class SpecimenDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getTypeStatusList() e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getTypeStatusList()");
         }
