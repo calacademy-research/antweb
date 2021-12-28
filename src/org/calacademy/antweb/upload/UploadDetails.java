@@ -206,7 +206,7 @@ public class UploadDetails extends OperationDetails {
 
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Record Count:</b> " + getRecordCount();
 
-        if ("specimen".equals(getOperation())) {
+        if ("specimenUpload".equals(getOperation())) {
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Parsed:</b> " + getBuildLineTotal();
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Processed:</b> " + getProcessLineTotal();
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Museums:</b> <a href='' title='" + getMuseumMap().toString() + "'>" + getMuseumMap().size() + "</a>";

@@ -675,7 +675,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         finishRegenerateAllAntweb();
         (new ProjectDb(getConnection())).updateCounts("allantwebants");      // Project counts
 
-        s_log.warn("regenerateAllAntweb() completed.");
+        s_log.info("regenerateAllAntweb() completed.");
 
         //s_log.warn("regenerateAllAntweb() execute complete.");
         //  LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "After regenerateAllAntweb Proj_taxon worldants counts");

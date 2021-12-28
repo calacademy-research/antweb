@@ -240,7 +240,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
 		// Not ideal, but the uploadDetails is created here. Validate info from above is not present.
         uploadDetails = importSpeciesList(project, uploadFile, accessGroupId);
-        if (AntwebProps.isDevOrStageMode()) s_log.info("importSpeciesList(4) 1 uploadDetails:" + uploadDetails);
+        //if (AntwebProps.isDevOrStageMode()) s_log.info("importSpeciesList(4) 1 uploadDetails:" + uploadDetails);
 
         if (uploadDetails == null) {
             s_log.error("uploadSpeciesList() uploadDetails is null");
@@ -257,12 +257,7 @@ public class SpeciesListUpload extends AntwebUpload {
         boolean skip = false;
         if (AntwebProps.isDevMode()) skip = true;
         if (!skip) {
-            try {
-                (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
-            } catch (SQLException e) {
-                s_log.error("uploadSpeciesList() unable to regenerateAllAntwebProject due to e:" + e);
-                throw e;
-            }
+            (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
         } else {
             s_log.debug("Warning ProjTaxonDb.regenerateAllAntweb() is skipped in Dev. See SpeciesListUpload.java:169");
         }
@@ -271,8 +266,6 @@ public class SpeciesListUpload extends AntwebUpload {
         A.log("uploadSpeciesList() NOT fossils:" + totalNotFossils);
 
         new WorldantsUploadDb(getConnection()).deleteHomonymsWithoutTaxa();
-
-        TaxonMgr.populate(getConnection(), true, false);
 
         try {
           if (singleUpload)
@@ -531,7 +524,7 @@ public class SpeciesListUpload extends AntwebUpload {
                             currentValidRank = element;
                             //A.log("currentValidRank:" + currentValidRank);
                         }
-                        A.iLog("importSpeciesList() index:" + index, 5000);  // + " currentValidRank:" + currentValidRank
+                        A.iLog("importSpeciesList() index:" + index, 100000);  // + " currentValidRank:" + currentValidRank
                         if (index == speciesHeader) {
                           thisSpecies = element.toLowerCase();
                           if ((thisSpecies != null) && !"".equals(thisSpecies)) {

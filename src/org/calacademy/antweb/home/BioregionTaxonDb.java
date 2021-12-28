@@ -210,7 +210,7 @@ See BioregionDb.java:77 where this call is commented out.
       Statement stmt = null;
       try {          
           if (get(bioregion.getName(), taxonName) != null) {
-            A.iLog("insertSpecies integrity checked");
+            //A.iLog("insertSpecies integrity checked");
             return;
           }
           String dml = "insert into bioregion_taxon (bioregion_name, taxon_name, specimen_count, image_count, insert_method, source) values ('" 

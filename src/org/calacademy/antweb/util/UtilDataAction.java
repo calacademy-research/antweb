@@ -217,7 +217,7 @@ public class UtilDataAction extends Action {
                 message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 12.30 mins
                 message += " " + doAction("geolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
                 message += " " + doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
-                GeolocaleMgr.populate(connection, true, false);
+                //GeolocaleMgr.populate(connection, true, false); // Unnecessary. We reload all in set5.
             }
 
             // dev: 7.05 mins. Prod: 14.52 mins. Dev2: 12.85
@@ -250,6 +250,7 @@ public class UtilDataAction extends Action {
                 s_log.info("Done deleteOldSpecimenUploadTaxa. Starting checkAntwiki...");
                 message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
                 s_log.info("Done checkAntwiki.");
+                AntwebMgr.populate(connection, true);
             }
 
             if ("restart".equals(action)) {

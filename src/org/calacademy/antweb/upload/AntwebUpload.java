@@ -250,8 +250,7 @@ public class AntwebUpload {
 
         // New functionality. Parent taxons are handled.
         if (!isParent && parentTaxonName != null && !"worldants".equals(source)) {
-
-
+            
             if (taxonName.contains("formicinaemyrma iperstriata"))
                 s_log.debug("saveTaxon() 5 BAD currentValidName:" + currentValidName + " taxonName:" + taxonName);
             // if we save a taxon, we make sure it's parent exists, or we create it.
