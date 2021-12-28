@@ -183,7 +183,7 @@ public class UploadAction extends Action {
 					} else {
 						s_log.warn("execute() DEV MODE SKIPPING runStatistics");
 					}
-			    }
+			    } else 
 
  			  if (action.equals("uploadSpeciesList")) {
  			    // This functionality should probably be inside of SpeciesListUploader.java
@@ -630,7 +630,7 @@ public class UploadAction extends Action {
 		// Would like to, but it takes a 3min for CAS data. Too expensive?
 		//specimenDb.calcCaste(groupId);
     }
-    
+
     private ActionForward doAction(String action, Connection connection, HttpServletRequest request
         , ActionMapping mapping, Login accessLogin)
         throws SQLException, IOException {
