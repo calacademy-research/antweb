@@ -457,7 +457,7 @@ public class AntwebUpload {
                 Statement stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.updateTaxon()");
 
                 int c = stmt.executeUpdate(query);
-                A.log("updateTaxon() c:" + c + " taxonName:" + taxonName); //query:" + query);
+                A.iLog("updateTaxon() c:" + c + " taxonName:" + taxonName); //query:" + query);
 
                 DBUtil.close(stmt, "AntwebUpload.updateTaxon()");
 

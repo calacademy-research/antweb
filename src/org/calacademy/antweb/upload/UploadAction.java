@@ -152,9 +152,9 @@ public class UploadAction extends Action {
 
 			if (action != null) {
 
-			  // Upload a Specimen File (tab-delimited .txt file):
-			  FormFile specimenFile = theForm.getBiota();
-			  if ("specimenUpload".equals(action) && (specimenFile != null) && (!specimenFile.getFileName().equals(""))) {
+			    // Upload a Specimen File (tab-delimited .txt file):
+			    FormFile specimenFile = theForm.getBiota();
+			    if ("specimenUpload".equals(action) && (specimenFile != null) && (!specimenFile.getFileName().equals(""))) {
 
 					String theFileName = accessGroup.getAbbrev() + "SpecimenList";
 					action = "import:" + theFileName;
@@ -183,7 +183,7 @@ public class UploadAction extends Action {
 					} else {
 						s_log.warn("execute() DEV MODE SKIPPING runStatistics");
 					}
-			  }
+			    }
 
  			  if (action.equals("uploadSpeciesList")) {
  			    // This functionality should probably be inside of SpeciesListUploader.java
@@ -630,23 +630,7 @@ public class UploadAction extends Action {
 		// Would like to, but it takes a 3min for CAS data. Too expensive?
 		//specimenDb.calcCaste(groupId);
     }
-
-        /*
-    // This thing turns the image_count view into an actual table to speed up queries on it.
-    private void runCountCrawls(Connection connection) throws SQLException {
-        if (AntwebProps.isDevOrStageMode()) {
-          s_log.warn("runCountCrawls() not crawling counts because of test mode.");
-          return;
-        }
-
-        s_log.warn("runCountCrawls() allCountCrawls");
-
-        (new TaxonCountDb(connection)).allCountCrawls();
-
-        (new TaxonDb(connection)).crawlForType();
-    }
- */
-
+    
     private ActionForward doAction(String action, Connection connection, HttpServletRequest request
         , ActionMapping mapping, Login accessLogin)
         throws SQLException, IOException {
