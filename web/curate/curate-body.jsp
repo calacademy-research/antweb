@@ -134,6 +134,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
        <html:form method="POST" action="upload.do" enctype="multipart/form-data">
          <input type="hidden" name="ancFileDirectory" value="none" />
+         <input type="hidden" name="action" value="specimenUpload" />
          <input type="hidden" name="updateAdvanced" value="no" />
          <input type="hidden" name="updateFieldGuide" value="none" />
          <input type="hidden" name="images" value="no" />

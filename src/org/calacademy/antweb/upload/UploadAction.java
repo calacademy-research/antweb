@@ -151,6 +151,40 @@ public class UploadAction extends Action {
             }
 
 			if (action != null) {
+
+			  // Upload a Specimen File (tab-delimited .txt file):
+			  FormFile specimenFile = theForm.getBiota();
+			  if ("specimenUpload".equals(action) && (specimenFile != null) && (!specimenFile.getFileName().equals(""))) {
+
+					String theFileName = accessGroup.getAbbrev() + "SpecimenList";
+					action = "import:" + theFileName;
+
+					//logFileName += theFileName + UploadDetails.getLogExt();
+					s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
+
+					uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+
+					ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
+
+					specimenPostProcess(connection, accessLogin, uploadDetails);
+
+					//A.log("execute() populate Museum map:" + uploadDetails.getMuseumMap());
+					// We will hold this for a separate curator driven museum calculation
+					try {
+						session.setAttribute("museumMap", uploadDetails.getMuseumMap());
+					} catch (java.lang.IllegalStateException e) {
+						s_log.info("execute() handled:" + e);
+					}
+
+					runCountCrawls = true;
+
+					if (!AntwebProps.isDevMode()) {
+						runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
+					} else {
+						s_log.warn("execute() DEV MODE SKIPPING runStatistics");
+					}
+			  }
+
  			  if (action.equals("uploadSpeciesList")) {
  			    // This functionality should probably be inside of SpeciesListUploader.java
 
@@ -445,39 +479,6 @@ public class UploadAction extends Action {
 
 				request.setAttribute("message", message);
 				return mapping.findForward("message");
-			}
-
-			// Upload a Specimen File (tab-delimited .txt file):
-			FormFile specimenFile = theForm.getBiota();
-			if ((specimenFile != null) && (!specimenFile.getFileName().equals(""))) {
-
-				String theFileName = accessGroup.getAbbrev() + "SpecimenList";
-				action = "import:" + theFileName;
-
-				//logFileName += theFileName + UploadDetails.getLogExt();
-				s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
-
-				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
-
-                ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
-
-				specimenPostProcess(connection, accessLogin, uploadDetails);
-
-				//A.log("execute() populate Museum map:" + uploadDetails.getMuseumMap());
-				// We will hold this for a separate curator driven museum calculation
-				try {
-				  session.setAttribute("museumMap", uploadDetails.getMuseumMap());
-				} catch (java.lang.IllegalStateException e) {
-				  s_log.info("execute() handled:" + e);
-				}
-
-  			    runCountCrawls = true;
-
-				if (!AntwebProps.isDevMode()) {
-                    runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
-				} else {
-					s_log.warn("execute() DEV MODE SKIPPING runStatistics");
-				}
 			}
 
 			// Upload a File to Folder:

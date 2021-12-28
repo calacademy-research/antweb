@@ -440,7 +440,8 @@ Or, if there are stmts and/or rsets...
       }
       s_lastMethod = method;
       if (secs > s_threshold) {
-        s_log.info("profileQuery() method:" + method + " secs:" + secs + " query:" + query);
+        String message = "profileQuery() method:" + method + " secs:" + secs + " query:" + query;
+          LogMgr.appendLog("profileQuery.log", message);
       }
     }
 

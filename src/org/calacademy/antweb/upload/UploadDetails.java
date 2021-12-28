@@ -188,7 +188,7 @@ public class UploadDetails extends OperationDetails {
             + warning
             + "<h3>Upload Details:</h3>"
             + "&nbsp;&nbsp;&nbsp;<b>Upload ID:</b> <a href='" + AntwebProps.getDomainApp() + "/uploadReport.do?uploadId=" + AntwebMgr.getNextSpecimenUploadId() + "'>" + AntwebMgr.getNextSpecimenUploadId() + "</a>"
-            + "<br> &nbsp;&nbsp;&nbsp;<b>Operation:" + getOperation() + "</a>"
+            + "<br> &nbsp;&nbsp;&nbsp;<b>Operation:" + getOperation() + "</b>"
             + "<br>&nbsp;&nbsp;&nbsp;<b>This Log File:</b> " + getLogFileAnchor() 
             + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + (new Date()).toString()     
             + "<br>&nbsp;&nbsp;&nbsp;<b>Encoding:</b> " + encoding   
