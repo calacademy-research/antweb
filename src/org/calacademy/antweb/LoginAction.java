@@ -120,8 +120,9 @@ public final class LoginAction extends Action {
             //s_log.warn("Successful login of " + userNameOrEmail + " target:" + target);
 
             if ((target != null) && (!target.equals("")) 
-              && (!target.contains("forgotPassword"))
-              && (!target.contains("login.do"))) { 
+                    && (!target.contains("forgotPassword"))
+                    && (!target.contains("curate.do"))
+                    && (!target.contains("login.do"))) {
               s_log.info("Target is " + target);
               if ( (target.contains("fieldGuideResults.do"))
                  ) {

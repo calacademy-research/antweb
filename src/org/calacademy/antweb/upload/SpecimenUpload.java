@@ -68,7 +68,12 @@ public class SpecimenUpload extends SpecimenUploadParse {
     
     public UploadDetails importSpecimens(UploadFile uploadFile, Login accessLogin) 
       throws SQLException, TestException, AntwebException
-    {      
+    {
+
+        if (TaxonMgr.getSubfamilies().size() < 10) {
+            throw new AntwebException("Taxon Mgr size discrepancy.");
+        }
+
         //UploadDetails uploadDetails = null;
         
         Group accessGroup = accessLogin.getGroup();
@@ -373,7 +378,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
         return otherColumns;
     }
 
-    protected void compileMessages(Group group) {
+    protected void compileMessages(Group group) throws SQLException {
 
         if (getBadRankTaxonList().size() > 0) {
             String badRankErrors = "";
@@ -382,7 +387,6 @@ public class SpecimenUpload extends SpecimenUploadParse {
                 //badRankErrors += "<br>&nbsp;&nbsp;&nbsp;" + error;
             }
             s_log.warn("compileMessages() UNREPORTED ? badRankTaxonList:" + badRankErrors);
-
             //String message = " <b>Parsing Errors (bad rank - <font color=red>skipped</font>)</b>" + badRankErrors;
             //getMessageMgr().getMessages().add(message);
             
@@ -404,7 +408,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
         groupMorphoGenera(group);        
     }
 
-    private void groupMorphoGenera(Group group) {
+    private void groupMorphoGenera(Group group) throws SQLException {
 
         String query = null;
         Statement stmt = null;
@@ -433,6 +437,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
             }            
         } catch (SQLException e) {
             s_log.error("groupMorphoGenera() e:" + e + " query:" + query);
+            throw e;
         } finally {
             DBUtil.close(stmt, "groupMorphoGenera()");
         }
