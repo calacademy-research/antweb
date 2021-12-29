@@ -483,17 +483,28 @@ public class UtilDataAction extends Action {
 		}
 
 		if (action.equals("regenerateAllAntweb")) {
-		  ProjTaxonDb projTaxonDb = (new ProjTaxonDb(connection));
-		  projTaxonDb.regenerateAllAntweb();            // Proj_taxon records
-		  message = "All Antweb regenerated";
+            ProjTaxonDb projTaxonDb = (new ProjTaxonDb(connection));
+            projTaxonDb.regenerateAllAntweb();            // Proj_taxon records
+            message = "All Antweb regenerated";
+        }
 
-          /* moved into regen
-          (new ProjTaxonCountDb(connection)).countCrawl("allantwebants"); // Proj_taxon counts
-		  projTaxonDb.finishRegenerateAllAntweb();
-		  (new ProjectDb(connection)).updateCounts("allantwebants");      // Project counts		 
-          */
-		}	
+		/*
+        if (action.equals("runCountCrawls")) {
+            ProjTaxonCountDb projTaxonCountDb = (new ProjTaxonCountDb(connection));
+            projTaxonCountDb.countCrawl("allantwebants"); // Proj_taxon counts
+		    //projTaxonDb.finishRegenerateAllAntweb();
+		    //projTaxonDb.updateCounts("allantwebants");      // Project counts
 
+		    BioregionTaxonCountDb bioregionTaxonCountDb = (new BioregionTaxonCountDb(connection));
+		    bioregionTaxonCountDb.childrenCountCrawl();
+
+   		    GeolocaleTaxonCountDb geolocaleTaxonCountDb = (new GeolocaleTaxonCountDb(connection));
+		    geolocaleTaxonCountDb.childrenCountCrawl(num);
+
+  		    MuseumTaxonCountDb museumTaxonCountDb = (new MuseumTaxonCountDb(connection));
+		    museumTaxonCountDb.childrenCountCrawl();
+		}
+*/
     // ---------- Count Crawls -------------------------
 		// https://antweb-stg/utilData.do?action=geolocaleTaxonCountCrawl&num=392
 		if (action.equals("geolocaleTaxonCountCrawl")) {
