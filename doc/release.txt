@@ -1,5 +1,5 @@
 Release 8.68.2
-  Exception handling refinement in specimen upload.
+  Exception handling refinement in specimen upload and search facility.
   New profileQuery system.
   manager class reload tuning.
 

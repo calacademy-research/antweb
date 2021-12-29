@@ -99,7 +99,7 @@ public class AdvancedSearchAction extends Action {
 	}
 
     // This is a method called by ObjectMapDb. Used on geolocale pages.
-    public Map getGoogleMap(String country, String adm1, String resultRank, String output, Connection connection) {
+    public Map getGoogleMap(String country, String adm1, String resultRank, String output, Connection connection) throws SQLException {
         //A.log("getGoogleMapFunction() country:" + country + " adm1:" + adm1 + " resultRank:" + resultRank + " output:" + output);
         SearchParameters searchParameters = new SearchParameters();
         searchParameters.setFamily(Family.FORMICIDAE);
@@ -130,7 +130,7 @@ public class AdvancedSearchAction extends Action {
     }
 
     // This is a method called by ObjectMapDb. Used on museum pages.
-    public Map getGoogleMap(Museum museum, String resultRank, String output, Connection connection) {
+    public Map getGoogleMap(Museum museum, String resultRank, String output, Connection connection) throws SQLException {
         String museumCode = museum.getCode();
         //A.log("getGoogleMapFunction() country:" + country + " adm1:" + adm1 + " resultRank:" + resultRank + " output:" + output);
         SearchParameters searchParameters = new SearchParameters();
@@ -161,7 +161,7 @@ public class AdvancedSearchAction extends Action {
     }
     
     // This is a method called by ObjectMapDb. Used on group pages.
-    public Map getGoogleMap(Group group, String resultRank, String output, Connection connection) {
+    public Map getGoogleMap(Group group, String resultRank, String output, Connection connection) throws SQLException {
         int groupId = group.getId();
         //A.log("getGoogleMap() groupId:" + groupId + " resultRank:" + resultRank + " output:" + output);
         SearchParameters searchParameters = new SearchParameters();
@@ -226,7 +226,7 @@ public class AdvancedSearchAction extends Action {
 
     // This version is used internally, for instance to create the geolocale maps. (Object_Maps table)
 	public ArrayList<ResultItem> getSearchResults(Connection connection, SearchParameters searchParameters) 
-		throws IOException, ServletException, SearchException {
+		throws IOException, ServletException, SearchException, SQLException {
         // s_log.warn("getSearchResults()");		
 
 		AdvancedSearchResults results = new AdvancedSearchResults();

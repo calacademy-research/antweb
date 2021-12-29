@@ -36,7 +36,7 @@ public class GenericSearch implements Serializable {
     protected ArrayList<ResultItem> results;
     protected Pattern inQuotes = Pattern.compile("(\".*?\")");
 
-    public ArrayList<ResultItem> getResults() throws SearchException {
+    public ArrayList<ResultItem> getResults() throws SearchException, SQLException {
 
         if (results == null) {
             setResults();
@@ -46,7 +46,7 @@ public class GenericSearch implements Serializable {
         return results;
     }
 
-    public void setResults() throws SearchException {
+    public void setResults() throws SearchException, SQLException {
         //A.log("GenericSearch.setResults()");
         //    first do a big search getting images, types, and the validity
         //    then for the invalid ones - do another search to get the valid names
@@ -85,7 +85,7 @@ public class GenericSearch implements Serializable {
 
     }
 
-    protected ArrayList<ResultItem> filterByProject(ArrayList<ResultItem> currentList, String project) {
+    protected ArrayList<ResultItem> filterByProject(ArrayList<ResultItem> currentList, String project) throws SQLException {
         //A.log("GenericSearch.filterByProject() project:" + project);
         if ((project == null)
                 || (project.length() <= 0)
@@ -149,7 +149,7 @@ public class GenericSearch implements Serializable {
             return theList;
         } catch (SQLException e) {
             s_log.error("filterByProject() query:" + theQuery + " " + e);
-            return null;
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "filterByProject()");
         }
@@ -162,7 +162,7 @@ public class GenericSearch implements Serializable {
     // The second pass deals with cases where we don't have the specimen
     // code.  For these, we'll execute a prepared statement
     //
-    protected ArrayList<SearchItem> setResultTypes(ArrayList<SearchItem> currentList, String project) {
+    protected ArrayList<SearchItem> setResultTypes(ArrayList<SearchItem> currentList, String project) throws SQLException {
         //A.log("GenericSearch.setResultTypes() project:" + project);
 
         if ((currentList == null) || (currentList.size() == 0)) {
@@ -239,6 +239,7 @@ public class GenericSearch implements Serializable {
         } catch (SQLException e) {
             s_log.error("setResultTypes() 1 theQuery:" + theQuery + " e:" + e);
             org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            throw e;
         } finally {
             DBUtil.close(prepStmt, rset, this, "setResultTypes() 1");
         }
@@ -289,7 +290,8 @@ public class GenericSearch implements Serializable {
                 }
             } catch (SQLException e) {
                 s_log.error("setResultTypes() 2 theQuery:" + theQuery + " e:" + e);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                org.calacademy.antweb.util.AntwebUtil.logShortStackTrace(e);
+                throw e;
             } finally {
                 DBUtil.close(stmt, rset, this, "setResultTypes() 2");
             }
@@ -318,7 +320,7 @@ public class GenericSearch implements Serializable {
         return currentList;
     }
 
-    protected ArrayList<ResultItem> createInitialResults() throws SearchException {
+    protected ArrayList<ResultItem> createInitialResults() throws SearchException, SQLException {
         //A.log("GenericSearch.createInitialResults()");
 
         // Need Subspecies logic?!
@@ -368,13 +370,13 @@ public class GenericSearch implements Serializable {
             return getListFromRset(GENERIC, rset, null, theQuery);
         } catch (SQLException e) {
             s_log.error("createInitialResults() query:" + theQuery + " e:" + e);
-            throw new SearchException(e.toString());
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "createInitialResults()");
         }
     }
 
-    protected ArrayList<ResultItem> getListFromRset(ResultSet rset, SearchItem synonymousItem, String theQuery, int numToShow) {
+    protected ArrayList<ResultItem> getListFromRset(ResultSet rset, SearchItem synonymousItem, String theQuery, int numToShow) throws SQLException {
         //A.log("GenericSearch.getListFromRset(rset..)"); 
         ArrayList<ResultItem> bigList = getListFromRset(GENERIC, rset, synonymousItem, theQuery);
         ArrayList<ResultItem> smallList = new ArrayList<>();
@@ -395,7 +397,7 @@ public class GenericSearch implements Serializable {
     public static int DESC_EDIT = 5;
     public static int SEARCH = 6;
 
-    protected ArrayList<ResultItem> getListFromRset(int searchType, ResultSet rset, SearchItem synonymousItem, String theQuery) {
+    protected ArrayList<ResultItem> getListFromRset(int searchType, ResultSet rset, SearchItem synonymousItem, String theQuery) throws SQLException {
         //A.log("GenericSearch.getListFromRset(searchType...)"); 
         ArrayList<ResultItem> theList = new ArrayList<>();
         String family = null;
@@ -636,7 +638,8 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
             }
         } catch (SQLException e) {
             s_log.error("getListFromRset() e:" + e + " query:" + theQuery);
-            AntwebUtil.logStackTrace(e);
+            AntwebUtil.logShortStackTrace(e);
+            throw e;
         }
 
         // AntwebUtil.logStackTrace();

@@ -111,7 +111,7 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
 	
 	public static String s_query = null;
 	    
-    protected ArrayList<ResultItem> createInitialResults() throws SearchException {
+    protected ArrayList<ResultItem> createInitialResults() throws SearchException, SQLException {
 
 		int sufficientCriteria = 3;   
         //  We expect to receive status and family so have 2 already by default. If family
@@ -391,7 +391,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
         } catch (SQLException e) {
             s_log.error("createInitialResults() e:" + e + " query:" + theQuery);
             //AntwebUtil.logShortStackTrace(e, 18);
-            return null;
+            throw e;
         }
     }
 
@@ -408,7 +408,7 @@ remove taxon entirely
 add status to specimen
 */
     
-    public void setResults() throws SearchException {
+    public void setResults() throws SearchException, SQLException {
         //  first do a big search getting images, types, and the validity
         //  then for the invalid ones - do another search to get the valid names
         //  put all of these in an array
