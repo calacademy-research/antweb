@@ -49,7 +49,7 @@
     String rank = taxon.getRank();
     String taxonPrettyName = taxon.getPrettyName();
 
-    if (taxonPrettyName == null) AntwebUtil.log("dynamicMap-body.jsp taxonPrettyName:" + taxonPrettyName + " requestInfo:" + HttpUtil.getRequestInfo(request));
+    if (taxonPrettyName == null || "".equals(taxonPrettyName)) AntwebUtil.log("dynamicMap-body.jsp taxonPrettyName:" + taxonPrettyName + " requestInfo:" + HttpUtil.getRequestInfo(request));
 
     boolean isSearch = false;
  
