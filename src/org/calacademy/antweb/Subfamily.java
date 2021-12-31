@@ -84,7 +84,7 @@ public class Subfamily extends Family implements Serializable {
             while (rset.next()) {
                 ++i;
 
-                child = (new TaxonDb(connection)).getGenus(subfamily, rset.getString("species"));
+                child = (new TaxonDb(connection)).getGenus(subfamily, rset.getString("genus"));
 
                 if (getChildImages) {
                     child.setImages(connection, overview, caste);
