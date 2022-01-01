@@ -110,7 +110,6 @@ public class Scheduler extends Action {
         }
 				
 		try {
-
 			String codeParam = "&secureCode=" + secureCode;
 
 		    UtilDataAction.setInComputeProcess(action);

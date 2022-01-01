@@ -130,7 +130,7 @@ public class OverviewMgr {
                                         // Apparently adm1Name not found. Return country instead. Otherwise would be very poor performance.
                                         // The overview would end up being allantwebants. Why? To be resolved. Other misses could trigger?
                                         overview = GeolocaleMgr.getCountry(countryName);
-                                        s_log.info("findOverview() Serious performance issue? See TaxaPage.fetchChildren() overview:" + overview + " countryName:" + countryName + " adm1Name:" + adm1Name);
+                                        s_log.info("findOverview() Not found Adm1:" + adm1Name + " Using countryName:" + countryName + " for overview:" + overview);
                                     }
 								  }
                                   //A.log("getOverview() adm1Name:" + adm1Name + " country:" + countryName + " overview:" + overview); // + " country:" + ((Adm1)overview).getParent());								  

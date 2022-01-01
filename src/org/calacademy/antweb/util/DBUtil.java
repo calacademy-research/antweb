@@ -324,10 +324,12 @@ Or, if there are stmts and/or rsets...
       for (NewProxyConnection conn : connectionRequestMap.keySet()) {
         ++i;
         DbRequest dbRequest = connectionRequestMap.get(conn);
-        Date date = dbRequest.date;
-        if (AntwebUtil.minsSince(date) > 5) {
-          if (val == null) val = "";
-          val += "i:" + i + " conn:" + conn + " dbRequest:" + dbRequest + "<br>";
+        if (dbRequest != null) {
+            Date date = dbRequest.date;
+            if (AntwebUtil.minsSince(date) > 5) {
+                if (val == null) val = "";
+                val += "i:" + i + " conn:" + conn + " dbRequest:" + dbRequest + "<br>";
+            }
         }
       }
       return val;
