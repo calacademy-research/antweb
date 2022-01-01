@@ -86,6 +86,7 @@ public final class BigMapAction extends Action {
               if (specimen == null || !specimenCode.equals(specimen.getCode())) {
                 specimen = (new Specimen(specimenCode, connection)); //(new SpecimenDb(connection)).getSpecimen(specimenCode);
                 session.setAttribute("specimen", specimen);
+                taxonName = specimen.getTaxonName();
               }          
           }
               
@@ -127,7 +128,7 @@ public final class BigMapAction extends Action {
         , int geolocaleId, String museumCode, boolean geolocaleFocus, Connection connection, HttpSession session) throws SQLException {
         
         Map thisMap = null;
-        s_log.debug("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName);
+        //s_log.info("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName);
                      
         // Taxon map.  
         if ((taxonName != null) && (!"".equals(taxonName))) {
@@ -148,13 +149,15 @@ public final class BigMapAction extends Action {
             }
 
             if (taxon.getName() == null || "".equals(taxon.getName())) AntwebUtil.log("getMap() getName:" + taxon.getName() + " title:" + thisMap.getTitle() + " taxon:" + taxon + " localityOverview:" + localityOverview + " geolocaleFocus:" + geolocaleFocus);
+            //A.log("getMap() taxon:" + taxon + " taxonName:" + taxon.getTaxonName() + " name:" + taxon.getName());
             session.setAttribute("taxon", taxon);
           } else {
             String message = "BigMapAction.getMap(" + project + ", " + taxonName + ", " 
               + specimenCode + ", " + localityKey + ", " + collectionCode + ", ...) taxon not found.";
             LogMgr.appendLog("notFound.txt", message);
+            session.setAttribute("taxon", null);
           }
-        } else 
+        } else
 
         if ((localityKey != null) && (!"".equals(localityKey))) {
           //s_log.warn("getMap() locality:" + localityKey);
