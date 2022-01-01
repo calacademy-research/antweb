@@ -270,11 +270,10 @@ public class GeolocaleMgr extends Manager {
         return null;
     }
 
-
     public static @Nullable Adm1 getAdm1(int geolocaleId) {
         return adm1List.stream().filter(geolocale -> geolocale.getId() == geolocaleId)
                 .findFirst().orElse(null);
-    }
+    } 
 
     public static @Nullable Geolocale getGeolocale(int geolocaleId) {
         return s_geolocales.stream().filter(geolocale -> geolocale.getId() == geolocaleId)

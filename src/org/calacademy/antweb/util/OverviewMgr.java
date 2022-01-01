@@ -105,7 +105,7 @@ public class OverviewMgr {
                                       hasParams = "country overview";
  								      countryName = request.getParameter("country");
                                     }
-                                    overview = GeolocaleMgr.getAdm1(adm1Name, countryName);
+                                    overview = GeolocaleMgr.getAnyAdm1(adm1Name, countryName);
 								    if (overview == null && adm1Name != null) {
                                         // Apparently adm1Name not found.
                                         throw new AntwebException("Adm1 not found countryName:" + countryName + " adm1Name:" + adm1Name);

@@ -1,6 +1,10 @@
+Release 8.68.5
+  In Overview Mgr, change getAdm1 to getAnyAdm1.
+
 Release 8.68.4
-  Exception handling and logging in BrowseAction, OverviewMgr, TaxonDb, imagePage.jsp, and Taxon hierarchy.
+  Exception handling and logging in BrowseAction, OverviewMgr, TaxonDb, and Taxon hierarchy.
   Added Geolocale.isLive() documentation.
+  imagePage.jsp prettyName use refined and expanded.
 
 Release 8.68.3
   Fix the Current Statistics More>>> Page.
