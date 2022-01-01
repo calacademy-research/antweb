@@ -38,7 +38,7 @@ public class BrowseAction extends DescriptionAction {
         throws IOException, ServletException {
 
         //A.log("execute() sort:" + request.getParameter("sortBy") + " " + request.getParameter("sortOrder"));
-
+        String message = null;
         java.util.Date startTime = new java.util.Date();        
 
         AntwebMgr.isPopulated(); // will force populate 
@@ -80,15 +80,7 @@ public class BrowseAction extends DescriptionAction {
         String subspecies = browseForm.getSubspecies();
         String[] chosen = browseForm.getChosen();
         String authorDate = browseForm.getAuthorDate();
-        
-/*
-        //String[] testStrings = {family, subfamily, genus, species, subspecies, authorDate};
-        String[] testStrings = {queryString};
-        if (HttpUtil.hasIllegalChars(testStrings, request)) {
-          request.setAttribute("message", "Illegal characters.");
-          return (mapping.findForward("message"));        
-        }
-*/
+
         String name = browseForm.getName();
         if (name != null) {
           if (Rank.FAMILY.equals(rank)) family = name;
@@ -131,7 +123,7 @@ public class BrowseAction extends DescriptionAction {
         }
                 
         if (family == null && subfamily == null && genus == null && species == null) {
-            String message = "Taxon not found.";
+            message = "Taxon not found.";
             request.setAttribute("message", message);
             return (mapping.findForward("message"));
         }
@@ -139,13 +131,13 @@ public class BrowseAction extends DescriptionAction {
         // Some requests have "&;" in the queryString.  EOL data feed?
         String correctedUrl = HttpUtil.redirectCorrectedUrl(request, response);      // Can't.  Response committed.  Diagnostic.
         if (correctedUrl != null) {
-          String message = "Error found with URL.  Try this link <a href=\"" + correctedUrl + "\">here</a>.";
+          message = "Error found with URL.  Try this link <a href=\"" + correctedUrl + "\">here</a>.";
           request.setAttribute("message", message);
           return (mapping.findForward("message"));
         }
      
         if("specimen".equals(rank)) {
-           String message = "Invalid request.";
+           message = "Invalid request.";
            if (browseForm.getCode() != null) {
               String link =  AntwebProps.getDomainApp() + "/specimen.do?code=" + browseForm.getCode();
               message += "  Try:<a href='" + link + "'>" + link + "</a>";
@@ -157,7 +149,7 @@ public class BrowseAction extends DescriptionAction {
         }
      
         if (Taxon.getTaxonOfRank(rank) == null) {
-             String message = "Bad rank:" + rank + " " + AntwebUtil.getRequestInfo(request);
+             message = "Bad rank:" + rank + " " + AntwebUtil.getRequestInfo(request);
              s_log.info("execute() " + message);
              request.setAttribute("message", message);
              return (mapping.findForward("message"));
@@ -224,7 +216,7 @@ public class BrowseAction extends DescriptionAction {
           if ("mapComparison".equals(cacheType)) {
             ++s_mapComparisonCount;
             if (s_mapComparisonCount > s_mapComparisonLimit) {
-              String message = "Simultaneous map comparison limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
+              message = "Simultaneous map comparison limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
               request.setAttribute("message", message);
               //s_log.warn("execute() message:" + message);
               return (mapping.findForward("message"));                  
@@ -233,7 +225,7 @@ public class BrowseAction extends DescriptionAction {
           if ("getComparison".equals(cacheType)) {
             ++s_getComparisonCount;
             if (s_getComparisonCount > s_getComparisonLimit) {
-              String message = "Simultaneous get comparison limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
+              message = "Simultaneous get comparison limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
               request.setAttribute("message", message);
               //s_log.warn("execute() message:" + message);
               return (mapping.findForward("message"));                  
@@ -278,7 +270,7 @@ public class BrowseAction extends DescriptionAction {
 		  //if (taxon != null) A.log("execute() authorDate:" + browseForm.getAuthorDate() + " class:" + taxon.getClass());
 
 		  if (taxon == null) {
-			  String message = "Taxon not found.";
+			  message = "Taxon not found.";
 			  request.setAttribute("message", message);
 			  return (mapping.findForward("message"));
 		  }
@@ -308,7 +300,7 @@ public class BrowseAction extends DescriptionAction {
 
 		  if (taxon.getTaxonSet() == null) {
               // if (!ProjectDb.projectHasTaxon(projectName, taxon, connection)) {
-			  String message = "Taxon:" + taxon.getTaxonName() + " not found for overview:" + overview;
+			  message = "Taxon:" + taxon.getTaxonName() + " not found for overview:" + overview;
 			  request.setAttribute("message", message);
 			  return (mapping.findForward("message"));
 		  }
@@ -428,18 +420,95 @@ We are showin the full map of ponerinae for every adm1.
 		  }
 */
 
+
+            if (taxon == null) {
+                message = "Taxon not found";
+                if (!overview.getName().equals(Project.ALLANTWEBANTS)) {
+                    message += " for overview:" + overview.getName();
+                } else {
+                    message += ".";
+                }
+                if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
+                    // An upload is currently in process.  Request that this process be re-attempted shortly.
+                    message += "  A curator is currently in the process of an Upload.  Please try again shortly.";
+                    s_log.info("execute() " + message);
+                } else {
+                    s_log.info("execute() " + message + "  No upload in process.");
+                }
+                request.setAttribute("message", message);
+                LogMgr.appendLog("noExists.txt", (new java.util.Date()).toString() + " - " + AntwebUtil.getRequestInfo(request));
+                return (mapping.findForward("message"));
+            }
+
+            if ("oneView".equals(cacheType)) chosen = (String[]) session.getAttribute("chosen");
+            if ("getCompare".equals(cacheType)) session.setAttribute("chosen", chosen);
+            //A.log("execute() scope:" + mapping.getScope() + " showTaxon:" + taxon + " chosen:" + chosen + " cacheType:" + cacheType);
+            if (chosen != null) {
+                taxon.filterChildren(chosen);
+            }
+
+            // A.log("execute() scope:" + mapping.getScope() + " rank:" + taxon.getRank());
+            // if ("request".equals(mapping.getScope())) {
+
+            request.getSession().setAttribute("taxon", taxon);
+
+            request.setAttribute("taxon", taxon);
+            request.setAttribute("showTaxon", taxon);
+
+            //session.setAttribute("taxon", taxon);
+
+            if ("getComparison".equals(cacheType) || "mapComparison".equals(cacheType)) {
+                session.setAttribute("showTaxon", taxon);
+                session.setAttribute("mykids", taxon.getChildren());
+            }
+
+
+//'<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getThumbview()
+
+            //A.log("execute() taxon:" + taxon + " taxonImages:" + taxon.getImages() );
+            //OpenGraphMgr.setOGTitle(Taxon.getPrettyTaxonName(taxon.getTaxonName()));
+            request.setAttribute("ogTitle", Taxon.getPrettyTaxonName(taxon.getTaxonName()));
+            if (taxon.getImages() != null) {
+                SpecimenImage headShot = (SpecimenImage) taxon.getImages().get("h");
+                if (headShot != null) {
+                    String ogImage = headShot.getMedres();
+                    //A.log("execute() ogImg:" + ogImg);
+                    //OpenGraphMgr.setOGImage(ogImg);
+                    request.setAttribute("ogImage", ogImage);
+                } else s_log.debug("No Open Graph Image set. No headshot");
+
+                if (AntwebDebug.isDebugTaxon(taxon.getTaxonName())) s_log.debug("has d image:" + taxon.getImages().get("d"));
+
+            }
+
+            String execTime = HttpUtil.finish(request, startTime);
+            taxon.setExecTime(execTime);
+
+            // Set a transactional control token to prevent double posting
+            // This was removed because Tokens in forms where messing with luke's new functionality.
+            // saveToken(request);
+
+            if (taxon instanceof Homonym) {
+                //s_log.warn("execute() returning homonym:" + taxon);
+                return mapping.findForward("homonym");
+            }
+
+            if (rank.equals("specimen")) {
+                return (mapping.findForward("specimen"));
+            } else if (request.getParameter("shot") != null) {
+                return (mapping.findForward("oneView"));
+            } else {
+                // A.log("Success");
+                return (mapping.findForward("success"));
+            }
+
         } catch (java.util.MissingResourceException e) {
 			// This was around the new Map() command above, but we seemed to be not closing the db connection.
-			String message = "execute() MissingResource overview:"+ overview.getName();
-			s_log.warn(message);                
-			s_log.info(message + " on " + AntwebUtil.getRequestInfo(request));
-			request.setAttribute("message", message);
-			return (mapping.findForward("message"));
+			message = "execute() e:" + e + " MissingResource overview:"+ overview.getName();
+        } catch (AntwebException e) {
+            s_log.error("execute() e:" + e + " " + HttpUtil.getRequestInfo(request));
         } catch (SQLException e) {
-            String message = "execute() SQLException caught on request:" + AntwebUtil.getRequestInfo(request);
-            if (AntwebProps.isDevMode()) message += " e:" + e.toString();
-            s_log.error(message);
-            if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace(e);
+            message = "execute() SQLException caught on request:" + AntwebUtil.getRequestInfo(request);
         } finally {
             if ("mapComparison".equals(cacheType)) --s_mapComparisonCount;
             if ("getComparison".equals(cacheType)) --s_getComparisonCount;
@@ -451,89 +520,10 @@ We are showin the full map of ponerinae for every adm1.
             //s_log.info("execute() closing uniqueNumber:" + uniqueNumber);            
         }
 
-        if (taxon == null) {
-            String message = "Taxon not found";
-            if (!overview.getName().equals(Project.ALLANTWEBANTS)) {
-                message += " for overview:" + overview.getName();
-            } else {
-                message += ".";
-            }
-            if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
-                // An upload is currently in process.  Request that this process be re-attempted shortly.
-                message += "  A curator is currently in the process of an Upload.  Please try again shortly.";
-                s_log.info("execute() " + message);
-            } else {
-                s_log.info("execute() " + message + "  No upload in process.");
-            }
-            request.setAttribute("message", message);
-            LogMgr.appendLog("noExists.txt", (new java.util.Date()).toString() + " - " + AntwebUtil.getRequestInfo(request));
-            return (mapping.findForward("message"));
-        }
-
-        if ("oneView".equals(cacheType)) chosen = (String[]) session.getAttribute("chosen");
-        if ("getCompare".equals(cacheType)) session.setAttribute("chosen", chosen);
-        //A.log("execute() scope:" + mapping.getScope() + " showTaxon:" + taxon + " chosen:" + chosen + " cacheType:" + cacheType);
-        if (chosen != null) {
-			taxon.filterChildren(chosen);
-        }
-
-        // A.log("execute() scope:" + mapping.getScope() + " rank:" + taxon.getRank());
-        // if ("request".equals(mapping.getScope())) {
-
-        try {
-          request.getSession().setAttribute("taxon", taxon);
-        } catch (Exception e) {
-          s_log.error("execute() finalizing e:" + e);
-        }            
-        request.setAttribute("taxon", taxon);
-        request.setAttribute("showTaxon", taxon);
-
-        //session.setAttribute("taxon", taxon);                
-
-        if ("getComparison".equals(cacheType) || "mapComparison".equals(cacheType)) {
-            session.setAttribute("showTaxon", taxon);        
-            session.setAttribute("mykids", taxon.getChildren());
-        }
-
-
-//'<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getThumbview()
-
-		//A.log("execute() taxon:" + taxon + " taxonImages:" + taxon.getImages() );
-		//OpenGraphMgr.setOGTitle(Taxon.getPrettyTaxonName(taxon.getTaxonName()));
-		request.setAttribute("ogTitle", Taxon.getPrettyTaxonName(taxon.getTaxonName()));
-		if (taxon.getImages() != null) {
-		  SpecimenImage headShot = (SpecimenImage) taxon.getImages().get("h");
-		  if (headShot != null) {
-			String ogImage = headShot.getMedres();
-			//A.log("execute() ogImg:" + ogImg);
-			//OpenGraphMgr.setOGImage(ogImg);
-    		request.setAttribute("ogImage", ogImage);
-		  } else s_log.debug("No Open Graph Image set. No headshot");
-
-          if (AntwebDebug.isDebugTaxon(taxon.getTaxonName())) s_log.debug("has d image:" + taxon.getImages().get("d"));
-
-        }
-        
-        String execTime = HttpUtil.finish(request, startTime);
-        taxon.setExecTime(execTime);        
-
-        // Set a transactional control token to prevent double posting
-        // This was removed because Tokens in forms where messing with luke's new functionality.
-       // saveToken(request);
-       
-        if (taxon instanceof Homonym) {
-          //s_log.warn("execute() returning homonym:" + taxon);
-          return mapping.findForward("homonym"); 
-        }
-        
-        if (rank.equals("specimen")) {
-            return (mapping.findForward("specimen"));
-        } else if (request.getParameter("shot") != null) {
-            return (mapping.findForward("oneView"));
-        } else {
-        // A.log("Success");        
-          return (mapping.findForward("success"));          
-        }
+        // Error handling.
+        s_log.error(message);
+        request.setAttribute("message", message);
+        return (mapping.findForward("message"));
     }
     
   

@@ -103,10 +103,7 @@ public final class TaxaPageAction extends Action {
               when opened. Next we can see which request is not being closed by looking for the 
               same number below.
             */
-          
-			//AntwebMgr.populate(connection);
-			//Overview overview = OverviewMgr.getAndSetOverview(request);
-            
+
             //if (overview instanceof Adm1) A.log("execute() overview:" + overview + " parent:" + overview.getParentName());
 			if (overview == null) {
 			  request.setAttribute("message", "overview not found");

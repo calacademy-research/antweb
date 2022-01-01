@@ -2775,13 +2775,14 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public void setChildren(Connection connection, String name) {
     }
 
-    public void setChildren(Connection connection, Overview overview) throws SQLException {
+    public void setChildren(Connection connection, Overview overview) throws SQLException, AntwebException {
         StatusSet statusSet = StatusSet.getInstance(overview.getName());
         setChildren(connection, overview, statusSet, false, false, Caste.DEFAULT, false, null);
     }
  
     // Overridden by the Subfamily, genus, species, subspecies.
-    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getImages, boolean getMaps, String caste, boolean global, String subgenus) throws SQLException {
+    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getImages, boolean getMaps, String caste, boolean global, String subgenus)
+            throws SQLException, AntwebException {
         //A.log("setChildren(5) overview:" + overview + " getImages:" + getImages + " getMaps:" + getMaps + " caste:" + caste);
         this.children = new ArrayList();
     }

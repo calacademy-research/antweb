@@ -30,26 +30,7 @@ public class OverviewMgr {
       request.setAttribute("overview", overview);       
       request.getSession().setAttribute("overview", overview);
     }
-/*
-    // Do not default to AllAntwebAnts!
-    public static Overview getAndSetOverviewSafe(HttpServletRequest request) {
-        Overview lastOverview = (Overview) request.getSession().getAttribute("overview");
-        request.getSession().setAttribute("lastOverview", lastOverview);
 
-        Overview overview = null;
-        try {
-            overview = OverviewMgr.findOverview(request);
-        } catch (AntwebException e) {
-            //s_log.warn("getAndSetOverview() e:" + e);
-            return null;
-        }
-
-        // if (overview == null) overview = new Project(Project.ALLANTWEBANTS);
-
-        OverviewMgr.setOverview(request, overview);
-        return overview;
-    }
-*/
     // This can and should be called once per request. Fetch and set. Also set lastOverview.
     public static Overview getAndSetOverview(HttpServletRequest request) throws AntwebException {
         Overview lastOverview = (Overview) request.getSession().getAttribute("overview");
@@ -167,12 +148,14 @@ public class OverviewMgr {
 
     public static ActionForward returnMessage(HttpServletRequest request, ActionMapping mapping, AntwebException e) {
         String message = e.toString() + " for " + HttpUtil.getRequestReferer(request) + " " + DateUtil.getFormatDateTimeStr();
+        s_log.info("returnMessage() " + message);
         message += ". <br><br>If you think this request should have been fulfilled, please email this error message to " + AntwebUtil.getAdminEmail() + ".";
         message += " Please indicate where you found the link, if not evident in the message. Thank you.";
         request.setAttribute("message", message);
         return mapping.findForward("message");
     }
 
+    /*
     public static ActionForward returnMessage(HttpServletRequest request, ActionMapping mapping) {
       String message = "Overview not found for " + HttpUtil.getRequestReferer(request) + " " + DateUtil.getFormatDateTimeStr();
       message += ". <br><br>If you think this request should have been fulfilled, please email this error message to " + AntwebUtil.getAdminEmail() + ".";
@@ -180,7 +163,7 @@ public class OverviewMgr {
       request.setAttribute("message", message);
       return mapping.findForward("message");        
     }    
-        
+*/
     // This only gets called in cases of species list. Only Project and Geolocale are managed by the Species List Tool.
     public static Overview getOverview(String name) {
         Overview overview = null;

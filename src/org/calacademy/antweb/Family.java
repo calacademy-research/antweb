@@ -29,7 +29,8 @@ public class Family extends Taxon implements Serializable {
     }
 
 
-    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
+    public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus)
+            throws SQLException, AntwebException {
 
         String fetchChildrenClause = "where 1 = 1";
         if (!global && overview != null) fetchChildrenClause = overview.getFetchChildrenClause();
@@ -39,9 +40,9 @@ public class Family extends Taxon implements Serializable {
         ArrayList theseChildren = new ArrayList();
         Statement stmt = null;
         ResultSet rset = null;
-        String theQuery;
+        String query = null;
         try {
-          theQuery =
+          query =
             "select distinct taxon.subfamily from taxon" // proj_taxon where " 
                 + fetchChildrenClause                   
                 + " and taxon.subfamily != '' "
@@ -51,7 +52,7 @@ public class Family extends Taxon implements Serializable {
                 + " order by taxon.subfamily";
 
             stmt = DBUtil.getStatement(connection, "setChildren()");
-            rset = stmt.executeQuery(theQuery);
+            rset = stmt.executeQuery(query);
 
             //A.log("setChildren() query:" + theQuery);
 
@@ -74,7 +75,9 @@ public class Family extends Taxon implements Serializable {
                 
                 theseChildren.add(child);
             }
-
+        } catch (SQLException e) {
+            s_log.info("setChildren() query:" + query + " e:" + e);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "setChildren()");
         }

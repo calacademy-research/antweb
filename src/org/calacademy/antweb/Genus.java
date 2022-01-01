@@ -60,7 +60,7 @@ public class Genus extends Subfamily implements Serializable {
     }    
 
     public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus)
-            throws SQLException {
+            throws SQLException, AntwebException {
     
         // global is not used. Currently only in Species.java.
         String fetchChildrenClause = " where 1 = 1";
@@ -177,7 +177,7 @@ We get both... that can't be right.
             //s_log.info("setChildren() total time:" + (((new GregorianCalendar()).getTimeInMillis()) - now));
             now = (new GregorianCalendar()).getTimeInMillis();
         } catch (SQLException e) {
-            s_log.debug("setChildren() query:" + query + " e:" + e);
+            s_log.info("setChildren() query:" + query + " e:" + e);
             throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "setChildren()");

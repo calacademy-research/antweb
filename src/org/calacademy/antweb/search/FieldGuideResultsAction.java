@@ -114,6 +114,9 @@ public final class FieldGuideResultsAction extends ResultsAction {
             } catch (SQLException e) {
                 s_log.error("execute() e:" + e + " caught on request:" + AntwebUtil.getRequestInfo(request));
                 s_log.info(AntwebUtil.getStackTrace(e));
+            } catch (AntwebException e) {
+                s_log.error("execute() e:" + e + " caught on request:" + AntwebUtil.getRequestInfo(request));
+                s_log.info(AntwebUtil.getStackTrace(e));
             } finally {
                DBUtil.close(connection, this, "FieldGuideResultsAction.execute()");
             }
@@ -135,7 +138,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 
     // If we want all specimens for a taxa instead of all qualifiying specimens of a taxa:
     private ArrayList<Taxon> getChosenTaxa(HttpServletRequest request, ArrayList<ResultItem> chosenResults
-            , String resultRank, String caste, Overview overview, Connection connection) throws SQLException {
+            , String resultRank, String caste, Overview overview, Connection connection) throws SQLException, AntwebException {
         ArrayList<Taxon> chosenTaxa = new ArrayList();
 
         s_log.debug("getChosenTaxa() chosenResults:" + chosenResults.size() + " resultRank:" + resultRank + " overview:" + overview);

@@ -65,8 +65,12 @@ public final class SpecimenAction extends DescriptionAction {
                 specimen.setCode(code);
                 specimen.setBrowserParams(request.getQueryString());                                            
 
-                Overview overview = OverviewMgr.getAndSetOverview(request);
-                if (overview == null) return OverviewMgr.returnMessage(request, mapping);
+                Overview overview = null;
+                try {
+                    overview = OverviewMgr.getAndSetOverview(request);
+                } catch (AntwebException e) {
+                    return OverviewMgr.returnMessage(request, mapping, e);
+                }
 
                 specimenExists = specimen.isSpecimen(connection, overview); // Uses overview?
                 //A.log("execute() code:" + code + " isSpecimen:" + specimenExists);
@@ -109,10 +113,14 @@ public final class SpecimenAction extends DescriptionAction {
                     request.setAttribute("message", message);
                     return (mapping.findForward("message"));
                 }
+            //} catch (AntwebException e) {
+            //    s_log.error("execute() e:" + e + " " + HttpUtil.getRequestInfo(request));
+            //    return (mapping.findForward("failure"));
             } catch (Exception e) {
-                s_log.error("execute() e:" + e);
                 if (!e.toString().contains("Connections could not be acquired from the underlying database")) {
                   AntwebUtil.logStackTrace(e);
+                } else {
+                    s_log.error("execute() e:" + e);
                 }
                 return (mapping.findForward("failure"));
             } finally {

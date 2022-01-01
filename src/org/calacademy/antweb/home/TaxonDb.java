@@ -1,5 +1,6 @@
 package org.calacademy.antweb.home;
 
+import com.mysql.cj.protocol.x.XMessageHeader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
@@ -30,19 +31,19 @@ public class TaxonDb extends AntwebDb {
         return getTaxon(taxonName) != null;
     }
 
-    public Subfamily getSubfamily(String subfamily) throws SQLException {
+    public Subfamily getSubfamily(String subfamily) throws SQLException, AntwebException {
         String taxonName = getTaxonName(subfamily, null, null, null, "subfamily");
         return (Subfamily) getTaxon(taxonName);
     }
-    public Genus getGenus(String subfamily, String genus) throws SQLException {
+    public Genus getGenus(String subfamily, String genus) throws SQLException, AntwebException {
         String taxonName = getTaxonName(subfamily, genus, null, null, "genus");
         return (Genus) getTaxon(taxonName);
     }
-    public Species getSpecies(String subfamily, String genus, String species) throws SQLException {
+    public Species getSpecies(String subfamily, String genus, String species) throws SQLException, AntwebException {
         String taxonName = getTaxonName(subfamily, genus, species, null, "species");
         return (Species) getTaxon(taxonName);
     }
-    public Subspecies getSubspecies(String subfamily, String genus, String species, String subspecies) throws SQLException {
+    public Subspecies getSubspecies(String subfamily, String genus, String species, String subspecies) throws SQLException, AntwebException {
         String taxonName = getTaxonName(subfamily, genus, species, subspecies, "subspecies");
         return (Subspecies) getTaxon(taxonName);
     }
@@ -207,11 +208,11 @@ public class TaxonDb extends AntwebDb {
         return taxon;
     }
 
-    public Taxon getFullTaxon(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+    public Taxon getFullTaxon(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException, AntwebException {
         return getFullTaxon("Formicidae", subfamily, genus, species, subspecies, rank);
     }
 
-    public Taxon getFullTaxon(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+    public Taxon getFullTaxon(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException, AntwebException {
         Taxon taxon = null;
 
         String taxonName = getTaxonName(family, subfamily, genus, species, subspecies, rank);
@@ -226,10 +227,10 @@ public class TaxonDb extends AntwebDb {
     }
 
 
-    private String getTaxonName(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+    private String getTaxonName(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException, AntwebException {
         return getTaxonName(null, subfamily, genus, species, subspecies, rank);
     }
-    private String getTaxonName(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException {
+    private String getTaxonName(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException, AntwebException {
         String taxonName = null;
 
         String familyClause = "";
@@ -266,10 +267,9 @@ public class TaxonDb extends AntwebDb {
                 taxonName = rset.getString("taxon_name");
             }
             if (i > 1) {
-                s_log.warn("getTaxonName() did not get unique result." + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank
-                        + " query:" + theQuery);
-                s_log.info("getTaxonName() " + AntwebUtil.getShortStackTrace());
-                return null;
+                String message = "getTaxonName() did not get unique result." + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank
+                        + " query:" + theQuery;
+                throw new AntwebException(message);
             }
         } catch (SQLException e) {
             s_log.error("getTaxonName() e:" + e);

@@ -20,8 +20,10 @@
         
   String titleString =  " - AntWeb";
   String rankString = new Formatter().capitalizeFirstLetter(taxon.getRank());
-  if (Utility.notBlank(taxon.getFullName())) { 
-	titleString = rankString + ": " + taxon.getPrettyName() + titleString;
+  if (Utility.notBlank(taxon.getFullName())) {
+    String prettyName = taxon.getPrettyName();
+    if (prettyName == null || "".equals(prettyName)) AntwebUtil.log("imagePage.jsp prettyName not found " + HttpUtil.getRequestInfo(request));
+	titleString = rankString + ": " + pretty + titleString;
   } 
    
   String metaString = "<meta name='keywords' content='" + taxon.getPrettyName() + ", AntWeb, ants,ant,formicidae '/>";
