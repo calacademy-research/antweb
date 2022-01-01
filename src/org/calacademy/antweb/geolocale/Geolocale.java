@@ -256,6 +256,12 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         this.altBioregion = altBioregion;
     }    
 
+    /*
+       Live is used to indicate when an adm1 should show up in the Geolocale hierarchy.
+       For example, the "States" in USA, or "Prov." in Canada.  We only have adm1s live for
+       countries that have enough distribution data so that the adm1s ant lists mean something.
+       If we could pull more distribution data from adm1s on antmaps could then make all valid live
+     */
     public boolean isLive() { return getIsLive(); }
     public boolean getIsLive() {
         return isLive;
