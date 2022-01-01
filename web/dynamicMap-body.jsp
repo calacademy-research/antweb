@@ -192,12 +192,18 @@
         </div>
         
         <div class="clear"></div>
-    <!-- 
+
+<%
+    String specimenPrettyName = specimen.getPrettyName();
+    if (specimenPrettyName == null || "".equals(specimenPrettyName)) AntwebUtil.log("dynamicMap-body.jsp specimenPrettyName:" + specimenPrettyName + " requestInfo:" + HttpUtil.getRequestInfo(request));
+
+%>
+    <!--
         taxonName:<%= specimen.getTaxonName() %> 
         details:<%= specimen.getDetails() %>
         fullName:<%= specimen.getFullName() %>
         simpleName:<%= specimen.getSimpleName() %>
-        prettyName:<%= specimen.getPrettyName() %>
+        prettyName:<%= specimenPrettyName %>
         fullName:<%= specimen.getFullName() %>
         name:<%= specimen.getName() %>
     -->

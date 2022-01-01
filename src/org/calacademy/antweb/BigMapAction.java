@@ -146,8 +146,8 @@ public final class BigMapAction extends Action {
             } else {            
               thisMap = new Map(taxon, localityOverview, connection, geolocaleFocus);
             }
-            //A.log("getMap() title:" + thisMap.getTitle() + " taxon:" + taxon + " localityOverview:" + localityOverview + " geolocaleFocus:" + geolocaleFocus);
 
+            if (taxon.getName() == null || "".equals(taxon.getName())) AntwebUtil.log("getMap() getName:" + taxon.getName() + " title:" + thisMap.getTitle() + " taxon:" + taxon + " localityOverview:" + localityOverview + " geolocaleFocus:" + geolocaleFocus);
             session.setAttribute("taxon", taxon);
           } else {
             String message = "BigMapAction.getMap(" + project + ", " + taxonName + ", " 

@@ -1060,7 +1060,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         if (Rank.SPECIES.equals(getRank())) return getSpecies();
         if (Rank.SUBSPECIES.equals(getRank())) return getSubspecies();
 
-        s_log.error(String.format("getName() for taxon %s has no rank: %s %n%s",
+        s_log.info(String.format("getName() for taxonName: %s has no rank: %s %n%s",
                 getTaxonName(), getRank(), AntwebUtil.getShortStackTrace()));
 
         return null;
