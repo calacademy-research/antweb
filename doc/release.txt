@@ -1,5 +1,6 @@
 Release 8.68.4
   Exception handling and logging in BrowseAction, OverviewMgr, TaxonDb, imagePage.jsp, and Taxon hierarchy.
+  Added Geolocale.isLive() documentation.
 
 Release 8.68.3
   Fix the Current Statistics More>>> Page.

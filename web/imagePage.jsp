@@ -23,7 +23,7 @@
   if (Utility.notBlank(taxon.getFullName())) {
     String prettyName = taxon.getPrettyName();
     if (prettyName == null || "".equals(prettyName)) AntwebUtil.log("imagePage.jsp prettyName not found " + HttpUtil.getRequestInfo(request));
-	titleString = rankString + ": " + pretty + titleString;
+	titleString = rankString + ": " + prettyName + titleString;
   } 
    
   String metaString = "<meta name='keywords' content='" + taxon.getPrettyName() + ", AntWeb, ants,ant,formicidae '/>";
