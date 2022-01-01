@@ -84,7 +84,19 @@ public class TaxonMgr extends Manager {
     //Called through UtilAction to, in a separate thread.
     public static void postInitialize(Connection connection) throws SQLException {
     }
-    
+
+    public static java.util.Collection<Taxon> getTaxa() {
+        return s_taxa.values();
+    }
+
+    public static int getValidTaxonCount() {
+        int validTaxonCount = 0;
+        for (Taxon taxon : getTaxa()) {
+            if (taxon.isValid()) ++validTaxonCount;
+        }
+        return validTaxonCount;
+    }
+
     public static ArrayList<Taxon> getSubfamilies() {
       //A.log("getSubfamilies() TaxonMgr.subfamilies:" + s_subfamilies);
       return s_subfamilies;
@@ -199,6 +211,39 @@ public class TaxonMgr extends Manager {
         } 
       }
       return (Species) s_species.get(taxonName);
+    }
+
+    // For Taxon Name Search Autocomplete
+    public static List<String> getPrettyTaxaNames(String text) {
+        if (prettyTaxaNamesList == null) {
+            //A.log("getPrettyTaxaNames(text) initializing...");
+            return null;
+        }
+        if (text == null) {
+            s_log.warn("TaxonMgr.getPrettyTaxaNames(text) text is null");
+            return null;
+        }
+        text = text.toLowerCase();
+        //A.log("getPrettyTaxaNames(text) text:" + text + " prettyTaxaListSize:" + prettyTaxaNamesList.size());
+        String[] texts = text.split(" ");
+        List<String> prettyTaxaNamesSubset = new ArrayList<>();
+        int i = 0;
+
+        for (String taxonName : prettyTaxaNamesList) {
+            boolean containsAll = true;
+            for (String s : texts) {
+                //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
+                if (!taxonName.toLowerCase().contains(s)) containsAll = false;
+                if (!containsAll) break;
+            }
+            if (containsAll) {
+                prettyTaxaNamesSubset.add(taxonName);
+                ++i;
+                if (i > 5000) break; // Because there are 4600 species in genus Camponotus
+            }
+        }
+        //A.log("getPrettyTaxaNames(q) returning size:" + prettyTaxaNamesSubset.size());
+        return prettyTaxaNamesSubset;
     }
 
     /*
@@ -474,37 +519,6 @@ TaxonMgr.refreshTaxon() operation:update taxon:dicomas class:class org.calacadem
  */
 
 
-    // For Taxon Name Search Autocomplete
-    public static List<String> getPrettyTaxaNames(String text) {
-        if (prettyTaxaNamesList == null) {
-            //A.log("getPrettyTaxaNames(text) initializing...");
-            return null;
-        }
-        if (text == null) {
-            s_log.warn("TaxonMgr.getPrettyTaxaNames(text) text is null");
-            return null;
-        }
-        text = text.toLowerCase();
-        //A.log("getPrettyTaxaNames(text) text:" + text + " prettyTaxaListSize:" + prettyTaxaNamesList.size());
-        String[] texts = text.split(" ");
-        List<String> prettyTaxaNamesSubset = new ArrayList<>();
-        int i = 0;
 
-        for (String taxonName : prettyTaxaNamesList) {
-            boolean containsAll = true;
-            for (String s : texts) {
-                //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
-                if (!taxonName.toLowerCase().contains(s)) containsAll = false;
-                if (!containsAll) break;
-            }
-            if (containsAll) {
-                prettyTaxaNamesSubset.add(taxonName);
-                ++i;
-                if (i > 5000) break; // Because there are 4600 species in genus Camponotus
-            }
-        }
-        //A.log("getPrettyTaxaNames(q) returning size:" + prettyTaxaNamesSubset.size());
-        return prettyTaxaNamesSubset;
-    }
 }
 

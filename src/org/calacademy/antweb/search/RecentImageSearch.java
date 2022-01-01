@@ -24,7 +24,7 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
     
     protected ArrayList<ResultItem> createInitialResults() {
 
-        s_log.info("creating initial results for recent images");
+        //s_log.info("creating initial results for recent images");
         
         if (daysAgo == null) {
             daysAgo = "1";
@@ -50,7 +50,7 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
               + " and ant_group.id=group_image.group_id " //specimen.taxon_name = taxon.taxon_name
               + " and image.upload_date is not null " 
               + " and artist.id = image.artist ";
-            s_log.info("days ago is " + daysAgo);
+            //s_log.info("days ago is " + daysAgo);
             if ((daysAgo != null) && (daysAgo.length() > 0)) {
                 Utility util = new Utility();
                 int daysToSub = -Integer.parseInt(daysAgo);
@@ -78,7 +78,7 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);
 
-            s_log.info("createInitialResults() query:" + theQuery);
+            A.log("createInitialResults() query:" + theQuery);
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);
             
@@ -122,22 +122,19 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
 
         Date now = new Date();
         s_log.info("creating inital results took " + (now.getTime() - startDate.getTime()));
-        
+        startDate = now;
+
+        /*
         try {
           s_log.info("the first type is " + ((ResultItem) initialResults.get(0)).getShotType());
         } catch (IndexOutOfBoundsException e) {
           s_log.info("Trapped info log exception:" + e);
         }
-       
-        startDate = now;
-        
+        */
+
+
         // for each invalid name, get the valid version
         //ArrayList validResults = getValidVersion(initialResults);
-
-        now = new Date();
-        //System.out.println("getting valid version took " + (now.getTime() - startDate.getTime()));
-        startDate = now;
-        
         // now filter out based on project - the reason we can't do this in the
         // initial query is that junior synonyms may not be part of a project,
         // but
@@ -147,11 +144,6 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
         // query would become too complicated to understand and debug
         //
         //ArrayList thisProjectResults = filterByProject(validResults, project);
-        
-        now = new Date();
-        //System.out.println("filtering by images processed " + thisProjectResults.size() + " objects and took " + (now.getTime() - startDate.getTime()));
-        startDate = now;
-        
         // same kind of thing with types
         //ArrayList typeLookup = setResultTypes(imageLookup, project);
         

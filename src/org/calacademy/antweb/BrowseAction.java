@@ -105,9 +105,13 @@ public class BrowseAction extends DescriptionAction {
           }
         }
 
-        Overview overview = OverviewMgr.getAndSetOverview(request);        
-        if (overview == null) return OverviewMgr.returnMessage(request, mapping);
-        
+        Overview overview = null;
+        try {
+            overview = OverviewMgr.getAndSetOverview(request);
+        } catch (AntwebException e) {
+            return OverviewMgr.returnMessage(request, mapping, e);
+        }
+
         String title = overview.getTitle(); 
         //A.log("execute() title:" + title + " overview:" + overview);
 
@@ -297,7 +301,7 @@ public class BrowseAction extends DescriptionAction {
           taxon.setStatusSetStr(statusSetStr);
           taxon.setStatusSetSize(statusSetSize);
 	
-          if (true) s_log.debug("execute() family:" + family + " subfamily:" + subfamily + " genus:" + genus
+          if (false) s_log.debug("execute() family:" + family + " subfamily:" + subfamily + " genus:" + genus
             + " species:" + species + " subspecies:" + subspecies + " rank:" + rank + " overview:" + overview
             + " statusStr:" + statusStr + " statusSetStr:" + statusSetStr + " resetProject:" + browseForm.getResetProject()
             + " taxon.status:" + taxon.getStatus());

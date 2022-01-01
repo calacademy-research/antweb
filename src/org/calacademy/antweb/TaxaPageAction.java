@@ -70,8 +70,12 @@ public final class TaxaPageAction extends Action {
           return (mapping.findForward("message"));        
         }
 
-        Overview overview = OverviewMgr.getAndSetOverview(request);
-        if (overview == null) return OverviewMgr.returnMessage(request, mapping);    
+        Overview overview = null;
+        try {
+            overview = OverviewMgr.getAndSetOverview(request);
+        } catch (AntwebException e) {
+            return OverviewMgr.returnMessage(request, mapping, e);
+        }
 
         if (AntwebMgr.isServerInitializing(overview)) {
           request.setAttribute("message", "One moment please, MuseumMgr is initializing.");

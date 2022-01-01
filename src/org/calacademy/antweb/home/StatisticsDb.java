@@ -89,12 +89,15 @@ museum
     }
     
     public StatSet getBioregionData(Bioregion bioregion) throws SQLException {
+
+        A.log("getBioregionData() bioregion:" + bioregion);
+
       UtilDb utilDb = new UtilDb(getConnection());
 
-      int extantValidSubfamilies = utilDb.getCount("from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
-      int extantValidGenera = utilDb.getCount("from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'genus'");
-      int extantValidSpecies = utilDb.getCount("from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'species'");
-      int extantValidSubspecies = utilDb.getCount("from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'subspecies'");
+      int extantValidSubfamilies = utilDb.getCount("select count(*) from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
+      int extantValidGenera = utilDb.getCount("select count(*) from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'genus'");
+      int extantValidSpecies = utilDb.getCount("select count(*) from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'species'");
+      int extantValidSubspecies = utilDb.getCount("select count(*) from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'subspecies'");
         
       StatSet statSet = new StatSet(bioregion.getName());
       statSet.set1("Subfamiles", extantValidSubfamilies);
@@ -119,10 +122,10 @@ museum
     public StatSet getExtantMuseumData(Museum museum) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
 
-      int extantValidSubfamilies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
-      int extantValidGenera = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'genus'");
-      int extantValidSpecies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'species'");
-      int extantValidSubspecies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'subspecies'");
+      int extantValidSubfamilies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
+      int extantValidGenera = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'genus'");
+      int extantValidSpecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'species'");
+      int extantValidSubspecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'subspecies'");
         
       StatSet statSet = new StatSet(museum.getCode());
       statSet.set1("Subfamiles", extantValidSubfamilies);
@@ -146,10 +149,10 @@ museum
     public StatSet getFossilMuseumData(Museum museum) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
 
-      int extantValidSubfamilies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
-      int extantValidGenera = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'genus'");
-      int extantValidSpecies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'species'");
-      int extantValidSubspecies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subspecies'");
+      int extantValidSubfamilies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
+      int extantValidGenera = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'genus'");
+      int extantValidSpecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'species'");
+      int extantValidSubspecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subspecies'");
         
       StatSet statSet = new StatSet(museum.getCode());
       statSet.set1("Valid Subfamiles", extantValidSubfamilies);
@@ -163,10 +166,10 @@ museum
     public StatSet getImageData(Museum museum) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
 
-      int extantValidSubfamilies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
-      int extantValidGenera = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'genus'");
-      int extantValidSpecies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'species'");
-      int extantValidSubspecies = utilDb.getCount("from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subspecies'");
+      int extantValidSubfamilies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
+      int extantValidGenera = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'genus'");
+      int extantValidSpecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'species'");
+      int extantValidSubspecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subspecies'");
         
       StatSet statSet = new StatSet(museum.getCode());
       statSet.set1("Valid Subfamiles", extantValidSubfamilies);

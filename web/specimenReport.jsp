@@ -32,7 +32,7 @@ if (sortedBy == null) {
   }
 }
 
-A.log("specimenReport.jsp sortedBy:" + sortedBy); // + " name:" + name + " code:" + code);
+//A.log("specimenReport.jsp sortedBy:" + sortedBy); // + " name:" + name + " code:" + code);
 %>
 
 </style>
@@ -44,7 +44,7 @@ A.log("specimenReport.jsp sortedBy:" + sortedBy); // + " name:" + name + " code:
     <div id="thumb_toggle">
      <% if (isBrowsePage) { 
           // See basicLayout.jsp conditions for inclusion of necessary javascript code
-          A.log("specimenReport.jsp queryStringNoQestionMark:" + HttpUtil.getQueryStringNoQuestionMark(request));
+          //A.log("specimenReport.jsp queryStringNoQestionMark:" + HttpUtil.getQueryStringNoQuestionMark(request));
           %>
           <form id="sortby">
             <input type="hidden" id="sortby_action" name="sortby_action" value="<%= AntwebProps.getDomainApp() %>/browse.do" />
@@ -109,7 +109,7 @@ A.log("specimenReport.jsp sortedBy:" + sortedBy); // + " name:" + name + " code:
         </select>
 
 <%
-A.log("specimenReport.jsp sortedBy:" + sortedBy);
+          //A.log("specimenReport.jsp sortedBy:" + sortedBy);
           String addIn = "";
           if (request.getParameter("sortBy") == null) addIn = "&sortBy=code";
           if (sortedBy != null) {

@@ -5,6 +5,8 @@
 
 --- Compilation ---
 
+
+
 # To bring up docker.  -d is for daemon.
 docker-compose up --build -d
 
@@ -12,6 +14,9 @@ docker-compose up --build
   # This will also do an ant build
 
 docker-compose up --build antweb
+
+docker-compose up --build
+  # Check to see if it builds with error
 
 # To compile
 docker-compose exec antweb ant deploy
@@ -39,6 +44,16 @@ mysqldump -u antweb -p --all-databases --routines --single-transaction --quick |
 # To speed up (optimize). To be run after database load
 docker-compose exec mysql sh -c "exec mysqlcheck --all-databases --optimize -u antweb -p"
 
+
+IntelliJ
+  Command ;
+  Under libraries add: 
+    tomcat 
+      For tomcat, may need to install tomcat through homebrew
+    lib from WEB-INF
+  To set up debug. Basic remote config.
+    Next to build hammer
+      Edit config. add config. Attach to remove JVM
 
 
 --- Deployment

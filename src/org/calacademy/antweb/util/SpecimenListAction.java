@@ -51,8 +51,12 @@ public final class SpecimenListAction extends Action {
         
         String rightClickSave = (String) df.get("action");
 
-        Overview overview = OverviewMgr.getAndSetOverview(request);
-        if (overview == null) return OverviewMgr.returnMessage(request, mapping); 
+        Overview overview = null;
+        try {
+            overview = OverviewMgr.getAndSetOverview(request);
+        } catch (AntwebException e) {
+            return OverviewMgr.returnMessage(request, mapping, e);
+        }
         
         String taxonName = (String) df.get("taxonName");
         if (taxonName != null) {

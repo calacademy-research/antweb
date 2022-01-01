@@ -36,9 +36,13 @@ public final class FieldGuideResultsAction extends ResultsAction {
         ActionForward forward = null;
         TaxaFromSearchForm taxaForm = (TaxaFromSearchForm) form;
 
-        Overview overview = OverviewMgr.getAndSetOverview(request);
-        if (overview == null) return OverviewMgr.returnMessage(request, mapping);
-                
+        Overview overview = null;
+        try {
+            overview = OverviewMgr.getAndSetOverview(request);
+        } catch (AntwebException e) {
+            return OverviewMgr.returnMessage(request, mapping, e);
+        }
+
         LocalityOverview localityOverview = (LocalityOverview) overview;
 
         if ((taxaForm.getTaxa() != null) || (taxaForm.getChosen() != null)) {

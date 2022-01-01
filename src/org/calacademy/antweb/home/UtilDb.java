@@ -16,13 +16,6 @@ public class UtilDb extends AntwebDb {
     public UtilDb(Connection connection) {
       super(connection);
     }
-    
-    public int getCount(String table, String where) throws SQLException {
-      int count = 0;
-      String fromWhere = "from " + table + " where " + where;
-      count = getCount(fromWhere);
-      return count;      
-    }
 
     // Should return a single value. Will return the first if a list.
     public String XgetValue(String query) throws SQLException {
@@ -150,6 +143,20 @@ public class UtilDb extends AntwebDb {
         } finally {
             DBUtil.close(stmt, rset, "getCountFromQuery()");
         }
+        return count;
+    }
+
+    public int getCount(String table, String where) throws SQLException {
+        if (where == null) return 0;
+        if (where.contains("select ")) {
+            s_log.error("getCount() Improper where:" + where + ". should not contain 'select'");
+            return 0;
+        }
+
+        int count = 0;
+        String fromWhere = "from " + table + " where " + where;
+        String query = "select count(*) " + fromWhere;
+        count = getCount(query);
         return count;
     }
 

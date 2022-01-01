@@ -38,8 +38,12 @@ public final class BigMapAction extends Action {
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
 
-        Overview overview = OverviewMgr.getAndSetOverview(request);
-        if (overview == null) return OverviewMgr.returnMessage(request, mapping);
+        Overview overview = null;
+        try {
+            overview = OverviewMgr.getAndSetOverview(request);
+        } catch (AntwebException e) {
+            return OverviewMgr.returnMessage(request, mapping, e);
+        }
 
         DynaActionForm df = (DynaActionForm) form;
         String taxonName = (String) df.get("taxonName");

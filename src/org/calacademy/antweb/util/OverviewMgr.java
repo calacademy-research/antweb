@@ -51,17 +51,11 @@ public class OverviewMgr {
     }
 */
     // This can and should be called once per request. Fetch and set. Also set lastOverview.
-    public static Overview getAndSetOverview(HttpServletRequest request) {
+    public static Overview getAndSetOverview(HttpServletRequest request) throws AntwebException {
         Overview lastOverview = (Overview) request.getSession().getAttribute("overview");
         request.getSession().setAttribute("lastOverview", lastOverview);
 
-        Overview overview = null;        
-        try {
-          overview = OverviewMgr.findOverview(request);
-        } catch (AntwebException e) {
-          //s_log.warn("getAndSetOverview() e:" + e);
-          return null;
-        }
+        Overview overview = OverviewMgr.findOverview(request);
 
         if (overview == null) overview = new Project(Project.ALLANTWEBANTS);
         OverviewMgr.setOverview(request, overview);   
@@ -88,6 +82,7 @@ public class OverviewMgr {
 			if (museumCode != null) {
               hasParams = "museum overview";
               overview = MuseumMgr.getMuseum(museumCode);
+              if (overview == null) throw new AntwebException("Museum not found for museumCode:" + museumCode);
 			  //s_log.warn("getOverview() museumCode:" + museumCode + " overview:" + overview);
 			} else {
 				String geolocaleIdStr = request.getParameter("geolocaleId");
@@ -95,22 +90,26 @@ public class OverviewMgr {
                   hasParams = "geolocale overview";
 				  int geolocaleId = (Integer.valueOf(geolocaleIdStr)).intValue();
 				  overview = GeolocaleMgr.getGeolocale(geolocaleId);
+                  if (overview == null) throw new AntwebException("Geolocale not found for geolocaleId:" + geolocaleIdStr);
 				} else {
 					String regionName = request.getParameter("regionName");
 					if (regionName != null) {
                       hasParams = "region overview";
 					  overview = GeolocaleMgr.getRegion(regionName);
+                      if (overview == null) throw new AntwebException("Region not found for regionName:" + regionName);
 					} else {
 						String subregionName = request.getParameter("subregionName");
 						if (subregionName != null) {
                           hasParams = "subregion overview";
 						  overview = GeolocaleMgr.getSubregion(subregionName);
+                          if (overview == null) throw new AntwebException("Subregion not found for subregionName:" + subregionName);
 						} else {
 							String countryName = request.getParameter("countryName");
 							String adm1Name = request.getParameter("adm1Name");
 							if (countryName != null && adm1Name == null) {
                               hasParams = "adm1 overview";
 							  overview = GeolocaleMgr.getCountry(countryName);
+                              if (overview == null) throw new AntwebException("Country not found for countryName:" + countryName);
 							} else {
 								if (HttpUtil.getTarget(request).contains("adm1.do")) {
                                   hasParams = "adm1 overview";
@@ -126,11 +125,14 @@ public class OverviewMgr {
  								      countryName = request.getParameter("country");
                                     }
                                     overview = GeolocaleMgr.getAdm1(adm1Name, countryName);
+								    if (overview == null && adm1Name != null) {
+                                        // Apparently adm1Name not found.
+                                        throw new AntwebException("Adm1 not found countryName:" + countryName + " adm1Name:" + adm1Name);
+                                    }
 								    if (overview == null) {
-                                        // Apparently adm1Name not found. Return country instead. Otherwise would be very poor performance.
-                                        // The overview would end up being allantwebants. Why? To be resolved. Other misses could trigger?
-                                        overview = GeolocaleMgr.getCountry(countryName);
-                                        s_log.info("findOverview() Not found Adm1:" + adm1Name + " Using countryName:" + countryName + " for overview:" + overview);
+                                        //overview = GeolocaleMgr.getCountry(countryName); // Just use the country and go on... ?
+                                        if (overview == null) throw new AntwebException("Overview not found");
+                                        //s_log.info("findOverview() Not found Adm1:" + adm1Name + " Using countryName:" + countryName + " for overview:" + overview);
                                     }
 								  }
                                   //A.log("getOverview() adm1Name:" + adm1Name + " country:" + countryName + " overview:" + overview); // + " country:" + ((Adm1)overview).getParent());								  
@@ -139,12 +141,13 @@ public class OverviewMgr {
 									if (bioregionName != null) {
                                       hasParams = "bioregion overview";
 									  overview = BioregionMgr.getBioregion(bioregionName);
-									  if (overview == null) s_log.warn("getOverview() bioregionName:" + bioregionName + " bioregion:" + overview);
+                                      if(overview == null) throw new AntwebException("Bioregion not found bioregionName:" + bioregionName);
+									  //if (overview == null) s_log.warn("getOverview() bioregionName:" + bioregionName + " bioregion:" + overview);
 									} else {
                                         hasParams = "session overview";	
 										overview = (Overview) request.getSession().getAttribute("overview");	
 										// A.log("getOverview() session overview:" + overview);	
-										if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);							
+										if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);
 									}
 								}
 							}
@@ -155,14 +158,21 @@ public class OverviewMgr {
 		}
 		
 		if (hasParams != null && overview == null) throw new AntwebException("Not found:" + hasParams);
-        
-        if (overview == null) return null;     
 
-        if (debug) s_log.warn("findOverview() overview:" + overview + " class:" + overview.getClass() + " queryString:" + request.getQueryString());
+        //s_log.info("findOverview() overview:" + overview + " class:" + overview.getClass() + " queryString:" + request.getQueryString());
+        if (overview == null) s_log.error("Overview not found for url:" + HttpUtil.getRequestInfo(request));
 
-        return overview;    
+        return overview;
     }
-    
+
+    public static ActionForward returnMessage(HttpServletRequest request, ActionMapping mapping, AntwebException e) {
+        String message = e.toString() + " for " + HttpUtil.getRequestReferer(request) + " " + DateUtil.getFormatDateTimeStr();
+        message += ". <br><br>If you think this request should have been fulfilled, please email this error message to " + AntwebUtil.getAdminEmail() + ".";
+        message += " Please indicate where you found the link, if not evident in the message. Thank you.";
+        request.setAttribute("message", message);
+        return mapping.findForward("message");
+    }
+
     public static ActionForward returnMessage(HttpServletRequest request, ActionMapping mapping) {
       String message = "Overview not found for " + HttpUtil.getRequestReferer(request) + " " + DateUtil.getFormatDateTimeStr();
       message += ". <br><br>If you think this request should have been fulfilled, please email this error message to " + AntwebUtil.getAdminEmail() + ".";

@@ -1,3 +1,7 @@
+Release 8.68.3
+  Fix the Current Statistics More>>> Page.
+  Exception handling for when overviews are not foumd.
+
 Release 8.68.2
   Exception handling refinement in specimen upload and search facility.
   New profileQuery system.

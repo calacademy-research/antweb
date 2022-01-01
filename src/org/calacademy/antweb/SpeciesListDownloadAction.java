@@ -29,8 +29,12 @@ public class SpeciesListDownloadAction extends Action {
 
         ActionForward a = Check.initLogin(request, mapping); if (a != null) return a;
 
-        Overview overview = OverviewMgr.getAndSetOverview(request);
-        if (overview == null) return OverviewMgr.returnMessage(request, mapping);
+        Overview overview = null;
+        try {
+            overview = OverviewMgr.getAndSetOverview(request);
+        } catch (AntwebException e) {
+            return OverviewMgr.returnMessage(request, mapping, e);
+        }
 
         java.sql.Connection connection = null;
         try {

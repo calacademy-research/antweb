@@ -56,8 +56,12 @@ public final class FieldGuideAction extends Action {
 		String species = fieldGuideForm.getSpecies();
 		String subspecies = fieldGuideForm.getSubspecies();
 
-        Overview overview = OverviewMgr.getAndSetOverview(request);
-        if (overview == null) return OverviewMgr.returnMessage(request, mapping);
+        Overview overview = null;
+        try {
+            overview = OverviewMgr.getAndSetOverview(request);
+        } catch (AntwebException e) {
+            return OverviewMgr.returnMessage(request, mapping, e);
+        }
 
         LocalityOverview localityOverview = null;        
         if (overview instanceof LocalityOverview) {

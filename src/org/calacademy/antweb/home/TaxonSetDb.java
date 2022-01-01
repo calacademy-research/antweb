@@ -94,7 +94,8 @@ public abstract class TaxonSetDb extends AntwebDb {
       
       return message;   
     }
-        
+
+    // Can be tested with: https://localhost/utilData.do?action=updateTaxonSetTaxonNames
     protected int updateTaxonSetTaxonName(String tableName, String taxonName, String currentValidName, String whereClause) throws SQLException {
       int c = 0;
       Statement stmt = null;

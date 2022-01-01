@@ -17,7 +17,7 @@
       if (displaySubgenera == null) displaySubgenera = "All";
     }
     //displaySubgenera = "all";
-    A.log("displaySubgenera:" + displaySubgenera);
+    //A.log("displaySubgenera:" + displaySubgenera);
 
     List<String> fullSetSubgenera = TaxonMgr.getSubgenera(taxon.getGenus());
 

@@ -20,7 +20,7 @@
 <br><br><br>
 
 <h2>Current Statistics:</h2>                    
-<br><b><%= A.commaFormat(AntwebMgr.getValidTaxaCount()) %> valid species + ssp.</b>
+<br><b><%= A.commaFormat(TaxonMgr.getValidTaxonCount()) %> valid species + ssp.</b>
 <br>&nbsp;&nbsp;Valid species and subspecies.
 <% if (LoginMgr.isDeveloper(request)) { %> <br>&nbsp;&nbsp;<b>Dev:</b> select count(taxon_name) from taxon where status = 'valid' and rank in ('species', 'subspecies')" <% } %>
  
