@@ -133,7 +133,7 @@ public final class BigMapAction extends Action {
         , int geolocaleId, String museumCode, boolean geolocaleFocus, Connection connection, HttpSession session) throws SQLException {
         
         Map thisMap = null;
-        s_log.info("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName + " specimenCode:" + specimenCode);
+        //s_log.info("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName + " specimenCode:" + specimenCode);
                      
         // Taxon map.  
         if ((taxonName != null) && (!"".equals(taxonName))) {

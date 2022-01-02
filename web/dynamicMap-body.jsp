@@ -61,7 +61,9 @@
 
     //A.log("justCached:" + justCached + " date:" + map.getCached());
     if (!justCached) {
-      cacheNote = "<b>*</b>This map was cached <font color=green>" + map.getCached() + ".</font>";
+      String linkStr = ".";
+      if (map.getCached() != null) linkStr = " <font color=green>" + map.getCached() + "</font>.";
+      cacheNote = "<b>*</b>This map was cached" + linkStr;
       if (LoginMgr.isCurator(request)) {
         cacheNote += " <a href='" + HttpUtil.getTarget(request) + "&refresh=true'>Refresh map</a>.";
       } else {
@@ -83,7 +85,7 @@
     if (request.getParameter("museumCode") != null) isMuseum = true;
 
     A.log("dynamicMap-body.jsp mapType:" + mapType + " title:" + title); // if not null + " overview:" + overview.getTitle());
-    
+
     //if ((rank == null) || (taxonPrettyName == null)) {
     String searchParam = (String) request.getParameter("searchMethod");
     if (searchParam != null) {
@@ -270,9 +272,15 @@
                String url = HttpUtil.getTarget(request);
                if (!isGeolocaleFocus && (adm1Name != null || countryName != null)) {
                  url += "&geolocaleFocus=true";
+
+                 String prettyStr = "";
+                 if (taxon.getPrettyName() != null) {
+                   prettyStr += " the " + taxon.getPrettyName() + " in";
             %>
-            <br>To see a map of the <%= taxon.getPrettyName() %> in <%= title %>, click: <a href='<%= url %>'>here</a>
-          <%   }
+            <br>To see a map of <%= prettyStr %> <%= title %>, click: <a href='<%= url %>'>here</a>
+          <%
+                 }
+               }
              } %>
            <%= cacheNote %>  
         </div>

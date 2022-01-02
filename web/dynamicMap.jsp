@@ -15,30 +15,30 @@
 
 <%@include file="common/antweb-defs.jsp" %>
 <%
-    String the_rank = null;
-    String the_name = null;
+    String taxonRank = null;
+    String prettyName = null;
     //Taxon taxon = (Taxon) session.getAttribute("taxon");
     if (taxon != null) {
-        the_rank = taxon.getRank();
-        if (the_rank == null) {
+        taxonRank = taxon.getRank();
+        if (taxonRank == null) {
             AntwebUtil.log("warn", "dynamicMap.jsp taxon.getRank() is null. Taxon name: " + taxon.getTaxonName() +
                     " requestInfo:" + HttpUtil.getRequestInfo(request));
         }
-        the_name = taxon.getPrettyName();
+        prettyName = (String) session.getAttribute("title");  //taxon.getPrettyName();
 
-        if (the_name == null) {
+        if (prettyName == null) {
             AntwebUtil.log("warn", "dynamicMap.jsp taxon.getPrettyName() is null. Taxon name: " + taxon.getTaxonName() +
                     " requestInfo:" + HttpUtil.getRequestInfo(request));
         }
     }
-    if ((the_rank == null) || (the_name == null)) {
-        the_rank = "Selected Results";
-        the_name = "";
+    if ((taxonRank == null) || (prettyName == null)) {
+        taxonRank = "Selected Results";
+        prettyName = "";
     }
-    String titleString = "Map of " + the_rank + " " + the_name + " from AntWeb";
+    String titleString = "Map of " + taxonRank + " " + prettyName + " from AntWeb";
 
-    String metaString = "<meta name='keywords' content='" + the_name + ", AntWeb, ants,ant,formicidae '/>";
-    metaString += "<meta name='description' content='Map of " + the_rank + " " + the_name + " from AntWeb.'/>";
+    String metaString = "<meta name='keywords' content='" + prettyName + ", AntWeb, ants,ant,formicidae '/>";
+    metaString += "<meta name='description' content='Map of " + taxonRank + " " + prettyName + " from AntWeb.'/>";
 %>
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
     <tiles:put name="title" value="<%= titleString %>"/>
