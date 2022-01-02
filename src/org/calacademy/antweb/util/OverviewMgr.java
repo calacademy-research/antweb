@@ -105,15 +105,16 @@ public class OverviewMgr {
                                       hasParams = "country overview";
  								      countryName = request.getParameter("country");
                                     }
-                                    overview = GeolocaleMgr.getAnyAdm1(adm1Name, countryName);
+								    if (countryName != null) {
+                                        overview = GeolocaleMgr.getAnyAdm1(adm1Name, countryName);
+                                    }
 								    if (overview == null && adm1Name != null) {
-                                        // Apparently adm1Name not found.
+                                        //A.log("findOverview() adm1Name:" + adm1Name + " param:" + request.getParameter("adm1Name"));
                                         throw new AntwebException("Adm1 not found countryName:" + countryName + " adm1Name:" + adm1Name);
                                     }
 								    if (overview == null) {
-                                        //overview = GeolocaleMgr.getCountry(countryName); // Just use the country and go on... ?
+                                        s_log.info("findOverview() Not found Adm1:" + adm1Name + " Using countryName:" + countryName + " for overview:" + overview + " param:" +  request.getParameter("adm1Name"));
                                         if (overview == null) throw new AntwebException("Overview not found");
-                                        //s_log.info("findOverview() Not found Adm1:" + adm1Name + " Using countryName:" + countryName + " for overview:" + overview);
                                     }
 								  }
                                   //A.log("getOverview() adm1Name:" + adm1Name + " country:" + countryName + " overview:" + overview); // + " country:" + ((Adm1)overview).getParent());								  

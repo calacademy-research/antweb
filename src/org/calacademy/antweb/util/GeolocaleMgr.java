@@ -273,7 +273,7 @@ public class GeolocaleMgr extends Manager {
     public static @Nullable Adm1 getAdm1(int geolocaleId) {
         return adm1List.stream().filter(geolocale -> geolocale.getId() == geolocaleId)
                 .findFirst().orElse(null);
-    } 
+    }
 
     public static @Nullable Geolocale getGeolocale(int geolocaleId) {
         return s_geolocales.stream().filter(geolocale -> geolocale.getId() == geolocaleId)
@@ -610,7 +610,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if (!AntwebMgr.isPopulated()) return null;
         if (adm1Name == null) return null;
         if (countryName == null) {
-            s_log.warn("getAnyAdm1(" + adm1Name + ", " + countryName + ") must included countryName.");
+            s_log.info("getAnyAdm1(" + adm1Name + ", " + countryName + ") must included countryName.");
             return null;
         }
         return adm1CountryMap.get(adm1Name, countryName);

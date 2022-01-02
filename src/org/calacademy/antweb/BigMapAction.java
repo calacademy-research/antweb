@@ -103,6 +103,7 @@ public final class BigMapAction extends Action {
           }           
                 
           Map map = getMap(project, taxonName, specimenCode, localityKey, collectionCode, geolocaleId, museumCode, geolocaleFocus, connection, session);
+          A.log("Map fetched:" + map);
 
           if (map != null) {
             String title = map.getTitle();
@@ -121,9 +122,9 @@ public final class BigMapAction extends Action {
             DBUtil.close(connection, this, "BigMapAction.execute()");
         }
 
-        s_log.info("execute() no map found for taxonName:" + taxonName + " specimenCode:" + specimenCode + " locality:" + localityKey + " collectionCode:" + collectionCode);      
+        String message = "No map found for taxonName:" + taxonName + " specimenCode:" + specimenCode + " locality:" + localityKey + " collectionCode:" + collectionCode;
+        s_log.info("execute() :" + message);
         //http://www.antweb.org/bigMapReq.do?name=microps&genus=nylanderia&rank=species&project=worldants
-        String message = "Big Map not found.";
         request.setAttribute("message", message);
         return (mapping.findForward("message"));
     }
@@ -132,7 +133,7 @@ public final class BigMapAction extends Action {
         , int geolocaleId, String museumCode, boolean geolocaleFocus, Connection connection, HttpSession session) throws SQLException {
         
         Map thisMap = null;
-        //s_log.info("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName);
+        s_log.info("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName + " specimenCode:" + specimenCode);
                      
         // Taxon map.  
         if ((taxonName != null) && (!"".equals(taxonName))) {
@@ -194,6 +195,9 @@ public final class BigMapAction extends Action {
         if ((specimenCode != null) && (!"".equals(specimenCode))) {
           Locality locality = null;
   		  if (specimenCode != null) {
+  		    boolean exists = (new SpecimenDb(connection)).exists(specimenCode);
+              A.log("getMap() SpecimenCode:" + specimenCode + " exists:" + exists);
+		    if (!exists) return null;
 		    ArrayList arrayList = new ArrayList();
 		    arrayList.add(specimenCode);
 		    thisMap = new Map(arrayList, connection);	    

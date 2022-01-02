@@ -18,22 +18,24 @@
 <div class="wide_left">
 
 <%
-      //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D.tif"));
-      //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D_2.tif"));
-      //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("UFV_LABECOL_000386_P_2.tif"));
-      //AntwebUtil.log("ImageUploaded val:" + ImageUploaded.getTestString("ZRC_6_1520_H.tif"));
-
-    //AntwebUtil.log("execute() name:" + TaxonMgr.getPrettyTaxaNames(taxonName) + " species:" + species);
-
-    //DateUtil.runTests();
-
-    //A.log("message-body.jsp andCriteria:" + StatusSet.getAndCriteria(Project.ALLANTWEBANTS));
-    //A.log("message-body.jsp andCriteria:" + StatusSet.getAndCriteria(Project.WORLDANTS));
-
-    // Test this way: http://localhost/antweb/util.do?action=testMessage
+    // Test this way: http://localhost/util.do?action=testMessage
 
     String message = (String) request.getAttribute("message"); 
-    //A.log("message-body.jsp message:" + message);
+    String testMessage = "";
+    if (AntwebProps.isDevMode()) {
+      //testMessage = "adm1: " + GeolocaleMgr.getAnyAdm1("Enewetak & Ujelang", "Marshall Islands");
+      testMessage = "adm1: " + GeolocaleMgr.getAnyAdm1("North Carolina", "United States");
+    // testeMessage = "ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D.tif");
+    // testMessage = "ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D_2.tif");
+    // testMessage = "ImageUploaded val:" + ImageUploaded.getTestString("UFV_LABECOL_000386_P_2.tif");
+    // testMessage = "ImageUploaded val:" + ImageUploaded.getTestString("ZRC_6_1520_H.tif");
+    // testMessage = "execute() name:" + TaxonMgr.getPrettyTaxaNames(taxonName) + " species:" + species;
+    // testMessage = "message-body.jsp andCriteria:" + StatusSet.getAndCriteria(Project.ALLANTWEBANTS));
+
+      A.log("message-body.jsp " + testMessage);    
+      message += " " + testMessage;    
+    }
+
     LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
 %>
 <br>

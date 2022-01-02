@@ -42,6 +42,7 @@ public class SpecimenDb extends AntwebDb {
         return false;
     }
 
+    // This will not return null if it does not exist. Bad object design of specimen.
     public Specimen getSpecimen(String code) throws SQLException {
       Specimen specimen = null;
       try {
