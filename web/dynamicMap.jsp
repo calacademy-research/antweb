@@ -27,8 +27,10 @@
         prettyName = (String) session.getAttribute("title");  //taxon.getPrettyName();
 
         if (prettyName == null) {
-            AntwebUtil.log("warn", "dynamicMap.jsp taxon.getPrettyName() is null. Taxon name: " + taxon.getTaxonName() +
-                    " requestInfo:" + HttpUtil.getRequestInfo(request));
+            // This does show up occasionally. No bad effects it seems. For instance:
+            //   https://www.antweb.org/bigMap.do?project=allantwebants&taxonName=myrmicinaeChelaner%20pubescens
+            //AntwebUtil.log("warn", "dynamicMap.jsp taxon.getPrettyName() is null. Taxon name: " + taxon.getTaxonName() +
+            //        " requestInfo:" + HttpUtil.getRequestInfo(request));
         }
     }
     if ((taxonRank == null) || (prettyName == null)) {
