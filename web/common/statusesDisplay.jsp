@@ -8,7 +8,10 @@
 <%
   // Do not display for species if a browse.do request.
   String sdRank = (String) request.getParameter("rank");
+  String before = HttpUtil.getTarget(request);
   String sdTarget = HttpUtil.getTargetMinusParams(request, "statusSet", "statusSetSize");
+  A.log("statusesDisplay \r\nbefore:" + before + " \r\n after:" + sdTarget);
+
   String sdDisplayChildRank = null;
   if (HttpUtil.getTarget(request).contains("taxonomicPage")) {
     sdDisplayChildRank = Formatter.initCap(sdRank);

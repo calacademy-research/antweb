@@ -905,40 +905,77 @@ public abstract class HttpUtil {
       }
       return target;
     }
-    
-    public static String getTargetMinusParam(HttpServletRequest request, String param) {
-      String target = HttpUtil.getTarget(request);
-      return getTargetMinusParam(target, param);
-    }
-    public static String getTargetMinusParam(String target, String param) {
-      int i = target.indexOf("&" + param);
-      if (i > 0) {
-        return target.substring(0, i); // What? We could lose params at the end of the line.
-      } else {
-        return target;
-      }
-    }
 
-    public static String getTargetMinusParams(HttpServletRequest request, String param1, String param2) {   
-      String target = HttpUtil.getTargetMinusParam(request, param1);
-      int i = target.indexOf("&" + param2);
-      if (i > 0) {
-        //A.log("getTargetMinusParams() x:" + target.substring(i-1, i));
-        if (target.substring(i-1, i).equals("&")) i = i - 1;
-        return target.substring(0, i); // What? We could lose params at the end of the line.
-      } else {
-        return target;
-      }
+    /*
+    To do. It seems the code below is faulty.
+
+        public static String getTargetMinusParam(String target, String param) {
+          int i = target.indexOf("&" + param);
+          String newTarget = target;
+          while (i > 0) {
+            newTarget = target.substring(0, i);
+            i = newTarget.indexOf("&" + param);
+          }
+          return newTarget;
+        }
+
+       have a removeParam method. Get called from both methods below.
+     */
+
+
+    // These are not (yet) designed to handle if the parameter immediately follows the ?
+    public static String getTargetMinusParam(HttpServletRequest request, String param) {
+        String target = HttpUtil.getTarget(request);
+        return getTargetMinusParam(target, param);
     }
-    
-    public static String getTargetReplaceParam(HttpServletRequest request, String oldParam, String newParam) {   
-      String target = HttpUtil.getTargetMinusParam(request, oldParam);
-      if (newParam != null && !"".equals(newParam)) {
-        target += "&" + newParam;
-      }
+    public static String getTargetMinusParams(HttpServletRequest request, String param1, String param2) {
+        String target = HttpUtil.getTarget(request);
+        target = getTargetMinusParams(target, param1, param2);
+        return target;
+    }
+    public static String getTargetMinusParams(String target, String param1, String param2) {
+        target = HttpUtil.getTargetMinusParam(target, param1);
+        target = HttpUtil.getTargetMinusParam(target, param2);
+        return target;
+    }
+    // will remove all instances.
+    public static String getTargetMinusParam(String target, String param) {
+        int i1 = target.indexOf("?" + param);
+        boolean isFirstParam = (i1 > 0);
+        if (!isFirstParam) i1 = target.indexOf("&" + param);
+        int j1 = target.indexOf("&", i1 + 1);
+        String newTarget = target;
+        String lastTarget = target;
+        while (i1 > 0) {
+            newTarget = newTarget.substring(0, i1);
+            if (isFirstParam) {
+                if (j1 > i1) newTarget += "?" + lastTarget.substring(j1 + 1);
+            } else {
+                if (j1 > i1) newTarget += lastTarget.substring(j1);
+            }
+            i1 = newTarget.indexOf("&" + param);
+            j1 = newTarget.indexOf("&" + param, i1 + 1);
+        }
+        return newTarget;
+    }
+    // newParam should be of the format: &param=value (either works).
+    public static String getTargetReplaceParam(HttpServletRequest request, String oldParam, String newParam) {
+      if (oldParam == null || newParam == null || !newParam.contains("=")) return null;
+      String target = HttpUtil.getTarget(request);
+      target = HttpUtil.getTargetReplaceParam(target, oldParam, newParam);
       return target;
     }
-        
+    public static String getTargetReplaceParam(String target, String oldParam, String newParam) {
+        if (oldParam == null || newParam == null || !newParam.contains("=")) return null;
+        if (!newParam.contains("&")) newParam = "&" + newParam;
+        target = HttpUtil.getTargetMinusParam(target, oldParam);
+        if (newParam != null && !"".equals(newParam)) {
+            target += newParam;
+        }
+        return target;
+    }
+
+
     public static int MILLIS = 1000;
     public static int SECS = 60;
     public static int MAX_REQUEST_TIME = MILLIS * 20;
@@ -1519,6 +1556,7 @@ public abstract class HttpUtil {
       return url;
     }
 
+    // The similar methods above might be better. For instance: getTargetMinusParam()
     public static String removeParam(String url, String paramName) {
       String newUrl = url;
       String param = "?" + paramName + "=";

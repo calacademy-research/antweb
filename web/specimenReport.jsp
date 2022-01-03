@@ -49,6 +49,7 @@ if (sortedBy == null) {
           <form id="sortby">
             <input type="hidden" id="sortby_action" name="sortby_action" value="<%= AntwebProps.getDomainApp() %>/browse.do" />
             <%
+            //A.log("specimenReport ADJUST DOCUMENTATION. This code is used.");
             /*
             Warning crazy here! Is this sortByExtras even used? See layout.jsp and layoutMobile and search on sortByExtras. Also see:
             specimen_list.js. Javascript is modifying the value of ns_sortby_extras. Very hard to debug.
@@ -124,6 +125,7 @@ if (sortedBy == null) {
             } else {
               sortImgLink = "<a href='" + HttpUtil.getTargetMinusParam(request, "sortOrder=up") + addIn + "&sortOrder=down'><img src='" + AntwebProps.getDomainApp() + "/image/downArrow.jpg' width=12></a>";
             }
+            //sortImgLink = HttpUtil.getTargetMinusParam(sortImgLink, "t"); // Does not seem to get rid of the extra &t= that are added by the sort drop down.
             if (sortImgLink != null) { %>
               <%= sortImgLink %>
          <% }

@@ -498,6 +498,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
 
  <!--==========End of Action Mappings that use the browseForm bean==========-->
 
+<!--
     <action
       path="/slideshow" 
       forward="/slideShow.do"/>
@@ -508,6 +509,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
                scope="session">
       <forward name="success" path="/slideShow.jsp"/>
     </action>
+-->
 
     <action
       path="/favs" 

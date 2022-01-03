@@ -1,6 +1,8 @@
 Release 8.68.7
-  FIx minor map display issues.
-
+  Fix minor map display issues.
+  Remove slideShow struts action.
+  Fix for compounding sort and order by parameters on browse pages.
+ 
 Release 8.68.6
   No map found error message changed to be more precise.
   Handle case of specimen not found in BigMapAction.

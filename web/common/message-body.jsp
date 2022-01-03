@@ -23,8 +23,26 @@
     String message = (String) request.getAttribute("message"); 
     String testMessage = "";
     if (AntwebProps.isDevMode()) {
-      //testMessage = "adm1: " + GeolocaleMgr.getAnyAdm1("Enewetak & Ujelang", "Marshall Islands");
-      testMessage = "adm1: " + GeolocaleMgr.getAnyAdm1("North Carolina", "United States");
+//      testMessage = "adm1: " + GeolocaleMgr.getAnyAdm1("Enewetak & Ujelang", "Marshall Islands");
+
+    //String url = "https://www.antweb.org/browse.do?subfamily=incertae_sedis&statussetsize=max&statusset=all&statusset=all&statusset=all&caste=default&statusset=all&orderby=status&statusset=all&orderby=taxonname&statusset=all&project=allantwebants&statusset=valid%20extant&orderBy=species";
+
+
+//    testMessage = HttpUtil.removeParam(url, "statusset");
+
+
+       //String url = "https://www.antweb.org/browse.do?caste=yay&subfamily=incertae_sedis&caste=default&project=allantwebants&statusset=valid%20extant&orderBy=species&statusset=all";
+       //A.log("0. url:" + url);
+       //A.log("1. Minus statusset:" + HttpUtil.getTargetMinusParam(url, "statusset"));
+       //A.log("2. Minus statusset and caste:" + HttpUtil.getTargetMinusParams(url, "statusset", "caste"));
+       //A.log("3. Replace project:" + HttpUtil.getTargetReplaceParam(url, "project", "taxon=dummy"));
+
+       //A.log("1. Minus statusset:" + HttpUtil.removeParam(url, "statusset"));
+       //A.log("2. Minus statusset and caste:" + HttpUtil.removeParams(url, "statusset", "caste"));
+       //A.log("3. Replace project:" + HttpUtil.getTargetReplaceParam(url, "project", "taxon=dummy"));
+
+       testMessage = "Testing done";
+
     // testeMessage = "ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D.tif");
     // testMessage = "ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D_2.tif");
     // testMessage = "ImageUploaded val:" + ImageUploaded.getTestString("UFV_LABECOL_000386_P_2.tif");
