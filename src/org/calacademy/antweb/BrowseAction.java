@@ -504,11 +504,12 @@ We are showin the full map of ponerinae for every adm1.
 
         } catch (java.util.MissingResourceException e) {
 			// This was around the new Map() command above, but we seemed to be not closing the db connection.
-			message = "execute() e:" + e + " MissingResource overview:"+ overview.getName();
+			message = "e:" + e + " MissingResource overview:"+ overview.getName();
         } catch (AntwebException e) {
-            s_log.error("execute() e:" + e + " " + HttpUtil.getRequestInfo(request));
+            message = "e:" + e;
         } catch (SQLException e) {
-            message = "execute() SQLException caught on request:" + AntwebUtil.getRequestInfo(request);
+            message = "Exception caught on request.";
+            s_log.error("execute() e:" + e);
         } finally {
             if ("mapComparison".equals(cacheType)) --s_mapComparisonCount;
             if ("getComparison".equals(cacheType)) --s_getComparisonCount;
@@ -521,11 +522,10 @@ We are showin the full map of ponerinae for every adm1.
         }
 
         // Error handling.
-        s_log.error(message);
+        s_log.error("execute() " + message + " " + AntwebUtil.getRequestInfo(request));
         request.setAttribute("message", message);
         return (mapping.findForward("message"));
     }
-    
   
   
     protected ActionForward taxonNameRedirect(BrowseForm browseForm, ActionMapping mapping

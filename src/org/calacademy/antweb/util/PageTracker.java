@@ -126,13 +126,16 @@ possible moment - ideally in jsp footer.
 
     public static String showRequests() {
         StringBuilder message = new StringBuilder();
+        try {
+            Collection<Tracker> trackers = trackerMap.values();
+            ArrayList<Tracker> trackerList = new ArrayList<>(trackers);
+            Collections.sort(trackerList);
 
-        Collection<Tracker> trackers = trackerMap.values();
-        ArrayList<Tracker> trackerList = new ArrayList<>(trackers);
-        Collections.sort(trackerList);
-
-        for (Tracker tracker : trackerList) {
-            message.append(tracker.toString()).append("\r\n");
+            for (Tracker tracker : trackerList) {
+                message.append(tracker.toString()).append("\r\n");
+            }
+        } catch (Exception e) {
+            AntwebUtil.log("showRequests() e:" + e);
         }
         return message.toString();
     }

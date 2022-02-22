@@ -202,7 +202,7 @@ public class AdvancedSearchAction extends Action {
     }
     
 	public ArrayList<ResultItem> getSearchResults(HttpServletRequest request,
-		SearchParameters searchParameters) throws IOException, ServletException, SearchException {
+		SearchParameters searchParameters) throws SQLException, IOException, ServletException, SearchException {
 
 		ArrayList<ResultItem> searchResults = null;
 
@@ -217,6 +217,7 @@ public class AdvancedSearchAction extends Action {
 		//	s_log.error("getSearchResults() 1 e:" + e);
 		} catch (SQLException e) {
 			s_log.error("getSearchResults() 2 e:" + e);
+			throw e;
 		} finally {
 			DBUtil.close(connection, this, "AdvancedSearchAction.getSearchResults()");
 		}

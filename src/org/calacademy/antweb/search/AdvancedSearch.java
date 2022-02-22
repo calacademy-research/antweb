@@ -128,7 +128,7 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
                 + ", sp.determinedby, sp.method, sp.dnaextractionnotes, sp.ownedby, sp.locatedat"
                 + ", sp.elevation, sp.decimal_longitude, sp.decimal_latitude"  //Added Feb 1, 2013.                  
                 + ", ant_group.name, sp.museum"
-                + ", sp.created, sp.bioregion, upload_id";
+                + ", sp.bioregion, upload_id";
 
             theQuery = "select " + fieldList
                 + ", count(image.id) as imagecount"
@@ -297,7 +297,9 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
             //A.log("createInitialResults() groupName:" + groupName + " groupNameSearchType:" + groupNameSearchType);
             if ((groupName != null) && (groupName.length() > 0)) {
 //                where.add(getSearchString("ant_group.name", groupNameSearchType, groupName)); // This don't for group searches. Break map generation. Why was it like this?
-                  where.add(getSearchString("groupName", groupNameSearchType, groupName));
+                  String groupNameStr = getSearchString("groupName", groupNameSearchType, groupName);
+                  A.log("groupNameStr:" + groupNameStr);
+                  where.add(groupNameStr);
             }
 
 /*             
@@ -340,7 +342,9 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
             }
             
             if ((created != null) && (created.length() > 0)) {
-                where.add(getSearchString("sp.created", createdSearchType, created));
+                String createdStr = getSearchString("sp.created", createdSearchType, created);
+                A.log("createdStr:" + createdStr);
+                where.add(createdStr);
             }
             
             if (uploadId > 0) {
@@ -366,7 +370,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
 
             s_query = theQuery;
             
-            //A.log("createInitialResults() theQuery:" + theQuery);
+            A.log("createInitialResults() theQuery:" + theQuery);
             //s_log.warn("createInitialResults() theQuery:" + theQuery);
               //AntwebUtil.logStackTrace();
 

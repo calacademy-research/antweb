@@ -91,7 +91,9 @@ public final class SearchAction extends DispatchAction {
           s_log.error("execute() se:" + e);
           return HttpUtil.sendMessage(request, mapping, e.toString());
         } catch (NoSuchMethodException e) {
-          s_log.error("execute() nsme:" + e);
+            s_log.error("execute() nsme:" + e);
+        } catch (SQLException e) {
+            s_log.error("execute() e:" + e + " " + HttpUtil.getRequestInfo(request));
         } catch (Exception e) {
           s_log.error("execute() e:" + e);
           AntwebUtil.logStackTrace(e);
@@ -106,7 +108,7 @@ public final class SearchAction extends DispatchAction {
 
     public ActionForward advancedSearch(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
-          throws IOException, ServletException, SearchException {
+          throws IOException, ServletException, SearchException, SQLException {
 
         AdvancedSearchForm advancedSearchForm = (AdvancedSearchForm) form;
 
@@ -139,7 +141,7 @@ public final class SearchAction extends DispatchAction {
 	*/
     private ActionForward doAdvancedSearch(SearchParameters searchParameters, String resultRank, String output
         , HttpServletRequest request, ActionMapping mapping) 
-        throws IOException, ServletException, SearchException {
+        throws IOException, ServletException, SearchException, SQLException {
 
       try {
         if (LoginMgr.isAdmin(request)) {
@@ -257,7 +259,7 @@ public final class SearchAction extends DispatchAction {
 			  return mapping.findForward("message");                   
 			} catch (SQLException e) {
 				s_log.error("execute() e:" + e);
-				AntwebUtil.logStackTrace(e);
+				throw e;
 			} finally {
 				DBUtil.close(connection, this, "SearchAction.doAdvancedSearch()");
 			}  
@@ -299,7 +301,7 @@ public final class SearchAction extends DispatchAction {
     // This attempts to get values from the form and invoke the advanced search process
     public ActionForward bayAreaSearch(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
-          throws IOException, ServletException, SearchException {
+          throws IOException, ServletException, SearchException, SQLException {
 
         HttpSession session = request.getSession();
 		java.util.Date startTime = new java.util.Date(); // for HttpUtil.finish(request, startTime);

@@ -1,3 +1,8 @@
+Release 8.68.8
+  Throw SQLException from AdvancedSearchAction and SearchAction.
+  BrowseAction logging changed.
+  
+
 Release 8.68.7
   Fix minor map display issues.
   Remove slideShow struts action.
@@ -10,7 +15,8 @@ Release 8.68.6
 Release 8.68.5
   In Overview Mgr, change getAdm1 to getAnyAdm1.
 
-Release 8.68.4
+Release 8.68.4 
+Date: Dec 31, 2021
   Exception handling and logging in BrowseAction, OverviewMgr, TaxonDb, and Taxon hierarchy.
   Added Geolocale.isLive() documentation.
   imagePage.jsp prettyName use refined and expanded.
@@ -36,6 +42,7 @@ Release 8.68
   Dev exempted tasks always logged.
 
 Release 8.67: 
+Note: Release rolled back. No errors found.
   Refactor of Taxon object & database facilities with performance enhancements.
 
 Release 8.66.1

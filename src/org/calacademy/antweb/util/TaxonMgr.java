@@ -144,11 +144,22 @@ public class TaxonMgr extends Manager {
       for (Taxon g : s_genera.values()) {
         //A.log("getGenus() genusTaxonName:" + genusName + " genus:" + genus.getName());
         if (genusName.equals(g.getName())) {
+            if (Status.SYNONYM.equals(g.getStatus())) {
+                A.log("Not using synonym " + g.getName());
+                continue;
+            }
             genus = g;
             if (genusFound == true && !s_ambiguousGenusReported) {
                 s_ambiguousGenusReported = true;
                 s_log.warn("getGenusFromName(). AMBIGUOUS! Found a second genus with genusName:" + genusName + ". generaSize:" + s_genera.size());
-                AntwebUtil.logShortStackTrace();
+                //AntwebUtil.logShortStackTrace();
+                /* Probably.
+                	at org.calacademy.antweb.util.TaxonMgr.getGenusFromName(TaxonMgr.java:151)
+	                at org.calacademy.antweb.upload.SpecimenUploadParse.parseLine(SpecimenUploadParse.java:294)
+	                at org.calacademy.antweb.upload.SpecimenUpload.importSpecimens(SpecimenUpload.java:164)
+	                at org.calacademy.antweb.upload.SpecimenUploader.uploadSpecimenFile(SpecimenUploader.java:98)
+             	    at org.calacademy.antweb.upload.SpecimenUploader.uploadSpecimenFile(SpecimenUploader.java:48)
+                 */
             }
             genusFound = true;
             // Keep looping. Small performance cost but if we find another, ambiguity bad.

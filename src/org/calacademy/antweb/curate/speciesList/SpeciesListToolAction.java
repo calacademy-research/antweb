@@ -603,7 +603,7 @@ To Do
   }      
       
     private ArrayList<ResultItem> doAdvancedSearch(SpeciesListToolForm toolForm, HttpServletRequest request) 
-        throws SearchException {
+        throws SearchException, SQLException {
 
         //A.log("doAdvancedSearch() toolForm:" + toolForm);
 
