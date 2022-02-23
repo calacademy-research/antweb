@@ -48,8 +48,7 @@ import org.calacademy.antweb.home.*;
 */
     // ------------------------- Proj_Taxon Child Count Crawl ----------------------------
 
-     public void childrenCountCrawl() 
-       throws SQLException {
+     public void childrenCountCrawl() throws SQLException {
          s_log.warn("childrenCountCrawl()");
           ArrayList<Project> projects = ProjectMgr.getLiveProjects();
           for (Project project : projects) {            
@@ -58,9 +57,9 @@ import org.calacademy.antweb.home.*;
           fixExceptions();
      }
 
-    public void childrenCountCrawl(String projectName)
-            throws SQLException {
+    public void childrenCountCrawl(String projectName) throws SQLException {
         Project project = ProjectMgr.getProject(projectName);
+        A.log("childrenCountCrawl:" + project);
         if (project != null) {
             childrenCountCrawl(project);
         } else {

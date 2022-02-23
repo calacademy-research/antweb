@@ -41,7 +41,7 @@
        //A.log("2. Minus statusset and caste:" + HttpUtil.removeParams(url, "statusset", "caste"));
        //A.log("3. Replace project:" + HttpUtil.getTargetReplaceParam(url, "project", "taxon=dummy"));
 
-       testMessage = "Testing done";
+       //testMessage = "Testing done";
 
     // testeMessage = "ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D.tif");
     // testMessage = "ImageUploaded val:" + ImageUploaded.getTestString("ZRC_ENT00000092_D_2.tif");

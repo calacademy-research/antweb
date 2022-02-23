@@ -524,7 +524,7 @@ public class SpeciesListUpload extends AntwebUpload {
                             currentValidRank = element;
                             //A.log("currentValidRank:" + currentValidRank);
                         }
-                        A.iLog("importSpeciesList() index:" + index, 100000);  // + " currentValidRank:" + currentValidRank
+                        //A.iLog("importSpeciesList() index:" + index, 100000);  // + " currentValidRank:" + currentValidRank
                         if (index == speciesHeader) {
                           thisSpecies = element.toLowerCase();
                           if ((thisSpecies != null) && !"".equals(thisSpecies)) {

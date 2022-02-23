@@ -190,6 +190,9 @@
 <%   if (AntwebProps.isDevOrStageMode()) { %>
       <h3 align=left>Dev</h3>
       <ul align=left>
+      
+	    <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl">Geolocale Crawl</a>
+      
 	    <li><a href="<%= domainApp %>/utilData.do?action=reCrawl"> ReCrawl (custom)</a>
 	    <li><a href="<%= domainApp %>/utilData.do?action=countCrawls"> Count </a> Crawls
 	    <li><a href="<%= domainApp %>/utilData.do?action=parentCrawl"> Crawl </a> for Parents

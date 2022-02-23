@@ -10,7 +10,7 @@
   String sdRank = (String) request.getParameter("rank");
   String before = HttpUtil.getTarget(request);
   String sdTarget = HttpUtil.getTargetMinusParams(request, "statusSet", "statusSetSize");
-  A.log("statusesDisplay \r\nbefore:" + before + " \r\n after:" + sdTarget);
+  //A.log("statusesDisplay \r\nbefore:" + before + " \r\n after:" + sdTarget);
 
   String sdDisplayChildRank = null;
   if (HttpUtil.getTarget(request).contains("taxonomicPage")) {

@@ -1,8 +1,18 @@
+
+Release 8.69.1
+  Create a UtilDataAction.worldantsCount action.
+  Add to scheduled action.  
+
+Release 8.69
+  Fix for the serverStatus page that can display incorrectly.
+  Look into the getGenusFromName() ambiguous for holcoponera.
+  SQLException thrown from SpeciesListToolAction.doAdvancedSearch()	
+  Fix browse requests with orderBy that would confuse rank.  
+
 Release 8.68.8
   Throw SQLException from AdvancedSearchAction and SearchAction.
   BrowseAction logging changed.
   
-
 Release 8.68.7
   Fix minor map display issues.
   Remove slideShow struts action.

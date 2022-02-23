@@ -280,9 +280,12 @@ public class UtilDataAction extends Action {
 		// 17.67 mins. success in 13.45 mins. success in 12.28 mins (after 1 constraint check removed).
 		// success in 12.97 mins.		
 		if (action.equals("worldantsFetchAndReload")) { 
-		  operationDetails = (new SpeciesListUploader(connection)).worldantsFetchAndReload();	
+		  operationDetails = (new SpeciesListUploader(connection)).worldantsFetchAndReload();
 
-		  LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " worldantsFetchAndReload: " + operationDetails.getMessage());
+		  // UtilData.do?action=worldantsCount Feb2022
+          (new ProjTaxonCountDb(connection)).childrenCountCrawl("worldants");
+
+          LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " worldantsFetchAndReload: " + operationDetails.getMessage());
 		  
           ((UploadDetails) operationDetails).finish(accessLogin, request, connection);
     		  
@@ -506,6 +509,13 @@ public class UtilDataAction extends Action {
 		}
 */
     // ---------- Count Crawls -------------------------
+
+        // Added Feb2022 to fix missing worldant counts...
+        if (action.equals("worldantsCount")) {
+            (new ProjTaxonCountDb(connection)).childrenCountCrawl("worldants");
+            message = "Finished Worldants Count Crawl ()";
+        }
+
 		// https://antweb-stg/utilData.do?action=geolocaleTaxonCountCrawl&num=392
 		if (action.equals("geolocaleTaxonCountCrawl")) {
 		  GeolocaleTaxonCountDb geolocaleTaxonCountDb = (new GeolocaleTaxonCountDb(connection));

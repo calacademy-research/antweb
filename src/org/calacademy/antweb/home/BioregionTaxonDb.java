@@ -251,7 +251,7 @@ See BioregionDb.java:77 where this call is commented out.
         // for each record, insert into bioregion_taxon.  Ignore constraint conflicts.    
 
 		if (get(bioregionName, taxonName) != null) {
-		  A.iLog("BioregionTaxonDb.insertTaxon integrity checked");
+		  //A.iLog("BioregionTaxonDb.insertTaxon() integrity checked");
 		  return false;
 		}
         String dml = null;

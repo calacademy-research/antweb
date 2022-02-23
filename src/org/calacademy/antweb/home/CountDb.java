@@ -69,7 +69,9 @@ public class CountDb extends AntwebDb {
 
     // Countables include Geolocale, Bioregion, Museum, Project.
     protected void childrenCountCrawl(Countable countable) throws SQLException {
-      if (countable == null) s_log.debug("childrenCountCrawl() why is countable null?");
+        A.log("childrenCountCrawl countable:" + countable);
+
+        if (countable == null) A.log("childrenCountCrawl() why is countable null?");
         debug = AntwebProps.isDevMode();
 		int specimenCount = countSpecimens(countable);
 
@@ -102,6 +104,7 @@ public class CountDb extends AntwebDb {
 		        "Alabama".equals(countable.toString())
              || "Alaska".equals(countable.toString())
              || "Colorado".equals(countable.toString())
+             || "worldants".equals(countable.toString())
                 )) s_log.debug("chilrenCountCrawl() message:" + message);
     }
     
