@@ -71,6 +71,7 @@ public class BrowseAction extends DescriptionAction {
 
         if ((rank == null) || ("".equals(rank))) rank = inferredRank(queryString);
         if (Rank.SUBGENUS.equals(rank)) rank = Rank.GENUS;
+        //A.log("browseForm.rank:" + browseForm.getRank() + " rank:" + rank);
 
         String family = browseForm.getFamily();
         String subfamily = browseForm.getSubfamily();
@@ -631,12 +632,16 @@ We are showin the full map of ponerinae for every adm1.
     }
 
     private String inferredRank(String queryString) {
-        if(queryString.contains("subspecies"))return Rank.SUBSPECIES;
-        if(queryString.contains("species"))return Rank.SPECIES;
-        if(queryString.contains("genus")&&!queryString.contains("subgenus"))return Rank.GENUS;
-        if(queryString.contains("subgenus"))return Rank.SUBGENUS;
-        if(queryString.contains("subfamily"))return Rank.SUBFAMILY;
-        if(queryString.contains("family"))return Rank.FAMILY;
+        // remove &orderBy=species
+        String testString = HttpUtil.removeParam(queryString, "orderBy");
+        //A.log("inferredRank() queryString:" + queryString + " testString:" + testString);
+
+        if(testString.contains("subspecies"))return Rank.SUBSPECIES;
+        if(testString.contains("species"))return Rank.SPECIES;
+        if(testString.contains("genus")&&!queryString.contains("subgenus"))return Rank.GENUS;
+        if(testString.contains("subgenus"))return Rank.SUBGENUS;
+        if(testString.contains("subfamily"))return Rank.SUBFAMILY;
+        if(testString.contains("family"))return Rank.FAMILY;
         return null;
     }
 }

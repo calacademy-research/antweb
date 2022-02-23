@@ -269,6 +269,7 @@ public class TaxonDb extends AntwebDb {
             if (i > 1) {
                 String message = "getTaxonName() did not get unique result." + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank
                         + " query:" + theQuery;
+                //  AntwebUtil.logStackTrace();
                 throw new AntwebException(message);
             }
         } catch (SQLException e) {
