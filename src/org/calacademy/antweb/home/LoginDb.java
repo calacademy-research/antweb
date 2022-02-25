@@ -712,8 +712,8 @@ public class LoginDb extends AntwebDb {
     public boolean isLegalLogin(Login login) throws SQLException {
         //Verify that the email and login have not been used before by another account
 
-        boolean namePresent = StringUtils.isBlank(login.getName());
-        boolean emailPresent = StringUtils.isBlank(login.getEmail());
+        boolean namePresent = !StringUtils.isBlank(login.getName());
+        boolean emailPresent = !StringUtils.isBlank(login.getEmail());
 
         if (!namePresent && !emailPresent) {
             return false;
@@ -722,9 +722,9 @@ public class LoginDb extends AntwebDb {
         String query;
 
         if (namePresent && emailPresent) {
-            query = "select count(*) as num from login where (name = ? or email = ?) or (name = ? or email = ?) and id = ?";
+            query = "select count(*) as num from login where (name = ? or email = ?) or (name = ? or email = ?) and id != ?";
         } else {
-            query = "select count(*) as num from login where (name = ? or email = ?) and id = ?";   // we can fill with either email or name
+            query = "select count(*) as num from login where (name = ? or email = ?) and id != ?";   // we can fill with either email or name
         }
 
 
