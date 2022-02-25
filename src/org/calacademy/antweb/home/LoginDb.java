@@ -709,7 +709,7 @@ public class LoginDb extends AntwebDb {
         }
     }
 
-    public boolean isLegalLogin(Login login) throws SQLException {
+    private boolean isLegalLogin(Login login) throws SQLException {
         //Verify that the email and login have not been used before by another account
 
         boolean namePresent = !StringUtils.isBlank(login.getName());
@@ -760,16 +760,17 @@ public class LoginDb extends AntwebDb {
 
 
             returnVal = (num == 0);
+
+            if (AntwebProps.isDevMode() && !returnVal) {
+                s_log.warn("isLegalLogin() returnVal: false for query:" + DBUtil.getPreparedStatementString(stmt));
+                //AntwebUtil.logShortStackTrace(6);
+            }
+
         } catch (SQLException e) {
             s_log.error("isLegalLogin() e:" + e + " query:" + query);
             throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "isLegalLogin()");
-        }
-
-        if (AntwebProps.isDevMode() && !returnVal) {
-            s_log.warn("isLegalLogin() returnVal: false for query:" + query);
-            //AntwebUtil.logShortStackTrace(6);
         }
         return returnVal;
     }

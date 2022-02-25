@@ -1,14 +1,18 @@
 package org.calacademy.antweb.util;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Date;
 import java.sql.*;
 
 import javax.sql.*;
+
 import com.mchange.v2.c3p0.*;
 import com.mysql.cj.jdbc.MysqlDataSource;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.mchange.v2.c3p0.impl.*;
@@ -505,6 +509,34 @@ Or, if there are stmts and/or rsets...
             }
         }
         return cpDiagnostics;
+    }
+
+
+    /** Fetch the bound values of a prepared statement and return a complete SQL statement
+     *
+     * To facilitate debugging and logging, this method gets the filled values of the prepared statement
+     * from the underlying JDBC connection, replacing the question marks in the query string with their filled values.
+     *
+     *
+     * @param stmt The prepared statement to view
+     * @return A complete SQL statement with the bound values
+     */
+    public static String getPreparedStatementString(PreparedStatement stmt) {
+        try {
+            C3P0ProxyStatement c3p0Stmt = (C3P0ProxyStatement) stmt;
+
+            Method toStringMethod = Object.class.getMethod("toString");
+            Object toStr = c3p0Stmt.rawStatementOperation(toStringMethod,
+                    C3P0ProxyStatement.RAW_STATEMENT, new Object[]{});
+            String sql;
+            sql = (String) toStr;
+            sql = StringUtils.substringAfter(sql, "PreparedStatement:").trim() + ";";
+            return sql;
+
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SQLException e) {
+            s_log.error("Exception extracting SQL:" + e.getMessage());
+            return "";
+        }
     }
 
 
