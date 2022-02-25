@@ -636,9 +636,10 @@ public class LoginDb extends AntwebDb {
         String theStatement = "delete from login_project where login_id = ?";
         PreparedStatement stmt = null;
 
+        ArrayList<SpeciesListable> projects = login.getProjects();
+        if (projects == null) return;
+        
         try {
-            ArrayList<SpeciesListable> projects = login.getProjects();
-            if (projects == null) return;
 
             //A.log("updateLoginProjects() projects:" + projects + " size:" + projects.size());
 
@@ -677,19 +678,23 @@ public class LoginDb extends AntwebDb {
         if (login.isAdmin())
             return; // Admins get all options automatically.  No need to store.
 
+        ArrayList<SpeciesListable> countries = login.getCountries();
+        if (countries == null) return;
+
         String theStatement = "delete from login_country where login_id = ?";
         PreparedStatement stmt = null;
         try {
-            ArrayList<SpeciesListable> countries = login.getCountries();
-            if (countries == null) return;
 
             stmt = DBUtil.getPreparedStatement(getConnection(), "updateLoginCountries()", theStatement);
             stmt.setInt(1, login.getId());
             stmt.executeUpdate();
 
+            stmt.close();   // Close statement so we can create new one with same variable
 
             theStatement = "insert into login_country (login_id, country)  values (?, ?)";
-            String name = null;
+            String name;
+            stmt = DBUtil.getPreparedStatement(getConnection(), "updateLoginCountries()", theStatement);
+
             //A.log("updateLoginCountries() countries:" + countries + " size:" + countries.size());
             for (SpeciesListable country : countries) {
                 if (country == null) continue;
