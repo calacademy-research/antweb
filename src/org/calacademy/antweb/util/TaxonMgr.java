@@ -145,7 +145,7 @@ public class TaxonMgr extends Manager {
         //A.log("getGenus() genusTaxonName:" + genusName + " genus:" + genus.getName());
         if (genusName.equals(g.getName())) {
             if (Status.SYNONYM.equals(g.getStatus())) {
-                A.log("Not using synonym " + g.getName());
+                //A.log("Not using synonym " + g.getName());
                 continue;
             }
             genus = g;

@@ -101,7 +101,8 @@ public final class EditLoginAction extends Action {
           return mapping.findForward("editLogin");
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            request.setAttribute("message", e.toString());
+            return (mapping.findForward("message"));
         } finally { 		
             DBUtil.close(connection, this, "EditLoginAction()");
         }

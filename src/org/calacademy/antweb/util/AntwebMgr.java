@@ -444,15 +444,6 @@ public class AntwebMgr {
       return imagedSpeciesCount;
     }
   
-/*
-            String update = "insert into statistics "
-                    + " (action, specimens, extant_taxa, total_taxa, proj_taxa, total_images, specimens_imaged, species_imaged, valid_species_imaged, login_id, exec_time) "  //
-                    + " values ('" + action + "'," +  specimenRecords + "," + validTaxa + "," + numberTotalTaxa 
-                    + "," + numberProjTaxa 
-                    + "," + totalImages + "," + imagedSpecimens 
-                    + "," + imagedSpecies + "," + validSpeciesImaged + "," + loginId + ", '" + execTime + "')";   
-*/                      
-  
     public static void populateStats(Connection connection, boolean forceReload) {
         //A.log("populateStats() c:" + getSpecimensCount() + " forceReload:" + forceReload);
         if (getSpecimensCount() != 0 && !forceReload) return;      

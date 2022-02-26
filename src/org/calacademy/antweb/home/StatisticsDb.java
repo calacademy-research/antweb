@@ -349,10 +349,11 @@ museum
         return statistics;
 	}
 
-    // Called by the Scheduler (or at startup?)
-    public void populateStatistics() throws SQLException, IOException {
+    /* Called by the Scheduler (or at startup?)
+    /public void populateStatistics() throws SQLException, IOException {
         populateStatistics("routine", 0, null, AntwebProps.getDocRoot());
     }
+*/
 
     public void populateStatistics(String action, int loginId, String execTime, String docBase)
             throws SQLException, IOException {
@@ -438,6 +439,11 @@ museum
                 outFile.write("<span class=\"numbers\">" + totalImages + "</span> total specimen images<br/>\n");
 
                 outFile.close();
+            }
+
+            if (AntwebProps.isDevMode()) {
+                A.log("populateStatistcs() execTime:" + execTime + " null:" + (execTime == null));
+                AntwebUtil.logStackTrace();
             }
 
             String update = "insert into statistics "

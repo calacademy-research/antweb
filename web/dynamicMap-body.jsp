@@ -47,10 +47,13 @@
     //if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);
     
     String rank = taxon.getRank();
-    String taxonPrettyName = taxon.getPrettyName();
+    String taxonPrettyName = null;
+    if (rank != null) {
+      taxonPrettyName = taxon.getPrettyName();
 
-    if (taxonPrettyName == null || "".equals(taxonPrettyName)) AntwebUtil.log("dynamicMap-body.jsp taxonPrettyName:" + taxonPrettyName + " requestInfo:" + HttpUtil.getRequestInfo(request));
-
+      if (taxonPrettyName == null || "".equals(taxonPrettyName)) AntwebUtil.log("dynamicMap-body.jsp taxonPrettyName:" + taxonPrettyName + " requestInfo:" + HttpUtil.getRequestInfo(request));
+    }
+    
     boolean isSearch = false;
  
 	String title = (String) session.getAttribute("title");

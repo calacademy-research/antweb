@@ -181,6 +181,7 @@ public class UploadAction extends Action {
 					if (!AntwebProps.isDevMode()) {
 						runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
 					} else {
+                        A.log("execTime:" + uploadDetails.getExecTime());
 						s_log.warn("execute() DEV MODE SKIPPING runStatistics");
 					}
 			    } else 

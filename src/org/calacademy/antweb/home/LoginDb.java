@@ -6,9 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Curator;
 import org.calacademy.antweb.Login;
 import org.calacademy.antweb.SpeciesListable;
-import org.calacademy.antweb.util.AntwebException;
-import org.calacademy.antweb.util.AntwebProps;
-import org.calacademy.antweb.util.DBUtil;
+import org.calacademy.antweb.util.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.servlet.http.HttpSession;
@@ -732,6 +730,7 @@ public class LoginDb extends AntwebDb {
             query = "select count(*) as num from login where (name = ? or email = ?) and id != ?";   // we can fill with either email or name
         }
 
+        A.log("isLegalLogin() namePresent:" + namePresent + " emailPresent:" + emailPresent + " query:" + query);
 
         PreparedStatement stmt = null;
         ResultSet rset = null;
@@ -757,12 +756,10 @@ public class LoginDb extends AntwebDb {
 
             rset = stmt.executeQuery();
 
-
             int num = 0;
             while (rset.next()) {
                 num = rset.getInt("num");
             }
-
 
             returnVal = (num == 0);
 

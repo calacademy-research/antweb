@@ -1,3 +1,7 @@
+Release 9.69.2
+  Add execTime to statistics records.
+  Quiet the logging for dynamic maps.
+  Look into login issue. Redundant records.
 
 Release 8.69.1
   Create a UtilDataAction.worldantsCount action.

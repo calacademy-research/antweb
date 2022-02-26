@@ -55,7 +55,8 @@ public class SpecimenUploader {
       throws SQLException, IOException, RESyntaxException, TestException, AntwebException
     {
         s_log.info("uploadSpecimenFile() specimenFileName:" + formFileName + " encoding:" + encoding);
-
+        
+        java.util.Date startTime = new java.util.Date();
         if ("default".equals(encoding)) encoding = null;
 
         Group group = login.getGroup();
@@ -99,6 +100,8 @@ public class SpecimenUploader {
         //uploadDetails.setRequest(request);
         uploadDetails.setBackupDirFile(backupDirFile);
 
+        String execTime = HttpUtil.getExecTime(startTime);
+        uploadDetails.setExecTime(execTime);
 
         //(new SpecimenDb(connection)).updateSpecimenStatus();
                    
