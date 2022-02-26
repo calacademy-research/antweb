@@ -21,8 +21,8 @@
     if (taxon != null) {
         taxonRank = taxon.getRank();
         if (taxonRank == null) {
-            A.log("warn", "dynamicMap.jsp taxon.getRank() is null. Taxon name: " + taxon.getTaxonName() +
-                    " requestInfo:" + HttpUtil.getRequestInfo(request));
+            //A.log("warn", "dynamicMap.jsp taxon.getRank() is null. Taxon name: " + taxon.getTaxonName() +
+            //        " requestInfo:" + HttpUtil.getRequestInfo(request));
         }
         prettyName = (String) session.getAttribute("title");  //taxon.getPrettyName();
 
