@@ -4,6 +4,7 @@ Release 9.70
   add backup_dir_file to the upload table;
   Removal of some deprecated admin functions.
   Homonym report enhancement.
+  SpecimenUploader refinement.
 
 Release 9.69.2
   Add execTime to statistics records.
