@@ -191,7 +191,7 @@ public class HomonymDb extends AntwebDb {
         if (authorDate != null) {
             criteria += " and author_date = '" + authorDate + "'";
         } else {
-            s_log.warn("getInfoHomonym() author_date should not be null for taxonName:" + taxonName);
+            //s_log.info("getInfoHomonym() author_date should not be null for taxonName:" + taxonName);
         }
 
         return getHomonymWithCriteria(criteria);

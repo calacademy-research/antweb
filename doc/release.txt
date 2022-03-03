@@ -3,7 +3,7 @@ Release 9.70
   Replace Utility.getInputFileHome() with AntwebProps.getWorkingDir()
   add backup_dir_file to the upload table;
   Removal of some deprecated admin functions.
-  Homonym report enhancement.
+  Homonym report and Event report enhancement.
   SpecimenUploader refinement.
 
 Release 9.69.2
