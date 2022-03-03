@@ -1,10 +1,14 @@
 package org.calacademy.antweb.home;
 
+
+import java.sql.*;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.*;
 import org.calacademy.antweb.Group;
-import org.calacademy.antweb.util.DBUtil;
-import org.calacademy.antweb.util.LogMgr;
+import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.upload.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -137,5 +141,87 @@ public class SpecimenUploadDb extends UploadDb {
         }
     }
 
+
+    public void updateUpload(Login accessLogin, UploadDetails uploadDetails) {
+        //s_log.warn("updateUpload()");
+        String logFileName = uploadDetails.getLogFileName();
+        String backupDirFile = uploadDetails.getBackupDirFile();
+        Group accessGroup = accessLogin.getGroup();
+        String insert = null;
+        Statement stmt = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "updateUpload()");
+            insert = "insert into upload(upload_id, login_id, group_name, group_id, log_file_name, backup_dir_file) "
+                    + "values (" + AntwebMgr.getNextSpecimenUploadId() + ", " + accessLogin.getId() + ", '" + accessGroup.getName() + "', " + accessGroup.getId() + ", '" + logFileName + "', '" + backupDirFile + "')";
+            A.log("updateUpload() insert:" + insert);
+            stmt.executeUpdate(insert);
+        } catch (SQLException e) {
+            s_log.error("updateUpload() logFileName:" + logFileName + " e:" + e);
+        } finally {
+            DBUtil.close(stmt, null, this, "updateUpload()");
+        }
+        updateCounts(accessGroup.getId());
+    }
+
+    
+    /*
+    /web/upload/20220224-11:49:08-specimen2.txt
+
+Was looking in the working dir. That file does not exist:
+ /usr/local/antweb/workingDir/specimen2.txt 
+
+It has been archived to here:
+/web/upload/20220224-11:49:08-specimen2.txt
+
+/data/antweb/web/upload/20220224-11:49:08-specimen2.txt
+    */
+    
+/*
+        // I think this would work during upload, but not during reload.
+        // During reload: https://www.antweb.org/query.do?action=curiousQuery&name=lastSpecimenUpload
+        // Look here: /web/upload/20220224-11:49:08-specimen2.txt
+        // Full path: /data/antweb/web/upload/
+ */
+
+    public String getLastUploadFileLoc(int accessGroup, boolean archived) {
+        String specimenFileLoc = null;
+        if (!archived) {
+            String specimenFileName = "specimen" + accessGroup + ".txt";
+            specimenFileLoc = AntwebProps.getWorkingDir() + specimenFileName;
+        } else {
+            // Called from here: https://localhost/query.do?action=curiousQuery&name=lastSpecimenUpload
+            // Invoked like: https://localhost/upload.do?action=reloadSpecimenList&groupId=2
+            String backupDirFile = getBackupDirFile(accessGroup);
+            specimenFileLoc = AntwebProps.getWebDir() + backupDirFile;
+        }
+        A.log("getLastUploadFileLoc() specimenFileLoc:" + specimenFileLoc + " archived:" + archived);
+        return specimenFileLoc;
+    }
+
+    private String getBackupDirFile(int accessGroup) {
+        String backupDirFile = null;
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select backup_dir_file from upload where group_id = " + accessGroup + " order by created desc limit 1";
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getLastFileName()");
+            rset = stmt.executeQuery(query);
+
+            while (rset.next()) {
+                backupDirFile = rset.getString("backup_dir_file");
+            }
+        } catch (SQLException e) {
+            s_log.warn("getLastFileName() e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, "getLastFileName()");
+        }
+
+        if (backupDirFile == null || "".equals(backupDirFile)) {
+          A.log("getBackupDirFile not found for :" + accessGroup);
+        }
+
+        return backupDirFile;
+    }
 }
 

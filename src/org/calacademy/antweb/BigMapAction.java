@@ -54,6 +54,10 @@ public final class BigMapAction extends Action {
         String countryName = (String) df.get("countryName");
         String adm1Name = (String) df.get("adm1Name");
         String museumCode = (String) df.get("museumCode");
+
+        // GeolocaleFocus feature is for taxon page maps with adm1 or country specified.
+        // Example: https://www.antweb.org/bigMap.do?taxonName=myrmicinaewasmannia%20rochai&countryName=Brazil
+        //   Will have a link to view just the specified geolocale, if logged in..
         String geolocaleFocusVal = (String) df.get("geolocaleFocus");
         boolean geolocaleFocus = "true".equals(geolocaleFocusVal);
         Boolean refresh = (Boolean) df.get("refresh");
@@ -152,6 +156,8 @@ public final class BigMapAction extends Action {
             } else {            
               thisMap = new Map(taxon, localityOverview, connection, geolocaleFocus);
             }
+
+            A.log("getMap() localityOverview:" + localityOverview + " geolocaleFocus:" + geolocaleFocus + " taxon:" + taxon);
 
             if (taxon.getName() == null || "".equals(taxon.getName())) AntwebUtil.log("getMap() getName:" + taxon.getName() + " title:" + thisMap.getTitle() + " taxon:" + taxon + " localityOverview:" + localityOverview + " geolocaleFocus:" + geolocaleFocus);
             //A.log("getMap() taxon:" + taxon + " taxonName:" + taxon.getTaxonName() + " name:" + taxon.getName());

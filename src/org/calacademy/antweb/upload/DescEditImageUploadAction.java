@@ -45,7 +45,7 @@ public class DescEditImageUploadAction extends Action {
           
             connection.setAutoCommit(true);
 
-            String outputFileDir = util.getInputFileHome();
+            String outputFileDir = AntwebProps.getWorkingDir();
 
             if (form instanceof DescEditImageUploadForm) {
                 DescEditImageUploadForm theForm = (DescEditImageUploadForm) form;

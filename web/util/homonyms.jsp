@@ -36,31 +36,45 @@ Antweb homonyms are listed below.
     int count = 0;
     out.println("<table cellpadding=10><tr><th>#</th>");
     out.println("<th>Homonym</th>");
+    out.println("<th>Author Date</th>");
     out.println("<th>AntCat</th>");
     out.println("<th>Current Valid Name</th>");
     out.println("<th>Matching Taxon</th>");
     out.println("</tr>");
     for (Homonym homonym : homonyms) {
+
       ++count;
       out.println("<tr><td>" + count + ".</td>");
-      out.println("<td><a href=\"" + domainApp + "/description.do?taxonName=" + homonym.getTaxonName() + "&status=homonym\">" + homonym.getPrettyTaxonName() + "</a></td>");
-      out.println("<td><a href='http://www.antcat.org/catalog/" + homonym.getAntcatId() + "'>" + homonym.getAntcatId() + "</a></td>");
-      boolean currentValidMatch = true;
-      String prettyCurrentValidName = new org.calacademy.antweb.Formatter().capitalizeFirstLetter(homonym.getCurrentValidName());
-      if (!homonym.getPrettyTaxonName().equals(prettyCurrentValidName)) {
-        currentValidMatch = false;
-      }
-      if (currentValidMatch) {
-        //if (AntwebProps.isDevMode()) AntwebUtil.log("homonym.jsp 1:" + homonym.getPrettyTaxonName() + " != " + prettyCurrentValidName);
-        out.println("<td>" + homonym.getCurrentValidName() + "</td>");
+      if (homonym == null) {
+        out.println("<td>Null homonym</td>");
+        continue;      
       } else {
-        out.println("<td><b>" + homonym.getCurrentValidName() + "</b></td>");
+        out.println("<td><a href=\"" + domainApp + "/description.do?taxonName=" + homonym.getTaxonName() + "&status=homonym\">" + homonym.getPrettyTaxonName() + "</a></td>");
+        out.println("<td>" + homonym.getAuthorDate() + "</td>");
+
+        out.println("<td><a href='http://www.antcat.org/catalog/" + homonym.getAntcatId() + "'>" + homonym.getAntcatId() + "</a></td>");
+
+        boolean currentValidMatch = true;
+        String prettyCurrentValidName = new org.calacademy.antweb.Formatter().capitalizeFirstLetter(homonym.getCurrentValidName());
+        if (prettyCurrentValidName != null && !homonym.getPrettyTaxonName().equals(prettyCurrentValidName)) {
+          AntwebUtil.log("currentValidMatch:" + currentValidMatch + " 1:" + homonym.getPrettyTaxonName() + " 2:" + prettyCurrentValidName); 
+          currentValidMatch = false;
+        }
+
+        if (currentValidMatch) {
+          //if (AntwebProps.isDevMode()) AntwebUtil.log("homonym.jsp 1:" + homonym.getPrettyTaxonName() + " != " + prettyCurrentValidName);
+          out.println("<td>" + homonym.getCurrentValidName() + "</td>");
+        } else {
+          out.println("<td><b>" + homonym.getCurrentValidName() + "</b></td>");
+        }
+
+        out.println("<td>" + (homonym.getSeniorHomonym() != null) + "</td>");
       }
-      out.println("<td>" + (homonym.getSeniorHomonym() != null) + "</td>");
+
     }
+
     out.println("</tr></table>");
     if (count == 0) out.println("<br> No uploads for this group");
-
 %>
 
 </div > 

@@ -5,8 +5,7 @@
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 
 <%@ page import="org.calacademy.antweb.*" %>
-<%@ page import="org.calacademy.antweb.util.AntwebUtil" %>
-<%@ page import="org.calacademy.antweb.util.HttpUtil" %>
+<%@ page import="org.calacademy.antweb.util.*" %>
 
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon"/>
 <jsp:setProperty name="taxon" property="*"/>
@@ -21,8 +20,8 @@
     if (taxon != null) {
         taxonRank = taxon.getRank();
         if (taxonRank == null) {
-            //A.log("warn", "dynamicMap.jsp taxon.getRank() is null. Taxon name: " + taxon.getTaxonName() +
-            //        " requestInfo:" + HttpUtil.getRequestInfo(request));
+            A.log("dynamicMap.jsp taxon.getRank() is null. Taxon name: " + taxon.getTaxonName() +
+                    " requestInfo:" + HttpUtil.getRequestInfo(request));
         }
         prettyName = (String) session.getAttribute("title");  //taxon.getPrettyName();
 

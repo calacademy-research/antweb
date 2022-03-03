@@ -163,8 +163,10 @@ public abstract class AntwebProps {
 		return getDocRoot() + "web/";
 	}
 
-    public static String getInputFileHome() { return getWorkingDir(); }
+    // AntwebProps.getInputFileHome() with AntwebProps.getWorkingDir()
+    //was: public static String getInputFileHome() { return getWorkingDir(); }
 
+    
     private static String s_workingDir = null;
     public static String getWorkingDir() {
         if (s_workingDir != null) return s_workingDir;

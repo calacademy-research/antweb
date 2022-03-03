@@ -20,7 +20,7 @@ public class HomonymDb extends AntwebDb {
     // table name? getInfoInstance
     // Without the authorDate, will be correct taxonName, but random homonym
     public Homonym getHomonym(String taxonName) {
-        Homonym homonym = (Homonym) new HomonymDb(getConnection()).getInfoHomonym("homonym", taxonName);
+        Homonym homonym = (Homonym) new HomonymDb(getConnection()).getInfoHomonym(taxonName, null);
         if (homonym == null) {
           return null;
         }
@@ -111,7 +111,7 @@ public class HomonymDb extends AntwebDb {
 
     public ArrayList<Taxon> getHomonyms() {
         ArrayList<Taxon> homonyms = new ArrayList<>();
-        String query = "select taxon_name from homonym order by taxon_name";
+        String query = "select taxon_name, author_date from homonym order by taxon_name";
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -120,7 +120,8 @@ public class HomonymDb extends AntwebDb {
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 String taxonName = rset.getString("taxon_name");
-                Taxon taxon = getHomonym(taxonName);
+                String authorDate = rset.getString("author_date");
+                Taxon taxon = getHomonym(taxonName, authorDate);
                 homonyms.add(taxon);
             }
         } catch (SQLException e) {
@@ -184,19 +185,25 @@ public class HomonymDb extends AntwebDb {
         Taxon taxon = null;
         if (taxonName == null) return null;
 
-        String criterion = " taxon_name = '" + taxonName + "'"
-        + " and author_date = '" + authorDate + "'";
+        String criteria = " taxon_name = '" + taxonName + "'";
 
-        return getInfoHomonym(criterion);
+        // Criteria should not be null.
+        if (authorDate != null) {
+            criteria += " and author_date = '" + authorDate + "'";
+        } else {
+            s_log.warn("getInfoHomonym() author_date should not be null for taxonName:" + taxonName);
+        }
+
+        return getHomonymWithCriteria(criteria);
     }
 
     private Taxon getInfoHomonym(int antcatId) {
         String criterion = " antcat_id = '" + antcatId + "'";
 
-        return getInfoHomonym(criterion);
+        return getHomonymWithCriteria(criterion);
     }
 
-    private Taxon getInfoHomonym(String criterion) {
+    private Taxon getHomonymWithCriteria(String criterion) {
         Homonym taxon = null;
         String theQuery = "";
         Statement stmt = null;
@@ -211,7 +218,7 @@ public class HomonymDb extends AntwebDb {
               + " from homonym "
               + " where " + criterion;
 
-            s_log.debug("getInfoHomonym() query:" + theQuery);
+            //s_log.info("getInfoHomonym() query:" + theQuery);
             stmt = DBUtil.getStatement(getConnection(), "getInfoHomonym()");
             rset = stmt.executeQuery(theQuery);
 
@@ -259,7 +266,7 @@ public class HomonymDb extends AntwebDb {
                 //taxon.setBioregion(rset.getString("bioregion"));
             }
 
-            if (AntwebProps.isDevMode()) if (count == 0) s_log.error("getInfoHomonym() not found. criterion:" + criterion); // taxonName:" + taxonName + " authorDate:" + authorDate);
+            if (AntwebProps.isDevMode()) if (count == 0) s_log.error("getInfoHomonym() not found. query:" + theQuery); // taxonName:" + taxonName + " authorDate:" + authorDate);
             if (count > 1) s_log.error("getInfoHomonym() count:" + count + " should never be more than 1. criterion:" + criterion); // TaxonName:" + taxonName + " authorDate:" + authorDate);
 
         } catch (SQLException e) {

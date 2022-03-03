@@ -130,7 +130,7 @@ public final class ListAction extends Action {
                             request.setAttribute("list", list);
                             return (mapping.findForward("list"));
                         }
-                        if (action.equals("casentDAnamalies")) {
+                        if (action.equals("casentDAnomalies")) {
                             String message = "Multiple taxa for single specimen";
                             request.setAttribute("message", message);
                             SpecimenDb specimenDb = new SpecimenDb(connection);

@@ -636,9 +636,8 @@ public class Map {
             // If the decimal longitude and latitude are null, no google map function will be set
 
             //if (false && (counter == 0) && AntwebProps.isDevMode()) 
-              if (false) A.slog("setPoints(taxon, project, connection, maxMapPoints) taxon:" + taxon + " name:" + name 
-              + " counter:" + counter + " pointCounter:" + pointCount + " keyCount:" + keyCount);
-              //+ " query:" + query);
+              if (true) A.log("setPoints(taxon, project, connection, maxMapPoints) taxon:" + taxon + " name:" + name
+              + " counter:" + counter + " pointCounter:" + pointCount + " keyCount:" + keyCount + " query:" + query);
               
             // Taxon maps do not have a title  
               

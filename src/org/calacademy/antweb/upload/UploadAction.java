@@ -272,8 +272,9 @@ public class UploadAction extends Action {
 				// logFileName += theFileName + UploadDetails.getLogExt();
 				String formFileName = (new Date()).toString() + "reloadSpecimen" + submitLogin.getGroup() + ".txt";
 
+				boolean isUpload = false; // It is a reload.
 				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theFileName, formFileName
-				  , submitLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+				  , submitLogin, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
 
                 if (AntwebProps.isDevMode()) {
 					s_log.debug("DEV SKIPPING, post specimen processing aborted.");
@@ -320,8 +321,9 @@ public class UploadAction extends Action {
 
 				//logFileName += accessGroup.getAbbrev() + "SpecimenTest" + UploadDetails.getLogExt();
 				s_log.info("execute() specimenTest");
+				boolean isUpload = false; // This is a reload
 				uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(accessGroup.getAbbrev() + "specimenTest", formFileName
-				  , accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+				  , accessLogin, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
 
                 ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
 
@@ -341,7 +343,7 @@ public class UploadAction extends Action {
 				*/
 				//logFileName += "allSpecimenFiles" + UploadDetails.getLogExt();
 				for (int i=0 ; i < 100; ++i) {
-				  String formFileName = AntwebProps.getInputFileHome() + "specimen" + i + ".txt";
+				  String formFileName = AntwebProps.getWorkingDir() + "specimen" + i + ".txt";
 
 				  if ((new File(formFileName)).exists()) {
 
@@ -367,8 +369,9 @@ public class UploadAction extends Action {
 
 					  //s_log.info("formFileName:" + formFileName + " accessGroup:" + accessGroup + " logFileName:" + logFileName);
 
+ 		 	  	      boolean isUpload = false; // This is a reload
 					  uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile("allSpecimenFiles", formFileName
-						, submitAsLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+						, submitAsLogin, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
 
                       ActionForward af = uploadDetails.returnForward(mapping, request); if (af != null) return af;
 
@@ -619,8 +622,8 @@ public class UploadAction extends Action {
 		objectMapDb.genGroupObjectMap(group);
 		s_log.debug("specimenPostProcess() genGroupObjectMap");
 
-		UploadDb uploadDb = new UploadDb(connection);
-		uploadDb.updateUpload(login, uploadDetails.getLogFileName());
+		SpecimenUploadDb uploadDb = new SpecimenUploadDb(connection);
+		uploadDb.updateUpload(login, uploadDetails);
 		uploadDb.updateGroup(group);
 		s_log.debug("specimenPostProcess() updateUpload");
 

@@ -49,15 +49,15 @@ public class UploadDb extends AntwebDb {
 		  upload.setGenera(rset.getInt("genera"));
 		  upload.setSpecies(rset.getInt("species"));
 		  upload.setUngeoreferenced(rset.getInt("ungeoreferenced"));
-		  upload.setFlagged(rset.getInt("flagged"));        }
-
+		  upload.setFlagged(rset.getInt("flagged"));        
+        }
         //A.log("getUpload() query:" + query);       
       } finally {
         DBUtil.close(stmt, rset, "getUpload()");        
       }      
       return upload;
     }
-    
+
     public ArrayList<Upload> getUploads() {
         //A.log("UploadDb.getUploads()");
         ArrayList<Upload> uploads = new ArrayList<>();
@@ -163,7 +163,6 @@ public class UploadDb extends AntwebDb {
         //A.log("getUploadLines() query:" + query + " uploadLines:" + uploadLines);
         return null;
     }
-        
     
     public Upload getCounts(int groupId) throws SQLException {
         Upload upload = getLastUploadByGroup(groupId);
@@ -412,44 +411,24 @@ public class UploadDb extends AntwebDb {
       }         
     }
 
-    public void updateUpload(Login accessLogin, String logFileName) {
-        //s_log.warn("updateUpload()");
-        Group accessGroup = accessLogin.getGroup();
-        String insert = null;
-        Statement stmt = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "updateUpload()");
-            insert = "insert into upload(upload_id, login_id, group_name, group_id, log_file_name) " 
-              + "values (" + AntwebMgr.getNextSpecimenUploadId() + ", " + accessLogin.getId() + ", \"" + accessGroup.getName() + "\", " + accessGroup.getId() + ", \"" + logFileName + "\")";  
-            stmt.executeUpdate(insert);
-        } catch (SQLException e) {
-            s_log.error("updateUpload() logFileName:" + logFileName + " e:" + e);
-        } finally {
-           DBUtil.close(stmt, null, this, "updateUpload()");        
-        }
-        
-        updateCounts(accessGroup.getId());
-    }
-        
-    
     public void updateGroup(Group accessGroup) {
         //s_log.warn("updateGroup()");
         String dml = null;
         Statement stmt = null;
         int uploadCount = getUploadCount(accessGroup.getId());
-        Timestamp firstUpload = getFirstUploadDate(accessGroup.getId()); 
+        Timestamp firstUpload = getFirstUploadDate(accessGroup.getId());
         try {
-            stmt = DBUtil.getStatement(getConnection(), "updateUpload()");            
+            stmt = DBUtil.getStatement(getConnection(), "updateUpload()");
             dml = "update ant_group set first_specimen_upload = '" + firstUpload + "', upload_count = " + uploadCount + " where id = " + accessGroup.getId();
             //A.log("updateGroup insert:" + dml);
             stmt.executeUpdate(dml);
         } catch (SQLException e) {
             s_log.error("updateUpload() e:" + e);
         } finally {
-           DBUtil.close(stmt, null, this, "updateUpload()");        
+           DBUtil.close(stmt, null, this, "updateUpload()");
         }
     }
-    
+
     public void insertDescription(String table, String taxonName, String authorDate, String title, String content) {
         /** Creation of taxonomichistory description_edit records */
 

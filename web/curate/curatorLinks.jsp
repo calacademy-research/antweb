@@ -21,7 +21,7 @@
       <li><a href="<%= domainApp %>/projectMgr.do">Project Manager</a>
       <li><a href="<%= domainApp %>/artists.do">Artist Manager</a>
       <li><a href="<%= domainApp %>/adminAlert.do">Admin Alert Manager</a>
-      <li><a href="<%= domainApp %>/ancPageMgr.do">Ancillary Page Manager</a> 
+      <!-- li><a href="< %= domainApp % >/ancPageMgr.do">Ancillary Page Manager</a --> 
       <li><a href="<%= domainApp %>/orphanMgr.do">Orphan Manager</a>
       <li><a href="<%= domainApp %>/bioregionMapMgr.do">Bioregion Map Manager</a>      
       <li><a href="<%= domainApp %>/introducedMapMgr.do">Introduced Map Manager</a>
@@ -53,10 +53,9 @@
     <h3 align=left>Reports</H3>
     <ul align=left>
       <li><a href="<%= domainApp %>/query.do?action=curateAntcat">Curate AntCat Queries</a>
-      <li><a href="<%= domainApp %>/web/log/admin.log">Admin Log</a>      
-      <li><a href="<%= domainApp %>/museum.do">Museum Overview</a>    
+      <li><a href="<%= domainApp %>/web/log/admin.log">Admin Log</a>     
       <li><a href="<%= domainApp %>/util.do?action=homonyms">Homonym Report</a>
-      <li><a href="<%= domainApp %>/adminUpdates.do">Admin Updates</a>
+      <!-- li><a href="< %= domainApp % >/adminUpdates.do">Admin Updates</a -->
       <li><a href="<%= domainApp %>/util.do?action=events">Events</a>
       <li><a href="<%= domainApp %>/util.do?action=adminAlerts">Admin Alerts</a>      
       <li><a href="<%= domainApp %>/common/statusDisplayPage.jsp">Taxa Status Documentation</a>
@@ -67,7 +66,7 @@
       <li><a href="<%= domainApp %>/list.do?action=pictureLikes">Image Likes</a>
       <li><a href="<%= domainApp %>/list.do?action=likes">Image Likes Display</a>
       <li><a href="<%= domainApp %>/recentDescEdits.do?action=recentDescEdits">Recent Description Edits</a>
-      <li><a href="<%= domainApp %>/list.do?action=casentDAnamalies">Casent -Dxx Anomalies</a>
+      <li><a href="<%= domainApp %>/list.do?action=casentDAnomalies">Casent -Dxx Anomalies</a>
       <li><a href="<%= domainApp %>/utilData.do?action=taxaOutsideOfNativeBioregion">Taxa Outside of Native Bioregion</a>
     </ul>
 

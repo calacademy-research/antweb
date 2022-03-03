@@ -620,7 +620,6 @@ public class Utility implements Serializable {
         return success;
     }
     
-    
     public void moveFile(String src, String dst) throws IOException {
         copyFile(src, dst);
         deleteFile(src);
@@ -636,12 +635,11 @@ public class Utility implements Serializable {
       // Something like site.docroot=/usr/local/tomcat/webapps/antweb/
       return AntwebProps.getDocRoot(); 
     }
-    public String getInputFileHome() { return AntwebProps.getInputFileHome(); }
+
     public String getGoogleKey() { return AntwebProps.getGoogleMapKey(); }
     public String getDomain() { return AntwebProps.getDomain(); }
     public String getDomainApp() { return AntwebProps.getDomainApp(); }    
     //public String getSiteUrl() { return AntwebProps.getSiteUrl(); }
-    
     
     
     public String getDateForFileName() {

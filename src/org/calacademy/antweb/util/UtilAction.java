@@ -156,8 +156,8 @@ public class UtilAction extends Action {
 				ArrayList<Event> events = (new EventDb(connection)).getEvents();
 				request.setAttribute("events", events);
 				HashMap<Integer, Login> curators = (new LoginDb(connection)).getCuratorMap();
+				//A.log("execute()  events:" + events + " curators:" + curators);
 				request.setAttribute("curators", curators);
-				//s_log.error("execute()  events:" + event);
 				returnLoc = (mapping.findForward("events"));                  
 			  }
 

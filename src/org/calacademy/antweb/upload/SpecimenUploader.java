@@ -8,6 +8,7 @@ import org.apache.regexp.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.home.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -23,6 +24,8 @@ public class SpecimenUploader {
       this.connection = connection;
     }
 
+
+    // This gets called from an upload post.
     public UploadDetails uploadSpecimenFile(UploadForm theForm, Login login, String userAgent, String encoding)
       throws SQLException, IOException, RESyntaxException, TestException, AntwebException
     {
@@ -33,7 +36,7 @@ public class SpecimenUploader {
         //String specimenUploadType = theForm.getSpecimenUploadType();
 
         Utility util = new Utility();      
-        String outputFileDir = util.getInputFileHome();
+        String outputFileDir = AntwebProps.getWorkingDir();
         FileUtil.makeDir(outputFileDir);
         String specimenFileName = outputFileDir + "specimen" + group.getId() + ".txt";
 
@@ -44,29 +47,32 @@ public class SpecimenUploader {
             util.copyFile(theForm.getBiota(), specimenFileName);
         }
 
+        boolean isUpload = true;
         // was 2nd param: specimenUploadType, 
-        return uploadSpecimenFile("uploadSpecimenFile", formFileName, login, userAgent, encoding);
+        return uploadSpecimenFile("uploadSpecimenFile", formFileName, login, userAgent, encoding, isUpload);
     }
 
     /* This version can be called directly in the case of specimenTest */    
     // was 2nd param: String specimenUploadType, 
     public UploadDetails uploadSpecimenFile(String operation, String formFileName
-      , Login login, String userAgent, String encoding) 
+      , Login login, String userAgent, String encoding, boolean isUpload)
       throws SQLException, IOException, RESyntaxException, TestException, AntwebException
     {
         s_log.info("uploadSpecimenFile() specimenFileName:" + formFileName + " encoding:" + encoding);
         
         java.util.Date startTime = new java.util.Date();
         if ("default".equals(encoding)) encoding = null;
-
         Group group = login.getGroup();
-
         UploadDetails uploadDetails = null;
-        Utility util = new Utility();      
-        String outputFileDir = AntwebProps.getInputFileHome();
+        Utility util = new Utility();
+        String outputFileDir = AntwebProps.getWorkingDir();
 
+        // if it contains a dash, it is not just specimenN.txt which is from the working dir. This is archived.
+        boolean isArchived = !isUpload;
+
+        SpecimenUploadDb specimenUploadDb = new SpecimenUploadDb(connection);
+        String specimenFileLoc = specimenUploadDb.getLastUploadFileLoc(group.getId(), isArchived);
         String specimenFileName = "specimen" + group.getId() + ".txt";
-        String specimenFileLoc = outputFileDir + specimenFileName;
 
         UploadFile uploadFile = new UploadFile(outputFileDir, specimenFileName, userAgent, encoding);
         String backupDirFile = uploadFile.backup();
