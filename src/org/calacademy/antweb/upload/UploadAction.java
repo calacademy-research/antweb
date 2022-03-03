@@ -141,6 +141,7 @@ public class UploadAction extends Action {
             //if (AntwebProps.isDevOrStageMode()) httpPostOK = true;
 		    if (!(HttpUtil.isPost(request) || httpPostOK) && !(
 		           "runStatistics".equals(action)
+                || "specimenTest".equals(action)
 		        || "reloadSpecimenList".equals(action)
 		        || "genRecentDescEdits".equals(action)
 		        )) {

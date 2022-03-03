@@ -183,44 +183,32 @@ It has been archived to here:
         // Full path: /data/antweb/web/upload/
  */
 
-    public String getLastUploadFileLoc(int accessGroup, boolean archived) {
-        String specimenFileLoc = null;
-        if (!archived) {
-            String specimenFileName = "specimen" + accessGroup + ".txt";
-            specimenFileLoc = AntwebProps.getWorkingDir() + specimenFileName;
-        } else {
-            // Called from here: https://localhost/query.do?action=curiousQuery&name=lastSpecimenUpload
-            // Invoked like: https://localhost/upload.do?action=reloadSpecimenList&groupId=2
-            String backupDirFile = getBackupDirFile(accessGroup);
-            specimenFileLoc = AntwebProps.getWebDir() + backupDirFile;
-        }
-        A.log("getLastUploadFileLoc() specimenFileLoc:" + specimenFileLoc + " archived:" + archived);
-        return specimenFileLoc;
-    }
-
-    private String getBackupDirFile(int accessGroup) {
+    public String getBackupDirFile(int accessGroup) {
         String backupDirFile = null;
+        // Called from here: https://localhost/query.do?action=curiousQuery&name=lastSpecimenUpload
+        // Invoked like: https://localhost/upload.do?action=reloadSpecimenList&groupId=2
 
         Statement stmt = null;
         ResultSet rset = null;
         String query = "select backup_dir_file from upload where group_id = " + accessGroup + " order by created desc limit 1";
         try {
-            stmt = DBUtil.getStatement(getConnection(), "getLastFileName()");
+            stmt = DBUtil.getStatement(getConnection(), "getBackupDirFile()");
             rset = stmt.executeQuery(query);
 
             while (rset.next()) {
                 backupDirFile = rset.getString("backup_dir_file");
             }
         } catch (SQLException e) {
-            s_log.warn("getLastFileName() e:" + e);
+            s_log.warn("getBackupDirFile() e:" + e);
         } finally {
-            DBUtil.close(stmt, rset, "getLastFileName()");
+            DBUtil.close(stmt, rset, "getBackupDirFile()");
         }
 
         if (backupDirFile == null || "".equals(backupDirFile)) {
-          A.log("getBackupDirFile not found for :" + accessGroup);
+            return null;
         }
 
+        A.log("getBackupDirFile() backupDirFile:" + backupDirFile);
         return backupDirFile;
     }
 }

@@ -175,7 +175,7 @@ public abstract class AntwebProps {
 
         boolean exists = new File(workingDir).exists();
         if (exists) {
-            s_log.info("getWorkingDir() workingDir:" + workingDir);
+            //s_log.info("getWorkingDir() workingDir:" + workingDir);
         } else {
             boolean success = FileUtil.makeDir(workingDir);
             if (!success) {

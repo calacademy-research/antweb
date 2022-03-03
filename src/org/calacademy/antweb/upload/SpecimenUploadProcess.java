@@ -521,7 +521,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
                 String newTaxonStr = null;
                 
                 if (currentValidTaxonName == null) {
-                  Taxon dummyTaxon = (new HomonymDb(getConnection())).getHomonym(currentValidName);
+                  Taxon dummyTaxon = (new HomonymDb(getConnection())).getHomonym(currentValidName);  // Unsafe usage! Homonym primary key includes author_date.
                   boolean isHomonym = false;
                   if (dummyTaxon != null) isHomonym = true;
                   if (isHomonym) {

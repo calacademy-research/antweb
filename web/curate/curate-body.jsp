@@ -100,7 +100,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
        %><h2><font color=red>Warning: Live Site</font></h2><% 
      }
    }
-   A.log("curate-body.jsp hasServerMessage:" + AntwebMgr.hasServerMessage() + " : " + AntwebMgr.getServerMessage());
+   //A.log("curate-body.jsp hasServerMessage:" + AntwebMgr.hasServerMessage() + " : " + AntwebMgr.getServerMessage());
    if (AntwebMgr.hasServerMessage()) {
      out.println(AntwebMgr.getServerMessage());
    }
@@ -261,7 +261,7 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
         <!-- View Archived Specimen List Files -->
         <% 
             ArrayList<Integer> uploadGroupList = AntwebUtil.getUploadGroupList();
-            if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadGroupList:" + uploadGroupList);
+            // A.log("curate-body.jsp uploadGroupList:" + uploadGroupList);
 
            // To be replaced by uploadGroupList
           //  ArrayList<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();

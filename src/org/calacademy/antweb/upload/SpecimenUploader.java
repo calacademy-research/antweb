@@ -36,12 +36,12 @@ public class SpecimenUploader {
         //String specimenUploadType = theForm.getSpecimenUploadType();
 
         Utility util = new Utility();      
-        String outputFileDir = AntwebProps.getWorkingDir();
-        FileUtil.makeDir(outputFileDir);
-        String specimenFileName = outputFileDir + "specimen" + group.getId() + ".txt";
+        String workingDir = AntwebProps.getWorkingDir();
+        FileUtil.makeDir(workingDir);
+        String specimenFileName = workingDir + "specimen" + group.getId() + ".txt";
 
         if (formFileName.contains("zip")) {
-            util.copyAndUnzipFile(theForm.getBiota(), outputFileDir + "group" + group.getId(), specimenFileName);
+            util.copyAndUnzipFile(theForm.getBiota(), workingDir + "group" + group.getId(), specimenFileName);
         } else {
             // copy from uploader's fileName to the biotaFile name.
             util.copyFile(theForm.getBiota(), specimenFileName);
@@ -65,27 +65,33 @@ public class SpecimenUploader {
         Group group = login.getGroup();
         UploadDetails uploadDetails = null;
         Utility util = new Utility();
-        String outputFileDir = AntwebProps.getWorkingDir();
 
-        // if it contains a dash, it is not just specimenN.txt which is from the working dir. This is archived.
-        boolean isArchived = !isUpload;
-
-        SpecimenUploadDb specimenUploadDb = new SpecimenUploadDb(connection);
-        String specimenFileLoc = specimenUploadDb.getLastUploadFileLoc(group.getId(), isArchived);
-        String specimenFileName = "specimen" + group.getId() + ".txt";
-
-        UploadFile uploadFile = new UploadFile(outputFileDir, specimenFileName, userAgent, encoding);
-        String backupDirFile = uploadFile.backup();
-
-        s_log.info("uploadSpecimenFile() specimenFileName:" + specimenFileName + " specimenFileLoc:" + specimenFileLoc + " backupDirFile:" + backupDirFile);
-        //s_antwebEventLog.info("backupDirFile:" + backupDirFile;
+        String specimenFileLoc = null;
+        String specimenFileName = null;
 
         String messageStr = null;
-        if ((!formFileName.contains(".txt")) && (!formFileName.contains(".TXT"))) {
+
+        UploadFile uploadFile = null;
+
+        if (isUpload) {
+            specimenFileName = "specimen" + group.getId() + ".txt";
+            uploadFile = new UploadFile(AntwebProps.getWorkingDir(), specimenFileName, userAgent, encoding);
+            specimenFileLoc = AntwebProps.getWorkingDir() + specimenFileName;
+        } else {
+            SpecimenUploadDb specimenUploadDb = new SpecimenUploadDb(connection);
+            specimenFileName = specimenUploadDb.getBackupDirFile(group.getId());
+            if (specimenFileName == null) messageStr = "BackupDirFile not found for group:" + group;
+            specimenFileLoc = AntwebProps.getWebDir() + specimenFileName;
+            uploadFile = new UploadFile(AntwebProps.getWebDir(), specimenFileName, userAgent, encoding);
+        }
+
+        if (!uploadFile.correctEncoding(encoding)) messageStr = "Encoding not validated for file:" + uploadFile.getFileLoc() + " encoding:" + uploadFile.getEncoding();
+
+        if (messageStr != null) {
+            // No further tests necessary.
+        } else if ((!formFileName.contains(".txt")) && (!formFileName.contains(".TXT"))) {
             s_log.warn("uploadSpecimenFile() theFileName not txt.  formFileName:" + formFileName);
             messageStr = "Specimen File must be a .txt file.";
-        } else if (!uploadFile.correctEncoding(encoding)) {
-            messageStr = "Encoding not validated for file:" + uploadFile.getFileLoc() + " encoding:" + uploadFile.getEncoding();
         } else if (isCurrentSpecimenFormat(specimenFileLoc) != null) {
             messageStr = "Specimen File must be in the most current format. " + isCurrentSpecimenFormat(specimenFileLoc);
         } else if (!util.isTabDelimited(specimenFileLoc)) {
@@ -96,6 +102,9 @@ public class SpecimenUploader {
             return new UploadDetails("specimen", messageStr, "message");
 		}
 
+        s_log.info("uploadSpecimenFile() specimenFileLoc:" + specimenFileLoc + " isUpload:" + isUpload);
+        //s_antwebEventLog.info("backupDirFile:" + backupDirFile;
+
         UploadHelper.init(uploadFile, group);
 
         //boolean success = false;  // UploadForm.getWhole() can be deprecated
@@ -104,7 +113,10 @@ public class SpecimenUploader {
         SpecimenUpload specimenUpload = new SpecimenUpload(connection);
 		uploadDetails = specimenUpload.importSpecimens(uploadFile, login);
         //uploadDetails.setRequest(request);
-        uploadDetails.setBackupDirFile(backupDirFile);
+
+        if (uploadFile != null) {
+            uploadDetails.setBackupDirFile(uploadFile.backup());
+        }
 
         String execTime = HttpUtil.getExecTime(startTime);
         uploadDetails.setExecTime(execTime);
