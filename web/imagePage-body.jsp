@@ -16,7 +16,11 @@
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 
 <%
+
+     
   Taxon taxon = (Taxon) request.getAttribute("taxon");
+  //A.log("default specimens? taxon:" + taxon);
+
   if (taxon == null) {
      A.log("imagePage-body.jsp taxon not found in request");
      return;
@@ -115,8 +119,10 @@
  <% 
 // AntwebUtil.log("***** rank:" + taxon.getRank());
  String rank = taxon.getRank();
- if (rank != null && (rank.equals(Rank.SPECIES) || rank.equals(Rank.SUBSPECIES))) { %>
-      <% // @ include file="/curate/defaultSpecimen/defaultSpecimen.jsp" %>
+//A.log("default specimens? rank:" + rank);
+ if (rank != null && (rank.equals(Rank.SPECIES) || rank.equals(Rank.SUBSPECIES))) { 
+ %>
+      <% // @include file="/curate/defaultSpecimen/defaultSpecimen.jsp" %>
  <% } %>
         <div class="clear"></div>
     </div>

@@ -175,7 +175,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     }
 
     // Called from Taxon, Family, Subfamily and Genus.
-    public void init(Connection connection) throws SQLException {
+    public void Xinit(Connection connection) throws SQLException {
         /* Beginning effort to consolidate initialization process.  Currently BrowseAction calls
            all sorts of methods to instantiate the taxon */
 
@@ -235,8 +235,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
               setDefaultSpecimen(Caste.MALE, imagePickDb.getDefaultSpecimen(Caste.MALE, this));
               setDefaultSpecimen(Caste.WORKER, imagePickDb.getDefaultSpecimen(Caste.WORKER, this));
               setDefaultSpecimen(Caste.QUEEN, imagePickDb.getDefaultSpecimen(Caste.QUEEN, this));
-              //A.log("init() taxonName:" + taxonName + " class:" + this.getClass() + " workerDefault:" + getDefaultSpecimen(Caste.WORKER));
-            }            
+              A.log("init() taxonName:" + taxonName + " class:" + this.getClass() + " workerDefault:" + getDefaultSpecimen(Caste.WORKER));
+            }
             TaxonPropDb taxonPropDb = (new TaxonPropDb(connection));
             if (Rank.GENUS.equals(getRank())) {
               setBioregionMap(taxonPropDb.getBioregionMap(taxonName));
@@ -246,7 +246,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
   			  setIntroducedMap(taxonPropDb.getIntroducedMap(taxonName));        
             }
 			
-            //A.log("init() taxonName:" + taxonName + " defaultSpecimen:" + getDefaultSpecimen() + " bioregionMap:" + getNativeBioregionMap());            
+            A.log("init() taxonName:" + taxonName + " rank:" + getRank()); // + " defaultSpecimen:" + getDefaultSpecimen() + " bioregionMap:" + getNativeBioregionMap());
+
             //s_log.warn("init() taxonName:" + taxonName + " isFossil;" + isFossil);
         } catch (SQLException e) {
             s_log.error("init() taxonName:" + taxonName + " e:" + e + " theQuery:" + theQuery);

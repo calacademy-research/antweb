@@ -695,7 +695,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Group:</b>
 </div>
 <div id=data_items2>
-<a href="<%= AntwebProps.getDomainApp() %>/group.do?id=<%= taxon.getGroupId() %>"><%= GroupMgr.getGroup(taxon.getGroupId()) %>
+<a href="<%= AntwebProps.getDomainApp() %>/group.do?id=<%= taxon.getGroupId() %>"><%= GroupMgr.getGroup(taxon.getGroupId()) %></a>
 </div>
 
 <div class="clear"></div>

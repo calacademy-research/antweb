@@ -60,11 +60,9 @@
       <li><a href="<%= domainApp %>/util.do?action=adminAlerts">Admin Alerts</a>      
       <li><a href="<%= domainApp %>/common/statusDisplayPage.jsp">Taxa Status Documentation</a>
       <li><a href="<%= domainApp %>/taxonomicPage.do?rank=species&project=worldants&isImaged=false">Unimaged Bolton Ants</a>    
-      <li><a href="<%= domainApp %>/web/upload/">Upload Files</a>      
       <li><a href="<%= domainApp %>/list.do?action=countries">Countries List</a>
       <li><a href="<%= domainApp %>/list.do?action=bioregions">Bioregions List</a>
       <li><a href="<%= domainApp %>/list.do?action=pictureLikes">Image Likes</a>
-      <li><a href="<%= domainApp %>/list.do?action=likes">Image Likes Display</a>
       <li><a href="<%= domainApp %>/recentDescEdits.do?action=recentDescEdits">Recent Description Edits</a>
       <li><a href="<%= domainApp %>/list.do?action=casentDAnomalies">Casent -Dxx Anomalies</a>
       <li><a href="<%= domainApp %>/utilData.do?action=taxaOutsideOfNativeBioregion">Taxa Outside of Native Bioregion</a>
@@ -84,8 +82,7 @@
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=taxonProp">tp</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=upload">u</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=artist">a</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=adminAlert">aa</a> 
-     
+        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=adminAlert">aa</a>      
 	  <li><a href="<%= domainApp %>/pageTracker.do">Page Tracker</a>
 	  <li><a href="<%= domainApp %>/cache.do?action=display">Cache Manager</a>
 	  <li>Process (automated)</li>
@@ -99,16 +96,14 @@
 	    <li><a href="<%= domainApp %>/upload.do?action=updateSpecimenStatus">Update</a> Specimen Status
       </ul>
 
+<% if (LoginMgr.isDeveloper(request)) { %>
 	  <li>Crawls (not automated)</li>
       <ul align=left>
   	    <!-- li><a href="< %= domainApp % >/upload.do?action=reloadSpeciesLists">Reload</a> All Species Lists -->
 		<li><a href="<%= domainApp %>/schedule.do?action=populateAll"> Populate </a> All (1.5hrs) 
 		<li>Crawl <a href="<%= domainApp %>/web/log/compute.log"> Log </a> File
-
-<% if (LoginMgr.isDeveloper(request)) { %>
 		<li><a href="<%= domainApp %>/utilData.do?action=testProjTaxon">testProjTaxon</a>
 		<li><a href="<%= domainApp %>/web/log/profiler.jsp">Profiler log</a>
-<% } %>
       </ul>
 	  <li><a href="<%= domainApp %>/util.do?action=testMessage"> Test </a>Message
 	  <li><a href="<%= domainApp %>/util.do?action=unboldMessage"> Test </a>Unbold Message
@@ -120,6 +115,8 @@
 	  <!-- li><a href="< %= domainApp % >/util.do?action=moveSpeciesListPages">Move</a> Species List Pages	  -->
       <li><a href="<%= domainApp %>/documentation/links.jsp">Links</a>      
       <li><a href="<%= domainApp %>/utilData.do?action=updateAdm1FromParentData">Update</a> Adm1 from parent data
+<% } %>
+
     </ul>
 
 <%   if (LoginMgr.isDeveloper(accessLogin)) { %>

@@ -49,7 +49,7 @@ public class SpecimenUploader {
 
         boolean isUpload = true;
         // was 2nd param: specimenUploadType, 
-        return uploadSpecimenFile("uploadSpecimenFile", formFileName, login, userAgent, encoding, isUpload);
+        return uploadSpecimenFile(theForm.getAction(), formFileName, login, userAgent, encoding, isUpload);
     }
 
     /* This version can be called directly in the case of specimenTest */    
@@ -59,11 +59,12 @@ public class SpecimenUploader {
       throws SQLException, IOException, RESyntaxException, TestException, AntwebException
     {
         s_log.info("uploadSpecimenFile() specimenFileName:" + formFileName + " encoding:" + encoding);
-        
+
+        UploadDetails uploadDetails = null;
+
         java.util.Date startTime = new java.util.Date();
         if ("default".equals(encoding)) encoding = null;
         Group group = login.getGroup();
-        UploadDetails uploadDetails = null;
         Utility util = new Utility();
 
         String specimenFileLoc = null;
@@ -99,7 +100,9 @@ public class SpecimenUploader {
         }
         if (messageStr != null) {
             s_log.warn("uploadSpecimenFile() " + messageStr);
-            return new UploadDetails("specimen", messageStr, "message");
+            uploadDetails = new UploadDetails("specimen", messageStr, "message");
+            uploadDetails.setAction(operation);
+            return uploadDetails;
 		}
 
         s_log.info("uploadSpecimenFile() specimenFileLoc:" + specimenFileLoc + " isUpload:" + isUpload);
@@ -112,7 +115,7 @@ public class SpecimenUploader {
 
         SpecimenUpload specimenUpload = new SpecimenUpload(connection);
 		uploadDetails = specimenUpload.importSpecimens(uploadFile, login);
-        //uploadDetails.setRequest(request);
+        uploadDetails.setAction(operation);
 
         if (uploadFile != null) {
             uploadDetails.setBackupDirFile(uploadFile.backup());
@@ -121,12 +124,8 @@ public class SpecimenUploader {
         String execTime = HttpUtil.getExecTime(startTime);
         uploadDetails.setExecTime(execTime);
 
-        //(new SpecimenDb(connection)).updateSpecimenStatus();
-                   
 		//s_log.warn("uploadSpecimenFile() specimenPostProcess = TRUE");
-		                    
-        //uploadDetails.setLogFileName(group.getAbbrev() + "SpecimenUpload.html");
-		                    
+
         return uploadDetails;     
     }
     

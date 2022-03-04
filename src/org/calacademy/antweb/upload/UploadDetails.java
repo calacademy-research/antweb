@@ -79,6 +79,16 @@ public class UploadDetails extends OperationDetails {
       }
       return "upload";
     }
+    
+    String action = null;
+    public void setAction(String action) {
+
+        this.action = action;
+
+    }
+    public String getAction() {
+        return action;
+    }
 
     public void setLogFileName(String logFileName) {
       this.logFileName = logFileName; 

@@ -1,3 +1,14 @@
+Release 9.70.2
+  Fix SQL parameter of isLegalLogin().
+  Homonym without authorDate adjustment.
+  Curator page links modified.
+  Fix to group link in admin section of taxonPage.
+  Add bioregionMap, introducedMap and defaultSpecimens to taxon population.
+
+Release 9.70.1
+  specimenPostProcess and specimenPostProcessGlobal.
+  Enhanced error messages for specimen upload.
+  Homonym work
 
 Release 9.70
   Replace Utility.getInputFileHome() with AntwebProps.getWorkingDir()

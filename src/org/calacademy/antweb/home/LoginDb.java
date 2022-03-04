@@ -743,7 +743,7 @@ public class LoginDb extends AntwebDb {
                 stmt.setString(2, login.getName());
                 stmt.setString(3, login.getEmail());
                 stmt.setString(4, login.getEmail());
-                stmt.setInt(4, login.getId());
+                stmt.setInt(5, login.getId());
             } else if (!namePresent) {
                 stmt.setString(1, login.getEmail());
                 stmt.setString(2, login.getEmail());
