@@ -81,6 +81,7 @@ public final class OverviewAction extends DescriptionAction {
             if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
                 projectDb.updateCounts(projectName);
                 ProjectMgr.populate(connection, true);
+                //A.log("Project:" + projectName + " action:" + action);
             }
 
             if (HttpUtil.isPost(request)) {

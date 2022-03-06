@@ -51,10 +51,10 @@ public class TaxonDb extends AntwebDb {
     public Taxon getTaxon(String taxonName) throws SQLException { //, tring tableName, String taxonNameClause
         Taxon taxon = null;
 
-        if ("amblyoponinaestigmatomma pallipes".equals(taxonName)) {
-            A.log("getTaxon() taxonName:" + taxonName);
-            AntwebUtil.logShortStackTrace();
-        }
+        //if ("amblyoponinaestigmatomma pallipes".equals(taxonName)) {
+        //    A.log("getTaxon() taxonName:" + taxonName);
+        //    AntwebUtil.logShortStackTrace();
+        //}
 
         String tableName = "taxon";
         String taxonNameClause = " taxon_name = '" + taxonName + "'";
@@ -173,22 +173,27 @@ public class TaxonDb extends AntwebDb {
             DBUtil.close(stmt, rset, "this", "getTaxon() taxonName:" + taxonName);
         }
 
-        if (Rank.SUBFAMILY.equals(taxon.getRank()) || taxon.isSpeciesOrSubspecies()) {
-            // if species we use "=" if subfamily we use "like". Genera are fetched with an overview specific child speciesStr.
-            ImagePickDb imagePickDb = new ImagePickDb(getConnection());
-            taxon.setDefaultSpecimen(Caste.MALE, imagePickDb.getDefaultSpecimen(Caste.MALE, taxon));
-            taxon.setDefaultSpecimen(Caste.WORKER, imagePickDb.getDefaultSpecimen(Caste.WORKER, taxon));
-            taxon.setDefaultSpecimen(Caste.QUEEN, imagePickDb.getDefaultSpecimen(Caste.QUEEN, taxon));
-            //A.log("getTaxon() taxonName:" + taxonName + " class:" + this.getClass() + " workerDefault:" + taxon.getDefaultSpecimen(Caste.WORKER));
+        // This makes the populateMgrs() process take 44 seconds instead of 17...
+        // Failure to execute this code block will prevent default specimens from displaying.
+        // BioregionMap and IntroducedMap are required for...
+        if (!AntwebProps.isDevMode()) {
+            if (Rank.SUBFAMILY.equals(taxon.getRank()) || taxon.isSpeciesOrSubspecies()) {
+                // if species we use "=" if subfamily we use "like". Genera are fetched with an overview specific child speciesStr.
+                ImagePickDb imagePickDb = new ImagePickDb(getConnection());
+                taxon.setDefaultSpecimen(Caste.MALE, imagePickDb.getDefaultSpecimen(Caste.MALE, taxon));
+                taxon.setDefaultSpecimen(Caste.WORKER, imagePickDb.getDefaultSpecimen(Caste.WORKER, taxon));
+                taxon.setDefaultSpecimen(Caste.QUEEN, imagePickDb.getDefaultSpecimen(Caste.QUEEN, taxon));
+                //A.log("getTaxon() taxonName:" + taxonName + " class:" + this.getClass() + " workerDefault:" + taxon.getDefaultSpecimen(Caste.WORKER));
+            }
+            TaxonPropDb taxonPropDb = (new TaxonPropDb(getConnection()));
+            if (Rank.GENUS.equals(taxon.getRank())) {
+                taxon.setBioregionMap(taxonPropDb.getBioregionMap(taxonName));
+            }
+            if (taxon.isSpeciesOrSubspecies()) {
+                taxon.setIntroducedMap(taxonPropDb.getIntroducedMap(taxonName));
+            }
         }
-        TaxonPropDb taxonPropDb = (new TaxonPropDb(getConnection()));
-        if (Rank.GENUS.equals(taxon.getRank())) {
-            taxon.setBioregionMap(taxonPropDb.getBioregionMap(taxonName));
-        }
-        if (taxon.isSpeciesOrSubspecies()) {
-            //A.log("init() setting Introduced. Is that OK?");
-            taxon.setIntroducedMap(taxonPropDb.getIntroducedMap(taxonName));
-        }
+
 
         if (taxon == null && log) {
           //It may not be found during Worldants, for instance amblyoponinae, but after the cleanup process it will...

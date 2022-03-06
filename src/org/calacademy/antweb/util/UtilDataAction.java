@@ -471,18 +471,24 @@ public class UtilDataAction extends Action {
         // ------ Project ----------
 
 		// Fast.  0.40 min.
-		// http://localhost/antweb/utilData.do?action=updateProjectCounts&name=allantwebants
+		// http://localhost/antweb/utilData.do?action=projectCountCrawl&name=bayareabants
 		if (action.equals("projectCountCrawl")) {
-		  String projectName = form.getName();
-		  String appendStr = "";
-		  ProjectDb projectDb = new ProjectDb(connection);
-		  if (projectName != null) {
-			projectDb.updateCounts(projectName);
-			appendStr += ":" + projectName;
-		  } else {
-			projectDb.updateCounts();
-		  }
-		  message = "Project" + appendStr + " counts updated";
+            String projectName = null;
+            String appendStr = null;
+            try {
+                projectName = form.getName();
+                appendStr = "";
+                ProjectDb projectDb = new ProjectDb(connection);
+                if (projectName != null) {
+                    projectDb.updateCounts(projectName);
+                    appendStr += ":" + projectName;
+                } else {
+                    projectDb.updateCounts();
+                }
+            } catch (Exception e) {
+		        A.log("projectCountCrawl projectName:" + projectName + " e:" + e);
+            }
+            message = "Project" + appendStr + " counts updated";
 		}
 
 		if (action.equals("regenerateAllAntweb")) {
@@ -491,30 +497,13 @@ public class UtilDataAction extends Action {
             message = "All Antweb regenerated";
         }
 
-		/*
-        if (action.equals("runCountCrawls")) {
-            ProjTaxonCountDb projTaxonCountDb = (new ProjTaxonCountDb(connection));
-            projTaxonCountDb.countCrawl("allantwebants"); // Proj_taxon counts
-		    //projTaxonDb.finishRegenerateAllAntweb();
-		    //projTaxonDb.updateCounts("allantwebants");      // Project counts
-
-		    BioregionTaxonCountDb bioregionTaxonCountDb = (new BioregionTaxonCountDb(connection));
-		    bioregionTaxonCountDb.childrenCountCrawl();
-
-   		    GeolocaleTaxonCountDb geolocaleTaxonCountDb = (new GeolocaleTaxonCountDb(connection));
-		    geolocaleTaxonCountDb.childrenCountCrawl(num);
-
-  		    MuseumTaxonCountDb museumTaxonCountDb = (new MuseumTaxonCountDb(connection));
-		    museumTaxonCountDb.childrenCountCrawl();
-		}
-*/
-    // ---------- Count Crawls -------------------------
-
         // Added Feb2022 to fix missing worldant counts...
         if (action.equals("worldantsCount")) {
             (new ProjTaxonCountDb(connection)).childrenCountCrawl("worldants");
             message = "Finished Worldants Count Crawl ()";
         }
+        
+    // ---------- Count Crawls -------------------------
 
 		// https://antweb-stg/utilData.do?action=geolocaleTaxonCountCrawl&num=392
 		if (action.equals("geolocaleTaxonCountCrawl")) {
