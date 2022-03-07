@@ -1,3 +1,5 @@
+Release 9.72.1
+  Resolve merge conflicts
 
 Release 9.72
   Cleanup the species list proxy records.
