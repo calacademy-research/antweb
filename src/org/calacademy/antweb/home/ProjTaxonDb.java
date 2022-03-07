@@ -197,7 +197,6 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 String x = (String) rset.getObject("x");
                 return true;
             }
-            stmt.close();
         } catch (SQLException e) {
             s_log.error("hasItem() projectName:" + projectName + " taxonName:" + taxonName);
         } finally {
@@ -336,7 +335,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 		//A.log("ProjTaxonDb.hasTaxonSetGenera() fromWhereClause:" + fromWhereClause);
         return super.hasTaxonSetGenera(speciesListName, subfamily, fromWhereClause);
     }
-    
+
 
     String deleteUncuratedMorphosWithoutSpecimen() throws SQLException {
         String dml = "delete from proj_taxon where taxon_name in (select taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon' and taxon_name not in (select taxon_name from specimen))";
@@ -354,7 +353,75 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         String message = "ProjTaxonDb.deleteUncuratedMorphosWithoutSpecimen:" + c   ;
         return message;
     }
-    
+
+    public String cleanupSpeciesListProxyRecords() throws SQLException {
+        String result = null;
+        String query = "select pt.taxon_name taxonName, pt.project_name projectName from proj_taxon pt where pt.source = 'proxyspeciesListTool'";
+        // For each proxyspeciesListTool find if it has children.
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "cleanupSpeciesListProxyRecords()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                String taxonName = (String) rset.getString("taxonName");
+                String projectName = (String) rset.getString("projectName");
+                if (hasNoChildren(taxonName, projectName)) {
+                    A.log("cleanupSpeciesListProxyRecords() taxonName:" + taxonName + " projectName:" + projectName);
+                    result = deleteProxyWithoutChildren(taxonName, projectName);
+                }
+            }
+        } catch (SQLException e) {
+            s_log.error("cleanupSpeciesListProxyRecords()");
+        } finally {
+            DBUtil.close(stmt, rset, "cleanupSpeciesListProxyRecords()");
+        }
+        return result;
+    }
+
+    private boolean hasNoChildren(String taxonName, String projectName) throws SQLException {
+        int count = 0;
+        String query = "select pt.taxon_name, pt.project_name from proj_taxon pt where pt.project_name = '" + projectName + "'"
+            + " and pt.taxon_name in (select taxon_name from taxon where parent_taxon_name = '" + taxonName + "')";
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "hasNoChildren()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                count = count + 1;
+            }
+        } catch (SQLException e) {
+            s_log.error("hasNoChildren() projectName:" + projectName + " taxonName:" + taxonName);
+        } finally {
+            DBUtil.close(stmt, rset, "hasNoChildren()");
+        }
+        return count == 0;
+    }
+
+
+    private String deleteProxyWithoutChildren(String taxonName, String projectName) throws SQLException {
+        String dml = "delete from proj_taxon where source = 'proxyspeciesListTool'"
+            + " and taxon_name = '" + taxonName + "'"
+            + " and project_name = '" + projectName + "'";
+        Statement stmt = null;
+        int c = 0;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "deleteProxyWithoutChildren()");
+            c = stmt.executeUpdate(dml);
+        } catch (SQLException e) {
+            s_log.error("deleteProxyWithoutChildren() e:" + e + " dml:" + dml);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, "deleteProxyWithoutChildren()");
+        }
+        String message = "deleteProxyWithoutChildren:" + c;
+        return message;
+    }
+
+
 // ---------------------------------------------------------------------------------------    
 
     // Get all records.

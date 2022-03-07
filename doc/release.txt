@@ -1,3 +1,14 @@
+
+Release 9.72
+  Cleanup species list proxy records.
+
+Release 9.71
+  Project Crawl changes
+
+Release 9.70.2
+  Fix SQL parameter of isLegalLogin().
+  Homonym without authorDate adjustment.
+
 Release 9.70.2
   Fix SQL parameter of isLegalLogin().
   Homonym without authorDate adjustment.

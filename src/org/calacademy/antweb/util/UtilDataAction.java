@@ -244,12 +244,19 @@ public class UtilDataAction extends Action {
                 message = "set5 - ";
                 message += " " + doAction("deleteConflictedDefaultImages", form, accessLogin, accessGroup, connection, request, mapping);
                 s_log.info("Done deleteConflictedDefaultImages. Starting genObjectMaps...");
+
                 message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 48.93 mins
                 s_log.info("Done genObjectMaps. Starting deleteOldSpecimenUploadTaxa...");
+
                 message += " " + doAction("deleteOldSpecimenUploadTaxa", form, accessLogin, accessGroup, connection, request, mapping);
                 s_log.info("Done deleteOldSpecimenUploadTaxa. Starting checkAntwiki...");
+
+                message += " " + doAction("cleanupSpeciesListProxyRecords", form, accessLogin, accessGroup, connection, request, mapping);
+                s_log.info("Done cleanupSpeciesListProxyRecords. Starting checkAntwiki...");
+
                 message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
                 s_log.info("Done checkAntwiki.");
+
                 AntwebMgr.populate(connection, true);
             }
 
@@ -507,7 +514,9 @@ public class UtilDataAction extends Action {
   		    MuseumTaxonCountDb museumTaxonCountDb = (new MuseumTaxonCountDb(connection));
 		    museumTaxonCountDb.childrenCountCrawl();
 		}
-*/
+        */
+
+
     // ---------- Count Crawls -------------------------
 
         // Added Feb2022 to fix missing worldant counts...
@@ -736,6 +745,14 @@ public class UtilDataAction extends Action {
           AntwebMgr.createSiteWarning(text);
           message = "SiteWarning set:" + text;
         }
+
+
+        // If a species list proxy record is created for a species list species that is then removed... cleanup.
+        if (action.equals("cleanupSpeciesListProxyRecords")) {
+            String result = (new ProjTaxonDb(connection)).cleanupSpeciesListProxyRecords();
+            message = "Cleanup Species List Proxy Records:" + result;
+        }
+
 
      // --- Map functions
 

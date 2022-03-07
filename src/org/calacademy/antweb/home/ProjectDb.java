@@ -605,7 +605,7 @@ public class ProjectDb extends AntwebDb {
           + " and t.taxarank in ('species', 'subspecies')"
           + " and pt.project_name = '" + project.getName() + "'";
 
-        if ("worldants".equals(project.getName())) s_log.info("getSpecimenAndImageCount() query:" + query);
+        if ("bayareaants".equals(project.getName())) A.log("getSpecimenAndImageCount() query:" + query);
           
         ResultSet rset = stmt.executeQuery(query);
         while (rset.next()) {          
@@ -639,7 +639,7 @@ public class ProjectDb extends AntwebDb {
             + " where project_name = '" + project.getName() + "'";
 
           x = stmt.executeUpdate(dml);
-          if ("worldants".equals(projectName)) s_log.info("updateCountsFromSpecimenData() x:" + x + " dml:" + dml);
+          if ("bayareaants".equals(projectName)) A.log("updateCountsFromSpecimenData() x:" + x + " dml:" + dml);
       } catch (SQLException e) {
           s_log.error("updateCountsFromSpecimenData() e:" + e);
       } finally {
@@ -654,27 +654,26 @@ public class ProjectDb extends AntwebDb {
         //A.log("updateCounts() ant project:" + project.getName());
         updateCounts(project.getName());
       }
-
       projectList = ProjectMgr.getGlobalProjects();
       for (Project project : projectList) {
-        //A.log("updateCounts() global project:" + project.getName());
+        A.log("updateCounts() global project:" + project.getName());
         updateCounts(project.getName());
       }
 
       updateProject();
-      
+
 	  LogMgr.appendLog("compute.log", "  Projects counts computed", true);       
     }
 
     public void updateCounts(String projectName) throws SQLException {
       Project project = ProjectMgr.getProject(projectName);
-      
+      //A.log("project:" + project);
       freshStart(project);
-      
+
       updateCountsFromSpecimenData(projectName);
 
       // update fields (subfamily_count, genus_count, species_count, image_count, json fields).  
-      finish(project); 
+      finish(project);
     }
 
     private void freshStart(Project project) throws SQLException {
@@ -717,11 +716,14 @@ public class ProjectDb extends AntwebDb {
     }
 
     private String finish(Project project) throws SQLException {
-      updateCountableTaxonData(project);
-      //updateImagedSpecimenCount(project);
-      updateValidSpeciesCount(project);
-      makeCharts(project);
-      return "Project Finished:" + project;
+        updateCountableTaxonData(project);
+
+        //updateImagedSpecimenCount(project);
+        updateValidSpeciesCount(project);
+
+        makeCharts(project);
+
+        return "Project Finished:" + project;
     }       
 
     private void updateCountableTaxonData(Project project) throws SQLException {
@@ -732,6 +734,8 @@ public class ProjectDb extends AntwebDb {
         int speciesCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "species");
 
         boolean subfamilyIsZero = (subfamilyCount == 0);
+
+        //A.log("updateCountableTaxonData() project:" + project + " subfamily:" + subfamilyCount + " genus:" + genusCount + " species:" + speciesCount);
         if (!("worldants".equals(project.getName()) && subfamilyCount == 0)) { 
           //s_log.warn("updateCountableTaxonData(" + project + ") subfamilyCount:" + subfamilyCount);
           projTaxonCountDb.updateCountableTaxonCounts("project", criteria, subfamilyCount, genusCount, speciesCount);                  
@@ -762,7 +766,7 @@ public class ProjectDb extends AntwebDb {
             while (rset.next()) {
                 validSpeciesCount = rset.getInt("count");
             }
-
+            if ("bayareaants".equals(project)) A.log("getValidSpeciesCount() project:" + project + " validSpeciesCount:" + validSpeciesCount + " query:" + query);
         } catch (SQLException e2) {
             s_log.error("getValidSpeciesCount() e:" + e2 + " query:" + query);
         } finally {
@@ -781,15 +785,23 @@ public class ProjectDb extends AntwebDb {
     }         
             
     public void makeCharts(Project project) throws SQLException {
+//A.log("makeCharts() start project:" + project);
       UtilDb utilDb = new UtilDb(getConnection());
       ProjTaxonCountDb projTaxonCountDb = new ProjTaxonCountDb(getConnection());
       String criteria = "project_name = '" + project + "'";
       String taxonCountQuery = getTaxonSubfamilyDistJsonQuery(criteria);
       String specimenCountQuery = getSpecimenSubfamilyDistJsonQuery(criteria);
-
-      utilDb.updateField("project", "taxon_subfamily_dist_json", "'" + projTaxonCountDb.getTaxonSubfamilyDistJson(taxonCountQuery) + "'", criteria);
-      utilDb.updateField("project", "specimen_subfamily_dist_json", "'" + projTaxonCountDb.getSpecimenSubfamilyDistJson(specimenCountQuery) + "'", criteria);
-    }    
+        //A.log("makeCharts() taxonCountQuery:" + taxonCountQuery);
+        //A.log("makeCharts() specimenCountQuery:" + specimenCountQuery);
+        //try {
+            utilDb.updateField("project", "taxon_subfamily_dist_json", "'" + projTaxonCountDb.getTaxonSubfamilyDistJson(taxonCountQuery) + "'", criteria);
+            utilDb.updateField("project", "specimen_subfamily_dist_json", "'" + projTaxonCountDb.getSpecimenSubfamilyDistJson(specimenCountQuery) + "'", criteria);
+        //} catch (Exception e) {
+        //    A.log("e:"+ e);
+        //    throw e;
+        //}
+      //A.log("makeCharts() end project:" + project);
+    }
     
     public String getTaxonSubfamilyDistJsonQuery(String criteria) {
       String query = "select t.subfamily, count(*) count, t2.chart_color " 

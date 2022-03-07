@@ -468,7 +468,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
          taxonCount = rset.getInt("count");
         }
 
-        if (debug) s_log.warn("getCountableTaxonCount() taxonCount:" + taxonCount + " query:" + query);       
+        if (debug) s_log.warn("getCountableTaxonCount() rank:" + rank + " taxonCount:" + taxonCount + " query:" + query);
 
       } catch (SQLException e) {
         s_log.error("getCountableTaxonCount() 2 e:" + e);
