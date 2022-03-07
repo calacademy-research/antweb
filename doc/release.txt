@@ -1,6 +1,6 @@
 
 Release 9.72
-  Cleanup species list proxy records.
+  Cleanup the species list proxy records.
 
 Release 9.71
   Project Crawl changes
