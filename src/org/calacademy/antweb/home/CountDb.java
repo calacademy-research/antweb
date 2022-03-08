@@ -461,7 +461,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
       Statement stmt = null;
       ResultSet rset = null;
       
-      debug = true && "species".equals(rank) && AntwebProps.isDevMode() && !s_isBulk;
+      debug = false && "species".equals(rank) && AntwebProps.isDevMode() && !s_isBulk;
       
       try {
         stmt = DBUtil.getStatement(getConnection(), "getCountableTaxonCount()");
@@ -550,7 +550,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
              if (chartColor == null) {
                Subfamily subfamilyObj = TaxonMgr.getSubfamily(subfamily);
                if (subfamilyObj == null) {
-                 s_log.warn("getTaxonSubfamilyDistJson() subfamilyObj is null for subfamily:" + subfamily + ". Subfamilies:" + TaxonMgr.getSubfamilies()); 
+                 s_log.info("getTaxonSubfamilyDistJson() subfamilyObj is null for subfamily:" + subfamily + ". Subfamilies:" + TaxonMgr.getSubfamilies());
                } else {
                  chartColor = subfamilyObj.getChartColor();
                  //A.log("getTaxonSubfamilyDistJson() color:" + chartColor);
@@ -585,14 +585,14 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
              String subfamily = rset.getString("subfamily");
              int count = rset.getInt("count");
              
-             Taxon theSubfamily = new TaxonDb(getConnection()).getTaxon(subfamily);
+             Subfamily theSubfamily = TaxonMgr.getSubfamily(subfamily);
              String chartColor = null;
              if (theSubfamily != null) {
                chartColor = theSubfamily.getChartColor();
                //A.log("getSpecimenSubfamilyDistJSon() subfamily:" + subfamily + " chartColor:" + chartColor);
                distJson += HttpUtil.getJsonElement(i, Formatter.initCap(subfamily), count, chartColor);
              } else {
-               s_log.debug("getSpecimenSubfamilyDistJson() subfamily not found:" + subfamily);
+               s_log.info("getSpecimenSubfamilyDistJson() subfamily not found:" + subfamily);
              }
              
           }           

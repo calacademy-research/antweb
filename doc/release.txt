@@ -1,6 +1,7 @@
 
 Release 9.71.3
   Project Taxon Child Count Crawl link added to Project overview page.
+  Logic to discover disowned parent genera in species lists.
   Minor species list and count work.
 
 Release 9.71.2

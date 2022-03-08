@@ -84,6 +84,7 @@ public class SessionRequestFilter implements Filter {
             // Periods are not allowed after the .do. This is a struts I limitation.
             if (actionPeriodPos > 0)
               postActionPeriodPos = target.indexOf(".", actionPeriodPos + 1);
+              //String periodStr = target.substring(postActionPeriodPos, postActionPeriodPos + 6);
               if (postActionPeriodPos > 0) {
                 note = " Handled. No periods allowed after action.";
               }

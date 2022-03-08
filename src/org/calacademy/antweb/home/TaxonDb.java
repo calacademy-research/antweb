@@ -176,7 +176,8 @@ public class TaxonDb extends AntwebDb {
         // This makes the populateMgrs() process take 44 seconds instead of 17...
         // Failure to execute this code block will prevent default specimens from displaying.
         // BioregionMap and IntroducedMap are required for...
-        if (!AntwebProps.isDevMode()) {
+        //if (!AntwebProps.isDevMode()) {
+        if (taxon != null) {
             if (Rank.SUBFAMILY.equals(taxon.getRank()) || taxon.isSpeciesOrSubspecies()) {
                 // if species we use "=" if subfamily we use "like". Genera are fetched with an overview specific child speciesStr.
                 ImagePickDb imagePickDb = new ImagePickDb(getConnection());
@@ -192,6 +193,8 @@ public class TaxonDb extends AntwebDb {
             if (taxon.isSpeciesOrSubspecies()) {
                 taxon.setIntroducedMap(taxonPropDb.getIntroducedMap(taxonName));
             }
+        } else {
+            s_log.warn("getTaxon() taxon is null:" + taxonName + " " + AntwebUtil.getShortStackTrace());
         }
 
 
