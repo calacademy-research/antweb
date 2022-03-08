@@ -151,6 +151,7 @@ public class UtilDataAction extends Action {
     private String handleException(Exception e, Connection connection, String action, String loginName) {
         String message = "Error. No changes made for action:" + action + " user:" + loginName + " e:" + e;
         s_log.error("handleException() " + message);
+        if (e instanceof NullPointerException) s_log.error(AntwebUtil.getStackTrace(e));
         try {
             if (connection != null) connection.rollback();
         } catch (SQLException e2) {
