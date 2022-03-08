@@ -1,3 +1,11 @@
+
+Release 9.71.3
+  Project Taxon Child Count Crawl link added to Project overview page.
+  Minor species list and count work.
+
+Release 9.71.2
+  Fix Bay Area Ants subfamily count.
+
 Release 9.72.1
   Resolve merge conflicts
 

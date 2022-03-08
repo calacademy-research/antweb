@@ -248,7 +248,7 @@ public class UtilDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateField()");
             count = stmt.executeUpdate(dml);
-            //A.log("updateField() count:" + count + " dml:" + dml);
+            if ("subfamily_count".equals(field)) A.log("updateField() count:" + count + " dml:" + dml);
         } catch (SQLException e) {
             s_log.error("updateField() e:" + e + " dml:" + dml);
             throw e;

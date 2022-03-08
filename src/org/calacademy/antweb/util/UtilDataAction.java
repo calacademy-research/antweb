@@ -249,10 +249,13 @@ public class UtilDataAction extends Action {
                 s_log.info("Done genObjectMaps. Starting deleteOldSpecimenUploadTaxa...");
 
                 message += " " + doAction("deleteOldSpecimenUploadTaxa", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done deleteOldSpecimenUploadTaxa. Starting checkAntwiki...");
+                s_log.info("Done deleteOldSpecimenUploadTaxa. Starting cleanupSpeciesListProxyRecords...");
 
                 message += " " + doAction("cleanupSpeciesListProxyRecords", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done cleanupSpeciesListProxyRecords. Starting checkAntwiki...");
+                s_log.info("Done cleanupSpeciesListProxyRecords. Starting verifyProjTaxon...");
+
+                message += " " + doAction("verifyProjTaxon", form, accessLogin, accessGroup, connection, request, mapping);
+                s_log.info("Done verifyProjTaxon. Starting checkAntwiki...");
 
                 message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
                 s_log.info("Done checkAntwiki.");
@@ -519,6 +522,22 @@ public class UtilDataAction extends Action {
 
     // ---------- Count Crawls -------------------------
 
+        // Don't just do worldants. Do all projects...
+        // Added Mar2022 to fix missing worldant counts...
+        // https://antweb-stg/utilData.do?action=geolocaleTaxonCountCrawl&num=392
+        if (action.equals("projTaxonChildCountCrawl")) {
+            ProjTaxonCountDb projTaxonCountDb = (new ProjTaxonCountDb(connection));
+            if (name == null || "".equals(name)) {
+                s_log.info("countCrawl expecting name:" + name + ". Running ChildrenCountCrawls for all projects.");
+                projTaxonCountDb.childrenCountCrawl();
+            } else {
+                projTaxonCountDb.childrenCountCrawl(name);
+            }
+            message = "Finished Project Count Crawl (" + name + ")";
+        }
+
+
+
         // Added Feb2022 to fix missing worldant counts...
         if (action.equals("worldantsCount")) {
             (new ProjTaxonCountDb(connection)).childrenCountCrawl("worldants");
@@ -547,7 +566,7 @@ public class UtilDataAction extends Action {
 		  } else {
 		    museumTaxonCountDb.childrenCountCrawl(code);
 		  }
-		  message = "Finished Museum Count Crawl (" + form.getNum() + ")";
+		  message = "Finished Museum Count Crawl (" + code + ")";
 		}
 
 		if (action.equals("bioregionTaxonCountCrawl")) {
@@ -753,6 +772,11 @@ public class UtilDataAction extends Action {
             message = "Cleanup Species List Proxy Records:" + result;
         }
 
+        // If a species list proxy record is created for a species list species that is then removed... cleanup.
+        if (action.equals("verifyProjTaxon")) {
+            String result = (new ProjTaxonDb(connection)).verifyProjTaxon();
+            message = "verifyProjTaxon Records:" + result;
+        }
 
      // --- Map functions
 

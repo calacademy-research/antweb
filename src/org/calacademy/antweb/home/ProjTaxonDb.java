@@ -369,7 +369,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 String projectName = (String) rset.getString("projectName");
                 if (hasNoChildren(taxonName, projectName)) {
                     A.log("cleanupSpeciesListProxyRecords() taxonName:" + taxonName + " projectName:" + projectName);
-                    result = deleteProxyWithoutChildren(taxonName, projectName);
+                    result = deleteProjTaxon(taxonName, projectName, "and source = 'proxyspeciesListTool'");
                 }
             }
         } catch (SQLException e) {
@@ -402,25 +402,61 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }
 
 
-    private String deleteProxyWithoutChildren(String taxonName, String projectName) throws SQLException {
-        String dml = "delete from proj_taxon where source = 'proxyspeciesListTool'"
-            + " and taxon_name = '" + taxonName + "'"
+    private String deleteProjTaxon(String taxonName, String projectName) throws SQLException {
+      return deleteProjTaxon(taxonName, projectName, null);
+    }
+    private String deleteProjTaxon(String taxonName, String projectName, String extraClause) throws SQLException {
+        String dml = "delete from proj_taxon where "
+            + " where taxon_name = '" + taxonName + "'"
             + " and project_name = '" + projectName + "'";
+        if (extraClause != null) dml += extraClause;
         Statement stmt = null;
         int c = 0;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "deleteProxyWithoutChildren()");
+            stmt = DBUtil.getStatement(getConnection(), "deleteProjTaxon()");
             c = stmt.executeUpdate(dml);
         } catch (SQLException e) {
-            s_log.error("deleteProxyWithoutChildren() e:" + e + " dml:" + dml);
+            s_log.error("deleteProjTaxon() e:" + e + " dml:" + dml);
             throw e;
         } finally {
-            DBUtil.close(stmt, "deleteProxyWithoutChildren()");
+            DBUtil.close(stmt, "deleteProjTaxon()");
         }
-        String message = "deleteProxyWithoutChildren:" + c;
+        String message = "deleteProjTaxon:" + c;
         return message;
     }
 
+
+    // Make sure that all of the genus records have the correct number of species records according to count.
+    // If a genus does not have species in the project, remove it.
+    public String verifyProjTaxon() throws SQLException {
+        String result = null;
+        String query = "select pt.taxon_name taxonName, pt.project_name projectName, pt.species_count from proj_taxon pt, taxon t "
+            + " where pt.taxon_name = t.taxon_name and t.taxarank = 'genus'"
+            + "   and pt.project_name != 'worldants'";
+        // For each proxyspeciesListTool find if it has children.
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "verifyProjTaxon()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                String genusName = (String) rset.getString("taxonName");
+                String projectName = (String) rset.getString("projectName");
+                int speciesCount = rset.getInt("species_count");
+                if (hasNoChildren(genusName, projectName)) {
+                    A.log("verifyProjTaxon() No children for genusName:" + genusName + " projectName:" + projectName + " speciesCount:" + speciesCount);
+                    // All, or just those with speciesCount > 0?
+                    //result = deleteProjTaxon(genusName, projectName);
+                }
+            }
+        } catch (SQLException e) {
+            s_log.error("verifyProjTaxon() e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, "verifyProjTaxon()");
+        }
+        return result;
+    }
 
 // ---------------------------------------------------------------------------------------    
 

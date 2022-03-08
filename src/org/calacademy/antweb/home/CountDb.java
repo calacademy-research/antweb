@@ -56,7 +56,8 @@ public class CountDb extends AntwebDb {
     // Useful for debugging? Code to execute and get results or a particular count.
     private static String s_query = null;  // Just used for reporting.
     private static String s_report = "";
-    private static boolean s_debug = false;
+    private static boolean s_debug = true;
+    
     protected String childrenCountReport(Countable countable) throws SQLException {
         if (countable == null) s_log.debug("childrenCountReport() why is countable null?");
         debug = AntwebProps.isDevMode();
@@ -102,10 +103,11 @@ public class CountDb extends AntwebDb {
 		  ;
 		if (countable != null && (
 		        "Alabama".equals(countable.toString())
-             || "Alaska".equals(countable.toString())
-             || "Colorado".equals(countable.toString())
-             || "worldants".equals(countable.toString())
-                )) s_log.debug("chilrenCountCrawl() message:" + message);
+            // || "Alaska".equals(countable.toString())
+            // || "Colorado".equals(countable.toString())
+            // || "worldants".equals(countable.toString())
+                 || "bayareaants".equals(countable.toString())
+                )) A.log("childrenCountCrawl() message:" + message);
     }
     
     protected int countSpecimens(Countable countable) 
@@ -184,6 +186,10 @@ public class CountDb extends AntwebDb {
         String query = countable.getCountChildrenQuery(rank);
         s_query = query; // For report.
 
+        if ("bayareaants".equals(countable.toString()) && "subfamily".equals(rank))
+            A.log("countChildren() countable:" + countable + " rank:" + rank + "  query:" + query);
+
+
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -215,12 +221,13 @@ public class CountDb extends AntwebDb {
                 }
               }
 
-              if (!s_debug) updateCount(countable, parentTaxonName, column, count);
+              updateCount(countable, parentTaxonName, column, count);
               //A.log("countChildren() parentTaxonName null for countable:" + countable);
               //if (AntwebProps.isDevMode() && (parentTaxonName != null && parentTaxonName.contains(debugTaxonName))) 
               // if (query.contains("geolocale_id = " + debugGeolocaleId + " ")) {
-				//A.log("CountDb.countChildren() countable:" + countable + " rank:" + rank + " column:" + column + " parentTaxonName:" + parentTaxonName + " count:" + count + " query:" + query);
-               //} 
+              if ("bayareaants".equals(countable) && "subfamily".equals(rank))
+                  A.log("CountDb.countChildren() countable:" + countable + " rank:" + rank + " column:" + column + " parentTaxonName:" + parentTaxonName + " count:" + count + " query:" + query);
+
 			}
             // if (debug) s_log.warn("countChildren() sum:" + sum + " query:" + query);
 		} finally {
@@ -244,7 +251,13 @@ public class CountDb extends AntwebDb {
           //AntwebUtil.logShortStackTrace();
           return 0;
         }
-       
+
+
+         if ("subfamily".equals(rank)) {
+             s_log.debug("countGrandChildren() countable:" + countable + " rank:" + rank + " column:" + column);
+         }
+
+
         int sum = 0;
         int count = 0;
 
@@ -298,7 +311,7 @@ public class CountDb extends AntwebDb {
           updateCountSQL = countable.getUpdateCountSQL(parentTaxonName, columnName, count);
           int taxonUpdateCount = stmt.executeUpdate(updateCountSQL);
         
-          //A.log("updateCount() taxonUpdateCount:" + taxonUpdateCount + " dml:" + updateCountSQL);
+          if ("bayareaants".equals(countable.toString())) A.log("updateCount() taxonUpdateCount:" + taxonUpdateCount + " dml:" + updateCountSQL);
 
           //if (taxonUpdateCount == 0)
             //A.log("updateCount() None Updated countable:" + countable + " columnName:" + columnName + " parentTaxonName:" + parentTaxonName); // + " updateCountSQL:" + updateCountSQL);
@@ -448,11 +461,12 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
       Statement stmt = null;
       ResultSet rset = null;
       
-      debug = false && AntwebProps.isDevMode() && !s_isBulk;
+      debug = true && "species".equals(rank) && AntwebProps.isDevMode() && !s_isBulk;
       
       try {
         stmt = DBUtil.getStatement(getConnection(), "getCountableTaxonCount()");
-        query = "select sum(" + rank + "_count) count from " + table + " where " + criteria + " and " + rank + "_count != 0";    
+        query = "select sum(" + rank + "_count) count from " + table + " where " + criteria + " and " + rank + "_count != 0";
+        if ("subfamily".equals(rank)) query += " and taxon_name != 'formicidae'";
 
  	    if ("proj_taxon".equals(table) || "geolocale_taxon".equals(table) || "museum_taxon".equals(table) || "bioregion_taxon".equals(table)) {
 	 	  if ("genus".equals(rank) || "species".equals(rank)) {

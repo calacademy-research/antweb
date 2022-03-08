@@ -321,7 +321,12 @@ Images:
 	   }
 
 	   if (LoginMgr.isAdmin(request)) { %>
-         <br><b><%= overview.getRecalcLink() %></b> (Includes count crawl. Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
+
+         <% if ("project".equals(overviewType)) { %>
+         <br><b><a href='<%= AntwebProps.getDomainApp() %>/utilData.do?action=projTaxonChildCountCrawl&name=<%= overview.getName() %>'>Project Taxon Child Count Crawl</a></b>
+         <% } %>
+	   
+         <br><b><%= overview.getRecalcLink() %></b> (Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
          <% if ("geolocale".equals(overviewType)) { %>
          <br><b><%= overview.getGoogleMapFunctionLink() %></b><%= overview.getGoogleMapFunctionLinkDesc() %>
          <% } %>
