@@ -37,13 +37,11 @@ public final class BayAreaSearchForm extends SearchForm {
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         this.adm2s = null;
     }
-    
-	public String[] getAdm2s() {
-		return adm2s;
-	}
 
+    public String[] getAdm2s() {
+        return adm2s;
+	}
 	public void setAdm2s(String[] strings) {
-		adm2s = strings;
+        adm2s = strings;
 	}
-
 }

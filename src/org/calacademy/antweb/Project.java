@@ -23,6 +23,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     public static String ALLANTWEBANTS = "allantwebants";
     public static String WORLDANTS = "worldants";
     public static String FOSSILANTS = "fossilants";
+    public static String BAYAREAANTS = "bayareaants";
 
     public static String PROJECT = "PROJECT";
     public static String GLOBAL = "GLOBAL";

@@ -1028,9 +1028,7 @@ public static int c = 0;
       // Update the image_count and specimen_count of geolocales.
       // allCountCrawls will be calling GeolocaleTaxonCountDb.countCrawls() (and the other overviews)
       // which will aggregate these into the counts available on overview pages and taxonomic pages.
-    
-      //if (true) return;
-    
+
   	  LogMgr.appendLog("compute.log", "  Populating Geolocales", true);    
   	      
       s_log.info("updateCounts() Adm1s..."); // This stage is way slow. 1hr+
@@ -1115,7 +1113,7 @@ public static int c = 0;
     }
                   
     public void updateCounts(int geolocaleId) throws SQLException {
-      // Crawl the Geolocale_taxon table to find the counts.
+        // Crawl the Geolocale_taxon table to find the counts.
       (new GeolocaleTaxonCountDb(getConnection())).childrenCountCrawl(geolocaleId);
 
       updateCountsFromSpecimenData(geolocaleId);
@@ -1546,7 +1544,7 @@ public static int c = 0;
         int genusCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "genus");
         int speciesCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "species");
 
-		//A.log("updatedCountableTaxonData(" + geolocaleId + ") speciesCount:" + speciesCount);
+		if (geolocaleId == 768) A.log("updatedCountableTaxonData(" + geolocaleId + ") subfamilyCount:" + subfamilyCount + " speciesCount:" + speciesCount);
 
         criteria = "id = " + geolocaleId;
         geolocaleTaxonCountDb.updateCountableTaxonCounts("geolocale", criteria, subfamilyCount, genusCount, speciesCount);                  

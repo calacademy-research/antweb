@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.geolocale.*;
 
 import javax.servlet.http.HttpSession;
 
@@ -209,10 +210,8 @@ public class StatusSet extends Status {
       String requestStatusSet = request.getParameter("statusSet");
       return getStatusSet(requestStatusSet, request, overview);
     }
+
     public static String getStatusSet(String requestStatusSet, HttpServletRequest request, Overview overview) {
-        if (false && AntwebProps.isDevMode() && overview instanceof Project) {
-          AntwebUtil.logShortStackTrace();
-        }
         boolean setInSession = true;
         String statusSetStr = requestStatusSet;
         //A.log("getStatusSet() 1 overview:" + overview + " statusSetStr:" + statusSetStr);
@@ -224,14 +223,13 @@ public class StatusSet extends Status {
             if (Project.WORLDANTS.equals(overviewName)) statusSetStr = StatusSet.VALID_WITH_FOSSIL;
             if (Project.ALLANTWEBANTS.equals(overviewName)) statusSetStr = StatusSet.ALL;
             if (Project.FOSSILANTS.equals(overviewName)) statusSetStr = StatusSet.VALID_WITH_FOSSIL;
+            if (Project.BAYAREAANTS.equals(overviewName)) statusSetStr = StatusSet.ALL;
+
+            if (overview instanceof Geolocale) statusSetStr = StatusSet.ALL;
           }
           if (statusSetStr == null) statusSetStr = (String) session.getAttribute("statusSet");
-          if (statusSetStr == null) statusSetStr = StatusSet.VALID_EXTANT; //StatusSet.ALL;
+          if (statusSetStr == null) statusSetStr = StatusSet.VALID_EXTANT; // ALL;
         }
-        
-        // See BrowseAction.java:400 for some notes about status related bugs.
-		//if (Project.WORLDANTS.equals(overview.getName())) statusSetStr = Status.VALID;
-		//if (Project.ALLANTWEBANTS.equals(overview.getName())) statusSetStr = StatusSet.ALL;
 
         //A.log("getStatusSet() 3 requestStatusSet:" + requestStatusSet + " sessionStatusSet:" + (String) session.getAttribute("statusSet") + " overview:" + overview + " statusSetStr:" + statusSetStr);
         

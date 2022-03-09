@@ -2727,7 +2727,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 	}
 
     public boolean isSubfamily() {
-	    A.log("isSubfamily() class:" + getClass().toString());
+	    //A.log("isSubfamily() class:" + getClass().toString());
         return "class org.calacademy.antweb.Subfamily".equals(getClass().toString());
     }
     public boolean isGenus() {

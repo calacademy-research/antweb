@@ -96,7 +96,9 @@ public abstract class HttpUtil {
       if (invalidMessage == null) {
           int questionMarkI = targetSic.indexOf("?");
           if (targetSic.indexOf("?", questionMarkI + 1) > 0) {
-              invalidMessage = "Multiple ? in request:" + targetSic;
+              if (!targetSic.contains("&target=")) { // Exceptions
+                  invalidMessage = "Multiple ? in request:" + targetSic;
+              }
           }
       }
 

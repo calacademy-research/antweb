@@ -247,7 +247,7 @@ public class BrowseAction extends DescriptionAction {
           // To be removed when threat of lost geolocale_taxa has passed.
           //(new GeolocaleTaxonDb(connection)).hasCalMorphos(); 
 
-		  boolean logTimes = AntwebProps.isDevMode() && false;   
+		  boolean logTimes = AntwebProps.isDevMode() && true;
 		  if (logTimes) s_log.warn("execute() 1 time:" +  AntwebUtil.millisSince(startTime));
 
 		  /* --- Here is where we fetch the Taxon or Homonym --- */
@@ -289,12 +289,13 @@ public class BrowseAction extends DescriptionAction {
           // This is only used to specify homonym.
           String statusStr = browseForm.getStatus();
           String statusSetStr = StatusSet.getStatusSet(browseForm.getStatusSet(), request, overview);
-          String statusSetSize = StatusSet.getStatusSetSize(request);                
-
+          String statusSetSize = StatusSet.getStatusSetSize(request);
+          
           taxon.setStatusSetStr(statusSetStr);
           taxon.setStatusSetSize(statusSetSize);
-	
-          if (false) s_log.debug("execute() family:" + family + " subfamily:" + subfamily + " genus:" + genus
+	      A.log("execute() + statusStr:" + statusStr + " statusSetStr:" + statusSetStr + " statusSetSize:" + statusSetSize);
+
+          if (true && AntwebProps.isDevMode()) A.log("execute() family:" + family + " subfamily:" + subfamily + " genus:" + genus
             + " species:" + species + " subspecies:" + subspecies + " rank:" + rank + " overview:" + overview
             + " statusStr:" + statusStr + " statusSetStr:" + statusSetStr + " resetProject:" + browseForm.getResetProject()
             + " taxon.status:" + taxon.getStatus());
@@ -359,7 +360,7 @@ public class BrowseAction extends DescriptionAction {
               
 			taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
 
-            //A.log("execute() childrenSize:" + taxon.getChildren().size());
+            A.log("execute() childrenSize:" + taxon.getChildren().size());
 
 			//taxon.setChildren(projectObj, statusSet, getChildImages, getChildMaps);                    
 		  }

@@ -13,7 +13,13 @@ public class BayAreaSearch extends GenericSearch implements Serializable {
 
     private static Log s_log = LogFactory.getLog(BayAreaSearch.class);
 
-    private String[] adm2s;   // was counties
+    public String[] getAdm1s()
+    {
+        String[] adm1s = {"California"};
+        return adm1s;
+    }
+
+    private String[] adm2s;
 
     public String[] getAdm2s() {
         return (this.adm2s);
