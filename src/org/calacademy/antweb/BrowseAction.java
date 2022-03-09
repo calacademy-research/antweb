@@ -388,6 +388,7 @@ We are showin the full map of ponerinae for every adm1.
 			  }
 */
               LocalityOverview localityOverview = (LocalityOverview) overview;
+              A.log("execute() getMap(" + taxon + ", " + localityOverview + ")");
               map = MapMgr.getMap(taxon, localityOverview, connection);
 			}// else if (overview instanceof Geolocale) {
             //  Project project = GeolocaleMgr.getProject((Geolocale)overview);

@@ -19,12 +19,13 @@ public abstract class MapMgr {
     private static int skipped = 0;
 
     public static Map getMap(Taxon taxon, LocalityOverview overview, Connection connection) {
-
-        boolean persist = (taxon instanceof Subfamily || taxon instanceof Genus); // They will be geolocaleFocus == false.
         Map map = null;
+
+        boolean persist = (taxon.isSubfamily() || taxon.isGenus()); // They will be geolocaleFocus == false.
+        persist = false;  // Effectively, turn MapMgr off.
         if (persist) {
-            map = MapMgr.getMap(taxon);
-            //A.log("getMap() map:" + map);
+            map = MapMgr.getMap(taxon); // NO! Must be locality specific.
+            A.log("getMap() class:" + taxon.getClass() + " taxonName:" + taxon.getTaxonName() + " persist:" + persist + " MUST BE LOCALITY SPECIFIC map:" + map);
             if (map == null) {
               map = new Map(taxon, overview, connection);
               MapMgr.setMap(taxon, map);
@@ -32,7 +33,9 @@ public abstract class MapMgr {
               ++skipped;
             }                  
         } else {
-          map = new Map(taxon, overview, connection);
+            Date before = new Date();
+            map = new Map(taxon, overview, connection);
+            A.log("getMap() millis:" + AntwebUtil.millisSince(before));
         }
 
         //A.log("execute() persist:" + persist + " taxon:" + taxon + " map:" + map);

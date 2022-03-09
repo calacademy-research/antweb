@@ -176,25 +176,29 @@ public class TaxonDb extends AntwebDb {
         // This makes the populateMgrs() process take 44 seconds instead of 17...
         // Failure to execute this code block will prevent default specimens from displaying.
         // BioregionMap and IntroducedMap are required for...
-        //if (!AntwebProps.isDevMode()) {
-        if (taxon != null) {
-            if (Rank.SUBFAMILY.equals(taxon.getRank()) || taxon.isSpeciesOrSubspecies()) {
-                // if species we use "=" if subfamily we use "like". Genera are fetched with an overview specific child speciesStr.
-                ImagePickDb imagePickDb = new ImagePickDb(getConnection());
-                taxon.setDefaultSpecimen(Caste.MALE, imagePickDb.getDefaultSpecimen(Caste.MALE, taxon));
-                taxon.setDefaultSpecimen(Caste.WORKER, imagePickDb.getDefaultSpecimen(Caste.WORKER, taxon));
-                taxon.setDefaultSpecimen(Caste.QUEEN, imagePickDb.getDefaultSpecimen(Caste.QUEEN, taxon));
-                //A.log("getTaxon() taxonName:" + taxonName + " class:" + this.getClass() + " workerDefault:" + taxon.getDefaultSpecimen(Caste.WORKER));
+
+        if (AntwebProps.isDevMode()) { // Don't run in dev because it is slow.
+            A.logi("getTaxon", "getTaxon() DEFAULT SPECIMEN functionality disabled in dev to speed up launch time.");
+        } else {  // Do run it in producction.
+            if (taxon != null) {
+                if (Rank.SUBFAMILY.equals(taxon.getRank()) || taxon.isSpeciesOrSubspecies()) {
+                    // if species we use "=" if subfamily we use "like". Genera are fetched with an overview specific child speciesStr.
+                    ImagePickDb imagePickDb = new ImagePickDb(getConnection());
+                    taxon.setDefaultSpecimen(Caste.MALE, imagePickDb.getDefaultSpecimen(Caste.MALE, taxon));
+                    taxon.setDefaultSpecimen(Caste.WORKER, imagePickDb.getDefaultSpecimen(Caste.WORKER, taxon));
+                    taxon.setDefaultSpecimen(Caste.QUEEN, imagePickDb.getDefaultSpecimen(Caste.QUEEN, taxon));
+                    //A.log("getTaxon() taxonName:" + taxonName + " class:" + this.getClass() + " workerDefault:" + taxon.getDefaultSpecimen(Caste.WORKER));
+                }
+                TaxonPropDb taxonPropDb = (new TaxonPropDb(getConnection()));
+                if (Rank.GENUS.equals(taxon.getRank())) {
+                    taxon.setBioregionMap(taxonPropDb.getBioregionMap(taxonName));
+                }
+                if (taxon.isSpeciesOrSubspecies()) {
+                    taxon.setIntroducedMap(taxonPropDb.getIntroducedMap(taxonName));
+                }
+            } else {
+                s_log.warn("getTaxon() taxon is null:" + taxonName + " " + AntwebUtil.getShortStackTrace());
             }
-            TaxonPropDb taxonPropDb = (new TaxonPropDb(getConnection()));
-            if (Rank.GENUS.equals(taxon.getRank())) {
-                taxon.setBioregionMap(taxonPropDb.getBioregionMap(taxonName));
-            }
-            if (taxon.isSpeciesOrSubspecies()) {
-                taxon.setIntroducedMap(taxonPropDb.getIntroducedMap(taxonName));
-            }
-        } else {
-            s_log.warn("getTaxon() taxon is null:" + taxonName + " " + AntwebUtil.getShortStackTrace());
         }
 
 

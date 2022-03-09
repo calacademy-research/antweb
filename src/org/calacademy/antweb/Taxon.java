@@ -2726,26 +2726,20 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		this.statusSetSize = statusSetSize;
 	}
 
-    /* // Feb2020
-    public void callFinalize() throws Throwable {
-      finalize();
+    public boolean isSubfamily() {
+	    A.log("isSubfamily() class:" + getClass().toString());
+        return "class org.calacademy.antweb.Subfamily".equals(getClass().toString());
     }
-    
-    protected void finalize() throws Throwable {
-        super.finalize();
-        if (images != null)
-            images.clear();
-        if (description != null)
-            description.clear();
-        connection = null;
-        if (children != null) {
-            for (Taxon thisChild : getChildren()) {
-                thisChild.finalize();
-            }
-            children.clear();
-        }
+    public boolean isGenus() {
+        return "class org.calacademy.antweb.Genus".equals(getClass().toString());
     }
-*/
+    public boolean isSpecies() {
+        return "class org.calacademy.antweb.Species".equals(getClass().toString());
+    }
+    public boolean isSubspecies() {
+        return "class org.calacademy.antweb.Subspecies".equals(getClass().toString());
+    }
+
 
     public Map getMap() {
         return map;

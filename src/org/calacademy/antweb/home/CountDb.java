@@ -311,7 +311,10 @@ public class CountDb extends AntwebDb {
           updateCountSQL = countable.getUpdateCountSQL(parentTaxonName, columnName, count);
           int taxonUpdateCount = stmt.executeUpdate(updateCountSQL);
         
-          if ("bayareaants".equals(countable.toString())) A.log("updateCount() taxonUpdateCount:" + taxonUpdateCount + " dml:" + updateCountSQL);
+          if (AntwebProps.isDevMode() && "bayareaants".equals(countable.toString()) && 95 == taxonUpdateCount) {
+              A.log("updateCount() taxonUpdateCount:" + taxonUpdateCount + " dml:" + updateCountSQL);
+              AntwebUtil.logShortStackTrace();
+          }
 
           //if (taxonUpdateCount == 0)
             //A.log("updateCount() None Updated countable:" + countable + " columnName:" + columnName + " parentTaxonName:" + parentTaxonName); // + " updateCountSQL:" + updateCountSQL);
