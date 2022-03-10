@@ -142,11 +142,14 @@
 
             <li><a href="<%= domainApp %>/utilData.do?action=populateBioregion&name=Indomalaya"> Populate </a> Indomalaya Bioregion
 
+            <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl"> Crawl</a> Geolocale (CA)
+            <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl&num=392"> Crawl</a> One Geolocale (CA)
+
+<-- Do these work? Use the above? -->
             <li><a href="<%= domainApp %>/utilData.do?action=populateOneGeolocaleTaxon&num=392"> Populate </a> One Geolocale (CA)
             <li><a href="<%= domainApp %>/utilData.do?action=geolocaleTaxonCountCrawl&num=392"> Crawl</a> One Geolocale (CA)
+
             <li><a href="<%= domainApp %>/utilData.do?action=populateGeolocaleCountryTaxon"> Populate </a> Countries
-
-
             <li><a href="<%= domainApp %>/utilData.do?action=populateOneProjTaxon"> Populate </a> One Project
 
           </ul>

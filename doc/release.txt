@@ -1,9 +1,7 @@
 
-Release 9.71.7
+Release 9.71.6
   Roll back change to support Bay Area Ants to support Geolocales.
   New fix for Bay Area ants.
-
-  update proj_taxon set subfamily_count = 0 where project_name = "bayareaants" and subfamily_count = 1;
 
 Release 9.71.5
   Use StatusSet.ALL as the default for Geolocale overviews.
