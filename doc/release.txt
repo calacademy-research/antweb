@@ -1,59 +1,58 @@
-Release 9.71.7
+Release 8.73
+  Roll back change to support Bay Area Ants to support Geolocales.
+  New fix for Bay Area ants.
+  California added to Bay Area searches.
   Dynamic map changes to support Bay Area Maps.
   Taxon.toString() will return a null if the rank is null.
 
-Release 9.71.6
-  Roll back change to support Bay Area Ants to support Geolocales.
-  New fix for Bay Area ants.
-
-Release 9.71.5
+Release 8.72.5
   Use StatusSet.ALL as the default for Geolocale overviews.
 
-Release 9.71.4
+Release 8.72.4
   Create isSubfamily(),... utility methods in Taxon.
   Turn off MapMgr.
 
-Release 9.71.3
+Release 8.72.3
   Project Taxon Child Count Crawl link added to Project overview page.
   Logic to discover disowned parent genera in species lists.
   Minor species list and count work.
 
-Release 9.71.2
+Release 8.71.2
   Fix Bay Area Ants subfamily count.
 
-Release 9.72.1
+Release 8.72.1
   Resolve merge conflicts
 
-Release 9.72
+Release 8.72
   Cleanup the species list proxy records.
 
-Release 9.71
+Release 8.71
   Project Crawl changes
   
-Release 9.70.2
+Release 8.70.2
   Fix SQL parameter of isLegalLogin().
   Homonym without authorDate adjustment.
 
-Release 9.70.2
+Release 8.70.2
   Fix SQL parameter of isLegalLogin().
   Homonym without authorDate adjustment.
   Curator page links modified.
   Fix to group link in admin section of taxonPage.
   Add bioregionMap, introducedMap and defaultSpecimens to taxon population.
 
-Release 9.70.1
+Release 8.70.1
   specimenPostProcess and specimenPostProcessGlobal.
   Enhanced error messages for specimen upload.
   Homonym work
 
-Release 9.70
+Release 8.70
   Replace Utility.getInputFileHome() with AntwebProps.getWorkingDir()
   add backup_dir_file to the upload table;
   Removal of some deprecated admin functions.
   Homonym report and Event report enhancement.
   SpecimenUploader refinement.
 
-Release 9.69.2
+Release 8.69.2
   Add execTime to statistics records.
   Quiet the logging for dynamic maps.
   Look into login issue. Redundant records.
