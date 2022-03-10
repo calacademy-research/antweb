@@ -179,7 +179,7 @@ public class TaxonDb extends AntwebDb {
 
         if (AntwebProps.isDevMode()) { // Don't run in dev because it is slow.
             A.logi("getTaxon", "getTaxon() DEFAULT SPECIMEN functionality disabled in dev to speed up launch time.");
-        } else {  // Do run it in producction.
+        } else {  // Do run it in production.
             if (taxon != null) {
                 if (Rank.SUBFAMILY.equals(taxon.getRank()) || taxon.isSpeciesOrSubspecies()) {
                     // if species we use "=" if subfamily we use "like". Genera are fetched with an overview specific child speciesStr.
@@ -197,7 +197,7 @@ public class TaxonDb extends AntwebDb {
                     taxon.setIntroducedMap(taxonPropDb.getIntroducedMap(taxonName));
                 }
             } else {
-                s_log.warn("getTaxon() taxon is null:" + taxonName + " " + AntwebUtil.getShortStackTrace());
+                s_log.warn("getTaxon() taxon is null:" + taxonName); // + " " + AntwebUtil.getShortStackTrace());
             }
         }
 

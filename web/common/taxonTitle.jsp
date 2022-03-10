@@ -2,6 +2,10 @@
 <br>
 <!-- functionality unnecessarily replicated in specimen-body.jsp --> 
 <h1><%
+   boolean isType = taxon.getIsType();
+
+if (taxon.getRank() != null) { // Otherwise SkipIt
+
    if (Utility.notBlank(taxon.getFullName())) {
      if (taxon instanceof Specimen) {
        String headerTitle = new Formatter().capitalizeFirstLetter(taxon.getRank()) + ": " + taxon.getPrettyName();
@@ -21,8 +25,7 @@
      }
    }
 
-   boolean isType = taxon.getIsType();
-   if (taxon instanceof Specimen) { 
+   if (taxon instanceof Specimen) {
 	 Specimen specimenTaxon = (Specimen) taxon;
 	 //A.log("taxonTitle.jsp specimenTaxon subgenus:" + specimenTaxon.getSubgenus() + " prettyName:" + specimenTaxon.getTaxonPrettyName());
 	 %>
@@ -37,10 +40,15 @@
 
 %>
 <%@include file="/common/statusDisplayTitle.jsp" %>
+<%
 
-<% if (isType) { %>
+ if (isType) { %>
 <a href='<%= AntwebProps.getDomainApp() %>/common/statusDisplayPage.jsp#type' target="new">
 <img src="<%= AntwebProps.getDomainApp() %>/image/has_type_status_icon.png" title="Has type specimens">
 </a>
-<% } %>
+<% }
+
+} // End SkipIt
+
+%>
 </h1>

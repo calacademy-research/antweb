@@ -990,6 +990,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     }
 
     public String toString() {
+        if (getRank() == null) return null;
         return getName();
     }
 

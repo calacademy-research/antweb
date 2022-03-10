@@ -238,7 +238,7 @@
         <%@ include file="/common/taxonTitle.jsp" %>
         <%
           taxon.generateBrowserParams(overview);
-          if (AntwebProps.isDevMode()) AntwebUtil.log("dynamicMap.jsp taxon:" + taxon + " browserParams:" + taxon.getBrowserParams());
+          //if (AntwebProps.isDevMode()) AntwebUtil.log("dynamicMap.jsp taxon:" + taxon + " browserParams:" + taxon.getBrowserParams());
           String overviewDo = "description.do";
           if (taxon instanceof Specimen) overviewDo = "specimen.do";
           //if (overview instanceof Country) overviewDo = "country.do";
