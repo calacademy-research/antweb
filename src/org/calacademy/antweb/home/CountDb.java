@@ -253,12 +253,10 @@ public class CountDb extends AntwebDb {
           //AntwebUtil.logShortStackTrace();
           return 0;
         }
-
-
+        
          if ("subfamily".equals(rank)) {
              A.log("countGrandChildren() countable:" + countable + " rank:" + rank + " column:" + column);
          }
-
 
         int sum = 0;
         int count = 0;

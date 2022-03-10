@@ -198,10 +198,13 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
                 where.add("sp.adm1='" + safeAdm1 + "'");
               }
             }
+
             if ((adm2 != null) && (adm2.length() > 0)) {
-                where.add(" (" + getSearchString("sp.adm2", adm2SearchType, adm2) + ") ");
+                String adm2SearchStr = getSearchString("sp.adm2", adm2SearchType, adm2);
+                where.add(" (" + adm2SearchStr + ") ");
+                //A.log("createInitialResults() adm2:" + adm2 + " adm2SearchType:" + adm2SearchType + " searchString:" + adm2SearchStr);
             }
-			//s_log.warn("createInitialResults() adm2:" + adm2 + " adm2SearchType:" + adm2SearchType + " searchString:" + getSearchString("sp.adm2", adm2SearchType, adm2));
+
             if ((bioregion != null)
                 && (bioregion.length() > 0)) {
                 where.add("sp.bioregion='" + bioregion + "'");
@@ -581,8 +584,10 @@ add status to specimen
     public String getAdm2() {
         return (this.adm2);
     }
-    public void setAdm2(String adm2) {
+    public void setAdm2(String adm2)
+    {
         this.adm2 = adm2;
+       // AntwebUtil.logShortStackTrace();
     }
     public String getAdm2SearchType() {
         return (this.adm2SearchType);

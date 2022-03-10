@@ -127,13 +127,15 @@ public final class SearchParameters extends AdvancedSearchForm {
 
     // equals was added here to get working with AdvancedSearch
     public SearchParameters (BayAreaSearchForm sForm) {
+        adm1 = "California";
+
         adm2s = sForm.getAdm2s();
         name = ""; family = ""; subfamily = ""; genus = ""; species = ""; subspecies = ""; searchType = ""; familySearchType = ""; subfamilySearchType = "";
           genusSearchType = ""; speciesSearchType = ""; subspeciesSearchType = ""; localityNameSearchType = ""; localityCodeSearchType = "";
           collectedBySearchType = ""; museumCodeSearchType = ""; adm2 = ""; adm2SearchType = "equals"; collectionCodeSearchType = "";
           specimenCodeSearchType = ""; methodSearchType = ""; microhabitatSearchType = ""; habitatSearchType = "";
           locatedAtSearchType = ""; locatedAt = ""; types = ""; imagesOnly = ""; country = ""; bioregion = "";
-          adm1 = ""; typeDesignation = ""; localityName = ""; localityCode = ""; collectionCode = "";
+          typeDesignation = ""; localityName = ""; localityCode = ""; collectionCode = "";
           specimenCode = ""; habitat = ""; method = ""; microhabitat = ""; project = ""; geolocaleId = 0; ownedBy = ""; collectedBy = ""; museumCode = ""; 
           caste = ""; casteSearchType = "";  
           subcaste = ""; subcasteSearchType = "";  
@@ -156,11 +158,13 @@ public final class SearchParameters extends AdvancedSearchForm {
         }
         //A.log("SearchParameters(bayAreaSearchForm) adm2:" + adm2 + " adm2s:" + adm2s[0]);
     }
-        
+
+    /*
     public void oldSearchParameters (BayAreaSearchForm sForm) {
         adm2s = sForm.getAdm2s();
     }
-    
+    */
+
     public SearchParameters (RecentImagesForm sForm) {
         daysAgo = sForm.getDaysAgo();
         numToShow = sForm.getNumToShow();
@@ -204,6 +208,7 @@ public final class SearchParameters extends AdvancedSearchForm {
         adm1 = null;
         typeDesignation = null;
         adm2 = null;
+        adm2s = null;
         localityName = null;
         localityCode = null;
         collectionCode = null;
@@ -213,7 +218,6 @@ public final class SearchParameters extends AdvancedSearchForm {
         method = null;
         microhabitat = null;
         ownedBy = null;
-        adm2s = null;    
         caste = null;
         casteSearchType = null;
         subcaste = null;

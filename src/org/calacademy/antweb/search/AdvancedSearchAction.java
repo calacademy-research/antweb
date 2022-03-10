@@ -275,15 +275,16 @@ public class AdvancedSearchAction extends Action {
 		
 		search.setTypes(searchParameters.getTypes());
 		search.setProject(searchParameters.getProject());
-		if (searchParameters.getAdm2() != null) {
-		  search.setAdm2(searchParameters.getAdm2().trim());
-		} else { 
-		  search.setAdm2("");			
-		}
+
 		//s_log.warn("getSearchResults() adm2:" + search.getAdm2());
 		search.setCountry(searchParameters.getCountry());
 		search.setBioregion(searchParameters.getBioregion());
 		search.setAdm1(searchParameters.getAdm1());
+		if (searchParameters.getAdm2() != null) {
+			search.setAdm2(searchParameters.getAdm2().trim());
+		} else {
+			search.setAdm2("");
+		}
 		search.setLocatedAt(searchParameters.getLocatedAt());
 		search.setTypeDesignation(searchParameters.getTypeDesignation());
 		if (searchParameters.getLocalityName() != null) {

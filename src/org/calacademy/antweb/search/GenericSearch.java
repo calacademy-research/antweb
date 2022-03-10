@@ -68,9 +68,6 @@ public class GenericSearch implements Serializable {
         // for each invalid name, get the valid version
         //ArrayList validResults = getValidVersion(initialResults);
 
-        now = new Date();
-        //s_log.info("getting valid version took " + (now.getTime() - startDate.getTime()));
-
         // now filter out based on project - the reason we can't do this in the
         // initial query is that junior synonyms may not be part of a project, but
         // their valid names may be - we want these to show up, so we need two
@@ -360,7 +357,8 @@ public class GenericSearch implements Serializable {
         }
         theQuery += " group by sp.taxon_name, sp.family, sp.subfamily, sp.genus, sp.species, sp.type_status, sp.code, sp.status"
                 + " , sp.life_stage, sp.caste, sp.subcaste, sp.medium, sp.specimennotes ";
-        s_log.debug("createInitialResults() query:" + theQuery);
+
+        A.log("createInitialResults() query:" + theQuery);
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -844,7 +842,8 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         if ((returnStr == null) || (returnStr.equals(""))) {
             returnStr = " 1 = 1 ";
         }
-        //A.log("getSearchString() property:" + property + " searchType:" + searchType + " value:" + value + " returnStr:" + returnStr);
+
+        A.log("getSearchString() property:" + property + " searchType:" + searchType + " value:" + value + " returnStr:" + returnStr);
 
         return returnStr;
     }
