@@ -217,6 +217,9 @@ These are here:
 
   Only these are here: ls /mnt/antweb/web/log    specimen  worldants
 
+To see JSP compiles:
+  docker-compose exec antweb bash
+  ls /usr/local/tomcat/work/Catalina/localhost/ROOT/org/apache/jsp/
 
 
 More useful - Dash

@@ -18,6 +18,19 @@ public class AdvancedSearchAction extends Action {
 
     private static Log s_log = LogFactory.getLog(AdvancedSearchAction.class);
 
+    /*
+	public ActionForward execute(ActionMapping mapping, ActionForm form,
+								 HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+
+		A.log("execute()");
+		HttpSession session = request.getSession();
+		AntwebProps.resetSessionProperties(session);
+
+		return (mapping.findForward("success"));
+	}
+*/
+
 	public String getSearchTitle(SearchParameters searchParameters) {
 
 		StringBuffer sb = new StringBuffer();

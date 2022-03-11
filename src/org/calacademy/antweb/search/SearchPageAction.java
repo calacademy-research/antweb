@@ -23,6 +23,9 @@ public final class SearchPageAction extends Action {
 
         AdvancedSearchForm searchForm = (AdvancedSearchForm) form;
         HttpSession session = request.getSession();
+
+        AntwebProps.resetSessionProperties(session);
+        
         Connection connection = null;
 		try {
           javax.sql.DataSource dataSource = getDataSource(request, "conPool");

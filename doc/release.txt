@@ -1,3 +1,7 @@
+Release 8.74
+  Creation of Session Properties utility page.
+  Reset session properties on advanced search page and home page.
+
 Release 8.73
   Roll back change to support Bay Area Ants to support Geolocales.
   New fix for Bay Area ants.

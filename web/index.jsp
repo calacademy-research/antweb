@@ -1,4 +1,7 @@
 <%@ page errorPage = "/error.jsp" %>
+
+<%@ page import="org.calacademy.antweb.util.*" %>
+
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 
@@ -8,6 +11,8 @@
 
 <%
     session.removeAttribute("taxon");
+    
+    AntwebProps.resetSessionProperties(session);
 
     //A.log("index.jsp target:" + HttpUtil.getTarget(request));
 %>

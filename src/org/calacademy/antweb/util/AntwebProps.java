@@ -1,5 +1,7 @@
 package org.calacademy.antweb.util;
 
+import javax.servlet.http.*;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
@@ -8,6 +10,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+
+import org.calacademy.antweb.*;
 
 public abstract class AntwebProps {
 
@@ -426,6 +430,12 @@ public abstract class AntwebProps {
 	public static String getTechAdminContact() {
 	  return "re.mark.johnson@gmail.com";
 	}
+
+	public static void resetSessionProperties(HttpSession session) {
+        session.setAttribute("statusSet", StatusSet.ALL);
+        session.setAttribute("project", Project.ALLANTWEBANTS);
+    }
+
 }
 
 

@@ -1,4 +1,4 @@
-
+	
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.data.*" %>
 <%@ page import="java.util.*" %>
@@ -128,18 +128,6 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 <br><b>Server Details:</b> <%= serverDetails %>
 <br><b>TaxonMgr</b><%= TaxonMgr.report() %>
 
-<br><br><br>
-<h3>Session Attributes Names:</h3>
- <%  //HttpSession session = request.getSession();
-     for (Enumeration e = session.getAttributeNames() ; e.hasMoreElements() ;) {
-       String name = (String) e.nextElement();
-       if (!"dummyForm".equals(name) && !"statistics".equals(name)) {
-         out.println("<br>name:<b>" + name + "</b> value:" + session.getAttribute(name));
-       } else {
-         out.println("<br>name:<b>" + name + "</b>");
-         A.log("serverStatus-body.jsp dummyForm:" + session.getAttribute(name));
-       }
-     }
  %>  
 <br><br><br>
 <h3>Assorted Links</h3>

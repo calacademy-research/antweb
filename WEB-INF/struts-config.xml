@@ -1689,6 +1689,9 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name ="success" path="/util/serverStatus.jsp"/>
       </action>
 
+      <action path="/sessionProps" 
+         forward="/util/sessionProps.jsp"/>         
+
     <action path="/serverStatusB"
             type = "org.calacademy.antweb.util.ServerStatusActionB"
             name="dummyForm">

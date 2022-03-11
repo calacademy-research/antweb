@@ -34,6 +34,7 @@
     <ul align=left>	
       <li><a href="<%= domainApp %>/statistics.do">Antweb Statistics</a>
       <li><a href="<%= domainApp %>/serverStatus.do">Server Status</a>
+      <li><a href="<%= domainApp %>/sessionProps.do">Session Properties</a>
       <li><a href="<%= domainApp %>/userAgents.do">User Agents</a>
       <li><a href="<%= domainApp %>/dbStatus.do">Database Status</a>
       <!-- li><a href="< %= domainApp % >/util.do?action=unlockImageUpload">Unlock</a> Image Upload -->
@@ -145,7 +146,7 @@
             <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl"> Crawl</a> Geolocale (CA)
             <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl&num=392"> Crawl</a> One Geolocale (CA)
 
-<-- Do these work? Use the above? -->
+<% //Do these work? Use the above? %>
             <li><a href="<%= domainApp %>/utilData.do?action=populateOneGeolocaleTaxon&num=392"> Populate </a> One Geolocale (CA)
             <li><a href="<%= domainApp %>/utilData.do?action=geolocaleTaxonCountCrawl&num=392"> Crawl</a> One Geolocale (CA)
 
