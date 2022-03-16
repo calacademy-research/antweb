@@ -447,7 +447,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 if (hasNoChildren(genusName, projectName)) {
                     A.log("verifyProjTaxon() No children for genusName:" + genusName + " projectName:" + projectName + " speciesCount:" + speciesCount);
                     // All, or just those with speciesCount > 0?
-                    //result = deleteProjTaxon(genusName, projectName);
+                    result = deleteProjTaxon(genusName, projectName);
                 }
             }
         } catch (SQLException e) {

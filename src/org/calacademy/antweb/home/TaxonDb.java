@@ -197,7 +197,7 @@ public class TaxonDb extends AntwebDb {
                     taxon.setIntroducedMap(taxonPropDb.getIntroducedMap(taxonName));
                 }
             } else {
-                s_log.warn("getTaxon() taxon is null:" + taxonName); // + " " + AntwebUtil.getShortStackTrace());
+                A.logi("TaxonDbNullTaxon", 2, "getTaxon() taxon is null:" + taxonName + " " + AntwebUtil.getShortStackTrace());
             }
         }
 

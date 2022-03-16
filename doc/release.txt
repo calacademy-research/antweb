@@ -1,3 +1,7 @@
+Release 8.75
+  TaxonDb getTaxon logging fixed.
+  ProjTaxonDb.verifyProjTaxon() to make remediations.
+
 Release 8.74
   Creation of Session Properties utility page.
   Reset session properties on advanced search page and home page.

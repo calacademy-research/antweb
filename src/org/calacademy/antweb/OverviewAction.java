@@ -60,8 +60,6 @@ public final class OverviewAction extends DescriptionAction {
            
         s_log.debug("execute() name:" + name + " uri:" + uri);
 
-//A.log("execute() 1 statusSet:" + (String) request.getSession().getAttribute("statusSet"));
-
         if (uri.contains("/projects.do")) {
             ArrayList<Project> projects = ProjectMgr.getAntProjects();
             request.setAttribute("overviews", projects);
@@ -91,8 +89,8 @@ public final class OverviewAction extends DescriptionAction {
             }
   
             OverviewMgr.setOverview(request, project);  
-            request.setAttribute("overview", project);   
-//A.log("execute() 2 statusSet:" + (String) request.getSession().getAttribute("statusSet"));
+            request.setAttribute("overview", project);
+            //A.log("execute() 2 statusSet:" + (String) request.getSession().getAttribute("statusSet"));
                 
             return mapping.findForward("project");
           } else {
