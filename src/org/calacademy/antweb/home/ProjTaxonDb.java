@@ -406,7 +406,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
       return deleteProjTaxon(taxonName, projectName, null);
     }
     private String deleteProjTaxon(String taxonName, String projectName, String extraClause) throws SQLException {
-        String dml = "delete from proj_taxon where "
+        String dml = "delete from proj_taxon "
             + " where taxon_name = '" + taxonName + "'"
             + " and project_name = '" + projectName + "'";
         if (extraClause != null) dml += extraClause;

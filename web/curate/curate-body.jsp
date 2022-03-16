@@ -532,9 +532,9 @@ Upload Curator File
                // This happens on the live server, so must be able to test. Antweb is invoked to pull down the fetch and reload from antcat (ibis...).
                // This enables us to test that upload process. 
                reloadStr = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=worldantsReload'>Reload</a>";
-               String fetchStr = "<a href='" + org.calacademy.antweb.curate.speciesList.SpeciesListUploader.fetchWorldantsUrl + "'>Fetch</a>";
+               String fetchStr = ""; //"<a href='" + org.calacademy.antweb.curate.speciesList.SpeciesListUploader.fetchWorldantsUrl + "'>Fetch</a> and ";
             %>
-            <div class="action_desc"><%= fetchStr %> and <%= reloadStr %> <b>Worldants</b> </div>
+            <div class="action_desc"><%= fetchStr %><%= reloadStr %> <b>Worldants</b> </div>
             <div class="clear"></div>
             <div class="align_right">
                 <input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="fetchAndReloadWorldants">
