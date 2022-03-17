@@ -116,7 +116,7 @@ RUN mkdir log -pm 777 && \
 RUN ln -s /mnt/antweb/web/bak bak && \
     ln -s /mnt/antweb/web/curator curator && \
     ln -s /mnt/antweb/web/documentation documentation && \
-    ln -s /mnt/antweb/web/specieslist specieslist && \
+    ln -s /mnt/antweb/web/speciesList speciesList && \
     ln -s /mnt/antweb/web/upload upload && \
     ln -s /mnt/antweb/web/workingdir workingdir && \
     ln -s /mnt/antweb/web/log/specimen log/specimen && \
