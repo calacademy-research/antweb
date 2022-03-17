@@ -122,10 +122,14 @@ public class SpeciesListUploader {
 
     int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
     String fileLoc = worldDir + "worldants_speciesList.txt";
-    String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
-    uploadDetails.setMessage(validateMessage);
-    
-    String backupDirFile = record(validateMessage, fileLoc, origWorldantsCount, true);
+
+
+   // String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
+   // A.log("Must we do this? uploadDetails.getMessage():" + uploadDetails.getMessage() + " We already validated in the reloadSpecieslist() above. ValidateMessage:" + validateMessage);
+   // uploadDetails.setMessage(validateMessage);
+
+
+    String backupDirFile = record(uploadDetails.getMessage(), fileLoc, origWorldantsCount, true);  // was validateMessage
     uploadDetails.setBackupDirFile(backupDirFile);
 
     s_log.debug("worldantsReload message:" + uploadDetails.getMessage());
@@ -137,7 +141,8 @@ public class SpeciesListUploader {
 
   public String validateWorldantsFile(String fileLoc, int origWorldantsCount) {
     if (AntwebProps.isDevOrStageMode()) {
-      A.log("validateWorldantsFile() DEV MODE SKIPPING");
+      A.log("validateWorldantsFile() DEV MODE SKIPPING (so that short files can be tested)");
+      AntwebUtil.logShortStackTrace();
       return "success";
     }
     

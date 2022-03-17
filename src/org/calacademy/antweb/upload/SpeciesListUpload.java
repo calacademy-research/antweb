@@ -262,8 +262,8 @@ public class SpeciesListUpload extends AntwebUpload {
             s_log.debug("Warning ProjTaxonDb.regenerateAllAntweb() is skipped in Dev. See SpeciesListUpload.java:169");
         }
 
-        A.log("uploadSpeciesList() fossils:" + totalFossils);
-        A.log("uploadSpeciesList() NOT fossils:" + totalNotFossils);
+        //A.log("uploadSpeciesList() fossils:" + totalFossils);
+        //A.log("uploadSpeciesList() NOT fossils:" + totalNotFossils);
 
         new WorldantsUploadDb(getConnection()).deleteHomonymsWithoutTaxa();
 
@@ -1012,7 +1012,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
             String projectRoot = ProjectMgr.getProject(project).getRoot();
 
-                String speciesListFile = uploadFile.getRoot() + Project.getSpeciesListDir() + projectRoot +  "/" + project + UploadFile.getSpeciesListTail();
+            String speciesListFile = uploadFile.getRoot() + Project.getSpeciesListDir() + projectRoot +  "/" + project + UploadFile.getSpeciesListTail();
             String message = " copy " + uploadFile.getFileLoc() + " to " + speciesListFile;
             s_log.info("copySpeciesListFile()" + message);
             util.copyFile(uploadFile.getFileLoc(), speciesListFile);

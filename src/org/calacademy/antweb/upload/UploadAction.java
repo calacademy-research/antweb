@@ -204,7 +204,7 @@ public class UploadAction extends Action {
 							runCountCrawls = true;
 						}
 
-						runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
+						runStatistics(action, connection, request, accessLogin.getId(), uploadDetails.getExecTime());
 						//runStatistics(action, dataSource, request, accessLogin.getId(), uploadDetails);
 
 						s_log.debug("uploadSpeciesList uploadDetails:" + uploadDetails);
@@ -240,7 +240,7 @@ public class UploadAction extends Action {
 
 					//runCountCrawls(connection);
 
-					runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
+					runStatistics(action, connection, request, accessLogin.getId(), uploadDetails.getExecTime());
 
 					uploadDetails.finish(accessLogin, request, connection);
 
@@ -615,7 +615,7 @@ public class UploadAction extends Action {
 		s_log.debug("specimenPostProcess() updateUpload");
 
 		if (!AntwebProps.isDevMode()) {
-			runStatistics(uploadDetails.getAction(), connection, request, login.getId(), uploadDetails);
+			runStatistics(uploadDetails.getAction(), connection, request, login.getId(), uploadDetails.getExecTime());
 		} else {
 			A.log("execTime:" + uploadDetails.getExecTime());
 			s_log.warn("execute() DEV MODE SKIPPING runStatistics");
@@ -1363,9 +1363,8 @@ public class UploadAction extends Action {
       runStatistics(action, connection, request, loginId, null);
     }
 
-    private void runStatistics(String action, java.sql.Connection connection, HttpServletRequest request, int loginId, UploadDetails uploadDetails)
+    private void runStatistics(String action, java.sql.Connection connection, HttpServletRequest request, int loginId, String execTime)
      throws SQLException, IOException {
-
 
         if (false && AntwebProps.isDevOrStageMode()) {
           s_log.warn("runStatistics() not executing because of test mode.");
@@ -1377,10 +1376,13 @@ public class UploadAction extends Action {
         //String docBase = request.getRealPath("/");
 		String docBase = AntwebProps.getDocRoot();
 
+		if (execTime == null) execTime = "N/A";
+		/*
         String execTime = "N/A";
+        if (execTime !)
         if (uploadDetails != null) execTime = uploadDetails.getExecTime();
+        */
 
         (new StatisticsDb(connection)).populateStatistics(action, loginId, execTime, docBase);
     }
-
 }

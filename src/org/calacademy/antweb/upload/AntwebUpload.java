@@ -44,7 +44,9 @@ public class AntwebUpload {
 
     // Set to null for no action.
     //private static String s_testTaxonName = null; //"myrmicinaenesomyrmex hirtellus";
-    private static String s_testTaxonName = "myrmicinaestrumigenys dicomas";
+    //private static String s_testTaxonName = "myrmicinaestrumigenys dicomas";
+    private static String s_testTaxonName = "myrmicinaecrematogaster parapilosa";
+
 
     private TaxonQueryHashMap taxonQueryHashMap = new TaxonQueryHashMap();
     private String lastTaxonName = null;
@@ -225,6 +227,9 @@ public class AntwebUpload {
 
                 ++countUploaded;
                 if (table.equals("taxon")) taxonQueryHashMap.put(taxonName, query);
+
+                if (AntwebProps.isDevMode() && taxonName.equals(s_testTaxonName))
+                    s_log.warn("saveTaxon() taxonName:" + taxonName + " query:" + query);
 
                 int rowCount = stmt.executeUpdate(query);
 
@@ -467,7 +472,7 @@ public class AntwebUpload {
                 //    TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);
             } catch (com.mysql.cj.jdbc.exceptions.MysqlDataTruncation e) {
                 String message = "e:" + e + " query:" + query;
-                s_log.error("updateTaxon() 1" + message);
+                s_log.error("updateTaxon() 1 " + message);
                 MessageMgr.addToErrors(message);
             } catch (SQLException e) {
                 s_log.error("updateTaxon() 2 e:" + e + " query:" + query);

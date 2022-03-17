@@ -19,19 +19,21 @@ public class WorldantsUploadDb extends AntwebDb {
     }
 
     /*
-
      Worldants file is fetched from a machine that runs a job off of a snapshot of the 
      antcat database.
-    
-     ssh mjohnson@ibss-info.calacademy.org
- 
+
      http://ibss-info/antcat.antweb.txt   <- This is the worldants download file.
      http://ibss-info/download_results.log   <- log file?
 
-     // Why is this linked on the curate page: http://antcat-export:9090/antcat.antweb.txt
+     // File is here: http://antcat-export:9090/antcat.antweb.txt
+     // Requires VPN access. Can be fetched from server:
+     //   wget http://antcat-export:9090/antcat.antweb.txt .
 
-     Located here:
-       /home/antcat-download/antcat.antweb.txt
+     // Copies are stored here: /data/antweb/web/upload/
+
+     // Working directory is /data/antweb/web/workingdir/ which is /usr/local/antweb/web/workingdir
+     //  -rw-r--r-- 1 root root 102137857 Mar 16 11:43 /data/antweb/web/workingdir/worldants.txt
+     //  -rw-r--r-- 1 root root 102137857 Mar 16 06:00 /data/antweb/web/workingdir/worldants_speciesList.txt     
 
      Stats from each upload are stored in the worldants_upload table. Visible here:
        https://www.antweb.org/query.do?name=worldantsUploads

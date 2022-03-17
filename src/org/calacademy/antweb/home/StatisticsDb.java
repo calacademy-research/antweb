@@ -441,9 +441,14 @@ museum
                 outFile.close();
             }
 
-            if (AntwebProps.isDevMode()) {
-                A.log("populateStatistcs() execTime:" + execTime + " null:" + (execTime == null));
-                AntwebUtil.logStackTrace();
+            if (AntwebProps.isDevMode() && execTime == null) {
+                A.log("populateStatistcs() execTime:" + execTime + " Why is execTime null?");
+                AntwebUtil.logShortStackTrace();
+                /* Why is the execTime null?
+                at org.calacademy.antweb.home.StatisticsDb.populateStatistics(StatisticsDb.java:446)
+                at org.calacademy.antweb.upload.UploadAction.runStatistics(UploadAction.java:1383)
+                at org.calacademy.antweb.upload.UploadAction.execute(UploadAction.java:207)
+                */
             }
 
             String update = "insert into statistics "

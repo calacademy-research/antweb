@@ -284,7 +284,6 @@ public class MessageMgr {
 
       Vector<String> messages = getMessages();
       boolean hasMessages = !messages.isEmpty();
-      //if (!hasMessages) return logString += "<h3><font color=green>Data tests passed.</font></h3>";
 
       logString += "<h3>Errors:</h3>"; //<pre>
       int i = 0;
@@ -304,6 +303,7 @@ public class MessageMgr {
 		  logString += "\r\r&nbsp;<b> " + i + "</b>:" + test.getHeading();
 	  }          
 
+	  A.log("getMessagesReport() logString:" + logString);
       return logString;
     }
 
