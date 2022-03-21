@@ -25,7 +25,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     and the data file uploaded.  Biota application is no longer under active development.    
 */
 
-    private static Log s_log = LogFactory.getLog(SpecimenUploadParse.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenUploadParse.class);
 
     static int MAXLENGTH = 80;
 
@@ -49,15 +49,14 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     //public abstract boolean importSpecimens(UploadFile uploadFile, Group group) throws SQLException, TestException, AntwebException;
         
     protected String parseLine(String theLine, int lineNum, Hashtable specimenItem, Hashtable taxonItem
-      , ArrayList otherColumns, ArrayList colList, String shortFileName, Login accessLogin) 
+      , ArrayList<String> otherColumns, ArrayList<String> colList, String shortFileName, Login accessLogin)
       throws SQLException, AntwebException {
 
         Group accessGroup = accessLogin.getGroup();
 
         Date startTime = new Date();
-        String initLine = theLine;                                  
-        StringBuffer otherInfo = new StringBuffer();             
-        String otherColumn = null;
+        StringBuilder otherInfo = new StringBuilder();
+        String otherColumn;
         String errorMessage = null;            
 		String code = null;
 		
@@ -106,7 +105,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 // colIndex:27  colList:27  otherColumns:27
                 if ((colIndex < colList.size()) && (colIndex < otherColumns.size())) {
                     if (colList.get(colIndex) != null) {
-                        String col = (String) colList.get(colIndex);
+                        String col = colList.get(colIndex);
                         col = col.toLowerCase();
  
                         /* This code block handles columns and headers as listed and defined in AntwebUpload */
@@ -169,12 +168,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         
                         boolean otherColumnFound = false;
                          
-                        if (((String) otherColumns.get(colIndex)).equals("loclongitude")) {
+                        if (otherColumns.get(colIndex).equals("loclongitude")) {
                             otherColumnFound = true;
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -180 && number <= 180) {
 								specimenItem.put("decimal_longitude", number);
-								lon = number.floatValue() * 1000;
+								lon = number * 1000;
 								if ((int) lon == 0) {
 									element = "";
 									specimenItem.put("decimal_longitude", (float) -999.9);
@@ -188,12 +187,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             }
                         }
 
-                        if (((String) otherColumns.get(colIndex)).equals("loclatitude")) {
+                        if (otherColumns.get(colIndex).equals("loclatitude")) {
                             otherColumnFound = true;
                             Float number = convertGeorefToDecimal(element.toLowerCase());
                             if (number >= -90 && number <= 90) {
 								specimenItem.put("decimal_latitude", number);
-								lat = number.floatValue() * 1000;
+								lat = number * 1000;
 								//A.log("parseLine() lat:" + lat + " number:" + number);
 								if ((int) lat == 0) {
 									element = "";
@@ -210,7 +209,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
                         // Elevation is inserted into the database as a simple number so that it is searchable.
                         //   and added to the hashtable in it's original form for display.
-                        if (((String) otherColumns.get(colIndex)).equals("elevation")) {   
+                        if (otherColumns.get(colIndex).equals("elevation")) {
                             otherColumnFound = true;
                             Integer elevation = getElevationFromString(element, lineNum);
                             if (elevation != null) {
@@ -221,11 +220,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         if (!otherColumnFound) {
                             //String heading = "<b>Unrecognized Column <font color=red>(ignored):</font></b>";
                             //getMessageMgr().addToMessageStrings(heading, (String) otherColumns.get(colIndex));
-                            getMessageMgr().addToMessages(MessageMgr.unrecognizedColumn, (String) otherColumns.get(colIndex));                            
+                            getMessageMgr().addToMessages(MessageMgr.unrecognizedColumn, (String) otherColumns.get(colIndex));
                         }
                          
                         if (!element.equals("")) {
-                            otherColumn = (String) otherColumns.get(colIndex);
+                            otherColumn = otherColumns.get(colIndex);
                             otherColumn = badXML.subst(otherColumn, "");
                             //A.log("parseLine() otherColumn:" + otherColumn);
                             element = formatter.replaceBadXML(element);
@@ -237,7 +236,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 } else {  //  if ((colIndex < colList.size()) && (colIndex < otherColumns.size())) {
                     String message = "parseLine() - Something wrong with specimen.  colIndex:" + colIndex + " colList.size:" + colList.size() + " otherColumns.size:" + otherColumns.size();
                     if (specimenItem.containsKey("code")) {
-                        message += " code:" + (String) specimenItem.get("code");
+                        message += " code:" + specimenItem.get("code");
                     } else {
                         message += " code:?";
                     }
@@ -410,7 +409,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                   specimenItem.put("subregion", subregion);			                        
 				}
 				boolean isValidCountry = GeolocaleMgr.isValidCountry(country);   // CountryDb.isValid(getConnection(), element);
-				boolean notBlank = (new Utility()).notBlank(country);
+				boolean notBlank = Utility.notBlank(country);
 				if (!isValidCountry && notBlank && !"Port of Entry".equals(country)) {
 				  getMessageMgr().addToMessages(MessageMgr.notValidCountries, country);
 				}
@@ -425,7 +424,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 getMessageMgr().addToMessages(MessageMgr.adm1Missing, validCountry.getName(), (String) specimenItem.get("code"));              
               }
             } else {
-				if (adm1 != null && adm1.contains("’")) {
+				if (adm1.contains("’")) {
 				  adm1 = Formatter.replace(adm1, "‘", "'");
 				  adm1 = Formatter.replace(adm1, "’", "'");
 				  specimenItem.put("adm1", adm1);
@@ -444,7 +443,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				}
 
 				boolean isValidAdm1 = GeolocaleMgr.isValid(adm1, country);
-				boolean notBlank = (new Utility()).notBlank(adm1);
+				boolean notBlank = Utility.notBlank(adm1);
                 boolean isIsland = GeolocaleMgr.isIsland(adm1);
 
 				if (!isValidAdm1 && notBlank && !isIsland) {
@@ -623,7 +622,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				//if (AntwebProps.isCAS(group) || AntwebProps.isDavis(group)) {
 				  String withinAdm1BoundsMsg = isWithinAdm1Bounds(specimenItem);
 				  if (withinAdm1BoundsMsg != null) {
-					String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + (String) specimenItem.get("code") + "'>" + (String) specimenItem.get("code") + "</a>";				
+					String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + (String) specimenItem.get("code") + "'>" + (String) specimenItem.get("code") + "</a>";
 					getMessageMgr().addToMessages(MessageMgr.latLonNotInAdm1Bounds, displayCode, withinAdm1BoundsMsg);  				
                     specimenItem.put("flag", "red");
    			        specimenItem.put("issue", MessageMgr.latLonNotInAdm1Bounds);  							
@@ -669,7 +668,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 	private static int s_withinBoundsCountryCount = 0;
 	private static int s_lastCountryCount = 0;
 
-    private static HashMap<String, String> latLonHash = new HashMap<>();
+    private static final HashMap<String, String> latLonHash = new HashMap<>();
 
     private static Coordinate getCoordinate(Hashtable specimenItem) {
 		Object latObj = specimenItem.get("decimal_latitude");
@@ -687,8 +686,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 		}
         Float lat = (Float) latObj;
         Float lon = (Float) lonObj;
-        Coordinate coord = new Coordinate(lon, lat);
-        return coord;
+        return new Coordinate(lon, lat);
     }
 
 
@@ -697,8 +695,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
  
         Coordinate coord = getCoordinate(specimenItem);
         if (coord == null) return null;
-        Float lat = coord.getLat();
-        Float lon = coord.getLon();
+        float lat = coord.getLat();
+        float lon = coord.getLon();
 
 
 		// If the localitycode is null but the decimal_longitude and decimal_latitude are not
@@ -709,7 +707,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         //A.iLog("isWithinCountryBounds() localityCode:" + localityCode);
         if (localityCode == null) {  // Maybe we have one already by lat/lon.
           String latLon = "" + lat + "," + lon;
-          localityCode = (String) latLonHash.get(latLon);
+          localityCode = latLonHash.get(latLon);
           if (localityCode == null) {
 
             localityCode = UploadUtil.cleanCode(localityCode);
@@ -787,8 +785,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         
         Coordinate coord = getCoordinate(specimenItem);
         if (coord == null) return null;
-        Float lat = coord.getLat();
-        Float lon = coord.getLon();
+        float lat = coord.getLat();
+        float lon = coord.getLon();
         
       // Check the bounds
         if (!adm1.equals(s_withinBoundsAdm1)) {
@@ -853,7 +851,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
        if (m_headerArrayList != null) return m_headerArrayList;
 
-       m_headerArrayList = new ArrayList();
+       m_headerArrayList = new ArrayList<>();
        m_headerArrayList.add("specimencode");
        m_headerArrayList.add("subfamily");
        m_headerArrayList.add("tribe");
@@ -911,13 +909,13 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
       return m_headerArrayList; 
     }
 
-    protected Hashtable getColumnTranslations() {
+    protected Hashtable<String, String> getColumnTranslations() {
         // *Thau Note:  Somewhat goofy way to match specimen field names to  
         // the database schema.  There's a better way to do this, but I don't have time now!
         // Mark Note.  If the column in the specimen file differs from the database field, map it.
         // Add it here AND above to the headerArrayList!
 
-        Hashtable columnTranslations = new Hashtable();
+        Hashtable<String, String> columnTranslations = new Hashtable<>();
         //     put ( specimen header, db column name )
         columnTranslations.put("speciesgenus", "genus");
         columnTranslations.put("specimencode", "code");
@@ -1021,7 +1019,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 ++rangeElevation;
                 String lowRange = elemStr.substring(0, elemStr.indexOf("-")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("-") + 1).trim();
-                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2d;
+                double averageElev = (Integer.parseInt(lowRange) + Integer.parseInt(elemStr)) / 2d;
                 int averageElevInt = (Double.valueOf(averageElev)).intValue();
                 elemStr = (Integer.valueOf(averageElevInt)).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);
@@ -1031,7 +1029,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 ++rangeElevation;
                 String lowRange = elemStr.substring(0, elemStr.indexOf("to")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("to") + 2).trim();
-                double averageElev = ((Integer.valueOf(lowRange)).intValue() + (Integer.valueOf(elemStr)).intValue()) / 2d;
+                double averageElev = (Integer.parseInt(lowRange) + Integer.parseInt(elemStr)) / 2d;
                 int averageElevInt = (Double.valueOf(averageElev)).intValue();
                 elemStr = (Integer.valueOf(averageElevInt)).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);

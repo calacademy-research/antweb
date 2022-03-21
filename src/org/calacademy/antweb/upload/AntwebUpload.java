@@ -22,13 +22,12 @@ public class AntwebUpload {
      */
 
     private Connection m_connection = null;
-    private static Log s_log = LogFactory.getLog(AntwebUpload.class);
-    static String currentDateFunction = "now()";  // for mysql
+    private static final Log s_log = LogFactory.getLog(AntwebUpload.class);
+    private static String currentDateFunction = "now()";  // for mysql
     String[] dateHeaderString = {"spcmrecorddate", "spcmrecchangeddate",
             "transecttype", "locrecorddate", "locrecchangeddate"
     };
-    ArrayList dateHeaders = new ArrayList(Arrays.asList(dateHeaderString));
-    String[] taxonHeaders = {"kingdom_name", "phylum_name", "class_name", "order_name", "family",
+    private final String[] taxonHeaders = {"kingdom_name", "phylum_name", "class_name", "order_name", "family",
             "subfamily", "tribe", "genus", "subgenus", "speciesgroup", "species", "subspecies"
             // worldants
             , "country", "valid", "fossil"
@@ -54,11 +53,11 @@ public class AntwebUpload {
     private int countUploaded = 0;
     private int uploadSkipped = 0;
 
-    ArrayList goodTaxonHeaders = new ArrayList(Arrays.asList(taxonHeaders));
+    ArrayList<String> goodTaxonHeaders = new ArrayList<>(Arrays.asList(taxonHeaders));
 
     UploadDb uploadDb = null;
 
-    private DescCounter m_descCounter = new DescCounter();
+    private final DescCounter m_descCounter = new DescCounter();
 
     private UploadDetails uploadDetails = null;
 
@@ -541,7 +540,7 @@ public class AntwebUpload {
                   // A.log("WE DON'T USE THIS CODE?"); Yes we do! Specimen uploads.
                   
                     //Taxon dummyTaxon = (new TaxonDb(getConnection())).getDummyTaxon(taxonName);
-                    Taxon dummyTaxon = null;
+                    Taxon dummyTaxon;
                     if (TaxonMgr.isUseRefreshing()) {
                         dummyTaxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
                     } else {
@@ -709,13 +708,13 @@ public class AntwebUpload {
         try {
             // prepare the fields and values
             Enumeration keys = item.keys();
-            StringBuffer fields = new StringBuffer();
+            StringBuilder fields = new StringBuilder();
             StringBuffer values = new StringBuffer();
             fields.append("(");
             values.append("(");
-            String key = null;
-            String value = null;
-            Float floatValue = null;
+            String key;
+            String value;
+            Float floatValue;
             
             while (keys.hasMoreElements()) {
                 key = (String) keys.nextElement();
@@ -854,8 +853,8 @@ public class AntwebUpload {
 //            values.setCharAt(values.length() - 1, ')');
 
             stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.saveSpecimen()");
-            dml = "insert into specimen " + fields.toString()
-                    + " values " + values.toString();
+            dml = "insert into specimen " + fields
+                    + " values " + values;
 
             //A.iLog("saveSpecimen() dml:" + dml);        
             
@@ -929,12 +928,11 @@ public class AntwebUpload {
     // Similar method implemented in SpecimenUpload. This one called from SpeciesListUpload.
     public String setStatusAndCurrentValidName(String taxonName, Hashtable taxonItem)
       throws SQLException
-    {  
-      String currentValudName = taxonName;
-      // Here we choose the best taxa for uploaded specimen.  
+    {
+        // Here we choose the best taxa for uploaded specimen.
       boolean skipTaxonEntry = false;
       String status = null;    
-      String originalTaxonName = null;
+      String originalTaxonName;
       
       //The case of morpho and indet are easy because we can determine by the taxon name.
       if (Taxon.isMorpho(taxonName)) {
@@ -945,7 +943,7 @@ public class AntwebUpload {
           TaxonDb taxonDb = new TaxonDb(getConnection());
 
           ProfileCounter.add("AntwebUpload.setStatusAndCurrentValidName()A");
-          Taxon taxon = null;
+          Taxon taxon;
           if (TaxonMgr.isUseRefreshing()) {
               taxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
           } else {
@@ -1088,17 +1086,16 @@ public class AntwebUpload {
     }
 
     private boolean isExceptionalSubfamily(String family, String subfamily) throws SQLException {
-      // Both "incertae_sedis" and "([subfamily])" are considered exceptional. 
-    
-      boolean isExceptional = false;
-      if ("incertae_sedis".equals(subfamily)) isExceptional = true;
-      if ( (subfamily != null) 
-        && (!"".equals(subfamily)) 
-        && (subfamily.substring(0,1).equals("("))
-         ) {
-        isExceptional = true;
-      }
-      return isExceptional;      
+        // Both "incertae_sedis" and "([subfamily])" are considered exceptional.
+
+        boolean isExceptional = "incertae_sedis".equals(subfamily);
+        if ((subfamily != null)
+                && (!"".equals(subfamily))
+                && (subfamily.charAt(0) == '(')
+        ) {
+            isExceptional = true;
+        }
+        return isExceptional;
     }
 
     protected boolean isExceptionalSubfamilySoCreate(String family, String subfamily, String source) 
@@ -1157,8 +1154,8 @@ public class AntwebUpload {
     protected int addMissingGenus(String subfamily, String genus, String project, String source, int lineNum, int accessGroup) {
         return addMissingGenus(subfamily, genus, project, source, "addMissingGenus", lineNum, accessGroup);
     }
-    protected int addMissingGenus(String subfamily, String genus, String project, String source, String insertMethod, int lineNum, int accessGroup) {
-        int c = 0;
+    private int addMissingGenus(String subfamily, String genus, String project, String source, String insertMethod, int lineNum, int accessGroup) {
+        int c;
         
         if (AntwebProps.isDevOrStageMode() && "formicinae".equals(subfamily) && "acantholepis".equals(genus) ) {
             s_log.warn("addMissingGenus() subfamily:" + subfamily + " genus:" + genus + " project:" + project + " source:" + source + " insertMethod:" + insertMethod);
@@ -1168,9 +1165,9 @@ public class AntwebUpload {
         DBUtil.open("addMissingGenus()");
  
         String taxonName;
-        Hashtable item;
+        Hashtable<String, Object> item;
 
-        item = new Hashtable();
+        item = new Hashtable<>();
         item.put("genus", genus);
 
         item.put("subfamily", subfamily);
@@ -1283,16 +1280,15 @@ public class AntwebUpload {
         fields.setCharAt(fields.length() - 1, ')');
         values.setCharAt(values.length() - 1, ')');
 
-        return "insert into " + table + " " + fields.toString() + " values "
-                + values.toString() + ";";
+        return "insert into " + table + " " + fields + " values " + values + ";";
     }
 
 
     protected Float convertGeorefToDecimal(String latlon) {
         float decimal = 0;
-        Float result = (float) 0.0;
+        float result = 0f;
         try {
-            result = Float.valueOf(latlon);
+            result = Float.parseFloat(latlon);
             //s_log.info("convertGeorefToDecimal() result: " + result); 
         } catch (NumberFormatException nfe) {
             try {
@@ -1322,7 +1318,7 @@ class UnicodeFormatter  {
 
    static public String byteToHex(byte b) {
       // Returns hex String representation of byte b
-      char hexDigit[] = {
+      char[] hexDigit = {
          '0', '1', '2', '3', '4', '5', '6', '7',
          '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
       };

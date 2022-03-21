@@ -461,8 +461,8 @@ public class SpeciesListUpload extends AntwebUpload {
                 }
                 
                 components = tab.split(theLine);
-                ArrayList elements = new ArrayList(Arrays.asList(components));
-                Iterator iter = elements.iterator();
+                ArrayList<String> elements = new ArrayList<>(Arrays.asList(components));
+                Iterator<String> iter = elements.iterator();
 
 				String taxonName = null;
 				String status = null;
@@ -477,10 +477,8 @@ public class SpeciesListUpload extends AntwebUpload {
                 
                 String thisCountry = null;
                 String thisBioregion = null;
-                int referenceId = 0; 
                 boolean isFossil = false;
-                
-                Hashtable temptaxonHash;
+
                 int index = 0;
 
                 String goodLineStatus = "true";
@@ -488,7 +486,7 @@ public class SpeciesListUpload extends AntwebUpload {
                 RE multipleSpaces = new RE(" +");
                 while ((iter.hasNext()) && (index < headers.size())) {
                     // This loop will populate the hashtable of elements (fields).
-                    element = (String) iter.next();
+                    element = iter.next();
                     element = multipleSpaces.subst(element.trim(), " ");                    
                     if (element == null)  s_log.error("importSpeciesList() 2 element is null");
                     //A.log("importSpeciesList() innerloop element:" + element);

@@ -29,7 +29,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         return getFullName().compareTo(other.getFullName());
     }
 
-    private static Log s_log = LogFactory.getLog(Taxon.class);
+    private static final Log s_log = LogFactory.getLog(Taxon.class);
 
     protected Taxon parent;
     protected String name;
@@ -41,9 +41,9 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected String rank;
     protected String theXml;
     protected Hashtable description;
-    protected Vector habitats;
-    protected Vector microhabitats;
-    protected Vector methods;
+    protected Vector<String> habitats;
+    protected Vector<String> microhabitats;
+    protected Vector<String> methods;
     protected String types;
     protected String elevations = "";
     protected String collectDateRange = "";
@@ -2384,10 +2384,10 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       return toTaxonName;
     }
 
-    public Vector getHabitats() {
+    public Vector<String> getHabitats() {
         return habitats;
     }
-    public void setHabitats(Vector habitats) {
+    public void setHabitats(Vector<String> habitats) {
         this.habitats = habitats;
     }
 
@@ -2404,7 +2404,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       //this.connection = null;
     }
 
-    public Vector getMicrohabitats() {
+    public Vector<String> getMicrohabitats() {
         return microhabitats;
     }    
     // These is to support the field guide.  Should not exist.  OO backwards.    
@@ -2417,10 +2417,10 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       //this.connection = null;
     }
 
-    public Vector getMethods() {
+    public Vector<String> getMethods() {
         return methods;
     }
-    public void setMethods(Vector methods) {
+    public void setMethods(Vector<String> methods) {
         this.methods = methods;
     }
 
@@ -2777,7 +2777,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         String binomial = "";
         String genus = getGenus();
         String species = getSpecies();
-        if ((util.notBlank(genus)) && (util.notBlank(species))) {
+        if ((Utility.notBlank(genus)) && (Utility.notBlank(species))) {
             binomial = myFormatter.capitalizeFirstLetter(genus) + " " + species;
         }
         return binomial;
@@ -2794,13 +2794,13 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         summary += "<p><b>Found most commonly in these habitats: </b>";
 
         // Habitats
-        Enumeration elements = getHabitats().elements();
+        Enumeration<String> elements = getHabitats().elements();
         int habitatI = 0;
-        StringBuffer habitatString = new StringBuffer();
+        StringBuilder habitatString = new StringBuilder();
         while (elements.hasMoreElements()) {
           ++habitatI;
           String comma = (habitatI > 1)?", ":""; 
-          String habitatCount = (String) elements.nextElement();
+          String habitatCount = elements.nextElement();
           String[] habitatCountArray = habitatCount.split(":");
           String habitatDesc = habitatCountArray[0];
           habitatDesc = habitatDesc.trim();
@@ -2816,13 +2816,13 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
       if (getMicrohabitats() != null && getMicrohabitats().size() > 0) {
         summary += "<p><b>Found most commonly in these microhabitats: </b>";
-        Enumeration elements = getMicrohabitats().elements();
+        Enumeration<String> elements = getMicrohabitats().elements();
         int i = 0;
-        StringBuffer microhabitatString = new StringBuffer();
+        StringBuilder microhabitatString = new StringBuilder();
         while (elements.hasMoreElements()) {
           ++i;
           String comma = (i > 1)?", ":""; 
-          String countStr = (String) elements.nextElement();
+          String countStr = elements.nextElement();
           String[] countStrArray = countStr.split(":");
           String desc = countStrArray[0];
           desc = desc.trim();
@@ -2838,13 +2838,13 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
       if (getMethods() != null && getMethods().size() > 0) {
         summary += "<p><b>Collected most commonly using these methods: </b>";
-        Enumeration elements = getMethods().elements();
+        Enumeration<String> elements = getMethods().elements();
         int i = 0;
-        StringBuffer methodString = new StringBuffer();
+        StringBuilder methodString = new StringBuilder();
         while (elements.hasMoreElements()) {
           ++i;
           String comma = (i > 1)?", ":""; 
-          String methodCount = (String) elements.nextElement();
+          String methodCount = elements.nextElement();
           String[] methodCountArray = methodCount.split(":");
           String methodDesc = methodCountArray[0];
           methodDesc = methodDesc.trim();
@@ -3207,28 +3207,28 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public static void sortTaxa(String orderBy, ArrayList<Taxon> children, Overview overview) {
         // Sort the ChildrenList
 
-        if ("taxonName".equals(orderBy)) Collections.sort(children, new SortTaxaByGenusSpecies());
-        if ("authorDate".equals(orderBy)) Collections.sort(children, new SortTaxaByAuthorDate());
-        if ("images".equals(orderBy)) Collections.sort(children, new SortTaxaByImages());
-        if ("genera".equals(orderBy)) Collections.sort(children, new SortTaxaByGenera());
+        if ("taxonName".equals(orderBy)) children.sort(new SortTaxaByGenusSpecies());
+        if ("authorDate".equals(orderBy)) children.sort(new SortTaxaByAuthorDate());
+        if ("images".equals(orderBy)) children.sort(new SortTaxaByImages());
+        if ("genera".equals(orderBy)) children.sort(new SortTaxaByGenera());
         if ("subgenera".equals(orderBy)) {
             s_log.debug("taxonReportBody.jsp sort by subgenera");
-            Collections.sort(children, new SortTaxaByGenusSubgenusSpecies());
+            children.sort(new SortTaxaByGenusSubgenusSpecies());
         }
-        if ("lifestage".equals(orderBy)) Collections.sort(children, new SortTaxaByLifeStage());
-        if ("medium".equals(orderBy)) Collections.sort(children, new SortTaxaByMedium());
-        if ("specimennotes".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimenNotes());
+        if ("lifestage".equals(orderBy)) children.sort(new SortTaxaByLifeStage());
+        if ("medium".equals(orderBy)) children.sort(new SortTaxaByMedium());
+        if ("specimennotes".equals(orderBy)) children.sort(new SortTaxaBySpecimenNotes());
 
-        if ("species".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecies());
-        if ("specimens".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimens());
-        if ("specimensGlobal".equals(orderBy)) Collections.sort(children, new SortTaxaByGlobalChildCount());
-        if ("specimens".equals(orderBy)) Collections.sort(children, new SortTaxaBySpecimens());
-        if ("map".equals(orderBy)) Collections.sort(children, new SortTaxaByMap());
-        if ("source".equals(orderBy)) Collections.sort(children, new SortTaxaBySource());
-        if ("status".equals(orderBy)) Collections.sort(children, new SortTaxaByStatus());
-        if ("type".equals(orderBy)) Collections.sort(children, new SortTaxaByIsType());
-        if ("ie".equals(orderBy)) Collections.sort(children, new SortTaxaByIE(overview));
-        if ("fromSpecimen".equals(orderBy)) Collections.sort(children, new SortTaxaByFromSpecimen());
+        if ("species".equals(orderBy)) children.sort(new SortTaxaBySpecies());
+        if ("specimens".equals(orderBy)) children.sort(new SortTaxaBySpecimens());
+        if ("specimensGlobal".equals(orderBy)) children.sort(new SortTaxaByGlobalChildCount());
+        if ("specimens".equals(orderBy)) children.sort(new SortTaxaBySpecimens());
+        if ("map".equals(orderBy)) children.sort(new SortTaxaByMap());
+        if ("source".equals(orderBy)) children.sort(new SortTaxaBySource());
+        if ("status".equals(orderBy)) children.sort(new SortTaxaByStatus());
+        if ("type".equals(orderBy)) children.sort(new SortTaxaByIsType());
+        if ("ie".equals(orderBy)) children.sort(new SortTaxaByIE(overview));
+        if ("fromSpecimen".equals(orderBy)) children.sort(new SortTaxaByFromSpecimen());
 	}
 }
 

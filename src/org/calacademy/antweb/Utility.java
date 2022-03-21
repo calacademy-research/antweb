@@ -22,7 +22,7 @@ import org.apache.commons.logging.LogFactory;
 /** Class utility keeps track of the information about a specific taxon */
 public class Utility implements Serializable {
   
-  private static Log s_log = LogFactory.getLog(Utility.class);
+  private static final Log s_log = LogFactory.getLog(Utility.class);
 
 
     public static boolean equal(int o1, int o2) {
@@ -76,30 +76,41 @@ public class Utility implements Serializable {
       return compareFloats(f1, f2, 0.001f);
     }
 
-        
+
+    /** Strips the matching character from the start/end of a string up to twice
+     * @param text The text to strip a character from
+     * @param toTrim The character to strip from the start/end of the string
+     * @return The string, after it has the character stripped
+     * @throws AntwebException if the trim goes out of bounds
+     */
     public static String customTrim(String text, String toTrim) throws AntwebException {
         String trimText = text;
         try {
-          if (text == null) return text;
-          if ("".equals(text)) return text;
-          if (toTrim.equals(text.substring(0,1))) {
-            trimText = trimText.substring(1);
-            //A.log("customTrim() cutFirst text:" + text + " trimText:" + trimText);
-          }
-          if (toTrim.equals(trimText.substring(0,1))) trimText = trimText.substring(1);
-            //A.log("customTrim() cutFirstAgain text:" + text + " trimText:" + trimText);
-        
-          if (toTrim.equals(trimText.substring(trimText.length() - 1))) {
-            trimText = trimText.substring(0, trimText.length() - 1);
-            //A.log("customTrim() cutLast text:" + text + " trimText:" + trimText);
-          }
-          if (toTrim.equals(trimText.substring(trimText.length() - 1))) {
-            trimText = trimText.substring(0, trimText.length() -1);        
-            //A.log("customTrim() cutLastAgain text:" + text + " trimText:" + trimText);
-          }
+            if (text == null) return null;
+            if ("".equals(text)) return text;
+
+            if (toTrim.equals(text.substring(0, 1))) {     // if first char matches, start the string after it
+                trimText = trimText.substring(1);
+                //A.log("customTrim() cutFirst text:" + text + " trimText:" + trimText);
+
+                // if new first char matches, start the string after it
+                if (toTrim.equals(trimText.substring(0, 1)))
+                    trimText = trimText.substring(1);
+                    //A.log("customTrim() cutFirstAgain text:" + text + " trimText:" + trimText);
+            }
+
+            if (toTrim.equals(trimText.substring(trimText.length() - 1))) {
+                trimText = trimText.substring(0, trimText.length() - 1);
+                //A.log("customTrim() cutLast text:" + text + " trimText:" + trimText);
+
+                if (toTrim.equals(trimText.substring(trimText.length() - 1))) {
+                    trimText = trimText.substring(0, trimText.length() - 1);
+                    //A.log("customTrim() cutLastAgain text:" + text + " trimText:" + trimText);
+                }
+            }
         } catch (StringIndexOutOfBoundsException e) {
-          String message = "customTrim() trimText:" + trimText + " toTrim:" + toTrim + " e:" + e;
-          throw new AntwebException(message);
+            String message = "customTrim() trimText:" + trimText + " toTrim:" + toTrim + " e:" + e;
+            throw new AntwebException(message);
         }
         //if (!trimText.equals(text)) A.log("customTrim() text:" + text + " trimText:" + trimText);   
         return trimText;
