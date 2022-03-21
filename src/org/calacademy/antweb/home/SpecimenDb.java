@@ -150,7 +150,7 @@ public class SpecimenDb extends AntwebDb {
             DBUtil.close(stmt, rset, this, "getSpecimenDetailXML()");
         }
 
-        return formatter.dequote(theXML);
+        return Formatter.dequote(theXML);
     }
 
     public ArrayList<String> getIntroducedByGroup(int groupId) throws SQLException {

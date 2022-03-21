@@ -41,9 +41,8 @@ public final class EditHomePageAction extends Action {
 			HashMap contents = new HashMap();
 			Statement stmt = connection.createStatement();
 			ResultSet rset = stmt.executeQuery(theQuery);
-			org.calacademy.antweb.Formatter format = new org.calacademy.antweb.Formatter();
 			while (rset.next()) {
-				contents.put(rset.getString("content_type"), format.dequote(rset.getString("content")));
+				contents.put(rset.getString("content_type"), org.calacademy.antweb.Formatter.dequote(rset.getString("content")));
 			}
 			setFormElements(theForm, contents);
 			          

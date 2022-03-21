@@ -244,7 +244,7 @@ public class Homonym extends Taxon implements Serializable {
                 value = rset.getString(3);
                 //key = AntFormatter.unescapeCharacters(key);
                 //value = AntFormatter.unescapeCharacters(value);
-                value = formatter.dequote(value);
+                value = Formatter.dequote(value);
                 description.put(key, value);
  
                 if (false)

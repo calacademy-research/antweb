@@ -85,7 +85,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
 
                 //key = AntFormatter.unescapeCharacters(key);
                 //value = AntFormatter.unescapeCharacters(value);
-                value = formatter.dequote(value);
+                value = Formatter.dequote(value);
                 description.put(key, value);
  
                 if (false)
@@ -237,7 +237,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
                 recordCount++;
                 key = rset.getString("title");
                 value = rset.getString("content");
-                value = formatter.dequote(value);
+                value = Formatter.dequote(value);
                 description.put(key, value);
             }
             //if (AntwebProps.isDevMode()) s_log.info("setDescription() recordCount:" + recordCount + " query:" + theQuery);
