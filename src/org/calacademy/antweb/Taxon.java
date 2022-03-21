@@ -2350,20 +2350,22 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         this.wasOriginalCombination = wasOriginalCombination;
     }
        
+    // TODO don't fetch entire row to see if it exists
     public boolean isExists(Connection connection) {
         // Check with the database.  Useful for OrphanDescEditsAction.java.
         extant = false;
         String taxonName = getTaxonName();
         String theQuery = "";
-        Statement stmt = null;
+        PreparedStatement stmt = null;
+        theQuery = "select EXISTS(select * from taxon where taxon_name = ?)";
         ResultSet rset = null;
         try {
-          stmt = DBUtil.getStatement(connection, "isExists");
-          theQuery = "select * from taxon where taxon_name='" + taxonName + "'";
-          rset = stmt.executeQuery(theQuery);
-          while (rset.next()) {
-            extant = true;
-          }
+            stmt = DBUtil.getPreparedStatement(connection, "isExists", theQuery);
+            stmt.setString(1, taxonName);
+            rset = stmt.executeQuery();
+
+            extant = rset.getBoolean(1);    // EXISTS() returns 0 if it doesn't exist
+
         } catch (SQLException e) {
             s_log.error("isExists() for taxonName:" + taxonName + " exception:" + e + " theQuery:" + theQuery);
             // project:" + project + " 
