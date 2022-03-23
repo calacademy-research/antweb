@@ -3,7 +3,7 @@ package org.calacademy.antweb.curate.speciesList;
 import java.sql.*;
 import java.io.*;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
@@ -94,7 +94,7 @@ public class SpeciesListUploader {
     //String urlLoc = "http://antweb.org/web/speciesList/world/worldants_speciesList.txt";
     String urlLoc = fetchWorldantsUrl;
 
-    boolean success = HttpUtil.writeUrlContents(urlLoc, fileLoc);                                  
+    boolean success = HttpUtil.writeUrlContents(urlLoc, fileLoc);
     if (!success) {
 	   String message = "Failed to fetch:" + urlLoc + " and write it here:" + fileLoc + ". Connected to VPN?";
        uploadDetails.setMessage(message);
