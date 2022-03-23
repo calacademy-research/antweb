@@ -123,7 +123,7 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
                return null;
             }
 
-		} catch (com.google.gson.JsonSyntaxException e) {
+		} catch (JsonSyntaxException e) {
 		  s_log.warn("getPlaces() e:" + e);
 		} 
         return geonetCountryResponse;

@@ -9,6 +9,8 @@ import java.util.*;
 import java.util.Date;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.commons.fileupload.*;
 import org.apache.commons.fileupload.disk.*;
 import org.apache.commons.fileupload.servlet.*;
@@ -58,7 +60,7 @@ public final class ImageUploaderAction extends Action {
                 
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "longConPool");
+            DataSource dataSource = getDataSource(request, "longConPool");
             connection = DBUtil.getConnection(dataSource, "ImageUploaderAction.execute()");        
 
             String action = request.getParameter("action");
@@ -184,7 +186,7 @@ public final class ImageUploaderAction extends Action {
         }    
 	}	
 
-    public void writeRecentImages(java.sql.Connection connection) {
+    public void writeRecentImages(Connection connection) {
         int maxRecent = 5;
         Utility util = new Utility();
         String docBase = util.getDocRoot();
@@ -270,7 +272,7 @@ public final class ImageUploaderAction extends Action {
 		}
 	}
 
-    private String getRecentImagesList(java.sql.Connection connection) {
+    private String getRecentImagesList(Connection connection) {
         String recentImagesList = "";
         Statement stmt = null;
         ResultSet rset = null;

@@ -216,7 +216,7 @@ public class Homonym extends Taxon implements Serializable {
      * To do: Remove taxon_name from query and replace with id.  Include into this class.
      */
         Formatter formatter = new Formatter();
-        Hashtable description = new Hashtable();
+        Hashtable<String, String> description = new Hashtable<>();
         String taxonName = null;
         String theQuery = "";
         Statement stmt = null;

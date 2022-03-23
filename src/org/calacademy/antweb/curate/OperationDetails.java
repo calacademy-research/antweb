@@ -14,7 +14,7 @@ public class OperationDetails {
 
     private static Log s_log = LogFactory.getLog(OperationDetails.class);
 
-    java.util.Date startTime = null;
+    Date startTime = null;
     HttpServletRequest request = null;
     String operation = null;
     String message = null;
@@ -22,12 +22,12 @@ public class OperationDetails {
     
     public OperationDetails() {     
       this.operation = "undefined";
-      this.startTime = new java.util.Date();
+      this.startTime = new Date();
     }
         
     public OperationDetails(String operation) {     
       this.operation = operation;
-      this.startTime = new java.util.Date();
+      this.startTime = new Date();
     }
 
     public OperationDetails(String operation, String message) {

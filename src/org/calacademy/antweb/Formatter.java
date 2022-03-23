@@ -1,6 +1,7 @@
 package org.calacademy.antweb;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.StringTokenizer;
 import java.util.Date;
 import java.util.Locale;
@@ -432,7 +433,7 @@ public class Formatter implements Serializable {
 
 		try {
 			out = new String(s.getBytes("ISO-8859-15"), "UTF-8");
-		} catch (java.io.UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException e) {
 		    s_log.error("convertFromUTF8() s:" + s + " exception:" + e);  // Mark added Jan 3, 2011 
 			return null;
 		}
@@ -444,7 +445,7 @@ public class Formatter implements Serializable {
 		String out = null;
 		try {
 			out = new String(s.getBytes("UTF-8"));
-		} catch (java.io.UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException e) {
 		    s_log.error("convertToUTF8() s:" + s + " exception:" + e);  // Mark added Jan 3, 2011 
 			return null;
 		}

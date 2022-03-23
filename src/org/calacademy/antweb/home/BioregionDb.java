@@ -60,7 +60,7 @@ public class BioregionDb extends AntwebDb {
           // subfamily_count, genus_count, species_count, taxon_subfamily_dist_json, specimen_subfamily_dist_json
           // extent, locality, project_name?         
          
-            Hashtable description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
+            Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
             bioregion.setDescription(description);
         }
 
@@ -120,7 +120,7 @@ public class BioregionDb extends AntwebDb {
                 bioregion.setEndemicSpeciesCount(rset.getInt("endemic_species_count"));
                 bioregion.setIntroducedSpeciesCount(rset.getInt("introduced_species_count"));
 
-                Hashtable description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
+                Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
                 bioregion.setDescription(description);     
                           
                 bioregions.add(bioregion);

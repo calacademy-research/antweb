@@ -1,11 +1,13 @@
 package org.calacademy.antweb;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -14,6 +16,7 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+import org.calacademy.antweb.upload.UploadAction;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
@@ -35,7 +38,7 @@ public final class SpecimenAction extends DescriptionAction {
           ActionForward c = Check.init(Check.UPLOAD, request, mapping); if (c != null) return c;
         }
 
-        java.util.Date startTime = new java.util.Date();
+        Date startTime = new Date();
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
 
@@ -53,9 +56,9 @@ public final class SpecimenAction extends DescriptionAction {
         Specimen specimen = null;
 
         if (code != null) {
-            java.sql.Connection connection = null;
+            Connection connection = null;
             try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 
                 if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
                 
@@ -102,7 +105,7 @@ public final class SpecimenAction extends DescriptionAction {
                       message += ".";
                     }
 
-                    if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
+                    if (UploadAction.isInUploadProcess()) {
                         // An upload is currently in process.  Request that this process be re-attempted shortly.
                         message += "  A curator is currently in the process of an Upload.  Please try again shortly.";
                     } else {

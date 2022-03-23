@@ -344,7 +344,7 @@ these other _cf1 etc.
                 //child.setMap(new Map(child, overview, connection));
                 theseChildren.add(child);
             }
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
            s_log.warn("setChildrenLocalized(" + overview + ") e:" + e + " query:" + query); 
         } finally {
             DBUtil.close(stmt, rset, this, "setChildrenLocalized()");

@@ -13,7 +13,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;  
   
 import com.google.gson.*;
-    
+
+import javax.net.ssl.SSLHandshakeException;
+
 public class FlickrPlace extends DataPlace {
 
     private static Log s_log = LogFactory.getLog(FlickrPlace.class);
@@ -262,7 +264,7 @@ public class FlickrPlace extends DataPlace {
                   // O, well. Flickr can miss sometimes. Log and skip. Likely to work next time. 
                   String message = "failed to scrape woe_name:" + place.woe_name + " woeId:" + place.woeid;
                   String eMess = " e:" + e;
-                  if (e instanceof java.lang.StringIndexOutOfBoundsException) eMess = "";
+                  if (e instanceof StringIndexOutOfBoundsException) eMess = "";
                   s_log.error("getPlace() " + message + e);
                   LogMgr.appendLog("DataPlaceCase.txt", message);
                   continue;
@@ -276,7 +278,7 @@ public class FlickrPlace extends DataPlace {
 			}
             //if (!found) A.log("FlickrPlace.getPlace() not found. placeName:" + placeName + " place:" + placeList + " json:" + json);
 
-		} catch (com.google.gson.JsonSyntaxException e) {
+		} catch (JsonSyntaxException e) {
 		  s_log.warn("execute() e:" + e);
 		} 
         return flickrPlace;
@@ -306,7 +308,7 @@ public class FlickrPlace extends DataPlace {
 		try {
 		  json = HttpUtil.getUrlIso(url);
 
-        } catch (javax.net.ssl.SSLHandshakeException e) {
+        } catch (SSLHandshakeException e) {
           throw new AntwebException("Bad handshake");   
 
           //} catch (sun.security.validator.ValidatorException e) {

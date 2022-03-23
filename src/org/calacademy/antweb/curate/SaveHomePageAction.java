@@ -1,8 +1,10 @@
 package org.calacademy.antweb.curate;
 
 import java.io.IOException;
+import java.lang.Class;
 import java.lang.reflect.Field;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -10,6 +12,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -32,13 +36,13 @@ public final class SaveHomePageAction extends Action {
 
         // Extract attributes we will need
         HttpSession session = request.getSession();
-        java.sql.Connection connection = null;
+        Connection connection = null;
         Statement stmt = null;
         
         HomePageForm theForm = (HomePageForm) form;
         
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SaveHomePageAction");
 
             connection.setAutoCommit(true);
@@ -46,7 +50,7 @@ public final class SaveHomePageAction extends Action {
 
             String update = null;
             try {
-                java.lang.Class formClass = java.lang.Class.forName("org.calacademy.antweb.curate.HomePageForm");
+                Class formClass = Class.forName("org.calacademy.antweb.curate.HomePageForm");
                 Field[] fields = formClass.getDeclaredFields();
                 String fieldName;
                 String fieldValue;
@@ -59,11 +63,11 @@ public final class SaveHomePageAction extends Action {
                     stmt.executeUpdate(update);
                 }
             } catch (IllegalAccessException e) {
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             } catch (SecurityException e) {
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             } catch (ClassNotFoundException e) {
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             }
             
         } catch (SQLException e) {

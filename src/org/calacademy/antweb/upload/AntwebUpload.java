@@ -6,6 +6,7 @@ import java.sql.*;
 import java.text.*;
 import java.util.Map;
 
+import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import org.apache.commons.lang3.tuple.Pair;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
@@ -259,7 +260,7 @@ public class AntwebUpload {
                 //    TaxonMgr.refreshTaxon(getConnection(), "save", table, taxonName, item);
                 //}
 
-            } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+            } catch (SQLIntegrityConstraintViolationException e) {
                 String message = "e:" + e + " query:" + boundQuery;
                 s_log.warn("saveTaxon() 4 " + message);
                 MessageMgr.addToErrors(message);
@@ -484,7 +485,7 @@ public class AntwebUpload {
 
                 //if (TaxonMgr.isUseRefreshing() && c > 0) {
                 //    TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);
-            } catch (com.mysql.cj.jdbc.exceptions.MysqlDataTruncation e) {
+            } catch (MysqlDataTruncation e) {
                 String message = "e:" + e + " query:" + query;
                 s_log.error("updateTaxon() 1 " + message);
                 MessageMgr.addToErrors(message);
@@ -638,7 +639,7 @@ public class AntwebUpload {
               s_log.debug("saveTaxonAndProjTaxon() taxonName:" + taxonName);
             }
         } catch (SQLException e) {
-            if (e instanceof java.sql.DataTruncation) {
+            if (e instanceof DataTruncation) {
                 AntwebUtil.logStackTrace(e);
             }
             s_log.error("saveTaxonAndProjTaxon() project:" + project + " e:" + e);
@@ -899,12 +900,12 @@ public class AntwebUpload {
             
         } catch (ClassCastException e) {
            AntwebUtil.logStackTrace(e);
-        } catch (java.sql.SQLSyntaxErrorException e) {
+        } catch (SQLSyntaxErrorException e) {
             s_log.error("saveSpecimen() dml:" + dml + " e:" + e);
             String message = "Specimen jdbc exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e; // + " query:" + query;
             s_log.debug("saveSpecimen() " + message);
             getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             String message = "Specimen code:" + code;
             getMessageMgr().addToMessages(MessageMgr.duplicateEntries, "", message);       
         } catch (SQLException e) {
@@ -918,10 +919,10 @@ public class AntwebUpload {
 
             // if a different access_group attempts to load a code of another group's specimen...
 
-            if (e instanceof java.sql.DataTruncation) return;
+            if (e instanceof DataTruncation) return;
             
             // or could we always add to the DBErrorSet and return?
-            if (!(e instanceof java.sql.SQLIntegrityConstraintViolationException)) {
+            if (!(e instanceof SQLIntegrityConstraintViolationException)) {
                 throw e;
             }
         } finally {

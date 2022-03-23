@@ -62,7 +62,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
 
     private int rev;
 
-    private Hashtable description;
+    private Hashtable<String, String> description;
 
     /*
     // should be abstract.
@@ -573,16 +573,16 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         
 // ---------- Describable Interface ----------------
 
-    public Hashtable getDescription() {
-        if (description == null) description = new Hashtable();
+    public Hashtable<String, String> getDescription() {
+        if (description == null) description = new Hashtable<>();
         return description;
     }
-    public void setDescription(Hashtable description) {
+    public void setDescription(Hashtable<String, String> description) {
         this.description = description;
     }
 
     public boolean hasDescription(String title) {
-      Set<String> keys = (Set<String>) getDescription().keySet();
+      Set<String> keys = getDescription().keySet();
       for (String key : keys) {
         if (key.equals(title)) return true;
       }

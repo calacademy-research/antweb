@@ -2,6 +2,7 @@ package org.calacademy.antweb.curate;
 
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.servlet.ServletException;
@@ -33,7 +34,7 @@ public final class NewBioRegionAction extends Action {
 
         // Extract attributes we will need
         HttpSession session = request.getSession();
-        java.sql.Connection connection = null;
+        Connection connection = null;
         String query = null;
         String title = null;
         String name = null;

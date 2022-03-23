@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -40,7 +42,7 @@ public final class ListAction extends Action {
         
         Connection connection = null;        
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "ListAction");
           
           //dataSource.setZeroDateTimeBehavior("convertToNull");

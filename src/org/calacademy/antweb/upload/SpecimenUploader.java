@@ -3,6 +3,7 @@ package org.calacademy.antweb.upload;
     
 import java.sql.*;
 import java.io.*;
+import java.util.Date;
 
 import org.apache.regexp.*;
 
@@ -62,7 +63,7 @@ public class SpecimenUploader {
 
         UploadDetails uploadDetails = null;
 
-        java.util.Date startTime = new java.util.Date();
+        Date startTime = new Date();
         if ("default".equals(encoding)) encoding = null;
         Group group = login.getGroup();
         Utility util = new Utility();

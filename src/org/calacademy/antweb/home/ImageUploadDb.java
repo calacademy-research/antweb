@@ -141,7 +141,7 @@ public class ImageUploadDb extends AntwebDb {
                 PreparedStatement ps=getConnection().prepareStatement(dml, Statement.RETURN_GENERATED_KEYS);
                 ps.setInt(1, imageUpload.getCuratorId());
                 ps.setInt(2, imageUpload.getGroupId());
-                ps.setTimestamp(3, new java.sql.Timestamp(imageUpload.getCreated().getTime()));
+                ps.setTimestamp(3, new Timestamp(imageUpload.getCreated().getTime()));
                 ps.setInt(4, imageUpload.getArtistId());
                 ps.setInt(5, imageUpload.getImageCount());
                 ps.setString(6, imageUpload.getLicense());

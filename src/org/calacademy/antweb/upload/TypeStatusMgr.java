@@ -1,6 +1,7 @@
 package org.calacademy.antweb.upload;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -9,6 +10,7 @@ import javax.servlet.ServletException;
 import org.apache.struts.action.*;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
@@ -33,9 +35,9 @@ public class TypeStatusMgr extends Action {
         LogMgr.emptyLog("typeStatusNoTaxonName.txt");
         LogMgr.emptyLog("typeStatusHomonym.txt");
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "TypeStatusMgr.execute()");
             int speciesFound = 0;
             int speciesNotFound = 0;

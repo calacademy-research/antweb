@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -50,7 +51,7 @@ public class ArtistDb extends AntwebDb {
 				  o = rset.getTimestamp("created");
                   //A.log("getArtists() created:" + o);
                   if (!o.toString().equals("0000-00-00 00:00:00")) {
-                    artist.setCreated((java.util.Date) o);
+                    artist.setCreated((Date) o);
                   }
                 } catch (SQLException e) {
                   // do nothing
@@ -90,7 +91,7 @@ public class ArtistDb extends AntwebDb {
 				artist.setName(rset.getString("name"));
 				
 				Object o = rset.getTimestamp("created");
-                artist.setCreated((java.util.Date) o);
+                artist.setCreated((Date) o);
                 //A.log("getArtists() created:" + artist.getCreated() + " o:" + o);                
                 
 				artist.setIsActive(rset.getBoolean("active"));

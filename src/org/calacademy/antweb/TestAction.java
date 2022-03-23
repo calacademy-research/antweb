@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.*;
@@ -32,9 +34,9 @@ public final class TestAction extends Action {
           return mapping.findForward("mobile");
         }			
 			
-		java.sql.Connection connection = null;		
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "TestAction.execute()");
             int speciesFound = 0;
             if (AntwebProps.isDevMode()) {

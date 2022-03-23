@@ -9,6 +9,7 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -30,7 +31,7 @@ public class DescEditImageUploadAction extends Action {
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
         String root = request.getSession().getServletContext().getRealPath("") + "/";
-        java.sql.Connection connection = null;
+        Connection connection = null;
         String query;
         String forwardPage = "";
         
@@ -40,7 +41,7 @@ public class DescEditImageUploadAction extends Action {
         String messageStr = "";
         
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "DescEditImageUploadAction");
           
             connection.setAutoCommit(true);

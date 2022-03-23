@@ -10,6 +10,7 @@ import javax.servlet.http.*;
 //import org.apache.fop.apps.FOPException;
 //import org.apache.fop.messaging.MessageHandler;
 
+import com.zonageek.jpeg.JpegException;
 import org.apache.struts.action.*;
 
 import com.zonageek.jpeg.Jpeg;
@@ -38,7 +39,7 @@ public class UtilAction extends Action {
         HttpSession session = request.getSession();
         HttpUtil.setUtf8(request, response); 
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
 		ActionForward returnLoc = null;
 
 		UtilForm theForm = (UtilForm) form;
@@ -302,12 +303,12 @@ public class UtilAction extends Action {
         try {
           jpeg.read(new FileInputStream(imagePath));
   
-        } catch (com.zonageek.jpeg.JpegException e) {
+        } catch (JpegException e) {
           message = "WSS. zonageekTest() e:" + e + " on " + imagePath;
           AntwebUtil.log(message);
           
           //continue;
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
           message = "WSS. zonageekTest() e:" + e + " on " + imagePath;
           AntwebUtil.log(message);
           //continue;

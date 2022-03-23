@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.*;
@@ -51,7 +53,7 @@ public final class GroupAction extends Action {
 
           Connection connection = null;
           try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
             
             LoginDb loginDb = new LoginDb(connection);
@@ -90,9 +92,9 @@ public final class GroupAction extends Action {
 
     private Group getGroup(String name, int groupId, HttpServletRequest request) {
 		Group group = null;
-		java.sql.Connection connection = null;		
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
             GroupDb groupDb = new GroupDb(connection);
             group = groupDb.getGroup(groupId);    
@@ -129,9 +131,9 @@ public final class GroupAction extends Action {
  
     private ArrayList<Group> getUploadGroups(HttpServletRequest request, String orderBy) {       
         ArrayList<Group> groups = null;
-		java.sql.Connection connection = null;		
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
             GroupDb groupDb = new GroupDb(connection);
             groups = groupDb.getUploadGroups(orderBy);

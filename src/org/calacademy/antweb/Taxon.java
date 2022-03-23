@@ -4,6 +4,7 @@ import java.util.*;
 import java.io.Serializable;
 import java.sql.*;
 import java.math.BigDecimal;
+import java.util.Date;
 
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
@@ -40,7 +41,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected String prettyName;
     protected String rank;
     protected String theXml;
-    protected Hashtable description;
+    protected Hashtable<String, String> description;
     protected Vector<String> habitats;
     protected Vector<String> microhabitats;
     protected Vector<String> methods;
@@ -69,7 +70,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected String browserParams;
     protected Map map;
     protected String fullName;
-    protected Hashtable images;
+    protected Hashtable<String, SpecimenImage> images;
     protected boolean hasImages;
     protected String code;
     //protected String nextRank = "";
@@ -359,7 +360,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       String name = getPrettyName();
       try {
         name = removeParens(name);
-      } catch (java.lang.OutOfMemoryError e) {
+      } catch (OutOfMemoryError e) {
         s_log.warn("getPrettyConciseName() name:" + name + " e:" + e);
       }
       return name;
@@ -1300,11 +1301,11 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       this.hasImagesCount = hasImagesCount;
     }
 
-    public Hashtable getImages() {
+    public Hashtable<String, SpecimenImage> getImages() {
         return images;
     }
     
-    public void setImages(Hashtable images) {
+    public void setImages(Hashtable<String, SpecimenImage> images) {
         // Not called very much. Common practice in Specimen and Species, and Taxon to directly set with this.images =
 
 		if (false) {
@@ -1529,7 +1530,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     */
 
     private String selectCodeByCaste(ResultSet rset, String caste) 
-      throws java.sql.SQLException {
+      throws SQLException {
       
         /* Looking for a code with the given caste. Caste will be null, default, male, worker or queen.		
 		 If looking for a worker. 
@@ -1866,7 +1867,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         */  
 
         //A.log("setImages() taxonName:" + getTaxonName());
-        Hashtable myImages = new Hashtable();
+        Hashtable<String, SpecimenImage> myImages = new Hashtable<>();
         String chosenImageCode = null;
         
         if ("formicidae".equals(getTaxonName())) chosenImageCode = "antweb1008052";
@@ -2217,15 +2218,15 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       this.extant = extant;
     }
     
-    public Hashtable getDescription() {
+    public Hashtable<String, String> getDescription() {
         return description;
     }
-    public void setDescription(Hashtable description) {
+    public void setDescription(Hashtable<String, String> description) {
         this.description = description;
     }
 
     public boolean hasDescription(String title) {
-      Set<String> keys = (Set<String>) getDescription().keySet();
+      Set<String> keys = getDescription().keySet();
       for (String key : keys) {
         if (key.equals(title)) return true;
       }
@@ -2462,8 +2463,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
             stmt = DBUtil.getStatement(connection, "setCollectDateRange()");
             rset = stmt.executeQuery(theQuery);
 
-            java.util.Date min = null;
-            java.util.Date max = null;
+            Date min = null;
+            Date max = null;
             while (rset.next()) {
                 min = rset.getDate(1);
                 max = rset.getDate(2);
@@ -2673,7 +2674,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
 //            Taxon thisChild;
             List goodArrayList = Arrays.asList(goodList);
-            ArrayList<Taxon> newChildren = new ArrayList();
+            ArrayList<Taxon> newChildren = new ArrayList<>();
             for (Taxon thisChild : getChildren()) {
 //            Iterator iterator = children.iterator();
 //            while (iterator.hasNext()) {
@@ -2705,7 +2706,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getImages, boolean getMaps, String caste, boolean global, String subgenus)
             throws SQLException, AntwebException {
         //A.log("setChildren(5) overview:" + overview + " getImages:" + getImages + " getMaps:" + getMaps + " caste:" + caste);
-        this.children = new ArrayList();
+        this.children = new ArrayList<>();
     }
     
     public void setChildrenLocalized(Connection connection, Overview overview) throws SQLException {

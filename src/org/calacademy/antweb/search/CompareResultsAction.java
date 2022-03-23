@@ -184,7 +184,7 @@ public final class CompareResultsAction extends ResultsAction {
 		TreeMap<Taxon, Integer> specimenToCompare = new TreeMap();   // maps a specimen to its position in the search results.  was new GenusSpeciesItemComparator()
 
 		Specimen specimen = null;
-		java.sql.Connection connection = null;
+		Connection connection = null;
 
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
@@ -229,7 +229,7 @@ public final class CompareResultsAction extends ResultsAction {
 		TreeMap<Taxon, Integer> taxaToCompare = new TreeMap(new GenusSpeciesItemComparator());   // maps a taxon to its position in the search results
 
 		Taxon taxon = null;
-		java.sql.Connection connection = null;
+		Connection connection = null;
 
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");

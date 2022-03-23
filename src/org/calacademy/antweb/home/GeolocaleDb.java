@@ -372,7 +372,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 	      geolocale.setRev(rset.getInt("rev"));
 		  geolocale.setGeorankType(rset.getString("georank_type"));
 	
-		  Hashtable description = (new DescEditDb(getConnection())).getDescription(geolocale.getName());
+		  Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(geolocale.getName());
 		  geolocale.setDescription(description);   
 		  
 		  geolocale.setAlternatives(getAlternatives(geolocale.getName(), geolocale.getGeorank()));
@@ -798,7 +798,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
           }
       } catch (SQLException e) {
          s_log.error("fetchSpeciesLists() e:" + e + " loginId:" + loginId);
-         org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+         AntwebUtil.logStackTrace(e);
       } finally {
         DBUtil.close(stmt, rset, "fetchSpeciesLists()");
       }
@@ -850,7 +850,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             
       } catch (SQLException e) {
          s_log.error("fetchSubSpeciesLists() e:" + e);
-         org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+         AntwebUtil.logStackTrace(e);
       } finally {
         DBUtil.close(stmt, rset, "fetchSubSpeciesLists()");
       }
@@ -2069,7 +2069,7 @@ public static int c = 0;
 
 		//A.log("addAddm1FromSpecimenData() 2 adm1:" + adm1 + " country:" + country + " accessGroupId:" + accessGroupId + " x:" + x + " dml:" + dml);
 
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             // no problem. Set the valid name...
         } catch (SQLException e) {
             s_log.error("addAdm1FromSpecimenData() e:" + e + " dml:" + dml);

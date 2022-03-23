@@ -46,7 +46,7 @@ public class UtilDataAction extends Action {
         HttpSession session = request.getSession();                
         HttpUtil.setUtf8(request, response); 
         
-        java.sql.Connection connection = null;
+        Connection connection = null;
         
 		UtilForm theForm = (UtilForm) form;
 		String action = theForm.getAction();

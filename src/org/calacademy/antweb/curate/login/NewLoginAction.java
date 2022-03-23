@@ -1,6 +1,8 @@
 package org.calacademy.antweb.curate.login;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
@@ -29,13 +31,13 @@ public class NewLoginAction extends Action {
 
         ActionForward a = Check.init("project", request, mapping); if (a != null) return a;
         
-        java.sql.Connection connection = null;
+        Connection connection = null;
         String query;
         int newLoginId = 0;
         Login login = null;
         
         try {         
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "NewLoginAction");
 
             LoginDb loginDb = new LoginDb(connection);

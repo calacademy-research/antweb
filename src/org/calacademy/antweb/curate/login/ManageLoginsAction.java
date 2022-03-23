@@ -1,6 +1,8 @@
 package org.calacademy.antweb.curate.login;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
@@ -29,9 +31,9 @@ public class ManageLoginsAction extends Action {
 
 		ArrayList loginList = new ArrayList();
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "ManageLoginsAction.execute()");
 
             loginList = LoginMgr.getLogins(); //(new LoginDb(connection)).getAllLogins();

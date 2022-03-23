@@ -235,7 +235,7 @@ public class GenericSearch implements Serializable {
 
         } catch (SQLException e) {
             s_log.error("setResultTypes() 1 theQuery:" + theQuery + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
             throw e;
         } finally {
             DBUtil.close(prepStmt, rset, this, "setResultTypes() 1");
@@ -287,7 +287,7 @@ public class GenericSearch implements Serializable {
                 }
             } catch (SQLException e) {
                 s_log.error("setResultTypes() 2 theQuery:" + theQuery + " e:" + e);
-                org.calacademy.antweb.util.AntwebUtil.logShortStackTrace(e);
+                AntwebUtil.logShortStackTrace(e);
                 throw e;
             } finally {
                 DBUtil.close(stmt, rset, this, "setResultTypes() 2");

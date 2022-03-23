@@ -189,7 +189,7 @@ public final class MapResultsAction extends ResultsAction {
               if (selectedTaxon.getFullName().equals(item.getFullName())) {
                 codeList.add(item.getCode());
               }
-			} catch (java.lang.IndexOutOfBoundsException e) {
+			} catch (IndexOutOfBoundsException e) {
 				s_log.warn("getSpecimensCodesForTaxaFromResults() thisChosen:" + thisChosen + " searchResults:" + searchResults);
 				throw e;
 			}

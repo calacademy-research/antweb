@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 import java.text.*;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.*;
 
@@ -589,7 +590,7 @@ public abstract class AntwebUtil {
       String shortStackTrace = stackTrace.substring(0, i);
       shortStackTrace = stackTrace.substring(0, i);
       return shortStackTrace;
-    } catch ( java.lang.StringIndexOutOfBoundsException e2) {
+    } catch ( StringIndexOutOfBoundsException e2) {
       s_log.warn("getShortStackTrace() e:" + e2 + " Returning full stacktrace.");
       return stackTrace;
     }
@@ -709,7 +710,7 @@ public abstract class AntwebUtil {
       return formatter.format(timePassed) + " mins";
 	}
 
-    public static String reportTime(java.util.Date startTime) {
+    public static String reportTime(Date startTime) {
       String execTime = "";
       long millis = AntwebUtil.millisSince(startTime);
       int threeMinOfMillis = 3 * 60 * 1000;
@@ -735,7 +736,7 @@ public abstract class AntwebUtil {
         return millisUntil;
     }
     public static long minUntil8pm() {
-        return java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(millisUntil8pm());    
+        return TimeUnit.MILLISECONDS.toMinutes(millisUntil8pm());
         // return millisUntil() / 1000 / 60;
     }
       

@@ -8,6 +8,7 @@ import org.calacademy.antweb.util.A;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.AntwebUtil;
 import org.calacademy.antweb.util.FileUtil;
+import org.im4java.core.CommandException;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IM4JavaException;
 import org.im4java.core.IMOperation;
@@ -226,7 +227,7 @@ public class ImageUploaded {
 
             Files.move(tempFile, Path.of(imagePath), REPLACE_EXISTING);
 
-        } catch (org.im4java.core.CommandException e) {
+        } catch (CommandException e) {
             AntwebUtil.log("im4java test e:" + e + " imageName:" + imageName + " imagePath:" + imagePath + " tags:" + tags);
         } catch (IOException e) {
             AntwebUtil.log("im4java test 2e:" + e);

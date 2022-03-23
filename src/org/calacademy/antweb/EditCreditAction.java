@@ -2,6 +2,8 @@ package org.calacademy.antweb;
 
 import java.io.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import org.apache.regexp.*;
 import java.sql.*;
@@ -28,11 +30,11 @@ public class EditCreditAction extends Action {
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response) {
 
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		String query;
 
 		try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "EditCreditAction");
 
 			connection.setAutoCommit(true);
@@ -104,7 +106,7 @@ public class EditCreditAction extends Action {
 				stmt.execute(query);
 			} catch (SQLException e) {
 				s_log.error("addNewCredit() e:" + e);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
                 DBUtil.close(stmt, rset, this, "addNewCredit()");			
 			}
@@ -125,7 +127,7 @@ public class EditCreditAction extends Action {
 				stmt.execute(theQuery);
 			} catch (SQLException e) {
 				s_log.error("editCredit() e:" + e + " theQuery:" + theQuery);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
                 DBUtil.close(stmt, this, "editCredit()");			
 			}

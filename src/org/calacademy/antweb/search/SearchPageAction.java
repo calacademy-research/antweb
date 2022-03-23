@@ -3,6 +3,8 @@ package org.calacademy.antweb.search;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -28,7 +30,7 @@ public final class SearchPageAction extends Action {
         
         Connection connection = null;
 		try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           if (DBUtil.isServerBusy(dataSource, request)) {
             return mapping.findForward("message");            
           }			

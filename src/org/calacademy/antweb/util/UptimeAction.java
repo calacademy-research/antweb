@@ -3,6 +3,8 @@ package org.calacademy.antweb.util;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -72,10 +74,10 @@ public final class UptimeAction extends Action {
 
     private boolean isDatabaseUp(HttpServletRequest request) {
 		boolean success = false;
-		java.sql.Connection connection = null;
+		Connection connection = null;
         Statement stmt = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, "UptimeAction.execute()");
 			stmt = connection.createStatement();
 			

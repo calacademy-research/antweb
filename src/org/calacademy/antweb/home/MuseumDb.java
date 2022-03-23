@@ -2,6 +2,7 @@ package org.calacademy.antweb.home;
 
 import java.util.*;
 import java.sql.*;
+import java.util.Map;
 
 //import org.apache.regexp.*;
 
@@ -133,7 +134,7 @@ public class MuseumDb extends AntwebDb {
           //A.log("updateMuseum() dml:" + dml);
           int c = stmt.executeUpdate(dml);
           message = c + " record inserted.";
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
           // no problem
           message = updateMuseum(museum);
         } catch (SQLException e) {
@@ -276,7 +277,7 @@ public class MuseumDb extends AntwebDb {
     
     private final static int MIN_MUSEUM_COUNT_FOR_CALC = 0;
     
-    public void populate(java.util.Map<String, Integer> museumMap) throws SQLException {
+    public void populate(Map<String, Integer> museumMap) throws SQLException {
       // could run a query here and do the set of museums found.  Usually one, but not for CAS.
       // Better, faster by a minute, to collect the museums as we go through the upload.
       ArrayList<String> museumCodes = new ArrayList<>(museumMap.keySet());
@@ -656,7 +657,7 @@ public class MuseumDb extends AntwebDb {
               + " ) values ('" + code + "', '" + taxonName + "','" + insertMethod + "')";
             //A.log("insertProjTaxon() dml:" + dml);
             stmt.executeUpdate(dml);
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             return false;
         } catch (SQLException e) {
             s_log.error("insertTaxon() e:" + e + " dml:" + dml);

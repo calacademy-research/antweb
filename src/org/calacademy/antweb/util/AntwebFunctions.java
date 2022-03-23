@@ -15,7 +15,7 @@ public abstract class AntwebFunctions {
 
   private static final Log s_log = LogFactory.getLog(AntwebFunctions.class);
     
-    public static void genRecentDescEdits(java.sql.Connection connection)
+    public static void genRecentDescEdits(Connection connection)
       throws SQLException, IOException {
 
       // This method generates the file here: http://localhost/antweb/recentDescEdits.jsp
@@ -181,7 +181,7 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
     }
 
 
-    public static String getMysqlProcessListHtml(java.sql.Connection connection) 
+    public static String getMysqlProcessListHtml(Connection connection)
       throws SQLException {
         String returnVal = "";
         ArrayList<String> list = getMysqlProcessList(connection);
@@ -191,7 +191,7 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
         return returnVal;
     }
 
-    public static String getMysqlProcessListStr(java.sql.Connection connection) 
+    public static String getMysqlProcessListStr(Connection connection)
       throws SQLException {
         String returnVal = "";
         ArrayList<String> list = getMysqlProcessList(connection);
@@ -201,7 +201,7 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
         return returnVal;
     }
 
-    public static void logMysqlProcessList(java.sql.Connection connection) 
+    public static void logMysqlProcessList(Connection connection)
       throws SQLException {
         ArrayList<String> list = getMysqlProcessList(connection);
         for (String record : list) {
@@ -209,7 +209,7 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
         }
     }
     
-    public static ArrayList getMysqlProcessList(java.sql.Connection connection)
+    public static ArrayList getMysqlProcessList(Connection connection)
       throws SQLException {
         String returnVal = "";
         String query = "show full processlist";

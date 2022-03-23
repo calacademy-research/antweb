@@ -1,5 +1,6 @@
 package org.calacademy.antweb.upload;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.Date;
 
@@ -1042,7 +1043,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (elemStr.indexOf(".") > 0) {
                 ++decimalElevation;
                 elemStr = elemStr.substring(0, elemStr.indexOf("."));
-                elemStr = (new java.math.BigDecimal(elemStr)).intValue() + "";
+                elemStr = (new BigDecimal(elemStr)).intValue() + "";
                //s_log.warn("getElevationFromString() decimal Elevation elevation:" + element + " elevation:" + elemStr);
             }        
             elemStr = elemStr.trim();

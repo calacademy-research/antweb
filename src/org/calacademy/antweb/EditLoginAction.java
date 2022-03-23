@@ -2,6 +2,7 @@ package org.calacademy.antweb;
 
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.servlet.ServletException;
@@ -42,7 +43,7 @@ public final class EditLoginAction extends Action {
         A.log("execute() id:" + editForm.getId() + " accessLogin(): " + accessLogin);
 
         Login login = null;
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
           DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "updateDefaultSpecimen()");

@@ -32,7 +32,7 @@ public class SpecimenXML extends DefaultHandler {
             // then the string may contain a space but it won't be visible in the logs! Cut and
             // paste from Terminal into Text Wrangler and you will see the space.     
             parse(xmlString);
-        } catch (org.xml.sax.SAXParseException e) {
+        } catch (SAXParseException e) {
             String message = "";
         /*
             if (hasSpaceWithinTags(xmlString)) {

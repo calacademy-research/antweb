@@ -3,6 +3,8 @@ package org.calacademy.antweb.util;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -21,9 +23,9 @@ public final class AdminAlertAction extends Action {
 
         ActionForward c = Check.admin(request, mapping); if (c != null) return c;
 
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, "AdminAlertAction.execute()");
 
             DynaActionForm df = (DynaActionForm) form;

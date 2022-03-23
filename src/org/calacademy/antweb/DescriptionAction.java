@@ -254,7 +254,7 @@ public class DescriptionAction extends Action {
         return true;
     }
     
-    protected void getDescEditHistory(Taxon taxon, java.sql.Connection connection, HttpServletRequest request) 
+    protected void getDescEditHistory(Taxon taxon, Connection connection, HttpServletRequest request)
       throws SQLException {
         /* Get all edits and hists for a given taxon where the access_login is known.  (Added late March, 2012) */
         
@@ -282,7 +282,7 @@ public class DescriptionAction extends Action {
 
           //A.log("getDescEditHistory() query:" + query);
  
-          ArrayList<String> arrayList = new ArrayList();
+          ArrayList<String> arrayList = new ArrayList<>();
           while (rset.next()) {
 
             String created = DateUtil.getFormatDateTimeStr(rset.getTimestamp("created"));        

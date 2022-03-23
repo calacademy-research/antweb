@@ -12,6 +12,7 @@ import org.apache.struts.actions.DispatchAction;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.calacademy.antweb.util.*;
 
@@ -150,7 +151,7 @@ public final class SearchAction extends DispatchAction {
         }
 
         HttpSession session = request.getSession();
-		java.util.Date startTime = new java.util.Date();
+		Date startTime = new Date();
         String execTime = null;
         
         String types = searchParameters.getTypes();
@@ -214,7 +215,7 @@ public final class SearchAction extends DispatchAction {
             String resultSetModifier = resultSetSize + " specimens" + greaterThanModifier;
             session.setAttribute("resultSetModifier", resultSetModifier);          
           } else {                    
-            java.util.ArrayList taxonList = null;
+            ArrayList taxonList = null;
             if (resultRank.equals(ResultRank.SUBFAMILY)) taxonList = results.getSubfamilyList(); 
             if (resultRank.equals(ResultRank.GENUS)) taxonList = results.getGenusList(); 
             if (resultRank.equals(ResultRank.SPECIES)) taxonList = results.getSpeciesList(); 
@@ -304,7 +305,7 @@ public final class SearchAction extends DispatchAction {
           throws IOException, ServletException, SearchException, SQLException {
 
         HttpSession session = request.getSession();
-		java.util.Date startTime = new java.util.Date(); // for HttpUtil.finish(request, startTime);
+		Date startTime = new Date(); // for HttpUtil.finish(request, startTime);
 
         BayAreaSearchForm bayForm = (BayAreaSearchForm) form;
 
@@ -351,7 +352,7 @@ public final class SearchAction extends DispatchAction {
         HttpServletRequest request, HttpServletResponse response)
           throws IOException, ServletException, SearchException {
             
-		java.util.Date startTime = new java.util.Date(); // for HttpUtil.finish(request, startTime);
+		Date startTime = new Date(); // for HttpUtil.finish(request, startTime);
             
         HttpSession session = request.getSession();
         SearchParameters searchParameters = new SearchParameters((RecentImagesForm) form);

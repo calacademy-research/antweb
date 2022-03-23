@@ -34,7 +34,7 @@ public abstract class AntwebProps {
         ResourceBundle bundle = null;
         try {
           bundle = ResourceBundle.getBundle(resourceName);
-        } catch (java.util.MissingResourceException e) {
+        } catch (MissingResourceException e) {
           s_log.warn("getBundle(" + resourceName + ") e:" + e);
           String message = " Antweb misconfigured. Error reading resource:" + resourceName + ".";
           if ("platform".equals(resourceName)) message += " Has a platform.properties file been copied into antweb/WEB-INF/classes/ ?";

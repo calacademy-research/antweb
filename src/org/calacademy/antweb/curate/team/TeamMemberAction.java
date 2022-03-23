@@ -20,7 +20,7 @@ public class TeamMemberAction extends Action {
 		HttpServletRequest request, HttpServletResponse response) {
 
         TeamMemberDb teamMemberDb = null;
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		ArrayList curatorList = new ArrayList();
         try {
           connection = getDataSource(request, "conPool").getConnection();

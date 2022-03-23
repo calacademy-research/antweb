@@ -8,6 +8,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import static java.nio.file.StandardCopyOption.*;
 
 import java.sql.*;
+import java.util.Date;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
@@ -36,7 +37,7 @@ public class LogMgr {
     appendWebLog(file, data, false);
   }
   public static void appendLog(String file, String data, boolean addTimestamp) {
-    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
+    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new Date()) + " " + data;
     appendWebLog(null, file, data);
   }
   public static void appendLog(String dir, String file, String data) {
@@ -48,7 +49,7 @@ public class LogMgr {
     appendWebLog(file, data, false);
   }
   public static void appendWebLog(String file, String data, boolean addTimestamp) {
-    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
+    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new Date()) + " " + data;
     appendWebLog(null, file, data);
   }
   public static void appendWebLog(String dir, String file, String data) {
@@ -66,7 +67,7 @@ public class LogMgr {
     appendDataLog(file, data, false);
   }
   public static void appendDataLog(String file, String data, boolean addTimestamp) {
-    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
+    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new Date()) + " " + data;
     appendDataLog(null, file, data);
   }
   public static void appendDataLog(String dir, String file, String data) {

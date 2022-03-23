@@ -7,6 +7,7 @@ import java.sql.*;
 import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
@@ -37,7 +38,7 @@ public final class ImageUploadReport extends Action {
         ImageUpload imageUpload = null;
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "ImageUploadReport.execute()");
         
             ImageUploadDb imageUploadDb = new ImageUploadDb(connection);        

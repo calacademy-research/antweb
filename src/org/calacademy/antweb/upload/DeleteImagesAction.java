@@ -1,12 +1,15 @@
 package org.calacademy.antweb.upload;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -49,9 +52,9 @@ public final class DeleteImagesAction extends Action {
 
         if (chosen != null) {
 
-            java.sql.Connection connection = null;
+            Connection connection = null;
             try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, "DeleteImagesAction.execute()");
 
                 for (String s : chosen) {

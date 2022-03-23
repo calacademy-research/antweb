@@ -44,7 +44,7 @@ public final class GeolocaleMgrAction extends Action {
         String georank = editGeolocaleForm.getGeorank();        		
 		if (georank == null) georank = "country";
 		
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
             DataSource dataSource = getDataSource(request, "conPool");
 		    connection = DBUtil.getConnection(dataSource, "GeolocaleMgrAction.execute()");

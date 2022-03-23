@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -143,9 +145,9 @@ public final class ShowLogAction extends Action {
     private String getSpecimenDetails(HttpServletRequest request, String code) {
         String specimenDetailXml = null;
         Specimen specimen = null;
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "getSpecimenDetails");
 
             specimenDetailXml = (new SpecimenDb(connection)).getSpecimenDetailXML(code);
@@ -183,7 +185,7 @@ public final class ShowLogAction extends Action {
             try {
                 message += "<tr><td>" + key + "</td><td>" + value + "</td></tr>";
                 ++i;
-            } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            } catch (ArrayIndexOutOfBoundsException e) {
                 s_log.debug("parseXMLIntoHtmlMessage.getUploadLog() i:" + i + " key:" + key + " e:" + e);
             }
         }
@@ -195,9 +197,9 @@ public final class ShowLogAction extends Action {
     private UploadLine getUploadLine(HttpServletRequest request, String fileName, int lineNum) {
         UploadLine uploadLine = null;
         
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "mediumConPool");
+			DataSource dataSource = getDataSource(request, "mediumConPool");
 			connection = DBUtil.getConnection(dataSource, "getUploadLine");
             
             UploadDb uploadDb = new UploadDb(connection);
@@ -277,7 +279,7 @@ public final class ShowLogAction extends Action {
   				  message += "<tr><td>" + col + "</td><td>" + lineCols[i] + "</td></tr>";
 				}
 				++i;
-			  } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+			  } catch (ArrayIndexOutOfBoundsException e) {
 				s_log.debug("ShowLogAction.getUploadLog() i:" + i + " col:" + col + " e:" + e);
 			  }			      
 			}

@@ -2,6 +2,7 @@ package org.calacademy.antweb.curate.group;
 
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.servlet.ServletException;
@@ -42,7 +43,7 @@ public final class ViewGroupAction extends Action {
         //Group group = GroupMgr.getGroup(id);
         Group group = null; 
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
             connection = getDataSource(request, "conPool").getConnection();
 

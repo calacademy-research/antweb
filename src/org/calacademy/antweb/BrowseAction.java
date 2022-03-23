@@ -5,12 +5,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
+import java.util.MissingResourceException;
 
 import javax.sql.DataSource;
 
 import org.calacademy.antweb.home.TaxonDb;
 import org.calacademy.antweb.home.HomonymDb;
 
+import org.calacademy.antweb.upload.UploadAction;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
@@ -39,7 +42,7 @@ public class BrowseAction extends DescriptionAction {
 
         //A.log("execute() sort:" + request.getParameter("sortBy") + " " + request.getParameter("sortOrder"));
         String message = null;
-        java.util.Date startTime = new java.util.Date();        
+        Date startTime = new Date();
 
         AntwebMgr.isPopulated(); // will force populate 
         
@@ -209,7 +212,7 @@ public class BrowseAction extends DescriptionAction {
 
         Taxon taxon = null;
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         String dbUtilName = "";
         //int uniqueNumber = AntwebUtil.getRandomNumber();        
         try {
@@ -431,7 +434,7 @@ We are showin the full map of ponerinae for every adm1.
                 } else {
                     message += ".";
                 }
-                if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
+                if (UploadAction.isInUploadProcess()) {
                     // An upload is currently in process.  Request that this process be re-attempted shortly.
                     message += "  A curator is currently in the process of an Upload.  Please try again shortly.";
                     s_log.info("execute() " + message);
@@ -439,7 +442,7 @@ We are showin the full map of ponerinae for every adm1.
                     s_log.info("execute() " + message + "  No upload in process.");
                 }
                 request.setAttribute("message", message);
-                LogMgr.appendLog("noExists.txt", (new java.util.Date()).toString() + " - " + AntwebUtil.getRequestInfo(request));
+                LogMgr.appendLog("noExists.txt", (new Date()).toString() + " - " + AntwebUtil.getRequestInfo(request));
                 return (mapping.findForward("message"));
             }
 
@@ -505,7 +508,7 @@ We are showin the full map of ponerinae for every adm1.
                 return (mapping.findForward("success"));
             }
 
-        } catch (java.util.MissingResourceException e) {
+        } catch (MissingResourceException e) {
 			// This was around the new Map() command above, but we seemed to be not closing the db connection.
 			message = "e:" + e + " MissingResource overview:"+ overview.getName();
         } catch (AntwebException e) {

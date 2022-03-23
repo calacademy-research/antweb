@@ -7,6 +7,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import org.calacademy.antweb.geolocale.*;
@@ -81,9 +83,9 @@ public final class BigMapAction extends Action {
 
         Project project = ProjectMgr.getProject(projectName);
         
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           
           if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
           

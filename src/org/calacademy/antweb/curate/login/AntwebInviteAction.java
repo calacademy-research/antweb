@@ -1,6 +1,7 @@
 package org.calacademy.antweb.curate.login;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -36,7 +37,7 @@ public final class AntwebInviteAction extends Action {
         boolean isInvitee = (accessLogin == null);    // administrators are NOT invitees,
         
         Login login = null; 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
             connection = getDataSource(request, "conPool").getConnection();
 
@@ -67,7 +68,7 @@ public final class AntwebInviteAction extends Action {
             }           
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);            
+            AntwebUtil.logStackTrace(e);
             return (mapping.findForward("error"));
         } finally {
             try {

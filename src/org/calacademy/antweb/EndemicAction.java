@@ -4,6 +4,8 @@ import java.util.*;
 import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -59,7 +61,7 @@ public final class EndemicAction extends Action {
         String dbUtilName = "EndemicAction.execute()";
         Connection connection = null;
         try {
-  		    javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+  		    DataSource dataSource = getDataSource(request, "conPool");
             if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 		    connection = DBUtil.getConnection(dataSource, dbUtilName);
 

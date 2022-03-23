@@ -174,14 +174,14 @@ public class ProjectDb extends AntwebDb {
               //A.log("fetch description");
               //project.setConnection(getConnection());
               
-              Hashtable description = (new DescEditDb(getConnection())).getDescription(project.getName());
+              Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(project.getName());
               project.setDescription(description);
             }
 
             //A.log("getFromDb() map:" + getMap() + " speciesListMappable:" + getSpeciesListMappable());
         } catch (SQLException e) {
             s_log.error("getProject() projectName:" + name + " query:" + theQuery + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         } finally {
             DBUtil.close(stmt, rset, this, "ProjectDb.getProject()");
         }
@@ -259,7 +259,7 @@ public class ProjectDb extends AntwebDb {
 
             } catch (SQLException e) {
                 s_log.error("update() scope:" + project.getScope() + " title:" + project.getTitle() + " query: " + theQuery);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);               
+                AntwebUtil.logStackTrace(e);
             } finally {
                 DBUtil.close(stmt, null, this, "ProjectDb.update()");
             }
@@ -330,7 +330,7 @@ public class ProjectDb extends AntwebDb {
 
       } catch (SQLException e) {
          s_log.error("fetchSpeciesLists() e:" + e + " loginId:" + loginId + ": ");
-         org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+         AntwebUtil.logStackTrace(e);
       } finally {
         DBUtil.close(stmt, rset, "fetchSpeciesLists()");
       }

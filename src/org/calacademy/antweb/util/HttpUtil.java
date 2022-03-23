@@ -9,7 +9,8 @@ import java.util.*;
 import javax.servlet.http.*;
 import javax.servlet.*;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.httpclient.URIException;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
@@ -18,6 +19,7 @@ import org.apache.struts.action.*;
 import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.util.AntwebUtil;
 
+import javax.servlet.jsp.JspWriter;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
@@ -513,7 +515,7 @@ public abstract class HttpUtil {
         if (str != null) {
             try {
                 target = URIUtil.encodePath(str, "ISO-8859-1");
-            } catch (org.apache.commons.httpclient.URIException e) {
+            } catch (URIException e) {
                 // do nothing.
             }
         }
@@ -529,8 +531,8 @@ public abstract class HttpUtil {
         String encoded = null;
         try {
             // ADDED the utf8 below 20200216.
-            encoded = java.net.URLEncoder.encode(toEncode, "utf8");
-        } catch (java.io.UnsupportedEncodingException e) {
+            encoded = URLEncoder.encode(toEncode, "utf8");
+        } catch (UnsupportedEncodingException e) {
             s_log.error("encode() e:" + e);
         }
         return encoded;
@@ -540,8 +542,8 @@ public abstract class HttpUtil {
         String decoded = null;
         try {
             // ADDED the utf8 below 20200216.
-            decoded = java.net.URLDecoder.decode(toDecode, "utf8");
-        } catch (java.io.UnsupportedEncodingException e) {
+            decoded = URLDecoder.decode(toDecode, "utf8");
+        } catch (UnsupportedEncodingException e) {
             s_log.error("decode() e:" + e);
         }
         return decoded;
@@ -549,7 +551,7 @@ public abstract class HttpUtil {
 
 
   public static String getParamString(HttpServletRequest request) 
-      throws java.net.SocketTimeoutException {
+      throws SocketTimeoutException {
    // This gets used by UgSessionRequestFilter to block SQLInjection attacks.
     String paramString = "";            
     Enumeration names = request.getParameterNames();
@@ -1001,7 +1003,7 @@ public abstract class HttpUtil {
       return execTime; 
     }
 */
-    public static String getExecTime(java.util.Date startTime) {
+    public static String getExecTime(Date startTime) {
         String execTime = "";
         long millis = AntwebUtil.millisSince(startTime);
         if (millis > 2000) {
@@ -1012,14 +1014,14 @@ public abstract class HttpUtil {
         return execTime;
     }
 
-    public static String finish(HttpServletRequest request, java.util.Date startTime) {
+    public static String finish(HttpServletRequest request, Date startTime) {
       return getExecTime(startTime);
     }
 
 
     //  Add the following code to JSPs...
     //    if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
-    public static boolean isStaticCallCheck(HttpServletRequest request, javax.servlet.jsp.JspWriter out) {
+    public static boolean isStaticCallCheck(HttpServletRequest request, JspWriter out) {
       if (HttpUtil.isStaticCall(request)) {
         try {
           out.println("Invalid URL.  Direct JSP calls unsupported.");
@@ -1168,7 +1170,7 @@ public abstract class HttpUtil {
     
       String output = "";
       
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
 
       if ((false) && (AntwebProps.isDevMode())) {
         s_log.warn("getUrl() the url:" + theUrl);
@@ -1224,7 +1226,7 @@ public abstract class HttpUtil {
     
       String output = "";
       
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
 
       if ((false) && (AntwebProps.isDevMode())) {
         s_log.warn("getUrl() the url:" + theUrl);
@@ -1348,7 +1350,7 @@ public abstract class HttpUtil {
   
   public static String getUtf8Url(String theUrl, String delimit) 
     throws IOException {  
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
 
       if ((false) && (AntwebProps.isDevMode())) {
         s_log.warn("getUtf8Url() the url:" + theUrl);
@@ -1360,7 +1362,7 @@ public abstract class HttpUtil {
       StringBuffer strVal = new StringBuffer();
       URL url = new URL(theUrl) ;
       
-      java.net.URLConnection urlConn = url.openConnection();
+      URLConnection urlConn = url.openConnection();
       urlConn.setRequestProperty("Accept-Charset", "UTF-8");
 
       try {
@@ -1391,7 +1393,7 @@ public abstract class HttpUtil {
       StringBuffer strVal = new StringBuffer();
       URL url = new URL(theUrl) ;
       
-      java.net.URLConnection urlConn = url.openConnection();
+      URLConnection urlConn = url.openConnection();
       urlConn.setRequestProperty("Accept-Charset", "UTF-8");
 
       try {

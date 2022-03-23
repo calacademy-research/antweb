@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -71,7 +73,7 @@ public final class ListUploadsAction extends Action {
         ArrayList<ImageUpload> imageUploads = null;
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "listImageUploads()");          
 
             String criteria = "";
@@ -133,7 +135,7 @@ public final class ListUploadsAction extends Action {
         ResultSet rset = null;
         String query = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "listSpecimenUploads()");          
 
             //s_log.warn("execute groupId:" + groupId);

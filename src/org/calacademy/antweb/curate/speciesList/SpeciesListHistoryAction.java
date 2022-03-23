@@ -30,7 +30,7 @@ public class SpeciesListHistoryAction extends SpeciesListToolAction {
     SpeciesListToolForm historyForm = (SpeciesListToolForm) form;
     if (historyForm == null) historyForm = new SpeciesListToolForm();
 
-    java.sql.Connection connection = null;
+    Connection connection = null;
     try {
        DataSource dataSource = getDataSource(request, "mediumConPool");
        connection = DBUtil.getConnection(dataSource, "SpeciesListHistoryAction.execute()");

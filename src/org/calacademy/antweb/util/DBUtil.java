@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.Date;
 import java.sql.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.sql.*;
 
 import com.mchange.v2.c3p0.*;
@@ -111,15 +112,15 @@ Or, if there are stmts and/or rsets...
 		return ds;
     }
 
-    public static Connection Xopen(javax.sql.DataSource dataSource, String name) throws SQLException {
+    public static Connection Xopen(DataSource dataSource, String name) throws SQLException {
        // getConnection() is the preferred call.
        return DBUtil.getConnection(dataSource, name);
     }
-    public static Connection getConnection(javax.sql.DataSource dataSource, String name) throws SQLException {
+    public static Connection getConnection(DataSource dataSource, String name) throws SQLException {
       return getConnection(dataSource, name, null);
     }
 
-    public static Connection getConnection(javax.sql.DataSource dataSource, String name, String queryString) throws SQLException {
+    public static Connection getConnection(DataSource dataSource, String name, String queryString) throws SQLException {
       Connection connection = null;
       try {
         connection = dataSource.getConnection();
@@ -400,7 +401,7 @@ Or, if there are stmts and/or rsets...
     private static int MINUTES = 1000 * 60;
     private static Date lastLog = null;
     
-    public static boolean isServerBusy(javax.sql.DataSource dataSource, javax.servlet.http.HttpServletRequest request) 
+    public static boolean isServerBusy(DataSource dataSource, HttpServletRequest request)
       throws SQLException {
       int numBusy = DBUtil.getNumBusyConnections(dataSource);
       if (numBusy > DBUtil.MAXNUMBUSYCONNECTIONS) {
@@ -410,7 +411,7 @@ Or, if there are stmts and/or rsets...
           lastLog = new Date();
           String logMessage = "<br><br>" + (new Date()).toString() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
           s_log.warn(logMessage);
-          java.sql.Connection connection = null;
+          Connection connection = null;
           try {
             connection = DBUtil.getConnection(dataSource, "AntwebUtil.isServerBusy()");
             logMessage += "<br>" + AntwebFunctions.getMysqlProcessListHtml(connection);
@@ -451,7 +452,7 @@ Or, if there are stmts and/or rsets...
       }
     }
 
-	public static int getNumBusyConnections(javax.sql.DataSource dataSource) {
+	public static int getNumBusyConnections(DataSource dataSource) {
         int numBusy = 0;
         String cpDiagnostics = null;
         if (dataSource instanceof ComboPooledDataSource) {
@@ -475,7 +476,7 @@ Or, if there are stmts and/or rsets...
 	  return AntFormatter.escapeQuotes(theString);
 	}
 
-    public static String getSimpleCpDiagnosticsAttr(javax.sql.DataSource dataSource) {
+    public static String getSimpleCpDiagnosticsAttr(DataSource dataSource) {
         String cpDiagnostics = "";
         if (dataSource instanceof ComboPooledDataSource) {
             ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
@@ -493,7 +494,7 @@ Or, if there are stmts and/or rsets...
     }
 
 
-    public static String getCpDiagnosticsAttr(javax.sql.DataSource dataSource) {
+    public static String getCpDiagnosticsAttr(DataSource dataSource) {
         String cpDiagnostics = "";
         if (dataSource instanceof ComboPooledDataSource) {
             ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;

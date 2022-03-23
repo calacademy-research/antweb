@@ -15,6 +15,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
+import org.calacademy.antweb.util.AntwebUtil;
 
 public class WorldAuthorityGenerator {
 
@@ -438,7 +439,7 @@ public class WorldAuthorityGenerator {
             }
         } catch (FileNotFoundException e) {
             s_log.error("could not open " + fileName + ": " + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
        // } catch (IOException e) {
        //     s_log.error("could not close " + fileName + ": " + e);
        //     org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);

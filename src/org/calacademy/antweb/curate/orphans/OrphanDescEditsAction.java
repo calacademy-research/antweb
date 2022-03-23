@@ -34,7 +34,7 @@ public final class OrphanDescEditsAction extends Action {
         
         ArrayList<Taxon> list = new ArrayList();
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
                 
         try {
             DataSource dataSource = getDataSource(request, "conPool");

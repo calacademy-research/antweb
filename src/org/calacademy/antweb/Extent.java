@@ -166,7 +166,7 @@ public class Extent {
             }
         } catch (Exception e) {
             s_log.error("error in  getExtentFromDb " + e + " query:" + theQuery);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         } finally {
             DBUtil.close(stmt, rset, this, "extent()");
         }

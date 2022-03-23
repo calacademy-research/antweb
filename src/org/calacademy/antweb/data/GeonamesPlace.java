@@ -200,7 +200,7 @@ public class GeonamesPlace extends DataPlace {
 			}
             //if (!found) A.log("GeonamesPlace.getPlace() not found. placeName:" + placeName + " place:" + placeList + " json:" + json);
 
-		} catch (com.google.gson.JsonSyntaxException e) {
+		} catch (JsonSyntaxException e) {
 		  s_log.warn("getPlace() e:" + e);
 		} 
         return geonamesPlace;
@@ -242,7 +242,7 @@ public class GeonamesPlace extends DataPlace {
 			}
 			return geonamesPlaceList;
 
-		} catch (com.google.gson.JsonSyntaxException e) {
+		} catch (JsonSyntaxException e) {
 		  s_log.warn("getChildren() e:" + e + " url:" + url + " json:" + json);
 		} 
         return null;

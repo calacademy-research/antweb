@@ -36,7 +36,7 @@ public class SpeciesListDownloadAction extends Action {
             return OverviewMgr.returnMessage(request, mapping, e);
         }
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
 
           DataSource dataSource = getDataSource(request, "conPool");

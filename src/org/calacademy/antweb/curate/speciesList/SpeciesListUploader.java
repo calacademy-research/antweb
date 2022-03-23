@@ -2,6 +2,7 @@ package org.calacademy.antweb.curate.speciesList;
 
 import java.sql.*;
 import java.io.*;
+import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -196,7 +197,7 @@ public class SpeciesListUploader {
     int backupFileSize = 0;
     if ("success".equals(validateMessage)) {	  
         // make backup copy                        
-        backupDirFile = "upload/" + new Utility().getDateForFileName(new java.util.Date()) + "-worldants.txt";
+        backupDirFile = "upload/" + new Utility().getDateForFileName(new Date()) + "-worldants.txt";
         backupFileName = AntwebProps.getWebDir() + backupDirFile;
         new Utility().copyFile(fileLoc, backupFileName);
         backupFileSize = FileUtil.getFileSize(backupFileName);

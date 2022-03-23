@@ -16,7 +16,7 @@ public class Upload {
     private String groupName;
     private int groupId;
     private String logFileName;
-    private java.util.Date created;     
+    private Date created;
     
     private int specimens;
     private int collections;
@@ -92,10 +92,10 @@ public class Upload {
       this.logFileName = logFileName;
     }
 
-    public java.util.Date getCreated() {
+    public Date getCreated() {
         return this.created;
     }
-    public void setCreated(java.util.Date created) {
+    public void setCreated(Date created) {
         this.created = created;
     }
     

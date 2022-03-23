@@ -5,9 +5,12 @@ import org.calacademy.antweb.*;
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.calacademy.antweb.util.*;
 
@@ -219,9 +222,9 @@ public class AdvancedSearchAction extends Action {
 
 		ArrayList<ResultItem> searchResults = null;
 
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "mediumConPool");
+			DataSource dataSource = getDataSource(request, "mediumConPool");
 			connection = DBUtil.getConnection(dataSource, "AdvancedSearchAction.getSearchResults()");
 
             searchResults = getSearchResults(connection, searchParameters);
@@ -247,7 +250,7 @@ public class AdvancedSearchAction extends Action {
 		AdvancedSearch search = new AdvancedSearch();
 		ArrayList<ResultItem> searchResults = null;
 		
-        java.util.Date startTime = new java.util.Date();	
+        Date startTime = new Date();
         
 //        A.log("getSearchResults() family:" + searchParameters.getFamily());	
 // http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=true&collGroupOpen=none&specGroupOpen=none&geoGroupOpen=&typeGroupOpen=none&searchType=contains&name=&familySearchType=notEquals&family=Formicidae&subfamilySearchType=contains&subfamily=&genusSearchType=contains&genus=&speciesSearchType=contains&species=&subspeciesSearchType=contains&subspecies=&bioregion=&country=&adm1=Ohio&adm2SearchType=contains&adm2=&localityNameSearchType=contains&localityName=&localityCodeSearchType=contains&localityCode=&habitatSearchType=contains&habitat=&elevationSearchType=greaterThanOrEqual&elevation=&methodSearchType=contains&method=&microhabitatSearchType=equals&microhabitat=&collectedBySearchType=equals&collectedBy=&collectionCodeSearchType=contains&collectionCode=&dateCollectedSearchType=greaterThanOrEqual&dateCollected=&specimenCodeSearchType=contains&specimenCode=&locatedAtSearchType=contains&locatedAt=&lifeStageSearchType=contains&lifeStage=&casteSearchType=contains&caste=&mediumSearchType=contains&medium=&specimenNotesSearchType=contains&specimenNotes=&dnaExtractionNotesSearchType=contains&dnaExtractionNotes=&ownedBySearchType=contains&ownedBy=&createdSearchType=equals&created=&groupName=&uploadId=0&type=&types=off&statusSet=all&imagesOnly=off&resultRank=specimen&output=list&x=49&y=14	

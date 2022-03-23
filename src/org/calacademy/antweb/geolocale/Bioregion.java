@@ -2,6 +2,7 @@ package org.calacademy.antweb.geolocale;
 
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,7 +33,7 @@ public class Bioregion extends LocalityOverview implements Countable {
 
     private String name;
 
-    private java.util.Date created;     
+    private Date created;
         
     //private String description;
     private String projectName;
@@ -58,7 +59,7 @@ public class Bioregion extends LocalityOverview implements Countable {
     //private ArrayList<Country> countries;
     private ArrayList<String> countries;
 
-    private Hashtable description;
+    private Hashtable<String, String> description;
     
 
     public Bioregion() {
@@ -164,10 +165,10 @@ public class Bioregion extends LocalityOverview implements Countable {
       return null;
     }    
     
-    public java.util.Date getCreated() {
+    public Date getCreated() {
         return this.created;
     }
-    public void setCreated(java.util.Date created) {
+    public void setCreated(Date created) {
         this.created = created;
     }
     
@@ -202,16 +203,16 @@ public class Bioregion extends LocalityOverview implements Countable {
       this.countries = countries;
     }     
     
-    public Hashtable getDescription() {
-        if (description == null) description = new Hashtable();
+    public Hashtable<String, String> getDescription() {
+        if (description == null) description = new Hashtable<>();
         return description;
     }
-    public void setDescription(Hashtable description) {
+    public void setDescription(Hashtable<String, String> description) {
         this.description = description;
     }
 
     public boolean hasDescription(String title) {
-      Set<String> keys = (Set<String>) getDescription().keySet();
+      Set<String> keys = getDescription().keySet();
       for (String key : keys) {
         if (key.equals(title)) return true;
       }

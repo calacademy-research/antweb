@@ -1,6 +1,8 @@
 package org.calacademy.antweb.curate.group;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
@@ -25,12 +27,12 @@ public class NewGroupAction extends Action {
     public ActionForward execute( ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         String query;
         int newGroupId = 0;
         
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "NewGroupAction");
           
             connection.setAutoCommit(true);

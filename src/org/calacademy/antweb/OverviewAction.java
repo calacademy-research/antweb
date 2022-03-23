@@ -38,7 +38,7 @@ public final class OverviewAction extends DescriptionAction {
       OverviewForm overviewForm = (OverviewForm) form;
 	  String action = overviewForm.getAction();
         
-      java.sql.Connection connection = null;
+      Connection connection = null;
       
       try {
         DataSource dataSource = null;

@@ -6,6 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -117,7 +118,7 @@ Request objects:
         ResultItem thisItem = null;
         Connection connection = null;
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "PrepareMapResultsAction.getModifiedSet()");                    
           while (iter.hasNext()) {
             thisItem = (ResultItem) iter.next();            

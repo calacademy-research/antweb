@@ -5,9 +5,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
 
+import org.calacademy.antweb.upload.UploadAction;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
@@ -40,10 +44,10 @@ public final class LocalityAction extends Action {
         // name= can still be used for the code and now also for the name.
         Locality locality = null;
         
-		java.util.Date startTime = new java.util.Date();
-		java.sql.Connection connection = null;		
+		Date startTime = new Date();
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			
             if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 			
@@ -75,7 +79,7 @@ public final class LocalityAction extends Action {
 */        
         if (locality == null) {        
 		  String message = "  Locality not found for name:" + name + " or code:" + code;
-		  if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
+		  if (UploadAction.isInUploadProcess()) {
 			// An upload is currently in process.  Request that this process be re-attempted shortly.
 			message += "  A curator is currently in the process of an Upload.";
 		  } else {

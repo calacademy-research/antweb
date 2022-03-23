@@ -29,7 +29,7 @@ possible moment - ideally in jsp footer.
       if (getRequestCount() > 100) {
         try {
           purge();
-        } catch (java.util.ConcurrentModificationException e) {
+        } catch (ConcurrentModificationException e) {
           // nothing to do.  
         }
       }
@@ -78,7 +78,7 @@ possible moment - ideally in jsp footer.
       Collection<Tracker> values = null;
       try {
         values = trackerMap.values();
-      } catch (java.util.ConcurrentModificationException e) {
+      } catch (ConcurrentModificationException e) {
         s_log.warn("purge() e:" + e + " values:" + values);
         return;
       }

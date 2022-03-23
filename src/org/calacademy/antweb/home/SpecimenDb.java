@@ -1,5 +1,6 @@
 package org.calacademy.antweb.home;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.sql.*;
 
@@ -710,7 +711,7 @@ public class SpecimenDb extends AntwebDb {
                 Timestamp dateCollected = rset.getTimestamp("dateCollected");
                 //String formatDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(dateCollected);
                 String dateCollectedStr = "";
-                if (dateCollected != null) dateCollectedStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
+                if (dateCollected != null) dateCollectedStr = new SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
                 String microhabitat = rset.getString("microhabitat");
                 String method = rset.getString("method");
                 //String ideal = rset.getString("ideal");
@@ -783,7 +784,7 @@ public class SpecimenDb extends AntwebDb {
                 String code = rset.getString("code");
                 String status = rset.getString("status");		
                 Timestamp dateCollected = rset.getTimestamp("dateCollected");
-                String dateCollectedStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
+                String dateCollectedStr = new SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
                 String microhabitat = rset.getString("microhabitat");
                 String method = rset.getString("method");
                 String ideal = "Yes";

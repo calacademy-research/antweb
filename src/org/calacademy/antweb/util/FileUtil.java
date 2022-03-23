@@ -95,7 +95,7 @@ public class FileUtil {
       s_log.debug("isDiskLow() percentI:" + percentI + " percent:" + percent);
 
       num = Integer.valueOf(percent);
-    } catch (java.lang.StringIndexOutOfBoundsException e) {
+    } catch (StringIndexOutOfBoundsException e) {
       s_log.debug("isDiskLow() e:" + e);
       return -2;
     }

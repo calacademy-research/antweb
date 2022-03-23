@@ -63,7 +63,7 @@ public class LoginMgr extends Manager {
     public static Login getAnonLogin() {
         Login login = new Login();
         login.setName("Anonymous");
-        login.setCreated(new java.util.Date());
+        login.setCreated(new Date());
         login.setGroupId(-1);   // Hardcoded anonymous group.    
         login.setIsAdmin(false);
         return login;            

@@ -4,6 +4,8 @@ import java.util.*;
 import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -66,7 +68,7 @@ native bioregions to genera.
         }
 
         String dbUtilName = "IntroducedAction.execute()";
-  		javax.sql.DataSource dataSource = null;
+  		DataSource dataSource = null;
         Connection connection = null;
         try {
           dataSource = getDataSource(request, "conPool");

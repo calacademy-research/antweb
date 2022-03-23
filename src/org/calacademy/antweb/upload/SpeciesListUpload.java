@@ -8,6 +8,7 @@ import org.apache.regexp.*;
 import org.apache.struts.upload.FormFile;
 
 import java.sql.*;
+import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -295,7 +296,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
         String returnStr = null;   
         //A.log("importSpeciesList() project:" + project + " fileName:" + fileName + " shortFileName:" + shortFileName + " encoding:" + encoding);          
-        LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " import:" + fileName);
+        LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + " import:" + fileName);
                
         boolean isWorldants = Project.WORLDANTS.equals(project);
 
@@ -843,7 +844,7 @@ public class SpeciesListUpload extends AntwebUpload {
             in.close();
 
             returnStr = "success";
-        } catch (java.io.FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             returnStr = "importSpeciesList() c1 project:" + project + " e" + e.toString();
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
@@ -851,7 +852,7 @@ public class SpeciesListUpload extends AntwebUpload {
             returnStr = "importSpeciesList() c2 project:" + project + " fileName:" + fileName + " e" + e.toString();
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
-        } catch (java.util.MissingResourceException e) {
+        } catch (MissingResourceException e) {
             returnStr = "importSpeciesList() c3 project:" + project + " fileName:" + fileName + " e" + e.toString();
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
@@ -1015,7 +1016,7 @@ public class SpeciesListUpload extends AntwebUpload {
             s_log.info("copySpeciesListFile()" + message);
             util.copyFile(uploadFile.getFileLoc(), speciesListFile);
 
-            LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + message);
+            LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + message);
 
             // The web/workingdir always has one copy of the latest... in theory.  Similar logic in reloadSpeciesList().
             String webWorkingDir = uploadFile.getRoot() + "web/workingdir/";

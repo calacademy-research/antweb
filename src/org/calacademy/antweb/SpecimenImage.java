@@ -258,13 +258,13 @@ public class SpecimenImage implements Serializable {
 			jpeg.read(new FileInputStream(imageName));
 		} catch (FileNotFoundException e) {
 			s_log.error("setMetadata() 1 e:" + e + " imageName:" + imageName);
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+			AntwebUtil.logStackTrace(e);
 		} catch (IOException e) {
 			s_log.error("setMetadata() 2 e:" + e + " imageName:" + imageName);
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+			AntwebUtil.logStackTrace(e);
 		} catch (JpegException e) {
 			s_log.error("setMetadata() 3 e:" + e + " imageName:" + imageName);
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+			AntwebUtil.logStackTrace(e);
 		}
     	
         ExifBlock exif = jpeg.getExifBlock();

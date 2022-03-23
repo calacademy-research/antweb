@@ -1,6 +1,8 @@
 package org.calacademy.antweb.curate.speciesList;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -28,9 +30,9 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
       String fromTaxonName = (String) df.get("fromTaxonName");
       String toTaxonName = (String) df.get("toTaxonName");
 
-      java.sql.Connection connection = null;
+      Connection connection = null;
       try {
-        javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+        DataSource dataSource = getDataSource(request, "conPool");
         connection = DBUtil.getConnection(dataSource, "SpeciesListMoveAction.execute()");      
         TaxonDb taxonDb = new TaxonDb(connection);
 

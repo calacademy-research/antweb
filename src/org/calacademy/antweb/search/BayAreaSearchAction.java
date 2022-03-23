@@ -3,6 +3,8 @@ package org.calacademy.antweb.search;
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.ArrayList;
@@ -69,9 +71,9 @@ searching for yolo counties in specimen table alone takes 50 seconds.  Need inde
 		if (adm2s != null) {
 			BayAreaSearch bayAreaSearch = new BayAreaSearch();
 
-			java.sql.Connection connection = null;
+			Connection connection = null;
 			try {
-				javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+				DataSource dataSource = getDataSource(request, "conPool");
 				connection = DBUtil.getConnection(dataSource, "BayAreaSearchAction.getSearchResults");
 
 				bayAreaSearch.setAdm2s(adm2s);

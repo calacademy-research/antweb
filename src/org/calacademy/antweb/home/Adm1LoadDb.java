@@ -18,7 +18,7 @@ public class Adm1LoadDb extends AntwebDb {
     }
 
     public void putCountry(String country) {
-      country = (new org.calacademy.antweb.Formatter()).capitalizeEachWord(country);
+      country = (new Formatter()).capitalizeEachWord(country);
       Geolocale geolocale = GeolocaleMgr.getCountry(country);          
       if (geolocale == null || !"country".equals(geolocale.getGeorank())) {
         s_log.warn("putCountry() geolocale not found:" + country);
@@ -37,7 +37,7 @@ public class Adm1LoadDb extends AntwebDb {
         country = properCasedCountry;
         */
         
-        country = (new org.calacademy.antweb.Formatter()).capitalizeEachWord(country);
+        country = (new Formatter()).capitalizeEachWord(country);
         
 		Geolocale geolocale = GeolocaleMgr.getCountry(country);          
 		if (geolocale == null || !"country".equals(geolocale.getGeorank())) {
@@ -61,9 +61,9 @@ public class Adm1LoadDb extends AntwebDb {
             //A.log("putAdm1() dml:" + dml);
             stmt = DBUtil.getStatement(getConnection(), "putAdm1()");
             int x = stmt.executeUpdate(dml);
-        } catch (java.sql.SQLSyntaxErrorException e) {
+        } catch (SQLSyntaxErrorException e) {
             s_log.debug("Adm1LoadDb.putAdm1() failed to insert country:" + country + " adm1:" + adm1);
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             // no problem. Already there.
             //A.log("Adm1LoadDb.putAdm1() exists: " + country + " " + adm1);
         } catch (SQLException e) {

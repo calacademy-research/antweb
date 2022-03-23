@@ -122,7 +122,7 @@ public abstract class DateUtil {
   public static String formatDateStr(String theDate) {
     if (theDate == null) return null;
     try {
-      java.util.Date utilDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(theDate);
+      Date utilDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(theDate);
       // A.log("formatDateStr() dateCollectedStartStr:" + dateCollectedStartStr + " utilDate:" + utilDate);
       return (utilDate.toString());
     } catch (ParseException e) {
@@ -156,7 +156,7 @@ public abstract class DateUtil {
     Date returnDate = null;
     try {
       returnDate = (new SimpleDateFormat(format)).parse(dateStr);
-    } catch (java.text.ParseException e) {
+    } catch (ParseException e) {
       //if ("2010/08/12".equals(dateStr)) A.log("format() NOT found:" + dateStr + " format:" + format + " e:" + e);
     }
     return returnDate;
@@ -318,7 +318,7 @@ public abstract class DateUtil {
           String output = ld.format(fLocalDate);
           returnDate = getDate(output);
           s_debugStep = 13;
-        } catch (java.time.format.DateTimeParseException e) {
+        } catch (DateTimeParseException e) {
         } catch (Exception e) {
           s_log.debug("constructDate() 1 dateStr:" + dateStr + " e:" + e);
         }
@@ -415,7 +415,7 @@ public abstract class DateUtil {
           try {
             returnDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
             //A.log("constructDate() 2 dateStr:" + dateStr + " returnDate:" + returnDate);
-          } catch (java.text.ParseException e) {
+          } catch (ParseException e) {
             //A.log("constructDate() 2 dateStr:" + dateStr + " e:" + e);
           }
         }

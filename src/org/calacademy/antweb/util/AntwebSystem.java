@@ -285,7 +285,7 @@ public class AntwebSystem {
      
     public static long getFreeSpace() {
         
-        long freeSpace = (new java.io.File("/")).getFreeSpace();
+        long freeSpace = (new File("/")).getFreeSpace();
         return freeSpace;
     }
         

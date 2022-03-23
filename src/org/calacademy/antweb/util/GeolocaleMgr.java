@@ -3,6 +3,7 @@ package org.calacademy.antweb.util;
 import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.GeolocaleDb;
@@ -47,7 +48,7 @@ public class GeolocaleMgr extends Manager {
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
         if (!forceReload && (s_regions != null)) return;
 
-        java.util.Date startTime = new java.util.Date();
+        Date startTime = new Date();
 
         if (s_regions == null || forceReload) {
             if (!s_oneAtATime) {
@@ -463,7 +464,7 @@ public class GeolocaleMgr extends Manager {
             for (Subregion subregion : region.getSubregions()) {
                 for (Country country : subregion.getAllCountries()) {
                     String countryName = country.getName().toLowerCase();
-                    countryName = (new org.calacademy.antweb.Formatter()).removeSpaces(countryName);
+                    countryName = (new Formatter()).removeSpaces(countryName);
                     if (name.equals(countryName)) return country;
                 }
             }

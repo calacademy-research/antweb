@@ -6,9 +6,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
+import java.util.Date;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -161,10 +164,10 @@ public final class LoginAction extends Action {
         
         if (messages.isEmpty()) {
 
-            java.sql.Connection connection = null;
+            Connection connection = null;
             String connName = "LoginAction.createAccount()" + AntwebUtil.getRandomNumber();
             try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, connName);
                 LoginDb loginDb = new LoginDb(connection);
             
@@ -179,7 +182,7 @@ public final class LoginAction extends Action {
                 } else {
                   // Successful login
                   //s_log.warn("Login.execute()2 userName:" + userNameOrEmail + " login:" + login);                
-                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + (new java.util.Date()).toString());
+                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + (new Date()).toString());
                   loginDb.updateLastLogin(login);
                 }
             } catch (AntwebException e) {
@@ -225,10 +228,10 @@ public final class LoginAction extends Action {
         }
 
         if (messages.isEmpty()) {
-            java.sql.Connection connection = null;
+            Connection connection = null;
             String connName = "LoginAction.login()" + AntwebUtil.getRandomNumber();
             try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, connName);
                 LoginDb loginDb = new LoginDb(connection);
                 login = loginDb.getLoginByName(userNameOrEmail);
@@ -242,7 +245,7 @@ public final class LoginAction extends Action {
                 } else {
                   // Successful login
                   //s_log.warn("Login.execute()2 userName:" + userNameOrEmail + " login:" + login);                
-                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + (new java.util.Date()).toString());
+                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + (new Date()).toString());
                   loginDb.updateLastLogin(login);
                 }      
             } catch (Exception sqle) {

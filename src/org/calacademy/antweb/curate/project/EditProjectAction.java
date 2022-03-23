@@ -3,6 +3,7 @@ package org.calacademy.antweb.curate.project;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -151,7 +152,7 @@ public final class EditProjectAction extends Action {
 
         try {
             projectDb.save(project);        
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             if (AntwebProps.isDevMode()) s_log.error("no worries on save.");
         }
                 

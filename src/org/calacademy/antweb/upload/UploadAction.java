@@ -92,7 +92,7 @@ public class UploadAction extends Action {
 		}
 
 		String root = session.getServletContext().getRealPath("") + "/";
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		String query;
 
 		UploadDetails uploadDetails = new UploadDetails();
@@ -618,7 +618,7 @@ public class UploadAction extends Action {
 		HttpSession session = request.getSession();
 		try {
 			session.setAttribute("museumMap", uploadDetails.getMuseumMap());
-		} catch(java.lang.IllegalStateException e) {
+		} catch(IllegalStateException e) {
 			s_log.info("execute() handled:" + e);
 		}
 
@@ -1350,12 +1350,12 @@ public class UploadAction extends Action {
       return returnVal;
     }
 
-    private void runStatistics(String action, java.sql.Connection connection, HttpServletRequest request, int loginId)
+    private void runStatistics(String action, Connection connection, HttpServletRequest request, int loginId)
       throws SQLException, IOException {
       runStatistics(action, connection, request, loginId, null);
     }
 
-    private void runStatistics(String action, java.sql.Connection connection, HttpServletRequest request, int loginId, String execTime)
+    private void runStatistics(String action, Connection connection, HttpServletRequest request, int loginId, String execTime)
      throws SQLException, IOException {
 
         if (false && AntwebProps.isDevOrStageMode()) {

@@ -3,11 +3,15 @@ package org.calacademy.antweb;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
 import java.io.*;
-import org.apache.commons.logging.Log; 
+import java.util.Date;
+
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
@@ -24,7 +28,7 @@ public final class TaxaPageAction extends Action {
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
-        java.util.Date startTime = new java.util.Date(); // for AntwebUtil.finish(request, startTime);
+        Date startTime = new Date(); // for AntwebUtil.finish(request, startTime);
 
         ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
@@ -87,12 +91,12 @@ public final class TaxaPageAction extends Action {
         taxaPage.setBrowserParams(rank, overview);
 
         if (rank != null) {
-          java.sql.Connection connection = null;
+          Connection connection = null;
           String connName = "TaxaPageAction.execute()" + AntwebUtil.getRandomNumber();
 
           //int uniqueNumber = AntwebUtil.getRandomNumber();
           try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
 
             if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }            
             

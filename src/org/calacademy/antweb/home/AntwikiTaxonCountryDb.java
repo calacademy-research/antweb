@@ -83,7 +83,7 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
 
           c += stmt.executeUpdate();
 
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             //s_log.error("storeTaxonCountry() e:" + e);        
         //} catch (SQLException e) {
         //    s_log.error("storeTaxonCountry() e:" + e);

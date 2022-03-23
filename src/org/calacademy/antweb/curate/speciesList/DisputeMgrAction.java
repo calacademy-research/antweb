@@ -1,6 +1,8 @@
 package org.calacademy.antweb.curate.speciesList;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -20,9 +22,9 @@ public class DisputeMgrAction extends Action {
     ActionForward c = Check.login(request, mapping); if (c != null) return c;
     //Login accessLogin = LoginMgr.getAccessLogin(request);
 
-    java.sql.Connection connection = null;
+    Connection connection = null;
     try {
-       javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+       DataSource dataSource = getDataSource(request, "conPool");
        connection = DBUtil.getConnection(dataSource, "DisputeMgrAction.execute()");
 
        ProjTaxonLogDb projTaxonLogDb = new ProjTaxonLogDb(connection);

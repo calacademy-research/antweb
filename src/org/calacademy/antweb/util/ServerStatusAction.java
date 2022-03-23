@@ -6,6 +6,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -45,7 +47,7 @@ static double getVersion () {
 
 
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "ServerStatusAction.execute");
  
             if (action.equals("toggleDownTime")) {
@@ -140,7 +142,7 @@ static double getVersion () {
     public static String getSimpleDownTimeMessage() { 
       return downTimeMessage;
     }    
-    public static String isDownTime(String action, java.sql.Connection connection)      
+    public static String isDownTime(String action, Connection connection)
       throws SQLException {
         String message = "";      
 
@@ -163,7 +165,7 @@ static double getVersion () {
     }
 
 
-    public static boolean getIsDownTime(java.sql.Connection connection) 
+    public static boolean getIsDownTime(Connection connection)
       throws SQLException {
         int downTime = 0; 
         Statement stmt = null;
@@ -189,7 +191,7 @@ static double getVersion () {
         return (downTime == 1);
     }
 
-    public static String toggleDownTime(java.sql.Connection connection) 
+    public static String toggleDownTime(Connection connection)
       throws SQLException {
         int downTime = 0;
         
@@ -222,7 +224,7 @@ static double getVersion () {
 
 // --------------------------------------------------
 	
-    private void setOperationLockAttr(javax.sql.DataSource dataSource, HttpServletRequest request) {
+    private void setOperationLockAttr(DataSource dataSource, HttpServletRequest request) {
         OperationLock operationLock = null;
         Connection connection = null;    
         try {

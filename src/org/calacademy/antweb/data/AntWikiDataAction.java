@@ -3,6 +3,7 @@ package org.calacademy.antweb.data;
 import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.regexp.*;
 
@@ -45,9 +46,9 @@ public final class AntWikiDataAction extends Action {
 
         if ("checkForUpdates".equals(action)) {
         
-			java.sql.Connection connection = null;
+			Connection connection = null;
 			try {
-				javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+				DataSource dataSource = getDataSource(request, "conPool");
 				connection = DBUtil.getConnection(dataSource, "EditGeolocaleAction.execute()");
 
 				message = AntWikiDataAction.checkForUpdates(connection);

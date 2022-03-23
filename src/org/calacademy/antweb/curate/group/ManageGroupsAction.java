@@ -25,7 +25,7 @@ public class ManageGroupsAction extends Action {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         ArrayList groupList = null;
 
         try {

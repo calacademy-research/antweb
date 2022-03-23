@@ -50,7 +50,7 @@ public final class SimpleContentEditorWriteAction extends Action {
                 outFile.close();
             } catch (IOException e) {
                 s_log.error("Unable to read from file " + docRoot + fileName + ": " + e);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             }
         } else {       
             try {
@@ -61,7 +61,7 @@ public final class SimpleContentEditorWriteAction extends Action {
                 outFile.close();
             } catch (IOException e) {
                 s_log.error("Unable to read from file " + docRoot + fileName + ": " + e);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             }
         }        
         ((SimpleContentEditorForm) form).setContents(contents);

@@ -50,7 +50,7 @@ public class SpeciesListDb extends AntwebDb {
           }
       } catch (SQLException e) {
          s_log.error("addMappableSpecimenLists() e:" + e + " loginId:" + loginId + ": ");
-         org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+         AntwebUtil.logStackTrace(e);
          throw e;
       } finally {
         DBUtil.close(stmt, rset, "addMappableSpecimenLists()");

@@ -44,7 +44,7 @@ public final class BigPictureAction extends Action {
         HttpSession session = request.getSession();
         
         String query = null;
-        java.sql.Connection connection = null;
+        Connection connection = null;
         ResultSet rset = null;
         Statement stmt = null;
         try {

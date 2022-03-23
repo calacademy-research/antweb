@@ -60,10 +60,10 @@ public class UploadLine {
 		this.line = line;
     }
 
-    public java.util.Date getCreated() {
+    public Date getCreated() {
         return this.created;
     }
-    public void setCreated(java.util.Date created) {
+    public void setCreated(Date created) {
         this.created = created;
     }
     

@@ -3,6 +3,7 @@ package org.calacademy.antweb;
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
 
@@ -30,9 +31,9 @@ public final class OrphanedImagesAction extends Action {
 		OrphanedImages orphans = new OrphanedImages();
 		ArrayList searchResults = null;
 		
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "OrphanedImagesAction");
 
 			orphans.setConnection(connection);

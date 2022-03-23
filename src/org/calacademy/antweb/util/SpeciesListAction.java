@@ -6,6 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
 import javax.sql.*;
 
 import org.calacademy.antweb.*;
@@ -29,14 +30,14 @@ public final class SpeciesListAction extends Action {
 
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
-        java.util.Date startTime = new java.util.Date();     
+        Date startTime = new Date();
         
         DynaActionForm df = (DynaActionForm) form;
         String name = (String) df.get("name");       // (project name)
         if (name != null) {
-          java.sql.Connection connection = null;   
+          Connection connection = null;
           try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SpeciesListAction.execute()");
         
             if (name.equals(Project.ALLANTWEBANTS)) {

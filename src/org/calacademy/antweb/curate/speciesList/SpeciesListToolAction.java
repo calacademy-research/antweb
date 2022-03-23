@@ -5,6 +5,7 @@ import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.io.*;
+import java.util.Date;
 import javax.servlet.ServletException;
 import javax.sql.DataSource;
 
@@ -91,7 +92,7 @@ To Do
     //A.log("execute() toolProps:" + toolProps);
     
     String message = "";
-    java.sql.Connection connection = null;
+    Connection connection = null;
     try {
       DataSource dataSource = getDataSource(request, "longConPool");
       connection = DBUtil.getConnection(dataSource, "SpeciesListToolAction.execute()");
@@ -609,7 +610,7 @@ To Do
 
         SearchParameters searchParameters = new SearchParameters(toolForm);
 
-		java.util.Date startTime = new java.util.Date();
+		Date startTime = new Date();
         String execTime = null;
         
        // String types = searchParameters.getTypes();
@@ -638,7 +639,7 @@ To Do
 
         if (results != null) {
 
-          java.util.ArrayList<ResultItem> searchSpeciesList = results.getSpeciesList(); 
+          ArrayList<ResultItem> searchSpeciesList = results.getSpeciesList();
 
           return searchSpeciesList;   
         }

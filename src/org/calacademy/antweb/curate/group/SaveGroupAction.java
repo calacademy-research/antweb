@@ -2,12 +2,15 @@ package org.calacademy.antweb.curate.group;
 
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -30,7 +33,7 @@ public final class SaveGroupAction extends Action {
 
         HttpSession session = request.getSession();
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         boolean isNew = false;
         SaveGroupForm form = ((SaveGroupForm) f);
                 
@@ -38,7 +41,7 @@ public final class SaveGroupAction extends Action {
         Group group = null;
         
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SaveGroupAction");          
 
             if ("delete".equals(form.getStep())) {

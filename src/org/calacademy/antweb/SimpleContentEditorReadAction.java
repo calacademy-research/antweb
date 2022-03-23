@@ -15,7 +15,8 @@ import org.apache.struts.action.ActionMapping;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-    
+import org.calacademy.antweb.util.AntwebUtil;
+
 public final class SimpleContentEditorReadAction extends Action {
 
     private static Log s_log = LogFactory.getLog(SimpleContentEditorReadAction.class);
@@ -41,7 +42,7 @@ public final class SimpleContentEditorReadAction extends Action {
             br.close();
         } catch (IOException e) {
             s_log.error("Unable to read from file:" + docRoot + fileName + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         }
         
         ((SimpleContentEditorForm) form).setContents(contents);

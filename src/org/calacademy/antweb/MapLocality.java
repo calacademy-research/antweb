@@ -149,7 +149,7 @@ public class MapLocality {
 				}
 			} catch (SQLException e) {
 				s_log.error("setPoints() e:" + e);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
               DBUtil.close(stmt, rset, this, "setPoints()");
 			} 
@@ -201,7 +201,7 @@ public class MapLocality {
 				
 			} catch (SQLException e) {
 				s_log.error("setPointsWithRestrictions() e: " + e);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
               DBUtil.close(stmt, rset, this, "setPointsWithRestrictions()");
 			} 
@@ -257,7 +257,7 @@ public class MapLocality {
 				}
 			} catch (SQLException e) {
 				s_log.error("setPoints() 2 e:" + e);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
               DBUtil.close(stmt, rset, this, "setPoints(2)");
             }			

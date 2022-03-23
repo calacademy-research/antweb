@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletOutputStream;
 import java.io.InputStream;
+import java.sql.Connection;
 
 import org.calacademy.antweb.*;
 
@@ -26,7 +27,7 @@ public final class TeamMemberImgDownloadAction extends Action {
        s_log.warn("in TeamMemberImgDonwload id is " + id);
 
 
-		java.sql.Connection connection = null;
+		Connection connection = null;
         TeamMember teamMember = null;
     //    try {
       //      connection = getDataSource(request, "conPool").getConnection();

@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;    
@@ -33,7 +36,7 @@ public final class CacheAction extends Action {
         String orderBy = (String) df.get("orderBy");
         ActionForward returnVal = null; 
 
-        java.util.Date startTime = new java.util.Date();                          
+        Date startTime = new Date();
 
         if ((url != null) && (!"".equals(url))) {
           boolean success = getLongRequestDetails(request, url, orderBy);
@@ -91,7 +94,7 @@ public final class CacheAction extends Action {
      }
 
     private void forgetCaching(HttpServletRequest request) {
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.forgetCaching()");
@@ -114,7 +117,7 @@ public final class CacheAction extends Action {
 */
 
     private void purgeCache(HttpServletRequest request) {
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.purgeCache()");
@@ -132,11 +135,11 @@ public final class CacheAction extends Action {
     private static int SLEEP_SECONDS = 60;
     
     private void genCacheThread(HttpServletRequest request) {
-	  javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+	  DataSource dataSource = getDataSource(request, "conPool");
       Connection connection = null;
       int didCacheCount = 0;
       
-      java.util.Date startTime = new java.util.Date();                        
+      Date startTime = new Date();
       s_log.info("getCacheThread() starting");
 
       if (true) return; // To turn off caching.
@@ -202,7 +205,7 @@ public final class CacheAction extends Action {
 
      private boolean getLongRequests(HttpServletRequest request, String orderBy) {
         boolean success = false;
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.getLongRequests()");
@@ -220,7 +223,7 @@ public final class CacheAction extends Action {
 
      private boolean getLongRequestDetails(HttpServletRequest request, String url, String orderBy) {
         boolean success = false;
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.getLongRequestDetails()");
@@ -241,9 +244,9 @@ public final class CacheAction extends Action {
         if (!isLoggedIn) { 
           // This function must not be logged in in order to generate the proper pages...
 
-            java.sql.Connection connection = null;                
+            Connection connection = null;
             try {
-              javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+              DataSource dataSource = getDataSource(request, "conPool");
               connection = DBUtil.getConnection(dataSource, "CacheAction.generateCacheItem()");
 
               AntwebCacheMgr.genCacheItem(connection);

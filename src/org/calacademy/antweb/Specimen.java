@@ -12,6 +12,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
+import org.xml.sax.SAXParseException;
 
 /** Class Species keeps track of the information about a specific taxon */
 public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  {
@@ -677,7 +678,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         try {
             handler = new SpecimenXML();
             detailHash = handler.parse(theXML);
-        } catch (org.xml.sax.SAXParseException e) {
+        } catch (SAXParseException e) {
             s_log.info("parseXMLIntoHtmlMessage() Parse Exception of generated XML.  code:" + code + " e:" + e + " xml:" + theXML);
         } catch (Exception e) {
             // Mark - NPE caught here.  Should check for null?  theXML is null.  Reproduce case first...

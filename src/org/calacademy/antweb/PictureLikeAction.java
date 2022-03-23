@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -67,9 +69,9 @@ public final class PictureLikeAction extends Action {
         Specimen theSpecimen = new Specimen();
         
         String query = null;
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "PictureLikeAction.execute()");
 
             ImageDb imageDb = new ImageDb(connection);
@@ -123,12 +125,12 @@ public final class PictureLikeAction extends Action {
         return (mapping.findForward("bigPicture"));
     }
 
-    private void likeSpecimenImage(int imageId, Login accessLogin, javax.sql.DataSource dataSource) {
+    private void likeSpecimenImage(int imageId, Login accessLogin, DataSource dataSource) {
 
         Group accessGroup = accessLogin.getGroup();
         String query = null;
         Statement stmt = null;
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "PictureLikeAction.likeSpecimenImage()");
 

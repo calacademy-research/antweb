@@ -66,7 +66,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     protected String previewPage;
     protected boolean speciesListMappable;
 
-    private Hashtable description;    
+    private Hashtable<String, String> description;
     
     // Geolocale dependent properties.  Add in: map?
 
@@ -163,7 +163,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
             variable = thisField.get(this);
         } catch (Exception e) {
             s_log.error("getSlotValue() for slot:" + variable + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         }
         return variable;
     }
@@ -531,16 +531,16 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 	}		    
 
 
-    public Hashtable getDescription() {
-        if (description == null) description = new Hashtable();
+    public Hashtable<String, String> getDescription() {
+        if (description == null) description = new Hashtable<>();
         return description;
     }
-    public void setDescription(Hashtable description) {
+    public void setDescription(Hashtable<String, String> description) {
         this.description = description;
     }
 
     public boolean hasDescription(String title) {
-      Set<String> keys = (Set<String>) getDescription().keySet();
+      Set<String> keys = getDescription().keySet();
       for (String key : keys) {
         if (key.equals(title)) return true;
       }

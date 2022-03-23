@@ -381,10 +381,10 @@ public class Utility implements Serializable {
                 copyFile(fileName + ".tmp", fileName);
             } catch (IOException e) {
                 s_log.error("fixNewLines() problem1 fileName:" + fileName + ": " + e);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             } catch (RESyntaxException e) {
                 s_log.error("fixNewLines() problem2 fileName:" + fileName + ": " + e);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             }                                 
         }
     }
@@ -419,7 +419,7 @@ public class Utility implements Serializable {
                     s_log.warn("unzipFile() command:" + command);  // exitValue:" + process.exitValue() + " 
                 } catch (IOException e) {
                     s_log.error("problem unzipping file " + zipName + ": " + e);
-                    org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                    AntwebUtil.logStackTrace(e);
                // } catch (InterruptedException e) {
                //     s_log.error("problem unzipping file " + zipName + ": " + e);
                //     org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
@@ -445,10 +445,10 @@ public class Utility implements Serializable {
                     process.waitFor();
                 } catch (IOException e) {
                     s_log.error("copyAndUnzipFile() problem unzipping file1 " + zippedName + ": " + e);
-                    org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                    AntwebUtil.logStackTrace(e);
                 } catch (InterruptedException e) {
                     s_log.error("copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e);
-                    org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                    AntwebUtil.logStackTrace(e);
                 }
             }
             
@@ -467,7 +467,7 @@ public class Utility implements Serializable {
                 copyFile(tempDirName + "/" + fileName, outName);
             } catch (IOException e) {
                 s_log.error("copyAndUnzipFile() couldn't move " + tempDirName + "/" + fileName + " to " + outName);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             }
             
             // remove the directory
@@ -694,7 +694,7 @@ public class Utility implements Serializable {
             outFile.close();
         } catch (IOException e) {
             s_log.error("saveStringToFile() problem saving to file:" + theFile + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         }
     }
 

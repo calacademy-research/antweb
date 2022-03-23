@@ -852,7 +852,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             stmt.executeUpdate(query);
             stmt.close();
         } catch (SQLException e) {
-            if (! (e instanceof java.sql.SQLIntegrityConstraintViolationException)) {
+            if (! (e instanceof SQLIntegrityConstraintViolationException)) {
                 s_log.error("addProjectFamily() e:" + e);
             } else {
                 //s_log.info("addProjectFamily() expected - e:" + e);            

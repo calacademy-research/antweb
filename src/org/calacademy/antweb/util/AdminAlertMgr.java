@@ -50,7 +50,7 @@ public final class AdminAlertMgr {
         // Add any alerting queries.
         try {
           s_queryAlerts = QueryManager.adminAlerts(connection);
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
           s_log.warn("checkIntegrity() e:" + e);
         }
 

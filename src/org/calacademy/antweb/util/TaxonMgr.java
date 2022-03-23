@@ -3,6 +3,7 @@
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.Collection;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
@@ -85,7 +86,7 @@ public class TaxonMgr extends Manager {
     public static void postInitialize(Connection connection) throws SQLException {
     }
 
-    public static java.util.Collection<Taxon> getTaxa() {
+    public static Collection<Taxon> getTaxa() {
         return s_taxa.values();
     }
 

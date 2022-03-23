@@ -247,7 +247,7 @@ public class AntwebCacheMgr {
         try {
           Timestamp cachedDate = resultSet.getTimestamp(field);  // "cached"  or "created", depending.
           if (cachedDate != null) cacheDate = cachedDate.toString();
-        } catch (java.sql.SQLException e) { 
+        } catch (SQLException e) {
           // if the field is empty, and exception will be thrown and ignored
           // It will be logged to the localhost.[date] file with info level.  Can not avoid.
           // s_log.error("e:" + e); 
