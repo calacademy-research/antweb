@@ -19,7 +19,7 @@ public class ResultsAction extends Action {
         ArrayList<ResultItem> chosenResults = new ArrayList<>();
 
         for (String choice : chosen) {
-          int chosenInt = (Integer.valueOf(choice)).intValue();
+          int chosenInt = Integer.parseInt(choice);
           ResultItem thisItem = (ResultItem) searchResults.get(chosenInt);
           chosenResults.add(thisItem);
         }

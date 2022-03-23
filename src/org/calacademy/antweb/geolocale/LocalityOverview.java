@@ -204,7 +204,7 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
 
 //A.log("getDoubleListVal() 1 i:" + i + " list:" + list + " listArray:" + listArray);
 
-            val = (Double.valueOf(listArray[i-1])).doubleValue();
+            val = Double.parseDouble(listArray[i - 1]);
 
 //A.log("getDoubleListVal() val:" + val);
 

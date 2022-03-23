@@ -50,7 +50,7 @@ public final class AntwebInviteAction extends Action {
             } else {
                 return mapping.findForward("goToLogin");  // if user later follows invitation link...
             }
-            int id = (Integer.valueOf(idStr)).intValue();
+            int id = Integer.parseInt(idStr);
             s_log.info("looking up login " + id);
              
             login = (new LoginDb(connection)).getLogin(id);

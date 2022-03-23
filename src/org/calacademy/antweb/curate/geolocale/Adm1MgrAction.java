@@ -37,7 +37,7 @@ public final class Adm1MgrAction extends Action {
         Integer groupIdInt = (Integer) df.get("groupId");
         int groupId = 0;
         if (groupIdInt != null) {
-          groupId = groupIdInt.intValue();
+          groupId = groupIdInt;
         }
         s_log.debug("adm1:" + adm1 + " country:" + countryName);
         Geolocale country = GeolocaleMgr.getValidCountry(countryName);

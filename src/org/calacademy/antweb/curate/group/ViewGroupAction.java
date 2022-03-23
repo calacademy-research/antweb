@@ -37,7 +37,7 @@ public final class ViewGroupAction extends Action {
           s_log.warn("execute() no id");
           return mapping.findForward("error");
         }
-        int id = (Integer.valueOf(idStr)).intValue();
+        int id = Integer.parseInt(idStr);
         s_log.info("looking up group " + id);
             
         //Group group = GroupMgr.getGroup(id);

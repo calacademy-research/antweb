@@ -37,7 +37,7 @@ public final class SaveGroupAction extends Action {
         boolean isNew = false;
         SaveGroupForm form = ((SaveGroupForm) f);
                 
-        int id = (Integer.valueOf(form.getId()).intValue());
+        int id = (Integer.parseInt(form.getId()));
         Group group = null;
         
         try {
@@ -66,7 +66,7 @@ public final class SaveGroupAction extends Action {
             //Integer adminLoginId = new Integer(form.getAdminLoginId());
             Integer adminLoginId = Integer.valueOf(form.getAdminLoginId());
 
-            group.setAdminLoginId(adminLoginId.intValue());
+            group.setAdminLoginId(adminLoginId);
             group.setAbbrev(form.getAbbrev());
 
             if (isNew) {

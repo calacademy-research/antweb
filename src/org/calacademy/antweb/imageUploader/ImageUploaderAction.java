@@ -141,7 +141,7 @@ public final class ImageUploaderAction extends Action {
                 imageUpload.setCuratorId(accessLogin.getId());
                 imageUpload.setGroupId(accessGroup.getId());
                 if (artist != null) {
-                  imageUpload.setArtistId(Integer.valueOf(artist).intValue());
+                  imageUpload.setArtistId(Integer.parseInt(artist));
                 }
                 imageUpload.setCreated(new Date());
                 Copyright copyright = (new CopyrightDb(connection)).getCurrentCopyright();

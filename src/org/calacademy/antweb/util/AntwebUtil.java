@@ -843,11 +843,11 @@ public abstract class AntwebUtil {
     }
 
 
-  private static Hashtable countHash = new Hashtable();
+  private static Hashtable<String, Integer> countHash = new Hashtable();
   public static void count(String key) {
     if (countHash.containsKey(key)) {
       Integer theCount = (Integer) countHash.get(key);  
-      int theCountInt = theCount.intValue() + 1;
+      int theCountInt = theCount + 1;
       //A.log("AntwebUtil.count() key:" + key + " count:" + theCountInt);
       countHash.put(key, theCountInt);
     } else {
@@ -856,7 +856,7 @@ public abstract class AntwebUtil {
   }
   public static int getCount(String key) {
     if (countHash.containsKey(key)) {
-      return ((Integer) countHash.get(key)).intValue();
+      return (Integer) countHash.get(key);
     } else {
       return 0;
     }

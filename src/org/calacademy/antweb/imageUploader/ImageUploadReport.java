@@ -46,7 +46,7 @@ public final class ImageUploadReport extends Action {
             DynaActionForm df = (DynaActionForm) form;
             int imageUploadId = 0;
             Integer id = (Integer) df.get("id");
-            if (id != null) imageUploadId = id.intValue();
+            if (id != null) imageUploadId = id;
 
             if (imageUploadId != 0) {            
               imageUpload = imageUploadDb.getImageUpload(imageUploadId);

@@ -349,7 +349,7 @@ public class GenericSearchResults implements Serializable {
     protected void updateHash(Hashtable hash, String key, Boolean value) {
         if (!(hash.containsKey(key))) {
             hash.put(key, value);
-        } else if (((Boolean) hash.get(key)).booleanValue() == false) {
+        } else if ((Boolean) hash.get(key) == false) {
             hash.put(key, value);
         }
     }
@@ -616,10 +616,10 @@ public class GenericSearchResults implements Serializable {
 			resItem = (ResultItem) iterator.next();
 		   thisCombo = resItem.getRank() + ":" + resItem.getFullName();
 
-            resItem.setHasImages(((Boolean) imageCheck.get(thisCombo)).booleanValue()
+            resItem.setHasImages((Boolean) imageCheck.get(thisCombo)
                     == true);
 
-            resItem.setTypes(((Boolean) typeCheck.get(thisCombo)).booleanValue()
+            resItem.setTypes((Boolean) typeCheck.get(thisCombo)
                     == true);
 		}
 

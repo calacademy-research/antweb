@@ -214,7 +214,7 @@ public class LoginMgr extends Manager {
       
       int groupId = 0;
       if (!groups.contains(",")) {
-        groupId = Integer.valueOf(groups).intValue();
+        groupId = Integer.parseInt(groups);
       }
       if (groupId == 0) return;
       Counts counts = imageUploadCounts.get("" + groupId);    

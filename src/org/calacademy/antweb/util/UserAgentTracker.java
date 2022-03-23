@@ -120,7 +120,7 @@ public class UserAgentTracker {
       }
       Object countInteger = agentsMap.get(userAgent);
       if (countInteger == null) return false;
-      int count = ((Integer) countInteger).intValue();
+      int count = (Integer) countInteger;
       return count > OVERACTIVE;
   }
 
@@ -138,7 +138,7 @@ public class UserAgentTracker {
       Set<String> keySet = agentsMap.keySet();
       String report = "";
       for (String key : keySet) {
-        int count = ((Integer) agentsMap.get(key)).intValue();
+        int count = (Integer) agentsMap.get(key);
         String star = "";
         if (key.contains("(login:")) star = "*";
         report += "\n" + key + star + ": " + count; 
@@ -154,7 +154,7 @@ public class UserAgentTracker {
       Map<Integer, String> countMap = new HashMap<>();
 
       for (String key : keySet) {
-        int count = ((Integer) agentsMap.get(key)).intValue();
+        int count = (Integer) agentsMap.get(key);
         String star = "";
         if (knownAgentsSet.contains(key)) star = "<b><font color=red>X</font></b>";        
         if (key.contains("(login:")) star = "<b><font color=red><img src='" + AntwebProps.getDomainApp() + "/image/greenCheck.png'></font></b>";
@@ -181,7 +181,7 @@ public class UserAgentTracker {
       Set<String> keySet = agentsMap.keySet();
       String report = "";
       for (String key : keySet) {
-        int count = ((Integer) agentsMap.get(key)).intValue();
+        int count = (Integer) agentsMap.get(key);
         if (count > OVERACTIVE) {
           report += "\n" + key + ": " + count; 
         }

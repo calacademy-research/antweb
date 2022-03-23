@@ -38,7 +38,7 @@ public final class GroupAction extends Action {
         String name = (String) df.get("name"); // Name could be id or name. We try id first.
         int groupId = 0;
         Integer id = (Integer) df.get("id");
-        if (id != null) groupId = id.intValue();
+        if (id != null) groupId = id;
         
         //A.log("GroupAction.execute() name:" + name + " groupId:" + groupId);
 

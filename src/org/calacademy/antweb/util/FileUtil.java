@@ -99,7 +99,7 @@ public class FileUtil {
       s_log.debug("isDiskLow() e:" + e);
       return -2;
     }
-    return num.intValue();
+    return num;
   }
 
   public static String getDiskFree() {

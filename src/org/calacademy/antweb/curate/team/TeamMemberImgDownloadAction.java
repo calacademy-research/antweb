@@ -22,7 +22,7 @@ public final class TeamMemberImgDownloadAction extends Action {
                                  HttpServletResponse response) throws Exception {
 
         String id = (String)request.getParameter("id");
-        int idInt = (Integer.valueOf(id)).intValue();
+        int idInt = Integer.parseInt(id);
 
        s_log.warn("in TeamMemberImgDonwload id is " + id);
 

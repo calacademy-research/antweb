@@ -374,7 +374,7 @@ public class Map {
 						//if ("Minnesota".equals(adm1)) A.slog("setPoints() adm1:" + adm1);
 												
                         if (tracker.containsKey(key)) {
-                            keyCount = ((Integer) tracker.get(key)).intValue();
+                            keyCount = (Integer) tracker.get(key);
                             ++keyCount;
                             tracker.put(key, keyCount);
                             ++nonUniqueLocalities;
@@ -602,7 +602,7 @@ public class Map {
 				if ((lon != 0.0) && (lat != 0.0)) {
 					key = lon + ":" + lat; //taxonName + ":" + 
 					if (distinctLocalities.containsKey(key)) {
-						keyCount = ((Integer) distinctLocalities.get(key)).intValue();
+						keyCount = (Integer) distinctLocalities.get(key);
 						++keyCount;
 						distinctLocalities.put(key, keyCount);
 					} else {
@@ -890,7 +890,7 @@ public class Map {
       if (count == null) {
         displayMapHash.put(objectName, 1);
       } else {
-        count = count.intValue() + 1;
+        count = count + 1;
         displayMapHash.put(objectName, count);
       }
       //A.log("addToDisplayMapCount() count:" + count);    

@@ -50,7 +50,7 @@ public final class EditLoginAction extends Action {
 
           String idStr = editForm.getId();
           if (idStr == null) return (mapping.findForward("goToLogin"));
-          int id = (Integer.valueOf(idStr)).intValue();
+          int id = Integer.parseInt(idStr);
           //s_log.info("looking up login " + id);
 
           LoginDb loginDb = new LoginDb(connection);

@@ -46,7 +46,7 @@ public class Utility implements Serializable {
 
   public static boolean isNumber(String number) {
     try {
-      int num = Integer.valueOf(number);
+      int num = Integer.parseInt(number);
 
       //if (num > 0) 
       return true;

@@ -184,7 +184,7 @@ public abstract class DateUtil {
     if (indexOfSecondHyphen < 6) return null;
     if (dateStr.length() > 9) return null;
     String shortYear = dateStr.substring(indexOfSecondHyphen + 1);
-    int year = Integer.valueOf(shortYear);
+    int year = Integer.parseInt(shortYear);
     if (year > 50) {
       year = year + 1900;
     } else {
@@ -389,7 +389,7 @@ public abstract class DateUtil {
 
     //A.log("handleDMYy() dateStr:" + dateStr + " shortYear:" + shortYear);
 
-    int year = Integer.valueOf(shortYear);
+    int year = Integer.parseInt(shortYear);
     if (year > 50) {
       year = year + 1900;
     } else {
@@ -397,7 +397,7 @@ public abstract class DateUtil {
     }
     dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
     String firstNum = dateStr.substring(0, indexOfFirstHyphen);
-    int firstNumInt = Integer.valueOf(firstNum);
+    int firstNumInt = Integer.parseInt(firstNum);
     Date date = null;
     if (firstNumInt <= 12) {
       date = format("MM/dd/yyyy", dateStr);

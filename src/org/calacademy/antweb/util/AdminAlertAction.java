@@ -38,7 +38,7 @@ public final class AdminAlertAction extends Action {
             if ("remove".equals(action)) {
                 int id = 0;
                 Integer integerId = (Integer) df.get("id");
-                if (integerId != null) id = integerId.intValue();
+                if (integerId != null) id = integerId;
                 AdminAlertMgr.remove(id, connection);
             }
 

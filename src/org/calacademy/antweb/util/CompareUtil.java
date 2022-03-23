@@ -42,8 +42,8 @@ public class CompareUtil {
 
         if (s1 == null || "".equals(s1)) return -1;
 	    if (s2 == null  || "".equals(s2)) return 1;
-	    int s1Int = (Integer.valueOf(s1)).intValue();
-	    int s2Int = (Integer.valueOf(s2)).intValue();
+	    int s1Int = Integer.parseInt(s1);
+	    int s2Int = Integer.parseInt(s2);
 	    if (s1Int == s2Int) return 0;
 	    return (s1Int > s2Int) ? 1 : -1;    
     }

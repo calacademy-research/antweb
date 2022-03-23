@@ -34,7 +34,7 @@ public class ProfileCounter {
     public static void add(String label) {
         Integer count = s_countMap.get(label);
         if (count == null) {
-            s_countMap.put(label, Integer.valueOf(1));
+            s_countMap.put(label, 1);
         } else {
             count = count + 1;
             s_countMap.put(label, count);

@@ -220,7 +220,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 						  a2 = ((ResultItem) o2).getType();
 						  // 2nd one first because reverse order
 						  Integer returnVal = compareVals(a2, a1);
-						  return returnVal.intValue();
+						  return returnVal;
 					  }
 				  });
 
@@ -270,7 +270,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 						  a2 = ((ResultItem) o2).getMedium();
 
 						  Integer returnVal = compareVals(a1, a2);
-						  return returnVal.intValue();
+						  return returnVal;
 					  }
 				  });
 				  break;

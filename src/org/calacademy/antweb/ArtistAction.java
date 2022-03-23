@@ -40,15 +40,15 @@ public final class ArtistAction extends Action {
         String name = (String) df.get("name"); // Name could be id or name. We try id first.
         int artistId = 0;
         Integer id = (Integer) df.get("id");
-        if (id != null) artistId = id.intValue();
+        if (id != null) artistId = id;
 
         int moveTo = 0;
         Integer moveToInt = (Integer) df.get("moveTo");
-        if (moveToInt != null) moveTo = moveToInt.intValue();
+        if (moveToInt != null) moveTo = moveToInt;
 
         Boolean isCreateBool = (Boolean) df.get("isCreate");
         boolean isCreate = false;
-        if (isCreateBool != null) isCreate = isCreateBool.booleanValue();
+        if (isCreateBool != null) isCreate = isCreateBool;
 
         Boolean isRemoveBool = (Boolean) df.get("isRemove");
         boolean isRemove = (isRemoveBool != null && isRemoveBool);

@@ -60,7 +60,7 @@ public final class ShowLogAction extends Action {
 		int lineNum = 0;
 		if (line != null) {
             try {
-              lineNum = (Integer.valueOf(line)).intValue();
+              lineNum = Integer.parseInt(line);
             } catch(NumberFormatException e) {
               //A.log("execute() e:" + e);
             }

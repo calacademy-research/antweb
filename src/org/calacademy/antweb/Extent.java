@@ -89,7 +89,7 @@ public class Extent {
     private float getExtentFloat(String s) {
       // Strings can contain ",".  Trim.
       s = s.replaceFirst(",", "");
-      float f = (Float.valueOf(s)).floatValue();
+      float f = Float.parseFloat(s);
       return f;
     }
     

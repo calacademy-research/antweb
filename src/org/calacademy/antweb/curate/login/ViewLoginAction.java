@@ -47,7 +47,7 @@ public final class ViewLoginAction extends Action {
             connection = DBUtil.getConnection(dataSource, "ViewLoginAction()");
           
             String idStr = ((SaveLoginForm) form).getId();
-            int id = (Integer.valueOf(idStr)).intValue();
+            int id = Integer.parseInt(idStr);
             //s_log.info("looking up login " + id);
 
             LoginDb loginDb = new LoginDb(connection);

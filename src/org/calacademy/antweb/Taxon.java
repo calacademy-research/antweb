@@ -268,13 +268,13 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     private static boolean getBoolFor(Hashtable item, String key) {
         String valueStr = (String) item.get(key);
         int intValue = 0; // arbitary default?
-        if (valueStr != null) intValue = Integer.valueOf(valueStr).intValue();
+        if (valueStr != null) intValue = Integer.parseInt(valueStr);
         return intValue == 1;
     }
     private static int getIntFor(Hashtable item, String key) {
         String strValue = (String) item.get(key);
         int intValue = 0;
-        if (strValue != null) intValue = Integer.valueOf(strValue).intValue();
+        if (strValue != null) intValue = Integer.parseInt(strValue);
         return intValue;
     }
 
@@ -2060,10 +2060,10 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       this.specimenCount = specimenCount;
     }
     public int getSpecimenCount() {
-      return this.specimenCount.intValue();
+      return this.specimenCount;
     }
     public boolean hasSpecimens() {
-      return (this.specimenCount != null) && (this.specimenCount.intValue() > 0);
+      return (this.specimenCount != null) && (this.specimenCount > 0);
     }
 
     public String getBrowserParams() {

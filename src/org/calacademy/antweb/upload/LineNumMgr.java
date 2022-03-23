@@ -110,7 +110,7 @@ public class LineNumMgr {
 	}
 	public static boolean isBadCarriageReturnLine(int lineNum) {
 	  for (Integer l : badCarriageReturnLines) {
-		if (l.intValue() == lineNum) return true;
+		if (l == lineNum) return true;
 	  }
 	  return false;
 	}        
@@ -118,7 +118,7 @@ public class LineNumMgr {
     public static int getBadLinesLessThan(int lineNum) {
       int c = 0;
 	  for (Integer l : badCarriageReturnLines) {
-		if (l.intValue() <= lineNum) ++c;
+		if (l <= lineNum) ++c;
 		//if (l.intValue() > lineNum) break;
 	  }
       //A.log("getBadLineLessThan() lineNum:" + lineNum + " c:" + c);

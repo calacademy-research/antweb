@@ -461,7 +461,7 @@ public class TaxonDb extends AntwebDb {
             DBUtil.close(stmt, rset, "this", "getAntcatCount()");
         }
         if (countStr == null) return 0;
-        return Integer.valueOf(countStr);
+        return Integer.parseInt(countStr);
     }
 
     public int getWorldantsCount() {

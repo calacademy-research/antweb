@@ -180,7 +180,7 @@ public final class MapResultsAction extends ResultsAction {
 		}
         for (String chosen : chosenList) {
           if (chosen == null) s_log.warn("getSpecimensCodesForTaxafromResults() chosenList:" + chosenList);
-          int thisChosen = (Integer.valueOf(chosen)).intValue();
+          int thisChosen = Integer.parseInt(chosen);
           ResultItem selectedTaxon = (ResultItem) taxonList.get(thisChosen);
           for (ResultItem item : searchResults) {
 			try {
@@ -220,7 +220,7 @@ public final class MapResultsAction extends ResultsAction {
         int thisChosen = 0;
         s_log.debug("getSpecimensFromResults()");
         for (String chosen : chosenList) {
-            thisChosen = (Integer.valueOf(chosen)).intValue();
+            thisChosen = Integer.parseInt(chosen);
             thisItem = (ResultItem) searchResults.get(thisChosen);
             codeList.add(thisItem.getCode());
         }

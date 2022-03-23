@@ -293,7 +293,7 @@ public final class CompareResultsAction extends ResultsAction {
         int thisChosen = 0;
   
         for (String chosenListNext : chosenList) {
-            thisChosen = (Integer.valueOf(chosenListNext)).intValue();
+            thisChosen = Integer.parseInt(chosenListNext);
             thisItem = (ResultItem) theTaxa.get(thisChosen);
 
             //A.log("getSpecimensForTaxaFromResults() chosenListNext:" + chosenListNext + " thisItem:" + thisItem);

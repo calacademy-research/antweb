@@ -44,7 +44,7 @@ public final class SaveLoginAction extends Action {
 
 		s_log.debug("execute() 0 id:" + form.getId() + " step:" + form.getStep() + " delete:" + form.getDelete());
         
-        int id = (Integer.valueOf(form.getId()).intValue());
+        int id = (Integer.parseInt(form.getId()));
         Login login = null;
 
         Connection connection = null;

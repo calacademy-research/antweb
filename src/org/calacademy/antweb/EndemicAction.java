@@ -34,7 +34,7 @@ public final class EndemicAction extends Action {
 
             int geolocaleId = 0;
             try {
-                geolocaleId = (Integer.valueOf(geolocaleIdStr)).intValue();
+                geolocaleId = Integer.parseInt(geolocaleIdStr);
             } catch (NumberFormatException e) {
                 request.setAttribute("message", "valid Geolocale ID expected. Found:" + geolocaleId);
                 return (mapping.findForward("message"));

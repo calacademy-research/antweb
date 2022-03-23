@@ -60,14 +60,14 @@ public final class ListUploadsAction extends Action {
         Integer groupId = (Integer) df.get("groupId");
         int groupIdInt = 0;
         if (groupId != null) {
-            groupIdInt = groupId.intValue();
+            groupIdInt = groupId;
         }
         String groupName = null;
 
         Integer curatorId = (Integer) df.get("curatorId");        
         int curatorIdInt = 0;
         if (curatorId != null) {
-            curatorIdInt = curatorId.intValue();
+            curatorIdInt = curatorId;
         }
 
         ArrayList<ImageUpload> imageUploads = null;
@@ -119,14 +119,14 @@ public final class ListUploadsAction extends Action {
         Integer groupId = (Integer) df.get("groupId");        
         int groupIdInt = 0;
         if (groupId != null) {
-            groupIdInt = groupId.intValue();
+            groupIdInt = groupId;
         }
         String groupName = null;
 
         Integer loginId = (Integer) df.get("loginId");        
         int loginIdInt = 0;
         if (loginId != null) {
-            loginIdInt = loginId.intValue();
+            loginIdInt = loginId;
         }
     
         ArrayList<Upload> uploads = new ArrayList<>();

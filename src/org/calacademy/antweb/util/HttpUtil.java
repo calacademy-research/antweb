@@ -276,7 +276,7 @@ public abstract class HttpUtil {
       }
       if (s_isOnline != null) {
         // Only need to test once.
-        return s_isOnline.booleanValue();
+        return s_isOnline;
       }
       if (testOnline()
           && true
@@ -287,7 +287,7 @@ public abstract class HttpUtil {
         s_isOnline = Boolean.FALSE;
         s_log.warn("Warning... Running in Offline Mode.");
       }
-      return s_isOnline.booleanValue();
+      return s_isOnline;
     }
   
     public static boolean isOffline() {

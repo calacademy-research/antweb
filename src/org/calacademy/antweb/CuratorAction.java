@@ -40,7 +40,7 @@ public final class CuratorAction extends Action {
         String name = (String) df.get("name"); // Name could be id or name. We try id first.
         int curatorId = 0;
         Integer id = (Integer) df.get("id");
-        if (id != null) curatorId = id.intValue();
+        if (id != null) curatorId = id;
         
         //A.log("execute() form:" + df);
 
@@ -48,7 +48,7 @@ public final class CuratorAction extends Action {
         String taxonName = (String) df.get("taxonName");
         int geolocaleId = 0;
         Integer geolocaleIdInt = (Integer) df.get("geolocaleId");
-        if (geolocaleIdInt != null) geolocaleId = geolocaleIdInt.intValue();
+        if (geolocaleIdInt != null) geolocaleId = geolocaleIdInt;
 
 		Connection connection = null;
 		try {
