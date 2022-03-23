@@ -555,15 +555,7 @@ public class UploadAction extends Action {
 			return mapping.findForward(uploadDetails.getForwardPage());
 
 
-		} catch (TestException e) {
-			return handleException(e, action, connection, mapping, request);
-		} catch (RESyntaxException e) {
-			return handleException(e, action, connection, mapping, request);
-		} catch (AntwebException e) {
-			return handleException(e, action, connection, mapping, request);
-		} catch (IOException e) {
-			return handleException(e, action, connection, mapping, request);
-		} catch (SQLException e) {
+		} catch (TestException | SQLException | IOException | AntwebException | RESyntaxException e) {
 			return handleException(e, action, connection, mapping, request);
 		} catch (Exception e) {
 			s_log.error("execute() e:" + e + " " + AntwebUtil.getShortStackTrace(e));

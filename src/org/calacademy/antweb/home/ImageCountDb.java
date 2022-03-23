@@ -38,77 +38,71 @@ public class ImageCountDb extends AntwebDb {
          new BioregionTaxonCountDb(getConnection()).imageCountCrawl();
          new MuseumTaxonCountDb(getConnection()).imageCountCrawl();
 
-  	      LogMgr.appendLog("compute.log", "  Image Count Crawl completed", true);                              
+  	      LogMgr.appendLog("compute.log", "  Image Count Crawl completed", true);
      }
 
-     private void countSpecimenImages() 
-       throws SQLException {
-       String query = "select count(*) count, image_of_id code from image " 
-           //+ " where shot_type != 'l'"
-           + " group by code";
+    /** Sets the image count for each specimen
+     * <br>
+     * Count is determined by counting rows in image table with matching specimen code
+     *
+     * @throws SQLException
+     */
+    private void countSpecimenImages()
+            throws SQLException {
+
+        String query = "update specimen " +
+                "set image_count = " +
+                "(select count(id) " +
+                "from image " +
+                "where image.image_of_id = specimen.code)";
 
         Statement stmt = null;
-        ResultSet rset = null;
+
         try {
-          stmt = DBUtil.getStatement(getConnection(), "countSpecimenImages()");
-          rset = stmt.executeQuery(query);
-        
-          int count = -1;
-          String code = null;
-          while (rset.next()) {
-            count = rset.getInt("count");
-            code = rset.getString("code");
-            updateSpecimenImageCount(code, count);
-          }
-          //if (AntwebProps.isDevMode()) s_log.info("countSpecimen() count:" + count);                        
-          stmt.close();       
-       } catch (SQLException e) {
-         s_log.warn("countSpecimenImages() query:" + query + " e:" + e);
-         throw e;
+            stmt = DBUtil.getStatement(getConnection(), "countSpecimenImages()");
+            stmt.executeQuery(query);
+
+            //if (AntwebProps.isDevMode()) s_log.info("countSpecimen() count:" + count);
+            stmt.close();
+
+        } catch (SQLException e) {
+            s_log.warn("countSpecimenImages() query:" + query + " e:" + e);
+            throw e;
         } finally {
-            DBUtil.close(stmt, rset, this, "countSpecimenImages()");
+            DBUtil.close(stmt, this, "countSpecimenImages()");
         }
-     }     
+    }
 
-     private void countSpeciesImages() throws SQLException {
-       String query = "";
+    /** Update the number of images for each species using the specimen table
+     * <p>Count is determined by summing the image counts of all specimens with matching taxon_name</p>
+     * @throws SQLException
+     */
+    private void countSpeciesImages() throws SQLException {
+        String query = "update taxon " +
+                "set image_count = " +
+                "(select COALESCE(SUM(specimen.image_count), 0) " +
+                "from ant.specimen " +
+                "where taxon.taxon_name = specimen.taxon_name)";
+
         Statement stmt = null;
-        ResultSet rset = null;
-        try {
-           query = "select sum(image_count) theSum, taxon_name from specimen " 
-             + " group by taxon_name";
 
+        try {
             stmt = DBUtil.getStatement(getConnection(), "countSpeciesImages()");
 
-            rset = stmt.executeQuery(query);
-        
-           int theSum = -1;
-           String parentTaxonName = null;
-           while (rset.next()) {
-             theSum = rset.getInt("theSum");
-             parentTaxonName = rset.getString("taxon_name");
-             updateTaxonImageCount(parentTaxonName, theSum);
-             
-             if (AntwebProps.isDevMode()) {
-               if ((parentTaxonName.contains("amblyoponinaeadetomyrma"))) {
-                 //s_log.warn("countSpeciesImages() amblyoponaeadetomyrma taxonName:" + parentTaxonName + " theSum:" + theSum);
-               }
-             }               
-             
-           }
-           //if (AntwebProps.isDevMode()) s_log.info("countSpecimen() count:" + count);                        
-       } catch (SQLException e) {
-          s_log.warn("countSpeciesImages() query:" + query + " e:" + e);
-          throw e;
-       } finally {
-           DBUtil.close(stmt, rset, this, "countSpeciesImages()");
-       }
-     }     
+            stmt.executeQuery(query);
 
-     
-     private void countTaxonImages(String rank) 
+        } catch (SQLException e) {
+            s_log.warn("countSpeciesImages() query:" + query + " e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, this, "countSpeciesImages()");
+        }
+    }
+
+
+     private void countTaxonImages(String rank)
        throws SQLException {
-       String query = "select sum(image_count) count, parent_taxon_name from taxon " 
+       String query = "select sum(image_count) count, parent_taxon_name from taxon "
            + " where taxarank = '" + rank + "'"
            + " group by parent_taxon_name";
         Statement stmt = null;
@@ -123,39 +117,23 @@ public class ImageCountDb extends AntwebDb {
            parentTaxonName = rset.getString("parent_taxon_name");
            updateTaxonImageCount(parentTaxonName, count);
          }
-         //if (AntwebProps.isDevMode()) s_log.info("countSpecimen() count:" + count);                        
+         //if (AntwebProps.isDevMode()) s_log.info("countSpecimen() count:" + count);
        } catch (SQLException e) {
          s_log.warn("countTaxonImages() query:" + query + " e:" + e);
-         throw e;         
+         throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "countTaxonImages()");
-        }   
+        }
      }
 
-     public void updateSpecimenImageCount(String code, int count)
-       throws SQLException {
-        Statement stmt = null;
-        try {
-          stmt = getConnection().createStatement();
-        
-          String updateSql = "update specimen set image_count = '" + count + "'" 
-            + " where code = '" + code + "'";
-
-          //if (AntwebProps.isDevMode()) s_log.info("updateSpecimenImageCount() update:" + updateSql);
-          int taxonUpdateCount = stmt.executeUpdate(updateSql);
-        } finally {
-          DBUtil.close(stmt, null, this, "updateSpecimenImageCount()");
-        } 
-     }    
-
-     public void updateTaxonImageCount(String taxonName, int count)
+    public void updateTaxonImageCount(String taxonName, int count)
        throws SQLException {
         Statement stmt = null;
         try {
           stmt = getConnection().createStatement();
           //String taxonName = getTaxonName(taxonId);
-        
-          String updateSql = "update taxon set image_count = '" + count + "'" 
+
+          String updateSql = "update taxon set image_count = '" + count + "'"
             + " where taxon_name = '" + taxonName + "'";
 
           //s_log.info("updateImageCount() update:" + updateSql);

@@ -9,9 +9,7 @@ import java.text.*;
 
 import org.apache.commons.text.*;
 
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
   
 import java.util.regex.Matcher;
@@ -21,7 +19,7 @@ import java.util.regex.Pattern;
 /** Various formatting methods **/
 public class Formatter implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Formatter.class);
+    private static final Log s_log = LogFactory.getLog(Formatter.class);
 
 	//static final long serialVersionUID = 1;
 	
@@ -128,12 +126,11 @@ public class Formatter implements Serializable {
 		//theString = replace(theString, "\"", "\"\"");
 		return theString;
 	}
-	
+
 	public static String escapeQuotes(String theString) {
 		if (theString == null) return null;
-		Formatter formatter = new Formatter();
-		theString = formatter.replace(theString, "'", "''");
-		theString = formatter.replace(theString, "\"", "\"\"");
+		theString = replace(theString, "'", "''");
+		theString = replace(theString, "\"", "\"\"");
 		return theString;
 	}
 
@@ -164,8 +161,7 @@ public class Formatter implements Serializable {
 	/** Removes all quotes from the beginning and end of a string
 	 *  and reduces multiple quotes to single quotes inside the string
 	 */
-
-	public String dequote(String oldString) {
+	public static String dequote(String oldString) {
 
 		if (oldString == null) {
 			return null;

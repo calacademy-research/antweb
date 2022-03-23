@@ -9,7 +9,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.home.*;
 
 /** Class Species keeps track of the information about a specific taxon */
 public class Species extends Genus implements Serializable {
@@ -770,7 +769,7 @@ To fix this proper would involve rewriting Species.sort()
     
     public void setHabitats(Connection connection) {
         //Formatter formatter = new Formatter();
-        Vector habitats = new Vector();
+        Vector<String> habitats = new Vector<>();
         String taxonName = null;
         String theQuery = null; 
         Statement stmt = null;
@@ -799,7 +798,7 @@ To fix this proper would involve rewriting Species.sort()
                 recordCount++;
                 count = rset.getString(1);
                 habitat = rset.getString(2);
-                habitat = myFormatter.dequote(habitat);
+                habitat = Formatter.dequote(habitat);
                 habitats.add(habitat + ":" + count);
             }
             //if (AntwebProps.isDevMode()) s_log.info("setHabitats() recordCount:" + recordCount + " q:" + theQuery);
@@ -815,7 +814,7 @@ To fix this proper would involve rewriting Species.sort()
     
     public void setMicrohabitats(Connection connection) {
         //Formatter formatter = new Formatter();
-        Vector microhabitats = new Vector();
+        Vector<String> microhabitats = new Vector<>();
         String taxonName = null;
         String theQuery = null; 
         Statement stmt = null;
@@ -846,7 +845,7 @@ To fix this proper would involve rewriting Species.sort()
                 recordCount++;
                 count = rset.getString(1);
                 microhabitat = rset.getString(2);
-                microhabitat = myFormatter.dequote(microhabitat);
+                microhabitat = Formatter.dequote(microhabitat);
                 microhabitats.add(microhabitat + ":" + count);
             }
             //if (AntwebProps.isDevMode()) s_log.info("setHabitats() recordCount:" + recordCount + " q:" + theQuery);
@@ -861,7 +860,7 @@ To fix this proper would involve rewriting Species.sort()
     }    
     
     public void setMethods(Connection connection) {
-        Vector methods = new Vector();
+        Vector<String> methods = new Vector<>();
         String taxonName = null;
         Statement stmt = null;
         ResultSet rset = null;
@@ -888,7 +887,7 @@ To fix this proper would involve rewriting Species.sort()
                 recordCount++;
                 count = rset.getString(1);
                 method = rset.getString(2);
-                method = myFormatter.dequote(method);
+                method = Formatter.dequote(method);
                 methods.add(method + ":" + count);
             }
 

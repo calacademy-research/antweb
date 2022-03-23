@@ -80,11 +80,12 @@ public class SpecimenUpload extends SpecimenUploadParse {
      
 	    Date startTime = new Date();
 
-        ArrayList<String> headerArrayList = getHeaderArrayList();       
-        String[] headerArray = headerArrayList.toArray(new String[headerArrayList.size()]);
-        ArrayList goodSpecimenHeaders = new ArrayList(Arrays.asList(headerArray));  // Could we just use the headerArrayList here?
-        Hashtable columnTranslation = getColumnTranslations();
-    
+        // generate list of important columns in specimen table
+        getHeaderArrayList();
+
+        // generate map of translations from file headers to database columns for specimen table
+        getColumnTranslations();
+
         try {
 
             LineNumMgr.init(uploadFile, getMessageMgr(), getConnection());
@@ -99,18 +100,16 @@ public class SpecimenUpload extends SpecimenUploadParse {
             doPreliminaries(accessGroup);
                                 
             // Get the header values
-            ArrayList colList = getSpecimenColumns(theLine);
-            ArrayList otherColumns = getOtherColumns(theLine);
+            ArrayList<String> colList = getSpecimenColumns(theLine);
+            ArrayList<String> otherColumns = getOtherColumns(theLine);
 
             //s_log.info("importSpecimens() colList:" + colList.toString());
             theLine = in.readLine();
 
             int lineNum = 1; //was 2;
-            int batchCount = 0;
-                
-            String oldLine = null;
-            Hashtable specimenItem = null;
-            Hashtable taxonItem = null;
+
+            Hashtable<String, Object> specimenItem = new Hashtable<>();
+            Hashtable<String, Object> taxonItem = new Hashtable<>();
             
             int buildLineTotal = 0;
             int processLineTotal = 0;
@@ -135,8 +134,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                       || theLine.contains("JTL187227")) {
                       s_log.info("importSpecimens() lineNum:" + lineNum + " is " + theLine);
                     }
-                    oldLine = new String(theLine);                    
-                    
+
                     //Throwing a TestException will end execution upon discovery of a test condition.
                     //if (AntwebProps.isDevMode() && getSpecimenUploadDb().hasTaxon("dorylinaeaenictogiton")) {
                     if (AntwebProps.isDevMode() && false && lineNum > 3000) {
@@ -154,8 +152,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
                         // " bsc:" + getUploadDetails().getPassWorldantsSpeciesCheckSet().size()
                     }
 
-                    specimenItem = new Hashtable();
-                    taxonItem = new Hashtable();
+                    specimenItem.clear();
+                    taxonItem.clear();
 
                     String shortFileName = uploadFile.getShortFileName();
 
@@ -281,40 +279,38 @@ public class SpecimenUpload extends SpecimenUploadParse {
          */
         ArrayList<String> headers = new ArrayList<>();
         int i = 0;
-        int j = 0;
-        String head = "";
+        int j;
+        String head;
         while (header.indexOf("\t", i) > 0) {
-          j = header.indexOf("\t", i);
-          head = header.substring(i, j);
-          //A.log("getArrayListEmptiesToo() head:" + head + " i:" + i + " j:" + j);
-          i = j+1;
-          if ("".equals(head)) {
-            head = " ";
-            //s_log.warn("getArrayListEmptiesToo() head!:" + head);
-          }
-          headers.add(head);
-        } 
+            j = header.indexOf("\t", i);
+            head = header.substring(i, j);
+            //A.log("getArrayListEmptiesToo() head:" + head + " i:" + i + " j:" + j);
+            i = j + 1;
+            if ("".equals(head)) {
+                head = " ";
+                //s_log.warn("getArrayListEmptiesToo() head!:" + head);
+            }
+            headers.add(head);
+        }
 
         head = header.substring(i);
         if ("".equals(head)) {
-          head = " ";
+            head = " ";
         }
         //s_log.warn("getArrayListEmptiesToo() head:" + head + " i:" + i);
         headers.add(head);
 
         //s_log.warn("getArrayListEmptiesToo() size:" + headers.size() + " header:" + headers);
-        return headers;    
+        return headers;
     }
 
-    protected ArrayList<String> getSpecimenColumns(String header) {
+    private ArrayList<String> getSpecimenColumns(String header) {
         
         // Somewhat goofy way to match biota field names to  
         // the database schema.  There's a better way to do this, but I don't have time now!
-        Hashtable columnTranslations = getColumnTranslations();    
+        Hashtable<String, String> columnTranslations = getColumnTranslations();
         
-        ArrayList<String> headers = getArrayListEmptiesToo(header);
-        //String[] stringArray = header.split("\t");
-        //ArrayList<String> headers = new ArrayList<String>(Arrays.asList(stringArray));
+        String[] headers = header.split("\t", -1);  // -1 doesn't remove empty elements
         //A.log("getSpecimenColumns() header:" + header + " headers:" + headers);
         
         ArrayList<String> colList = new ArrayList<>();
@@ -322,9 +318,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
         for (String theHead : headers) {
             theHead = theHead.trim();
 
-            if (getHeaderArrayList().contains(theHead)) {    
+            if (getHeaderArrayList().contains(theHead)) {
                 if (columnTranslations.containsKey(theHead)) {
-                    theHead = (String) columnTranslations.get(theHead);
+                    theHead = columnTranslations.get(theHead);
                 }
                 colList.add(theHead);
             } else {
@@ -338,10 +334,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
         return colList;
     }
     
-    protected ArrayList<String> getOtherColumns(String header) {
+    private ArrayList<String> getOtherColumns(String header) {
 
-        // ArrayList<String> headers = new ArrayList<String>(Arrays.asList(header.split("\t")));
-        ArrayList<String> headers = getArrayListEmptiesToo(header);
+        String[] headers = header.split("\t", -1);  // -1 doesn't remove empty list elements
         ArrayList<String> otherColumns = new ArrayList<>();
         
         //s_log.info("getOtherColumns(" + header + ")");
@@ -378,7 +373,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
         return otherColumns;
     }
 
-    protected void compileMessages(Group group) throws SQLException {
+    private void compileMessages(Group group) throws SQLException {
 
         if (getBadRankTaxonList().size() > 0) {
             String badRankErrors = "";

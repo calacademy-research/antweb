@@ -299,8 +299,8 @@ public class SpeciesListUpload extends AntwebUpload {
                
         boolean isWorldants = Project.WORLDANTS.equals(project);
 
-        ArrayList colList = new ArrayList();
-        ArrayList descriptionList = new ArrayList();
+        ArrayList<String> colList = new ArrayList<>();
+        ArrayList<String> descriptionList = new ArrayList<>();
         
         int i = 0;
         try {
@@ -433,7 +433,7 @@ public class SpeciesListUpload extends AntwebUpload {
             String element;
 
             TaxonHash taxonHash = new TaxonHash();
-            Hashtable description = new Hashtable();
+            Hashtable<String, Object> description = new Hashtable<>();
 
             //s_log.warn("importSpeciesListByValidity() project:" + project);
 
@@ -451,7 +451,7 @@ public class SpeciesListUpload extends AntwebUpload {
                 description.clear();
 
                 String theLineBefore = theLine;
-                theLine = AntFormatter.escapeQuotes(theLine);
+//                theLine = AntFormatter.escapeQuotes(theLine);
                 if (false
                     && (AntwebProps.isDevMode())
                     && !theLine.equals(theLineBefore)
@@ -461,10 +461,10 @@ public class SpeciesListUpload extends AntwebUpload {
                 }
                 
                 components = tab.split(theLine);
-                ArrayList elements = new ArrayList(Arrays.asList(components));
-                Iterator iter = elements.iterator();
+                ArrayList<String> elements = new ArrayList<>(Arrays.asList(components));
+                Iterator<String> iter = elements.iterator();
 
-				String taxonName = null;
+				String taxonName;
 				String status = null;
 				String currentValidRank = null;
 				int antcatId = 0;
@@ -477,10 +477,8 @@ public class SpeciesListUpload extends AntwebUpload {
                 
                 String thisCountry = null;
                 String thisBioregion = null;
-                int referenceId = 0; 
                 boolean isFossil = false;
-                
-                Hashtable temptaxonHash;
+
                 int index = 0;
 
                 String goodLineStatus = "true";
@@ -488,7 +486,7 @@ public class SpeciesListUpload extends AntwebUpload {
                 RE multipleSpaces = new RE(" +");
                 while ((iter.hasNext()) && (index < headers.size())) {
                     // This loop will populate the hashtable of elements (fields).
-                    element = (String) iter.next();
+                    element = iter.next();
                     element = multipleSpaces.subst(element.trim(), " ");                    
                     if (element == null)  s_log.error("importSpeciesList() 2 element is null");
                     //A.log("importSpeciesList() innerloop element:" + element);
@@ -607,7 +605,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         }
                     } else if (descriptionList.get(index) != null) {
                         if (!(element.equals(""))) {
-                            description.put(descriptionList.get(index), element);
+                            description.put((String) descriptionList.get(index), element);
                             //A.log("importSpeciesList() key:" + descriptionList.get(index) + " element:" + element);
                         }
                     }

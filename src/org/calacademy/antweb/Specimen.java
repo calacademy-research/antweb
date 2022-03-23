@@ -759,7 +759,7 @@ update specimen set other = '
                 recordCount++;
                 key = rset.getString("title");
                 value = rset.getString("content");
-                value = formatter.dequote(value);
+                value = Formatter.dequote(value);
                 description.put(key, value);
  
                 if (false)

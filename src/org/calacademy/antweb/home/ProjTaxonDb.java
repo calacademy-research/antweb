@@ -21,10 +21,10 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     // Satisfies the EditableTaxonSetDb abstract method.
     public ProjTaxon get(String projectName, String taxonName) {
-        String query = "";
+        String query;
         ProjTaxon projTaxon = null;
         Statement stmt = null;
-        ResultSet rset = null;
+        ResultSet rset;
         try {
 
             stmt = DBUtil.getStatement(getConnection(), "getTaxonSet()");
@@ -37,9 +37,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 projTaxon = new ProjTaxon();
-                projTaxon.setProjectName((String) rset.getString("project_name"));
-                projTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                projTaxon.setSource((String) rset.getString("source"));
+                projTaxon.setProjectName(rset.getString("project_name"));
+                projTaxon.setTaxonName(rset.getString("taxon_name"));
+                projTaxon.setSource(rset.getString("source"));
                 projTaxon.setRev(rset.getInt("rev"));
                 projTaxon.setSubfamilyCount(rset.getInt("subfamily_count"));
                 projTaxon.setGenusCount(rset.getInt("genus_count"));
@@ -59,6 +59,43 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         }
         return projTaxon;
     }
+
+    /** Gets the source for a specified taxonName
+     *
+     * @param projectName The project to search within
+     * @param taxonName The taxonName to search for
+     * @return The source of the taxonName if present, null if not found
+     */
+    public String getTaxonSource(String projectName, String taxonName) {
+
+        String query = "select source from proj_taxon where project_name = ? and taxon_name = ?";
+        PreparedStatement stmt = null;
+        ResultSet rset;
+
+        String source = null;
+
+        try {
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getProjTaxonSource()", query);
+
+            stmt.setString(1, projectName);
+            stmt.setString(2, taxonName);
+
+            rset = stmt.executeQuery();
+
+            if (rset.next()) {
+                source = rset.getString(1);
+            }
+
+        } catch (SQLException e) {
+            s_log.error("e:" + e);
+        } finally {
+            DBUtil.close(stmt, "getProjTaxonSource()");
+        }
+
+        return source;
+
+    }
+
     public boolean exists(String project, String taxonName) {
         TaxonSet taxonSet = get(project, taxonName);
         return (taxonSet != null);
@@ -158,22 +195,26 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         String projectName = project.getName();
 
         // We can't insert. Already exists. Update source if priority allows.
-		TaxonSet taxonSet = get(projectName, taxonName);
-		if (taxonSet != null) {
-            if (Source.aTrumpsB(source, taxonSet.getSource())) {
+        String existingSource = getTaxonSource(projectName, taxonName);
+		if (existingSource != null) {
+            if (Source.aTrumpsB(source, existingSource)) {
               update(project, taxonName, source);  
             }
             return 0;
         }
-          
-        String dml = null;
-        Statement stmt = null;
-        int count = 0;
+
+        // No source exists, will insert this one
+        String dml = "insert into proj_taxon (project_name, taxon_name, source) values (?, ?, ?)";
+        PreparedStatement stmt = null;
+        int count;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "insertItem()");
-            dml = "insert into proj_taxon (project_name, taxon_name, source)"
-              + " values ('" + projectName + "', '" + taxonName + "', '" + source + "')";
-            count = stmt.executeUpdate(dml);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "insertItem()", dml);
+
+            stmt.setString(1, projectName);
+            stmt.setString(2, taxonName);
+            stmt.setString(3, source);
+
+            count = stmt.executeUpdate();
 	    } catch (SQLException e) {
           //A.log("insertItem() e:" + e + " source:" + source);
           throw e;
@@ -309,7 +350,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             projectName = rset.getString("project_name");
             
             tableName = "proj_taxon";
-            whereClause = "project_name = '" + projectName + "'";
+            whereClause = "project_name = " + stmt.enquoteLiteral(projectName);
 
             c += updateTaxonSetTaxonName(tableName, taxonName, currentValidName, whereClause);
           }
@@ -646,63 +687,63 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         ArrayList<String> statistics = new ArrayList<>();
         //HashMap<String, String> stats = new HashMap<String, String>();
 
-        String query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = \"" + project + "\" and taxarank=\"subfamily\"";
-        Statement stmt2 = connection.createStatement();              
+        Statement stmt2 = connection.createStatement();
+        String query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank=\"subfamily\"";
         ResultSet resultSet2 = stmt2.executeQuery(query);
         int extinctSubfamily = 0;
         while (resultSet2.next()) {
             extinctSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = \"" + project + "\" and taxarank=\"genus\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int extinctGenera= 0;
         while (resultSet2.next()) {
             extinctGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = \"" + project + "\" and taxarank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int extinctSpecies = 0;
         while (resultSet2.next()) {
             extinctSpecies = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = \"" + project + "\" and taxarank=\"subfamily\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank=\"subfamily\"";
         resultSet2 = stmt2.executeQuery(query);
         int extantSubfamily = 0;
         while (resultSet2.next()) {
             extantSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = \"" + project + "\" and taxarank=\"genus\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int extantGenera = 0;
         while (resultSet2.next()) {
             extantGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = \"" + project + "\" and taxarank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int extantSpecies = 0;
         while (resultSet2.next()) {
             extantSpecies = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name  and proj_taxon.project_name = \"" + project + "\" and status='valid' and taxarank=\"subfamily\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name  and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and status='valid' and taxarank=\"subfamily\"";
         resultSet2 = stmt2.executeQuery(query);
         int validSubfamily = 0;
         while (resultSet2.next()) {
             validSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = \"" + project + "\" and status='valid' and taxarank=\"genus\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + "  and status='valid' and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int validGenera = 0;
         while (resultSet2.next()) {
             validGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = \"" + project + "\" and status='valid' and taxarank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and status='valid' and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int validSpecies = 0;
         while (resultSet2.next()) {
             validSpecies = resultSet2.getInt(1);
         }
                 
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = '" + project + "'"
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + stmt2.enquoteLiteral(project)
           + " and taxon.status = 'valid' and taxarank in ('species', 'subspecies') and proj_taxon.image_count > 0";
         resultSet2 = stmt2.executeQuery(query);
         int validImagedSpecies = 0;
@@ -710,7 +751,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             validImagedSpecies = resultSet2.getInt(1);
         }
                         
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = \"" + project + "\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + stmt2.enquoteLiteral(project);
         resultSet2 = stmt2.executeQuery(query);
         int totalTaxa = 0;
         while (resultSet2.next()) {
@@ -755,7 +796,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             
         // Source discernment is insufficient here. Must depend mostly on if specimens exist.          
         String insertDML = "insert into proj_taxon (taxon_name, project_name, source) " 
-            + " (select taxon_name, 'allantwebants', (case when source like 'specimen%' then '" + Source.SPECIMEN + "' when source = 'worldants' then 'worldants' else '' end) " 
+            + " (select taxon_name, 'allantwebants', (case when source like 'specimen%' then " + stmt.enquoteLiteral(Source.SPECIMEN) + " when source = 'worldants' then 'worldants' else '' end) "
             + " from taxon "   
             + " where status in " + StatusSet.getCountables()
             + ")";

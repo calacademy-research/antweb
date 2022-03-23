@@ -5,7 +5,7 @@ import java.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class TaxonHash extends Hashtable {
+public final class TaxonHash extends Hashtable<String, Object> {
 
     private static Log s_log = LogFactory.getLog(TaxonHash.class);
 

@@ -3,7 +3,7 @@ package org.calacademy.antweb.curate.speciesList;
 import java.sql.*;
 import java.io.*;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
@@ -14,7 +14,7 @@ import org.apache.struts.upload.FormFile;
 
 public class SpeciesListUploader {
 
-  private static Log s_log = LogFactory.getLog(SpeciesListUploader.class);
+  private static final Log s_log = LogFactory.getLog(SpeciesListUploader.class);
 
   // Old link.
   //  public static String fetchWorldantsUrl = "http://ibss-info/antcat.antweb.txt";
@@ -29,9 +29,9 @@ public class SpeciesListUploader {
      /data/antweb/web/speciesList/world/worldants_speciesList.txt
 */
 
-  Connection connection = null;
+  Connection connection;
 
-  private static String worldDir = AntwebProps.getWebDir() + "speciesList/world/";
+  private static final String worldDir = AntwebProps.getWebDir() + "speciesList/world/";
 
   public SpeciesListUploader(Connection connection) {  
     this.connection = connection;
@@ -63,7 +63,7 @@ public class SpeciesListUploader {
   }
 
   public UploadDetails uploadWorldants(FormFile theFile, UploadFile uploadFile, Group accessGroup) throws AntwebException, IOException, SQLException {
-    UploadDetails uploadDetails = null;
+    UploadDetails uploadDetails;
     UploadHelper.init(uploadFile, accessGroup);   
 
     SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
@@ -94,7 +94,7 @@ public class SpeciesListUploader {
     //String urlLoc = "http://antweb.org/web/speciesList/world/worldants_speciesList.txt";
     String urlLoc = fetchWorldantsUrl;
 
-    boolean success = HttpUtil.writeUrlContents(urlLoc, fileLoc);                                  
+    boolean success = HttpUtil.writeUrlContents(urlLoc, fileLoc);
     if (!success) {
 	   String message = "Failed to fetch:" + urlLoc + " and write it here:" + fileLoc + ". Connected to VPN?";
        uploadDetails.setMessage(message);
@@ -149,12 +149,12 @@ public class SpeciesListUploader {
     String message = "";
     int min_reasonable_worldants_count = 1000;
     
-    int worldantsCount = (new AntwebSystem()).countLines(fileLoc);
+    int worldantsCount = AntwebSystem.countLines(fileLoc);
     A.log("validateWorldantsFile() worldantsCount:" + worldantsCount);
     boolean countIsLow = true;
 
     if (worldantsCount > WORLDANTS_LOW_COUNT) countIsLow = false;
-          
+
     /*
     // The existing count in the database is low. Waive the 
     boolean dbIsLow = (origWorldantsCount < min_reasonable_worldants_count);
