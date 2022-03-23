@@ -2,6 +2,8 @@ package org.calacademy.antweb.util;
 	
 import java.io.*;
 import java.net.*;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.*;
 
 import javax.servlet.http.*;
@@ -1411,55 +1413,26 @@ public abstract class HttpUtil {
       return null;    
     }
 
-	public static boolean writeUrlContents(String theUrl, String fileName) {   //String[] args) {
+    public static boolean writeUrlContents(String theUrl, String fileName) {   //String[] args) {
+        // speedy download that skips application memory, direct to disk
+        // https://stackoverflow.com/questions/921262/how-can-i-download-and-save-a-file-from-the-internet-using-java
+        // https://www.techiedelight.com/download-file-from-url-java/
+        try (InputStream in = new URL(theUrl).openStream();
+             ReadableByteChannel rbc = Channels.newChannel(in);
+             FileOutputStream fos = new FileOutputStream(fileName)) {
 
-		URL url = null;
-        //A.log("writeUrlContents() IN url:" + theUrl + " toFile:" + fileName);
- 
-		try {
-			// get URL content
-			url = new URL(theUrl);
-			URLConnection conn = url.openConnection();
- 
-			// open the stream and put it into BufferedReader
-			BufferedReader br = new BufferedReader(
-                               new InputStreamReader(conn.getInputStream())); 
-			String inputLine;
- 
-			//save to this filename
-			//String fileName = "/users/mkyong/test.html";
-			File file = new File(fileName);
- 
-			if (!file.exists()) {
-				file.createNewFile();
-			}
- 
-			//use FileWriter to write file
-			FileWriter fw = new FileWriter(file.getAbsoluteFile());
-			BufferedWriter bw = new BufferedWriter(fw);
- 
-            int count = 0;
-			while ((inputLine = br.readLine()) != null) {
-                ++count;
-                if ((count % 10000 == 0)) s_log.debug("writeUrlContents() count" + count);
-				bw.write(inputLine + "\n");
-			}
- 
-			bw.close();
-			br.close();
- 
-            s_log.debug("writeUrlContents() url:" + theUrl + " toFile:" + fileName);
+            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
             return true;
- 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-        return false;         
-	}  
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-    private static int MAX_ITERATION = 60;  // This should cover all adm1
+        return false;
+    }
+
+    private static final int MAX_ITERATION = 60;  // This should cover all adm1
       // This should be multiplied by 27 to have the actual count.
-    private static String[] uniqueColors = {"#0c6197", "#4daa4b", "#90c469", "#daca61", "#e4a14b", "#e98125", "#cb2121", "#830909", "#923e99", "#ae83d5", "#bf273e", "#ce2aeb", "#bca44a", "#618d1b", "#1ee67b", "#b0ec44", "#a4a0c9", "#322849", "#86f71a", "#d1c87f", "#7d9058", "#44b9b0", "#7c37c0", "#cc9fb1", "#e65414", "#8b6834", "#248838"};
+    private static final String[] uniqueColors = {"#0c6197", "#4daa4b", "#90c469", "#daca61", "#e4a14b", "#e98125", "#cb2121", "#830909", "#923e99", "#ae83d5", "#bf273e", "#ce2aeb", "#bca44a", "#618d1b", "#1ee67b", "#b0ec44", "#a4a0c9", "#322849", "#86f71a", "#d1c87f", "#7d9058", "#44b9b0", "#7c37c0", "#cc9fb1", "#e65414", "#8b6834", "#248838"};
     private static String[] colors = null;    
     public static String[] getColors() {
       if (colors != null) return colors;
@@ -1468,7 +1441,7 @@ public abstract class HttpUtil {
           //A.log("getColors() i:" + i + " j:" + j + " color:" + uniqueColors[j]);
           colorList.addAll(Arrays.asList(uniqueColors));
       }      
-      colors = colorList.toArray(new String[colorList.size()]);
+      colors = colorList.toArray(new String[0]);
       //A.log("getColors:" + colorList);
       return colors;
     }
