@@ -299,8 +299,8 @@ public class SpeciesListUpload extends AntwebUpload {
                
         boolean isWorldants = Project.WORLDANTS.equals(project);
 
-        ArrayList colList = new ArrayList();
-        ArrayList descriptionList = new ArrayList();
+        ArrayList<String> colList = new ArrayList<>();
+        ArrayList<String> descriptionList = new ArrayList<>();
         
         int i = 0;
         try {
@@ -433,7 +433,7 @@ public class SpeciesListUpload extends AntwebUpload {
             String element;
 
             TaxonHash taxonHash = new TaxonHash();
-            Hashtable description = new Hashtable();
+            Hashtable<String, Object> description = new Hashtable<>();
 
             //s_log.warn("importSpeciesListByValidity() project:" + project);
 
@@ -451,7 +451,7 @@ public class SpeciesListUpload extends AntwebUpload {
                 description.clear();
 
                 String theLineBefore = theLine;
-                theLine = AntFormatter.escapeQuotes(theLine);
+//                theLine = AntFormatter.escapeQuotes(theLine);
                 if (false
                     && (AntwebProps.isDevMode())
                     && !theLine.equals(theLineBefore)
@@ -464,7 +464,7 @@ public class SpeciesListUpload extends AntwebUpload {
                 ArrayList<String> elements = new ArrayList<>(Arrays.asList(components));
                 Iterator<String> iter = elements.iterator();
 
-				String taxonName = null;
+				String taxonName;
 				String status = null;
 				String currentValidRank = null;
 				int antcatId = 0;
@@ -605,7 +605,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         }
                     } else if (descriptionList.get(index) != null) {
                         if (!(element.equals(""))) {
-                            description.put(descriptionList.get(index), element);
+                            description.put((String) descriptionList.get(index), element);
                             //A.log("importSpeciesList() key:" + descriptionList.get(index) + " element:" + element);
                         }
                     }

@@ -4,7 +4,9 @@ import java.util.Date;
 import java.util.*;
 import java.sql.*;
 import java.text.*;
+import java.util.Map;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 
@@ -23,7 +25,7 @@ public class AntwebUpload {
 
     private Connection m_connection = null;
     private static final Log s_log = LogFactory.getLog(AntwebUpload.class);
-    private static String currentDateFunction = "now()";  // for mysql
+    private static final String currentDateFunction = "now()";  // for mysql
     String[] dateHeaderString = {"spcmrecorddate", "spcmrecchangeddate",
             "transecttype", "locrecorddate", "locrecchangeddate"
     };
@@ -44,10 +46,10 @@ public class AntwebUpload {
     // Set to null for no action.
     //private static String s_testTaxonName = null; //"myrmicinaenesomyrmex hirtellus";
     //private static String s_testTaxonName = "myrmicinaestrumigenys dicomas";
-    private static String s_testTaxonName = "myrmicinaecrematogaster parapilosa";
+    private static final String s_testTaxonName = "myrmicinaecrematogaster parapilosa";
 
 
-    private TaxonQueryHashMap taxonQueryHashMap = new TaxonQueryHashMap();
+    private final TaxonQueryHashMap taxonQueryHashMap = new TaxonQueryHashMap();
     private String lastTaxonName = null;
 
     private int countUploaded = 0;
@@ -89,26 +91,24 @@ public class AntwebUpload {
         return m_descCounter;
     }
 
-    protected void saveHomonym(Hashtable item)  //, String source
+    protected void saveHomonym(Hashtable<String, Object> item)  //, String source
             throws SQLException {
         //A.log("SaveHomonym item:" + item);
         saveTaxon(item, "homonym");  //source, 
     }
 
-    protected int saveTaxon(Hashtable item) throws SQLException {
+    protected int saveTaxon(Hashtable<String, Object> item) throws SQLException {
         return saveTaxon(item, "taxon");  //source, 
     }
 
-    private int saveTaxon(Hashtable item, String table) throws SQLException {
+    private int saveTaxon(Hashtable<String, Object> item, String table) throws SQLException {
         return saveTaxon(item, table, false);
     }
 
     // Method is recursively inserting parent records.
-    private int saveTaxon(Hashtable item, String table, boolean isParent) throws SQLException {
+    private int saveTaxon(Hashtable<String, Object> item, String table, boolean isParent) throws SQLException {
         //Called from both SpeciesListUpload and SpecimenUpload.
         int c = 0;
-
-        boolean debugItem = true;
 
         String taxonName = (String) item.get("taxon_name");
 
@@ -188,7 +188,7 @@ public class AntwebUpload {
             item.put("author_date", authorDate);
         }
 
-        String parentTaxonName = null;
+        String parentTaxonName;
         String currentValidName = (String) item.get("current_valid_name");
         if (taxonName.contains("dolichoderinaecolobopsis macrocephala"))
             s_log.debug("saveTaxon() 2 CURRENT VALID NAME:" + currentValidName + " taxonName:" + taxonName);
@@ -218,19 +218,38 @@ public class AntwebUpload {
                 //return 0;
             }
 
-            String query = getInsertionQuery(item, table);
+            Pair<String, LinkedList<Object>> statementValuesPair = getInsertionQuery(item, table);
 
-            Statement stmt = null;
+            String dml = statementValuesPair.getKey();
+            LinkedList<Object> values = statementValuesPair.getValue();
+
+            String boundQuery = "";
+            PreparedStatement stmt = null;
             try {
-                stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.saveTaxon()");
+                stmt = DBUtil.getPreparedStatement(getConnection(), "AntwebUpload.saveTaxon()", dml);
+
+                // set values
+                int index = 1;
+                for (Object value : values) {
+                    stmt.setObject(index, value);
+                    index++;
+                }
 
                 ++countUploaded;
-                if (table.equals("taxon")) taxonQueryHashMap.put(taxonName, query);
+
+                // not sure what the performance hit is for making this every row in case it crashes.
+                // probably better to just print query and list of values when not in dev mode
+                boundQuery = DBUtil.getPreparedStatementString(stmt);
+
+
+                if (table.equals("taxon")) {
+                    taxonQueryHashMap.put(taxonName, boundQuery);
+                }
 
                 if (AntwebProps.isDevMode() && taxonName.equals(s_testTaxonName))
-                    s_log.warn("saveTaxon() taxonName:" + taxonName + " query:" + query);
+                    s_log.warn("saveTaxon() taxonName:" + taxonName + " query:" + boundQuery);
 
-                int rowCount = stmt.executeUpdate(query);
+                int rowCount = stmt.executeUpdate();
 
                 c += rowCount;
                 if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
@@ -241,11 +260,11 @@ public class AntwebUpload {
                 //}
 
             } catch (java.sql.SQLIntegrityConstraintViolationException e) {
-                String message = "e:" + e + " query:" + query;
+                String message = "e:" + e + " query:" + boundQuery;
                 s_log.warn("saveTaxon() 4 " + message);
                 MessageMgr.addToErrors(message);
             } catch (SQLException e) {
-                s_log.error("saveTaxon() 5 e:" + e + " query:" + query);
+                s_log.error("saveTaxon() 5 e:" + e + " query:" + boundQuery);
                 throw e;
             } finally {
                 DBUtil.close(stmt, "AntwebUpload.saveTaxon()");
@@ -254,7 +273,7 @@ public class AntwebUpload {
 
         // New functionality. Parent taxons are handled.
         if (!isParent && parentTaxonName != null && !"worldants".equals(source)) {
-            
+
             if (taxonName.contains("formicinaemyrma iperstriata"))
                 s_log.debug("saveTaxon() 5 BAD currentValidName:" + currentValidName + " taxonName:" + taxonName);
             // if we save a taxon, we make sure it's parent exists, or we create it.
@@ -286,62 +305,63 @@ public class AntwebUpload {
         return c;
     }
 
-    private String getInsertionQuery(Hashtable item, String table) {
-        String query = "insert into " + table;
+    /** Generate a parameterized insertion statement, and the list of values to insert
+     *
+     * @param item The hashtable of key:value mappings to insert
+     * @param table The table to use in the insertion statement
+     * @return A pair: the insertion statement, and list of objects to insert
+     */
+    private Pair<String, LinkedList<Object>> getInsertionQuery(Hashtable<String, Object> item, String table) {
 
-        StringBuffer fields = new StringBuffer();
-        StringBuffer values = new StringBuffer();
-        fields.append("(");
-        values.append("(");
-        Float floatValue = null;
-        Object value = null;
-        Set<String> keys = item.keySet();
+        LinkedList<String> fields = new LinkedList<>();
+        LinkedList<Object> values = new LinkedList<>();
+
+        String query;
+        Object value;
 
         boolean logThis = false;
-        for (String key : keys) {
-            value = item.get(key);
+        for (Map.Entry<String, Object> entry : item.entrySet()) {
+            String key = entry.getKey();
+            value = entry.getValue();
 
             //A.log("getInsertionQuery() key:" + key + " value:" + value);
+            // Skip key-value pair if key is in list to be skipped
             if (enactExceptions(key, value)) continue;
 
-            fields.append(translateKeyToColumn(key) + ",");
+            fields.add(translateKeyToColumn(key));
 
             if (value instanceof String) {
-                if (((String) value).contains("\"")) {
-                    value = AntFormatter.escapeQuotes((String) value);
-                    //s_log.warn("getInsertionQuery() using mysqlEscapeQuotes().  value:" + value);
-                }
-
                 // *** Added Apr 4 2020
                 if (((String) value).contains("'")) {
+                    // Mar 2022: now that we're using a PreparedStatement, there's no need to escape strings with quotes
+                    // leaving because logging might be useful.
                     logThis = true;
                     //AntwebUtil.logShortStackTrace(10);
-
-                    value = AntFormatter.escapeQuotes((String) value);
-                    //s_log.warn("getInsertionQuery() using mysqlEscapeQuotes().  value:" + value);
                 }
 
-                if (((String) value).equals("true")) value = "1";
-                if (((String) value).equals("false")) value = "0";
+                if (value.equals("true")) value = true;
+                if (value.equals("false")) value = false;
 
-                values.append("'" + value + "',");
+                values.add(value);
+
             } else {
-                values.append(value + ",");
+                values.add(value);
             }
         }
 
-        fields.setCharAt(fields.length() - 1, ')'); // here we remove final commas
-        values.setCharAt(values.length() - 1, ')');
-        query += " " + fields.toString() + " values ";
+        // Fill values with n question marks
+        String placeholders = "?,".repeat(values.size());
+        placeholders = placeholders.substring(0, placeholders.length() - 1);
 
-        String theValues = values.toString();
-        query += theValues;
+        query = "insert into " + table
+                + " (" + String.join(",", fields) + ") " // Join all fields with commas
+                + "values (" + placeholders + ")";
 
         if (logThis) A.logi("Ivory Coast", "Should swap Coate'ivory for proper name? query:" + query);
 
         //if (query.contains("country")) A.log("getInsertionQuery() query:" + query);        
 
-        return query;
+        return Pair.of(query, values);
     }
 
     // The key is almost always the columns. But...
@@ -350,9 +370,8 @@ public class AntwebUpload {
       return key;
     }
 
-    private void updateTaxon(Hashtable item, String table)
-      throws SQLException
-    {
+    private void updateTaxon(Hashtable<String, Object> item, String table)
+            throws SQLException {
 
         String taxonName = (String) item.get("taxon_name");
         String source = (String) item.get("source");
@@ -376,18 +395,18 @@ public class AntwebUpload {
         if (!skip) {
 
             String query = "update " + table + " set ";
-            StringBuffer sets = new StringBuffer();
-            String key = null;
-            Object value = null;
+            StringBuilder sets = new StringBuilder();
+            String key;
+            Object value;
             try {
                 // prepare the fields and values
-                Enumeration keys = item.keys();
-                StringBuffer fields = new StringBuffer();
-                StringBuffer values = new StringBuffer();
-                Float floatValue = null;
+                Enumeration<String> keys = item.keys();
+                Float floatValue;
+
+                Statement stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.updateTaxon()");
 
                 while (keys.hasMoreElements()) {
-                    key = (String) keys.nextElement();
+                    key = keys.nextElement();
                     value = item.get(key);
 
                     //if (!"worldants".equals(source)) {  // A taxon from a specimen record source.
@@ -399,12 +418,11 @@ public class AntwebUpload {
 
                     if (key.equals("decimal_latitude") || key.equals("decimal_longitude")) {
                         floatValue = (Float) item.get(key);
-                        String setStr = key + "=" + floatValue.floatValue() + ",";
+                        String setStr = key + "=" + floatValue + ",";
                         sets.append(setStr);
                         //A.log("updateTaxon():" + setStr);
                     } else {
                         if (value instanceof String) {
-                            String valueStr = (String) value;
 
 					/* // Nothing seems to test for: C�te d'Ivoire                    
 					  String original = (String) value; //new String("A" + "\u00ea" + "\u00f1" + "\u00fc" + "C");
@@ -425,16 +443,15 @@ public class AntwebUpload {
                       if (valueStr.contains("Ivoire")) if (AsciiUtils.isNonAscii(valueStr)) A.log("updateTaxon() 2hasDiacritics:" + valueStr);
 					*/
 
+                            // quote escaping is handled by enquoteLiteral
+                            // if (valueStr.contains("\"") || valueStr.contains("\'")) {
+                            //     //A.log("updateTaxon() key:" + key + " value:" + value);
+                            //     value = AntFormatter.escapeQuotes(valueStr);
+                            // }
 
-                            if (valueStr.contains("\"") || valueStr.contains("\'")) {
-                                //A.log("updateTaxon() key:" + key + " value:" + value);
-                                value = AntFormatter.escapeQuotes(valueStr);
-                            }
-
-                            if (((String) value).equals("true")) value = "1";
-                            if (((String) value).equals("false")) value = "0";
-
-                            sets.append(translateKeyToColumn(key) + "='" + value + "',");
+                            if (value.equals("true")) value = "1";
+                            if (value.equals("false")) value = "0";
+                            sets.append(translateKeyToColumn(key) + "=" + stmt.enquoteLiteral((String) value) + ",");
                         } else {
                             sets.append(translateKeyToColumn(key) + "=" + value + ",");
                         }
@@ -444,11 +461,11 @@ public class AntwebUpload {
                     sets.setLength(sets.length() - 1);
                 }
 
-                query += " " + sets.toString();
+                query += " " + sets;
                 query += ", pending=0";
                 if (!query.contains("parent_taxon_name"))
-                    query += ", parent_taxon_name='" + Taxon.getParentTaxonNameFromName(taxonName) + "'";
-                query += " where taxon_name = '" + taxonName + "'";
+                    query += ", parent_taxon_name=" + stmt.enquoteLiteral(Taxon.getParentTaxonNameFromName(taxonName));
+                query += " where taxon_name = " + stmt.enquoteLiteral(taxonName);
 
                 if (!query.contains("insert_method")) {
                     s_log.error("updateTaxon() Somewhere in the following stacktrace should have been put an insert_method into item."); // + " query:" + query);
@@ -457,8 +474,6 @@ public class AntwebUpload {
 
                 if (AntwebProps.isDevMode() && taxonName.equals(s_testTaxonName))
                     s_log.warn("updateTaxon() taxonName:" + taxonName + " query:" + query);
-
-                Statement stmt = DBUtil.getStatement(getConnection(), "AntwebUpload.updateTaxon()");
 
                 int c = stmt.executeUpdate(query);
                 //A.iLog("AntwebUpload.updateTaxon() c:" + c + " taxonName:" + taxonName, 10000); //query:" + query);
@@ -478,7 +493,7 @@ public class AntwebUpload {
                 throw e;
             }
         }
-    }  
+    }
     
 	public static boolean hasDiacritics(String s) {
 		// Decompose any á into a and combining-'.
@@ -488,7 +503,7 @@ public class AntwebUpload {
 	  return Normalizer.isNormalized(s, Normalizer.Form.NFD);
 	}      
 
-    protected int saveTaxonAndProjTaxon(Hashtable item, String project) {
+    protected int saveTaxonAndProjTaxon(Hashtable<String, Object> item, String project) {
         int c = 0; // The number of saved Taxa (saveTaxon() is recursive).
         
         //A.log("saveTaxonAndProjTaxon() project:" + project + " item:" + item);    
@@ -643,6 +658,12 @@ public class AntwebUpload {
       return "false";    
     }
 
+    /**
+     * Determines if column should be skipped from key name
+     * @param key
+     * @param value
+     * @return
+     */
     private boolean enactExceptions(String key, Object value) {
         // We don't update these. These are never included for specimen taxa.
       if ("author_date_html".equals(key)) return true;
@@ -651,7 +672,7 @@ public class AntwebUpload {
       //if ("country".equals(key)) return true;
       //if ("bioregion".equals(key)) return true;
 
-      return ("reference_id".equals(key)) && ("".equals((String) value));   // The ints are sometimes nil "".
+      return ("reference_id".equals(key)) && ("".equals(value));   // The ints are sometimes nil "".
     }
 
     // If an exception, value will not be updated. Only runs on specimen record taxa.
@@ -674,7 +695,7 @@ public class AntwebUpload {
         return true;
     }
 
-    void saveSpecimen(Hashtable item)
+    void saveSpecimen(Hashtable<String, Object> item)
       throws SQLException {
       //throws com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException {
        /** 
@@ -707,9 +728,9 @@ public class AntwebUpload {
         Statement stmt = null;
         try {
             // prepare the fields and values
-            Enumeration keys = item.keys();
+            Enumeration<String> keys = item.keys();
             StringBuilder fields = new StringBuilder();
-            StringBuffer values = new StringBuffer();
+            StringBuilder values = new StringBuilder();
             fields.append("(");
             values.append("(");
             String key;
@@ -717,18 +738,18 @@ public class AntwebUpload {
             Float floatValue;
             
             while (keys.hasMoreElements()) {
-                key = (String) keys.nextElement();
+                key = keys.nextElement();
                 switch (key) {
                     case "decimal_latitude":
                     case "decimal_longitude":
                         floatValue = (Float) item.get(key);
                         fields.append(key + ",");
 
-                        String appendValue = "";
+                        String appendValue;
                         if (floatValue.compareTo((float) -999.9) == 0) {
                             appendValue = "null,";
                         } else {
-                            appendValue = floatValue.floatValue() + ",";
+                            appendValue = floatValue + ",";
                         }
                         values.append(appendValue);
                         //A.log("saveSpecimen() appendValue:" + appendValue);
@@ -784,15 +805,15 @@ public class AntwebUpload {
                     }
                     case "access_group":
                         fields.append("access_group,");
-                        values.append(((Integer) item.get("access_group")).intValue() + ",");
+                        values.append(item.get("access_group") + ",");
                         break;
                     case "access_login":
                         fields.append("access_login,");
-                        values.append(((Integer) item.get("access_login")).intValue() + ",");
+                        values.append(item.get("access_login") + ",");
                         break;
                     case "is_introduced":
                         fields.append("is_introduced,");
-                        values.append(((Integer) item.get("is_introduced")).intValue() + ",");
+                        values.append(item.get("is_introduced") + ",");
                         break;
                     case "backupFileName":
                         fields.append("backup_file_name,");
@@ -806,9 +827,9 @@ public class AntwebUpload {
                             // Perhaps a more stringent check here is appropriate.  For now, if the
                             // last letter of the string is a \ then it fouls up the SQL quoting.
                             // This was happening for some of Jack's collectionnotes.
-                            String lastChar = null;
+                            String lastChar;
                             try {
-                                lastChar = value.substring(value.length() - 1, value.length());
+                                lastChar = value.substring(value.length() - 1);
                                 if (lastChar.equals("\\")) value += " ";
                             } catch (Exception e) {
                                 // no action taken
@@ -926,7 +947,7 @@ public class AntwebUpload {
 	
 
     // Similar method implemented in SpecimenUpload. This one called from SpeciesListUpload.
-    public String setStatusAndCurrentValidName(String taxonName, Hashtable taxonItem)
+    public String setStatusAndCurrentValidName(String taxonName, Hashtable<String, Object> taxonItem)
       throws SQLException
     {
         // Here we choose the best taxa for uploaded specimen.
@@ -1138,10 +1159,10 @@ public class AntwebUpload {
         getUploadDb().insertSubfamily(taxonName, "formicidae", subfamily, source, insertMethod, Status.UNRECOGNIZED); // This is a PLACEHOLDER taxon.
     }
 
-    protected int addMissingGenera(Hashtable genera, String project, String source, int lineNum, int accessGroup) {
+    protected int addMissingGenera(Hashtable<String, Object> genera, String project, String source, int lineNum, int accessGroup) {
         int c = 0;
 
-        for (String genus : (Set<String>) genera.keySet()) {
+        for (String genus : genera.keySet()) {
             String subfamily = (String) genera.get(genus);
             if (isValidSubfamilyCheck(subfamily)) {
 				c += addMissingGenus(subfamily, genus, project, source, "addMissingGenera", lineNum, accessGroup);
@@ -1193,22 +1214,22 @@ public class AntwebUpload {
         return c;
     }
 
-    protected void saveDescriptionEdit(Hashtable description) {
+    protected void saveDescriptionEdit(Hashtable<String, Object> description) {
       saveDescription(description, "description_edit");
     }
-    protected void saveDescriptionHomonym(Hashtable description) {
+    protected void saveDescriptionHomonym(Hashtable<String, Object> description) {
       saveDescription(description, "description_homonym");
     }
-    private void saveDescription(Hashtable description, String table) {
+    private void saveDescription(Hashtable<String, Object> description, String table) {
       /*
         We used to save all of the description records in the description table.
         Now we are allowing them to be created via the user interface, aside from
         taxonomichistory.
        */
 
-        for (Enumeration keys = description.keys(); keys.hasMoreElements();) {
+        for (Enumeration<String> keys = description.keys(); keys.hasMoreElements();) {
           String taxonName = (String) description.get("taxon_name");
-          String title = (String) keys.nextElement();            
+          String title = keys.nextElement();
           String content = (String) description.get(title);
           String authorDate = (String) description.get("author_date");        
           authorDate = UploadUtil.cleanHtml(authorDate);

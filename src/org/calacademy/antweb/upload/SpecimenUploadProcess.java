@@ -20,16 +20,13 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
     and the data file uploaded.  Biota application is no longer under active development.
     
 */
-    private static Log s_log = LogFactory.getLog(SpecimenUploadProcess.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenUploadProcess.class);
 
     static int MAXLENGTH = 80;
 
     String currentDateFunction = "now()";  // for mysql 
-    
-    private TreeSet illegitimateCountries = new TreeSet();
-    private TreeSet illegitimateBioregions = new TreeSet();
 
-    SpecimenUploadProcess(Connection connection) {
+	SpecimenUploadProcess(Connection connection) {
       super(connection);
 
       //setSpecimenUploadDb(new SpecimenUploadDb(getConnection()));       
@@ -45,7 +42,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
     }
 
     // This is useful when various values depend on others. They are all loaded now.
-    boolean processLine(Hashtable specimenItem, Hashtable taxonItem, int lineNum, String shortFileName, Group group) 
+    boolean processLine(Hashtable<String, Object> specimenItem, Hashtable<String, Object> taxonItem, int lineNum, String shortFileName, Group group)
       throws SQLException {
 
         //UploadHelper.setLineNum(lineNum);
@@ -431,7 +428,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 	private static int s_statusAndCurrentValidNameCount = 0;    
 
     // Similar method in AntwebUpload.
-    public String setStatusAndCurrentValidName(String taxonName, Hashtable taxonItem, Hashtable specimenItem, String source)
+    public String setStatusAndCurrentValidName(String taxonName, Hashtable<String, Object> taxonItem, Hashtable<String, Object> specimenItem, String source)
       throws SQLException
     {  
 

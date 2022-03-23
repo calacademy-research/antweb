@@ -126,12 +126,11 @@ public class Formatter implements Serializable {
 		//theString = replace(theString, "\"", "\"\"");
 		return theString;
 	}
-	
+
 	public static String escapeQuotes(String theString) {
 		if (theString == null) return null;
-		Formatter formatter = new Formatter();
-		theString = formatter.replace(theString, "'", "''");
-		theString = formatter.replace(theString, "\"", "\"\"");
+		theString = replace(theString, "'", "''");
+		theString = replace(theString, "\"", "\"\"");
 		return theString;
 	}
 
@@ -162,7 +161,6 @@ public class Formatter implements Serializable {
 	/** Removes all quotes from the beginning and end of a string
 	 *  and reduces multiple quotes to single quotes inside the string
 	 */
-
 	public static String dequote(String oldString) {
 
 		if (oldString == null) {

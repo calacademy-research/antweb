@@ -438,27 +438,38 @@ public class UploadDb extends AntwebDb {
           return;
         }
         String dml = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "UploadDb.insertDescription()");      
-    
-            dml = "delete from " + table + " where taxon_name = '" + taxonName
-              + "' and title = 'taxonomichistory'"; 
-            if (authorDate != null) dml += " and author_date = '" + authorDate + "'";  
-              
+
+            dml = "delete from " + table + " where taxon_name = ? and title = 'taxonomichistory'";
+            if (authorDate != null) dml += " and author_date = ?";
+
+            stmt = DBUtil.getPreparedStatement(getConnection(), "UploadDb.insertDescription()", dml);
+
+            stmt.setString(1, taxonName);
+            if (authorDate != null) stmt.setString(2, authorDate);
+
             //s_log.warn("insertDescription() dml:" + dml);
-            stmt.executeUpdate(dml);
+            stmt.executeUpdate();
 
             //s_log.info("insertDescription() query:" +  query);
-        
-            stmt = getConnection().createStatement();
-            dml = "insert into " + table + " (taxon_name,";
-            if (authorDate != null) dml += " author_date,";  
-            dml += " title, content, is_manual_entry) " + " values ('" + taxonName + "', ";
-            if (authorDate != null) dml += " '" + authorDate + "',"; 
-            dml += " '" + title  + "', '" + content + "', 0" +  ")";
-            stmt.executeUpdate(dml);
-            
+
+            stmt.close();
+
+            String insertStatement = "insert into " + table + " (taxon_name, title, content, is_manual_entry) values (?, ?, ?, 0)";
+
+            if (authorDate != null) {
+                insertStatement = "insert into " + table + " (taxon_name, title, content, is_manual_entry, author_date) values (?, ?, ?, 0, ?)";
+            }
+
+            stmt = DBUtil.getPreparedStatement(getConnection(), "UploadDb.insertDescription()", insertStatement);
+
+            stmt.setString(1, taxonName);
+            stmt.setString(2, title);
+            stmt.setString(3, content);
+            if (authorDate != null) stmt.setString(4, authorDate);
+
+            stmt.executeUpdate();
 
         } catch (SQLException e) {
             s_log.error("insertDescription() e:" + e + " dml:" + dml);
