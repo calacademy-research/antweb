@@ -131,8 +131,7 @@ public class Scheduler extends Action {
 				Date startTime = new Date();
 			    String url = null;
 				try {
-					int i = 0;  // This will invoke all of them.
-					if (num > 0) i = num;    // This would invoke one of them
+					int i = Math.max(num, 0);  // This will invoke one of them if num != 0, otherwise invokes all of them
 
 					// if (AntwebProps.isDevMode()) i = 1;
 					//s_log.warn("doAction() action:" + action + " i:" + i + " num:" + num);

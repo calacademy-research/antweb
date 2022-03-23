@@ -362,7 +362,7 @@ Out of bounds:
 	  double latDiff = latMax - latMin;
 	  double lngDiff = lngMax - lngMin;
 
-	  double maxDiff = (lngDiff > latDiff) ? lngDiff : latDiff;
+	  double maxDiff = Math.max(lngDiff, latDiff);
 	  if (maxDiff < 360 / Math.pow(2, 20)) {
 		zoomLevel = 21;
 	  } else {
