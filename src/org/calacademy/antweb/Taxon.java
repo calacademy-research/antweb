@@ -719,8 +719,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             taxon = new Kingdom();
         } else if (Rank.PHYLUM.equals(rank)) {
             taxon = new Phylum();
-        } else if (Rank.PHYLUM.equals(rank)) {
-            taxon = new org.calacademy.antweb.Class();
+//        } else if (Rank.PHYLUM.equals(rank)) {
+//            taxon = new org.calacademy.antweb.Class();
         } else if (Rank.ORDER.equals(rank)) {
             taxon = new Order();
         } else if (Rank.FAMILY.equals(rank)) {
@@ -1582,7 +1582,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 			if ("alateMale".equals(caste) && "alate".equals(rsetSubcaste)) return code;
 			if ("intercaste".equals(caste) && "intercaste".equals(rsetSubcaste)) return code;
 			if ("gynandromorph".equals(caste) && "gynandromorph".equals(rsetSubcaste)) return code;
-			if ("brachypterous".equals(caste) && "brachypterous".equals(rsetSubcaste)) return code;
+//			if ("brachypterous".equals(caste) && "brachypterous".equals(rsetSubcaste)) return code;
 			if ("larvaPupa".equals(caste) && "larva/pupa".equals(rsetSubcaste)) return code;
         }
 

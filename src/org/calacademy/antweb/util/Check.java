@@ -77,9 +77,9 @@ public class Check {
 
     // ActionForward a = Check.initLoginValidbusy(getDataSource(request, "conPool"), request, mapping); if (a != null) return a;
     public static ActionForward initLoginValidBusy(DataSource dataSource, HttpServletRequest request, ActionMapping mapping) {
-        ActionForward a = Check.initLoginValid(request, mapping); if (a != null) return a;
+        ActionForward a = Check.initLoginValid(request, mapping);
         if (a != null) return a;
-        a = Check.busy(dataSource, request, mapping); if (a != null) return a;
+        a = Check.busy(dataSource, request, mapping);
         return a;
     }
 

@@ -700,9 +700,9 @@ public class UploadAction extends Action {
 		  util.makeDirTree(fullDir);
 		} else if (!"homepage".equals(dir)) {
 		  dir = Project.getSpeciesListDir() + dir;
-		} else if ("homepage".equals(dir)) {
-		  dir = "web/homepage";
-		  serverDir = "homepage";
+//		} else if ("homepage".equals(dir)) {
+//		  dir = "web/homepage";
+//		  serverDir = "homepage";
 		}
 
 		String dirFileName = dir + "/" + fileName;
