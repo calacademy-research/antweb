@@ -843,7 +843,7 @@ public abstract class AntwebUtil {
     }
 
 
-  private static Hashtable<String, Integer> countHash = new Hashtable();
+  private static Hashtable<String, Integer> countHash = new Hashtable<>();
   public static void count(String key) {
     if (countHash.containsKey(key)) {
       Integer theCount = (Integer) countHash.get(key);  
@@ -867,7 +867,7 @@ public abstract class AntwebUtil {
       Integer count = (Integer) countHash.get(key);
       //A.log("logCountHash() " + key + ":" + count);
     }
-    countHash = new Hashtable();
+    countHash = new Hashtable<>();
   }
   
   public static String getAdminEmail() {
