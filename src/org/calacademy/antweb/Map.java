@@ -771,7 +771,7 @@ public class Map {
             }
             if (thisFloat != 0.0) {
                 
-                if (foundPoint == true) {
+                if (foundPoint) {
                     theArrayString.append(",");
                 } else {
                     foundPoint = true;
@@ -783,7 +783,7 @@ public class Map {
         theArrayString.append(")");
        // A.slog("getJavascriptArray() " + coord + ":" + points.size());
         
-        if (foundPoint == true) {
+        if (foundPoint) {
             return theArrayString.toString();
         } else {
             return null;
@@ -834,7 +834,7 @@ public class Map {
                     //i = i - 1; // because we didn't find something to add.
                     break;
             }
-            if (foundPoint == true) {
+            if (foundPoint) {
                 theArrayString.append(",");
             } else {
                 foundPoint = true;
@@ -844,7 +844,7 @@ public class Map {
 
         theArrayString.append(")");
         
-        if (foundPoint == true) {
+        if (foundPoint) {
             return theArrayString.toString();
         } else {
             return null;

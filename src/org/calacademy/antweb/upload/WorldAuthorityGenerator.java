@@ -448,11 +448,7 @@ public class WorldAuthorityGenerator {
     }
     
     private boolean isFossil(String line) {
-        boolean result = false;
-        if (extinctStar.matcher(line).find()) {
-            result = true;
-        }
-        return result;
+        return extinctStar.matcher(line).find();
     }
     
     private boolean isValid(String line) {
@@ -489,11 +485,7 @@ public class WorldAuthorityGenerator {
     }
     
     private boolean isGreen(String line) {
-        boolean result = false;
-        if (green.matcher(line).find()) {
-            result = true;
-        }
-        return result;
+        return green.matcher(line).find();
     }
     
     private boolean isExtant(String line) {
@@ -1004,20 +996,12 @@ public class WorldAuthorityGenerator {
         return result;
     }
     private boolean isSpecies(String line) {
-        boolean result = false;
-        
-        if (!notSpeciesP.matcher(line).find() && !isSubspecies(line)) {
-            result = true;
-        }
-        return result;
+
+        return !notSpeciesP.matcher(line).find() && !isSubspecies(line);
     }
     
     private boolean isSubspecies(String line) {
-        boolean result = false;
-        if (blue.matcher(line).find()) {
-            result = true;
-        }
-        return result;
+        return blue.matcher(line).find();
     }
     
     private boolean isGenus(String line) {
@@ -1281,11 +1265,7 @@ public class WorldAuthorityGenerator {
     }
     
     private boolean knownProblem(String line) {
-        boolean result = false;
-        if (line.contains("see under")) {
-            result = true;
-        }
-        return result;
+        return line.contains("see under");
     }
 
     private String fixKnownProblems(String line) {

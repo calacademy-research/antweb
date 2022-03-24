@@ -152,9 +152,8 @@ public class SpeciesListUploader {
     
     int worldantsCount = AntwebSystem.countLines(fileLoc);
     A.log("validateWorldantsFile() worldantsCount:" + worldantsCount);
-    boolean countIsLow = true;
 
-    if (worldantsCount > WORLDANTS_LOW_COUNT) countIsLow = false;
+    boolean countIsLow = worldantsCount <= WORLDANTS_LOW_COUNT;
 
     /*
     // The existing count in the database is low. Waive the 

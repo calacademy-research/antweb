@@ -150,7 +150,7 @@ public class TaxonMgr extends Manager {
                 continue;
             }
             genus = g;
-            if (genusFound == true && !s_ambiguousGenusReported) {
+            if (genusFound && !s_ambiguousGenusReported) {
                 s_ambiguousGenusReported = true;
                 s_log.warn("getGenusFromName(). AMBIGUOUS! Found a second genus with genusName:" + genusName + ". generaSize:" + s_genera.size());
                 //AntwebUtil.logShortStackTrace();

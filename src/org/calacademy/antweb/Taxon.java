@@ -1233,7 +1233,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     public boolean getHasImages() {
         boolean hasEm = false;
 
-        if (hasImages == true || images != null && images.size() > 0) {
+        if (hasImages || images != null && images.size() > 0) {
             hasEm = true;
         }
 
@@ -1361,10 +1361,10 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
                         foundOne = true;
                     } 
                     count++;
-                } while (foundOne == false && count < ors.length);
+                } while (!foundOne && count < ors.length);
 
                 // add padding if necessary
-                if (padding && foundOne == false) {
+                if (padding && !foundOne) {
                     thisList.add(blankImage);
                 }
             }
@@ -1714,10 +1714,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         ... even if we discard the results, the whole http request is rerun. Makes no sense (and hard to track down).
         Adjustment made so that it doesn't run on overviews that are regions.
          */
-        boolean skipGetUnpickedDefault = false;
-        if (overview instanceof Region || overview instanceof Subregion) {
-            skipGetUnpickedDefault = true;
-        }
+        boolean skipGetUnpickedDefault = overview instanceof Region || overview instanceof Subregion;
         if (!skipGetUnpickedDefault ) speciesNameSet = getSpeciesNameSet(connection, overview); // Could just returned null here?
 
         // Subfamilies are different.

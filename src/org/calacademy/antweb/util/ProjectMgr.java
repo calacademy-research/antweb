@@ -85,7 +85,7 @@ public class ProjectMgr {
       ArrayList<Project> projects = new ArrayList<>();
       for (String key : s_allProjectsHash.keySet()) {
         Project project = s_allProjectsHash.get(key);
-        if (true == project.getIsLive()) {
+        if (project.getIsLive()) {
           projects.add(project);
         }
       }
@@ -122,13 +122,13 @@ public class ProjectMgr {
       }
       HashMap<String, Project> projects = getAllProjectsHash();
       if (projects == null || projects.keySet() == null) {
-        if (unloadedProjectsReported == false) {
+        if (!unloadedProjectsReported) {
           s_log.warn("getProject() Seems projects not loaded yet.  useName:" + useName);
           unloadedProjectsReported = true;
         }
         return null;
       } else {
-        if (unloadedProjectsReported == true) {
+        if (unloadedProjectsReported) {
           s_log.warn("getProject() Projects are loaded now. Projects.size:" + projects.size());
           unloadedProjectsReported = false;
         }

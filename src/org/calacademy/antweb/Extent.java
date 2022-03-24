@@ -173,11 +173,7 @@ public class Extent {
     }
     
     public boolean hasAllZeros() {
-        boolean allZeros = false;
-        if (minLon == 0 && minLat == 0 && maxLon == 0 && maxLat == 0) {
-            allZeros = true;
-        }
-        return allZeros;
+        return minLon == 0 && minLat == 0 && maxLon == 0 && maxLat == 0;
     }
 
     public float getMaxLat() {

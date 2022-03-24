@@ -168,7 +168,7 @@ Request objects:
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);
 
-            if (rset.next() && hasInfo == false) {
+            if (rset.next() && !hasInfo) {
                 int lat = rset.getInt(1);
                 int lon = rset.getInt(2);
                 if (lat != 0 && lon != 0)

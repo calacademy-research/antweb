@@ -42,8 +42,7 @@ public class MessageMgr {
         return getErrors().size();
     }
     public static boolean hasErrors() {
-        if (getErrors().size() > 0) return true;
-        return false;
+        return getErrors().size() > 0;
     }
     private static int maxI = 20;
     public static String getErrorsReport() {
@@ -594,8 +593,7 @@ public class MessageMgr {
                 
                 String messages = "&nbsp;<b>" + getHeading() + detailLink + listSize + ": </b>";
 
-                boolean printAsList = true;
-                if ("adm1Missing".equals(getKey())) printAsList = false;
+                boolean printAsList = !"adm1Missing".equals(getKey());
                 int i = 0;
                 for (String value : list2) {
                   if (printAsList) {

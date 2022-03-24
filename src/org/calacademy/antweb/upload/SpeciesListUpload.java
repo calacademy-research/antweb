@@ -255,8 +255,7 @@ public class SpeciesListUpload extends AntwebUpload {
         // CLEAN UP METHODS.
         TaxonSetDb.updateTaxonSetTaxonNames(getConnection());
 
-        boolean skip = false;
-        if (AntwebProps.isDevMode()) skip = true;
+        boolean skip = AntwebProps.isDevMode();
         if (!skip) {
             new ProjTaxonDb(getConnection()).regenerateAllAntweb();
         } else {

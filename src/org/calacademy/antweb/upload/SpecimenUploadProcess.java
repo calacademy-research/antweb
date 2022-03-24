@@ -519,9 +519,8 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
                 
                 if (currentValidTaxonName == null) {
                   Taxon dummyTaxon = new HomonymDb(getConnection()).getHomonym(currentValidName);  // Unsafe usage! Homonym primary key includes author_date.
-                  boolean isHomonym = false;
-                  if (dummyTaxon != null) isHomonym = true;
-                  if (isHomonym) {
+                  boolean isHomonym = dummyTaxon != null;
+					if (isHomonym) {
                     // Seems to be Homonym.  Ideally in this case, we would create a taxon for the insertion.  As is, pointing at not current valid name.
                     // XXX.  FM.  See http://localhost/antweb/specimen.do?name=fmnhins0000109175 
                     // Create a matching taxon to be parent of the specimen.

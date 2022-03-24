@@ -60,7 +60,7 @@ public final class BioregionMapMgrAction extends Action {
 			}
 
 			s_log.debug("execute() refresh:" + bioregionMapMgrForm.isRefresh());
-            if (bioregionMapMgrForm.isRefresh() == true) {
+            if (bioregionMapMgrForm.isRefresh()) {
 			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
               taxonPropDb.refreshBioregionMap();
             }

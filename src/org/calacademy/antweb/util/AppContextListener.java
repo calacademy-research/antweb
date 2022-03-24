@@ -83,7 +83,7 @@ public final class AppContextListener
     public void contextInitialized(ServletContextEvent event)
     {
         boolean resourcesLoaded = AntwebProps.loadResources();
-        if (resourcesLoaded == false) contextDestroyed(event);
+        if (!resourcesLoaded) contextDestroyed(event);
 
         String stats = AntwebUtil.getMemoryStats();
         s_log.warn("+++++ Server Initialized. Antweb Version: " + AntwebProps.getAntwebVersion() + "+++++");

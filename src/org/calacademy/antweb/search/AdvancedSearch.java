@@ -363,7 +363,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
 
             // Every other search invert the results. This is useful for generating maps.
             // If we don't like a set of searchResults we can have another.
-            if (flipSort == true) sortString += " desc";
+            if (flipSort) sortString += " desc";
             flipSort = !flipSort;
             
             theQuery

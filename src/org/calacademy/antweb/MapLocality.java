@@ -347,7 +347,7 @@ public class MapLocality {
 			}
 			if (thisFloat != 0.0) {
 				
-				if (foundPoint == true) {
+				if (foundPoint) {
 					theArrayString.append(",");
 				} else {
 					foundPoint = true;
@@ -358,7 +358,7 @@ public class MapLocality {
 
 		theArrayString.append(")");
 		
-		if (foundPoint == true) {
+		if (foundPoint) {
 			return theArrayString.toString();
 		} else {
 			return null;
@@ -393,7 +393,7 @@ public class MapLocality {
 					break;
 			}
 			
-			if (foundPoint == true) {
+			if (foundPoint) {
 				theArrayString.append(",");
 			} else {
 				foundPoint = true;
@@ -403,7 +403,7 @@ public class MapLocality {
 
 		theArrayString.append(")");
 		
-		if (foundPoint == true) {
+		if (foundPoint) {
 			return theArrayString.toString();
 		} else {
 			return null;

@@ -913,7 +913,7 @@ public class UploadAction extends Action {
           boolean parseLine = true;
 
           // if it follows the pattern of one word, followed by a period, no *
-          if (line.length() > 0 && line.substring(0,1).equals("*")) parseLine = false;
+          if (line.length() > 0 && line.charAt(0) == '*') parseLine = false;
           if (!line.contains("(")) parseLine = false;
           int periodIndex = line.indexOf(".");
           if (periodIndex < 0) continue;
