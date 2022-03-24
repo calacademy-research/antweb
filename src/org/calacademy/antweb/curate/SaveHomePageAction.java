@@ -62,14 +62,10 @@ public final class SaveHomePageAction extends Action {
                     //s_log.info("execute update:" + update);
                     stmt.executeUpdate(update);
                 }
-            } catch (IllegalAccessException e) {
-                AntwebUtil.logStackTrace(e);
-            } catch (SecurityException e) {
-                AntwebUtil.logStackTrace(e);
-            } catch (ClassNotFoundException e) {
+            } catch (IllegalAccessException | ClassNotFoundException | SecurityException e) {
                 AntwebUtil.logStackTrace(e);
             }
-            
+
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
             return mapping.findForward("error");

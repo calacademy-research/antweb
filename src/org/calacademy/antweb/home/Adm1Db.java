@@ -26,10 +26,9 @@ public class Adm1Db {
       adm1 = Formatter.initCap(adm1);
             
       boolean contains = adm1s.contains(adm1);
-      if (contains) return true;
-
-      //s_log.warn("isValid() contains:" + contains + " adm1:" + adm1);
+      // if (!contains) s_log.warn("isValid() contains:" + contains + " adm1:" + adm1);
       return contains;
+
     }
 
     public static void populate(Connection connection) {

@@ -99,7 +99,7 @@ public final class DescEditSearchResults extends GenericSearchResults
     s_log.info("sorting descriptionEdits with field " + fieldName);
       switch (fieldName) {
           case "code":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -111,7 +111,7 @@ public final class DescEditSearchResults extends GenericSearchResults
 
               break;
           case "shotType":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -122,7 +122,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "shotNumber":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -133,7 +133,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "name":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -146,7 +146,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "artist":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -157,7 +157,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "group":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -168,7 +168,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "uploadDate":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;

@@ -79,8 +79,8 @@ public final class CompareResultsAction extends ResultsAction {
 
         if (taxaForm.getTaxa() != null || taxaForm.getChosen() != null) {
             String[] chosen = taxaForm.getChosen();
-            ArrayList<String> chosenList = new ArrayList(Arrays.asList(chosen));
-            ArrayList<ResultItem> chosenResults = null;
+            ArrayList<String> chosenList = new ArrayList<>(Arrays.asList(chosen));
+            ArrayList<ResultItem> chosenResults;
                 
             String resultRank = taxaForm.getResultRank();
             if (resultRank == null) resultRank = ResultRank.SPECIMEN;
@@ -181,7 +181,7 @@ public final class CompareResultsAction extends ResultsAction {
     private TreeMap<Taxon, Integer> getSpecimenToCompare(HttpServletRequest request, ArrayList<ResultItem> chosenResults
             , ArrayList<String> chosenList, Project project) {
 
-		TreeMap<Taxon, Integer> specimenToCompare = new TreeMap();   // maps a specimen to its position in the search results.  was new GenusSpeciesItemComparator()
+		TreeMap<Taxon, Integer> specimenToCompare = new TreeMap<>();   // maps a specimen to its position in the search results.  was new GenusSpeciesItemComparator()
 
 		Specimen specimen = null;
 		Connection connection = null;
@@ -226,7 +226,7 @@ public final class CompareResultsAction extends ResultsAction {
     private TreeMap<Taxon, Integer> getTaxaToCompare(HttpServletRequest request, ArrayList<ResultItem> chosenResults
             , ArrayList<String> chosenList, Project project, String resultRank) {
 
-		TreeMap<Taxon, Integer> taxaToCompare = new TreeMap(new GenusSpeciesItemComparator());   // maps a taxon to its position in the search results
+		TreeMap<Taxon, Integer> taxaToCompare = new TreeMap<>(new GenusSpeciesItemComparator());   // maps a taxon to its position in the search results
 
 		Taxon taxon = null;
 		Connection connection = null;
@@ -288,13 +288,13 @@ public final class CompareResultsAction extends ResultsAction {
 
     protected ArrayList<ResultItem> getSpecimensForTaxaFromResults(ArrayList<String> chosenList
              , ArrayList<ResultItem> theTaxa, ArrayList<ResultItem> searchResults) {
-        ArrayList<ResultItem> theSpecimens = new ArrayList();
-        ResultItem thisItem = null;
-        int thisChosen = 0;
+        ArrayList<ResultItem> theSpecimens = new ArrayList<>();
+        ResultItem thisItem;
+        int thisChosen;
   
         for (String chosenListNext : chosenList) {
             thisChosen = Integer.parseInt(chosenListNext);
-            thisItem = (ResultItem) theTaxa.get(thisChosen);
+            thisItem = theTaxa.get(thisChosen);
 
             //A.log("getSpecimensForTaxaFromResults() chosenListNext:" + chosenListNext + " thisItem:" + thisItem);
 

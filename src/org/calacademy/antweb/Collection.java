@@ -28,7 +28,7 @@ public class Collection extends AdvancedSearchResults {
     }
 
 
-    private ArrayList<Group> groupList = new ArrayList();
+    private ArrayList<Group> groupList = new ArrayList<>();
     
     protected Map map;
     
@@ -87,7 +87,7 @@ public class Collection extends AdvancedSearchResults {
     // We override both GenericSearchResults.getResultsAsTaxon() and GenericSearchResults.sortBy()
     // This method allows getResultsAsTaxon to work correctly...
     public ArrayList<ResultItem> getResults() {
-        if (getSpecimenResults().getResults() == null) return new ArrayList();    
+        if (getSpecimenResults().getResults() == null) return new ArrayList<>();
         return getSpecimenResults().getResults();
     }
 

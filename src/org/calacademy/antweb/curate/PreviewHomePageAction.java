@@ -116,17 +116,7 @@ public final class PreviewHomePageAction extends Action {
 
             result = thisMethod.invoke(form, paramsObj);
             
-        } catch (SecurityException e) {
-            AntwebUtil.logStackTrace(e);
-        } catch (IllegalArgumentException e) {
-            AntwebUtil.logStackTrace(e);
-        } catch (ClassNotFoundException e) {
-            AntwebUtil.logStackTrace(e);
-        } catch (NoSuchMethodException e) {
-            AntwebUtil.logStackTrace(e);
-        } catch (IllegalAccessException e) {
-            AntwebUtil.logStackTrace(e);
-        } catch (InvocationTargetException e) {
+        } catch (SecurityException | IllegalArgumentException | ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             AntwebUtil.logStackTrace(e);
         }
         return result;

@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class Login implements Comparable {
 
-    private static Log s_log = LogFactory.getLog(Login.class);
+    private static final Log s_log = LogFactory.getLog(Login.class);
     
     public static int BRIAN = 1;
     public static int MARK = 22;

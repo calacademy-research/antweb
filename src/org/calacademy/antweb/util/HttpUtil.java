@@ -480,9 +480,9 @@ public abstract class HttpUtil {
     public static Map<String, String> getHeadersInfo(HttpServletRequest request) {
 		Map<String, String> map = new HashMap<>();
 
-		Enumeration headerNames = request.getHeaderNames();
+		Enumeration<String> headerNames = request.getHeaderNames();
 		while (headerNames.hasMoreElements()) {
-			String key = (String) headerNames.nextElement();
+			String key = headerNames.nextElement();
 			String value = request.getHeader(key);
 			map.put(key, value);			
 		}
@@ -491,9 +491,9 @@ public abstract class HttpUtil {
 
     public static String getHeadersStr(HttpServletRequest request) {
         String headerStr = "headerStr:";
-		Enumeration headerNames = request.getHeaderNames();
+		Enumeration<String> headerNames = request.getHeaderNames();
 		while (headerNames.hasMoreElements()) {
-			String key = (String) headerNames.nextElement();
+			String key = headerNames.nextElement();
 			String value = request.getHeader(key);
             headerStr += " " + key + ":" + value;
 		}
@@ -561,9 +561,9 @@ public abstract class HttpUtil {
   // Could be multiple ones? This just gets first.
   public static String getParamValue(String param, HttpServletRequest request) {
     String paramsStr = "";            
-    Enumeration names = request.getParameterNames();
+    Enumeration<String> names = request.getParameterNames();
     while (names.hasMoreElements()) {
-      String name = (String) names.nextElement();
+      String name = names.nextElement();
       if (param.equals(name)) {
         String[] values = request.getParameterValues(name);    
         for (String value : values) {
@@ -582,9 +582,9 @@ public abstract class HttpUtil {
   public static String getParamsStr(String param, HttpServletRequest request) {
     // Used by oneView.jsp to get the multiple "chosen" params.
     String paramsStr = "";            
-    Enumeration names = request.getParameterNames();
+    Enumeration<String> names = request.getParameterNames();
     while (names.hasMoreElements()) {
-      String name = (String) names.nextElement();
+      String name = names.nextElement();
       if ("chosen".equals(name)) {
         String[] values = request.getParameterValues(name);    
         for (String value : values) {

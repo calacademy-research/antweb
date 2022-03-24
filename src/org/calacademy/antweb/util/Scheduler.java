@@ -171,10 +171,8 @@ public class Scheduler extends Action {
 						s_log.info("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
-				} catch (AntwebException e) {
+				} catch (AntwebException | IOException e) {
 					s_log.error("doAction() Scheduler failed. Investigate log files. e:" + e + " url:" + url);
-				} catch (IOException e) {
-				    s_log.error("doAction() Scheduler failed. Investigate log files. e:" + e + " url:" + url);
 				}
 				message = "Scheduler " + action + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
 				s_log.warn("doAction() " + message);

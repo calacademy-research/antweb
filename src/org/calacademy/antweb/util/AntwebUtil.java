@@ -317,14 +317,11 @@ public abstract class AntwebUtil {
    StringBuilder text = new StringBuilder();
    try {
     String NL = System.getProperty("line.separator");
-    Scanner scanner = new Scanner(new FileInputStream(fileName));
-    try {
-      while (scanner.hasNextLine()){
-        text.append(scanner.nextLine() + NL);
-      }
-    } finally {
-      scanner.close();
-    } 
+     try (Scanner scanner = new Scanner(new FileInputStream(fileName))) {
+       while (scanner.hasNextLine()) {
+         text.append(scanner.nextLine()).append(NL);
+       }
+     }
    } catch(FileNotFoundException e) {
      return null;
    } catch(Exception e) {

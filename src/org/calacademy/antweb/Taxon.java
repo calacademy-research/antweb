@@ -175,7 +175,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       return false;
     }
 
-    public static Taxon getTaxon(Hashtable item) {
+    public static Taxon getTaxon(Hashtable<String, Object> item) {
         String rank = (String) item.get("rank");
         Taxon taxon = getTaxonOfRank(rank);
         taxon.setKingdomName((String) item.get("kingdom_name"));
@@ -2668,7 +2668,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         if (getChildren() != null) {
 
 //            Taxon thisChild;
-            List goodArrayList = Arrays.asList(goodList);
+            List<String> goodArrayList = Arrays.asList(goodList);
             ArrayList<Taxon> newChildren = new ArrayList<>();
             for (Taxon thisChild : getChildren()) {
 //            Iterator iterator = children.iterator();

@@ -22,7 +22,7 @@ public class SpeciesListDb extends AntwebDb {
     
     public ArrayList<String> fetchMappableSpecimenLists(Login login) throws SQLException {
       
-      ArrayList<String> refListList = new ArrayList(); //(ArrayList<String>) speciesListList.clone();
+      ArrayList<String> refListList = new ArrayList<>(); //(ArrayList<String>) speciesListList.clone();
       
       int loginId = login.getId();
         
@@ -398,7 +398,7 @@ public class SpeciesListDb extends AntwebDb {
           return "";
         }
 
-        ArrayList<String> chosenList = new ArrayList(Arrays.asList(chosen));
+        ArrayList<String> chosenList = new ArrayList<>(Arrays.asList(chosen));
         //ArrayList<String> oldChosenList = new ArrayList(Arrays.asList(oldChosen));
 
 		// Don't just delete.  Select * of them.  Before I delete it, see if it is the only taxon

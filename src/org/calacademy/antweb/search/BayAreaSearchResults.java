@@ -65,7 +65,7 @@ public final class BayAreaSearchResults
 				theNames.put(fullName, item);
 			}
 		}
-		Collections.sort(myResults, new ResultItemComparator());
+		myResults.sort(new ResultItemComparator());
 		this.results = myResults;
 	}
 

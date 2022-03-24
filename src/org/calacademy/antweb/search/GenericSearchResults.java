@@ -321,7 +321,7 @@ public class GenericSearchResults implements Serializable {
                 myResults.add(item);
             }
 
-        Collections.sort(myResults, new ResultItemComparator());
+        myResults.sort(new ResultItemComparator());
         this.results = myResults;
     }
 
@@ -622,7 +622,7 @@ public class GenericSearchResults implements Serializable {
             resItem.setTypes((Boolean) typeCheck.get(thisCombo));
 		}
 
-        Collections.sort(myResults, new ResultItemComparator());
+        myResults.sort(new ResultItemComparator());
         this.results = myResults;
     }
             

@@ -1267,7 +1267,7 @@ public class AntwebUpload {
       return uploadDetails.getMessageMgr();
     }
     
-    protected void setHigherTaxonomicHierarchy(Hashtable item) {
+    protected void setHigherTaxonomicHierarchy(Hashtable<String, Object> item) {
         // set the hierarchy.  This is true for all projects.  Specimens data may differ.
         
         String family = (String) item.get("family");

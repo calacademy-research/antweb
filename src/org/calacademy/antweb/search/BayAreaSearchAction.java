@@ -50,7 +50,7 @@ public final class BayAreaSearchAction extends Action {
 		HttpSession session = request.getSession();
 
 		String[] adm2s = searchParameters.getAdm2s();
-		ArrayList searchResults = null;
+		ArrayList<ResultItem> searchResults = null;
 	//	BayAreaSearchResults results = new BayAreaSearchResults();
 
     //s_log.warn("getSearchResults() adm2s:" + adm2s);

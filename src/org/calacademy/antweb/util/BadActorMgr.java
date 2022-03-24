@@ -15,7 +15,7 @@ public abstract class BadActorMgr {
       return false; // To be...
     }
 
-    private static HashMap badActorMap = new HashMap<String, Integer>();
+    private static final HashMap<String, Integer> badActorMap = new HashMap<>();
 
     public static void addBadActor(HttpServletRequest request) {
         String ip = HttpUtil.getClientIpAddress(request);
@@ -26,7 +26,7 @@ public abstract class BadActorMgr {
       A.iLog("addBadActor() ip:" + ip);
       if (ip != null) {
         if (true || !"http://0:0:0:0:0:0:0:1".equals(ip)) {
-          Integer count = (Integer) badActorMap.get(ip);
+          Integer count = badActorMap.get(ip);
           if (count == null) {
               badActorMap.put(ip, 1);
           } else {

@@ -191,11 +191,16 @@ public class HomonymDb extends AntwebDb {
         if (authorDate != null) {
             criteria += " and author_date = '" + authorDate + "'";
         } else {
-            if ("myrmicinaecarebara silvestrii".equals(taxonName)) criteria += " and author_date = '(Santschi, 1914)'";
-            else if ("myrmicinaesolenopsis pygmaea".equals(taxonName)) criteria += " and author_date = 'Forel, 1905'";
-            else if ("myrmicinaepheidole longipes".equals(taxonName)) {
-                s_log.warn("No valid homonym for myrmicinaepheidole longipes");
-                return null;
+            switch (taxonName) {
+                case "myrmicinaecarebara silvestrii":
+                    criteria += " and author_date = '(Santschi, 1914)'";
+                    break;
+                case "myrmicinaesolenopsis pygmaea":
+                    criteria += " and author_date = 'Forel, 1905'";
+                    break;
+                case "myrmicinaepheidole longipes":
+                    s_log.warn("No valid homonym for myrmicinaepheidole longipes");
+                    return null;
             }
             //s_log.info("getInfoHomonym() author_date should not be null for taxonName:" + taxonName);
         }

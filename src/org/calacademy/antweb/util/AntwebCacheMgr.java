@@ -11,7 +11,6 @@ import java.sql.*;
 import java.util.Date;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -137,15 +136,11 @@ public class AntwebCacheMgr {
             + "', " + busyConnections + ", " + HttpUtil.getIsBot(request) + ")";
 
         //s_log.warn("insertLongRequest() query:" + theInsert);
-                             
-        Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
+
+        try (Statement stmt = connection.createStatement()) {
             stmt.executeUpdate(theInsert);
         } catch (Exception e) {
-            s_log.warn("insertLongRequest e:" + e);    
-        } finally {
-            stmt.close();   
+            s_log.warn("insertLongRequest e:" + e);
         }
     }
 
@@ -175,18 +170,15 @@ public class AntwebCacheMgr {
       return theQuery;
     }
 
-    public static ArrayList getLongRequests(Connection connection) 
+    public static ArrayList<LongRequest> getLongRequests(Connection connection)
       throws SQLException {
-            ArrayList longRequests = new ArrayList();
-
-            String query = AntwebCacheMgr.getLongRequestsQuery(true, "");
+        String query = AntwebCacheMgr.getLongRequestsQuery(true, "");
             return getRequests(connection, query);
 	}
 
     // called by http://www.antweb.org/cache.do?action=display
-    public static ArrayList getLongRequestDetails(Connection connection, String url, String orderBy) 
+    public static ArrayList<LongRequest> getLongRequestDetails(Connection connection, String url, String orderBy)
       throws SQLException {
-        ArrayList longRequests = new ArrayList();
         String urlClause = "";
         if (!"all".equals(url)) urlClause = " and url = \"" + url + "\"";
         String orderByClause = "";
@@ -202,9 +194,9 @@ public class AntwebCacheMgr {
         return getRequests(connection, query);
 	}
 
-    public static ArrayList getRequests(Connection connection, String query)
+    public static ArrayList<LongRequest> getRequests(Connection connection, String query)
       throws SQLException {
-        ArrayList longRequests = new ArrayList();
+        ArrayList<LongRequest> longRequests = new ArrayList<>();
 
         Statement stmt = null;       
         ResultSet resultSet = null;
@@ -258,12 +250,8 @@ public class AntwebCacheMgr {
     public static void forgetCaching(Connection connection) throws SQLException {
         // Then delete all very old records from the table, regardless of cached or logged in, over a certain age.
         String theUpdate = "update long_request set cached = default";
-        Statement stmt = null;
-        try {
-          stmt = connection.createStatement();
-          stmt.executeUpdate(theUpdate);
-        } finally {
-          stmt.close();            
+        try (Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate(theUpdate);
         }
     }
     
@@ -282,12 +270,8 @@ public class AntwebCacheMgr {
    
     public static void deleteLongRequests(Connection connection) throws SQLException {
         String theDelete = "delete from long_request";
-        Statement stmt = null;
-        try {
-          stmt = connection.createStatement();
-          stmt.executeUpdate(theDelete);
-        } finally {
-          stmt.close();            
+        try (Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate(theDelete);
         }
     }
 
@@ -548,13 +532,9 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
 
         s_log.debug("updateCachedItems() query:" + theUpdate);
 
-        Statement stmt = null;
-        try {
-          stmt = connection.createStatement();
+      try (Statement stmt = connection.createStatement()) {
           stmt.executeUpdate(theUpdate);
-        } finally {
-          stmt.close();     
-        }
+      }
   }
 
 /*

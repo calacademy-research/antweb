@@ -45,8 +45,8 @@ public abstract class AntwebFunctions {
           rset = stmt.executeQuery(query);
 
           int count = 0; 
-          Vector taxonList = new Vector();  // for distinctness.
-          String href = null; 
+          Vector<String> taxonList = new Vector<>();  // for distinctness.
+          String href;
           while (rset.next()) {
             String taxonName = rset.getString("taxon_name");
             String code = rset.getString("code");
@@ -209,9 +209,8 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
         }
     }
     
-    public static ArrayList getMysqlProcessList(Connection connection)
+    public static ArrayList<String> getMysqlProcessList(Connection connection)
       throws SQLException {
-        String returnVal = "";
         String query = "show full processlist";
         String delim = " | ";
         ArrayList<String> list = new ArrayList<>();

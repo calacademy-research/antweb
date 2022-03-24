@@ -266,13 +266,10 @@ public class UtilAction extends Action {
 			request.setAttribute("message", "action not found:" + action);
 			return mapping.findForward("message");
 
-        } catch (SQLException e) {
+        } catch (SQLException | IOException e) {
             s_log.error("execute() action:" + action + " e:" + e);
             AntwebUtil.errorStackTrace(e);
-		} catch (IOException e) {
-			s_log.error("execute() action:" + action + " e:" + e);
-			AntwebUtil.errorStackTrace(e);
-        } finally {
+		} finally {
             DBUtil.close(connection, this, "UploadAction.execute() 1");
         }
 
@@ -303,17 +300,13 @@ public class UtilAction extends Action {
         try {
           jpeg.read(new FileInputStream(imagePath));
   
-        } catch (JpegException e) {
+        } catch (JpegException | IOException e) {
           message = "WSS. zonageekTest() e:" + e + " on " + imagePath;
           AntwebUtil.log(message);
           
           //continue;
-        } catch (IOException e) {
-          message = "WSS. zonageekTest() e:" + e + " on " + imagePath;
-          AntwebUtil.log(message);
-          //continue;
         }
-      }
+	  }
       return message;
     }
     

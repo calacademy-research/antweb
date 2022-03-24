@@ -131,11 +131,7 @@ public class UtilDataAction extends Action {
                 request.setAttribute("message", "action not found:" + action);
                 return mapping.findForward("message");
 
-            } catch (SQLException e) {
-                message = handleException(e, connection, action, loginName);
-            } catch (IOException e) {
-                message = handleException(e, connection, action, loginName);
-            } catch (AntwebException e) {
+            } catch (IOException | AntwebException e) {
                 message = handleException(e, connection, action, loginName);
             } catch (Exception e) {
                 message = handleException(e, connection, action, loginName);

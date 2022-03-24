@@ -209,10 +209,8 @@ public class AdvancedSearchAction extends Action {
           s_log.warn("getGoogleMap() null searchResults()");
           return null;
         }
-        ArrayList taxonList = null;
-        ArrayList<String> chosenList = null;
-      
-		Map map = new MapResultsAction().getMap(searchResults, taxonList, chosenList, resultRank, output, title, connection);
+
+		Map map = new MapResultsAction().getMap(searchResults, null, null, resultRank, output, title, connection);
 		//if (title.contains("AFRC")) s_log.warn("getGoogleMap() title:" + title + " map.points.size:" + map.getPoints().size());
         return map;
     }

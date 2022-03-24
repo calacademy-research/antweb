@@ -106,16 +106,13 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     }
         
 
-    public static Comparator<Project> getNameComparator = new Comparator<>() {
+    public static Comparator<Project> getNameComparator = (a1, a2) -> {
+        String name1 = a1.getTitle().toUpperCase();
+        String name2 = a2.getTitle().toUpperCase();
 
-        public int compare(Project a1, Project a2) {
-            String name1 = a1.getTitle().toUpperCase();
-            String name2 = a2.getTitle().toUpperCase();
-
-            //ascending order
-            return name1.compareTo(name2);
-        }
-    };        
+        //ascending order
+        return name1.compareTo(name2);
+    };
         
     public int compareTo(Project other) {
         //A.log("compareTo() fullName:" + getFullName() + " vs " + other.getFullName());

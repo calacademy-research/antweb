@@ -30,7 +30,7 @@ public final class ChooseComparisonAction extends Action {
 
         if (chosen != null) {
 
-            ArrayList theImages = new ArrayList();
+            ArrayList<SpecimenImage> theImages = new ArrayList<>();
             for (String s : chosen) {
                 theImages.add(createSpecimenImage(s));
             }

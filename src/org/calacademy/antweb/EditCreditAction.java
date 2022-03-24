@@ -140,11 +140,7 @@ public class EditCreditAction extends Action {
 		// go through each image in the images directory
 		File dir = new File("/home/antweb/images");
 
-		FilenameFilter filter = new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return !name.startsWith(".");
-			}
-		};
+		FilenameFilter filter = (dir1, name) -> !name.startsWith(".");
 
 		RE dot = null;
 		RE underscore = null;

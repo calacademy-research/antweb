@@ -341,7 +341,6 @@ public class ImageDb extends AntwebDb {
     public static ArrayList<String> getLikesLinkList(Connection connection) throws SQLException {
         ArrayList<String> imageList = new ArrayList<>();
         String theQuery = "select image_id, count(image_id) likes from image_like group by image_id";
-        imageList = new ArrayList();
 
         Statement stmt = null;
         ResultSet rset = null;

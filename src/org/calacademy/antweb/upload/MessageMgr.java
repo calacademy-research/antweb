@@ -26,7 +26,7 @@ public class MessageMgr {
     }
 
     // Used by Worldants
-    private static Vector<String> s_errors = new Vector<String>();
+    private static Vector<String> s_errors = new Vector<>();
     public static Vector<String> getErrors() {
         return s_errors;
     }
@@ -164,7 +164,7 @@ public class MessageMgr {
     public void init() {
         s_message = null;
         s_messages = new Vector();
-        s_errors = new Vector<String>();
+        s_errors = new Vector<>();
         flags = new HashMap<>();
 
       testList.add(new Test(noRecordsProcessed, STR, "<b>Rollback occurred. <font color=red>(not uploaded)</font></b>"));

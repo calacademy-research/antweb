@@ -111,10 +111,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
               s_log.debug("execute() (chosenTaxa) count:" + chosenTaxa.size());    // For Bay Area ants Marin: 81
 			  fieldGuide.setTaxa(chosenTaxa);			  
 		  	  fieldGuide.setTitle((String) session.getAttribute("searchTitle"));	
-            } catch (SQLException e) {
-                s_log.error("execute() e:" + e + " caught on request:" + AntwebUtil.getRequestInfo(request));
-                s_log.info(AntwebUtil.getStackTrace(e));
-            } catch (AntwebException e) {
+            } catch (SQLException | AntwebException e) {
                 s_log.error("execute() e:" + e + " caught on request:" + AntwebUtil.getRequestInfo(request));
                 s_log.info(AntwebUtil.getStackTrace(e));
             } finally {

@@ -144,7 +144,7 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
                      " join image on sp.code = image.image_of_id  ";    
 
 */    
-            ArrayList<String> where = new ArrayList();
+            ArrayList<String> where = new ArrayList<>();
 
             //where.add(" taxon.family = \"formicidae\"");
             //where.add(" 1=1 ");

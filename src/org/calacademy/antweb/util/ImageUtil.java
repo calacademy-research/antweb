@@ -118,15 +118,11 @@ public class ImageUtil {
     
     private static String output(InputStream inputStream) throws IOException {
         StringBuilder sb = new StringBuilder();
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new InputStreamReader(inputStream));
-            String line = null;
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
             while ((line = br.readLine()) != null) {
-                sb.append(line + System.getProperty("line.separator"));
+                sb.append(line).append(System.getProperty("line.separator"));
             }
-        } finally {
-            br.close();
         }
         return sb.toString();
     }
