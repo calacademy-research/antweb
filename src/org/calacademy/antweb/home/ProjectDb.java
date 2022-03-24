@@ -42,7 +42,7 @@ public class ProjectDb extends AntwebDb {
           projects.put(projectName, project);
         }
       } catch (SQLException e) {
-        s_log.error("getAllProjects() query:" + query + " e:" + e.toString());
+        s_log.error("getAllProjects() query:" + query + " e:" + e);
       } finally {
         DBUtil.close(stmt, rset, this, "ProjectDb.getAllProjects()");
       }
@@ -73,7 +73,7 @@ public class ProjectDb extends AntwebDb {
           projects.add(project);
         }
       } catch (SQLException e) {
-        s_log.error("getProjects(scope) query:" + query + " e:" + e.toString());
+        s_log.error("getProjects(scope) query:" + query + " e:" + e);
       } finally {
         DBUtil.close(stmt, rset, this, "ProjectDb.getProjects(scope)");
       }
@@ -103,7 +103,7 @@ public class ProjectDb extends AntwebDb {
           projects.add(project);
         }
       } catch (SQLException e) {
-        s_log.error("getProjects() query:" + query + " e:" + e.toString());
+        s_log.error("getProjects() query:" + query + " e:" + e);
       } finally {
         DBUtil.close(stmt, rset, this, "ProjectDb.getProjects()");
       }

@@ -104,7 +104,7 @@ public class UtilDataAction extends Action {
 
                 if (action != null) {
 
-                    s_log.info("execute() " + form.toString());
+                    s_log.info("execute() " + form);
 
                     //if (AntwebProps.isDevMode()) throw new AntwebException("Test! XXX");
 

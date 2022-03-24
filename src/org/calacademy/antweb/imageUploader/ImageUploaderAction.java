@@ -175,7 +175,7 @@ public final class ImageUploaderAction extends Action {
         } catch (Exception ex) {
           //AntwebUtil.logStackTrace(ex);
           AntwebUtil.log("ImageUploaderAction.execute() e:" + ex);
-          message = "Error uploading images. ex:" + ex.toString();
+          message = "Error uploading images. ex:" + ex;
           AdminAlertMgr.add(message, connection);
           request.setAttribute("message", message);
           s_log.warn(message + " temppDir:" + ImageUploaded.tempDir);

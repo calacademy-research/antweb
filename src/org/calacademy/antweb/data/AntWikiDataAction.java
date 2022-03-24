@@ -218,7 +218,7 @@ public final class AntWikiDataAction extends Action {
             messageStr = "<h3>Valid Test</h3><br><br>" 
               + "validTaxonCount:" + insertCount + " inserted into antwiki_taxon_country.  NotValidTaxonCount:" + notValidTaxonCount
               + " notFoundCount:" + notFoundCount + "\n"
-              + "<br><br>" + content.toString();
+              + "<br><br>" + content;
 
         } catch (RESyntaxException e) {
           s_log.warn("load() e:" + e);

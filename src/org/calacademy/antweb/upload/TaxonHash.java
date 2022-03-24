@@ -27,10 +27,10 @@ public final class TaxonHash extends Hashtable<String, Object> {
 
     public void log(String location) {
       if (INFO.equals(logLevel)) {
-        s_log.info(location + " " + toString());
+        s_log.info(location + " " + this);
       }
       if (WARN.equals(logLevel)) {
-        s_log.warn(location + " " + toString());
+        s_log.warn(location + " " + this);
       } 
     }
     

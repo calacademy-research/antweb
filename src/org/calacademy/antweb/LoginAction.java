@@ -182,13 +182,13 @@ public final class LoginAction extends Action {
                 } else {
                   // Successful login
                   //s_log.warn("Login.execute()2 userName:" + userNameOrEmail + " login:" + login);                
-                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + new Date().toString());
+                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + new Date());
                   loginDb.updateLastLogin(login);
                 }
             } catch (AntwebException e) {
                 if (e.toString().contains("already in use")) { 
                   msg = new ActionMessage("error.login.nameInUse");
-                  s_log.debug("createAccount() msg:" + msg.toString());
+                  s_log.debug("createAccount() msg:" + msg);
                   messages.add("message",msg);
                 }
                 return null;
@@ -196,7 +196,7 @@ public final class LoginAction extends Action {
                 s_log.warn("Login.createAccount() e:" + e);
                 if (e.toString().contains("already in use")) { 
                   msg = new ActionMessage("error.login.nameInUse");
-                  s_log.debug("createAccount() msg:" + msg.toString());
+                  s_log.debug("createAccount() msg:" + msg);
                   messages.add("message",msg);
                 } else {
                   msg = new ActionMessage("error.login.dbFailure");
@@ -245,7 +245,7 @@ public final class LoginAction extends Action {
                 } else {
                   // Successful login
                   //s_log.warn("Login.execute()2 userName:" + userNameOrEmail + " login:" + login);                
-                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + new Date().toString());
+                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + new Date());
                   loginDb.updateLastLogin(login);
                 }      
             } catch (Exception sqle) {

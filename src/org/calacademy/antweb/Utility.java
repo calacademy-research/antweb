@@ -186,7 +186,7 @@ public class Utility implements Serializable {
             output.append(" ");
             isASCII = false;
           } else {
-            s_log.info("isAllASCII() false char:" + c + " or:-" + Character.toString ((char) c) + "- at col:" + i + " of input:" + input);
+            s_log.info("isAllASCII() false char:" + c + " or:-" + (char) c + "- at col:" + i + " of input:" + input);
             return "false";            
           }
         } else {

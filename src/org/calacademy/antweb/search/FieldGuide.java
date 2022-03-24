@@ -152,7 +152,7 @@ public class FieldGuide {
                 totalLon += coord.getLon();
             }
             String center = "center=" + Float.valueOf(totalLat / points.size()).toString() + "," + Float.valueOf(totalLon / points.size()).toString();
-            result = preamble + sizing + center + "&" + markers.toString() + "&" + key;
+            result = preamble + sizing + center + "&" + markers + "&" + key;
             //s_log.info("static map for " + thisTaxon.getName() + " " + result);
         }
         return result;        

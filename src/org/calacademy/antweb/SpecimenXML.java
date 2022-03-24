@@ -42,11 +42,11 @@ public class SpecimenXML extends DefaultHandler {
          */
             s_log.error("isInvalid() " + message + " e:" + e + ". FILE COULD BE SAVED AS UTF8 with BOM?");
             s_log.info("isInvalid() " + message + " e:" + e + " for xmlString:" + xmlString + ". FILE COULD BE SAVED AS UTF8 with BOM?");
-            isInvalid = message + e.toString() + ". Could file have been erroneously saved as UTF8 with BOM?";
+            isInvalid = message + e + ". Could file have been erroneously saved as UTF8 with BOM?";
         } catch (Exception e) {
             String message = "";
             s_log.error("isInvalid() " + message + " e:" + e + " for xmlString:" + xmlString);
-            isInvalid = message + e.toString();
+            isInvalid = message + e;
         }
         return isInvalid;
     }

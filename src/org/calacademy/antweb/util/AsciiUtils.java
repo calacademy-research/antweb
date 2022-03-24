@@ -54,7 +54,7 @@ public class AsciiUtils {
           sb.append(c);
         }
      }
-    s_log.debug("convertNonAscii sb:" + sb.toString());
+    s_log.debug("convertNonAscii sb:" + sb);
      return sb.toString();
   }
 

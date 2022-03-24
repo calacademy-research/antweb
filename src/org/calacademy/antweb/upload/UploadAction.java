@@ -261,7 +261,7 @@ public class UploadAction extends Action {
 					String theFileName = abbrev + "SpecimenList";
 					action = "reload:" + theFileName;
 					// logFileName += theFileName + UploadDetails.getLogExt();
-					String formFileName = new Date().toString() + "reloadSpecimen" + submitLogin.getGroup() + ".txt";
+					String formFileName = new Date() + "reloadSpecimen" + submitLogin.getGroup() + ".txt";
 
 					boolean isUpload = false; // It is a reload.
 					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theFileName, formFileName
@@ -305,7 +305,7 @@ public class UploadAction extends Action {
 					// Fetched from AppResources site.inputfilehome=/Users/mark/dev/calAcademy/workingdir/
 					// In this test case, no file is uploaded, but the server side workingdir copy is used. (specimen21.txt).
 					// UploadFile - backup() /antweb/workingdir/specimen21.txt to /antweb/web/upload/20131112-21:28:53-specimen21.txt
-					String formFileName = new Date().toString() + "specimenTest" + accessGroup + ".txt";
+					String formFileName = new Date() + "specimenTest" + accessGroup + ".txt";
 
 					//logFileName += accessGroup.getAbbrev() + "SpecimenTest" + UploadDetails.getLogExt();
 					s_log.info("execute() specimenTest");
@@ -946,7 +946,7 @@ public class UploadAction extends Action {
 
 //http://localhost/antweb//tmp/parsedBoltonNGC.txt
 
-        messageStr += "<br><br>" + content.toString();
+        messageStr += "<br><br>" + content;
 
         return messageStr;
     }
@@ -1001,7 +1001,7 @@ public class UploadAction extends Action {
             messageStr = "<h3>AntWiki Regional Taxon List Load</h3><br><br>"
               + "validTaxonCount:" + validTaxonCount + " notValidTaxonCount:" + notValidTaxonCount + "\n"
               + "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Report: <a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=antwebUniqueValidTaxa'>Antweb Unique Valid Taxa</a>"
-              + "<br><br>" + content.toString()
+              + "<br><br>" + content
               ;
 
         return messageStr;
@@ -1079,7 +1079,7 @@ public class UploadAction extends Action {
 
               + "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Report: <a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=antwebUniqueFossilTaxa'>Antweb Unique Fossil Taxa</a>"
 
-              + "<br><br>" + content.toString()
+              + "<br><br>" + content
               ;
 
         } catch (RESyntaxException e) {
@@ -1175,8 +1175,8 @@ public class UploadAction extends Action {
               + "<br>Antweb valid species count not in file: " + validSpeciesMap.size()
              // + " taxonNotFound:" + taxonNotFound + "\n"
              // + "<br><br><h3>Current Valid Name in Question:</h3><br><br>" + cvnfContent.toString()
-              + "<br><br><h3>Antcat taxa not found in Antweb</h3><br>" + tnfContent.toString()
-              + "<br><br><h3>Antweb taxa not found in file</h3>" + awContent.toString();
+              + "<br><br><h3>Antcat taxa not found in Antweb</h3><br>" + tnfContent
+              + "<br><br><h3>Antweb taxa not found in file</h3>" + awContent;
 
 
         } catch (RESyntaxException e) {
@@ -1241,8 +1241,8 @@ public class UploadAction extends Action {
 
             messageStr = "<h3>Synonym Test</h3><br><br>"
               + " currentValidFound:" + currentValidFound + " currentValidNotFound:" + currentValidNotFound + " taxonNotFound:" + taxonNotFound + "\n"
-              + "<br><br><h3>Current Valid Name in Question:</h3><br><br>" + cvnfContent.toString()
-              + "<br><br><h3>Taxa Not Found</h3><br><br>" + tnfContent.toString();
+              + "<br><br><h3>Current Valid Name in Question:</h3><br><br>" + cvnfContent
+              + "<br><br><h3>Taxa Not Found</h3><br><br>" + tnfContent;
 
         } catch (RESyntaxException e) {
           s_log.error("testFileSynonyms() e:" + e);

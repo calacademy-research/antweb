@@ -151,7 +151,7 @@ To Do
 
         } catch (SearchException e) {
           s_log.error("setResults() e:" + e);
-          message = "<b><font color=red>Search failed:" + e.toString() + "</font></b>";           
+          message = "<b><font color=red>Search failed:" + e + "</font></b>";
         }
          
         if (searchSpeciesList != null && !searchSpeciesList.isEmpty()) {

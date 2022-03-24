@@ -181,7 +181,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             }
             
         } catch (SQLException e) {
-            s_log.error("getGeolocale() name:" + name + " georank:" + georank + " e:" + e.toString() + " query:" + query + " sqlstate:" + e.getSQLState());
+            s_log.error("getGeolocale() name:" + name + " georank:" + georank + " e:" + e + " query:" + query + " sqlstate:" + e.getSQLState());
              //+  " message:" + e.getMessage() + " code:" + e.getErrorCode()   Message is null and code is 0.
 
         } finally {
@@ -1308,7 +1308,7 @@ public static int c = 0;
           c += updateGeolocaleFieldCount("endemic", lastGeolocaleId, count);          
         }        
       } catch (SQLException e) {
-        s_log.error("calcEndemism() query:" + query + " e:" + e.toString());
+        s_log.error("calcEndemism() query:" + query + " e:" + e);
       } finally {
         DBUtil.close(stmt, rset, this, "calcEndemism()");
       }    
@@ -1409,7 +1409,7 @@ public static int c = 0;
             }
             s_log.debug("calcHigherEndemismAdm1() c:" + c);
         } catch (SQLException e) {
-            s_log.error("calcHigherEndemismAdm1() query:" + query + " e:" + e.toString());
+            s_log.error("calcHigherEndemismAdm1() query:" + query + " e:" + e);
         } finally {
             DBUtil.close(stmt, rset, this, "calcHigherEndemismAdm1()");
         }
@@ -1441,7 +1441,7 @@ public static int c = 0;
             }
             s_log.debug("calcHigherEndemismCountry() c:" + c);
         } catch (SQLException e) {
-            s_log.error("calcHigherEndemismCountry() query:" + query + " e:" + e.toString());
+            s_log.error("calcHigherEndemismCountry() query:" + query + " e:" + e);
         } finally {
             DBUtil.close(stmt, rset, this, "calcHigherEndemismCountry()");
         }
@@ -1473,7 +1473,7 @@ public static int c = 0;
             }
             s_log.debug("calcHigherEndemismSubregion() c:" + c);
         } catch (SQLException e) {
-            s_log.error("calcHigherEndemismSubregion() query:" + query + " e:" + e.toString());
+            s_log.error("calcHigherEndemismSubregion() query:" + query + " e:" + e);
         } finally {
             DBUtil.close(stmt, rset, this, "calcHigherEndemismSubregion()");
         }

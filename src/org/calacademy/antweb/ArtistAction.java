@@ -130,7 +130,7 @@ public final class ArtistAction extends Action {
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            String message = "e:" + e.toString();
+            String message = "e:" + e;
             request.setAttribute("message", message);
             return mapping.findForward("message");
         } finally {

@@ -120,7 +120,7 @@ public class GenericSearch implements Serializable {
                 addedList.add(thisName);
             }
         }
-        theQuery += "(" + inBuffer.toString() + ") ";
+        theQuery += "(" + inBuffer + ") ";
         theQuery += " and proj_taxon.project_name = '" + project + "' and ";
         theQuery += " taxon.taxon_name = proj_taxon.taxon_name";
 
@@ -261,7 +261,7 @@ public class GenericSearch implements Serializable {
                 specString.append("'");
             }
             theQuery.append("(");
-            theQuery.append(specString.toString());
+            theQuery.append(specString);
             theQuery.append(")");
 
             now = new Date();

@@ -301,7 +301,7 @@ public abstract class AntwebUtil {
           out.write(stringData);
           out.close();
       } catch(Exception e) {
-          s_log.error("writeFile() file:" + file + " e:" + e.toString());
+          s_log.error("writeFile() file:" + file + " e:" + e);
       }
   }
 
@@ -328,7 +328,7 @@ public abstract class AntwebUtil {
    } catch(FileNotFoundException e) {
      return null;
    } catch(Exception e) {
-     s_log.error("readFile() fileName:" + fileName + " e:" + e.toString());
+     s_log.error("readFile() fileName:" + fileName + " e:" + e);
    }
    return text.toString();
   }
@@ -624,7 +624,7 @@ public abstract class AntwebUtil {
     try {
       Thread.sleep(millis);
     } catch(InterruptedException e) {
-      s_log.warn("Exception in AntwebUtil.sleep(): " + e.toString());
+      s_log.warn("Exception in AntwebUtil.sleep(): " + e);
     }   
   }
 
@@ -633,7 +633,7 @@ public abstract class AntwebUtil {
     try {
       Thread.sleep(millis);
     } catch(InterruptedException e) {
-      s_log.warn("Exception in AntwebUtil.sleep(): " + e.toString());
+      s_log.warn("Exception in AntwebUtil.sleep(): " + e);
     }   
   }
 

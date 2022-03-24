@@ -93,7 +93,7 @@ public class SessionRequestFilter implements Filter {
           String htmlMessage = null;
 
           if (!"".equals(note)) {    // for instance: http://localhost/antweb/adm1.do?%20(Terr.%20Amazonas)
-            message += note + " e:" + e.toString() + " target:" + target;          
+            message += note + " e:" + e + " target:" + target;
             s_log.warn("doFilter() " + message);
             htmlMessage 
               = "<br><b>Request Error: </b>" + message;
@@ -102,7 +102,7 @@ public class SessionRequestFilter implements Filter {
           } else {
             int caseNumber = AntwebUtil.getCaseNumber();
             message += " See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber;
-            message += " e:" + e.toString() + " target:" + target;
+            message += " e:" + e + " target:" + target;
             s_log.error("doFilter() WST " + message);
             message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
   		    LogMgr.appendLog("srfExceptions.jsp", message);    
@@ -110,7 +110,7 @@ public class SessionRequestFilter implements Filter {
               = "<br><b>Request Error</b>"
               + "<br><br><b>Case#:</b>" + caseNumber 
               + "<br>(Please notify " + AntwebUtil.getAdminEmail() + ") with this info and description of use case. Thank you."
-              + "<br><b>Exception:</b>" + e.toString()
+              + "<br><b>Exception:</b>" + e
               + "<br><b>Request:</b>" + target
               + "<br><b>Datetime:</b>" + formatDateTime
               ; 
@@ -139,7 +139,7 @@ public class SessionRequestFilter implements Filter {
         } else {
             execTime = millis + " millis";
         }
-        String message = new Date().toString() + " time:" + execTime + " requestInfo:" + HttpUtil.getRequestInfo(request);
+        String message = new Date() + " time:" + execTime + " requestInfo:" + HttpUtil.getRequestInfo(request);
         if (AntwebProps.isDevMode()) {
             //s_log.warn(message);
             MAX_REQUEST_TIME = 1;

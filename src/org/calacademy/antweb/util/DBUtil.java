@@ -284,7 +284,7 @@ Or, if there are stmts and/or rsets...
         boolean success = true;
         //	A.log("close() object:" + object + " name:" + name);  
         String objectName = null;
-        if (object != null) objectName = object.toString() + " ";
+        if (object != null) objectName = object + " ";
         try {   
             if (rset != null) rset.close();   
         } catch (SQLException e) {
@@ -409,7 +409,7 @@ Or, if there are stmts and/or rsets...
 //        if ((lastLog == null) || (AntwebUtil.timePassed(lastLog, new Date()) > (MINUTES * .5))) {
         if (lastLog == null || AntwebUtil.minsSince(lastLog) > 1) {
           lastLog = new Date();
-          String logMessage = "<br><br>" + new Date().toString() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
+          String logMessage = "<br><br>" + new Date() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
           s_log.warn(logMessage);
           Connection connection = null;
           try {

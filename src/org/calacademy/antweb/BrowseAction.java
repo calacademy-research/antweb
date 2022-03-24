@@ -442,7 +442,7 @@ We are showin the full map of ponerinae for every adm1.
                     s_log.info("execute() " + message + "  No upload in process.");
                 }
                 request.setAttribute("message", message);
-                LogMgr.appendLog("noExists.txt", new Date().toString() + " - " + AntwebUtil.getRequestInfo(request));
+                LogMgr.appendLog("noExists.txt", new Date() + " - " + AntwebUtil.getRequestInfo(request));
                 return mapping.findForward("message");
             }
 

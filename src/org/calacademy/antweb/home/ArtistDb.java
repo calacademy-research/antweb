@@ -159,7 +159,7 @@ public class ArtistDb extends AntwebDb {
             return "Created artist:" + artist.getLink() + ".";
 		} catch (SQLException e) {
 			s_log.error("createArtist() dml" + dml + " e:" + e);
-            return "error:" + e.toString();
+            return "error:" + e;
 		} finally { 		
 			DBUtil.close(stmt, "createArtist()");
 		}
@@ -234,7 +234,7 @@ public class ArtistDb extends AntwebDb {
               returnVal += " Artist:" + artist + " NOT deleted.";
             }
         } catch (Exception e) {
-            return "error:" + e.toString();
+            return "error:" + e;
         }
         return returnVal;
     }

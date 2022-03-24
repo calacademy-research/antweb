@@ -121,7 +121,7 @@ public class ImageDb extends AntwebDb {
                     Exif exif = new Exif(imagePath);
                     if (exif.isFound()) {
                       String artistName = exif.getArtist();
-                      LogMgr.appendLog("exifData.txt", imagePath + " exif:" + exif.toString());               
+                      LogMgr.appendLog("exifData.txt", imagePath + " exif:" + exif);
                     }                      
                 } else {
                     //A.log("getExifData() id:" + id + " code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber + " highres:" + highres);

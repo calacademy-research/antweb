@@ -148,7 +148,7 @@ public class GenericSearchResults implements Serializable {
           dummySpecimen.setUploadId(thisItem.getUploadId());
           taxonList.add(dummySpecimen);  
 
-          AntwebUtil.logFirst("GenericSearchResults.getResultsAsTaxon() code:" + dummySpecimen.getCode() + " resultItem:" + dummySpecimen.toString() + " adm1:" + dummySpecimen.getAdm1() + " adm2:" + dummySpecimen.getAdm2());                
+          AntwebUtil.logFirst("GenericSearchResults.getResultsAsTaxon() code:" + dummySpecimen.getCode() + " resultItem:" + dummySpecimen + " adm1:" + dummySpecimen.getAdm1() + " adm2:" + dummySpecimen.getAdm2());
       }
       dummyTaxon.setChildren(taxonList);
       

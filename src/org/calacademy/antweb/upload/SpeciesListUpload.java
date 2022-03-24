@@ -845,19 +845,19 @@ public class SpeciesListUpload extends AntwebUpload {
 
             returnStr = "success";
         } catch (FileNotFoundException e) {
-            returnStr = "importSpeciesList() c1 project:" + project + " e" + e.toString();
+            returnStr = "importSpeciesList() c1 project:" + project + " e" + e;
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
         } catch (RESyntaxException e) {
-            returnStr = "importSpeciesList() c2 project:" + project + " fileName:" + fileName + " e" + e.toString();
+            returnStr = "importSpeciesList() c2 project:" + project + " fileName:" + fileName + " e" + e;
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
         } catch (MissingResourceException e) {
-            returnStr = "importSpeciesList() c3 project:" + project + " fileName:" + fileName + " e" + e.toString();
+            returnStr = "importSpeciesList() c3 project:" + project + " fileName:" + fileName + " e" + e;
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
         } catch (IndexOutOfBoundsException e) {
-            returnStr = "importSpeciesList() project:" + project + " e" + e.toString();
+            returnStr = "importSpeciesList() project:" + project + " e" + e;
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
         }

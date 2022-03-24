@@ -1207,7 +1207,7 @@ public abstract class HttpUtil {
 			//output += str;
 		}   
       } catch (Exception e) {
-		String message = "e:" + e.toString();
+		String message = "e:" + e;
 		//AntwebUtil.logShortStackTrace();
 		//if (AntwebProps.isDevMode()) 
 		message += " url:" + url;

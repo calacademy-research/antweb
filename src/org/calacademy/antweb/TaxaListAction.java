@@ -119,7 +119,7 @@ public final class TaxaListAction extends Action {
                 taxaList.add(taxonLink);
             }
 		} catch (SQLException e) {
-			s_log.error("execute() e:" + e.toString());
+			s_log.error("execute() e:" + e);
 		} finally {
           DBUtil.close(connection, stmt, rset, this, "TaxaListAction.execute()");
 		}

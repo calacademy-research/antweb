@@ -83,7 +83,7 @@ public class AdvancedSearchAction extends Action {
         addToSearch(sb, "statusSet", searchParameters.getStatusSet(), null);
  		
 		String prefix = ""; //"Results from Searching AntWeb where: ";
-		return prefix + sb.toString();
+		return prefix + sb;
 	}
 	
 	private void addToSearch(StringBuffer sb, String field, String value, String searchModifier) {

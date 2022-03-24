@@ -259,7 +259,7 @@ public final class SpecimenListAction extends Action {
                 s_log.warn("getAllAntwebSpecimenData() specimenCount:" + specimenCount);
             }
         }
-        s_log.debug("geneateAntwebSpecimenData() fullPath:" + fullPath + " data:" + dataBuffer.toString());
+        s_log.debug("geneateAntwebSpecimenData() fullPath:" + fullPath + " data:" + dataBuffer);
         LogMgr.appendFile(fullPath, dataBuffer.toString());
         //return dataBuffer;
     }

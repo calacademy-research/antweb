@@ -221,7 +221,7 @@ public final class FieldGuideAction extends Action {
             request.setAttribute("message", message);
             return mapping.findForward("message");
         } catch (ArrayIndexOutOfBoundsException e) {
-            s_log.warn("FieldGuideForm:" + fieldGuideForm.toString());
+            s_log.warn("FieldGuideForm:" + fieldGuideForm);
             AntwebUtil.logStackTrace(e);           
         } catch (Exception e) {
             s_log.error("execute() 3 e:" + e);

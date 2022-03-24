@@ -692,7 +692,7 @@ public class BioregionDb extends AntwebDb {
             s_log.debug("calcEndemism() count:" + count + " query:" + query);
 
         } catch (SQLException e) {
-            s_log.error("calcEndemism() query:" + query + " e:" + e.toString());
+            s_log.error("calcEndemism() query:" + query + " e:" + e);
             throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "calcEndemism()");
