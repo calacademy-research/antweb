@@ -93,19 +93,7 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
         }
         return null;
     }
-    
-    class ImageGroup {
-      String taxonName;
-      String subfamily;
-      String genus;
-      String species;
-      String subspecies;
-      String shotType;
-      String shotNumber;
-      String uploadDate;
-      String groupName;
-    }
-    
+
     public void setResults() {
      // ** This is same as GenericSearch but the filterByProject is commented out
 
