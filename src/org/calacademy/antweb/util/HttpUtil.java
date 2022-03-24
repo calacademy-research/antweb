@@ -656,7 +656,7 @@ public abstract class HttpUtil {
   public static boolean redirectPostToGet(HttpServletRequest request
     , HttpServletResponse response
     , String requestedPathWithQuery) 
-    throws IOException, MalformedURLException {
+    throws IOException {
 
       String target = AntwebProps.getDomainApp() + requestedPathWithQuery;
       HttpUtil.sendRedirect(target, request, response);
@@ -666,7 +666,7 @@ public abstract class HttpUtil {
   public static boolean redirectSecure(HttpServletRequest request
     , HttpServletResponse response
     , String requestedPathWithQuery) 
-    throws IOException, MalformedURLException {
+    throws IOException {
 
     if (!HttpUtil.isSecure(request)) {
       String target = "https://" + request.getServerName() + requestedPathWithQuery;
@@ -690,8 +690,7 @@ public abstract class HttpUtil {
 
     
   public static String redirectCorrectedUrl(HttpServletRequest request  
-    , HttpServletResponse response)  
-    throws IOException, MalformedURLException { 
+    , HttpServletResponse response) {
 
     /* Called from BrowseAction in case where rank is null */
     //        //response.sendRedirect(newPath);  // can't. Response committed.
