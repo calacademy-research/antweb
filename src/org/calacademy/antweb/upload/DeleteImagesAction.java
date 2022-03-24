@@ -44,7 +44,7 @@ public final class DeleteImagesAction extends Action {
         if (searchResults == null) {
           message = "Session expired. Refresh <a href='" + AntwebProps.getDomainApp() + "/recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30'>here</a>";
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));          
+          return mapping.findForward("message");
         }
 
         ArrayList results = searchResults.getResults();
@@ -68,7 +68,7 @@ public final class DeleteImagesAction extends Action {
                 s_log.error("execute() e:" + e);
                 message = "e:" + e;
                 request.setAttribute("message", message);
-                return (mapping.findForward("message"));                
+                return mapping.findForward("message");
             } finally {
                 DBUtil.close(connection, this, "DeleteImagesAction.execute()");
             }
@@ -78,10 +78,10 @@ public final class DeleteImagesAction extends Action {
             
             request.setAttribute("group", group);
             request.setAttribute("daysAgo", daysAgo);
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         } else {
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
     }
 }

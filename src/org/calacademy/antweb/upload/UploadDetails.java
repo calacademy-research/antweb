@@ -96,7 +96,7 @@ public class UploadDetails extends OperationDetails {
     public String getLogFileName() {
         if (this.logFileName != null) return this.logFileName;
         
-        String dateString = (new Utility()).getDateForFileName(getStartTime());
+        String dateString = new Utility().getDateForFileName(getStartTime());
         return dateString + "-" + getOperation() + getLogExt();
     }
     
@@ -200,7 +200,7 @@ public class UploadDetails extends OperationDetails {
             + "&nbsp;&nbsp;&nbsp;<b>Upload ID:</b> <a href='" + AntwebProps.getDomainApp() + "/uploadReport.do?uploadId=" + AntwebMgr.getNextSpecimenUploadId() + "'>" + AntwebMgr.getNextSpecimenUploadId() + "</a>"
             + "<br> &nbsp;&nbsp;&nbsp;<b>Operation:" + getOperation() + "</b>"
             + "<br>&nbsp;&nbsp;&nbsp;<b>This Log File:</b> " + getLogFileAnchor() 
-            + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + (new Date()).toString()     
+            + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + new Date().toString()
             + "<br>&nbsp;&nbsp;&nbsp;<b>Encoding:</b> " + encoding   
             + "<br>&nbsp;&nbsp;&nbsp;<b>Antweb version:</b> " + AntwebUtil.getReleaseNum()
             + "<br>&nbsp;&nbsp;&nbsp;<b>Uploaded File:</b> " + getBackupFileAnchor();
@@ -239,7 +239,7 @@ public class UploadDetails extends OperationDetails {
         logString += "\r\r<br><br>";
         logString += "<h3>Statistics</h3>";
 
-        if ((preUploadStatistics != null) && (postUploadStatistics != null) ) {
+        if (preUploadStatistics != null && postUploadStatistics != null) {
         //if (!getPreUploadStats().equals(getPostUploadStats())) {
           if (preUploadStatistics.equals(postUploadStatistics)) {
             logString += "<br>Prior to Upload:<font color=green>Data set unchanged</font>";  
@@ -345,7 +345,7 @@ public class UploadDetails extends OperationDetails {
         setExecTime(execTime);
 
         if (getOperation().contains("orldants")) {
-            (new WorldantsUploadDb(connection)).updateWorldantsUpload(this); 
+            new WorldantsUploadDb(connection).updateWorldantsUpload(this);
         }
         
         if (getForwardPage() == null) {

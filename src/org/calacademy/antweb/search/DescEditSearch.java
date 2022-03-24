@@ -47,7 +47,7 @@ public class DescEditSearch extends GenericSearch implements Serializable {
                 + "artist.id = image.artist ";
 
         s_log.info("days ago is " + daysAgo);
-        if ((daysAgo != null) && (daysAgo.length() > 0)) {
+        if (daysAgo != null && daysAgo.length() > 0) {
                 
             Utility util = new Utility();
             int daysToSub = -Integer.parseInt(daysAgo);
@@ -55,12 +55,12 @@ public class DescEditSearch extends GenericSearch implements Serializable {
             cal.add(Calendar.DATE, daysToSub);
             theQuery += " and image.upload_date > '" + util.getCurrentDateAndTimeString(cal.getTime()) + "'";
                 
-        } else if ((fromDate != null) && (toDate != null)) {                
+        } else if (fromDate != null && toDate != null) {
             theQuery += " and image.upload_date >= '" + fromDate + "' and image.upload_date <= '" +
                 toDate + "' ";
         }
 
-        if ((groupName != null) && (groupName.length() > 0)) {
+        if (groupName != null && groupName.length() > 0) {
             theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + groupName + "'";
         }
             

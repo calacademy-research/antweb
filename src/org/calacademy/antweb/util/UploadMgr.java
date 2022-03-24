@@ -20,9 +20,9 @@ public class UploadMgr {
     
       //A.log("UploadMgr.populate() forceReload:" + forceReload);
       
-      if (!forceReload && (s_uploads != null)) return;      
+      if (!forceReload && s_uploads != null) return;
       
-      UploadDb uploadDb = (new UploadDb(connection));
+      UploadDb uploadDb = new UploadDb(connection);
 
       s_uploads = uploadDb.getUploads();
     }  

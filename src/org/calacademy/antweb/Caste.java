@@ -279,7 +279,7 @@ public final class Caste {
       return "alate/dealate";
     }        
     private static boolean isMale(String casteNote) {
-      if ((casteNote.contains("male") && !casteNote.contains("female"))
+      if (casteNote.contains("male") && !casteNote.contains("female")
         || endsWith(casteNote, "m")
         || casteNote.contains("m ")
         || "m".equals(casteNote)

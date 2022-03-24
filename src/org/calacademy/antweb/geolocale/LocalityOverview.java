@@ -137,7 +137,7 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
         this.centroidFixed = centroidFixed;
     }
     public String useCentroid() {
-      if (getCentroidFixed() != null && !("".equals(getCentroidFixed()))) {
+      if (getCentroidFixed() != null && !"".equals(getCentroidFixed())) {
         return getCentroidFixed();
       } else { 
         if ("null".equals(getCentroid())) return null;
@@ -161,7 +161,7 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
     }
         
     public String useBoundingBox() {
-      if (getBoundingBoxFixed() != null && !("".equals(getBoundingBoxFixed()))) {
+      if (getBoundingBoxFixed() != null && !"".equals(getBoundingBoxFixed())) {
         return getBoundingBoxFixed();
       } else { 
         if ("null".equals(getBoundingBox())) return null;
@@ -245,7 +245,7 @@ Ex USA:
     public String getFlagIcon() {
       String name = getName();
       name = name.toLowerCase();
-      name = (new Formatter()).capitalizeFirstLetter(name);
+      name = new Formatter().capitalizeFirstLetter(name);
       name = name.replaceAll(" ", "-");
       name = name + "-flag.png";
       return name;
@@ -366,7 +366,7 @@ Out of bounds:
 	  if (maxDiff < 360 / Math.pow(2, 20)) {
 		zoomLevel = 21;
 	  } else {
-		zoomLevel = (int) (-1*( (Math.log(maxDiff)/Math.log(2)) - (Math.log(360)/Math.log(2))));
+		zoomLevel = (int) (-1*( Math.log(maxDiff)/Math.log(2) - Math.log(360)/Math.log(2)));
 		if (zoomLevel < 1)
 			zoomLevel = 1;
 	  }

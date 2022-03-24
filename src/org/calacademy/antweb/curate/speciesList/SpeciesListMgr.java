@@ -64,8 +64,8 @@ public class SpeciesListMgr {
 	  }
       boolean isDisplayYellowAnt = false;
       if (Utility.isNumber(speciesListName)) speciesListName = SpeciesListMgr.getName(speciesListName);
-	  if ( (taxon.getCountryList() != null && taxon.getCountryList().contains(speciesListName) )
-			 || (taxon.getAdm1List() != null && taxon.getAdm1List().contains(speciesListName) )           
+	  if ( taxon.getCountryList() != null && taxon.getCountryList().contains(speciesListName)
+			 || taxon.getAdm1List() != null && taxon.getAdm1List().contains(speciesListName)
 		 ) { 
 		 isDisplayYellowAnt = true;
 	  }

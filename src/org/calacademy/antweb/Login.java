@@ -257,7 +257,7 @@ public class Login implements Comparable {
 
      public String getDisplayNameEmailFirst() {
        if (email != null && !"null".equals(email) && !"".equals(email)) return email;
-       if ((this.name != null) && (!this.name.equals(""))) return this.name;
+       if (this.name != null && !this.name.equals("")) return this.name;
        String displayName = "";
        if (getFirstName() != null && !"".equals(getFirstName()))
          displayName += getFirstName();
@@ -296,7 +296,7 @@ public class Login implements Comparable {
          
      public String toDisplayString() {
          // Display name how the user likes.  If they enter a username, display it, otherwise email.
-         if ((this.name != null) && (!this.name.equals(""))) {
+         if (this.name != null && !this.name.equals("")) {
            return this.name;
          } else {
            return this.email;

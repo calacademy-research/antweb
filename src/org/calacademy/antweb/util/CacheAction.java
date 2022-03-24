@@ -38,24 +38,24 @@ public final class CacheAction extends Action {
 
         Date startTime = new Date();
 
-        if ((url != null) && (!"".equals(url))) {
+        if (url != null && !"".equals(url)) {
           boolean success = getLongRequestDetails(request, url, orderBy);
 		  if (success) {
-			return (mapping.findForward("longRequestDetails"));
+			return mapping.findForward("longRequestDetails");
 		  } else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
   		  }             
         }
 
         if (true) {
           request.setAttribute("message", "Caching turned off.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         }
 
         if (action.equals("genCacheThread")) {
           genCacheThread(request);
           request.setAttribute("message", "genCacheThread completed.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         }
         /*
         if (action.equals("keepCurrent")) {
@@ -68,7 +68,7 @@ public final class CacheAction extends Action {
           returnVal = generateCacheItem(mapping, request);
           HttpUtil.finish(request, startTime);
           request.setAttribute("message", "genCacheItem completed.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         } else {
           if (action.equals("forgetCaching")) {
             forgetCaching(request);
@@ -85,9 +85,9 @@ public final class CacheAction extends Action {
           // if (action.equals("display")) { // this is the default
           boolean success = getLongRequests(request, orderBy);
 		  if (success) {
-			return (mapping.findForward("longRequests"));
+			return mapping.findForward("longRequests");
 		  } else {  
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
   		  }        
         }        
         //return (mapping.findForward("error"));
@@ -263,10 +263,10 @@ public final class CacheAction extends Action {
                     
           request.setAttribute("message", "Cache item generated. Back to <a href=\"" + AntwebProps.getDomainApp() + "/cache.do?action=display\">CacheMgr</a>.");
           request.setAttribute("header", "Cache item generated.");          
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         } else {
           request.setAttribute("message", "The Antweb cache generation functions will not function if you are logged in.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         }
 	}
 }

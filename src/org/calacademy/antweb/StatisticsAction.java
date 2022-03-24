@@ -37,7 +37,7 @@ public final class StatisticsAction extends Action {
         if ("false".equals(isLinkStr)) isLink = false;
         request.getSession().setAttribute("isLink", isLink);
         String bodyStr = (String) request.getParameter("body");
-        boolean body = ("true".equals(bodyStr));
+        boolean body = "true".equals(bodyStr);
 
         boolean success = false;
 
@@ -48,7 +48,7 @@ public final class StatisticsAction extends Action {
                 
             if ("true".equals(byUpload)) {
               success = getStatisticsByUpload(request, connection);
-              return (mapping.findForward("statisticsStr"));
+              return mapping.findForward("statisticsStr");
             } else if (project != null) {
               success = getStatisticsByAProject(request, project, isLink, connection);
             } else if ("true".equals(byProject)) {
@@ -61,7 +61,7 @@ public final class StatisticsAction extends Action {
               success = getStatisticsByGeolocale(request, isLink, connection);
             } else {
               success = getStatistics(request, connection);
-              return (mapping.findForward("statisticsStr"));
+              return mapping.findForward("statisticsStr");
             }
        
         } catch (SQLException e) {
@@ -73,12 +73,12 @@ public final class StatisticsAction extends Action {
         
 		if (success) {
 		  if (body) {
-		    return (mapping.findForward("statisticsRealTime-body"));
+		    return mapping.findForward("statisticsRealTime-body");
 		  } else {
-			return (mapping.findForward("statisticsRealTime"));
+			return mapping.findForward("statisticsRealTime");
 		  }
 		} else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
     }
 

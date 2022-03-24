@@ -27,9 +27,9 @@ public class GroupMgr {
     public static void populate(Connection connection, boolean forceReload) {
         s_log.debug("populate()");
 
-      if (!forceReload && (s_groups != null)) return;
+      if (!forceReload && s_groups != null) return;
 
-      GroupDb groupDb = (new GroupDb(connection));
+      GroupDb groupDb = new GroupDb(connection);
       try {
         //A.log("populate()");
         s_groups = groupDb.getAllGroups();

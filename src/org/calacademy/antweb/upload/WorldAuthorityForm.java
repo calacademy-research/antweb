@@ -30,7 +30,7 @@ public final class WorldAuthorityForm extends ActionForm {
 	}
 
 	public String getMode() {
-	return (this.mode);
+	return this.mode;
 	}
 
 	public void setMode(String mode) {

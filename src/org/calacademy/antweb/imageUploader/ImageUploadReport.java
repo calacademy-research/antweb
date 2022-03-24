@@ -51,9 +51,9 @@ public final class ImageUploadReport extends Action {
             if (imageUploadId != 0) {            
               imageUpload = imageUploadDb.getImageUpload(imageUploadId);
               request.setAttribute("imageUpload", imageUpload);  
-              return (mapping.findForward("report"));         
+              return mapping.findForward("report");
             } else {          
-              return (mapping.findForward("error"));         
+              return mapping.findForward("error");
             }
         } catch (SQLException e) {
           AntwebUtil.log("ImageUploadReport.execute() e:" + e);
@@ -62,6 +62,6 @@ public final class ImageUploadReport extends Action {
         }
 
         AntwebUtil.log("execute() No messages set. This shouldn't happen");
-        return (mapping.findForward("error"));         
+        return mapping.findForward("error");
 	}	
 }

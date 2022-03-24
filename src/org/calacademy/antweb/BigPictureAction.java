@@ -68,13 +68,13 @@ public final class BigPictureAction extends Action {
             shot = form.getShot();   
             if (shot == null || "null".equals(shot)) {
               request.setAttribute("message", "null is an invalid shot type.");
-              return (mapping.findForward("message"));            
+              return mapping.findForward("message");
             }
             number = form.getNumber();
             if ("".equals(shot) || shot == null || "".equals(code) || code == null) {
               String message = "Must specimen code (name) and shot";
               request.setAttribute("message", message);
-              return (mapping.findForward("message"));                       
+              return mapping.findForward("message");
             }
                         
             request.setAttribute("code", code);
@@ -87,7 +87,7 @@ public final class BigPictureAction extends Action {
               String message = "Incorrect specimen identifier:" + code;
               s_log.error("execute() " + message);
               request.setAttribute("message", message);
-              return (mapping.findForward("message"));            
+              return mapping.findForward("message");
             }
 
             ImageDb imageDb = new ImageDb(connection);
@@ -107,7 +107,7 @@ public final class BigPictureAction extends Action {
                     String message = "image NOT deleted"; //. Report error to " + AntwebUtil.getAdminEmail();
                     if (isDeleted) message = "image deleted";
                     request.setAttribute("message", message);
-                    return (mapping.findForward("message")); 
+                    return mapping.findForward("message");
                   }
                 }
               }
@@ -125,7 +125,7 @@ public final class BigPictureAction extends Action {
           //s_log.warn("Image not found for image:" + code + " shot:" + shot + " number:" + number);
           String message = "BigPicture not found.";
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         }
 
         //theImage.setPaths();
@@ -157,6 +157,6 @@ public final class BigPictureAction extends Action {
         // Set a transactional control token to prevent double posting
         saveToken(request);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

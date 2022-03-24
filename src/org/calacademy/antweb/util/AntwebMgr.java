@@ -250,7 +250,7 @@ public class AntwebMgr {
         Date startTime = new Date();
         AntwebFunctions.genRecentDescEdits(connection);
 
-        (new ImageUploaderAction()).writeRecentImages(connection);
+        new ImageUploaderAction().writeRecentImages(connection);
 
         s_log.debug("genRecentContent() secs:" + AntwebUtil.secsSince(startTime));
         // (new StatisticsDb(connection)).populateStatistics();
@@ -286,7 +286,7 @@ public class AntwebMgr {
     public static ActionForward isInitializing(HttpServletRequest request, ActionMapping mapping) {
         if (AntwebMgr.isServerInitializing()) {
              request.setAttribute("message", "Server is initializing...");
-             return (mapping.findForward("message"));   
+             return mapping.findForward("message");
         }
         return null;
     }

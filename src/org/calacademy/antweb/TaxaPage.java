@@ -211,7 +211,7 @@ public class TaxaPage implements Serializable {
                         child.setGenus(rset.getString("genus"));
                         break;
                     case "species":
-                        String selectedRank = (rset.getString("taxarank"));
+                        String selectedRank = rset.getString("taxarank");
                         if ("species".equals(selectedRank)) {
                             child = new Species();
                         } else { // Then it is subspecies

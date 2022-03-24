@@ -88,7 +88,7 @@ public class UploadAction extends Action {
 			String message = "Server is currently in an Upload Process. Please try again in a little while.";
 			if (LoginMgr.isAdmin(request)) message += " " + getIsInUploadProcess();
 			request.setAttribute("message", message);
-			return (mapping.findForward("message"));
+			return mapping.findForward("message");
 		}
 
 		String root = session.getServletContext().getRealPath("") + "/";
@@ -138,7 +138,7 @@ public class UploadAction extends Action {
 				String downTimeMessage = ServerStatusAction.isDownTime(action, connection);
 				if (!"".equals(downTimeMessage)) {
 					request.setAttribute("message", downTimeMessage);
-					return (mapping.findForward("message"));
+					return mapping.findForward("message");
 				}
 			}
 
@@ -152,14 +152,14 @@ public class UploadAction extends Action {
 				String message = "action:" + action + " must be submitted through an http post.";
 				s_log.info(message);
 				request.setAttribute("message", message);
-				return (mapping.findForward("message"));
+				return mapping.findForward("message");
 			}
 
 			if (action != null) {
 
 				// Upload a Specimen File (tab-delimited .txt file):
 				FormFile specimenFile = theForm.getBiota();
-				if ("specimenUpload".equals(action) && (specimenFile != null) && (!specimenFile.getFileName().equals(""))) {
+				if ("specimenUpload".equals(action) && specimenFile != null && !specimenFile.getFileName().equals("")) {
 
 					String theFileName = accessGroup.getAbbrev() + "SpecimenList";
 					action = "import:" + theFileName;
@@ -167,7 +167,7 @@ public class UploadAction extends Action {
 					//logFileName += theFileName + UploadDetails.getLogExt();
 					s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
-					uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 
 					ActionForward af = uploadDetails.returnForward(mapping, request);
 					if (af != null) return af;
@@ -192,7 +192,7 @@ public class UploadAction extends Action {
 
 						Date startTime = new Date();
 
-						uploadDetails = (new SpeciesListUploader(connection)).uploadWorldants(theForm.getTheFile(), uploadFile, accessGroup);
+						uploadDetails = new SpeciesListUploader(connection).uploadWorldants(theForm.getTheFile(), uploadFile, accessGroup);
 
 						uploadDetails.setStartTime(startTime);
 						if (uploadDetails.isErrorForward()) {
@@ -235,7 +235,7 @@ public class UploadAction extends Action {
 					if (message != null && !"success".equals(message)) {
 						AdminAlertMgr.add(message, connection);
 						request.setAttribute("message", message);
-						return (mapping.findForward("message"));
+						return mapping.findForward("message");
 					}
 
 					//runCountCrawls(connection);
@@ -261,10 +261,10 @@ public class UploadAction extends Action {
 					String theFileName = abbrev + "SpecimenList";
 					action = "reload:" + theFileName;
 					// logFileName += theFileName + UploadDetails.getLogExt();
-					String formFileName = (new Date()).toString() + "reloadSpecimen" + submitLogin.getGroup() + ".txt";
+					String formFileName = new Date().toString() + "reloadSpecimen" + submitLogin.getGroup() + ".txt";
 
 					boolean isUpload = false; // It is a reload.
-					uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(theFileName, formFileName
+					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theFileName, formFileName
 							, submitLogin, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
 
 					if (AntwebProps.isDevMode()) {
@@ -305,12 +305,12 @@ public class UploadAction extends Action {
 					// Fetched from AppResources site.inputfilehome=/Users/mark/dev/calAcademy/workingdir/
 					// In this test case, no file is uploaded, but the server side workingdir copy is used. (specimen21.txt).
 					// UploadFile - backup() /antweb/workingdir/specimen21.txt to /antweb/web/upload/20131112-21:28:53-specimen21.txt
-					String formFileName = (new Date()).toString() + "specimenTest" + accessGroup + ".txt";
+					String formFileName = new Date().toString() + "specimenTest" + accessGroup + ".txt";
 
 					//logFileName += accessGroup.getAbbrev() + "SpecimenTest" + UploadDetails.getLogExt();
 					s_log.info("execute() specimenTest");
 					boolean isUpload = false; // This is a reload
-					uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile(accessGroup.getAbbrev() + "specimenTest", formFileName
+					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(accessGroup.getAbbrev() + "specimenTest", formFileName
 							, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
 
 					ActionForward af = uploadDetails.returnForward(mapping, request);
@@ -332,7 +332,7 @@ public class UploadAction extends Action {
 					for (int i = 0; i < 100; ++i) {
 						String formFileName = AntwebProps.getWorkingDir() + "specimen" + i + ".txt";
 
-						if ((new File(formFileName)).exists()) {
+						if (new File(formFileName).exists()) {
 
 							s_log.info("-+-+-+-+-+-+-+-+-+ reloading:" + formFileName + "+-+-+-+-+-+-+-+-+-+-+-+");
 
@@ -357,7 +357,7 @@ public class UploadAction extends Action {
 								//s_log.info("formFileName:" + formFileName + " accessGroup:" + accessGroup + " logFileName:" + logFileName);
 
 								boolean isUpload = false; // This is a reload
-								uploadDetails = (new SpecimenUploader(connection)).uploadSpecimenFile("allSpecimenFiles", formFileName
+								uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile("allSpecimenFiles", formFileName
 										, submitAsLogin, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
 
 								ActionForward af = uploadDetails.returnForward(mapping, request);
@@ -378,7 +378,7 @@ public class UploadAction extends Action {
 				} else if (action.equals("speciesTest")) {
 					//String message = "Species List test not yet implemented.";
 
-					SpeciesListUpload speciesListUpload = (new SpeciesListUpload(connection));
+					SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
 					uploadDetails = speciesListUpload.importSpeciesList("worldants", "/Users/mark/dev/calAcademy/workingdir/worldants.txt"
 							, "worldants.txt", "UTF-8", accessGroup.getId());
 					if (uploadDetails.getErrorForward(mapping) != null) return uploadDetails.getErrorForward(mapping);
@@ -411,7 +411,7 @@ public class UploadAction extends Action {
 			}
 
 			// Delete Project
-			if (!(theForm.getDeleteProject().equals("none"))) {
+			if (!theForm.getDeleteProject().equals("none")) {
 				String deleteProject = theForm.getDeleteProject();
 
 				ProjectDb projectDb = new ProjectDb(connection);
@@ -429,7 +429,7 @@ public class UploadAction extends Action {
 			}
 
 			// Create Project
-			if (!(theForm.getCreateProject().equals("none"))) {
+			if (!theForm.getCreateProject().equals("none")) {
 				String createProject = theForm.getCreateProject();
 
 				if (!Project.isProjectName(createProject)) {
@@ -446,8 +446,8 @@ public class UploadAction extends Action {
 				return mapping.findForward("message");
 			}
 
-			if (!(theForm.getEditSpeciesList().equals("none"))) {
-				String editSpeciesList = ((theForm.getEditSpeciesList()));
+			if (!theForm.getEditSpeciesList().equals("none")) {
+				String editSpeciesList = theForm.getEditSpeciesList();
 				s_log.info("execute() editSpeciesList:" + editSpeciesList);
 				request.setAttribute("mapSpeciesList1Name", editSpeciesList);
 				request.setAttribute("isFreshen", "true");
@@ -461,8 +461,8 @@ public class UploadAction extends Action {
 				return mapping.findForward("message");
 			}
 
-			if (!(theForm.getDownloadSpeciesList().equals("none"))) {
-				String downloadSpeciesList = ((theForm.getDownloadSpeciesList()));
+			if (!theForm.getDownloadSpeciesList().equals("none")) {
+				String downloadSpeciesList = theForm.getDownloadSpeciesList();
 				//String dir = downloadSpeciesList.substring(0, downloadSpeciesList.indexOf("ants"));
 				//if (dir.equals("mad")) dir = "madagascar";
 				//if (dir.equals("cal")) dir = "california";
@@ -536,7 +536,7 @@ public class UploadAction extends Action {
 				}
 			}
 
-			if ((theForm.getSuccessKey() != null) && (theForm.getSuccessKey().equals("worldAuthorityFiles"))) {
+			if (theForm.getSuccessKey() != null && theForm.getSuccessKey().equals("worldAuthorityFiles")) {
 				s_log.debug("execute() worldauth successKey:" + theForm.getSuccessKey());
 				worldAuthGen(request);
 				uploadDetails.setForwardPage(theForm.getSuccessKey());
@@ -628,9 +628,9 @@ public class UploadAction extends Action {
 
 	private void specimenPostProcessGlobal(Connection connection) throws SQLException {
 		A.log("start specimenPostProcessGlobal");
-		(new GeolocaleDb(connection)).calcEndemic();
+		new GeolocaleDb(connection).calcEndemic();
 
-        (new TaxonDb(connection)).removeIndetWithoutSpecimen();
+        new TaxonDb(connection).removeIndetWithoutSpecimen();
 		A.log("end specimenPostProcessGlobal");
     }
 
@@ -645,7 +645,7 @@ public class UploadAction extends Action {
 		if (action.equals("runStatistics")) {
 			runStatistics(action, connection, request, loginId);
 			//return (mapping.findForward("statisticsStr"));
-			return (mapping.findForward("statisticsDo"));
+			return mapping.findForward("statisticsDo");
 		}
 		if (action.equals("runCountCrawls")) {
 			s_log.info("doAction() Run Count Crawl should be done through UtilData.do.");
@@ -656,7 +656,7 @@ public class UploadAction extends Action {
 		if (action.equals("genRecentDescEdits") || action.equals("genAll")) {
 		   try {
 			  AntwebFunctions.genRecentDescEdits(connection);
-			  return (mapping.findForward("success"));
+			  return mapping.findForward("success");
 		   } catch (IOException e) {
 			   String message = e.toString();
 			   s_log.error("doAction() " + message);
@@ -710,8 +710,8 @@ public class UploadAction extends Action {
 
 		String outputFileName2 = docBase + dirFileName;
 
-		if ((outputFileName != null)
-		  && (!outputFileName.equals(""))) {
+		if (outputFileName != null
+		  && !outputFileName.equals("")) {
 			outputFileName2 = docBase + dir + "/" + outputFileName;
 		}
 
@@ -860,9 +860,9 @@ public class UploadAction extends Action {
               messageStr = "<br><br>In order to push antwiki data on to geolocale_taxon, click ";
               messageStr += "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>"
 					  + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a><br><br>";
-              messageStr += (new AntWikiDataAction()).loadRegionalTaxonList(in, connection);
+              messageStr += new AntWikiDataAction().loadRegionalTaxonList(in, connection);
             } else if (fileName.contains("fips-414")) {  // Adm1 load file
-              messageStr = (new Adm1LoadAction()).loadList(in, connection);
+              messageStr = new Adm1LoadAction().loadList(in, connection);
             } else if (fileName.contains("ngc_species") || fileName.contains("NGC Species")) { // Bolton New Genera Catalog
               messageStr = boltonNewGeneraCatalog(in, connection);
             }
@@ -974,7 +974,7 @@ public class UploadAction extends Action {
               if (theLine == null) continue;
 
               //String taxonName = (new AntWikiData(theLine)).getShortTaxonName();
-              String taxonName = (new AntWikiData(theLine)).getTaxonName();
+              String taxonName = new AntWikiData(theLine).getTaxonName();
               antwikiTaxonCountryDb.insertValidTaxa(taxonName);
               // insert taxonName into Antwiki_valid_taxa
               // then report on select valid taxa from taxon where not in (select taxon_name from antwiki_valid_taxa.
@@ -1339,9 +1339,9 @@ public class UploadAction extends Action {
       ArrayList<SpeciesListable> speciesLists = login.getProjects();
       for (SpeciesListable speciesList : speciesLists) {
          Project project = ProjectMgr.getProject(speciesList.getName());
-         Project thisProj = (new ProjectDb(connection)).getProject(project.getName());
+         Project thisProj = new ProjectDb(connection).getProject(project.getName());
          s_log.debug("getProjectForDirectory() proj:" + thisProj + " name:" + project.getName() + " root:" + thisProj.getRoot() + " dir:" + directory);
-         if ((thisProj != null) && (thisProj.getRoot() != null) && (directory.contains(thisProj.getRoot()))) {
+         if (thisProj != null && thisProj.getRoot() != null && directory.contains(thisProj.getRoot())) {
              returnVal = thisProj;
              break;
          }
@@ -1375,6 +1375,6 @@ public class UploadAction extends Action {
         if (uploadDetails != null) execTime = uploadDetails.getExecTime();
         */
 
-        (new StatisticsDb(connection)).populateStatistics(action, loginId, execTime, docBase);
+        new StatisticsDb(connection).populateStatistics(action, loginId, execTime, docBase);
     }
 }

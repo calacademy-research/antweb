@@ -35,9 +35,9 @@ public final class SaveGroupAction extends Action {
 
         Connection connection = null;
         boolean isNew = false;
-        SaveGroupForm form = ((SaveGroupForm) f);
+        SaveGroupForm form = (SaveGroupForm) f;
                 
-        int id = (Integer.parseInt(form.getId()));
+        int id = Integer.parseInt(form.getId());
         Group group = null;
         
         try {
@@ -46,11 +46,11 @@ public final class SaveGroupAction extends Action {
 
             if ("delete".equals(form.getStep())) {
                 s_log.warn(" step:" + form.getStep() + " id:" + id);      
-                (new GroupDb(connection)).deleteById(id);
-                return (mapping.findForward("success"));
+                new GroupDb(connection).deleteById(id);
+                return mapping.findForward("success");
             }
 
-            group = (new GroupDb(connection)).getGroup(id);
+            group = new GroupDb(connection).getGroup(id);
 
             s_log.info("execute() groupId:" + id + " found:" + group);
 
@@ -70,20 +70,20 @@ public final class SaveGroupAction extends Action {
             group.setAbbrev(form.getAbbrev());
 
             if (isNew) {
-                (new GroupDb(connection)).saveGroup(group);
+                new GroupDb(connection).saveGroup(group);
             } else {
-                (new GroupDb(connection)).updateGroup(group);
+                new GroupDb(connection).updateGroup(group);
             }            
             
             GroupMgr.populate(connection, true);     
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "SaveGroupAction");
         }
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

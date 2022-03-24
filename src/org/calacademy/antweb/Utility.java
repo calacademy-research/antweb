@@ -141,7 +141,7 @@ public class Utility implements Serializable {
     public static String firstLetters(String theString) {
       // Turn a string like "valid without fossil" into "vwf"
       String firstLetters = "";
-      if ((theString == null) || ("".equals(theString))) return ".";
+      if (theString == null || "".equals(theString)) return ".";
       
       firstLetters = theString.substring(0,1);
       int spaceIndex = theString.indexOf(" ");
@@ -275,12 +275,12 @@ public class Utility implements Serializable {
       boolean isNotBlank = true;
       if (theTerm == null) return false;
       theTerm = theTerm.trim();
-      if ( (theTerm.length() <= 0) 
-        || (theTerm.equals("null")) 
-        || (theTerm.equals("NULL"))
-        || (theTerm.equals("Null"))
-        || (theTerm.equals("none"))
-        || (theTerm.equals("0.0"))
+      if ( theTerm.length() <= 0
+        || theTerm.equals("null")
+        || theTerm.equals("NULL")
+        || theTerm.equals("Null")
+        || theTerm.equals("none")
+        || theTerm.equals("0.0")
         ) {
         isNotBlank = false;
       }
@@ -309,7 +309,7 @@ public class Utility implements Serializable {
    // by toggling this flag we can display empty fields on the specimen, collection and locality pages
    private static boolean isDisplayEmpty = true;
    public static boolean displayEmptyOrNotBlank(String theTerm) {
-       return isDisplayEmpty || (Utility.notBlank(theTerm));
+       return isDisplayEmpty || Utility.notBlank(theTerm);
    }
    
    public static String andify(ArrayList theList) {
@@ -348,7 +348,7 @@ public class Utility implements Serializable {
     public boolean badFileName(String fileName) {
        RE badFileCharacter;
        boolean result = false;
-       if ((fileName == null) || (fileName.equals(""))) {
+       if (fileName == null || fileName.equals("")) {
            result = true;
        } else {
            try {
@@ -409,7 +409,7 @@ public class Utility implements Serializable {
         String command = "";
         if (zipName != null) {
             // create a new temp directory
-            boolean success = (new File(unzipDir)).mkdir();
+            boolean success = new File(unzipDir).mkdir();
             
             if (new File(zipName).exists()) {
                 try {
@@ -433,7 +433,7 @@ public class Utility implements Serializable {
         
         if (file != null) {
             // create a new temp directory
-            boolean success = (new File(tempDirName)).mkdir();
+            boolean success = new File(tempDirName).mkdir();
             
             // unzip into that directory
             String zippedName = outName + ".zip";
@@ -459,7 +459,7 @@ public class Utility implements Serializable {
             String fileName = "";
             for (String s : dirListing) {
                 s_log.info("copyAndUnzipFile() dir listing shows: *" + s + "*");
-                if (!(s.equals(".")) && !(s.equals("..")) && !(s.contains("__"))) {
+                if (!s.equals(".") && !s.equals("..") && !s.contains("__")) {
                     fileName = s;
                 }
             }
@@ -477,7 +477,7 @@ public class Utility implements Serializable {
     }
 
     public boolean directoryExists(String directory) {
-        return (new File(directory)).exists();
+        return new File(directory).exists();
     }
 
     public static boolean makeDirTree(String dirTree) {
@@ -503,7 +503,7 @@ public class Utility implements Serializable {
           //if (dirTree.contains("2017")) AntwebUtil.logStackTrace();
 
           try {
-            isSuccess = (dirFile).mkdir();
+            isSuccess = dirFile.mkdir();
             if (isSuccess) {
                 if (debug) s_log.debug("makeDirTree() Success creating dir:" + thisDir);
             } else {
@@ -538,7 +538,7 @@ public class Utility implements Serializable {
         }
         // Create a directory; all ancestor directories must exist
         try {
-            isSuccess = (dirFile).mkdir();
+            isSuccess = dirFile.mkdir();
             if (isSuccess) {
                 s_log.warn("createDirectory() Success creating dir:" + directoryName);   
             } else {
@@ -555,7 +555,7 @@ public class Utility implements Serializable {
         
         s_log.info("deletingDirectory() " + dir.getName());
         
-        if ((dir.exists() && (dir.getName().length() > 1))) {
+        if (dir.exists() && dir.getName().length() > 1) {
             File[] files = dir.listFiles();
             for (File file : files) {
                 if (file.isDirectory()) {
@@ -565,7 +565,7 @@ public class Utility implements Serializable {
                 }
             }
         }
-        return (dir.delete());
+        return dir.delete();
     }
     
 

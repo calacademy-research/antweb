@@ -26,21 +26,21 @@ public class TaxaFromSearchForm extends SearchForm {
 
 
 	public String getProject() {
-		return (this.project);
+		return this.project;
 	}
 	public void setProject(String project) {
 		this.project = project;
 	}
 
 	public String getCaste() {
-		return (this.caste);
+		return this.caste;
 	}
 	public void setCaste(String caste) {
 		this.caste = caste;
 	}
 	
 	public String[] getChosen() {
-		return (this.chosen);
+		return this.chosen;
 	}
 
 	public void setChosen(String[] chosen) {

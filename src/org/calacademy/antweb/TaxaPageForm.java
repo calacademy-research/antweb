@@ -17,14 +17,14 @@ public final class TaxaPageForm extends ActionForm {
     private String caste;
 
     public String getCaste() {
-    	return (this.caste);
+    	return this.caste;
     }
     public void setCaste(String caste) {
         this.caste = caste;
     }
     
     public String getRank() {
-    	return (this.rank);
+    	return this.rank;
     }
     public void setRank(String rank) {
         this.rank = rank;
@@ -40,7 +40,7 @@ public final class TaxaPageForm extends ActionForm {
     				HttpServletRequest request) {
 
         ActionErrors errors = new ActionErrors();
-        if ((rank == null) || (rank.length() < 1))
+        if (rank == null || rank.length() < 1)
             errors.add("rank", new ActionError("error.rank.required"));
 
         AntwebUtil.blockFishingAttack(request, errors);

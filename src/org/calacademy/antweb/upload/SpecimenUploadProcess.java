@@ -78,7 +78,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 		*/                    
 
 		if (skipRecord == null) {
-		  if ((code == null) || (code.length() == 0) ) {
+		  if (code == null || code.length() == 0) {
 			s_log.warn("processLine() code is null or empty string line:" + lineNum + " taxon:" + taxonName);
 			getMessageMgr().addToMessages(MessageMgr.codeNotFound, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code);
 			skipRecord = "codeIsNull";
@@ -183,12 +183,12 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 			  //boolean isExistingSubfamilyForAGenus = getSpecimenUploadDb().isExistingSubfamilyForAGenus(family, subfamily, genus);
 			  //A.log("processLine() Not existing subfamily:" + subfamily + " for genus:" + genus);
 				ProfileCounter.add("SpecimenUploadProcessIsExistingSubfamilyForGenus");
-			  boolean isExistingTaxonSubfamilyForAGenus = (new TaxonDb(getConnection())).isExistingSubfamilyForAGenus(family, subfamily, genus);
+			  boolean isExistingTaxonSubfamilyForAGenus = new TaxonDb(getConnection()).isExistingSubfamilyForAGenus(family, subfamily, genus);
 			  boolean isExistingHomonymSubfamilyForAGenus = false;
 			  if (!isExistingTaxonSubfamilyForAGenus) {
 				// Date startTime1 = new Date();
 				// Check HomonymDb.
-				isExistingHomonymSubfamilyForAGenus = (new HomonymDb(getConnection())).isExistingSubfamilyForAGenus(family, subfamily, genus);
+				isExistingHomonymSubfamilyForAGenus = new HomonymDb(getConnection()).isExistingSubfamilyForAGenus(family, subfamily, genus);
 				if (isExistingHomonymSubfamilyForAGenus) {
 				  //A.log("processLine() Homonym found in antweb.  Subfamily:" + subfamily + " genus:" + genus);
 				  String displayTaxonName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + subfamily+genus + "'>" + Taxon.displaySubfamilyGenus(subfamily, genus) + "</a>";                          
@@ -207,7 +207,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 				String antwebTaxonName = antwebSubfamily + taxonName.substring(uploadedSubfamilyLength);
 
 				// Not happy with this logic.  Creating trouble.  Doubted.
-				boolean subfamilyNotFoundInAntweb = "".equals(antwebSubfamily) || (subfamily == null) || (antwebTaxonName == null);
+				boolean subfamilyNotFoundInAntweb = "".equals(antwebSubfamily) || subfamily == null || antwebTaxonName == null;
 				if (true && subfamilyNotFoundInAntweb) {
 				  //A.log("processLine() 2 subfamily not found in antweb.  antwebTaxonName:" + antwebTaxonName + " subfamily:" + subfamily + " genus:" + genus + " antwebSubfamily:" + antwebSubfamily);
 				  getMessageMgr().addToMessages(MessageMgr.invalidSubfamilyForGenus, Taxon.displaySubfamilyGenus(subfamily, genus));
@@ -463,7 +463,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
           if (taxon != null) status = taxon.getStatus();
 
-          if ((taxon == null) || (status == null) || (Status.UNRECOGNIZED.equals(status))) {
+          if (taxon == null || status == null || Status.UNRECOGNIZED.equals(status)) {
           
             if (false && taxonName.contains("gryllinaegryllus")) s_log.debug("setStatusAndCurrentValidName() taxon:" + taxon
               + " status:" + status + " statusAndCurrentValidNameCount:" + s_statusAndCurrentValidNameCount
@@ -478,7 +478,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 
             if (status == null) status = Status.UNRECOGNIZED;
 
-            if ((new HomonymDb(getConnection())).isHomonym(taxonName)) {
+            if (new HomonymDb(getConnection()).isHomonym(taxonName)) {
               //String heading = "<b>Taxon names recognized as Homonyms.  Names are not verified against AntCat.org  Submission <font color=green>(uploaded)</font></b>";
               String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
               getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);            
@@ -518,7 +518,7 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
                 String newTaxonStr = null;
                 
                 if (currentValidTaxonName == null) {
-                  Taxon dummyTaxon = (new HomonymDb(getConnection())).getHomonym(currentValidName);  // Unsafe usage! Homonym primary key includes author_date.
+                  Taxon dummyTaxon = new HomonymDb(getConnection()).getHomonym(currentValidName);  // Unsafe usage! Homonym primary key includes author_date.
                   boolean isHomonym = false;
                   if (dummyTaxon != null) isHomonym = true;
                   if (isHomonym) {

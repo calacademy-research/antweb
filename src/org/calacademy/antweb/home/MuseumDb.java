@@ -55,7 +55,7 @@ public class MuseumDb extends AntwebDb {
            museum.setChartColor(rset.getString("chart_color"));
            museum.setCreated(rset.getTimestamp("created"));
            if (deepCopy) {
-             Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(museum.getCode());
+             Hashtable<String, String> description = new DescEditDb(getConnection()).getDescription(museum.getCode());
              museum.setDescription(description);
 
              // museum.setTaxonSubfamilyDistJson(getSpecimenSubfamilyDistJson(museum.getCode()));
@@ -102,7 +102,7 @@ public class MuseumDb extends AntwebDb {
            museum.setChartColor(rset.getString("chart_color"));
            museum.setCreated(rset.getTimestamp("created"));
          
-           Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(museum.getCode());
+           Hashtable<String, String> description = new DescEditDb(getConnection()).getDescription(museum.getCode());
            museum.setDescription(description);         
         }
       } finally {
@@ -418,7 +418,7 @@ public class MuseumDb extends AntwebDb {
     private void updateImagedSpecimenCount(String code) throws SQLException {
         int count = getImagedSpecimenCount(code);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("museum", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "code = '" + code + "'");
+        utilDb.updateField("museum", "imaged_specimen_count", Integer.valueOf(count).toString(), "code = '" + code + "'");
     }
 
     private int getImagedSpecimenCount(String code) {
@@ -447,7 +447,7 @@ public class MuseumDb extends AntwebDb {
     private void updateValidSpeciesCount(String code) throws SQLException {
         int count = getValidSpeciesCount(code);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("museum", "valid_species_count", (Integer.valueOf(count)).toString(), "code = '" + code + "'");
+        utilDb.updateField("museum", "valid_species_count", Integer.valueOf(count).toString(), "code = '" + code + "'");
     }
 
     private int getValidSpeciesCount(String code) {
@@ -481,7 +481,7 @@ public class MuseumDb extends AntwebDb {
       A.log("populateSpecimenMuseum(" + museumCode + ")");
       String whereClause = "museum = '" + museumCode + "'";
       
-      (new UtilDb(getConnection())).updateField("specimen", "museum", null, whereClause);
+      new UtilDb(getConnection()).updateField("specimen", "museum", null, whereClause);
 
       //A.log("populateSpecimenMuseum() emptied specimen.museum field whereClause:" + whereClause);
       Statement stmt = null;
@@ -532,7 +532,7 @@ public class MuseumDb extends AntwebDb {
             return;
           }
       
-          (new UtilDb(getConnection())).deleteFrom("museum_taxon", " where code = '" + museumCode + "'");
+          new UtilDb(getConnection()).deleteFrom("museum_taxon", " where code = '" + museumCode + "'");
 
           String query = "select taxon_name, count(*) specimenCount, count(id) imageCount " 
             + " from specimen s left join image i on s.code = i.image_of_id " 

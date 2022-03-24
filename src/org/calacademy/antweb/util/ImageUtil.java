@@ -73,7 +73,7 @@ public class ImageUtil {
         int i = 0;
         for (String path : paths) {
           ++i;
-          if ((i % 10000 ) == 0) s_log.warn("handleImage() i:" + i);
+          if (i % 10000 == 0) s_log.warn("handleImage() i:" + i);
           if (new File(path).exists()) {
             ++fileFoundCount;
   

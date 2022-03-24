@@ -234,7 +234,7 @@ public class MessageMgr {
     }      
     
     public static String getMessageDisplay(String key) {
-      Test test = (new MessageMgr()).getTest(key);   
+      Test test = new MessageMgr().getTest(key);
       if (test != null) return test.getHeading();
       return key;
     }

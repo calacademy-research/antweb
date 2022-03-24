@@ -65,7 +65,7 @@ public class ObjectMapDb extends AntwebDb {
 
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
 		
-		Map map = (new AdvancedSearchAction()).getGoogleMap(museum, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
+		Map map = new AdvancedSearchAction().getGoogleMap(museum, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
 
 		SearchAction.undoSetTempSpecimenSearchLimit();
 
@@ -121,7 +121,7 @@ public class ObjectMapDb extends AntwebDb {
 
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
 
-		Map map = (new AdvancedSearchAction()).getGoogleMap(country, adm1, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
+		Map map = new AdvancedSearchAction().getGoogleMap(country, adm1, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
 
 		SearchAction.undoSetTempSpecimenSearchLimit();
 
@@ -202,7 +202,7 @@ public class ObjectMapDb extends AntwebDb {
     public void genGroupObjectMap(Group group) throws SQLException {
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
 
-		Map map = (new AdvancedSearchAction()).getGoogleMap(group, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
+		Map map = new AdvancedSearchAction().getGoogleMap(group, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
 
 		SearchAction.undoSetTempSpecimenSearchLimit();
 

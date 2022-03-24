@@ -82,7 +82,7 @@ public class LogMgr {
 
 
   public static void appendFile(String fullPath, String data) {
-    (new Utility()).makeDirTree(fullPath);
+    new Utility().makeDirTree(fullPath);
     try {
       FileWriter fstream = new FileWriter(fullPath, true);
       BufferedWriter out = new BufferedWriter(fstream);
@@ -117,7 +117,7 @@ public class LogMgr {
     String logDir = AntwebProps.getDataRoot() + "log/";
     String bakDir = logDir + "bak/";
     String backupDir = bakDir + yearStr + "/" + dateStr + "/";
-    (new Utility()).makeDirTree(backupDir);
+    new Utility().makeDirTree(backupDir);
     s_log.info("archiveLogs() Make backupDir:" + backupDir);
 
     //String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";
@@ -180,7 +180,7 @@ public class LogMgr {
   }
 
   public static void logQuery(Connection connection, String note, String query) throws SQLException {
-    String results = (new UtilDb(connection)).runQuery(query);
+    String results = new UtilDb(connection).runQuery(query);
     s_log.warn("logQuery() note:" + note + " results:" + results);  
   }
 
@@ -189,7 +189,7 @@ public class LogMgr {
     NamedQuery namedQuery = Queries.getNamedQuery(name);
     if (namedQuery != null) {
       String query = namedQuery.getQuery();
-      String results = (new UtilDb(connection)).runQuery(query);
+      String results = new UtilDb(connection).runQuery(query);
       s_log.warn("logAntQuery() note:" + note + " results:" + results);  
     } else {
       s_log.warn("logAntQuery() namedQuery not found:" + name);       
@@ -203,7 +203,7 @@ public class LogMgr {
     for (NamedQuery namedQuery : battery) {
       ++i;
       String query = namedQuery.getQuery();
-      String retVal = (new UtilDb(connection)).runQuery(query);
+      String retVal = new UtilDb(connection).runQuery(query);
       results += "\n+++ query:" + i + ". "+ namedQuery.getName() + retVal;
     }
     s_log.warn("logAntBattery() note:" + note + " results:" + results);  

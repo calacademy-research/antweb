@@ -29,7 +29,7 @@ public final class UploadReportAction extends Action {
           String message = "uploadId not found.";
           //s_log.warn("execute() " + message);
    	      request.setAttribute("message", message);
- 		  return (mapping.findForward("message"));
+ 		  return mapping.findForward("message");
         }
 
         if (uploadId > 0) {
@@ -46,7 +46,7 @@ public final class UploadReportAction extends Action {
 		  }
 		}
    	    request.setAttribute("message", "Upload Report not found:" + uploadId);
-		return (mapping.findForward("message"));
+		return mapping.findForward("message");
 	}
 
 }

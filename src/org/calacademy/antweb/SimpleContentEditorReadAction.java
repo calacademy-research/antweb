@@ -25,7 +25,7 @@ public final class SimpleContentEditorReadAction extends Action {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        String docRoot = (new Utility()).getDocRoot();
+        String docRoot = new Utility().getDocRoot();
         
         String fileName = ((SimpleContentEditorForm) form).getFileName();
         String contents = "";
@@ -47,6 +47,6 @@ public final class SimpleContentEditorReadAction extends Action {
         
         ((SimpleContentEditorForm) form).setContents(contents);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

@@ -20,9 +20,9 @@ public class MuseumMgr {
     }
     
     public static void populate(Connection connection, boolean forceReload) throws SQLException {
-      if (!forceReload && (s_museums != null)) return;      
+      if (!forceReload && s_museums != null) return;
       
-      MuseumDb museumDb = (new MuseumDb(connection));
+      MuseumDb museumDb = new MuseumDb(connection);
       s_museums = museumDb.getMuseums(true); // deep copy
       
       // This will appear a string of nulls until museum table name is populated.  No problem.

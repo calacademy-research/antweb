@@ -552,7 +552,7 @@ public class SpecimenDb extends AntwebDb {
       return " (flag is null or flag != 'red') ";
     }
     public static String getStatusCriteria() {
-      return (new StatusSet()).getCriteria("specimen");
+      return new StatusSet().getCriteria("specimen");
     }
     public static String getTaxaCriteria() {
       return " family = 'formicidae'";
@@ -853,12 +853,12 @@ public class SpecimenDb extends AntwebDb {
 */
 
                 // We have an old value. mem222072 |            8 | 0000-04-24             | 0000-04-24
-                if ((startNew != null && start == null) || ("mem222072".equals(code))) {
+                if (startNew != null && start == null || "mem222072".equals(code)) {
                     newNulls1 += updateCollectedStartAsNull(code);
                     s_log.debug("parseDates() code:" + code + " start:" + start + " startNew:" + startNew);
                 }
                 //ex: | sam-hym-c005977   | pseudomyrmecinaetetraponera natalensis | 1947/12/              | 1947/12/-00-00
-                if ((start != null && startNew == null)) {
+                if (start != null && startNew == null) {
                     newNulls2 += updateCollectedStartAsNull(code);
                     s_log.debug("parseDates() WTF code:" + code + " start:" + start + " startStr:" + startStr + " startNew:" + startNew);
                 }
@@ -878,7 +878,7 @@ public class SpecimenDb extends AntwebDb {
                 }
 */
 
-                if ((startNew != null && !startNew.equals(start)) || (endNew != null && !endNew.equals(end))) {
+                if (startNew != null && !startNew.equals(start) || endNew != null && !endNew.equals(end)) {
                     count = updateParsedDates(code, startNew, endNew);
                     s_log.warn("parseDates() count:" + count + " code:" + code + " startStr:" + startStr + " start:" + start + " -> " + startNew + " end:" + end + " -> " + endNew);
                     if (count < 1) {

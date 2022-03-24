@@ -75,7 +75,7 @@ public class A {
   }
   public static boolean loopCount(int divNum) {
     loopCounter = loopCounter + 1;
-      return loopCounter == 1 || (loopCounter % divNum) == 0;
+      return loopCounter == 1 || loopCounter % divNum == 0;
   }
   
   private static int[] logCounter = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -92,7 +92,7 @@ public class A {
     if (!AntwebProps.isDevOrStageMode()) return;
 
     logCounter[log] = logCounter[log] + 1;
-    if (logCounter[log] == 1 || (logCounter[log] % divNum) == 0) {
+    if (logCounter[log] == 1 || logCounter[log] % divNum == 0) {
       s_log.info("log:" + log + " " + message + " i:" + logCounter[log]);
     }
   }
@@ -132,12 +132,12 @@ public class A {
    
 	public static String commaFormat(String num) {
 	  if (num == null) return "0";
-	  return commaFormat((Long.valueOf(num)).intValue());
+	  return commaFormat(Long.valueOf(num).intValue());
 	}	
 	
 	public static String commaFormat(long num) {
 	  if (num == 0) return "0";
-	  return commaFormat((Long.valueOf(num)).intValue());
+	  return commaFormat(Long.valueOf(num).intValue());
 	}
 	
 	public static String commaFormat(int num) {

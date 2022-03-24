@@ -91,7 +91,7 @@ public class SpecimenUploader {
 
         if (messageStr != null) {
             // No further tests necessary.
-        } else if ((!formFileName.contains(".txt")) && (!formFileName.contains(".TXT"))) {
+        } else if (!formFileName.contains(".txt") && !formFileName.contains(".TXT")) {
             s_log.warn("uploadSpecimenFile() theFileName not txt.  formFileName:" + formFileName);
             messageStr = "Specimen File must be a .txt file.";
         } else if (isCurrentSpecimenFormat(specimenFileLoc) != null) {

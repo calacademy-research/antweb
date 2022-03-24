@@ -90,22 +90,22 @@ public class AdvancedSearchAction extends Action {
         //s_log.warn("addToSearch()");		
 	
 		Formatter format = new Formatter();
-		if ((value != null) && (value.length() > 0)) {
+		if (value != null && value.length() > 0) {
 
 			if (searchModifier == null) {
 				if (sb.length() > 0) {
 					sb.append(", ");
 				}
 				sb.append(format.capitalizeFirstLetter(field) + " is " + format.capitalizeFirstLetter(value));
-			} else if ((searchModifier.equals("boolean")) && (value.equals("on"))) {
+			} else if (searchModifier.equals("boolean") && value.equals("on")) {
 				// no need to list images being on, since only things with images are shown
-				if (!(field.equals("images"))) {
+				if (!field.equals("images")) {
 					if (sb.length() > 0) {
 						sb.append(", ");
 					}
 					sb.append("only " + format.capitalizeFirstLetter(field));
 				}
-			} else if ((value != null) && (value.length() > 0)) {
+			} else if (value != null && value.length() > 0) {
 				if (sb.length() > 0) {
 					sb.append(", ");
 				}
@@ -212,7 +212,7 @@ public class AdvancedSearchAction extends Action {
         ArrayList taxonList = null;
         ArrayList<String> chosenList = null;
       
-		Map map = (new MapResultsAction()).getMap(searchResults, taxonList, chosenList, resultRank, output, title, connection);
+		Map map = new MapResultsAction().getMap(searchResults, taxonList, chosenList, resultRank, output, title, connection);
 		//if (title.contains("AFRC")) s_log.warn("getGoogleMap() title:" + title + " map.points.size:" + map.getPoints().size());
         return map;
     }

@@ -79,10 +79,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             otherInfo.append("<features>");
 
             boolean debugLine = false;
-            if (AntwebProps.isDevMode() && true && (
-                      theLine.contains("32-004941")
-                   // || theLine.contains("0000105982")
-                 )) {
+            // || theLine.contains("0000105982")
+            if (AntwebProps.isDevMode() && true && theLine.contains("32-004941")) {
                 debugLine = true;
             }
 
@@ -104,7 +102,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 //A.log("parseLine() next:" + next + " element:" + element);
                 // if (colIndex == 0) code = element;
                 // colIndex:27  colList:27  otherColumns:27
-                if ((colIndex < colList.size()) && (colIndex < otherColumns.size())) {
+                if (colIndex < colList.size() && colIndex < otherColumns.size()) {
                     if (colList.get(colIndex) != null) {
                         String col = colList.get(colIndex);
                         col = col.toLowerCase();
@@ -141,20 +139,20 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
                         if (goodTaxonHeaders.contains(col)) {
                             // A.log("parseLine() col:" + col + " element:" + element);
-                            if (!"".equals(element) && (element != null) && !"type".equals(col)) { // Specimen can have this but not taxon
+                            if (!"".equals(element) && element != null && !"type".equals(col)) { // Specimen can have this but not taxon
                               taxonItem.put(col, element);
                             }
                         }
                                  
                         if (col.equals("code")) {
                            String lowerCode = element.toLowerCase();
-                           String newCode = (new Formatter()).removeSpaces(lowerCode);
+                           String newCode = new Formatter().removeSpaces(lowerCode);
                            code = newCode;
                            //if (!lowerCode.equals(newCode)) ++spacesRemoved;
                            specimenItem.put(col, newCode);
                            //A.log("parseLine() code col:" + col + " element:" + element);
                         } else {
-                           if (!"".equals(element) && (element != null)) {
+                           if (!"".equals(element) && element != null) {
                              specimenItem.put(col, element);
                              // A.log("parseLine() not code col:" + col + " element:" + element);
                            }
@@ -357,7 +355,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
              // A.log("parseLine() null for speciesName:" + speciesName + " spaceIndex:" + spaceIndex);
   	  	    }
             if (speciesName.contains("\"") 
-              || (subspeciesName != null && subspeciesName.contains(" ")))
+              || subspeciesName != null && subspeciesName.contains(" "))
             {
                 String tempName = speciesName;
                 if (subspeciesName != null && subspeciesName.contains(" ")) tempName += " " + subspeciesName;
@@ -591,18 +589,18 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             
 //if ("casent0187122".equals(code)) A.log("parseLine() 1");                  
             taxonItem.put("source", shortFileName);
-            taxonItem.put("line_num", (Integer.valueOf(lineNum)).toString());
+            taxonItem.put("line_num", Integer.valueOf(lineNum).toString());
             taxonItem.put("access_group", accessGroup.getId());
             
             //if (!taxonItem.containsKey("fossil")) taxonItem.put("fossil", 0);
 
-            specimenItem.put("line_num", (Integer.valueOf(lineNum)).toString());
+            specimenItem.put("line_num", Integer.valueOf(lineNum).toString());
             specimenItem.put("access_group", accessGroup.getId());
             specimenItem.put("access_login", accessLogin.getId());
 
             // put a subfamily in front of the TOC
-            if ((taxonItem.containsKey("toc")) && (!"".equals((String) taxonItem.get("toc")))) {
-                if ((taxonItem.containsKey("subfamily")) && (!"".equals((String) taxonItem.get("subfamily")))) {
+            if (taxonItem.containsKey("toc") && !"".equals((String) taxonItem.get("toc"))) {
+                if (taxonItem.containsKey("subfamily") && !"".equals((String) taxonItem.get("subfamily"))) {
                     taxonItem.put("toc", (String) taxonItem.get("subfamily") + (String) taxonItem.get("toc"));
                 } else {
                     taxonItem.put("toc", null);
@@ -969,7 +967,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
     
     private Integer getElevationFromString(String element, int lineNum) {
-        if ((element == null) || (element.equals(""))) return null;
+        if (element == null || element.equals("")) return null;
         Integer elevation = null;
         String elemStr = element.toLowerCase();
         try {
@@ -1021,8 +1019,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 String lowRange = elemStr.substring(0, elemStr.indexOf("-")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("-") + 1).trim();
                 double averageElev = (Integer.parseInt(lowRange) + Integer.parseInt(elemStr)) / 2d;
-                int averageElevInt = (Double.valueOf(averageElev)).intValue();
-                elemStr = (Integer.valueOf(averageElevInt)).toString();
+                int averageElevInt = Double.valueOf(averageElev).intValue();
+                elemStr = Integer.valueOf(averageElevInt).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);
             }
             if (elemStr.indexOf("to") >= 1) {
@@ -1031,8 +1029,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 String lowRange = elemStr.substring(0, elemStr.indexOf("to")).trim();
                 elemStr = elemStr.substring(elemStr.indexOf("to") + 2).trim();
                 double averageElev = (Integer.parseInt(lowRange) + Integer.parseInt(elemStr)) / 2d;
-                int averageElevInt = (Double.valueOf(averageElev)).intValue();
-                elemStr = (Integer.valueOf(averageElevInt)).toString();
+                int averageElevInt = Double.valueOf(averageElev).intValue();
+                elemStr = Integer.valueOf(averageElevInt).toString();
                 //s_log.warn("getElevationFromString() RangeElevation elevation:" + element + " elevation:" + elemStr);
             }
             if (elemStr.contains("+")) {
@@ -1043,12 +1041,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (elemStr.indexOf(".") > 0) {
                 ++decimalElevation;
                 elemStr = elemStr.substring(0, elemStr.indexOf("."));
-                elemStr = (new BigDecimal(elemStr)).intValue() + "";
+                elemStr = new BigDecimal(elemStr).intValue() + "";
                //s_log.warn("getElevationFromString() decimal Elevation elevation:" + element + " elevation:" + elemStr);
             }        
             elemStr = elemStr.trim();
 
-            elevation = (Integer.valueOf(elemStr));
+            elevation = Integer.valueOf(elemStr);
             ++figuredElevation;
         } catch (Exception e) {
             ++unfathomableElevation;

@@ -108,6 +108,6 @@ public final class IntroducedMapMgrAction extends Action {
         request.setAttribute("speciesList", speciesList);
         request.setAttribute("form", bioregionMapMgrForm);
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

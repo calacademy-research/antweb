@@ -39,7 +39,7 @@ public final class CollectionAction extends Action {
         if (name == null) {
           message = "Must enter a collection name.";
 		  request.setAttribute("message", message);
-		  return (mapping.findForward("message"));
+		  return mapping.findForward("message");
         } 
         
         String queryString = request.getQueryString();
@@ -57,7 +57,7 @@ public final class CollectionAction extends Action {
             connection = DBUtil.getConnection(dataSource, "CollectionAction.execute()", HttpUtil.getTarget(request));	
             AntwebMgr.populate(connection);            
 
-            collection = (new CollectionDb(connection)).getCollection(name);
+            collection = new CollectionDb(connection).getCollection(name);
 
 			s_log.debug("collection:" + collection + " size:" + collection.getSpecimenResults().getResults().size());
 
@@ -70,7 +70,7 @@ public final class CollectionAction extends Action {
 			  if (!name.equals(cleanCode)) {
 				message = "Unsatisfactory collection code name. Perhaps looking for <a href='" + AntwebProps.getDomainApp() + "/collection.do?name=" + cleanCode + "'>" + cleanCode + "</a>?";
 				request.setAttribute("message", message);
-				return (mapping.findForward("message"));
+				return mapping.findForward("message");
 			  }
         			  
               if (UploadAction.isInUploadProcess()) {
@@ -82,7 +82,7 @@ public final class CollectionAction extends Action {
                 LogMgr.appendLog("badRequest.log", message);
 			  }
               request.setAttribute("message", message);
-              return (mapping.findForward("message"));
+              return mapping.findForward("message");
 			}			
 			
             session.setAttribute("advancedSearchResults", collection);
@@ -109,6 +109,6 @@ public final class CollectionAction extends Action {
 		// Set a transactional control token to prevent double posting
 		saveToken(request);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
 	}
 }

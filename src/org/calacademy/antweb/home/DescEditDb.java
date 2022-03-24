@@ -186,11 +186,11 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
                 descEdit.setAccessGroupId(rset.getInt("access_group"));
                 descEdit.setAccessLoginId(rset.getInt("access_login"));
 
-                Login accessLogin = (new LoginDb(getConnection())).getLogin(descEdit.getAccessLoginId());  // quickload
+                Login accessLogin = new LoginDb(getConnection()).getLogin(descEdit.getAccessLoginId());  // quickload
                 descEdit.setAccessLogin(accessLogin);
                 
                 if (descEdit.getCode() == null) {
-                  Taxon taxon = (new TaxonDb(getConnection())).getTaxon(descEdit.getTaxonName());
+                  Taxon taxon = new TaxonDb(getConnection()).getTaxon(descEdit.getTaxonName());
                   if (taxon != null) {
                     //s_log.warn("getRecentDescEdits() taxonName:" + descEdit.getTaxonName() + " prettyName:" + infoInstance.getPrettyName() 
                     //  + " accessLoginId:" + descEdit.getAccessLoginId() + " title:" + descEdit.getTitle());                
@@ -260,7 +260,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
 
       emptyObjectEdit();
       
-      HashMap<String, Project> projectsHashMap = (new ProjectDb(getConnection())).getAllProjects();
+      HashMap<String, Project> projectsHashMap = new ProjectDb(getConnection()).getAllProjects();
       Collection<Project> values = projectsHashMap.values();
       int i = 0;
       for (Project project : values) {

@@ -49,7 +49,7 @@ s_log.debug("getSlides() query:" + theQuery);
 			String thisName = null;
 			while (rset.next()) {
 				thisName = rset.getString(1);
-				if ((thisName != null) && (thisName.length() > 0) && (!thisName.equals("null"))) {
+				if (thisName != null && thisName.length() > 0 && !thisName.equals("null")) {
 					slides.add(rset.getString(1));
 				}
 			}
@@ -62,7 +62,7 @@ s_log.debug("getSlides() query:" + theQuery);
 	}
 
 	public String getRank() {
-		return (this.rank);
+		return this.rank;
 	}
 
 	public void setRank(String rank) {

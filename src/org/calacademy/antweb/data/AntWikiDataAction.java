@@ -76,7 +76,7 @@ public final class AntWikiDataAction extends Action {
 
         }
         request.setAttribute("message", message);
-        return (mapping.findForward("message"));             
+        return mapping.findForward("message");
     }
     
     private void processPage(ArrayList<String> taxonCountryPage, Connection connection) {
@@ -275,7 +275,7 @@ public final class AntWikiDataAction extends Action {
 
         //A.log("getTaxon() taxonName:" + taxonName + " query:" + query);
 
-        return (new TaxonDb(connection)).getTaxon(taxonName);
+        return new TaxonDb(connection).getTaxon(taxonName);
     }
 
 // ---------------------------------------------------------------------------------------

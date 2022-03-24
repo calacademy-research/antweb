@@ -68,9 +68,9 @@ public class TeamMemberAction extends Action {
         
         if (curatorList != null) {
           request.getSession().setAttribute("curatorList", curatorList);      
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         } else {
-          return (mapping.findForward("error"));
+          return mapping.findForward("error");
         }		
 		
 	}

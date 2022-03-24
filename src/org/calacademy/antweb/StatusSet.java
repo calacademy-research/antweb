@@ -80,10 +80,10 @@ public class StatusSet extends Status {
         /* For calculating children counts,  
          */
         if (Project.WORLDANTS.equals(projectName)) {
-          return (new StatusSet(VALID)).getAndCriteria();
+          return new StatusSet(VALID).getAndCriteria();
           
         } else if (Project.ALLANTWEBANTS.equals(projectName)) {
-          return (new StatusSet(ALL)).getAndCriteria();
+          return new StatusSet(ALL).getAndCriteria();
 
         } else {
           return "";

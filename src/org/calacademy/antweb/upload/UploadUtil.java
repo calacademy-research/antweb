@@ -92,7 +92,7 @@ public class UploadUtil {
         boolean valid = false;
         if (item.containsKey(key)) {
             String keyVal = (String) item.get(key);
-            if ((!keyVal.equals("null")) && (!keyVal.equals(""))) {
+            if (!keyVal.equals("null") && !keyVal.equals("")) {
                 valid = true;
             }
         }

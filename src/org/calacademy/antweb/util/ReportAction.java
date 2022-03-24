@@ -59,13 +59,13 @@ public final class ReportAction extends Action {
         }
          
         if (target != null && target.contains("countryAdm1List")) {
-          return (mapping.findForward("countryAdm1List"));
+          return mapping.findForward("countryAdm1List");
         }
 
         if (target != null && target.contains("bioregionCountryList")) {
           ArrayList<HashMap<String, String>> bioregionCountryList = getBioregionCountryList(request);
           request.setAttribute("bioregionCountryList", bioregionCountryList);
-          return (mapping.findForward("bioregionCountryList"));
+          return mapping.findForward("bioregionCountryList");
         }
         
         return null;

@@ -107,7 +107,7 @@ public class TeamMemberDb extends AntwebDb {
         
 
           // Use of ternary operator.  short conditional statement
-          int isPublished = (teamMember.isPublished()) ? 1 : 0;      
+          int isPublished = teamMember.isPublished() ? 1 : 0;
           String theDML = "";
           
           TeamMember existingTeamMember = findById(teamMember.getId());     

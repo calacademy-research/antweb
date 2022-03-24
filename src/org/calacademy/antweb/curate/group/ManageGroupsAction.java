@@ -31,7 +31,7 @@ public class ManageGroupsAction extends Action {
         try {
             connection = getDataSource(request, "conPool").getConnection();
 
-            groupList = (new GroupDb(connection)).getAllGroups();
+            groupList = new GroupDb(connection).getAllGroups();
             //s_log.info("execute() groupList:" + groupList);
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
@@ -45,9 +45,9 @@ public class ManageGroupsAction extends Action {
 
         if (groupList != null) {
           request.getSession().setAttribute("antwebGroups", groupList);      
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         } else {
-          return (mapping.findForward("error"));
+          return mapping.findForward("error");
         }
     }
 }

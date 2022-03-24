@@ -57,7 +57,7 @@ public class BrowseAction extends DescriptionAction {
         HttpSession session = request.getSession();
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
-        BrowseForm browseForm = ((BrowseForm) form);
+        BrowseForm browseForm = (BrowseForm) form;
         String rank = browseForm.getRank();
         //boolean local = browseForm.getLocal(); // unnecessary now because non-global is the default.
         boolean global = browseForm.getGlobal();
@@ -72,7 +72,7 @@ public class BrowseAction extends DescriptionAction {
         if (!queryString.contains("?")) queryString = "?" + queryString;
         boolean isPost = HttpUtil.isPost(request);
 
-        if ((rank == null) || ("".equals(rank))) rank = inferredRank(queryString);
+        if (rank == null || "".equals(rank)) rank = inferredRank(queryString);
         if (Rank.SUBGENUS.equals(rank)) rank = Rank.GENUS;
         //A.log("browseForm.rank:" + browseForm.getRank() + " rank:" + rank);
 
@@ -113,23 +113,23 @@ public class BrowseAction extends DescriptionAction {
 
         // This block of code will handle a request that comes in with a taxonName parameter 
         // by building up and redirecting to a new request.
-        boolean hasQueryString = (queryString != null);
-        if (((browseForm.getTaxonName() != null) && (!"".equals(browseForm.getTaxonName()))) || (browseForm.getAntcatId() != 0)) {
+        boolean hasQueryString = queryString != null;
+        if (browseForm.getTaxonName() != null && !"".equals(browseForm.getTaxonName()) || browseForm.getAntcatId() != 0) {
           //session.setAttribute("statusSet", StatusSet.ALL);
           s_log.debug("execute() redirect taxonName:" + browseForm.getTaxonName() + " antcatId:" + browseForm.getAntcatId());
           return taxonNameRedirect(browseForm, mapping, request, response);
         } else if (hasQueryString && request.getQueryString().contains("antcatId=")) {
             request.setAttribute("message", "Enter an AntCat ID in the url.");
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         } else if (hasQueryString && request.getQueryString().contains("taxonName=")) {
             request.setAttribute("message", "Enter a taxon name in the url.");
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
                 
         if (family == null && subfamily == null && genus == null && species == null) {
             message = "Taxon not found.";
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
         			
         // Some requests have "&;" in the queryString.  EOL data feed?
@@ -137,7 +137,7 @@ public class BrowseAction extends DescriptionAction {
         if (correctedUrl != null) {
           message = "Error found with URL.  Try this link <a href=\"" + correctedUrl + "\">here</a>.";
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         }
      
         if("specimen".equals(rank)) {
@@ -149,14 +149,14 @@ public class BrowseAction extends DescriptionAction {
               message += "  Description.do requests are for taxa, not specimens.";
            }
            request.setAttribute("message", message);
-           return (mapping.findForward("message"));
+           return mapping.findForward("message");
         }
      
         if (Taxon.getTaxonOfRank(rank) == null) {
              message = "Bad rank:" + rank + " " + AntwebUtil.getRequestInfo(request);
              s_log.info("execute() " + message);
              request.setAttribute("message", message);
-             return (mapping.findForward("message"));
+             return mapping.findForward("message");
         }
   
         String cacheType = "";            
@@ -171,7 +171,7 @@ public class BrowseAction extends DescriptionAction {
         boolean isGenCache = false;  // parameter has been passed in with url indicating that this request response will be cached.
         boolean isCachable = false;  // One of the struts action types that may be cached (browse.do and description.do)
         if ("true".equals(browseForm.getGenCache())) isGenCache = true;                
-        if (("browse".equals(cacheType)) || ("images".equals(cacheType))) {
+        if ("browse".equals(cacheType) || "images".equals(cacheType)) {
            isCachable = true;
         } else if ("description".equals(cacheType)) {   // Nov 13, 2013
            isCachable = false;
@@ -181,7 +181,7 @@ public class BrowseAction extends DescriptionAction {
            ) {
             if (accessLogin == null) {        
               request.setAttribute("message", Login.MUST_LOGIN_MESSAGE);
-              return (mapping.findForward("message"));
+              return mapping.findForward("message");
             }
         }
 
@@ -223,7 +223,7 @@ public class BrowseAction extends DescriptionAction {
               message = "Simultaneous map comparison limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
               request.setAttribute("message", message);
               //s_log.warn("execute() message:" + message);
-              return (mapping.findForward("message"));                  
+              return mapping.findForward("message");
             }
           }
           if ("getComparison".equals(cacheType)) {
@@ -232,7 +232,7 @@ public class BrowseAction extends DescriptionAction {
               message = "Simultaneous get comparison limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
               request.setAttribute("message", message);
               //s_log.warn("execute() message:" + message);
-              return (mapping.findForward("message"));                  
+              return mapping.findForward("message");
             }
           }        
         
@@ -255,7 +255,7 @@ public class BrowseAction extends DescriptionAction {
 
 		  /* --- Here is where we fetch the Taxon or Homonym --- */
 
-		  if (!"homonym".equals(browseForm.getStatus()) && (browseForm.getAuthorDate() == null)) {
+		  if (!"homonym".equals(browseForm.getStatus()) && browseForm.getAuthorDate() == null) {
 			if (taxon == null) {
               //A.log("execute  () family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank);
 
@@ -265,7 +265,7 @@ public class BrowseAction extends DescriptionAction {
 		  }
 		  if (taxon == null) {
 			// Perhaps it is a Homonym...
-			taxon = (new HomonymDb(connection)).getFullHomonym(family, subfamily, genus, species, subspecies, authorDate);
+			taxon = new HomonymDb(connection).getFullHomonym(family, subfamily, genus, species, subspecies, authorDate);
             //A.log("execute() homonym:" + taxon);
 			/* See the homonyms of /description.do?subfamily=formicinae&genus=camponotus
 			They are actually of rank: subgenus
@@ -276,7 +276,7 @@ public class BrowseAction extends DescriptionAction {
 		  if (taxon == null) {
 			  message = "Taxon not found.";
 			  request.setAttribute("message", message);
-			  return (mapping.findForward("message"));
+			  return mapping.findForward("message");
 		  }
 
           if (!Status.VALID.equals(taxon.getStatus()) && Project.WORLDANTS.equals(overview.getName())) {
@@ -307,7 +307,7 @@ public class BrowseAction extends DescriptionAction {
               // if (!ProjectDb.projectHasTaxon(projectName, taxon, connection)) {
 			  message = "Taxon:" + taxon.getTaxonName() + " not found for overview:" + overview;
 			  request.setAttribute("message", message);
-			  return (mapping.findForward("message"));
+			  return mapping.findForward("message");
 		  }
 
 		  String facet = HttpUtil.getFacet(request);
@@ -315,7 +315,7 @@ public class BrowseAction extends DescriptionAction {
 						
 		  //A.log("execute() saveDescriptionEdit accessGroup:" + accessGroup + " taxon:" + taxon); 
 		  boolean success = saveDescriptionEdit(browseForm, taxon, accessLogin, request, connection);   
-		  if (!success) return (mapping.findForward("message"));                    
+		  if (!success) return mapping.findForward("message");
 
 		  if (accessLogin != null) getDescEditHistory(taxon, connection, request);
 
@@ -442,8 +442,8 @@ We are showin the full map of ponerinae for every adm1.
                     s_log.info("execute() " + message + "  No upload in process.");
                 }
                 request.setAttribute("message", message);
-                LogMgr.appendLog("noExists.txt", (new Date()).toString() + " - " + AntwebUtil.getRequestInfo(request));
-                return (mapping.findForward("message"));
+                LogMgr.appendLog("noExists.txt", new Date().toString() + " - " + AntwebUtil.getRequestInfo(request));
+                return mapping.findForward("message");
             }
 
             if ("oneView".equals(cacheType)) chosen = (String[]) session.getAttribute("chosen");
@@ -500,12 +500,12 @@ We are showin the full map of ponerinae for every adm1.
             }
 
             if (rank.equals("specimen")) {
-                return (mapping.findForward("specimen"));
+                return mapping.findForward("specimen");
             } else if (request.getParameter("shot") != null) {
-                return (mapping.findForward("oneView"));
+                return mapping.findForward("oneView");
             } else {
                 // A.log("Success");
-                return (mapping.findForward("success"));
+                return mapping.findForward("success");
             }
 
         } catch (MissingResourceException e) {
@@ -530,7 +530,7 @@ We are showin the full map of ponerinae for every adm1.
         // Error handling.
         s_log.error("execute() " + message + " " + AntwebUtil.getRequestInfo(request));
         request.setAttribute("message", message);
-        return (mapping.findForward("message"));
+        return mapping.findForward("message");
     }
   
   
@@ -560,25 +560,25 @@ We are showin the full map of ponerinae for every adm1.
 		String authorDate = browseForm.getAuthorDate();
 		// fetch with taxon name
 		if (taxonName != null && !"".equals(taxonName)) {
-		  if (!"homonym".equals(browseForm.getStatus()) && (authorDate == null))
+		  if (!"homonym".equals(browseForm.getStatus()) && authorDate == null)
               //A.log("4");
 
             //String commonName = Formatter.initCap(taxonName);
               //A.log("6 commonName:" + commonName);
               
-			fetchTaxon = (new TaxonDb(connection)).getTaxon(taxonName);
+			fetchTaxon = new TaxonDb(connection).getTaxon(taxonName);
 		  if (fetchTaxon == null) {
               //A.log("5");
 			if (authorDate == null) 
-			  fetchTaxon = (new HomonymDb(connection)).getHomonym(taxonName);
+			  fetchTaxon = new HomonymDb(connection).getHomonym(taxonName);
 			else 
-			  fetchTaxon = (new HomonymDb(connection)).getHomonym(taxonName, authorDate);
+			  fetchTaxon = new HomonymDb(connection).getHomonym(taxonName, authorDate);
 		  } 
 		  if (fetchTaxon == null) {
             String commonTaxonName = CommonNames.get(taxonName);
             if (commonTaxonName != null) {
               //A.log("6");
-              fetchTaxon = (new TaxonDb(connection)).getTaxon(commonTaxonName);
+              fetchTaxon = new TaxonDb(connection).getTaxon(commonTaxonName);
             }		  
 		  }
 		}
@@ -588,19 +588,19 @@ We are showin the full map of ponerinae for every adm1.
 		s_log.debug("taxonNameRedirect() antcatId:" + antcatId + " taxonName:" + taxonName + " fetchStr:" + fetchStr + " resetProject:" + browseForm.getResetProject());
 
 		// fetch with Antcat ID
-		if ((fetchTaxon == null) && (antcatId != 0)) {
+		if (fetchTaxon == null && antcatId != 0) {
 
 		  TaxonDb taxonDb = new TaxonDb(connection);
           taxonName = taxonDb.getTaxonNameFromAntcatId("taxon", antcatId);
 
 		  if (taxonName == null) {
 			request.setAttribute("message", "Taxon name not found for antcatId:" + antcatId);
-			return (mapping.findForward("message"));
+			return mapping.findForward("message");
 		  }
-		  fetchTaxon = (new TaxonDb(connection)).getTaxon(taxonName);
+		  fetchTaxon = new TaxonDb(connection).getTaxon(taxonName);
 
 		  if (fetchTaxon == null) {
-			fetchTaxon = (new HomonymDb(connection)).getHomonym(browseForm.getAntcatId());
+			fetchTaxon = new HomonymDb(connection).getHomonym(browseForm.getAntcatId());
 			taxonName = fetchTaxon.getTaxonName();
 		  }
 		}
@@ -626,7 +626,7 @@ We are showin the full map of ponerinae for every adm1.
           return null;
         } else {
 		  request.setAttribute("message", taxonName + " does not exist in the database");
-		  return (mapping.findForward("message"));
+		  return mapping.findForward("message");
 		}
 	  } catch (IOException | SQLException e) {
 		s_log.warn("execute() fetchTaxon e:" + e);

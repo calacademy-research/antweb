@@ -44,7 +44,7 @@ public final class ImageUploaderAction extends Action {
             String message = "Server is currently in an Upload Process. Please try again in a little while.";
             if (LoginMgr.isAdmin(request)) message += " " + UploadAction.getIsInUploadProcess();
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
 
         //ActionForward e = Check.admin(request, mapping); if (e != null) return e;     
@@ -68,7 +68,7 @@ public final class ImageUploaderAction extends Action {
               writeRecentImages(connection);
               message = "Recent Images page regenerated";
               request.setAttribute("message", message);
-              return (mapping.findForward("message"));
+              return mapping.findForward("message");
             }
 
             String contentType = request.getContentType(); // Verify the content type
@@ -104,7 +104,7 @@ public final class ImageUploaderAction extends Action {
 
                 if (fileItems.size() == 0) {
                    request.setAttribute("message", "No files uploaded.");
-                   return (mapping.findForward("message"));                    
+                   return mapping.findForward("message");
                 }
                 // The files and other items come mixed together. Handle all, process later.
                 for (FileItem fileItem : fileItems) {
@@ -115,16 +115,16 @@ public final class ImageUploaderAction extends Action {
                         if (!"success".equals(message)) {
                             request.setAttribute("message", message);
                             s_log.warn(message);
-                            return (mapping.findForward("message"));
+                            return mapping.findForward("message");
                         }
 
                         String code = imageUploaded.getCode();
-                        boolean exists = (new SpecimenDb(connection)).exists(code);
+                        boolean exists = new SpecimenDb(connection).exists(code);
                         if (!exists) {
                             message = "Specimen:" + code + " not found in the Antweb database.";
                             request.setAttribute("message", message);
                             s_log.warn(message);
-                            return (mapping.findForward("message"));
+                            return mapping.findForward("message");
                         }
 
                         boolean specimenDataExists = specimenDb.exists(imageUploaded.getCode());
@@ -144,7 +144,7 @@ public final class ImageUploaderAction extends Action {
                   imageUpload.setArtistId(Integer.parseInt(artist));
                 }
                 imageUpload.setCreated(new Date());
-                Copyright copyright = (new CopyrightDb(connection)).getCurrentCopyright();
+                Copyright copyright = new CopyrightDb(connection).getCurrentCopyright();
                 imageUpload.setCopyright(copyright);
                 imageUpload.setLicense(ImageUpload.LICENSE);
                 imageUpload.setImages(images);
@@ -166,11 +166,11 @@ public final class ImageUploaderAction extends Action {
                 
                 request.setAttribute("imageUpload", imageUpload);
                 s_log.debug("go to report");
-                return (mapping.findForward("report"));           
+                return mapping.findForward("report");
 
             } else {        
                 s_log.debug("go to imageUploader");
-                return (mapping.findForward("imageUploader"));         
+                return mapping.findForward("imageUploader");
             }
         } catch (Exception ex) {
           //AntwebUtil.logStackTrace(ex);
@@ -179,7 +179,7 @@ public final class ImageUploaderAction extends Action {
           AdminAlertMgr.add(message, connection);
           request.setAttribute("message", message);
           s_log.warn(message + " temppDir:" + ImageUploaded.tempDir);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         } finally {
           DBUtil.close(connection, this, "ImageUploaderAction.execute()");
           UploadAction.setIsInUploadProcess(null);          
@@ -199,7 +199,7 @@ public final class ImageUploaderAction extends Action {
 			String recentImagesList = getRecentImagesList(connection);
 
             docBase += "web/genInc";
-            (new Utility()).makeDirTree(docBase);
+            new Utility().makeDirTree(docBase);
             
             File outputFile = new File(docBase + "/recentImages_gen_inc.jsp");
             FileWriter outFile = new FileWriter(outputFile);
@@ -225,7 +225,7 @@ public final class ImageUploaderAction extends Action {
             int homepageMaxRecent = 5;
             Formatter format = new Formatter();
             ArrayList<String> distinctTaxa = new ArrayList<>();
-            while (rset.next() && (currItems <= homepageMaxRecent)) {
+            while (rset.next() && currItems <= homepageMaxRecent) {
                 code = rset.getString("code");
                 theGenus = rset.getString("genus");
                 theSpecies = rset.getString("species");
@@ -233,15 +233,15 @@ public final class ImageUploaderAction extends Action {
                 String theTaxon = theGenus + " " + theSpecies + " " + theSubspecies;
                 if (distinctTaxa.contains(theTaxon)) continue;
                 distinctTaxa.add(theTaxon);
-                if ((code != null) && (!code.equals("")) && (!code.equals(lastValue))) {
+                if (code != null && !code.equals("") && !code.equals(lastValue)) {
                     currItems++;
                     lastValue = code;
                     outFile.write("<a class=\"uppercase\" href=\"" + domainApp 
                         + "/specimenImages.do?code=" + code + "\">" + code + "</a>");
-                    if ((theGenus != null) && 
-                        (theSpecies != null) &&
-                        (theGenus.length() > 0) && 
-                        (theSpecies.length() > 0)
+                    if (theGenus != null &&
+                            theSpecies != null &&
+                            theGenus.length() > 0 &&
+                            theSpecies.length() > 0
                        ) {
 						String url = domainApp + "/images.do?" 
 						  + "genus=" + theGenus 

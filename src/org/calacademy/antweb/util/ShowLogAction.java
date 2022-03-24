@@ -81,7 +81,7 @@ public final class ShowLogAction extends Action {
 
         if (message != null) {
             request.setAttribute("message", message);
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         }
 
 
@@ -114,7 +114,7 @@ public final class ShowLogAction extends Action {
         if (log == null) {
             message = "Must enter a log name for action:" + action;
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
 
         String command = null;
@@ -131,7 +131,7 @@ public final class ShowLogAction extends Action {
             String linesParam = linesOption + " " + lines;
             command = "tail" + linesParam + " " + log;
         }
-        message = (new AntwebSystem()).launchProcess(command, true);
+        message = new AntwebSystem().launchProcess(command, true);
         String logMessage = "";
         if (message != null && message.length() > 100) logMessage = message.substring(100) + "...";
 
@@ -139,7 +139,7 @@ public final class ShowLogAction extends Action {
         //A.log("command:" + command + " results:" + logMessage);
 
         request.setAttribute("message", message);
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 
     private String getSpecimenDetails(HttpServletRequest request, String code) {
@@ -150,8 +150,8 @@ public final class ShowLogAction extends Action {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "getSpecimenDetails");
 
-            specimenDetailXml = (new SpecimenDb(connection)).getSpecimenDetailXML(code);
-            specimen = (new SpecimenDb(connection)).getSpecimen(code);
+            specimenDetailXml = new SpecimenDb(connection).getSpecimenDetailXML(code);
+            specimen = new SpecimenDb(connection).getSpecimen(code);
             specimen.getDetailHash();
 
         } catch (SQLException e) {

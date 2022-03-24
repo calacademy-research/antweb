@@ -119,7 +119,7 @@ public class AntwebUpload {
             return 0;
         }
 
-        if ((taxonName == null) || (taxonName.length() == 0)) return 0;
+        if (taxonName == null || taxonName.length() == 0) return 0;
         if (lastTaxonName != null && lastTaxonName.equals(taxonName)) return 0;
         lastTaxonName = taxonName;
 
@@ -525,7 +525,7 @@ public class AntwebUpload {
                 String source = (String) item.get("source");
 
 				// XXX without genus null check this seems to fail on worldants without a rollback.
-				if (genus != null && (taxonName.equals(s_testTaxonName))) {
+				if (genus != null && taxonName.equals(s_testTaxonName)) {
 				  s_log.debug("saveTaxonAndProjTaxon() taxonName:" + taxonName + " family:" + family + " project:" + project + " genus:" + genus + " authorDate:" + item.get("author_date"));
 				  //AntwebUtil.logStackTrace();
 				}
@@ -560,7 +560,7 @@ public class AntwebUpload {
                     if (TaxonMgr.isUseRefreshing()) {
                         dummyTaxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
                     } else {
-                        dummyTaxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
+                        dummyTaxon = new TaxonDb(getConnection()).getTaxon(taxonName);
                     }
 
 
@@ -580,13 +580,13 @@ public class AntwebUpload {
 				  } 
 
                   boolean isValid = status.getValue().equals(Status.VALID);
-                  boolean isValidSubfamilyForGenus = (new TaxonDb(getConnection())).isValidSubfamilyForGenus(family, subfamily, genus);
+                  boolean isValidSubfamilyForGenus = new TaxonDb(getConnection()).isValidSubfamilyForGenus(family, subfamily, genus);
 
-                  if ((!isValid) && !isValidSubfamilyForGenus) {
+                  if (!isValid && !isValidSubfamilyForGenus) {
                     s_log.debug("saveTaxonAndProjTaxon() isValidSubfamilyForGenus failure.  Add to list.  taxonName:" + taxonName);
                     // add to the Invalid Subfamily for Genus list. - to avoid duplicates
 
-                    isValidSubfamilyForGenus = (new HomonymDb(getConnection())).isValidSubfamilyForGenus(family, subfamily, genus);
+                    isValidSubfamilyForGenus = new HomonymDb(getConnection()).isValidSubfamilyForGenus(family, subfamily, genus);
                     if (isValidSubfamilyForGenus) {
                       String message = Taxon.displaySubfamilyGenus(subfamily, genus);
                       getMessageMgr().addToMessages(MessageMgr.generaAreHomonyms, message);
@@ -673,7 +673,7 @@ public class AntwebUpload {
       //if ("country".equals(key)) return true;
       //if ("bioregion".equals(key)) return true;
 
-      return ("reference_id".equals(key)) && ("".equals(value));   // The ints are sometimes nil "".
+      return "reference_id".equals(key) && "".equals(value);   // The ints are sometimes nil "".
     }
 
     // If an exception, value will not be updated. Only runs on specimen record taxa.
@@ -889,7 +889,7 @@ public class AntwebUpload {
             }
 
             ++saveSpecimenCount;
-            if ((saveSpecimenCount % 25000 == 0)) s_log.info("saveSpecimen() count" + saveSpecimenCount + " code:" + code);
+            if (saveSpecimenCount % 25000 == 0) s_log.info("saveSpecimen() count" + saveSpecimenCount + " code:" + code);
                                     
             // Only if successful insert, count and record the museum
             if (item.containsKey("ownedby")) {
@@ -978,10 +978,10 @@ public class AntwebUpload {
 		  //A.log("AntwebUpload.setStatusAndCurrentValidName() taxonName:" + taxonName + " taxon:" + taxon);
 
           if (taxon != null) status = taxon.getStatus();
-          if ((taxon == null) || (status == null) || (Status.UNRECOGNIZED.equals(status))) {
+          if (taxon == null || status == null || Status.UNRECOGNIZED.equals(status)) {
             if (status == null) status = Status.UNRECOGNIZED;
 
-            if ((new HomonymDb(getConnection())).isHomonym(taxonName)) {
+            if (new HomonymDb(getConnection()).isHomonym(taxonName)) {
 //            if (Status.HOMONYM.equals(status)) {
               String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
               getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);            
@@ -1099,7 +1099,7 @@ public class AntwebUpload {
             displayName = "[empty string]";
             // was: getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);
          }
-         String toName = (new org.calacademy.antweb.Formatter()).capitalizeFirstLetter(status.getCurrentValidName());
+         String toName = new Formatter().capitalizeFirstLetter(status.getCurrentValidName());
          String message = displayName + " -> " + toName;
          getMessageMgr().addToMessages(MessageMgr.taxonNamesUpdatedToBeCurrentValidName, message); 
        } else {
@@ -1111,9 +1111,9 @@ public class AntwebUpload {
         // Both "incertae_sedis" and "([subfamily])" are considered exceptional.
 
         boolean isExceptional = "incertae_sedis".equals(subfamily);
-        if ((subfamily != null)
-                && (!"".equals(subfamily))
-                && (subfamily.charAt(0) == '(')
+        if (subfamily != null
+                && !"".equals(subfamily)
+                && subfamily.charAt(0) == '('
         ) {
             isExceptional = true;
         }
@@ -1271,7 +1271,7 @@ public class AntwebUpload {
         // set the hierarchy.  This is true for all projects.  Specimens data may differ.
         
         String family = (String) item.get("family");
-        if ( ("formicidae".equals(family)) || (family == null)) {
+        if ( "formicidae".equals(family) || family == null) {
             item.put("kingdom_name", "animalia");
             item.put("phylum_name", "arthropoda");
             item.put("class_name", "insecta");
@@ -1322,8 +1322,8 @@ public class AntwebUpload {
                     float seconds = Float.parseFloat(oldGeo.getParen(3));
                     String direction = oldGeo.getParen(4);
 
-                    decimal = degrees + (minutes / 60) + (seconds / 3600);
-                    if ((direction.equals("s")) || (direction.equals("w"))) {
+                    decimal = degrees + minutes / 60 + seconds / 3600;
+                    if (direction.equals("s") || direction.equals("w")) {
                         decimal = 0 - decimal;
                     }
                     result = decimal;
@@ -1344,7 +1344,7 @@ class UnicodeFormatter  {
          '0', '1', '2', '3', '4', '5', '6', '7',
          '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
       };
-      char[] array = { hexDigit[(b >> 4) & 0x0f], hexDigit[b & 0x0f] };
+      char[] array = { hexDigit[b >> 4 & 0x0f], hexDigit[b & 0x0f] };
       return new String(array);
    }
 

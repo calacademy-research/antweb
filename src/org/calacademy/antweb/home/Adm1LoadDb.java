@@ -18,7 +18,7 @@ public class Adm1LoadDb extends AntwebDb {
     }
 
     public void putCountry(String country) {
-      country = (new Formatter()).capitalizeEachWord(country);
+      country = new Formatter().capitalizeEachWord(country);
       Geolocale geolocale = GeolocaleMgr.getCountry(country);          
       if (geolocale == null || !"country".equals(geolocale.getGeorank())) {
         s_log.warn("putCountry() geolocale not found:" + country);
@@ -37,7 +37,7 @@ public class Adm1LoadDb extends AntwebDb {
         country = properCasedCountry;
         */
         
-        country = (new Formatter()).capitalizeEachWord(country);
+        country = new Formatter().capitalizeEachWord(country);
         
 		Geolocale geolocale = GeolocaleMgr.getCountry(country);          
 		if (geolocale == null || !"country".equals(geolocale.getGeorank())) {

@@ -89,7 +89,7 @@ public final class LocalityAction extends Action {
 			}
 		  } 
 		  request.setAttribute("message", message);
-		  return (mapping.findForward("message"));
+		  return mapping.findForward("message");
         }
 
         // We have the locality
@@ -104,7 +104,7 @@ public final class LocalityAction extends Action {
 		// Set a transactional control token to prevent double posting
 		saveToken(request);
 
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 	
 }

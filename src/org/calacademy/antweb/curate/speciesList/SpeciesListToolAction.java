@@ -97,7 +97,7 @@ To Do
       DataSource dataSource = getDataSource(request, "longConPool");
       connection = DBUtil.getConnection(dataSource, "SpeciesListToolAction.execute()");
       connection.setAutoCommit(false);
-      SpeciesListDb speciesListDb = (new SpeciesListDb(connection));
+      SpeciesListDb speciesListDb = new SpeciesListDb(connection);
 
 
       //A.log("SpeciesListTool.execute() action:" + toolProps.getAction() + " refSpeciesListType:" + toolProps.getRefSpeciesListType() + " doSearch:" + toolProps.getDoSearch());
@@ -155,7 +155,7 @@ To Do
         }
          
         if (searchSpeciesList != null && !searchSpeciesList.isEmpty()) {
-		  ArrayList<Taxon> advSearchTaxa = (new TaxonDb(connection)).getTaxa(searchSpeciesList, toolProps.getDisplaySubfamily());
+		  ArrayList<Taxon> advSearchTaxa = new TaxonDb(connection).getTaxa(searchSpeciesList, toolProps.getDisplaySubfamily());
           countSearchSpecimen(connection, advSearchTaxa);
           toolProps.setAdvSearchTaxa(advSearchTaxa);
         }
@@ -236,17 +236,17 @@ To Do
         
     int maxListSize = 0;    
     ArrayList<Taxon> mapSpeciesList1 = null;
-    if ((mapSpeciesList1Name != null) && (!"none".equals(mapSpeciesList1Name))) {
+    if (mapSpeciesList1Name != null && !"none".equals(mapSpeciesList1Name)) {
       mapSpeciesList1 = speciesListDb.getSpeciesList(displaySubfamily, mapSpeciesList1Name);
       if (mapSpeciesList1.size() > maxListSize) maxListSize = mapSpeciesList1.size();
     }
     ArrayList<Taxon> mapSpeciesList2 = null;
-    if ((mapSpeciesList2Name != null) && (!"none".equals(mapSpeciesList2Name))) {
+    if (mapSpeciesList2Name != null && !"none".equals(mapSpeciesList2Name)) {
       mapSpeciesList2 = speciesListDb.getSpeciesList(displaySubfamily, mapSpeciesList2Name);
       if (mapSpeciesList2.size() > maxListSize) maxListSize = mapSpeciesList2.size();
     }
     ArrayList<Taxon> mapSpeciesList3 = null;
-    if ((mapSpeciesList3Name != null) && (!"none".equals(mapSpeciesList3Name))) {
+    if (mapSpeciesList3Name != null && !"none".equals(mapSpeciesList3Name)) {
       mapSpeciesList3 = speciesListDb.getSpeciesList(displaySubfamily, mapSpeciesList3Name);
       if (mapSpeciesList3.size() > maxListSize) maxListSize = mapSpeciesList3.size();
     }
@@ -270,7 +270,7 @@ To Do
   String size = " refSpeciesList"; if (refSpeciesList == null) size += ":null"; else size += ".size:" + refSpeciesList.size();
   //A.log("setSpeciesListMappings() refSpeciesListType:" + refSpeciesListType + " refSpeciesListName:" + refSpeciesListName + size);
 
-    if ((refSpeciesListType != null) && refSpeciesListType.contains("antcatNames")) {
+    if (refSpeciesListType != null && refSpeciesListType.contains("antcatNames")) {
       toolProps.setRefSpeciesListParams("");
       if ("none".equals(displaySubfamily)) displaySubfamily = "amblyoponinae";
     }
@@ -308,7 +308,7 @@ To Do
     if (projLogId != 0 || geoLogId != 0) {
       if (projLogId != 0) {
 		  refSpeciesList = new ArrayList<>();
-		  ArrayList<ProjTaxonLogDetail> logDetails = (new ProjTaxonLogDb(connection)).getProjTaxonLogDetails(projLogId, displaySubfamily);  
+		  ArrayList<ProjTaxonLogDetail> logDetails = new ProjTaxonLogDb(connection).getProjTaxonLogDetails(projLogId, displaySubfamily);
 	  
 		  //TaxonDb taxonDb = new TaxonDb(connection);
 		  for (ProjTaxonLogDetail  logDetail : logDetails) {  // was: ProjTaxonLogDetail 
@@ -326,7 +326,7 @@ To Do
 		  }
       } else { // OK. GeoLogId:
 		  refSpeciesList = new ArrayList<>();
-		  ArrayList<GeolocaleTaxonLogDetail> logDetails = (new GeolocaleTaxonLogDb(connection)).getGeolocaleTaxonLogDetails(geoLogId, displaySubfamily);  
+		  ArrayList<GeolocaleTaxonLogDetail> logDetails = new GeolocaleTaxonLogDb(connection).getGeolocaleTaxonLogDetails(geoLogId, displaySubfamily);
 	  
 //		  TaxonDb taxonDb = new TaxonDb(connection);
 		  for (GeolocaleTaxonLogDetail  logDetail : logDetails) {  // was: ProjTaxonLogDetail 
@@ -352,7 +352,7 @@ To Do
         String geoSubfamily = null;
         if (searchTaxon != null) geoSubfamily = searchTaxon.getSubfamily();
         // Why would this be null? ***       
-        if ("none".equals(displaySubfamily) || (displaySubfamily == null) || (geoSubfamily != null && displaySubfamily.equals(geoSubfamily))) {
+        if ("none".equals(displaySubfamily) || displaySubfamily == null || geoSubfamily != null && displaySubfamily.equals(geoSubfamily)) {
           //A.log("setSpeciesListMappings() add searchTaxon:" + searchTaxon);
           //sumSpeciesList.remove(searchTaxon);  // So that the list remains unique.
           if (!sumSpeciesList.contains(searchTaxon)) sumSpeciesList.add(searchTaxon);
@@ -410,15 +410,15 @@ To Do
      if (taxon == null) s_log.warn("saveCheckedLists() taxon:null sumSpeciesList:" + sumSpeciesList);
       String taxonName = taxon.getTaxonName(); 
 
-      if ((mapSpeciesList1 != null) && (!mapSpeciesList1.isEmpty())) { 
+      if (mapSpeciesList1 != null && !mapSpeciesList1.isEmpty()) {
         if (mapSpeciesList1.contains(taxon))
           oldChosenList1.add(taxonName);
       }
-      if ((mapSpeciesList2 != null) && (!mapSpeciesList2.isEmpty())) { 
+      if (mapSpeciesList2 != null && !mapSpeciesList2.isEmpty()) {
         if (mapSpeciesList2.contains(taxon))
           oldChosenList2.add(taxonName);
       }
-      if ((mapSpeciesList3 != null) && (!mapSpeciesList3.isEmpty())) { 
+      if (mapSpeciesList3 != null && !mapSpeciesList3.isEmpty()) {
         if (mapSpeciesList3.contains(taxon))
           oldChosenList3.add(taxonName);
       }

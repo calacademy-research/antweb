@@ -63,7 +63,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
     
     void doPreliminaries(Group group) throws SQLException {
         // overridden by SpecimenUploadAugment
-        (new SpecimenUploadDb(getConnection())).dropSpecimens(group);    
+        new SpecimenUploadDb(getConnection()).dropSpecimens(group);
     }    
     
     public UploadDetails importSpecimens(UploadFile uploadFile, Login accessLogin) 
@@ -142,7 +142,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                       throw new TestException(true);  // commit?
                     }
                                         
-                    if ( (true) && ((lineNum % 10000 ) == 0)) {  // was: AntwebProps.isDevOrStageMode()
+                    if ( true && lineNum % 10000 == 0) {  // was: AntwebProps.isDevOrStageMode()
                       if ("incremental".equals(getMode())) {
                          // getConnection().commit();  This doesn't help at all
                       }
@@ -186,7 +186,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
 					theLine = in.readLine();
 					++lineNum;   
-					if ((lineNum % 5000) == 0) s_log.debug("importSpecimens() lineNum:" + lineNum + " buildLineTotal:" + buildLineTotal + " processLineTotal:" + processLineTotal);
+					if (lineNum % 5000 == 0) s_log.debug("importSpecimens() lineNum:" + lineNum + " buildLineTotal:" + buildLineTotal + " processLineTotal:" + processLineTotal);
 				
 					//Profiler.profile("importSpecimenLoop", startTimeLoop);                     
 		
@@ -250,7 +250,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
             // Date startTimex = new Date();
 
             if (AntwebProps.isDevMode()) { s_log.debug("DEV SKIPPING regenerateAllAntweb"); } else
-            (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
+            new ProjTaxonDb(getConnection()).regenerateAllAntweb();
             //Profiler.profile("regenerateAllAntweb", startTimex);
 
             TaxonMgr.populate(getConnection(), true, false);
@@ -259,7 +259,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
             //(new OrphansDb(getConnection())).deleteOrphanViloma();
 
             // s_log.info("importSpecimens() done removing orphans");
-            (new SpecimenUploadDb(getConnection())).updateSpecimenUploadDate(accessGroup);
+            new SpecimenUploadDb(getConnection()).updateSpecimenUploadDate(accessGroup);
                 
         } catch (IOException e) {
             s_log.error("importSpecimens()  (File input error?)  e:" + e);
@@ -393,7 +393,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
         // Warn if Multiple Bioregions for non-introduced taxa.                                                     
         // New Query to be added to specimen upload report. Get the total and if > 0 display link to proper access_group.
-        ArrayList<ArrayList<String>> multiBioregionList = (new SpecimenDb(getConnection())).getMultiBioregionTaxaList(group.getId());
+        ArrayList<ArrayList<String>> multiBioregionList = new SpecimenDb(getConnection()).getMultiBioregionTaxaList(group.getId());
         if (multiBioregionList.size() > 1) { // The first record would be the header.
           // Create the link to the multiBioregionTaxa
             String message = "<a href='" + AntwebProps.getDomainApp() + "/list.do?action=multiBioregionTaxaList&groupId=" + group.getId() + "'>list</a>";

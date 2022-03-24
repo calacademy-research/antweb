@@ -26,7 +26,7 @@ public final class ChooseComparisonForm extends ActionForm {
     private String[] chosen;
 
     public String[] getChosen() {
-	return (this.chosen);
+	return this.chosen;
     }
 
 
@@ -35,7 +35,7 @@ public final class ChooseComparisonForm extends ActionForm {
     }
 
     public String getRank() {
-	return (this.rank);
+	return this.rank;
     }
 
 
@@ -45,7 +45,7 @@ public final class ChooseComparisonForm extends ActionForm {
 
 
     public String getName() {
-	return (this.name);
+	return this.name;
     }
 
     public void setName(String name) {

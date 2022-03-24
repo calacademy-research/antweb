@@ -27,14 +27,14 @@ public class DescriptionAction extends Action {
 
             //A.log("saveDescriptionEdit() editField:" + editField + " is:" + isSaveEditField);          
 
-            if ((isSaveEditField) && (editField != null)) {
+            if (isSaveEditField && editField != null) {
               String contents = form.getContents();
               String imageUrl = form.getImageUrl();
               String guiDefaultContent = AntwebProps.getProp("gui.default.content");
                   
               s_log.debug("saveDescriptionEdit() descriptionEdit.  contents:" + contents + " imageUrl:" + imageUrl);
                   
-              if ((contents.equals(guiDefaultContent)) && (imageUrl == null)) {
+              if (contents.equals(guiDefaultContent) && imageUrl == null) {
                 // The user hit Done but did not modify the default text
                 s_log.warn("saveDescriptionEdit() User hit done to save the gui default content.  Returning success.");
                 return true;  // was a success forward

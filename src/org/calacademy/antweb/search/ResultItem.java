@@ -141,7 +141,7 @@ public final class ResultItem extends Item implements Serializable, Comparable<R
 	}
 
 	public String getFullName() {  // ex: temnothorax andrei    
-		return (this.fullName);
+		return this.fullName;
 	}
 	public void setFullName(String fullName) {
 		this.fullName = fullName;
@@ -154,14 +154,14 @@ public final class ResultItem extends Item implements Serializable, Comparable<R
     }
 
 	public String getPageParams() {
-		return (this.pageParams);
+		return this.pageParams;
 	}
 	public void setPageParams(String pageParams) {
 		this.pageParams = pageParams;
 	}
 
 	public boolean getTypes() {
-		return (this.types);
+		return this.types;
 	}
 	public void setTypes(boolean types) {
 		this.types = types;

@@ -37,12 +37,12 @@ public final class EndemicAction extends Action {
                 geolocaleId = Integer.parseInt(geolocaleIdStr);
             } catch (NumberFormatException e) {
                 request.setAttribute("message", "valid Geolocale ID expected. Found:" + geolocaleId);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
             geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
             if (geolocale == null) {
                 request.setAttribute("message", "geolocale not found:" + geolocaleId);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
         }
 
@@ -54,7 +54,7 @@ public final class EndemicAction extends Action {
             bioregion = BioregionMgr.getBioregion(bioregionName);
             if (bioregion == null) {
                 request.setAttribute("message", "bioregion not found:" + bioregion);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
         }
 
@@ -81,7 +81,7 @@ public final class EndemicAction extends Action {
         request.setAttribute("endemic", endemics);        
         //request.setAttribute("geolocale", geolocale);
 
-        return (mapping.findForward("endemic"));
+        return mapping.findForward("endemic");
     }
 
     private ArrayList<String> getGeolocaleEndemics(int geolocaleId, Connection connection) {
@@ -89,7 +89,7 @@ public final class EndemicAction extends Action {
 
 		String query = "select gt.taxon_name from geolocale_taxon gt, taxon where gt.taxon_name = taxon.taxon_name " 
 		  + " and gt.geolocale_id = " + geolocaleId 
-		  + (new StatusSet()).getAndCriteria()
+		  + new StatusSet().getAndCriteria()
 		  + " and gt.is_endemic = 1 order by genus, species, subspecies";
 
         Statement stmt = null;
@@ -117,7 +117,7 @@ public final class EndemicAction extends Action {
 
         String query = "select bt.taxon_name from bioregion_taxon bt, taxon where bt.taxon_name = taxon.taxon_name "
                 + " and bt.bioregion_name = '" + bioregionName + "'"
-                + (new StatusSet()).getAndCriteria()
+                + new StatusSet().getAndCriteria()
                 + " and bt.is_endemic = 1 order by genus, species, subspecies";
 
         Statement stmt = null;

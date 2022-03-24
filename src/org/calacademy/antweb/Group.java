@@ -202,7 +202,7 @@ public class Group implements Comparable {
      }
 
      public boolean isCurator() {
-       return (getId() >= 0);
+       return getId() >= 0;
      }
      
     public boolean equals(Object o) {

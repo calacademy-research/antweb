@@ -32,7 +32,7 @@ public class QueryStats {
           minMillis = millis;
         }
 
-        if ((minMillis > 0) && (maxMillis > 0)) {
+        if (minMillis > 0 && maxMillis > 0) {
           minMaxDiff = (long)((double)minMillis / (double)maxMillis);          
         }
     

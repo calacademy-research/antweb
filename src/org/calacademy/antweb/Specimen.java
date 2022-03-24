@@ -24,7 +24,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
       String theOther = other.getTaxonName() + other.getFullName();
 
       s_log.debug("compareTo() compare:" + thisOne + " 2:" + theOther);
-      return (thisOne).compareTo(theOther);
+      return thisOne.compareTo(theOther);
     }
 
     protected String typeStatus;
@@ -330,11 +330,11 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
       data += Utility.notBlankValue(getOwnedBy()) + delimiter;
       data += Utility.notBlankValue(getTypeStatus()) + delimiter;  // getTypeStatus() ?
       data += Utility.notBlankValue(getDeterminedBy()) + delimiter;
-      data += ((getDateDetermined() == null) ? "" : getDateDetermined()) + delimiter;      
+      data += (getDateDetermined() == null ? "" : getDateDetermined()) + delimiter;
       data += Utility.notBlankValue(getCollectionCode()) + delimiter;
       data += Utility.notBlankValue(getCollectedBy()) + delimiter;
-      data += ((getDateCollectedStart() == null) ? "" : getDateCollectedStart()) + delimiter;
-      data += ((getDateCollectedEnd() == null) ? "" : getDateCollectedEnd()) + delimiter;
+      data += (getDateCollectedStart() == null ? "" : getDateCollectedStart()) + delimiter;
+      data += (getDateCollectedEnd() == null ? "" : getDateCollectedEnd()) + delimiter;
       data += Utility.notBlankValue(getMethod()) + delimiter;
       data += Utility.notBlankValue(getHabitat()) + delimiter;
       data += Utility.notBlankValue(getMicrohabitat()) + delimiter;
@@ -351,7 +351,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
       data += Utility.notBlankValue(getBioregion()) + delimiter;
       data += Utility.notBlankValue(getLocalityNotes()) + delimiter;
       data += Utility.notBlankValue(getLocalityCode()) + delimiter;
-      data += ((getCreated() == null) ? "" : getCreated()) + delimiter;
+      data += (getCreated() == null ? "" : getCreated()) + delimiter;
       data += Utility.notBlankValue("" + getUploadId()) + delimiter;
       return data;      
     }
@@ -367,7 +367,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
   	    
   	    //A.log("isSpecimen() code:" + getCode() + " connection:" + connection);
     
-        if ((getCode() != null) && (!getCode().equals("")) && (connection != null)) {
+        if (getCode() != null && !getCode().equals("") && connection != null) {
             Statement stmt = null;
             ResultSet rset = null;
             try {
@@ -394,7 +394,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         boolean isSpecimen = false;
 		Statement stmt = null;
 		ResultSet rset = null;
-        if ((getCode() != null) && (!getCode().equals("")) && (connection != null)) {
+        if (getCode() != null && !getCode().equals("") && connection != null) {
             try {
 //                String query = "select code from specimen " 
 //                    + " where code = '" + AntFormatter.escapeQuotes(getCode()) + "'"
@@ -875,7 +875,7 @@ update specimen set other = '
 
         String encodeCode = HttpUtil.encodePath(localityCode);
         if (encodeCode != null) {  // use the localityCode to link, if there is one.
-            String label = (localityName != null) ? localityName : localityCode;  // but use the localityName to label, if there is one.
+            String label = localityName != null ? localityName : localityCode;  // but use the localityName to label, if there is one.
             localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + encodeCode + "\">" + label + "</a>";
         } else { // use the localityName
             //String encodeName = HttpUtil.encodePath(localityName);
@@ -918,7 +918,7 @@ For a locality name without code (this name has special characters:
         String localityLink = null; // getLocalityName();
 
         if (encodeCode != null) {  // use the localityCode to link, if there is one.
-            String label = (getLocalityName() != null) ? getLocalityName() : localityCode;
+            String label = getLocalityName() != null ? getLocalityName() : localityCode;
             //out.println("LocalityLink1:" + localityLink + " target:" + target + " name:" + getLocalityName());
             //if ("locality".equals(sortBy)) localityName =  "<span class=\"sorted_by\">" + localityName + "</span>";
             localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + localityCode + "\">" + label + "</a>"; // was name = target
@@ -937,10 +937,10 @@ For a locality name without code (this name has special characters):
   http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=true&localityNameSearchType=equals&localityName=%22RPPN%20Cara%C3%A7a%22
 */
 
-        if ( (getLocalityName() != null)
-            || (Utility.notBlank(getCountry())) 
-            || (Utility.notBlank(getAdm1())) 
-            || (Utility.notBlank(getAdm2())) 
+        if ( getLocalityName() != null
+            || Utility.notBlank(getCountry())
+            || Utility.notBlank(getAdm1())
+            || Utility.notBlank(getAdm2())
         ) {
             localityInfoString = linkName + "&nbsp;&nbsp;" + localityLink + "";
             //A.log("getLocalityInfoString(str) linkName:" + linkName + " adm2:" + getAdm2());
@@ -981,7 +981,7 @@ For a locality name without code (this name has special characters):
     }
     public boolean getIsType() {
         String typeStatus = getTypeStatus();
-        boolean type = (typeStatus != null && !"".equals(typeStatus));
+        boolean type = typeStatus != null && !"".equals(typeStatus);
         //A.log("getIsType() typeStatus:" + typeStatus + " type:" + type + " status:" + getStatus());
         if (Status.MORPHOTAXON.equals(getStatus())) {
           type = false;
@@ -1093,7 +1093,7 @@ For a locality name without code (this name has special characters):
 
 
     public String getOwnedByLink() {
-      String link = (new Formatter()).clearNull(getOwnedBy());
+      String link = new Formatter().clearNull(getOwnedBy());
       if (getMuseumCode() != null) {
         link = "<a href='" + AntwebProps.getDomainApp() + "/museum.do?code=" + getMuseumCode() + "'>" + link + "</a>";
       }
@@ -1101,7 +1101,7 @@ For a locality name without code (this name has special characters):
     }
    
     public String getLocatedAtLink() {
-        String link = (new Formatter()).clearNull(locatedAt);
+        String link = new Formatter().clearNull(locatedAt);
         Museum museum = MuseumMgr.getInferredMuseum(locatedAt);
         if (museum != null) link = museum.getLink();        
         return link;
@@ -1187,12 +1187,12 @@ For a locality name without code (this name has special characters):
     
     public boolean isCurator(Group group) {
       if (group == null) return false;
-      return (getGroupId() == group.getId());    
+      return getGroupId() == group.getId();
     }
 
     public boolean isCurator(Login login) {
       if (login == null) return false;
-      return (getCuratorId() == login.getId());    
+      return getCuratorId() == login.getId();
     }    
     
     public String getMedium() {
@@ -1318,7 +1318,7 @@ For a locality name without code (this name has special characters):
              return;
            } 
            try {
-               java.util.Date utilDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(created);
+               java.util.Date utilDate = new SimpleDateFormat("yyyy-MM-dd").parse(created);
                Timestamp createdTs = new Timestamp(utilDate.getTime());
                
       // A.log("setCreated() created:" + created + " utilDate:" + utilDate);

@@ -26,11 +26,11 @@ public class Formatter implements Serializable {
 	
 	
 	public static String commaFormat(String num) {
-	  return commaFormat((Long.valueOf(num)).intValue());
+	  return commaFormat(Long.valueOf(num).intValue());
 	}	
 	
 	public static String commaFormat(long num) {
-	  return commaFormat((Long.valueOf(num)).intValue());
+	  return commaFormat(Long.valueOf(num).intValue());
 	}
 	
 	public static String commaFormat(int num) {
@@ -82,12 +82,12 @@ public class Formatter implements Serializable {
 	/** append a delimiter to a string if that string is not null or empty **/
 	public String appendToNonNull(String theString, String del) {
 		
-		if ((theString == null) || (del == null)) {
+		if (theString == null || del == null) {
 			return "";
 		}
 
 		StringBuffer sb = new StringBuffer(theString);
-		if ((theString != null) && (theString.length() > 0)) {
+		if (theString != null && theString.length() > 0) {
 			sb.append(del);
 		}
 		return sb.toString();
@@ -147,12 +147,12 @@ public class Formatter implements Serializable {
 		StringBuffer oldSb = new StringBuffer(theString);
 		StringBuffer newSb = new StringBuffer();
 		for (int i = 0; i < oldSb.length(); i++) {
-			if ((oldSb.charAt(i) != '\'') && (oldSb.charAt(i) != '"')) {
+			if (oldSb.charAt(i) != '\'' && oldSb.charAt(i) != '"') {
 				newSb.append(oldSb.charAt(i));
 			} else if (
-				(i == oldSb.length() - 1) || ((oldSb.charAt(i) == '\'') && (oldSb.charAt(i + 1) != '\''))
-					|| ((oldSb.charAt(i) == '"') 
-						&& (oldSb.charAt(i + 1) != '"'))) {
+				i == oldSb.length() - 1 || oldSb.charAt(i) == '\'' && oldSb.charAt(i + 1) != '\''
+					|| oldSb.charAt(i) == '"'
+						&& oldSb.charAt(i + 1) != '"') {
 				newSb.append(oldSb.charAt(i));
 			}
 		}
@@ -224,7 +224,7 @@ public class Formatter implements Serializable {
     }
 
     public static String replace(String main, String oldStr, String newStr) {
-      return (new Formatter()).stringReplace(main, oldStr, newStr);
+      return new Formatter().stringReplace(main, oldStr, newStr);
     }
 
 	/** Replace part of a string with new stuff
@@ -235,7 +235,7 @@ public class Formatter implements Serializable {
 	 */
 	private String stringReplace(String main, String oldStr, String newStr) {
 		
-		if ((main == null) || (oldStr == null)) return main;
+		if (main == null || oldStr == null) return main;
 		
 		if (main.equals(""))
 			return "";
@@ -255,7 +255,7 @@ public class Formatter implements Serializable {
 	
 	public static String replaceOne(String main, String oldStr, String newStr) {
 		
-		if ((main == null) || (oldStr == null)) return main;
+		if (main == null || oldStr == null) return main;
 		
 		if (main.equals(""))
 			return "";
@@ -427,7 +427,7 @@ public class Formatter implements Serializable {
 	/* convert from UTF-8 encoded HTML-Pages -> internal Java String Format */
 	public static String convertFromUTF8(String s) {
 		String out = null;
-		if ((s == null) || (s.length() <= 0)) {
+		if (s == null || s.length() <= 0) {
 			return null;
 		}
 
@@ -481,7 +481,7 @@ public class Formatter implements Serializable {
         
   public static String formatMB(long num) {
     long longNum = num / 1024 / 1024;
-    String stringNum = (Long.valueOf(longNum)).toString();
+    String stringNum = Long.valueOf(longNum).toString();
     return Formatter.commaFormat(longNum) + "MB";
   }
         

@@ -55,28 +55,28 @@ public final class ViewLoginAction extends Action {
             session.setAttribute("thisLogin", login);
 
             // This fetches the full list for select box population
-            ArrayList groupList = (new GroupDb(connection)).getAllGroups();
+            ArrayList groupList = new GroupDb(connection).getAllGroups();
             request.getSession().setAttribute("antwebGroups", groupList);             
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "ViewLoginAction()");
         }
         
         if (accessLogin.isAdmin()) {    
-          return (mapping.findForward("viewLogin"));
+          return mapping.findForward("viewLogin");
         } else if (accessLogin.getId() == login.getId()) {
           // This user is visiting their own user account
           if (accessLogin.isCurator()) {
-            return (mapping.findForward("viewLogin"));        
+            return mapping.findForward("viewLogin");
           } else {
-            return (mapping.findForward("editLogin"));        
+            return mapping.findForward("editLogin");
           }
         } else {
           // This user is not authorized to view this page
-          return (mapping.findForward("error"));
+          return mapping.findForward("error");
         }
 
     }

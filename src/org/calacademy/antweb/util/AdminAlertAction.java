@@ -52,7 +52,7 @@ public final class AdminAlertAction extends Action {
 			DBUtil.close(connection, this, "AdminAlertAction.execute()");
 		}        
  
-    	return (mapping.findForward("success"));
+    	return mapping.findForward("success");
 	}
 	
 }

@@ -71,10 +71,10 @@ public final class TestAction extends Action {
 		        
         if (true) {        
 		  request.setAttribute("message", message);
-		  return (mapping.findForward("message"));
+		  return mapping.findForward("message");
         }
 
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 	
 }

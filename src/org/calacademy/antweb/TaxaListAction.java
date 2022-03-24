@@ -54,7 +54,7 @@ public final class TaxaListAction extends Action {
             
         String query = "select taxon_name from taxon where 1=1 ";
 
-        if ((!"".equals(rank)) && rank != null) {
+        if (!"".equals(rank) && rank != null) {
           if ("species".equals(rank)) {
             query += " and (taxarank = 'species' or taxarank = 'subspecies')";
           } else
@@ -127,6 +127,6 @@ public final class TaxaListAction extends Action {
         //s_log.warn("execute() list:" + taxaList);
 		request.setAttribute("title", title);
 	    request.setAttribute("list", taxaList);        
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
 	}
 }

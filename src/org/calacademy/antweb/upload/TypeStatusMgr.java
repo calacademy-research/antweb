@@ -93,7 +93,7 @@ public class TypeStatusMgr extends Action {
 
         s_log.warn("execute() complete.");
         request.setAttribute("message", message);
-        return (mapping.findForward("message"));
+        return mapping.findForward("message");
     }
 
 

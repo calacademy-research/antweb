@@ -47,7 +47,7 @@ public final class ChangePasswordAction extends Action {
 			messages.add("message",msg);
 		}
 		
-		if ((newPassword == null) || (newPassword.length() == 0)) {
+		if (newPassword == null || newPassword.length() == 0) {
 			msg = new ActionMessage("error.login.needPassword");
 			messages.add("message",msg);
 		} else if (!newPassword.equals(newPassword2)) {
@@ -63,11 +63,11 @@ public final class ChangePasswordAction extends Action {
                 DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, "ChangePasswordAction()");
 	
-				(new LoginDb(connection)).changePassword(accessLogin, newPassword); 
+				new LoginDb(connection).changePassword(accessLogin, newPassword);
                 
             } catch (SQLException e) {
                 s_log.error("execute() e:" + e);
-                return (mapping.findForward("error"));
+                return mapping.findForward("error");
             } finally { 		
                 DBUtil.close(connection, this, "ChangePasswordAction()");
             }			
@@ -75,10 +75,10 @@ public final class ChangePasswordAction extends Action {
 		
 		if (messages.isEmpty()) {
 			session.setAttribute("accessLogin", accessLogin);
-			return (mapping.findForward("success"));
+			return mapping.findForward("success");
 		} else {
 			saveMessages(request,messages);
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
 	}
 }

@@ -98,7 +98,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     public boolean exists(String project, String taxonName) {
         TaxonSet taxonSet = get(project, taxonName);
-        return (taxonSet != null);
+        return taxonSet != null;
     }
 
     public int insert(String projectName, String taxonName, String source) throws SQLException {
@@ -311,7 +311,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         
         if (Taxon.isMorpho(taxonName)) {
 			// So we will delete the taxon outright.
-			TaxonDb taxonDb = (new TaxonDb(getConnection()));
+			TaxonDb taxonDb = new TaxonDb(getConnection());
 			taxonDb.deleteTaxon(taxonName);
         }
         
@@ -815,9 +815,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
         // This was in the UtilData.java regenerateAllAntweb
 
-        (new ProjTaxonCountDb(getConnection())).childrenCountCrawl("allantwebants"); // Proj_taxon counts
+        new ProjTaxonCountDb(getConnection()).childrenCountCrawl("allantwebants"); // Proj_taxon counts
         finishRegenerateAllAntweb();
-        (new ProjectDb(getConnection())).updateCounts("allantwebants");      // Project counts
+        new ProjectDb(getConnection()).updateCounts("allantwebants");      // Project counts
 
         s_log.info("regenerateAllAntweb() completed.");
 

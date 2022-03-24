@@ -36,7 +36,7 @@ public final class PictureLikeAction extends Action {
         if (accessLogin == null) {
             String message = "You must be logged in to Like a picture.";
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));            
+            return mapping.findForward("message");
         }
         
         String code = ((SpecimenImageForm) form).getCode();
@@ -46,7 +46,7 @@ public final class PictureLikeAction extends Action {
             String message = "Incorrect specimen identifier:" + code;
             s_log.error("execute() " + message);
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));            
+            return mapping.findForward("message");
         }
 
         String shot = ((SpecimenImageForm) form).getShot();
@@ -108,7 +108,7 @@ public final class PictureLikeAction extends Action {
          s_log.warn("Image not found for image:" + code + "shot:" + shot + " number:" + number);
           String message = "BigPicture not found.";
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         }
         
         boolean requestScope = "request".equals(mapping.getScope());
@@ -122,7 +122,7 @@ public final class PictureLikeAction extends Action {
         
         // Set a transactional control token to prevent double posting
         saveToken(request);
-        return (mapping.findForward("bigPicture"));
+        return mapping.findForward("bigPicture");
     }
 
     private void likeSpecimenImage(int imageId, Login accessLogin, DataSource dataSource) {

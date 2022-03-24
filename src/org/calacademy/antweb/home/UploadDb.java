@@ -486,7 +486,7 @@ public class UploadDb extends AntwebDb {
         return new Status(Status.INDETERMINED);  
       } else {
       
-        Taxon dummyTaxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
+        Taxon dummyTaxon = new TaxonDb(getConnection()).getTaxon(taxonName);
         String status = dummyTaxon.getStatus();
         String currentValidName = dummyTaxon.getCurrentValidName();
       
@@ -626,7 +626,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         //A.log("insertSubfamily() delete proj_taxon dml:" + dml);
         stmt.executeUpdate(dml);
 
-        (new ProjTaxonDb(getConnection())).insert(source, taxonName, "insertSubfamily");
+        new ProjTaxonDb(getConnection()).insert(source, taxonName, "insertSubfamily");
 
       } catch (SQLException e) {
         // This will happen in cases where the records are not sequential.  It is OK.

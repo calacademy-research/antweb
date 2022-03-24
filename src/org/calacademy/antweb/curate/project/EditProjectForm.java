@@ -50,7 +50,7 @@ public final class EditProjectForm extends ActionForm {
 	private String displayKey;
     
     public String getProjectName() {
-	return (this.projectName);
+	return this.projectName;
     }
 
     public void setProjectName(String projectName) {

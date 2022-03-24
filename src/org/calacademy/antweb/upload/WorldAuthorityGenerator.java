@@ -281,8 +281,8 @@ public class WorldAuthorityGenerator {
             fossil = isFossil(line);
             thisTaxon = getSynopsisTaxon(line);
                         
-            if ((type.equals("extinct") && fossil && (thisTaxon != null)) ||
-            (type.equals("extant") && !fossil && (thisTaxon != null)))    {
+            if (type.equals("extinct") && fossil && thisTaxon != null ||
+                    type.equals("extant") && !fossil && thisTaxon != null)    {
                 
                 if (recording) {
                     recording = false;
@@ -482,7 +482,7 @@ public class WorldAuthorityGenerator {
     private boolean isAvailable(String line) {
         boolean result = true;
         if (purple.matcher(line).find() || black.matcher(line).find() ||
-                !(color.matcher(line).find())) {
+                !color.matcher(line).find()) {
             result = false;
         }
         return result;
@@ -498,7 +498,7 @@ public class WorldAuthorityGenerator {
     
     private boolean isExtant(String line) {
         boolean result = false;
-        if (red.matcher(line).find() && boldItalic.matcher(line).find() && (!extinctStar.matcher(line).find())) {
+        if (red.matcher(line).find() && boldItalic.matcher(line).find() && !extinctStar.matcher(line).find()) {
             result = true;
         }
         return result;
@@ -655,7 +655,7 @@ public class WorldAuthorityGenerator {
             //  1908b: 41 (w.q.) COSTA RICA. <b>Unavailable name</b> (Bolton, 1995b: 54).</span></p>
             //  /\.\s+(.*?)\s+.*?\s(.*?)<\/i>(.*?)<i>(.*?)<\/i>(.*?)<i>(.*?)<\/i>/
             String tempLine = line;
-            if ((species.contains(".")) && (!available)) {
+            if (species.contains(".") && !available) {
                 
                 tempLine = tempLine.replace("<i>","");
                 tempLine = tempLine.replace("</i>", "");
@@ -670,7 +670,7 @@ public class WorldAuthorityGenerator {
             }
             
             //s_log.info("origGenus is" + origGenus + " species is " + species);
-            if ((origGenus != null) && (origGenus.length() > 0)) {
+            if (origGenus != null && origGenus.length() > 0) {
                 origGenus = betweenParens.matcher(origGenus).replaceAll("");
                 //s_log.info("jode: " + origGenus);
                 Matcher temp = firstCap.matcher(origGenus);
@@ -708,11 +708,11 @@ public class WorldAuthorityGenerator {
                 }
                 originalCombination = getOriginalCombination(line);
             }
-            if ((species.length() == 0) || (origGenus.length() == 0) || (author.length() == 0)) {  
+            if (species.length() == 0 || origGenus.length() == 0 || author.length() == 0) {
                 if (line.contains(test)) {
                     s_log.info("ERROR: *species:$species* *origGenus:$origGenus* *author:$author* line:$line\n");
                 }            
-                if ((notes.length() > 0) && (!knownProblem(notes))) {
+                if (notes.length() > 0 && !knownProblem(notes)) {
                     result.put("taxonomic history",notes);
                 } else {
                     result = null;
@@ -800,8 +800,8 @@ public class WorldAuthorityGenerator {
             }
             String country = getCountry(line);
             
-            if ((species.length() == 0) || (origGenus.length() == 0) || (author.length() == 0)) {   
-                if ((notes.length() > 0) && (!knownProblem(notes))) {
+            if (species.length() == 0 || origGenus.length() == 0 || author.length() == 0) {
+                if (notes.length() > 0 && !knownProblem(notes)) {
                     result.put("taxonomic history",notes);
                 } else {
                     result = null;
@@ -907,7 +907,7 @@ public class WorldAuthorityGenerator {
                 line = lineIter.next();
                 lineCount++;
                 //s_log.info("looking at " + fileName + ": " + lineCount + " ===> " + line);
-                if ((isGenusExtant(line) || isGenusFossil(line))) {
+                if (isGenusExtant(line) || isGenusFossil(line)) {
                     
                     genus = parseGenus(line);
                     //System.out.print(" found genus!" + genus);
@@ -978,7 +978,7 @@ public class WorldAuthorityGenerator {
     private boolean isGenusExtant(String line) {
         boolean result = false;
         String newLine;
-        if (red.matcher(line).find() && boldItalic.matcher(line).find() && !(seeUnderPat.matcher(line).find()) && !(extinctStar.matcher(line).find())) {
+        if (red.matcher(line).find() && boldItalic.matcher(line).find() && !seeUnderPat.matcher(line).find() && !extinctStar.matcher(line).find()) {
             newLine = removeAllTags(line);
             
             if (startsWithCap.matcher(newLine).find()) {
@@ -993,7 +993,7 @@ public class WorldAuthorityGenerator {
     private boolean isGenusFossil(String line) {
         boolean result = false;
         String newLine;
-        if (red.matcher(line).find() && boldItalic.matcher(line).find() && !(seeUnderPat.matcher(line).find()) && extinctStar.matcher(line).find()) {
+        if (red.matcher(line).find() && boldItalic.matcher(line).find() && !seeUnderPat.matcher(line).find() && extinctStar.matcher(line).find()) {
             newLine = removeAllTags(line);
             if (startsWithCap.matcher(newLine).find()) {
                 result = true;
@@ -1023,7 +1023,7 @@ public class WorldAuthorityGenerator {
     private boolean isGenus(String line) {
         boolean result = false;
         Matcher m2 = blue.matcher(line);
-        if (!(m2.find())) {
+        if (!m2.find()) {
             line = removeAllTagsButItalics(line);
             Matcher m = genusP.matcher(line);
             if (m.find()) {
@@ -1055,7 +1055,7 @@ public class WorldAuthorityGenerator {
         String key = "";
         for (String s : contents.keySet()) {
             key = s;
-            if ((key.length() > 0) && contents.get(key).size() > 1) {
+            if (key.length() > 0 && contents.get(key).size() > 1) {
                 result.append(keyLabel + " " + key + " has " + contents.get(key).size() + " instances of " + valueLabel + ":" + contents.get(key) + "<br>");
             }
         }
@@ -1106,14 +1106,14 @@ public class WorldAuthorityGenerator {
             author = temp.get("species author date");
             notes = temp.get("taxonomic history");
             speciesEp = temp.get("species");
-            if ((notes != null) && (notes.length() > 0)) {
-                if ((speciesEp == null) || (speciesEp.length()==0)) {
+            if (notes != null && notes.length() > 0) {
+                if (speciesEp == null || speciesEp.length()==0) {
                     result.append("could not parse line: " + notes);
                 } else {
-                    if ((subfamily == null) || (subfamily.length() == 0)) {
+                    if (subfamily == null || subfamily.length() == 0) {
                         result.append("could find no subfamily for genus " + genus + " in line " + notes + "<br>");
                     }
-                    if ((author == null) || (author.length() == 0)) {
+                    if (author == null || author.length() == 0) {
                         result.append("could find no author for genus " + genus + " " + speciesEp + " in line " + notes + "<br>");
                     }
                 }
@@ -1139,7 +1139,7 @@ public class WorldAuthorityGenerator {
             while (headerIter.hasNext()) {
                 thisHeader = headerIter.next();
             
-                if ((temp.containsKey(thisHeader)) && (temp.get(thisHeader) != null)) {
+                if (temp.containsKey(thisHeader) && temp.get(thisHeader) != null) {
                     s_log.info(thisHeader + " ----> " + temp.get(thisHeader));
                     tempArray.add(temp.get(thisHeader));
                 } else {
@@ -1203,7 +1203,7 @@ public class WorldAuthorityGenerator {
             if (temp.get("subfamily").contains(" ")) {
                 //s_log.info("subfamily is " + temp.get("subfamily"));
                 currentValid = temp.get("current valid name");
-                if ((currentValid != null) && (lookup.get(currentValid) != null) && (lookup.get(currentValid).contains(" ")) && (lookup.get(currentValid).size() > 0)) {
+                if (currentValid != null && lookup.get(currentValid) != null && lookup.get(currentValid).contains(" ") && lookup.get(currentValid).size() > 0) {
                     currentSubfamily = lookup.get(currentValid).get(0);
                     temp.put("subfamily", currentSubfamily);
                     //s_log.info("from currentvalid, putting " + currentSubfamily + " into subfamily");
@@ -1212,7 +1212,7 @@ public class WorldAuthorityGenerator {
                     if (m.find()) {
                         tempGenus = m.group(1);
                         //s_log.info("tempgenus is " + tempGenus);
-                        if ((lookup.get(tempGenus) != null) && (lookup.get(tempGenus).size() > 0)) {
+                        if (lookup.get(tempGenus) != null && lookup.get(tempGenus).size() > 0) {
                             currentSubfamily = lookup.get(tempGenus).get(0);
                             temp.put("subfamily", currentSubfamily);
                             temp.put("current valid name",tempGenus);
@@ -1262,7 +1262,7 @@ public class WorldAuthorityGenerator {
                 
             }
         }
-        if (!(result.equals("U.S.A"))) {
+        if (!result.equals("U.S.A")) {
             result = new Formatter().capitalizeEachWord(result);
         }
         return result;

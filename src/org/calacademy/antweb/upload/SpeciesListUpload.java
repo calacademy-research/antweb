@@ -224,8 +224,8 @@ public class SpeciesListUpload extends AntwebUpload {
 
 		// Worldants is a special case.  Download the file and load it.
 		if ("worldants".equals(project)) {
-		    int origWorldantsCount = (new TaxonDb(getConnection())).getWorldantsCount();
-		    String message = (new SpeciesListUploader(getConnection())).validateWorldantsFile(fileLoc, origWorldantsCount);
+		    int origWorldantsCount = new TaxonDb(getConnection()).getWorldantsCount();
+		    String message = new SpeciesListUploader(getConnection()).validateWorldantsFile(fileLoc, origWorldantsCount);
             setValidateMessage(message);
             if (!"success".equals(message)) {
                 s_log.error("importSpeciesList(4) validateWorldantsFile not success. Message:" + message);
@@ -258,7 +258,7 @@ public class SpeciesListUpload extends AntwebUpload {
         boolean skip = false;
         if (AntwebProps.isDevMode()) skip = true;
         if (!skip) {
-            (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
+            new ProjTaxonDb(getConnection()).regenerateAllAntweb();
         } else {
             s_log.debug("Warning ProjTaxonDb.regenerateAllAntweb() is skipped in Dev. See SpeciesListUpload.java:169");
         }
@@ -359,7 +359,7 @@ public class SpeciesListUpload extends AntwebUpload {
             for (String theHead : headers) { 
                 theHead = getGoodHeader(theHead);
 
-                if ((!"subfamily".equals(theHead) && theHead.contains("subfamily"))) {
+                if (!"subfamily".equals(theHead) && theHead.contains("subfamily")) {
                   // We should not have a header that contains subfamily but is not subfamily.
                   s_log.warn("importSpeciesList() theHead like subfamily:" + theHead);
                 }
@@ -421,9 +421,9 @@ public class SpeciesListUpload extends AntwebUpload {
             }
 
             if (! (
-                   (colList.contains("subfamily"))
-                && (colList.contains("genus"))
-                && (colList.contains("species"))
+                   colList.contains("subfamily")
+                && colList.contains("genus")
+                && colList.contains("species")
               )) {
                 s_log.error(returnStr  + " colList:" + colList);
                 returnStr = "Species file required header not included for " + fileName;
@@ -454,9 +454,9 @@ public class SpeciesListUpload extends AntwebUpload {
                 String theLineBefore = theLine;
 //                theLine = AntFormatter.escapeQuotes(theLine);
                 if (false
-                    && (AntwebProps.isDevMode())
-                    && !theLine.equals(theLineBefore)
-                    && (lineNum > 28 && lineNum < 31)
+                        && AntwebProps.isDevMode()
+                        && !theLine.equals(theLineBefore)
+                        && lineNum > 28 && lineNum < 31
                    ) {
                      s_log.debug("importSpeciesList() lineNum:" + lineNum + " theLine:" + theLine); // + " theLineBefore:" + theLineBefore);
                 }
@@ -485,7 +485,7 @@ public class SpeciesListUpload extends AntwebUpload {
                 String goodLineStatus = "true";
 
                 RE multipleSpaces = new RE(" +");
-                while ((iter.hasNext()) && (index < headers.size())) {
+                while (iter.hasNext() && index < headers.size()) {
                     // This loop will populate the hashtable of elements (fields).
                     element = iter.next();
                     element = multipleSpaces.subst(element.trim(), " ");                    
@@ -526,7 +526,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         //A.iLog("importSpeciesList() index:" + index, 100000);  // + " currentValidRank:" + currentValidRank
                         if (index == speciesHeader) {
                           thisSpecies = element.toLowerCase();
-                          if ((thisSpecies != null) && !"".equals(thisSpecies)) {
+                          if (thisSpecies != null && !"".equals(thisSpecies)) {
 
                             // Subspecies can either be in their own column, or concatenated with the species (backwards compatible)
                             if (thisSpecies.contains(" ")) {
@@ -605,7 +605,7 @@ public class SpeciesListUpload extends AntwebUpload {
                             taxonHash.put(col, element);
                         }
                     } else if (descriptionList.get(index) != null) {
-                        if (!(element.equals(""))) {
+                        if (!element.equals("")) {
                             description.put((String) descriptionList.get(index), element);
                             //A.log("importSpeciesList() key:" + descriptionList.get(index) + " element:" + element);
                         }
@@ -630,7 +630,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         taxonHash.put("taxon_name", "formicidae");
                         taxonHash.put("rank", Rank.FAMILY);                     
                         taxonHash.put("subfamily", "");   
-                        (new ProjTaxonDb(getConnection())).addProjectFamily(project);              
+                        new ProjTaxonDb(getConnection()).addProjectFamily(project);
                         //getSpeciesListUploadDb().specialFormicidaeHandling(project);             
                         //s_log.warn("importSpeciesListByValidity in formicidae +++++ taxonHash:" + taxonHash);                
                     } else if (Rank.SUBSPECIES.equals(currentValidRank)) {
@@ -654,11 +654,11 @@ public class SpeciesListUpload extends AntwebUpload {
                         } 
                     }                    
                 } else {  // other species lists
-                    if ((taxonHash.get(Rank.GENUS) == null) || (taxonHash.get(Rank.GENUS).equals(""))) {
+                    if (taxonHash.get(Rank.GENUS) == null || taxonHash.get(Rank.GENUS).equals("")) {
                         taxonHash.put("rank", Rank.SUBFAMILY);                      
-                    } else if ((taxonHash.get(Rank.SPECIES) == null) || (taxonHash.get(Rank.SPECIES).equals(""))) {
+                    } else if (taxonHash.get(Rank.SPECIES) == null || taxonHash.get(Rank.SPECIES).equals("")) {
                         taxonHash.put("rank", Rank.GENUS);                      
-                    } else if ((taxonHash.get(Rank.SUBSPECIES) == null) || (taxonHash.get(Rank.SUBSPECIES).equals(""))) {
+                    } else if (taxonHash.get(Rank.SUBSPECIES) == null || taxonHash.get(Rank.SUBSPECIES).equals("")) {
                         taxonHash.put("rank", Rank.SPECIES);  
                     } else {
                         taxonHash.put("rank", Rank.SUBSPECIES);
@@ -690,13 +690,13 @@ public class SpeciesListUpload extends AntwebUpload {
                     boolean ignoreTaxon = false;
                     if (isWorldants) {
                         if (! (
-                            (Rank.FAMILY.equals(currentValidRank))
-                         || (Rank.SUBFAMILY.equals(currentValidRank))
+                            Rank.FAMILY.equals(currentValidRank)
+                         || Rank.SUBFAMILY.equals(currentValidRank)
                          // || (Rank.TRIBE.equals(currentValidRank))                        
-                         || (Rank.GENUS.equals(currentValidRank))
+                         || Rank.GENUS.equals(currentValidRank)
                          // || (Rank.SUBGENUS.equals(currentValidRank))                        
-                         || (Rank.SPECIES.equals(currentValidRank))
-                         || (Rank.SUBSPECIES.equals(currentValidRank))                        
+                         || Rank.SPECIES.equals(currentValidRank)
+                         || Rank.SUBSPECIES.equals(currentValidRank)
                           ) ) {
                             if (taxonName.contains(debugTaxonName)) s_log.debug("importSpeciesList() 1 ignoreTaxon because unrecognized rank");
                             ignoreTaxon = true;
@@ -734,7 +734,7 @@ public class SpeciesListUpload extends AntwebUpload {
                           if (t != null && !t.equals("") && !t.equals(taxonName)) {
 
                             // Must go to database, unless we start adding inserted taxa to TaxonMgr.
-                            DummyTaxon currentValidTaxon = (new DummyTaxonDb(getConnection())).getDummyTaxon(t);
+                            DummyTaxon currentValidTaxon = new DummyTaxonDb(getConnection()).getDummyTaxon(t);
                             if (currentValidTaxon != null) {
 								currentValidName = t;                            
                             } else {
@@ -789,7 +789,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
                               Taxon current = TaxonMgr.getTaxon(currentValidName);
                               if (current == null) {
-                                  current = (new TaxonDb(getConnection())).getTaxon(currentValidName);
+                                  current = new TaxonDb(getConnection()).getTaxon(currentValidName);
 
                                   if (taxonName.contains(debugTaxonName)) s_log.debug("importSpeciesList() 11 currentValidName:" + currentValidName + " not found in TaxonMgr. Found in DB:" + current);
                                   // If we load a small worldants and then try to load a big one, taxa will not be in the taxonMgr.
@@ -797,7 +797,7 @@ public class SpeciesListUpload extends AntwebUpload {
                               }
                               if (current != null) {
                                   if (current.isValid()) {
-                                      (new GeolocaleTaxonDb(getConnection())).setTaxonSet(country, currentValidName, Source.ANTCAT);
+                                      new GeolocaleTaxonDb(getConnection()).setTaxonSet(country, currentValidName, Source.ANTCAT);
                                   }
                               }
 							} else {
@@ -812,7 +812,7 @@ public class SpeciesListUpload extends AntwebUpload {
 						  if (thisBioregion != null && !"".equals(thisBioregion) && !isFossil) {
                             Bioregion bioregion = BioregionMgr.getBioregion(thisBioregion);           
 						    if (bioregion != null) {
-						      boolean inserted = (new BioregionTaxonDb(getConnection())).insertTaxon(bioregion.getName(), currentValidName, "importSpeciesList", Source.ANTCAT);
+						      boolean inserted = new BioregionTaxonDb(getConnection()).insertTaxon(bioregion.getName(), currentValidName, "importSpeciesList", Source.ANTCAT);
                               if (inserted) {
                                 i = i + 1;
                                 //if ("dorylinaedorylus erraticus".equals(currentValidName)) A.log("importSpeciesList() inserted:" + inserted + " i:" + i + " bioregion:" + bioregion + " currentValidName:" + currentValidName);
@@ -825,13 +825,13 @@ public class SpeciesListUpload extends AntwebUpload {
 							  ++fossilCount;
 							  //A.log("importSpeciesList() fossilCount:" + fossilCount + " Add to fossil list taxonName:" + taxonName);
 							  Project fossilants = ProjectMgr.getProject("fossilants"); 
-							  (new ProjTaxonDb(getConnection())).insert(fossilants, currentValidName, Source.ANTCAT); 
+							  new ProjTaxonDb(getConnection()).insert(fossilants, currentValidName, Source.ANTCAT);
 						  }                   
                         } else {
 							if (taxonName.contains(debugTaxonName)) s_log.debug("importSpeciesList() 13 Not inserted taxonName:" + taxonName + " c:" + c);
                         }
                         
-                        if (taxonName.equals("formicidae") && (!"worldants".equals(project))) {
+                        if (taxonName.equals("formicidae") && !"worldants".equals(project)) {
                           s_log.warn("importSpeciesList() non-worldants insertion of formicidae.  lineNum:" + lineNum + " source:" + shortFileName);
                         }  
 
@@ -938,11 +938,11 @@ public class SpeciesListUpload extends AntwebUpload {
         //A.log("SpeciesListUpload.reloadSpeciesList(6) fileLoc:" + fileLoc);
 
 		if ("worldants".equals(project)) {
-		    int origWorldantsCount = (new TaxonDb(getConnection())).getWorldantsCount();
-		    String message = (new SpeciesListUploader(getConnection())).validateWorldantsFile(fileLoc, origWorldantsCount);
+		    int origWorldantsCount = new TaxonDb(getConnection()).getWorldantsCount();
+		    String message = new SpeciesListUploader(getConnection()).validateWorldantsFile(fileLoc, origWorldantsCount);
 		    //A.log("SpeciesListUpload.reloadSpeciesList(6) message:" + message);
             if (!"success".equals(message)) {
-              return (new UploadDetails(message));
+              return new UploadDetails(message);
             }
 		}        
 
@@ -958,7 +958,7 @@ public class SpeciesListUpload extends AntwebUpload {
           try {
             Utility.makeDirTree(webWorkingDir);          
             //A.log("reloadSpeciesList(6) fileLoc:" + uploadFile.getFileLoc() + " workingDir:"+ webWorkingDirCopy);
-            (new Utility()).copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);          
+            new Utility().copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
           } catch (IOException e) {
             s_log.error("reloadSpeciesListFile(6) copyFile e:" + e);
             throw e;
@@ -1052,9 +1052,9 @@ public class SpeciesListUpload extends AntwebUpload {
 
     private boolean validNameKey(String key, Hashtable taxonHash) {
         boolean valid = false;
-        if ((taxonHash.containsKey(key))
-                && (!((String) taxonHash.get(key)).equals("null"))
-                && (!((String) taxonHash.get(key)).equals(""))) {
+        if (taxonHash.containsKey(key)
+                && !((String) taxonHash.get(key)).equals("null")
+                && !((String) taxonHash.get(key)).equals("")) {
             valid = true;
         }
         return valid;
@@ -1082,7 +1082,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
             s_log.info("isCurrentProjectFileFormat() testLine:" + theLine);
 
-            if ((!theLine.contains("Subfamily")) && (!theLine.contains("subfamily"))) {
+            if (!theLine.contains("Subfamily") && !theLine.contains("subfamily")) {
               s_log.error("isCurrentProjectFileFormat() " + fileName + " does not contain Subfamily");
               return false;
             }

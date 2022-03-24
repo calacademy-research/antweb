@@ -19,7 +19,7 @@ public class Search extends GenericSearch implements Serializable {
         String genus = null;
         String species = null;
 
-        if ((name == null) || (name.equals(""))) {
+        if (name == null || name.equals("")) {
             return new ArrayList();
         }
 
@@ -40,7 +40,7 @@ public class Search extends GenericSearch implements Serializable {
             + " from taxon left outer join specimen as sp on taxon.taxon_name = sp.taxon_name left outer join image on "
             + " sp.code = image.image_of_id where  (";
 
-        if ((genus != null) && (species != null)) {
+        if (genus != null && species != null) {
             theQuery += getSearchString("taxon.genus", "equals", genus)
                 + " and "
                 + getSearchString("taxon.species", "equals", species)

@@ -28,9 +28,9 @@ public class BioregionMgr {
         //AntwebUtil.logStackTrace();
       }
       
-      if (!forceReload && (s_bioregions != null)) return;      
+      if (!forceReload && s_bioregions != null) return;
       
-      BioregionDb bioregionDb = (new BioregionDb(connection));
+      BioregionDb bioregionDb = new BioregionDb(connection);
 
       s_bioregions = bioregionDb.getBioregions(true); // deep copy
       //s_bioregionProjectNames = bioregionDb.getBioregionProjectNames();

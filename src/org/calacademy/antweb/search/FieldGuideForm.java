@@ -29,7 +29,7 @@ public final class FieldGuideForm extends ActionForm {
     private String caste = "useDefaults";
 
 	public String getCaste() {
-		return (this.caste);
+		return this.caste;
 	}
 	public void setCaste(String caste) {
 		this.caste = caste;

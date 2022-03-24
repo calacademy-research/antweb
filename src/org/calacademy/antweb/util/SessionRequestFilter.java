@@ -139,7 +139,7 @@ public class SessionRequestFilter implements Filter {
         } else {
             execTime = millis + " millis";
         }
-        String message = (new Date()).toString() + " time:" + execTime + " requestInfo:" + HttpUtil.getRequestInfo(request);
+        String message = new Date().toString() + " time:" + execTime + " requestInfo:" + HttpUtil.getRequestInfo(request);
         if (AntwebProps.isDevMode()) {
             //s_log.warn(message);
             MAX_REQUEST_TIME = 1;
@@ -252,7 +252,7 @@ class CustomTask extends TimerTask  {
       // Scheduler launch.
       AntwebUtil.log("SessionRequestFilter.CustomTask.run()");
       if (!AntwebProps.isDevMode()) {
-        (new Scheduler()).doAction();
+        new Scheduler().doAction();
       } else {
           AntwebUtil.log("warn", "CustomTask.run() DEV MODE SKIPPING scheduler.doAction()");
       }

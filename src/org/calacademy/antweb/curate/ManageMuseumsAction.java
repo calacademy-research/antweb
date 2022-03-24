@@ -46,7 +46,7 @@ public class ManageMuseumsAction extends Action {
 
         // Is it new?
         if ("save".equals(action) && museumCode == null) {
-          return (mapping.findForward("success")); 
+          return mapping.findForward("success");
         }
               
         String message = "";
@@ -86,7 +86,7 @@ public class ManageMuseumsAction extends Action {
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "ManageMuseumsAction");
         }
@@ -95,6 +95,6 @@ public class ManageMuseumsAction extends Action {
         if (museum != null) request.setAttribute("museum", museum);      
         if (message != null) request.setAttribute("message", message);
                
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

@@ -50,21 +50,21 @@ public class NewLoginAction extends Action {
               request.getSession().setAttribute("thisLogin", login);
               request.setAttribute("isNewLogin", "true");
 
-              ArrayList groupList = (new GroupDb(connection)).getAllGroups();
+              ArrayList groupList = new GroupDb(connection).getAllGroups();
               request.getSession().setAttribute("antwebGroups", groupList);   
             }
           
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "NewLoginAction");
         }
 
         if (login != null) {
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         } else {
-          return (mapping.findForward("failure"));
+          return mapping.findForward("failure");
         }
     }
 

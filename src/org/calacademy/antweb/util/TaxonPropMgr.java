@@ -21,7 +21,7 @@ public abstract class TaxonPropMgr {
     }
 
     public static void populate(Connection connection, boolean forceReload) {
-      if (!forceReload && (s_taxaIntroducedMaps != null)) return;
+      if (!forceReload && s_taxaIntroducedMaps != null) return;
       
       TaxonPropDb taxonPropDb = new TaxonPropDb(connection);      
       s_taxaIntroducedMaps = taxonPropDb.getTaxaIntroducedMaps();
@@ -52,7 +52,7 @@ public abstract class TaxonPropMgr {
 
     public static boolean isIntroducedSomewhere(String taxonName) {
       String introducedMap = TaxonPropMgr.getIntroducedMap(taxonName);
-      boolean isIntroducedSomewhere = (introducedMap != null);
+      boolean isIntroducedSomewhere = introducedMap != null;
       return isIntroducedSomewhere;
     }
 

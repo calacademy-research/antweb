@@ -48,7 +48,7 @@ public class UploadForm extends ActionForm {
   }
     
   public String getSpecimenUploadType() {
-        return (this.specimenUploadType);
+        return this.specimenUploadType;
   }
   public void setSpecimenUploadType(String specimenUploadType) {
         this.specimenUploadType = specimenUploadType;

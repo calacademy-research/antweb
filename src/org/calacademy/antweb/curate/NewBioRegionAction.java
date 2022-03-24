@@ -52,7 +52,7 @@ public final class NewBioRegionAction extends Action {
         
         //s_log.warn("execute() root:" + root + " title:" + title + " );
         
-        if ((title != null) && (title.length() > 0) && (root != null) && (root.length() > 0)) {
+        if (title != null && title.length() > 0 && root != null && root.length() > 0) {
         
             try {
                 DataSource dataSource = getDataSource(request, "conPool");
@@ -60,11 +60,11 @@ public final class NewBioRegionAction extends Action {
           
                 connection.setAutoCommit(true);
 
-                (new ProjectDb(connection)).save(project);
+                new ProjectDb(connection).save(project);
                   
                 String dirName = AntwebProps.getDocRoot() + "/" + Project.getSpeciesListDir() + root;
                 s_log.warn("execute() creating:" + dirName);
-                (new Utility()).makeDirTree(dirName);
+                new Utility().makeDirTree(dirName);
                                 
                 //boolean success = createDirectory(theForm.getRoot());
                 //if (! success) return (mapping.findForward("failure"));
@@ -74,14 +74,14 @@ public final class NewBioRegionAction extends Action {
                 
             } catch (SQLException e) {
                 s_log.error("execute() e:" + e);
-                return (mapping.findForward("error"));
+                return mapping.findForward("error");
             } finally { 		
                 DBUtil.close(connection, this, "NewBioRegionAction");
             }
 
-            return (mapping.findForward("success")); 
+            return mapping.findForward("success");
         } else {
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
     }
     

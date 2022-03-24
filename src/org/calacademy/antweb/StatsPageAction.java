@@ -33,7 +33,7 @@ public final class StatsPageAction extends Action {
 
             StatisticsDb statisticsDb = new StatisticsDb(connection);
 
-            HashMap<String, int[]> imageStats = (new ImageDb(connection)).getImageStats();
+            HashMap<String, int[]> imageStats = new ImageDb(connection).getImageStats();
             for (String status : imageStats.keySet()) {
               int[] stats = imageStats.get(status);
               //A.log(" key:" + status + " total:" + stats[0] + " worker:" + stats[1] + " male:" + stats[2] + " queen:" + stats[3] + " other:" + stats[4]); 
@@ -68,15 +68,15 @@ public final class StatsPageAction extends Action {
             success = true;            
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "StatsPageAction()");
         }        
         
 		if (success) {
-		    return (mapping.findForward("success"));
+		    return mapping.findForward("success");
 		} else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
     }
 

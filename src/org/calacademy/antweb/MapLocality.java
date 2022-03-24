@@ -50,7 +50,7 @@ public class MapLocality {
    	
    	public MapLocality(ArrayList localityCodes, Connection connection)  {
 		super();
-		if ((localityCodes != null) && (localityCodes.size() > 0)) {
+		if (localityCodes != null && localityCodes.size() > 0) {
      
 			long thisRand = new Random().nextLong();
             
@@ -87,8 +87,8 @@ public class MapLocality {
 		}
 		
 		if (Utility.notBlank(project) 
-		    && (!project.equals(Project.WORLDANTS))
-		    && (!project.equals(Project.ALLANTWEBANTS))
+		    && !project.equals(Project.WORLDANTS)
+		    && !project.equals(Project.ALLANTWEBANTS)
 		) {
 			terms.add("project+like+%27%25" + project + "%25%27");
 		}
@@ -136,7 +136,7 @@ public class MapLocality {
 					thisName = thisName.replace("\"", "");
 					thisCode = thisCode.replace("\"","");
 					
-					if ((thisLon != 0.0) && (thisLat != 0.0)) {
+					if (thisLon != 0.0 && thisLat != 0.0) {
 
 						locality = new Locality();
 						locality.setLocalityCode(thisCode);
@@ -186,7 +186,7 @@ public class MapLocality {
 					thisName = thisName.replace("\"", "");
 					thisCode = thisCode.replace("\"","");
 					
-					if ((thisLon != 0.0) && (thisLat != 0.0)) {
+					if (thisLon != 0.0 && thisLat != 0.0) {
 
 						locality = new Locality();
 						locality.setLocalityCode(thisCode);
@@ -245,7 +245,7 @@ public class MapLocality {
 					thisCode = rset.getString("localitycode");
 					thisName = rset.getString("localityname");
 					
-					if ((thisLon != 0.0) && (thisLat != 0.0)) {
+					if (thisLon != 0.0 && thisLat != 0.0) {
 
 						locality = new Locality();
 						locality.setLocalityCode(thisCode);
@@ -285,10 +285,10 @@ public class MapLocality {
 		
 		StringBuffer theString = null;
 		String googleString = null;
-		if ((getPoints() != null) && (getPoints().size() > 0)) {
+		if (getPoints() != null && getPoints().size() > 0) {
 			String latArray = getJavaScriptArray(getPoints(),"lat");
 			String lonArray = getJavaScriptArray(getPoints(),"lon");
-			if ((latArray != null) && (lonArray != null)) {
+			if (latArray != null && lonArray != null) {
 			
 			  theString = new StringBuffer();
 			  if (getPoints().size() > 1) {

@@ -77,7 +77,7 @@ public class Genus extends Subfamily implements Serializable {
         }
         //A.log("subgenus clause added:" + subgenusClause);
 
-        long now = (new GregorianCalendar()).getTimeInMillis();
+        long now = new GregorianCalendar().getTimeInMillis();
         
         ArrayList theseChildren = new ArrayList();
 
@@ -106,7 +106,7 @@ public class Genus extends Subfamily implements Serializable {
 
             //s_log.info("in genus set children query is : " + theQuery);
             //s_log.info("setChildren() initial query time:" + (((new GregorianCalendar()).getTimeInMillis()) - now));
-            now = (new GregorianCalendar()).getTimeInMillis();
+            now = new GregorianCalendar().getTimeInMillis();
 
             stmt = connection.createStatement();
             rset = stmt.executeQuery(query);
@@ -134,16 +134,16 @@ public class Genus extends Subfamily implements Serializable {
                 //  s_log.info("setChildren setup time:" + setupTime);
                 //  now = (new GregorianCalendar()).getTimeInMillis();
 
-                if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
+                if (getChildMaps && i < Taxon.getMaxSafeChildrenCount() && overview instanceof LocalityOverview) {
                     child.setMap(new Map(child, (LocalityOverview) overview, connection));
-                    if ((i + 1) == Taxon.getMaxSafeChildrenCount()) {
+                    if (i + 1 == Taxon.getMaxSafeChildrenCount()) {
                         s_log.warn("setChildren taxon:" + getGenus() + " has over " + Taxon.getMaxSafeChildrenCount() + " maps");
                     }
                 }
 
                 //  mapTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
                 //  now = (new GregorianCalendar()).getTimeInMillis();                
-                browserTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
+                browserTime += new GregorianCalendar().getTimeInMillis() - now;
                 // now = (new GregorianCalendar()).getTimeInMillis();
 
                 //A.log("setChildren() getChildImages:" + getChildImages);
@@ -175,7 +175,7 @@ We get both... that can't be right.
             //s_log.info("mt" + mapTime + ", it: " + imageTime + ", bt: " + browserTime + " , st" + setupTime);
             setChildrenCount(theseChildren.size());
             //s_log.info("setChildren() total time:" + (((new GregorianCalendar()).getTimeInMillis()) - now));
-            now = (new GregorianCalendar()).getTimeInMillis();
+            now = new GregorianCalendar().getTimeInMillis();
         } catch (SQLException e) {
             s_log.info("setChildren() query:" + query + " e:" + e);
             throw e;

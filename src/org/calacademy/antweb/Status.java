@@ -130,10 +130,10 @@ public class Status {
          return false;
       }
 
-      if ( (getValue().equals(Status.VALID))
-        || (getValue().equals(Status.MORPHOTAXON))
-        || (getValue().equals(Status.UNIDENTIFIABLE))
-        || (getValue().equals(Status.INDETERMINED))
+      if ( getValue().equals(Status.VALID)
+        || getValue().equals(Status.MORPHOTAXON)
+        || getValue().equals(Status.UNIDENTIFIABLE)
+        || getValue().equals(Status.INDETERMINED)
          ) {
         passed = true;
       } 

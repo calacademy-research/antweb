@@ -48,19 +48,19 @@ public final class WorldAuthorityAction extends Action {
 			String extinct = (String) session.getAttribute("extinct");
 			String extant = (String) session.getAttribute("extant");
 			
-			if ((extinct != null) && (extinct.length() > 0)) {
+			if (extinct != null && extinct.length() > 0) {
 				util.backupFile(docPath + "/extinct.xls");
 				util.saveStringToFile(extinct, docPath + "/extinct.xls");
 			}
 			
-			if ((extant != null) && (extant.length() > 0)) {
+			if (extant != null && extant.length() > 0) {
 				util.backupFile(docPath + "/extant.xls");
 				util.saveStringToFile(extant, docPath + "/extant.xls");
 			}
 		} else {
 			success = "failure";
 		}
-		return (mapping.findForward(success));
+		return mapping.findForward(success);
 			
 	}
 

@@ -43,7 +43,7 @@ public final class OrphanedImagesAction extends Action {
 			
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "OrphanedImagesAction");
         }
@@ -61,9 +61,9 @@ public final class OrphanedImagesAction extends Action {
 		// Forward control to the edit user registration page
 
 		if (success) {
-			return (mapping.findForward("success"));
+			return mapping.findForward("success");
 		} else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
 
 	}

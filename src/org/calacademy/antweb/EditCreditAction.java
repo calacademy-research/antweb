@@ -47,7 +47,7 @@ public class EditCreditAction extends Action {
 				String newValue = theForm.getNewValue();
 				String selectedValue = theForm.getSelectedValue();
 				int selectedIntValue=0;
-				if ((selectedValue != null) && (!"".equals(selectedValue))) {
+				if (selectedValue != null && !"".equals(selectedValue)) {
 					selectedIntValue = Integer.parseInt(selectedValue);
 				}
 				if (changeType == null)
@@ -67,12 +67,12 @@ public class EditCreditAction extends Action {
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "EditCreditAction");
         }
 
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 
 
@@ -80,9 +80,9 @@ public class EditCreditAction extends Action {
 
 	private void addNewCredit(Connection connection, String changeField, String newValue) {
 
-		if ((changeField != null)
-			&& (newValue != null)
-			&& (connection != null)) {
+		if (changeField != null
+			&& newValue != null
+			&& connection != null) {
 
             Statement stmt = null;
             ResultSet rset = null;
@@ -114,9 +114,9 @@ public class EditCreditAction extends Action {
 	}
 	
 	private void editCredit(Connection connection, String changeField, int selectedValue, String newValue) {
-		if ((changeField != null)
-			&& (newValue != null)
-			&& (connection != null) && (selectedValue > 0)) {
+		if (changeField != null
+			&& newValue != null
+			&& connection != null && selectedValue > 0) {
 
             String theQuery = "";
             Statement stmt = null;
@@ -296,7 +296,7 @@ public class EditCreditAction extends Action {
 			while (rset.next()) {
 				theId = rset.getInt(1);
 				theValue = rset.getString(2);
-				if ((theValue != null) && (!theValue.equals(""))) {
+				if (theValue != null && !theValue.equals("")) {
 					outFile.write("<html:option value=\"" + theId + "\"");
 					outFile.write(">" + theValue + "</html:option>\n");
 				}

@@ -32,7 +32,7 @@ public class TaxonMgr extends Manager {
     private static Date s_populateTime;
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
-        if (!forceReload && (s_subfamilies != null)) return;
+        if (!forceReload && s_subfamilies != null) return;
 
         TaxonDb taxonDb = new TaxonDb(connection);
         s_subfamilies = taxonDb.getTaxa(Rank.SUBFAMILY);

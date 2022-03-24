@@ -74,7 +74,7 @@ public class FlickrPlace extends DataPlace {
 	  int i = 0;
 	  for (Country country : countries) {
 
-		if ((++i % 100) == 0) s_log.warn("fetchAdm1Data() countries processed:" + i);
+		if (++i % 100 == 0) s_log.warn("fetchAdm1Data() countries processed:" + i);
         if (country.getName() == null || "".equals(country.getName())) {
           s_log.warn("fetchAdm1Data() No name:" + country.getName() + " for country with id:" + country.getId());
           continue;

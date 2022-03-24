@@ -63,10 +63,10 @@ public class Profiler {
         for (String key : keySet) {
           Profile profile = profiles.get(key);
           report += " " + key + " - (count:" + profile.getCount() 
-                 + " | avg:" + (profile.getTotalTimePassed() / profile.getCount()) 
+                 + " | avg:" + profile.getTotalTimePassed() / profile.getCount()
                  + " | max:" + profile.getMaxTimePassed() + " | mostSlow:" + profile.getMostSlowValue() + ")<br>";
         }
-		LogMgr.appendLog(logName, (new Date()) + "  " + report + "\r\r" );
+		LogMgr.appendLog(logName, new Date() + "  " + report + "\r\r" );
         if (clear) {
             profiles.clear();  // empty it out on report.
         }

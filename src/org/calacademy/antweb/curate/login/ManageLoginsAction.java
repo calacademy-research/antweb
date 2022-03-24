@@ -45,9 +45,9 @@ public class ManageLoginsAction extends Action {
 
         if (loginList != null) {
           request.getSession().setAttribute("antwebLogins", loginList);      
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         } else {
-          return (mapping.findForward("error"));
+          return mapping.findForward("error");
         }		
 		
 	}

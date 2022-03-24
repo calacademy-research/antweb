@@ -39,7 +39,7 @@ public final class EditProjectAction extends Action {
         projectName = ProjectMgr.getProjectName(projectName);
         if (projectName == null) projectName = editProjectForm.getProjectName();
         
-        ActionForward forward = (mapping.findForward("error"));
+        ActionForward forward = mapping.findForward("error");
         Connection connection = null;
         try {
             DataSource dataSource = getDataSource(request, "conPool");
@@ -85,7 +85,7 @@ public final class EditProjectAction extends Action {
               return null;                      
             }
             // Get the project and return it to the projectEdit.jsp
-            Project thisProject = (new ProjectDb(connection)).getProject(projectName);
+            Project thisProject = new ProjectDb(connection).getProject(projectName);
             if (thisProject == null) {
               thisProject = editProjectForm.freshProject();
             }
@@ -97,7 +97,7 @@ public final class EditProjectAction extends Action {
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "EditProjectAction.execute()");
         }
@@ -109,9 +109,9 @@ public final class EditProjectAction extends Action {
     
         EditProjectForm editProjectForm = (EditProjectForm) form;
             
-        if ((editProjectForm.getExtent() != null) 
-          && (!"".equals(editProjectForm.getExtent())) 
-          && (editProjectForm.getExtent().contains(","))
+        if (editProjectForm.getExtent() != null
+          && !"".equals(editProjectForm.getExtent())
+          && editProjectForm.getExtent().contains(",")
           ) {
             ActionMessages messages = new ActionMessages();
             ActionMessage msg = new ActionMessage("error.extent.commas");
@@ -122,11 +122,11 @@ public final class EditProjectAction extends Action {
         boolean isAllAntwebAnts = false;
         if (editProjectForm.getProjectName() != null && editProjectForm.getProjectName().equals("allantwebants")) isAllAntwebAnts = true;
         
-        if ( (!isAllAntwebAnts) && (locality != null) && (!"".equals(locality)) && (!( 
-                 locality.contains("bioregion") 
+        if ( !isAllAntwebAnts && locality != null && !"".equals(locality) && !(
+                 locality.contains("bioregion")
               || locality.contains("country")
               || locality.contains("adm1")
-              ))) {
+              )) {
             String message = "Mapping Range Criteria must be bioregion, country or adm1.";
             return message;
         }        

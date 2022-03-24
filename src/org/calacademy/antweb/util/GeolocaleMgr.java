@@ -46,7 +46,7 @@ public class GeolocaleMgr extends Manager {
     private static boolean s_oneAtATime = false;
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
-        if (!forceReload && (s_regions != null)) return;
+        if (!forceReload && s_regions != null) return;
 
         Date startTime = new Date();
 
@@ -61,7 +61,7 @@ public class GeolocaleMgr extends Manager {
             GeolocaleMgr.populateDeep(connection, true);
             GeolocaleMgr.populateShallow(connection, true);
             // For Place Name Search Autocomplete
-            placeNamesList = (new GeolocaleDb(connection)).getPlaceNames();
+            placeNamesList = new GeolocaleDb(connection).getPlaceNames();
 
             s_oneAtATime = false;
         }
@@ -74,7 +74,7 @@ public class GeolocaleMgr extends Manager {
     }
 
     private static void populateDeep(Connection connection, boolean forceReload) throws SQLException {
-        if (!forceReload && (s_regions != null)) return;
+        if (!forceReload && s_regions != null) return;
 
         GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
         // deep crawl through subregion, countries and adm1.  Use for Georegion menu.
@@ -83,7 +83,7 @@ public class GeolocaleMgr extends Manager {
 
     private static void populateShallow(Connection connection, boolean forceReload) {
 
-        if (!forceReload && (s_geolocales != null)) return;
+        if (!forceReload && s_geolocales != null) return;
 
         //A.log("populateShallow forceReload:" + forceReload + " s_geolocales:" + s_geolocales);
 
@@ -464,7 +464,7 @@ public class GeolocaleMgr extends Manager {
             for (Subregion subregion : region.getSubregions()) {
                 for (Country country : subregion.getAllCountries()) {
                     String countryName = country.getName().toLowerCase();
-                    countryName = (new Formatter()).removeSpaces(countryName);
+                    countryName = new Formatter().removeSpaces(countryName);
                     if (name.equals(countryName)) return country;
                 }
             }

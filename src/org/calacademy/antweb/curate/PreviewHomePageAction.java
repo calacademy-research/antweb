@@ -43,7 +43,7 @@ public final class PreviewHomePageAction extends Action {
         HomePageForm theForm = (HomePageForm) form;
         generateHomePage(theForm);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
     
     public void generateHomePage(HomePageForm form) {        
@@ -66,7 +66,7 @@ public final class PreviewHomePageAction extends Action {
             int end;
             while ((str = in.readLine()) != null) {
                 //do the substitutions one at a time
-                if ((str.contains("[%")) && (str.contains("%]"))) {
+                if (str.contains("[%") && str.contains("%]")) {
                     while (str.length() > 0) {
                         start = str.indexOf("[%");
                         end = str.indexOf("%]");

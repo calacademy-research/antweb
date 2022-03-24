@@ -22,7 +22,7 @@ public class BayAreaSearch extends GenericSearch implements Serializable {
     private String[] adm2s;
 
     public String[] getAdm2s() {
-        return (this.adm2s);
+        return this.adm2s;
     }
 
     public void setAdm2s(String[] adm2s) {

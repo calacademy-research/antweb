@@ -81,7 +81,7 @@ public final class OrphanTaxonsAction extends Action {
                   //s_log.warn("orphan() q:" + query);
                   while (rset2.next()) {
                     String taxonName = rset2.getString(1);
-                    Taxon taxon = (new TaxonDb(connection)).getTaxon(taxonName);
+                    Taxon taxon = new TaxonDb(connection).getTaxon(taxonName);
                     taxonList.add(taxon);
                   }
                   stmt2.close();
@@ -90,7 +90,7 @@ public final class OrphanTaxonsAction extends Action {
             }
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, stmt1, rset1, this, "OrphanTaxonsAction");
         }
@@ -98,7 +98,7 @@ public final class OrphanTaxonsAction extends Action {
         request.setAttribute("uploads", uploadList);
         request.setAttribute("orphans", taxonList);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 
     

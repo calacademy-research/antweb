@@ -388,7 +388,7 @@ class GeonamesResponse {
     String totalResultsCount;
     List<Geoname> geonames;
     
-    public String toString() { return "GeonamesResponse c:" + totalResultsCount + " l:" + ((geonames != null) ? geonames.size() : 0); }
+    public String toString() { return "GeonamesResponse c:" + totalResultsCount + " l:" + (geonames != null ? geonames.size() : 0); }
 }
 
 class Geoname {

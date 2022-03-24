@@ -32,7 +32,7 @@ public final class DupedGeneraAction extends Action {
 
         boolean isLoggedIn = LoginMgr.isLoggedIn(request);
         if (!isLoggedIn) {
-          return (mapping.findForward("notLoggedIn"));
+          return mapping.findForward("notLoggedIn");
         }
         
         HttpSession session = request.getSession();
@@ -54,7 +54,7 @@ public final class DupedGeneraAction extends Action {
             String source = theForm.getSource();
             if (action != null) {       
               if (action.equals("delete")) {
-                 if ((taxonName != null) && (!"".equals(taxonName))) {
+                 if (taxonName != null && !"".equals(taxonName)) {
                    orphansDb.deleteTaxon(taxonName);
                  }
                  // if ((source != null) && (!"".equals(source))) {                   
@@ -66,10 +66,10 @@ public final class DupedGeneraAction extends Action {
 
           orphanTaxonList = orphansDb.getDupedGeneraList();
           request.setAttribute("orphans", orphanTaxonList);
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "DupedGeneraAction.execute()");
         }

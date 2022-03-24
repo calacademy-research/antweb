@@ -51,7 +51,7 @@ public final class ListUploadsAction extends Action {
           listSpecimenUploads(request, form);
         }
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 
     private void listImageUploads(HttpServletRequest request, ActionForm form) {
@@ -83,7 +83,7 @@ public final class ListUploadsAction extends Action {
             if (curatorIdInt != 0) {
               criteria += " where curator_id = " + curatorIdInt;
             }
-            imageUploads = (new ImageUploadDb(connection)).getImageUploads(criteria);
+            imageUploads = new ImageUploadDb(connection).getImageUploads(criteria);
 
         } catch (SQLException e) {
             s_log.error("listImageUploads() e:" + e);
@@ -156,7 +156,7 @@ public final class ListUploadsAction extends Action {
                 Upload upload = new Upload();
                 upload.setLogFileName(rset.getString("log_file_name"));
                 upload.setCreated(rset.getDate("created"));
-                groupName = (rset.getString("group_name"));
+                groupName = rset.getString("group_name");
                 upload.setGroupName(groupName);
                 upload.setGroupId(rset.getInt("group_id"));
                 upload.setLoginId(rset.getInt("login_id"));

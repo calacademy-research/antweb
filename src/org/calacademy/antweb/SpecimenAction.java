@@ -50,7 +50,7 @@ public final class SpecimenAction extends DescriptionAction {
         if (code == null) code = name;
         if (code == null) {
 			request.setAttribute("message", "Specimen code not found");
-			return (mapping.findForward("message"));        
+			return mapping.findForward("message");
         }
         code = code.toLowerCase();
         Specimen specimen = null;
@@ -83,7 +83,7 @@ public final class SpecimenAction extends DescriptionAction {
                     specimen.fullInit(connection);
                     //A.log("execute() uploadedBy:" + specimen.getAccessGroup());
                     boolean success = saveDescriptionEdit(specimenForm, specimen, accessLogin, request, connection);   
-                    if (!success) return (mapping.findForward("message"));    
+                    if (!success) return mapping.findForward("message");
                     
                     if (accessLogin != null) getDescEditHistory(specimen, connection, request);
                     
@@ -99,7 +99,7 @@ public final class SpecimenAction extends DescriptionAction {
                 } else {
                     String message = "Specimen:" + code + " is not in the AntWeb database";
 
-                    if ((overview != null) && (!overview.toString().equals("allantwebants")) && (!overview.toString().equals("")) ) {
+                    if (overview != null && !overview.toString().equals("allantwebants") && !overview.toString().equals("")) {
                       message += " for overview:" + overview + ".  <br><br>Go to <a href=" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "&project=allantwebants>All Antweb</a>.";
                     } else {
                       message += ".";
@@ -114,7 +114,7 @@ public final class SpecimenAction extends DescriptionAction {
                     }
                     
                     request.setAttribute("message", message);
-                    return (mapping.findForward("message"));
+                    return mapping.findForward("message");
                 }
             //} catch (AntwebException e) {
             //    s_log.error("execute() e:" + e + " " + HttpUtil.getRequestInfo(request));
@@ -125,7 +125,7 @@ public final class SpecimenAction extends DescriptionAction {
                 } else {
                     s_log.error("execute() e:" + e);
                 }
-                return (mapping.findForward("failure"));
+                return mapping.findForward("failure");
             } finally {
                 try {
                     QueryProfiler.profile("specimenAction", startTime);	            
@@ -170,6 +170,6 @@ public final class SpecimenAction extends DescriptionAction {
         //saveToken(request);
 
         // Forward control to the edit user registration page
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

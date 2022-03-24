@@ -89,8 +89,8 @@ public class DescEditImageUploadAction extends Action {
 
                     String outputFileName2 = docBase + dirFileName;
                     
-                    if ((outputFileName != null) 
-                      && (!outputFileName.equals(""))) {
+                    if (outputFileName != null
+                      && !outputFileName.equals("")) {
                         outputFileName2 = docBase + dir + "/" + outputFileName; 
                     }
 
@@ -146,7 +146,7 @@ public class DescEditImageUploadAction extends Action {
             }
         } catch (IOException | SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally {
             DBUtil.close(connection, this, "DescEditImageUploadAction");
         }

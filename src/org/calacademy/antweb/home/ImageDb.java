@@ -207,7 +207,7 @@ public class ImageDb extends AntwebDb {
 				specimenImage.setDate(rset.getString("upload_date"));
 
 				hasTiff = rset.getInt("has_tiff");
-				boolean ifHasTiff = (hasTiff == 1);
+				boolean ifHasTiff = hasTiff == 1;
 				specimenImage.setHasTiff(ifHasTiff);
 
 				specimenImage.setArtistId(rset.getInt("artist"));

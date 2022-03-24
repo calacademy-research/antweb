@@ -162,11 +162,11 @@ public class SaveLoginForm extends ActionForm {
 
             errors = new ActionErrors();
 
-            if ((email != null) && (!"".equals(email)) && (!AntwebUtil.validEmail(email))) {
+            if (email != null && !"".equals(email) && !AntwebUtil.validEmail(email)) {
                 errors.add("error", new ActionError("error.login.invalidEmail"));
             }
 
-            if ((retypePassword == null) || (!password.equals(retypePassword))) {
+            if (retypePassword == null || !password.equals(retypePassword)) {
                 errors.add("error", new ActionError("error.login.retypePasswordMismatch"));        
             }
 
@@ -176,24 +176,24 @@ public class SaveLoginForm extends ActionForm {
             if ("invite".equals(getStep())) {            
               //s_log.warn("is invite form validation");
               
-              if ((getName() != null) && 
-                (getName().equals(accessLogin.getName()))) {
+              if (getName() != null &&
+                      getName().equals(accessLogin.getName())) {
                   // This condition is to catch and block the error of form autofill 
                 errors.add("error", new ActionError("error.login.invalidUsername"));
               } else {
                 s_log.warn("validate() name:" + getName() + " accessName:" + accessLogin.getName());
               }
               if (
-                  ((getPassword() != null) && (!getPassword().equals(""))) ||
-                  ((getRetypePassword() != null) && (!getRetypePassword().equals("")))
+                  getPassword() != null && !getPassword().equals("") ||
+                          getRetypePassword() != null && !getRetypePassword().equals("")
                   ) {
                 errors.add("error", new ActionError("error.login.notEmptyPasswords"));              
               }
             } else {
               //s_log.warn("is NOT invite form validation");
-              if ((accessLogin != null) && (accessLogin.isAdmin())) {
+              if (accessLogin != null && accessLogin.isAdmin()) {
                 // And admin can modify a user without entering username/pwd.  They are not updated.
-                if ((getPassword() != null) && (getPassword().equals(""))) {
+                if (getPassword() != null && getPassword().equals("")) {
                   errors.add("error", new ActionError("error.login.emptyPassword"));              
                 }
               }

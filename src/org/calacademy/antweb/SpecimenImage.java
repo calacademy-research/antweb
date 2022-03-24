@@ -125,7 +125,7 @@ public class SpecimenImage implements Serializable {
         String withoutNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + ".tif";
 
         // For performance sake, when done with the debugging move this into the else statement.
-        String docRoot = (new Utility()).getDocRoot();
+        String docRoot = new Utility().getDocRoot();
 
         if (number > 1) {
           path = withNum;
@@ -166,7 +166,7 @@ public class SpecimenImage implements Serializable {
         if (number > 1) {
           return withNum;
         } else {
-            String docRoot = (new Utility()).getDocRoot();
+            String docRoot = new Utility().getDocRoot();
             if (AntwebUtil.fileFound(docRoot + withNum)) {
                 return withNum;
             } else {
@@ -248,7 +248,7 @@ public class SpecimenImage implements Serializable {
 	
 
     public void setMetadata() {
-	  	String docRoot = (new Utility()).getDocRoot();
+	  	String docRoot = new Utility().getDocRoot();
 	  	
     	String imageName = docRoot + getMedres();
     	Formatter formatter = new Formatter();
@@ -271,29 +271,29 @@ public class SpecimenImage implements Serializable {
     	if (exif != null) {
     		HashMap theFields = exif.getExifFields();
     		if (theFields.containsKey("Artist")) {
-    			artist = ((String) exif.getExifField("Artist"));
-                if ((artist != null) && (artist.length() > 0)) {
+    			artist = (String) exif.getExifField("Artist");
+                if (artist != null && artist.length() > 0) {
                     artist = artist.trim();
                 }
     		}
          
     		if (theFields.containsKey("Copyright")) {
-                copyright = ((String) exif.getExifField("Copyright"));
-                if ((copyright != null) && (copyright.length() > 0)) {
+                copyright = (String) exif.getExifField("Copyright");
+                if (copyright != null && copyright.length() > 0) {
                     copyright = copyright.trim();
                 } 
     		}
     		
     		if (theFields.containsKey("ImageDescription")) {
-     			description = ((String) exif.getExifField("ImageDescription"));
-     			if ((description != null) && (description.length() > 0)) {
+     			description = (String) exif.getExifField("ImageDescription");
+     			if (description != null && description.length() > 0) {
      				description = description.trim();
      			} 
     		}
     		
     		if (theFields.containsKey("DateTime")) {
-                String dateTime = ((String) exif.getExifField("DateTime"));
-                if ((dateTime != null) && (dateTime.length() > 0)) {
+                String dateTime = (String) exif.getExifField("DateTime");
+                if (dateTime != null && dateTime.length() > 0) {
                     dateTime = dateTime.trim();
                     int space = dateTime.indexOf(" ");
                     if (space != -1) {

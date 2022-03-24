@@ -62,7 +62,7 @@ public final class SpecimenListAction extends Action {
         if (taxonName != null) {
 
           String dir = "/web/data/specimenData";
-          (new Utility()).createDirectory(dir);
+          new Utility().createDirectory(dir);
           String fileName = "/" + overview.getName() + "-" + taxonName + ".txt";
           String fullPath = AntwebProps.getDocRoot() + dir + fileName;   
 
@@ -127,7 +127,7 @@ public final class SpecimenListAction extends Action {
               }		              
       
               connection = DBUtil.getConnection(dataSource, "SpecimenListAction.execute()");
-              Taxon taxon = (new TaxonDb(connection)).getTaxon(taxonName);
+              Taxon taxon = new TaxonDb(connection).getTaxon(taxonName);
 
               if (taxon == null) {
                 s_log.warn("execute() taxon not found:" + taxonName);
@@ -240,7 +240,7 @@ public final class SpecimenListAction extends Action {
         StringBuffer dataBuffer = new StringBuffer();
         dataBuffer.append(Specimen.getDataHeader() + "\n");
                     
-        ArrayList<String> codes = (new SpecimenDb(connection)).getAntwebSpecimenCodes(overview, family, subfamily, genus, species, subspecies);
+        ArrayList<String> codes = new SpecimenDb(connection).getAntwebSpecimenCodes(overview, family, subfamily, genus, species, subspecies);
 
         int specimenCount = 0;
         for (String code : codes) {
@@ -250,12 +250,12 @@ public final class SpecimenListAction extends Action {
             dataBuffer.append(specimen.getData(connection) + "\n");
 
             // Write out
-            if ((specimenCount % 10000) == 0) {
+            if (specimenCount % 10000 == 0) {
                 LogMgr.appendFile(fullPath, dataBuffer.toString());
                 dataBuffer = new StringBuffer();                  
             }
             // Log progress
-            if ((specimenCount % 10000) == 0) {
+            if (specimenCount % 10000 == 0) {
                 s_log.warn("getAllAntwebSpecimenData() specimenCount:" + specimenCount);
             }
         }
@@ -269,7 +269,7 @@ public final class SpecimenListAction extends Action {
     private ActionForward generateAllAntwebAnts(ActionMapping mapping, HttpServletRequest request) throws SQLException {
 
         String dir = "/web/data/specimenData/";
-        (new Utility()).createDirectory(dir);
+        new Utility().createDirectory(dir);
         String fileName = "allantwebants-formicidae.txt";
         String fullDir = AntwebProps.getDocRoot() + dir;          
         String fullPath = AntwebProps.getDocRoot() + dir + fileName;          
@@ -291,7 +291,7 @@ public final class SpecimenListAction extends Action {
       
             // Use the first connection to get all of the specimen codes
             connection = DBUtil.getConnection(dataSource, "SpecimenListAction.generateAllAntwebAnts()");
-            ArrayList<String> codes = (new SpecimenDb(connection)).getAntwebSpecimenCodes(ProjectMgr.getProject(Project.ALLANTWEBANTS), Family.ANT_FAMILY);
+            ArrayList<String> codes = new SpecimenDb(connection).getAntwebSpecimenCodes(ProjectMgr.getProject(Project.ALLANTWEBANTS), Family.ANT_FAMILY);
 
             int specimenCount = 0;
             for (String code : codes) {
@@ -300,12 +300,12 @@ public final class SpecimenListAction extends Action {
                 Specimen specimen = Specimen.getShallowInstance(code, connection);
                 dataBuffer.append(specimen.getData(connection) + "\n");
 
-                if ((specimenCount % 10000) == 0) {
+                if (specimenCount % 10000 == 0) {
                     s_log.warn("generateAllAntwebAnts() specimenCount:" + specimenCount + " writing to:" + fullPath);
                     LogMgr.appendFile(fullPath, dataBuffer.toString());
                     dataBuffer = new StringBuffer();                
                 }
-                if ((specimenCount % 100000) == 0) {
+                if (specimenCount % 100000 == 0) {
                     //connection.close();     
                     DBUtil.close(connection, this, "SpecimenListAction.generateAllAntwebAnts()");                
                     connection = DBUtil.getConnection(dataSource, "SpecimenListAction.generateAllAntwebAnts()");

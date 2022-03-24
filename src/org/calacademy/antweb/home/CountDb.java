@@ -373,7 +373,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
 		   
 			   //if (AntwebProps.isDevMode() && taxonName.equals(debugTaxonName)) s_log.warn("imageCountCrawl() query:" + query);
 
-			   if ((lastGenus != null) && (genus != null) && (!genus.equals(lastGenus))) {
+			   if (lastGenus != null && genus != null && !genus.equals(lastGenus)) {
 				 // break on genus             
 				 String genusTaxonName = lastSubfamily + lastGenus;
 				 updateCountableTaxonImageCount(countable, genusTaxonName, genusImageSum, "genus");
@@ -383,7 +383,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
 			   }
 			   lastGenus = genus;
 		   
-			   if ((lastSubfamily != null) && (subfamily != null) && (!subfamily.equals(lastSubfamily))) {
+			   if (lastSubfamily != null && subfamily != null && !subfamily.equals(lastSubfamily)) {
 				 // break on subfamily             
 				 updateCountableTaxonImageCount(countable, lastSubfamily, subfamilyImageSum, "subfamily");
 				 subfamilyImageSum = imageSum;
@@ -392,7 +392,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
 			   }
 			   lastSubfamily = subfamily;
 		   
-			   if ((lastFamily != null) && (!family.equals(lastFamily))) {
+			   if (lastFamily != null && !family.equals(lastFamily)) {
 				 // break on family
 				 updateCountableTaxonImageCount(countable, lastFamily, familyImageSum, "family");
 				 familyImageSum = imageSum;

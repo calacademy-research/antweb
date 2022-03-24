@@ -46,12 +46,12 @@ native bioregions to genera.
                 geolocaleId = Integer.parseInt(geolocaleIdStr);
             } catch (NumberFormatException e) {
                 request.setAttribute("message", "valid Geolocale ID expected. Found:" + geolocaleId);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
             geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
             if (geolocale == null) {
                 request.setAttribute("message", "geolocale not found:" + geolocaleId);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
         }
 
@@ -63,7 +63,7 @@ native bioregions to genera.
             bioregion = BioregionMgr.getBioregion(bioregionName);
             if (bioregion == null) {
                 request.setAttribute("message", "bioregion not found:" + bioregion);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
         }
 
@@ -89,7 +89,7 @@ native bioregions to genera.
 		}
 		
         request.setAttribute("introduced", introduced);
-	    return (mapping.findForward("introduced"));
+	    return mapping.findForward("introduced");
     }
 
     private ArrayList<String> getGeolocaleIntroduced(int geolocaleId, Connection connection) {

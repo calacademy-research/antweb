@@ -21,7 +21,7 @@ public abstract class MapMgr {
     public static Map getMap(Taxon taxon, LocalityOverview overview, Connection connection) {
         Map map = null;
 
-        boolean persist = (taxon.isSubfamily() || taxon.isGenus()); // They will be geolocaleFocus == false.
+        boolean persist = taxon.isSubfamily() || taxon.isGenus(); // They will be geolocaleFocus == false.
         persist = false;  // Effectively, turn MapMgr off.
         if (persist) {
             map = MapMgr.getMap(taxon); // NO! Must be locality specific.

@@ -174,7 +174,7 @@ public class ProjectDb extends AntwebDb {
               //A.log("fetch description");
               //project.setConnection(getConnection());
               
-              Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(project.getName());
+              Hashtable<String, String> description = new DescEditDb(getConnection()).getDescription(project.getName());
               project.setDescription(description);
             }
 
@@ -225,7 +225,7 @@ public class ProjectDb extends AntwebDb {
             int MAX_MAP_LENGTH = 40;  // This is what the field is defined as in the database.
               // Weirdness in design of the getMapString causes danger of overwriting the database values.
             String mapImage = project.getMapImage();
-            if ((mapImage != null) && (mapImage.length() < MAX_MAP_LENGTH)) {
+            if (mapImage != null && mapImage.length() < MAX_MAP_LENGTH) {
                 s_log.info("updateInDb() scope:" + project.getScope() + " title:" + project.getTitle() + " good mapImage:" + mapImage);                        
                 theQuery += addSet("map", mapImage) + ",";
             } else {
@@ -427,7 +427,7 @@ public class ProjectDb extends AntwebDb {
             s_log.error("addSet() field is null for value:" + value);
             return "";
         } 
-        if ((value == null) || (value.equals("null"))) { 
+        if (value == null || value.equals("null")) {
             value = ""; 
         }
         value =  AntFormatter.escapeQuotes(value);
@@ -734,7 +734,7 @@ public class ProjectDb extends AntwebDb {
         int genusCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "genus");        
         int speciesCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "species");
 
-        boolean subfamilyIsZero = (subfamilyCount == 0);
+        boolean subfamilyIsZero = subfamilyCount == 0;
 
         A.log("updateCountableTaxonCounts() project:" + project + " subfamilyCount:" + subfamilyCount + " condition:" + !("worldants".equals(project.getName()) && subfamilyCount == 0));
 
@@ -750,7 +750,7 @@ public class ProjectDb extends AntwebDb {
     private void updateValidSpeciesCount(Project project) throws SQLException {
         int count = getValidSpeciesCount(project);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("project", "valid_species_count", (Integer.valueOf(count)).toString(), "project_name = '" + project.getName() + "'");
+        utilDb.updateField("project", "valid_species_count", Integer.valueOf(count).toString(), "project_name = '" + project.getName() + "'");
     }
 
     private int getValidSpeciesCount(Project project) {

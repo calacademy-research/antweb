@@ -9,7 +9,7 @@ class Adm1Response {
 
     public List<Result> results;
     
-    public String toString() { return "Adm1Response l:" + ((results != null) ? results.size() : 0); }
+    public String toString() { return "Adm1Response l:" + (results != null ? results.size() : 0); }
 }
 
 class Result {

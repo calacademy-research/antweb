@@ -73,8 +73,8 @@ public class LineNumMgr {
 
           int fudgeFactor = 1;
           if (lineNum > 1 &&
-               ( componentCount < (lastComponentCount - fudgeFactor)
-             ||  componentCount > (lastComponentCount + fudgeFactor)
+               ( componentCount < lastComponentCount - fudgeFactor
+             ||  componentCount > lastComponentCount + fudgeFactor
                )
              && componentCount < minComponentCount  
              ) {

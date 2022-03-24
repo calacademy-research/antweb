@@ -117,8 +117,8 @@ these other _cf1 etc.
 
         if (debug) s_log.warn("setSeeAlso() siblingSubspecies:" + siblingSubspecies);
 
-        if (siblingSubspecies != null  && (!"".equals(siblingSubspecies))) {
-          if ((seeAlso != null) && (!"".equals(seeAlso))) seeAlso += ", ";
+        if (siblingSubspecies != null  && !"".equals(siblingSubspecies)) {
+          if (seeAlso != null && !"".equals(seeAlso)) seeAlso += ", ";
           if (seeAlso == null) seeAlso = "";
           seeAlso += siblingSubspecies;
         }
@@ -133,9 +133,9 @@ these other _cf1 etc.
     public String getFullName() {
         StringBuffer fullName = new StringBuffer();
         fullName.append(genus + " ");
-        if ((subgenus != null)
-            && (!("".equals(subgenus)))
-            && (!("null".equals(subgenus)))) {
+        if (subgenus != null
+            && !"".equals(subgenus)
+            && !"null".equals(subgenus)) {
             fullName.append("(" + subgenus + ") ");
         }
 /*        
@@ -146,9 +146,9 @@ these other _cf1 etc.
         }
 */
         fullName.append(species);
-        if ((subspecies != null)
-            && (!("".equals(subspecies)))
-            && (!("null".equals(subspecies)))) {
+        if (subspecies != null
+            && !"".equals(subspecies)
+            && !"null".equals(subspecies)) {
             fullName.append(" " + subspecies);
         }
 
@@ -275,7 +275,7 @@ these other _cf1 etc.
             }
             if (AntwebDebug.isDebugTaxon(getTaxonName())) s_log.debug("setChildren(7) setHasImages code:" + child.getCode() + " hasImages:" + child.getHasImages());
 
-            if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
+            if (getChildMaps && i < Taxon.getMaxSafeChildrenCount() && overview instanceof LocalityOverview) {
                 child.setMap(new Map(child, (LocalityOverview) overview, connection));
             }
             child.setTaxonomicInfo(connection);   // is this needed?  Yes, for now.
@@ -319,7 +319,7 @@ these other _cf1 etc.
             if (overview instanceof LocalityOverview) {
               String locality = ((LocalityOverview) overview).getLocality();                    
 			  s_log.debug("setChildrenLocalized() locality:" + locality);
-              if ((locality != null) && (locality.length() > 0) && (!locality.equals("null")))  {
+              if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
                 if ("country".equals(locality.substring(0, 7))) {
                     locality = "specimen." + locality;
                 }
@@ -754,12 +754,12 @@ To fix this proper would involve rewriting Species.sort()
     public boolean hasSpecimenDataSummary() {
         boolean hasSpecimenData = false;
         if (
-             ( (habitats != null) && (habitats.size() > 0) )
-          || ( (methods != null) && (methods.size() > 0) )
-          || ( (microhabitats != null) && (microhabitats.size() > 0) )
-          || (!"".equals(elevations)) 
-          || (!"".equals(collectDateRange))
-          || (!"".equals(types))
+             habitats != null && habitats.size() > 0
+          || methods != null && methods.size() > 0
+          || microhabitats != null && microhabitats.size() > 0
+          || !"".equals(elevations)
+          || !"".equals(collectDateRange)
+          || !"".equals(types)
         ) hasSpecimenData = true;
 
         //A.log("hasSpecimenDataSummary() " + hasSpecimenData);

@@ -35,7 +35,7 @@ public final class PrepareFieldGuideResultsAction extends PrepareAction {
             results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
 			if (session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
             forwardString = "advancedSearch"; 
-        } else if ((resultRank.equals("species")) || (resultRank.equals("genus")) || (resultRank.equals("subfamily"))) {
+        } else if (resultRank.equals("species") || resultRank.equals("genus") || resultRank.equals("subfamily")) {
             results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
 			if (session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
             request.setAttribute("resultRank", resultRank);            
@@ -72,7 +72,7 @@ public final class PrepareFieldGuideResultsAction extends PrepareAction {
 
         request.setAttribute("resultSetModifier", resultSetModifier);
 
-        return (mapping.findForward(forwardString));
+        return mapping.findForward(forwardString);
     }
 
     public ArrayList<ResultItem> getModifiedSet(String resultRank, ArrayList theResults, HttpServletRequest request) {

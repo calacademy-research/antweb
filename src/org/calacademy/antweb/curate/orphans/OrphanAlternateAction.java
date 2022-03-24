@@ -52,7 +52,7 @@ public final class OrphanAlternateAction extends Action {
             String subfamily = theForm.getSubfamily();
             String source = theForm.getSource();
 
-            if ((theForm.getBrowse() != null) && (theForm.getBrowse().equals("browse"))) {
+            if (theForm.getBrowse() != null && theForm.getBrowse().equals("browse")) {
                String newTaxonName = null;
                int inaeIndex = taxonName.indexOf("inae");
                if (taxonName.contains("inae")) {
@@ -60,7 +60,7 @@ public final class OrphanAlternateAction extends Action {
                }
                s_log.debug("execute() browse newTaxonName:" + newTaxonName);
                
-               Taxon fetchTaxon = (new TaxonDb(connection)).getTaxon(taxonName);
+               Taxon fetchTaxon = new TaxonDb(connection).getTaxon(taxonName);
                if (fetchTaxon != null) {
                   String url = fetchTaxon.getUrl();
                   response.sendRedirect(url);  
@@ -99,7 +99,7 @@ public final class OrphanAlternateAction extends Action {
 
           putLookupDataInRequest(request, connection);
           
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
@@ -107,7 +107,7 @@ public final class OrphanAlternateAction extends Action {
             DBUtil.close(connection, "OrphanAlterateAction.execute()");
         }
 
-        return (mapping.findForward("error"));
+        return mapping.findForward("error");
     }
 
 

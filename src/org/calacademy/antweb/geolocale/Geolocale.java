@@ -369,7 +369,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
 
     public String getRoot() {
       String name = getName();
-      name = (new Formatter()).removeSpaces(name);
+      name = new Formatter().removeSpaces(name);
       name = name.toLowerCase();
       return name;
     }
@@ -436,14 +436,14 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
 
         // This is so no broken image shows up on the project page prior to adding it.
         authorImageTag = "";
-        if ((authorImage != null) && !(authorImage.equals(""))) {
+        if (authorImage != null && !authorImage.equals("")) {
           authorImageTag = "<img src=\"" + AntwebProps.getImgDomainApp() + "/" + Project.getSpeciesListDir() + getRoot() + "/" + getAuthorImage() + "\">";
           s_log.debug("setAuthorImage() authorImageTag:" + authorImageTag);
         }        
     }        
         
     public boolean isCanShowSpecimenTaxa() {
-        return (isCountry() && !getIsUseChildren()) || isAdm1();
+        return isCountry() && !getIsUseChildren() || isAdm1();
     }
 	public boolean isCountry() {
 	  return Georank.country.equals(getGeorank());
@@ -799,7 +799,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       for (Geolocale child : children) {
         if ("valid".equals(validOrLive) && !child.getIsValid()) continue;
         if ("live".equals(validOrLive) && !child.getIsLive()) continue;        
-        if ("list".equals(overviewOrList) && (georank.equals("country") && !getIsUseChildren())) continue;
+        if ("list".equals(overviewOrList) && georank.equals("country") && !getIsUseChildren()) continue;
         ++i;
         if (i == 1) display = "<b>" + getChildrenHeading() + ":</b> ";
         if (i > 1) display += ", ";

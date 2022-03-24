@@ -27,7 +27,7 @@ public class AntwebSystem {
     
   public static int countLines(String fileName) {
     String command = "wc " + fileName;
-    String countLinesStr = (new AntwebSystem()).launchProcess(command, true);
+    String countLinesStr = new AntwebSystem().launchProcess(command, true);
     if (countLinesStr.length() <= 0) {
       s_log.error("countLines() Empty string returned from command:" + command);
       //if (AntwebProps.isDevOrStageMode()) return SpeciesListUploader.WORLDANTS_LOW_COUNT;
@@ -285,7 +285,7 @@ public class AntwebSystem {
      
     public static long getFreeSpace() {
         
-        long freeSpace = (new File("/")).getFreeSpace();
+        long freeSpace = new File("/").getFreeSpace();
         return freeSpace;
     }
         

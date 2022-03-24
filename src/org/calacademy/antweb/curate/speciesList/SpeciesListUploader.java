@@ -55,7 +55,7 @@ public class SpeciesListUploader {
     uploadDetails.setStartTime(fetchDetails.getStartTime());
     uploadDetails.setOperation("fetchAndReloadWorldants");    
 
-    int worldantsChangeCount = (new WorldantsUploadDb(connection)).getWorldantsChangeCount();
+    int worldantsChangeCount = new WorldantsUploadDb(connection).getWorldantsChangeCount();
     if (worldantsChangeCount == 0) {
       AdminAlertMgr.addIfFresh(AdminAlertMgr.noWorldantsChanges, AdminAlertMgr.noWorldantsChangesContains, AdminAlertMgr.WEEK, connection);
     }  
@@ -72,7 +72,7 @@ public class SpeciesListUploader {
 
    // (new WorldantsUploadDb(connection)).insertWorldantsUpload(backupFileName, backupFileSize, origWorldantsCount, validateMessage, fileSize);
     String fileLoc = worldDir + "worldants_speciesList.txt";
-    int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
+    int origWorldantsCount = new TaxonDb(connection).getWorldantsCount();
     //String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
     String validateMessage = speciesListUpload.getValidateMessage();
     String backupDirFile = record(validateMessage, fileLoc, origWorldantsCount, true);
@@ -104,7 +104,7 @@ public class SpeciesListUploader {
     
     s_log.warn("fetchWorldantsList() Worldants fetched:" + urlLoc + " written here:" + fileLoc + " successfully.");
 
-    int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
+    int origWorldantsCount = new TaxonDb(connection).getWorldantsCount();
 
     String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
     uploadDetails.setMessage(validateMessage);
@@ -121,7 +121,7 @@ public class SpeciesListUploader {
 	SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
 	UploadDetails uploadDetails = speciesListUpload.reloadSpeciesList(Project.WORLDANTS, Group.TESTGROUP);
 
-    int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
+    int origWorldantsCount = new TaxonDb(connection).getWorldantsCount();
     String fileLoc = worldDir + "worldants_speciesList.txt";
 
 
@@ -205,7 +205,7 @@ public class SpeciesListUploader {
 
     if (persistToDb) {
       // we do not persist fetches     
-      (new WorldantsUploadDb(connection)).insertWorldantsUpload(backupDirFile, backupFileSize, origWorldantsCount, validateMessage, fileSize);
+      new WorldantsUploadDb(connection).insertWorldantsUpload(backupDirFile, backupFileSize, origWorldantsCount, validateMessage, fileSize);
     }
     
     return backupDirFile;

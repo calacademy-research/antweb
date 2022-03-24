@@ -171,7 +171,7 @@ public class Map {
     public Map(ArrayList<String> specimens, Connection connection) {
         super();
         setChosenList(specimens);
-        if ((specimens != null) && (specimens.size() > 0)) {
+        if (specimens != null && specimens.size() > 0) {
             long thisTime = new GregorianCalendar().getTimeInMillis();
             setMapName("map" + thisTime);
 
@@ -186,7 +186,7 @@ public class Map {
         // This is not the same as a Map(Locality). These are specimen codes but one for each locality to be mapped.
         setIsMapLocalities(mapLocalities);
         setInfo(info);
-        if ((specimens != null) && (specimens.size() > 0)) {
+        if (specimens != null && specimens.size() > 0) {
             long thisTime = new GregorianCalendar().getTimeInMillis();
 
             setMapName("map" + thisTime);
@@ -225,7 +225,7 @@ public class Map {
             terms.add("subspecies%3d%27" + taxon.getSubspecies() + "%27");
         }
 
-        if (Utility.notBlank(overview.toString()) && (!overview.equals(Project.WORLDANTS))) {
+        if (Utility.notBlank(overview.toString()) && !overview.equals(Project.WORLDANTS)) {
             //String term = "project+like+%27%25" + project + "%25%27";
             String term = "project+like+%27%25" + overview + "%25%27";
             terms.add(term);
@@ -240,7 +240,7 @@ public class Map {
     }
 
     public boolean hasPoints() {
-        return (getPoints() != null) && (getPoints().size() > 0);
+        return getPoints() != null && getPoints().size() > 0;
     }
 
     public ArrayList<Coordinate> getPoints() {
@@ -261,7 +261,7 @@ public class Map {
         }
         float thisLon = loc.getDecimalLongitude();
         float thisLat = loc.getDecimalLatitude();
-        if ((thisLon != 0.0) && (thisLat != 0.0)) {
+        if (thisLon != 0.0 && thisLat != 0.0) {
             points.add(new Coordinate(thisLon, thisLat));
             //s_log.warn("setPoints(locality) lon:" + thisLon + " lat:" + thisLat);
         } else {
@@ -276,7 +276,7 @@ public class Map {
 
         float thisLon = locality.getDecimalLongitude();
         float thisLat = locality.getDecimalLatitude();
-        if ((thisLon != 0.0) && (thisLat != 0.0)) {
+        if (thisLon != 0.0 && thisLat != 0.0) {
             points.add(new Coordinate(thisLon, thisLat));
             //s_log.warn("setPoints(locality) lon:" + thisLon + " lat:" + thisLat);
         } else {
@@ -367,7 +367,7 @@ public class Map {
                     thisLon = rset.getFloat("decimal_longitude");
                     String taxonName = rset.getString("taxon_name");
                     
-                    if ((thisLon != 0.0) && (thisLat != 0.0)) {
+                    if (thisLon != 0.0 && thisLat != 0.0) {
                         key = taxonName + ":" + thisLon + ":" + thisLat;
                         
 						String adm1 = rset.getString("adm1");
@@ -448,7 +448,7 @@ public class Map {
 
     private void setPoints(Taxon taxon, LocalityOverview overview, Connection connection, int maxMapPoints, boolean geolocaleFocus) {
         
-        boolean persist = (taxon.isSubfamily()) && !geolocaleFocus; // or genus?
+        boolean persist = taxon.isSubfamily() && !geolocaleFocus; // or genus?
         if (persist) {
           ++nonFucusedSubfamilyMaps;
           // Oops, not so easy to persist a map, is it?
@@ -484,11 +484,11 @@ public class Map {
 
         String locality;
 
-        boolean useProject = (overview instanceof Project);
+        boolean useProject = overview instanceof Project;
           if (name.equals(Project.WORLDANTS) || name.equals("ALLANTWEBANTS") || "null".equals(name)) useProject = false;
         // geolocaleFocus is passed all the way from the web page to indicate query restiction and resulting zoom.
-        boolean useGeolocale = geolocaleFocus && (overview instanceof Geolocale);
-        boolean useBioregion = (overview instanceof Bioregion);
+        boolean useGeolocale = geolocaleFocus && overview instanceof Geolocale;
+        boolean useBioregion = overview instanceof Bioregion;
 
         query = "select sp.decimal_longitude, sp.decimal_latitude, sp.code, sp.taxon_name, sp.genus, sp.species, sp.subspecies, localitycode "
           + " from specimen as sp";
@@ -523,7 +523,7 @@ public class Map {
 
         if (useProject) {
           locality = overview.getLocality();
-          if ((locality != null) && (locality.length() > 0) && (!locality.equals("null")))  {
+          if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
             terms.add("sp." + locality);
           }    
           terms.add("proj_taxon.project_name = '" + name + "'");
@@ -599,7 +599,7 @@ public class Map {
 				species = rset.getString("species");
 				subspecies = rset.getString("subspecies");
 				localityCode = rset.getString("localitycode");
-				if ((lon != 0.0) && (lat != 0.0)) {
+				if (lon != 0.0 && lat != 0.0) {
 					key = lon + ":" + lat; //taxonName + ":" + 
 					if (distinctLocalities.containsKey(key)) {
 						keyCount = (Integer) distinctLocalities.get(key);
@@ -674,11 +674,11 @@ public class Map {
         
         StringBuffer theString = null;
         String googleString = null;
-        if ((getPoints() != null) && (getPoints().size() > 0)) {
+        if (getPoints() != null && getPoints().size() > 0) {
           //ArrayList clearPoints = clearZeros(getPoints());
           String latArray = getJavaScriptArray(getPoints(),"lat");
           String lonArray = getJavaScriptArray(getPoints(),"lon");
-          if ((latArray != null) && (lonArray != null)) {
+          if (latArray != null && lonArray != null) {
             
               theString = new StringBuffer();
 

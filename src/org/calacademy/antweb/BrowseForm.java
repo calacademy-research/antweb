@@ -79,7 +79,7 @@ public final class BrowseForm extends DescriptionForm {
     
 
 	public String getCaste() {
-		return (this.caste);
+		return this.caste;
 	}
 	public void setCaste(String caste) {
 		this.caste = caste;
@@ -102,14 +102,14 @@ public final class BrowseForm extends DescriptionForm {
     }
 
     public String getRank() {
-         return (this.rank);
+         return this.rank;
     }
     public void setRank(String rank) {
         this.rank = rank;
     }
 
     public String getName() {
-        return (this.name);
+        return this.name;
     }
     public void setName(String name) {
         this.name = name;
@@ -123,14 +123,14 @@ public final class BrowseForm extends DescriptionForm {
     }
 
     public String getFamily() {
-        return (this.family);
+        return this.family;
     }
     public void setFamily(String family) {
         this.family = family;
     }
 
     public String getSubfamily() {
-        return (this.subfamily);
+        return this.subfamily;
     }
     public void setSubfamily(String subfamily) {
         this.subfamily = subfamily;
@@ -165,21 +165,21 @@ public final class BrowseForm extends DescriptionForm {
     }
 
     public String getCode() {
-        return (this.code);
+        return this.code;
     }
     public void setCode(String code) {
         this.code = code;
     }    
         
     public String getProject() {
-        return (this.project);
+        return this.project;
     }
     public void setProject(String project) {
         this.project = project;
     }    
 
    public String[] getChosen() {
-    return (this.chosen);
+    return this.chosen;
     }
     public void setChosen(String [] chosen) {
         this.chosen = chosen;

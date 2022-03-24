@@ -108,11 +108,11 @@ public class EditLoginForm extends ActionForm {
 
             errors = new ActionErrors();
 
-            if ((email == null) || (!AntwebUtil.validEmail(email))) {
+            if (email == null || !AntwebUtil.validEmail(email)) {
                 errors.add("error", new ActionError("error.login.invalidEmail"));
             }
 
-            if ((retypePassword == null) || (!password.equals(retypePassword))) {
+            if (retypePassword == null || !password.equals(retypePassword)) {
                 errors.add("error", new ActionError("error.login.retypePasswordMismatch"));        
             }
 
@@ -122,8 +122,8 @@ public class EditLoginForm extends ActionForm {
             //if (accessLogin != null) accessUserName = accessLogin.getName();
             
             if (
-               ((getPassword() != null) && (!getPassword().equals(""))) ||
-               ((getRetypePassword() != null) && (!getRetypePassword().equals("")))
+               getPassword() != null && !getPassword().equals("") ||
+                       getRetypePassword() != null && !getRetypePassword().equals("")
                ) {
                 errors.add("error", new ActionError("error.login.notEmptyPasswords"));              
             }

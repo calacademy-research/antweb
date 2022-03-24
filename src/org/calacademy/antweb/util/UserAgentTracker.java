@@ -169,7 +169,7 @@ public class UserAgentTracker {
       ArrayList<Integer> list = new ArrayList<>(treeSet);
 
       for (Integer count : list) {
-          agent = (countMap.get(count));
+          agent = countMap.get(count);
           s_log.debug("htmlReport() count:" + count + " agent:" + agent);
           report += agent;
       }

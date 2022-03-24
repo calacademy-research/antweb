@@ -106,7 +106,7 @@ public class AntwebCacheMgr {
         if (genus != null) dirFile += "/" + genus;
         dirFile +=  "/fieldGuide.txt";
         // Or if a project
-        if ((subfamily == null) && (genus == null)) {
+        if (subfamily == null && genus == null) {
           dirFile = "data/" + cacheType + "/" + overview.getName() + "/" + rank + ".txt";
         }
         s_log.debug("finish() fieldGuide insert into longRequest table dirFile:" + dirFile);
@@ -124,7 +124,7 @@ public class AntwebCacheMgr {
           return;
         }
 
-        boolean isLoggedIn = (accessLogin != null);
+        boolean isLoggedIn = accessLogin != null;
         int loginId = 0;
         if (isLoggedIn) {
           loginId = accessLogin.getId();
@@ -190,7 +190,7 @@ public class AntwebCacheMgr {
         String urlClause = "";
         if (!"all".equals(url)) urlClause = " and url = \"" + url + "\"";
         String orderByClause = "";
-        if ((orderBy != null) && (!"".equals(orderBy))) orderByClause = " order by " + orderBy;
+        if (orderBy != null && !"".equals(orderBy)) orderByClause = " order by " + orderBy;
         String query = "select id, cache_type, url, dir_file, millis, cache_millis, created, cached, request_info, busy_connections, is_logged_in, is_bot from long_request where " 
           //+ " is_logged_in != 1 and "
           + " created >= DATE_SUB(SYSDATE(), INTERVAL " + LONG_REQUEST_CREATED_INTERVAL + " DAY) " 
@@ -361,8 +361,8 @@ public class AntwebCacheMgr {
   private static boolean isExpired(String cacheDate) {
     try {
       java.util.Date expireDate = AntwebUtil.getDateNDaysAgo(new java.util.Date(), EXPIRED_DAYS_AGO);
-      java.util.Date cachedDate = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).parse(cacheDate);
-      return (cachedDate.compareTo(expireDate) < 0);
+      java.util.Date cachedDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(cacheDate);
+      return cachedDate.compareTo(expireDate) < 0;
     } catch (ParseException e) {
       s_log.error("isExpired() e:" + e);
       return true;  // arbitrary.  Should not happen.
@@ -404,7 +404,7 @@ public class AntwebCacheMgr {
           ++reqCount;        
           String cacheDate = getCacheDate(rset, "cached");
 
-          if (("".equals(cacheDate)) || (isExpired(cacheDate))) {            
+          if ("".equals(cacheDate) || isExpired(cacheDate)) {
             // if not cached, or cache is expired, then cache
             String dirFile = rset.getString("dir_file");
             String url = rset.getString("url");
@@ -438,7 +438,7 @@ public class AntwebCacheMgr {
 
   private static boolean uncacheableUrl(String url) {
     if (
-        (url.contains("statusSet="))
+            url.contains("statusSet=")
        ) {
          s_log.info("uncacheableUrl() url:" + url);
          return true;
@@ -492,7 +492,7 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
       s_lastCacheItem = dataFile;
 
       tempDataFile = dataFile + "T";
-      (new Utility()).makeDirTree(dataFile); 
+      new Utility().makeDirTree(dataFile);
       s_log.debug("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + dataFile);
 
       BufferedWriter out = new BufferedWriter(new FileWriter(tempDataFile, false));
@@ -570,7 +570,7 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
     if (isGetCache) {
       fetchFromCache = true;
     } else {
-      boolean isLoggedIn = (accessLogin != null);  
+      boolean isLoggedIn = accessLogin != null;
       if (!isLoggedIn) fetchFromCache = true;
     }
     return fetchFromCache;
@@ -651,7 +651,7 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
         return false;
       }
                 
-      boolean hasInCache = (new File(AntwebProps.getDocRoot() + dir, fileName)).exists();
+      boolean hasInCache = new File(AntwebProps.getDocRoot() + dir, fileName).exists();
       //s_log.warn("hasInCache() hasInCache:" + hasInCache + " cacheType:" + cacheType + " dir:" + dir + " fileName:" + fileName);
       return hasInCache;
   }
@@ -693,7 +693,7 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
       String fileName = null;
       
       if (cacheType.equals("fieldGuide")) {
-        if ((subfamily == null) && (genus == null)) {
+        if (subfamily == null && genus == null) {
           dir = "/web/data/fieldGuide/" + overview.getName() + "/";
           fileName = rank + ".txt";
         } else {

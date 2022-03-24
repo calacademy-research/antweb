@@ -21,7 +21,7 @@ public class DescEditImageUploadForm extends UploadForm {
     private String contents;
     
     public String getRank() {
-    return (this.rank);
+    return this.rank;
     }
 
     public void setRank(String rank) {
@@ -29,7 +29,7 @@ public class DescEditImageUploadForm extends UploadForm {
     }
 
     public String getName() {
-    return (this.name);
+    return this.name;
     }
 
     public void setName(String name) {
@@ -37,7 +37,7 @@ public class DescEditImageUploadForm extends UploadForm {
     }
     
     public String getEditField() {
-    return (this.editField);
+    return this.editField;
     }
 
     public void setEditField(String editField) {

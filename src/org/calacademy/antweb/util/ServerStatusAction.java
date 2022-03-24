@@ -75,7 +75,7 @@ static double getVersion () {
         String serverDetails = ServerStatusAction.getServerDetails();
         request.setAttribute("serverDetails", serverDetails);           
                    
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 
     public static boolean isReady() {
@@ -188,7 +188,7 @@ static double getVersion () {
         } finally {
             DBUtil.close(stmt, rset, "ServerStatusAction.isDownTime()");
         }      
-        return (downTime == 1);
+        return downTime == 1;
     }
 
     public static String toggleDownTime(Connection connection)
@@ -229,7 +229,7 @@ static double getVersion () {
         Connection connection = null;    
         try {
             connection = DBUtil.getConnection(dataSource, "ServerStatusAction.setOperationLockAttr()");
-            operationLock = (new OperationLockDb(connection)).getOperationLock();
+            operationLock = new OperationLockDb(connection).getOperationLock();
             if (operationLock != null) {
               //s_log.warn("setOperationLockAttr() isLocked:" + operationLock.isLocked());
               request.setAttribute("operationLock", operationLock);

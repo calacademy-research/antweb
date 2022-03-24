@@ -50,7 +50,7 @@ public class NewGroupAction extends Action {
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "NewGroupAction");
         }
@@ -61,9 +61,9 @@ public class NewGroupAction extends Action {
             newGroup.setId(newGroupId);
             request.getSession().setAttribute("thisGroup", newGroup);
             request.setAttribute("isNewGroup", "true");
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         } else {
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         }
     }
 

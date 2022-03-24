@@ -52,7 +52,7 @@ public final class TeamMemberImgUploadAction extends Action {
                     String message = "File:" + myFile.getFileName() + " is to big (" + myFile.getFileSize() + ") to upload.";
                     s_log.warn(message);
                     request.setAttribute("message", message);
-                    return (mapping.findForward("message"));
+                    return mapping.findForward("message");
                 }
                 // per.setUsername( myName );
 /*
@@ -69,7 +69,7 @@ public final class TeamMemberImgUploadAction extends Action {
          //       teamMemberDb.saveImage(teamMember);
             }
         }
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 
     public ActionForward executeFresh(ActionMapping mapping,

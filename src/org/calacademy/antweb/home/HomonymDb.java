@@ -290,7 +290,7 @@ public class HomonymDb extends AntwebDb {
         boolean isSubfamilyForGenus = false;
         String query = "select distinct subfamily from homonym " 
             + " where taxarank = 'genus' and "; // Added Jun 26, 2014";
-        if ((family != null) && !("null".equals(family))) {
+        if (family != null && !"null".equals(family)) {
             query += " family = '" + family + "' and ";
         } else {
             query += " family = 'formicidae' and ";
@@ -312,7 +312,7 @@ public class HomonymDb extends AntwebDb {
 
          String query = "select distinct subfamily from homonym " 
             + " where ";
-        if ((family != null) && !("null".equals(family))) {
+        if (family != null && !"null".equals(family)) {
             query += " family = '" + family + "' and ";
         } else {
             query += " family = 'formicidae' and ";

@@ -105,7 +105,7 @@ public class UploadFile {
     // This is used for Project upload, but not of Worldants
 
     public boolean isWorldAnts() {
-        return (fileName != null) && (fileName.contains("worldants"));
+        return fileName != null && fileName.contains("worldants");
     }
 
     public static boolean isValidUTF8(String filePath) {
@@ -261,13 +261,13 @@ public class UploadFile {
     }
     
     public boolean isUTF8() {
-      return (encoding.equals("UTF-8"));
+      return encoding.equals("UTF-8");
     }
     public boolean isMacRoman() {
-      return (encoding.equals("MacRoman"));
+      return encoding.equals("MacRoman");
     }
     public boolean isIso() {
-      return (encoding.equals("ISO8859_1"));
+      return encoding.equals("ISO8859_1");
     }
 
     public String getRoot() {

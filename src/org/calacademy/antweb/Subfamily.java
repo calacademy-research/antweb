@@ -85,7 +85,7 @@ public class Subfamily extends Family implements Serializable {
             while (rset.next()) {
                 ++i;
 
-                child = (new TaxonDb(connection)).getGenus(subfamily, rset.getString("genus"));
+                child = new TaxonDb(connection).getGenus(subfamily, rset.getString("genus"));
 
                 if (getChildImages) {
                     child.setImages(connection, overview, caste);
@@ -93,7 +93,7 @@ public class Subfamily extends Family implements Serializable {
                 //    child.setHasImages(overview);
                 //}
 
-                if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount())) {
+                if (getChildMaps && i < Taxon.getMaxSafeChildrenCount()) {
                     if (overview instanceof LocalityOverview)
                         child.setMap(new Map(child, (LocalityOverview) overview, connection));
                 }

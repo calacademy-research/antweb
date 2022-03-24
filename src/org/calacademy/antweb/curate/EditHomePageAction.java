@@ -50,12 +50,12 @@ public final class EditHomePageAction extends Action {
 			          
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "EditHomePageAction");
         }
         
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 	
 	private void setFormElements(HomePageForm form, HashMap contents) {

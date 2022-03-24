@@ -20,6 +20,6 @@ public final class PageTrackerAction extends Action {
 
         ActionForward c = Check.admin(request, mapping); if (c != null) return c;
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

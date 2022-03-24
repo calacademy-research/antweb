@@ -45,7 +45,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 
         LocalityOverview localityOverview = (LocalityOverview) overview;
 
-        if ((taxaForm.getTaxa() != null) || (taxaForm.getChosen() != null)) {
+        if (taxaForm.getTaxa() != null || taxaForm.getChosen() != null) {
 
 			String title = null;
 			Taxon taxon = null;
@@ -66,7 +66,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 			AdvancedSearchResults searchResults = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");      
 			if (searchResults == null) {
 	          s_log.warn("execute() WST. searchResults is null. Sending to login.");
-			  return (mapping.findForward("goToLogin"));        
+			  return mapping.findForward("goToLogin");
 			}
 
             if (ResultRank.SPECIMEN.equals(resultRank)) {
@@ -87,13 +87,13 @@ public final class FieldGuideResultsAction extends ResultsAction {
 				//if (ResultRank.GENUS.equals(resultRank)) chosenResults = getSpecimensForTaxaFromResults(chosenList, taxonList, searchResults.getResults());
 				//if (ResultRank.SUBFAMILY.equals(resultRank)) chosenResults = getSpecimensForTaxaFromResults(chosenList, taxonList, searchResults.getResults());
 				forward = mapping.findForward("fieldGuideByTaxon");
-				title = (new Formatter()).capitalizeFirstLetter(resultRank) + " Field Guide";                    
+				title = new Formatter().capitalizeFirstLetter(resultRank) + " Field Guide";
 				s_log.debug("execute() chosenResults (taxon) count:" + chosenResults.size());   // For Bay Area ants Marin: 383
 			} else {
 			    String message = "Unsupported Result Rank for Field Guide:" + resultRank;
 			    s_log.error("execute() " + message);
 			    request.setAttribute("message", message);
-			    return (mapping.findForward("message"));            				
+			    return mapping.findForward("message");
             }
             FieldGuide fieldGuide = new FieldGuide();
             Connection connection = null;
@@ -129,7 +129,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             String message = "No taxa chosen/found for target:" + HttpUtil.getTarget(request);
             s_log.warn(message);
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
 
         saveToken(request);
@@ -150,7 +150,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);
                 Taxon taxon = null;
 				if (ResultRank.SPECIES.equals(resultRank) || ResultRank.SPECIMEN.equals(resultRank)) {
-                    taxon = (new TaxonDb(connection)).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), resultItem.getSpecies(), null, Rank.SPECIES);
+                    taxon = new TaxonDb(connection).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), resultItem.getSpecies(), null, Rank.SPECIES);
                     if (taxon == null) {
                       s_log.error("getChoseTaxa() subfamily:" + resultItem.getSubfamily() + " species:" + resultItem.getSpecies() + " genus:" + resultItem.getGenus());
                       // Last time this happened (in dev env) it was a data problem, remedied by a production database reload.
@@ -159,10 +159,10 @@ public final class FieldGuideResultsAction extends ResultsAction {
              	// taxon.setChildrenLocalized(project);
 			} else {
   				 if (ResultRank.GENUS.equals(resultRank)) {
-                    taxon = (new TaxonDb(connection)).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), null, null, resultRank);
+                    taxon = new TaxonDb(connection).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), null, null, resultRank);
                 } else if (ResultRank.SUBFAMILY.equals(resultRank)) {
                     //taxon = Taxon.getInstance(connection, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getSubfamily(), null, null, resultRank);  // Subfamily mentionned twice was a bug?
-                    taxon = (new TaxonDb(connection)).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), null, null, null, resultRank);
+                    taxon = new TaxonDb(connection).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), null, null, null, resultRank);
                 }                  
 	   		      //taxon.setChildren(project);
 			}

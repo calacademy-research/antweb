@@ -51,16 +51,16 @@ public final class ArtistAction extends Action {
         if (isCreateBool != null) isCreate = isCreateBool;
 
         Boolean isRemoveBool = (Boolean) df.get("isRemove");
-        boolean isRemove = (isRemoveBool != null && isRemoveBool);
+        boolean isRemove = isRemoveBool != null && isRemoveBool;
 
         Boolean isEditBool = (Boolean) df.get("isEdit");
-        boolean isEdit = (isEditBool != null && isEditBool);
+        boolean isEdit = isEditBool != null && isEditBool;
         
         //A.log("GroupAction.execute() name:" + name + " groupId:" + groupId);
 
         if ((name == null || "".equals(name)) && isCreate) {
 			request.setAttribute("message", "Enter an Artist Name in the URL bar...");
-			return (mapping.findForward("message"));
+			return mapping.findForward("message");
         }
 
         boolean goToArtistManager = false;
@@ -79,7 +79,7 @@ public final class ArtistAction extends Action {
                 Artist test = ArtistMgr.getArtist(name);
                 if (test != null) {
                   request.setAttribute("message", "artist:" + name + " already exists.");
-                  return (mapping.findForward("message"));                
+                  return mapping.findForward("message");
                 }
 
                 Curator curator = LoginMgr.getCurator(accessLogin.getId());
@@ -98,13 +98,13 @@ public final class ArtistAction extends Action {
                 Artist artist = ArtistMgr.getArtist(artistId);
                 if (artist == null) {
                   request.setAttribute("message", "Artist with id:" + artistId + " does not exist.");
-                  return (mapping.findForward("message"));                
+                  return mapping.findForward("message");
                 }
                 artist.setName(name);
                 String returnVal = artistDb.saveArtist(artist, accessLogin);
                 if (returnVal == null) {
                   request.setAttribute("message", "Artist with id:" + artistId + " not saved.");
-                  return (mapping.findForward("message"));
+                  return mapping.findForward("message");
                 }
                 ArtistMgr.populate(connection, true, false);
                 request.setAttribute("message", "<font color=green>" + returnVal + "</font>");
@@ -115,13 +115,13 @@ public final class ArtistAction extends Action {
                 Artist artist = ArtistMgr.getArtist(artistId);
                 if (artist == null) {
                   request.setAttribute("message", "Artist with id:" + artistId + " does not exist.");
-                  return (mapping.findForward("message"));
+                  return mapping.findForward("message");
                 }
                 Artist moveToArtist = ArtistMgr.getArtist(moveTo);
                 String returnVal = artistDb.removeArtist(artist, moveToArtist, accessLogin);
                 if (returnVal == null) {
                   request.setAttribute("message", "Artist with id:" + artistId + " not deleted.");
-                  return (mapping.findForward("message"));                
+                  return mapping.findForward("message");
                 }
                 ArtistMgr.populate(connection, true, false);
                 request.setAttribute("message", "<font color=green>" + returnVal + "</font>");
@@ -132,7 +132,7 @@ public final class ArtistAction extends Action {
             s_log.error("execute() e:" + e);
             String message = "e:" + e.toString();
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));                
+            return mapping.findForward("message");
         } finally {
             DBUtil.close(connection, this, "ArtistAction.execute()");
         }          
@@ -151,10 +151,10 @@ public final class ArtistAction extends Action {
           if (artist == null) {
             String message = "  Artist not found " + key + ". Server initializing?";
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
           }                    
 		  request.setAttribute("artist", artist);
-		  return (mapping.findForward("artist"));
+		  return mapping.findForward("artist");
         } else {
           ArrayList<Artist> artists = ArtistMgr.getArtists();
 
@@ -168,7 +168,7 @@ public final class ArtistAction extends Action {
 */
 		  request.setAttribute("artists", artists);
 		  //A.log("ArtistAction.execute() artists:" + artists);
-		  return (mapping.findForward("artists"));        
+		  return mapping.findForward("artists");
         }
 	}
 }

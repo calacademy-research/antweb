@@ -108,7 +108,7 @@ public abstract class DateUtil {
     // With an input like: 2012-03-27 15:48:09.0 will return: 2012-03-27
     Date theDate = null;
     try {
-      theDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
+      theDate = new SimpleDateFormat("yyyy-MM-dd").parse(dateStr);
     } catch (ParseException e) {
       s_log.error("e:" + e + " theDate:" + dateStr);
     }
@@ -122,9 +122,9 @@ public abstract class DateUtil {
   public static String formatDateStr(String theDate) {
     if (theDate == null) return null;
     try {
-      Date utilDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(theDate);
+      Date utilDate = new SimpleDateFormat("yyyy-MM-dd").parse(theDate);
       // A.log("formatDateStr() dateCollectedStartStr:" + dateCollectedStartStr + " utilDate:" + utilDate);
-      return (utilDate.toString());
+      return utilDate.toString();
     } catch (ParseException e) {
       s_log.debug("formatDateStr() theDate:" + theDate + " e:" + e);
       // no action taken.
@@ -140,7 +140,7 @@ public abstract class DateUtil {
   }
 
   public static String getFormatDateStr(Date theDate, String format) {
-    return (new SimpleDateFormat(format)).format(theDate);
+    return new SimpleDateFormat(format).format(theDate);
   }
 
   // Take an String of unknown date format and return a string in the correct format. Used for Specimen upload.
@@ -155,7 +155,7 @@ public abstract class DateUtil {
   private static Date format(String format, String dateStr) {
     Date returnDate = null;
     try {
-      returnDate = (new SimpleDateFormat(format)).parse(dateStr);
+      returnDate = new SimpleDateFormat(format).parse(dateStr);
     } catch (ParseException e) {
       //if ("2010/08/12".equals(dateStr)) A.log("format() NOT found:" + dateStr + " format:" + format + " e:" + e);
     }
@@ -413,7 +413,7 @@ public abstract class DateUtil {
         Date returnDate = null;
         if (dateStr != null) {
           try {
-            returnDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
+            returnDate = new SimpleDateFormat("yyyy-MM-dd").parse(dateStr);
             //A.log("constructDate() 2 dateStr:" + dateStr + " returnDate:" + returnDate);
           } catch (ParseException e) {
             //A.log("constructDate() 2 dateStr:" + dateStr + " e:" + e);
@@ -424,7 +424,7 @@ public abstract class DateUtil {
 
     public static boolean isDate(String dateStr) {
       Date date = DateUtil.constructDate(dateStr);
-      return (date != null);    
+      return date != null;
     }
 
   private static Date getTruncatedDate(String truncDatesCollected) {

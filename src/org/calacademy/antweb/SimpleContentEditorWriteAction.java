@@ -29,7 +29,7 @@ public final class SimpleContentEditorWriteAction extends Action {
         ActionForward c = Check.login(request, mapping); if (c != null) return c;
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
-        String docRoot = (new Utility()).getDocRoot();
+        String docRoot = new Utility().getDocRoot();
         
         String fileName = ((SimpleContentEditorForm) form).getFileName();
         String contents = ((SimpleContentEditorForm) form).getContents();
@@ -37,7 +37,7 @@ public final class SimpleContentEditorWriteAction extends Action {
         // only this file can be editted right now
         if (!fileName.equals("staff_gen_inc.jsp")) {
             s_log.error("execute() filename is not staff_gen_inc.jsp");
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
 
         if (AntwebProps.isDevMode()) {
@@ -66,6 +66,6 @@ public final class SimpleContentEditorWriteAction extends Action {
         }        
         ((SimpleContentEditorForm) form).setContents(contents);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

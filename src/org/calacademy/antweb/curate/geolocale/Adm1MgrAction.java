@@ -45,7 +45,7 @@ public final class Adm1MgrAction extends Action {
         if (countryName == null || adm1 == null || country == null) {
           String message = "Adm1Mgr Error. Country:" + countryName + "   Adm1:" + adm1;
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         }
 
         ArrayList<Geolocale> list = new ArrayList<>();
@@ -116,7 +116,7 @@ public final class Adm1MgrAction extends Action {
         request.setAttribute("list", list);
         request.setAttribute("codes", codeStr);
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
 
 //        String link = AntwebProps.getDomainApp() + "/editGeolocale.do?adm1=" + adm1 + "&country=" + country;
 //        return (mapping.findForward("adm1"));

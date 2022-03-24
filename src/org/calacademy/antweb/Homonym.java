@@ -266,7 +266,7 @@ public class Homonym extends Taxon implements Serializable {
     }
 
     public void setSeniorHomonym(Connection connection) throws SQLException {
-        seniorHomonym = (new TaxonDb(connection)).getTaxon(getTaxonName());
+        seniorHomonym = new TaxonDb(connection).getTaxon(getTaxonName());
         s_log.debug("setSeniorHomonym() homonym:" + getTaxonName() + " seniorHomonym:" + seniorHomonym);
     }
     public Taxon getSeniorHomonym() {

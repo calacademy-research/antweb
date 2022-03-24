@@ -23,9 +23,9 @@ public class LoginMgr extends Manager {
     private static ArrayList<Curator> s_curators;
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
-      if (!forceReload && (s_logins != null)) return;      
+      if (!forceReload && s_logins != null) return;
       
-      LoginDb loginDb = (new LoginDb(connection));
+      LoginDb loginDb = new LoginDb(connection);
       try {
         s_logins = loginDb.getAllLogins();
         //loginDb.getImageUploadCounter();  // initialize the LoginMgr counts.
@@ -81,13 +81,13 @@ public class LoginMgr extends Manager {
     public static ActionForward mustLogIn(HttpServletRequest request, ActionMapping mapping) {
 		if (LoginMgr.getAccessLogin(request) == null) {
 		    s_log.debug("mustLogin() login:" + LoginMgr.getAccessLogin(request));
-			return (mapping.findForward("notLoggedIn"));
+			return mapping.findForward("notLoggedIn");
 		}
         return null;
     }
     public static ActionForward mustBeAdmin(HttpServletRequest request, ActionMapping mapping) {
 		if (!LoginMgr.isAdmin(request)) {
-			return (mapping.findForward("notLoggedIn"));
+			return mapping.findForward("notLoggedIn");
 		}
         return null;
     }
@@ -98,12 +98,12 @@ public class LoginMgr extends Manager {
 	}
 	
 	public static boolean isAdmin(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.isAdmin());
+        return accessLogin != null && accessLogin.isAdmin();
     }
 
     public static boolean isLoggedIn(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
-        return (accessLogin != null);
+        return accessLogin != null;
     }
     
     public static boolean isCurator(HttpServletRequest request) {
@@ -111,7 +111,7 @@ public class LoginMgr extends Manager {
 	    return isCurator(accessLogin);
 	}
 	public static boolean isCurator(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.isCurator());
+        return accessLogin != null && accessLogin.isCurator();
     }
 
     public static boolean isDeveloper(HttpServletRequest request) {
@@ -119,11 +119,11 @@ public class LoginMgr extends Manager {
 	    return isDeveloper(accessLogin);
 	}
 	public static boolean isDeveloper(Login accessLogin) {
-        return (accessLogin != null)
+        return accessLogin != null
                 // A specific list of Developer admins.
                 && (
-                (accessLogin.getId() == Login.MARK)
-                        || (accessLogin.getId() == Login.TEST_LOGIN)
+                accessLogin.getId() == Login.MARK
+                        || accessLogin.getId() == Login.TEST_LOGIN
         );
     }
     
@@ -132,14 +132,14 @@ public class LoginMgr extends Manager {
 	    return LoginMgr.isMark(getAccessLogin(request));
 	}
 	public static boolean isMark(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.getId() == 22);
+        return accessLogin != null && accessLogin.getId() == 22;
     }
 
     public static boolean isPeter(HttpServletRequest request) {
         return LoginMgr.isPeter(getAccessLogin(request));
     }
     public static boolean isPeter(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.getId() == 36);
+        return accessLogin != null && accessLogin.getId() == 36;
     }
 
     public static boolean isMichele(HttpServletRequest request) {
@@ -147,14 +147,14 @@ public class LoginMgr extends Manager {
 	    return isMichele(accessLogin);
 	}
 	public static boolean isMichele(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.getId() == 23);
+        return accessLogin != null && accessLogin.getId() == 23;
     }
     public static boolean isJack(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
 	    return isJack(accessLogin);
 	}
 	public static boolean isJack(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.getId() == 2);
+        return accessLogin != null && accessLogin.getId() == 2;
     }
 
     public static boolean isInitialized() {

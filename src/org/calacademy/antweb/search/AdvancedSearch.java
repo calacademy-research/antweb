@@ -150,7 +150,7 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
             //where.add(" 1=1 ");
 
             // Name is taxonName. duh.
-            if ((name != null) && (name.length() > 0)) {
+            if (name != null && name.length() > 0) {
                 if (searchType.equals("equals")) {
                     searchType = "ends";
                 }
@@ -166,19 +166,19 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
                 --sufficientCriteria;  // if Formicidae is removed, one less criteria but bar is just as high
             }
 
-            if ((subfamily != null) && (subfamily.length() > 0) && !"none".equals(subfamily)) {
+            if (subfamily != null && subfamily.length() > 0 && !"none".equals(subfamily)) {
                 where.add(getSearchString("sp.subfamily", subfamilySearchType, subfamily));
             }
-            if ((genus != null) && (genus.length() > 0) && !"none".equals(genus)) {
+            if (genus != null && genus.length() > 0 && !"none".equals(genus)) {
                 where.add(getSearchString("sp.genus", genusSearchType, genus));
             }
-            if ((species != null) && (species.length() > 0)) {
+            if (species != null && species.length() > 0) {
                 where.add(getSearchString("sp.species", speciesSearchType, species));
             }
-            if ((subspecies != null) && (subspecies.length() > 0)) {
+            if (subspecies != null && subspecies.length() > 0) {
                 where.add(getSearchString("sp.subspecies", subspeciesSearchType, subspecies));
             }
-            if ((country != null) && (country.length() > 0)) {
+            if (country != null && country.length() > 0) {
               if ("null".equals(country)) {
                 where.add("sp.country is null");
               } else {
@@ -190,7 +190,7 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
                 }
               }
             }
-            if ((adm1 != null) && (adm1.length() > 0)) {
+            if (adm1 != null && adm1.length() > 0) {
               if ("null".equals(adm1)) {
                 where.add("sp.adm1 is null");
               } else {
@@ -199,77 +199,77 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
               }
             }
 
-            if ((adm2 != null) && (adm2.length() > 0)) {
+            if (adm2 != null && adm2.length() > 0) {
                 String adm2SearchStr = getSearchString("sp.adm2", adm2SearchType, adm2);
                 where.add(" (" + adm2SearchStr + ") ");
                 //A.log("createInitialResults() adm2:" + adm2 + " adm2SearchType:" + adm2SearchType + " searchString:" + adm2SearchStr);
             }
 
-            if ((bioregion != null)
-                && (bioregion.length() > 0)) {
+            if (bioregion != null
+                && bioregion.length() > 0) {
                 where.add("sp.bioregion='" + bioregion + "'");
             }
-            if ((typeDesignation != null) && (typeDesignation.length() > 0)) {
+            if (typeDesignation != null && typeDesignation.length() > 0) {
                 //where.add("sp.type='" + typeDesignation + "'");
                 where.add("sp.type_status like '%" + typeDesignation + "%'");
             }
-            if ((method != null) && (method.length() > 0)) {
+            if (method != null && method.length() > 0) {
                 where.add(getSearchString("sp.method", methodSearchType, method));
             }
-            if ((microhabitat != null) && (microhabitat.length() > 0)) {
+            if (microhabitat != null && microhabitat.length() > 0) {
                 where.add(getSearchString("sp.microhabitat", microhabitatSearchType, microhabitat));
             }
-            if ((habitat != null) && (habitat.length() > 0)) {
+            if (habitat != null && habitat.length() > 0) {
                 where.add(getSearchString("sp.habitat", habitatSearchType, habitat));
             }
-            if ((localityName != null) && (localityName.length() > 0)) {
+            if (localityName != null && localityName.length() > 0) {
                 where.add(getSearchString("sp.localityname", localityNameSearchType, localityName));
             }
-            if ((localityCode != null) && (localityCode.length() > 0)) {
+            if (localityCode != null && localityCode.length() > 0) {
                 where.add(getSearchString("sp.localitycode", localityCodeSearchType, localityCode));
             }
-            if ((locatedAt != null) && (locatedAt.length() > 0)) {
+            if (locatedAt != null && locatedAt.length() > 0) {
                 where.add(getSearchString("sp.locatedat", locatedAtSearchType, locatedAt));
             }
-            if ((collectionCode != null) && (collectionCode.length() > 0)) {
+            if (collectionCode != null && collectionCode.length() > 0) {
                 where.add(getSearchString("sp.collectioncode", collectionCodeSearchType, collectionCode));
             }
-            if ((collectedBy != null) && (collectedBy.length() > 0)) {
+            if (collectedBy != null && collectedBy.length() > 0) {
                 where.add(getSearchString("sp.collectedby", collectedBySearchType, collectedBy));
             }
             
-            if ((museumCode != null) && (museumCode.length() > 0)) {
+            if (museumCode != null && museumCode.length() > 0) {
                 where.add(getSearchString("sp.museum", museumCodeSearchType, museumCode));
             }
             //A.log("createInitialResults() museumCode:" + museumCode + " where:" + where);  
-            if ((specimenCode != null) && (specimenCode.length() > 0)) {
+            if (specimenCode != null && specimenCode.length() > 0) {
                 where.add(getSearchString("sp.code", specimenCodeSearchType, specimenCode));
             }
-            if ((lifeStage != null) && (lifeStage.length() > 0)) {
+            if (lifeStage != null && lifeStage.length() > 0) {
                 where.add(getSearchString("sp.life_stage", lifeStageSearchType, lifeStage));
             }
-            if ((caste != null) && (caste.length() > 0)) {
+            if (caste != null && caste.length() > 0) {
                 where.add(getSearchString("sp.caste", casteSearchType, caste));
             }
             //A.log("AdvancedSearch().createInitialResults() antwebSucaste:" + subcaste);
-            if ((subcaste != null) && (subcaste.length() > 0)) {
+            if (subcaste != null && subcaste.length() > 0) {
                 String translateSubcaste = subcaste;
                 if (subcaste.equals("alateDealate")) translateSubcaste = "alate/dealate";
                 if (subcaste.equals("majorSoldier")) translateSubcaste = "major/soldier";
                 if (subcaste.equals("larvaPupa")) translateSubcaste = "larva/pupa";
                 where.add(getSearchString("sp.subcaste", subcasteSearchType, translateSubcaste));
             }
-            if ((medium != null) && (medium.length() > 0)) {
+            if (medium != null && medium.length() > 0) {
                 where.add(getSearchString("sp.medium", mediumSearchType, medium));
             }
-            if ((specimenNotes != null) && (specimenNotes.length() > 0)) {
+            if (specimenNotes != null && specimenNotes.length() > 0) {
                 where.add(getSearchString("sp.specimennotes", specimenNotesSearchType, specimenNotes));
             }
             
 			//A.log("createInitialResults() medium:" + medium);
             
             // This would not work for: DMNH (Denver Museum).  Handled above.
-            if ((ownedBy != null) && (ownedBy.length() > 0)) {
+            if (ownedBy != null && ownedBy.length() > 0) {
                 where.add(getSearchString("sp.ownedBy", ownedBySearchType, ownedBy));
             }
 
@@ -278,27 +278,27 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
 			  AntwebUtil.logStackTrace();
 			}
 
-            if ((microhabitat != null) && (microhabitat.length() > 0)) {
+            if (microhabitat != null && microhabitat.length() > 0) {
                 where.add(getSearchString("sp.microhabitat", microhabitatSearchType, microhabitat));
             }
            
             //A.log("createInitialResults() dnaExtractionNotes:" + dnaExtractionNotes);
-            if ((dnaExtractionNotes != null) && (dnaExtractionNotes.length() > 0)) {
+            if (dnaExtractionNotes != null && dnaExtractionNotes.length() > 0) {
                 where.add(getSearchString("sp.dnaextractionnotes", dnaExtractionNotesSearchType, dnaExtractionNotes));
             }
-            if ((determinedBy != null) && (determinedBy.length() > 0)) {
+            if (determinedBy != null && determinedBy.length() > 0) {
                 where.add(getSearchString("sp.determinedby", determinedBySearchType, determinedBy));
             }
             
 
-            if ((dateCollected != null) && (dateCollected.length() > 0)) {
+            if (dateCollected != null && dateCollected.length() > 0) {
                 //A.log("createInitialResults() dateCollectedSearchType:" + dateCollectedSearchType + " dateCollected:" + dateCollected); // + " str:" + getSearchString("name", groupNameSearchType, groupName));
 
                 where.add(getDateSearchString("sp.datecollectedstart", dateCollectedSearchType, dateCollected));
             }
 
             //A.log("createInitialResults() groupName:" + groupName + " groupNameSearchType:" + groupNameSearchType);
-            if ((groupName != null) && (groupName.length() > 0)) {
+            if (groupName != null && groupName.length() > 0) {
 //                where.add(getSearchString("ant_group.name", groupNameSearchType, groupName)); // This don't for group searches. Break map generation. Why was it like this?
                   String groupNameStr = getSearchString("groupName", groupNameSearchType, groupName);
                   A.log("groupNameStr:" + groupNameStr);
@@ -312,7 +312,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
             }
 */
 
-            if ((getElevation() != null) && (getElevation().length() > 0)) {
+            if (getElevation() != null && getElevation().length() > 0) {
                 where.add(getSearchString("sp.elevation", elevationSearchType, elevation));
             }
             // dateCollectedStart?  What about the criteria above?  Reconcile.
@@ -331,8 +331,8 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
 */ 
             //A.log("createInitialResults() validNames:" + getValidNames() + " statusSet:" + getStatusSet());
 
-            if ((getStatusSet() != null) && (getStatusSet().length() > 0)) {
-                String statusCriteria = (new StatusSet(getStatusSet())).getCriteria("sp");
+            if (getStatusSet() != null && getStatusSet().length() > 0) {
+                String statusCriteria = new StatusSet(getStatusSet()).getCriteria("sp");
 
                 if (!"all".equals(getStatusSet()) 
                  && !"valid".equals(getStatusSet())
@@ -344,7 +344,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
                 where.add(statusCriteria);
             }
             
-            if ((created != null) && (created.length() > 0)) {
+            if (created != null && created.length() > 0) {
                 String createdStr = getSearchString("sp.created", createdSearchType, created);
                 A.log("createdStr:" + createdStr);
                 where.add(createdStr);
@@ -460,39 +460,39 @@ add status to specimen
     }
     
     public String getGenus() {
-        return (this.genus);
+        return this.genus;
     }
     public void setGenus(String genus) {
         this.genus = genus;
     }
     public String getGenusSearchType() {
-        return (this.genusSearchType);
+        return this.genusSearchType;
     }
     public void setGenusSearchType(String genusSearchType) {
         this.genusSearchType = genusSearchType;
     }
     
     public String getSpecies() {
-        return (this.species);
+        return this.species;
     }
     public void setSpecies(String species) {
         this.species = species;
     }
     public String getSpeciesSearchType() {
-        return (this.speciesSearchType);
+        return this.speciesSearchType;
     }
     public void setSpeciesSearchType(String speciesSearchType) {
         this.speciesSearchType = speciesSearchType;
     }
     
     public String getSubspecies() {
-        return (this.subspecies);
+        return this.subspecies;
     }
     public void setSubspecies(String subspecies) {
         this.subspecies = subspecies;
     }
     public String getSubspeciesSearchType() {
-        return (this.subspeciesSearchType);
+        return this.subspeciesSearchType;
     }
     public void setSubspeciesSearchType(String subspeciesSearchType) {
         this.subspeciesSearchType = subspeciesSearchType;
@@ -582,7 +582,7 @@ add status to specimen
     }
                 
     public String getAdm2() {
-        return (this.adm2);
+        return this.adm2;
     }
     public void setAdm2(String adm2)
     {
@@ -590,7 +590,7 @@ add status to specimen
        // AntwebUtil.logShortStackTrace();
     }
     public String getAdm2SearchType() {
-        return (this.adm2SearchType);
+        return this.adm2SearchType;
     }
     public void setAdm2SearchType(String adm2SearchType) {
         this.adm2SearchType = adm2SearchType;
@@ -610,13 +610,13 @@ add status to specimen
     }
     
     public String getLocalityName() {
-        return (this.localityName);
+        return this.localityName;
     }
     public void setLocalityName(String localityName) {
         this.localityName = localityName;
     }  
     public String getLocalityNameSearchType() {
-        return (this.localityNameSearchType);
+        return this.localityNameSearchType;
     }
     public void setLocalityNameSearchType(String localityNameSearchType) {
         this.localityNameSearchType = localityNameSearchType;
@@ -637,7 +637,7 @@ add status to specimen
 
 
     public String getLocalityCode() {
-        return (this.localityCode);
+        return this.localityCode;
     }
     public void setLocalityCode(String localityCode) {
         this.localityCode = localityCode;
@@ -651,13 +651,13 @@ add status to specimen
 
 
     public String getCollectionCode() {
-        return (this.collectionCode);
+        return this.collectionCode;
     }
     public void setCollectionCode(String collectionCode) {
         this.collectionCode = collectionCode;
     }
     public String getCollectionCodeSearchType() {
-        return (this.collectionCodeSearchType);
+        return this.collectionCodeSearchType;
     }
     public void setCollectionCodeSearchType(String collectionCodeSearchType) {
         this.collectionCodeSearchType = collectionCodeSearchType;
@@ -670,7 +670,7 @@ add status to specimen
         collectedBy = string;
     }
     public String getCollectedBySearchType() {
-        return (this.collectedBySearchType);
+        return this.collectedBySearchType;
     }
     public void setCollectedBySearchType(String collectedBySearchType) {
         this.collectedBySearchType = collectedBySearchType;
@@ -683,20 +683,20 @@ add status to specimen
         this.museumCode = museumCode;
     }
     public String getMuseumCodeSearchType() {
-        return (this.museumCodeSearchType);
+        return this.museumCodeSearchType;
     }
     public void setMuseumCodeSearchType(String museumCodeSearchType) {
         this.museumCodeSearchType = museumCodeSearchType;
     }
 
     public String getSpecimenCode() {
-        return (this.specimenCode);
+        return this.specimenCode;
     }
     public void setSpecimenCode(String specimenCode) {
         this.specimenCode = specimenCode;
     }
     public String getSpecimenCodeSearchType() {
-        return (this.specimenCodeSearchType);
+        return this.specimenCodeSearchType;
     }
     public void setSpecimenCodeSearchType(String specimenCodeSearchType) {
         this.specimenCodeSearchType = specimenCodeSearchType;
@@ -730,28 +730,28 @@ add status to specimen
     }
     
     public String getCountry() {
-        return (this.country);
+        return this.country;
     }
     public void setCountry(String country) {
         this.country = country;
     }
 
     public String getBioregion() {
-        return (this.bioregion);
+        return this.bioregion;
     }
     public void setBioregion(String bioregion) {
         this.bioregion = bioregion;
     }
     
     public String getadm1() {
-        return (this.adm1);
+        return this.adm1;
     }
     public void setAdm1(String adm1) {
         this.adm1 = adm1;
     }
 
     public String getTypeDesignation() {
-        return (this.typeDesignation);
+        return this.typeDesignation;
     }
     public void setTypeDesignation(String typeDesignation) {
         this.typeDesignation = typeDesignation;

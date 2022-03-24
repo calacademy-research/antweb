@@ -27,7 +27,7 @@ public class ProjectMgr {
     }
 
     public static void populate(Connection connection, boolean forceReload) {
-      if (!forceReload && (s_globalProjects != null)) return;
+      if (!forceReload && s_globalProjects != null) return;
 
       ProjectDb projectDb = new ProjectDb(connection);
       s_globalProjects = projectDb.getProjects("GLOBAL");
@@ -204,7 +204,7 @@ public class ProjectMgr {
       for (String key : projects.keySet()) {
         Project project = s_allProjectsHash.get(key);
         if (project.getName().equals(candidate)
-          || (project.getDisplayKey() != null && project.getDisplayKey().equals(candidate)))
+          || project.getDisplayKey() != null && project.getDisplayKey().equals(candidate))
         {
           if (project.getDisplayKey() != null && !project.getDisplayKey().equals("")) {
             //s_log.warn("getUseName() *** " + project.getDisplayKey());

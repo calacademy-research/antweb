@@ -34,7 +34,7 @@ public final class AntwebInviteAction extends Action {
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
-        boolean isInvitee = (accessLogin == null);    // administrators are NOT invitees,
+        boolean isInvitee = accessLogin == null;    // administrators are NOT invitees,
         
         Login login = null; 
         Connection connection = null;
@@ -44,7 +44,7 @@ public final class AntwebInviteAction extends Action {
             boolean isInvitedLogin = false;
 
             String email = ((SaveLoginForm) form).getEmail();
-            String idStr = (new LoginDb(connection)).findInviteId(email);
+            String idStr = new LoginDb(connection).findInviteId(email);
             if (idStr != null) {
                 isInvitedLogin = true;  // we found a pending invitation
             } else {
@@ -53,10 +53,10 @@ public final class AntwebInviteAction extends Action {
             int id = Integer.parseInt(idStr);
             s_log.info("looking up login " + id);
              
-            login = (new LoginDb(connection)).getLogin(id);
+            login = new LoginDb(connection).getLogin(id);
             session.setAttribute("thisLogin", login);
 
-            ArrayList groupList = (new GroupDb(connection)).getAllGroups();
+            ArrayList groupList = new GroupDb(connection).getAllGroups();
             request.getSession().setAttribute("antwebGroups", groupList);  
 
             if (!isInvitee) return mapping.findForward("manageLogin");   
@@ -64,12 +64,12 @@ public final class AntwebInviteAction extends Action {
             if (isInvitedLogin) {  // The invitee needs to be logged in to see and save the page...
               session.setAttribute("accessLogin", accessLogin);
               session.setAttribute("isInvitee", true);
-              return (mapping.findForward("manageLogin")); //antwebInvite 
+              return mapping.findForward("manageLogin"); //antwebInvite
             }           
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
             AntwebUtil.logStackTrace(e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally {
             try {
                 connection.close();

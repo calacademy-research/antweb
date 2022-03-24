@@ -117,7 +117,7 @@ public final class SpeciesListAction extends Action {
                 while (rset.next()) {
                   ++specimenCount;
                   String taxonName = rset.getString(1);
-                  Species specie = (Species) (new TaxonDb(connection)).getTaxon(taxonName);
+                  Species specie = (Species) new TaxonDb(connection).getTaxon(taxonName);
 
                   data.append(specie.getData() + "\n");
                 }
@@ -141,7 +141,7 @@ public final class SpeciesListAction extends Action {
         StringBuffer data = new StringBuffer();    
 
         String dir = "/web/data/";
-        (new Utility()).createDirectory(dir);
+        new Utility().createDirectory(dir);
         String fileName = "allantwebants" + UploadFile.getSpeciesListTail();
         String fullPath = AntwebProps.getDocRoot() + dir + fileName;
         
@@ -169,7 +169,7 @@ public final class SpeciesListAction extends Action {
               while (rset.next()) {
                 ++specimenCount;
                 String taxonName = rset.getString(1);
-                Species specie = (Species) (new TaxonDb(connection)).getTaxon(taxonName);
+                Species specie = (Species) new TaxonDb(connection).getTaxon(taxonName);
 
                 data.append(specie.getData() + "\n");
               }

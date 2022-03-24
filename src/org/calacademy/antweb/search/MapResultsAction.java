@@ -80,14 +80,14 @@ public final class MapResultsAction extends ResultsAction {
 			DBUtil.close(connection, this, "MapResultsAction.execute()");
 		}  
 		        
-        String sizeStr = (map.getChosenList() == null) ? "null" : "" + map.getChosenList().size();
+        String sizeStr = map.getChosenList() == null ? "null" : "" + map.getChosenList().size();
         s_log.debug("MapResultsAction.execute() resultRank:" + resultRank + " title:" + map.getTitle() + " chosenList.size:" + sizeStr + " map:" + map);
 
         session.setAttribute("title", map.getTitle());  // now redundant. Could change the client code as well.
         session.setAttribute("map", map);
         session.setAttribute("chosenList", map.getChosenList());
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
     
     public Map getMap(ArrayList<ResultItem> searchResults, ArrayList<ResultItem> taxonList, ArrayList<String> chosenList, String resultRank

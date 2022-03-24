@@ -39,7 +39,7 @@ public class ImageUploadDb extends AntwebDb {
                 imageUpload.setImageCount(rset.getInt("image_count"));
                 
                 int year = rset.getInt("copyright_year");
-                Copyright copyright = (new CopyrightDb(getConnection())).getCopyrightByYear(year);
+                Copyright copyright = new CopyrightDb(getConnection()).getCopyrightByYear(year);
                 imageUpload.setCopyright(copyright);
                 imageUpload.setLicense(rset.getString("license"));
                 imageUpload.setIsComplete(rset.getInt("complete") == 1);
@@ -113,7 +113,7 @@ public class ImageUploadDb extends AntwebDb {
                 imageUpload.setArtistId(rset.getInt("artist_id"));
                 imageUpload.setLicense(rset.getString("license"));
                 int year = rset.getInt("copyright_year");
-                Copyright copyright = (new CopyrightDb(getConnection())).getCopyrightByYear(year);
+                Copyright copyright = new CopyrightDb(getConnection()).getCopyrightByYear(year);
                 imageUpload.setCopyright(copyright);
                 imageUpload.setIsComplete(rset.getInt("complete") == 1);
                 imageUploads.add(imageUpload);

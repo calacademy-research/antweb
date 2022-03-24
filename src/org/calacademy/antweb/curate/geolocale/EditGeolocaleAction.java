@@ -34,7 +34,7 @@ public final class EditGeolocaleAction extends Action {
 		Login accessLogin = LoginMgr.getAccessLogin(request);
 
         EditGeolocaleForm editGeolocaleForm = (EditGeolocaleForm) form;
-        if (editGeolocaleForm == null) return (mapping.findForward("startFresh"));
+        if (editGeolocaleForm == null) return mapping.findForward("startFresh");
         
         String name = editGeolocaleForm.getName();
         String georank = editGeolocaleForm.getGeorank();
@@ -50,11 +50,11 @@ public final class EditGeolocaleAction extends Action {
 
         if ((name == null || "".equals(name)) && editGeolocaleForm.getIsCreate()) {
 			request.setAttribute("message", "Enter an Adm1 Name in the URL bar...");
-			return (mapping.findForward("message"));
+			return mapping.findForward("message");
         }
      
         if (name == null && id == 0) {
-            return (mapping.findForward("startFresh"));
+            return mapping.findForward("startFresh");
         }
 
 
@@ -178,7 +178,7 @@ public final class EditGeolocaleAction extends Action {
 			if (georank != null) georankParam = "?georank=" + georank;
 			message += "<br><br><< Back to <a href='" + AntwebProps.getDomainApp() + "/geolocaleMgr.do" + georankParam + "'>Geolocale Manager</a>";
 			request.setAttribute("message", message);
-			return (mapping.findForward("message"));
+			return mapping.findForward("message");
 		  }
 
 		  Geolocale geolocale = null;
@@ -203,14 +203,14 @@ public final class EditGeolocaleAction extends Action {
 		    s_log.warn("execute() Error creating " + message );
 			message = "<br><br>Error." + message;
 			request.setAttribute("message", message);
-			return (mapping.findForward("message"));					    
+			return mapping.findForward("message");
 		  }
 
 		  ArrayList<Geolocale> validChildren = geolocaleDb.getValidChildren(geolocale.getParent());
 		  request.setAttribute("validChildren", validChildren);		
 		  request.setAttribute("geolocale", geolocale);
 		  request.setAttribute("form", editGeolocaleForm);
-		  return (mapping.findForward("success"));
+		  return mapping.findForward("success");
 
 		} catch (SQLException | ClassCastException e) {
 			s_log.error("execute() e:" + e);
@@ -218,6 +218,6 @@ public final class EditGeolocaleAction extends Action {
 			DBUtil.close(connection, this, "EditGeolocaleAction.execute()");
 		}
 
-        return (mapping.findForward("failure"));
+        return mapping.findForward("failure");
     }
 }

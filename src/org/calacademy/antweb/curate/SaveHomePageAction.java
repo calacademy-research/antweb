@@ -72,7 +72,7 @@ public final class SaveHomePageAction extends Action {
             
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, stmt, this, "SaveHomePageAction");
         }
@@ -84,6 +84,6 @@ public final class SaveHomePageAction extends Action {
         s_log.info("execute() copy previewBody:" + previewBody + " to " + indexBody);
         util.copyFile(previewBody, indexBody);
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

@@ -221,7 +221,7 @@ public class TaxonCountDb extends AntwebDb {
              updateTaxonImageCount(parentTaxonName, theSum);
              
              if (AntwebProps.isDevMode()) {
-               if ((parentTaxonName.contains("amblyoponinaeadetomyrma"))) {
+               if (parentTaxonName.contains("amblyoponinaeadetomyrma")) {
                  //s_log.warn("countSpeciesImages() amblyoponaeadetomyrma taxonName:" + parentTaxonName + " theSum:" + theSum);
                }
              }               

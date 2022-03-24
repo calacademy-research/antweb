@@ -53,7 +53,7 @@ public class SpecimenFieldSummary {
 		String theQuery = null;
 		results = new HashMap();
 
-		if ((Utility.blank(subfamily) && Utility.blank(genus) && Utility.blank(species))
+		if (Utility.blank(subfamily) && Utility.blank(genus) && Utility.blank(species)
 				|| Utility.blank(field)) {
 			// do nothing
 			

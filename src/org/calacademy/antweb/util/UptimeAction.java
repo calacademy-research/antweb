@@ -30,7 +30,7 @@ public final class UptimeAction extends Action {
         if (queryString.contains("fail=1") || queryString.contains("fail=true")) isFailOnPurpose = true;
         if (queryString.contains("fail=0") || queryString.contains("fail=false")) isFailOnPurpose = false;
         if (isFailOnPurpose()) {
-            return (mapping.findForward("fail"));        
+            return mapping.findForward("fail");
         }
   
 		HttpSession session = request.getSession();
@@ -52,10 +52,10 @@ public final class UptimeAction extends Action {
 
         if (!successDB || !successDisk) {
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));   
+            return mapping.findForward("message");
         }
         
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 
     private boolean isWebDirAccessible() {

@@ -236,7 +236,7 @@ public abstract class AntwebProps {
         String app = "";
         if (AntwebProps.isDevMode()) {
           app = AntwebProps.getProp("site.app");    
-          if ((app != null) && (!app.equals(""))) {
+          if (app != null && !app.equals("")) {
             app = "/" + app;
           }
         }
@@ -282,7 +282,7 @@ public abstract class AntwebProps {
         String domain = AntwebProps.getProp("site.domain");
         String domainApp =  "http://" + domain;
         String app = AntwebProps.getProp("site.app");    
-        if ((app != null) && (!app.equals(""))) {
+        if (app != null && !app.equals("")) {
           domainApp += "/" + app;
         }
         //A.log("getDomainApp() domainApp:" + domainApp);        
@@ -309,7 +309,7 @@ public abstract class AntwebProps {
         String domain = AntwebProps.getDomain();    
         String app = AntwebProps.getProp("site.app");    
         String domainApp = domain;
-        if ((app != null) && (!app.equals(""))) {
+        if (app != null && !app.equals("")) {
           domainApp += "/" + app;
         }
         s_log.debug("getDomainApp() domainApp:" + domainApp);
@@ -336,11 +336,11 @@ public abstract class AntwebProps {
         //}
 
         String domain = AntwebProps.getDomain();    
-        if ((domain != null) && domain.contains("http://")) {
+        if (domain != null && domain.contains("http://")) {
           domain = "https://" + domain.substring(7);
         }
 
-        if ((port != null) && (!"".equals(port))) {
+        if (port != null && !"".equals(port)) {
           port = port.trim();
           //s_log.warn("getSecureDomainApp() port:" + port + "-");
           domain += ":" + port; // "8443";  // This port should probably be a configured parameter
@@ -348,7 +348,7 @@ public abstract class AntwebProps {
 
         String app = AntwebProps.getProp("site.app");    
         String domainApp = domain;
-        if ((app != null) && (!app.equals(""))) {
+        if (app != null && !app.equals("")) {
           domainApp += "/" + app;
         }
         
@@ -374,7 +374,7 @@ public abstract class AntwebProps {
 	    if (true) return "googleEarth.do";
 
 	    String googleEarthURI = AntwebProps.getProp("googleEarthURI");
-        if ((googleEarthURI == null) || (googleEarthURI.equals(""))) googleEarthURI = "googleEarth/";
+        if (googleEarthURI == null || googleEarthURI.equals("")) googleEarthURI = "googleEarth/";
         return googleEarthURI;
 	}
 		

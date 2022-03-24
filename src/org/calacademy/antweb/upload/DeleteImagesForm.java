@@ -17,7 +17,7 @@ public final class DeleteImagesForm extends ActionForm {
     private String[] chosen;
 
     public String[] getChosen() {
-    return (this.chosen);
+    return this.chosen;
     }
 
 

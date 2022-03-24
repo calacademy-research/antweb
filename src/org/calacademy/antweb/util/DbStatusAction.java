@@ -54,9 +54,9 @@ public final class DbStatusAction extends Action {
         request.setAttribute("mySqlProcessListHtml", mySqlProcessListHtml);
 
 		if (success) {
-			return (mapping.findForward("success"));
+			return mapping.findForward("success");
 		} else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
 	}
 	
@@ -90,7 +90,7 @@ public final class DbStatusAction extends Action {
         connection = null;    
         try {
             connection = DBUtil.getConnection(dataSource, "DbStatusAction.holdOpenConnection()", HttpUtil.getTarget(request));
-            (new OperationLockDb(connection)).getOperationLock();
+            new OperationLockDb(connection).getOperationLock();
 
             s_log.warn("Connection held open");
         } catch (SQLException e) {

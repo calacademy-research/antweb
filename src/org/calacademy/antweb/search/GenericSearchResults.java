@@ -43,10 +43,10 @@ public class GenericSearchResults implements Serializable {
             for (ResultItem resultItem : dataset) {
                 thisItem = resultItem;
                 if ("images".equals(property)) {
-                    if ((thisItem.isHasImages()) || ((thisItem.getSynonym() != null) && (thisItem.getSynonym().isHasImages()))) {
+                    if (thisItem.isHasImages() || thisItem.getSynonym() != null && thisItem.getSynonym().isHasImages()) {
                         newList.add(thisItem);
                     }
-                } else if ("types".equals(property) && (thisItem.getType() != null) && (!thisItem.getType().equals(""))) {
+                } else if ("types".equals(property) && thisItem.getType() != null && !thisItem.getType().equals("")) {
                     newList.add(thisItem);
                 } else {
                     //System.out.println(thisItem.getName() + " filtered out with type: " + thisItem.getType());
@@ -184,7 +184,7 @@ public class GenericSearchResults implements Serializable {
             tempSet = filter(tempSet, (String) iter.next());
         }
         rset = tempSet;
-        if ((filters.contains("types"))) {
+        if (filters.contains("types")) {
             setResults();
         } else {        
             setResultsCollapse();
@@ -347,7 +347,7 @@ public class GenericSearchResults implements Serializable {
     }
 
     protected void updateHash(Hashtable hash, String key, Boolean value) {
-        if (!(hash.containsKey(key))) {
+        if (!hash.containsKey(key)) {
             hash.put(key, value);
         } else if ((Boolean) hash.get(key) == false) {
             hash.put(key, value);
@@ -479,7 +479,7 @@ public class GenericSearchResults implements Serializable {
 					item = new ResultItem();
 
 					thisRank = (String) rankIterator.next();
-					if ((type != null) && (!("".equals(type)))) {
+					if (type != null && !"".equals(type)) {
 						hasTypes = true;
 					}
 
@@ -519,7 +519,7 @@ public class GenericSearchResults implements Serializable {
 						pageParams = "rank=subfamily&subfamily=" + subfamily + "&project=" + project;
 
 					// if this is a genus and not a binomial pair
-					} else if (thisRank.equals("genus") && ((species == null) || (species.length() == 0))) {
+					} else if (thisRank.equals("genus") && (species == null || species.length() == 0)) {
 						fullName = genus;
 						itemName = genus;
 						pageParams =
@@ -545,8 +545,8 @@ public class GenericSearchResults implements Serializable {
 						updateHash(imageCheck, tempCombo, hasImages);
 						updateHash(typeCheck, tempCombo, hasTypes);
 						
-						if ((!(tracker.contains(tempCombo)))
-							&& (fullName.length() > 2)) {
+						if (!tracker.contains(tempCombo)
+							&& fullName.length() > 2) {
 							item = makeNewItem(
 								genus, genus, family, subfamily, genus,
 								null,  // this was species, but I think it should be null 
@@ -579,8 +579,8 @@ public class GenericSearchResults implements Serializable {
 					updateHash(imageCheck, combo, hasImages);
 					updateHash(typeCheck, combo, hasTypes);
 
-					if ((!(tracker.contains(combo)))
-						&& (fullName.length() > 2)) {
+					if (!tracker.contains(combo)
+						&& fullName.length() > 2) {
 						item =
 							makeNewItem(
 								itemName, fullName, family, subfamily, genus, species, subspecies,
@@ -685,7 +685,7 @@ public class GenericSearchResults implements Serializable {
     }
         
     public ArrayList<String> getSpecimens() {            
-        if ((rset == null) || (rset.size() < 1)) {
+        if (rset == null || rset.size() < 1) {
             return null;
         }
             

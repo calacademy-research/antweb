@@ -109,7 +109,7 @@ Request objects:
 
         request.setAttribute("resultSetModifier", resultSetModifier);
 
-        return (mapping.findForward(forwardString));
+        return mapping.findForward(forwardString);
     }
 
     public ArrayList<ResultItem> getModifiedSet(String resultRank, ArrayList theResults, HttpServletRequest request) {
@@ -140,9 +140,9 @@ Request objects:
         String theQuery = "";
 
         //if (util.notBlank(theItem.getCode())) {
-        if ((resultRank != null ) && (resultRank.equals("specimen"))) {
+        if (resultRank != null && resultRank.equals("specimen")) {
             theQuery = "select decimal_latitude, decimal_longitude from specimen where code = '" + theItem.getCode() + "'";
-        } else if ((resultRank != null ) && (resultRank.equals("locality"))) {
+        } else if (resultRank != null && resultRank.equals("locality")) {
             AntwebUtil.log("hasGeoRefInfo() resultRank=locality needs to be handled! item:" + theItem);
         } else {
             ArrayList terms = new ArrayList();
@@ -168,7 +168,7 @@ Request objects:
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);
 
-            if (rset.next() && (hasInfo == false)) {
+            if (rset.next() && hasInfo == false) {
                 int lat = rset.getInt(1);
                 int lon = rset.getInt(2);
                 if (lat != 0 && lon != 0)

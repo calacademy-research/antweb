@@ -51,10 +51,10 @@ public final class OrphanGeneraAction extends Action {
             String source = theForm.getSource();
             if (action != null) {       
               if (action.equals("delete")) {
-                 if ((taxonName != null) && (!"".equals(taxonName))) {
+                 if (taxonName != null && !"".equals(taxonName)) {
                    orphansDb.deleteTaxon(taxonName);
                  }
-                 if ((source != null) && (!"".equals(source))) {                   
+                 if (source != null && !"".equals(source)) {
                    orphansDb.deleteOrphanedGeneraFromSource(source);
                  }
               }
@@ -65,12 +65,12 @@ public final class OrphanGeneraAction extends Action {
             
           request.setAttribute("orphans", orphanTaxonList);
 
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
 
           
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "OrphanGeneraAction()");
         }

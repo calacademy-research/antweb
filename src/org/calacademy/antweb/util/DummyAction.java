@@ -22,7 +22,7 @@ public final class DummyAction extends Action {
 
         String target = HttpUtil.getTarget(request);        
         if (target.contains("userAgents.do")) {
-   		  return (mapping.findForward("userAgents"));
+   		  return mapping.findForward("userAgents");
 	    }
 	    
 	    return mapping.findForward("success");

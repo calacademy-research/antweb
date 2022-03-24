@@ -45,7 +45,7 @@ public final class CompareResultsAction extends ResultsAction {
         Project project = ProjectMgr.getProject(projectName);
         if (project == null) {
 	      request.setAttribute("message", "Project not found:" + projectName);
-	      return (mapping.findForward("message"));    
+	      return mapping.findForward("message");
 	    }
 
         /*
@@ -77,7 +77,7 @@ public final class CompareResultsAction extends ResultsAction {
         // OCT312016
            //A.log("CompareResultsAction.execute() projectName:" + projectName);
 
-        if ((taxaForm.getTaxa() != null) || (taxaForm.getChosen() != null)) {
+        if (taxaForm.getTaxa() != null || taxaForm.getChosen() != null) {
             String[] chosen = taxaForm.getChosen();
             ArrayList<String> chosenList = new ArrayList(Arrays.asList(chosen));
             ArrayList<ResultItem> chosenResults = null;
@@ -115,13 +115,13 @@ public final class CompareResultsAction extends ResultsAction {
 				  String message = "Unsupported Result Rank for Compare Results:" + resultRank;
 				  s_log.error("execute() " + message);
 				  request.setAttribute("message", message);
-				  return (mapping.findForward("message"));            				
+				  return mapping.findForward("message");
                 }
             } catch (IndexOutOfBoundsException e) {
               String message = "Session could be stale.  Please restart the search process.";
               s_log.error("execute() " + message);
               request.setAttribute("message", message);
-              return (mapping.findForward("message"));            
+              return mapping.findForward("message");
             }
                         
             /* The taxaToCompare TreeMap is keyed by Specimen (casent displayed), which is meaningless and makes
@@ -172,9 +172,9 @@ public final class CompareResultsAction extends ResultsAction {
         String shot = request.getParameter("shot");
 		//A.log("CompareResultsAction.execute() shot:" + shot);
         if (shot != null) {
-            return (mapping.findForward("oneView"));
+            return mapping.findForward("oneView");
         } else {
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         }
     }
 

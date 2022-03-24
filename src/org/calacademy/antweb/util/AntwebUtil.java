@@ -72,7 +72,7 @@ public abstract class AntwebUtil {
     }
     public static boolean isSecureCode(int secureCode) {
       if (s_secureCode == 0) return false;
-      return (s_secureCode == secureCode);
+      return s_secureCode == secureCode;
     }
     public static void resetSecureCode() {
       s_secureCode = 0;
@@ -278,7 +278,7 @@ public abstract class AntwebUtil {
       String docRoot = AntwebProps.getDocRoot();
       String dataRoot = docRoot + "web/data/";
       String dataFile = dataRoot + file;
-      (new Utility()).makeDirTree(dataFile); 
+      new Utility().makeDirTree(dataFile);
       s_log.debug("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + file);
       AntwebUtil.writeFile(dataFile, stringData);
   }
@@ -286,7 +286,7 @@ public abstract class AntwebUtil {
   public static void writeDataFile(String dir, String file, String stringData) {
       String docRoot = AntwebProps.getDocRoot();
       String dataRoot = docRoot + dir;
-      (new Utility()).makeDirTree(dataRoot); 
+      new Utility().makeDirTree(dataRoot);
       String dataFile = dataRoot + file;
       s_log.warn("writeDataFile() 2 dataRoot:" + dataRoot + " file:" + file);
       AntwebUtil.writeFile(dataFile, stringData);
@@ -294,7 +294,7 @@ public abstract class AntwebUtil {
 
   public static void writeFile(String file, String stringData)
   {
-      String loc = (new StringBuilder()).append(file).toString();
+      String loc = new StringBuilder().append(file).toString();
       try
       {
           BufferedWriter out = new BufferedWriter(new FileWriter(loc, false));
@@ -363,7 +363,7 @@ public abstract class AntwebUtil {
     if (fileExists) {
       lastModified = file.lastModified();
       expireTime = lastModified + expirePeriod;
-      if ((new Date()).getTime() > expireTime) {
+      if (new Date().getTime() > expireTime) {
         isExpired = true;        
         AntwebUtil.remove(fullFileName);
       }
@@ -532,7 +532,7 @@ public abstract class AntwebUtil {
       String line = trace.substring(0, nIndex);
       trace = trace.substring(nIndex + 3);
 
-      if ((line.contains("org.apache.jsp") || line.contains("org.calacademy.antweb")) && !(line.contains("StackTrace"))) { // || line.contains("AntwebException")
+      if ((line.contains("org.apache.jsp") || line.contains("org.calacademy.antweb")) && !line.contains("StackTrace")) { // || line.contains("AntwebException")
         //A.log("i:" + i + " nIndex:" + nIndex + " line:" + line);
         traceLines.add("at " + line);
       }
@@ -620,7 +620,7 @@ public abstract class AntwebUtil {
 
   public static void sleep(double seconds) {
     double doubleMillis = seconds * 1000;
-    int millis = (Double.valueOf(doubleMillis)).intValue();
+    int millis = Double.valueOf(doubleMillis).intValue();
     try {
       Thread.sleep(millis);
     } catch(InterruptedException e) {
@@ -649,7 +649,7 @@ public abstract class AntwebUtil {
       System.gc();
       long duration = new Date().getTime() - startTime ;
      // s_log.warn("GarbageCollected:" + duration);
-      return (Long.valueOf(duration)).toString();
+      return Long.valueOf(duration).toString();
   }
   
   public static long millisSince(Date date) {
@@ -731,7 +731,7 @@ public abstract class AntwebUtil {
         c.set(Calendar.MINUTE, 0);
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
-        long millisUntil = (c.getTimeInMillis() - System.currentTimeMillis());
+        long millisUntil = c.getTimeInMillis() - System.currentTimeMillis();
         //if (AntwebProps.isDevMode()) AntwebUtil.log("millisUntil:" + millisUntil);
         return millisUntil;
     }

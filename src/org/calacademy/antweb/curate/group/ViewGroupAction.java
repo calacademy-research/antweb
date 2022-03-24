@@ -47,7 +47,7 @@ public final class ViewGroupAction extends Action {
         try {
             connection = getDataSource(request, "conPool").getConnection();
 
-            group = (new GroupDb(connection)).getGroup(id);
+            group = new GroupDb(connection).getGroup(id);
 
 			LoginDb loginDb = new LoginDb(connection);
 			group.setCurators(loginDb.getCurators(group.getId()));
@@ -66,6 +66,6 @@ public final class ViewGroupAction extends Action {
         }
         
         session.setAttribute("thisGroup", group);
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

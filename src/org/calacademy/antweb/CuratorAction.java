@@ -64,7 +64,7 @@ public final class CuratorAction extends Action {
 			if (curator == null) {
 				String message = "  Curator not found for name:" + name + " id:" + id + ".";
 				request.setAttribute("message", message);
-				return (mapping.findForward("message"));
+				return mapping.findForward("message");
 			}
 
 // Performing very poorly on the live server
@@ -72,24 +72,24 @@ public final class CuratorAction extends Action {
 //			request.setAttribute("curations", curations);
 
 			request.setAttribute("curator", curator);
-			return (mapping.findForward("curator"));
+			return mapping.findForward("curator");
 		  } else if (geolocaleId != 0 && taxonName != null) {
 			// Show curation        
 			//A.log("execute() taxonName:" + taxonName + " geolocaleId:" + geolocaleId);
 
-            GeolocaleTaxon geolocaleTaxon = (GeolocaleTaxon) (new GeolocaleTaxonDb(connection)).get(geolocaleId, taxonName); // to get Curator 
+            GeolocaleTaxon geolocaleTaxon = (GeolocaleTaxon) new GeolocaleTaxonDb(connection).get(geolocaleId, taxonName); // to get Curator
             if (geolocaleTaxon == null) {
 				String message = "geolocale_taxon is null for taxonName:" + taxonName + " geolocaleId:" + geolocaleId + ".";
                 //A.log("execute() " + message);
 				request.setAttribute("message", message);
-				return (mapping.findForward("message"));            
+				return mapping.findForward("message");
             }
-			Curation curation = (new GeolocaleTaxonLogDb(connection)).getCuration(taxonName, geolocaleId);
+			Curation curation = new GeolocaleTaxonLogDb(connection).getCuration(taxonName, geolocaleId);
 			if (curation == null) curation = new Curation();
 			curation.setGeolocaleTaxon(geolocaleTaxon);
 			request.setAttribute("curation", curation);
 			//A.log("execute() curation:" + curation);
-			return (mapping.findForward("curation"));
+			return mapping.findForward("curation");
 		  } else {
 			// show all Curators.
 			
@@ -98,7 +98,7 @@ public final class CuratorAction extends Action {
 			request.setAttribute("curators", curators);
             //A.log("a1d:" + accessLogin.getName());
 			
-			return (mapping.findForward("curators"));        
+			return mapping.findForward("curators");
 		  }
 
 	   } catch (SQLException e) {

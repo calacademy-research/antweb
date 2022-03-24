@@ -183,19 +183,19 @@ public final class Rank implements Serializable {
             rank.add("family");
         }
 */
-        if ((subfamily != null) && (subfamily.contains(name))) {
+        if (subfamily != null && subfamily.contains(name)) {
             rank.add("subfamily");
         }
 
-        if ((genus != null) && (genus.contains(name))) {
+        if (genus != null && genus.contains(name)) {
             rank.add("genus");
         }
 
-        if ((species != null) && (species.contains(name))) {
+        if (species != null && species.contains(name)) {
             rank.add("species");
         }
 
-        if ((subspecies != null) && (subspecies.contains(name))) {
+        if (subspecies != null && subspecies.contains(name)) {
             rank.add("subspecies");
         }
         

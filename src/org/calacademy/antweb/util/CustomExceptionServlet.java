@@ -39,7 +39,7 @@ public class CustomExceptionServlet extends HttpServlet {
 			obj = request.getAttribute("javax.servlet.jsp.jspException");
 		}
 
-		if ((obj != null) && (obj instanceof Throwable)) {
+		if (obj != null && obj instanceof Throwable) {
 			exception = (Throwable) obj;
 		}
 		//s_log.error("Request URI: " + request.getAttribute("javax.servlet.forward.request_uri"));

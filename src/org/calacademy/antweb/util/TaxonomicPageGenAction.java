@@ -47,7 +47,7 @@ public final class TaxonomicPageGenAction extends Action {
         s_log.warn("execute() url:" + url + " pathInfo:" + pathInfo + " query:" + query);
 
         String dir = "/" + project + "/";
-        (new Utility()).createDirectory(dir);
+        new Utility().createDirectory(dir);
         String fileName = "taxonomicPageGen.jsp";
         String fullPath = AntwebProps.getDocRoot() + dir + fileName;
         String output = null;
@@ -56,8 +56,8 @@ public final class TaxonomicPageGenAction extends Action {
            See TaxonomicPageGenAction.java 
         */
         
-        if ( 
-        ("bayarea".equals(project))   
+        if (
+                "bayarea".equals(project)
 /*
      || ("austrailian".equals(project))  
      || ("atol".equals(project)) 

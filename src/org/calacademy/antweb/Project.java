@@ -140,14 +140,14 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
           //<img class=border border=0 src=images/.jpg></a> 
         
         String thisString = "";
-        if ((specimenInfo != null) && (specimenInfo.length() > 0)) {
-            if ((linkInfo != null) && (linkInfo.length() > 0)) {
+        if (specimenInfo != null && specimenInfo.length() > 0) {
+            if (linkInfo != null && linkInfo.length() > 0) {
                 thisString += "<a href=\""  + linkInfo + "\">";
             }
 
             thisString+= "<img src=\"" + AntwebProps.getImgDomainApp() + "/" + Project.getSpeciesListDir() + getRoot() + "/" + specimenInfo + "\">"; 
 
-            if ((linkInfo != null) && (linkInfo.length() > 0)) {
+            if (linkInfo != null && linkInfo.length() > 0) {
                 thisString += "</a>"; 
             }
         }
@@ -208,7 +208,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 
         // This is so no broken image shows up on the project page prior to adding it.
         authorImageTag = "";
-        if ((authorImage != null) && !(authorImage.equals(""))) {
+        if (authorImage != null && !authorImage.equals("")) {
           authorImageTag = "<img src=\"" + AntwebProps.getImgDomainApp() + "/" + Project.getSpeciesListDir() + getRoot() + "/" + getAuthorImage() + "\">";
           s_log.debug("setAuthorImage() authorImageTag:" + authorImageTag);
         }        
@@ -262,7 +262,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 
     public String getRoot() {  // projectName without "ants"
       String name = getName();
-      name = (new Formatter()).removeSpaces(name);
+      name = new Formatter().removeSpaces(name);
       name = name.toLowerCase();
       int antsIndex = name.indexOf("ants");
       if (antsIndex > 0) {
@@ -467,7 +467,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     
 	public static String getRootName(String project) {  // projectName, or title will work
 	    if (project == null) return null;
-  	    project = (new Formatter()).removeSpaces(project);
+  	    project = new Formatter().removeSpaces(project);
         project = project.toLowerCase();
 
         if (project.contains("ants")) {
@@ -479,7 +479,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 	
 	public static String getProjectName(String country) {
 	  country = country.toLowerCase();
-	  country = (new Formatter()).removeSpaces(country);
+	  country = new Formatter().removeSpaces(country);
 	  //if ("madagascar".equals(country)) return "madants";
       //if ("czech republic".equals(country)) return "czechants";
       String projectName = country + "ants";

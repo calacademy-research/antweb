@@ -131,7 +131,7 @@ Or, if there are stmts and/or rsets...
 
       if (connection != null) {
           if (connection instanceof NewProxyConnection) {
-              connectionMap.put((NewProxyConnection) connection, name + " " + (new java.util.Date()));
+              connectionMap.put((NewProxyConnection) connection, name + " " + new Date());
 
               DbRequest dbRequest = new DbRequest(name, queryString, new java.util.Date());
               connectionRequestMap.put((NewProxyConnection) connection, dbRequest);
@@ -407,9 +407,9 @@ Or, if there are stmts and/or rsets...
       if (numBusy > DBUtil.MAXNUMBUSYCONNECTIONS) {
         String message = "Due to current server load, Antweb is not able to fulfill this request at this time.  Please try again later.";
 //        if ((lastLog == null) || (AntwebUtil.timePassed(lastLog, new Date()) > (MINUTES * .5))) {
-        if ((lastLog == null) || AntwebUtil.minsSince(lastLog) > 1) {
+        if (lastLog == null || AntwebUtil.minsSince(lastLog) > 1) {
           lastLog = new Date();
-          String logMessage = "<br><br>" + (new Date()).toString() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
+          String logMessage = "<br><br>" + new Date().toString() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
           s_log.warn(logMessage);
           Connection connection = null;
           try {
@@ -438,7 +438,7 @@ Or, if there are stmts and/or rsets...
       if (secs < s_threshold) return;
       if (method.equals(s_lastMethod)) {
           ++s_sameMethod;
-          if ((s_sameMethod % 10) == 0) {
+          if (s_sameMethod % 10 == 0) {
               s_log.info("profileQuery sameMethod:" + s_sameMethod + " method:" + method);
           }
           return;

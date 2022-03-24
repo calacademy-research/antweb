@@ -43,7 +43,7 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
           String message = "fromTaxonName:" + fromTaxonName + " not found";
           s_log.warn(message);
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         }
 
         String message = null;
@@ -60,10 +60,10 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
               + "<br><br>  Back to <a href='" + AntwebProps.getDomainApp() 
               + "/moveToValid.do'>Move To Valid</a> Tool.";
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
           }
         } else if ("confirm".equals(action)) {
-          if ((toTaxonName == null) || ("".equals(toTaxonName))){
+          if (toTaxonName == null || "".equals(toTaxonName)){
              message = "To Move a taxon, you must select a valid taxon";        
              message = "<b><font color=red>" + message + "</font></b>";
            } else {
@@ -71,10 +71,10 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
             message += "<br><br>  Back to <a href='" + AntwebProps.getDomainApp() 
               + "/moveToValid.do'>Move To Valid</a> Tool.";
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
           }
         } else if ("back".equals(action)) {
-            return (mapping.findForward("moveToValid"));     
+            return mapping.findForward("moveToValid");
         } else {
           request.setAttribute("fromTaxon", fromTaxon);   
           request.setAttribute("toTaxon", toTaxon);   

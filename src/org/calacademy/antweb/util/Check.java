@@ -31,7 +31,7 @@ public class Check {
     public static ActionForward notBot(HttpServletRequest request, ActionMapping mapping) {
         if (HttpUtil.isBot(request)) {
             request.setAttribute("message", "no bots allowed");
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
         return null;
     }
@@ -172,7 +172,7 @@ public class Check {
         if (UtilDataAction.isInComputeProcess()) {
             String message = "Antweb is currently in it's re-computation process.  Please try again shortly.";
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
         return null;
     }    

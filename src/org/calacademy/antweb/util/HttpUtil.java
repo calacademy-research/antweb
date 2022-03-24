@@ -86,8 +86,8 @@ public abstract class HttpUtil {
       String targetSic = HttpUtil.getTarget(request); //Sic
 
       invalidMessage = HttpUtil.isLegitRequest(request);
-      if (AntwebProps.isDevMode() && (invalidMessage != null)) s_log.warn("invalidRequest() invalidMessage:" + invalidMessage);
-      if (invalidMessage == null && (HttpUtil.getIsBot(request) && HttpUtil.isPost(request))) {
+      if (AntwebProps.isDevMode() && invalidMessage != null) s_log.warn("invalidRequest() invalidMessage:" + invalidMessage);
+      if (invalidMessage == null && HttpUtil.getIsBot(request) && HttpUtil.isPost(request)) {
           invalidMessage = "Bot posts not allowed.  " + targetSic;
       }
 
@@ -130,12 +130,12 @@ public abstract class HttpUtil {
       String message = BadActorMgr.ifBadActorBlockedGetMessage(request);
       if (message != null) {
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
       }
 
       if (HttpUtil.hasIllegalStr(queryString, request)) {
             request.setAttribute("message", "Illegal characters.");
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
       }
 
       boolean hasSpecialChars = false;    
@@ -180,18 +180,18 @@ public abstract class HttpUtil {
       String userAgent = (String) request.getHeader("user-agent");
       if (userAgent != null) {
         userAgent = userAgent.toLowerCase();
-        if ( (userAgent.contains("bot")) 
-          || (userAgent.contains("spider"))
-          || (userAgent.contains("slurp"))
-          || (userAgent.contains("ahrefs"))
-          || (userAgent.contains("baidu"))
-          || (userAgent.contains("The Knowledge AI"))
-          || (userAgent.contains("opensiteexplorer"))
-          || (userAgent.contains("Gigabot"))
-          || (userAgent.contains("SemrushBot"))
-          || (userAgent.contains("centurybot"))
-          || (userAgent.contains("bingbot"))
-            || (userAgent.contains("naver.me"))
+        if ( userAgent.contains("bot")
+          || userAgent.contains("spider")
+          || userAgent.contains("slurp")
+          || userAgent.contains("ahrefs")
+          || userAgent.contains("baidu")
+          || userAgent.contains("The Knowledge AI")
+          || userAgent.contains("opensiteexplorer")
+          || userAgent.contains("Gigabot")
+          || userAgent.contains("SemrushBot")
+          || userAgent.contains("centurybot")
+          || userAgent.contains("bingbot")
+            || userAgent.contains("naver.me")
           //|| (userAgent.contains())
            ) {
           isBot = true;   
@@ -329,15 +329,15 @@ public abstract class HttpUtil {
     }
     
     public static boolean isDisallowedFileType(String fileName) {
-        return (fileName != null) &&
-                ((fileName.contains(".jsp"))
-                        || (fileName.contains(".JSP"))
-                        || (fileName.contains(".php"))
-                        || (fileName.contains(".PHP"))
-                        || (fileName.contains(".pl"))
-                        || (fileName.contains(".PL"))
-                        || (fileName.contains(".sh"))
-                        || (fileName.contains(".SH"))
+        return fileName != null &&
+                (fileName.contains(".jsp")
+                        || fileName.contains(".JSP")
+                        || fileName.contains(".php")
+                        || fileName.contains(".PHP")
+                        || fileName.contains(".pl")
+                        || fileName.contains(".PL")
+                        || fileName.contains(".sh")
+                        || fileName.contains(".SH")
                 );
     }
     
@@ -373,10 +373,10 @@ public abstract class HttpUtil {
 
     public static boolean isIllegalStr(String string) {
         String str = string.toLowerCase();
-        return (str.contains("sleep") && !(str.contains("sleeping") || str.contains("kameelsleep")))
+        return str.contains("sleep") && !(str.contains("sleeping") || str.contains("kameelsleep"))
                 || str.contains("case%20")
                 || str.contains("select%20")
-                || (str.contains("order%20") && !str.contains("border"))
+                || str.contains("order%20") && !str.contains("border")
                 || str.contains("3ddbms_pipe.receive_message")
                 || str.contains("waitfor  ");
     }
@@ -416,9 +416,9 @@ public abstract class HttpUtil {
 
     public static boolean abortAction(String content) {
       // This method looks for jsp injection code.  True to abort.
-        return (content != null) &&
-                ((content.contains("Loesch")) // This is the author of Browser.jsp
-                        || (false)
+        return content != null &&
+                (content.contains("Loesch") // This is the author of Browser.jsp
+                        || false
                 );
     }
     
@@ -443,12 +443,12 @@ public abstract class HttpUtil {
         String queryString = request.getQueryString();
         if (queryString == null) return false;
         if ( 
-             (queryString.contains("%2Cnull%2Cnull%2"))
-          || (queryString.contains("union%20all"))
-          || (queryString.contains("ascii"))
+             queryString.contains("%2Cnull%2Cnull%2")
+          || queryString.contains("union%20all")
+          || queryString.contains("ascii")
           ) {
           ++botAttackCount;
-          if ((botAttackCount % 100 ) == 0) {
+          if (botAttackCount % 100 == 0) {
             s_log.error("isBotAttackDefence() count:" + botAttackCount);
           }
           return true;
@@ -463,7 +463,7 @@ public abstract class HttpUtil {
         boolean isServerBusy = DBUtil.isServerBusy(dataSource, request);                                  		  
         if (HttpUtil.getIsBot(request) && isServerBusy) {
           ++serverBusyCount;
-          if ((serverBusyCount % 100 ) == 0) {
+          if (serverBusyCount % 100 == 0) {
               s_log.warn("tooBusyForBots() serverBusyCount:" + serverBusyCount);
           }
           return true;
@@ -503,9 +503,9 @@ public abstract class HttpUtil {
         if (request.getContentType() != null) {
           String contentType = request.getContentType().toLowerCase();
             //A.log("isPost:" + request.getContentType());
-            return (contentType.contains("multipart/form-data"))
-                    || (contentType.contains("application/x-www-form-urlencoded"))
-                    || (contentType.contains("text/plain"));
+            return contentType.contains("multipart/form-data")
+                    || contentType.contains("application/x-www-form-urlencoded")
+                    || contentType.contains("text/plain");
         }
         return false;
     }
@@ -655,7 +655,7 @@ public abstract class HttpUtil {
      */
     public static boolean requestParameter(ServletRequest request, String param) {
         Object val = request.getParameter(param);
-        if (val != null && !( val.equals("false") ))
+        if (val != null && !val.equals("false"))
             return true;
         return request.getParameter(param + ".x") != null;
     }
@@ -885,12 +885,12 @@ public abstract class HttpUtil {
       
       if (requestURI.contains("academyHeader.jsp")) return null;
       
-      if ((requestURI == null) || (requestURI.equals("null"))) {
+      if (requestURI == null || requestURI.equals("null")) {
         //A.log("devMode Note: no requestURI");
         return null;
       }
       
-      target = (new Utility()).getDomain() + requestURI;
+      target = new Utility().getDomain() + requestURI;
       if (queryString != null)
         target += queryString; 
 
@@ -947,7 +947,7 @@ public abstract class HttpUtil {
     // will remove all instances.
     public static String getTargetMinusParam(String target, String param) {
         int i1 = target.indexOf("?" + param);
-        boolean isFirstParam = (i1 > 0);
+        boolean isFirstParam = i1 > 0;
         if (!isFirstParam) i1 = target.indexOf("&" + param);
         int j1 = target.indexOf("&", i1 + 1);
         String newTarget = target;
@@ -1054,7 +1054,7 @@ public abstract class HttpUtil {
 
       //A.log("isStaticCall() 2 requestedPath:" + requestedPath);
       
-      if ((requestedPath != null) && (requestedPath.contains(".jsp"))) {
+      if (requestedPath != null && requestedPath.contains(".jsp")) {
  
         // May get called twice.  Once for page and once for -body.
         //AntwebUtil.logStackTrace();
@@ -1172,7 +1172,7 @@ public abstract class HttpUtil {
       
       LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
 
-      if ((false) && (AntwebProps.isDevMode())) {
+      if (false && AntwebProps.isDevMode()) {
         s_log.warn("getUrl() the url:" + theUrl);
         return "";
       }
@@ -1228,7 +1228,7 @@ public abstract class HttpUtil {
       
       LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
 
-      if ((false) && (AntwebProps.isDevMode())) {
+      if (false && AntwebProps.isDevMode()) {
         s_log.warn("getUrl() the url:" + theUrl);
         return "";
       }
@@ -1352,7 +1352,7 @@ public abstract class HttpUtil {
     throws IOException {  
       LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
 
-      if ((false) && (AntwebProps.isDevMode())) {
+      if (false && AntwebProps.isDevMode()) {
         s_log.warn("getUtf8Url() the url:" + theUrl);
         return "";
       }

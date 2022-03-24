@@ -43,7 +43,7 @@ public class Scheduler extends Action {
    		    String message = "Scheduler can only be launched by administrative login";
 			s_log.warn(message);
 			request.setAttribute("message", message);
-			return (mapping.findForward("message"));
+			return mapping.findForward("message");
 		}
 
         HttpSession session = request.getSession();
@@ -68,14 +68,14 @@ public class Scheduler extends Action {
             String message = "Scheduler failed because isInitialized:" + AntwebMgr.isInitialized() + " isInitializing:" + AntwebMgr.isServerInitializing();
             s_log.error("execute() " + message);
 			request.setAttribute("message", message);
-			return (mapping.findForward("adminMessage"));
+			return mapping.findForward("adminMessage");
 		}
 
         String message = doAction(action, num, secureCode);
 
         LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete. "); // + 	" mesage:" + message);
 		request.setAttribute("message", message);
-		return (mapping.findForward("adminMessage")); 	  
+		return mapping.findForward("adminMessage");
     }
 
     // Called from SessionRequestFilter

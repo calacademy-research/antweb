@@ -44,9 +44,9 @@ public final class ChooseComparisonAction extends Action {
             // Set a transactional control token to prevent double posting
             saveToken(request);
 
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         } else {
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
     }
 

@@ -54,12 +54,12 @@ public final class SaveProjectAction extends Action {
             
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "SaveProjectAction");
         }
           
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
     
         
@@ -81,7 +81,7 @@ public final class SaveProjectAction extends Action {
         projectDb.update(project);
 
         // Update the project lists...
-        (new LoginDb(connection)).refreshLogin(request.getSession());            
+        new LoginDb(connection).refreshLogin(request.getSession());
         
         //String docBase = util.getDocRoot();
         
@@ -91,7 +91,7 @@ public final class SaveProjectAction extends Action {
 
        s_log.info("saveProject() project:" + project.getName() + " root:" + project.getRoot());
 
-      if (!((project.getRoot() == null) || (project.getRoot().equals("")))) {
+      if (!(project.getRoot() == null || project.getRoot().equals(""))) {
         String preview = Project.getSpeciesListPath() + project.getRoot() + "/" + project.getRoot() + "-preview.jsp";
         String genFile = Project.getSpeciesListPath() + project.getRoot() + "/" + project.getRoot() + "-body.jsp";
 //        String preview = docBase + project.getRoot() + "-preview.jsp";

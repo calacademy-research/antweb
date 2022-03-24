@@ -60,7 +60,7 @@ public class BioregionDb extends AntwebDb {
           // subfamily_count, genus_count, species_count, taxon_subfamily_dist_json, specimen_subfamily_dist_json
           // extent, locality, project_name?         
          
-            Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
+            Hashtable<String, String> description = new DescEditDb(getConnection()).getDescription(bioregion.getName());
             bioregion.setDescription(description);
         }
 
@@ -120,7 +120,7 @@ public class BioregionDb extends AntwebDb {
                 bioregion.setEndemicSpeciesCount(rset.getInt("endemic_species_count"));
                 bioregion.setIntroducedSpeciesCount(rset.getInt("introduced_species_count"));
 
-                Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(bioregion.getName());
+                Hashtable<String, String> description = new DescEditDb(getConnection()).getDescription(bioregion.getName());
                 bioregion.setDescription(description);     
                           
                 bioregions.add(bioregion);
@@ -316,10 +316,10 @@ public class BioregionDb extends AntwebDb {
       
       // Populate the bioregion_taxon table.
       populateSpecies(bioregionName);
-      (new BioregionTaxonDb(getConnection())).populateHigherTaxa(bioregionName);
+      new BioregionTaxonDb(getConnection()).populateHigherTaxa(bioregionName);
       
       // Crawl the Geolocale_taxon table to find the counts.
-      (new BioregionTaxonCountDb(getConnection())).childrenCountCrawl(bioregionName);
+      new BioregionTaxonCountDb(getConnection()).childrenCountCrawl(bioregionName);
 
       // update bioregion fields (title, image_count, subfamily_count, genus_count, species_count).                    
       finish(bioregion); 
@@ -364,7 +364,7 @@ public class BioregionDb extends AntwebDb {
 		return;
 	  }
   
-	  (new UtilDb(getConnection())).deleteFrom("bioregion_taxon", " where bioregion_name = '" + bioregionName + "' and source != 'antcat'");
+	  new UtilDb(getConnection()).deleteFrom("bioregion_taxon", " where bioregion_name = '" + bioregionName + "' and source != 'antcat'");
 
       BioregionTaxonDb bioregionTaxonDb = new BioregionTaxonDb(getConnection());
 	  int fromSpecimenCount = bioregionTaxonDb.populateSpeciesFromSpecimen(bioregion);
@@ -430,7 +430,7 @@ public class BioregionDb extends AntwebDb {
     private void updateImagedSpecimenCount(Bioregion bioregion) throws SQLException {
         int count = getImagedSpecimenCount(bioregion);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("bioregion", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "name = '" + bioregion + "'");
+        utilDb.updateField("bioregion", "imaged_specimen_count", Integer.valueOf(count).toString(), "name = '" + bioregion + "'");
     }
 
     private int getImagedSpecimenCount(Bioregion bioregion) throws SQLException {
@@ -461,7 +461,7 @@ public class BioregionDb extends AntwebDb {
     private void updateValidSpeciesCount(Bioregion bioregion) throws SQLException {
         int count = getValidSpeciesCount(bioregion);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("bioregion", "valid_species_count", (Integer.valueOf(count)).toString(), "name = '" + bioregion + "'");
+        utilDb.updateField("bioregion", "valid_species_count", Integer.valueOf(count).toString(), "name = '" + bioregion + "'");
     }
 
     private int getValidSpeciesCount(Bioregion bioregion) throws SQLException {
@@ -646,7 +646,7 @@ public class BioregionDb extends AntwebDb {
                // + " and b.name = '" + bioregion.getName() + "'"
                 + " and taxon.taxarank in ('species', 'subspecies')"
                 + " and taxon.fossil = 0"
-                + (new StatusSet()).getAndCriteria(Project.ALLANTWEBANTS)
+                + new StatusSet().getAndCriteria(Project.ALLANTWEBANTS)
                 //+ " and  taxon.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
                 + " and taxon.family = 'formicidae'"
                 + " group by bt.taxon_name having count(*) = 1"

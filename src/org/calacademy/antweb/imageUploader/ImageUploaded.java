@@ -83,7 +83,7 @@ public class ImageUploaded {
         if (file.exists()) {
           // move the file to the backupdir.
           FileUtil.makeDir(backupDir);
-          (new Utility()).copyFile(fullName, backupDir + name);
+          new Utility().copyFile(fullName, backupDir + name);
           setIsReUploaded(true);
         }
       } catch (FileNotFoundException e) {

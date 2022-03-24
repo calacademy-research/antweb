@@ -69,7 +69,7 @@ s_log.debug("GeolocaleMgrAction.execute() geolocaleArray.size:" + geolocaleArray
 
             
             s_log.debug("execute() success");
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
 
 		} catch (SQLException e) {
 			s_log.error("execute() e:" + e);
@@ -77,6 +77,6 @@ s_log.debug("GeolocaleMgrAction.execute() geolocaleArray.size:" + geolocaleArray
 			DBUtil.close(connection, this, "GeolocaleMgrAction.execute()");
 		}
 
-        return (mapping.findForward("failure"));
+        return mapping.findForward("failure");
     }
 }

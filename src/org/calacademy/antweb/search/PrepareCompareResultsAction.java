@@ -73,7 +73,7 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 			String message = "Unsupported Result Rank for Prepare Compare Results:" + resultRank;
 			s_log.error("execute() " + message);
 			request.setAttribute("message", message);
-		    return (mapping.findForward("message")); 
+		    return mapping.findForward("message");
 		}
 		
 		
@@ -113,13 +113,13 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 
         //A.log("execute() scope:" + mapping.getScope());
 
-		return (mapping.findForward(forwardString));
+		return mapping.findForward(forwardString);
 	}
 
     public ArrayList<ResultItem> getModifiedSet(String resultRank, ArrayList theResults, HttpServletRequest request) {
         // Create a results set that only has results with images.
 		ArrayList newResults = new ArrayList();
-        if (!(resultRank.equals("species"))) {  // we do a special thing in this case below.
+        if (!resultRank.equals("species")) {  // we do a special thing in this case below.
   		  Iterator iter = theResults.iterator();
  		  ResultItem thisItem = null;
 		  while (iter.hasNext()) {

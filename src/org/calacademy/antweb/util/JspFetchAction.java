@@ -28,7 +28,7 @@ public class JspFetchAction extends Action {
 
         HttpUtil.setUtf8(request, response); 
         
-        return (mapping.findForward("failure"));              
+        return mapping.findForward("failure");
     }
     
     public void doGet(HttpServletRequest request, HttpServletResponse response)
