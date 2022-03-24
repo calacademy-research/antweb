@@ -18,12 +18,12 @@ import org.apache.commons.logging.LogFactory;
 public class AdvancedSearchResults extends GenericSearchResults
 	implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(AdvancedSearchResults.class);
+    private static final Log s_log = LogFactory.getLog(AdvancedSearchResults.class);
 
 	public void setResultsWithFilters(ArrayList<String> filters) {
 
 		removeNullCodes();
-		ArrayList tempSet = rset;
+		ArrayList<ResultItem> tempSet = rset;
         for (String filter : filters) {
 			tempSet = filter(tempSet, filter);
         }
@@ -45,17 +45,10 @@ public class AdvancedSearchResults extends GenericSearchResults
 		}
 		Set<String> keys = subfamilyHash.keySet();
         for (String thisKey : keys) {
-			ResultItem thisItem = (ResultItem) subfamilyHash.get(thisKey);
+			ResultItem thisItem = subfamilyHash.get(thisKey);
 			subfamilyList.add(thisItem);
 		}
-		Collections.sort(subfamilyList, new Comparator(){			 
-            public int compare(Object o1, Object o2) {
-              ResultItem p1 = (ResultItem) o1;
-              ResultItem p2 = (ResultItem) o2;
-              return p1.getFullName().compareToIgnoreCase(p2.getFullName());
-            }
- 
-        });
+		subfamilyList.sort((o1, o2) -> o1.getFullName().compareToIgnoreCase(o2.getFullName()));
 		return subfamilyList;
 	}
 	
@@ -75,18 +68,11 @@ public class AdvancedSearchResults extends GenericSearchResults
 		Iterator<String> keyIter = keys.iterator();
 		String thisKey;
 		while (keyIter.hasNext()) {
-			thisKey = (String) keyIter.next();
-			thisItem = (ResultItem) genusHash.get(thisKey);
+			thisKey = keyIter.next();
+			thisItem = genusHash.get(thisKey);
 			genusList.add(thisItem);
 		}
-		Collections.sort(genusList, new Comparator(){			 
-            public int compare(Object o1, Object o2) {
-              ResultItem p1 = (ResultItem) o1;
-              ResultItem p2 = (ResultItem) o2;
-              return p1.getFullName().compareToIgnoreCase(p2.getFullName());
-            }
- 
-        });
+		genusList.sort((o1, o2) -> o1.getFullName().compareToIgnoreCase(o2.getFullName()));
 		return genusList;
 	}
 	 
@@ -111,18 +97,12 @@ public class AdvancedSearchResults extends GenericSearchResults
 		Iterator<String> keyIter = keys.iterator();
 		String thisKey;
 		while (keyIter.hasNext()) {
-			thisKey = (String) keyIter.next();
-			thisItem = (ResultItem) specHash.get(thisKey);
+			thisKey = keyIter.next();
+			thisItem = specHash.get(thisKey);
 			specList.add(thisItem);
 		}
         // Sort it
-		Collections.sort(specList, new Comparator() {			 
-            public int compare(Object o1, Object o2) {
-            	ResultItem p1 = (ResultItem) o1;
-            	ResultItem p2 = (ResultItem) o2;
-               return p1.getFullName().compareToIgnoreCase(p2.getFullName());
-            }
-        });
+		specList.sort((o1, o2) -> o1.getFullName().compareToIgnoreCase(o2.getFullName()));
 
         s_log.debug("getSpeciesList() specList.size():" + specList.size() + " from " + results.size());
 		return specList;
@@ -160,122 +140,104 @@ public class AdvancedSearchResults extends GenericSearchResults
       try {
 		  switch (fieldName) {
 			  case "code":
-				  Collections.sort(results, new Comparator() {
-					  public int compare(Object o1, Object o2) {
-						  if ("down".equals(sortOrder)) {
-							  Object t = o1;
-							  o1 = o2;
-							  o2 = t;
-						  }
-						  return CompareUtil.compareString(((ResultItem) o1).getCode(), ((ResultItem) o2).getCode());
+				  results.sort((o1, o2) -> {
+					  if ("down".equals(sortOrder)) {
+						  ResultItem t = o1;
+						  o1 = o2;
+						  o2 = t;
 					  }
+					  return CompareUtil.compareString(o1.getCode(), o2.getCode());
 				  });
 				  break;
 			  case "country":
-				  Collections.sort(results, new Comparator() {
-					  public int compare(Object o1, Object o2) {
-						  if ("down".equals(sortOrder)) {
-							  Object t = o1;
-							  o1 = o2;
-							  o2 = t;
-						  }
-						  return CompareUtil.compareString(((ResultItem) o1).getCountry(), ((ResultItem) o2).getCountry());
+				  results.sort((o1, o2) -> {
+					  if ("down".equals(sortOrder)) {
+						  ResultItem t = o1;
+						  o1 = o2;
+						  o2 = t;
 					  }
+					  return CompareUtil.compareString(o1.getCountry(), o2.getCountry());
 				  });
 				  break;
 			  case "images":
-				  Collections.sort(results, new Comparator() {
-					  public int compare(Object o1, Object o2) {
-						  if ("down".equals(sortOrder)) {
-							  Object t = o1;
-							  o1 = o2;
-							  o2 = t;
-						  }
-						  // 2nd one first because reverse order
-						  return CompareUtil.compareIntNoZero(((ResultItem) o2).getImageCount(), ((ResultItem) o1).getImageCount());
+				  results.sort((o1, o2) -> {
+					  if ("down".equals(sortOrder)) {
+						  ResultItem t = o1;
+						  o1 = o2;
+						  o2 = t;
 					  }
+					  // 2nd one first because reverse order
+					  return CompareUtil.compareIntNoZero(o2.getImageCount(), o1.getImageCount());
 				  });
 				  break;
 			  case "location":
-				  Collections.sort(results, new Comparator() {
-					  public int compare(Object o1, Object o2) {
-						  if ("down".equals(sortOrder)) {
-							  Object t = o1;
-							  o1 = o2;
-							  o2 = t;
-						  }
-						  return compareVals(((ResultItem) o1).getLocalityString(), ((ResultItem) o2).getLocalityString());
+				  results.sort((o1, o2) -> {
+					  if ("down".equals(sortOrder)) {
+						  ResultItem t = o1;
+						  o1 = o2;
+						  o2 = t;
 					  }
+					  return compareVals(o1.getLocalityString(), o2.getLocalityString());
 				  });
 				  break;
 			  case "type":
-				  Collections.sort(results, new Comparator() {
-					  public int compare(Object o1, Object o2) {
-						  if ("down".equals(sortOrder)) {
-							  Object t = o1;
-							  o1 = o2;
-							  o2 = t;
-						  }
-						  a1 = ((ResultItem) o1).getType();
-						  a2 = ((ResultItem) o2).getType();
-						  // 2nd one first because reverse order
-						  Integer returnVal = compareVals(a2, a1);
-						  return returnVal;
+				  results.sort((o1, o2) -> {
+					  if ("down".equals(sortOrder)) {
+						  ResultItem t = o1;
+						  o1 = o2;
+						  o2 = t;
 					  }
+					  a1 = o1.getType();
+					  a2 = o2.getType();
+					  // 2nd one first because reverse order
+					  return compareVals(a2, a1);
 				  });
 
 				  // caste atually sorts by caste+subcaste
 				  break;
 			  case "caste":
-				  Collections.sort(results, new Comparator() {
-					  public int compare(Object o1, Object o2) {
-						  if ("down".equals(sortOrder)) {
-							  Object t = o1;
-							  o1 = o2;
-							  o2 = t;
-						  }
-						  ResultItem resultItemO1 = (ResultItem) o1;
-						  ResultItem resultItemO2 = (ResultItem) o2;
-						  String casteSubcasteO1 = resultItemO1.getCaste() + resultItemO1.getSubcaste();
-						  String casteSubcasteO2 = resultItemO2.getCaste() + resultItemO1.getSubcaste();
-						  // 2nd one first because reverse order
-						  return CompareUtil.compareString(casteSubcasteO2, casteSubcasteO1);
+				  results.sort((o1, o2) -> {
+					  if ("down".equals(sortOrder)) {
+						  ResultItem t = o1;
+						  o1 = o2;
+						  o2 = t;
 					  }
+					  ResultItem resultItemO1 = o1;
+					  ResultItem resultItemO2 = o2;
+					  String casteSubcasteO1 = resultItemO1.getCaste() + resultItemO1.getSubcaste();
+					  String casteSubcasteO2 = resultItemO2.getCaste() + resultItemO1.getSubcaste();
+					  // 2nd one first because reverse order
+					  return CompareUtil.compareString(casteSubcasteO2, casteSubcasteO1);
 				  });
 				  break;
 			  case "lifestage":
 				  s_fieldName = "lifeStage";
-				  Collections.sort(results, new Comparator() {
-					  public int compare(Object o1, Object o2) {
-						  //A.log("compare(lifestage) o1:" + o1 + " o2:" + o2);
-						  if ("down".equals(sortOrder)) {
-							  Object t = o1;
-							  o1 = o2;
-							  o2 = t;
-						  }
-						  // 2nd one first because reverse order
-						  return CompareUtil.compareString(((ResultItem) o2).getLifeStage(), ((ResultItem) o1).getLifeStage());
+				  results.sort((o1, o2) -> {
+					  //A.log("compare(lifestage) o1:" + o1 + " o2:" + o2);
+					  if ("down".equals(sortOrder)) {
+						  ResultItem t = o1;
+						  o1 = o2;
+						  o2 = t;
 					  }
+					  // 2nd one first because reverse order
+					  return CompareUtil.compareString(o2.getLifeStage(), o1.getLifeStage());
 				  });
 				  break;
 			  case "medium":
-				  Collections.sort(results, new Comparator() {
-					  public int compare(Object o1, Object o2) {
-						  if ("down".equals(sortOrder)) {
-							  Object t = o1;
-							  o1 = o2;
-							  o2 = t;
-						  }
-						  a1 = ((ResultItem) o1).getMedium();
-						  a2 = ((ResultItem) o2).getMedium();
-
-						  Integer returnVal = compareVals(a1, a2);
-						  return returnVal;
+				  results.sort((o1, o2) -> {
+					  if ("down".equals(sortOrder)) {
+						  ResultItem t = o1;
+						  o1 = o2;
+						  o2 = t;
 					  }
+					  a1 = o1.getMedium();
+					  a2 = o2.getMedium();
+
+					  return compareVals(a1, a2);
 				  });
 				  break;
 			  case "specimennotes":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -288,7 +250,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "taxonname":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -300,7 +262,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "ownedby":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -312,7 +274,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "habitat":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -325,7 +287,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "microhabitat":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -338,7 +300,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "collectedby":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -351,7 +313,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  break;
 			  case "museumCode":
 			  case "museum":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -363,7 +325,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "method":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -375,7 +337,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "dna":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -388,7 +350,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "determinedby":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -400,7 +362,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "databy":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -412,7 +374,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "datecollected":    // These could be backwards to sort backwards
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -424,7 +386,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "collection":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -436,7 +398,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "elevation":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -449,7 +411,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "latitude":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -462,7 +424,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "longitude":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -475,7 +437,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "created":    // These could be backwards to sort backwards
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;
@@ -487,7 +449,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 				  });
 				  break;
 			  case "uploadid":
-				  Collections.sort(results, new Comparator() {
+				  results.sort(new Comparator() {
 					  public int compare(Object o1, Object o2) {
 						  if ("down".equals(sortOrder)) {
 							  Object t = o1;

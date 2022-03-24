@@ -633,18 +633,12 @@ To Do
         
         AdvancedSearchResults results = new AdvancedSearchResults();
         results.setRset(searchResults);
-        results.setResultsWithFilters(new ArrayList());
+        results.setResultsWithFilters(new ArrayList<>());
 
         //s_log.info("doAdvancedSearch() with filters:" + myFilters + " it has " + results.getSpecimens().size() + " specimens");
 
-        if (results != null) {
-
-          ArrayList<ResultItem> searchSpeciesList = results.getSpeciesList();
-
-          return searchSpeciesList;   
-        }
-        return null;
-    }    
+      return results.getSpeciesList();
+    }
     
 }
 
