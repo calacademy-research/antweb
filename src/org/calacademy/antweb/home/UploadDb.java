@@ -637,7 +637,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
       return c;
     }
 
-    private static ArrayList<String> s_extantIndetSubfamilies = null;
+    private static ArrayList<String> s_extantIndetSubfamilies;
     public ArrayList<String> getExtantIndetSubfamilies() throws SQLException {
       if (s_extantIndetSubfamilies == null) {
         s_extantIndetSubfamilies = new ArrayList<>();

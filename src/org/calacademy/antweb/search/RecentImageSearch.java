@@ -16,11 +16,11 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
 
     private static Log s_log = LogFactory.getLog(RecentImageSearch.class);
 
-    private String daysAgo = null;
-    private String numToShow = null;
-    protected String group = null;
-    protected String fromDate = null;
-    protected String toDate = null;
+    private String daysAgo;
+    private String numToShow;
+    protected String group;
+    protected String fromDate;
+    protected String toDate;
     
     protected ArrayList<ResultItem> createInitialResults() {
 
@@ -95,15 +95,15 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
     }
     
     class ImageGroup {
-      String taxonName = null;
-      String subfamily = null;
-      String genus = null;
-      String species = null;
-      String subspecies = null;
-      String shotType = null;
-      String shotNumber = null;
-      String uploadDate = null;
-      String groupName = null;      
+      String taxonName;
+      String subfamily;
+      String genus;
+      String species;
+      String subspecies;
+      String shotType;
+      String shotNumber;
+      String uploadDate;
+      String groupName;
     }
     
     public void setResults() {

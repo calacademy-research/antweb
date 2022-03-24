@@ -17,8 +17,8 @@ public class GroupMgr {
 
     private static final Log s_log = LogFactory.getLog(GroupMgr.class);
 
-    private static ArrayList<Group> s_groups = null;
-    private static ArrayList<Group> s_uploadGroups = null;
+    private static ArrayList<Group> s_groups;
+    private static ArrayList<Group> s_uploadGroups;
         
     public static void populate(Connection connection) {
       populate(connection, false);

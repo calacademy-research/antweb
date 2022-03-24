@@ -13,7 +13,7 @@ public class MuseumMgr {
 
     private static final Log s_log = LogFactory.getLog(MuseumMgr.class);
 
-    private static ArrayList<Museum> s_museums = null;
+    private static ArrayList<Museum> s_museums;
         
     public static void populate(Connection connection) throws SQLException {
       populate(connection, false);

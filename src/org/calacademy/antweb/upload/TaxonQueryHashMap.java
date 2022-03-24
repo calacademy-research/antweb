@@ -9,7 +9,7 @@ class TaxonQueryHashMap extends HashMap {
   
   private static final Log s_log = LogFactory.getLog(TaxonQueryHashMap.class);
       
-  private String source = null;
+  private String source;
   
   TaxonQueryHashMap() {
     super();

@@ -10,12 +10,12 @@ public class UploadLine {
     private static Log s_log = LogFactory.getLog(UploadLine.class);
 
     private int id = 0;
-    private String fileName = null;
+    private String fileName;
 	private int lineNum = 0;
 	private int displayLineNum = 0;
 	private int groupId = 0;
-	private String line = null;
-	private Date created = null;
+	private String line;
+	private Date created;
 	
   
     public int getId() {

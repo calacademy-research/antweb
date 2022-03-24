@@ -14,7 +14,7 @@ public class ProjTaxon extends OverviewTaxon {
     private static Log s_log = LogFactory.getLog(ProjTaxon.class);
 
     private int rev = 0;
-    private String source = null;
+    private String source;
     //private boolean isIntroduced = false;   
         
     private String projectName;

@@ -24,7 +24,7 @@ public class AntwebUpload {
      * Extended by SpecimenUpload, and SpeciesListUpload
      */
 
-    private Connection m_connection = null;
+    private Connection m_connection;
     private static final Log s_log = LogFactory.getLog(AntwebUpload.class);
     private static final String currentDateFunction = "now()";  // for mysql
     String[] dateHeaderString = {"spcmrecorddate", "spcmrecchangeddate",
@@ -51,18 +51,18 @@ public class AntwebUpload {
 
 
     private final TaxonQueryHashMap taxonQueryHashMap = new TaxonQueryHashMap();
-    private String lastTaxonName = null;
+    private String lastTaxonName;
 
     private int countUploaded = 0;
     private int uploadSkipped = 0;
 
     ArrayList<String> goodTaxonHeaders = new ArrayList<>(Arrays.asList(taxonHeaders));
 
-    UploadDb uploadDb = null;
+    UploadDb uploadDb;
 
     private final DescCounter m_descCounter = new DescCounter();
 
-    private UploadDetails uploadDetails = null;
+    private UploadDetails uploadDetails;
 
     public static int saveSpecimenCount = 0;
 

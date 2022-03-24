@@ -24,7 +24,7 @@ public class UploadForm extends ActionForm {
   protected String whole = "false";
   protected String encoding;  
   protected String outputFileName = "";
-  protected String successKey = null;
+  protected String successKey;
   protected String action;
   private String specimenUploadType = "full";
   protected String recrawl = "true";

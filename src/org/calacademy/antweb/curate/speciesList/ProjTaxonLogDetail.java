@@ -10,7 +10,7 @@ public class ProjTaxonLogDetail extends ProjTaxon implements Comparable<ProjTaxo
     private static Log s_log = LogFactory.getLog(ProjTaxonLogDetail.class);
 
     private int logId = 0;
-    private Taxon taxon = null;
+    private Taxon taxon;
 
     public ProjTaxonLogDetail() {
     }

@@ -21,10 +21,10 @@ import org.calacademy.antweb.util.*;
 public final class SlideShowForm extends ActionForm {
 
 
-    private String rank = null;
-    private String name = null;
-    private String index = null;
-    private String slideShow = null;
+    private String rank;
+    private String name;
+    private String index;
+    private String slideShow;
 
 	public String getSlideShow() {
 	return (this.slideShow);

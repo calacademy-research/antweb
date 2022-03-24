@@ -15,7 +15,7 @@ public final class TaxonHash extends Hashtable<String, Object> {
     public TaxonHash() {
     }
  
-    public String logLevel = null;
+    public String logLevel;
     
     public void setLogLevel(String logLevel) {
       this.logLevel = logLevel;

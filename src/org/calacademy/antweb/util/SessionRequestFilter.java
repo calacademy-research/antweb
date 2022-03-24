@@ -200,7 +200,7 @@ public class SessionRequestFilter implements Filter {
         s_log.warn(AntwebSystem.getTopReport());
     }
        
-    public static Date s_initTime = null;
+    public static Date s_initTime;
     public static Date getInitTime() {
       return s_initTime;
     }

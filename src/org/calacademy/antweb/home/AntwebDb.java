@@ -26,7 +26,7 @@ public class AntwebDb {
     static int MAXLENGTH = 80;
     String currentDateFunction = "now()";
 
-    Connection m_connection = null;
+    Connection m_connection;
     
     AntwebDb() {
     }

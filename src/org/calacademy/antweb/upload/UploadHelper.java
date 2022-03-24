@@ -4,9 +4,9 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;
 
 public class UploadHelper {
-  static Group group = null;
-  static String source = null;
-  static UploadFile uploadFile = null;
+  static Group group;
+  static String source;
+  static UploadFile uploadFile;
           
   public static void init(UploadFile uploadFile, Group group) {
     setGroup(group);

@@ -71,7 +71,7 @@ public class Status {
       return statusArrayList;
     }    
     	
-    protected String value = null;
+    protected String value;
     private String currentValidName = "";
     
     public Status () {

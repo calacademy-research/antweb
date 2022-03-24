@@ -17,12 +17,12 @@ import org.calacademy.antweb.util.*;
 
 public class TaxaFromSearchForm extends SearchForm {
 
-	private String taxa[] = null;
-	private String project = null;
-	private String caste = null;
-	private String chosen[] = null;
-	private String resultRank = null;
-	private String output = null;
+	private String taxa[];
+	private String project;
+	private String caste;
+	private String chosen[];
+	private String resultRank;
+	private String output;
 
 
 	public String getProject() {

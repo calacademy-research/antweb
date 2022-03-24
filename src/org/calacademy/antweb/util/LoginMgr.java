@@ -19,8 +19,8 @@ public class LoginMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(LoginMgr.class);
 
-    private static ArrayList<Login> s_logins = null;
-    private static ArrayList<Curator> s_curators = null;
+    private static ArrayList<Login> s_logins;
+    private static ArrayList<Curator> s_curators;
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
       if (!forceReload && (s_logins != null)) return;      

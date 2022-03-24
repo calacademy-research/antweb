@@ -84,11 +84,11 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected String binomial = "";
     protected boolean fossil;
     protected boolean extant = false;
-    protected String source = null;
+    protected String source;
     protected int lineNum = 0;
-    protected String insertMethod = null;
-    protected Timestamp created = null;
-    protected String execTime = null;
+    protected String insertMethod;
+    protected Timestamp created;
+    protected String execTime;
     protected boolean isType = false;
     protected boolean isAntCat = false;
     protected boolean isPending = false;
@@ -112,26 +112,26 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected int holId;
     protected int groupId;
 
-    private String chartColor = null;
+    private String chartColor;
     
-    private String maleSpecimen = null;
-    private String workerSpecimen = null;
-    private String queenSpecimen = null;    
+    private String maleSpecimen;
+    private String workerSpecimen;
+    private String queenSpecimen;
 
     private String bioregionMap;  // only for genera
     private String introducedMap; // only for species
     
-    protected Vector<String> homonymAuthorDates = null;        
+    protected Vector<String> homonymAuthorDates;
     //private ArrayList<Project> projects = null;
-    private ArrayList<Country> countries = null;
-    private ArrayList<Bioregion> bioregions = null;
+    private ArrayList<Country> countries;
+    private ArrayList<Bioregion> bioregions;
     
     protected TaxonSet taxonSet;
     
-    private String uploadDate = null;  // Used on the specimenReport.jsp    
+    private String uploadDate;  // Used on the specimenReport.jsp
 
-    private transient ArrayList<String> countryList = null;
-    private transient ArrayList<String> adm1List = null;
+    private transient ArrayList<String> countryList;
+    private transient ArrayList<String> adm1List;
 
     public boolean equals(Object o) {
       String thisTaxonName = getTaxonName();
@@ -140,8 +140,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         return thisTaxonName.equals(thatTaxonName);
     }
     
-    protected String seeAlso = null;
-    protected String alsoDatabased = null;
+    protected String seeAlso;
+    protected String alsoDatabased;
 
     //private static String debugCode = null;
     private static String debugCode = "ponerinaethaumatomyrmex zeteki";
@@ -810,7 +810,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
      * just a get/set method with construction happening in the appropriate place.
      * First called from TaxonMgr.populate(TaxonMgr.java:43
      * */
-    private String taxonName = null;
+    private String taxonName;
     public String getTaxonName() {
 
         if (taxonName == null) {
@@ -2055,7 +2055,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         this.favoriteImagesProjectsStr = favoriteImagesProjectsStr;
     }   
 
-    private transient Integer specimenCount = null;
+    private transient Integer specimenCount;
     public void setSpecimenCount(Integer specimenCount) {
       this.specimenCount = specimenCount;
     }
@@ -2714,8 +2714,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
 
-    private String statusSetStr = null;
-    private String statusSetSize = null;
+    private String statusSetStr;
+    private String statusSetSize;
     
 	public String getStatusSetStr() {
 	    return statusSetStr;

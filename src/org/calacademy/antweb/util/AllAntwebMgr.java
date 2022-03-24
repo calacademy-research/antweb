@@ -13,7 +13,7 @@ public class AllAntwebMgr {
 
     private static final Log s_log = LogFactory.getLog(AllAntwebMgr.class);
 
-    private static HashMap<String, ProjTaxon> s_allAntwebMap = null;
+    private static HashMap<String, ProjTaxon> s_allAntwebMap;
         
     public static void populate(Connection connection) {
       populate(connection, false);

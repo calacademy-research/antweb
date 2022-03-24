@@ -73,7 +73,7 @@ public abstract class LocalityOverview extends Overview {
         this.mapImage = mapImage;
     }
 
-    private Map map = null;
+    private Map map;
     public Map getMap() {
         return map;
     }

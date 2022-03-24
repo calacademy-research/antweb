@@ -8,7 +8,7 @@ public class Copyright {
     private static Log s_log = LogFactory.getLog(Copyright.class);
 
     private int id;
-    private String copyright = null;
+    private String copyright;
     private int year = 0;
       
 

@@ -11,13 +11,13 @@ public class AntwikiTaxonCountry implements Comparable<AntwikiTaxonCountry> {
 
     private int id = 0;
     private int rev = 0; 
-    private String shortTaxonName = null;
-    private String originalTaxonName = null;
-    private String taxonName = null;
-    private String country = null;
+    private String shortTaxonName;
+    private String originalTaxonName;
+    private String taxonName;
+    private String country;
     private boolean isIntroduced = false;
     private Timestamp created;
-    private String projectName = null;
+    private String projectName;
     
     public AntwikiTaxonCountry() {
     }

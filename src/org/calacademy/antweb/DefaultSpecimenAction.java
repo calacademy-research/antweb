@@ -18,7 +18,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class DefaultSpecimenAction extends Action {
 
-    private static String s_taxonName = null;
+    private static String s_taxonName;
 
     private static Log s_log = LogFactory.getLog(DefaultSpecimenAction.class);
 

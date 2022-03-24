@@ -18,9 +18,9 @@ public class ProjectMgr {
 
     private static final Log s_log = LogFactory.getLog(ProjectMgr.class);
     
-    private static ArrayList<Project> s_globalProjects = null;
-    private static ArrayList<Project> s_subglobalProjects = null;
-    private static HashMap<String, Project> s_allProjectsHash = null;
+    private static ArrayList<Project> s_globalProjects;
+    private static ArrayList<Project> s_subglobalProjects;
+    private static HashMap<String, Project> s_allProjectsHash;
 
     public static void populate(Connection connection) {
       populate(connection, false);

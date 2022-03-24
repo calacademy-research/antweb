@@ -25,7 +25,7 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
     protected static Log s_log = LogFactory.getLog(AdvancedSearchForm.class);
 
     //Search parameters common to all search types
-    String types = null;
+    String types;
     
     //Search parameters common to basic searches
     String name = "";
@@ -60,52 +60,52 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
 
     String adm2SearchType = "equals";
 
-    String locatedAt = null;
-    String project = null;
-    String country = null;
+    String locatedAt;
+    String project;
+    String country;
 
     int geolocaleId = 0;
 
-    String adm1 = null;    // was province
-    String adm2 = null;   // was county
-    String[] adm2s = null;  // was counties    
-    String bioregion = null;
+    String adm1;    // was province
+    String adm2;   // was county
+    String[] adm2s;  // was counties
+    String bioregion;
 
-    String typeDesignation = null;
-    String localityName = null;
-    String localityCode = null;
-    String collectionCode = null;
-    String specimenCode = null;
+    String typeDesignation;
+    String localityName;
+    String localityCode;
+    String collectionCode;
+    String specimenCode;
 
-    String habitat = null;
-    String method = null;
-    String microhabitat = null;
-    String ownedBy = null;
-	String collectedBy = null;
-	String museumCode = null;
+    String habitat;
+    String method;
+    String microhabitat;
+    String ownedBy;
+	String collectedBy;
+	String museumCode;
 
-	String caste = null;
-	String casteSearchType = null;
-	String subcaste = null;
-	String subcasteSearchType = null;
-	String lifeStage = null;
-	String lifeStageSearchType = null;
-	String medium = null;
+	String caste;
+	String casteSearchType;
+	String subcaste;
+	String subcasteSearchType;
+	String lifeStage;
+	String lifeStageSearchType;
+	String medium;
 	String mediumSearchType = "equals";
-	String specimenNotes = null;
+	String specimenNotes;
 	String specimenNotesSearchType = "equals";
-	String dnaExtractionNotes = null;
+	String dnaExtractionNotes;
 	String dnaExtractionNotesSearchType = "equals";
 	
-	String elevation = null;
-	String elevationSearchType = null;
-	String dateCollected = null;
-	String dateCollectedSearchType = null;
-	String validNames = null;
-	String statusSet = null;
+	String elevation;
+	String elevationSearchType;
+	String dateCollected;
+	String dateCollectedSearchType;
+	String validNames;
+	String statusSet;
 
-	String created = null;
-	String createdSearchType = null;	
+	String created;
+	String createdSearchType;
 
     String groupName;
 

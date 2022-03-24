@@ -10,8 +10,8 @@ public class CommonNames {
 
   private static Log s_log = LogFactory.getLog(CommonNames.class);
   private static boolean isInitialized = false;
-  private static HashMap<String, String> nameMap = null;
-  private static ArrayList<String> namesList = null;   
+  private static HashMap<String, String> nameMap;
+  private static ArrayList<String> namesList;
 
   public static void init() {
     isInitialized = true;

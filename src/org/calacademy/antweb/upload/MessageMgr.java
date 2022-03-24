@@ -58,13 +58,13 @@ public class MessageMgr {
     }
 
 
-    public static String s_message = null;
+    public static String s_message;
     // This is for a show stopper.  Bad column for instance.
     public void addMessage(String message) {
       s_message = message;
     }
     
-    private String messageStr = null;
+    private String messageStr;
     public String getMessageStr() {
       return messageStr;
     }
@@ -361,11 +361,11 @@ public class MessageMgr {
     class Test {
       boolean isPassed = true;
       int addCount = 0;
-      Group group = null;
-      String key = null;
-      String type = null;
-      String heading = null;
-      String flag = null;
+      Group group;
+      String key;
+      String type;
+      String heading;
+      String flag;
 
       String getFlag() { return flag; }
       int count = 0;

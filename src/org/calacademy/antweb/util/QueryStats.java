@@ -15,7 +15,7 @@ public class QueryStats {
     private long maxMillis = 0;
     private long minMillis = 0;
     private long minMaxDiff = 0;
-    private Date maxMillisTimestamp = null;
+    private Date maxMillisTimestamp;
     private long totalMillis = 0;
 
 

@@ -19,7 +19,7 @@ public class Curator extends Login {
       // The total number of images uploaded.    
       
     private int descEditCount = 0;
-    private Upload lastUpload = null;
+    private Upload lastUpload;
     
     public String getLink() {
       return  "<a href='" + AntwebProps.getDomainApp() + "/curator.do?id=" + getId() + "'>" + getDisplayName() + "</a>";

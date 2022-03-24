@@ -81,7 +81,7 @@ public final class DbStatusAction extends Action {
         return mySqlProcessListHtml;
     }
 
-    private static Connection connection = null;
+    private static Connection connection;
 
     public boolean holdOpenConnection(HttpServletRequest request, HttpServletResponse response) {
         // This should only be done to test connection expiration...

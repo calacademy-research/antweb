@@ -7,7 +7,7 @@ public final class SearchParameters extends AdvancedSearchForm {
 
     private static Log s_log = LogFactory.getLog(SearchParameters.class);
     
-    String daysAgo = null;
+    String daysAgo;
     String numToShow;
     String fromDate, toDate;
     //String group;

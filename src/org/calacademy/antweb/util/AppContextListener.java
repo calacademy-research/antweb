@@ -30,7 +30,7 @@ public final class AppContextListener
     
     public AppContextListener() {}
      
-    private CacheTask cacheTask = null; 
+    private CacheTask cacheTask;
      
     public void contextDestroyed(ServletContextEvent event)
     {

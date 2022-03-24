@@ -82,7 +82,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
     ArrayList dateHeaders = new ArrayList(Arrays.asList(dateHeaderString));
 
-    SpeciesListUploadDb m_speciesListUploadDb = null;
+    SpeciesListUploadDb m_speciesListUploadDb;
     private int totalTaxonCountryPrimaryKeyViolations = 0;
     private int totalFossils = 0; 
     private int totalNotFossils = 0;   
@@ -172,7 +172,7 @@ public class SpeciesListUpload extends AntwebUpload {
         return uploadDetails;
     }
 
-    String validateMessage = null;
+    String validateMessage;
     public void setValidateMessage(String message) {
         validateMessage = message;
     }

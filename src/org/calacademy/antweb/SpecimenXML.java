@@ -20,7 +20,7 @@ public class SpecimenXML extends DefaultHandler {
     private static final Log s_log = LogFactory.getLog(SpecimenXML.class);
 
     private final Hashtable<String, String> theHash = new Hashtable<>();
-    private String currentElement = null;
+    private String currentElement;
     private SAXParserFactory spf;
     private SAXParser saxParser;
 

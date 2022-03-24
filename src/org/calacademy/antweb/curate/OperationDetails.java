@@ -14,11 +14,11 @@ public class OperationDetails {
 
     private static Log s_log = LogFactory.getLog(OperationDetails.class);
 
-    Date startTime = null;
-    HttpServletRequest request = null;
-    String operation = null;
-    String message = null;
-    private String forwardPage = null;
+    Date startTime;
+    HttpServletRequest request;
+    String operation;
+    String message;
+    private String forwardPage;
     
     public OperationDetails() {     
       this.operation = "undefined";

@@ -14,7 +14,7 @@ public class Homonym extends Taxon implements Serializable {
 
     private static Log s_log = LogFactory.getLog(Homonym.class);
 
-    private Taxon seniorHomonym = null;
+    private Taxon seniorHomonym;
     
 
     public void finishInstance(Connection connection) throws SQLException {

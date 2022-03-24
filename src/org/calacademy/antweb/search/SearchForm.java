@@ -23,9 +23,9 @@ public class SearchForm extends ActionForm {
     private String searchType = "contains";
     private String name = "";
     private String taxonName = "";
-    private String types = null;
-    public String imagesOnly = null;
-    private String project = null;
+    private String types;
+    public String imagesOnly;
+    private String project;
     private int geolocaleId = 0;
 
     public String getSearchType() {

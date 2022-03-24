@@ -13,7 +13,7 @@ import org.calacademy.antweb.util.*;
 public class SearchDb {
     private static Log s_log = LogFactory.getLog(SearchDb.class);        
 
-    private Connection connection = null;
+    private Connection connection;
     
     public SearchDb(Connection connection) {
       this.connection = connection;

@@ -15,11 +15,11 @@ public class DescEditSearch extends GenericSearch implements Serializable {
 
     private static Log s_log = LogFactory.getLog(DescEditSearch.class);
 
-    private String daysAgo = null;
-    private String numToShow = null;
-    protected String groupName = null;
-    protected String fromDate = null;
-    protected String toDate = null;
+    private String daysAgo;
+    private String numToShow;
+    protected String groupName;
+    protected String fromDate;
+    protected String toDate;
     
     protected ArrayList<ResultItem> createInitialResults() {
 

@@ -737,8 +737,8 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
       return retVal + " deleteGeolocaleTaxaWithoutTaxon. ";
     }
 
-    private HashSet<String> s_queryInsertGovernor = null;
-    private HashSet<String> s_queryUpdateGovernor = null;
+    private HashSet<String> s_queryInsertGovernor;
+    private HashSet<String> s_queryUpdateGovernor;
     public static int s_updateCount = 0;
     private static int s_insertCount = 0;
     private static int s_constraintCount = 0;

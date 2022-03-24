@@ -32,9 +32,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
     String currentDateFunction = "now()";  // for mysql 
 
-    SpecimenUploadDb m_specimenUploadDb = null;
+    SpecimenUploadDb m_specimenUploadDb;
 
-    private ArrayList<String> m_headerArrayList = null;
+    private ArrayList<String> m_headerArrayList;
 
     private final HashSet<String> taxonomyHeaders = new HashSet<>(Arrays.asList(
             "kingdom_name", "phylum_name", "class_name", "order_name", "specimencode", "family", "subfamily", "tribe",
@@ -665,7 +665,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
 
 	private static int s_countryOutOfBounds = 0;
-	private static String s_withinBoundsCountry = null;
+	private static String s_withinBoundsCountry;
 	private static int s_withinBoundsCountryCount = 0;
 	private static int s_lastCountryCount = 0;
 
@@ -769,7 +769,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
 
 	private static int s_adm1OutOfBounds = 0;
-	private static String s_withinBoundsAdm1 = null;
+	private static String s_withinBoundsAdm1;
 	private static int s_withinBoundsAdm1Count = 0;
 	private static int s_lastAdm1Count = 0;
 

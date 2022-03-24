@@ -109,7 +109,7 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
 	
 	private int uploadId;
 	
-	public static String s_query = null;
+	public static String s_query;
 	    
     protected ArrayList<ResultItem> createInitialResults() throws SearchException, SQLException {
 

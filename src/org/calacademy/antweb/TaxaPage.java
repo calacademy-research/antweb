@@ -26,7 +26,7 @@ public class TaxaPage implements Serializable {
 	private int childrenCount;
 	private String pluralRank;
 
-	private HttpServletRequest request = null;
+	private HttpServletRequest request;
 
     private Overview overview;
 
@@ -36,8 +36,8 @@ public class TaxaPage implements Serializable {
 	public boolean isWithSpecimen() { return isWithSpecimen; }
 
 
-    private String statusSetStr = null;
-    private String statusSetSize = null;
+    private String statusSetStr;
+    private String statusSetSize;
 
 	public int getChildrenCount() {
 		if (children != null) {

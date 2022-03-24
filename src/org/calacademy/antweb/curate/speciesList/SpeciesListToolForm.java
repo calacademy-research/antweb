@@ -18,21 +18,21 @@ public class SpeciesListToolForm extends AdvancedSearchForm {
     
     private boolean isFreshen = false;
     
-	private String taxa[] = null;
-	private String chosen1[] = null;    
-	private String chosen2[] = null;    
-	private String chosen3[] = null;  
+	private String taxa[];
+	private String chosen1[];
+	private String chosen2[];
+	private String chosen3[];
 
-	private String speciesListName = null;
+	private String speciesListName;
 	
-	private String mapSpeciesList1Name = null;
-	private String mapSpeciesList2Name = null;
-	private String mapSpeciesList3Name = null;
+	private String mapSpeciesList1Name;
+	private String mapSpeciesList2Name;
+	private String mapSpeciesList3Name;
 
-    private String doSearch = null;        
+    private String doSearch;
     
-	private String refSpeciesListType = null;    
-	private String refSpeciesListName = null;    
+	private String refSpeciesListType;
+	private String refSpeciesListName;
     private String displaySubfamily = "none";
     
     private int projLogId = 0;

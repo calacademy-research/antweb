@@ -20,9 +20,9 @@ public abstract class AntwebProps {
     public static String guiDefaultContent = "Add your content here";    
     
     private static boolean s_loadedResources = false;
-    private static ResourceBundle s_appResources = null;
-    private static ResourceBundle s_antwebResources = null;
-    private static ResourceBundle s_platformResources = null;
+    private static ResourceBundle s_appResources;
+    private static ResourceBundle s_antwebResources;
+    private static ResourceBundle s_platformResources;
 
     public static boolean loadResources() {
       //s_log.warn("loadResources()");
@@ -171,7 +171,7 @@ public abstract class AntwebProps {
     //was: public static String getInputFileHome() { return getWorkingDir(); }
 
     
-    private static String s_workingDir = null;
+    private static String s_workingDir;
     public static String getWorkingDir() {
         if (s_workingDir != null) return s_workingDir;
 
@@ -215,7 +215,7 @@ public abstract class AntwebProps {
 	    return rev;
 	}
 
-    private static String s_imgDomainApp = null;
+    private static String s_imgDomainApp;
     public static String getImgDomainApp() {
         if (s_imgDomainApp != null) return s_imgDomainApp;
         /* Use this method to get something like: http://localhost/antweb or http://antweb.org   Not end with slash.  */
@@ -275,8 +275,8 @@ public abstract class AntwebProps {
         return protocol + "://" + domain;
     }
     
-    public static String s_domainApp = null;
-    public static String s_secureDomainApp = null;
+    public static String s_domainApp;
+    public static String s_secureDomainApp;
 
     public static String getInsecureDomainApp() {
         String domain = AntwebProps.getProp("site.domain");

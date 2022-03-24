@@ -14,7 +14,7 @@ public class UploadMgr {
 
   private static final Log s_log = LogFactory.getLog(UploadMgr.class);
   
-  private static ArrayList<Upload> s_uploads = null;
+  private static ArrayList<Upload> s_uploads;
 
     public static void populate(Connection connection, boolean forceReload) {
     

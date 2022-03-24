@@ -16,11 +16,11 @@ import org.apache.commons.logging.LogFactory;
 public class UploadFile {
     private static Log s_log = LogFactory.getLog(UploadFile.class);
 
-    String encoding = null;
-    String userAgent = null;
-    String base = null;
-    String fileName = null;
-    String root = null;
+    String encoding;
+    String userAgent;
+    String base;
+    String fileName;
+    String root;
     boolean isBioRegion = false;
     
     // Usually this file encapsulates details of an actual file uploaded.
@@ -33,7 +33,7 @@ public class UploadFile {
       isReload = reload; 
     }
 
-    private String backupFileName = null;
+    private String backupFileName;
 
 //    public static String oldProjectFileTail = "_authority.txt";
 //    public static String projectFileTail = "_project.txt";

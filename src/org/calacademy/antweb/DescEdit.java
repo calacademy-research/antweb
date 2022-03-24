@@ -11,19 +11,19 @@ public class DescEdit {
 
     private static Log s_log = LogFactory.getLog(DescEdit.class);
 
-    private String taxonName = null;
-    private String code = null;
-    private String title = null;
-    private String content = null;
+    private String taxonName;
+    private String code;
+    private String title;
+    private String content;
     private int editId = 0;
-    private Date created = null;
+    private Date created;
     private int taxonId = 0;
     private boolean isManualEntry = false;
     private int accessGroupId = 0;
     private int accessLoginId = 0;
-    private String prettyName = null;
+    private String prettyName;
     
-    private Login accessLogin = null;
+    private Login accessLogin;
     
     public DescEdit() {
     }

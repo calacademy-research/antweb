@@ -21,9 +21,9 @@ import org.calacademy.antweb.util.*;
 public final class ChooseComparisonForm extends ActionForm {
 
 
-    private String rank = null;
-    private String name = null;
-    private String[] chosen = null;
+    private String rank;
+    private String name;
+    private String[] chosen;
 
     public String[] getChosen() {
 	return (this.chosen);

@@ -78,10 +78,10 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     private boolean isIntroduced = false;
     //private boolean isEndemic = false;
     
-    private String museumCode = null;
-    private String backupFileName = null;
+    private String museumCode;
+    private String backupFileName;
 
-    private String defaultFor = null;
+    private String defaultFor;
 
     private Hashtable features = new Hashtable();
 
@@ -615,7 +615,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         this.hasImages = hasOne;
     }
 
-    private String detailXml = null;
+    private String detailXml;
 
     public String getDetailXml() {
         return detailXml;

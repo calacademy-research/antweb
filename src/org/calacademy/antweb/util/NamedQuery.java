@@ -8,17 +8,17 @@ public class NamedQuery  //implements Iterable
 
   private static final Log s_log = LogFactory.getLog(NamedQuery.class);
     
-  private String name = null;
-  private String param = null;
-  private String desc = null;
-  private String query = null;
-  private String headerHtml = null;
-  private String[] headerArray = null;
-  private String detailQuery = null;
-  private String result = null;
+  private String name;
+  private String param;
+  private String desc;
+  private String query;
+  private String headerHtml;
+  private String[] headerArray;
+  private String detailQuery;
+  private String result;
   private int rowCount = 0;
-  private String timePassedNote = null;
-  private String fileName = null;
+  private String timePassedNote;
+  private String fileName;
 
   NamedQuery(String name, String param, String fileName, String desc, String[] headerArray, String query) {
     this.name = name;

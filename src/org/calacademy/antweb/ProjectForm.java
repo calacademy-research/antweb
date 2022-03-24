@@ -12,7 +12,7 @@ public final class ProjectForm extends DescriptionForm {
 
     private static Log s_log = LogFactory.getLog(ProjectForm.class);
 
-    private String name = null;
+    private String name;
 
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         this.name = null;

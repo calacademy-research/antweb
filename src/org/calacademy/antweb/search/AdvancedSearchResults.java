@@ -130,7 +130,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 
 
 	public static int s_count = 0;
-	public static String s_fieldName = null;
+	public static String s_fieldName;
 	public static String a1 = "";
 	public static String a2 = "";
 

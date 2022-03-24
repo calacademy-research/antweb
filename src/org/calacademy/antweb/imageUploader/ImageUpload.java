@@ -16,15 +16,15 @@ public class ImageUpload {
     private int id = 0;
     private int curatorId = 0;
     private int groupId = 0;
-    private Date created = null;
+    private Date created;
     private int artistId = 0;
-    private Copyright copyright = null;
-    private String license = null;
+    private Copyright copyright;
+    private String license;
 
     private int imageCount = 0;
     private boolean complete = false;
     
-    private ArrayList<ImageUploaded> images = null; 
+    private ArrayList<ImageUploaded> images;
 
 
     public ImageUpload() { 

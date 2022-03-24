@@ -55,16 +55,16 @@ According to our new Display Map Counter (counting the number of times that the 
 
 public class Map {
 
-    private ArrayList<String> chosenList = null;
+    private ArrayList<String> chosenList;
     public static int displayMapCount = 0;
     private static HashMap<String, Integer> displayMapHash = new HashMap<>();
 
-    private String title = null;
-    private String subtitle = null;
+    private String title;
+    private String subtitle;
 
-    private String info = null;
+    private String info;
 
-    protected String staticMapParams = null;
+    protected String staticMapParams;
     protected ArrayList<Coordinate> points = new ArrayList<>();
     protected ArrayList mapSpecimens = new ArrayList();
 
@@ -95,7 +95,7 @@ public class Map {
         return collectionCode;
     }
 
-    private Date cached = null;
+    private Date cached;
 
     private static Log s_log = LogFactory.getLog(Map.class);
 

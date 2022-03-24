@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
 public class SearchIncludeFactory {
 
     private static Log s_log = LogFactory.getLog(SearchIncludeFactory.class);    
-    private Connection connection = null;
+    private Connection connection;
 
     public SearchIncludeFactory(Connection connection) {
        this.connection = connection;

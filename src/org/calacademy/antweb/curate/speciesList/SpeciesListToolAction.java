@@ -22,7 +22,7 @@ public class SpeciesListToolAction extends SpeciesListSuperAction {
 
   private static Log s_log = LogFactory.getLog(SpeciesListToolAction.class);
 
-  private static ArrayList<Geolocale> s_blackList = null;
+  private static ArrayList<Geolocale> s_blackList;
   
   private static final int s_maxSpeciesListSizeBeforeDisplaySubfamily = 1000;
   

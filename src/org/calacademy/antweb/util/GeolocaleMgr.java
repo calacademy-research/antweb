@@ -22,17 +22,17 @@ public class GeolocaleMgr extends Manager {
     private static final Log s_log = LogFactory.getLog(GeolocaleMgr.class);
 
     // This is a deep copy. Used for menus.
-    private static ArrayList<Region> s_regions = null;
+    private static ArrayList<Region> s_regions;
 
     // Used for most of the getGeolocale() methods.
-    private static ArrayList<Geolocale> s_geolocales = null;
+    private static ArrayList<Geolocale> s_geolocales;
 
     // For Taxon Name Search Autocomplete    
-    private static List<String> placeNamesList = null;
+    private static List<String> placeNamesList;
 
-    private static LinkedList<Adm1> adm1List = null;
+    private static LinkedList<Adm1> adm1List;
 
-    private static Map<String, Country> countryNameMap = null;
+    private static Map<String, Country> countryNameMap;
 
     /**
      * key is pair of adm1Name, countryName, value is the Adm1 object

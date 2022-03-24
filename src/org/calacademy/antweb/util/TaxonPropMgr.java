@@ -14,7 +14,7 @@ public abstract class TaxonPropMgr {
 
     private static final Log s_log = LogFactory.getLog(TaxonPropMgr.class);
 
-    private static HashMap<String, String> s_taxaIntroducedMaps = null;
+    private static HashMap<String, String> s_taxaIntroducedMaps;
 
     public static void populate(Connection connection) {
       populate(connection, false);

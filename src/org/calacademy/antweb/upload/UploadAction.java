@@ -40,7 +40,7 @@ public class UploadAction extends Action {
 	static int MAXLENGTH = 80;
 
 	//    private static boolean m_isInProcess = false;
-	private static String s_isInProcess = null;
+	private static String s_isInProcess;
 
 	// Due to architectural wankiness this is made public.  Easier than a redesign.
 	// Called from SpecimenListUpload.reloadSpeciesList(), etc...

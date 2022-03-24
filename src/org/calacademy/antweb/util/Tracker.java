@@ -30,7 +30,7 @@ public class Tracker implements Comparable<Tracker> {
     return this.target;
   }
 
-  private Date startTime = null;
+  private Date startTime;
   public void setStartTime(Date startTime) {
     this.startTime = startTime;
   }
@@ -46,7 +46,7 @@ public class Tracker implements Comparable<Tracker> {
     this.code = code;
   }    
   
-  private String requestString = null;
+  private String requestString;
   public void setRequestString(String str) {
     this.requestString = str;
   }

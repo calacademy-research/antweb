@@ -13,17 +13,17 @@ public final class OverviewForm extends DescriptionForm {
     private static Log s_log = LogFactory.getLog(OverviewForm.class);
 
     private int id = 0;
-    private String name = null;
-    private String title = null;    
-    private String code = null;
-    private String action = null;
-    private String country = null;
-    private String adm1Name = null;
-    private String countryName = null;
-    private String subregionName = null;
-    private String regionName = null;
+    private String name;
+    private String title;
+    private String code;
+    private String action;
+    private String country;
+    private String adm1Name;
+    private String countryName;
+    private String subregionName;
+    private String regionName;
 
-    private String placeName = null;
+    private String placeName;
 
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         this.name = null;

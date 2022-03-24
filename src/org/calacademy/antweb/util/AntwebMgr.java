@@ -475,7 +475,7 @@ public class AntwebMgr {
         return "" + getStartTime();
     }
        
-    public static Date s_startTime = null;        
+    public static Date s_startTime;
     public static Date getStartTime() {
       return s_startTime;
     }

@@ -27,11 +27,11 @@ public class Group implements Comparable {
     // Transient field
     //private Login login;   
     private Upload upload;
-    private Timestamp firstUpload = null;
-    private Timestamp lastUpload = null;
+    private Timestamp firstUpload;
+    private Timestamp lastUpload;
     private int uploadCount = 0;
-    private String curatorList = null;
-    private ArrayList<Curator> curators = null;
+    private String curatorList;
+    private ArrayList<Curator> curators;
 
 /* This can go away, along with Login.getGroups logic, when we stop getting the accessLogin
    from the accessGroup.

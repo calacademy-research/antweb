@@ -17,19 +17,19 @@ public class UploadDetails extends OperationDetails {
 
     private static Log s_log = LogFactory.getLog(UploadDetails.class);
 
-    MessageMgr messageMgr = null;
+    MessageMgr messageMgr;
 
     private boolean runStatistics = false;
 
-    public ArrayList preUploadStatistics = null;
-    public ArrayList postUploadStatistics = null;
+    public ArrayList preUploadStatistics;
+    public ArrayList postUploadStatistics;
 
     int countInsertedSpecies = 0;
     int countUpdatedSpecies = 0;
     int countInsertedSpecimens = 0;
 
-    private String logFileName = null;
-    private String backupDirFile = null;
+    private String logFileName;
+    private String backupDirFile;
 
 
     private boolean offerRunCountCrawlLink = false;
@@ -80,7 +80,7 @@ public class UploadDetails extends OperationDetails {
       return "upload";
     }
     
-    String action = null;
+    String action;
     public void setAction(String action) {
 
         this.action = action;
@@ -292,7 +292,7 @@ public class UploadDetails extends OperationDetails {
         }
     }
 
-    String messageLogFile = null;
+    String messageLogFile;
     public String getMessageLogFile() {
         return messageLogFile;
     }

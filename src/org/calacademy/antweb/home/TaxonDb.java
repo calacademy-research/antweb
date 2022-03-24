@@ -705,7 +705,7 @@ public class TaxonDb extends AntwebDb {
     }          
 
     public static int s_currentValidFetchCount = 0;
-    private static String s_lastCurrentValidTaxonName = null;
+    private static String s_lastCurrentValidTaxonName;
     public static String getCurrentValidTaxonName(Connection connection, String currentValidName) {
         if (currentValidName == null) return null;
         if (currentValidName.equals(s_lastCurrentValidTaxonName)) return s_lastCurrentValidTaxonName;

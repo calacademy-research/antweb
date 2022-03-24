@@ -11,13 +11,13 @@ import org.calacademy.antweb.util.*;
 
 public final class SpecimenImageForm extends ActionForm {
 
-    private String imageId = null; // This is a usable alternative.  Primary key.
-    private String code = null;    // This is the what we should use.
-    private String name = null;    // This is what we did use.  Backwards compatible
-    private String shot = null;
+    private String imageId; // This is a usable alternative.  Primary key.
+    private String code;    // This is the what we should use.
+    private String name;    // This is what we did use.  Backwards compatible
+    private String shot;
     private int number = 0;
-    private String artist = null;
-    private String action = null;
+    private String artist;
+    private String action;
     
     public String getImageId() {
 	    return (this.imageId);

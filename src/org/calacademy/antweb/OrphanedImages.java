@@ -14,7 +14,7 @@ public class OrphanedImages {
 
     private static final Log s_log = LogFactory.getLog(OrphanedImages.class);
 
-	Connection connection = null;
+	Connection connection;
 	ArrayList orphans = new ArrayList();
 	
 	public ArrayList getOrphans() {

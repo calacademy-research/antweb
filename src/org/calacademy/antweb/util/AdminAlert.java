@@ -16,8 +16,8 @@ public class AdminAlert {
     }
     
     private int id = 0;
-    private String alert = null;
-    private Timestamp created = null;
+    private String alert;
+    private Timestamp created;
     private boolean isAcknowledged = false;    
 
     public int getId() {

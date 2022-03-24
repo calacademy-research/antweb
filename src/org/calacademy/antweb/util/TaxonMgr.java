@@ -15,21 +15,21 @@ public class TaxonMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(TaxonMgr.class);
 
-    private static ArrayList<Taxon> s_subfamilies = null;
+    private static ArrayList<Taxon> s_subfamilies;
     
-    private static HashMap<String, Taxon> s_genera = null;
+    private static HashMap<String, Taxon> s_genera;
     
-    private static HashMap<String, Taxon> s_species = null;
+    private static HashMap<String, Taxon> s_species;
 
     // Shallow copies
-    private static HashMap<String, Taxon> s_taxa = null;
+    private static HashMap<String, Taxon> s_taxa;
 
     private static HashMap<String, ArrayList<String>> s_subgenusHashMap = new HashMap<>();
 
     //private static List<String> taxaNamesList = null;
-    private static List<String> prettyTaxaNamesList = null;
+    private static List<String> prettyTaxaNamesList;
 
-    private static Date s_populateTime = null;
+    private static Date s_populateTime;
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
         if (!forceReload && (s_subfamilies != null)) return;

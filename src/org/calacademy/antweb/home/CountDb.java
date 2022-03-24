@@ -54,7 +54,7 @@ public class CountDb extends AntwebDb {
     }
 
     // Useful for debugging? Code to execute and get results or a particular count.
-    private static String s_query = null;  // Just used for reporting.
+    private static String s_query;  // Just used for reporting.
     private static String s_report = "";
     private static boolean s_debug = true;
     

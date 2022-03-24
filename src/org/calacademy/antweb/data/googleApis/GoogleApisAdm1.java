@@ -14,7 +14,7 @@ public class GoogleApisAdm1 {
 
     public static final String source = "GoogleApis";
 
-    private static String json = null;
+    private static String json;
 
     private static String centroid;
     private static String boundingBox;

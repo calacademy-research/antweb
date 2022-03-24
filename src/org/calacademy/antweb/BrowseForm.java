@@ -26,27 +26,27 @@ public final class BrowseForm extends DescriptionForm {
     private static Log s_log = LogFactory.getLog(BrowseForm.class);
 
     private int taxonId = 0;
-    private String rank = null;
-    private String name = null;  // Be nice to get rid of this.  It differs depending on rank.  Take the guesswork out.
-    private String family = null;
-    private String subfamily = null;
-    private String genus = null;
-    private String subgenus = null;
-    private String species = null;
-    private String subspecies = null;    
-    private String code = null;
+    private String rank;
+    private String name;  // Be nice to get rid of this.  It differs depending on rank.  Take the guesswork out.
+    private String family;
+    private String subfamily;
+    private String genus;
+    private String subgenus;
+    private String species;
+    private String subspecies;
+    private String code;
 
-    private String project = null;
-    private String chosen[] = null;
+    private String project;
+    private String chosen[];
     private String childMaps = "";
     private String childImages = "";
-    private String taxonName = null;
+    private String taxonName;
     private String getCache = "";
     private int antcatId = 0;
-    private String statusSet = null;
-    private String status = null;
-    private String authorDate = null;
-    private String caste = null;
+    private String statusSet;
+    private String status;
+    private String authorDate;
+    private String caste;
     private boolean resetProject = false;
     private boolean local = false;
     private boolean global = false;

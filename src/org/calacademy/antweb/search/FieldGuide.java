@@ -18,12 +18,12 @@ public class FieldGuide {
   /* This version of FieldGuide.java does not utilize PDF or XML */
     private static Log s_log = LogFactory.getLog(FieldGuide.class);
 
-    private ArrayList<Taxon> taxa = null;
-    protected String title = null;
-    protected Overview overview = null;
+    private ArrayList<Taxon> taxa;
+    protected String title;
+    protected Overview overview;
     //protected Project project = null;
-    protected String rank = null;
-    protected Extent extent = null;
+    protected String rank;
+    protected Extent extent;
     protected HashMap localities = new HashMap();
 
     private int MAX_MARKERS = 50;

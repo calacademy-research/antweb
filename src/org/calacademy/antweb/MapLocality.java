@@ -20,7 +20,7 @@ public class MapLocality {
 
     private static Log s_log = LogFactory.getLog(MapLocality.class);
 	
-	protected String staticMapParams = null;
+	protected String staticMapParams;
 	protected ArrayList points = new ArrayList();
 	protected ArrayList mapLocalities = new ArrayList();
 

@@ -14,11 +14,11 @@ public class DescEditImageUploadForm extends UploadForm {
 //  protected FormFile theFile2;
 //  protected String homePageDirectory = "";
  
-    private String rank = null;
-    private String name = null;
-    private String editField = null;
-    private String target = null;
-    private String contents = null;
+    private String rank;
+    private String name;
+    private String editField;
+    private String target;
+    private String contents;
     
     public String getRank() {
     return (this.rank);

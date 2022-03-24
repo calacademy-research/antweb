@@ -14,13 +14,13 @@ public class Profiler {
    query statistics there.  Also viewable in real time in the serverStatus page.
    */
 
-    protected static Date firstOfPeriodTime = null;
+    protected static Date firstOfPeriodTime;
 
     protected static HashMap<String, Profile> profiles = new HashMap<>();
 
     private static final Log s_log = LogFactory.getLog(Profiler.class);
 
-    private String slowestValue = null;
+    private String slowestValue;
 
     public static void profile(String key, Date startTime) {
       Profiler.profile(key, startTime, null);
@@ -79,7 +79,7 @@ class Profile {
     long totalTimePassed = 0;
     int count = 0;
     long maxTimePassed = 0;
-    String mostSlowValue = null;
+    String mostSlowValue;
 
     int getCount() {
       return count;

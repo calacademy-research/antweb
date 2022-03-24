@@ -26,10 +26,10 @@ public class SpecimenImage implements Serializable {
     protected int number;
     protected String highResJpgPath;
     protected String artist = "April Nobile";
-    protected Artist artistObj = null;
+    protected Artist artistObj;
     protected String date;
     protected String description;
-    protected String copyright = null;  // "California Academy of Sciences, 2000-2010";
+    protected String copyright;  // "California Academy of Sciences, 2000-2010";
     protected boolean hasTiff = false;
     private int groupId = 0;
     private int artistId = 0;

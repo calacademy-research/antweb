@@ -82,9 +82,9 @@ Or, if there are stmts and/or rsets...
 */
 
     static class DbRequest {
-      String name = null;
-      String queryString = null;
-      Date date = null;
+      String name;
+      String queryString;
+      Date date;
 
       DbRequest(String name, String queryString, Date date) {
         this.name = name;
@@ -399,7 +399,7 @@ Or, if there are stmts and/or rsets...
 
     static int MAXNUMBUSYCONNECTIONS = 100; // was 13;
     private static int MINUTES = 1000 * 60;
-    private static Date lastLog = null;
+    private static Date lastLog;
     
     public static boolean isServerBusy(DataSource dataSource, HttpServletRequest request)
       throws SQLException {

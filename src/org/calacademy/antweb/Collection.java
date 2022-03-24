@@ -18,7 +18,7 @@ public class Collection extends AdvancedSearchResults {
     private String microhabitat= "";
     private String method = "";
     private String collectedBy = "";
-    private Locality locality = null;
+    private Locality locality;
     protected String collectionNotes = "";
     private String dateCollectedStart = "";
     private String dateCollectedEnd = "";

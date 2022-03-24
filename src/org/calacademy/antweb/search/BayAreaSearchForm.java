@@ -18,7 +18,7 @@ import org.apache.struts.action.ActionMapping;
 
 public final class BayAreaSearchForm extends SearchForm {
 
-    private String[] adm2s = null;
+    private String[] adm2s;
     
     public ActionErrors validate(ActionMapping mapping,
     				HttpServletRequest request) {

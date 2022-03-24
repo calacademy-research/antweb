@@ -39,17 +39,17 @@ public class ImageUploaded {
   public static String backupDir = imagesDir + "backup/";
 
   private int id = 0;
-  private String fileName = null;  
-  private String code = null;  
-  private String shot = null;  
+  private String fileName;
+  private String code;
+  private String shot;
   private int number = 0;
-  private String ext = null;
-  private Date created = null;
+  private String ext;
+  private Date created;
   boolean reUploaded = false;
-  private String errorMessage = null;
+  private String errorMessage;
   boolean isSpecimenDataExists = false;
 
-  private ImageUpload imageUpload = null;
+  private ImageUpload imageUpload;
 
   public ImageUploaded() {
   }

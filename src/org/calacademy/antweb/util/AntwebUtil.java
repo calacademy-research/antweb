@@ -210,7 +210,7 @@ public abstract class AntwebUtil {
     return qualifiedFiles;
   }
 
-  private static ArrayList<Integer> s_uploadGroupList = null;
+  private static ArrayList<Integer> s_uploadGroupList;
   public static ArrayList<Integer> getUploadGroupList() {
     if (s_uploadGroupList != null) return s_uploadGroupList;
 

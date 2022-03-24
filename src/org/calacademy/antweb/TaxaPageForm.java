@@ -13,8 +13,8 @@ public final class TaxaPageForm extends ActionForm {
 
 // This class is not used.  Parameters are used.
 
-    private String rank = null;
-    private String caste = null;
+    private String rank;
+    private String caste;
 
     public String getCaste() {
     	return (this.caste);

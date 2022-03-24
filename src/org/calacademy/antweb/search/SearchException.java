@@ -2,7 +2,7 @@ package org.calacademy.antweb.search;
 
 public class SearchException extends Exception {
 
-  String message = null;
+  String message;
 
   public SearchException(String message) {
     setMessage(message);
