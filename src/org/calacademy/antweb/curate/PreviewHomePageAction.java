@@ -108,7 +108,7 @@ public final class PreviewHomePageAction extends Action {
         java.lang.Class thisClass;
         Object[] paramsObj = {};
         try {
-            Class params[] = {};
+            Class[] params = {};
             Method thisMethod;            
             method = "get" + format.capitalizeFirstLetter(slot);
             thisClass = Class.forName("org.calacademy.antweb.curate.HomePageForm");

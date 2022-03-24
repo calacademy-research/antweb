@@ -18,10 +18,10 @@ public class SpeciesListToolForm extends AdvancedSearchForm {
     
     private boolean isFreshen = false;
     
-	private String taxa[];
-	private String chosen1[];
-	private String chosen2[];
-	private String chosen3[];
+	private String[] taxa;
+	private String[] chosen1;
+	private String[] chosen2;
+	private String[] chosen3;
 
 	private String speciesListName;
 	

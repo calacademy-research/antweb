@@ -17,10 +17,10 @@ import org.calacademy.antweb.util.*;
 
 public class TaxaFromSearchForm extends SearchForm {
 
-	private String taxa[];
+	private String[] taxa;
 	private String project;
 	private String caste;
-	private String chosen[];
+	private String[] chosen;
 	private String resultRank;
 	private String output;
 

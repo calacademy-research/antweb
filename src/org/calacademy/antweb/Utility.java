@@ -454,7 +454,7 @@ public class Utility implements Serializable {
             
             // move the file out of that directory and give it the right name
             File dir = new File(tempDirName);
-            String dirListing[] = dir.list();
+            String[] dirListing = dir.list();
             s_log.info("copyAndUnzipFile() dir listing has length: " + dirListing.length);
             String fileName = "";
             for (String s : dirListing) {

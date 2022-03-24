@@ -106,7 +106,7 @@ public class SpecimenXML extends DefaultHandler {
         }
     }
 
-    public void characters(char buf[], int offset, int len) throws SAXException {
+    public void characters(char[] buf, int offset, int len) throws SAXException {
       String s = new String(buf, offset, len);
       if (theHash.containsKey(currentElement)) {
         s = (String) theHash.get(currentElement) + s;

@@ -37,7 +37,7 @@ public final class BrowseForm extends DescriptionForm {
     private String code;
 
     private String project;
-    private String chosen[];
+    private String[] chosen;
     private String childMaps = "";
     private String childImages = "";
     private String taxonName;

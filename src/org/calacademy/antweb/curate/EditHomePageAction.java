@@ -68,7 +68,7 @@ public final class EditHomePageAction extends Action {
 		Class thisClass;
 		try {
 			Class stringClass = Class.forName("java.lang.String");
-			Class params[] = {stringClass};
+			Class[] params = {stringClass};
 			
 			Method thisMethod;
 		
