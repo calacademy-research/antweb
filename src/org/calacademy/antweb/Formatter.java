@@ -2,6 +2,7 @@ package org.calacademy.antweb;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
 import java.util.Date;
 import java.util.Locale;
@@ -443,12 +444,7 @@ public class Formatter implements Serializable {
 	/* convert from internal Java String Format -> UTF-8 encoded HTML/JSP-Pages  */
 	public static String convertToUTF8(String s) {
 		String out = null;
-		try {
-			out = new String(s.getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-		    s_log.error("convertToUTF8() s:" + s + " exception:" + e);  // Mark added Jan 3, 2011 
-			return null;
-		}
+		out = new String(s.getBytes(StandardCharsets.UTF_8));
 		//if (AntwebProps.isDevMode()) s_log.info("convertToUtf8() original:" + s + " converted:" + out);
 		return out;
 	}

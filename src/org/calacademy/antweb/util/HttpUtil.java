@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import javax.servlet.http.*;
@@ -529,23 +530,15 @@ public abstract class HttpUtil {
  */
     public static String encode(String toEncode) {
         String encoded = null;
-        try {
-            // ADDED the utf8 below 20200216.
-            encoded = URLEncoder.encode(toEncode, "utf8");
-        } catch (UnsupportedEncodingException e) {
-            s_log.error("encode() e:" + e);
-        }
+        // ADDED the utf8 below 20200216.
+        encoded = URLEncoder.encode(toEncode, StandardCharsets.UTF_8);
         return encoded;
     }
 
     public static String decode(String toDecode) {
         String decoded = null;
-        try {
-            // ADDED the utf8 below 20200216.
-            decoded = URLDecoder.decode(toDecode, "utf8");
-        } catch (UnsupportedEncodingException e) {
-            s_log.error("decode() e:" + e);
-        }
+        // ADDED the utf8 below 20200216.
+        decoded = URLDecoder.decode(toDecode, StandardCharsets.UTF_8);
         return decoded;
     }
 
@@ -1367,7 +1360,7 @@ public abstract class HttpUtil {
 
       try {
         BufferedReader input = new BufferedReader(
-            new InputStreamReader(urlConn.getInputStream(), "UTF-8")); 
+            new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8));
         StringBuilder strB = new StringBuilder();
         String str;
         
@@ -1398,7 +1391,7 @@ public abstract class HttpUtil {
 
       try {
         BufferedReader input = new BufferedReader(
-            new InputStreamReader(urlConn.getInputStream(), "UTF-8")); 
+            new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8));
         String str;
         
         //int i = 0;
