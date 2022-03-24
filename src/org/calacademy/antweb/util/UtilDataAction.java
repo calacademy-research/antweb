@@ -76,8 +76,8 @@ public class UtilDataAction extends Action {
           List<String> needNothingInit = new ArrayList<>(Arrays.asList("fetchGoogleApisData", "delGoogleMapFunction", "genGoogleMapFunction", "delGoogleMapFunction", "genObjectMaps"
                   , "genGroupObjectMap", "genGroupObjectMaps", "updateGroupCounts", "updateGroupUploadStats", "exifData", "changeOwner", "changeOwnerAndPerms"
                   , "adminAlertTest", "populateBioregion", "siteWarning", "imageUtil"));
-          List<String> needLoginInit = new ArrayList<>(Arrays.asList("imageUtil"));
-          List<String> needTaxonInit = new ArrayList<>(Arrays.asList("worldantsReload"));
+          List<String> needLoginInit = new ArrayList<>(List.of("imageUtil"));
+          List<String> needTaxonInit = new ArrayList<>(List.of("worldantsReload"));
 
           if (needNothingInit.contains(action)) { 
             // do nothing.

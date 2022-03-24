@@ -64,7 +64,7 @@ public final class SaveGroupAction extends Action {
 // Use valueOf(String) to convert a string to an Integer object.
 
             //Integer adminLoginId = new Integer(form.getAdminLoginId());
-            Integer adminLoginId = Integer.valueOf(form.getAdminLoginId());
+            int adminLoginId = Integer.parseInt(form.getAdminLoginId());
 
             group.setAdminLoginId(adminLoginId);
             group.setAbbrev(form.getAbbrev());

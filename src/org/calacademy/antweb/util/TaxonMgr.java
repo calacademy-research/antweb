@@ -245,8 +245,10 @@ public class TaxonMgr extends Manager {
             boolean containsAll = true;
             for (String s : texts) {
                 //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
-                if (!taxonName.toLowerCase().contains(s)) containsAll = false;
-                if (!containsAll) break;
+                if (!taxonName.toLowerCase().contains(s)) {
+                    containsAll = false;
+                    break;
+                }
             }
             if (containsAll) {
                 prettyTaxaNamesSubset.add(taxonName);

@@ -2637,9 +2637,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     public ArrayList<Geolocale> getGeolocales() {
-      ArrayList<Geolocale> geolocales = new ArrayList<>();
-        geolocales.addAll(getCountries());
-      return geolocales;
+        return new ArrayList<>(getCountries());
     }
     
     // Used to make the Distribution List.  Ordered by bioregion.

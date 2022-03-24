@@ -48,8 +48,8 @@ public class LoginMgr extends Manager {
         LoginDb loginDb = new LoginDb(connection);
         s_curators = loginDb.getAllCurators();
 
-        ArrayList<Curator> tempList = new ArrayList<>();
-        tempList.addAll(s_curators);
+        // Why can't we loop through s_curators?
+        ArrayList<Curator> tempList = new ArrayList<>(s_curators);
 
         for (Curator curator : tempList) {
             loginDb.postInstantiate(curator);

@@ -203,13 +203,13 @@ public final class CompareResultsAction extends ResultsAction {
 				specimen = new Specimen(thisItem.getCode(), project, connection, true); // getImages! Needed?
 				//A.log("getSpecimenToCompare() specimen:" + specimen);
 
-				Integer chosenListGetCount = 0;
+				int chosenListGetCount = 0;
 				if (chosenList.size() > count) {
-				  chosenListGetCount = Integer.valueOf((String) chosenList.get(count));           
+				  chosenListGetCount = Integer.parseInt((String) chosenList.get(count));
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);
 				}
 				
-				specimenToCompare.put(specimen, Integer.valueOf(chosenListGetCount));  // was count
+				specimenToCompare.put(specimen, chosenListGetCount);  // was count
                   // A.log("getSpecimenToCompare() specimen:" + specimen + " count:" + count + " chosenList.getCount:" + chosenListGetCount + " specimenToCompare:" + specimenToCompare.size());
 				++count;      // was count++;              
 			}
@@ -265,13 +265,13 @@ public final class CompareResultsAction extends ResultsAction {
 				taxon.generateBrowserParams(project);
 				taxon.setImages(connection, project);
 
-				Integer chosenListGetCount = 0;
+				int chosenListGetCount = 0;
 				if (chosenList.size() > count) {
-				  chosenListGetCount = Integer.valueOf((String) chosenList.get(count));
+				  chosenListGetCount = Integer.parseInt((String) chosenList.get(count));
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);
 				}
 				
-				taxaToCompare.put(taxon, Integer.valueOf(chosenListGetCount));  // was count
+				taxaToCompare.put(taxon, chosenListGetCount);  // was count
 				if (AntwebProps.isDevMode()) s_log.info("getTaxaToCompare() taxon:" + taxon + " count:" + count + " chosenList.getCount:" + chosenListGetCount + " taxaToCompare:" + taxaToCompare.size());
 				++count;      // was count++;              
 			}
