@@ -141,9 +141,7 @@ public class AntwebUpload {
             //A.log("saveTaxon() dummyTaxon:" + dummyTaxon + " source:" + source + " taxonName:" + taxonName);
 
             if (dummyTaxon != null) {
-                if (isParent) {
-                    return 0; // Already exists. Great.
-                } else {
+                if (!isParent) {
                     //A.iLog(3, "saveTaxon() update taxonName:" + taxonName + " lineNum:" + lineNum, 1000);
 
                     // Unresolved junior homonyms from worldants are getting inserted (technically updated).
@@ -167,8 +165,9 @@ public class AntwebUpload {
                     //A.log("saveTaxon() dummyTaxon:" + dummyTaxon + " item:" + item + " table:" + table);
 
                     updateTaxon(item, table);
-                    return 0;
                 }
+                // if isParent, already exists. Great.
+                return 0;
             } else {
                 if (isParent) {
                     s_log.debug("saveTaxon() 1 parent doesn't exist rank:" + rank + " taxonName:" + taxonName + " so creating it.");
@@ -587,15 +586,15 @@ public class AntwebUpload {
                     // add to the Invalid Subfamily for Genus list. - to avoid duplicates
 
                     isValidSubfamilyForGenus = new HomonymDb(getConnection()).isValidSubfamilyForGenus(family, subfamily, genus);
-                    if (isValidSubfamilyForGenus) {
-                      String message = Taxon.displaySubfamilyGenus(subfamily, genus);
-                      getMessageMgr().addToMessages(MessageMgr.generaAreHomonyms, message);
+                      String message;
+                      if (isValidSubfamilyForGenus) {
+                          message = Taxon.displaySubfamilyGenus(subfamily, genus);
+                          getMessageMgr().addToMessages(MessageMgr.generaAreHomonyms, message);
+                      } else {
+                          message = Taxon.displaySubfamilyGenusLinkToGenus(subfamily, genus);
+                          getMessageMgr().addToMessages(MessageMgr.invalidSubfamilyForGenus, message);
+                      }
                       return 0;
-                    } else {
-                      String message = Taxon.displaySubfamilyGenusLinkToGenus(subfamily, genus);
-                      getMessageMgr().addToMessages(MessageMgr.invalidSubfamilyForGenus, message);
-                      return 0;
-                    }
                   }
 
                   if (status.isPassWorldAntsSpeciesCheck()) {             

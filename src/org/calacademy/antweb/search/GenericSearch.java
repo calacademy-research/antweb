@@ -670,11 +670,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                 operator = "!=";
                 break;
             case "contains":
-                operator = "like";
-                break;
             case "begins":
-                operator = "like";
-                break;
             case "ends":
                 operator = "like";
                 break;
@@ -693,26 +689,16 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         switch (searchType) {
             case "equals":
             case "equal":
-                leftPercent = "";
-                break;
             case "notEquals":
             case "notEqual":
+            case "begins":
+            case "greaterThanOrEqual":
+            case "lessThanOrEqual":
                 leftPercent = "";
                 break;
             case "contains":
-                leftPercent = "%";
-                break;
-            case "begins":
-                leftPercent = "";
-                break;
             case "ends":
                 leftPercent = "%";
-                break;
-            case "greaterThanOrEqual":
-                leftPercent = "";
-                break;
-            case "lessThanOrEqual":
-                leftPercent = "";
                 break;
         }
         return leftPercent;
@@ -723,26 +709,16 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         switch (searchType) {
             case "equals":
             case "equal":
-                rightPercent = "";
-                break;
             case "notEquals":
             case "notEqual":
+            case "ends":
+            case "greaterThanOrEqual":
+            case "lessThanOrEqual":
                 rightPercent = "";
                 break;
             case "contains":
-                rightPercent = "%";
-                break;
             case "begins":
                 rightPercent = "%";
-                break;
-            case "ends":
-                rightPercent = "";
-                break;
-            case "greaterThanOrEqual":
-                rightPercent = "";
-                break;
-            case "lessThanOrEqual":
-                rightPercent = "";
                 break;
         }
         return rightPercent;

@@ -657,8 +657,8 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         } finally {
           DBUtil.close(stmt, rset, "UploadDb.getExtantIndetSubfamilies()");
         }
-        return s_extantIndetSubfamilies;    
-      } else return s_extantIndetSubfamilies;
+      }
+        return s_extantIndetSubfamilies;
     }
     
     public String getAntwebSubfamily(String genus) 

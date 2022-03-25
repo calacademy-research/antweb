@@ -293,9 +293,7 @@ public final class Caste {
       if (casteNote.contains("ergatoid")
         || casteNote.contains("apterous")
          ) return "ergatoid";
-      if (casteNote.contains("winged")
-         ) return "alate";
-      return "alate";
+        return "alate";
     }    
     private static boolean isOther(String casteNote) {
         return casteNote.contains("intercaste")

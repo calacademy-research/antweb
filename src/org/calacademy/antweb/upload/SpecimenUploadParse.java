@@ -574,13 +574,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                   A.log("parseLine() flagged:" + code);
                 } */
 
-                  return errorMessage;
-
               } else {
                 errorMessage = "code Not Found In Line line:" + lineNum + " displayLine:" + LineNumMgr.getDisplayLineNum(lineNum);
                 getMessageMgr().addToMessages(MessageMgr.codeNotFoundInLine, "line:" + LineNumMgr.getDisplayLineNum(lineNum));
-                return errorMessage;
               }
+                return errorMessage;
             } else {
               specimenItem.put("taxon_name", taxonName);
               taxonItem.put("taxon_name", taxonName);            

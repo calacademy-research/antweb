@@ -737,8 +737,7 @@ public class UploadAction extends Action {
 		  // If the uploaded file is a zip file, then unzip it.  (Completed?)
 		  if (outputFileName2.contains(" ")) {
 			messageStr = "Space not allowed in uploaded zip filename.";
-			return new UploadDetails("uploadFile", messageStr, "message");
-			//request.setAttribute("message", "Space not allowed in uploaded zip filename.");
+			  //request.setAttribute("message", "Space not allowed in uploaded zip filename.");
 			//return mapping.findForward("message");
 		  } else {
 
@@ -752,11 +751,11 @@ public class UploadAction extends Action {
 
 			messageStr = "Your file has been uploaded and unzipped here:<br><br>"
 			  + "  &nbsp;&nbsp;&nbsp;<a href=\"" + url + "\">" + url + "</a>";
-			return new UploadDetails("uploadFile", messageStr, "message");
 
-			//request.setAttribute("message", messageStr);
+			  //request.setAttribute("message", messageStr);
 			//return mapping.findForward("message");
 		  }
+			return new UploadDetails("uploadFile", messageStr, "message");
 		}
 
 		String url = AntwebProps.getDomainApp() + "/" + dirFileName;

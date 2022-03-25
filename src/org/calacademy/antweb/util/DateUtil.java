@@ -260,12 +260,11 @@ public abstract class DateUtil {
           if (firstSpaceI > 0) {
             if (secondSpaceI < 0) {
               A.p("constructDateStr(" + dateStr + ") mo year");
-              returnDate = getDate(dateStr);
             } else {
               A.p("constructDateStr(" + dateStr + ") day mo year");
               // if mo > 12 error
-              returnDate = getDate(dateStr);
             }
+            returnDate = getDate(dateStr);
           }
           s_debugStep = 9;
         }

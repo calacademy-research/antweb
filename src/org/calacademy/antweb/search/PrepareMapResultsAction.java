@@ -55,11 +55,6 @@ Request objects:
         String forwardString = "failure";
         switch (resultRank) {
             case "specimen":
-                results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-                if (session.getAttribute("fullAdvancedSearchResults") != null)
-                    results.setResults((ArrayList) session.getAttribute("fullAdvancedSearchResults")); // added to fix session
-                forwardString = "advancedSearch";
-                break;
             case "locality":
                 results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
                 if (session.getAttribute("fullAdvancedSearchResults") != null)
