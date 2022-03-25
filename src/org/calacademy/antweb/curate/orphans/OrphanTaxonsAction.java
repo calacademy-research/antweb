@@ -75,7 +75,7 @@ public final class OrphanTaxonsAction extends Action {
                   uploadList.add("source:" + source + " lastUpload:" + max + " taxonCount:" + count + "");
 
                   Statement stmt2 = connection.createStatement();
-                  query = "select taxon_name from taxon where source = \'" + source + "\' and created < date_sub(\'" + max + "\', INTERVAL 1 DAY)";
+                  query = "select taxon_name from taxon where source = '" + source + "' and created < date_sub('" + max + "', INTERVAL 1 DAY)";
                   ResultSet rset2 = stmt2.executeQuery(query);
  
                   //s_log.warn("orphan() q:" + query);
@@ -122,7 +122,7 @@ public final class OrphanTaxonsAction extends Action {
               Date max = rset1.getTimestamp(1);
 
               Statement stmt2 = connection.createStatement();
-              query = "select taxon_name from taxon where source = \"" + source + "\" and created < date_sub(\'" + max + "\', INTERVAL 1 DAY)";
+              query = "select taxon_name from taxon where source = \"" + source + "\" and created < date_sub('" + max + "', INTERVAL 1 DAY)";
               ResultSet rset2 = stmt2.executeQuery(query);
  
               //s_log.warn("orphan() q:" + query);

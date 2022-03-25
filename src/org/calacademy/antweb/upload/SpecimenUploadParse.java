@@ -95,7 +95,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             for (String next : elements) {
                 String element = multipleSpaces.subst(next.trim(), " ");
 
-                element = Utility.customTrim(element, "\'");
+                element = Utility.customTrim(element, "'");
                 element = Utility.customTrim(element, "\"");
                 if (element == null) element = "";
 

@@ -176,14 +176,14 @@ public class Formatter implements Serializable {
 			RE startQuote = new RE("^\"+");
 			RE endQuote = new RE("\"+$");
 			RE multiQuote = new RE("\"\"");
-			RE multiApos = new RE("\'\'");
+			RE multiApos = new RE("''");
 			RE entityMultiQuote = new RE("&quot;&quot;");
 			RE entityMultiApos = new RE("&apos;&apos;");
 
 			newString = startQuote.subst(oldString, "");
 			newString = endQuote.subst(newString, "");
 			newString = multiQuote.subst(newString, "\"");
-			newString = multiApos.subst(newString, "\'");
+			newString = multiApos.subst(newString, "'");
 			newString = entityMultiQuote.subst(newString, "&quot;");
 			newString = entityMultiApos.subst(newString, "&apos;");
 		} catch (RESyntaxException e) {
@@ -197,7 +197,7 @@ public class Formatter implements Serializable {
 		theText = replace(theText, "&", "&amp;");
 		theText = replace(theText, "<", "&lt;");
 		theText = replace(theText, ">", "&gt;");
-		theText = replace(theText, "\'", "&apos;");
+		theText = replace(theText, "'", "&apos;");
 		theText = replace(theText, "\"", "&quot;");
 		theText = replace(theText, "/", "");
 

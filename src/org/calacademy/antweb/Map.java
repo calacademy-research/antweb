@@ -714,9 +714,9 @@ public class Map {
                   if (localityName != null) encodedLocalityName = HttpUtil.encode(localityName);
                   String encodedLocalityCode = null;
                   if (localityCode != null) encodedLocalityCode = HttpUtil.encode(localityCode);
-                  theString.append("new Array(\'" + encodedLocalityName + "\'),new Array(\'" + encodedLocalityCode + "\')");
+                  theString.append("new Array('" + encodedLocalityName + "'),new Array('" + encodedLocalityCode + "')");
               } else if (isCollection) {
-                  theString.append("new Array(\'" + collectionCode + "\')");
+                  theString.append("new Array('" + collectionCode + "')");
               } else if (isMapLocalities()) {
                 //A.slog("localityNames:" + getJavaScriptSpecimenArray(getMapSpecimens(), "localityname"));
                   theString.append(getJavaScriptSpecimenArray(getMapSpecimens(), "localityname"));
@@ -730,7 +730,7 @@ public class Map {
                   theString.append(",");
                   theString.append(getJavaScriptSpecimenArray(getMapSpecimens(), "images"));
               }
-              theString.append(", \'" + AntwebProps.getDomainApp() + "/'");
+              theString.append(", '" + AntwebProps.getDomainApp() + "/'");
 
               theString.append(");");
 

@@ -490,7 +490,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
                     String theElementBefore = element;
                     try {
-                        element = Utility.customTrim(element, "\'");
+                        element = Utility.customTrim(element, "'");
                         element = Utility.customTrim(element, "\"");
                     } catch (AntwebException e) {
                         s_log.warn("importSpeciesList() e:" + e.getMessage());
@@ -889,7 +889,7 @@ public class SpeciesListUpload extends AntwebUpload {
 		Statement stmt = null;
 		ResultSet rset = null;
         try {
-            query = "select root from project where project_name = \'" + project + "\'";
+            query = "select root from project where project_name = '" + project + "'";
             stmt = DBUtil.getStatement(getConnection(), "SpeciesListUpload.reloadSpeciesList()");
             rset = stmt.executeQuery(query);
             while (rset.next()) {

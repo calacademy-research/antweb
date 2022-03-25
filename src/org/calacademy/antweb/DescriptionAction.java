@@ -91,7 +91,7 @@ public class DescriptionAction extends Action {
             int rowCount = 0;
 
             // To avoid MySQLSyntaxErrorException
-            contents = contents.replaceAll("'", "\''");            
+            contents = contents.replaceAll("'", "''");
 
             String whereClause = " where object_key ='" + describable.getName() + "' and title ='" + title + "'"; // + "' and " + codeClause;
             
@@ -182,7 +182,7 @@ public class DescriptionAction extends Action {
             int rowCount = 0;
 
             // To avoid MySQLSyntaxErrorException
-            contents = contents.replaceAll("'", "\''");            
+            contents = contents.replaceAll("'", "''");
             
             String code = null;
             String codeClause = " code is null";

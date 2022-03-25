@@ -468,7 +468,7 @@ public class UploadAction extends Action {
 				//if (dir.equals("cal")) dir = "california";
 				String url = domainApp + "/speciesListDownload.do?projectName=" + downloadSpeciesList;
 				//String url = domainApp + "/web/speciesList/" + dir + "/" + downloadSpeciesList + UploadFile.getSpeciesListTail();  //"_project.txt";
-				String message = "<b>\'Right-click\' and \'Save Link As\' to download:</b> <a href=\"" + url + "\">" + url + "</a>";
+				String message = "<b>'Right-click' and 'Save Link As' to download:</b> <a href=\"" + url + "\">" + url + "</a>";
 				s_log.info(message);
 
 				request.setAttribute("message", message);
@@ -942,7 +942,7 @@ public class UploadAction extends Action {
 
         messageStr = "<h3>Parsed Bolton New Genera Catalog</h3><br><br>";
 
-        messageStr += "<b>\'Right-click\' and \'Save Link As\' to download:</b><br> <a href=\"" + fullUrl + "\">" + outputPath + "</a>";
+        messageStr += "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + fullUrl + "\">" + outputPath + "</a>";
 
 //http://localhost/antweb//tmp/parsedBoltonNGC.txt
 

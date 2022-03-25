@@ -473,10 +473,10 @@ public class ProjectDb extends AntwebDb {
             Statement stmt;
             stmt = getConnection().createStatement();
 
-            query = "delete from project where project_name = \'" + speciesList + "\'";
+            query = "delete from project where project_name = '" + speciesList + "'";
             stmt.executeUpdate(query);
 
-            query = "delete from proj_taxon where project_name = \'" + speciesList + "\'";
+            query = "delete from proj_taxon where project_name = '" + speciesList + "'";
             stmt.executeUpdate(query);
 
             stmt.close();

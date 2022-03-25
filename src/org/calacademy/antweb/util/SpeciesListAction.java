@@ -58,7 +58,7 @@ public final class SpeciesListAction extends Action {
                     if (dir.equals("mad")) dir = "madagascar";
                     if (dir.equals("cal")) dir = "california";
                     String url = AntwebProps.getDomainApp() + "/web/speciesList/" + dir + "/" + name + UploadFile.getSpeciesListTail();
-                    message = "<b>\'Right-click\' and \'Save Link As\' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
+                    message = "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
                     s_log.info(message);
                 }
                 request.setAttribute("message", message);
@@ -128,7 +128,7 @@ public final class SpeciesListAction extends Action {
             s_log.debug("createSpeciesListLink() fullPath:" + fullPath);
             AntwebUtil.writeFile(fullPath, data.toString());
         }
-        String message = "<b>\'Right-click\' and \'Save Link As\' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
+        String message = "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
         s_log.info(message);
         request.setAttribute("message", message);
         return mapping.findForward("message");
@@ -182,7 +182,7 @@ public final class SpeciesListAction extends Action {
         }
         
         String url = AntwebProps.getDomainApp() + dir + fileName;
-        String message = "<b>\'Right-click\' and \'Save Link As\' to download:</b><br>&nbsp;&nbsp;&nbsp;&nbsp; <a href=\"" + url + "\">" + url + "</a>";
+        String message = "<b>'Right-click' and 'Save Link As' to download:</b><br>&nbsp;&nbsp;&nbsp;&nbsp; <a href=\"" + url + "\">" + url + "</a>";
         s_log.info("getAllAntwebAnts() specimenCount:" + specimenCount);
         request.setAttribute("message", message);
         return mapping.findForward("message");

@@ -277,11 +277,11 @@ public class TypeSearch implements Serializable {
     sb.append(property);
     sb.append(" ");
     sb.append(operator);
-    sb.append(" \'");
+    sb.append(" '");
     sb.append(leftPercent);
     sb.append(value);
     sb.append(rightPercent);
-    sb.append("\'");
+    sb.append("'");
 
     return sb.toString();
   }

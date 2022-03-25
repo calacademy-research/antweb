@@ -803,11 +803,11 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                 sb.append(property);
                 sb.append(" ");
                 sb.append(operator);
-                sb.append(" \'");
+                sb.append(" '");
                 sb.append(leftPercent);
                 sb.append(AntFormatter.escapeQuotes(thisElement.trim()));
                 sb.append(rightPercent);
-                sb.append("\'");
+                sb.append("'");
                 if (thisElement.length() > 0 && loop < elements.size() - 1) {
                     sb.append(" or ");
                 }

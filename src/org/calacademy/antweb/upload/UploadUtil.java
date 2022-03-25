@@ -108,7 +108,7 @@ public class UploadUtil {
            cleanCode = Formatter.replace(cleanCode, "#", "");
            //A.log("cleanCode() code:" + code + " cleanCode:" + cleanCode);
         }
-        if (cleanCode.contains("\'")) cleanCode = Formatter.replace(cleanCode, "\'", "");
+        if (cleanCode.contains("'")) cleanCode = Formatter.replace(cleanCode, "'", "");
         if (cleanCode.contains(" ")) cleanCode = Formatter.replace(cleanCode, " ", "");
         //if (!Formatter.hasApha(code)) { }
       }
