@@ -64,7 +64,7 @@ public abstract class DateUtil {
     try {
       // handle date in the format like log4j: 2008-08-28 09:46:55
       DateFormat formatter = new SimpleDateFormat("yyyy-MM");
-      theDay = (Date) formatter.parse(dateStr);
+      theDay = formatter.parse(dateStr);
       //A.log("DateUtil.getFormatDateShort() theDayStr:" + dateStr + " theDay:" + theDay);
     } catch (ParseException e) {
       return null;
@@ -77,7 +77,7 @@ public abstract class DateUtil {
     try {
       // handle date in the format like log4j: 2008-08-28 09:46:55
       DateFormat formatter = new SimpleDateFormat("yyyy");
-      theDay = (Date) formatter.parse(dateStr);
+      theDay = formatter.parse(dateStr);
       //A.log("DateUtil.getFormatDateShortShort() theDayStr:" + dateStr + " theDay:" + theDay);
     } catch (ParseException e) {
       return null;

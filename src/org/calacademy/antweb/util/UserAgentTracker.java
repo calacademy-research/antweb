@@ -97,7 +97,7 @@ public class UserAgentTracker {
   }
 
   private static String getUserAgent(HttpServletRequest request) {
-      String userAgent = (String) request.getHeader("user-agent");
+      String userAgent = request.getHeader("user-agent");
       Login accessLogin = LoginMgr.getAccessLogin(request);
       if (accessLogin != null) userAgent += " (login:" + accessLogin.getName() + ")";
       return userAgent;  
@@ -118,9 +118,9 @@ public class UserAgentTracker {
         s_log.debug("KNOWN AGENT:" + userAgent);
         return true;
       }
-      Object countInteger = agentsMap.get(userAgent);
+      Integer countInteger = agentsMap.get(userAgent);
       if (countInteger == null) return false;
-      int count = (Integer) countInteger;
+      int count = countInteger;
       return count > OVERACTIVE;
   }
 
@@ -138,7 +138,7 @@ public class UserAgentTracker {
       Set<String> keySet = agentsMap.keySet();
       String report = "";
       for (String key : keySet) {
-        int count = (Integer) agentsMap.get(key);
+        int count = agentsMap.get(key);
         String star = "";
         if (key.contains("(login:")) star = "*";
         report += "\n" + key + star + ": " + count; 
@@ -154,7 +154,7 @@ public class UserAgentTracker {
       Map<Integer, String> countMap = new HashMap<>();
 
       for (String key : keySet) {
-        int count = (Integer) agentsMap.get(key);
+        int count = agentsMap.get(key);
         String star = "";
         if (knownAgentsSet.contains(key)) star = "<b><font color=red>X</font></b>";        
         if (key.contains("(login:")) star = "<b><font color=red><img src='" + AntwebProps.getDomainApp() + "/image/greenCheck.png'></font></b>";
@@ -181,7 +181,7 @@ public class UserAgentTracker {
       Set<String> keySet = agentsMap.keySet();
       String report = "";
       for (String key : keySet) {
-        int count = (Integer) agentsMap.get(key);
+        int count = agentsMap.get(key);
         if (count > OVERACTIVE) {
           report += "\n" + key + ": " + count; 
         }

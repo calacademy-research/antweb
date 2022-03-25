@@ -26,17 +26,17 @@ public final class StatisticsAction extends Action {
 
         ActionForward c = Check.login(request, mapping); if (c != null) return c;
 
-        String byUpload = (String) request.getParameter("byUpload");
-        String project = (String) request.getParameter("project");
-        String byProject = (String) request.getParameter("byProject");
-        String byBioregion = (String) request.getParameter("byBioregion");
-        String byMuseum = (String) request.getParameter("byMuseum");
-        String byGeolocale = (String) request.getParameter("byGeolocale");
-        String isLinkStr = (String) request.getParameter("isLink");
+        String byUpload = request.getParameter("byUpload");
+        String project = request.getParameter("project");
+        String byProject = request.getParameter("byProject");
+        String byBioregion = request.getParameter("byBioregion");
+        String byMuseum = request.getParameter("byMuseum");
+        String byGeolocale = request.getParameter("byGeolocale");
+        String isLinkStr = request.getParameter("isLink");
         boolean isLink = true;
         if ("false".equals(isLinkStr)) isLink = false;
         request.getSession().setAttribute("isLink", isLink);
-        String bodyStr = (String) request.getParameter("body");
+        String bodyStr = request.getParameter("body");
         boolean body = "true".equals(bodyStr);
 
         boolean success = false;

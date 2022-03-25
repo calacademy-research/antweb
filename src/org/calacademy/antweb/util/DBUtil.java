@@ -207,10 +207,10 @@ Or, if there are stmts and/or rsets...
     }
 
     public static void close(String name) {
-        java.util.Date startTime = (java.util.Date) s_stmtTimeMap.get(name);
+        java.util.Date startTime = s_stmtTimeMap.get(name);
         if (startTime == null) return;
         long millisSince = AntwebUtil.millisSince(startTime);
-        QueryStats queryStats = (QueryStats) s_queryStatsMap.get(name);
+        QueryStats queryStats = s_queryStatsMap.get(name);
         if (queryStats == null) queryStats = new QueryStats();
         queryStats.count(millisSince);
         s_queryStatsMap.put(name, queryStats);
@@ -254,7 +254,7 @@ Or, if there are stmts and/or rsets...
         //was: for (String name : s_queryStatsMap.keySet()) {
 
         for (String name : stringArray) {        
-          String stats = ((QueryStats) s_queryStatsMap.get(name)).log();
+          String stats = s_queryStatsMap.get(name).log();
           String logData = name + " " + stats;
           LogMgr.appendLog("queryStats.log", logData);      
         }

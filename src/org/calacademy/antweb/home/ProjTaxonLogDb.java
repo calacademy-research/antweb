@@ -385,9 +385,9 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 projTaxon = new ProjTaxon();
-                projTaxon.setProjectName((String) rset.getString("project_name"));
-                projTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                projTaxon.setSource((String) rset.getString("source"));
+                projTaxon.setProjectName(rset.getString("project_name"));
+                projTaxon.setTaxonName(rset.getString("taxon_name"));
+                projTaxon.setSource(rset.getString("source"));
                 projTaxon.setRev(rset.getInt("rev"));
             }
         } catch (SQLException e) {
@@ -424,9 +424,9 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 ProjTaxon projTaxon = new ProjTaxon();
-                projTaxon.setProjectName((String) rset.getString("project_name"));
-                projTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                projTaxon.setSource((String) rset.getString("source"));
+                projTaxon.setProjectName(rset.getString("project_name"));
+                projTaxon.setTaxonName(rset.getString("taxon_name"));
+                projTaxon.setSource(rset.getString("source"));
                 projTaxon.setRev(rset.getInt("rev"));
                 disputes.add(projTaxon);
             }

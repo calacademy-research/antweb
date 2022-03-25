@@ -219,7 +219,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         if (!otherColumnFound) {
                             //String heading = "<b>Unrecognized Column <font color=red>(ignored):</font></b>";
                             //getMessageMgr().addToMessageStrings(heading, (String) otherColumns.get(colIndex));
-                            getMessageMgr().addToMessages(MessageMgr.unrecognizedColumn, (String) otherColumns.get(colIndex));
+                            getMessageMgr().addToMessages(MessageMgr.unrecognizedColumn, otherColumns.get(colIndex));
                         }
                          
                         if (!element.equals("")) {
@@ -599,9 +599,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             specimenItem.put("access_login", accessLogin.getId());
 
             // put a subfamily in front of the TOC
-            if (taxonItem.containsKey("toc") && !"".equals((String) taxonItem.get("toc"))) {
-                if (taxonItem.containsKey("subfamily") && !"".equals((String) taxonItem.get("subfamily"))) {
-                    taxonItem.put("toc", (String) taxonItem.get("subfamily") + (String) taxonItem.get("toc"));
+            if (taxonItem.containsKey("toc") && !"".equals(taxonItem.get("toc"))) {
+                if (taxonItem.containsKey("subfamily") && !"".equals(taxonItem.get("subfamily"))) {
+                    taxonItem.put("toc", taxonItem.get("subfamily") + (String) taxonItem.get("toc"));
                 } else {
                     taxonItem.put("toc", null);
                 }
@@ -613,7 +613,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             
             String withinCountryBoundsMsg = isWithinCountryBounds(specimenItem);
 			if (withinCountryBoundsMsg != null) {
-				String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + (String) specimenItem.get("code") + "'>" + (String) specimenItem.get("code") + "</a>";
+				String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimenItem.get("code") + "'>" + specimenItem.get("code") + "</a>";
 				getMessageMgr().addToMessages(MessageMgr.latLonNotInCountryBounds, displayCode, withinCountryBoundsMsg);  	
                 specimenItem.put("flag", "red");
 			    specimenItem.put("issue", MessageMgr.latLonNotInCountryBounds);  							
@@ -621,7 +621,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				//if (AntwebProps.isCAS(group) || AntwebProps.isDavis(group)) {
 				  String withinAdm1BoundsMsg = isWithinAdm1Bounds(specimenItem);
 				  if (withinAdm1BoundsMsg != null) {
-					String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + (String) specimenItem.get("code") + "'>" + (String) specimenItem.get("code") + "</a>";
+					String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimenItem.get("code") + "'>" + specimenItem.get("code") + "</a>";
 					getMessageMgr().addToMessages(MessageMgr.latLonNotInAdm1Bounds, displayCode, withinAdm1BoundsMsg);  				
                     specimenItem.put("flag", "red");
    			        specimenItem.put("issue", MessageMgr.latLonNotInAdm1Bounds);  							

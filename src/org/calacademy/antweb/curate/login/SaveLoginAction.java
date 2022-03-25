@@ -153,7 +153,7 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
                     return mapping.findForward("failure");
                   }    
 		
-                  String newPassword = (String) form.getPassword();		
+                  String newPassword = form.getPassword();
                   loginDb.changePassword(login, newPassword);
                   return mapping.findForward("success");
           
@@ -203,8 +203,8 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
         ActionErrors errors = new ActionErrors();
         ActionMessage msg = null;
                       
-        String newPassword = (String) form.getPassword();
-        String newPassword2 = (String) form.getRetypePassword();
+        String newPassword = form.getPassword();
+        String newPassword2 = form.getRetypePassword();
 		
         if (newPassword == null || newPassword.length() == 0) {
             errors.add("error", new ActionError("error.login.needPassword"));
@@ -219,8 +219,8 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
         ActionMessages messages = new ActionMessages();
         ActionMessage msg = null;
                       
-        String newPassword = (String) form.getPassword();
-        String newPassword2 = (String) form.getRetypePassword();
+        String newPassword = form.getPassword();
+        String newPassword2 = form.getRetypePassword();
 		
         if (newPassword == null || newPassword.length() == 0) {
             msg = new ActionMessage("error.login.needPassword");

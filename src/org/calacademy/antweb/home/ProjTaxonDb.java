@@ -406,8 +406,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             stmt = DBUtil.getStatement(getConnection(), "cleanupSpeciesListProxyRecords()");
             rset = stmt.executeQuery(query);
             while (rset.next()) {
-                String taxonName = (String) rset.getString("taxonName");
-                String projectName = (String) rset.getString("projectName");
+                String taxonName = rset.getString("taxonName");
+                String projectName = rset.getString("projectName");
                 if (hasNoChildren(taxonName, projectName)) {
                     A.log("cleanupSpeciesListProxyRecords() taxonName:" + taxonName + " projectName:" + projectName);
                     result = deleteProjTaxon(taxonName, projectName, "and source = 'proxyspeciesListTool'");
@@ -482,8 +482,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             stmt = DBUtil.getStatement(getConnection(), "verifyProjTaxon()");
             rset = stmt.executeQuery(query);
             while (rset.next()) {
-                String genusName = (String) rset.getString("taxonName");
-                String projectName = (String) rset.getString("projectName");
+                String genusName = rset.getString("taxonName");
+                String projectName = rset.getString("projectName");
                 int speciesCount = rset.getInt("species_count");
                 if (hasNoChildren(genusName, projectName)) {
                     A.log("verifyProjTaxon() No children for genusName:" + genusName + " projectName:" + projectName + " speciesCount:" + speciesCount);

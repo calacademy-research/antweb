@@ -24,7 +24,7 @@ public class GeolocaleTaxonLogDetail extends GeolocaleTaxon implements Comparabl
     
     public int compareTo(GeolocaleTaxonLogDetail o) {
         // Only operates on taxonName.  All details in a given ProjTaxonLog are assumed to be of the same species list.
-        GeolocaleTaxonLogDetail other = (GeolocaleTaxonLogDetail) o;
+        GeolocaleTaxonLogDetail other = o;
 
         return Taxon.getPrettyTaxonName(getTaxonName()).compareTo(Taxon.getPrettyTaxonName(other.getTaxonName()));
     }

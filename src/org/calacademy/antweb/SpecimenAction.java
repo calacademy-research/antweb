@@ -147,7 +147,7 @@ public final class SpecimenAction extends DescriptionAction {
             request.setAttribute("ogTitle", ogTitle);
 			if (specimen.getImages() != null) {
               //A.log("execute() images:" + specimen.getImages());			
-			  SpecimenImage headShot = (SpecimenImage) specimen.getImages().get("p1");
+			  SpecimenImage headShot = specimen.getImages().get("p1");
 			  if (headShot != null) {
 				ogImage = headShot.getHighres();
 				s_log.debug("execute() ogImage:" + ogImage);

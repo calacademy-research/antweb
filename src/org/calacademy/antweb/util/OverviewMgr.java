@@ -171,10 +171,10 @@ public class OverviewMgr {
         boolean isProject = Project.isProjectName(name);
         if (isProject) {
           Project project = ProjectMgr.getProject(name);
-          if (project != null) overview = (Overview) project;
+          if (project != null) overview = project;
         } else {
-          Geolocale geolocale = (Geolocale) GeolocaleMgr.getGeolocale(name);
-          if (geolocale != null) overview = (Overview) geolocale;
+          Geolocale geolocale = GeolocaleMgr.getGeolocale(name);
+          if (geolocale != null) overview = geolocale;
         }
         return overview;
     }

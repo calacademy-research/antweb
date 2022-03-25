@@ -73,11 +73,11 @@ public class UploadUtil {
         //            sb.append(" (" + (String) item.get("speciesgroup") + ")");
         //        }
         if (validNameKey("species", item)) {
-            sb.append(" " + (String) item.get("species"));
+            sb.append(" " + item.get("species"));
         }
 
         if (validNameKey("subspecies", item)) {
-            sb.append(" " + (String) item.get("subspecies"));
+            sb.append(" " + item.get("subspecies"));
         }
 
         //A.log("makeName() name:"+ sb.toString());  

@@ -478,9 +478,8 @@ public class Map {
 
         //A.log("setPoints(taxon, localityOverview, connection) taxon:" + taxon + " overview:" + overview);
  
-        String query = null;
-        Formatter myFormatter = new Formatter();
-        ArrayList terms = new ArrayList();
+        String query;
+        ArrayList<String> terms = new ArrayList<>();
 
         String locality;
 
@@ -532,11 +531,11 @@ public class Map {
         if (useGeolocale) {
           //terms.add("geolocale_taxon.geolocale_id = " + ((Geolocale) overview).getId());
           if (overview instanceof Country) {
-            terms.add("sp.country = '" + ((Country) overview).getName() + "'");
+            terms.add("sp.country = '" + overview.getName() + "'");
           }
           if (overview instanceof Adm1) {
             terms.add("sp.country = '" + ((Adm1) overview).getParent() + "'");          
-            terms.add("sp.adm1 = '" + ((Adm1) overview).getName() + "'");
+            terms.add("sp.adm1 = '" + overview.getName() + "'");
           }          
         }
 
@@ -702,9 +701,9 @@ public class Map {
                 // If it is a single point, as would be a locality or collection.
                 theString.append("'small', ");
                 theString.append("'" + getMapName() + "',");
-                theString.append(((Coordinate) getPoints().get(0)).getLat());
+                theString.append(getPoints().get(0).getLat());
                 theString.append(",");
-                theString.append(((Coordinate) getPoints().get(0)).getLon());
+                theString.append(getPoints().get(0).getLon());
               }
               theString.append(",");
 //A.log("setGoogleMapFunction() isLocality:" + isLocality + " isCollection:" + isCollection + " isMapLocality:" + isMapLocalities());
@@ -822,7 +821,7 @@ public class Map {
                     break;
                 case "images":
                     if (specimen.getImages() != null) {
-                        specImage = (SpecimenImage) specimen.getImages().get("p1");
+                        specImage = specimen.getImages().get("p1");
                         if (specImage != null) {
                             value = specImage.getLowres();
                         }

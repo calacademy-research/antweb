@@ -39,7 +39,7 @@ public abstract class TaxonPropMgr {
 	    }
 	    return null;
 	  }
-      return (String) s_taxaIntroducedMaps.get(taxonName);    
+      return s_taxaIntroducedMaps.get(taxonName);
     }
     
     public static boolean isIntroduced(String taxonName, String bioregion) {

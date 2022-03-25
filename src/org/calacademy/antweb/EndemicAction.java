@@ -27,7 +27,7 @@ public final class EndemicAction extends Action {
 
         ArrayList<String> endemics = null;
 
-        String geolocaleIdStr = (String) request.getParameter("geolocaleId");
+        String geolocaleIdStr = request.getParameter("geolocaleId");
         Geolocale geolocale = null;
         if (geolocaleIdStr != null) {
             ActionForward a = Check.init(Check.GEOLOCALE, request, mapping); if (a != null) return a;
@@ -46,7 +46,7 @@ public final class EndemicAction extends Action {
             }
         }
 
-        String bioregionName = (String) request.getParameter("bioregionName");
+        String bioregionName = request.getParameter("bioregionName");
         Bioregion bioregion = null;
         if (bioregionName != null) {
             ActionForward a = Check.init(Check.BIOREGION, request, mapping); if (a != null) return a;

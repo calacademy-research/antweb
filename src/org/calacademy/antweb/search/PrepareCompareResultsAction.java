@@ -139,7 +139,7 @@ public final class PrepareCompareResultsAction extends PrepareAction {
          This list will have potentially many more images because those images, though they belong to the taxon
          are of specimens not necessarily in the region specified in the criteria.  */
          
-        ArrayList<ResultItem> specList = ((AdvancedSearchResults) results).getSpeciesList();
+        ArrayList<ResultItem> specList = results.getSpeciesList();
  	    ArrayList<ResultItem> imagedSpecList = new ArrayList<>();
 		HashMap<String, ResultItem> specHash = new HashMap<>();
 		

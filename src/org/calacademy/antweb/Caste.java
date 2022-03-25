@@ -25,7 +25,7 @@ public final class Caste {
     }
 
     public static String getCaste(HttpServletRequest request) {
-        String casteStr = (String) request.getParameter("caste");
+        String casteStr = request.getParameter("caste");
         return Caste.getCaste(casteStr, request);
     }
     public static String getCaste(String requestCaste, HttpServletRequest request) {

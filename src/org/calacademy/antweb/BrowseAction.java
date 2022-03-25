@@ -475,7 +475,7 @@ We are showin the full map of ponerinae for every adm1.
             //OpenGraphMgr.setOGTitle(Taxon.getPrettyTaxonName(taxon.getTaxonName()));
             request.setAttribute("ogTitle", Taxon.getPrettyTaxonName(taxon.getTaxonName()));
             if (taxon.getImages() != null) {
-                SpecimenImage headShot = (SpecimenImage) taxon.getImages().get("h");
+                SpecimenImage headShot = taxon.getImages().get("h");
                 if (headShot != null) {
                     String ogImage = headShot.getMedres();
                     //A.log("execute() ogImg:" + ogImg);

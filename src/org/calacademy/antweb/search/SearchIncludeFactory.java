@@ -27,7 +27,7 @@ public class SearchIncludeFactory {
       ArrayList<String> bioregions = new SearchDb(connection).getBioregionList();
       for (String bioregion : bioregions) {
         String selected = "";        
-        if (formBioregion != null && bioregion.toLowerCase().equals(formBioregion.toLowerCase())) selected = " selected";
+        if (bioregion.equalsIgnoreCase(formBioregion)) selected = " selected";
         bioregionGenInc += "<option value='" + bioregion + "'" + selected + ">" + bioregion + "</option>";
       }
       bioregionGenInc += "</select>";
@@ -45,7 +45,7 @@ public class SearchIncludeFactory {
       //A.log("getCountryGenInc() countries:" + countries);      
       for (String country : countries) {
         String selected = "";        
-        if (formCountry != null && country.toLowerCase().equals(formCountry.toLowerCase())) selected = " selected";
+        if (country.equalsIgnoreCase(formCountry)) selected = " selected";
         countryGenInc += "<option value='" + country + "'" + selected + ">" + country + "</option>";
       }
       countryGenInc += "<option value='Port of Entry'>Port of Entry	</option>";
@@ -63,7 +63,7 @@ public class SearchIncludeFactory {
       ArrayList<String> adm1s = new SearchDb(connection).getAdm1List();
       for (String adm1 : adm1s) {
         String selected = "";        
-        if (formAdm1 != null && adm1.toLowerCase().equals(formAdm1.toLowerCase())) selected = " selected";
+        if (adm1.equalsIgnoreCase(formAdm1)) selected = " selected";
         adm1GenInc += "<option value='" + adm1 + "'" + selected + ">" + adm1 + "</option>";
       }
       adm1GenInc += "</select>";

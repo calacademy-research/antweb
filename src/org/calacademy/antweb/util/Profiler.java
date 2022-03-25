@@ -39,7 +39,7 @@ public class Profiler {
         //A.log("min since first:" + AntwebUtil.minsSince(firstOfPeriodTime) + " min since start:" + AntwebUtil.minsSince(startTime) );
 
         if (profiles.containsKey(key)) {
-            Profile profile = (Profile) profiles.get(key);
+            Profile profile = profiles.get(key);
             profile.add(startTime, value);
         } else {
             Profile profile = new Profile();

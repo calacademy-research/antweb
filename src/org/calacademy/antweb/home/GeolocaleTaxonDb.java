@@ -64,8 +64,8 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             while (rset.next()) {
                 geolocaleTaxon = new GeolocaleTaxon();
                 geolocaleTaxon.setGeolocaleId(rset.getInt("geolocale_id"));
-                geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                geolocaleTaxon.setSource((String) rset.getString("source"));
+                geolocaleTaxon.setTaxonName(rset.getString("taxon_name"));
+                geolocaleTaxon.setSource(rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setIsIntroduced(rset.getInt("is_introduced") == 1);
 
@@ -102,8 +102,8 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             while (rset.next()) {
                 GeolocaleTaxon geolocaleTaxon = new GeolocaleTaxon();
                 geolocaleTaxon.setGeolocaleId(rset.getInt("geolocale_id"));
-                geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                geolocaleTaxon.setSource((String) rset.getString("source"));
+                geolocaleTaxon.setTaxonName(rset.getString("taxon_name"));
+                geolocaleTaxon.setSource(rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setIsIntroduced(rset.getInt("is_introduced") == 1);
                 taxonSetList.add(geolocaleTaxon);

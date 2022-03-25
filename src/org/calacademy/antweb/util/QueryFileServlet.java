@@ -85,7 +85,7 @@ public class QueryFileServlet extends HttpServlet {
 
             // modifies response
             response.setContentType(mimeType);
-            response.setContentLength((int) message.length());
+            response.setContentLength(message.length());
             //response.setContentLength((int) downloadFile.length());
 
             // forces download

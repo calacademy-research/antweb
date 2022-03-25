@@ -178,7 +178,7 @@ public abstract class HttpUtil {
         
     public static boolean getIsBot(HttpServletRequest request) {
       boolean isBot = false;
-      String userAgent = (String) request.getHeader("user-agent");
+      String userAgent = request.getHeader("user-agent");
       if (userAgent != null) {
         userAgent = userAgent.toLowerCase();
         if ( userAgent.contains("bot")
@@ -821,7 +821,7 @@ public abstract class HttpUtil {
         if (queryString == null)
             return null;
 
-        if (queryString.substring(0, 1).equals("?")) {
+        if (queryString.charAt(0) == '?') {
             afterQuestionMark = queryString.substring(1);
         } else { // Might be string domain.
             if (queryString.contains(AntwebProps.getDomainApp())) {

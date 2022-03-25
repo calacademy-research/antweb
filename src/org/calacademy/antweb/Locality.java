@@ -186,7 +186,7 @@ public class Locality {
   public String getAmissEmail() {
     String amissEmail = "antweb@calacademy.org";  
     if (getGroupList().size() == 1) {
-      amissEmail = ((Group) getGroupList().get(0)).getAdminEmail();
+      amissEmail = getGroupList().get(0).getAdminEmail();
     }
     s_log.debug("getAmissEmail() size:" + getGroupList().size() + " amissEmail:" + amissEmail);
     return amissEmail;

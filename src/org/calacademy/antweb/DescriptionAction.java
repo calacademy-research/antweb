@@ -187,7 +187,7 @@ public class DescriptionAction extends Action {
             String code = null;
             String codeClause = " code is null";
             if (taxon instanceof Specimen) {
-              code = ((Specimen) taxon).getCode();            
+              code = taxon.getCode();
               codeClause = " code = '" + code + "'";
             }
 
@@ -260,7 +260,7 @@ public class DescriptionAction extends Action {
         
       String codeClause = " and code is null";
       if (taxon instanceof Specimen) {
-        codeClause = " and code = '" + ((Specimen) taxon).getCode() + "'";
+        codeClause = " and code = '" + taxon.getCode() + "'";
       }
         
       String query = "select distinct de.created, l.first_name, l.last_name, l.name, title from description_edit de" 

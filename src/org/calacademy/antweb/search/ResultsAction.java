@@ -20,7 +20,7 @@ public class ResultsAction extends Action {
 
         for (String choice : chosen) {
           int chosenInt = Integer.parseInt(choice);
-          ResultItem thisItem = (ResultItem) searchResults.get(chosenInt);
+          ResultItem thisItem = searchResults.get(chosenInt);
           chosenResults.add(thisItem);
         }
 

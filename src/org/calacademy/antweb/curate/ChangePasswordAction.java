@@ -38,9 +38,9 @@ public final class ChangePasswordAction extends Action {
 		ActionMessages messages = new ActionMessages();
 		ActionMessage msg = null;
 		
-		String oldPassword = (String) theForm.getOldPassword();
-		String newPassword = (String) theForm.getNewPassword1();
-		String newPassword2 = (String) theForm.getNewPassword2();
+		String oldPassword = theForm.getOldPassword();
+		String newPassword = theForm.getNewPassword1();
+		String newPassword2 = theForm.getNewPassword2();
 		
 		if (!accessLogin.getPassword().equals(oldPassword)) {
 			msg = new ActionMessage("error.login.failedLogin");

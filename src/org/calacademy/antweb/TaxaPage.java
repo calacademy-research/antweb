@@ -151,8 +151,8 @@ public class TaxaPage implements Serializable {
           }
 
           if (overview instanceof Project) {
-            specimenQuery += " where ( country = '" + ((Project) overview).getTitle() + "'"
-              + " or adm1 = '" + ((Project) overview).getTitle() + "' )" ;
+            specimenQuery += " where ( country = '" + overview.getTitle() + "'"
+              + " or adm1 = '" + overview.getTitle() + "' )" ;
           }
 
           fetchChildrenQuery += specimenQuery;

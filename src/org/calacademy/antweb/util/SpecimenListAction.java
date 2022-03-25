@@ -76,9 +76,9 @@ public final class SpecimenListAction extends Action {
           // This cache logic is different because we do not want to fetch.  We just
           // want to know if it is there.  We just create a link to it if it exists.
            
-          boolean isGetCache = "true".equals((String) df.get("getCache"));
+          boolean isGetCache = "true".equals(df.get("getCache"));
           s_log.debug("execute() getCache:" + isGetCache);
-          boolean isGenCache = "true".equals((String) df.get("genCache"));
+          boolean isGenCache = "true".equals(df.get("genCache"));
           if (!isGenCache) {
             boolean fetchFromCache = AntwebCacheMgr.isFetchFromCache(accessLogin, isGetCache);
             if (fetchFromCache) {

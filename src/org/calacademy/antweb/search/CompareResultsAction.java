@@ -205,7 +205,7 @@ public final class CompareResultsAction extends ResultsAction {
 
 				int chosenListGetCount = 0;
 				if (chosenList.size() > count) {
-				  chosenListGetCount = Integer.parseInt((String) chosenList.get(count));
+				  chosenListGetCount = Integer.parseInt(chosenList.get(count));
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);
 				}
 				
@@ -267,7 +267,7 @@ public final class CompareResultsAction extends ResultsAction {
 
 				int chosenListGetCount = 0;
 				if (chosenList.size() > count) {
-				  chosenListGetCount = Integer.parseInt((String) chosenList.get(count));
+				  chosenListGetCount = Integer.parseInt(chosenList.get(count));
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);
 				}
 				

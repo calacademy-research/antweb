@@ -53,7 +53,7 @@ possible moment - ideally in jsp footer.
 
       if (isDebug) {
           if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
-              s_log.info("add() request:" + (String) request.getAttribute("trackerKey"));
+              s_log.info("add() request:" + request.getAttribute("trackerKey"));
 
           //A.log("add() request:" + (String) request.getAttribute("trackerKey"));
           //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();
@@ -67,7 +67,7 @@ possible moment - ideally in jsp footer.
 
       if (isDebug) {
           if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
-              s_log.debug("remove() request:" + (String) request.getAttribute("trackerKey"));
+              s_log.debug("remove() request:" + request.getAttribute("trackerKey"));
         //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();
       }
     }

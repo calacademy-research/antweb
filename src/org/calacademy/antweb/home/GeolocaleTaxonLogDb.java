@@ -674,8 +674,8 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             while (rset.next()) {
                 geolocaleTaxon = new GeolocaleTaxon();
                 geolocaleTaxon.setGeolocaleId(rset.getInt("geolocale_id"));
-                geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                geolocaleTaxon.setSource((String) rset.getString("source"));
+                geolocaleTaxon.setTaxonName(rset.getString("taxon_name"));
+                geolocaleTaxon.setSource(rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setCuratorId(rset.getInt("curator_id"));
                 geolocaleTaxon.setCreated(rset.getTimestamp("created"));
@@ -718,8 +718,8 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             while (rset.next()) {
                 GeolocaleTaxon geolocaleTaxon = new GeolocaleTaxon();
                 geolocaleTaxon.setGeolocaleId(rset.getInt("geolocale_id"));
-                geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                geolocaleTaxon.setSource((String) rset.getString("source"));
+                geolocaleTaxon.setTaxonName(rset.getString("taxon_name"));
+                geolocaleTaxon.setSource(rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setCuratorId(rset.getInt("curator_id"));
                 geolocaleTaxon.setCreated(rset.getTimestamp("created"));                

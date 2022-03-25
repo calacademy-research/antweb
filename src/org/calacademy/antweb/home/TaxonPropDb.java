@@ -223,8 +223,8 @@ public class TaxonPropDb extends AntwebDb {
             rset = stmt.executeQuery(theQuery);
 
             while (rset.next()) {
-                String taxonName = (String) rset.getString("taxon_name");
-                String value = (String) rset.getString("value");
+                String taxonName = rset.getString("taxon_name");
+                String value = rset.getString("value");
                 taxaMap.put(taxonName, value);
             }
         } catch (SQLException e) {

@@ -200,9 +200,7 @@ public class FieldGuide {
                       
     public void setTitle(String rank, String name) {
         StringBuffer sb = new StringBuffer();
-        Formatter format = new Formatter();
-        
-        sb.append("");
+
         switch (rank) {
             case "subfamily":
                 sb.append("Subfamilies ");

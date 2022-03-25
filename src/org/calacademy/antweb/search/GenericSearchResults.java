@@ -182,7 +182,7 @@ public class GenericSearchResults implements Serializable {
         Iterator<String> iter = filters.iterator();
         ArrayList<ResultItem> tempSet = rset;
         while (iter.hasNext()) {
-            tempSet = filter(tempSet, (String) iter.next());
+            tempSet = filter(tempSet, iter.next());
         }
         rset = tempSet;
         if (filters.contains("types")) {
@@ -217,7 +217,7 @@ public class GenericSearchResults implements Serializable {
             Iterator<ResultItem> resIter = rset.iterator();
             ResultItem thisItem;
             while (resIter.hasNext()) {
-                thisItem = (ResultItem) resIter.next();
+                thisItem = resIter.next();
                  
                 String genus = thisItem.getGenus();
                 String species = thisItem.getSpecies();
@@ -617,9 +617,9 @@ public class GenericSearchResults implements Serializable {
 			resItem = (ResultItem) iterator.next();
 		   thisCombo = resItem.getRank() + ":" + resItem.getFullName();
 
-            resItem.setHasImages((Boolean) imageCheck.get(thisCombo));
+            resItem.setHasImages(imageCheck.get(thisCombo));
 
-            resItem.setTypes((Boolean) typeCheck.get(thisCombo));
+            resItem.setTypes(typeCheck.get(thisCombo));
 		}
 
         myResults.sort(new ResultItemComparator());

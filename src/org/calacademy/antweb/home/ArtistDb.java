@@ -46,12 +46,12 @@ public class ArtistDb extends AntwebDb {
 				artist = new Artist();
 				artist.setId(rset.getInt("id"));
 				artist.setName(rset.getString("name"));
-				Object o = null;
+				Date o;
 				try {
 				  o = rset.getTimestamp("created");
                   //A.log("getArtists() created:" + o);
                   if (!o.toString().equals("0000-00-00 00:00:00")) {
-                    artist.setCreated((Date) o);
+                    artist.setCreated(o);
                   }
                 } catch (SQLException e) {
                   // do nothing
@@ -84,14 +84,14 @@ public class ArtistDb extends AntwebDb {
 			rset = stmt.executeQuery(query);
             //A.log("getArtists() query:" + query);
             
-			Artist artist = null;
+			Artist artist;
 			while (rset.next()) {
 				artist = new Artist();
 				artist.setId(rset.getInt("id"));
 				artist.setName(rset.getString("name"));
 				
-				Object o = rset.getTimestamp("created");
-                artist.setCreated((Date) o);
+				Date o = rset.getTimestamp("created");
+                artist.setCreated(o);
                 //A.log("getArtists() created:" + artist.getCreated() + " o:" + o);                
                 
 				artist.setIsActive(rset.getBoolean("active"));

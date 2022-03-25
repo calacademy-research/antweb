@@ -182,7 +182,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
   
         for (String chosenListNext : chosenList) {
             thisChosen = Integer.parseInt(chosenListNext);
-            thisItem = (ResultItem) theTaxa.get(thisChosen);
+            thisItem = theTaxa.get(thisChosen);
             for (ResultItem resultItem : searchResults) {
                 if (thisItem.getSpecies().equals(resultItem.getSpecies())
                   && thisItem.getGenus().equals(resultItem.getGenus())

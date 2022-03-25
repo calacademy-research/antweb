@@ -573,7 +573,7 @@ public class SpeciesListUpload extends AntwebUpload {
                           // readLine() above does not seem to handle blank lines.  They get skipped, count not incremented.                          
                         }
 
-						String column = (String) colList.get(index);                        
+						String column = colList.get(index);
 						String elementSubfamily = Taxon.getSubfamilyFromName(element);
 						try {                        
 							if ("current_valid_name".equals(column) && elementSubfamily != null) {
@@ -594,7 +594,7 @@ public class SpeciesListUpload extends AntwebUpload {
 						}
 
                         if (element != null && !"".equals(element)) {
-                            String col = (String) colList.get(index);
+                            String col = colList.get(index);
                             
                             //if (col.contains("country")) A.log("importSpeciesList () col:" + col + " element:" + element);
                             
@@ -602,7 +602,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         }
                     } else if (descriptionList.get(index) != null) {
                         if (!element.equals("")) {
-                            description.put((String) descriptionList.get(index), element);
+                            description.put(descriptionList.get(index), element);
                             //A.log("importSpeciesList() key:" + descriptionList.get(index) + " element:" + element);
                         }
                     }
@@ -1049,8 +1049,8 @@ public class SpeciesListUpload extends AntwebUpload {
     private boolean validNameKey(String key, Hashtable taxonHash) {
         boolean valid = false;
         if (taxonHash.containsKey(key)
-                && !((String) taxonHash.get(key)).equals("null")
-                && !((String) taxonHash.get(key)).equals("")) {
+                && !taxonHash.get(key).equals("null")
+                && !taxonHash.get(key).equals("")) {
             valid = true;
         }
         return valid;

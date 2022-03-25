@@ -903,9 +903,9 @@ For a locality name without code (this name has special characters:
 	    String localityInfoString = null;
         Formatter formatter = new Formatter();
         String localityCode = getLocalityCode();
-        String countryColon = formatter.appendToNonNull(formatter.clearNull((String) getCountry()),":");
-        String adm1Colon = formatter.appendToNonNull(formatter.clearNull((String) getAdm1()),":");
-        String adm2Semicolon = formatter.appendToNonNull(formatter.clearNull((String) getAdm2()),":");
+        String countryColon = formatter.appendToNonNull(formatter.clearNull(getCountry()),":");
+        String adm1Colon = formatter.appendToNonNull(formatter.clearNull(getAdm1()),":");
+        String adm2Semicolon = formatter.appendToNonNull(formatter.clearNull(getAdm2()),":");
         String latLonMaxError = formatter.clearNull(getLatLonMaxError()); 
         // <!-- was:specimen.getLocXYAccuracy()  was: desc.get("locxyaccuracy") -->
 

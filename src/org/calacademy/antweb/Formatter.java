@@ -6,6 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
 import java.util.Date;
 import java.util.Locale;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.regexp.*;
 import java.text.*;
 
@@ -339,16 +341,7 @@ public class Formatter implements Serializable {
 	  return Formatter.initCap(thePhrase);	
 	}	
 	public String capitalizeFirstLetter(String theWord) {
-		if (theWord == null)
-			return null;
-		if (theWord.length() < 1)
-			return "";
-
-		String first = theWord.substring(0, 1).toUpperCase();
-		String rest = theWord.substring(1);
-		StringBuffer newString = new StringBuffer().append(first).append(rest);
-        //A.log("capitalizeFirstLetter() theWord:" + theWord + " first:" + first + " rest:" + rest);
-		return newString.toString();
+		return StringUtils.capitalize(theWord);
 	}
 
 

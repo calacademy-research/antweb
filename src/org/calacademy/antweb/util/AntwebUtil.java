@@ -292,17 +292,14 @@ public abstract class AntwebUtil {
       AntwebUtil.writeFile(dataFile, stringData);
   }
 
-  public static void writeFile(String file, String stringData)
-  {
-      String loc = new StringBuilder().append(file).toString();
-      try
-      {
-          BufferedWriter out = new BufferedWriter(new FileWriter(loc, false));
-          out.write(stringData);
-          out.close();
-      } catch(Exception e) {
-          s_log.error("writeFile() file:" + file + " e:" + e);
-      }
+  public static void writeFile(String file, String stringData) {
+    try {
+      BufferedWriter out = new BufferedWriter(new FileWriter(file, false));
+      out.write(stringData);
+      out.close();
+    } catch (Exception e) {
+      s_log.error("writeFile() file:" + file + " e:" + e);
+    }
   }
 
   public static String readFile(String dir, String fileName) {
