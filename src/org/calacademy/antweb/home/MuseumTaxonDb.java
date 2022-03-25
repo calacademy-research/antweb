@@ -95,7 +95,7 @@ public class MuseumTaxonDb extends TaxonSetDb {
         Statement stmt = null;
         ResultSet rset = null;
 
-        String query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 1 and museum_taxon.code = '" + museumCode + "' and rank=\"subfamily\"";
+        String query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 1 and museum_taxon.code = '" + museumCode + "' and taxarank=\"subfamily\"";
 
         try { 
             stmt = DBUtil.getStatement(connection, "getStatistics()");             
@@ -105,49 +105,49 @@ public class MuseumTaxonDb extends TaxonSetDb {
                 extinctSubfamily = rset.getInt(1);
             }
         
-            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 1 and museum_taxon.code = '" + museumCode + "' and rank=\"genus\"";
+            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 1 and museum_taxon.code = '" + museumCode + "' and taxarank=\"genus\"";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 extinctGenera = rset.getInt(1);
             }
-            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 1 and museum_taxon.code = '" + museumCode + "' and rank in ('species', 'subspecies')";
+            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 1 and museum_taxon.code = '" + museumCode + "' and taxarank in ('species', 'subspecies')";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 extinctSpecies = rset.getInt(1);
             }
-            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 0 and museum_taxon.code = '" + museumCode + "' and rank=\"subfamily\"";
+            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 0 and museum_taxon.code = '" + museumCode + "' and taxarank=\"subfamily\"";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 extantSubfamily = rset.getInt(1);
             }
-            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 0 and museum_taxon.code = '" + museumCode + "' and rank=\"genus\"";
+            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 0 and museum_taxon.code = '" + museumCode + "' and taxarank=\"genus\"";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 extantGenera = rset.getInt(1);
             }
-            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 0 and museum_taxon.code = '" + museumCode + "' and rank in ('species', 'subspecies')";
+            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and taxon.fossil = 0 and museum_taxon.code = '" + museumCode + "' and taxarank in ('species', 'subspecies')";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 extantSpecies = rset.getInt(1);
             }
-            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name  and museum_taxon.code = '" + museumCode + "' and status='valid' and rank=\"subfamily\"";
+            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name  and museum_taxon.code = '" + museumCode + "' and status='valid' and taxarank=\"subfamily\"";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 validSubfamily = rset.getInt(1);
             }
-            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and museum_taxon.code = '" + museumCode + "' and status='valid' and rank=\"genus\"";
+            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and museum_taxon.code = '" + museumCode + "' and status='valid' and taxarank=\"genus\"";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 validGenera = rset.getInt(1);
             }
-            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and museum_taxon.code = '" + museumCode + "' and status='valid' and rank in ('species', 'subspecies')";
+            query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and museum_taxon.code = '" + museumCode + "' and status='valid' and taxarank in ('species', 'subspecies')";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 validSpecies = rset.getInt(1);
             }
 
             query = "select count(*) from taxon, museum_taxon where taxon.taxon_name = museum_taxon.taxon_name and museum_taxon.code = '" + museumCode + "'"
-              + " and taxon.status = 'valid' and rank in ('species', 'subspecies') and museum_taxon.image_count > 0";
+              + " and taxon.status = 'valid' and taxarank in ('species', 'subspecies') and museum_taxon.image_count > 0";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 validImagedSpecies = rset.getInt(1);

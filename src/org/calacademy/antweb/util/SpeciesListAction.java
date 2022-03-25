@@ -101,7 +101,7 @@ public final class SpeciesListAction extends Action {
 
             String theQuery =
                 "select taxon_name from taxon where family = 'formicidae' "
-                  + " and rank in ('species', 'subspecies') "
+                  + " and taxarank in ('species', 'subspecies') "
                   + " and taxon_name in (select taxon_name from proj_taxon where project_name = '" + name + "')";
  
             Statement stmt = null;
@@ -153,7 +153,7 @@ public final class SpeciesListAction extends Action {
       
             String theQuery =
                 "select taxon_name from taxon where family = 'formicidae' "
-                  + " and rank in ('species', 'subspecies') ";
+                  + " and taxarank in ('species', 'subspecies') ";
 
             Statement stmt = null;
             ResultSet rset = null;

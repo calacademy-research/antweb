@@ -117,7 +117,7 @@ public final class OrphanAlternateAction extends Action {
         ArrayList<String> subfamilies = new ArrayList<>();
         try {        
           stmt = DBUtil.getStatement(connection, "OrphanAlternateAction.putLookupDataInRequest");
-          String query = "select distinct subfamily from taxon where family='formicidae' and rank = 'subfamily' and status = 'valid'";
+          String query = "select distinct subfamily from taxon where family='formicidae' and taxarank = 'subfamily' and status = 'valid'";
           ResultSet rset = stmt.executeQuery(query);
           while (rset.next()) {
             String subfamily = rset.getString(1);

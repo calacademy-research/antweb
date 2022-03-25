@@ -200,9 +200,9 @@ public class SpecimenDb extends AntwebDb {
 	    specimen.add("<tr><td><hr></td><td><hr></td><td><hr></td></tr>");
         Statement stmt = null;
         ResultSet rset = null;
-		String query = "select code, subfamily, genus, subgenus from specimen where taxon_name in (select taxon_name from taxon where (rank = 'species' or rank = 'subspecies') "
+		String query = "select code, subfamily, genus, subgenus from specimen where taxon_name in (select taxon_name from taxon where (taxarank = 'species' or taxarank = 'subspecies') "
 		  + " and genus not like '(%'"
-		  + " and (subfamily, genus) in ( select subfamily, genus from taxon where rank = 'genus' and status = 'morphotaxon') and access_group = " + groupId + ") " 
+		  + " and (subfamily, genus) in ( select subfamily, genus from taxon where taxarank = 'genus' and status = 'morphotaxon') and access_group = " + groupId + ") "
 		  + " and access_group = " + groupId;
               
         try {

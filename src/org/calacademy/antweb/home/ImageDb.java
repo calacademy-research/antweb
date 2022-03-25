@@ -424,10 +424,10 @@ public class ImageDb extends AntwebDb {
         String theQuery = "select "
           + " status "
           + ", count(*) total "
-          + ", sum(case when caste = 'worker' then 1 else 0 end) worker" 
-          + ", sum(case when caste = 'male' then 1 else 0 end) male" 
-          + ", sum(case when caste = 'queen' then 1 else 0 end) queen" 
-          + ", sum(case when caste not in ('worker', 'male', 'queen') then 1 else 0 end) other" 
+          + ", sum(IF(caste = 'worker', 1, 0)) worker"
+          + ", sum(IF(caste = 'male', 1, 0)) male"
+          + ", sum(IF(caste = 'queen', 1, 0)) queen"
+          + ", sum(IF(caste not in ('worker', 'male', 'queen'), 1, 0)) as other"
           + " from specimen s, image i where s.code = i.image_of_id group by status"
           + " order by total desc";
 
