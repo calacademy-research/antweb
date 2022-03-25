@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.Date;
 import java.sql.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.sql.*;
 
 import com.mchange.v2.c3p0.*;
@@ -81,9 +82,9 @@ Or, if there are stmts and/or rsets...
 */
 
     static class DbRequest {
-      String name = null;
-      String queryString = null;
-      Date date = null;
+      final String name;
+      final String queryString;
+      final Date date;
 
       DbRequest(String name, String queryString, Date date) {
         this.name = name;
@@ -97,8 +98,8 @@ Or, if there are stmts and/or rsets...
     }
 
     private static final Log s_log = LogFactory.getLog(DBUtil.class);
-    private static HashMap<NewProxyConnection, String> connectionMap = new HashMap<>();
-    private static HashMap<NewProxyConnection, DbRequest> connectionRequestMap = new HashMap<>();
+    private static final HashMap<NewProxyConnection, String> connectionMap = new HashMap<>();
+    private static final HashMap<NewProxyConnection, DbRequest> connectionRequestMap = new HashMap<>();
 
     // Called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
     public static DataSource getDataSource() {
@@ -111,15 +112,15 @@ Or, if there are stmts and/or rsets...
 		return ds;
     }
 
-    public static Connection Xopen(javax.sql.DataSource dataSource, String name) throws SQLException {
+    public static Connection Xopen(DataSource dataSource, String name) throws SQLException {
        // getConnection() is the preferred call.
        return DBUtil.getConnection(dataSource, name);
     }
-    public static Connection getConnection(javax.sql.DataSource dataSource, String name) throws SQLException {
+    public static Connection getConnection(DataSource dataSource, String name) throws SQLException {
       return getConnection(dataSource, name, null);
     }
 
-    public static Connection getConnection(javax.sql.DataSource dataSource, String name, String queryString) throws SQLException {
+    public static Connection getConnection(DataSource dataSource, String name, String queryString) throws SQLException {
       Connection connection = null;
       try {
         connection = dataSource.getConnection();
@@ -130,7 +131,7 @@ Or, if there are stmts and/or rsets...
 
       if (connection != null) {
           if (connection instanceof NewProxyConnection) {
-              connectionMap.put((NewProxyConnection) connection, name + " " + (new java.util.Date()));
+              connectionMap.put((NewProxyConnection) connection, name + " " + new Date());
 
               DbRequest dbRequest = new DbRequest(name, queryString, new java.util.Date());
               connectionRequestMap.put((NewProxyConnection) connection, dbRequest);
@@ -141,12 +142,12 @@ Or, if there are stmts and/or rsets...
       return connection;    
     }
 
-    private static int MAX_BUSY_CONNECTIONS = 10;
+    private static final int MAX_BUSY_CONNECTIONS = 10;
     public static boolean isServerBusy() {
       return getServerBusyConnectionCount() >= MAX_BUSY_CONNECTIONS;
     }
  
-    private static HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<>();
+    private static final HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<>();
     private static HashMap<String, QueryStats> s_queryStatsMap = new HashMap<>();
 
     
@@ -206,10 +207,10 @@ Or, if there are stmts and/or rsets...
     }
 
     public static void close(String name) {
-        java.util.Date startTime = (java.util.Date) s_stmtTimeMap.get(name);
+        java.util.Date startTime = s_stmtTimeMap.get(name);
         if (startTime == null) return;
         long millisSince = AntwebUtil.millisSince(startTime);
-        QueryStats queryStats = (QueryStats) s_queryStatsMap.get(name);
+        QueryStats queryStats = s_queryStatsMap.get(name);
         if (queryStats == null) queryStats = new QueryStats();
         queryStats.count(millisSince);
         s_queryStatsMap.put(name, queryStats);
@@ -253,7 +254,7 @@ Or, if there are stmts and/or rsets...
         //was: for (String name : s_queryStatsMap.keySet()) {
 
         for (String name : stringArray) {        
-          String stats = ((QueryStats) s_queryStatsMap.get(name)).log();
+          String stats = s_queryStatsMap.get(name).log();
           String logData = name + " " + stats;
           LogMgr.appendLog("queryStats.log", logData);      
         }
@@ -283,7 +284,7 @@ Or, if there are stmts and/or rsets...
         boolean success = true;
         //	A.log("close() object:" + object + " name:" + name);  
         String objectName = null;
-        if (object != null) objectName = object.toString() + " ";
+        if (object != null) objectName = object + " ";
         try {   
             if (rset != null) rset.close();   
         } catch (SQLException e) {
@@ -396,21 +397,21 @@ Or, if there are stmts and/or rsets...
       return s_serverBusyConnectionCount;
     }
 
-    static int MAXNUMBUSYCONNECTIONS = 100; // was 13;
-    private static int MINUTES = 1000 * 60;
-    private static Date lastLog = null;
+    static final int MAXNUMBUSYCONNECTIONS = 100; // was 13;
+    private static final int MINUTES = 1000 * 60;
+    private static Date lastLog;
     
-    public static boolean isServerBusy(javax.sql.DataSource dataSource, javax.servlet.http.HttpServletRequest request) 
+    public static boolean isServerBusy(DataSource dataSource, HttpServletRequest request)
       throws SQLException {
       int numBusy = DBUtil.getNumBusyConnections(dataSource);
       if (numBusy > DBUtil.MAXNUMBUSYCONNECTIONS) {
         String message = "Due to current server load, Antweb is not able to fulfill this request at this time.  Please try again later.";
 //        if ((lastLog == null) || (AntwebUtil.timePassed(lastLog, new Date()) > (MINUTES * .5))) {
-        if ((lastLog == null) || AntwebUtil.minsSince(lastLog) > 1) {
+        if (lastLog == null || AntwebUtil.minsSince(lastLog) > 1) {
           lastLog = new Date();
-          String logMessage = "<br><br>" + (new Date()).toString() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
+          String logMessage = "<br><br>" + new Date() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
           s_log.warn(logMessage);
-          java.sql.Connection connection = null;
+          Connection connection = null;
           try {
             connection = DBUtil.getConnection(dataSource, "AntwebUtil.isServerBusy()");
             logMessage += "<br>" + AntwebFunctions.getMysqlProcessListHtml(connection);
@@ -429,7 +430,7 @@ Or, if there are stmts and/or rsets...
       }
     }
 
-    private static int s_threshold = 8;
+    private static final int s_threshold = 8;
     private static String s_lastMethod;
     private static int s_sameMethod = 0;
     public static void profileQuery(String method, Date startTime, String query) {
@@ -437,7 +438,7 @@ Or, if there are stmts and/or rsets...
       if (secs < s_threshold) return;
       if (method.equals(s_lastMethod)) {
           ++s_sameMethod;
-          if ((s_sameMethod % 10) == 0) {
+          if (s_sameMethod % 10 == 0) {
               s_log.info("profileQuery sameMethod:" + s_sameMethod + " method:" + method);
           }
           return;
@@ -451,7 +452,7 @@ Or, if there are stmts and/or rsets...
       }
     }
 
-	public static int getNumBusyConnections(javax.sql.DataSource dataSource) {
+	public static int getNumBusyConnections(DataSource dataSource) {
         int numBusy = 0;
         String cpDiagnostics = null;
         if (dataSource instanceof ComboPooledDataSource) {
@@ -475,7 +476,7 @@ Or, if there are stmts and/or rsets...
 	  return AntFormatter.escapeQuotes(theString);
 	}
 
-    public static String getSimpleCpDiagnosticsAttr(javax.sql.DataSource dataSource) {
+    public static String getSimpleCpDiagnosticsAttr(DataSource dataSource) {
         String cpDiagnostics = "";
         if (dataSource instanceof ComboPooledDataSource) {
             ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
@@ -493,7 +494,7 @@ Or, if there are stmts and/or rsets...
     }
 
 
-    public static String getCpDiagnosticsAttr(javax.sql.DataSource dataSource) {
+    public static String getCpDiagnosticsAttr(DataSource dataSource) {
         String cpDiagnostics = "";
         if (dataSource instanceof ComboPooledDataSource) {
             ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;

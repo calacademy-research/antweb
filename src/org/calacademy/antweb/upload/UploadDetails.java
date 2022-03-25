@@ -15,21 +15,21 @@ import org.apache.commons.logging.LogFactory;
 
 public class UploadDetails extends OperationDetails {
 
-    private static Log s_log = LogFactory.getLog(UploadDetails.class);
+    private static final Log s_log = LogFactory.getLog(UploadDetails.class);
 
-    MessageMgr messageMgr = null;
+    final MessageMgr messageMgr;
 
     private boolean runStatistics = false;
 
-    public ArrayList preUploadStatistics = null;
-    public ArrayList postUploadStatistics = null;
+    public ArrayList preUploadStatistics;
+    public ArrayList postUploadStatistics;
 
     int countInsertedSpecies = 0;
     int countUpdatedSpecies = 0;
     int countInsertedSpecimens = 0;
 
-    private String logFileName = null;
-    private String backupDirFile = null;
+    private String logFileName;
+    private String backupDirFile;
 
 
     private boolean offerRunCountCrawlLink = false;
@@ -80,7 +80,7 @@ public class UploadDetails extends OperationDetails {
       return "upload";
     }
     
-    String action = null;
+    String action;
     public void setAction(String action) {
 
         this.action = action;
@@ -96,7 +96,7 @@ public class UploadDetails extends OperationDetails {
     public String getLogFileName() {
         if (this.logFileName != null) return this.logFileName;
         
-        String dateString = (new Utility()).getDateForFileName(getStartTime());
+        String dateString = Utility.getDateForFileName(getStartTime());
         return dateString + "-" + getOperation() + getLogExt();
     }
     
@@ -200,7 +200,7 @@ public class UploadDetails extends OperationDetails {
             + "&nbsp;&nbsp;&nbsp;<b>Upload ID:</b> <a href='" + AntwebProps.getDomainApp() + "/uploadReport.do?uploadId=" + AntwebMgr.getNextSpecimenUploadId() + "'>" + AntwebMgr.getNextSpecimenUploadId() + "</a>"
             + "<br> &nbsp;&nbsp;&nbsp;<b>Operation:" + getOperation() + "</b>"
             + "<br>&nbsp;&nbsp;&nbsp;<b>This Log File:</b> " + getLogFileAnchor() 
-            + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + (new Date()).toString()     
+            + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + new Date()
             + "<br>&nbsp;&nbsp;&nbsp;<b>Encoding:</b> " + encoding   
             + "<br>&nbsp;&nbsp;&nbsp;<b>Antweb version:</b> " + AntwebUtil.getReleaseNum()
             + "<br>&nbsp;&nbsp;&nbsp;<b>Uploaded File:</b> " + getBackupFileAnchor();
@@ -239,7 +239,7 @@ public class UploadDetails extends OperationDetails {
         logString += "\r\r<br><br>";
         logString += "<h3>Statistics</h3>";
 
-        if ((preUploadStatistics != null) && (postUploadStatistics != null) ) {
+        if (preUploadStatistics != null && postUploadStatistics != null) {
         //if (!getPreUploadStats().equals(getPostUploadStats())) {
           if (preUploadStatistics.equals(postUploadStatistics)) {
             logString += "<br>Prior to Upload:<font color=green>Data set unchanged</font>";  
@@ -292,7 +292,7 @@ public class UploadDetails extends OperationDetails {
         }
     }
 
-    String messageLogFile = null;
+    String messageLogFile;
     public String getMessageLogFile() {
         return messageLogFile;
     }
@@ -345,7 +345,7 @@ public class UploadDetails extends OperationDetails {
         setExecTime(execTime);
 
         if (getOperation().contains("orldants")) {
-            (new WorldantsUploadDb(connection)).updateWorldantsUpload(this); 
+            new WorldantsUploadDb(connection).updateWorldantsUpload(this);
         }
         
         if (getForwardPage() == null) {
@@ -388,7 +388,7 @@ public class UploadDetails extends OperationDetails {
     }
     
     // Maintain a set of museums.  Could have been query but this done for performance.
-    private Map<String, Integer> museumMap = new HashMap<>();
+    private final Map<String, Integer> museumMap = new HashMap<>();
     
     public void addToMuseumMap(String element) {
       for (Museum museum : MuseumMgr.getMuseums()) {

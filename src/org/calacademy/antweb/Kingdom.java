@@ -2,18 +2,14 @@
 package org.calacademy.antweb;
 
 import java.io.Serializable;
-import java.sql.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-
 /** Class Kingdom keeps track of the information about a specific taxon */
 public class Kingdom extends Taxon implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Kingdom.class);
+    private static final Log s_log = LogFactory.getLog(Kingdom.class);
     
     public String getNextRank() {
         return "Phyla";

@@ -18,16 +18,16 @@ public class ProjectMgr {
 
     private static final Log s_log = LogFactory.getLog(ProjectMgr.class);
     
-    private static ArrayList<Project> s_globalProjects = null;
-    private static ArrayList<Project> s_subglobalProjects = null;
-    private static HashMap<String, Project> s_allProjectsHash = null;
+    private static ArrayList<Project> s_globalProjects;
+    private static ArrayList<Project> s_subglobalProjects;
+    private static HashMap<String, Project> s_allProjectsHash;
 
     public static void populate(Connection connection) {
       populate(connection, false);
     }
 
     public static void populate(Connection connection, boolean forceReload) {
-      if (!forceReload && (s_globalProjects != null)) return;
+      if (!forceReload && s_globalProjects != null) return;
 
       ProjectDb projectDb = new ProjectDb(connection);
       s_globalProjects = projectDb.getProjects("GLOBAL");
@@ -85,7 +85,7 @@ public class ProjectMgr {
       ArrayList<Project> projects = new ArrayList<>();
       for (String key : s_allProjectsHash.keySet()) {
         Project project = s_allProjectsHash.get(key);
-        if (true == project.getIsLive()) {
+        if (project.getIsLive()) {
           projects.add(project);
         }
       }
@@ -122,13 +122,13 @@ public class ProjectMgr {
       }
       HashMap<String, Project> projects = getAllProjectsHash();
       if (projects == null || projects.keySet() == null) {
-        if (unloadedProjectsReported == false) {
+        if (!unloadedProjectsReported) {
           s_log.warn("getProject() Seems projects not loaded yet.  useName:" + useName);
           unloadedProjectsReported = true;
         }
         return null;
       } else {
-        if (unloadedProjectsReported == true) {
+        if (unloadedProjectsReported) {
           s_log.warn("getProject() Projects are loaded now. Projects.size:" + projects.size());
           unloadedProjectsReported = false;
         }
@@ -204,7 +204,7 @@ public class ProjectMgr {
       for (String key : projects.keySet()) {
         Project project = s_allProjectsHash.get(key);
         if (project.getName().equals(candidate)
-          || (project.getDisplayKey() != null && project.getDisplayKey().equals(candidate)))
+          || project.getDisplayKey() != null && project.getDisplayKey().equals(candidate))
         {
           if (project.getDisplayKey() != null && !project.getDisplayKey().equals("")) {
             //s_log.warn("getUseName() *** " + project.getDisplayKey());

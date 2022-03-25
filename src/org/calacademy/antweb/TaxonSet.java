@@ -9,7 +9,7 @@ import org.apache.commons.logging.LogFactory;
 
 public abstract class TaxonSet {
 
-    private static Log s_log = LogFactory.getLog(TaxonSet.class);
+    private static final Log s_log = LogFactory.getLog(TaxonSet.class);
 
     protected int subfamilyCount = 0;
     protected int genusCount = 0;

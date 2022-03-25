@@ -7,10 +7,10 @@ import org.apache.commons.logging.LogFactory;
 
 public class ProjTaxonLogDetail extends ProjTaxon implements Comparable<ProjTaxonLogDetail>  {
 
-    private static Log s_log = LogFactory.getLog(ProjTaxonLogDetail.class);
+    private static final Log s_log = LogFactory.getLog(ProjTaxonLogDetail.class);
 
     private int logId = 0;
-    private Taxon taxon = null;
+    private Taxon taxon;
 
     public ProjTaxonLogDetail() {
     }
@@ -23,7 +23,7 @@ public class ProjTaxonLogDetail extends ProjTaxon implements Comparable<ProjTaxo
     
     public int compareTo(ProjTaxonLogDetail o) {
         // Only operates on taxonName.  All details in a given ProjTaxonLog are assumed to be of the same species list.
-        ProjTaxonLogDetail other = (ProjTaxonLogDetail) o;
+        ProjTaxonLogDetail other = o;
 
         return Taxon.getPrettyTaxonName(getTaxonName()).compareTo(Taxon.getPrettyTaxonName(other.getTaxonName()));
     }

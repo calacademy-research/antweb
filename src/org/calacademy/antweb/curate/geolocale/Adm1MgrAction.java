@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class Adm1MgrAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(Adm1MgrAction.class);
+    private static final Log s_log = LogFactory.getLog(Adm1MgrAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -37,7 +37,7 @@ public final class Adm1MgrAction extends Action {
         Integer groupIdInt = (Integer) df.get("groupId");
         int groupId = 0;
         if (groupIdInt != null) {
-          groupId = groupIdInt.intValue();
+          groupId = groupIdInt;
         }
         s_log.debug("adm1:" + adm1 + " country:" + countryName);
         Geolocale country = GeolocaleMgr.getValidCountry(countryName);
@@ -45,7 +45,7 @@ public final class Adm1MgrAction extends Action {
         if (countryName == null || adm1 == null || country == null) {
           String message = "Adm1Mgr Error. Country:" + countryName + "   Adm1:" + adm1;
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         }
 
         ArrayList<Geolocale> list = new ArrayList<>();
@@ -116,7 +116,7 @@ public final class Adm1MgrAction extends Action {
         request.setAttribute("list", list);
         request.setAttribute("codes", codeStr);
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
 
 //        String link = AntwebProps.getDomainApp() + "/editGeolocale.do?adm1=" + adm1 + "&country=" + country;
 //        return (mapping.findForward("adm1"));

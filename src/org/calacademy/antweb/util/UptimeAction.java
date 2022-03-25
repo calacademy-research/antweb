@@ -3,6 +3,8 @@ package org.calacademy.antweb.util;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -11,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
     
 public final class UptimeAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(UptimeAction.class);
+    private static final Log s_log = LogFactory.getLog(UptimeAction.class);
 
     private static boolean isFailOnPurpose = false;
     public static boolean isFailOnPurpose() {
@@ -28,7 +30,7 @@ public final class UptimeAction extends Action {
         if (queryString.contains("fail=1") || queryString.contains("fail=true")) isFailOnPurpose = true;
         if (queryString.contains("fail=0") || queryString.contains("fail=false")) isFailOnPurpose = false;
         if (isFailOnPurpose()) {
-            return (mapping.findForward("fail"));        
+            return mapping.findForward("fail");
         }
   
 		HttpSession session = request.getSession();
@@ -50,10 +52,10 @@ public final class UptimeAction extends Action {
 
         if (!successDB || !successDisk) {
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));   
+            return mapping.findForward("message");
         }
         
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 
     private boolean isWebDirAccessible() {
@@ -72,10 +74,10 @@ public final class UptimeAction extends Action {
 
     private boolean isDatabaseUp(HttpServletRequest request) {
 		boolean success = false;
-		java.sql.Connection connection = null;
+		Connection connection = null;
         Statement stmt = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, "UptimeAction.execute()");
 			stmt = connection.createStatement();
 			

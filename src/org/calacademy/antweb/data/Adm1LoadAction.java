@@ -16,7 +16,7 @@ import org.calacademy.antweb.home.*;
 
 public final class Adm1LoadAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(Adm1LoadAction.class);
+    private static final Log s_log = LogFactory.getLog(Adm1LoadAction.class);
 
     private static final Log s_antwebEventLog = LogFactory.getLog("adm1Load");
  

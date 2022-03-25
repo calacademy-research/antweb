@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class CustomExceptionHandler extends ExceptionHandler {
 
-  private static Log s_log = LogFactory.getLog(CustomExceptionHandler.class);
+  private static final Log s_log = LogFactory.getLog(CustomExceptionHandler.class);
 
   public ActionForward execute(Exception ex, ExceptionConfig ae,
 	ActionMapping mapping, ActionForm formInstance,

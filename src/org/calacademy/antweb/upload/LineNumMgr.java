@@ -1,6 +1,8 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.sql.*;
 
@@ -12,8 +14,8 @@ import org.apache.commons.logging.LogFactory;
     
 public class LineNumMgr {
 
-    private static Log s_log = LogFactory.getLog(LineNumMgr.class);
-	private static ArrayList<Integer> badCarriageReturnLines = null;
+    private static final Log s_log = LogFactory.getLog(LineNumMgr.class);
+	private static ArrayList<Integer> badCarriageReturnLines;
 
 
 // --------------------------------------------------------------------------------------
@@ -49,7 +51,7 @@ public class LineNumMgr {
 		String theHeader = null;
 		String lastLine = null;
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(uploadFile.getFileLoc()), uploadFile.getEncoding()));            
+        BufferedReader in = Files.newBufferedReader(Paths.get(uploadFile.getFileLoc()), uploadFile.getCharset());
         theLine = in.readLine();
         int lineNum = 1;
         int componentCount = 0;
@@ -73,8 +75,8 @@ public class LineNumMgr {
 
           int fudgeFactor = 1;
           if (lineNum > 1 &&
-               ( componentCount < (lastComponentCount - fudgeFactor)
-             ||  componentCount > (lastComponentCount + fudgeFactor)
+               ( componentCount < lastComponentCount - fudgeFactor
+             ||  componentCount > lastComponentCount + fudgeFactor
                )
              && componentCount < minComponentCount  
              ) {
@@ -110,7 +112,7 @@ public class LineNumMgr {
 	}
 	public static boolean isBadCarriageReturnLine(int lineNum) {
 	  for (Integer l : badCarriageReturnLines) {
-		if (l.intValue() == lineNum) return true;
+		if (l == lineNum) return true;
 	  }
 	  return false;
 	}        
@@ -118,7 +120,7 @@ public class LineNumMgr {
     public static int getBadLinesLessThan(int lineNum) {
       int c = 0;
 	  for (Integer l : badCarriageReturnLines) {
-		if (l.intValue() <= lineNum) ++c;
+		if (l <= lineNum) ++c;
 		//if (l.intValue() > lineNum) break;
 	  }
       //A.log("getBadLineLessThan() lineNum:" + lineNum + " c:" + c);

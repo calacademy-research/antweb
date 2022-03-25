@@ -12,7 +12,6 @@ import org.calacademy.antweb.imageUploader.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.Map;
 
 import java.sql.*;
 
@@ -250,7 +249,7 @@ public class AntwebMgr {
         Date startTime = new Date();
         AntwebFunctions.genRecentDescEdits(connection);
 
-        (new ImageUploaderAction()).writeRecentImages(connection);
+        new ImageUploaderAction().writeRecentImages(connection);
 
         s_log.debug("genRecentContent() secs:" + AntwebUtil.secsSince(startTime));
         // (new StatisticsDb(connection)).populateStatistics();
@@ -286,7 +285,7 @@ public class AntwebMgr {
     public static ActionForward isInitializing(HttpServletRequest request, ActionMapping mapping) {
         if (AntwebMgr.isServerInitializing()) {
              request.setAttribute("message", "Server is initializing...");
-             return (mapping.findForward("message"));   
+             return mapping.findForward("message");
         }
         return null;
     }
@@ -475,7 +474,7 @@ public class AntwebMgr {
         return "" + getStartTime();
     }
        
-    public static Date s_startTime = null;        
+    public static Date s_startTime;
     public static Date getStartTime() {
       return s_startTime;
     }

@@ -9,6 +9,7 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -18,7 +19,7 @@ public class DescEditImageUploadAction extends Action {
 
     //public static int IMG_WIDTH = 500;
     
-    private static Log s_log = LogFactory.getLog(DescEditImageUploadAction.class);
+    private static final Log s_log = LogFactory.getLog(DescEditImageUploadAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {
@@ -30,17 +31,15 @@ public class DescEditImageUploadAction extends Action {
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
         String root = request.getSession().getServletContext().getRealPath("") + "/";
-        java.sql.Connection connection = null;
+        Connection connection = null;
         String query;
         String forwardPage = "";
-        
-        
-        Utility util = new Utility();
+
 
         String messageStr = "";
         
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "DescEditImageUploadAction");
           
             connection.setAutoCommit(true);
@@ -79,7 +78,7 @@ public class DescEditImageUploadAction extends Action {
                     // Create the curator's directory if it does not already exist.
                     if (dir.equals("curator")) {
                       dir = "web/curator/" + accessLogin.getId();
-                      util.makeDirTree(dir);
+                      Utility.makeDirTree(dir);
                     }
                     
                     String fileName = theForm.getTheFile2().getFileName();
@@ -88,13 +87,13 @@ public class DescEditImageUploadAction extends Action {
 
                     String outputFileName2 = docBase + dirFileName;
                     
-                    if ((outputFileName != null) 
-                      && (!outputFileName.equals(""))) {
+                    if (outputFileName != null
+                      && !outputFileName.equals("")) {
                         outputFileName2 = docBase + dir + "/" + outputFileName; 
                     }
 
-                    util.backupFile(outputFileName2);
-                    boolean isSuccess = util.copyFile(theForm.getTheFile2(), outputFileName2);
+                    Utility.backupFile(outputFileName2);
+                    boolean isSuccess = Utility.copyFile(theForm.getTheFile2(), outputFileName2);
                     if (!isSuccess) {
                       s_log.warn("execute() copyFile failure");
                       return mapping.findForward("error");
@@ -145,7 +144,7 @@ public class DescEditImageUploadAction extends Action {
             }
         } catch (IOException | SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally {
             DBUtil.close(connection, this, "DescEditImageUploadAction");
         }

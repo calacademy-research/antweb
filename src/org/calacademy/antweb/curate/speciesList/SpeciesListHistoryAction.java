@@ -15,7 +15,7 @@ import org.calacademy.antweb.home.*;
 
 public class SpeciesListHistoryAction extends SpeciesListToolAction {
 
-  private static Log s_log = LogFactory.getLog(SpeciesListHistoryAction.class);
+  private static final Log s_log = LogFactory.getLog(SpeciesListHistoryAction.class);
 
   public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {
@@ -30,7 +30,7 @@ public class SpeciesListHistoryAction extends SpeciesListToolAction {
     SpeciesListToolForm historyForm = (SpeciesListToolForm) form;
     if (historyForm == null) historyForm = new SpeciesListToolForm();
 
-    java.sql.Connection connection = null;
+    Connection connection = null;
     try {
        DataSource dataSource = getDataSource(request, "mediumConPool");
        connection = DBUtil.getConnection(dataSource, "SpeciesListHistoryAction.execute()");

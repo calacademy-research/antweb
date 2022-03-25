@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletOutputStream;
 import java.io.InputStream;
+import java.sql.Connection;
 
 import org.calacademy.antweb.*;
 
@@ -20,13 +21,13 @@ public final class TeamMemberImgDownloadAction extends Action {
                                  HttpServletRequest request, 
                                  HttpServletResponse response) throws Exception {
 
-        String id = (String)request.getParameter("id");
-        int idInt = (Integer.valueOf(id)).intValue();
+        String id = request.getParameter("id");
+        int idInt = Integer.parseInt(id);
 
        s_log.warn("in TeamMemberImgDonwload id is " + id);
 
 
-		java.sql.Connection connection = null;
+		Connection connection = null;
         TeamMember teamMember = null;
     //    try {
       //      connection = getDataSource(request, "conPool").getConnection();

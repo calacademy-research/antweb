@@ -4,10 +4,12 @@ import java.io.*;
 import java.util.*;
 
 import java.text.*;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.*;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
@@ -31,7 +33,7 @@ public abstract class AntwebUtil {
   
   private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");  
   
-  private static HashMap<String, Integer> s_logHash = new HashMap<>();
+  private static final HashMap<String, Integer> s_logHash = new HashMap<>();
   
   public static void main(String[] args) { 
    // To execute:    ant antwebUtil    
@@ -71,7 +73,7 @@ public abstract class AntwebUtil {
     }
     public static boolean isSecureCode(int secureCode) {
       if (s_secureCode == 0) return false;
-      return (s_secureCode == secureCode);
+      return s_secureCode == secureCode;
     }
     public static void resetSecureCode() {
       s_secureCode = 0;
@@ -209,7 +211,7 @@ public abstract class AntwebUtil {
     return qualifiedFiles;
   }
 
-  private static ArrayList<Integer> s_uploadGroupList = null;
+  private static ArrayList<Integer> s_uploadGroupList;
   public static ArrayList<Integer> getUploadGroupList() {
     if (s_uploadGroupList != null) return s_uploadGroupList;
 
@@ -277,7 +279,7 @@ public abstract class AntwebUtil {
       String docRoot = AntwebProps.getDocRoot();
       String dataRoot = docRoot + "web/data/";
       String dataFile = dataRoot + file;
-      (new Utility()).makeDirTree(dataFile); 
+      Utility.makeDirTree(dataFile);
       s_log.debug("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + file);
       AntwebUtil.writeFile(dataFile, stringData);
   }
@@ -285,23 +287,18 @@ public abstract class AntwebUtil {
   public static void writeDataFile(String dir, String file, String stringData) {
       String docRoot = AntwebProps.getDocRoot();
       String dataRoot = docRoot + dir;
-      (new Utility()).makeDirTree(dataRoot); 
+      Utility.makeDirTree(dataRoot);
       String dataFile = dataRoot + file;
       s_log.warn("writeDataFile() 2 dataRoot:" + dataRoot + " file:" + file);
       AntwebUtil.writeFile(dataFile, stringData);
   }
 
-  public static void writeFile(String file, String stringData)
-  {
-      String loc = (new StringBuilder()).append(file).toString();
-      try
-      {
-          BufferedWriter out = new BufferedWriter(new FileWriter(loc, false));
-          out.write(stringData);
-          out.close();
-      } catch(Exception e) {
-          s_log.error("writeFile() file:" + file + " e:" + e.toString());
-      }
+  public static void writeFile(String file, String stringData) {
+    try {
+      FileUtils.writeStringToFile(new File(file), stringData);
+    } catch (Exception e) {
+      s_log.error("writeFile() file:" + file + " e:" + e);
+    }
   }
 
   public static String readFile(String dir, String fileName) {
@@ -316,18 +313,15 @@ public abstract class AntwebUtil {
    StringBuilder text = new StringBuilder();
    try {
     String NL = System.getProperty("line.separator");
-    Scanner scanner = new Scanner(new FileInputStream(fileName));
-    try {
-      while (scanner.hasNextLine()){
-        text.append(scanner.nextLine() + NL);
-      }
-    } finally {
-      scanner.close();
-    } 
+     try (Scanner scanner = new Scanner(new FileInputStream(fileName))) {
+       while (scanner.hasNextLine()) {
+         text.append(scanner.nextLine()).append(NL);
+       }
+     }
    } catch(FileNotFoundException e) {
      return null;
    } catch(Exception e) {
-     s_log.error("readFile() fileName:" + fileName + " e:" + e.toString());
+     s_log.error("readFile() fileName:" + fileName + " e:" + e);
    }
    return text.toString();
   }
@@ -362,7 +356,7 @@ public abstract class AntwebUtil {
     if (fileExists) {
       lastModified = file.lastModified();
       expireTime = lastModified + expirePeriod;
-      if ((new Date()).getTime() > expireTime) {
+      if (new Date().getTime() > expireTime) {
         isExpired = true;        
         AntwebUtil.remove(fullFileName);
       }
@@ -531,7 +525,7 @@ public abstract class AntwebUtil {
       String line = trace.substring(0, nIndex);
       trace = trace.substring(nIndex + 3);
 
-      if ((line.contains("org.apache.jsp") || line.contains("org.calacademy.antweb")) && !(line.contains("StackTrace"))) { // || line.contains("AntwebException")
+      if ((line.contains("org.apache.jsp") || line.contains("org.calacademy.antweb")) && !line.contains("StackTrace")) { // || line.contains("AntwebException")
         //A.log("i:" + i + " nIndex:" + nIndex + " line:" + line);
         traceLines.add("at " + line);
       }
@@ -543,7 +537,7 @@ public abstract class AntwebUtil {
   }
 
 
-  private static int s_shortStackLines = 7  ;
+  private static final int s_shortStackLines = 7  ;
 
   public static String getShortStackTrace() {
     return AntwebUtil.getShortStackTrace(s_shortStackLines);
@@ -589,7 +583,7 @@ public abstract class AntwebUtil {
       String shortStackTrace = stackTrace.substring(0, i);
       shortStackTrace = stackTrace.substring(0, i);
       return shortStackTrace;
-    } catch ( java.lang.StringIndexOutOfBoundsException e2) {
+    } catch ( StringIndexOutOfBoundsException e2) {
       s_log.warn("getShortStackTrace() e:" + e2 + " Returning full stacktrace.");
       return stackTrace;
     }
@@ -619,11 +613,11 @@ public abstract class AntwebUtil {
 
   public static void sleep(double seconds) {
     double doubleMillis = seconds * 1000;
-    int millis = (Double.valueOf(doubleMillis)).intValue();
+    int millis = Double.valueOf(doubleMillis).intValue();
     try {
       Thread.sleep(millis);
     } catch(InterruptedException e) {
-      s_log.warn("Exception in AntwebUtil.sleep(): " + e.toString());
+      s_log.warn("Exception in AntwebUtil.sleep(): " + e);
     }   
   }
 
@@ -632,7 +626,7 @@ public abstract class AntwebUtil {
     try {
       Thread.sleep(millis);
     } catch(InterruptedException e) {
-      s_log.warn("Exception in AntwebUtil.sleep(): " + e.toString());
+      s_log.warn("Exception in AntwebUtil.sleep(): " + e);
     }   
   }
 
@@ -648,7 +642,7 @@ public abstract class AntwebUtil {
       System.gc();
       long duration = new Date().getTime() - startTime ;
      // s_log.warn("GarbageCollected:" + duration);
-      return (Long.valueOf(duration)).toString();
+      return Long.valueOf(duration).toString();
   }
   
   public static long millisSince(Date date) {
@@ -709,7 +703,7 @@ public abstract class AntwebUtil {
       return formatter.format(timePassed) + " mins";
 	}
 
-    public static String reportTime(java.util.Date startTime) {
+    public static String reportTime(Date startTime) {
       String execTime = "";
       long millis = AntwebUtil.millisSince(startTime);
       int threeMinOfMillis = 3 * 60 * 1000;
@@ -730,12 +724,12 @@ public abstract class AntwebUtil {
         c.set(Calendar.MINUTE, 0);
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
-        long millisUntil = (c.getTimeInMillis() - System.currentTimeMillis());
+        long millisUntil = c.getTimeInMillis() - System.currentTimeMillis();
         //if (AntwebProps.isDevMode()) AntwebUtil.log("millisUntil:" + millisUntil);
         return millisUntil;
     }
     public static long minUntil8pm() {
-        return java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(millisUntil8pm());    
+        return TimeUnit.MILLISECONDS.toMinutes(millisUntil8pm());
         // return millisUntil() / 1000 / 60;
     }
       
@@ -833,7 +827,7 @@ public abstract class AntwebUtil {
     }     
     
 
-    public static boolean isDeployed = true;
+    public static final boolean isDeployed = true;
         
     public static boolean isDeployed(HttpServletRequest request) {
       if (isDeployed) return true;
@@ -842,11 +836,11 @@ public abstract class AntwebUtil {
     }
 
 
-  private static Hashtable countHash = new Hashtable();
+  private static Hashtable<String, Integer> countHash = new Hashtable<>();
   public static void count(String key) {
     if (countHash.containsKey(key)) {
       Integer theCount = (Integer) countHash.get(key);  
-      int theCountInt = theCount.intValue() + 1;
+      int theCountInt = theCount + 1;
       //A.log("AntwebUtil.count() key:" + key + " count:" + theCountInt);
       countHash.put(key, theCountInt);
     } else {
@@ -855,7 +849,7 @@ public abstract class AntwebUtil {
   }
   public static int getCount(String key) {
     if (countHash.containsKey(key)) {
-      return ((Integer) countHash.get(key)).intValue();
+      return (Integer) countHash.get(key);
     } else {
       return 0;
     }
@@ -866,7 +860,7 @@ public abstract class AntwebUtil {
       Integer count = (Integer) countHash.get(key);
       //A.log("logCountHash() " + key + ":" + count);
     }
-    countHash = new Hashtable();
+    countHash = new Hashtable<>();
   }
   
   public static String getAdminEmail() {

@@ -1,17 +1,19 @@
 package org.calacademy.antweb;
 
-import java.util.*;
-import java.util.Map;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public class CommonNames {
 
-  private static Log s_log = LogFactory.getLog(CommonNames.class);
+  private static final Log s_log = LogFactory.getLog(CommonNames.class);
   private static boolean isInitialized = false;
-  private static HashMap<String, String> nameMap = null;
-  private static ArrayList<String> namesList = null;   
+  private static HashMap<String, String> nameMap;
+  private static ArrayList<String> namesList;
 
   public static void init() {
     isInitialized = true;
@@ -45,7 +47,6 @@ public class CommonNames {
     // Found on google via "common ant names"
     nameMap.put("Black garden ant", "formicinaelasius niger");
     nameMap.put("Pharoah ant", "myrmicinaemonomorium pharaonis");
-    nameMap.put("Banded sugar ant", "formicinaecamponotus consobrinus");
     nameMap.put("Yellow crazy ant", "formicinaeanoplolepis gracilipes");
     nameMap.put("Jack jumper ant", "myrmeciinaemyrmecia pilosula");
     nameMap.put("Green tree ant", "formicinaeoecophylla smaragdina");
@@ -73,23 +74,24 @@ public class CommonNames {
 
   public static String get(String commonName) {
     if (!isInitialized) init();
-    String taxonName = nameMap.get(commonName);
-    return taxonName;  
-  }  
+    return nameMap.get(commonName);
+  }
 
+  /**
+   * Get the common names of a species from the taxonName
+   *
+   * @param taxonName the species name to look up
+   * @return A comma + space separated list of common names for the taxonName. Returns null if no common names found.
+   */
   public static String getCommonNames(String taxonName) {
     if (!isInitialized) init();
-    String commonNames = "";
+    String commonNames = nameMap.entrySet().stream()  // get common name, taxonName entry pairs from map
+            .filter(e -> e.getValue().equals(taxonName))  // keep entries where taxonName matches map value
+            .map(Map.Entry::getKey) // get common names
+            .collect(Collectors.joining(", ")); // join all together into a comma separated list
 
-    int i = 0;
-	for(Map.Entry entry: nameMap.entrySet()){
-		if(taxonName.equals(entry.getValue())){
-			++i;
-			if (i > 1) commonNames += ", ";
-			commonNames += entry.getKey();
-		}
-	}
-    if (i == 0) return null;
+    if (commonNames.isEmpty()) commonNames = null;  // if no names matched, collect() returns an empty string, we want null
+
     return commonNames;
   }  
 

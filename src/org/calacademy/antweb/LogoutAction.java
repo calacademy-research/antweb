@@ -18,7 +18,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class LogoutAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(LogoutAction.class);
+    private static final Log s_log = LogFactory.getLog(LogoutAction.class);
 
     public ActionForward execute(
         ActionMapping mapping, ActionForm form,
@@ -33,18 +33,18 @@ public final class LogoutAction extends Action {
         String requestURI = request.getRequestURI();
         if (requestURI.contains("forgotPassword")) {
           //s_log.warn("Yes, forgotTarget");
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         }
         
         LoginMgr.removeAccessLogin(request);
 
         String target = ((LoginForm) form).getTarget();
 
-        if ((target != null) && (!target.equals("")) && (!target.contains("login.do"))) {
+        if (target != null && !target.equals("") && !target.contains("login.do")) {
           //s_log.warn("Logout:" + target);
           return new ActionForward(target, true);  // target must be a physical page
         } else {
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         }
     }
 }

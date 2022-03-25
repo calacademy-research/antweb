@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class DescriptionAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(DescriptionAction.class);
+    private static final Log s_log = LogFactory.getLog(DescriptionAction.class);
       
     protected boolean saveDescriptionEdit(DescriptionForm form, Describable editObject, Login accessLogin, HttpServletRequest request, Connection connection) 
         throws SQLException {            
@@ -27,14 +27,14 @@ public class DescriptionAction extends Action {
 
             //A.log("saveDescriptionEdit() editField:" + editField + " is:" + isSaveEditField);          
 
-            if ((isSaveEditField) && (editField != null)) {
+            if (isSaveEditField && editField != null) {
               String contents = form.getContents();
               String imageUrl = form.getImageUrl();
               String guiDefaultContent = AntwebProps.getProp("gui.default.content");
                   
               s_log.debug("saveDescriptionEdit() descriptionEdit.  contents:" + contents + " imageUrl:" + imageUrl);
                   
-              if ((contents.equals(guiDefaultContent)) && (imageUrl == null)) {
+              if (contents.equals(guiDefaultContent) && imageUrl == null) {
                 // The user hit Done but did not modify the default text
                 s_log.warn("saveDescriptionEdit() User hit done to save the gui default content.  Returning success.");
                 return true;  // was a success forward
@@ -91,7 +91,7 @@ public class DescriptionAction extends Action {
             int rowCount = 0;
 
             // To avoid MySQLSyntaxErrorException
-            contents = contents.replaceAll("'", "\''");            
+            contents = contents.replaceAll("'", "''");
 
             String whereClause = " where object_key ='" + describable.getName() + "' and title ='" + title + "'"; // + "' and " + codeClause;
             
@@ -182,12 +182,12 @@ public class DescriptionAction extends Action {
             int rowCount = 0;
 
             // To avoid MySQLSyntaxErrorException
-            contents = contents.replaceAll("'", "\''");            
+            contents = contents.replaceAll("'", "''");
             
             String code = null;
             String codeClause = " code is null";
             if (taxon instanceof Specimen) {
-              code = ((Specimen) taxon).getCode();            
+              code = taxon.getCode();
               codeClause = " code = '" + code + "'";
             }
 
@@ -254,13 +254,13 @@ public class DescriptionAction extends Action {
         return true;
     }
     
-    protected void getDescEditHistory(Taxon taxon, java.sql.Connection connection, HttpServletRequest request) 
+    protected void getDescEditHistory(Taxon taxon, Connection connection, HttpServletRequest request)
       throws SQLException {
         /* Get all edits and hists for a given taxon where the access_login is known.  (Added late March, 2012) */
         
       String codeClause = " and code is null";
       if (taxon instanceof Specimen) {
-        codeClause = " and code = '" + ((Specimen) taxon).getCode() + "'";
+        codeClause = " and code = '" + taxon.getCode() + "'";
       }
         
       String query = "select distinct de.created, l.first_name, l.last_name, l.name, title from description_edit de" 
@@ -282,7 +282,7 @@ public class DescriptionAction extends Action {
 
           //A.log("getDescEditHistory() query:" + query);
  
-          ArrayList<String> arrayList = new ArrayList();
+          ArrayList<String> arrayList = new ArrayList<>();
           while (rset.next()) {
 
             String created = DateUtil.getFormatDateTimeStr(rset.getTimestamp("created"));        

@@ -12,9 +12,9 @@ import org.apache.commons.logging.LogFactory;
     
 public class Homonym extends Taxon implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Homonym.class);
+    private static final Log s_log = LogFactory.getLog(Homonym.class);
 
-    private Taxon seniorHomonym = null;
+    private Taxon seniorHomonym;
     
 
     public void finishInstance(Connection connection) throws SQLException {
@@ -216,7 +216,7 @@ public class Homonym extends Taxon implements Serializable {
      * To do: Remove taxon_name from query and replace with id.  Include into this class.
      */
         Formatter formatter = new Formatter();
-        Hashtable description = new Hashtable();
+        Hashtable<String, String> description = new Hashtable<>();
         String taxonName = null;
         String theQuery = "";
         Statement stmt = null;
@@ -266,7 +266,7 @@ public class Homonym extends Taxon implements Serializable {
     }
 
     public void setSeniorHomonym(Connection connection) throws SQLException {
-        seniorHomonym = (new TaxonDb(connection)).getTaxon(getTaxonName());
+        seniorHomonym = new TaxonDb(connection).getTaxon(getTaxonName());
         s_log.debug("setSeniorHomonym() homonym:" + getTaxonName() + " seniorHomonym:" + seniorHomonym);
     }
     public Taxon getSeniorHomonym() {

@@ -31,7 +31,7 @@ public class Check {
     public static ActionForward notBot(HttpServletRequest request, ActionMapping mapping) {
         if (HttpUtil.isBot(request)) {
             request.setAttribute("message", "no bots allowed");
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
         return null;
     }
@@ -77,9 +77,9 @@ public class Check {
 
     // ActionForward a = Check.initLoginValidbusy(getDataSource(request, "conPool"), request, mapping); if (a != null) return a;
     public static ActionForward initLoginValidBusy(DataSource dataSource, HttpServletRequest request, ActionMapping mapping) {
-        ActionForward a = Check.initLoginValid(request, mapping); if (a != null) return a;
+        ActionForward a = Check.initLoginValid(request, mapping);
         if (a != null) return a;
-        a = Check.busy(dataSource, request, mapping); if (a != null) return a;
+        a = Check.busy(dataSource, request, mapping);
         return a;
     }
 
@@ -172,7 +172,7 @@ public class Check {
         if (UtilDataAction.isInComputeProcess()) {
             String message = "Antweb is currently in it's re-computation process.  Please try again shortly.";
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
         return null;
     }    

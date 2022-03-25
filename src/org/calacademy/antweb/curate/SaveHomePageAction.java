@@ -1,8 +1,10 @@
 package org.calacademy.antweb.curate;
 
 import java.io.IOException;
+import java.lang.Class;
 import java.lang.reflect.Field;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -10,6 +12,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -24,7 +28,7 @@ import org.calacademy.antweb.util.*;
 
 public final class SaveHomePageAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SaveHomePageAction.class);
+    private static final Log s_log = LogFactory.getLog(SaveHomePageAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -32,13 +36,13 @@ public final class SaveHomePageAction extends Action {
 
         // Extract attributes we will need
         HttpSession session = request.getSession();
-        java.sql.Connection connection = null;
+        Connection connection = null;
         Statement stmt = null;
         
         HomePageForm theForm = (HomePageForm) form;
         
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SaveHomePageAction");
 
             connection.setAutoCommit(true);
@@ -46,7 +50,7 @@ public final class SaveHomePageAction extends Action {
 
             String update = null;
             try {
-                java.lang.Class formClass = java.lang.Class.forName("org.calacademy.antweb.curate.HomePageForm");
+                Class formClass = Class.forName("org.calacademy.antweb.curate.HomePageForm");
                 Field[] fields = formClass.getDeclaredFields();
                 String fieldName;
                 String fieldValue;
@@ -58,28 +62,23 @@ public final class SaveHomePageAction extends Action {
                     //s_log.info("execute update:" + update);
                     stmt.executeUpdate(update);
                 }
-            } catch (IllegalAccessException e) {
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-            } catch (SecurityException e) {
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-            } catch (ClassNotFoundException e) {
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            } catch (IllegalAccessException | ClassNotFoundException | SecurityException e) {
+                AntwebUtil.logStackTrace(e);
             }
-            
+
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, stmt, this, "SaveHomePageAction");
         }
-        
-        Utility util = new Utility();
-        String docRoot = util.getDocRoot();
+
+        String docRoot = Utility.getDocRoot();
         String previewBody = docRoot + "homePagePreview-body.jsp";
         String indexBody = docRoot + "web/homepage/index-body.jsp";
         s_log.info("execute() copy previewBody:" + previewBody + " to " + indexBody);
-        util.copyFile(previewBody, indexBody);
+        Utility.copyFile(previewBody, indexBody);
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

@@ -69,7 +69,7 @@ public class OverviewMgr {
 				String geolocaleIdStr = request.getParameter("geolocaleId");
 				if (geolocaleIdStr != null) {
                   hasParams = "geolocale overview";
-				  int geolocaleId = (Integer.valueOf(geolocaleIdStr)).intValue();
+				  int geolocaleId = Integer.parseInt(geolocaleIdStr);
 				  overview = GeolocaleMgr.getGeolocale(geolocaleId);
                   if (overview == null) throw new AntwebException("Geolocale not found for geolocaleId:" + geolocaleIdStr);
 				} else {
@@ -171,10 +171,10 @@ public class OverviewMgr {
         boolean isProject = Project.isProjectName(name);
         if (isProject) {
           Project project = ProjectMgr.getProject(name);
-          if (project != null) overview = (Overview) project;
+          if (project != null) overview = project;
         } else {
-          Geolocale geolocale = (Geolocale) GeolocaleMgr.getGeolocale(name);
-          if (geolocale != null) overview = (Overview) geolocale;
+          Geolocale geolocale = GeolocaleMgr.getGeolocale(name);
+          if (geolocale != null) overview = geolocale;
         }
         return overview;
     }

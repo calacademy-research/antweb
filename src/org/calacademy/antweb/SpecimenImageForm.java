@@ -11,16 +11,16 @@ import org.calacademy.antweb.util.*;
 
 public final class SpecimenImageForm extends ActionForm {
 
-    private String imageId = null; // This is a usable alternative.  Primary key.
-    private String code = null;    // This is the what we should use.
-    private String name = null;    // This is what we did use.  Backwards compatible
-    private String shot = null;
+    private String imageId; // This is a usable alternative.  Primary key.
+    private String code;    // This is the what we should use.
+    private String name;    // This is what we did use.  Backwards compatible
+    private String shot;
     private int number = 0;
-    private String artist = null;
-    private String action = null;
+    private String artist;
+    private String action;
     
     public String getImageId() {
-	    return (this.imageId);
+	    return this.imageId;
     }
 
     public void setImageId(String imageId) {
@@ -28,7 +28,7 @@ public final class SpecimenImageForm extends ActionForm {
     }
     
     public String getCode() {
-	    return (this.code);
+	    return this.code;
     }
 
     public void setCode(String code) {
@@ -36,7 +36,7 @@ public final class SpecimenImageForm extends ActionForm {
     }
 
     public String getName() {
-    	return (this.name);
+    	return this.name;
     }
 
     public void setName(String name) {
@@ -87,9 +87,9 @@ public final class SpecimenImageForm extends ActionForm {
     				HttpServletRequest request) {
 
         ActionErrors errors = new ActionErrors();
-        if ((name == null) || (name.length() < 1))
-          if ((code == null) || (code.length() < 1))
-            if ((imageId == null) || (imageId.length() < 1))
+        if (name == null || name.length() < 1)
+          if (code == null || code.length() < 1)
+            if (imageId == null || imageId.length() < 1)
               errors.add("name", new ActionError("error.name.required"));
               
         HttpUtil.blockFishingAttack(request, errors);

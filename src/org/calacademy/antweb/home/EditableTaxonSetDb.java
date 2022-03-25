@@ -12,7 +12,7 @@ import org.calacademy.antweb.*;
 
 public abstract class EditableTaxonSetDb extends TaxonSetDb {
 
-    private static Log s_log = LogFactory.getLog(EditableTaxonSetDb.class);
+    private static final Log s_log = LogFactory.getLog(EditableTaxonSetDb.class);
 
     public EditableTaxonSetDb(Connection connection) {
       super(connection);

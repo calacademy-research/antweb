@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class HitUrlThread extends Thread {
 
-    private static Log s_log = LogFactory.getLog(HitUrlThread.class);
+    private static final Log s_log = LogFactory.getLog(HitUrlThread.class);
 
 	public HitUrlThread(String str) {
 		super(str);

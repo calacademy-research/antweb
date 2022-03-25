@@ -1,7 +1,6 @@
 package org.calacademy.antweb.util;
 
 import java.util.*;
-import java.util.Collection;
 
 import javax.servlet.http.*;
 
@@ -29,7 +28,7 @@ possible moment - ideally in jsp footer.
       if (getRequestCount() > 100) {
         try {
           purge();
-        } catch (java.util.ConcurrentModificationException e) {
+        } catch (ConcurrentModificationException e) {
           // nothing to do.  
         }
       }
@@ -53,7 +52,7 @@ possible moment - ideally in jsp footer.
 
       if (isDebug) {
           if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
-              s_log.info("add() request:" + (String) request.getAttribute("trackerKey"));
+              s_log.info("add() request:" + request.getAttribute("trackerKey"));
 
           //A.log("add() request:" + (String) request.getAttribute("trackerKey"));
           //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();
@@ -67,7 +66,7 @@ possible moment - ideally in jsp footer.
 
       if (isDebug) {
           if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
-              s_log.debug("remove() request:" + (String) request.getAttribute("trackerKey"));
+              s_log.debug("remove() request:" + request.getAttribute("trackerKey"));
         //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();
       }
     }
@@ -78,7 +77,7 @@ possible moment - ideally in jsp footer.
       Collection<Tracker> values = null;
       try {
         values = trackerMap.values();
-      } catch (java.util.ConcurrentModificationException e) {
+      } catch (ConcurrentModificationException e) {
         s_log.warn("purge() e:" + e + " values:" + values);
         return;
       }

@@ -9,7 +9,7 @@ import org.calacademy.antweb.util.*;
 
 public class Extent {
 
-    private static Log s_log = LogFactory.getLog(Extent.class);
+    private static final Log s_log = LogFactory.getLog(Extent.class);
 
     float maxLat;
     float minLat;
@@ -55,7 +55,7 @@ public class Extent {
         float latDiff = maxLat - minLat;
         float lonDiff = maxLon - minLon;
         
-        float product = (thePercent / 100.0f) / 2.0f;
+        float product = thePercent / 100.0f / 2.0f;
         
         float latIncrement = latDiff * product; 
         float lonIncrement = lonDiff * product;
@@ -71,25 +71,25 @@ public class Extent {
         float latDiff = maxLat - minLat;
         float lonDiff = maxLon - minLon;
         
-        float latMid = maxLat - (latDiff / 2.0f);
-        float lonMid = maxLon - (lonDiff / 2.0f);
+        float latMid = maxLat - latDiff / 2.0f;
+        float lonMid = maxLon - lonDiff / 2.0f;
         
         
         if (latDiff < minHeight) {
-            this.maxLat = latMid + (minHeight / 2.0f);
-            this.minLat = latMid - (minHeight / 2.0f);            
+            this.maxLat = latMid + minHeight / 2.0f;
+            this.minLat = latMid - minHeight / 2.0f;
         }
         
         if (lonDiff < minWidth) {
-            this.maxLon = lonMid + (minWidth / 2.0f);
-            this.minLon = lonMid - (minWidth / 2.0f);            
+            this.maxLon = lonMid + minWidth / 2.0f;
+            this.minLon = lonMid - minWidth / 2.0f;
         }    
     }
     
     private float getExtentFloat(String s) {
       // Strings can contain ",".  Trim.
       s = s.replaceFirst(",", "");
-      float f = (Float.valueOf(s)).floatValue();
+      float f = Float.parseFloat(s);
       return f;
     }
     
@@ -166,18 +166,14 @@ public class Extent {
             }
         } catch (Exception e) {
             s_log.error("error in  getExtentFromDb " + e + " query:" + theQuery);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         } finally {
             DBUtil.close(stmt, rset, this, "extent()");
         }
     }
     
     public boolean hasAllZeros() {
-        boolean allZeros = false;
-        if ((minLon == 0) && (minLat == 0) && (maxLon == 0) && (maxLat == 0)) {
-            allZeros = true;
-        }
-        return allZeros;
+        return minLon == 0 && minLat == 0 && maxLon == 0 && maxLat == 0;
     }
 
     public float getMaxLat() {

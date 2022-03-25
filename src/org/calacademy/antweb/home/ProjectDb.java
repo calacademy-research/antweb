@@ -12,7 +12,7 @@ import org.calacademy.antweb.util.*;
 
 public class ProjectDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(ProjectDb.class);
+    private static final Log s_log = LogFactory.getLog(ProjectDb.class);
         
     public ProjectDb(Connection connection) {
       super(connection);
@@ -42,7 +42,7 @@ public class ProjectDb extends AntwebDb {
           projects.put(projectName, project);
         }
       } catch (SQLException e) {
-        s_log.error("getAllProjects() query:" + query + " e:" + e.toString());
+        s_log.error("getAllProjects() query:" + query + " e:" + e);
       } finally {
         DBUtil.close(stmt, rset, this, "ProjectDb.getAllProjects()");
       }
@@ -73,7 +73,7 @@ public class ProjectDb extends AntwebDb {
           projects.add(project);
         }
       } catch (SQLException e) {
-        s_log.error("getProjects(scope) query:" + query + " e:" + e.toString());
+        s_log.error("getProjects(scope) query:" + query + " e:" + e);
       } finally {
         DBUtil.close(stmt, rset, this, "ProjectDb.getProjects(scope)");
       }
@@ -103,7 +103,7 @@ public class ProjectDb extends AntwebDb {
           projects.add(project);
         }
       } catch (SQLException e) {
-        s_log.error("getProjects() query:" + query + " e:" + e.toString());
+        s_log.error("getProjects() query:" + query + " e:" + e);
       } finally {
         DBUtil.close(stmt, rset, this, "ProjectDb.getProjects()");
       }
@@ -174,14 +174,14 @@ public class ProjectDb extends AntwebDb {
               //A.log("fetch description");
               //project.setConnection(getConnection());
               
-              Hashtable description = (new DescEditDb(getConnection())).getDescription(project.getName());
+              Hashtable<String, String> description = new DescEditDb(getConnection()).getDescription(project.getName());
               project.setDescription(description);
             }
 
             //A.log("getFromDb() map:" + getMap() + " speciesListMappable:" + getSpeciesListMappable());
         } catch (SQLException e) {
             s_log.error("getProject() projectName:" + name + " query:" + theQuery + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         } finally {
             DBUtil.close(stmt, rset, this, "ProjectDb.getProject()");
         }
@@ -191,7 +191,7 @@ public class ProjectDb extends AntwebDb {
 // was Project.saveToDb(Project project)
     public void save(Project project) throws SQLException {
         if (project.getName() != null && project.getName().length() > 0) {
-            String theInsert = "";
+            String theInsert;
             if (null != project.getScope()) {
                theInsert = "insert into project (root, project_title, scope, project_name, species_list_mappable) values (";
                theInsert += "'" + project.getRoot() + "','" + project.getTitle() + "','" + project.getScope() + "','" + project.getName() + "', " + project.getSpeciesListMappable() + ")";
@@ -225,7 +225,7 @@ public class ProjectDb extends AntwebDb {
             int MAX_MAP_LENGTH = 40;  // This is what the field is defined as in the database.
               // Weirdness in design of the getMapString causes danger of overwriting the database values.
             String mapImage = project.getMapImage();
-            if ((mapImage != null) && (mapImage.length() < MAX_MAP_LENGTH)) {
+            if (mapImage != null && mapImage.length() < MAX_MAP_LENGTH) {
                 s_log.info("updateInDb() scope:" + project.getScope() + " title:" + project.getTitle() + " good mapImage:" + mapImage);                        
                 theQuery += addSet("map", mapImage) + ",";
             } else {
@@ -259,7 +259,7 @@ public class ProjectDb extends AntwebDb {
 
             } catch (SQLException e) {
                 s_log.error("update() scope:" + project.getScope() + " title:" + project.getTitle() + " query: " + theQuery);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);               
+                AntwebUtil.logStackTrace(e);
             } finally {
                 DBUtil.close(stmt, null, this, "ProjectDb.update()");
             }
@@ -330,7 +330,7 @@ public class ProjectDb extends AntwebDb {
 
       } catch (SQLException e) {
          s_log.error("fetchSpeciesLists() e:" + e + " loginId:" + loginId + ": ");
-         org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+         AntwebUtil.logStackTrace(e);
       } finally {
         DBUtil.close(stmt, rset, "fetchSpeciesLists()");
       }
@@ -427,7 +427,7 @@ public class ProjectDb extends AntwebDb {
             s_log.error("addSet() field is null for value:" + value);
             return "";
         } 
-        if ((value == null) || (value.equals("null"))) { 
+        if (value == null || value.equals("null")) {
             value = ""; 
         }
         value =  AntFormatter.escapeQuotes(value);
@@ -443,7 +443,7 @@ public class ProjectDb extends AntwebDb {
         stmt.executeUpdate(dml);
 
         //From SaveLoginAction, the list of projects comes from a form.  They are strings.
-        String projectName = null;
+        String projectName;
         ArrayList<SpeciesListable> projects = login.getProjects();
         if (projects == null) return;                
         //A.log("updateProjects() projects:" + projects);
@@ -468,15 +468,15 @@ public class ProjectDb extends AntwebDb {
     }
     
     public void deleteSpeciesList(String speciesList) {
-        String query = "";
+        String query;
         try {	
             Statement stmt;
             stmt = getConnection().createStatement();
 
-            query = "delete from project where project_name = \'" + speciesList + "\'";
+            query = "delete from project where project_name = '" + speciesList + "'";
             stmt.executeUpdate(query);
 
-            query = "delete from proj_taxon where project_name = \'" + speciesList + "\'";
+            query = "delete from proj_taxon where project_name = '" + speciesList + "'";
             stmt.executeUpdate(query);
 
             stmt.close();
@@ -631,7 +631,7 @@ public class ProjectDb extends AntwebDb {
         return;
       }
 
-      String dml = null;
+      String dml;
       Statement stmt = null;      
       try {
           stmt = DBUtil.getStatement(getConnection(), "updateCountsFromSpecimenData()");
@@ -734,7 +734,7 @@ public class ProjectDb extends AntwebDb {
         int genusCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "genus");        
         int speciesCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "species");
 
-        boolean subfamilyIsZero = (subfamilyCount == 0);
+        boolean subfamilyIsZero = subfamilyCount == 0;
 
         A.log("updateCountableTaxonCounts() project:" + project + " subfamilyCount:" + subfamilyCount + " condition:" + !("worldants".equals(project.getName()) && subfamilyCount == 0));
 
@@ -750,7 +750,7 @@ public class ProjectDb extends AntwebDb {
     private void updateValidSpeciesCount(Project project) throws SQLException {
         int count = getValidSpeciesCount(project);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("project", "valid_species_count", (Integer.valueOf(count)).toString(), "project_name = '" + project.getName() + "'");
+        utilDb.updateField("project", "valid_species_count", Integer.valueOf(count).toString(), "project_name = '" + project.getName() + "'");
     }
 
     private int getValidSpeciesCount(Project project) {

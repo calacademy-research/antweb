@@ -12,7 +12,7 @@ public class DummyTaxon extends Taxon {
      * are keyed on taxonName
      */
 
-    private static Log s_log = LogFactory.getLog(DummyTaxon.class);
+    private static final Log s_log = LogFactory.getLog(DummyTaxon.class);
 
     private String bioregionMap;
 
@@ -78,7 +78,7 @@ public class DummyTaxon extends Taxon {
     }
     
     // This is to provide suggestions to the curator during the Orphan Manager Desc Edit process.
-    ArrayList<DummyTaxon> possibleValidNames = null;
+    ArrayList<DummyTaxon> possibleValidNames;
     public ArrayList<DummyTaxon> getPossibleValidNames() {
       return possibleValidNames;
     }

@@ -28,7 +28,7 @@ public final class DisplayAction extends Action {
    Integrate functionality with description.do?
 */
 
-    private static Log s_log = LogFactory.getLog(DisplayAction.class);
+    private static final Log s_log = LogFactory.getLog(DisplayAction.class);
 
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
@@ -45,7 +45,7 @@ if (true) return null;  // functionality disabled.
         s_log.warn("execute() url:" + url + " pathInfo:" + pathInfo + " query:" + query);
 
         String dir = "/web/data/taxon/";
-        (new Utility()).createDirectory(dir);
+        new Utility().createDirectory(dir);
         String fileName = query;
         String fullPath = AntwebProps.getDocRoot() + dir + fileName;
         String output = null;

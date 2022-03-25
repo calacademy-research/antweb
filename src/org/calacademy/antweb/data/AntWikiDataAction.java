@@ -3,6 +3,7 @@ package org.calacademy.antweb.data;
 import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.regexp.*;
 
@@ -20,7 +21,7 @@ import org.calacademy.antweb.home.*;
 
 public final class AntWikiDataAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(AntWikiDataAction.class);
+    private static final Log s_log = LogFactory.getLog(AntWikiDataAction.class);
 
     private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
  
@@ -45,9 +46,9 @@ public final class AntWikiDataAction extends Action {
 
         if ("checkForUpdates".equals(action)) {
         
-			java.sql.Connection connection = null;
+			Connection connection = null;
 			try {
-				javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+				DataSource dataSource = getDataSource(request, "conPool");
 				connection = DBUtil.getConnection(dataSource, "EditGeolocaleAction.execute()");
 
 				message = AntWikiDataAction.checkForUpdates(connection);
@@ -75,7 +76,7 @@ public final class AntWikiDataAction extends Action {
 
         }
         request.setAttribute("message", message);
-        return (mapping.findForward("message"));             
+        return mapping.findForward("message");
     }
     
     private void processPage(ArrayList<String> taxonCountryPage, Connection connection) {
@@ -217,7 +218,7 @@ public final class AntWikiDataAction extends Action {
             messageStr = "<h3>Valid Test</h3><br><br>" 
               + "validTaxonCount:" + insertCount + " inserted into antwiki_taxon_country.  NotValidTaxonCount:" + notValidTaxonCount
               + " notFoundCount:" + notFoundCount + "\n"
-              + "<br><br>" + content.toString();
+              + "<br><br>" + content;
 
         } catch (RESyntaxException e) {
           s_log.warn("load() e:" + e);
@@ -274,7 +275,7 @@ public final class AntWikiDataAction extends Action {
 
         //A.log("getTaxon() taxonName:" + taxonName + " query:" + query);
 
-        return (new TaxonDb(connection)).getTaxon(taxonName);
+        return new TaxonDb(connection).getTaxon(taxonName);
     }
 
 // ---------------------------------------------------------------------------------------

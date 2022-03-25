@@ -18,18 +18,18 @@ import org.apache.struts.action.ActionMapping;
 
 public final class FieldGuideForm extends ActionForm {
 
-    private String subfamily = null;
-    private String genus = null;
-    private String species = null;
-    private String subspecies = null;
-	private String project = null;
-    private String museum = null;
-	private String rank = null;
+    private String subfamily;
+    private String genus;
+    private String species;
+    private String subspecies;
+	private String project;
+    private String museum;
+	private String rank;
     private String getCache = "";
     private String caste = "useDefaults";
 
 	public String getCaste() {
-		return (this.caste);
+		return this.caste;
 	}
 	public void setCaste(String caste) {
 		this.caste = caste;

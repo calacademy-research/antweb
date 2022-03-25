@@ -10,14 +10,14 @@ import org.apache.commons.logging.LogFactory;
 
 public final class DeleteImagesForm extends ActionForm {
 
-    private static Log s_log = LogFactory.getLog(DeleteImagesForm.class);
+    private static final Log s_log = LogFactory.getLog(DeleteImagesForm.class);
 
-    private String daysAgo = null;
-    private String group = null;
-    private String[] chosen = null;
+    private String daysAgo;
+    private String group;
+    private String[] chosen;
 
     public String[] getChosen() {
-    return (this.chosen);
+    return this.chosen;
     }
 
 

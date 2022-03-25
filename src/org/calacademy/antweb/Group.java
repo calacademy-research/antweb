@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class Group implements Comparable {
 
-    private static Log s_log = LogFactory.getLog(Group.class);
+    private static final Log s_log = LogFactory.getLog(Group.class);
     
     private int id;
     private String name;
@@ -22,16 +22,16 @@ public class Group implements Comparable {
     //private String adminEmail;
         
     public static int ADMINGROUP = 1;
-    public static int TESTGROUP = 25;
+    public static final int TESTGROUP = 25;
     
     // Transient field
     //private Login login;   
     private Upload upload;
-    private Timestamp firstUpload = null;
-    private Timestamp lastUpload = null;
+    private Timestamp firstUpload;
+    private Timestamp lastUpload;
     private int uploadCount = 0;
-    private String curatorList = null;
-    private ArrayList<Curator> curators = null;
+    private String curatorList;
+    private ArrayList<Curator> curators;
 
 /* This can go away, along with Login.getGroups logic, when we stop getting the accessLogin
    from the accessGroup.
@@ -179,18 +179,15 @@ public class Group implements Comparable {
     }    
 
 
-    public static Comparator<Group> getGroupNameComparator = new Comparator<>() {
+    public static Comparator<Group> getGroupNameComparator = (a1, a2) -> {
+        String name1 = a1.getName().toUpperCase();
+        String name2 = a2.getName().toUpperCase();
 
-        public int compare(Group a1, Group a2) {
-            String name1 = a1.getName().toUpperCase();
-            String name2 = a2.getName().toUpperCase();
+        //ascending order
+        return name1.compareTo(name2);
 
-            //ascending order
-            return name1.compareTo(name2);
-
-            //descending order
-            //return name2.compareTo(name1);
-        }
+        //descending order
+        //return name2.compareTo(name1);
     };
     
      public int compareTo(Object o) throws ClassCastException {
@@ -202,7 +199,7 @@ public class Group implements Comparable {
      }
 
      public boolean isCurator() {
-       return (getId() >= 0);
+       return getId() >= 0;
      }
      
     public boolean equals(Object o) {

@@ -27,14 +27,14 @@ Nice way to figure what bit of code is calling a method, and how many times, is 
  */
 
 public class ProfileCounter {
-    private static HashMap<String, Integer> s_countMap = new HashMap<String, Integer>();
+    private static HashMap<String, Integer> s_countMap = new HashMap<>();
 
     private final static Log s_log = LogFactory.getLog(ProfileCounter.class);
     
     public static void add(String label) {
         Integer count = s_countMap.get(label);
         if (count == null) {
-            s_countMap.put(label, Integer.valueOf(1));
+            s_countMap.put(label, 1);
         } else {
             count = count + 1;
             s_countMap.put(label, count);
@@ -42,7 +42,7 @@ public class ProfileCounter {
     }
 
     public static void reset() {
-        s_countMap = new HashMap<String, Integer>();
+        s_countMap = new HashMap<>();
     }
 
     public static void report() {

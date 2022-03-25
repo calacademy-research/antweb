@@ -4,6 +4,8 @@ import java.util.*;
 import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -24,7 +26,7 @@ native bioregions to genera.
 
 */
 
-    private static Log s_log = LogFactory.getLog(IntroducedAction.class);
+    private static final Log s_log = LogFactory.getLog(IntroducedAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -34,26 +36,26 @@ native bioregions to genera.
 
         ArrayList<String> introduced = null;
 
-        String geolocaleIdStr = (String) request.getParameter("geolocaleId");
+        String geolocaleIdStr = request.getParameter("geolocaleId");
         Geolocale geolocale = null;
         if (geolocaleIdStr != null) {
             ActionForward a = Check.init(Check.GEOLOCALE, request, mapping); if (a != null) return a;
 
             int geolocaleId = 0;
             try {
-                geolocaleId = (Integer.valueOf(geolocaleIdStr)).intValue();
+                geolocaleId = Integer.parseInt(geolocaleIdStr);
             } catch (NumberFormatException e) {
                 request.setAttribute("message", "valid Geolocale ID expected. Found:" + geolocaleId);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
             geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
             if (geolocale == null) {
                 request.setAttribute("message", "geolocale not found:" + geolocaleId);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
         }
 
-        String bioregionName = (String) request.getParameter("bioregionName");
+        String bioregionName = request.getParameter("bioregionName");
         Bioregion bioregion = null;
         if (bioregionName != null) {
             ActionForward a = Check.init(Check.BIOREGION, request, mapping); if (a != null) return a;
@@ -61,12 +63,12 @@ native bioregions to genera.
             bioregion = BioregionMgr.getBioregion(bioregionName);
             if (bioregion == null) {
                 request.setAttribute("message", "bioregion not found:" + bioregion);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
         }
 
         String dbUtilName = "IntroducedAction.execute()";
-  		javax.sql.DataSource dataSource = null;
+  		DataSource dataSource = null;
         Connection connection = null;
         try {
           dataSource = getDataSource(request, "conPool");
@@ -87,7 +89,7 @@ native bioregions to genera.
 		}
 		
         request.setAttribute("introduced", introduced);
-	    return (mapping.findForward("introduced"));
+	    return mapping.findForward("introduced");
     }
 
     private ArrayList<String> getGeolocaleIntroduced(int geolocaleId, Connection connection) {

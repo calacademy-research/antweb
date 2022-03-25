@@ -23,7 +23,7 @@ import org.calacademy.antweb.home.*;
 
 public final class SaveLoginAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SaveLoginAction.class);
+    private static final Log s_log = LogFactory.getLog(SaveLoginAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm f,
 		HttpServletRequest request, HttpServletResponse response)
@@ -39,12 +39,12 @@ public final class SaveLoginAction extends Action {
         Group accessGroup = GroupMgr.getAccessGroup(request);
         
         if (accessGroup == null) {
-          return (mapping.findForward("login"));
+          return mapping.findForward("login");
         }
 
 		s_log.debug("execute() 0 id:" + form.getId() + " step:" + form.getStep() + " delete:" + form.getDelete());
         
-        int id = (Integer.valueOf(form.getId()).intValue());
+        int id = Integer.parseInt(form.getId());
         Login login = null;
 
         Connection connection = null;
@@ -59,7 +59,7 @@ public final class SaveLoginAction extends Action {
                 s_log.warn("execute() delete");
                 loginDb.deleteById(id);
                 request.setAttribute("message", "Login deleted id:" + id);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
 
             login = loginDb.getLogin(id);
@@ -131,14 +131,14 @@ s_log.debug("execute() groupName:" + groupName + " loginGroupId:" + login.getGro
 //   boolean isOwnLogin = (accessGroup != null) && (accessGroup.getLogin().getName().equals(form.getName()));
 //   The above does not work, because Brian may not have set the users name for it to be equal to the form name.
 
-              boolean isOwnLogin = (accessLogin != null) && (!accessLogin.isAdmin());
+              boolean isOwnLogin = accessLogin != null && !accessLogin.isAdmin();
 s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLogin + " formName:" + form.getName());
-              if ((accessLogin == null)   // as is the case for invites
-                || (isOwnLogin)) {        // as is for users logged in through the invite page
+              if (accessLogin == null   // as is the case for invites
+                || isOwnLogin) {        // as is for users logged in through the invite page
                 ActionErrors errors = passPwdCheck(form);
                 if (!errors.isEmpty()) {
                     saveErrors(request, errors);
-                    return (mapping.findForward("failure"));    
+                    return mapping.findForward("failure");
                 }  
                 loginDb.userUpdateLogin(login);
               } else {
@@ -150,12 +150,12 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
                   ActionErrors errors = passPwdCheck(form);
                   if (!errors.isEmpty()) {
                     saveErrors(request, errors);
-                    return (mapping.findForward("failure"));    
+                    return mapping.findForward("failure");
                   }    
 		
-                  String newPassword = (String) form.getPassword();		
+                  String newPassword = form.getPassword();
                   loginDb.changePassword(login, newPassword);
-                  return (mapping.findForward("success"));
+                  return mapping.findForward("success");
           
                 } else {
                   s_log.info("execute() 4 step is:" + form.getStep() + " changePassword:" + form.getChangePassword());
@@ -166,7 +166,7 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
 
             // create directory for curator login if it does not exist
             //String accessName = login.getName(); 
-            boolean createdDir = (new Utility()).createDirectory("web/curator/" + login.getId());
+            boolean createdDir = new Utility().createDirectory("web/curator/" + login.getId());
             s_log.debug("execute createdDir:" + createdDir);
             // Test for createdDir?
             
@@ -175,18 +175,18 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
             if ("invite".equals(form.getStep())) {
                 s_log.warn("execute() step:" + form.getStep()); 
                 request.setAttribute("inviteLogin", login);                
-                return (mapping.findForward("invite"));
+                return mapping.findForward("invite");
             }
 
         } catch (AntwebException e) {
             s_log.error("execute() e:" + e + "isNew:" + isNew);
             request.setAttribute("message", e.getMessage());
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         } catch (SQLException e) {
             s_log.error("execute() e:" + e + "isNew:" + isNew);
             AntwebUtil.logStackTrace(e);
             request.setAttribute("message", e.getMessage());
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         // So that exception is sent to log.  Still will appear on web page as stacktrace.
         } catch (Exception e) {
             s_log.error(e);
@@ -195,7 +195,7 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
             DBUtil.close(connection, this, "SaveLoginAction.execute()");
         }
 
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 
 
@@ -203,10 +203,10 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
         ActionErrors errors = new ActionErrors();
         ActionMessage msg = null;
                       
-        String newPassword = (String) form.getPassword();
-        String newPassword2 = (String) form.getRetypePassword();
+        String newPassword = form.getPassword();
+        String newPassword2 = form.getRetypePassword();
 		
-        if ((newPassword == null) || (newPassword.length() == 0)) {
+        if (newPassword == null || newPassword.length() == 0) {
             errors.add("error", new ActionError("error.login.needPassword"));
         } else if (!newPassword.equals(newPassword2)) {
             errors.add("error", new ActionError("error.login.passwordsMustMatch"));
@@ -219,10 +219,10 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
         ActionMessages messages = new ActionMessages();
         ActionMessage msg = null;
                       
-        String newPassword = (String) form.getPassword();
-        String newPassword2 = (String) form.getRetypePassword();
+        String newPassword = form.getPassword();
+        String newPassword2 = form.getRetypePassword();
 		
-        if ((newPassword == null) || (newPassword.length() == 0)) {
+        if (newPassword == null || newPassword.length() == 0) {
             msg = new ActionMessage("error.login.needPassword");
             messages.add("message",msg);
             s_log.debug("passPwdCheck needPassword");

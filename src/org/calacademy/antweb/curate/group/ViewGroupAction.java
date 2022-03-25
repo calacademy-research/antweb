@@ -2,6 +2,7 @@ package org.calacademy.antweb.curate.group;
 
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.servlet.ServletException;
@@ -21,7 +22,7 @@ import org.calacademy.antweb.home.*;
 
 public final class ViewGroupAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ViewGroupAction.class);
+    private static final Log s_log = LogFactory.getLog(ViewGroupAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -36,17 +37,17 @@ public final class ViewGroupAction extends Action {
           s_log.warn("execute() no id");
           return mapping.findForward("error");
         }
-        int id = (Integer.valueOf(idStr)).intValue();
+        int id = Integer.parseInt(idStr);
         s_log.info("looking up group " + id);
             
         //Group group = GroupMgr.getGroup(id);
         Group group = null; 
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
             connection = getDataSource(request, "conPool").getConnection();
 
-            group = (new GroupDb(connection)).getGroup(id);
+            group = new GroupDb(connection).getGroup(id);
 
 			LoginDb loginDb = new LoginDb(connection);
 			group.setCurators(loginDb.getCurators(group.getId()));
@@ -65,6 +66,6 @@ public final class ViewGroupAction extends Action {
         }
         
         session.setAttribute("thisGroup", group);
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

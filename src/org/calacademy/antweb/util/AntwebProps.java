@@ -19,10 +19,10 @@ public abstract class AntwebProps {
     
     public static String guiDefaultContent = "Add your content here";    
     
-    private static boolean s_loadedResources = false;
-    private static ResourceBundle s_appResources = null;
-    private static ResourceBundle s_antwebResources = null;
-    private static ResourceBundle s_platformResources = null;
+    private static final boolean s_loadedResources = false;
+    private static ResourceBundle s_appResources;
+    private static ResourceBundle s_antwebResources;
+    private static ResourceBundle s_platformResources;
 
     public static boolean loadResources() {
       //s_log.warn("loadResources()");
@@ -34,7 +34,7 @@ public abstract class AntwebProps {
         ResourceBundle bundle = null;
         try {
           bundle = ResourceBundle.getBundle(resourceName);
-        } catch (java.util.MissingResourceException e) {
+        } catch (MissingResourceException e) {
           s_log.warn("getBundle(" + resourceName + ") e:" + e);
           String message = " Antweb misconfigured. Error reading resource:" + resourceName + ".";
           if ("platform".equals(resourceName)) message += " Has a platform.properties file been copied into antweb/WEB-INF/classes/ ?";
@@ -71,7 +71,7 @@ public abstract class AntwebProps {
         return "true".equals(prop);
 	}
 
-    private static HashMap<String, String> s_propMap = new HashMap<>();
+    private static final HashMap<String, String> s_propMap = new HashMap<>();
 
 	public static @Nullable String getProp(String prop) {
 
@@ -171,7 +171,7 @@ public abstract class AntwebProps {
     //was: public static String getInputFileHome() { return getWorkingDir(); }
 
     
-    private static String s_workingDir = null;
+    private static String s_workingDir;
     public static String getWorkingDir() {
         if (s_workingDir != null) return s_workingDir;
 
@@ -215,7 +215,7 @@ public abstract class AntwebProps {
 	    return rev;
 	}
 
-    private static String s_imgDomainApp = null;
+    private static String s_imgDomainApp;
     public static String getImgDomainApp() {
         if (s_imgDomainApp != null) return s_imgDomainApp;
         /* Use this method to get something like: http://localhost/antweb or http://antweb.org   Not end with slash.  */
@@ -236,7 +236,7 @@ public abstract class AntwebProps {
         String app = "";
         if (AntwebProps.isDevMode()) {
           app = AntwebProps.getProp("site.app");    
-          if ((app != null) && (!app.equals(""))) {
+          if (app != null && !app.equals("")) {
             app = "/" + app;
           }
         }
@@ -275,14 +275,14 @@ public abstract class AntwebProps {
         return protocol + "://" + domain;
     }
     
-    public static String s_domainApp = null;
-    public static String s_secureDomainApp = null;
+    public static String s_domainApp;
+    public static String s_secureDomainApp;
 
     public static String getInsecureDomainApp() {
         String domain = AntwebProps.getProp("site.domain");
         String domainApp =  "http://" + domain;
         String app = AntwebProps.getProp("site.app");    
-        if ((app != null) && (!app.equals(""))) {
+        if (app != null && !app.equals("")) {
           domainApp += "/" + app;
         }
         //A.log("getDomainApp() domainApp:" + domainApp);        
@@ -309,7 +309,7 @@ public abstract class AntwebProps {
         String domain = AntwebProps.getDomain();    
         String app = AntwebProps.getProp("site.app");    
         String domainApp = domain;
-        if ((app != null) && (!app.equals(""))) {
+        if (app != null && !app.equals("")) {
           domainApp += "/" + app;
         }
         s_log.debug("getDomainApp() domainApp:" + domainApp);
@@ -336,11 +336,11 @@ public abstract class AntwebProps {
         //}
 
         String domain = AntwebProps.getDomain();    
-        if ((domain != null) && domain.contains("http://")) {
+        if (domain != null && domain.contains("http://")) {
           domain = "https://" + domain.substring(7);
         }
 
-        if ((port != null) && (!"".equals(port))) {
+        if (port != null && !"".equals(port)) {
           port = port.trim();
           //s_log.warn("getSecureDomainApp() port:" + port + "-");
           domain += ":" + port; // "8443";  // This port should probably be a configured parameter
@@ -348,7 +348,7 @@ public abstract class AntwebProps {
 
         String app = AntwebProps.getProp("site.app");    
         String domainApp = domain;
-        if ((app != null) && (!app.equals(""))) {
+        if (app != null && !app.equals("")) {
           domainApp += "/" + app;
         }
         
@@ -374,7 +374,7 @@ public abstract class AntwebProps {
 	    if (true) return "googleEarth.do";
 
 	    String googleEarthURI = AntwebProps.getProp("googleEarthURI");
-        if ((googleEarthURI == null) || (googleEarthURI.equals(""))) googleEarthURI = "googleEarth/";
+        if (googleEarthURI == null || googleEarthURI.equals("")) googleEarthURI = "googleEarth/";
         return googleEarthURI;
 	}
 		

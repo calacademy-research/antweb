@@ -10,14 +10,14 @@ import org.apache.commons.logging.LogFactory;
 
 public class AdminAlert {
 
-    private static Log s_log = LogFactory.getLog(AdminAlert.class);
+    private static final Log s_log = LogFactory.getLog(AdminAlert.class);
 
     public AdminAlert() {
     }
     
     private int id = 0;
-    private String alert = null;
-    private Timestamp created = null;
+    private String alert;
+    private Timestamp created;
     private boolean isAcknowledged = false;    
 
     public int getId() {

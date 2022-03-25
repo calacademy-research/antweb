@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ChooseComparisonAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ChooseComparisonAction.class);
+    private static final Log s_log = LogFactory.getLog(ChooseComparisonAction.class);
     
     public ActionForward execute(
         ActionMapping mapping, ActionForm form,
@@ -30,7 +30,7 @@ public final class ChooseComparisonAction extends Action {
 
         if (chosen != null) {
 
-            ArrayList theImages = new ArrayList();
+            ArrayList<SpecimenImage> theImages = new ArrayList<>();
             for (String s : chosen) {
                 theImages.add(createSpecimenImage(s));
             }
@@ -44,9 +44,9 @@ public final class ChooseComparisonAction extends Action {
             // Set a transactional control token to prevent double posting
             saveToken(request);
 
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         } else {
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
     }
 

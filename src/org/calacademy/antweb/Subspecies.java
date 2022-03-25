@@ -9,11 +9,10 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.home.*;
 
 public final class Subspecies extends Species implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Subspecies.class);
+    private static final Log s_log = LogFactory.getLog(Subspecies.class);
 
     public String getNextRank() {
         return "Specimens";
@@ -105,7 +104,7 @@ public final class Subspecies extends Species implements Serializable {
             } else {
                 child.setHasImages(connection, overview);
             }                        
-            if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
+            if (getChildMaps && i < Taxon.getMaxSafeChildrenCount() && overview instanceof LocalityOverview) {
                 child.setMap(new Map(child, (LocalityOverview) overview, connection));
             }
             child.setTaxonomicInfo(connection);   // is this needed?  Yes, for now.
@@ -149,7 +148,7 @@ public final class Subspecies extends Species implements Serializable {
 		if (overview instanceof LocalityOverview) {
 		  String locality = ((LocalityOverview) overview).getLocality();                    
 		  s_log.debug("setChildrenLocalized() locality:" + locality);
-		  if ((locality != null) && (locality.length() > 0) && (!locality.equals("null")))  {
+		  if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
 			if ("country".equals(locality.substring(0, 7))) {
 				locality = "specimen." + locality;
 			}
@@ -197,9 +196,9 @@ public final class Subspecies extends Species implements Serializable {
     public String getFullName() {
         StringBuffer fullName = new StringBuffer();
         fullName.append(genus + " ");
-        if ((subgenus != null)
-            && (!("".equals(subgenus)))
-            && (!("null".equals(subgenus)))) {
+        if (subgenus != null
+            && !"".equals(subgenus)
+            && !"null".equals(subgenus)) {
             fullName.append("(" + subgenus + ") ");
         }
 /*        
@@ -210,9 +209,9 @@ public final class Subspecies extends Species implements Serializable {
         }
 */
         fullName.append(species);
-        if ((subspecies != null)
-            && (!("".equals(subspecies)))
-            && (!("null".equals(subspecies)))) {
+        if (subspecies != null
+            && !"".equals(subspecies)
+            && !"null".equals(subspecies)) {
             fullName.append(" " + subspecies);
         }
 

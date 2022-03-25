@@ -13,16 +13,16 @@ public class MuseumMgr {
 
     private static final Log s_log = LogFactory.getLog(MuseumMgr.class);
 
-    private static ArrayList<Museum> s_museums = null;
+    private static ArrayList<Museum> s_museums;
         
     public static void populate(Connection connection) throws SQLException {
       populate(connection, false);
     }
     
     public static void populate(Connection connection, boolean forceReload) throws SQLException {
-      if (!forceReload && (s_museums != null)) return;      
+      if (!forceReload && s_museums != null) return;
       
-      MuseumDb museumDb = (new MuseumDb(connection));
+      MuseumDb museumDb = new MuseumDb(connection);
       s_museums = museumDb.getMuseums(true); // deep copy
       
       // This will appear a string of nulls until museum table name is populated.  No problem.

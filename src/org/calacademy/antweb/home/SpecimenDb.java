@@ -1,5 +1,6 @@
 package org.calacademy.antweb.home;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.sql.*;
 
@@ -14,7 +15,7 @@ import org.calacademy.antweb.util.*;
 
 public class SpecimenDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(SpecimenDb.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenDb.class);
         
     public SpecimenDb(Connection connection) throws SQLException {
       super(connection);
@@ -199,9 +200,9 @@ public class SpecimenDb extends AntwebDb {
 	    specimen.add("<tr><td><hr></td><td><hr></td><td><hr></td></tr>");
         Statement stmt = null;
         ResultSet rset = null;
-		String query = "select code, subfamily, genus, subgenus from specimen where taxon_name in (select taxon_name from taxon where (rank = 'species' or rank = 'subspecies') "
+		String query = "select code, subfamily, genus, subgenus from specimen where taxon_name in (select taxon_name from taxon where (taxarank = 'species' or taxarank = 'subspecies') "
 		  + " and genus not like '(%'"
-		  + " and (subfamily, genus) in ( select subfamily, genus from taxon where rank = 'genus' and status = 'morphotaxon') and access_group = " + groupId + ") " 
+		  + " and (subfamily, genus) in ( select subfamily, genus from taxon where taxarank = 'genus' and status = 'morphotaxon') and access_group = " + groupId + ") "
 		  + " and access_group = " + groupId;
               
         try {
@@ -551,7 +552,7 @@ public class SpecimenDb extends AntwebDb {
       return " (flag is null or flag != 'red') ";
     }
     public static String getStatusCriteria() {
-      return (new StatusSet()).getCriteria("specimen");
+      return new StatusSet().getCriteria("specimen");
     }
     public static String getTaxaCriteria() {
       return " family = 'formicidae'";
@@ -710,7 +711,7 @@ public class SpecimenDb extends AntwebDb {
                 Timestamp dateCollected = rset.getTimestamp("dateCollected");
                 //String formatDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(dateCollected);
                 String dateCollectedStr = "";
-                if (dateCollected != null) dateCollectedStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
+                if (dateCollected != null) dateCollectedStr = new SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
                 String microhabitat = rset.getString("microhabitat");
                 String method = rset.getString("method");
                 //String ideal = rset.getString("ideal");
@@ -783,7 +784,7 @@ public class SpecimenDb extends AntwebDb {
                 String code = rset.getString("code");
                 String status = rset.getString("status");		
                 Timestamp dateCollected = rset.getTimestamp("dateCollected");
-                String dateCollectedStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
+                String dateCollectedStr = new SimpleDateFormat("yyyy-MM-dd").format(dateCollected);
                 String microhabitat = rset.getString("microhabitat");
                 String method = rset.getString("method");
                 String ideal = "Yes";
@@ -852,12 +853,12 @@ public class SpecimenDb extends AntwebDb {
 */
 
                 // We have an old value. mem222072 |            8 | 0000-04-24             | 0000-04-24
-                if ((startNew != null && start == null) || ("mem222072".equals(code))) {
+                if (startNew != null && start == null || "mem222072".equals(code)) {
                     newNulls1 += updateCollectedStartAsNull(code);
                     s_log.debug("parseDates() code:" + code + " start:" + start + " startNew:" + startNew);
                 }
                 //ex: | sam-hym-c005977   | pseudomyrmecinaetetraponera natalensis | 1947/12/              | 1947/12/-00-00
-                if ((start != null && startNew == null)) {
+                if (start != null && startNew == null) {
                     newNulls2 += updateCollectedStartAsNull(code);
                     s_log.debug("parseDates() WTF code:" + code + " start:" + start + " startStr:" + startStr + " startNew:" + startNew);
                 }
@@ -877,7 +878,7 @@ public class SpecimenDb extends AntwebDb {
                 }
 */
 
-                if ((startNew != null && !startNew.equals(start)) || (endNew != null && !endNew.equals(end))) {
+                if (startNew != null && !startNew.equals(start) || endNew != null && !endNew.equals(end)) {
                     count = updateParsedDates(code, startNew, endNew);
                     s_log.warn("parseDates() count:" + count + " code:" + code + " startStr:" + startStr + " start:" + start + " -> " + startNew + " end:" + end + " -> " + endNew);
                     if (count < 1) {

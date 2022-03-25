@@ -81,5 +81,5 @@ class GeonetAdm1CentroidResponse {
     List<Field> fields;
     List<CentroidFeature> features;
     
-    public String toString() { return "GeonetResponse l:" + ((features != null) ? features.size() : 0); }
+    public String toString() { return "GeonetResponse l:" + (features != null ? features.size() : 0); }
 }

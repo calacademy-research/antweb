@@ -32,14 +32,14 @@ public final class WorldAuthorityAction extends Action {
 		// Extract attributes we will need
 		HttpSession session = request.getSession();
 		Utility util = new Utility();
-		String docPath = util.getDocRoot() + "/worldAuthorityFiles";
+		String docPath = Utility.getDocRoot() + "/worldAuthorityFiles";
 		
 		String success = "success";
 		String mode = ((WorldAuthorityForm) form).getMode();
 		String fileName = ((WorldAuthorityForm) form).getFileName();
 		fileName = docPath + "/" + fileName;
 		if (mode.equals("rollback")) {
-			boolean rolledBack = util.rollbackFile(fileName);
+			boolean rolledBack = Utility.rollbackFile(fileName);
 			if (!rolledBack) {
 				success = "failure";
 			}
@@ -48,19 +48,19 @@ public final class WorldAuthorityAction extends Action {
 			String extinct = (String) session.getAttribute("extinct");
 			String extant = (String) session.getAttribute("extant");
 			
-			if ((extinct != null) && (extinct.length() > 0)) {
-				util.backupFile(docPath + "/extinct.xls");
+			if (extinct != null && extinct.length() > 0) {
+				Utility.backupFile(docPath + "/extinct.xls");
 				util.saveStringToFile(extinct, docPath + "/extinct.xls");
 			}
 			
-			if ((extant != null) && (extant.length() > 0)) {
-				util.backupFile(docPath + "/extant.xls");
+			if (extant != null && extant.length() > 0) {
+				Utility.backupFile(docPath + "/extant.xls");
 				util.saveStringToFile(extant, docPath + "/extant.xls");
 			}
 		} else {
 			success = "failure";
 		}
-		return (mapping.findForward(success));
+		return mapping.findForward(success);
 			
 	}
 

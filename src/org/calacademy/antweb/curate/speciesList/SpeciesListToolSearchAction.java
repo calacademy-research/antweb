@@ -14,7 +14,7 @@ import org.calacademy.antweb.search.*;
 
 public class SpeciesListToolSearchAction extends Action { //extends SpeciesListToolAction 
 
-  private static Log s_log = LogFactory.getLog(SpeciesListToolSearchAction.class);
+  private static final Log s_log = LogFactory.getLog(SpeciesListToolSearchAction.class);
 
   public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {

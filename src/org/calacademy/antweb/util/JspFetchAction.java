@@ -13,7 +13,7 @@ import org.apache.struts.action.*;
 
 public class JspFetchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(JspFetchAction.class);
+    private static final Log s_log = LogFactory.getLog(JspFetchAction.class);
     
 // DEPRECATED? The calls below do not seem to invoke this class.
 // This class is not included in struts-config.xml. 
@@ -28,7 +28,7 @@ public class JspFetchAction extends Action {
 
         HttpUtil.setUtf8(request, response); 
         
-        return (mapping.findForward("failure"));              
+        return mapping.findForward("failure");
     }
     
     public void doGet(HttpServletRequest request, HttpServletResponse response)

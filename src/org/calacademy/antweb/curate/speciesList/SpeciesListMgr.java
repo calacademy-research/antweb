@@ -12,9 +12,9 @@ public class SpeciesListMgr {
 
     public static SpeciesListable getSpeciesList(String key) {
 		if (Project.isProjectName(key)) {
-		   return (SpeciesListable) ProjectMgr.getProject(key);
+		   return ProjectMgr.getProject(key);
 		} else {
-		   return (SpeciesListable) GeolocaleMgr.getGeolocale(key);
+		   return GeolocaleMgr.getGeolocale(key);
 		}		
     }
 
@@ -64,8 +64,8 @@ public class SpeciesListMgr {
 	  }
       boolean isDisplayYellowAnt = false;
       if (Utility.isNumber(speciesListName)) speciesListName = SpeciesListMgr.getName(speciesListName);
-	  if ( (taxon.getCountryList() != null && taxon.getCountryList().contains(speciesListName) )
-			 || (taxon.getAdm1List() != null && taxon.getAdm1List().contains(speciesListName) )           
+	  if ( taxon.getCountryList() != null && taxon.getCountryList().contains(speciesListName)
+			 || taxon.getAdm1List() != null && taxon.getAdm1List().contains(speciesListName)
 		 ) { 
 		 isDisplayYellowAnt = true;
 	  }

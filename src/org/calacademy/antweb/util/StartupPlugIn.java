@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class StartupPlugIn implements PlugIn {
 
-    private static Log s_log = LogFactory.getLog(StartupPlugIn.class);
+    private static final Log s_log = LogFactory.getLog(StartupPlugIn.class);
 
   // This method will be called at application shutdown time
   public void destroy() {

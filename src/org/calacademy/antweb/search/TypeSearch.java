@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
 /** Class TypeSearch does the searching of the specimen data */
 public class TypeSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(TypeSearch.class);
+    private static final Log s_log = LogFactory.getLog(TypeSearch.class);
 
     private String name;
     private String searchType;
@@ -54,7 +54,7 @@ public class TypeSearch implements Serializable {
              " from taxon, specimen as sp left outer join image on " +
              " sp.code = image.image_of_id where (taxon.status = 'valid' and taxon.taxon_name = sp.taxon_name and ";
 
-         if ((genus != null) && (species !=null)) {
+         if (genus != null && species !=null) {
             theQuery += getSearchString("taxon.genus","equals",genus) + " and " +
                         getSearchString("taxon.species","equals",species) + ") ";
           } else {
@@ -78,7 +78,7 @@ public class TypeSearch implements Serializable {
                " proj_taxon.project_name = '" + project + "' and " +
                " proj_taxon.taxon_name = taxon.taxon_name and taxon.status = 'valid' and (";
 
-          if ((genus != null) && (species !=null)) {
+          if (genus != null && species !=null) {
             theQuery += getSearchString("taxon.genus","equals",genus) + " and " +
                         getSearchString("taxon.species","equals",species) + ") ";
           } else {
@@ -132,7 +132,7 @@ public class TypeSearch implements Serializable {
              " where sp.code = image.image_of_id and (taxon.taxon_name = sp.taxon_name and " +
                  " taxon.status = 'valid' and " ;
 
-          if ((genus != null) && (species !=null)) {
+          if (genus != null && species !=null) {
             theQuery += getSearchString("taxon.genus","equals",genus) + " and " +
                         getSearchString("taxon.species","equals",species) + ") ";
           } else {
@@ -156,7 +156,7 @@ public class TypeSearch implements Serializable {
              " proj_taxon.project_name = '" + project + "' and taxon.status = 'valid' and " +
              " proj_taxon.taxon_name = sp.taxon_name and (";
 
-          if ((genus != null) && (species !=null)) {
+          if (genus != null && species !=null) {
             theQuery += getSearchString("taxon.genus","equals",genus) + " and " +
                         getSearchString("taxon.species","equals",species) + ") ";
           } else {
@@ -189,7 +189,7 @@ public class TypeSearch implements Serializable {
 
 
     public String getSearchType() {
-        return (this.searchType);
+        return this.searchType;
     }
 
     public void setSearchType(String searchType) {
@@ -197,7 +197,7 @@ public class TypeSearch implements Serializable {
     }
 
     public String getName() {
-        return (this.name);
+        return this.name;
     }
 
     public void setName(String name) {
@@ -205,7 +205,7 @@ public class TypeSearch implements Serializable {
     }
 
     public String getProject() {
-        return (this.project);
+        return this.project;
     }
 
     public void setProject(String project) {
@@ -213,7 +213,7 @@ public class TypeSearch implements Serializable {
     }
 
     public String getTypes() {
-        return (this.types);
+        return this.types;
     }
 
     public void setTypes(String types) {
@@ -221,7 +221,7 @@ public class TypeSearch implements Serializable {
     }
 
     public String getImages() {
-        return (this.images);
+        return this.images;
     }
 
 
@@ -277,11 +277,11 @@ public class TypeSearch implements Serializable {
     sb.append(property);
     sb.append(" ");
     sb.append(operator);
-    sb.append(" \'");
+    sb.append(" '");
     sb.append(leftPercent);
     sb.append(value);
     sb.append(rightPercent);
-    sb.append("\'");
+    sb.append("'");
 
     return sb.toString();
   }

@@ -3,6 +3,7 @@ package org.calacademy.antweb;
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
 
@@ -30,9 +31,9 @@ public final class OrphanedImagesAction extends Action {
 		OrphanedImages orphans = new OrphanedImages();
 		ArrayList searchResults = null;
 		
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "OrphanedImagesAction");
 
 			orphans.setConnection(connection);
@@ -42,7 +43,7 @@ public final class OrphanedImagesAction extends Action {
 			
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "OrphanedImagesAction");
         }
@@ -60,9 +61,9 @@ public final class OrphanedImagesAction extends Action {
 		// Forward control to the edit user registration page
 
 		if (success) {
-			return (mapping.findForward("success"));
+			return mapping.findForward("success");
 		} else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
 
 	}

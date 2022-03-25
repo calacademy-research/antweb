@@ -6,6 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -54,11 +55,6 @@ Request objects:
         String forwardString = "failure";
         switch (resultRank) {
             case "specimen":
-                results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-                if (session.getAttribute("fullAdvancedSearchResults") != null)
-                    results.setResults((ArrayList) session.getAttribute("fullAdvancedSearchResults")); // added to fix session
-                forwardString = "advancedSearch";
-                break;
             case "locality":
                 results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
                 if (session.getAttribute("fullAdvancedSearchResults") != null)
@@ -108,7 +104,7 @@ Request objects:
 
         request.setAttribute("resultSetModifier", resultSetModifier);
 
-        return (mapping.findForward(forwardString));
+        return mapping.findForward(forwardString);
     }
 
     public ArrayList<ResultItem> getModifiedSet(String resultRank, ArrayList theResults, HttpServletRequest request) {
@@ -117,7 +113,7 @@ Request objects:
         ResultItem thisItem = null;
         Connection connection = null;
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "PrepareMapResultsAction.getModifiedSet()");                    
           while (iter.hasNext()) {
             thisItem = (ResultItem) iter.next();            
@@ -139,9 +135,9 @@ Request objects:
         String theQuery = "";
 
         //if (util.notBlank(theItem.getCode())) {
-        if ((resultRank != null ) && (resultRank.equals("specimen"))) {
+        if (resultRank != null && resultRank.equals("specimen")) {
             theQuery = "select decimal_latitude, decimal_longitude from specimen where code = '" + theItem.getCode() + "'";
-        } else if ((resultRank != null ) && (resultRank.equals("locality"))) {
+        } else if (resultRank != null && resultRank.equals("locality")) {
             AntwebUtil.log("hasGeoRefInfo() resultRank=locality needs to be handled! item:" + theItem);
         } else {
             ArrayList terms = new ArrayList();
@@ -167,7 +163,7 @@ Request objects:
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);
 
-            if (rset.next() && (hasInfo == false)) {
+            if (rset.next() && !hasInfo) {
                 int lat = rset.getInt(1);
                 int lon = rset.getInt(2);
                 if (lat != 0 && lon != 0)

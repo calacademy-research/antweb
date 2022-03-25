@@ -15,17 +15,17 @@ import org.apache.commons.logging.LogFactory;
 
 public class Project extends LocalityOverview implements SpeciesListable, Comparable<Project>, Countable {      // was LocalityOverview
 
-    private static Log s_log = LogFactory.getLog(Project.class);
+    private static final Log s_log = LogFactory.getLog(Project.class);
     
     // This is the directory where all of the generated pages are put...
    // public static final String s_speciesListDir = "web/speciesList/";
 
-    public static String ALLANTWEBANTS = "allantwebants";
-    public static String WORLDANTS = "worldants";
-    public static String FOSSILANTS = "fossilants";
-    public static String BAYAREAANTS = "bayareaants";
+    public static final String ALLANTWEBANTS = "allantwebants";
+    public static final String WORLDANTS = "worldants";
+    public static final String FOSSILANTS = "fossilants";
+    public static final String BAYAREAANTS = "bayareaants";
 
-    public static String PROJECT = "PROJECT";
+    public static final String PROJECT = "PROJECT";
     public static String GLOBAL = "GLOBAL";
 
     //public static String CALANTS = "calants";
@@ -66,7 +66,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     protected String previewPage;
     protected boolean speciesListMappable;
 
-    private Hashtable description;    
+    private Hashtable<String, String> description;
     
     // Geolocale dependent properties.  Add in: map?
 
@@ -106,16 +106,13 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     }
         
 
-    public static Comparator<Project> getNameComparator = new Comparator<>() {
+    public static Comparator<Project> getNameComparator = (a1, a2) -> {
+        String name1 = a1.getTitle().toUpperCase();
+        String name2 = a2.getTitle().toUpperCase();
 
-        public int compare(Project a1, Project a2) {
-            String name1 = a1.getTitle().toUpperCase();
-            String name2 = a2.getTitle().toUpperCase();
-
-            //ascending order
-            return name1.compareTo(name2);
-        }
-    };        
+        //ascending order
+        return name1.compareTo(name2);
+    };
         
     public int compareTo(Project other) {
         //A.log("compareTo() fullName:" + getFullName() + " vs " + other.getFullName());
@@ -140,14 +137,14 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
           //<img class=border border=0 src=images/.jpg></a> 
         
         String thisString = "";
-        if ((specimenInfo != null) && (specimenInfo.length() > 0)) {
-            if ((linkInfo != null) && (linkInfo.length() > 0)) {
+        if (specimenInfo != null && specimenInfo.length() > 0) {
+            if (linkInfo != null && linkInfo.length() > 0) {
                 thisString += "<a href=\""  + linkInfo + "\">";
             }
 
             thisString+= "<img src=\"" + AntwebProps.getImgDomainApp() + "/" + Project.getSpeciesListDir() + getRoot() + "/" + specimenInfo + "\">"; 
 
-            if ((linkInfo != null) && (linkInfo.length() > 0)) {
+            if (linkInfo != null && linkInfo.length() > 0) {
                 thisString += "</a>"; 
             }
         }
@@ -163,7 +160,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
             variable = thisField.get(this);
         } catch (Exception e) {
             s_log.error("getSlotValue() for slot:" + variable + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         }
         return variable;
     }
@@ -208,7 +205,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 
         // This is so no broken image shows up on the project page prior to adding it.
         authorImageTag = "";
-        if ((authorImage != null) && !(authorImage.equals(""))) {
+        if (authorImage != null && !authorImage.equals("")) {
           authorImageTag = "<img src=\"" + AntwebProps.getImgDomainApp() + "/" + Project.getSpeciesListDir() + getRoot() + "/" + getAuthorImage() + "\">";
           s_log.debug("setAuthorImage() authorImageTag:" + authorImageTag);
         }        
@@ -262,7 +259,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 
     public String getRoot() {  // projectName without "ants"
       String name = getName();
-      name = (new Formatter()).removeSpaces(name);
+      name = new Formatter().removeSpaces(name);
       name = name.toLowerCase();
       int antsIndex = name.indexOf("ants");
       if (antsIndex > 0) {
@@ -467,7 +464,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     
 	public static String getRootName(String project) {  // projectName, or title will work
 	    if (project == null) return null;
-  	    project = (new Formatter()).removeSpaces(project);
+  	    project = new Formatter().removeSpaces(project);
         project = project.toLowerCase();
 
         if (project.contains("ants")) {
@@ -479,7 +476,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 	
 	public static String getProjectName(String country) {
 	  country = country.toLowerCase();
-	  country = (new Formatter()).removeSpaces(country);
+	  country = new Formatter().removeSpaces(country);
 	  //if ("madagascar".equals(country)) return "madants";
       //if ("czech republic".equals(country)) return "czechants";
       String projectName = country + "ants";
@@ -531,16 +528,16 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
 	}		    
 
 
-    public Hashtable getDescription() {
-        if (description == null) description = new Hashtable();
+    public Hashtable<String, String> getDescription() {
+        if (description == null) description = new Hashtable<>();
         return description;
     }
-    public void setDescription(Hashtable description) {
+    public void setDescription(Hashtable<String, String> description) {
         this.description = description;
     }
 
     public boolean hasDescription(String title) {
-      Set<String> keys = (Set<String>) getDescription().keySet();
+      Set<String> keys = getDescription().keySet();
       for (String key : keys) {
         if (key.equals(title)) return true;
       }

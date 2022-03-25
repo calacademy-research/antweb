@@ -328,7 +328,7 @@ public abstract class Queries {
             "taxonNameWithSingleQuote"
           , "There is a single quotation within the taxon name"
           , "<th>Taxon Name</th><th>Rank</th><th>Status</th><th>Type</th><th>Source</th><th>Insert Method</th><th>Created</th>"      
-          , "select taxon_name, taxarank, status, type, source, insert_method, created from taxon where taxon_name like '%\''%'"
+          , "select taxon_name, taxarank, status, type, source, insert_method, created from taxon where taxon_name like '%''%'"
           ));
         
         queries.add(new NamedQuery(
@@ -407,7 +407,7 @@ public abstract class Queries {
           , "<th>Taxon Name</th>"
           , "select "
           // Probably should use domainApp
-            + " concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"\'>\"), taxon_name), \"</a>\") "            
+            + " concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\") "
             + " from taxon where taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0 and taxon_name not in (select taxon_name from antwiki_valid_taxa)"
           ));
                   
@@ -467,7 +467,7 @@ public abstract class Queries {
            "homonymWithoutTaxon"
           , "Homonyms without matching records in the taxon table."
           , "<th>Taxon Name</th>"
-          ,"select concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"\'>\"), taxon_name), \"</a>\") from homonym where taxon_name not in (select taxon_name from taxon)"
+          , "select concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\") from homonym where taxon_name not in (select taxon_name from taxon)"
         ));    
         return queries; // end getHomonymNamedQueries()
     }
@@ -480,7 +480,7 @@ public abstract class Queries {
             , "Taxon name not valid from specimen list."
             , "<th>Group</th><th>Taxon Name</th><th>Status</th>"
             , " select distinct g.abbrev, " 
-            + " concat(concat(concat(concat(\"<a href=\'http://antweb.org/description.do?taxonName=\", t.taxon_name), \"\'>\"), t.taxon_name), \"</a>\") "            
+            + " concat(concat(concat(concat(\"<a href='http://antweb.org/description.do?taxonName=\", t.taxon_name), \"'>\"), t.taxon_name), \"</a>\") "
             + ", t.status from specimen sp, taxon t, ant_group g"
             + " where sp.taxon_name = t.taxon_name " 
             + " and sp.access_group = g.id"
@@ -572,7 +572,7 @@ public abstract class Queries {
             "multiBioregionSpecimenTaxa"
           , "These non-introduced taxa are found in multiple bioregions."
           , "<th>Taxon Name</th><th>Bioregions</th><th>Bioregion Count</th>"
-          , "select concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/bigMap.do?taxonName=\", taxon_name), \"\'>\"), taxon_name), \"</a>\"), group_concat(distinct bioregion), count(distinct bioregion) from specimen where bioregion is not null and taxon_name not like '%indet%' and country != 'Port of Entry' and taxon_name not in (select distinct taxon_name from proj_taxon where project_name = 'introducedants') group by taxon_name having count(distinct bioregion) > 1 order by count(distinct bioregion) desc, taxon_name"
+          , "select concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/bigMap.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\"), group_concat(distinct bioregion), count(distinct bioregion) from specimen where bioregion is not null and taxon_name not like '%indet%' and country != 'Port of Entry' and taxon_name not in (select distinct taxon_name from proj_taxon where project_name = 'introducedants') group by taxon_name having count(distinct bioregion) > 1 order by count(distinct bioregion) desc, taxon_name"
         ));
 
         queries.add(new NamedQuery(
@@ -622,7 +622,7 @@ public abstract class Queries {
           , "The list of fossil species and subspecies exist in Antweb but are not contained in the submitted fossil taxon set."
           , "<th>Taxon Name</th>"
           , "select "
-            + " concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"\'>\"), taxon_name), \"</a>\") "            
+            + " concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\") "
             + " from taxon where taxarank in ('species', 'subspecies') and status= 'valid' and fossil = 1 and taxon_name not in (select taxon_name from antwiki_fossil_taxa)"
           ));
           
@@ -802,14 +802,14 @@ public abstract class Queries {
            "projTaxaWithoutTaxonWithoutHomonym"
           , "Project_taxon records without matching records in the taxon table (without homonym) ."
           , "<th>Project Name</th><th>Taxon Name</th><th>Source</th>"
-          ,"select project_name, concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"\'>\"), taxon_name), \"</a>\"), source from proj_taxon where taxon_name not in (select taxon_name from taxon) and source not in ('worldants', 'fossilants') and taxon_name not in (select taxon_name from homonym) order by project_name, source"
+          , "select project_name, concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\"), source from proj_taxon where taxon_name not in (select taxon_name from taxon) and source not in ('worldants', 'fossilants') and taxon_name not in (select taxon_name from homonym) order by project_name, source"
         ));
 
         queries.add(new NamedQuery(
            "projTaxaWithoutTaxonWithHomonym"
           , "Project_taxon records without matching records in the taxon table (with homonym)."
           , "<th>Project Name</th><th>Taxon Name</th><th>Source</th>"
-          ,"select project_name, concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"\'>\"), taxon_name), \"</a>\"), source from proj_taxon where taxon_name not in (select taxon_name from taxon) and source not in ('worldants', 'fossilants') and taxon_name in (select taxon_name from homonym)order by project_name, source"
+          , "select project_name, concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\"), source from proj_taxon where taxon_name not in (select taxon_name from taxon) and source not in ('worldants', 'fossilants') and taxon_name in (select taxon_name from homonym)order by project_name, source"
         ));
 
         queries.add(new NamedQuery(
@@ -967,7 +967,7 @@ public abstract class Queries {
           , "Show the morphotaxa that are in geolocales that do not have specimen."
           , "<th>Taxon Name</th><th>Geolocale Name</th><th>Geolocale Id</th><th>Created</th><th>Source</th>"
           , "select "
-          + " concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/browse.do?taxonName=\", taxon_name), \"\'>\"), taxon_name), \"</a>\") "                      
+          + " concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/browse.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\") "
           + ", name, geolocale_id, geolocale_taxon.created, geolocale_taxon.source " 
           + " from geolocale_taxon, geolocale where geolocale_taxon.geolocale_id = geolocale.id and taxon_name in (select taxon_name from taxon where status = 'morphotaxon')  and taxon_name not in (select distinct taxon_name from specimen) order by georank, name"
           , "deleteGeolocaleListMorphotaxa"
@@ -1023,7 +1023,7 @@ public abstract class Queries {
           , "Non-introduced geolocale taxa found in multiple bioregions."
           , "<th>Taxon Name</th><th>Bioregion Count</th><th>Bioregions</th>"
           , "select "
-            + " concat(concat(concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", t.taxon_name), \"\'>\"), t.taxon_name), \"</a>\") "                      
+            + " concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", t.taxon_name), \"'>\"), t.taxon_name), \"</a>\") "
             + ", count(distinct g.bioregion), group_concat(distinct concat(' ', g.bioregion)) from geolocale_taxon gt, geolocale g, taxon t where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name " 
             + " and t.taxon_name not in (select taxon_name from proj_taxon where project_name = 'introducedants')"
             + " and t.taxarank in ('species', 'subspecies') group by gt.taxon_name having count(distinct g.bioregion) > 2 order by count(distinct g.bioregion) desc"
@@ -1107,7 +1107,7 @@ public abstract class Queries {
                 , "Worldants uploads since May of 2019."
                 , "<th>Created</th><th>Operation</th><th>Message</th><th>File Size</th><th>Worldants Count</th><th>Exec Time</th><th>Log File</th>"
                 , "SELECT created, operation, validate_message, file_size, orig_worldants_count, exec_time "
-                + ", concat(concat(\"<a href=\'" + AntwebProps.getDomainApp() + "/web/log/worldants/\",log_file_name), \"'>Log file</a>\") "
+                + ", concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/web/log/worldants/\",log_file_name), \"'>Log file</a>\") "
                 + " FROM worldants_upload order by created desc"
         ));
 
@@ -1131,7 +1131,7 @@ public abstract class Queries {
                 , "Specimen uploads ordered by date."
                 , "<th>Group Name</th><th>Count</th><th>Last Upload</th><th>Reload</th>"
                 , "select g.name, count(distinct code), max(s.created)"
-                + ", concat(concat(concat(concat(\"&nbsp;&nbsp;&nbsp;<a href=\'" + AntwebProps.getDomainApp() + "/upload.do?action=reloadSpecimenList&groupId=\", g.id), \"\'>\"), 'run'), \"</a>\") "
+                + ", concat(concat(concat(concat(\"&nbsp;&nbsp;&nbsp;<a href='" + AntwebProps.getDomainApp() + "/upload.do?action=reloadSpecimenList&groupId=\", g.id), \"'>\"), 'run'), \"</a>\") "
                 + " from specimen s, ant_group g where s.access_group = g.id group by access_group order by max(s.created) desc"
         ));
         /* namedQueries.add(new NamedQuery(

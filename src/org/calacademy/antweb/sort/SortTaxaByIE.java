@@ -7,7 +7,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public class SortTaxaByIE implements Comparator<Taxon> 
 { 
-    String bioregion = null;
+    String bioregion;
 
     public SortTaxaByIE(Overview overview) {	
         if (overview instanceof Bioregion) {

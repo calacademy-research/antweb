@@ -14,13 +14,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class UploadFile {
-    private static Log s_log = LogFactory.getLog(UploadFile.class);
+    private static final Log s_log = LogFactory.getLog(UploadFile.class);
 
-    String encoding = null;
-    String userAgent = null;
-    String base = null;
-    String fileName = null;
-    String root = null;
+    String encoding;
+    String userAgent;
+    String base;
+    String fileName;
+    String root;
     boolean isBioRegion = false;
     
     // Usually this file encapsulates details of an actual file uploaded.
@@ -33,12 +33,12 @@ public class UploadFile {
       isReload = reload; 
     }
 
-    private String backupFileName = null;
+    private String backupFileName;
 
 //    public static String oldProjectFileTail = "_authority.txt";
 //    public static String projectFileTail = "_project.txt";
         
-    public static String s_speciesListTail = "_speciesList.txt";
+    public static final String s_speciesListTail = "_speciesList.txt";
     public static String getSpeciesListTail() { 
         return s_speciesListTail; 
     }
@@ -105,7 +105,7 @@ public class UploadFile {
     // This is used for Project upload, but not of Worldants
 
     public boolean isWorldAnts() {
-        return (fileName != null) && (fileName.contains("worldants"));
+        return fileName != null && fileName.contains("worldants");
     }
 
     public static boolean isValidUTF8(String filePath) {
@@ -146,6 +146,10 @@ public class UploadFile {
     }    
     public void setEncoding(String encoding) {
       this.encoding = encoding;
+    }
+
+    public Charset getCharset() {
+        return Charset.forName(encoding);
     }
 
     boolean correctEncoding(String encoding) {
@@ -261,13 +265,13 @@ public class UploadFile {
     }
     
     public boolean isUTF8() {
-      return (encoding.equals("UTF-8"));
+      return encoding.equals("UTF-8");
     }
     public boolean isMacRoman() {
-      return (encoding.equals("MacRoman"));
+      return encoding.equals("MacRoman");
     }
     public boolean isIso() {
-      return (encoding.equals("ISO8859_1"));
+      return encoding.equals("ISO8859_1");
     }
 
     public String getRoot() {
@@ -300,17 +304,17 @@ public class UploadFile {
       } else {
         if (file.exists()) {
           Utility util = new Utility();
-          String fullWebDir = util.getDocRoot() + "web";
+          String fullWebDir = Utility.getDocRoot() + "web";
           String fullWebUploadDir = fullWebDir + "/upload";
           //String backupWorkingDir = util.getInputFileHome() + "/backup";
-          util.makeDirTree(fullWebUploadDir);
+          Utility.makeDirTree(fullWebUploadDir);
           s_log.info("backup() makeDirTree:" + fullWebUploadDir);
 
-          this.backupFileName = util.getDateForFileName() + "-" + getShortFileName();
+          this.backupFileName = Utility.getDateForFileName() + "-" + getShortFileName();
           String tempBackupDirFile = fullWebUploadDir + "/" + backupFileName;
           try {
             s_log.info("backup() " + getFileLoc() + " to " + tempBackupDirFile);
-            util.copyFile(getFileLoc(), tempBackupDirFile);
+            Utility.copyFile(getFileLoc(), tempBackupDirFile);
             backupDirFile = "upload/" + backupFileName;
           } catch (IOException e) {
             s_log.error("backup() e:" + e);

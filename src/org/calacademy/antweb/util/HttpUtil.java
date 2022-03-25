@@ -4,12 +4,14 @@ import java.io.*;
 import java.net.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import javax.servlet.http.*;
 import javax.servlet.*;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.httpclient.URIException;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
@@ -18,6 +20,7 @@ import org.apache.struts.action.*;
 import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.util.AntwebUtil;
 
+import javax.servlet.jsp.JspWriter;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
@@ -84,8 +87,8 @@ public abstract class HttpUtil {
       String targetSic = HttpUtil.getTarget(request); //Sic
 
       invalidMessage = HttpUtil.isLegitRequest(request);
-      if (AntwebProps.isDevMode() && (invalidMessage != null)) s_log.warn("invalidRequest() invalidMessage:" + invalidMessage);
-      if (invalidMessage == null && (HttpUtil.getIsBot(request) && HttpUtil.isPost(request))) {
+      if (AntwebProps.isDevMode() && invalidMessage != null) s_log.warn("invalidRequest() invalidMessage:" + invalidMessage);
+      if (invalidMessage == null && HttpUtil.getIsBot(request) && HttpUtil.isPost(request)) {
           invalidMessage = "Bot posts not allowed.  " + targetSic;
       }
 
@@ -128,12 +131,12 @@ public abstract class HttpUtil {
       String message = BadActorMgr.ifBadActorBlockedGetMessage(request);
       if (message != null) {
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
       }
 
       if (HttpUtil.hasIllegalStr(queryString, request)) {
             request.setAttribute("message", "Illegal characters.");
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
       }
 
       boolean hasSpecialChars = false;    
@@ -175,21 +178,21 @@ public abstract class HttpUtil {
         
     public static boolean getIsBot(HttpServletRequest request) {
       boolean isBot = false;
-      String userAgent = (String) request.getHeader("user-agent");
+      String userAgent = request.getHeader("user-agent");
       if (userAgent != null) {
         userAgent = userAgent.toLowerCase();
-        if ( (userAgent.contains("bot")) 
-          || (userAgent.contains("spider"))
-          || (userAgent.contains("slurp"))
-          || (userAgent.contains("ahrefs"))
-          || (userAgent.contains("baidu"))
-          || (userAgent.contains("The Knowledge AI"))
-          || (userAgent.contains("opensiteexplorer"))
-          || (userAgent.contains("Gigabot"))
-          || (userAgent.contains("SemrushBot"))
-          || (userAgent.contains("centurybot"))
-          || (userAgent.contains("bingbot"))
-            || (userAgent.contains("naver.me"))
+        if ( userAgent.contains("bot")
+          || userAgent.contains("spider")
+          || userAgent.contains("slurp")
+          || userAgent.contains("ahrefs")
+          || userAgent.contains("baidu")
+          || userAgent.contains("The Knowledge AI")
+          || userAgent.contains("opensiteexplorer")
+          || userAgent.contains("Gigabot")
+          || userAgent.contains("SemrushBot")
+          || userAgent.contains("centurybot")
+          || userAgent.contains("bingbot")
+            || userAgent.contains("naver.me")
           //|| (userAgent.contains())
            ) {
           isBot = true;   
@@ -257,15 +260,15 @@ public abstract class HttpUtil {
 
 
   
-    private static boolean s_isOffline = false;
+    private static final boolean s_isOffline = false;
     // In order to set to offline, hardcode it above, or turn s_showResults to true and look 
     // at the log results to find a string that will uniquely identify the service
     // (such as gogoinflight or unitied-wifi).
-    private static boolean s_showResults = false;
-    private static String[] s_services = {"gogoinflight", "united-wifi"};
+    private static final boolean s_showResults = false;
+    private static final String[] s_services = {"gogoinflight", "united-wifi"};
       // This is the persisted property resulting from the various conditions that may indicate
     // on of offline.
-    private static Boolean s_isOnline = null;
+    private static Boolean s_isOnline;
   
     public static boolean isOnline() {
       if (!AntwebProps.isDevMode()) {
@@ -274,7 +277,7 @@ public abstract class HttpUtil {
       }
       if (s_isOnline != null) {
         // Only need to test once.
-        return s_isOnline.booleanValue();
+        return s_isOnline;
       }
       if (testOnline()
           && true
@@ -285,7 +288,7 @@ public abstract class HttpUtil {
         s_isOnline = Boolean.FALSE;
         s_log.warn("Warning... Running in Offline Mode.");
       }
-      return s_isOnline.booleanValue();
+      return s_isOnline;
     }
   
     public static boolean isOffline() {
@@ -327,15 +330,15 @@ public abstract class HttpUtil {
     }
     
     public static boolean isDisallowedFileType(String fileName) {
-        return (fileName != null) &&
-                ((fileName.contains(".jsp"))
-                        || (fileName.contains(".JSP"))
-                        || (fileName.contains(".php"))
-                        || (fileName.contains(".PHP"))
-                        || (fileName.contains(".pl"))
-                        || (fileName.contains(".PL"))
-                        || (fileName.contains(".sh"))
-                        || (fileName.contains(".SH"))
+        return fileName != null &&
+                (fileName.contains(".jsp")
+                        || fileName.contains(".JSP")
+                        || fileName.contains(".php")
+                        || fileName.contains(".PHP")
+                        || fileName.contains(".pl")
+                        || fileName.contains(".PL")
+                        || fileName.contains(".sh")
+                        || fileName.contains(".SH")
                 );
     }
     
@@ -371,10 +374,10 @@ public abstract class HttpUtil {
 
     public static boolean isIllegalStr(String string) {
         String str = string.toLowerCase();
-        return (str.contains("sleep") && !(str.contains("sleeping") || str.contains("kameelsleep")))
+        return str.contains("sleep") && !(str.contains("sleeping") || str.contains("kameelsleep"))
                 || str.contains("case%20")
                 || str.contains("select%20")
-                || (str.contains("order%20") && !str.contains("border"))
+                || str.contains("order%20") && !str.contains("border")
                 || str.contains("3ddbms_pipe.receive_message")
                 || str.contains("waitfor  ");
     }
@@ -414,9 +417,9 @@ public abstract class HttpUtil {
 
     public static boolean abortAction(String content) {
       // This method looks for jsp injection code.  True to abort.
-        return (content != null) &&
-                ((content.contains("Loesch")) // This is the author of Browser.jsp
-                        || (false)
+        return content != null &&
+                (content.contains("Loesch") // This is the author of Browser.jsp
+                        || false
                 );
     }
     
@@ -441,12 +444,12 @@ public abstract class HttpUtil {
         String queryString = request.getQueryString();
         if (queryString == null) return false;
         if ( 
-             (queryString.contains("%2Cnull%2Cnull%2"))
-          || (queryString.contains("union%20all"))
-          || (queryString.contains("ascii"))
+             queryString.contains("%2Cnull%2Cnull%2")
+          || queryString.contains("union%20all")
+          || queryString.contains("ascii")
           ) {
           ++botAttackCount;
-          if ((botAttackCount % 100 ) == 0) {
+          if (botAttackCount % 100 == 0) {
             s_log.error("isBotAttackDefence() count:" + botAttackCount);
           }
           return true;
@@ -461,7 +464,7 @@ public abstract class HttpUtil {
         boolean isServerBusy = DBUtil.isServerBusy(dataSource, request);                                  		  
         if (HttpUtil.getIsBot(request) && isServerBusy) {
           ++serverBusyCount;
-          if ((serverBusyCount % 100 ) == 0) {
+          if (serverBusyCount % 100 == 0) {
               s_log.warn("tooBusyForBots() serverBusyCount:" + serverBusyCount);
           }
           return true;
@@ -477,9 +480,9 @@ public abstract class HttpUtil {
     public static Map<String, String> getHeadersInfo(HttpServletRequest request) {
 		Map<String, String> map = new HashMap<>();
 
-		Enumeration headerNames = request.getHeaderNames();
+		Enumeration<String> headerNames = request.getHeaderNames();
 		while (headerNames.hasMoreElements()) {
-			String key = (String) headerNames.nextElement();
+			String key = headerNames.nextElement();
 			String value = request.getHeader(key);
 			map.put(key, value);			
 		}
@@ -488,9 +491,9 @@ public abstract class HttpUtil {
 
     public static String getHeadersStr(HttpServletRequest request) {
         String headerStr = "headerStr:";
-		Enumeration headerNames = request.getHeaderNames();
+		Enumeration<String> headerNames = request.getHeaderNames();
 		while (headerNames.hasMoreElements()) {
-			String key = (String) headerNames.nextElement();
+			String key = headerNames.nextElement();
 			String value = request.getHeader(key);
             headerStr += " " + key + ":" + value;
 		}
@@ -501,9 +504,9 @@ public abstract class HttpUtil {
         if (request.getContentType() != null) {
           String contentType = request.getContentType().toLowerCase();
             //A.log("isPost:" + request.getContentType());
-            return (contentType.contains("multipart/form-data"))
-                    || (contentType.contains("application/x-www-form-urlencoded"))
-                    || (contentType.contains("text/plain"));
+            return contentType.contains("multipart/form-data")
+                    || contentType.contains("application/x-www-form-urlencoded")
+                    || contentType.contains("text/plain");
         }
         return false;
     }
@@ -513,7 +516,7 @@ public abstract class HttpUtil {
         if (str != null) {
             try {
                 target = URIUtil.encodePath(str, "ISO-8859-1");
-            } catch (org.apache.commons.httpclient.URIException e) {
+            } catch (URIException e) {
                 // do nothing.
             }
         }
@@ -527,29 +530,21 @@ public abstract class HttpUtil {
  */
     public static String encode(String toEncode) {
         String encoded = null;
-        try {
-            // ADDED the utf8 below 20200216.
-            encoded = java.net.URLEncoder.encode(toEncode, "utf8");
-        } catch (java.io.UnsupportedEncodingException e) {
-            s_log.error("encode() e:" + e);
-        }
+        // ADDED the utf8 below 20200216.
+        encoded = URLEncoder.encode(toEncode, StandardCharsets.UTF_8);
         return encoded;
     }
 
     public static String decode(String toDecode) {
         String decoded = null;
-        try {
-            // ADDED the utf8 below 20200216.
-            decoded = java.net.URLDecoder.decode(toDecode, "utf8");
-        } catch (java.io.UnsupportedEncodingException e) {
-            s_log.error("decode() e:" + e);
-        }
+        // ADDED the utf8 below 20200216.
+        decoded = URLDecoder.decode(toDecode, StandardCharsets.UTF_8);
         return decoded;
     }
 
 
   public static String getParamString(HttpServletRequest request) 
-      throws java.net.SocketTimeoutException {
+      throws SocketTimeoutException {
    // This gets used by UgSessionRequestFilter to block SQLInjection attacks.
     String paramString = "";            
     Enumeration names = request.getParameterNames();
@@ -566,9 +561,9 @@ public abstract class HttpUtil {
   // Could be multiple ones? This just gets first.
   public static String getParamValue(String param, HttpServletRequest request) {
     String paramsStr = "";            
-    Enumeration names = request.getParameterNames();
+    Enumeration<String> names = request.getParameterNames();
     while (names.hasMoreElements()) {
-      String name = (String) names.nextElement();
+      String name = names.nextElement();
       if (param.equals(name)) {
         String[] values = request.getParameterValues(name);    
         for (String value : values) {
@@ -587,9 +582,9 @@ public abstract class HttpUtil {
   public static String getParamsStr(String param, HttpServletRequest request) {
     // Used by oneView.jsp to get the multiple "chosen" params.
     String paramsStr = "";            
-    Enumeration names = request.getParameterNames();
+    Enumeration<String> names = request.getParameterNames();
     while (names.hasMoreElements()) {
-      String name = (String) names.nextElement();
+      String name = names.nextElement();
       if ("chosen".equals(name)) {
         String[] values = request.getParameterValues(name);    
         for (String value : values) {
@@ -653,7 +648,7 @@ public abstract class HttpUtil {
      */
     public static boolean requestParameter(ServletRequest request, String param) {
         Object val = request.getParameter(param);
-        if (val != null && !( val.equals("false") ))
+        if (val != null && !val.equals("false"))
             return true;
         return request.getParameter(param + ".x") != null;
     }
@@ -661,7 +656,7 @@ public abstract class HttpUtil {
   public static boolean redirectPostToGet(HttpServletRequest request
     , HttpServletResponse response
     , String requestedPathWithQuery) 
-    throws IOException, MalformedURLException {
+    throws IOException {
 
       String target = AntwebProps.getDomainApp() + requestedPathWithQuery;
       HttpUtil.sendRedirect(target, request, response);
@@ -671,7 +666,7 @@ public abstract class HttpUtil {
   public static boolean redirectSecure(HttpServletRequest request
     , HttpServletResponse response
     , String requestedPathWithQuery) 
-    throws IOException, MalformedURLException {
+    throws IOException {
 
     if (!HttpUtil.isSecure(request)) {
       String target = "https://" + request.getServerName() + requestedPathWithQuery;
@@ -695,8 +690,7 @@ public abstract class HttpUtil {
 
     
   public static String redirectCorrectedUrl(HttpServletRequest request  
-    , HttpServletResponse response)  
-    throws IOException, MalformedURLException { 
+    , HttpServletResponse response) {
 
     /* Called from BrowseAction in case where rank is null */
     //        //response.sendRedirect(newPath);  // can't. Response committed.
@@ -827,7 +821,7 @@ public abstract class HttpUtil {
         if (queryString == null)
             return null;
 
-        if (queryString.substring(0, 1).equals("?")) {
+        if (queryString.charAt(0) == '?') {
             afterQuestionMark = queryString.substring(1);
         } else { // Might be string domain.
             if (queryString.contains(AntwebProps.getDomainApp())) {
@@ -883,12 +877,12 @@ public abstract class HttpUtil {
       
       if (requestURI.contains("academyHeader.jsp")) return null;
       
-      if ((requestURI == null) || (requestURI.equals("null"))) {
+      if (requestURI == null || requestURI.equals("null")) {
         //A.log("devMode Note: no requestURI");
         return null;
       }
       
-      target = (new Utility()).getDomain() + requestURI;
+      target = new Utility().getDomain() + requestURI;
       if (queryString != null)
         target += queryString; 
 
@@ -945,7 +939,7 @@ public abstract class HttpUtil {
     // will remove all instances.
     public static String getTargetMinusParam(String target, String param) {
         int i1 = target.indexOf("?" + param);
-        boolean isFirstParam = (i1 > 0);
+        boolean isFirstParam = i1 > 0;
         if (!isFirstParam) i1 = target.indexOf("&" + param);
         int j1 = target.indexOf("&", i1 + 1);
         String newTarget = target;
@@ -980,7 +974,7 @@ public abstract class HttpUtil {
     }
 
 
-    public static int MILLIS = 1000;
+    public static final int MILLIS = 1000;
     public static int SECS = 60;
     public static int MAX_REQUEST_TIME = MILLIS * 20;
 /*
@@ -1001,7 +995,7 @@ public abstract class HttpUtil {
       return execTime; 
     }
 */
-    public static String getExecTime(java.util.Date startTime) {
+    public static String getExecTime(Date startTime) {
         String execTime = "";
         long millis = AntwebUtil.millisSince(startTime);
         if (millis > 2000) {
@@ -1012,14 +1006,14 @@ public abstract class HttpUtil {
         return execTime;
     }
 
-    public static String finish(HttpServletRequest request, java.util.Date startTime) {
+    public static String finish(HttpServletRequest request, Date startTime) {
       return getExecTime(startTime);
     }
 
 
     //  Add the following code to JSPs...
     //    if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
-    public static boolean isStaticCallCheck(HttpServletRequest request, javax.servlet.jsp.JspWriter out) {
+    public static boolean isStaticCallCheck(HttpServletRequest request, JspWriter out) {
       if (HttpUtil.isStaticCall(request)) {
         try {
           out.println("Invalid URL.  Direct JSP calls unsupported.");
@@ -1052,7 +1046,7 @@ public abstract class HttpUtil {
 
       //A.log("isStaticCall() 2 requestedPath:" + requestedPath);
       
-      if ((requestedPath != null) && (requestedPath.contains(".jsp"))) {
+      if (requestedPath != null && requestedPath.contains(".jsp")) {
  
         // May get called twice.  Once for page and once for -body.
         //AntwebUtil.logStackTrace();
@@ -1168,9 +1162,9 @@ public abstract class HttpUtil {
     
       String output = "";
       
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
 
-      if ((false) && (AntwebProps.isDevMode())) {
+      if (false && AntwebProps.isDevMode()) {
         s_log.warn("getUrl() the url:" + theUrl);
         return "";
       }
@@ -1205,7 +1199,7 @@ public abstract class HttpUtil {
 			//output += str;
 		}   
       } catch (Exception e) {
-		String message = "e:" + e.toString();
+		String message = "e:" + e;
 		//AntwebUtil.logShortStackTrace();
 		//if (AntwebProps.isDevMode()) 
 		message += " url:" + url;
@@ -1224,9 +1218,9 @@ public abstract class HttpUtil {
     
       String output = "";
       
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
 
-      if ((false) && (AntwebProps.isDevMode())) {
+      if (false && AntwebProps.isDevMode()) {
         s_log.warn("getUrl() the url:" + theUrl);
         return "";
       }
@@ -1348,9 +1342,9 @@ public abstract class HttpUtil {
   
   public static String getUtf8Url(String theUrl, String delimit) 
     throws IOException {  
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
 
-      if ((false) && (AntwebProps.isDevMode())) {
+      if (false && AntwebProps.isDevMode()) {
         s_log.warn("getUtf8Url() the url:" + theUrl);
         return "";
       }
@@ -1360,12 +1354,12 @@ public abstract class HttpUtil {
       StringBuffer strVal = new StringBuffer();
       URL url = new URL(theUrl) ;
       
-      java.net.URLConnection urlConn = url.openConnection();
+      URLConnection urlConn = url.openConnection();
       urlConn.setRequestProperty("Accept-Charset", "UTF-8");
 
       try {
         BufferedReader input = new BufferedReader(
-            new InputStreamReader(urlConn.getInputStream(), "UTF-8")); 
+            new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8));
         StringBuilder strB = new StringBuilder();
         String str;
         
@@ -1391,12 +1385,12 @@ public abstract class HttpUtil {
       StringBuffer strVal = new StringBuffer();
       URL url = new URL(theUrl) ;
       
-      java.net.URLConnection urlConn = url.openConnection();
+      URLConnection urlConn = url.openConnection();
       urlConn.setRequestProperty("Accept-Charset", "UTF-8");
 
       try {
         BufferedReader input = new BufferedReader(
-            new InputStreamReader(urlConn.getInputStream(), "UTF-8")); 
+            new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8));
         String str;
         
         //int i = 0;
@@ -1433,7 +1427,7 @@ public abstract class HttpUtil {
     private static final int MAX_ITERATION = 60;  // This should cover all adm1
       // This should be multiplied by 27 to have the actual count.
     private static final String[] uniqueColors = {"#0c6197", "#4daa4b", "#90c469", "#daca61", "#e4a14b", "#e98125", "#cb2121", "#830909", "#923e99", "#ae83d5", "#bf273e", "#ce2aeb", "#bca44a", "#618d1b", "#1ee67b", "#b0ec44", "#a4a0c9", "#322849", "#86f71a", "#d1c87f", "#7d9058", "#44b9b0", "#7c37c0", "#cc9fb1", "#e65414", "#8b6834", "#248838"};
-    private static String[] colors = null;    
+    private static String[] colors;
     public static String[] getColors() {
       if (colors != null) return colors;
       ArrayList<String> colorList = new ArrayList<>();

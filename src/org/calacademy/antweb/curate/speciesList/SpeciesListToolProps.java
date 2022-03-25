@@ -8,24 +8,24 @@ import org.calacademy.antweb.util.*;
 
 public class SpeciesListToolProps extends SpeciesListToolForm {
 
-    private ArrayList<String> noPassWorldantsSpeciesList = null;
-    private ArrayList<String> refListList = null;
-    private ArrayList<String> refListSubfamilies = null;    
+    private ArrayList<String> noPassWorldantsSpeciesList;
+    private ArrayList<String> refListList;
+    private ArrayList<String> refListSubfamilies;
 
-    private String refSpeciesListParams = null;
+    private String refSpeciesListParams;
 
-    private ArrayList<Taxon> mapSpeciesList1 = null;
-    private ArrayList<Taxon> mapSpeciesList2 = null;
-    private ArrayList<Taxon> mapSpeciesList3 = null;
+    private ArrayList<Taxon> mapSpeciesList1;
+    private ArrayList<Taxon> mapSpeciesList2;
+    private ArrayList<Taxon> mapSpeciesList3;
 
-    private ArrayList<Taxon> refSpeciesList = null;
-    private ArrayList<Taxon> sumSpeciesList = null;
+    private ArrayList<Taxon> refSpeciesList;
+    private ArrayList<Taxon> sumSpeciesList;
     
-    private ArrayList<String> oldChosenList1 = null;
-    private ArrayList<String> oldChosenList2 = null;
-    private ArrayList<String> oldChosenList3 = null;
+    private ArrayList<String> oldChosenList1;
+    private ArrayList<String> oldChosenList2;
+    private ArrayList<String> oldChosenList3;
 
-    private ArrayList<Taxon> advSearchTaxa = null;
+    private ArrayList<Taxon> advSearchTaxa;
     
 
     public String getRefSpeciesListParams() {

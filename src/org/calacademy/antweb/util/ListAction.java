@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -15,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ListAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ListAction.class);
+    private static final Log s_log = LogFactory.getLog(ListAction.class);
 
     public ActionForward execute(
         ActionMapping mapping,
@@ -27,7 +29,7 @@ public final class ListAction extends Action {
         boolean botAttackDefence = HttpUtil.isBotAttackDefence(request);
         if (botAttackDefence) {
           request.setAttribute("message", "Invalid request.");
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         }       
 
         // Extract attributes we will need
@@ -40,7 +42,7 @@ public final class ListAction extends Action {
         
         Connection connection = null;        
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "ListAction");
           
           //dataSource.setZeroDateTimeBehavior("convertToNull");
@@ -84,13 +86,13 @@ public final class ListAction extends Action {
                     request.setAttribute("ogTitle", "Favorite images as selected by the curators of Antweb.org.");
                     request.setAttribute("ogDesc", "Witness the great diversity of the over 15,000 species of ants on Earth.");
 
-                    return (mapping.findForward("likes"));
+                    return mapping.findForward("likes");
                 }
                 case "toUpload": {
                     String toUploadDir = AntwebProps.getProp("site.toUpload");
-                    String message = (new AntwebSystem()).launchProcess("ls -al " + toUploadDir, true);
+                    String message = new AntwebSystem().launchProcess("ls -al " + toUploadDir, true);
                     request.setAttribute("message", message);
-                    return (mapping.findForward("message"));
+                    return mapping.findForward("message");
                 }
                 case "recentDescEdits": {
                     String message = "Antweb Recent Description Edits";
@@ -109,7 +111,7 @@ public final class ListAction extends Action {
                     List<String> list = taxonDb.getTaxonNames(taxonName, true);
                     //A.log("ListAction listOfLists:" + listOfLists);
                     request.setAttribute("listTable", list);
-                    return (mapping.findForward("listTable"));
+                    return mapping.findForward("listTable");
                 }
                 default:
 
@@ -121,14 +123,14 @@ public final class ListAction extends Action {
                             ArrayList<String> list = LoginDb.getUsrAdmList(connection);
                             //A.log("ListAction.execute() accessGroup:" + accessGroup + " isAdmin:" + accessGroup.isAdmin() + " size:" + list.size());
                             request.setAttribute("list", list);
-                            return (mapping.findForward("list"));
+                            return mapping.findForward("list");
                         }
                         if (action.equals("usrAdmLastLogin")) {
                             String message = "Antweb Last Login List";
                             request.setAttribute("message", message);
                             ArrayList<String> list = LoginDb.getUsrAdmLastLoginList(connection);
                             request.setAttribute("list", list);
-                            return (mapping.findForward("list"));
+                            return mapping.findForward("list");
                         }
                         if (action.equals("casentDAnomalies")) {
                             String message = "Multiple taxa for single specimen";
@@ -136,14 +138,14 @@ public final class ListAction extends Action {
                             SpecimenDb specimenDb = new SpecimenDb(connection);
                             ArrayList<String> list = specimenDb.getCasentDAnamalies();
                             request.setAttribute("listTable", list);
-                            return (mapping.findForward("listTable"));
+                            return mapping.findForward("listTable");
                         }
 
                         if (action.equals("recentCASPinnedPonerinae")) {
                             SpecimenDb specimenDb = new SpecimenDb(connection);
                             QueryReport queryReport = specimenDb.getRecentCASPinnedPonerinaeQueryReport();
                             request.setAttribute("queryReport", queryReport);
-                            return (mapping.findForward("queryReport"));
+                            return mapping.findForward("queryReport");
                         }
 
                     }
@@ -157,13 +159,13 @@ public final class ListAction extends Action {
                             Object o = df.get("groupId");
                             if (o == null) {
                                 request.setAttribute("message", "Must enter &groupId= parameter");
-                                return (mapping.findForward("message"));
+                                return mapping.findForward("message");
                             }
                             int groupId = (Integer) o;
                             ArrayList<String> list = specimenDb.getIntroducedByGroup(groupId);
                             //A.log("ListAction list:" + list);
                             request.setAttribute("listTable", list);
-                            return (mapping.findForward("listTable"));
+                            return mapping.findForward("listTable");
                         }
 
                         if (action.equals("specimensWithMorphoGenera")) {
@@ -174,7 +176,7 @@ public final class ListAction extends Action {
                             ArrayList<String> list = specimenDb.getSpecimensWithMorphoGenera(groupId);
                             s_log.debug("ListAction list:" + list);
                             request.setAttribute("listTable", list);
-                            return (mapping.findForward("listTable"));
+                            return mapping.findForward("listTable");
                         }
 
                         if (action.equals("multiBioregionTaxaList")) {
@@ -185,22 +187,22 @@ public final class ListAction extends Action {
                             ArrayList<ArrayList<String>> listOfLists = specimenDb.getMultiBioregionTaxaList(groupId);
                             //A.log("ListAction listOfLists:" + listOfLists);
                             request.setAttribute("listOfLists", listOfLists);
-                            return (mapping.findForward("listOfLists"));
+                            return mapping.findForward("listOfLists");
                         }
                     }
 
                     request.setAttribute("message", "action:" + action + " not found. Be sure you are logged in.");
-                    return (mapping.findForward("message"));
+                    return mapping.findForward("message");
 
             }
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "ListAction");
         }             
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

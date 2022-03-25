@@ -1,14 +1,11 @@
 package org.calacademy.antweb;
 
-import org.calacademy.antweb.util.*;
-
 import java.io.*;
 import java.util.*;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 
@@ -20,7 +17,7 @@ public class SpecimenXML extends DefaultHandler {
     private static final Log s_log = LogFactory.getLog(SpecimenXML.class);
 
     private final Hashtable<String, String> theHash = new Hashtable<>();
-    private String currentElement = null;
+    private String currentElement;
     private SAXParserFactory spf;
     private SAXParser saxParser;
 
@@ -32,7 +29,7 @@ public class SpecimenXML extends DefaultHandler {
             // then the string may contain a space but it won't be visible in the logs! Cut and
             // paste from Terminal into Text Wrangler and you will see the space.     
             parse(xmlString);
-        } catch (org.xml.sax.SAXParseException e) {
+        } catch (SAXParseException e) {
             String message = "";
         /*
             if (hasSpaceWithinTags(xmlString)) {
@@ -42,11 +39,11 @@ public class SpecimenXML extends DefaultHandler {
          */
             s_log.error("isInvalid() " + message + " e:" + e + ". FILE COULD BE SAVED AS UTF8 with BOM?");
             s_log.info("isInvalid() " + message + " e:" + e + " for xmlString:" + xmlString + ". FILE COULD BE SAVED AS UTF8 with BOM?");
-            isInvalid = message + e.toString() + ". Could file have been erroneously saved as UTF8 with BOM?";
+            isInvalid = message + e + ". Could file have been erroneously saved as UTF8 with BOM?";
         } catch (Exception e) {
             String message = "";
             s_log.error("isInvalid() " + message + " e:" + e + " for xmlString:" + xmlString);
-            isInvalid = message + e.toString();
+            isInvalid = message + e;
         }
         return isInvalid;
     }
@@ -106,10 +103,10 @@ public class SpecimenXML extends DefaultHandler {
         }
     }
 
-    public void characters(char buf[], int offset, int len) throws SAXException {
+    public void characters(char[] buf, int offset, int len) throws SAXException {
       String s = new String(buf, offset, len);
       if (theHash.containsKey(currentElement)) {
-        s = (String) theHash.get(currentElement) + s;
+        s = theHash.get(currentElement) + s;
       }
       theHash.put(currentElement, s);
     }

@@ -7,11 +7,11 @@ import org.apache.commons.logging.LogFactory;
 
 public class QueryReport {
 
-    private static Log s_log = LogFactory.getLog(QueryReport.class);
+    private static final Log s_log = LogFactory.getLog(QueryReport.class);
 
     private String name;
-    private String query = null;
-    private String subquery = null;
+    private String query;
+    private String subquery;
     private String desc;
     private String heading;
     ArrayList<String> list = new ArrayList<>();

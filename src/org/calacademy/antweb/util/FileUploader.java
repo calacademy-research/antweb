@@ -16,7 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class FileUploader extends HttpServlet {
 
-  private static Log s_log = LogFactory.getLog(FileUploader.class);
+  private static final Log s_log = LogFactory.getLog(FileUploader.class);
 
   // Accessible as: http://localhost/antweb/specimen/CASENT0106322X
     
@@ -49,7 +49,7 @@ public class FileUploader extends HttpServlet {
                     String docBase = AntwebProps.getDocRoot();
                     // could be: /Users/macpro/dev/apache-tomcat-7.0.21/webapps/antweb/
                     String toUploadDir = docBase + "web/toUpload/";
-                    (new Utility()).makeDirTree(toUploadDir);
+                    Utility.makeDirTree(toUploadDir);
                     s_log.warn("doPost() toUploadDir:" + toUploadDir);
                     File savedFile = new File(toUploadDir + itemName);
                     item.write(savedFile);

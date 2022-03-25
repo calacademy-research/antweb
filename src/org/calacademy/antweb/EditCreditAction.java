@@ -2,6 +2,8 @@ package org.calacademy.antweb;
 
 import java.io.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import org.apache.regexp.*;
 import java.sql.*;
@@ -23,16 +25,16 @@ import org.calacademy.antweb.util.*;
 
 public class EditCreditAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(EditCreditAction.class);
+    private static final Log s_log = LogFactory.getLog(EditCreditAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response) {
 
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		String query;
 
 		try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "EditCreditAction");
 
 			connection.setAutoCommit(true);
@@ -45,7 +47,7 @@ public class EditCreditAction extends Action {
 				String newValue = theForm.getNewValue();
 				String selectedValue = theForm.getSelectedValue();
 				int selectedIntValue=0;
-				if ((selectedValue != null) && (!"".equals(selectedValue))) {
+				if (selectedValue != null && !"".equals(selectedValue)) {
 					selectedIntValue = Integer.parseInt(selectedValue);
 				}
 				if (changeType == null)
@@ -65,12 +67,12 @@ public class EditCreditAction extends Action {
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "EditCreditAction");
         }
 
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 
 
@@ -78,9 +80,9 @@ public class EditCreditAction extends Action {
 
 	private void addNewCredit(Connection connection, String changeField, String newValue) {
 
-		if ((changeField != null)
-			&& (newValue != null)
-			&& (connection != null)) {
+		if (changeField != null
+			&& newValue != null
+			&& connection != null) {
 
             Statement stmt = null;
             ResultSet rset = null;
@@ -104,7 +106,7 @@ public class EditCreditAction extends Action {
 				stmt.execute(query);
 			} catch (SQLException e) {
 				s_log.error("addNewCredit() e:" + e);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
                 DBUtil.close(stmt, rset, this, "addNewCredit()");			
 			}
@@ -112,9 +114,9 @@ public class EditCreditAction extends Action {
 	}
 	
 	private void editCredit(Connection connection, String changeField, int selectedValue, String newValue) {
-		if ((changeField != null)
-			&& (newValue != null)
-			&& (connection != null) && (selectedValue > 0)) {
+		if (changeField != null
+			&& newValue != null
+			&& connection != null && selectedValue > 0) {
 
             String theQuery = "";
             Statement stmt = null;
@@ -125,7 +127,7 @@ public class EditCreditAction extends Action {
 				stmt.execute(theQuery);
 			} catch (SQLException e) {
 				s_log.error("editCredit() e:" + e + " theQuery:" + theQuery);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
                 DBUtil.close(stmt, this, "editCredit()");			
 			}
@@ -138,11 +140,7 @@ public class EditCreditAction extends Action {
 		// go through each image in the images directory
 		File dir = new File("/home/antweb/images");
 
-		FilenameFilter filter = new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return !name.startsWith(".");
-			}
-		};
+		FilenameFilter filter = (dir1, name) -> !name.startsWith(".");
 
 		RE dot = null;
 		RE underscore = null;
@@ -294,7 +292,7 @@ public class EditCreditAction extends Action {
 			while (rset.next()) {
 				theId = rset.getInt(1);
 				theValue = rset.getString(2);
-				if ((theValue != null) && (!theValue.equals(""))) {
+				if (theValue != null && !theValue.equals("")) {
 					outFile.write("<html:option value=\"" + theId + "\"");
 					outFile.write(">" + theValue + "</html:option>\n");
 				}

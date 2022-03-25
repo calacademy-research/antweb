@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class Rest {
 
-  private static Log s_log = LogFactory.getLog(Rest.class);
+  private static final Log s_log = LogFactory.getLog(Rest.class);
 
   public static void main(String[] args) { 
    // To execute:    ant restTests   

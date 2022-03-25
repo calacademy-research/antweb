@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class BioregionMapMgrAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(BioregionMapMgrAction.class);
+    private static final Log s_log = LogFactory.getLog(BioregionMapMgrAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -60,7 +60,7 @@ public final class BioregionMapMgrAction extends Action {
 			}
 
 			s_log.debug("execute() refresh:" + bioregionMapMgrForm.isRefresh());
-            if (bioregionMapMgrForm.isRefresh() == true) {
+            if (bioregionMapMgrForm.isRefresh()) {
 			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
               taxonPropDb.refreshBioregionMap();
             }
@@ -111,6 +111,6 @@ public final class BioregionMapMgrAction extends Action {
         request.setAttribute("genusList", genusList);
         request.setAttribute("form", bioregionMapMgrForm);
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

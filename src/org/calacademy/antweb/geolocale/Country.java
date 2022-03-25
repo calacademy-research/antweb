@@ -5,12 +5,11 @@ import java.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.*;
 
 public class Country extends Geolocale {
 
-    private static Log s_log = LogFactory.getLog(Country.class);
+    private static final Log s_log = LogFactory.getLog(Country.class);
     
     public Country() {
     }

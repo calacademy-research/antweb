@@ -2,7 +2,7 @@ package org.calacademy.antweb.util;
 
 public class AntwebException extends Exception {
 
-  private String message = null;
+  private String message;
 
     public AntwebException() {
   }

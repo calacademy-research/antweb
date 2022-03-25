@@ -2,6 +2,7 @@ package org.calacademy.antweb.util;
 
 import com.zonageek.jpeg.ExifBlock;
 import com.zonageek.jpeg.Jpeg;
+import com.zonageek.jpeg.JpegException;
 
 import java.io.*;
 import java.util.HashMap;
@@ -26,11 +27,11 @@ public class Exif {
 	Jpeg jpeg = new Jpeg();    
 	try {
       jpeg.read(new FileInputStream(imagePath));
-    } catch (java.io.FileNotFoundException e) {
+    } catch (FileNotFoundException e) {
       LogMgr.appendLog("imageNotFound.txt", imagePath);
       AntwebUtil.log("WSS. Exif() 1 exception:" + e + " on " + imagePath);
       return;
-    } catch (com.zonageek.jpeg.JpegException e) {    
+    } catch (JpegException e) {
       LogMgr.appendLog("zonageeks.txt", imagePath);
       AntwebUtil.log("WSS. Exif() 2 exception:" + e + " on " + imagePath);
       //String reqInfo = HttpUtil.getRequestInfo(request);
@@ -52,22 +53,22 @@ public class Exif {
 		exifFields = theFields.toString();
 		
 		if (theFields.containsKey("Artist")) {
-			artist = ((String) exif.getExifField("Artist"));
-			if ((artist != null) && (artist.length() > 0)) {
+			artist = (String) exif.getExifField("Artist");
+			if (artist != null && artist.length() > 0) {
 				artist = artist.trim();
 			}
 		}
      
 		if (theFields.containsKey("Copyright")) {
-			copyright = ((String) exif.getExifField("Copyright"));
-			if ((copyright != null) && (copyright.length() > 0)) {
+			copyright = (String) exif.getExifField("Copyright");
+			if (copyright != null && copyright.length() > 0) {
 				copyright = copyright.trim();
 			} 
 		}
 		
 		if (theFields.containsKey("DateTime")) {
-			dateTime = ((String) exif.getExifField("DateTime"));
-			if ((dateTime != null) && (dateTime.length() > 0)) {
+			dateTime = (String) exif.getExifField("DateTime");
+			if (dateTime != null && dateTime.length() > 0) {
 				dateTime = dateTime.trim();
 				int space = dateTime.indexOf(" ");
 				if (space != -1) {

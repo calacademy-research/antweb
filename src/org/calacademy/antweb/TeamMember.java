@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class TeamMember {
 
-    private static Log s_log = LogFactory.getLog(TeamMember.class);
+    private static final Log s_log = LogFactory.getLog(TeamMember.class);
         
     private int id;
     private String name;
@@ -168,7 +168,7 @@ public class TeamMember {
          
      public String toDisplayString() {
          // Display name how the user likes.  If they enter a username, display it, otherwise email.
-         if ((this.name != null) && (!this.name.equals(""))) {
+         if (this.name != null && !this.name.equals("")) {
            return this.name;
          } else {
            return this.email;

@@ -23,12 +23,12 @@ import org.apache.struts.action.ActionMapping;
 
 public final class GenericSpecimenSearchForm extends ActionForm {
 
-	private String subfamily = null;
-	private String genus = null;
-	private String species = null;
-	private String field = null;
-	private String value = null;
-    private String project = null;
+	private String subfamily;
+	private String genus;
+	private String species;
+	private String field;
+	private String value;
+    private String project;
     
 	/**
 	 * @return Returns the project.

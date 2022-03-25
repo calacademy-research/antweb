@@ -16,7 +16,7 @@ import org.calacademy.antweb.home.*;
 /** Class Subfamily keeps track of the information about a specific taxon */
 public class Subfamily extends Family implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Subfamily.class);
+    private static final Log s_log = LogFactory.getLog(Subfamily.class);
 
     public static boolean isValidAntSubfamily(String subfamily) {
       // for the test, strip any parenthesis...
@@ -85,7 +85,7 @@ public class Subfamily extends Family implements Serializable {
             while (rset.next()) {
                 ++i;
 
-                child = (new TaxonDb(connection)).getGenus(subfamily, rset.getString("genus"));
+                child = new TaxonDb(connection).getGenus(subfamily, rset.getString("genus"));
 
                 if (getChildImages) {
                     child.setImages(connection, overview, caste);
@@ -93,7 +93,7 @@ public class Subfamily extends Family implements Serializable {
                 //    child.setHasImages(overview);
                 //}
 
-                if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount())) {
+                if (getChildMaps && i < Taxon.getMaxSafeChildrenCount()) {
                     if (overview instanceof LocalityOverview)
                         child.setMap(new Map(child, (LocalityOverview) overview, connection));
                 }

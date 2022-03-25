@@ -3,6 +3,8 @@ package org.calacademy.antweb.util;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -13,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class AdminAlertAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(AdminAlertAction.class);
+    private static final Log s_log = LogFactory.getLog(AdminAlertAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -21,9 +23,9 @@ public final class AdminAlertAction extends Action {
 
         ActionForward c = Check.admin(request, mapping); if (c != null) return c;
 
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, "AdminAlertAction.execute()");
 
             DynaActionForm df = (DynaActionForm) form;
@@ -36,7 +38,7 @@ public final class AdminAlertAction extends Action {
             if ("remove".equals(action)) {
                 int id = 0;
                 Integer integerId = (Integer) df.get("id");
-                if (integerId != null) id = integerId.intValue();
+                if (integerId != null) id = integerId;
                 AdminAlertMgr.remove(id, connection);
             }
 
@@ -50,7 +52,7 @@ public final class AdminAlertAction extends Action {
 			DBUtil.close(connection, this, "AdminAlertAction.execute()");
 		}        
  
-    	return (mapping.findForward("success"));
+    	return mapping.findForward("success");
 	}
 	
 }

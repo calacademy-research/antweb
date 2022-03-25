@@ -14,10 +14,10 @@ public class ArtistMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(ArtistMgr.class);
 
-    private static ArrayList<Artist> s_artists = null;
+    private static ArrayList<Artist> s_artists;
     
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
-      if (!forceReload && (s_artists != null)) return;      
+      if (!forceReload && s_artists != null) return;
       
       try {
         //A.log("populate()");

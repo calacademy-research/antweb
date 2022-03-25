@@ -1,7 +1,5 @@
 package org.calacademy.antweb.geolocale;
 
-import org.calacademy.antweb.Formatter;
-
 import java.sql.*;
 
 import org.calacademy.antweb.*;
@@ -13,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class GeolocaleTaxon extends OverviewTaxon {
 
-    private static Log s_log = LogFactory.getLog(GeolocaleTaxon.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleTaxon.class);
 
     private int geolocaleId;
     

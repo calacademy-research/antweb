@@ -6,6 +6,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -22,7 +24,7 @@ import org.calacademy.antweb.home.*;
 
 public final class DupedGeneraAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(DupedGeneraAction.class);
+    private static final Log s_log = LogFactory.getLog(DupedGeneraAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -30,16 +32,16 @@ public final class DupedGeneraAction extends Action {
 
         boolean isLoggedIn = LoginMgr.isLoggedIn(request);
         if (!isLoggedIn) {
-          return (mapping.findForward("notLoggedIn"));
+          return mapping.findForward("notLoggedIn");
         }
         
         HttpSession session = request.getSession();
 
         ArrayList orphanTaxonList = new ArrayList();
-        java.sql.Connection connection = null;
+        Connection connection = null;
                         
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "DupedGeneraAction.execute()");
 
           OrphansDb orphansDb = new OrphansDb(connection);
@@ -52,7 +54,7 @@ public final class DupedGeneraAction extends Action {
             String source = theForm.getSource();
             if (action != null) {       
               if (action.equals("delete")) {
-                 if ((taxonName != null) && (!"".equals(taxonName))) {
+                 if (taxonName != null && !"".equals(taxonName)) {
                    orphansDb.deleteTaxon(taxonName);
                  }
                  // if ((source != null) && (!"".equals(source))) {                   
@@ -64,10 +66,10 @@ public final class DupedGeneraAction extends Action {
 
           orphanTaxonList = orphansDb.getDupedGeneraList();
           request.setAttribute("orphans", orphanTaxonList);
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "DupedGeneraAction.execute()");
         }

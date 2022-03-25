@@ -11,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class TeamMemberDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(TeamMemberDb.class);
+    private static final Log s_log = LogFactory.getLog(TeamMemberDb.class);
         
     public TeamMemberDb(Connection connection) {
       super(connection);
@@ -107,7 +107,7 @@ public class TeamMemberDb extends AntwebDb {
         
 
           // Use of ternary operator.  short conditional statement
-          int isPublished = (teamMember.isPublished()) ? 1 : 0;      
+          int isPublished = teamMember.isPublished() ? 1 : 0;
           String theDML = "";
           
           TeamMember existingTeamMember = findById(teamMember.getId());     

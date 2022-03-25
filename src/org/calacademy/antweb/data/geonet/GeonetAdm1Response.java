@@ -57,5 +57,5 @@ class GeonetAdm1Response {
     List<Field> fields;
     List<Feature> features;
     
-    public String toString() { return "GeonetResponse l:" + ((features != null) ? features.size() : 0); }
+    public String toString() { return "GeonetResponse l:" + (features != null ? features.size() : 0); }
 }

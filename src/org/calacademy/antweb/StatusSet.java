@@ -14,7 +14,7 @@ import javax.servlet.http.HttpSession;
 
 
 public class StatusSet extends Status {
-    private static Log s_log = LogFactory.getLog(StatusSet.class);
+    private static final Log s_log = LogFactory.getLog(StatusSet.class);
 
     /*  
       StatusSets are groupings of statuses.  See Status for individual statuses.
@@ -80,10 +80,10 @@ public class StatusSet extends Status {
         /* For calculating children counts,  
          */
         if (Project.WORLDANTS.equals(projectName)) {
-          return (new StatusSet(VALID)).getAndCriteria();
+          return new StatusSet(VALID).getAndCriteria();
           
         } else if (Project.ALLANTWEBANTS.equals(projectName)) {
-          return (new StatusSet(ALL)).getAndCriteria();
+          return new StatusSet(ALL).getAndCriteria();
 
         } else {
           return "";

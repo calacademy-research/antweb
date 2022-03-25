@@ -19,12 +19,12 @@ public class UserAgentTracker {
 
   private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);
 
-  private static Map<String, Integer> agentsMap = new HashMap<>();
+  private static final Map<String, Integer> agentsMap = new HashMap<>();
   private static int nullAgent = 0;
 
-  private static Set<String> knownAgentsSet = new HashSet<>();
+  private static final Set<String> knownAgentsSet = new HashSet<>();
       
-  private static int OVERACTIVE = 1000;
+  private static final int OVERACTIVE = 1000;
 
   public static void init(Connection connection) {
       
@@ -97,7 +97,7 @@ public class UserAgentTracker {
   }
 
   private static String getUserAgent(HttpServletRequest request) {
-      String userAgent = (String) request.getHeader("user-agent");
+      String userAgent = request.getHeader("user-agent");
       Login accessLogin = LoginMgr.getAccessLogin(request);
       if (accessLogin != null) userAgent += " (login:" + accessLogin.getName() + ")";
       return userAgent;  
@@ -118,9 +118,9 @@ public class UserAgentTracker {
         s_log.debug("KNOWN AGENT:" + userAgent);
         return true;
       }
-      Object countInteger = agentsMap.get(userAgent);
+      Integer countInteger = agentsMap.get(userAgent);
       if (countInteger == null) return false;
-      int count = ((Integer) countInteger).intValue();
+      int count = countInteger;
       return count > OVERACTIVE;
   }
 
@@ -138,7 +138,7 @@ public class UserAgentTracker {
       Set<String> keySet = agentsMap.keySet();
       String report = "";
       for (String key : keySet) {
-        int count = ((Integer) agentsMap.get(key)).intValue();
+        int count = agentsMap.get(key);
         String star = "";
         if (key.contains("(login:")) star = "*";
         report += "\n" + key + star + ": " + count; 
@@ -154,7 +154,7 @@ public class UserAgentTracker {
       Map<Integer, String> countMap = new HashMap<>();
 
       for (String key : keySet) {
-        int count = ((Integer) agentsMap.get(key)).intValue();
+        int count = agentsMap.get(key);
         String star = "";
         if (knownAgentsSet.contains(key)) star = "<b><font color=red>X</font></b>";        
         if (key.contains("(login:")) star = "<b><font color=red><img src='" + AntwebProps.getDomainApp() + "/image/greenCheck.png'></font></b>";
@@ -169,7 +169,7 @@ public class UserAgentTracker {
       ArrayList<Integer> list = new ArrayList<>(treeSet);
 
       for (Integer count : list) {
-          agent = (countMap.get(count));
+          agent = countMap.get(count);
           s_log.debug("htmlReport() count:" + count + " agent:" + agent);
           report += agent;
       }
@@ -181,7 +181,7 @@ public class UserAgentTracker {
       Set<String> keySet = agentsMap.keySet();
       String report = "";
       for (String key : keySet) {
-        int count = ((Integer) agentsMap.get(key)).intValue();
+        int count = agentsMap.get(key);
         if (count > OVERACTIVE) {
           report += "\n" + key + ": " + count; 
         }

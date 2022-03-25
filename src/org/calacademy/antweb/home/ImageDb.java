@@ -12,7 +12,7 @@ import org.calacademy.antweb.imageUploader.*;
 
 public class ImageDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(ImageDb.class);
+    private static final Log s_log = LogFactory.getLog(ImageDb.class);
 
     public ImageDb(Connection connection) {
       super(connection);
@@ -121,7 +121,7 @@ public class ImageDb extends AntwebDb {
                     Exif exif = new Exif(imagePath);
                     if (exif.isFound()) {
                       String artistName = exif.getArtist();
-                      LogMgr.appendLog("exifData.txt", imagePath + " exif:" + exif.toString());               
+                      LogMgr.appendLog("exifData.txt", imagePath + " exif:" + exif);
                     }                      
                 } else {
                     //A.log("getExifData() id:" + id + " code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber + " highres:" + highres);
@@ -207,7 +207,7 @@ public class ImageDb extends AntwebDb {
 				specimenImage.setDate(rset.getString("upload_date"));
 
 				hasTiff = rset.getInt("has_tiff");
-				boolean ifHasTiff = (hasTiff == 1);
+				boolean ifHasTiff = hasTiff == 1;
 				specimenImage.setHasTiff(ifHasTiff);
 
 				specimenImage.setArtistId(rset.getInt("artist"));
@@ -341,7 +341,6 @@ public class ImageDb extends AntwebDb {
     public static ArrayList<String> getLikesLinkList(Connection connection) throws SQLException {
         ArrayList<String> imageList = new ArrayList<>();
         String theQuery = "select image_id, count(image_id) likes from image_like group by image_id";
-        imageList = new ArrayList();
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -425,10 +424,10 @@ public class ImageDb extends AntwebDb {
         String theQuery = "select "
           + " status "
           + ", count(*) total "
-          + ", sum(case when caste = 'worker' then 1 else 0 end) worker" 
-          + ", sum(case when caste = 'male' then 1 else 0 end) male" 
-          + ", sum(case when caste = 'queen' then 1 else 0 end) queen" 
-          + ", sum(case when caste not in ('worker', 'male', 'queen') then 1 else 0 end) other" 
+          + ", sum(IF(caste = 'worker', 1, 0)) worker"
+          + ", sum(IF(caste = 'male', 1, 0)) male"
+          + ", sum(IF(caste = 'queen', 1, 0)) queen"
+          + ", sum(IF(caste not in ('worker', 'male', 'queen'), 1, 0)) as other"
           + " from specimen s, image i where s.code = i.image_of_id group by status"
           + " order by total desc";
 

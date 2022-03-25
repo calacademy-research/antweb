@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class GeonetMgr {
 
-    private static Log s_log = LogFactory.getLog(GeonetMgr.class);
+    private static final Log s_log = LogFactory.getLog(GeonetMgr.class);
 
     public static final String source = "Geonet";
     

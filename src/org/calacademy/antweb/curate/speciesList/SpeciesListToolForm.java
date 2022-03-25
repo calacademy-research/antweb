@@ -18,21 +18,21 @@ public class SpeciesListToolForm extends AdvancedSearchForm {
     
     private boolean isFreshen = false;
     
-	private String taxa[] = null;
-	private String chosen1[] = null;    
-	private String chosen2[] = null;    
-	private String chosen3[] = null;  
+	private String[] taxa;
+	private String[] chosen1;
+	private String[] chosen2;
+	private String[] chosen3;
 
-	private String speciesListName = null;
+	private String speciesListName;
 	
-	private String mapSpeciesList1Name = null;
-	private String mapSpeciesList2Name = null;
-	private String mapSpeciesList3Name = null;
+	private String mapSpeciesList1Name;
+	private String mapSpeciesList2Name;
+	private String mapSpeciesList3Name;
 
-    private String doSearch = null;        
+    private String doSearch;
     
-	private String refSpeciesListType = null;    
-	private String refSpeciesListName = null;    
+	private String refSpeciesListType;
+	private String refSpeciesListName;
     private String displaySubfamily = "none";
     
     private int projLogId = 0;
@@ -96,7 +96,7 @@ public class SpeciesListToolForm extends AdvancedSearchForm {
 
     // Used just for the history form
 	public String getSpeciesListName() {
-		return (this.speciesListName);
+		return this.speciesListName;
 	}
 	public void setSpeciesListName(String name) {
 	    if ("null".equals(name)) return;
@@ -104,21 +104,21 @@ public class SpeciesListToolForm extends AdvancedSearchForm {
 	}
     
 	public String getMapSpeciesList1Name() {
-		return (this.mapSpeciesList1Name);
+		return this.mapSpeciesList1Name;
 	}
 	public void setMapSpeciesList1Name(String name) {
 	    if ("null".equals(name)) return;
 		this.mapSpeciesList1Name = name;
 	}
 	public String getMapSpeciesList2Name() {
-		return (this.mapSpeciesList2Name);
+		return this.mapSpeciesList2Name;
 	}
 	public void setMapSpeciesList2Name(String name) {
 	    if ("null".equals(name)) return;
 		this.mapSpeciesList2Name = name;
 	}
 	public String getMapSpeciesList3Name() {
-		return (this.mapSpeciesList3Name);
+		return this.mapSpeciesList3Name;
 	}
 	public void setMapSpeciesList3Name(String name) {
 	    if ("null".equals(name)) return;
@@ -126,14 +126,14 @@ public class SpeciesListToolForm extends AdvancedSearchForm {
 	}
 	
 	public String getRefSpeciesListType() {
-		return (this.refSpeciesListType);
+		return this.refSpeciesListType;
 	}
 	public void setRefSpeciesListType(String type) {
 	    if ("null".equals(type)) return;
 		this.refSpeciesListType = type;
 	}
 	public String getRefSpeciesListName() {
-		return (this.refSpeciesListName);
+		return this.refSpeciesListName;
 	}
 	public void setRefSpeciesListName(String name) {
 	    if ("null".equals(name)) return;
@@ -141,19 +141,19 @@ public class SpeciesListToolForm extends AdvancedSearchForm {
 	}
 
 	public String[] getChosen1() {
-		return (this.chosen1);
+		return this.chosen1;
 	}
 	public void setChosen1(String[] chosen1) {
 		this.chosen1 = chosen1;
 	}
 	public String[] getChosen2() {
-		return (this.chosen2);
+		return this.chosen2;
 	}
 	public void setChosen2(String[] chosen2) {
 		this.chosen2 = chosen2;
 	}
 	public String[] getChosen3() {
-		return (this.chosen3);
+		return this.chosen3;
 	}
 	public void setChosen3(String[] chosen3) {
 		this.chosen3 = chosen3;

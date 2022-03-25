@@ -8,6 +8,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import static java.nio.file.StandardCopyOption.*;
 
 import java.sql.*;
+import java.util.Date;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
@@ -36,7 +37,7 @@ public class LogMgr {
     appendWebLog(file, data, false);
   }
   public static void appendLog(String file, String data, boolean addTimestamp) {
-    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
+    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new Date()) + " " + data;
     appendWebLog(null, file, data);
   }
   public static void appendLog(String dir, String file, String data) {
@@ -48,7 +49,7 @@ public class LogMgr {
     appendWebLog(file, data, false);
   }
   public static void appendWebLog(String file, String data, boolean addTimestamp) {
-    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
+    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new Date()) + " " + data;
     appendWebLog(null, file, data);
   }
   public static void appendWebLog(String dir, String file, String data) {
@@ -66,7 +67,7 @@ public class LogMgr {
     appendDataLog(file, data, false);
   }
   public static void appendDataLog(String file, String data, boolean addTimestamp) {
-    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
+    if (addTimestamp) data = DateUtil.getFormatDateTimeStr(new Date()) + " " + data;
     appendDataLog(null, file, data);
   }
   public static void appendDataLog(String dir, String file, String data) {
@@ -81,7 +82,7 @@ public class LogMgr {
 
 
   public static void appendFile(String fullPath, String data) {
-    (new Utility()).makeDirTree(fullPath);
+    Utility.makeDirTree(fullPath);
     try {
       FileWriter fstream = new FileWriter(fullPath, true);
       BufferedWriter out = new BufferedWriter(fstream);
@@ -116,7 +117,7 @@ public class LogMgr {
     String logDir = AntwebProps.getDataRoot() + "log/";
     String bakDir = logDir + "bak/";
     String backupDir = bakDir + yearStr + "/" + dateStr + "/";
-    (new Utility()).makeDirTree(backupDir);
+    Utility.makeDirTree(backupDir);
     s_log.info("archiveLogs() Make backupDir:" + backupDir);
 
     //String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";
@@ -179,7 +180,7 @@ public class LogMgr {
   }
 
   public static void logQuery(Connection connection, String note, String query) throws SQLException {
-    String results = (new UtilDb(connection)).runQuery(query);
+    String results = new UtilDb(connection).runQuery(query);
     s_log.warn("logQuery() note:" + note + " results:" + results);  
   }
 
@@ -188,7 +189,7 @@ public class LogMgr {
     NamedQuery namedQuery = Queries.getNamedQuery(name);
     if (namedQuery != null) {
       String query = namedQuery.getQuery();
-      String results = (new UtilDb(connection)).runQuery(query);
+      String results = new UtilDb(connection).runQuery(query);
       s_log.warn("logAntQuery() note:" + note + " results:" + results);  
     } else {
       s_log.warn("logAntQuery() namedQuery not found:" + name);       
@@ -202,7 +203,7 @@ public class LogMgr {
     for (NamedQuery namedQuery : battery) {
       ++i;
       String query = namedQuery.getQuery();
-      String retVal = (new UtilDb(connection)).runQuery(query);
+      String retVal = new UtilDb(connection).runQuery(query);
       results += "\n+++ query:" + i + ". "+ namedQuery.getName() + retVal;
     }
     s_log.warn("logAntBattery() note:" + note + " results:" + results);  

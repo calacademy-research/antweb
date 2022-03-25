@@ -313,7 +313,7 @@ class Item {
 	}
 
 	public String getMuseumCode() {
-	 return (this.museumCode);
+	 return this.museumCode;
 	}
 	public void setMuseumCode(String museumCode) {
 	 this.museumCode = museumCode;

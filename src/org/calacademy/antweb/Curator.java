@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class Curator extends Login {
 
-    private static Log s_log = LogFactory.getLog(Curator.class);
+    private static final Log s_log = LogFactory.getLog(Curator.class);
 
     private int specimenUploadCount = 0;
     private int imageUploadCount = 0;
@@ -19,7 +19,7 @@ public class Curator extends Login {
       // The total number of images uploaded.    
       
     private int descEditCount = 0;
-    private Upload lastUpload = null;
+    private Upload lastUpload;
     
     public String getLink() {
       return  "<a href='" + AntwebProps.getDomainApp() + "/curator.do?id=" + getId() + "'>" + getDisplayName() + "</a>";
@@ -60,62 +60,50 @@ public class Curator extends Login {
     }  
     
 
-    public static Comparator<Curator> CuratorNameComparator = new Comparator<>() {
+    public static Comparator<Curator> CuratorNameComparator = (a1, a2) -> {
+        String name1 = a1.getDisplayName().toUpperCase();
+        String name2 = a2.getDisplayName().toUpperCase();
 
-        public int compare(Curator a1, Curator a2) {
-            String name1 = a1.getDisplayName().toUpperCase();
-            String name2 = a2.getDisplayName().toUpperCase();
+        //ascending order
+        return name1.compareTo(name2);
 
-            //ascending order
-            return name1.compareTo(name2);
-
-            //descending order
-            //return name2.compareTo(name1);
-        }
+        //descending order
+        //return name2.compareTo(name1);
     };
     
-    public static Comparator<Curator> CuratorGroupNameComparator = new Comparator<>() {
+    public static Comparator<Curator> CuratorGroupNameComparator = (a1, a2) -> {
+        String name1 = a1.getGroup().getName().toUpperCase();
+        String name2 = a2.getGroup().getName().toUpperCase();
 
-        public int compare(Curator a1, Curator a2) {
-            String name1 = a1.getGroup().getName().toUpperCase();
-            String name2 = a2.getGroup().getName().toUpperCase();
+        //ascending order
+        return name1.compareTo(name2);
 
-            //ascending order
-            return name1.compareTo(name2);
-
-            //descending order
-            //return name2.compareTo(name1);
-        }
+        //descending order
+        //return name2.compareTo(name1);
     };
     
-    public static Comparator<Curator> CuratorDescEditComparator = new Comparator<>() {
+    public static Comparator<Curator> CuratorDescEditComparator = (a1, a2) -> {
 
-        public int compare(Curator a1, Curator a2) {
+        int count1 = a1.getDescEditCount();
+        int count2 = a2.getDescEditCount();
 
-            int count1 = a1.getDescEditCount();
-            int count2 = a2.getDescEditCount();
+        /*For ascending order*/
+        //return count1 - count2;
 
-            /*For ascending order*/
-            //return count1 - count2;
+        /*For descending order*/
+        return count2 - count1;
+    };
 
-            /*For descending order*/
-            return count2 - count1;
-        }
-    };    
+    public static Comparator<Curator> CuratorSpecimenUploadComparator = (a1, a2) -> {
 
-    public static Comparator<Curator> CuratorSpecimenUploadComparator = new Comparator<>() {
+        int count1 = a1.getSpecimenUploadCount();
+        int count2 = a2.getSpecimenUploadCount();
 
-        public int compare(Curator a1, Curator a2) {
+        /*For ascending order*/
+        //return count1 - count2;
 
-            int count1 = a1.getSpecimenUploadCount();
-            int count2 = a2.getSpecimenUploadCount();
-
-            /*For ascending order*/
-            //return count1 - count2;
-
-            /*For descending order*/
-            return count2 - count1;
-        }
-    };      
+        /*For descending order*/
+        return count2 - count1;
+    };
     
 }

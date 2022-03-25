@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
     
 public final class DummyAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(DummyAction.class);
+    private static final Log s_log = LogFactory.getLog(DummyAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -22,7 +22,7 @@ public final class DummyAction extends Action {
 
         String target = HttpUtil.getTarget(request);        
         if (target.contains("userAgents.do")) {
-   		  return (mapping.findForward("userAgents"));
+   		  return mapping.findForward("userAgents");
 	    }
 	    
 	    return mapping.findForward("success");

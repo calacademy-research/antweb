@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.*;
@@ -21,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class GroupAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(GroupAction.class);
+    private static final Log s_log = LogFactory.getLog(GroupAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -36,7 +38,7 @@ public final class GroupAction extends Action {
         String name = (String) df.get("name"); // Name could be id or name. We try id first.
         int groupId = 0;
         Integer id = (Integer) df.get("id");
-        if (id != null) groupId = id.intValue();
+        if (id != null) groupId = id;
         
         //A.log("GroupAction.execute() name:" + name + " groupId:" + groupId);
 
@@ -46,12 +48,12 @@ public final class GroupAction extends Action {
           if (group == null) {
 			  String message = "  Group not found:" + name + ".";
 			  request.setAttribute("message", message);
-			  return (mapping.findForward("message"));
+			  return mapping.findForward("message");
           }
 
           Connection connection = null;
           try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
             
             LoginDb loginDb = new LoginDb(connection);
@@ -65,24 +67,24 @@ public final class GroupAction extends Action {
           
 //          request.setAttribute("curators" curators);
 		  request.setAttribute("group", group);
-		  return (mapping.findForward("group"));
+		  return mapping.findForward("group");
         } else {
           String orderBy = (String) df.get("orderBy");
           if (orderBy != null && orderBy.toLowerCase().contains("select")) {
               s_log.warn("execute() rejected orderBy:" + orderBy);
               request.setAttribute("message", "invalid request");
-              return (mapping.findForward("message"));
+              return mapping.findForward("message");
           }
           ArrayList<Group> groups = getUploadGroups(request, orderBy);
           if (groups == null) {
 			  String message = " Problem fetching groups with orderBy:" + orderBy;
               s_log.warn("execute() " + message);
 			  request.setAttribute("message", message);
-			  return (mapping.findForward("message"));          
+			  return mapping.findForward("message");
           }
 		  request.setAttribute("groups", groups);
 		  //A.log("GroupAction.execute() orderby:" + orderBy + " groups:" + groups);
-		  return (mapping.findForward("groups"));
+		  return mapping.findForward("groups");
         }
 		
 		//s_log.warn("execute() set request attribute locality:" + locality);
@@ -90,15 +92,15 @@ public final class GroupAction extends Action {
 
     private Group getGroup(String name, int groupId, HttpServletRequest request) {
 		Group group = null;
-		java.sql.Connection connection = null;		
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
             GroupDb groupDb = new GroupDb(connection);
             group = groupDb.getGroup(groupId);    
             //A.log("execute() code:" + code + " group:" + group);
             if (group == null) {
-              group = (groupDb).getGroup(name);
+              group = groupDb.getGroup(name);
               //A.log("getGroup() groupId:" + groupId + " name:" + name + " group:" + group);
             } // else A.log("NOT");
 	
@@ -116,7 +118,7 @@ public final class GroupAction extends Action {
             group.setUploadCount(uploadDb.getUploadCount(groupId));
             group.setCuratorList(groupDb.getCuratorList(groupId));
             
-            Map map = (new ObjectMapDb(connection)).getGroupMap(groupId);
+            Map map = new ObjectMapDb(connection).getGroupMap(groupId);
             request.setAttribute("map", map);
                        
 		} catch (SQLException e) {
@@ -129,9 +131,9 @@ public final class GroupAction extends Action {
  
     private ArrayList<Group> getUploadGroups(HttpServletRequest request, String orderBy) {       
         ArrayList<Group> groups = null;
-		java.sql.Connection connection = null;		
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
             GroupDb groupDb = new GroupDb(connection);
             groups = groupDb.getUploadGroups(orderBy);

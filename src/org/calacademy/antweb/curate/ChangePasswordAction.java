@@ -7,6 +7,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import org.apache.commons.logging.Log; 
@@ -18,7 +20,7 @@ import org.calacademy.antweb.home.*;
 
 public final class ChangePasswordAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ChangePasswordAction.class);
+    private static final Log s_log = LogFactory.getLog(ChangePasswordAction.class);
     
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -36,16 +38,16 @@ public final class ChangePasswordAction extends Action {
 		ActionMessages messages = new ActionMessages();
 		ActionMessage msg = null;
 		
-		String oldPassword = (String) theForm.getOldPassword();
-		String newPassword = (String) theForm.getNewPassword1();
-		String newPassword2 = (String) theForm.getNewPassword2();
+		String oldPassword = theForm.getOldPassword();
+		String newPassword = theForm.getNewPassword1();
+		String newPassword2 = theForm.getNewPassword2();
 		
 		if (!accessLogin.getPassword().equals(oldPassword)) {
 			msg = new ActionMessage("error.login.failedLogin");
 			messages.add("message",msg);
 		}
 		
-		if ((newPassword == null) || (newPassword.length() == 0)) {
+		if (newPassword == null || newPassword.length() == 0) {
 			msg = new ActionMessage("error.login.needPassword");
 			messages.add("message",msg);
 		} else if (!newPassword.equals(newPassword2)) {
@@ -55,17 +57,17 @@ public final class ChangePasswordAction extends Action {
 		
 		if (messages.isEmpty()) {
 		
-			java.sql.Connection connection = null;
+			Connection connection = null;
 	
 			try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, "ChangePasswordAction()");
 	
-				(new LoginDb(connection)).changePassword(accessLogin, newPassword); 
+				new LoginDb(connection).changePassword(accessLogin, newPassword);
                 
             } catch (SQLException e) {
                 s_log.error("execute() e:" + e);
-                return (mapping.findForward("error"));
+                return mapping.findForward("error");
             } finally { 		
                 DBUtil.close(connection, this, "ChangePasswordAction()");
             }			
@@ -73,10 +75,10 @@ public final class ChangePasswordAction extends Action {
 		
 		if (messages.isEmpty()) {
 			session.setAttribute("accessLogin", accessLogin);
-			return (mapping.findForward("success"));
+			return mapping.findForward("success");
 		} else {
 			saveMessages(request,messages);
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
 	}
 }

@@ -8,10 +8,10 @@ import org.apache.commons.logging.LogFactory;
 
 public class GeolocaleTaxonLogDetail extends GeolocaleTaxon implements Comparable<GeolocaleTaxonLogDetail>  {
 
-    private static Log s_log = LogFactory.getLog(GeolocaleTaxonLogDetail.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleTaxonLogDetail.class);
 
     private int logId = 0;
-    private Taxon taxon = null;
+    private Taxon taxon;
 
     public GeolocaleTaxonLogDetail() {
     }
@@ -24,7 +24,7 @@ public class GeolocaleTaxonLogDetail extends GeolocaleTaxon implements Comparabl
     
     public int compareTo(GeolocaleTaxonLogDetail o) {
         // Only operates on taxonName.  All details in a given ProjTaxonLog are assumed to be of the same species list.
-        GeolocaleTaxonLogDetail other = (GeolocaleTaxonLogDetail) o;
+        GeolocaleTaxonLogDetail other = o;
 
         return Taxon.getPrettyTaxonName(getTaxonName()).compareTo(Taxon.getPrettyTaxonName(other.getTaxonName()));
     }

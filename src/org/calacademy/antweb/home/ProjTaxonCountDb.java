@@ -12,7 +12,7 @@ import org.calacademy.antweb.home.*;
 
  public class ProjTaxonCountDb extends CountDb {
     
-    private static Log s_log = LogFactory.getLog(ProjTaxonCountDb.class);
+    private static final Log s_log = LogFactory.getLog(ProjTaxonCountDb.class);
         
     public ProjTaxonCountDb(Connection connection) {
       super(connection);

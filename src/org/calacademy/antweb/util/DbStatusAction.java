@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -15,7 +17,7 @@ import org.calacademy.antweb.home.*;
     
 public final class DbStatusAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(DbStatusAction.class);
+    private static final Log s_log = LogFactory.getLog(DbStatusAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -38,7 +40,7 @@ public final class DbStatusAction extends Action {
         }
         
   	    HttpSession session = request.getSession();
-        javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+        DataSource dataSource = getDataSource(request, "conPool");
 		
         setCpDiagnosticsAttr(dataSource, request);
 
@@ -52,20 +54,20 @@ public final class DbStatusAction extends Action {
         request.setAttribute("mySqlProcessListHtml", mySqlProcessListHtml);
 
 		if (success) {
-			return (mapping.findForward("success"));
+			return mapping.findForward("success");
 		} else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
 	}
 	
-	private void setCpDiagnosticsAttr(javax.sql.DataSource dataSource, HttpServletRequest request) {
+	private void setCpDiagnosticsAttr(DataSource dataSource, HttpServletRequest request) {
         String cpDiagnostics = DBUtil.getCpDiagnosticsAttr(dataSource);
         request.setAttribute("cpDiagnostics", cpDiagnostics);
 	}
 
     public String getMySqlProcessListHtml(HttpServletRequest request) {
         String mySqlProcessListHtml = null;
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "DbStatusAction.getMySqlProcessListHtml()", HttpUtil.getTarget(request));
@@ -79,16 +81,16 @@ public final class DbStatusAction extends Action {
         return mySqlProcessListHtml;
     }
 
-    private static Connection connection = null;
+    private static Connection connection;
 
     public boolean holdOpenConnection(HttpServletRequest request, HttpServletResponse response) {
         // This should only be done to test connection expiration...
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
 		
         connection = null;    
         try {
             connection = DBUtil.getConnection(dataSource, "DbStatusAction.holdOpenConnection()", HttpUtil.getTarget(request));
-            (new OperationLockDb(connection)).getOperationLock();
+            new OperationLockDb(connection).getOperationLock();
 
             s_log.warn("Connection held open");
         } catch (SQLException e) {

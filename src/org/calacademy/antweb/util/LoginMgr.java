@@ -19,13 +19,13 @@ public class LoginMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(LoginMgr.class);
 
-    private static ArrayList<Login> s_logins = null;
-    private static ArrayList<Curator> s_curators = null;
+    private static ArrayList<Login> s_logins;
+    private static ArrayList<Curator> s_curators;
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
-      if (!forceReload && (s_logins != null)) return;      
+      if (!forceReload && s_logins != null) return;
       
-      LoginDb loginDb = (new LoginDb(connection));
+      LoginDb loginDb = new LoginDb(connection);
       try {
         s_logins = loginDb.getAllLogins();
         //loginDb.getImageUploadCounter();  // initialize the LoginMgr counts.
@@ -48,8 +48,8 @@ public class LoginMgr extends Manager {
         LoginDb loginDb = new LoginDb(connection);
         s_curators = loginDb.getAllCurators();
 
-        ArrayList<Curator> tempList = new ArrayList<>();
-        tempList.addAll(s_curators);
+        // Why can't we loop through s_curators?
+        ArrayList<Curator> tempList = new ArrayList<>(s_curators);
 
         for (Curator curator : tempList) {
             loginDb.postInstantiate(curator);
@@ -63,7 +63,7 @@ public class LoginMgr extends Manager {
     public static Login getAnonLogin() {
         Login login = new Login();
         login.setName("Anonymous");
-        login.setCreated(new java.util.Date());
+        login.setCreated(new Date());
         login.setGroupId(-1);   // Hardcoded anonymous group.    
         login.setIsAdmin(false);
         return login;            
@@ -81,13 +81,13 @@ public class LoginMgr extends Manager {
     public static ActionForward mustLogIn(HttpServletRequest request, ActionMapping mapping) {
 		if (LoginMgr.getAccessLogin(request) == null) {
 		    s_log.debug("mustLogin() login:" + LoginMgr.getAccessLogin(request));
-			return (mapping.findForward("notLoggedIn"));
+			return mapping.findForward("notLoggedIn");
 		}
         return null;
     }
     public static ActionForward mustBeAdmin(HttpServletRequest request, ActionMapping mapping) {
 		if (!LoginMgr.isAdmin(request)) {
-			return (mapping.findForward("notLoggedIn"));
+			return mapping.findForward("notLoggedIn");
 		}
         return null;
     }
@@ -98,12 +98,12 @@ public class LoginMgr extends Manager {
 	}
 	
 	public static boolean isAdmin(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.isAdmin());
+        return accessLogin != null && accessLogin.isAdmin();
     }
 
     public static boolean isLoggedIn(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
-        return (accessLogin != null);
+        return accessLogin != null;
     }
     
     public static boolean isCurator(HttpServletRequest request) {
@@ -111,7 +111,7 @@ public class LoginMgr extends Manager {
 	    return isCurator(accessLogin);
 	}
 	public static boolean isCurator(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.isCurator());
+        return accessLogin != null && accessLogin.isCurator();
     }
 
     public static boolean isDeveloper(HttpServletRequest request) {
@@ -119,11 +119,11 @@ public class LoginMgr extends Manager {
 	    return isDeveloper(accessLogin);
 	}
 	public static boolean isDeveloper(Login accessLogin) {
-        return (accessLogin != null)
+        return accessLogin != null
                 // A specific list of Developer admins.
                 && (
-                (accessLogin.getId() == Login.MARK)
-                        || (accessLogin.getId() == Login.TEST_LOGIN)
+                accessLogin.getId() == Login.MARK
+                        || accessLogin.getId() == Login.TEST_LOGIN
         );
     }
     
@@ -132,14 +132,14 @@ public class LoginMgr extends Manager {
 	    return LoginMgr.isMark(getAccessLogin(request));
 	}
 	public static boolean isMark(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.getId() == 22);
+        return accessLogin != null && accessLogin.getId() == 22;
     }
 
     public static boolean isPeter(HttpServletRequest request) {
         return LoginMgr.isPeter(getAccessLogin(request));
     }
     public static boolean isPeter(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.getId() == 36);
+        return accessLogin != null && accessLogin.getId() == 36;
     }
 
     public static boolean isMichele(HttpServletRequest request) {
@@ -147,14 +147,14 @@ public class LoginMgr extends Manager {
 	    return isMichele(accessLogin);
 	}
 	public static boolean isMichele(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.getId() == 23);
+        return accessLogin != null && accessLogin.getId() == 23;
     }
     public static boolean isJack(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
 	    return isJack(accessLogin);
 	}
 	public static boolean isJack(Login accessLogin) {
-        return (accessLogin != null) && (accessLogin.getId() == 2);
+        return accessLogin != null && accessLogin.getId() == 2;
     }
 
     public static boolean isInitialized() {
@@ -193,7 +193,7 @@ public class LoginMgr extends Manager {
 
 // ------------------------------------------------
 
-    private static HashMap<String, Counts> imageUploadCounts = new HashMap<>();
+    private static final HashMap<String, Counts> imageUploadCounts = new HashMap<>();
 
     static class Counts {
       int imageUploads = 0;
@@ -214,7 +214,7 @@ public class LoginMgr extends Manager {
       
       int groupId = 0;
       if (!groups.contains(",")) {
-        groupId = Integer.valueOf(groups).intValue();
+        groupId = Integer.parseInt(groups);
       }
       if (groupId == 0) return;
       Counts counts = imageUploadCounts.get("" + groupId);    

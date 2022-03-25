@@ -9,7 +9,7 @@ import com.google.gson.*;
     
 public class GeonetAdm1Codes {
 
-    private static Log s_log = LogFactory.getLog(GeonetAdm1Codes.class);
+    private static final Log s_log = LogFactory.getLog(GeonetAdm1Codes.class);
 
     public static final String source = "Geonet";
 
@@ -52,7 +52,7 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
                return null;
             }
 
-		} catch (com.google.gson.JsonSyntaxException e) {
+		} catch (JsonSyntaxException e) {
 		  s_log.warn("getPlaces() e:" + e);
 		} 
         return geonetAdm1Response;
@@ -81,7 +81,7 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
                return null;
             }
 
-		} catch (com.google.gson.JsonSyntaxException e) {
+		} catch (JsonSyntaxException e) {
 		  s_log.warn("getPlaces() e:" + e);
 		} 
         return geonetAdm1CentroidResponse;

@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class IntroducedMapMgrAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(IntroducedMapMgrAction.class);
+    private static final Log s_log = LogFactory.getLog(IntroducedMapMgrAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -108,6 +108,6 @@ public final class IntroducedMapMgrAction extends Action {
         request.setAttribute("speciesList", speciesList);
         request.setAttribute("form", bioregionMapMgrForm);
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

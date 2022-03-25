@@ -13,13 +13,13 @@ import org.apache.commons.logging.LogFactory;
 /** Class Advanced does the searching for the advanced_search.jsp page */
 public class DescEditSearch extends GenericSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(DescEditSearch.class);
+    private static final Log s_log = LogFactory.getLog(DescEditSearch.class);
 
-    private String daysAgo = null;
-    private String numToShow = null;
-    protected String groupName = null;
-    protected String fromDate = null;
-    protected String toDate = null;
+    private String daysAgo;
+    private String numToShow;
+    protected String groupName;
+    protected String fromDate;
+    protected String toDate;
     
     protected ArrayList<ResultItem> createInitialResults() {
 
@@ -47,20 +47,19 @@ public class DescEditSearch extends GenericSearch implements Serializable {
                 + "artist.id = image.artist ";
 
         s_log.info("days ago is " + daysAgo);
-        if ((daysAgo != null) && (daysAgo.length() > 0)) {
-                
-            Utility util = new Utility();
+        if (daysAgo != null && daysAgo.length() > 0) {
+
             int daysToSub = -Integer.parseInt(daysAgo);
             GregorianCalendar cal = new GregorianCalendar();
             cal.add(Calendar.DATE, daysToSub);
-            theQuery += " and image.upload_date > '" + util.getCurrentDateAndTimeString(cal.getTime()) + "'";
+            theQuery += " and image.upload_date > '" + Utility.getCurrentDateAndTimeString(cal.getTime()) + "'";
                 
-        } else if ((fromDate != null) && (toDate != null)) {                
+        } else if (fromDate != null && toDate != null) {
             theQuery += " and image.upload_date >= '" + fromDate + "' and image.upload_date <= '" +
                 toDate + "' ";
         }
 
-        if ((groupName != null) && (groupName.length() > 0)) {
+        if (groupName != null && groupName.length() > 0) {
             theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + groupName + "'";
         }
             

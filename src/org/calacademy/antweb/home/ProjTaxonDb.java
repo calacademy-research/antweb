@@ -11,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class ProjTaxonDb extends EditableTaxonSetDb {
     
-    private static Log s_log = LogFactory.getLog(ProjTaxonDb.class);
+    private static final Log s_log = LogFactory.getLog(ProjTaxonDb.class);
         
     public ProjTaxonDb(Connection connection) {
       super(connection);
@@ -98,7 +98,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     public boolean exists(String project, String taxonName) {
         TaxonSet taxonSet = get(project, taxonName);
-        return (taxonSet != null);
+        return taxonSet != null;
     }
 
     public int insert(String projectName, String taxonName, String source) throws SQLException {
@@ -311,7 +311,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         
         if (Taxon.isMorpho(taxonName)) {
 			// So we will delete the taxon outright.
-			TaxonDb taxonDb = (new TaxonDb(getConnection()));
+			TaxonDb taxonDb = new TaxonDb(getConnection());
 			taxonDb.deleteTaxon(taxonName);
         }
         
@@ -406,8 +406,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             stmt = DBUtil.getStatement(getConnection(), "cleanupSpeciesListProxyRecords()");
             rset = stmt.executeQuery(query);
             while (rset.next()) {
-                String taxonName = (String) rset.getString("taxonName");
-                String projectName = (String) rset.getString("projectName");
+                String taxonName = rset.getString("taxonName");
+                String projectName = rset.getString("projectName");
                 if (hasNoChildren(taxonName, projectName)) {
                     A.log("cleanupSpeciesListProxyRecords() taxonName:" + taxonName + " projectName:" + projectName);
                     result = deleteProjTaxon(taxonName, projectName, "and source = 'proxyspeciesListTool'");
@@ -482,8 +482,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             stmt = DBUtil.getStatement(getConnection(), "verifyProjTaxon()");
             rset = stmt.executeQuery(query);
             while (rset.next()) {
-                String genusName = (String) rset.getString("taxonName");
-                String projectName = (String) rset.getString("projectName");
+                String genusName = rset.getString("taxonName");
+                String projectName = rset.getString("projectName");
                 int speciesCount = rset.getInt("species_count");
                 if (hasNoChildren(genusName, projectName)) {
                     A.log("verifyProjTaxon() No children for genusName:" + genusName + " projectName:" + projectName + " speciesCount:" + speciesCount);
@@ -815,9 +815,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
         // This was in the UtilData.java regenerateAllAntweb
 
-        (new ProjTaxonCountDb(getConnection())).childrenCountCrawl("allantwebants"); // Proj_taxon counts
+        new ProjTaxonCountDb(getConnection()).childrenCountCrawl("allantwebants"); // Proj_taxon counts
         finishRegenerateAllAntweb();
-        (new ProjectDb(getConnection())).updateCounts("allantwebants");      // Project counts
+        new ProjectDb(getConnection()).updateCounts("allantwebants");      // Project counts
 
         s_log.info("regenerateAllAntweb() completed.");
 
@@ -852,7 +852,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             stmt.executeUpdate(query);
             stmt.close();
         } catch (SQLException e) {
-            if (! (e instanceof java.sql.SQLIntegrityConstraintViolationException)) {
+            if (! (e instanceof SQLIntegrityConstraintViolationException)) {
                 s_log.error("addProjectFamily() e:" + e);
             } else {
                 //s_log.info("addProjectFamily() expected - e:" + e);            

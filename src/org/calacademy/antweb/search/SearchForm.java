@@ -23,33 +23,33 @@ public class SearchForm extends ActionForm {
     private String searchType = "contains";
     private String name = "";
     private String taxonName = "";
-    private String types = null;
-    public String imagesOnly = null;
-    private String project = null;
+    private String types;
+    public String imagesOnly;
+    private String project;
     private int geolocaleId = 0;
 
     public String getSearchType() {
-        return (this.searchType);
+        return this.searchType;
     }
     public void setSearchType(String searchType) {
         this.searchType = searchType;
     }
 
     public String getName() {
-        return (this.name);
+        return this.name;
     }
     public void setName(String name) {
         this.name = name;
     }
     public String getTaxonName() {
-        return (this.taxonName);
+        return this.taxonName;
     }
     public void setTaxonName(String name) {
         this.taxonName = name;
     }
 
     public String getTypes() {
-    return (this.types);
+    return this.types;
     }
 
     public void setTypes(String types) {
@@ -57,7 +57,7 @@ public class SearchForm extends ActionForm {
     }
 
     public String getImagesOnly() {
-		return (this.imagesOnly);
+		return this.imagesOnly;
     }
     public void setImagesOnly(String imagesOnly) {    
         this.imagesOnly = imagesOnly;
@@ -85,13 +85,13 @@ public class SearchForm extends ActionForm {
         // Bag out...
         if (true) return errors;
         
-        if ((name == null) || (name.length() < 1)) {
-          if (((imagesOnly == null) || (imagesOnly.length() < 1))  && ((types == null) || (types.length() < 1))) {
+        if (name == null || name.length() < 1) {
+          if ((imagesOnly == null || imagesOnly.length() < 1)  && (types == null || types.length() < 1)) {
             errors.add("name", new ActionError("error.name.required"));
           } 
         }
 
-        if ((searchType == null) || (searchType.length() < 1))
+        if (searchType == null || searchType.length() < 1)
             errors.add("searchType", new ActionError("error.searchType.required"));
 
         AntwebUtil.blockFishingAttack(request, errors);

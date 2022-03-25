@@ -13,10 +13,10 @@ import org.calacademy.antweb.util.*;
 
 public class CopyrightDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(CopyrightDb.class);
+    private static final Log s_log = LogFactory.getLog(CopyrightDb.class);
 
-    private static int lastRequest = 0;
-    private static Copyright lastResponse = null;
+    private static final int lastRequest = 0;
+    private static Copyright lastResponse;
     
     public CopyrightDb(Connection connection) {
       super(connection);
@@ -75,7 +75,7 @@ public class CopyrightDb extends AntwebDb {
         return null;
     }
     
-    private static ArrayList<Copyright> copyrights = null;
+    private static ArrayList<Copyright> copyrights;
         
     private void getCopyrights() throws SQLException {    
         Copyright copyright = null;        

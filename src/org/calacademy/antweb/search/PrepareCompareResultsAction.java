@@ -20,7 +20,7 @@ import org.apache.commons.logging.LogFactory;
     
 public final class PrepareCompareResultsAction extends PrepareAction {
 
-    private static Log s_log = LogFactory.getLog(PrepareCompareResultsAction.class);
+    private static final Log s_log = LogFactory.getLog(PrepareCompareResultsAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -73,7 +73,7 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 			String message = "Unsupported Result Rank for Prepare Compare Results:" + resultRank;
 			s_log.error("execute() " + message);
 			request.setAttribute("message", message);
-		    return (mapping.findForward("message")); 
+		    return mapping.findForward("message");
 		}
 		
 		
@@ -113,13 +113,13 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 
         //A.log("execute() scope:" + mapping.getScope());
 
-		return (mapping.findForward(forwardString));
+		return mapping.findForward(forwardString);
 	}
 
     public ArrayList<ResultItem> getModifiedSet(String resultRank, ArrayList theResults, HttpServletRequest request) {
         // Create a results set that only has results with images.
 		ArrayList newResults = new ArrayList();
-        if (!(resultRank.equals("species"))) {  // we do a special thing in this case below.
+        if (!resultRank.equals("species")) {  // we do a special thing in this case below.
   		  Iterator iter = theResults.iterator();
  		  ResultItem thisItem = null;
 		  while (iter.hasNext()) {
@@ -139,7 +139,7 @@ public final class PrepareCompareResultsAction extends PrepareAction {
          This list will have potentially many more images because those images, though they belong to the taxon
          are of specimens not necessarily in the region specified in the criteria.  */
          
-        ArrayList<ResultItem> specList = ((AdvancedSearchResults) results).getSpeciesList();
+        ArrayList<ResultItem> specList = results.getSpeciesList();
  	    ArrayList<ResultItem> imagedSpecList = new ArrayList<>();
 		HashMap<String, ResultItem> specHash = new HashMap<>();
 		

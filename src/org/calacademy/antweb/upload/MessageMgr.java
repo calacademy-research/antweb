@@ -14,7 +14,7 @@ public class MessageMgr {
       init();
     }
 
-    private static Log s_log = LogFactory.getLog(MessageMgr.class);
+    private static final Log s_log = LogFactory.getLog(MessageMgr.class);
 
     private Vector<String> s_messages = new Vector();
     public Vector<String> getMessages() {
@@ -26,7 +26,7 @@ public class MessageMgr {
     }
 
     // Used by Worldants
-    private static Vector<String> s_errors = new Vector<String>();
+    private static Vector<String> s_errors = new Vector<>();
     public static Vector<String> getErrors() {
         return s_errors;
     }
@@ -42,10 +42,9 @@ public class MessageMgr {
         return getErrors().size();
     }
     public static boolean hasErrors() {
-        if (getErrors().size() > 0) return true;
-        return false;
+        return getErrors().size() > 0;
     }
-    private static int maxI = 20;
+    private static final int maxI = 20;
     public static String getErrorsReport() {
         String errorReport = "<br>&nbsp;&nbsp;&nbsp;<h3>Errors:</h3> ";
         int i = 0;
@@ -58,13 +57,13 @@ public class MessageMgr {
     }
 
 
-    public static String s_message = null;
+    public static String s_message;
     // This is for a show stopper.  Bad column for instance.
     public void addMessage(String message) {
       s_message = message;
     }
     
-    private String messageStr = null;
+    private String messageStr;
     public String getMessageStr() {
       return messageStr;
     }
@@ -89,7 +88,7 @@ public class MessageMgr {
     private final String MAP = "map";
     private final String NUM = "num";
 
-    ArrayList<Test> testList = new ArrayList<>();
+    final ArrayList<Test> testList = new ArrayList<>();
     private ArrayList<Test> getTests() {
       return testList;
     }
@@ -165,7 +164,7 @@ public class MessageMgr {
     public void init() {
         s_message = null;
         s_messages = new Vector();
-        s_errors = new Vector<String>();
+        s_errors = new Vector<>();
         flags = new HashMap<>();
 
       testList.add(new Test(noRecordsProcessed, STR, "<b>Rollback occurred. <font color=red>(not uploaded)</font></b>"));
@@ -234,7 +233,7 @@ public class MessageMgr {
     }      
     
     public static String getMessageDisplay(String key) {
-      Test test = (new MessageMgr()).getTest(key);   
+      Test test = new MessageMgr().getTest(key);
       if (test != null) return test.getHeading();
       return key;
     }
@@ -361,20 +360,20 @@ public class MessageMgr {
     class Test {
       boolean isPassed = true;
       int addCount = 0;
-      Group group = null;
-      String key = null;
-      String type = null;
-      String heading = null;
-      String flag = null;
+      Group group;
+      final String key;
+      final String type;
+      final String heading;
+      String flag;
 
       String getFlag() { return flag; }
       int count = 0;
 
-      HashMap<String, TreeSet<String>> messageStringHash = new HashMap();            
-      HashMap<String, HashSet<String>> messageSetsHash = new HashMap();        
-      HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap();        
+      final HashMap<String, TreeSet<String>> messageStringHash = new HashMap();
+      final HashMap<String, HashSet<String>> messageSetsHash = new HashMap();
+      final HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap();
 
-      Vector<String> details = new Vector();
+      final Vector<String> details = new Vector();
 
       Test(String key, String type, String heading, String flag) {
         this(key, type, heading);
@@ -594,8 +593,7 @@ public class MessageMgr {
                 
                 String messages = "&nbsp;<b>" + getHeading() + detailLink + listSize + ": </b>";
 
-                boolean printAsList = true;
-                if ("adm1Missing".equals(getKey())) printAsList = false;
+                boolean printAsList = !"adm1Missing".equals(getKey());
                 int i = 0;
                 for (String value : list2) {
                   if (printAsList) {

@@ -11,13 +11,13 @@ import org.calacademy.antweb.util.*;
 
 public final class Caste {
 
-    private static Log s_log = LogFactory.getLog(Caste.class);
+    private static final Log s_log = LogFactory.getLog(Caste.class);
 
-    public static String DEFAULT = "default";
-    public static String MALE = "male";
-    public static String WORKER = "worker";
-    public static String QUEEN = "queen";
-    public static String OTHER = "other";
+    public static final String DEFAULT = "default";
+    public static final String MALE = "male";
+    public static final String WORKER = "worker";
+    public static final String QUEEN = "queen";
+    public static final String OTHER = "other";
 
     public static boolean debug = AntwebProps.isDevMode();
 
@@ -25,7 +25,7 @@ public final class Caste {
     }
 
     public static String getCaste(HttpServletRequest request) {
-        String casteStr = (String) request.getParameter("caste");
+        String casteStr = request.getParameter("caste");
         return Caste.getCaste(casteStr, request);
     }
     public static String getCaste(String requestCaste, HttpServletRequest request) {
@@ -279,7 +279,7 @@ public final class Caste {
       return "alate/dealate";
     }        
     private static boolean isMale(String casteNote) {
-      if ((casteNote.contains("male") && !casteNote.contains("female"))
+      if (casteNote.contains("male") && !casteNote.contains("female")
         || endsWith(casteNote, "m")
         || casteNote.contains("m ")
         || "m".equals(casteNote)
@@ -293,9 +293,7 @@ public final class Caste {
       if (casteNote.contains("ergatoid")
         || casteNote.contains("apterous")
          ) return "ergatoid";
-      if (casteNote.contains("winged")
-         ) return "alate";
-      return "alate";
+        return "alate";
     }    
     private static boolean isOther(String casteNote) {
         return casteNote.contains("intercaste")

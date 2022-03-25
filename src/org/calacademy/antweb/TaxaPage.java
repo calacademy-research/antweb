@@ -17,7 +17,7 @@ import javax.servlet.http.*;
 /** Class Taxon keeps track of the information about a specific taxon */
 public class TaxaPage implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(TaxaPage.class);
+    private static final Log s_log = LogFactory.getLog(TaxaPage.class);
 
 	private String rank;
 	private ArrayList<Taxon> children;
@@ -26,7 +26,7 @@ public class TaxaPage implements Serializable {
 	private int childrenCount;
 	private String pluralRank;
 
-	private HttpServletRequest request = null;
+	private HttpServletRequest request;
 
     private Overview overview;
 
@@ -36,8 +36,8 @@ public class TaxaPage implements Serializable {
 	public boolean isWithSpecimen() { return isWithSpecimen; }
 
 
-    private String statusSetStr = null;
-    private String statusSetSize = null;
+    private String statusSetStr;
+    private String statusSetSize;
 
 	public int getChildrenCount() {
 		if (children != null) {
@@ -151,8 +151,8 @@ public class TaxaPage implements Serializable {
           }
 
           if (overview instanceof Project) {
-            specimenQuery += " where ( country = '" + ((Project) overview).getTitle() + "'"
-              + " or adm1 = '" + ((Project) overview).getTitle() + "' )" ;
+            specimenQuery += " where ( country = '" + overview.getTitle() + "'"
+              + " or adm1 = '" + overview.getTitle() + "' )" ;
           }
 
           fetchChildrenQuery += specimenQuery;
@@ -211,7 +211,7 @@ public class TaxaPage implements Serializable {
                         child.setGenus(rset.getString("genus"));
                         break;
                     case "species":
-                        String selectedRank = (rset.getString("taxarank"));
+                        String selectedRank = rset.getString("taxarank");
                         if ("species".equals(selectedRank)) {
                             child = new Species();
                         } else { // Then it is subspecies

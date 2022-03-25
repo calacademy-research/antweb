@@ -7,15 +7,15 @@ import org.apache.commons.logging.LogFactory;
 
 public class Event {
 
-    private static Log s_log = LogFactory.getLog(Event.class);
+    private static final Log s_log = LogFactory.getLog(Event.class);
 
 // Should match with web/taxonPage-body.jsp.  Poor design.  Should be properties of Description.java.
 
-    public static String TAXON_PAGE_IMAGES = "images";
+    public static final String TAXON_PAGE_IMAGES = "images";
       // will match with the editField from web/common/taxonImageEditField.jsp
-    public static String TAXON_PAGE_VIDEOS = "videos";
+    public static final String TAXON_PAGE_VIDEOS = "videos";
       // will match with the editField from web/common/taxonVideoEditField.jsp
-    public static String TAXON_PAGE_OVERVIEW = "overview";
+    public static final String TAXON_PAGE_OVERVIEW = "overview";
 
     private int id;
     private String operation;

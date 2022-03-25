@@ -13,7 +13,7 @@ import org.calacademy.antweb.curate.speciesList.*;
 
 public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     
-    private static Log s_log = LogFactory.getLog(GeolocaleTaxonLogDb.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleTaxonLogDb.class);
         
     public GeolocaleTaxonLogDb(Connection connection) {
       super(connection);
@@ -382,7 +382,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
               + " where gtl.log_id = gtld.log_id"
               + " and gtld.geolocale_id = " + geolocaleId
               + " and gtld.taxon_name = '" + taxonName + "'"
-              + " order by created asc"; // get the first instance
+              + " order by created"; // get the first instance
 
             //A.log("getCuration() query:" + query);
             rset = stmt.executeQuery(query);
@@ -637,7 +637,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     }
 
 
-	private static ArrayList<TaxonSet> s_disputes = null;
+	private static ArrayList<TaxonSet> s_disputes;
 
     public TaxonSet getDispute(int geolocaleId, String taxonName) throws SQLException {
 
@@ -674,8 +674,8 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             while (rset.next()) {
                 geolocaleTaxon = new GeolocaleTaxon();
                 geolocaleTaxon.setGeolocaleId(rset.getInt("geolocale_id"));
-                geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                geolocaleTaxon.setSource((String) rset.getString("source"));
+                geolocaleTaxon.setTaxonName(rset.getString("taxon_name"));
+                geolocaleTaxon.setSource(rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setCuratorId(rset.getInt("curator_id"));
                 geolocaleTaxon.setCreated(rset.getTimestamp("created"));
@@ -718,8 +718,8 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             while (rset.next()) {
                 GeolocaleTaxon geolocaleTaxon = new GeolocaleTaxon();
                 geolocaleTaxon.setGeolocaleId(rset.getInt("geolocale_id"));
-                geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                geolocaleTaxon.setSource((String) rset.getString("source"));
+                geolocaleTaxon.setTaxonName(rset.getString("taxon_name"));
+                geolocaleTaxon.setSource(rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setCuratorId(rset.getInt("curator_id"));
                 geolocaleTaxon.setCreated(rset.getTimestamp("created"));                

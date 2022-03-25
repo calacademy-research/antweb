@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;    
@@ -21,7 +24,7 @@ http://www.antweb.org/cache.do?action=genCacheThread
     
 public final class CacheAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(CacheAction.class);
+    private static final Log s_log = LogFactory.getLog(CacheAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -33,26 +36,26 @@ public final class CacheAction extends Action {
         String orderBy = (String) df.get("orderBy");
         ActionForward returnVal = null; 
 
-        java.util.Date startTime = new java.util.Date();                          
+        Date startTime = new Date();
 
-        if ((url != null) && (!"".equals(url))) {
+        if (url != null && !"".equals(url)) {
           boolean success = getLongRequestDetails(request, url, orderBy);
 		  if (success) {
-			return (mapping.findForward("longRequestDetails"));
+			return mapping.findForward("longRequestDetails");
 		  } else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
   		  }             
         }
 
         if (true) {
           request.setAttribute("message", "Caching turned off.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         }
 
         if (action.equals("genCacheThread")) {
           genCacheThread(request);
           request.setAttribute("message", "genCacheThread completed.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         }
         /*
         if (action.equals("keepCurrent")) {
@@ -65,7 +68,7 @@ public final class CacheAction extends Action {
           returnVal = generateCacheItem(mapping, request);
           HttpUtil.finish(request, startTime);
           request.setAttribute("message", "genCacheItem completed.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         } else {
           if (action.equals("forgetCaching")) {
             forgetCaching(request);
@@ -82,16 +85,16 @@ public final class CacheAction extends Action {
           // if (action.equals("display")) { // this is the default
           boolean success = getLongRequests(request, orderBy);
 		  if (success) {
-			return (mapping.findForward("longRequests"));
+			return mapping.findForward("longRequests");
 		  } else {  
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
   		  }        
         }        
         //return (mapping.findForward("error"));
      }
 
     private void forgetCaching(HttpServletRequest request) {
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.forgetCaching()");
@@ -114,7 +117,7 @@ public final class CacheAction extends Action {
 */
 
     private void purgeCache(HttpServletRequest request) {
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.purgeCache()");
@@ -127,16 +130,16 @@ public final class CacheAction extends Action {
         }    
     }
 
-    private static int GEN_CACHE_THREAD_MINUTES = 10;
-    private static int PAUSE_SECONDS = 2;
-    private static int SLEEP_SECONDS = 60;
+    private static final int GEN_CACHE_THREAD_MINUTES = 10;
+    private static final int PAUSE_SECONDS = 2;
+    private static final int SLEEP_SECONDS = 60;
     
     private void genCacheThread(HttpServletRequest request) {
-	  javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+	  DataSource dataSource = getDataSource(request, "conPool");
       Connection connection = null;
       int didCacheCount = 0;
       
-      java.util.Date startTime = new java.util.Date();                        
+      Date startTime = new Date();
       s_log.info("getCacheThread() starting");
 
       if (true) return; // To turn off caching.
@@ -202,7 +205,7 @@ public final class CacheAction extends Action {
 
      private boolean getLongRequests(HttpServletRequest request, String orderBy) {
         boolean success = false;
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.getLongRequests()");
@@ -220,7 +223,7 @@ public final class CacheAction extends Action {
 
      private boolean getLongRequestDetails(HttpServletRequest request, String url, String orderBy) {
         boolean success = false;
-		javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+		DataSource dataSource = getDataSource(request, "conPool");
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.getLongRequestDetails()");
@@ -241,9 +244,9 @@ public final class CacheAction extends Action {
         if (!isLoggedIn) { 
           // This function must not be logged in in order to generate the proper pages...
 
-            java.sql.Connection connection = null;                
+            Connection connection = null;
             try {
-              javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+              DataSource dataSource = getDataSource(request, "conPool");
               connection = DBUtil.getConnection(dataSource, "CacheAction.generateCacheItem()");
 
               AntwebCacheMgr.genCacheItem(connection);
@@ -260,10 +263,10 @@ public final class CacheAction extends Action {
                     
           request.setAttribute("message", "Cache item generated. Back to <a href=\"" + AntwebProps.getDomainApp() + "/cache.do?action=display\">CacheMgr</a>.");
           request.setAttribute("header", "Cache item generated.");          
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         } else {
           request.setAttribute("message", "The Antweb cache generation functions will not function if you are logged in.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         }
 	}
 }

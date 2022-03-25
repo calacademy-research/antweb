@@ -9,7 +9,7 @@ import org.apache.commons.logging.LogFactory;
 /** Class ResultItem keeps track of the information about a search item */
 public final class ResultItem extends Item implements Serializable, Comparable<ResultItem> {
 
-    private static Log s_log = LogFactory.getLog(ResultItem.class);
+    private static final Log s_log = LogFactory.getLog(ResultItem.class);
 
     public int compareTo(ResultItem other) {
         int compareInt = getFullName().compareTo(other.getFullName());
@@ -141,7 +141,7 @@ public final class ResultItem extends Item implements Serializable, Comparable<R
 	}
 
 	public String getFullName() {  // ex: temnothorax andrei    
-		return (this.fullName);
+		return this.fullName;
 	}
 	public void setFullName(String fullName) {
 		this.fullName = fullName;
@@ -154,14 +154,14 @@ public final class ResultItem extends Item implements Serializable, Comparable<R
     }
 
 	public String getPageParams() {
-		return (this.pageParams);
+		return this.pageParams;
 	}
 	public void setPageParams(String pageParams) {
 		this.pageParams = pageParams;
 	}
 
 	public boolean getTypes() {
-		return (this.types);
+		return this.types;
 	}
 	public void setTypes(boolean types) {
 		this.types = types;

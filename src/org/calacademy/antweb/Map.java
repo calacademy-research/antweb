@@ -1,19 +1,16 @@
 package org.calacademy.antweb;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.geolocale.*;
+import org.calacademy.antweb.home.SpecimenDb;
+import org.calacademy.antweb.util.*;
+
 import java.sql.Connection;
-
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
-
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.SpecimenDb;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
 
 /*
 
@@ -55,18 +52,18 @@ According to our new Display Map Counter (counting the number of times that the 
 
 public class Map {
 
-    private ArrayList<String> chosenList = null;
+    private ArrayList<String> chosenList;
     public static int displayMapCount = 0;
-    private static HashMap<String, Integer> displayMapHash = new HashMap<>();
+    private static final HashMap<String, Integer> displayMapHash = new HashMap<>();
 
-    private String title = null;
-    private String subtitle = null;
+    private String title;
+    private String subtitle;
 
-    private String info = null;
+    private String info;
 
-    protected String staticMapParams = null;
+    protected String staticMapParams;
     protected ArrayList<Coordinate> points = new ArrayList<>();
-    protected ArrayList mapSpecimens = new ArrayList();
+    protected ArrayList<Specimen> mapSpecimens = new ArrayList<>();
 
     protected String mapName = "";
     protected String googleMapFunction = "";
@@ -95,9 +92,9 @@ public class Map {
         return collectionCode;
     }
 
-    private Date cached = null;
+    private Date cached;
 
-    private static Log s_log = LogFactory.getLog(Map.class);
+    private static final Log s_log = LogFactory.getLog(Map.class);
 
 
     public Map() {
@@ -171,7 +168,7 @@ public class Map {
     public Map(ArrayList<String> specimens, Connection connection) {
         super();
         setChosenList(specimens);
-        if ((specimens != null) && (specimens.size() > 0)) {
+        if (specimens != null && specimens.size() > 0) {
             long thisTime = new GregorianCalendar().getTimeInMillis();
             setMapName("map" + thisTime);
 
@@ -186,7 +183,7 @@ public class Map {
         // This is not the same as a Map(Locality). These are specimen codes but one for each locality to be mapped.
         setIsMapLocalities(mapLocalities);
         setInfo(info);
-        if ((specimens != null) && (specimens.size() > 0)) {
+        if (specimens != null && specimens.size() > 0) {
             long thisTime = new GregorianCalendar().getTimeInMillis();
 
             setMapName("map" + thisTime);
@@ -205,7 +202,7 @@ public class Map {
     }
 
     public void setStaticMapParams(Taxon taxon, Overview overview) {
-        ArrayList terms = new ArrayList();
+        ArrayList<String> terms = new ArrayList<>();
 
         this.staticMapParams = "";
 
@@ -225,7 +222,7 @@ public class Map {
             terms.add("subspecies%3d%27" + taxon.getSubspecies() + "%27");
         }
 
-        if (Utility.notBlank(overview.toString()) && (!overview.equals(Project.WORLDANTS))) {
+        if (Utility.notBlank(overview.toString()) && !overview.equals(Project.WORLDANTS)) {
             //String term = "project+like+%27%25" + project + "%25%27";
             String term = "project+like+%27%25" + overview + "%25%27";
             terms.add(term);
@@ -240,7 +237,7 @@ public class Map {
     }
 
     public boolean hasPoints() {
-        return (getPoints() != null) && (getPoints().size() > 0);
+        return getPoints() != null && getPoints().size() > 0;
     }
 
     public ArrayList<Coordinate> getPoints() {
@@ -261,7 +258,7 @@ public class Map {
         }
         float thisLon = loc.getDecimalLongitude();
         float thisLat = loc.getDecimalLatitude();
-        if ((thisLon != 0.0) && (thisLat != 0.0)) {
+        if (thisLon != 0.0 && thisLat != 0.0) {
             points.add(new Coordinate(thisLon, thisLat));
             //s_log.warn("setPoints(locality) lon:" + thisLon + " lat:" + thisLat);
         } else {
@@ -276,7 +273,7 @@ public class Map {
 
         float thisLon = locality.getDecimalLongitude();
         float thisLat = locality.getDecimalLatitude();
-        if ((thisLon != 0.0) && (thisLat != 0.0)) {
+        if (thisLon != 0.0 && thisLat != 0.0) {
             points.add(new Coordinate(thisLon, thisLat));
             //s_log.warn("setPoints(locality) lon:" + thisLon + " lat:" + thisLat);
         } else {
@@ -351,7 +348,7 @@ public class Map {
                 //String thisGenus, thisSpecies, thisSubspecies, thisCode, thisName;
                 Specimen specimen;
                 String key;
-                HashMap tracker = new HashMap();
+                HashMap<String, Integer> tracker = new HashMap<>();
                 int nonUniqueLocalities = 0;
                 int keyCount = 0;
                 int pointCount = 0;
@@ -367,14 +364,14 @@ public class Map {
                     thisLon = rset.getFloat("decimal_longitude");
                     String taxonName = rset.getString("taxon_name");
                     
-                    if ((thisLon != 0.0) && (thisLat != 0.0)) {
+                    if (thisLon != 0.0 && thisLat != 0.0) {
                         key = taxonName + ":" + thisLon + ":" + thisLat;
                         
 						String adm1 = rset.getString("adm1");
 						//if ("Minnesota".equals(adm1)) A.slog("setPoints() adm1:" + adm1);
 												
                         if (tracker.containsKey(key)) {
-                            keyCount = ((Integer) tracker.get(key)).intValue();
+                            keyCount = tracker.get(key);
                             ++keyCount;
                             tracker.put(key, keyCount);
                             ++nonUniqueLocalities;
@@ -448,7 +445,7 @@ public class Map {
 
     private void setPoints(Taxon taxon, LocalityOverview overview, Connection connection, int maxMapPoints, boolean geolocaleFocus) {
         
-        boolean persist = (taxon.isSubfamily()) && !geolocaleFocus; // or genus?
+        boolean persist = taxon.isSubfamily() && !geolocaleFocus; // or genus?
         if (persist) {
           ++nonFucusedSubfamilyMaps;
           // Oops, not so easy to persist a map, is it?
@@ -478,17 +475,16 @@ public class Map {
 
         //A.log("setPoints(taxon, localityOverview, connection) taxon:" + taxon + " overview:" + overview);
  
-        String query = null;
-        Formatter myFormatter = new Formatter();
-        ArrayList terms = new ArrayList();
+        String query;
+        ArrayList<String> terms = new ArrayList<>();
 
         String locality;
 
-        boolean useProject = (overview instanceof Project);
+        boolean useProject = overview instanceof Project;
           if (name.equals(Project.WORLDANTS) || name.equals("ALLANTWEBANTS") || "null".equals(name)) useProject = false;
         // geolocaleFocus is passed all the way from the web page to indicate query restiction and resulting zoom.
-        boolean useGeolocale = geolocaleFocus && (overview instanceof Geolocale);
-        boolean useBioregion = (overview instanceof Bioregion);
+        boolean useGeolocale = geolocaleFocus && overview instanceof Geolocale;
+        boolean useBioregion = overview instanceof Bioregion;
 
         query = "select sp.decimal_longitude, sp.decimal_latitude, sp.code, sp.taxon_name, sp.genus, sp.species, sp.subspecies, localitycode "
           + " from specimen as sp";
@@ -523,7 +519,7 @@ public class Map {
 
         if (useProject) {
           locality = overview.getLocality();
-          if ((locality != null) && (locality.length() > 0) && (!locality.equals("null")))  {
+          if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
             terms.add("sp." + locality);
           }    
           terms.add("proj_taxon.project_name = '" + name + "'");
@@ -532,11 +528,11 @@ public class Map {
         if (useGeolocale) {
           //terms.add("geolocale_taxon.geolocale_id = " + ((Geolocale) overview).getId());
           if (overview instanceof Country) {
-            terms.add("sp.country = '" + ((Country) overview).getName() + "'");
+            terms.add("sp.country = '" + overview.getName() + "'");
           }
           if (overview instanceof Adm1) {
             terms.add("sp.country = '" + ((Adm1) overview).getParent() + "'");          
-            terms.add("sp.adm1 = '" + ((Adm1) overview).getName() + "'");
+            terms.add("sp.adm1 = '" + overview.getName() + "'");
           }          
         }
 
@@ -580,8 +576,8 @@ public class Map {
             String taxonName, code, genus, species, subspecies, localityCode;
             Specimen spec;
             String key;
-            HashMap distinctLocalities = new HashMap();
-            HashMap distinctUnmappableLocalities = new HashMap();
+            HashMap<String, Integer> distinctLocalities = new HashMap<>();
+            HashMap<String, Integer> distinctUnmappableLocalities = new HashMap<>();
             int keyCount = 0;
             int pointCount = 0;
             int counter = 0;
@@ -599,10 +595,10 @@ public class Map {
 				species = rset.getString("species");
 				subspecies = rset.getString("subspecies");
 				localityCode = rset.getString("localitycode");
-				if ((lon != 0.0) && (lat != 0.0)) {
+				if (lon != 0.0 && lat != 0.0) {
 					key = lon + ":" + lat; //taxonName + ":" + 
 					if (distinctLocalities.containsKey(key)) {
-						keyCount = ((Integer) distinctLocalities.get(key)).intValue();
+						keyCount = distinctLocalities.get(key);
 						++keyCount;
 						distinctLocalities.put(key, keyCount);
 					} else {
@@ -672,13 +668,13 @@ public class Map {
         //A.log("setGoogleMapFunction() points:" + points);
         //	AntwebUtil.infoStackTrace();
         
-        StringBuffer theString = null;
+        StringBuffer theString;
         String googleString = null;
-        if ((getPoints() != null) && (getPoints().size() > 0)) {
+        if (getPoints() != null && getPoints().size() > 0) {
           //ArrayList clearPoints = clearZeros(getPoints());
           String latArray = getJavaScriptArray(getPoints(),"lat");
           String lonArray = getJavaScriptArray(getPoints(),"lon");
-          if ((latArray != null) && (lonArray != null)) {
+          if (latArray != null && lonArray != null) {
             
               theString = new StringBuffer();
 
@@ -702,9 +698,9 @@ public class Map {
                 // If it is a single point, as would be a locality or collection.
                 theString.append("'small', ");
                 theString.append("'" + getMapName() + "',");
-                theString.append(((Coordinate) getPoints().get(0)).getLat());
+                theString.append(getPoints().get(0).getLat());
                 theString.append(",");
-                theString.append(((Coordinate) getPoints().get(0)).getLon());
+                theString.append(getPoints().get(0).getLon());
               }
               theString.append(",");
 //A.log("setGoogleMapFunction() isLocality:" + isLocality + " isCollection:" + isCollection + " isMapLocality:" + isMapLocalities());
@@ -715,9 +711,9 @@ public class Map {
                   if (localityName != null) encodedLocalityName = HttpUtil.encode(localityName);
                   String encodedLocalityCode = null;
                   if (localityCode != null) encodedLocalityCode = HttpUtil.encode(localityCode);
-                  theString.append("new Array(\'" + encodedLocalityName + "\'),new Array(\'" + encodedLocalityCode + "\')");
+                  theString.append("new Array('" + encodedLocalityName + "'),new Array('" + encodedLocalityCode + "')");
               } else if (isCollection) {
-                  theString.append("new Array(\'" + collectionCode + "\')");
+                  theString.append("new Array('" + collectionCode + "')");
               } else if (isMapLocalities()) {
                 //A.slog("localityNames:" + getJavaScriptSpecimenArray(getMapSpecimens(), "localityname"));
                   theString.append(getJavaScriptSpecimenArray(getMapSpecimens(), "localityname"));
@@ -731,7 +727,7 @@ public class Map {
                   theString.append(",");
                   theString.append(getJavaScriptSpecimenArray(getMapSpecimens(), "images"));
               }
-              theString.append(", \'" + AntwebProps.getDomainApp() + "/'");
+              theString.append(", '" + AntwebProps.getDomainApp() + "/'");
 
               theString.append(");");
 
@@ -771,7 +767,7 @@ public class Map {
             }
             if (thisFloat != 0.0) {
                 
-                if (foundPoint == true) {
+                if (foundPoint) {
                     theArrayString.append(",");
                 } else {
                     foundPoint = true;
@@ -783,7 +779,7 @@ public class Map {
         theArrayString.append(")");
        // A.slog("getJavascriptArray() " + coord + ":" + points.size());
         
-        if (foundPoint == true) {
+        if (foundPoint) {
             return theArrayString.toString();
         } else {
             return null;
@@ -822,7 +818,7 @@ public class Map {
                     break;
                 case "images":
                     if (specimen.getImages() != null) {
-                        specImage = (SpecimenImage) specimen.getImages().get("p1");
+                        specImage = specimen.getImages().get("p1");
                         if (specImage != null) {
                             value = specImage.getLowres();
                         }
@@ -834,7 +830,7 @@ public class Map {
                     //i = i - 1; // because we didn't find something to add.
                     break;
             }
-            if (foundPoint == true) {
+            if (foundPoint) {
                 theArrayString.append(",");
             } else {
                 foundPoint = true;
@@ -844,7 +840,7 @@ public class Map {
 
         theArrayString.append(")");
         
-        if (foundPoint == true) {
+        if (foundPoint) {
             return theArrayString.toString();
         } else {
             return null;
@@ -870,10 +866,10 @@ public class Map {
       return mapSpecimens.size();
     }
     
-    public ArrayList getMapSpecimens() {
+    public ArrayList<Specimen> getMapSpecimens() {
         return mapSpecimens;
     }
-    public void setMapSpecimens(ArrayList mapSpecimens) {
+    public void setMapSpecimens(ArrayList<Specimen> mapSpecimens) {
         this.mapSpecimens = mapSpecimens;
     }
 
@@ -890,7 +886,7 @@ public class Map {
       if (count == null) {
         displayMapHash.put(objectName, 1);
       } else {
-        count = count.intValue() + 1;
+        count = count + 1;
         displayMapHash.put(objectName, count);
       }
       //A.log("addToDisplayMapCount() count:" + count);    

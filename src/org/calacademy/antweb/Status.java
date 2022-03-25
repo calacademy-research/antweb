@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class Status {
 
-    private static Log s_log = LogFactory.getLog(Status.class);
+    private static final Log s_log = LogFactory.getLog(Status.class);
     
     // status values:
 
@@ -71,7 +71,7 @@ public class Status {
       return statusArrayList;
     }    
     	
-    protected String value = null;
+    protected String value;
     private String currentValidName = "";
     
     public Status () {
@@ -130,10 +130,10 @@ public class Status {
          return false;
       }
 
-      if ( (getValue().equals(Status.VALID))
-        || (getValue().equals(Status.MORPHOTAXON))
-        || (getValue().equals(Status.UNIDENTIFIABLE))
-        || (getValue().equals(Status.INDETERMINED))
+      if ( getValue().equals(Status.VALID)
+        || getValue().equals(Status.MORPHOTAXON)
+        || getValue().equals(Status.UNIDENTIFIABLE)
+        || getValue().equals(Status.INDETERMINED)
          ) {
         passed = true;
       } 

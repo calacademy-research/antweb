@@ -8,21 +8,21 @@ import org.apache.commons.logging.LogFactory;
 
 public final class Rank implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Rank.class);
+    private static final Log s_log = LogFactory.getLog(Rank.class);
 
-    public static String KINGDOM = "kingdom";
-    public static String PHYLUM = "phylum";
-    public static String CLASS = "class";
-    public static String ORDER = "order";
-    public static String FAMILY = "family";
-    public static String SUBFAMILY = "subfamily";
-    public static String TRIBE = "tribe";
-    public static String GENUS = "genus";
-    public static String SUBGENUS = "subgenus";
-    public static String SPECIES = "species";
-    public static String SUBSPECIES = "subspecies";
-    public static String SPECIMEN = "specimen";
-    public static String LOCALITY = "locality";
+    public static final String KINGDOM = "kingdom";
+    public static final String PHYLUM = "phylum";
+    public static final String CLASS = "class";
+    public static final String ORDER = "order";
+    public static final String FAMILY = "family";
+    public static final String SUBFAMILY = "subfamily";
+    public static final String TRIBE = "tribe";
+    public static final String GENUS = "genus";
+    public static final String SUBGENUS = "subgenus";
+    public static final String SPECIES = "species";
+    public static final String SUBSPECIES = "subspecies";
+    public static final String SPECIMEN = "specimen";
+    public static final String LOCALITY = "locality";
     
 
     public Rank() {
@@ -183,19 +183,19 @@ public final class Rank implements Serializable {
             rank.add("family");
         }
 */
-        if ((subfamily != null) && (subfamily.contains(name))) {
+        if (subfamily != null && subfamily.contains(name)) {
             rank.add("subfamily");
         }
 
-        if ((genus != null) && (genus.contains(name))) {
+        if (genus != null && genus.contains(name)) {
             rank.add("genus");
         }
 
-        if ((species != null) && (species.contains(name))) {
+        if (species != null && species.contains(name)) {
             rank.add("species");
         }
 
-        if ((subspecies != null) && (subspecies.contains(name))) {
+        if (subspecies != null && subspecies.contains(name)) {
             rank.add("subspecies");
         }
         
@@ -208,11 +208,10 @@ public final class Rank implements Serializable {
     
     public static String getRank(String subfamily, String genus, String species, String subspecies) {
     // This is used in the search mechanism 
-        Utility utility = new Utility();
-        if (utility.notBlank(subspecies)) return SUBSPECIES;
-        if (utility.notBlank(species)) return SPECIES;
-        if (utility.notBlank(genus)) return GENUS;
-        if (utility.notBlank(subfamily)) return SUBFAMILY;
+        if (Utility.notBlank(subspecies)) return SUBSPECIES;
+        if (Utility.notBlank(species)) return SPECIES;
+        if (Utility.notBlank(genus)) return GENUS;
+        if (Utility.notBlank(subfamily)) return SUBFAMILY;
         //if (utility.notBlank(family)) return FAMILY;
         return "not found";
     }

@@ -2,8 +2,6 @@ package org.calacademy.antweb.curate;
 
 import java.util.*;
 
-import org.calacademy.antweb.util.*;
-
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 
@@ -12,22 +10,22 @@ import org.apache.commons.logging.LogFactory;
     
 public class OperationDetails {
 
-    private static Log s_log = LogFactory.getLog(OperationDetails.class);
+    private static final Log s_log = LogFactory.getLog(OperationDetails.class);
 
-    java.util.Date startTime = null;
-    HttpServletRequest request = null;
-    String operation = null;
-    String message = null;
-    private String forwardPage = null;
+    Date startTime;
+    HttpServletRequest request;
+    String operation;
+    String message;
+    private String forwardPage;
     
     public OperationDetails() {     
       this.operation = "undefined";
-      this.startTime = new java.util.Date();
+      this.startTime = new Date();
     }
         
     public OperationDetails(String operation) {     
       this.operation = operation;
-      this.startTime = new java.util.Date();
+      this.startTime = new Date();
     }
 
     public OperationDetails(String operation, String message) {
@@ -122,7 +120,7 @@ public class OperationDetails {
       if (i > 0) {
         String execTimeSec = execTime.substring(0, i);
         try {
-          int secs = (Integer.valueOf(execTimeSec)).intValue();
+          int secs = Integer.parseInt(execTimeSec);
           double min = secs / 60d;
           return " (" + min + " min)";
         } catch (NumberFormatException e) {

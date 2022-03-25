@@ -11,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class HomonymDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(HomonymDb.class);
+    private static final Log s_log = LogFactory.getLog(HomonymDb.class);
         
     public HomonymDb(Connection connection) {
       super(connection);
@@ -191,11 +191,16 @@ public class HomonymDb extends AntwebDb {
         if (authorDate != null) {
             criteria += " and author_date = '" + authorDate + "'";
         } else {
-            if ("myrmicinaecarebara silvestrii".equals(taxonName)) criteria += " and author_date = '(Santschi, 1914)'";
-            else if ("myrmicinaesolenopsis pygmaea".equals(taxonName)) criteria += " and author_date = 'Forel, 1905'";
-            else if ("myrmicinaepheidole longipes".equals(taxonName)) {
-                s_log.warn("No valid homonym for myrmicinaepheidole longipes");
-                return null;
+            switch (taxonName) {
+                case "myrmicinaecarebara silvestrii":
+                    criteria += " and author_date = '(Santschi, 1914)'";
+                    break;
+                case "myrmicinaesolenopsis pygmaea":
+                    criteria += " and author_date = 'Forel, 1905'";
+                    break;
+                case "myrmicinaepheidole longipes":
+                    s_log.warn("No valid homonym for myrmicinaepheidole longipes");
+                    return null;
             }
             //s_log.info("getInfoHomonym() author_date should not be null for taxonName:" + taxonName);
         }
@@ -290,7 +295,7 @@ public class HomonymDb extends AntwebDb {
         boolean isSubfamilyForGenus = false;
         String query = "select distinct subfamily from homonym " 
             + " where taxarank = 'genus' and "; // Added Jun 26, 2014";
-        if ((family != null) && !("null".equals(family))) {
+        if (family != null && !"null".equals(family)) {
             query += " family = '" + family + "' and ";
         } else {
             query += " family = 'formicidae' and ";
@@ -312,7 +317,7 @@ public class HomonymDb extends AntwebDb {
 
          String query = "select distinct subfamily from homonym " 
             + " where ";
-        if ((family != null) && !("null".equals(family))) {
+        if (family != null && !"null".equals(family)) {
             query += " family = '" + family + "' and ";
         } else {
             query += " family = 'formicidae' and ";

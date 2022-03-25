@@ -24,7 +24,7 @@ public class UploadForm extends ActionForm {
   protected String whole = "false";
   protected String encoding;  
   protected String outputFileName = "";
-  protected String successKey = null;
+  protected String successKey;
   protected String action;
   private String specimenUploadType = "full";
   protected String recrawl = "true";
@@ -48,7 +48,7 @@ public class UploadForm extends ActionForm {
   }
     
   public String getSpecimenUploadType() {
-        return (this.specimenUploadType);
+        return this.specimenUploadType;
   }
   public void setSpecimenUploadType(String specimenUploadType) {
         this.specimenUploadType = specimenUploadType;

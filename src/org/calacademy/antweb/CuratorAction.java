@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.*;
@@ -21,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class CuratorAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(CuratorAction.class);
+    private static final Log s_log = LogFactory.getLog(CuratorAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -38,7 +40,7 @@ public final class CuratorAction extends Action {
         String name = (String) df.get("name"); // Name could be id or name. We try id first.
         int curatorId = 0;
         Integer id = (Integer) df.get("id");
-        if (id != null) curatorId = id.intValue();
+        if (id != null) curatorId = id;
         
         //A.log("execute() form:" + df);
 
@@ -46,11 +48,11 @@ public final class CuratorAction extends Action {
         String taxonName = (String) df.get("taxonName");
         int geolocaleId = 0;
         Integer geolocaleIdInt = (Integer) df.get("geolocaleId");
-        if (geolocaleIdInt != null) geolocaleId = geolocaleIdInt.intValue();
+        if (geolocaleIdInt != null) geolocaleId = geolocaleIdInt;
 
 		Connection connection = null;
 		try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "CuratorAction.execute()");
 
 		  if (!Utility.isBlank(name) || curatorId != 0) {
@@ -62,7 +64,7 @@ public final class CuratorAction extends Action {
 			if (curator == null) {
 				String message = "  Curator not found for name:" + name + " id:" + id + ".";
 				request.setAttribute("message", message);
-				return (mapping.findForward("message"));
+				return mapping.findForward("message");
 			}
 
 // Performing very poorly on the live server
@@ -70,24 +72,24 @@ public final class CuratorAction extends Action {
 //			request.setAttribute("curations", curations);
 
 			request.setAttribute("curator", curator);
-			return (mapping.findForward("curator"));
+			return mapping.findForward("curator");
 		  } else if (geolocaleId != 0 && taxonName != null) {
 			// Show curation        
 			//A.log("execute() taxonName:" + taxonName + " geolocaleId:" + geolocaleId);
 
-            GeolocaleTaxon geolocaleTaxon = (GeolocaleTaxon) (new GeolocaleTaxonDb(connection)).get(geolocaleId, taxonName); // to get Curator 
+            GeolocaleTaxon geolocaleTaxon = (GeolocaleTaxon) new GeolocaleTaxonDb(connection).get(geolocaleId, taxonName); // to get Curator
             if (geolocaleTaxon == null) {
 				String message = "geolocale_taxon is null for taxonName:" + taxonName + " geolocaleId:" + geolocaleId + ".";
                 //A.log("execute() " + message);
 				request.setAttribute("message", message);
-				return (mapping.findForward("message"));            
+				return mapping.findForward("message");
             }
-			Curation curation = (new GeolocaleTaxonLogDb(connection)).getCuration(taxonName, geolocaleId);
+			Curation curation = new GeolocaleTaxonLogDb(connection).getCuration(taxonName, geolocaleId);
 			if (curation == null) curation = new Curation();
 			curation.setGeolocaleTaxon(geolocaleTaxon);
 			request.setAttribute("curation", curation);
 			//A.log("execute() curation:" + curation);
-			return (mapping.findForward("curation"));
+			return mapping.findForward("curation");
 		  } else {
 			// show all Curators.
 			
@@ -96,7 +98,7 @@ public final class CuratorAction extends Action {
 			request.setAttribute("curators", curators);
             //A.log("a1d:" + accessLogin.getName());
 			
-			return (mapping.findForward("curators"));        
+			return mapping.findForward("curators");
 		  }
 
 	   } catch (SQLException e) {

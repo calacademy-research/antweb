@@ -4,9 +4,12 @@ import java.io.IOException;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.calacademy.antweb.util.*;
 
@@ -15,7 +18,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class RecentImageSearchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(RecentImageSearchAction.class);
+    private static final Log s_log = LogFactory.getLog(RecentImageSearchAction.class);
 
     public String getSearchTitle(SearchParameters searchParameters) {
         return "Specimens with Images Recently Uploaded to Antweb";
@@ -51,7 +54,7 @@ public final class RecentImageSearchAction extends Action {
         }
 
         ArrayList<ResultItem> searchResults = null;        
-	    java.util.Date startTime = new java.util.Date();
+	    Date startTime = new Date();
 
         Connection connection = null;
         Statement stmt = null;
@@ -59,7 +62,7 @@ public final class RecentImageSearchAction extends Action {
         try {
             String theQuery = "select distinct name from ant_group";
 
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "RecentImageSearchAction.getSearchResults()");
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);

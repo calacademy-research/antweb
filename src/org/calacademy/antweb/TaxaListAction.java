@@ -18,7 +18,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public final class TaxaListAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(TaxaListAction.class);
+    private static final Log s_log = LogFactory.getLog(TaxaListAction.class);
 
 // taxaList.do?valid=1&extant=1&project=worldants&rank=subfamily
 
@@ -54,7 +54,7 @@ public final class TaxaListAction extends Action {
             
         String query = "select taxon_name from taxon where 1=1 ";
 
-        if ((!"".equals(rank)) && rank != null) {
+        if (!"".equals(rank) && rank != null) {
           if ("species".equals(rank)) {
             query += " and (taxarank = 'species' or taxarank = 'subspecies')";
           } else
@@ -119,7 +119,7 @@ public final class TaxaListAction extends Action {
                 taxaList.add(taxonLink);
             }
 		} catch (SQLException e) {
-			s_log.error("execute() e:" + e.toString());
+			s_log.error("execute() e:" + e);
 		} finally {
           DBUtil.close(connection, stmt, rset, this, "TaxaListAction.execute()");
 		}
@@ -127,6 +127,6 @@ public final class TaxaListAction extends Action {
         //s_log.warn("execute() list:" + taxaList);
 		request.setAttribute("title", title);
 	    request.setAttribute("list", taxaList);        
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
 	}
 }

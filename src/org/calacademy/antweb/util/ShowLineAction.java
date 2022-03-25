@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ShowLineAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ShowLineAction.class);
+    private static final Log s_log = LogFactory.getLog(ShowLineAction.class);
 
     public ActionForward execute(
         ActionMapping mapping,
@@ -35,15 +35,15 @@ public final class ShowLineAction extends Action {
         line = (String) df.get("line");
 
         String command = "awk '{if ((NR == " + line + ")) print $0}' " + fileName; 
-        String message = (new AntwebSystem()).launchProcess(command, true);
+        String message = new AntwebSystem().launchProcess(command, true);
 
         String shortMessage = "No results";
-        if ((message != null) && (message.length() < 100)) shortMessage = "-" + message + "-";
-        if ((message != null) && (message.length() >= 100)) shortMessage = message.substring(0, 100);
+        if (message != null && message.length() < 100) shortMessage = "-" + message + "-";
+        if (message != null && message.length() >= 100) shortMessage = message.substring(0, 100);
 
         if (AntwebProps.isDevMode()) AntwebUtil.log("command:" + command + " results:" + shortMessage);
 
         request.setAttribute("message", message);
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
       }
 }

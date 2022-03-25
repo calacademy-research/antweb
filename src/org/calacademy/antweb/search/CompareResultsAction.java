@@ -21,7 +21,7 @@ import org.calacademy.antweb.*;
     
 public final class CompareResultsAction extends ResultsAction {
 
-    private static Log s_log = LogFactory.getLog(CompareResultsAction.class);
+    private static final Log s_log = LogFactory.getLog(CompareResultsAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -45,7 +45,7 @@ public final class CompareResultsAction extends ResultsAction {
         Project project = ProjectMgr.getProject(projectName);
         if (project == null) {
 	      request.setAttribute("message", "Project not found:" + projectName);
-	      return (mapping.findForward("message"));    
+	      return mapping.findForward("message");
 	    }
 
         /*
@@ -77,10 +77,10 @@ public final class CompareResultsAction extends ResultsAction {
         // OCT312016
            //A.log("CompareResultsAction.execute() projectName:" + projectName);
 
-        if ((taxaForm.getTaxa() != null) || (taxaForm.getChosen() != null)) {
+        if (taxaForm.getTaxa() != null || taxaForm.getChosen() != null) {
             String[] chosen = taxaForm.getChosen();
-            ArrayList<String> chosenList = new ArrayList(Arrays.asList(chosen));
-            ArrayList<ResultItem> chosenResults = null;
+            ArrayList<String> chosenList = new ArrayList<>(Arrays.asList(chosen));
+            ArrayList<ResultItem> chosenResults;
                 
             String resultRank = taxaForm.getResultRank();
             if (resultRank == null) resultRank = ResultRank.SPECIMEN;
@@ -115,13 +115,13 @@ public final class CompareResultsAction extends ResultsAction {
 				  String message = "Unsupported Result Rank for Compare Results:" + resultRank;
 				  s_log.error("execute() " + message);
 				  request.setAttribute("message", message);
-				  return (mapping.findForward("message"));            				
+				  return mapping.findForward("message");
                 }
             } catch (IndexOutOfBoundsException e) {
               String message = "Session could be stale.  Please restart the search process.";
               s_log.error("execute() " + message);
               request.setAttribute("message", message);
-              return (mapping.findForward("message"));            
+              return mapping.findForward("message");
             }
                         
             /* The taxaToCompare TreeMap is keyed by Specimen (casent displayed), which is meaningless and makes
@@ -172,19 +172,19 @@ public final class CompareResultsAction extends ResultsAction {
         String shot = request.getParameter("shot");
 		//A.log("CompareResultsAction.execute() shot:" + shot);
         if (shot != null) {
-            return (mapping.findForward("oneView"));
+            return mapping.findForward("oneView");
         } else {
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         }
     }
 
     private TreeMap<Taxon, Integer> getSpecimenToCompare(HttpServletRequest request, ArrayList<ResultItem> chosenResults
             , ArrayList<String> chosenList, Project project) {
 
-		TreeMap<Taxon, Integer> specimenToCompare = new TreeMap();   // maps a specimen to its position in the search results.  was new GenusSpeciesItemComparator()
+		TreeMap<Taxon, Integer> specimenToCompare = new TreeMap<>();   // maps a specimen to its position in the search results.  was new GenusSpeciesItemComparator()
 
 		Specimen specimen = null;
-		java.sql.Connection connection = null;
+		Connection connection = null;
 
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
@@ -203,13 +203,13 @@ public final class CompareResultsAction extends ResultsAction {
 				specimen = new Specimen(thisItem.getCode(), project, connection, true); // getImages! Needed?
 				//A.log("getSpecimenToCompare() specimen:" + specimen);
 
-				Integer chosenListGetCount = 0;
+				int chosenListGetCount = 0;
 				if (chosenList.size() > count) {
-				  chosenListGetCount = Integer.valueOf((String) chosenList.get(count));           
+				  chosenListGetCount = Integer.parseInt(chosenList.get(count));
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);
 				}
 				
-				specimenToCompare.put(specimen, Integer.valueOf(chosenListGetCount));  // was count
+				specimenToCompare.put(specimen, chosenListGetCount);  // was count
                   // A.log("getSpecimenToCompare() specimen:" + specimen + " count:" + count + " chosenList.getCount:" + chosenListGetCount + " specimenToCompare:" + specimenToCompare.size());
 				++count;      // was count++;              
 			}
@@ -226,10 +226,10 @@ public final class CompareResultsAction extends ResultsAction {
     private TreeMap<Taxon, Integer> getTaxaToCompare(HttpServletRequest request, ArrayList<ResultItem> chosenResults
             , ArrayList<String> chosenList, Project project, String resultRank) {
 
-		TreeMap<Taxon, Integer> taxaToCompare = new TreeMap(new GenusSpeciesItemComparator());   // maps a taxon to its position in the search results
+		TreeMap<Taxon, Integer> taxaToCompare = new TreeMap<>(new GenusSpeciesItemComparator());   // maps a taxon to its position in the search results
 
 		Taxon taxon = null;
-		java.sql.Connection connection = null;
+		Connection connection = null;
 
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
@@ -265,13 +265,13 @@ public final class CompareResultsAction extends ResultsAction {
 				taxon.generateBrowserParams(project);
 				taxon.setImages(connection, project);
 
-				Integer chosenListGetCount = 0;
+				int chosenListGetCount = 0;
 				if (chosenList.size() > count) {
-				  chosenListGetCount = Integer.valueOf((String) chosenList.get(count));
+				  chosenListGetCount = Integer.parseInt(chosenList.get(count));
 				  // s_log.info("  getTaxaToCompare() chosenListSize:" + chosenList.size() + " chosenListGetCount:" + chosenListGetCount);
 				}
 				
-				taxaToCompare.put(taxon, Integer.valueOf(chosenListGetCount));  // was count
+				taxaToCompare.put(taxon, chosenListGetCount);  // was count
 				if (AntwebProps.isDevMode()) s_log.info("getTaxaToCompare() taxon:" + taxon + " count:" + count + " chosenList.getCount:" + chosenListGetCount + " taxaToCompare:" + taxaToCompare.size());
 				++count;      // was count++;              
 			}
@@ -288,13 +288,13 @@ public final class CompareResultsAction extends ResultsAction {
 
     protected ArrayList<ResultItem> getSpecimensForTaxaFromResults(ArrayList<String> chosenList
              , ArrayList<ResultItem> theTaxa, ArrayList<ResultItem> searchResults) {
-        ArrayList<ResultItem> theSpecimens = new ArrayList();
-        ResultItem thisItem = null;
-        int thisChosen = 0;
+        ArrayList<ResultItem> theSpecimens = new ArrayList<>();
+        ResultItem thisItem;
+        int thisChosen;
   
         for (String chosenListNext : chosenList) {
-            thisChosen = (Integer.valueOf(chosenListNext)).intValue();
-            thisItem = (ResultItem) theTaxa.get(thisChosen);
+            thisChosen = Integer.parseInt(chosenListNext);
+            thisItem = theTaxa.get(thisChosen);
 
             //A.log("getSpecimensForTaxaFromResults() chosenListNext:" + chosenListNext + " thisItem:" + thisItem);
 

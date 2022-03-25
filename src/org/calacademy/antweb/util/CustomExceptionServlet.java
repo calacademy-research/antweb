@@ -1,18 +1,20 @@
 package org.calacademy.antweb.util;
 
-import java.util.*;
-import java.io.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Date;
+
 public class CustomExceptionServlet extends HttpServlet {
 
-  private static Log s_log = LogFactory.getLog(CustomExceptionServlet.class);
+  private static final Log s_log = LogFactory.getLog(CustomExceptionServlet.class);
   
-  static String errorPageURL = "error.jsp";
+  static final String errorPageURL = "error.jsp";
   
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
   	throws ServletException, IOException {
@@ -39,7 +41,7 @@ public class CustomExceptionServlet extends HttpServlet {
 			obj = request.getAttribute("javax.servlet.jsp.jspException");
 		}
 
-		if ((obj != null) && (obj instanceof Throwable)) {
+		if (obj != null && obj instanceof Throwable) {
 			exception = (Throwable) obj;
 		}
 		//s_log.error("Request URI: " + request.getAttribute("javax.servlet.forward.request_uri"));

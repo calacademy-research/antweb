@@ -25,7 +25,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class FieldGuideResultsAction extends ResultsAction {
 
-    private static Log s_log = LogFactory.getLog(FieldGuideResultsAction.class);
+    private static final Log s_log = LogFactory.getLog(FieldGuideResultsAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -45,7 +45,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 
         LocalityOverview localityOverview = (LocalityOverview) overview;
 
-        if ((taxaForm.getTaxa() != null) || (taxaForm.getChosen() != null)) {
+        if (taxaForm.getTaxa() != null || taxaForm.getChosen() != null) {
 
 			String title = null;
 			Taxon taxon = null;
@@ -66,7 +66,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 			AdvancedSearchResults searchResults = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");      
 			if (searchResults == null) {
 	          s_log.warn("execute() WST. searchResults is null. Sending to login.");
-			  return (mapping.findForward("goToLogin"));        
+			  return mapping.findForward("goToLogin");
 			}
 
             if (ResultRank.SPECIMEN.equals(resultRank)) {
@@ -87,13 +87,13 @@ public final class FieldGuideResultsAction extends ResultsAction {
 				//if (ResultRank.GENUS.equals(resultRank)) chosenResults = getSpecimensForTaxaFromResults(chosenList, taxonList, searchResults.getResults());
 				//if (ResultRank.SUBFAMILY.equals(resultRank)) chosenResults = getSpecimensForTaxaFromResults(chosenList, taxonList, searchResults.getResults());
 				forward = mapping.findForward("fieldGuideByTaxon");
-				title = (new Formatter()).capitalizeFirstLetter(resultRank) + " Field Guide";                    
+				title = new Formatter().capitalizeFirstLetter(resultRank) + " Field Guide";
 				s_log.debug("execute() chosenResults (taxon) count:" + chosenResults.size());   // For Bay Area ants Marin: 383
 			} else {
 			    String message = "Unsupported Result Rank for Field Guide:" + resultRank;
 			    s_log.error("execute() " + message);
 			    request.setAttribute("message", message);
-			    return (mapping.findForward("message"));            				
+			    return mapping.findForward("message");
             }
             FieldGuide fieldGuide = new FieldGuide();
             Connection connection = null;
@@ -111,10 +111,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
               s_log.debug("execute() (chosenTaxa) count:" + chosenTaxa.size());    // For Bay Area ants Marin: 81
 			  fieldGuide.setTaxa(chosenTaxa);			  
 		  	  fieldGuide.setTitle((String) session.getAttribute("searchTitle"));	
-            } catch (SQLException e) {
-                s_log.error("execute() e:" + e + " caught on request:" + AntwebUtil.getRequestInfo(request));
-                s_log.info(AntwebUtil.getStackTrace(e));
-            } catch (AntwebException e) {
+            } catch (SQLException | AntwebException e) {
                 s_log.error("execute() e:" + e + " caught on request:" + AntwebUtil.getRequestInfo(request));
                 s_log.info(AntwebUtil.getStackTrace(e));
             } finally {
@@ -129,7 +126,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             String message = "No taxa chosen/found for target:" + HttpUtil.getTarget(request);
             s_log.warn(message);
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
 
         saveToken(request);
@@ -150,7 +147,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             if (overview == null) overview = ProjectMgr.getProject(Project.ALLANTWEBANTS);
                 Taxon taxon = null;
 				if (ResultRank.SPECIES.equals(resultRank) || ResultRank.SPECIMEN.equals(resultRank)) {
-                    taxon = (new TaxonDb(connection)).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), resultItem.getSpecies(), null, Rank.SPECIES);
+                    taxon = new TaxonDb(connection).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), resultItem.getSpecies(), null, Rank.SPECIES);
                     if (taxon == null) {
                       s_log.error("getChoseTaxa() subfamily:" + resultItem.getSubfamily() + " species:" + resultItem.getSpecies() + " genus:" + resultItem.getGenus());
                       // Last time this happened (in dev env) it was a data problem, remedied by a production database reload.
@@ -159,10 +156,10 @@ public final class FieldGuideResultsAction extends ResultsAction {
              	// taxon.setChildrenLocalized(project);
 			} else {
   				 if (ResultRank.GENUS.equals(resultRank)) {
-                    taxon = (new TaxonDb(connection)).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), null, null, resultRank);
+                    taxon = new TaxonDb(connection).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getGenus(), null, null, resultRank);
                 } else if (ResultRank.SUBFAMILY.equals(resultRank)) {
                     //taxon = Taxon.getInstance(connection, Family.FORMICIDAE, resultItem.getSubfamily(), resultItem.getSubfamily(), null, null, resultRank);  // Subfamily mentionned twice was a bug?
-                    taxon = (new TaxonDb(connection)).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), null, null, null, resultRank);
+                    taxon = new TaxonDb(connection).getFullTaxon(Family.FORMICIDAE, resultItem.getSubfamily(), null, null, null, resultRank);
                 }                  
 	   		      //taxon.setChildren(project);
 			}
@@ -184,8 +181,8 @@ public final class FieldGuideResultsAction extends ResultsAction {
         int thisChosen = 0;
   
         for (String chosenListNext : chosenList) {
-            thisChosen = (Integer.valueOf(chosenListNext)).intValue();
-            thisItem = (ResultItem) theTaxa.get(thisChosen);
+            thisChosen = Integer.parseInt(chosenListNext);
+            thisItem = theTaxa.get(thisChosen);
             for (ResultItem resultItem : searchResults) {
                 if (thisItem.getSpecies().equals(resultItem.getSpecies())
                   && thisItem.getGenus().equals(resultItem.getGenus())

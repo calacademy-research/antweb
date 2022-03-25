@@ -8,13 +8,13 @@ import org.apache.commons.logging.LogFactory;
 
 public class OperationLock {
 
-    private static Log s_log = LogFactory.getLog(OperationLock.class);
+    private static final Log s_log = LogFactory.getLog(OperationLock.class);
 
-    public static int IMAGE_UPLOAD_LOCK = 1;
+    public static final int IMAGE_UPLOAD_LOCK = 1;
 
-      private static long minute = 60 * 1000;
-      public static long FIFTEENMIN = 15 * minute;
-      public static long ONEHOUR = FIFTEENMIN * 4;
+      private static final long minute = 60 * 1000;
+      public static final long FIFTEENMIN = 15 * minute;
+      public static final long ONEHOUR = FIFTEENMIN * 4;
 
       private int operation = IMAGE_UPLOAD_LOCK;  // Default (and only so far).
       private boolean locked = false;
@@ -41,18 +41,18 @@ public class OperationLock {
         double minDbl = millis / minute;
 
         DecimalFormat decForm = new DecimalFormat("0.0");
-        String minStr = (decForm.format(minDbl)) + " minutes";
+        String minStr = decForm.format(minDbl) + " minutes";
         
         //s_log.warn("convertMillisToMinStr() minStr:" + minStr + " millis:" + millis);
         return minStr;
       }
       
       private String getElapsedTimeHoursMinutesSecondsString(double elapsedTimeDbl) {       
-        long elapsedTime = (Double.valueOf(elapsedTimeDbl)).longValue();
+        long elapsedTime = Double.valueOf(elapsedTimeDbl).longValue();
         String format = String.format("%%0%dd", 2);  
         elapsedTime = elapsedTime / 1000;  
         String seconds = String.format(format, elapsedTime % 60);  
-        String minutes = String.format(format, (elapsedTime % 3600) / 60);  
+        String minutes = String.format(format, elapsedTime % 3600 / 60);
         String hours = String.format(format, elapsedTime / 3600);  
         String time =  hours + ":" + minutes + ":" + seconds;  
         return time;  
@@ -61,13 +61,13 @@ public class OperationLock {
       public double timeToExpire() {
         if (durationMillis == 0) return 0;
         
-        double nowMillis = (new Date()).getTime();
+        double nowMillis = new Date().getTime();
         //double nowMillis = getNow().getTime();
-        long nowMillisLong = (Double.valueOf(nowMillis)).longValue();
+        long nowMillisLong = Double.valueOf(nowMillis).longValue();
         // s_log.warn("timeToExpire: now:" + AntwebUtil.getFormatDateTimeStr(new Date(nowMillisLong)) + " nowMillis:" + nowMillis);        
         
         double createdMillis = getCreated().getTime();
-        long createdMillisLong = (Double.valueOf(createdMillis)).longValue();
+        long createdMillisLong = Double.valueOf(createdMillis).longValue();
         // s_log.warn("timeToExpire: created:" + AntwebUtil.getFormatDateTimeStr(new Date(createdMillisLong)) + " createdMillis:" + createdMillis);        
 
         double sinceLockTime = nowMillis - createdMillis;
@@ -94,7 +94,7 @@ public class OperationLock {
         if (durationMillis == 0) return false;
         if (getCreated() == null) return false;  // to avoid an NPE
         double timeToExpire = timeToExpire();
-        return (timeToExpire < 0);
+        return timeToExpire < 0;
       }
             
       public long getDurationMillis() {

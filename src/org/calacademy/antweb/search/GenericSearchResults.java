@@ -25,10 +25,10 @@ import org.apache.commons.logging.LogFactory;
  
 public class GenericSearchResults implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(GenericSearchResults.class);
+    private static final Log s_log = LogFactory.getLog(GenericSearchResults.class);
 
     protected static int maxResultsToShow = 20;
-    protected ArrayList rset;
+    protected ArrayList<ResultItem> rset;
     protected ArrayList filters;
     protected String project;
     protected ArrayList<ResultItem> results;
@@ -38,15 +38,15 @@ public class GenericSearchResults implements Serializable {
     
     public ArrayList<ResultItem> filter(ArrayList<ResultItem> dataset, String property) {
         ArrayList<ResultItem> newList = new ArrayList<>();
-        ResultItem thisItem = null;
+        ResultItem thisItem;
         if (dataset != null) {
             for (ResultItem resultItem : dataset) {
                 thisItem = resultItem;
                 if ("images".equals(property)) {
-                    if ((thisItem.isHasImages()) || ((thisItem.getSynonym() != null) && (thisItem.getSynonym().isHasImages()))) {
+                    if (thisItem.isHasImages() || thisItem.getSynonym() != null && thisItem.getSynonym().isHasImages()) {
                         newList.add(thisItem);
                     }
-                } else if ("types".equals(property) && (thisItem.getType() != null) && (!thisItem.getType().equals(""))) {
+                } else if ("types".equals(property) && thisItem.getType() != null && !thisItem.getType().equals("")) {
                     newList.add(thisItem);
                 } else {
                     //System.out.println(thisItem.getName() + " filtered out with type: " + thisItem.getType());
@@ -147,7 +147,7 @@ public class GenericSearchResults implements Serializable {
           dummySpecimen.setUploadId(thisItem.getUploadId());
           taxonList.add(dummySpecimen);  
 
-          AntwebUtil.logFirst("GenericSearchResults.getResultsAsTaxon() code:" + dummySpecimen.getCode() + " resultItem:" + dummySpecimen.toString() + " adm1:" + dummySpecimen.getAdm1() + " adm2:" + dummySpecimen.getAdm2());                
+          AntwebUtil.logFirst("GenericSearchResults.getResultsAsTaxon() code:" + dummySpecimen.getCode() + " resultItem:" + dummySpecimen + " adm1:" + dummySpecimen.getAdm1() + " adm2:" + dummySpecimen.getAdm2());
       }
       dummyTaxon.setChildren(taxonList);
       
@@ -164,7 +164,7 @@ public class GenericSearchResults implements Serializable {
         return results;
     }
 
-    public void setResults(ArrayList rset, String name, String project)
+    public void setResults(ArrayList<ResultItem> rset, String name, String project)
         throws Exception {
             
         this.rset = rset;
@@ -178,13 +178,13 @@ public class GenericSearchResults implements Serializable {
     }
     
     public void setResultsWithFilters(ArrayList<String> filters) {  // throws Exception
-        Iterator iter = filters.iterator();
-        ArrayList tempSet = rset;
+        Iterator<String> iter = filters.iterator();
+        ArrayList<ResultItem> tempSet = rset;
         while (iter.hasNext()) {
-            tempSet = filter(tempSet, (String) iter.next());
+            tempSet = filter(tempSet, iter.next());
         }
         rset = tempSet;
-        if ((filters.contains("types"))) {
+        if (filters.contains("types")) {
             setResults();
         } else {        
             setResultsCollapse();
@@ -208,21 +208,21 @@ public class GenericSearchResults implements Serializable {
             Hashtable imageCheck = new Hashtable();
             Hashtable typeCheck = new Hashtable();
 
-            ResultItem item = null;
+            ResultItem item;
             ArrayList rank = null;
-            ResultItem synonym = null;
+            ResultItem synonym;
 
 
-            Iterator resIter = rset.iterator();
-            ResultItem thisItem = null;
+            Iterator<ResultItem> resIter = rset.iterator();
+            ResultItem thisItem;
             while (resIter.hasNext()) {
-                thisItem = (ResultItem) resIter.next();
+                thisItem = resIter.next();
                  
                 String genus = thisItem.getGenus();
                 String species = thisItem.getSpecies();
                 String subspecies = thisItem.getSubspecies();
                 
-                String pageParams = ""; 
+                String pageParams = "";
                 
                 item = new ResultItem();
                 
@@ -320,7 +320,7 @@ public class GenericSearchResults implements Serializable {
                 myResults.add(item);
             }
 
-        Collections.sort(myResults, new ResultItemComparator());
+        myResults.sort(new ResultItemComparator());
         this.results = myResults;
     }
 
@@ -347,9 +347,9 @@ public class GenericSearchResults implements Serializable {
     }
 
     protected void updateHash(Hashtable hash, String key, Boolean value) {
-        if (!(hash.containsKey(key))) {
+        if (!hash.containsKey(key)) {
             hash.put(key, value);
-        } else if (((Boolean) hash.get(key)).booleanValue() == false) {
+        } else if (!((Boolean) hash.get(key))) {
             hash.put(key, value);
         }
     }
@@ -368,10 +368,10 @@ public class GenericSearchResults implements Serializable {
         }
     }
 */
-    public ArrayList getRset() {
+    public ArrayList<ResultItem> getRset() {
         return rset;
     }
-    public void setRset(ArrayList list) {
+    public void setRset(ArrayList<ResultItem> list) {
         rset = list;
     }
 
@@ -400,43 +400,43 @@ public class GenericSearchResults implements Serializable {
 
         ArrayList<ResultItem> myResults = new ArrayList<>();
 
-		ArrayList tracker = new ArrayList();
-		Hashtable imageCheck = new Hashtable();
-		Hashtable typeCheck = new Hashtable();
+		ArrayList<String> tracker = new ArrayList<>();
+		Hashtable<String, Boolean> imageCheck = new Hashtable<>();
+		Hashtable<String, Boolean> typeCheck = new Hashtable<>();
 
-		ArrayList rank = null;
-		String thisRank = null;
-		String pageParams = null;
+		ArrayList rank;
+		String thisRank;
+		String pageParams;
 		boolean hasImages = false;
 		boolean hasTypes = false;
-		String family = null;
-		String subfamily = null;
-		String genus = null;
-		String species = null;
+		String family;
+		String subfamily;
+		String genus;
+		String species;
 		String subspecies = null;
-		String code = null;
-		String type = null;
-		Iterator rankIterator = null;
-		ResultItem item = null;
+		String code;
+		String type;
+		Iterator rankIterator;
+		ResultItem item;
 		String typeOriginalCombination = null;
-		String fullName = null;
+		String fullName;
 				
-		String tempCombo = null;
-		String combo = null;
+		String tempCombo;
+		String combo;
 		Iterator resIter = rset.iterator();
-		SearchItem thisItem = null;
-		ResultItem synonym = null;
-		String country=null;
-		String adm1=null;
-		String localityName=null;
-		String itemName = null;
-		String lifeStage = null;
-		String caste = null;
-		String subcaste = null;
-		String medium = null;
-		String specimenNotes = null;
-		String artist = null;
-		String group = null;
+		SearchItem thisItem;
+		ResultItem synonym;
+		String country;
+		String adm1;
+		String localityName;
+		String itemName;
+		String lifeStage;
+		String caste;
+		String subcaste;
+		String medium;
+		String specimenNotes;
+		String artist;
+		String group;
 		String shotType = null;
 		String shotNumber = null;
 		String uploadDate = null;
@@ -479,7 +479,7 @@ public class GenericSearchResults implements Serializable {
 					item = new ResultItem();
 
 					thisRank = (String) rankIterator.next();
-					if ((type != null) && (!("".equals(type)))) {
+					if (type != null && !"".equals(type)) {
 						hasTypes = true;
 					}
 
@@ -519,7 +519,7 @@ public class GenericSearchResults implements Serializable {
 						pageParams = "rank=subfamily&subfamily=" + subfamily + "&project=" + project;
 
 					// if this is a genus and not a binomial pair
-					} else if (thisRank.equals("genus") && ((species == null) || (species.length() == 0))) {
+					} else if (thisRank.equals("genus") && (species == null || species.length() == 0)) {
 						fullName = genus;
 						itemName = genus;
 						pageParams =
@@ -545,8 +545,8 @@ public class GenericSearchResults implements Serializable {
 						updateHash(imageCheck, tempCombo, hasImages);
 						updateHash(typeCheck, tempCombo, hasTypes);
 						
-						if ((!(tracker.contains(tempCombo)))
-							&& (fullName.length() > 2)) {
+						if (!tracker.contains(tempCombo)
+							&& fullName.length() > 2) {
 							item = makeNewItem(
 								genus, genus, family, subfamily, genus,
 								null,  // this was species, but I think it should be null 
@@ -579,8 +579,8 @@ public class GenericSearchResults implements Serializable {
 					updateHash(imageCheck, combo, hasImages);
 					updateHash(typeCheck, combo, hasTypes);
 
-					if ((!(tracker.contains(combo)))
-						&& (fullName.length() > 2)) {
+					if (!tracker.contains(combo)
+						&& fullName.length() > 2) {
 						item =
 							makeNewItem(
 								itemName, fullName, family, subfamily, genus, species, subspecies,
@@ -610,20 +610,18 @@ public class GenericSearchResults implements Serializable {
 		// now go through the items and set the images and types appropriately
 
 		Iterator iterator = myResults.iterator();
-		ResultItem resItem = null;
-		String thisCombo = "";
+		ResultItem resItem;
+		String thisCombo;
 		while (iterator.hasNext()) {
 			resItem = (ResultItem) iterator.next();
 		   thisCombo = resItem.getRank() + ":" + resItem.getFullName();
 
-            resItem.setHasImages(((Boolean) imageCheck.get(thisCombo)).booleanValue()
-                    == true);
+            resItem.setHasImages(imageCheck.get(thisCombo));
 
-            resItem.setTypes(((Boolean) typeCheck.get(thisCombo)).booleanValue()
-                    == true);
+            resItem.setTypes(typeCheck.get(thisCombo));
 		}
 
-        Collections.sort(myResults, new ResultItemComparator());
+        myResults.sort(new ResultItemComparator());
         this.results = myResults;
     }
             
@@ -675,7 +673,7 @@ public class GenericSearchResults implements Serializable {
     protected void removeNullCodes() {
         if (rset == null) return;  // Mark Feb, 2013
         Iterator rsetIter = rset.iterator();
-        ResultItem resItem = null;
+        ResultItem resItem;
         while (rsetIter.hasNext()) {
             resItem = (ResultItem) rsetIter.next();
             if (resItem.getCode() == null) {
@@ -685,14 +683,14 @@ public class GenericSearchResults implements Serializable {
     }
         
     public ArrayList<String> getSpecimens() {            
-        if ((rset == null) || (rset.size() < 1)) {
+        if (rset == null || rset.size() < 1) {
             return null;
         }
             
         ArrayList<String> specimens = new ArrayList();
         Iterator iter = rset.iterator();
         //Utility util = new Utility();
-        SearchItem thisResult = null;
+        SearchItem thisResult;
         while (iter.hasNext()) {
             thisResult = (SearchItem) iter.next();
             if (Utility.notBlank(thisResult.getCode())) {

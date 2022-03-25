@@ -31,7 +31,7 @@ public class UploadFileServlet extends HttpServlet {
 
 		PrintWriter out = response.getWriter();
 		HttpSession httpSession = request.getSession();
-		String filePathUpload = (String) httpSession.getAttribute("path")!=null ? httpSession.getAttribute("path").toString() : "" ;
+		String filePathUpload = httpSession.getAttribute("path") !=null ? httpSession.getAttribute("path").toString() : "" ;
 
 		String path1 = filePathUpload;
 		String filename = null;

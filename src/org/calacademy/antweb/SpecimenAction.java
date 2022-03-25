@@ -1,11 +1,13 @@
 package org.calacademy.antweb;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -14,12 +16,13 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+import org.calacademy.antweb.upload.UploadAction;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
 public final class SpecimenAction extends DescriptionAction {
 
-    private static Log s_log = LogFactory.getLog(SpecimenAction.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -35,7 +38,7 @@ public final class SpecimenAction extends DescriptionAction {
           ActionForward c = Check.init(Check.UPLOAD, request, mapping); if (c != null) return c;
         }
 
-        java.util.Date startTime = new java.util.Date();
+        Date startTime = new Date();
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
 
@@ -47,15 +50,15 @@ public final class SpecimenAction extends DescriptionAction {
         if (code == null) code = name;
         if (code == null) {
 			request.setAttribute("message", "Specimen code not found");
-			return (mapping.findForward("message"));        
+			return mapping.findForward("message");
         }
         code = code.toLowerCase();
         Specimen specimen = null;
 
         if (code != null) {
-            java.sql.Connection connection = null;
+            Connection connection = null;
             try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 
                 if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
                 
@@ -80,11 +83,11 @@ public final class SpecimenAction extends DescriptionAction {
                     specimen.fullInit(connection);
                     //A.log("execute() uploadedBy:" + specimen.getAccessGroup());
                     boolean success = saveDescriptionEdit(specimenForm, specimen, accessLogin, request, connection);   
-                    if (!success) return (mapping.findForward("message"));    
+                    if (!success) return mapping.findForward("message");
                     
                     if (accessLogin != null) getDescEditHistory(specimen, connection, request);
                     
-                    ArrayList specimenList = new ArrayList();
+                    ArrayList<String> specimenList = new ArrayList<>();
                     specimenList.add(specimen.getCode());
                     
                     specimen.setMap(new Map(specimenList, connection));                    
@@ -96,13 +99,13 @@ public final class SpecimenAction extends DescriptionAction {
                 } else {
                     String message = "Specimen:" + code + " is not in the AntWeb database";
 
-                    if ((overview != null) && (!overview.toString().equals("allantwebants")) && (!overview.toString().equals("")) ) {
+                    if (overview != null && !overview.toString().equals("allantwebants") && !overview.toString().equals("")) {
                       message += " for overview:" + overview + ".  <br><br>Go to <a href=" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "&project=allantwebants>All Antweb</a>.";
                     } else {
                       message += ".";
                     }
 
-                    if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
+                    if (UploadAction.isInUploadProcess()) {
                         // An upload is currently in process.  Request that this process be re-attempted shortly.
                         message += "  A curator is currently in the process of an Upload.  Please try again shortly.";
                     } else {
@@ -111,7 +114,7 @@ public final class SpecimenAction extends DescriptionAction {
                     }
                     
                     request.setAttribute("message", message);
-                    return (mapping.findForward("message"));
+                    return mapping.findForward("message");
                 }
             //} catch (AntwebException e) {
             //    s_log.error("execute() e:" + e + " " + HttpUtil.getRequestInfo(request));
@@ -122,7 +125,7 @@ public final class SpecimenAction extends DescriptionAction {
                 } else {
                     s_log.error("execute() e:" + e);
                 }
-                return (mapping.findForward("failure"));
+                return mapping.findForward("failure");
             } finally {
                 try {
                     QueryProfiler.profile("specimenAction", startTime);	            
@@ -144,7 +147,7 @@ public final class SpecimenAction extends DescriptionAction {
             request.setAttribute("ogTitle", ogTitle);
 			if (specimen.getImages() != null) {
               //A.log("execute() images:" + specimen.getImages());			
-			  SpecimenImage headShot = (SpecimenImage) specimen.getImages().get("p1");
+			  SpecimenImage headShot = specimen.getImages().get("p1");
 			  if (headShot != null) {
 				ogImage = headShot.getHighres();
 				s_log.debug("execute() ogImage:" + ogImage);
@@ -167,6 +170,6 @@ public final class SpecimenAction extends DescriptionAction {
         //saveToken(request);
 
         // Forward control to the edit user registration page
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

@@ -14,14 +14,14 @@ public abstract class TaxonPropMgr {
 
     private static final Log s_log = LogFactory.getLog(TaxonPropMgr.class);
 
-    private static HashMap<String, String> s_taxaIntroducedMaps = null;
+    private static HashMap<String, String> s_taxaIntroducedMaps;
 
     public static void populate(Connection connection) {
       populate(connection, false);
     }
 
     public static void populate(Connection connection, boolean forceReload) {
-      if (!forceReload && (s_taxaIntroducedMaps != null)) return;
+      if (!forceReload && s_taxaIntroducedMaps != null) return;
       
       TaxonPropDb taxonPropDb = new TaxonPropDb(connection);      
       s_taxaIntroducedMaps = taxonPropDb.getTaxaIntroducedMaps();
@@ -39,7 +39,7 @@ public abstract class TaxonPropMgr {
 	    }
 	    return null;
 	  }
-      return (String) s_taxaIntroducedMaps.get(taxonName);    
+      return s_taxaIntroducedMaps.get(taxonName);
     }
     
     public static boolean isIntroduced(String taxonName, String bioregion) {
@@ -52,7 +52,7 @@ public abstract class TaxonPropMgr {
 
     public static boolean isIntroducedSomewhere(String taxonName) {
       String introducedMap = TaxonPropMgr.getIntroducedMap(taxonName);
-      boolean isIntroducedSomewhere = (introducedMap != null);
+      boolean isIntroducedSomewhere = introducedMap != null;
       return isIntroducedSomewhere;
     }
 

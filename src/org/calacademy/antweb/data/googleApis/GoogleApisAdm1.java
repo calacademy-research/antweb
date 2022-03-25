@@ -9,12 +9,12 @@ import com.google.gson.*;
 
 public class GoogleApisAdm1 {
 
-    private static Log s_log = LogFactory.getLog(GoogleApisAdm1.class);
+    private static final Log s_log = LogFactory.getLog(GoogleApisAdm1.class);
 
 
     public static final String source = "GoogleApis";
 
-    private static String json = null;
+    private static String json;
 
     private static String centroid;
     private static String boundingBox;
@@ -87,7 +87,7 @@ s_log.warn("6:" + adm1Response.results.get(0).address_components[0].types[0].toC
 			}
 		} catch (AntwebException e) {
           throw e;
-		} catch (com.google.gson.JsonSyntaxException e) {
+		} catch (JsonSyntaxException e) {
 		  s_log.warn("fetch() fetchUrl:" + fetchUrl + " e:" + e);
         } catch (Exception e) {
 		  s_log.warn("fetch() fetchUrl:" + fetchUrl + " adm1Response:" + adm1Response + " e:" + e);

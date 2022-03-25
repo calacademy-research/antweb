@@ -17,8 +17,8 @@ import org.apache.struts.action.ActionMapping;
 public final class WorldAuthorityForm extends ActionForm {
 
 
-    private String mode = null;
-    private String fileName = null;
+    private String mode;
+    private String fileName;
     
 
 	public String getFileName() {
@@ -30,7 +30,7 @@ public final class WorldAuthorityForm extends ActionForm {
 	}
 
 	public String getMode() {
-	return (this.mode);
+	return this.mode;
 	}
 
 	public void setMode(String mode) {

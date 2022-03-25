@@ -7,21 +7,21 @@ import org.apache.commons.logging.LogFactory;
 
 public class StatSet {
 
-    private static Log s_log = LogFactory.getLog(StatSet.class);
+    private static final Log s_log = LogFactory.getLog(StatSet.class);
 
     public StatSet(String name) {
       this.name = name;
     }
     
-    private String name = null;
+    private final String name;
 
-    private String title1 = null;
+    private String title1;
     private int value1 = 0;
-    private String title2 = null;
+    private String title2;
     private int value2 = 0;
-    private String title3 = null;
+    private String title3;
     private int value3 = 0;
-    private String title4 = null;
+    private String title4;
     private int value4 = 0;
 
     public void set1(String title, int value) {

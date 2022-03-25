@@ -12,7 +12,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public class Museum extends LocalityOverview implements Countable {
     
-    private static Log s_log = LogFactory.getLog(Museum.class);
+    private static final Log s_log = LogFactory.getLog(Museum.class);
 
     private String code;
     private String name;
@@ -20,7 +20,7 @@ public class Museum extends LocalityOverview implements Countable {
 
     private boolean isActive;    
 
-    private Hashtable description;
+    private Hashtable<String, String> description;
 
     private Date created;      
     private Date modified;      
@@ -184,16 +184,16 @@ public class Museum extends LocalityOverview implements Countable {
       return "museumCode:" + getCode() + " specimenCount:" + getSpecimenCount() + " imageCount:" + getImageCount(); 
     }   
     
-    public Hashtable getDescription() {
-        if (description == null) description = new Hashtable();
+    public Hashtable<String, String> getDescription() {
+        if (description == null) description = new Hashtable<>();
         return description;
     }
-    public void setDescription(Hashtable description) {
+    public void setDescription(Hashtable<String, String> description) {
         this.description = description;
     }
 
     public boolean hasDescription(String title) {
-      Set<String> keys = (Set<String>) getDescription().keySet();
+      Set<String> keys = getDescription().keySet();
       for (String key : keys) {
         if (key.equals(title)) return true;
       }

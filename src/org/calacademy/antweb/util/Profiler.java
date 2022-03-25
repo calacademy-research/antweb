@@ -14,13 +14,13 @@ public class Profiler {
    query statistics there.  Also viewable in real time in the serverStatus page.
    */
 
-    protected static Date firstOfPeriodTime = null;
+    protected static Date firstOfPeriodTime;
 
-    protected static HashMap<String, Profile> profiles = new HashMap<>();
+    protected static final HashMap<String, Profile> profiles = new HashMap<>();
 
     private static final Log s_log = LogFactory.getLog(Profiler.class);
 
-    private String slowestValue = null;
+    private String slowestValue;
 
     public static void profile(String key, Date startTime) {
       Profiler.profile(key, startTime, null);
@@ -39,7 +39,7 @@ public class Profiler {
         //A.log("min since first:" + AntwebUtil.minsSince(firstOfPeriodTime) + " min since start:" + AntwebUtil.minsSince(startTime) );
 
         if (profiles.containsKey(key)) {
-            Profile profile = (Profile) profiles.get(key);
+            Profile profile = profiles.get(key);
             profile.add(startTime, value);
         } else {
             Profile profile = new Profile();
@@ -63,10 +63,10 @@ public class Profiler {
         for (String key : keySet) {
           Profile profile = profiles.get(key);
           report += " " + key + " - (count:" + profile.getCount() 
-                 + " | avg:" + (profile.getTotalTimePassed() / profile.getCount()) 
+                 + " | avg:" + profile.getTotalTimePassed() / profile.getCount()
                  + " | max:" + profile.getMaxTimePassed() + " | mostSlow:" + profile.getMostSlowValue() + ")<br>";
         }
-		LogMgr.appendLog(logName, (new Date()) + "  " + report + "\r\r" );
+		LogMgr.appendLog(logName, new Date() + "  " + report + "\r\r" );
         if (clear) {
             profiles.clear();  // empty it out on report.
         }
@@ -79,7 +79,7 @@ class Profile {
     long totalTimePassed = 0;
     int count = 0;
     long maxTimePassed = 0;
-    String mostSlowValue = null;
+    String mostSlowValue;
 
     int getCount() {
       return count;

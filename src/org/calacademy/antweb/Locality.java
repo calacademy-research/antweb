@@ -6,13 +6,11 @@ package org.calacademy.antweb;
 
 import java.util.ArrayList;
 
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class Locality {
-    private static Log s_log = LogFactory.getLog(Locality.class);
+    private static final Log s_log = LogFactory.getLog(Locality.class);
 
     private String localityCode="";
     private String localityName="";
@@ -33,7 +31,7 @@ public class Locality {
     protected String elevationMaxError = "";
     protected String latLonMaxError = "";
     
-    private ArrayList<Group> groupList = new ArrayList();
+    private ArrayList<Group> groupList = new ArrayList<>();
     
     // MarkMap
     protected Map map;
@@ -186,7 +184,7 @@ public class Locality {
   public String getAmissEmail() {
     String amissEmail = "antweb@calacademy.org";  
     if (getGroupList().size() == 1) {
-      amissEmail = ((Group) getGroupList().get(0)).getAdminEmail();
+      amissEmail = getGroupList().get(0).getAdminEmail();
     }
     s_log.debug("getAmissEmail() size:" + getGroupList().size() + " amissEmail:" + amissEmail);
     return amissEmail;

@@ -12,6 +12,7 @@ import org.apache.struts.actions.DispatchAction;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.calacademy.antweb.util.*;
 
@@ -20,13 +21,13 @@ import org.apache.commons.logging.LogFactory;
 
 public final class SearchAction extends DispatchAction {
 
-    private static Log s_log = LogFactory.getLog(SearchAction.class);
+    private static final Log s_log = LogFactory.getLog(SearchAction.class);
     private static final Log s_searchLog = LogFactory.getLog("searchLog");
 
     public static int tempSpecimenSearchLimit = -1;
     public static int specimenSearchLimit = 50000;   // default can be overridden with setTempSpecimenSearchLimit()
-    public static int devSpecimenSearchLimit = 10000;
-    public static int noSpecimenSearchLimit = 1000000;
+    public static final int devSpecimenSearchLimit = 10000;
+    public static final int noSpecimenSearchLimit = 1000000;
 
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
@@ -150,7 +151,7 @@ public final class SearchAction extends DispatchAction {
         }
 
         HttpSession session = request.getSession();
-		java.util.Date startTime = new java.util.Date();
+		Date startTime = new Date();
         String execTime = null;
         
         String types = searchParameters.getTypes();
@@ -166,7 +167,7 @@ public final class SearchAction extends DispatchAction {
 			                 
         if (searchResults == null) {
             //s_log.warn("doAdvancedSearch() searchResults=null for searchParameters:" + searchParameters);
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
         if (AntwebProps.isDevMode()) {
           //s_log.warn("advancedSearch() searchParameters:" + searchParameters);
@@ -178,10 +179,10 @@ public final class SearchAction extends DispatchAction {
         AdvancedSearchResults results = new AdvancedSearchResults();
         results.setRset(searchResults);
         ArrayList<String> myFilters = new ArrayList<>();
-        if ((imagesOnly != null) && (imagesOnly.equals("on"))) {
+        if (imagesOnly != null && imagesOnly.equals("on")) {
             myFilters.add("images");
         }
-        if ((types != null) && (types.equals("on"))) {
+        if (types != null && types.equals("on")) {
             myFilters.add("types");
         }
         //s_log.info("doAdvancedSearch() with filters:" + myFilters + " it has " + results.getSpecimens().size() + " specimens");
@@ -214,7 +215,7 @@ public final class SearchAction extends DispatchAction {
             String resultSetModifier = resultSetSize + " specimens" + greaterThanModifier;
             session.setAttribute("resultSetModifier", resultSetModifier);          
           } else {                    
-            java.util.ArrayList taxonList = null;
+            ArrayList taxonList = null;
             if (resultRank.equals(ResultRank.SUBFAMILY)) taxonList = results.getSubfamilyList(); 
             if (resultRank.equals(ResultRank.GENUS)) taxonList = results.getGenusList(); 
             if (resultRank.equals(ResultRank.SPECIES)) taxonList = results.getSpeciesList(); 
@@ -251,7 +252,7 @@ public final class SearchAction extends DispatchAction {
 				DataSource dataSource = getDataSource(request,"conPool");
 				connection = DBUtil.getConnection(dataSource, "SearchAction.doAdvancedSearch()");  
 				title = "Mapping Search Results";
-				map = (new MapResultsAction()).getMap(results.getResults(), null, null, resultRank, output, title, connection); // nulls are taxonList, chosenList
+				map = new MapResultsAction().getMap(results.getResults(), null, null, resultRank, output, title, connection); // nulls are taxonList, chosenList
 			} catch (IndexOutOfBoundsException e2) {
 			  String message = "Case#:" + AntwebUtil.getCaseNumber() + " e:" + e2 + " target:" + HttpUtil.getTarget(request);
 			  s_log.warn("execute() message:" + message);
@@ -264,7 +265,7 @@ public final class SearchAction extends DispatchAction {
 				DBUtil.close(connection, this, "SearchAction.doAdvancedSearch()");
 			}  
 			
-			String sizeStr = (map.getChosenList() == null) ? "null" : "" + map.getChosenList().size();
+			String sizeStr = map.getChosenList() == null ? "null" : "" + map.getChosenList().size();
 			s_log.debug("SearchAction.doAdvancedSearch() resultRank:" + resultRank + " title:" + map.getTitle() + " chosenList.size:" + sizeStr + " map:" + map);
 
             String pageTitle = "";
@@ -279,7 +280,7 @@ public final class SearchAction extends DispatchAction {
 			session.setAttribute("map", map);
 			session.setAttribute("chosenList", map.getChosenList());
 
-			return (mapping.findForward("dynamicMap"));                  
+			return mapping.findForward("dynamicMap");
           }
 
           session.setAttribute("resultRank", resultRank);        
@@ -291,7 +292,7 @@ public final class SearchAction extends DispatchAction {
 
         } else {
             //A.log("doAdvancedSearch() failure");  
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
       } finally {
         SearchAction.undoSetTempSpecimenSearchLimit();        
@@ -304,7 +305,7 @@ public final class SearchAction extends DispatchAction {
           throws IOException, ServletException, SearchException, SQLException {
 
         HttpSession session = request.getSession();
-		java.util.Date startTime = new java.util.Date(); // for HttpUtil.finish(request, startTime);
+		Date startTime = new Date(); // for HttpUtil.finish(request, startTime);
 
         BayAreaSearchForm bayForm = (BayAreaSearchForm) form;
 
@@ -341,9 +342,9 @@ public final class SearchAction extends DispatchAction {
         session.setAttribute("searchResults", results);
 
         if (results != null) {
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         } else {
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
     }
 
@@ -351,7 +352,7 @@ public final class SearchAction extends DispatchAction {
         HttpServletRequest request, HttpServletResponse response)
           throws IOException, ServletException, SearchException {
             
-		java.util.Date startTime = new java.util.Date(); // for HttpUtil.finish(request, startTime);
+		Date startTime = new Date(); // for HttpUtil.finish(request, startTime);
             
         HttpSession session = request.getSession();
         SearchParameters searchParameters = new SearchParameters((RecentImagesForm) form);
@@ -375,9 +376,9 @@ public final class SearchAction extends DispatchAction {
 		HttpUtil.finish(request, startTime);
 
         if (results != null) {
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         } else {
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
     }    
 

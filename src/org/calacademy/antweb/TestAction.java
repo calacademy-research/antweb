@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.*;
@@ -18,7 +20,7 @@ import org.apache.commons.logging.LogFactory;
 //http://localhost/antweb/test.do
 public final class TestAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(TestAction.class);
+    private static final Log s_log = LogFactory.getLog(TestAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -32,9 +34,9 @@ public final class TestAction extends Action {
           return mapping.findForward("mobile");
         }			
 			
-		java.sql.Connection connection = null;		
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+			DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "TestAction.execute()");
             int speciesFound = 0;
             if (AntwebProps.isDevMode()) {
@@ -69,10 +71,10 @@ public final class TestAction extends Action {
 		        
         if (true) {        
 		  request.setAttribute("message", message);
-		  return (mapping.findForward("message"));
+		  return mapping.findForward("message");
         }
 
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 	
 }

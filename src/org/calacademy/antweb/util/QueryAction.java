@@ -17,7 +17,7 @@ import org.calacademy.antweb.home.*;
 
 public class QueryAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(QueryAction.class);
+    private static final Log s_log = LogFactory.getLog(QueryAction.class);
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
@@ -80,7 +80,7 @@ public class QueryAction extends Action {
                 if (action.equals("curiousQuery") || action.equals("query")) {
                   if (name == null || "".equals(name)) {
                     request.setAttribute("message", "Enter query name into url bar.");
-                    return (mapping.findForward("message")); 			  
+                    return mapping.findForward("message");
                   }
               
                   String message = QueryManager.curiousQuery(name, connection);
@@ -91,7 +91,7 @@ public class QueryAction extends Action {
                 if (action.equals("queryBattery")) {
                   if (name == null || "".equals(name)) {
                     request.setAttribute("message", "Enter battery name into url bar.");
-                    return (mapping.findForward("message")); 			  
+                    return mapping.findForward("message");
                   }
               
                   String message = QueryManager.queryBattery(name, connection);
@@ -126,16 +126,16 @@ public class QueryAction extends Action {
                   ArrayList<Taxon> homonyms = homonymDb.getHomonyms();
                   //s_log.error("execute()  homonyms:" + homonyms);
                   request.setAttribute("homonyms", homonyms);
-                  returnLoc = (mapping.findForward("homonyms"));                  
+                  returnLoc = mapping.findForward("homonyms");
                 }
 
                 if (action.equals("events")) {
-                  ArrayList<Event> events = (new EventDb(connection)).getEvents();
+                  ArrayList<Event> events = new EventDb(connection).getEvents();
                   request.setAttribute("events", events);
-                  HashMap<Integer, Login> curators = (new LoginDb(connection)).getCuratorMap();
+                  HashMap<Integer, Login> curators = new LoginDb(connection).getCuratorMap();
                   request.setAttribute("curators", curators);
                   //s_log.error("execute()  events:" + event);
-                  returnLoc = (mapping.findForward("events"));                  
+                  returnLoc = mapping.findForward("events");
                 }
 
                 if ("query".equals(action) && name != null && param != null) {
@@ -153,7 +153,7 @@ public class QueryAction extends Action {
 			  return returnLoc;
 			}
 			request.setAttribute("message", "action not found:" + action);
-			return (mapping.findForward("message")); 
+			return mapping.findForward("message");
 
         } catch (SQLException e) {
             s_log.error("execute() action:" + action + " e:" + e);

@@ -14,7 +14,7 @@ import com.google.gson.*;
     
 public class GeonetCountryCodes {
 
-    private static Log s_log = LogFactory.getLog(GeonetCountryCodes.class);
+    private static final Log s_log = LogFactory.getLog(GeonetCountryCodes.class);
 
     public static final String source = "Geonet";
     
@@ -123,7 +123,7 @@ Below each form is the data we are looking for. Selecting JSON and clicking Quer
                return null;
             }
 
-		} catch (com.google.gson.JsonSyntaxException e) {
+		} catch (JsonSyntaxException e) {
 		  s_log.warn("getPlaces() e:" + e);
 		} 
         return geonetCountryResponse;

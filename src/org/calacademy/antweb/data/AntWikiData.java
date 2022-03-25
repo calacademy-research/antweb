@@ -9,14 +9,14 @@ import org.apache.regexp.*;
 
 public final class AntWikiData {
 
-    private static Log s_log = LogFactory.getLog(AntWikiData.class);
+    private static final Log s_log = LogFactory.getLog(AntWikiData.class);
 
-    private String shortTaxonName = null;
-    private String subfamily = null;
-	private String genus = null;
-    private String species = null;
-    private String subspecies = null;
-    private String country = null;
+    private String shortTaxonName;
+    private String subfamily;
+	private String genus;
+    private String species;
+    private String subspecies;
+    private String country;
       
     public AntWikiData(String theLine) {
       String[] components = null;

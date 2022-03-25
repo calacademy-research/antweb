@@ -20,7 +20,7 @@ public final class RedirectTestAction extends HttpServlet {
 //    String newsId = pathInfo.substring(1);
     String query = request.getQueryString();
 
-    if ((pathInfo == null) || (pathInfo.length() < 2)) {
+    if (pathInfo == null || pathInfo.length() < 2) {
       response.sendRedirect("http://www.antweb.org");
       return;
     }

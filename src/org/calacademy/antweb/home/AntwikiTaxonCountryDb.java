@@ -6,7 +6,6 @@ import org.calacademy.antweb.AntFormatter;
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.Taxon;
 import org.calacademy.antweb.geolocale.AntwikiTaxonCountry;
-import org.calacademy.antweb.util.A;
 import org.calacademy.antweb.util.DBUtil;
 
 import java.sql.*;
@@ -14,7 +13,7 @@ import java.util.ArrayList;
 
 public class AntwikiTaxonCountryDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(AntwikiTaxonCountryDb.class);
+    private static final Log s_log = LogFactory.getLog(AntwikiTaxonCountryDb.class);
         
     public AntwikiTaxonCountryDb(Connection connection) {
       super(connection);
@@ -83,7 +82,7 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
 
           c += stmt.executeUpdate();
 
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             //s_log.error("storeTaxonCountry() e:" + e);        
         //} catch (SQLException e) {
         //    s_log.error("storeTaxonCountry() e:" + e);

@@ -15,7 +15,7 @@ class DescCounter extends HashMap {
              put(title, 1);
          } else {
              Integer i = (Integer) o;
-             put(title, i.intValue() + 1);
+             put(title, i + 1);
          }
      }
          
@@ -25,7 +25,7 @@ class DescCounter extends HashMap {
              return 0;
          } else {
              Integer i= (Integer) o;
-             return i.intValue();
+             return i;
          }
      }
 

@@ -14,13 +14,13 @@ import org.apache.commons.logging.LogFactory;
 /** Class Advanced does the searching for the advanced_search.jsp page */
 public class RecentImageSearch extends GenericSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(RecentImageSearch.class);
+    private static final Log s_log = LogFactory.getLog(RecentImageSearch.class);
 
-    private String daysAgo = null;
-    private String numToShow = null;
-    protected String group = null;
-    protected String fromDate = null;
-    protected String toDate = null;
+    private String daysAgo;
+    private String numToShow;
+    protected String group;
+    protected String fromDate;
+    protected String toDate;
     
     protected ArrayList<ResultItem> createInitialResults() {
 
@@ -51,19 +51,18 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
               + " and image.upload_date is not null " 
               + " and artist.id = image.artist ";
             //s_log.info("days ago is " + daysAgo);
-            if ((daysAgo != null) && (daysAgo.length() > 0)) {
-                Utility util = new Utility();
+            if (daysAgo != null && daysAgo.length() > 0) {
                 int daysToSub = -Integer.parseInt(daysAgo);
                 GregorianCalendar cal = new GregorianCalendar();
                 cal.add(Calendar.DATE, daysToSub);
-                theQuery += " and image.upload_date > '" + util.getCurrentDateAndTimeString(cal.getTime()) + "'";
+                theQuery += " and image.upload_date > '" + Utility.getCurrentDateAndTimeString(cal.getTime()) + "'";
                 
-            } else if ((fromDate != null) && (toDate != null)) {
+            } else if (fromDate != null && toDate != null) {
                 theQuery += " and image.upload_date >= '" + fromDate + "' and image.upload_date <= '" +
                      toDate + "' ";
             }
 
-            if ((group != null) && (group.length() > 0)) {
+            if (group != null && group.length() > 0) {
                 theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + group + "'";
             }
 
@@ -84,7 +83,7 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
             
             //return getListFromRset(rset,null, Integer.parseInt(numToShow));
             return getListFromRset(GenericSearch.RECENT_IMAGE, rset, null, theQuery);
-        } catch (java.sql.SQLSyntaxErrorException e) {
+        } catch (SQLSyntaxErrorException e) {
             s_log.error("createInitialResults() !!!!FIX!!!! e:" + e + " query:" + theQuery + " To fix, see antweb/doc/dbDebug.txt. Must turn off sql_mode: ONLY_FULL_GROUP_BY in my.cnf.");
         } catch (SQLException e) {
             s_log.error("createInitialResults() e:" + e + " query:" + theQuery);
@@ -93,19 +92,7 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
         }
         return null;
     }
-    
-    class ImageGroup {
-      String taxonName = null;
-      String subfamily = null;
-      String genus = null;
-      String species = null;
-      String subspecies = null;
-      String shotType = null;
-      String shotNumber = null;
-      String uploadDate = null;
-      String groupName = null;      
-    }
-    
+
     public void setResults() {
      // ** This is same as GenericSearch but the filterByProject is commented out
 

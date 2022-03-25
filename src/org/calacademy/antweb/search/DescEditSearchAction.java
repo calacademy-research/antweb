@@ -3,6 +3,8 @@ package org.calacademy.antweb.search;
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,7 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class DescEditSearchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(DescEditSearchAction.class);
+    private static final Log s_log = LogFactory.getLog(DescEditSearchAction.class);
 
     public String getSearchTitle(SearchParameters searchParameters) {
         return "Taxons with Description Edits Made to Antweb";
@@ -49,11 +51,11 @@ public final class DescEditSearchAction extends Action {
 
         ArrayList<ResultItem> searchResults = null;
         
-        java.sql.Connection connection = null;
+        Connection connection = null;
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "DescEditSearchAction.getSearchResults()");
 
             stmt = connection.createStatement();

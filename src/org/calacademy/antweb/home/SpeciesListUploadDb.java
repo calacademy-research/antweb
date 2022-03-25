@@ -12,7 +12,7 @@ import org.calacademy.antweb.util.*;
 
 public class SpeciesListUploadDb extends UploadDb {
     
-    private static Log s_log = LogFactory.getLog(SpeciesListUploadDb.class);
+    private static final Log s_log = LogFactory.getLog(SpeciesListUploadDb.class);
 
     public static int s_taxonCountryPrimaryKeyViolations = 0;
     

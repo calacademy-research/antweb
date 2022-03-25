@@ -1,12 +1,15 @@
 package org.calacademy.antweb.upload;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -22,7 +25,7 @@ import org.apache.commons.logging.LogFactory;
     
 public final class DeleteImagesAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(DeleteImagesAction.class);
+    private static final Log s_log = LogFactory.getLog(DeleteImagesAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -41,7 +44,7 @@ public final class DeleteImagesAction extends Action {
         if (searchResults == null) {
           message = "Session expired. Refresh <a href='" + AntwebProps.getDomainApp() + "/recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30'>here</a>";
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));          
+          return mapping.findForward("message");
         }
 
         ArrayList results = searchResults.getResults();
@@ -49,9 +52,9 @@ public final class DeleteImagesAction extends Action {
 
         if (chosen != null) {
 
-            java.sql.Connection connection = null;
+            Connection connection = null;
             try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, "DeleteImagesAction.execute()");
 
                 for (String s : chosen) {
@@ -65,7 +68,7 @@ public final class DeleteImagesAction extends Action {
                 s_log.error("execute() e:" + e);
                 message = "e:" + e;
                 request.setAttribute("message", message);
-                return (mapping.findForward("message"));                
+                return mapping.findForward("message");
             } finally {
                 DBUtil.close(connection, this, "DeleteImagesAction.execute()");
             }
@@ -75,10 +78,10 @@ public final class DeleteImagesAction extends Action {
             
             request.setAttribute("group", group);
             request.setAttribute("daysAgo", daysAgo);
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
         } else {
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         }
     }
 }

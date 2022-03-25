@@ -16,17 +16,17 @@ import org.apache.commons.logging.LogFactory;
 
 public class FieldGuide {
   /* This version of FieldGuide.java does not utilize PDF or XML */
-    private static Log s_log = LogFactory.getLog(FieldGuide.class);
+    private static final Log s_log = LogFactory.getLog(FieldGuide.class);
 
-    private ArrayList<Taxon> taxa = null;
-    protected String title = null;
-    protected Overview overview = null;
+    private ArrayList<Taxon> taxa;
+    protected String title;
+    protected Overview overview;
     //protected Project project = null;
-    protected String rank = null;
-    protected Extent extent = null;
+    protected String rank;
+    protected Extent extent;
     protected HashMap localities = new HashMap();
 
-    private int MAX_MARKERS = 50;
+    private final int MAX_MARKERS = 50;
 
     public FieldGuide() {
        super();
@@ -82,7 +82,7 @@ public class FieldGuide {
         String locality = ((LocalityOverview) getOverview()).getLocality();
         String theQuery = "select localitycode from specimen where specimen.code='" + taxon.getName() + "'";
 
-        if ((locality != null) && (locality.length() > 0) && (!locality.equals("null")))  {
+        if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
             theQuery += " and " + locality;
         }
         
@@ -100,7 +100,7 @@ public class FieldGuide {
 
             if (localityCode != null) {
               //s_log.info("looking up locality code: " + localityCode);
-              result = (new LocalityDb(connection)).getLocality(localityCode);
+              result = new LocalityDb(connection).getLocality(localityCode);
             } 
         } catch (SQLException e) {
             s_log.warn("problem getting points " + theQuery + e);
@@ -128,7 +128,7 @@ public class FieldGuide {
         String key = new Utility().getGoogleKey();
         
         
-        if ((theMap != null) && (theMap.getPoints() != null) && (theMap.getPoints().size() > 0)) {
+        if (theMap != null && theMap.getPoints() != null && theMap.getPoints().size() > 0) {
             ArrayList points = null;
             if (theMap.getPoints().size() <= MAX_MARKERS) {
                 points = theMap.getPoints();
@@ -152,7 +152,7 @@ public class FieldGuide {
                 totalLon += coord.getLon();
             }
             String center = "center=" + Float.valueOf(totalLat / points.size()).toString() + "," + Float.valueOf(totalLon / points.size()).toString();
-            result = preamble + sizing + center + "&" + markers.toString() + "&" + key;
+            result = preamble + sizing + center + "&" + markers + "&" + key;
             //s_log.info("static map for " + thisTaxon.getName() + " " + result);
         }
         return result;        
@@ -188,7 +188,7 @@ public class FieldGuide {
 	  String title = null;
 	  boolean isProject = Project.isProjectName(name);
 	   if (isProject) {
-		  title = (ProjectMgr.getProject(name)).getTitle();
+		  title = ProjectMgr.getProject(name).getTitle();
 	   } else {
  	      //Geolocale geolocale = GeolocaleMgr.getGeolocale(name); 
           //if (geolocale == null) return name;
@@ -200,9 +200,7 @@ public class FieldGuide {
                       
     public void setTitle(String rank, String name) {
         StringBuffer sb = new StringBuffer();
-        Formatter format = new Formatter();
-        
-        sb.append("");
+
         switch (rank) {
             case "subfamily":
                 sb.append("Subfamilies ");
@@ -217,7 +215,7 @@ public class FieldGuide {
                 sb.append("Subspecies ");
                 break;
         }
-        if ((name != null) && (name.length() > 0)) {
+        if (name != null && name.length() > 0) {
 
           String title = getOverviewTitle(name);
     	   sb.append(" of " + title);
@@ -231,7 +229,7 @@ public class FieldGuide {
         String rank = "subfamily";
                 
         String taxonName = "";
-        if ((subfamily != null) && ((genus == null) || (genus.length() == 0))) {
+        if (subfamily != null && (genus == null || genus.length() == 0)) {
             taxonName = format.capitalizeFirstLetter(subfamily) + " ";
         }
         if (genus != null) {
@@ -242,7 +240,7 @@ public class FieldGuide {
         if (rank.equals("subfamily")) sb.append("for Genera of Subfamily " + taxonName);
         if (rank.equals("genus")) sb.append("for Species of Genus " + taxonName);
 
-        if ((name != null) && (name.length() > 0)) {
+        if (name != null && name.length() > 0) {
 
           String title = getOverviewTitle(name);
           sb.append(" in " + title);

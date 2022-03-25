@@ -16,7 +16,7 @@ import org.calacademy.antweb.Formatter;
 
 public class GeolocaleDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(GeolocaleDb.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleDb.class);
 
     public GeolocaleDb(Connection connection) {
       super(connection);
@@ -181,7 +181,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             }
             
         } catch (SQLException e) {
-            s_log.error("getGeolocale() name:" + name + " georank:" + georank + " e:" + e.toString() + " query:" + query + " sqlstate:" + e.getSQLState());
+            s_log.error("getGeolocale() name:" + name + " georank:" + georank + " e:" + e + " query:" + query + " sqlstate:" + e.getSQLState());
              //+  " message:" + e.getMessage() + " code:" + e.getErrorCode()   Message is null and code is 0.
 
         } finally {
@@ -344,7 +344,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 		  geolocale.setIsIsland(rset.getInt("is_island") == 1);
           //if ("Greece".equals(geolocale.getName())) A.log("GeolocaleDb 1 name:" + geolocale.getName() + " isUseChildren:" + geolocale.getIsUseChildren());
 
-		  if (withChildren && !("adm1".equals(geolocale.getGeorank()))) {
+		  if (withChildren && !"adm1".equals(geolocale.getGeorank())) {
 		  // This functionality could exist in a Georank class.
 			String childRank = null;
 			if ("region".equals(geolocale.getGeorank())) childRank = "subregion";
@@ -372,7 +372,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 	      geolocale.setRev(rset.getInt("rev"));
 		  geolocale.setGeorankType(rset.getString("georank_type"));
 	
-		  Hashtable description = (new DescEditDb(getConnection())).getDescription(geolocale.getName());
+		  Hashtable<String, String> description = new DescEditDb(getConnection()).getDescription(geolocale.getName());
 		  geolocale.setDescription(description);   
 		  
 		  geolocale.setAlternatives(getAlternatives(geolocale.getName(), geolocale.getGeorank()));
@@ -639,9 +639,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             if (form.getGeorank() != null) dml += " , georank = '" + form.getGeorank() + "'";
 
             dml += ", name = '" + AntFormatter.escapeQuotes(form.getName()) + "'";
-            String val = (form.getIsoCode() == null) ? "null" : "'" + form.getIsoCode() + "'";
+            String val = form.getIsoCode() == null ? "null" : "'" + form.getIsoCode() + "'";
             dml += ", isoCode = " + val;
-            val = (form.getIso3Code() == null) ? "null" : "'" + form.getIso3Code() + "'";
+            val = form.getIso3Code() == null ? "null" : "'" + form.getIso3Code() + "'";
             dml += ", iso3Code = " + val;
             dml += ", is_un = " + form.isUn(); 
             dml += ", is_live = " + form.isLive();
@@ -798,7 +798,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
           }
       } catch (SQLException e) {
          s_log.error("fetchSpeciesLists() e:" + e + " loginId:" + loginId);
-         org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+         AntwebUtil.logStackTrace(e);
       } finally {
         DBUtil.close(stmt, rset, "fetchSpeciesLists()");
       }
@@ -850,7 +850,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             
       } catch (SQLException e) {
          s_log.error("fetchSubSpeciesLists() e:" + e);
-         org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+         AntwebUtil.logStackTrace(e);
       } finally {
         DBUtil.close(stmt, rset, "fetchSubSpeciesLists()");
       }
@@ -930,7 +930,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
 public static int a = 0;
 public static int b = 0;
-public static int c = 0;
+public static final int c = 0;
 
     public void updateCentroid(Geolocale geolocale) {
 
@@ -1114,7 +1114,7 @@ public static int c = 0;
                   
     public void updateCounts(int geolocaleId) throws SQLException {
         // Crawl the Geolocale_taxon table to find the counts.
-      (new GeolocaleTaxonCountDb(getConnection())).childrenCountCrawl(geolocaleId);
+      new GeolocaleTaxonCountDb(getConnection()).childrenCountCrawl(geolocaleId);
 
       updateCountsFromSpecimenData(geolocaleId);
 
@@ -1242,7 +1242,7 @@ public static int c = 0;
         + " and taxon.fossil = 0"
 		+ " and g.georank = 'country'"
 	    //+ " and g.georank in ('country', 'adm1')" // This would half the result set size.
-        + (new StatusSet()).getAndCriteria()
+        + new StatusSet().getAndCriteria()
               // Project.ALLANTWEBANTS
 		+ " and taxon.family = 'formicidae'"
 		+ " group by gt.taxon_name having count(*) = 1 " 
@@ -1261,7 +1261,7 @@ public static int c = 0;
         + " and taxon.fossil = 0"
         + " and g.georank = 'adm1'"
         + " and (gt.taxon_name, g.parent) in (select gt.taxon_name, g.name from geolocale g, geolocale_taxon gt where g.id = gt.geolocale_id and gt.is_endemic = 1)"
-        + (new StatusSet()).getAndCriteria()
+        + new StatusSet().getAndCriteria()
 		+ " and taxon.family = 'formicidae'"
         + " group by gt.taxon_name having count(*) = 1 " 
         + " order by geolocale_id";
@@ -1308,7 +1308,7 @@ public static int c = 0;
           c += updateGeolocaleFieldCount("endemic", lastGeolocaleId, count);          
         }        
       } catch (SQLException e) {
-        s_log.error("calcEndemism() query:" + query + " e:" + e.toString());
+        s_log.error("calcEndemism() query:" + query + " e:" + e);
       } finally {
         DBUtil.close(stmt, rset, this, "calcEndemism()");
       }    
@@ -1409,7 +1409,7 @@ public static int c = 0;
             }
             s_log.debug("calcHigherEndemismAdm1() c:" + c);
         } catch (SQLException e) {
-            s_log.error("calcHigherEndemismAdm1() query:" + query + " e:" + e.toString());
+            s_log.error("calcHigherEndemismAdm1() query:" + query + " e:" + e);
         } finally {
             DBUtil.close(stmt, rset, this, "calcHigherEndemismAdm1()");
         }
@@ -1441,7 +1441,7 @@ public static int c = 0;
             }
             s_log.debug("calcHigherEndemismCountry() c:" + c);
         } catch (SQLException e) {
-            s_log.error("calcHigherEndemismCountry() query:" + query + " e:" + e.toString());
+            s_log.error("calcHigherEndemismCountry() query:" + query + " e:" + e);
         } finally {
             DBUtil.close(stmt, rset, this, "calcHigherEndemismCountry()");
         }
@@ -1473,7 +1473,7 @@ public static int c = 0;
             }
             s_log.debug("calcHigherEndemismSubregion() c:" + c);
         } catch (SQLException e) {
-            s_log.error("calcHigherEndemismSubregion() query:" + query + " e:" + e.toString());
+            s_log.error("calcHigherEndemismSubregion() query:" + query + " e:" + e);
         } finally {
             DBUtil.close(stmt, rset, this, "calcHigherEndemismSubregion()");
         }
@@ -1561,7 +1561,7 @@ public static int c = 0;
         int count = getImagedSpecimenCount(geolocale);
         UtilDb utilDb = new UtilDb(getConnection());
         //A.log("updateImagedSpecimenCount() id:" + geolocale.getId());
-        utilDb.updateField("geolocale", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "id = " + geolocale.getId());
+        utilDb.updateField("geolocale", "imaged_specimen_count", Integer.valueOf(count).toString(), "id = " + geolocale.getId());
     }
 
     private int getImagedSpecimenCount(Geolocale geolocale) {
@@ -1676,7 +1676,7 @@ public static int c = 0;
     private void updateValidSpeciesCount(int geolocaleId) throws SQLException {
         int count = getValidSpeciesCount(geolocaleId);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("geolocale", "valid_species_count", (Integer.valueOf(count)).toString(), "id = '" + geolocaleId + "'");
+        utilDb.updateField("geolocale", "valid_species_count", Integer.valueOf(count).toString(), "id = '" + geolocaleId + "'");
     }
 
     private int getValidSpeciesCount(int geolocaleId) {
@@ -2069,7 +2069,7 @@ public static int c = 0;
 
 		//A.log("addAddm1FromSpecimenData() 2 adm1:" + adm1 + " country:" + country + " accessGroupId:" + accessGroupId + " x:" + x + " dml:" + dml);
 
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             // no problem. Set the valid name...
         } catch (SQLException e) {
             s_log.error("addAdm1FromSpecimenData() e:" + e + " dml:" + dml);

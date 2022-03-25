@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class Curation extends GeolocaleTaxon {
 
-    private static Log s_log = LogFactory.getLog(Curation.class);
+    private static final Log s_log = LogFactory.getLog(Curation.class);
 
 /*
     private int geolocaleId;

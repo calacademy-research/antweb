@@ -15,16 +15,17 @@ import org.apache.struts.action.ActionMapping;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-    
+import org.calacademy.antweb.util.AntwebUtil;
+
 public final class SimpleContentEditorReadAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SimpleContentEditorReadAction.class);
+    private static final Log s_log = LogFactory.getLog(SimpleContentEditorReadAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        String docRoot = (new Utility()).getDocRoot();
+        String docRoot = Utility.getDocRoot();
         
         String fileName = ((SimpleContentEditorForm) form).getFileName();
         String contents = "";
@@ -41,11 +42,11 @@ public final class SimpleContentEditorReadAction extends Action {
             br.close();
         } catch (IOException e) {
             s_log.error("Unable to read from file:" + docRoot + fileName + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         }
         
         ((SimpleContentEditorForm) form).setContents(contents);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

@@ -16,26 +16,26 @@ import org.apache.struts.action.ActionMapping;
 public final class SpecimenForm extends DescriptionForm {
 
 
-    private String code = null;
-    private String name = null;
-    private String project = null;
+    private String code;
+    private String name;
+    private String project;
 
     public String getName() {
-	return (this.name);
+	return this.name;
     }
     public void setName(String name) {
         this.name = name;
     }
 
     public String getCode() {
-	return (this.code);
+	return this.code;
     }
     public void setCode(String code) {
         this.code = code;
     }
     
     public String getProject() {
-        return (this.project);
+        return this.project;
     }
     public void setProject(String project) {
         this.project = project;

@@ -14,13 +14,13 @@ import org.calacademy.antweb.home.*;
 
 public class TeamMemberAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(TeamMemberAction.class);
+    private static final Log s_log = LogFactory.getLog(TeamMemberAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm f,
 		HttpServletRequest request, HttpServletResponse response) {
 
         TeamMemberDb teamMemberDb = null;
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		ArrayList curatorList = new ArrayList();
         try {
           connection = getDataSource(request, "conPool").getConnection();
@@ -32,7 +32,7 @@ public class TeamMemberAction extends Action {
             // A submit!
             s_log.warn("execute() id:" + form.getId());
             TeamMember teamMember = new TeamMember();
-            teamMember.setId( (Integer.valueOf(form.getId())).intValue() );
+            teamMember.setId(Integer.parseInt(form.getId()));
             teamMember.setRoleOrg(form.getRoleOrg());
             teamMember.setName(form.getName());
             teamMember.setEmail(form.getEmail());
@@ -68,9 +68,9 @@ public class TeamMemberAction extends Action {
         
         if (curatorList != null) {
           request.getSession().setAttribute("curatorList", curatorList);      
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         } else {
-          return (mapping.findForward("error"));
+          return mapping.findForward("error");
         }		
 		
 	}

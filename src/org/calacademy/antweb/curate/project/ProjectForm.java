@@ -27,7 +27,7 @@ public void setProject(String project) {
     				HttpServletRequest request) {
 
         ActionErrors errors = new ActionErrors();
-        if ((project == null) || (project.length() < 1))
+        if (project == null || project.length() < 1)
             errors.add("name", new ActionError("error.name.required"));
             
         AntwebUtil.blockFishingAttack(request, errors);

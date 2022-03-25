@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class BayAreaSearch extends GenericSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(BayAreaSearch.class);
+    private static final Log s_log = LogFactory.getLog(BayAreaSearch.class);
 
     public String[] getAdm1s()
     {
@@ -22,7 +22,7 @@ public class BayAreaSearch extends GenericSearch implements Serializable {
     private String[] adm2s;
 
     public String[] getAdm2s() {
-        return (this.adm2s);
+        return this.adm2s;
     }
 
     public void setAdm2s(String[] adm2s) {

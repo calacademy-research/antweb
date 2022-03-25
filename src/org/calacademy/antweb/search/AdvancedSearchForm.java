@@ -22,10 +22,10 @@ import org.apache.commons.logging.LogFactory;
 
 public class AdvancedSearchForm extends TaxaFromSearchForm {
 
-    protected static Log s_log = LogFactory.getLog(AdvancedSearchForm.class);
+    protected static final Log s_log = LogFactory.getLog(AdvancedSearchForm.class);
 
     //Search parameters common to all search types
-    String types = null;
+    String types;
     
     //Search parameters common to basic searches
     String name = "";
@@ -60,52 +60,52 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
 
     String adm2SearchType = "equals";
 
-    String locatedAt = null;
-    String project = null;
-    String country = null;
+    String locatedAt;
+    String project;
+    String country;
 
     int geolocaleId = 0;
 
-    String adm1 = null;    // was province
-    String adm2 = null;   // was county
-    String[] adm2s = null;  // was counties    
-    String bioregion = null;
+    String adm1;    // was province
+    String adm2;   // was county
+    String[] adm2s;  // was counties
+    String bioregion;
 
-    String typeDesignation = null;
-    String localityName = null;
-    String localityCode = null;
-    String collectionCode = null;
-    String specimenCode = null;
+    String typeDesignation;
+    String localityName;
+    String localityCode;
+    String collectionCode;
+    String specimenCode;
 
-    String habitat = null;
-    String method = null;
-    String microhabitat = null;
-    String ownedBy = null;
-	String collectedBy = null;
-	String museumCode = null;
+    String habitat;
+    String method;
+    String microhabitat;
+    String ownedBy;
+	String collectedBy;
+	String museumCode;
 
-	String caste = null;
-	String casteSearchType = null;
-	String subcaste = null;
-	String subcasteSearchType = null;
-	String lifeStage = null;
-	String lifeStageSearchType = null;
-	String medium = null;
+	String caste;
+	String casteSearchType;
+	String subcaste;
+	String subcasteSearchType;
+	String lifeStage;
+	String lifeStageSearchType;
+	String medium;
 	String mediumSearchType = "equals";
-	String specimenNotes = null;
+	String specimenNotes;
 	String specimenNotesSearchType = "equals";
-	String dnaExtractionNotes = null;
+	String dnaExtractionNotes;
 	String dnaExtractionNotesSearchType = "equals";
 	
-	String elevation = null;
-	String elevationSearchType = null;
-	String dateCollected = null;
-	String dateCollectedSearchType = null;
-	String validNames = null;
-	String statusSet = null;
+	String elevation;
+	String elevationSearchType;
+	String dateCollected;
+	String dateCollectedSearchType;
+	String validNames;
+	String statusSet;
 
-	String created = null;
-	String createdSearchType = null;	
+	String created;
+	String createdSearchType;
 
     String groupName;
 
@@ -149,7 +149,7 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
         return errors;
     }
 
-    static String s_defaultOperator = "contains";  //"equals";
+    static final String s_defaultOperator = "contains";  //"equals";
 
 /**/
     public void reset(ActionMapping mapping, HttpServletRequest request) {
@@ -292,14 +292,14 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
     
 
     public String getResultRank() {
-		return (this.resultRank);
+		return this.resultRank;
     }
     public void setResultRank(String resultRank) {
         this.resultRank = resultRank;
     }		
 
     public String getOutput() {
-		return (this.output);
+		return this.output;
     }
     public void setOutput(String output) {
         this.output = output;
@@ -427,96 +427,96 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
 	}
 
     public String getGenus() {
-		return (this.genus);
+		return this.genus;
     }
     public void setGenus(String genus) {
         this.genus = genus;
     }
 
     public String getSpecies() {
-		return (this.species);
+		return this.species;
     }
     public void setSpecies(String species) {
         this.species = species;
     }
     public String getSubspecies() {
-		return (this.subspecies);
+		return this.subspecies;
     }
     public void setSubspecies(String subspecies) {
         this.subspecies = subspecies;
     }
 
     public String getGenusSearchType() {
-		return (this.genusSearchType);
+		return this.genusSearchType;
     }
     public void setGenusSearchType(String genusSearchType) {
         this.genusSearchType = genusSearchType;
     }
 
     public String getSpeciesSearchType() {
-		return (this.speciesSearchType);
+		return this.speciesSearchType;
     }
     public void setSpeciesSearchType(String speciesSearchType) {
         this.speciesSearchType = speciesSearchType;
     }
     public String getSubspeciesSearchType() {
-		return (this.subspeciesSearchType);
+		return this.subspeciesSearchType;
     }
     public void setSubspeciesSearchType(String subspeciesSearchType) {
         this.subspeciesSearchType = subspeciesSearchType;
     }
 
     public String getLocalityNameSearchType() {
-		return (this.localityNameSearchType);
+		return this.localityNameSearchType;
     }
     public void setLocalityNameSearchType(String localityNameSearchType) {
         this.localityNameSearchType = localityNameSearchType;
     }
 
     public String getLocalityCodeSearchType() {
-		return (this.localityCodeSearchType);
+		return this.localityCodeSearchType;
     }
     public void setLocalityCodeSearchType(String localityCodeSearchType) {
         this.localityCodeSearchType = localityCodeSearchType;
     }
 
     public String getCollectionCodeSearchType() {
-		return (this.collectionCodeSearchType);
+		return this.collectionCodeSearchType;
     }
     public void setCollectionCodeSearchType(String collectionCodeSearchType) {
         this.collectionCodeSearchType = collectionCodeSearchType;
     }
 
     public String getCollectedBySearchType() {
-		return (this.collectedBySearchType);
+		return this.collectedBySearchType;
     }
     public void setCollectedBySearchType(String collectedBySearchType) {
         this.collectedBySearchType = collectedBySearchType;
     }
 
     public String getMuseumCodeSearchType() {
-		return (this.museumCodeSearchType);
+		return this.museumCodeSearchType;
     }
     public void setMuseumCodeSearchType(String museumCodeSearchType) {
         this.museumCodeSearchType = museumCodeSearchType;
     }
 
     public String getAdm2SearchType() {
-		return (this.adm2SearchType);
+		return this.adm2SearchType;
     }
     public void setAdm2SearchType(String adm2SearchType) {
         this.adm2SearchType = adm2SearchType;
     }
 
     public String getSpecimenCodeSearchType() {
-		return (this.specimenCodeSearchType);
+		return this.specimenCodeSearchType;
     }
     public void setSpecimenCodeSearchType(String specimenCodeSearchType) {
         this.specimenCodeSearchType = specimenCodeSearchType;
     }
 
     public String getTypeDesignation() {
-		return (this.typeDesignation);
+		return this.typeDesignation;
     }
     public void setTypeDesignation(String typeDesignation) {
         this.typeDesignation = typeDesignation;
@@ -529,7 +529,7 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
 	 * @return
 	 */
 	public String getType() {
-		return (this.typeDesignation);
+		return this.typeDesignation;
 	}
 
 	/**
@@ -543,42 +543,42 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
 	}
 
     public String getAdm2() {
-		return (this.adm2);
+		return this.adm2;
     }
     public void setAdm2(String adm2) {
         this.adm2 = adm2;
     }
 
     public String getLocalityName() {
-		return (this.localityName);
+		return this.localityName;
     }
     public void setLocalityName(String localityName) {
         this.localityName = localityName;
     }
 
     public String getLocalityCode() {
-		return (this.localityCode);
+		return this.localityCode;
     }
     public void setLocalityCode(String localityCode) {
         this.localityCode = localityCode;
     }
 
     public String getCollectionCode() {
-		return (this.collectionCode);
+		return this.collectionCode;
     }
     public void setCollectionCode(String collectionCode) {
         this.collectionCode = collectionCode;
     }
 
     public String getSpecimenCode() {
-		return (this.specimenCode);
+		return this.specimenCode;
     }
     public void setSpecimenCode(String specimenCode) {
         this.specimenCode = specimenCode;
     }
 
     public String getBioregion() {
-		return (this.bioregion);
+		return this.bioregion;
     }
     public void setBioregion(String bioregion) {
         this.bioregion = bioregion;
@@ -591,42 +591,42 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
      * @return
      */
 	public String getOwnedby() {
-	   return (this.ownedBy);
+	   return this.ownedBy;
   	}
    	public void setOwnedby(String ownedBy) {
 	   this.ownedBy = ownedBy;
    	}
 
 	public String getCollectedby() {
-	 return (this.collectedBy);
+	 return this.collectedBy;
 	}
 	public void setCollectedby(String collectedBy) {
 	 this.collectedBy = collectedBy;
 	}
 
 	public String getMuseumcode() {
-	 return (this.museumCode);
+	 return this.museumCode;
 	}
 	public void setMuseumcode(String museumCode) {
 	 this.museumCode = museumCode;
 	}
 
     public String getCountry() {
-		return (this.country);
+		return this.country;
     }
     public void setCountry(String country) {
         this.country = country;
     }
 
     public String getAdm1() {
-		return (this.adm1);
+		return this.adm1;
     }
     public void setAdm1(String adm1) {
         this.adm1 = adm1;
     }
 
     public String getTypes() {
-		return (this.types);
+		return this.types;
     }
     public void setTypes(String types) {
         this.types = types;
@@ -718,7 +718,7 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
 	}
 
 	public String getMuseumCode() {
-	 return (this.museumCode);
+	 return this.museumCode;
 	}
 	public void setMuseumCode(String museumCode) {
 	 this.museumCode = museumCode;

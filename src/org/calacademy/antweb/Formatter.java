@@ -1,17 +1,20 @@
 package org.calacademy.antweb;
 
-import java.io.Serializable;
-import java.util.StringTokenizer;
-import java.util.Date;
-import java.util.Locale;
-import org.apache.regexp.*;
-import java.text.*;
-
-import org.apache.commons.text.*;
-
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-  
+import org.apache.commons.text.WordUtils;
+import org.apache.regexp.RE;
+import org.apache.regexp.RESyntaxException;
+
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
+import java.text.NumberFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,11 +28,11 @@ public class Formatter implements Serializable {
 	
 	
 	public static String commaFormat(String num) {
-	  return commaFormat((Long.valueOf(num)).intValue());
+	  return commaFormat(Long.valueOf(num).intValue());
 	}	
 	
 	public static String commaFormat(long num) {
-	  return commaFormat((Long.valueOf(num)).intValue());
+	  return commaFormat(Long.valueOf(num).intValue());
 	}
 	
 	public static String commaFormat(int num) {
@@ -81,12 +84,12 @@ public class Formatter implements Serializable {
 	/** append a delimiter to a string if that string is not null or empty **/
 	public String appendToNonNull(String theString, String del) {
 		
-		if ((theString == null) || (del == null)) {
+		if (theString == null || del == null) {
 			return "";
 		}
 
 		StringBuffer sb = new StringBuffer(theString);
-		if ((theString != null) && (theString.length() > 0)) {
+		if (theString != null && theString.length() > 0) {
 			sb.append(del);
 		}
 		return sb.toString();
@@ -146,12 +149,12 @@ public class Formatter implements Serializable {
 		StringBuffer oldSb = new StringBuffer(theString);
 		StringBuffer newSb = new StringBuffer();
 		for (int i = 0; i < oldSb.length(); i++) {
-			if ((oldSb.charAt(i) != '\'') && (oldSb.charAt(i) != '"')) {
+			if (oldSb.charAt(i) != '\'' && oldSb.charAt(i) != '"') {
 				newSb.append(oldSb.charAt(i));
 			} else if (
-				(i == oldSb.length() - 1) || ((oldSb.charAt(i) == '\'') && (oldSb.charAt(i + 1) != '\''))
-					|| ((oldSb.charAt(i) == '"') 
-						&& (oldSb.charAt(i + 1) != '"'))) {
+				i == oldSb.length() - 1 || oldSb.charAt(i) == '\'' && oldSb.charAt(i + 1) != '\''
+					|| oldSb.charAt(i) == '"'
+						&& oldSb.charAt(i + 1) != '"') {
 				newSb.append(oldSb.charAt(i));
 			}
 		}
@@ -172,14 +175,14 @@ public class Formatter implements Serializable {
 			RE startQuote = new RE("^\"+");
 			RE endQuote = new RE("\"+$");
 			RE multiQuote = new RE("\"\"");
-			RE multiApos = new RE("\'\'");
+			RE multiApos = new RE("''");
 			RE entityMultiQuote = new RE("&quot;&quot;");
 			RE entityMultiApos = new RE("&apos;&apos;");
 
 			newString = startQuote.subst(oldString, "");
 			newString = endQuote.subst(newString, "");
 			newString = multiQuote.subst(newString, "\"");
-			newString = multiApos.subst(newString, "\'");
+			newString = multiApos.subst(newString, "'");
 			newString = entityMultiQuote.subst(newString, "&quot;");
 			newString = entityMultiApos.subst(newString, "&apos;");
 		} catch (RESyntaxException e) {
@@ -193,7 +196,7 @@ public class Formatter implements Serializable {
 		theText = replace(theText, "&", "&amp;");
 		theText = replace(theText, "<", "&lt;");
 		theText = replace(theText, ">", "&gt;");
-		theText = replace(theText, "\'", "&apos;");
+		theText = replace(theText, "'", "&apos;");
 		theText = replace(theText, "\"", "&quot;");
 		theText = replace(theText, "/", "");
 
@@ -223,7 +226,7 @@ public class Formatter implements Serializable {
     }
 
     public static String replace(String main, String oldStr, String newStr) {
-      return (new Formatter()).stringReplace(main, oldStr, newStr);
+      return new Formatter().stringReplace(main, oldStr, newStr);
     }
 
 	/** Replace part of a string with new stuff
@@ -234,7 +237,7 @@ public class Formatter implements Serializable {
 	 */
 	private String stringReplace(String main, String oldStr, String newStr) {
 		
-		if ((main == null) || (oldStr == null)) return main;
+		if (main == null || oldStr == null) return main;
 		
 		if (main.equals(""))
 			return "";
@@ -254,7 +257,7 @@ public class Formatter implements Serializable {
 	
 	public static String replaceOne(String main, String oldStr, String newStr) {
 		
-		if ((main == null) || (oldStr == null)) return main;
+		if (main == null || oldStr == null) return main;
 		
 		if (main.equals(""))
 			return "";
@@ -337,16 +340,7 @@ public class Formatter implements Serializable {
 	  return Formatter.initCap(thePhrase);	
 	}	
 	public String capitalizeFirstLetter(String theWord) {
-		if (theWord == null)
-			return null;
-		if (theWord.length() < 1)
-			return "";
-
-		String first = theWord.substring(0, 1).toUpperCase();
-		String rest = theWord.substring(1);
-		StringBuffer newString = new StringBuffer().append(first).append(rest);
-        //A.log("capitalizeFirstLetter() theWord:" + theWord + " first:" + first + " rest:" + rest);
-		return newString.toString();
+		return StringUtils.capitalize(theWord);
 	}
 
 
@@ -426,13 +420,13 @@ public class Formatter implements Serializable {
 	/* convert from UTF-8 encoded HTML-Pages -> internal Java String Format */
 	public static String convertFromUTF8(String s) {
 		String out = null;
-		if ((s == null) || (s.length() <= 0)) {
+		if (s == null || s.length() <= 0) {
 			return null;
 		}
 
 		try {
 			out = new String(s.getBytes("ISO-8859-15"), "UTF-8");
-		} catch (java.io.UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException e) {
 		    s_log.error("convertFromUTF8() s:" + s + " exception:" + e);  // Mark added Jan 3, 2011 
 			return null;
 		}
@@ -442,12 +436,7 @@ public class Formatter implements Serializable {
 	/* convert from internal Java String Format -> UTF-8 encoded HTML/JSP-Pages  */
 	public static String convertToUTF8(String s) {
 		String out = null;
-		try {
-			out = new String(s.getBytes("UTF-8"));
-		} catch (java.io.UnsupportedEncodingException e) {
-		    s_log.error("convertToUTF8() s:" + s + " exception:" + e);  // Mark added Jan 3, 2011 
-			return null;
-		}
+		out = new String(s.getBytes(StandardCharsets.UTF_8));
 		//if (AntwebProps.isDevMode()) s_log.info("convertToUtf8() original:" + s + " converted:" + out);
 		return out;
 	}
@@ -480,11 +469,11 @@ public class Formatter implements Serializable {
         
   public static String formatMB(long num) {
     long longNum = num / 1024 / 1024;
-    String stringNum = (Long.valueOf(longNum)).toString();
+    String stringNum = Long.valueOf(longNum).toString();
     return Formatter.commaFormat(longNum) + "MB";
   }
         
-  public static String ignoreUtf8 = "()/_.,&-]";  
+  public static final String ignoreUtf8 = "()/_.,&-]";
   public static boolean hasSpecialCharacter(String str) {
     String extras = "äáëéìöü";
     extras += "óÑ";  // Added May 202 for Córdoba and Ñuble
@@ -515,7 +504,7 @@ public class Formatter implements Serializable {
   }
 
   public static boolean hasSpecialCharacter(String str, String patternStr) {
-    if (str == null || str.trim().isEmpty()) {
+    if (str == null || StringUtils.isBlank(str)) {
         s_log.debug("Incorrect format of string");
         return false;
     }

@@ -5,11 +5,11 @@ import org.apache.commons.logging.LogFactory;
 
 public final class Output {
 
-    private static Log s_log = LogFactory.getLog(Output.class);
+    private static final Log s_log = LogFactory.getLog(Output.class);
 
-    public static String LIST = "list";
-    public static String MAP_SPECIMEN = "mapSpecimen";
-    public static String MAP_LOCALITY = "mapLocality"; 
+    public static final String LIST = "list";
+    public static final String MAP_SPECIMEN = "mapSpecimen";
+    public static final String MAP_LOCALITY = "mapLocality";
 
     public Output() {
     }

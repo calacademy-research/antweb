@@ -64,10 +64,10 @@ public class SaveGroupForm extends ActionForm {
 
         ActionErrors errors = null; 
         
-        if ((newGroup == null) || (newGroup.equals("true"))) {
+        if (newGroup == null || newGroup.equals("true")) {
             errors = new ActionErrors();
             
-            if ((name == null) || (name.length() < 1))
+            if (name == null || name.length() < 1)
                 errors.add("error", new ActionError("error.group.namerequired"));
             
             //if ((name != null) && (name.indexOf(" ") != -1))

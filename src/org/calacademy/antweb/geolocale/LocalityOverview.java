@@ -2,7 +2,6 @@ package org.calacademy.antweb.geolocale;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.*;
 //import javax.media.j3d.*;
 import org.apache.regexp.*;
@@ -73,7 +72,7 @@ public abstract class LocalityOverview extends Overview {
         this.mapImage = mapImage;
     }
 
-    private Map map = null;
+    private Map map;
     public Map getMap() {
         return map;
     }
@@ -137,7 +136,7 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
         this.centroidFixed = centroidFixed;
     }
     public String useCentroid() {
-      if (getCentroidFixed() != null && !("".equals(getCentroidFixed()))) {
+      if (getCentroidFixed() != null && !"".equals(getCentroidFixed())) {
         return getCentroidFixed();
       } else { 
         if ("null".equals(getCentroid())) return null;
@@ -161,7 +160,7 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
     }
         
     public String useBoundingBox() {
-      if (getBoundingBoxFixed() != null && !("".equals(getBoundingBoxFixed()))) {
+      if (getBoundingBoxFixed() != null && !"".equals(getBoundingBoxFixed())) {
         return getBoundingBoxFixed();
       } else { 
         if ("null".equals(getBoundingBox())) return null;
@@ -204,7 +203,7 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
 
 //A.log("getDoubleListVal() 1 i:" + i + " list:" + list + " listArray:" + listArray);
 
-            val = (Double.valueOf(listArray[i-1])).doubleValue();
+            val = Double.parseDouble(listArray[i - 1]);
 
 //A.log("getDoubleListVal() val:" + val);
 
@@ -245,7 +244,7 @@ Ex USA:
     public String getFlagIcon() {
       String name = getName();
       name = name.toLowerCase();
-      name = (new Formatter()).capitalizeFirstLetter(name);
+      name = new Formatter().capitalizeFirstLetter(name);
       name = name.replaceAll(" ", "-");
       name = name + "-flag.png";
       return name;
@@ -362,11 +361,11 @@ Out of bounds:
 	  double latDiff = latMax - latMin;
 	  double lngDiff = lngMax - lngMin;
 
-	  double maxDiff = (lngDiff > latDiff) ? lngDiff : latDiff;
+	  double maxDiff = Math.max(lngDiff, latDiff);
 	  if (maxDiff < 360 / Math.pow(2, 20)) {
 		zoomLevel = 21;
 	  } else {
-		zoomLevel = (int) (-1*( (Math.log(maxDiff)/Math.log(2)) - (Math.log(360)/Math.log(2))));
+		zoomLevel = (int) (-1*( Math.log(maxDiff)/Math.log(2) - Math.log(360)/Math.log(2)));
 		if (zoomLevel < 1)
 			zoomLevel = 1;
 	  }

@@ -13,7 +13,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public class BioregionTaxonCountDb extends CountDb {
     
-    private static Log s_log = LogFactory.getLog(BioregionTaxonCountDb.class);
+    private static final Log s_log = LogFactory.getLog(BioregionTaxonCountDb.class);
         
     public BioregionTaxonCountDb(Connection connection) {
       super(connection);

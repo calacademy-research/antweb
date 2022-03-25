@@ -17,9 +17,9 @@ import org.apache.commons.logging.LogFactory;
 public final class SearchListAction extends Action {
 /* This class returns a link to the file generated for search results. */
 
-    private static Log s_log = LogFactory.getLog(SearchListAction.class);
+    private static final Log s_log = LogFactory.getLog(SearchListAction.class);
 
-    private static int specimenCount = 0;
+    private static final int specimenCount = 0;
 
     public ActionForward execute(
         ActionMapping mapping,

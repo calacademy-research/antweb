@@ -20,9 +20,9 @@ public class ImageUtil {
     private static int fileFoundCount = 0;
     private static int fileNotFoundCount = 0;
     
-    private static Counter counter = new Counter();
+    private static final Counter counter = new Counter();
     
-    private static ArrayList<SpecimenImage> notTifList = new ArrayList<>();
+    private static final ArrayList<SpecimenImage> notTifList = new ArrayList<>();
     
     public static ArrayList<SpecimenImage> getNotTifList() {
       return notTifList;
@@ -73,7 +73,7 @@ public class ImageUtil {
         int i = 0;
         for (String path : paths) {
           ++i;
-          if ((i % 10000 ) == 0) s_log.warn("handleImage() i:" + i);
+          if (i % 10000 == 0) s_log.warn("handleImage() i:" + i);
           if (new File(path).exists()) {
             ++fileFoundCount;
   
@@ -118,15 +118,11 @@ public class ImageUtil {
     
     private static String output(InputStream inputStream) throws IOException {
         StringBuilder sb = new StringBuilder();
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new InputStreamReader(inputStream));
-            String line = null;
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
             while ((line = br.readLine()) != null) {
-                sb.append(line + System.getProperty("line.separator"));
+                sb.append(line).append(System.getProperty("line.separator"));
             }
-        } finally {
-            br.close();
         }
         return sb.toString();
     }

@@ -20,18 +20,18 @@ import org.calacademy.antweb.home.*;
 
 public class ManageGroupsAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ManageGroupsAction.class);
+    private static final Log s_log = LogFactory.getLog(ManageGroupsAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         ArrayList groupList = null;
 
         try {
             connection = getDataSource(request, "conPool").getConnection();
 
-            groupList = (new GroupDb(connection)).getAllGroups();
+            groupList = new GroupDb(connection).getAllGroups();
             //s_log.info("execute() groupList:" + groupList);
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
@@ -45,9 +45,9 @@ public class ManageGroupsAction extends Action {
 
         if (groupList != null) {
           request.getSession().setAttribute("antwebGroups", groupList);      
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         } else {
-          return (mapping.findForward("error"));
+          return mapping.findForward("error");
         }
     }
 }

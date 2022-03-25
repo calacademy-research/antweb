@@ -136,7 +136,8 @@
               
    <% if (desc.containsKey("taxonomichistory")) { %>
         <br><h2>Taxonomic History (provided by Barry Bolton, <%= year %>)</h2>
-                    <% String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); %>
+                    <% new Formatter();
+                        String words = Formatter.removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); %>
                     <%= new Formatter().removeTag((String) words, "o:p") %>
    <% } %>
 

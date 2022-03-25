@@ -13,11 +13,11 @@ Could be extended to allow for a set of codes, taxonNames, etc...
 public class AntwebDebug {
 
   // Master switch this must be true for this utility to work. Turn off by setting to false.
-  public static boolean isDebug = true;
+  public static final boolean isDebug = true;
 
-  public static String code = "usnm609585";  // for specimen, of course.
+  public static final String code = "usnm609585";  // for specimen, of course.
 
-  public static String taxonName = "dolichoderinaektunaxia jucunda";
+  public static final String taxonName = "dolichoderinaektunaxia jucunda";
 
 
   public static boolean isDebugCode(String debugCode) {

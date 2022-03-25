@@ -17,8 +17,8 @@ import org.apache.struts.action.ActionForm;
 
 public final class SimpleContentEditorForm extends ActionForm {
 
-    private String fileName = null;
-    private String contents = null;
+    private String fileName;
+    private String contents;
 
     public String getContents() {
         return contents;

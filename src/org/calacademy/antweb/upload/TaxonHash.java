@@ -7,15 +7,15 @@ import org.apache.commons.logging.LogFactory;
 
 public final class TaxonHash extends Hashtable<String, Object> {
 
-    private static Log s_log = LogFactory.getLog(TaxonHash.class);
+    private static final Log s_log = LogFactory.getLog(TaxonHash.class);
 
-    public static String INFO = "info";
-    public static String WARN = "warn";
+    public static final String INFO = "info";
+    public static final String WARN = "warn";
 
     public TaxonHash() {
     }
  
-    public String logLevel = null;
+    public String logLevel;
     
     public void setLogLevel(String logLevel) {
       this.logLevel = logLevel;
@@ -27,10 +27,10 @@ public final class TaxonHash extends Hashtable<String, Object> {
 
     public void log(String location) {
       if (INFO.equals(logLevel)) {
-        s_log.info(location + " " + toString());
+        s_log.info(location + " " + this);
       }
       if (WARN.equals(logLevel)) {
-        s_log.warn(location + " " + toString());
+        s_log.warn(location + " " + this);
       } 
     }
     

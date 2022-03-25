@@ -1,6 +1,8 @@
 package org.calacademy.antweb.curate.login;
 
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
@@ -20,7 +22,7 @@ import org.calacademy.antweb.util.*;
 
 public class ManageLoginsAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ManageLoginsAction.class);
+    private static final Log s_log = LogFactory.getLog(ManageLoginsAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response) {
@@ -29,9 +31,9 @@ public class ManageLoginsAction extends Action {
 
 		ArrayList loginList = new ArrayList();
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "ManageLoginsAction.execute()");
 
             loginList = LoginMgr.getLogins(); //(new LoginDb(connection)).getAllLogins();
@@ -43,9 +45,9 @@ public class ManageLoginsAction extends Action {
 
         if (loginList != null) {
           request.getSession().setAttribute("antwebLogins", loginList);      
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
         } else {
-          return (mapping.findForward("error"));
+          return mapping.findForward("error");
         }		
 		
 	}

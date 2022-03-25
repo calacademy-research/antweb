@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Artist;
 import org.calacademy.antweb.Curator;
 import org.calacademy.antweb.Login;
-import org.calacademy.antweb.util.A;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.DBUtil;
 
@@ -14,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class ArtistDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(ArtistDb.class);
+    private static final Log s_log = LogFactory.getLog(ArtistDb.class);
     //private Connection connection = null;
     
     public ArtistDb(Connection connection) {
@@ -45,12 +45,12 @@ public class ArtistDb extends AntwebDb {
 				artist = new Artist();
 				artist.setId(rset.getInt("id"));
 				artist.setName(rset.getString("name"));
-				Object o = null;
+				Date o;
 				try {
 				  o = rset.getTimestamp("created");
                   //A.log("getArtists() created:" + o);
                   if (!o.toString().equals("0000-00-00 00:00:00")) {
-                    artist.setCreated((java.util.Date) o);
+                    artist.setCreated(o);
                   }
                 } catch (SQLException e) {
                   // do nothing
@@ -83,14 +83,14 @@ public class ArtistDb extends AntwebDb {
 			rset = stmt.executeQuery(query);
             //A.log("getArtists() query:" + query);
             
-			Artist artist = null;
+			Artist artist;
 			while (rset.next()) {
 				artist = new Artist();
 				artist.setId(rset.getInt("id"));
 				artist.setName(rset.getString("name"));
 				
-				Object o = rset.getTimestamp("created");
-                artist.setCreated((java.util.Date) o);
+				Date o = rset.getTimestamp("created");
+                artist.setCreated(o);
                 //A.log("getArtists() created:" + artist.getCreated() + " o:" + o);                
                 
 				artist.setIsActive(rset.getBoolean("active"));
@@ -158,7 +158,7 @@ public class ArtistDb extends AntwebDb {
             return "Created artist:" + artist.getLink() + ".";
 		} catch (SQLException e) {
 			s_log.error("createArtist() dml" + dml + " e:" + e);
-            return "error:" + e.toString();
+            return "error:" + e;
 		} finally { 		
 			DBUtil.close(stmt, "createArtist()");
 		}
@@ -233,7 +233,7 @@ public class ArtistDb extends AntwebDb {
               returnVal += " Artist:" + artist + " NOT deleted.";
             }
         } catch (Exception e) {
-            return "error:" + e.toString();
+            return "error:" + e;
         }
         return returnVal;
     }

@@ -17,30 +17,30 @@ import org.calacademy.antweb.util.*;
 
 public class TaxaFromSearchForm extends SearchForm {
 
-	private String taxa[] = null;
-	private String project = null;
-	private String caste = null;
-	private String chosen[] = null;
-	private String resultRank = null;
-	private String output = null;
+	private String[] taxa;
+	private String project;
+	private String caste;
+	private String[] chosen;
+	private String resultRank;
+	private String output;
 
 
 	public String getProject() {
-		return (this.project);
+		return this.project;
 	}
 	public void setProject(String project) {
 		this.project = project;
 	}
 
 	public String getCaste() {
-		return (this.caste);
+		return this.caste;
 	}
 	public void setCaste(String caste) {
 		this.caste = caste;
 	}
 	
 	public String[] getChosen() {
-		return (this.chosen);
+		return this.chosen;
 	}
 
 	public void setChosen(String[] chosen) {

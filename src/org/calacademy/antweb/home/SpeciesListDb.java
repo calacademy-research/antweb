@@ -14,7 +14,7 @@ import org.calacademy.antweb.curate.speciesList.*;
 
 public class SpeciesListDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(SpeciesListDb.class);
+    private static final Log s_log = LogFactory.getLog(SpeciesListDb.class);
 
     public SpeciesListDb(Connection connection) {
       super(connection);
@@ -22,7 +22,7 @@ public class SpeciesListDb extends AntwebDb {
     
     public ArrayList<String> fetchMappableSpecimenLists(Login login) throws SQLException {
       
-      ArrayList<String> refListList = new ArrayList(); //(ArrayList<String>) speciesListList.clone();
+      ArrayList<String> refListList = new ArrayList<>(); //(ArrayList<String>) speciesListList.clone();
       
       int loginId = login.getId();
         
@@ -50,7 +50,7 @@ public class SpeciesListDb extends AntwebDb {
           }
       } catch (SQLException e) {
          s_log.error("addMappableSpecimenLists() e:" + e + " loginId:" + loginId + ": ");
-         org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+         AntwebUtil.logStackTrace(e);
          throw e;
       } finally {
         DBUtil.close(stmt, rset, "addMappableSpecimenLists()");
@@ -90,7 +90,7 @@ public class SpeciesListDb extends AntwebDb {
         lastTaxonName = taxonName;
         
         int specimenCount = rset.getInt("specimen_count");
-        Taxon taxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
+        Taxon taxon = new TaxonDb(getConnection()).getTaxon(taxonName);
 
         if (taxon != null) {
           taxon.setSpecimenCount(specimenCount);
@@ -145,7 +145,7 @@ public class SpeciesListDb extends AntwebDb {
 
   public ArrayList<Taxon> getGeolocaleSpeciesList(String displaySubfamily, String speciesListName) {
 
-      Geolocale country = (GeolocaleMgr.getGeolocale(speciesListName));
+      Geolocale country = GeolocaleMgr.getGeolocale(speciesListName);
       if (country == null) {
         s_log.info("getGeolocaleSpeciesList() null country for speciesListName:" + speciesListName);
         return new ArrayList<>();
@@ -196,7 +196,7 @@ public class SpeciesListDb extends AntwebDb {
         }
       }
 
-      if (!Utility.isBlank(refSpeciesListType) && (!refSpeciesListType.contains("search"))) {
+      if (!Utility.isBlank(refSpeciesListType) && !refSpeciesListType.contains("search")) {
         if (refSpeciesListType.contains("specimen")) {
           projectCriteria += " or source = '" + refSpeciesListType + "'";      
         } if (refSpeciesListType.contains("antcatNames")) {
@@ -243,7 +243,7 @@ public class SpeciesListDb extends AntwebDb {
         }
       }
 
-      if (!Utility.isBlank(refSpeciesListType) && (!refSpeciesListType.contains("search"))) {
+      if (!Utility.isBlank(refSpeciesListType) && !refSpeciesListType.contains("search")) {
         if (refSpeciesListType.contains("specimen")) {
           geolocaleCriteria += " or source = '" + refSpeciesListName + "'";      
         } 
@@ -387,8 +387,8 @@ public class SpeciesListDb extends AntwebDb {
 
         //A.log("SpeciesListDb.saveTaxonSet() speciesListName:" + speciesListName + " chosen:" + chosen + " oldChosen:" + oldChosenList);
 
-        if ((speciesListName == null) || ("null".equals(speciesListName)) || ("none".equals(speciesListName))
-         || (oldChosenList == null)) {
+        if (speciesListName == null || "null".equals(speciesListName) || "none".equals(speciesListName)
+         || oldChosenList == null) {
           //A.log("saveTaxonSet() 1 speciesListName:" + speciesListName + " chosen:" + chosen.length + " oldChosen:" + oldChosenList.size());
           return message;
         }
@@ -398,7 +398,7 @@ public class SpeciesListDb extends AntwebDb {
           return "";
         }
 
-        ArrayList<String> chosenList = new ArrayList(Arrays.asList(chosen));
+        ArrayList<String> chosenList = new ArrayList<>(Arrays.asList(chosen));
         //ArrayList<String> oldChosenList = new ArrayList(Arrays.asList(oldChosen));
 
 		// Don't just delete.  Select * of them.  Before I delete it, see if it is the only taxon
@@ -531,7 +531,7 @@ public class SpeciesListDb extends AntwebDb {
         while (rset.next()) {
             String taxonName = rset.getString(1);
 
-            if ((AntwebProps.isDevMode()) && ("amblyoponinaemystrium mysticum".equals(taxonName))) {
+            if (AntwebProps.isDevMode() && "amblyoponinaemystrium mysticum".equals(taxonName)) {
               s_log.warn("noPassWorldantsSpeciesList() taxonName:" + taxonName + " isMorpho:" + Taxon.isMorpho(taxonName) + " isIndet:" + Taxon.isIndet(taxonName));
             }
 

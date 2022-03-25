@@ -1,19 +1,22 @@
 package org.calacademy.antweb.upload;
 
-import java.io.*;
-import java.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Formatter;
+import org.calacademy.antweb.util.AntwebUtil;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.util.*;
+import java.util.Date;
+import java.util.Hashtable;
 
 public class UploadUtil {
 
-    private static Log s_log = LogFactory.getLog(UploadUtil.class); 
+    private static final Log s_log = LogFactory.getLog(UploadUtil.class);
             
     static String getFirstLine(String fileName, String encoding) {
         String theLine = "";
@@ -25,9 +28,6 @@ public class UploadUtil {
                 // parse the header
                 theLine = in.readLine();
                 theLine = theLine.toLowerCase();
-            } catch (FileNotFoundException e) {
-                s_log.error("getFirstLine(" + fileName + ", " + encoding + ") e: " + e);
-                //AntwebUtil.errorStackTrace(e);
             } catch (IOException e) {
                 s_log.error("getFirstLine(" + fileName + ", " + encoding + ") e: " + e);
                 //AntwebUtil.errorStackTrace(e);
@@ -52,7 +52,7 @@ public class UploadUtil {
     
     public static String makeName(Hashtable item) {
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder(24);
 
         if (validNameKey("taxon_name", item)) {
             if ("formicidae".equals(item.get("taxon_name")))         
@@ -76,11 +76,11 @@ public class UploadUtil {
         //            sb.append(" (" + (String) item.get("speciesgroup") + ")");
         //        }
         if (validNameKey("species", item)) {
-            sb.append(" " + (String) item.get("species"));
+            sb.append(" " + item.get("species"));
         }
 
         if (validNameKey("subspecies", item)) {
-            sb.append(" " + (String) item.get("subspecies"));
+            sb.append(" " + item.get("subspecies"));
         }
 
         //A.log("makeName() name:"+ sb.toString());  
@@ -92,7 +92,7 @@ public class UploadUtil {
         boolean valid = false;
         if (item.containsKey(key)) {
             String keyVal = (String) item.get(key);
-            if ((!keyVal.equals("null")) && (!keyVal.equals(""))) {
+            if (!keyVal.equals("null") && !keyVal.equals("")) {
                 valid = true;
             }
         }
@@ -111,7 +111,7 @@ public class UploadUtil {
            cleanCode = Formatter.replace(cleanCode, "#", "");
            //A.log("cleanCode() code:" + code + " cleanCode:" + cleanCode);
         }
-        if (cleanCode.contains("\'")) cleanCode = Formatter.replace(cleanCode, "\'", "");
+        if (cleanCode.contains("'")) cleanCode = Formatter.replace(cleanCode, "'", "");
         if (cleanCode.contains(" ")) cleanCode = Formatter.replace(cleanCode, " ", "");
         //if (!Formatter.hasApha(code)) { }
       }

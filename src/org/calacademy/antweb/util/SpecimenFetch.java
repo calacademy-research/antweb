@@ -45,7 +45,7 @@ public class SpecimenFetch extends HttpServlet {
     try {
       output = HttpUtil.fetchUrl(url);
     } catch (Exception e) {
-      output = "e:" + e.toString();
+      output = "e:" + e;
       //if (AntwebProps.isDevMode()) 
       output += " url:" + url;
       s_log.error("execute() " + output);

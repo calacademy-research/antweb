@@ -3,6 +3,7 @@ package org.calacademy.antweb.util;
 import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.GeolocaleDb;
@@ -21,17 +22,17 @@ public class GeolocaleMgr extends Manager {
     private static final Log s_log = LogFactory.getLog(GeolocaleMgr.class);
 
     // This is a deep copy. Used for menus.
-    private static ArrayList<Region> s_regions = null;
+    private static ArrayList<Region> s_regions;
 
     // Used for most of the getGeolocale() methods.
-    private static ArrayList<Geolocale> s_geolocales = null;
+    private static ArrayList<Geolocale> s_geolocales;
 
     // For Taxon Name Search Autocomplete    
-    private static List<String> placeNamesList = null;
+    private static List<String> placeNamesList;
 
-    private static LinkedList<Adm1> adm1List = null;
+    private static LinkedList<Adm1> adm1List;
 
-    private static Map<String, Country> countryNameMap = null;
+    private static Map<String, Country> countryNameMap;
 
     /**
      * key is pair of adm1Name, countryName, value is the Adm1 object
@@ -45,9 +46,9 @@ public class GeolocaleMgr extends Manager {
     private static boolean s_oneAtATime = false;
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
-        if (!forceReload && (s_regions != null)) return;
+        if (!forceReload && s_regions != null) return;
 
-        java.util.Date startTime = new java.util.Date();
+        Date startTime = new Date();
 
         if (s_regions == null || forceReload) {
             if (!s_oneAtATime) {
@@ -60,7 +61,7 @@ public class GeolocaleMgr extends Manager {
             GeolocaleMgr.populateDeep(connection, true);
             GeolocaleMgr.populateShallow(connection, true);
             // For Place Name Search Autocomplete
-            placeNamesList = (new GeolocaleDb(connection)).getPlaceNames();
+            placeNamesList = new GeolocaleDb(connection).getPlaceNames();
 
             s_oneAtATime = false;
         }
@@ -73,7 +74,7 @@ public class GeolocaleMgr extends Manager {
     }
 
     private static void populateDeep(Connection connection, boolean forceReload) throws SQLException {
-        if (!forceReload && (s_regions != null)) return;
+        if (!forceReload && s_regions != null) return;
 
         GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
         // deep crawl through subregion, countries and adm1.  Use for Georegion menu.
@@ -82,7 +83,7 @@ public class GeolocaleMgr extends Manager {
 
     private static void populateShallow(Connection connection, boolean forceReload) {
 
-        if (!forceReload && (s_geolocales != null)) return;
+        if (!forceReload && s_geolocales != null) return;
 
         //A.log("populateShallow forceReload:" + forceReload + " s_geolocales:" + s_geolocales);
 
@@ -463,7 +464,7 @@ public class GeolocaleMgr extends Manager {
             for (Subregion subregion : region.getSubregions()) {
                 for (Country country : subregion.getAllCountries()) {
                     String countryName = country.getName().toLowerCase();
-                    countryName = (new org.calacademy.antweb.Formatter()).removeSpaces(countryName);
+                    countryName = new Formatter().removeSpaces(countryName);
                     if (name.equals(countryName)) return country;
                 }
             }

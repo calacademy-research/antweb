@@ -6,6 +6,6 @@ public interface Describable {
 
   String getName();
   void setName(String name);
-  Hashtable getDescription();
+  Hashtable<String, String> getDescription();
 
 }

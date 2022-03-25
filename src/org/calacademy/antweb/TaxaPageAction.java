@@ -3,18 +3,22 @@ package org.calacademy.antweb;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
 import java.io.*;
-import org.apache.commons.logging.Log; 
+import java.util.Date;
+
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
 public final class TaxaPageAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(TaxaPageAction.class);
+    private static final Log s_log = LogFactory.getLog(TaxaPageAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -24,7 +28,7 @@ public final class TaxaPageAction extends Action {
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
-        java.util.Date startTime = new java.util.Date(); // for AntwebUtil.finish(request, startTime);
+        Date startTime = new Date(); // for AntwebUtil.finish(request, startTime);
 
         ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
@@ -36,7 +40,7 @@ public final class TaxaPageAction extends Action {
 
         if (ProjectMgr.hasMoved(request, response)) return null;
 
-        boolean withImages = ("true".equals(request.getParameter("images")));     // Mark.  Temp.  True creates performance problems;    
+        boolean withImages = "true".equals(request.getParameter("images"));     // Mark.  Temp.  True creates performance problems;
 
         if (AntwebProps.isDevMode() && withImages) {  // If the server is struggling, this would be good functionality to restrict.
             ActionForward c = Check.loginValid(request, mapping); if (c != null) return c;
@@ -55,7 +59,7 @@ public final class TaxaPageAction extends Action {
         }   
 
         String simpleStr = request.getParameter("simple");
-        boolean simple = ("true".equals(simpleStr));
+        boolean simple = "true".equals(simpleStr);
 
         String isImaged = request.getParameter("isImaged");
         //A.log("execute() isImaged:" + isImaged);
@@ -67,7 +71,7 @@ public final class TaxaPageAction extends Action {
         String[] testStrings = {rank, simpleStr, isImaged, caste};
         if (HttpUtil.hasIllegalChars(testStrings, request)) {
           request.setAttribute("message", "Illegal characters.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         }
 
         Overview overview = null;
@@ -79,7 +83,7 @@ public final class TaxaPageAction extends Action {
 
         if (AntwebMgr.isServerInitializing(overview)) {
           request.setAttribute("message", "One moment please, MuseumMgr is initializing.");
-          return (mapping.findForward("message"));        
+          return mapping.findForward("message");
         }
 
         TaxaPage taxaPage = new TaxaPage();
@@ -87,12 +91,12 @@ public final class TaxaPageAction extends Action {
         taxaPage.setBrowserParams(rank, overview);
 
         if (rank != null) {
-          java.sql.Connection connection = null;
+          Connection connection = null;
           String connName = "TaxaPageAction.execute()" + AntwebUtil.getRandomNumber();
 
           //int uniqueNumber = AntwebUtil.getRandomNumber();
           try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
 
             if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }            
             
@@ -107,29 +111,29 @@ public final class TaxaPageAction extends Action {
             //if (overview instanceof Adm1) A.log("execute() overview:" + overview + " parent:" + overview.getParentName());
 			if (overview == null) {
 			  request.setAttribute("message", "overview not found");
-			  return (mapping.findForward("message"));              
+			  return mapping.findForward("message");
 			}        
 
             if (!Rank.isValid(rank)) {
                 String message = "invalid rank:" + rank;
 				s_log.info("execute() " + message); 
 				request.setAttribute("message", message);
-				return (mapping.findForward("message"));        
+				return mapping.findForward("message");
             }
 
- 			if (("species".equals(rank)) 
+ 			if ("species".equals(rank)
 			  && (
 			     Project.ALLANTWEBANTS.equals(overview)
 			  || Project.WORLDANTS.equals(overview)   
 			  )
-			  && (!"false".equals(isImaged))
-			  && (withImages)
-			  && (overview == null)
+			  && !"false".equals(isImaged)
+			  && withImages
+			  && overview == null
 			  ) {
 				String message = "Sorry, due to resultset size, this is an unreasonable request.  Rank:" + rank + " overview:" + overview;
 				s_log.info("Execute() " + message); 
 				request.setAttribute("message", message);
-				return (mapping.findForward("message"));        
+				return mapping.findForward("message");
 			}
 
               // Caching Logic Part I
@@ -160,7 +164,7 @@ public final class TaxaPageAction extends Action {
                               //if (AntwebProps.isDevOrStageMode())
                               s_log.info("Execute() " + message);
                               request.setAttribute("message", message);
-                              return (mapping.findForward("message"));
+                              return mapping.findForward("message");
                           }
                       }
                   }
@@ -175,7 +179,7 @@ public final class TaxaPageAction extends Action {
                 String message = "Subspecies not supported for taxonomic page. Use species.";
                 s_log.error("execute() " + message + " " + HttpUtil.getRequestInfo(request));
                 request.setAttribute("message", message);
-                return (mapping.findForward("message"));            
+                return mapping.findForward("message");
             }
 
 
@@ -223,9 +227,9 @@ public final class TaxaPageAction extends Action {
         // A.log("execute() children:" + taxaPage.getChildren() + " simple:" + simple);                      
 
         if (taxaPage.getChildren() == null) {
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

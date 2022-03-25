@@ -4,6 +4,8 @@ import java.util.*;
 import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -15,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
     
 public final class EndemicAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(EndemicAction.class);
+    private static final Log s_log = LogFactory.getLog(EndemicAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -25,26 +27,26 @@ public final class EndemicAction extends Action {
 
         ArrayList<String> endemics = null;
 
-        String geolocaleIdStr = (String) request.getParameter("geolocaleId");
+        String geolocaleIdStr = request.getParameter("geolocaleId");
         Geolocale geolocale = null;
         if (geolocaleIdStr != null) {
             ActionForward a = Check.init(Check.GEOLOCALE, request, mapping); if (a != null) return a;
 
             int geolocaleId = 0;
             try {
-                geolocaleId = (Integer.valueOf(geolocaleIdStr)).intValue();
+                geolocaleId = Integer.parseInt(geolocaleIdStr);
             } catch (NumberFormatException e) {
                 request.setAttribute("message", "valid Geolocale ID expected. Found:" + geolocaleId);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
             geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
             if (geolocale == null) {
                 request.setAttribute("message", "geolocale not found:" + geolocaleId);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
         }
 
-        String bioregionName = (String) request.getParameter("bioregionName");
+        String bioregionName = request.getParameter("bioregionName");
         Bioregion bioregion = null;
         if (bioregionName != null) {
             ActionForward a = Check.init(Check.BIOREGION, request, mapping); if (a != null) return a;
@@ -52,14 +54,14 @@ public final class EndemicAction extends Action {
             bioregion = BioregionMgr.getBioregion(bioregionName);
             if (bioregion == null) {
                 request.setAttribute("message", "bioregion not found:" + bioregion);
-                return (mapping.findForward("message"));
+                return mapping.findForward("message");
             }
         }
 
         String dbUtilName = "EndemicAction.execute()";
         Connection connection = null;
         try {
-  		    javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+  		    DataSource dataSource = getDataSource(request, "conPool");
             if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 		    connection = DBUtil.getConnection(dataSource, dbUtilName);
 
@@ -79,7 +81,7 @@ public final class EndemicAction extends Action {
         request.setAttribute("endemic", endemics);        
         //request.setAttribute("geolocale", geolocale);
 
-        return (mapping.findForward("endemic"));
+        return mapping.findForward("endemic");
     }
 
     private ArrayList<String> getGeolocaleEndemics(int geolocaleId, Connection connection) {
@@ -87,7 +89,7 @@ public final class EndemicAction extends Action {
 
 		String query = "select gt.taxon_name from geolocale_taxon gt, taxon where gt.taxon_name = taxon.taxon_name " 
 		  + " and gt.geolocale_id = " + geolocaleId 
-		  + (new StatusSet()).getAndCriteria()
+		  + new StatusSet().getAndCriteria()
 		  + " and gt.is_endemic = 1 order by genus, species, subspecies";
 
         Statement stmt = null;
@@ -115,7 +117,7 @@ public final class EndemicAction extends Action {
 
         String query = "select bt.taxon_name from bioregion_taxon bt, taxon where bt.taxon_name = taxon.taxon_name "
                 + " and bt.bioregion_name = '" + bioregionName + "'"
-                + (new StatusSet()).getAndCriteria()
+                + new StatusSet().getAndCriteria()
                 + " and bt.is_endemic = 1 order by genus, species, subspecies";
 
         Statement stmt = null;

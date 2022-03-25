@@ -5,20 +5,20 @@ import org.apache.commons.logging.LogFactory;
 
 public class Georank {
 
-    private static Log s_log = LogFactory.getLog(Georank.class);
+    private static final Log s_log = LogFactory.getLog(Georank.class);
     
     
-    public static String region = "region";
-    public static String subregion = "subregion";
-    public static String country = "country";
-    public static String adm1 = "adm1";
-    public static String adm2 = "adm2";
+    public static final String region = "region";
+    public static final String subregion = "subregion";
+    public static final String country = "country";
+    public static final String adm1 = "adm1";
+    public static final String adm2 = "adm2";
 
-    public static String REGION = "region";
-    public static String SUBREGION = "subregion";
-    public static String COUNTRY = "country";
-    public static String ADM1 = "adm1";
-    public static String ADM2 = "adm2";
+    public static final String REGION = "region";
+    public static final String SUBREGION = "subregion";
+    public static final String COUNTRY = "country";
+    public static final String ADM1 = "adm1";
+    public static final String ADM2 = "adm2";
 
     public Georank() {
     }

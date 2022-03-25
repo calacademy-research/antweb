@@ -3,6 +3,7 @@
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.Collection;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
@@ -14,24 +15,24 @@ public class TaxonMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(TaxonMgr.class);
 
-    private static ArrayList<Taxon> s_subfamilies = null;
+    private static ArrayList<Taxon> s_subfamilies;
     
-    private static HashMap<String, Taxon> s_genera = null;
+    private static HashMap<String, Taxon> s_genera;
     
-    private static HashMap<String, Taxon> s_species = null;
+    private static HashMap<String, Taxon> s_species;
 
     // Shallow copies
-    private static HashMap<String, Taxon> s_taxa = null;
+    private static HashMap<String, Taxon> s_taxa;
 
     private static HashMap<String, ArrayList<String>> s_subgenusHashMap = new HashMap<>();
 
     //private static List<String> taxaNamesList = null;
-    private static List<String> prettyTaxaNamesList = null;
+    private static List<String> prettyTaxaNamesList;
 
-    private static Date s_populateTime = null;
+    private static Date s_populateTime;
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
-        if (!forceReload && (s_subfamilies != null)) return;
+        if (!forceReload && s_subfamilies != null) return;
 
         TaxonDb taxonDb = new TaxonDb(connection);
         s_subfamilies = taxonDb.getTaxa(Rank.SUBFAMILY);
@@ -85,7 +86,7 @@ public class TaxonMgr extends Manager {
     public static void postInitialize(Connection connection) throws SQLException {
     }
 
-    public static java.util.Collection<Taxon> getTaxa() {
+    public static Collection<Taxon> getTaxa() {
         return s_taxa.values();
     }
 
@@ -149,7 +150,7 @@ public class TaxonMgr extends Manager {
                 continue;
             }
             genus = g;
-            if (genusFound == true && !s_ambiguousGenusReported) {
+            if (genusFound && !s_ambiguousGenusReported) {
                 s_ambiguousGenusReported = true;
                 s_log.warn("getGenusFromName(). AMBIGUOUS! Found a second genus with genusName:" + genusName + ". generaSize:" + s_genera.size());
                 //AntwebUtil.logShortStackTrace();
@@ -244,8 +245,10 @@ public class TaxonMgr extends Manager {
             boolean containsAll = true;
             for (String s : texts) {
                 //log("getPrettyTaxaNames() text:" + text + " j:" + texts[j] + " taxonName:" + taxonName);
-                if (!taxonName.toLowerCase().contains(s)) containsAll = false;
-                if (!containsAll) break;
+                if (!taxonName.toLowerCase().contains(s)) {
+                    containsAll = false;
+                    break;
+                }
             }
             if (containsAll) {
                 prettyTaxaNamesSubset.add(taxonName);

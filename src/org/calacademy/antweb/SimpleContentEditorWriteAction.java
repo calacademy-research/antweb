@@ -20,7 +20,7 @@ import org.calacademy.antweb.util.*;
 
 public final class SimpleContentEditorWriteAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SimpleContentEditorWriteAction.class);
+    private static final Log s_log = LogFactory.getLog(SimpleContentEditorWriteAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -29,7 +29,7 @@ public final class SimpleContentEditorWriteAction extends Action {
         ActionForward c = Check.login(request, mapping); if (c != null) return c;
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
-        String docRoot = (new Utility()).getDocRoot();
+        String docRoot = Utility.getDocRoot();
         
         String fileName = ((SimpleContentEditorForm) form).getFileName();
         String contents = ((SimpleContentEditorForm) form).getContents();
@@ -37,7 +37,7 @@ public final class SimpleContentEditorWriteAction extends Action {
         // only this file can be editted right now
         if (!fileName.equals("staff_gen_inc.jsp")) {
             s_log.error("execute() filename is not staff_gen_inc.jsp");
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
 
         if (AntwebProps.isDevMode()) {
@@ -50,7 +50,7 @@ public final class SimpleContentEditorWriteAction extends Action {
                 outFile.close();
             } catch (IOException e) {
                 s_log.error("Unable to read from file " + docRoot + fileName + ": " + e);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             }
         } else {       
             try {
@@ -61,11 +61,11 @@ public final class SimpleContentEditorWriteAction extends Action {
                 outFile.close();
             } catch (IOException e) {
                 s_log.error("Unable to read from file " + docRoot + fileName + ": " + e);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             }
         }        
         ((SimpleContentEditorForm) form).setContents(contents);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 }

@@ -13,15 +13,15 @@ import org.calacademy.antweb.util.AntwebProps;
 
 public class SpecimenFieldSummary {
 
-    private static Log s_log = LogFactory.getLog(SpecimenFieldSummary.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenFieldSummary.class);
 	
-	String subfamily = null;
-	String genus = null;
-	String species = null;
-	String field = null;
-	String project = null;
-	Connection connection = null;
-	HashMap results = null;
+	String subfamily;
+	String genus;
+	String species;
+	String field;
+	String project;
+	Connection connection;
+	HashMap results;
 	
 	public Connection getConnection() {
 		return connection;
@@ -53,7 +53,7 @@ public class SpecimenFieldSummary {
 		String theQuery = null;
 		results = new HashMap();
 
-		if ((Utility.blank(subfamily) && Utility.blank(genus) && Utility.blank(species))
+		if (Utility.blank(subfamily) && Utility.blank(genus) && Utility.blank(species)
 				|| Utility.blank(field)) {
 			// do nothing
 			

@@ -25,10 +25,10 @@ import org.calacademy.antweb.util.*;
 
 public class DescriptionForm extends ActionForm {
 
-    private static Log s_log = LogFactory.getLog(DescriptionForm.class);
+    private static final Log s_log = LogFactory.getLog(DescriptionForm.class);
 
     private boolean m_isSaveEditField = false;
-    private String m_editField = null;
+    private String m_editField;
     private String m_contents;
     private String m_imageUrl = "";
     

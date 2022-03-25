@@ -14,8 +14,8 @@ public class BioregionMgr {
 
     private static final Log s_log = LogFactory.getLog(BioregionMgr.class);
 
-    private static ArrayList<Bioregion> s_bioregions = null;
-    private static ArrayList<String> s_bioregionProjectNames = null;
+    private static ArrayList<Bioregion> s_bioregions;
+    private static ArrayList<String> s_bioregionProjectNames;
         
     public static void populate(Connection connection) throws SQLException {
       populate(connection, false);
@@ -28,9 +28,9 @@ public class BioregionMgr {
         //AntwebUtil.logStackTrace();
       }
       
-      if (!forceReload && (s_bioregions != null)) return;      
+      if (!forceReload && s_bioregions != null) return;
       
-      BioregionDb bioregionDb = (new BioregionDb(connection));
+      BioregionDb bioregionDb = new BioregionDb(connection);
 
       s_bioregions = bioregionDb.getBioregions(true); // deep copy
       //s_bioregionProjectNames = bioregionDb.getBioregionProjectNames();

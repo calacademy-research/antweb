@@ -4,31 +4,30 @@ import java.sql.*;
 import java.util.ArrayList;
 
 import org.calacademy.antweb.search.*;
-import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
 public class Collection extends AdvancedSearchResults {
 
-    private static Log s_log = LogFactory.getLog(Collection.class);
+    private static final Log s_log = LogFactory.getLog(Collection.class);
 
     private String code = "";
     private String habitat = "";
     private String microhabitat= "";
     private String method = "";
     private String collectedBy = "";
-    private Locality locality = null;
+    private Locality locality;
     protected String collectionNotes = "";
     private String dateCollectedStart = "";
     private String dateCollectedEnd = "";
-    private SearchResults specimenResults = new SearchResults();
+    private final SearchResults specimenResults = new SearchResults();
     public SearchResults getSpecimenResults() {
       return specimenResults;
     }
 
 
-    private ArrayList<Group> groupList = new ArrayList();
+    private ArrayList<Group> groupList = new ArrayList<>();
     
     protected Map map;
     
@@ -87,7 +86,7 @@ public class Collection extends AdvancedSearchResults {
     // We override both GenericSearchResults.getResultsAsTaxon() and GenericSearchResults.sortBy()
     // This method allows getResultsAsTaxon to work correctly...
     public ArrayList<ResultItem> getResults() {
-        if (getSpecimenResults().getResults() == null) return new ArrayList();    
+        if (getSpecimenResults().getResults() == null) return new ArrayList<>();
         return getSpecimenResults().getResults();
     }
 
@@ -193,7 +192,7 @@ public class Collection extends AdvancedSearchResults {
   public String getAmissEmail() {
     String amissEmail = "antweb@calacademy.org";  
     if (getGroupList().size() == 1) {
-      amissEmail = ((Group) getGroupList().get(0)).getAdminEmail();
+      amissEmail = getGroupList().get(0).getAdminEmail();
     }
     s_log.debug("getAmissEmail() size:" + getGroupList().size() + " amissEmail:" + amissEmail);
     return amissEmail;

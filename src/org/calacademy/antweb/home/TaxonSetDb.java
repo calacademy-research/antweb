@@ -14,7 +14,7 @@ import java.sql.*;
 
 public abstract class TaxonSetDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(TaxonSetDb.class);
+    private static final Log s_log = LogFactory.getLog(TaxonSetDb.class);
 
     public TaxonSetDb(Connection connection) {
       super(connection);
@@ -77,7 +77,7 @@ public abstract class TaxonSetDb extends AntwebDb {
       message += " " + new ProjTaxonDb(connection).deleteUncuratedMorphosWithoutSpecimen();
       message += " " + geolocaleTaxonDb.deleteGeolocaleTaxaWithoutTaxon();     
 
-      int c = (new UtilDb(connection)).deleteFrom("proj_taxon", "where taxon_name not in (select taxon_name from taxon) and project_name not in ('worldants')");
+      int c = new UtilDb(connection).deleteFrom("proj_taxon", "where taxon_name not in (select taxon_name from taxon) and project_name not in ('worldants')");
       s_log.debug("dataCleanup() records deleted:" + c);
 
       return message;   

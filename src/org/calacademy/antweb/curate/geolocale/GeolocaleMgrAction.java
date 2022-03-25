@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class GeolocaleMgrAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(GeolocaleMgrAction.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleMgrAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -44,7 +44,7 @@ public final class GeolocaleMgrAction extends Action {
         String georank = editGeolocaleForm.getGeorank();        		
 		if (georank == null) georank = "country";
 		
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
             DataSource dataSource = getDataSource(request, "conPool");
 		    connection = DBUtil.getConnection(dataSource, "GeolocaleMgrAction.execute()");
@@ -69,7 +69,7 @@ s_log.debug("GeolocaleMgrAction.execute() geolocaleArray.size:" + geolocaleArray
 
             
             s_log.debug("execute() success");
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
 
 		} catch (SQLException e) {
 			s_log.error("execute() e:" + e);
@@ -77,6 +77,6 @@ s_log.debug("GeolocaleMgrAction.execute() geolocaleArray.size:" + geolocaleArray
 			DBUtil.close(connection, this, "GeolocaleMgrAction.execute()");
 		}
 
-        return (mapping.findForward("failure"));
+        return mapping.findForward("failure");
     }
 }

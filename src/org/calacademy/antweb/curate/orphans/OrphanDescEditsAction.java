@@ -24,7 +24,7 @@ import java.sql.*;
 
 public final class OrphanDescEditsAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(OrphanDescEditsAction.class);
+    private static final Log s_log = LogFactory.getLog(OrphanDescEditsAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -34,7 +34,7 @@ public final class OrphanDescEditsAction extends Action {
         
         ArrayList<Taxon> list = new ArrayList();
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
                 
         try {
             DataSource dataSource = getDataSource(request, "conPool");
@@ -53,7 +53,7 @@ public final class OrphanDescEditsAction extends Action {
                 + " toTaxonName:" + theForm.getToTaxonName() 
                 + " suggestedTaxonName:" + theForm.getSuggestedTaxonName()
                 + " browse:" + theForm.getBrowse());
-              if ((theForm.getBrowse() != null) && (theForm.getBrowse().equals("browse"))) {
+              if (theForm.getBrowse() != null && theForm.getBrowse().equals("browse")) {
                   String url = AntwebProps.getDomainApp() + "/browse.do";
                   if (theForm.getToTaxonName() != null && !"".equals(theForm.getToTaxonName())) {
                     url += "?taxonName=" + theForm.getToTaxonName();
@@ -109,11 +109,11 @@ public final class OrphanDescEditsAction extends Action {
             list.addAll(orphansDb.getTaxonOrphanDescEditTaxons());
             request.setAttribute("orphanDescEditTaxons", list);        
 
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
                       
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "OrphanDescEditsAction.execute()");
         }
@@ -194,11 +194,11 @@ public final class OrphanDescEditsAction extends Action {
         String newTaxonName = "";
         
         if (theForm.getToTaxonName() != null && !"".equals(theForm.getToTaxonName())) {
-          newTaxon = (new TaxonDb(connection)).getTaxon(theForm.getToTaxonName());
+          newTaxon = new TaxonDb(connection).getTaxon(theForm.getToTaxonName());
           if (newTaxon == null) return "taxon:" + theForm.getToTaxonName() + " does not exist.";
         } if (theForm.getSuggestedTaxonName() != null && !"".equals(theForm.getSuggestedTaxonName())) {
           s_log.debug("transferEditsToTaxon() suggestedTaxonName:" + theForm.getSuggestedTaxonName());
-          newTaxon = (new TaxonDb(connection)).getTaxon(theForm.getSuggestedTaxonName());
+          newTaxon = new TaxonDb(connection).getTaxon(theForm.getSuggestedTaxonName());
         } else {
           String subfamily = theForm.getSubfamily();
           String genus = theForm.getGenus();

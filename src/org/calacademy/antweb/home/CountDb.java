@@ -7,7 +7,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.Geolocale;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
@@ -38,12 +37,12 @@ public class CountDb extends AntwebDb {
         http://localhost/antweb/utilData.do?action=countCrawl&num=7
 */
 
-    private static Log s_log = LogFactory.getLog(CountDb.class);
+    private static final Log s_log = LogFactory.getLog(CountDb.class);
         
     // Best to use a lightly populated subfamily name.    
     //String debugName = "martialinae";    
-    String debugTaxonName = "dorylinaeacanthostichus davisi";
-    int debugGeolocaleId = 0;
+    final String debugTaxonName = "dorylinaeacanthostichus davisi";
+    final int debugGeolocaleId = 0;
     //int debugGeolocaleId = 2;
     boolean debug = true;
 
@@ -54,7 +53,7 @@ public class CountDb extends AntwebDb {
     }
 
     // Useful for debugging? Code to execute and get results or a particular count.
-    private static String s_query = null;  // Just used for reporting.
+    private static String s_query;  // Just used for reporting.
     private static String s_report = "";
     private static boolean s_debug = true;
     
@@ -373,7 +372,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
 		   
 			   //if (AntwebProps.isDevMode() && taxonName.equals(debugTaxonName)) s_log.warn("imageCountCrawl() query:" + query);
 
-			   if ((lastGenus != null) && (genus != null) && (!genus.equals(lastGenus))) {
+			   if (lastGenus != null && genus != null && !genus.equals(lastGenus)) {
 				 // break on genus             
 				 String genusTaxonName = lastSubfamily + lastGenus;
 				 updateCountableTaxonImageCount(countable, genusTaxonName, genusImageSum, "genus");
@@ -383,7 +382,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
 			   }
 			   lastGenus = genus;
 		   
-			   if ((lastSubfamily != null) && (subfamily != null) && (!subfamily.equals(lastSubfamily))) {
+			   if (lastSubfamily != null && subfamily != null && !subfamily.equals(lastSubfamily)) {
 				 // break on subfamily             
 				 updateCountableTaxonImageCount(countable, lastSubfamily, subfamilyImageSum, "subfamily");
 				 subfamilyImageSum = imageSum;
@@ -392,7 +391,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
 			   }
 			   lastSubfamily = subfamily;
 		   
-			   if ((lastFamily != null) && (!family.equals(lastFamily))) {
+			   if (lastFamily != null && !family.equals(lastFamily)) {
 				 // break on family
 				 updateCountableTaxonImageCount(countable, lastFamily, familyImageSum, "family");
 				 familyImageSum = imageSum;

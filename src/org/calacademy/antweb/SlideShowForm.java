@@ -21,13 +21,13 @@ import org.calacademy.antweb.util.*;
 public final class SlideShowForm extends ActionForm {
 
 
-    private String rank = null;
-    private String name = null;
-    private String index = null;
-    private String slideShow = null;
+    private String rank;
+    private String name;
+    private String index;
+    private String slideShow;
 
 	public String getSlideShow() {
-	return (this.slideShow);
+	return this.slideShow;
 	}
 
 	public void setSlideShow(String slideShow) {
@@ -36,7 +36,7 @@ public final class SlideShowForm extends ActionForm {
 
 
     public String getRank() {
-	return (this.rank);
+	return this.rank;
     }
 
     public void setRank(String rank) {
@@ -44,7 +44,7 @@ public final class SlideShowForm extends ActionForm {
     }
 
     public String getName() {
-	return (this.name);
+	return this.name;
     }
 
     public void setName(String name) {
@@ -52,7 +52,7 @@ public final class SlideShowForm extends ActionForm {
     }
 
     public String getIndex() {
-	return (this.index);
+	return this.index;
     }
 
     public void setIndex(String index) {

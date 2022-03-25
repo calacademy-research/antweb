@@ -13,14 +13,14 @@ public class AllAntwebMgr {
 
     private static final Log s_log = LogFactory.getLog(AllAntwebMgr.class);
 
-    private static HashMap<String, ProjTaxon> s_allAntwebMap = null;
+    private static HashMap<String, ProjTaxon> s_allAntwebMap;
         
     public static void populate(Connection connection) {
       populate(connection, false);
     }
     
     public static void populate(Connection connection, boolean forceReload) {
-      if (!forceReload && (s_allAntwebMap != null)) return;      
+      if (!forceReload && s_allAntwebMap != null) return;
       s_allAntwebMap = new HashMap<>();
       
       ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);

@@ -29,10 +29,10 @@ The requested urls should perhaps be in utilData.do instead of here.
 */
 public class Scheduler extends Action {
 
-    public static int LAUNCHTIME = 5; // 5 am. Referenced from SessionRequestFilter.
+    public static final int LAUNCHTIME = 5; // 5 am. Referenced from SessionRequestFilter.
 
 
-    private static Log s_log = LogFactory.getLog(Scheduler.class);
+    private static final Log s_log = LogFactory.getLog(Scheduler.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {
@@ -43,7 +43,7 @@ public class Scheduler extends Action {
    		    String message = "Scheduler can only be launched by administrative login";
 			s_log.warn(message);
 			request.setAttribute("message", message);
-			return (mapping.findForward("message"));
+			return mapping.findForward("message");
 		}
 
         HttpSession session = request.getSession();
@@ -68,14 +68,14 @@ public class Scheduler extends Action {
             String message = "Scheduler failed because isInitialized:" + AntwebMgr.isInitialized() + " isInitializing:" + AntwebMgr.isServerInitializing();
             s_log.error("execute() " + message);
 			request.setAttribute("message", message);
-			return (mapping.findForward("adminMessage"));
+			return mapping.findForward("adminMessage");
 		}
 
         String message = doAction(action, num, secureCode);
 
         LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete. "); // + 	" mesage:" + message);
 		request.setAttribute("message", message);
-		return (mapping.findForward("adminMessage")); 	  
+		return mapping.findForward("adminMessage");
     }
 
     // Called from SessionRequestFilter
@@ -131,8 +131,7 @@ public class Scheduler extends Action {
 				Date startTime = new Date();
 			    String url = null;
 				try {
-					int i = 0;  // This will invoke all of them.
-					if (num > 0) i = num;    // This would invoke one of them
+					int i = Math.max(num, 0);  // This will invoke one of them if num != 0, otherwise invokes all of them
 
 					// if (AntwebProps.isDevMode()) i = 1;
 					//s_log.warn("doAction() action:" + action + " i:" + i + " num:" + num);
@@ -172,10 +171,8 @@ public class Scheduler extends Action {
 						s_log.info("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
-				} catch (AntwebException e) {
+				} catch (AntwebException | IOException e) {
 					s_log.error("doAction() Scheduler failed. Investigate log files. e:" + e + " url:" + url);
-				} catch (IOException e) {
-				    s_log.error("doAction() Scheduler failed. Investigate log files. e:" + e + " url:" + url);
 				}
 				message = "Scheduler " + action + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
 				s_log.warn("doAction() " + message);

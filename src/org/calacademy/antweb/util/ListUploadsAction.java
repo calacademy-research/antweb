@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -18,7 +20,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ListUploadsAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ListUploadsAction.class);
+    private static final Log s_log = LogFactory.getLog(ListUploadsAction.class);
 
     public ActionForward execute(
         ActionMapping mapping,
@@ -49,7 +51,7 @@ public final class ListUploadsAction extends Action {
           listSpecimenUploads(request, form);
         }
         
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 
     private void listImageUploads(HttpServletRequest request, ActionForm form) {
@@ -58,20 +60,20 @@ public final class ListUploadsAction extends Action {
         Integer groupId = (Integer) df.get("groupId");
         int groupIdInt = 0;
         if (groupId != null) {
-            groupIdInt = groupId.intValue();
+            groupIdInt = groupId;
         }
         String groupName = null;
 
         Integer curatorId = (Integer) df.get("curatorId");        
         int curatorIdInt = 0;
         if (curatorId != null) {
-            curatorIdInt = curatorId.intValue();
+            curatorIdInt = curatorId;
         }
 
         ArrayList<ImageUpload> imageUploads = null;
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "listImageUploads()");          
 
             String criteria = "";
@@ -81,7 +83,7 @@ public final class ListUploadsAction extends Action {
             if (curatorIdInt != 0) {
               criteria += " where curator_id = " + curatorIdInt;
             }
-            imageUploads = (new ImageUploadDb(connection)).getImageUploads(criteria);
+            imageUploads = new ImageUploadDb(connection).getImageUploads(criteria);
 
         } catch (SQLException e) {
             s_log.error("listImageUploads() e:" + e);
@@ -117,14 +119,14 @@ public final class ListUploadsAction extends Action {
         Integer groupId = (Integer) df.get("groupId");        
         int groupIdInt = 0;
         if (groupId != null) {
-            groupIdInt = groupId.intValue();
+            groupIdInt = groupId;
         }
         String groupName = null;
 
         Integer loginId = (Integer) df.get("loginId");        
         int loginIdInt = 0;
         if (loginId != null) {
-            loginIdInt = loginId.intValue();
+            loginIdInt = loginId;
         }
     
         ArrayList<Upload> uploads = new ArrayList<>();
@@ -133,7 +135,7 @@ public final class ListUploadsAction extends Action {
         ResultSet rset = null;
         String query = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "listSpecimenUploads()");          
 
             //s_log.warn("execute groupId:" + groupId);
@@ -154,7 +156,7 @@ public final class ListUploadsAction extends Action {
                 Upload upload = new Upload();
                 upload.setLogFileName(rset.getString("log_file_name"));
                 upload.setCreated(rset.getDate("created"));
-                groupName = (rset.getString("group_name"));
+                groupName = rset.getString("group_name");
                 upload.setGroupName(groupName);
                 upload.setGroupId(rset.getInt("group_id"));
                 upload.setLoginId(rset.getInt("login_id"));

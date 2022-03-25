@@ -13,7 +13,7 @@ import org.calacademy.antweb.util.*;
     
 public final class UploadReportAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(UploadReportAction.class);
+    private static final Log s_log = LogFactory.getLog(UploadReportAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -29,7 +29,7 @@ public final class UploadReportAction extends Action {
           String message = "uploadId not found.";
           //s_log.warn("execute() " + message);
    	      request.setAttribute("message", message);
- 		  return (mapping.findForward("message"));
+ 		  return mapping.findForward("message");
         }
 
         if (uploadId > 0) {
@@ -46,7 +46,7 @@ public final class UploadReportAction extends Action {
 		  }
 		}
    	    request.setAttribute("message", "Upload Report not found:" + uploadId);
-		return (mapping.findForward("message"));
+		return mapping.findForward("message");
 	}
 
 }

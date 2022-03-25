@@ -1,7 +1,6 @@
 package org.calacademy.antweb.search;
 
 import java.io.*;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.ArrayList;
 
@@ -11,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 public final class DescEditSearchResults extends GenericSearchResults
     implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(DescEditSearchResults.class);
+    private static final Log s_log = LogFactory.getLog(DescEditSearchResults.class);
 
     /*
     public void setResultsWithFilters(ArrayList filters) throws Exception {
@@ -99,7 +98,7 @@ public final class DescEditSearchResults extends GenericSearchResults
     s_log.info("sorting descriptionEdits with field " + fieldName);
       switch (fieldName) {
           case "code":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -111,7 +110,7 @@ public final class DescEditSearchResults extends GenericSearchResults
 
               break;
           case "shotType":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -122,7 +121,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "shotNumber":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -133,7 +132,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "name":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -146,7 +145,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "artist":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -157,7 +156,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "group":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;
@@ -168,7 +167,7 @@ public final class DescEditSearchResults extends GenericSearchResults
               });
               break;
           case "uploadDate":
-              Collections.sort(results, new Comparator() {
+              results.sort(new Comparator() {
 
                   public int compare(Object o1, Object o2) {
                       ResultItem p1 = (ResultItem) o1;

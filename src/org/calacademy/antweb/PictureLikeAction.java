@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -20,7 +22,7 @@ import org.calacademy.antweb.home.*;
 
 public final class PictureLikeAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(PictureLikeAction.class);
+    private static final Log s_log = LogFactory.getLog(PictureLikeAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -34,7 +36,7 @@ public final class PictureLikeAction extends Action {
         if (accessLogin == null) {
             String message = "You must be logged in to Like a picture.";
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));            
+            return mapping.findForward("message");
         }
         
         String code = ((SpecimenImageForm) form).getCode();
@@ -44,7 +46,7 @@ public final class PictureLikeAction extends Action {
             String message = "Incorrect specimen identifier:" + code;
             s_log.error("execute() " + message);
             request.setAttribute("message", message);
-            return (mapping.findForward("message"));            
+            return mapping.findForward("message");
         }
 
         String shot = ((SpecimenImageForm) form).getShot();
@@ -67,9 +69,9 @@ public final class PictureLikeAction extends Action {
         Specimen theSpecimen = new Specimen();
         
         String query = null;
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "PictureLikeAction.execute()");
 
             ImageDb imageDb = new ImageDb(connection);
@@ -106,7 +108,7 @@ public final class PictureLikeAction extends Action {
          s_log.warn("Image not found for image:" + code + "shot:" + shot + " number:" + number);
           String message = "BigPicture not found.";
           request.setAttribute("message", message);
-          return (mapping.findForward("message"));
+          return mapping.findForward("message");
         }
         
         boolean requestScope = "request".equals(mapping.getScope());
@@ -120,15 +122,15 @@ public final class PictureLikeAction extends Action {
         
         // Set a transactional control token to prevent double posting
         saveToken(request);
-        return (mapping.findForward("bigPicture"));
+        return mapping.findForward("bigPicture");
     }
 
-    private void likeSpecimenImage(int imageId, Login accessLogin, javax.sql.DataSource dataSource) {
+    private void likeSpecimenImage(int imageId, Login accessLogin, DataSource dataSource) {
 
         Group accessGroup = accessLogin.getGroup();
         String query = null;
         Statement stmt = null;
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "PictureLikeAction.likeSpecimenImage()");
 

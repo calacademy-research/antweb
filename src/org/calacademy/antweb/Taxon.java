@@ -1,17 +1,18 @@
 package org.calacademy.antweb;
 
-import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
-import java.math.BigDecimal;
-
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.sort.*;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.geolocale.*;
+import org.calacademy.antweb.home.ImageDb;
+import org.calacademy.antweb.home.ImagePickDb;
+import org.calacademy.antweb.sort.*;
+import org.calacademy.antweb.util.*;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.sql.*;
+import java.util.Date;
+import java.util.*;
 
 public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
@@ -40,7 +41,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected String prettyName;
     protected String rank;
     protected String theXml;
-    protected Hashtable description;
+    protected Hashtable<String, String> description;
     protected Vector<String> habitats;
     protected Vector<String> microhabitats;
     protected Vector<String> methods;
@@ -69,7 +70,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected String browserParams;
     protected Map map;
     protected String fullName;
-    protected Hashtable images;
+    protected Hashtable<String, SpecimenImage> images;
     protected boolean hasImages;
     protected String code;
     //protected String nextRank = "";
@@ -79,15 +80,15 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected int hasImagesCount = 0;
     
     protected int similarCount;    
-    protected Formatter myFormatter = new Formatter();
+    protected final Formatter myFormatter = new Formatter();
     protected String binomial = "";
     protected boolean fossil;
     protected boolean extant = false;
-    protected String source = null;
+    protected String source;
     protected int lineNum = 0;
-    protected String insertMethod = null;
-    protected Timestamp created = null;
-    protected String execTime = null;
+    protected String insertMethod;
+    protected Timestamp created;
+    protected String execTime;
     protected boolean isType = false;
     protected boolean isAntCat = false;
     protected boolean isPending = false;
@@ -111,26 +112,26 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected int holId;
     protected int groupId;
 
-    private String chartColor = null;
+    private String chartColor;
     
-    private String maleSpecimen = null;
-    private String workerSpecimen = null;
-    private String queenSpecimen = null;    
+    private String maleSpecimen;
+    private String workerSpecimen;
+    private String queenSpecimen;
 
     private String bioregionMap;  // only for genera
     private String introducedMap; // only for species
     
-    protected Vector<String> homonymAuthorDates = null;        
+    protected Vector<String> homonymAuthorDates;
     //private ArrayList<Project> projects = null;
-    private ArrayList<Country> countries = null;
-    private ArrayList<Bioregion> bioregions = null;
+    private ArrayList<Country> countries;
+    private ArrayList<Bioregion> bioregions;
     
     protected TaxonSet taxonSet;
     
-    private String uploadDate = null;  // Used on the specimenReport.jsp    
+    private String uploadDate;  // Used on the specimenReport.jsp
 
-    private transient ArrayList<String> countryList = null;
-    private transient ArrayList<String> adm1List = null;
+    private transient ArrayList<String> countryList;
+    private transient ArrayList<String> adm1List;
 
     public boolean equals(Object o) {
       String thisTaxonName = getTaxonName();
@@ -139,11 +140,11 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         return thisTaxonName.equals(thatTaxonName);
     }
     
-    protected String seeAlso = null;
-    protected String alsoDatabased = null;
+    protected String seeAlso;
+    protected String alsoDatabased;
 
     //private static String debugCode = null;
-    private static String debugCode = "ponerinaethaumatomyrmex zeteki";
+    private static final String debugCode = "ponerinaethaumatomyrmex zeteki";
 
     /*
     // Called from getInstance() above.
@@ -174,7 +175,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       return false;
     }
 
-    public static Taxon getTaxon(Hashtable item) {
+    public static Taxon getTaxon(Hashtable<String, Object> item) {
         String rank = (String) item.get("rank");
         Taxon taxon = getTaxonOfRank(rank);
         taxon.setKingdomName((String) item.get("kingdom_name"));
@@ -267,13 +268,13 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     private static boolean getBoolFor(Hashtable item, String key) {
         String valueStr = (String) item.get(key);
         int intValue = 0; // arbitary default?
-        if (valueStr != null) intValue = Integer.valueOf(valueStr).intValue();
+        if (valueStr != null) intValue = Integer.parseInt(valueStr);
         return intValue == 1;
     }
     private static int getIntFor(Hashtable item, String key) {
         String strValue = (String) item.get(key);
         int intValue = 0;
-        if (strValue != null) intValue = Integer.valueOf(strValue).intValue();
+        if (strValue != null) intValue = Integer.parseInt(strValue);
         return intValue;
     }
 
@@ -359,7 +360,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       String name = getPrettyName();
       try {
         name = removeParens(name);
-      } catch (java.lang.OutOfMemoryError e) {
+      } catch (OutOfMemoryError e) {
         s_log.warn("getPrettyConciseName() name:" + name + " e:" + e);
       }
       return name;
@@ -401,7 +402,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             this.prettyName = getFullName().toUpperCase();
         } else {
             this.prettyName = new Formatter().capitalizeFirstLetter(getFullName());
-            if ((subgenus != null) && (subgenus.length() > 0)) {
+            if (subgenus != null && subgenus.length() > 0) {
                 this.prettyName = new Formatter().capitalizeSubgenus(this.prettyName);
             }
         }
@@ -413,7 +414,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       String noSubfamilyTaxonName = null;
       int inaeIndex = taxonName.indexOf("inae");
       
-      if ((inaeIndex == taxonName.length() - 4) || ("incertae_sedis".equals(taxonName))) {
+      if (inaeIndex == taxonName.length() - 4 || "incertae_sedis".equals(taxonName)) {
         // This is a subfamily.
         return taxonName;
       }
@@ -435,10 +436,10 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       String longPrettyTaxonName = taxonName;
       int inaeIndex = taxonName.indexOf("inae");
       if (taxonName.contains("inae")) {
-        longPrettyTaxonName = (new Formatter()).capitalizeFirstLetter(taxonName.substring(0, inaeIndex + 4)) + " " + (new Formatter()).capitalizeFirstLetter(taxonName.substring(inaeIndex + 4));
+        longPrettyTaxonName = new Formatter().capitalizeFirstLetter(taxonName.substring(0, inaeIndex + 4)) + " " + new Formatter().capitalizeFirstLetter(taxonName.substring(inaeIndex + 4));
       }
       if (taxonName.contains("incertae_sedis")) {
-        longPrettyTaxonName = "Incertae Sedis " + (new Formatter()).capitalizeFirstLetter(taxonName.substring(15));
+        longPrettyTaxonName = "Incertae Sedis " + new Formatter().capitalizeFirstLetter(taxonName.substring(15));
       }
       //A.log("taxonName:" + taxonName + " prettyTaxonName:" + prettyTaxonName);
       return longPrettyTaxonName;
@@ -463,9 +464,9 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       String prettyTaxonName = taxonName;
       int inaeIndex = taxonName.indexOf("inae");
 
-      if ((inaeIndex == taxonName.length() - 4) || ("incertae_sedis".equals(taxonName))) {
+      if (inaeIndex == taxonName.length() - 4 || "incertae_sedis".equals(taxonName)) {
         // This is a subfamily.
-        return (new Formatter()).capitalizeFirstLetter(taxonName);
+        return new Formatter().capitalizeFirstLetter(taxonName);
       }
       if (taxonName.contains("inae)")) {
         prettyTaxonName = taxonName.substring(inaeIndex + 5);
@@ -476,7 +477,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         prettyTaxonName = taxonName.substring(14);
       }
       prettyTaxonName = prettyTaxonName.trim();      
-      prettyTaxonName = (new Formatter()).capitalizeFirstLetter(prettyTaxonName);
+      prettyTaxonName = new Formatter().capitalizeFirstLetter(prettyTaxonName);
       //A.log("taxonName:" + taxonName + " prettyTaxonName:" + prettyTaxonName);
       return prettyTaxonName;
     }
@@ -718,8 +719,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             taxon = new Kingdom();
         } else if (Rank.PHYLUM.equals(rank)) {
             taxon = new Phylum();
-        } else if (Rank.PHYLUM.equals(rank)) {
-            taxon = new org.calacademy.antweb.Class();
+//        } else if (Rank.PHYLUM.equals(rank)) {
+//            taxon = new org.calacademy.antweb.Class();
         } else if (Rank.ORDER.equals(rank)) {
             taxon = new Order();
         } else if (Rank.FAMILY.equals(rank)) {
@@ -749,7 +750,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
         public static Taxon getTaxonOfRank(String subfamily, String genus, String subgenus, String species, String subspecies) {
         Taxon taxon = null;
-        if ((genus != null) && (species != null) && (subspecies != null)) {
+        if (genus != null && species != null && subspecies != null) {
             taxon = new Subspecies();
             taxon.setRank("subspecies");
             taxon.setSubfamily(subfamily);
@@ -757,7 +758,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             taxon.setSubgenus(subgenus);
             taxon.setSpecies(species);
             taxon.setSubspecies(subspecies);
-        } else if ((genus != null) && (species != null)) {
+        } else if (genus != null && species != null) {
             taxon = new Species();
             taxon.setRank("species");
             taxon.setSubfamily(subfamily);
@@ -809,7 +810,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
      * just a get/set method with construction happening in the appropriate place.
      * First called from TaxonMgr.populate(TaxonMgr.java:43
      * */
-    private String taxonName = null;
+    private String taxonName;
     public String getTaxonName() {
 
         if (taxonName == null) {
@@ -862,8 +863,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
     public String getSimpleName() {
         // Used in site_nav.jsp.  Useful for species or specimen only.
-        String simpleName = (new Formatter()).capitalizeFirstLetter(getGenus()) + " " + getSpecies();
-        if ((getSubspecies() != null) && !"".equals(getSubspecies())) simpleName += " " + getSubspecies();
+        String simpleName = new Formatter().capitalizeFirstLetter(getGenus()) + " " + getSpecies();
+        if (getSubspecies() != null && !"".equals(getSubspecies())) simpleName += " " + getSubspecies();
         return simpleName;
     }
   
@@ -1050,7 +1051,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
     public String diff(Taxon otherTaxon) {
         if (otherTaxon == null) return null;
-        StringBuffer strBuf = new StringBuffer();
+        StringBuffer strBuf = new StringBuffer(1024);
 
         if (!Utility.equal(getTaxonName(), otherTaxon.getTaxonName())) strBuf.append(" taxonName:" + getTaxonName() + "/" + otherTaxon.getTaxonName());
         if (!Utility.equal(getRank(), otherTaxon.getRank())) strBuf.append(" taxarank:" + getRank() + "/" + otherTaxon.getRank());
@@ -1128,7 +1129,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       this.fossil = fossil;
     } 
     
-    private static int MAX_SAFE_CHILDREN_COUNT = 300;        
+    private static final int MAX_SAFE_CHILDREN_COUNT = 300;
         
     public static int getMaxSafeChildrenCount() {
       return MAX_SAFE_CHILDREN_COUNT;
@@ -1136,8 +1137,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     
     public boolean useSafeMode() {
         if (
-            (getChildrenCount() > MAX_SAFE_CHILDREN_COUNT)
-            && ("species".equals(getRank()))
+            getChildrenCount() > MAX_SAFE_CHILDREN_COUNT
+            && "species".equals(getRank())
             ) {
             s_log.info("Using safe mode for rank:" + getRank() + " taxon:" + getTaxonName());
             return true;
@@ -1206,7 +1207,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     
         int theCount = 0;
         if (images != null) {
-          if (images.size() > 0) {
+          if (!images.isEmpty()) {
             theCount = images.size();
           }
         } else {
@@ -1232,7 +1233,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     public boolean getHasImages() {
         boolean hasEm = false;
 
-        if ((hasImages == true) || ((images != null) && (images.size() > 0))) {
+        if (hasImages || images != null && !images.isEmpty()) {
             hasEm = true;
         }
 
@@ -1300,11 +1301,11 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       this.hasImagesCount = hasImagesCount;
     }
 
-    public Hashtable getImages() {
+    public Hashtable<String, SpecimenImage> getImages() {
         return images;
     }
     
-    public void setImages(Hashtable images) {
+    public void setImages(Hashtable<String, SpecimenImage> images) {
         // Not called very much. Common practice in Specimen and Species, and Taxon to directly set with this.images =
 
 		if (false) {
@@ -1360,10 +1361,10 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
                         foundOne = true;
                     } 
                     count++;
-                } while (foundOne == false && (count < ors.length));
+                } while (!foundOne && count < ors.length);
 
                 // add padding if necessary
-                if (padding && foundOne == false) {
+                if (padding && !foundOne) {
                     thisList.add(blankImage);
                 }
             }
@@ -1384,7 +1385,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public boolean hasImage(String shot) {
         boolean hasImage = false;
         //s_log.warn("hasImage() images:" + images + " shot:" + shot);        
-        if ((images != null) && (images.size() > 0)) {
+        if (images != null && images.size() > 0) {
           if (images.containsKey(shot)) {
               return true;
           } 
@@ -1529,7 +1530,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     */
 
     private String selectCodeByCaste(ResultSet rset, String caste) 
-      throws java.sql.SQLException {
+      throws SQLException {
       
         /* Looking for a code with the given caste. Caste will be null, default, male, worker or queen.		
 		 If looking for a worker. 
@@ -1581,12 +1582,12 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 			if ("alateMale".equals(caste) && "alate".equals(rsetSubcaste)) return code;
 			if ("intercaste".equals(caste) && "intercaste".equals(rsetSubcaste)) return code;
 			if ("gynandromorph".equals(caste) && "gynandromorph".equals(rsetSubcaste)) return code;
-			if ("brachypterous".equals(caste) && "brachypterous".equals(rsetSubcaste)) return code;
+//			if ("brachypterous".equals(caste) && "brachypterous".equals(rsetSubcaste)) return code;
 			if ("larvaPupa".equals(caste) && "larva/pupa".equals(rsetSubcaste)) return code;
         }
 
         // Return what we will settle for...
-        if ((caste == null || Caste.DEFAULT.equals(caste))) {
+        if (caste == null || Caste.DEFAULT.equals(caste)) {
           if (firstWorker != null) return firstWorker;
           if (firstUndesignated != null) return firstUndesignated;
           if (firstQueen != null) return firstQueen;
@@ -1713,10 +1714,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         ... even if we discard the results, the whole http request is rerun. Makes no sense (and hard to track down).
         Adjustment made so that it doesn't run on overviews that are regions.
          */
-        boolean skipGetUnpickedDefault = false;
-        if (overview instanceof Region || overview instanceof Subregion) {
-            skipGetUnpickedDefault = true;
-        }
+        boolean skipGetUnpickedDefault = overview instanceof Region || overview instanceof Subregion;
         if (!skipGetUnpickedDefault ) speciesNameSet = getSpeciesNameSet(connection, overview); // Could just returned null here?
 
         // Subfamilies are different.
@@ -1866,7 +1864,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         */  
 
         //A.log("setImages() taxonName:" + getTaxonName());
-        Hashtable myImages = new Hashtable();
+        Hashtable<String, SpecimenImage> myImages = new Hashtable<>();
         String chosenImageCode = null;
         
         if ("formicidae".equals(getTaxonName())) chosenImageCode = "antweb1008052";
@@ -1897,7 +1895,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         }
 
         // Found a good one. Load it into images.
-		ArrayList<SpecimenImage> specImages = (new ImageDb(connection)).getSpecimenImages(chosenImageCode); 
+		ArrayList<SpecimenImage> specImages = new ImageDb(connection).getSpecimenImages(chosenImageCode);
 		for (SpecimenImage specImage : specImages) {
 		  myImages.put(specImage.getShotType(), specImage);
 		}
@@ -1967,7 +1965,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     public static boolean isIndet(String taxonName) {
-        return (taxonName.contains("undet")) || (taxonName.contains("indet"));
+        return taxonName.contains("undet") || taxonName.contains("indet");
     }
     
     public static String getNotMorphoCriteria() {
@@ -2026,20 +2024,20 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           return true;
         }
 
-        isMorpho = (taxonName.contains("1"))
-                || (taxonName.contains("2"))
-                || (taxonName.contains("3"))
-                || (taxonName.contains("4"))
-                || (taxonName.contains("5"))
-                || (taxonName.contains("6"))
-                || (taxonName.contains("7"))
-                || (taxonName.contains("8"))
-                || (taxonName.contains("9"))
-                || (taxonName.contains("-"))
-                || (taxonName.contains("_"))
-                || (taxonName.contains("("))
-                || (taxonName.contains(")"))
-                || (taxonName.contains("."));
+        isMorpho = taxonName.contains("1")
+                || taxonName.contains("2")
+                || taxonName.contains("3")
+                || taxonName.contains("4")
+                || taxonName.contains("5")
+                || taxonName.contains("6")
+                || taxonName.contains("7")
+                || taxonName.contains("8")
+                || taxonName.contains("9")
+                || taxonName.contains("-")
+                || taxonName.contains("_")
+                || taxonName.contains("(")
+                || taxonName.contains(")")
+                || taxonName.contains(".");
         //if ("myrmicinaecrematogaster jtl-022".equals(taxonName)) s_log.warn("isMorphoSpecies(" + taxonName + ") isMorpho:" + isMorpho);
         return isMorpho;
     }		
@@ -2054,15 +2052,15 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         this.favoriteImagesProjectsStr = favoriteImagesProjectsStr;
     }   
 
-    private transient Integer specimenCount = null;
+    private transient Integer specimenCount;
     public void setSpecimenCount(Integer specimenCount) {
       this.specimenCount = specimenCount;
     }
     public int getSpecimenCount() {
-      return this.specimenCount.intValue();
+      return this.specimenCount;
     }
     public boolean hasSpecimens() {
-      return (this.specimenCount != null) && (this.specimenCount.intValue() > 0);
+      return this.specimenCount != null && this.specimenCount > 0;
     }
 
     public String getBrowserParams() {
@@ -2217,15 +2215,15 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       this.extant = extant;
     }
     
-    public Hashtable getDescription() {
+    public Hashtable<String, String> getDescription() {
         return description;
     }
-    public void setDescription(Hashtable description) {
+    public void setDescription(Hashtable<String, String> description) {
         this.description = description;
     }
 
     public boolean hasDescription(String title) {
-      Set<String> keys = (Set<String>) getDescription().keySet();
+      Set<String> keys = getDescription().keySet();
       for (String key : keys) {
         if (key.equals(title)) return true;
       }
@@ -2462,8 +2460,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
             stmt = DBUtil.getStatement(connection, "setCollectDateRange()");
             rset = stmt.executeQuery(theQuery);
 
-            java.util.Date min = null;
-            java.util.Date max = null;
+            Date min = null;
+            Date max = null;
             while (rset.next()) {
                 min = rset.getDate(1);
                 max = rset.getDate(2);
@@ -2471,7 +2469,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
             //A.log("getDateCollected() min:" + min + " max:" + max + " query:" + theQuery);
 
-            if ((min != null) && (min.equals(max))) {
+            if (min != null && min.equals(max)) {
               collectDateRange = "collected on " + min;
             } else {
               if (min != null) collectDateRange += "collected between " + min + " ";
@@ -2531,7 +2529,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
               avg = rset.getDouble(3);
             }
 
-            if ((min == max) && (min != 0)) {
+            if (min == max && min != 0) {
               elevations = "collected at " + max + " m";
               //s_log.info("setElevations() elevations:" + elevations + " q:" + theQuery);
             } else {
@@ -2567,22 +2565,22 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         Formatter format = new Formatter();
         String domainApp = AntwebProps.getDomainApp();    
             
-        if ((getFamily() != null) && (getFamily().length() > 0)) {
+        if (getFamily() != null && getFamily().length() > 0) {
             otherUrl = domainApp + strutsTarget + "?family=" + getFamily() + "&rank=family";
             targetName = format.capitalizeFirstLetter(getFamily());
             if (Rank.FAMILY.equals(getRank())) targetUrl = otherViewUrl; else targetUrl = descUrl;
         }
-        if ((getSubfamily() != null) && (getSubfamily().length() > 0)) {
+        if (getSubfamily() != null && getSubfamily().length() > 0) {
             otherUrl = domainApp + strutsTarget + "?subfamily=" + getSubfamily() + "&rank=subfamily";
             targetName = format.capitalizeFirstLetter(getSubfamily());
             if (Rank.SUBFAMILY.equals(getRank())) targetUrl = otherViewUrl; else targetUrl = descUrl;
         }
-        if ((getGenus() != null) && (getGenus().length() > 0)) {
+        if (getGenus() != null && getGenus().length() > 0) {
             otherUrl = domainApp + strutsTarget + "?genus=" + getGenus() + "&rank=genus";
             targetName = format.capitalizeFirstLetter(getGenus());
             if (Rank.GENUS.equals(getRank())) targetUrl = otherViewUrl; else targetUrl = descUrl;
         }
-        if ((getSpecies() != null) && (getSpecies().length() > 0)) {
+        if (getSpecies() != null && getSpecies().length() > 0) {
             otherUrl = domainApp + strutsTarget + "?genus=" + getGenus() + "&species=" + getSpecies() + "&rank=species";
             if (Rank.SPECIMEN.equals(getRank())) {
                 targetName = format.capitalizeFirstLetter(getGenus()) + " " + getSpecies();
@@ -2620,9 +2618,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 	  String taxonOptions = null;
 	  
 	  if (
-		  (overview instanceof Geolocale) 
-	   || (overview instanceof Museum)
-	   || (overview instanceof Bioregion)    
+		  overview instanceof Geolocale
+	   || overview instanceof Museum
+	   || overview instanceof Bioregion
 	   ) {
 		taxonOptions = overview.getChangeViewOptions(getTaxonName(), otherUrl, connection);
 	  }
@@ -2639,9 +2637,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     public ArrayList<Geolocale> getGeolocales() {
-      ArrayList<Geolocale> geolocales = new ArrayList<>();
-        geolocales.addAll(getCountries());
-      return geolocales;
+        return new ArrayList<>(getCountries());
     }
     
     // Used to make the Distribution List.  Ordered by bioregion.
@@ -2672,8 +2668,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         if (getChildren() != null) {
 
 //            Taxon thisChild;
-            List goodArrayList = Arrays.asList(goodList);
-            ArrayList<Taxon> newChildren = new ArrayList();
+            List<String> goodArrayList = Arrays.asList(goodList);
+            ArrayList<Taxon> newChildren = new ArrayList<>();
             for (Taxon thisChild : getChildren()) {
 //            Iterator iterator = children.iterator();
 //            while (iterator.hasNext()) {
@@ -2705,7 +2701,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getImages, boolean getMaps, String caste, boolean global, String subgenus)
             throws SQLException, AntwebException {
         //A.log("setChildren(5) overview:" + overview + " getImages:" + getImages + " getMaps:" + getMaps + " caste:" + caste);
-        this.children = new ArrayList();
+        this.children = new ArrayList<>();
     }
     
     public void setChildrenLocalized(Connection connection, Overview overview) throws SQLException {
@@ -2713,8 +2709,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
 
-    private String statusSetStr = null;
-    private String statusSetSize = null;
+    private String statusSetStr;
+    private String statusSetSize;
     
 	public String getStatusSetStr() {
 	    return statusSetStr;
@@ -2773,11 +2769,10 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
     public String getBinomial() {
         //Formatter form = new Formatter();
-        Utility util = new Utility();
         String binomial = "";
         String genus = getGenus();
         String species = getSpecies();
-        if ((Utility.notBlank(genus)) && (Utility.notBlank(species))) {
+        if (Utility.notBlank(genus) && Utility.notBlank(species)) {
             binomial = myFormatter.capitalizeFirstLetter(genus) + " " + species;
         }
         return binomial;
@@ -2799,7 +2794,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         StringBuilder habitatString = new StringBuilder();
         while (elements.hasMoreElements()) {
           ++habitatI;
-          String comma = (habitatI > 1)?", ":""; 
+          String comma = habitatI > 1 ?", ":"";
           String habitatCount = elements.nextElement();
           String[] habitatCountArray = habitatCount.split(":");
           String habitatDesc = habitatCountArray[0];
@@ -2821,7 +2816,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         StringBuilder microhabitatString = new StringBuilder();
         while (elements.hasMoreElements()) {
           ++i;
-          String comma = (i > 1)?", ":""; 
+          String comma = i > 1 ?", ":"";
           String countStr = elements.nextElement();
           String[] countStrArray = countStr.split(":");
           String desc = countStrArray[0];
@@ -2843,7 +2838,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         StringBuilder methodString = new StringBuilder();
         while (elements.hasMoreElements()) {
           ++i;
-          String comma = (i > 1)?", ":""; 
+          String comma = i > 1 ?", ":"";
           String methodCount = elements.nextElement();
           String[] methodCountArray = methodCount.split(":");
           String methodDesc = methodCountArray[0];

@@ -13,7 +13,7 @@ import org.calacademy.antweb.util.*;
 
 public class GeolocaleTaxonLog extends GeolocaleTaxon {
 
-    private static Log s_log = LogFactory.getLog(GeolocaleTaxonLog.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleTaxonLog.class);
 
     private int logId = 0;
     private Timestamp created;

@@ -13,10 +13,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;  
   
 import com.google.gson.*;
-    
+
+import javax.net.ssl.SSLHandshakeException;
+
 public class FlickrPlace extends DataPlace {
 
-    private static Log s_log = LogFactory.getLog(FlickrPlace.class);
+    private static final Log s_log = LogFactory.getLog(FlickrPlace.class);
 
     public static final String source = "Flickr";
 
@@ -50,7 +52,7 @@ public class FlickrPlace extends DataPlace {
     /util.do?action=fetchFlickrPlaces
 */
 
-    static String s_flickrAdm1 = "flickrAdm1.html";
+    static final String s_flickrAdm1 = "flickrAdm1.html";
 
     // 
     public static String fetchAdm1Data(Connection connection) {
@@ -72,7 +74,7 @@ public class FlickrPlace extends DataPlace {
 	  int i = 0;
 	  for (Country country : countries) {
 
-		if ((++i % 100) == 0) s_log.warn("fetchAdm1Data() countries processed:" + i);
+		if (++i % 100 == 0) s_log.warn("fetchAdm1Data() countries processed:" + i);
         if (country.getName() == null || "".equals(country.getName())) {
           s_log.warn("fetchAdm1Data() No name:" + country.getName() + " for country with id:" + country.getId());
           continue;
@@ -262,7 +264,7 @@ public class FlickrPlace extends DataPlace {
                   // O, well. Flickr can miss sometimes. Log and skip. Likely to work next time. 
                   String message = "failed to scrape woe_name:" + place.woe_name + " woeId:" + place.woeid;
                   String eMess = " e:" + e;
-                  if (e instanceof java.lang.StringIndexOutOfBoundsException) eMess = "";
+                  if (e instanceof StringIndexOutOfBoundsException) eMess = "";
                   s_log.error("getPlace() " + message + e);
                   LogMgr.appendLog("DataPlaceCase.txt", message);
                   continue;
@@ -276,7 +278,7 @@ public class FlickrPlace extends DataPlace {
 			}
             //if (!found) A.log("FlickrPlace.getPlace() not found. placeName:" + placeName + " place:" + placeList + " json:" + json);
 
-		} catch (com.google.gson.JsonSyntaxException e) {
+		} catch (JsonSyntaxException e) {
 		  s_log.warn("execute() e:" + e);
 		} 
         return flickrPlace;
@@ -306,7 +308,7 @@ public class FlickrPlace extends DataPlace {
 		try {
 		  json = HttpUtil.getUrlIso(url);
 
-        } catch (javax.net.ssl.SSLHandshakeException e) {
+        } catch (SSLHandshakeException e) {
           throw new AntwebException("Bad handshake");   
 
           //} catch (sun.security.validator.ValidatorException e) {
@@ -378,7 +380,7 @@ public class FlickrPlace extends DataPlace {
       nextTdI = output.indexOf("(", i) - 1;  // The space will come after the place Type Id 
       String placeTypeId = output.substring(i+4, nextTdI);
       //A.log("FlickrPlace.scrapePlace() i:" + i + " nextTdI:" + nextTdI + " placeTypeId:" + placeTypeId + " woeId:" + woeId);
-      place.placeTypeId = (Integer.valueOf(placeTypeId)).intValue();
+      place.placeTypeId = Integer.parseInt(placeTypeId);
 
       // Go about getting the place type?
 

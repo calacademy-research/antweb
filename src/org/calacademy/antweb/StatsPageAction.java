@@ -4,6 +4,8 @@ import java.util.*;
 import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -16,7 +18,7 @@ import org.apache.commons.logging.LogFactory;
     
 public final class StatsPageAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(StatisticsAction.class);
+    private static final Log s_log = LogFactory.getLog(StatisticsAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -26,12 +28,12 @@ public final class StatsPageAction extends Action {
 
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "StatsPageAction()");
 
             StatisticsDb statisticsDb = new StatisticsDb(connection);
 
-            HashMap<String, int[]> imageStats = (new ImageDb(connection)).getImageStats();
+            HashMap<String, int[]> imageStats = new ImageDb(connection).getImageStats();
             for (String status : imageStats.keySet()) {
               int[] stats = imageStats.get(status);
               //A.log(" key:" + status + " total:" + stats[0] + " worker:" + stats[1] + " male:" + stats[2] + " queen:" + stats[3] + " other:" + stats[4]); 
@@ -66,15 +68,15 @@ public final class StatsPageAction extends Action {
             success = true;            
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "StatsPageAction()");
         }        
         
 		if (success) {
-		    return (mapping.findForward("success"));
+		    return mapping.findForward("success");
 		} else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
     }
 

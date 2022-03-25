@@ -9,19 +9,19 @@ import org.apache.commons.logging.LogFactory;
 
 public class DescEditImageUploadForm extends UploadForm {
 
-    private static Log s_log = LogFactory.getLog(DescEditImageUploadForm.class);
+    private static final Log s_log = LogFactory.getLog(DescEditImageUploadForm.class);
 
 //  protected FormFile theFile2;
 //  protected String homePageDirectory = "";
  
-    private String rank = null;
-    private String name = null;
-    private String editField = null;
-    private String target = null;
-    private String contents = null;
+    private String rank;
+    private String name;
+    private String editField;
+    private String target;
+    private String contents;
     
     public String getRank() {
-    return (this.rank);
+    return this.rank;
     }
 
     public void setRank(String rank) {
@@ -29,7 +29,7 @@ public class DescEditImageUploadForm extends UploadForm {
     }
 
     public String getName() {
-    return (this.name);
+    return this.name;
     }
 
     public void setName(String name) {
@@ -37,7 +37,7 @@ public class DescEditImageUploadForm extends UploadForm {
     }
     
     public String getEditField() {
-    return (this.editField);
+    return this.editField;
     }
 
     public void setEditField(String editField) {

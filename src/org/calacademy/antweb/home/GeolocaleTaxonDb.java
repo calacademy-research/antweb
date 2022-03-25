@@ -15,7 +15,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public class GeolocaleTaxonDb extends EditableTaxonSetDb {
     
-    private static Log s_log = LogFactory.getLog(GeolocaleTaxonDb.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleTaxonDb.class);
         
     public GeolocaleTaxonDb(Connection connection) {
       super(connection);
@@ -48,7 +48,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     }
 
     public TaxonSet get(int geolocaleId, String taxonName) throws SQLException {
-        String query = "";
+        String query;
         GeolocaleTaxon geolocaleTaxon = null;
         Statement stmt = null;
         ResultSet rset = null;
@@ -64,8 +64,8 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             while (rset.next()) {
                 geolocaleTaxon = new GeolocaleTaxon();
                 geolocaleTaxon.setGeolocaleId(rset.getInt("geolocale_id"));
-                geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                geolocaleTaxon.setSource((String) rset.getString("source"));
+                geolocaleTaxon.setTaxonName(rset.getString("taxon_name"));
+                geolocaleTaxon.setSource(rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setIsIntroduced(rset.getInt("is_introduced") == 1);
 
@@ -85,9 +85,9 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
     public ArrayList<TaxonSet> getTaxonSetList(String taxaRank, int geolocaleId) throws SQLException {
         ArrayList<TaxonSet> taxonSetList = new ArrayList<>();
-        String query = "";
+        String query;
         Statement stmt = null;
-        ResultSet rset = null;
+        ResultSet rset;
         try {
 
             stmt = DBUtil.getStatement(getConnection(), "getTaxonSetList()");
@@ -102,8 +102,8 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             while (rset.next()) {
                 GeolocaleTaxon geolocaleTaxon = new GeolocaleTaxon();
                 geolocaleTaxon.setGeolocaleId(rset.getInt("geolocale_id"));
-                geolocaleTaxon.setTaxonName((String) rset.getString("taxon_name"));
-                geolocaleTaxon.setSource((String) rset.getString("source"));
+                geolocaleTaxon.setTaxonName(rset.getString("taxon_name"));
+                geolocaleTaxon.setSource(rset.getString("source"));
                 geolocaleTaxon.setRev(rset.getInt("rev"));
                 geolocaleTaxon.setIsIntroduced(rset.getInt("is_introduced") == 1);
                 taxonSetList.add(geolocaleTaxon);
@@ -331,7 +331,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
                 // Morpho check?  We already know that it is not in Bolton and does not have specimens.
                 // So we will delete the taxon outright.
-                TaxonDb taxonDb = (new TaxonDb(getConnection()));
+                TaxonDb taxonDb = new TaxonDb(getConnection());
                 taxonDb.deleteTaxon(taxonName);
               }
             }
@@ -364,7 +364,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 	 
 // ------------------------- support methods -----------------------------
     private boolean hasItem(int id, String taxonName) throws SQLException {
-        String query = "";
+        String query;
         Statement stmt = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "hasItem()");
@@ -416,7 +416,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
           AntwebUtil.logStackTrace();              
         }
 */          
-        String dml = null;
+        String dml;
         Statement stmt = null;
         int count = 0;
         try {
@@ -668,7 +668,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
         deleteMorphoStr += deleteUncuratedMorphosWithoutSpecimen();
         insertTotal = insertGeolocaleTaxaFromSpecimens();
 
-        (new UtilDb(getConnection())).deleteFrom("geolocale_taxon", "where (geolocale_id, taxon_name) in (select geolocale_id, taxon_name from geolocale_taxon_dispute)");
+        new UtilDb(getConnection()).deleteFrom("geolocale_taxon", "where (geolocale_id, taxon_name) in (select geolocale_id, taxon_name from geolocale_taxon_dispute)");
 
       return "deleteTotal:" + deleteTotal + " insertTotal:" + insertTotal + " " + deleteMorphoStr;
 	}
@@ -733,12 +733,12 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
     public String deleteGeolocaleTaxaWithoutTaxon() throws SQLException {
       String dmlWhereClause = "where taxon_name not in (select taxon_name from taxon)";
-      int retVal = (new UtilDb(getConnection())).deleteFrom("geolocale_taxon", dmlWhereClause);
+      int retVal = new UtilDb(getConnection()).deleteFrom("geolocale_taxon", dmlWhereClause);
       return retVal + " deleteGeolocaleTaxaWithoutTaxon. ";
     }
 
-    private HashSet<String> s_queryInsertGovernor = null;
-    private HashSet<String> s_queryUpdateGovernor = null;
+    private HashSet<String> s_queryInsertGovernor;
+    private HashSet<String> s_queryUpdateGovernor;
     public static int s_updateCount = 0;
     private static int s_insertCount = 0;
     private static int s_constraintCount = 0;
@@ -789,7 +789,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
             while (rset.next()) {
                 ++specimenCount;
-                if ((specimenCount % 10000) == 0)
+                if (specimenCount % 10000 == 0)
                     s_log.info("insertGeolocaleTaxaFromSpecimens() specimenCount:" + specimenCount);
 
                 //if (AntwebProps.isDevMode() && (specimenCount % 2000) == 0) throw new AntwebException("test");
@@ -870,7 +870,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
     public String populateFromAntwikiData() throws SQLException {
       String disputes = "";
       String unfoundCountriesStr = "";
-      HashSet unfoundCountries = new HashSet<String>();
+      HashSet<String> unfoundCountries = new HashSet<>();
 
       s_subfamilyCount = 0;
       s_generaCount = 0;
@@ -879,7 +879,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
       resetQueryGovernors();
 
-      ArrayList<AntwikiTaxonCountry> taxonCountries = (new AntwikiTaxonCountryDb(getConnection())).getAntwikiTaxonCountries();
+      ArrayList<AntwikiTaxonCountry> taxonCountries = new AntwikiTaxonCountryDb(getConnection()).getAntwikiTaxonCountries();
       //Collections.sort(taxonCountries);
       for (AntwikiTaxonCountry speciesCountry : taxonCountries) {
         //String projectName = speciesCountry.getProjectName();
@@ -1021,7 +1021,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             if ("region".equals(geolocale.getGeorank())) continue;
             Geolocale parentGeolocale = GeolocaleMgr.getGeolocale(geolocale.getParent());
             
-          boolean d = ("Chile".equals(geolocale.getName()) || "Chile".equals(parentGeolocale.getName()));
+          boolean d = "Chile".equals(geolocale.getName()) || "Chile".equals(parentGeolocale.getName());
             if (parentGeolocale == null) {
               String message = "null parentGeolocale for geolocaleId:" + geolocaleId + " name:" + geolocale.getName() + " parent:" + geolocale.getParent();
               if (!message.equals(lastLine)) {
@@ -1084,7 +1084,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             if ("hymenoptera".equals(parentTaxonName)) continue;
             
             Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
-          boolean d = ("Chile".equals(geolocale.getName()));
+          boolean d = "Chile".equals(geolocale.getName());
             
             String geolocaleName = geolocale.getName();
             ++outOfIntegrity;

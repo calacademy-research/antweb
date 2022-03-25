@@ -1,6 +1,8 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Date;
 import java.sql.*;
@@ -32,14 +34,14 @@ public class SpecimenUpload extends SpecimenUploadParse {
     and the data file uploaded.  Biota application is no longer under active development.
     
 */
-    private static Log s_log = LogFactory.getLog(SpecimenUpload.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenUpload.class);
 
     static int MAXLENGTH = 80;
 
     String currentDateFunction = "now()";  // for mysql 
     
-    private TreeSet illegitimateCountries = new TreeSet();
-    private TreeSet illegitimateBioregions = new TreeSet();
+    private final TreeSet illegitimateCountries = new TreeSet();
+    private final TreeSet illegitimateBioregions = new TreeSet();
 
     SpecimenUpload(Connection connection) {
       super(connection);      
@@ -63,7 +65,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
     
     void doPreliminaries(Group group) throws SQLException {
         // overridden by SpecimenUploadAugment
-        (new SpecimenUploadDb(getConnection())).dropSpecimens(group);    
+        new SpecimenUploadDb(getConnection()).dropSpecimens(group);
     }    
     
     public UploadDetails importSpecimens(UploadFile uploadFile, Login accessLogin) 
@@ -89,9 +91,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
         try {
 
             LineNumMgr.init(uploadFile, getMessageMgr(), getConnection());
-        
-            BufferedReader in = new BufferedReader(
-                new InputStreamReader(new FileInputStream(uploadFile.getFileLoc()), uploadFile.getEncoding()));
+
+
+            BufferedReader in = Files.newBufferedReader(Paths.get(uploadFile.getFileLoc()), uploadFile.getCharset());
 
             // parse the header 
             String theLine = in.readLine();         
@@ -142,7 +144,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                       throw new TestException(true);  // commit?
                     }
                                         
-                    if ( (true) && ((lineNum % 10000 ) == 0)) {  // was: AntwebProps.isDevOrStageMode()
+                    if ( true && lineNum % 10000 == 0) {  // was: AntwebProps.isDevOrStageMode()
                       if ("incremental".equals(getMode())) {
                          // getConnection().commit();  This doesn't help at all
                       }
@@ -186,7 +188,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
 					theLine = in.readLine();
 					++lineNum;   
-					if ((lineNum % 5000) == 0) s_log.debug("importSpecimens() lineNum:" + lineNum + " buildLineTotal:" + buildLineTotal + " processLineTotal:" + processLineTotal);
+					if (lineNum % 5000 == 0) s_log.debug("importSpecimens() lineNum:" + lineNum + " buildLineTotal:" + buildLineTotal + " processLineTotal:" + processLineTotal);
 				
 					//Profiler.profile("importSpecimenLoop", startTimeLoop);                     
 		
@@ -250,7 +252,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
             // Date startTimex = new Date();
 
             if (AntwebProps.isDevMode()) { s_log.debug("DEV SKIPPING regenerateAllAntweb"); } else
-            (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
+            new ProjTaxonDb(getConnection()).regenerateAllAntweb();
             //Profiler.profile("regenerateAllAntweb", startTimex);
 
             TaxonMgr.populate(getConnection(), true, false);
@@ -259,7 +261,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
             //(new OrphansDb(getConnection())).deleteOrphanViloma();
 
             // s_log.info("importSpecimens() done removing orphans");
-            (new SpecimenUploadDb(getConnection())).updateSpecimenUploadDate(accessGroup);
+            new SpecimenUploadDb(getConnection()).updateSpecimenUploadDate(accessGroup);
                 
         } catch (IOException e) {
             s_log.error("importSpecimens()  (File input error?)  e:" + e);
@@ -393,7 +395,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
         // Warn if Multiple Bioregions for non-introduced taxa.                                                     
         // New Query to be added to specimen upload report. Get the total and if > 0 display link to proper access_group.
-        ArrayList<ArrayList<String>> multiBioregionList = (new SpecimenDb(getConnection())).getMultiBioregionTaxaList(group.getId());
+        ArrayList<ArrayList<String>> multiBioregionList = new SpecimenDb(getConnection()).getMultiBioregionTaxaList(group.getId());
         if (multiBioregionList.size() > 1) { // The first record would be the header.
           // Create the link to the multiBioregionTaxa
             String message = "<a href='" + AntwebProps.getDomainApp() + "/list.do?action=multiBioregionTaxaList&groupId=" + group.getId() + "'>list</a>";

@@ -23,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class GenericSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(GenericSearch.class);
+    private static final Log s_log = LogFactory.getLog(GenericSearch.class);
 
     protected String name;
     protected String taxonName;
@@ -34,7 +34,7 @@ public class GenericSearch implements Serializable {
     protected int geolocaleId;
     protected Connection connection;
     protected ArrayList<ResultItem> results;
-    protected Pattern inQuotes = Pattern.compile("(\".*?\")");
+    protected final Pattern inQuotes = Pattern.compile("(\".*?\")");
 
     public ArrayList<ResultItem> getResults() throws SearchException, SQLException {
 
@@ -84,13 +84,13 @@ public class GenericSearch implements Serializable {
 
     protected ArrayList<ResultItem> filterByProject(ArrayList<ResultItem> currentList, String project) throws SQLException {
         //A.log("GenericSearch.filterByProject() project:" + project);
-        if ((project == null)
-                || (project.length() <= 0)
+        if (project == null
+                || project.length() <= 0
                 || project.equals(Project.WORLDANTS)
                 || project.equals(Project.ALLANTWEBANTS)
                 || project.equals("default")
-                || (currentList == null)
-                || (currentList.size() == 0)) {
+                || currentList == null
+                || currentList.size() == 0) {
             return currentList;
         }
 
@@ -120,7 +120,7 @@ public class GenericSearch implements Serializable {
                 addedList.add(thisName);
             }
         }
-        theQuery += "(" + inBuffer.toString() + ") ";
+        theQuery += "(" + inBuffer + ") ";
         theQuery += " and proj_taxon.project_name = '" + project + "' and ";
         theQuery += " taxon.taxon_name = proj_taxon.taxon_name";
 
@@ -162,7 +162,7 @@ public class GenericSearch implements Serializable {
     protected ArrayList<SearchItem> setResultTypes(ArrayList<SearchItem> currentList, String project) throws SQLException {
         //A.log("GenericSearch.setResultTypes() project:" + project);
 
-        if ((currentList == null) || (currentList.size() == 0)) {
+        if (currentList == null || currentList.size() == 0) {
             return currentList;
         }
 
@@ -180,20 +180,20 @@ public class GenericSearch implements Serializable {
         String preparedQuery =
                 "select specimen.type_status from specimen";
 
-        if ((project != null)
-                && (project.length() > 0)
-                && (!project.equals(Project.WORLDANTS))
-                && (!project.equals(Project.ALLANTWEBANTS))
+        if (project != null
+                && project.length() > 0
+                && !project.equals(Project.WORLDANTS)
+                && !project.equals(Project.ALLANTWEBANTS)
         ) {
             preparedQuery += ", proj_taxon ";
         }
 
         preparedQuery += " where type_status != '' ";
 
-        if ((project != null)
-                && (project.length() > 0)
-                && (!project.equals(Project.WORLDANTS))
-                && (!project.equals(Project.ALLANTWEBANTS))
+        if (project != null
+                && project.length() > 0
+                && !project.equals(Project.WORLDANTS)
+                && !project.equals(Project.ALLANTWEBANTS)
         ) {
             preparedQuery += " and proj_taxon.project_name = '" + project + "' ";
             preparedQuery += " and proj_taxon.taxon_name = specimen.taxon_name ";
@@ -235,7 +235,7 @@ public class GenericSearch implements Serializable {
 
         } catch (SQLException e) {
             s_log.error("setResultTypes() 1 theQuery:" + theQuery + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
             throw e;
         } finally {
             DBUtil.close(prepStmt, rset, this, "setResultTypes() 1");
@@ -261,7 +261,7 @@ public class GenericSearch implements Serializable {
                 specString.append("'");
             }
             theQuery.append("(");
-            theQuery.append(specString.toString());
+            theQuery.append(specString);
             theQuery.append(")");
 
             now = new Date();
@@ -287,7 +287,7 @@ public class GenericSearch implements Serializable {
                 }
             } catch (SQLException e) {
                 s_log.error("setResultTypes() 2 theQuery:" + theQuery + " e:" + e);
-                org.calacademy.antweb.util.AntwebUtil.logShortStackTrace(e);
+                AntwebUtil.logShortStackTrace(e);
                 throw e;
             } finally {
                 DBUtil.close(stmt, rset, this, "setResultTypes() 2");
@@ -345,7 +345,7 @@ public class GenericSearch implements Serializable {
                 + " left outer join image on sp.code = image.image_of_id "
                 + " where (";
 
-        if ((genus != null) && (species != null)) {
+        if (genus != null && species != null) {
             theQuery += getSearchString("sp.genus", "equals", genus)
                     + " and " + getSearchString("sp.species", "equals", species)
                     + ") ";
@@ -380,20 +380,20 @@ public class GenericSearch implements Serializable {
         ArrayList<ResultItem> smallList = new ArrayList<>();
         int loop = 0;
         int bigListSize = bigList.size();
-        while ((loop < numToShow) && (loop < bigListSize)) {
+        while (loop < numToShow && loop < bigListSize) {
             smallList.add(bigList.get(loop));
             loop++;
         }
         return smallList;
     }
 
-    public static int GENERIC = 0;
-    public static int RECENT_IMAGE = 1;
-    public static int ADVANCED = 2;
+    public static final int GENERIC = 0;
+    public static final int RECENT_IMAGE = 1;
+    public static final int ADVANCED = 2;
     public static int IMAGEPICK = 3;
     public static int BAY_AREA = 4;
-    public static int DESC_EDIT = 5;
-    public static int SEARCH = 6;
+    public static final int DESC_EDIT = 5;
+    public static final int SEARCH = 6;
 
     protected ArrayList<ResultItem> getListFromRset(int searchType, ResultSet rset, SearchItem synonymousItem, String theQuery) throws SQLException {
         //A.log("GenericSearch.getListFromRset(searchType...)"); 
@@ -555,7 +555,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                 }
                 if (theQuery.contains("imagecount"))
                     imageCount = rset.getInt(rset.findColumn("imagecount"));
-                if ((theQuery.contains("type")) && !(searchType == RECENT_IMAGE))  // contains shot_type
+                if (theQuery.contains("type") && !(searchType == RECENT_IMAGE))  // contains shot_type
                     type = rset.getString(rset.findColumn("type_status"));
                 if (theQuery.contains("status"))
                     status = rset.getString(rset.findColumn("status"));
@@ -670,11 +670,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                 operator = "!=";
                 break;
             case "contains":
-                operator = "like";
-                break;
             case "begins":
-                operator = "like";
-                break;
             case "ends":
                 operator = "like";
                 break;
@@ -693,26 +689,16 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         switch (searchType) {
             case "equals":
             case "equal":
-                leftPercent = "";
-                break;
             case "notEquals":
             case "notEqual":
+            case "begins":
+            case "greaterThanOrEqual":
+            case "lessThanOrEqual":
                 leftPercent = "";
                 break;
             case "contains":
-                leftPercent = "%";
-                break;
-            case "begins":
-                leftPercent = "";
-                break;
             case "ends":
                 leftPercent = "%";
-                break;
-            case "greaterThanOrEqual":
-                leftPercent = "";
-                break;
-            case "lessThanOrEqual":
-                leftPercent = "";
                 break;
         }
         return leftPercent;
@@ -723,26 +709,16 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         switch (searchType) {
             case "equals":
             case "equal":
-                rightPercent = "";
-                break;
             case "notEquals":
             case "notEqual":
+            case "ends":
+            case "greaterThanOrEqual":
+            case "lessThanOrEqual":
                 rightPercent = "";
                 break;
             case "contains":
-                rightPercent = "%";
-                break;
             case "begins":
                 rightPercent = "%";
-                break;
-            case "ends":
-                rightPercent = "";
-                break;
-            case "greaterThanOrEqual":
-                rightPercent = "";
-                break;
-            case "lessThanOrEqual":
-                rightPercent = "";
                 break;
         }
         return rightPercent;
@@ -803,12 +779,12 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                 sb.append(property);
                 sb.append(" ");
                 sb.append(operator);
-                sb.append(" \'");
+                sb.append(" '");
                 sb.append(leftPercent);
                 sb.append(AntFormatter.escapeQuotes(thisElement.trim()));
                 sb.append(rightPercent);
-                sb.append("\'");
-                if ((thisElement.length() > 0) && (loop < (elements.size() - 1))) {
+                sb.append("'");
+                if (thisElement.length() > 0 && loop < elements.size() - 1) {
                     sb.append(" or ");
                 }
             }
@@ -839,7 +815,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
             }
         }
 
-        if ((returnStr == null) || (returnStr.equals(""))) {
+        if (returnStr == null || returnStr.equals("")) {
             returnStr = " 1 = 1 ";
         }
 
@@ -856,7 +832,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
     }
 
     public String getSearchType() {
-        return (this.searchType);
+        return this.searchType;
     }
 
     public void setSearchType(String searchType) {
@@ -864,21 +840,21 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
     }
 
     public String getName() {
-        return (this.name);
+        return this.name;
     }
     public void setName(String name) {
         this.name = name.trim();
     }
 
     public String getTaxonName() {
-        return (this.taxonName);
+        return this.taxonName;
     }
     public void setTaxonName(String name) {
         this.taxonName = name;
     }
 
     public String getProject() {
-        return (this.project);
+        return this.project;
     }
 
     public void setProject(String project) {
@@ -893,7 +869,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
     }    
 
     public String getTypes() {
-        return (this.types);
+        return this.types;
     }
 
     public void setTypes(String types) {

@@ -11,7 +11,7 @@ public final class BayAreaSearchResults
 	//extends AdvancedSearchResults
 	implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(BayAreaSearchResults.class);
+    private static final Log s_log = LogFactory.getLog(BayAreaSearchResults.class);
 
 	public void setResults() { // throws Exception
 
@@ -53,7 +53,7 @@ public final class BayAreaSearchResults
 			if (theNames.containsKey(fullName)) {
 				thisItem = (ResultItem) theNames.get(fullName);
 				thisAdm2 = thisItem.getAdm2();   // was county
-				if ((thisAdm2 != null) && (!thisAdm2.contains(adm2))) {
+				if (thisAdm2 != null && !thisAdm2.contains(adm2)) {
 					thisItem.setAdm2(thisAdm2 + ", " + adm2);
 				} else {
 					s_log.info("thisAdm2:" + thisAdm2);
@@ -65,7 +65,7 @@ public final class BayAreaSearchResults
 				theNames.put(fullName, item);
 			}
 		}
-		Collections.sort(myResults, new ResultItemComparator());
+		myResults.sort(new ResultItemComparator());
 		this.results = myResults;
 	}
 

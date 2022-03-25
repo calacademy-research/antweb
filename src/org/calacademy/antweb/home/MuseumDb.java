@@ -2,6 +2,7 @@ package org.calacademy.antweb.home;
 
 import java.util.*;
 import java.sql.*;
+import java.util.Map;
 
 //import org.apache.regexp.*;
 
@@ -54,7 +55,7 @@ public class MuseumDb extends AntwebDb {
            museum.setChartColor(rset.getString("chart_color"));
            museum.setCreated(rset.getTimestamp("created"));
            if (deepCopy) {
-             Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(museum.getCode());
+             Hashtable<String, String> description = new DescEditDb(getConnection()).getDescription(museum.getCode());
              museum.setDescription(description);
 
              // museum.setTaxonSubfamilyDistJson(getSpecimenSubfamilyDistJson(museum.getCode()));
@@ -101,7 +102,7 @@ public class MuseumDb extends AntwebDb {
            museum.setChartColor(rset.getString("chart_color"));
            museum.setCreated(rset.getTimestamp("created"));
          
-           Hashtable<String, String> description = (new DescEditDb(getConnection())).getDescription(museum.getCode());
+           Hashtable<String, String> description = new DescEditDb(getConnection()).getDescription(museum.getCode());
            museum.setDescription(description);         
         }
       } finally {
@@ -133,7 +134,7 @@ public class MuseumDb extends AntwebDb {
           //A.log("updateMuseum() dml:" + dml);
           int c = stmt.executeUpdate(dml);
           message = c + " record inserted.";
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
           // no problem
           message = updateMuseum(museum);
         } catch (SQLException e) {
@@ -276,7 +277,7 @@ public class MuseumDb extends AntwebDb {
     
     private final static int MIN_MUSEUM_COUNT_FOR_CALC = 0;
     
-    public void populate(java.util.Map<String, Integer> museumMap) throws SQLException {
+    public void populate(Map<String, Integer> museumMap) throws SQLException {
       // could run a query here and do the set of museums found.  Usually one, but not for CAS.
       // Better, faster by a minute, to collect the museums as we go through the upload.
       ArrayList<String> museumCodes = new ArrayList<>(museumMap.keySet());
@@ -417,7 +418,7 @@ public class MuseumDb extends AntwebDb {
     private void updateImagedSpecimenCount(String code) throws SQLException {
         int count = getImagedSpecimenCount(code);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("museum", "imaged_specimen_count", (Integer.valueOf(count)).toString(), "code = '" + code + "'");
+        utilDb.updateField("museum", "imaged_specimen_count", Integer.valueOf(count).toString(), "code = '" + code + "'");
     }
 
     private int getImagedSpecimenCount(String code) {
@@ -446,7 +447,7 @@ public class MuseumDb extends AntwebDb {
     private void updateValidSpeciesCount(String code) throws SQLException {
         int count = getValidSpeciesCount(code);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("museum", "valid_species_count", (Integer.valueOf(count)).toString(), "code = '" + code + "'");
+        utilDb.updateField("museum", "valid_species_count", Integer.valueOf(count).toString(), "code = '" + code + "'");
     }
 
     private int getValidSpeciesCount(String code) {
@@ -480,7 +481,7 @@ public class MuseumDb extends AntwebDb {
       A.log("populateSpecimenMuseum(" + museumCode + ")");
       String whereClause = "museum = '" + museumCode + "'";
       
-      (new UtilDb(getConnection())).updateField("specimen", "museum", null, whereClause);
+      new UtilDb(getConnection()).updateField("specimen", "museum", null, whereClause);
 
       //A.log("populateSpecimenMuseum() emptied specimen.museum field whereClause:" + whereClause);
       Statement stmt = null;
@@ -531,7 +532,7 @@ public class MuseumDb extends AntwebDb {
             return;
           }
       
-          (new UtilDb(getConnection())).deleteFrom("museum_taxon", " where code = '" + museumCode + "'");
+          new UtilDb(getConnection()).deleteFrom("museum_taxon", " where code = '" + museumCode + "'");
 
           String query = "select taxon_name, count(*) specimenCount, count(id) imageCount " 
             + " from specimen s left join image i on s.code = i.image_of_id " 
@@ -656,7 +657,7 @@ public class MuseumDb extends AntwebDb {
               + " ) values ('" + code + "', '" + taxonName + "','" + insertMethod + "')";
             //A.log("insertProjTaxon() dml:" + dml);
             stmt.executeUpdate(dml);
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             return false;
         } catch (SQLException e) {
             s_log.error("insertTaxon() e:" + e + " dml:" + dml);

@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
 /** Class Search does the searching of the specimen data */
 public class SlideShowSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(SlideShowSearch.class);
+    private static final Log s_log = LogFactory.getLog(SlideShowSearch.class);
 
 	private String rank;
 	private Connection connection;
@@ -49,7 +49,7 @@ s_log.debug("getSlides() query:" + theQuery);
 			String thisName = null;
 			while (rset.next()) {
 				thisName = rset.getString(1);
-				if ((thisName != null) && (thisName.length() > 0) && (!thisName.equals("null"))) {
+				if (thisName != null && thisName.length() > 0 && !thisName.equals("null")) {
 					slides.add(rset.getString(1));
 				}
 			}
@@ -62,7 +62,7 @@ s_log.debug("getSlides() query:" + theQuery);
 	}
 
 	public String getRank() {
-		return (this.rank);
+		return this.rank;
 	}
 
 	public void setRank(String rank) {

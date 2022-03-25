@@ -12,14 +12,14 @@ import org.apache.commons.logging.LogFactory;
 /** Class Search does the standard search for taxa */
 public class Search extends GenericSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Search.class);
+    private static final Log s_log = LogFactory.getLog(Search.class);
 
     protected ArrayList<ResultItem> createInitialResults() throws SearchException {
         String theQuery = null;
         String genus = null;
         String species = null;
 
-        if ((name == null) || (name.equals(""))) {
+        if (name == null || name.equals("")) {
             return new ArrayList();
         }
 
@@ -40,7 +40,7 @@ public class Search extends GenericSearch implements Serializable {
             + " from taxon left outer join specimen as sp on taxon.taxon_name = sp.taxon_name left outer join image on "
             + " sp.code = image.image_of_id where  (";
 
-        if ((genus != null) && (species != null)) {
+        if (genus != null && species != null) {
             theQuery += getSearchString("taxon.genus", "equals", genus)
                 + " and "
                 + getSearchString("taxon.species", "equals", species)

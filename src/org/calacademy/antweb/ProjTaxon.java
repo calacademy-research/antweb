@@ -11,10 +11,10 @@ import org.calacademy.antweb.util.*;
 
 public class ProjTaxon extends OverviewTaxon {
 
-    private static Log s_log = LogFactory.getLog(ProjTaxon.class);
+    private static final Log s_log = LogFactory.getLog(ProjTaxon.class);
 
     private int rev = 0;
-    private String source = null;
+    private String source;
     //private boolean isIntroduced = false;   
         
     private String projectName;

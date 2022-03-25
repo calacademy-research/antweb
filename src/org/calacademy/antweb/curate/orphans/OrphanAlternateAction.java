@@ -6,6 +6,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -23,7 +25,7 @@ import org.calacademy.antweb.home.*;
 
 public final class OrphanAlternateAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(OrphanAlternateAction.class);
+    private static final Log s_log = LogFactory.getLog(OrphanAlternateAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -34,10 +36,10 @@ public final class OrphanAlternateAction extends Action {
         HttpSession session = request.getSession();
 
         ArrayList<Taxon> orphanTaxonList = new ArrayList();
-        java.sql.Connection connection = null;
+        Connection connection = null;
                         
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "OrphanAlterateAction.execute()");
 
           OrphansDb orphansDb = new OrphansDb(connection);
@@ -50,7 +52,7 @@ public final class OrphanAlternateAction extends Action {
             String subfamily = theForm.getSubfamily();
             String source = theForm.getSource();
 
-            if ((theForm.getBrowse() != null) && (theForm.getBrowse().equals("browse"))) {
+            if (theForm.getBrowse() != null && theForm.getBrowse().equals("browse")) {
                String newTaxonName = null;
                int inaeIndex = taxonName.indexOf("inae");
                if (taxonName.contains("inae")) {
@@ -58,7 +60,7 @@ public final class OrphanAlternateAction extends Action {
                }
                s_log.debug("execute() browse newTaxonName:" + newTaxonName);
                
-               Taxon fetchTaxon = (new TaxonDb(connection)).getTaxon(taxonName);
+               Taxon fetchTaxon = new TaxonDb(connection).getTaxon(taxonName);
                if (fetchTaxon != null) {
                   String url = fetchTaxon.getUrl();
                   response.sendRedirect(url);  
@@ -97,7 +99,7 @@ public final class OrphanAlternateAction extends Action {
 
           putLookupDataInRequest(request, connection);
           
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
@@ -105,7 +107,7 @@ public final class OrphanAlternateAction extends Action {
             DBUtil.close(connection, "OrphanAlterateAction.execute()");
         }
 
-        return (mapping.findForward("error"));
+        return mapping.findForward("error");
     }
 
 
@@ -115,7 +117,7 @@ public final class OrphanAlternateAction extends Action {
         ArrayList<String> subfamilies = new ArrayList<>();
         try {        
           stmt = DBUtil.getStatement(connection, "OrphanAlternateAction.putLookupDataInRequest");
-          String query = "select distinct subfamily from taxon where family='formicidae' and rank = 'subfamily' and status = 'valid'";
+          String query = "select distinct subfamily from taxon where family='formicidae' and taxarank = 'subfamily' and status = 'valid'";
           ResultSet rset = stmt.executeQuery(query);
           while (rset.next()) {
             String subfamily = rset.getString(1);

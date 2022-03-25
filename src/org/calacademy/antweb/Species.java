@@ -13,7 +13,7 @@ import org.calacademy.antweb.geolocale.*;
 /** Class Species keeps track of the information about a specific taxon */
 public class Species extends Genus implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Species.class);
+    private static final Log s_log = LogFactory.getLog(Species.class);
 
     public String getNextRank() {
         return "Specimens";
@@ -117,8 +117,8 @@ these other _cf1 etc.
 
         if (debug) s_log.warn("setSeeAlso() siblingSubspecies:" + siblingSubspecies);
 
-        if (siblingSubspecies != null  && (!"".equals(siblingSubspecies))) {
-          if ((seeAlso != null) && (!"".equals(seeAlso))) seeAlso += ", ";
+        if (siblingSubspecies != null  && !"".equals(siblingSubspecies)) {
+          if (seeAlso != null && !"".equals(seeAlso)) seeAlso += ", ";
           if (seeAlso == null) seeAlso = "";
           seeAlso += siblingSubspecies;
         }
@@ -131,12 +131,12 @@ these other _cf1 etc.
 
 
     public String getFullName() {
-        StringBuffer fullName = new StringBuffer();
-        fullName.append(genus + " ");
-        if ((subgenus != null)
-            && (!("".equals(subgenus)))
-            && (!("null".equals(subgenus)))) {
-            fullName.append("(" + subgenus + ") ");
+        StringBuilder fullName = new StringBuilder();
+        fullName.append(genus).append(" ");
+        if (subgenus != null
+            && !"".equals(subgenus)
+            && !"null".equals(subgenus)) {
+            fullName.append("(").append(subgenus).append(") ");
         }
 /*        
         if ((speciesGroup != null)
@@ -146,9 +146,9 @@ these other _cf1 etc.
         }
 */
         fullName.append(species);
-        if ((subspecies != null)
-            && (!("".equals(subspecies)))
-            && (!("null".equals(subspecies)))) {
+        if (subspecies != null
+            && !"".equals(subspecies)
+            && !"null".equals(subspecies)) {
             fullName.append(" " + subspecies);
         }
 
@@ -275,7 +275,7 @@ these other _cf1 etc.
             }
             if (AntwebDebug.isDebugTaxon(getTaxonName())) s_log.debug("setChildren(7) setHasImages code:" + child.getCode() + " hasImages:" + child.getHasImages());
 
-            if ((getChildMaps) && (i < Taxon.getMaxSafeChildrenCount()) && overview instanceof LocalityOverview) {
+            if (getChildMaps && i < Taxon.getMaxSafeChildrenCount() && overview instanceof LocalityOverview) {
                 child.setMap(new Map(child, (LocalityOverview) overview, connection));
             }
             child.setTaxonomicInfo(connection);   // is this needed?  Yes, for now.
@@ -319,7 +319,7 @@ these other _cf1 etc.
             if (overview instanceof LocalityOverview) {
               String locality = ((LocalityOverview) overview).getLocality();                    
 			  s_log.debug("setChildrenLocalized() locality:" + locality);
-              if ((locality != null) && (locality.length() > 0) && (!locality.equals("null")))  {
+              if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
                 if ("country".equals(locality.substring(0, 7))) {
                     locality = "specimen." + locality;
                 }
@@ -344,7 +344,7 @@ these other _cf1 etc.
                 //child.setMap(new Map(child, overview, connection));
                 theseChildren.add(child);
             }
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
            s_log.warn("setChildrenLocalized(" + overview + ") e:" + e + " query:" + query); 
         } finally {
             DBUtil.close(stmt, rset, this, "setChildrenLocalized()");
@@ -380,16 +380,20 @@ To fix this proper would involve rewriting Species.sort()
       try {
 
 	    if (fieldName.equals("bioregion")) {
-			Collections.sort(children, new Comparator(){				 
-	            public int compare(Object o1, Object o2) {
-                    if ("down".equals(sortOrder)) { Object t = o1; o1 = o2; o2 = t; }
-	                return CompareUtil.compareString(((Specimen) o1).getBioregion(), ((Specimen) o2).getBioregion());
-	            }
-	        });
+			children.sort(new Comparator() {
+                public int compare(Object o1, Object o2) {
+                    if ("down".equals(sortOrder)) {
+                        Object t = o1;
+                        o1 = o2;
+                        o2 = t;
+                    }
+                    return CompareUtil.compareString(((Specimen) o1).getBioregion(), ((Specimen) o2).getBioregion());
+                }
+            });
 		}
           switch (fieldName) {
               case "code":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -401,7 +405,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "collectedby":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -414,7 +418,7 @@ To fix this proper would involve rewriting Species.sort()
                   // Caste actually sorts by caste+subcaste
                   break;
               case "caste":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -431,7 +435,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "collection":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -444,7 +448,7 @@ To fix this proper would involve rewriting Species.sort()
                   break;
               case "country":
 
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           ++count;
                           if ("down".equals(sortOrder)) {
@@ -462,7 +466,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "databy":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -474,7 +478,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "datecollected":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -486,7 +490,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "determinedby":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -498,7 +502,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "dna":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -511,7 +515,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "elevation":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -524,7 +528,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "habitat":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -537,7 +541,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "images":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           //A.log("Species.sortBy() o1:" + o1 + " c1:" + ((Specimen) o1).getImageCount() + " o2:" + o2 + " c2:" + ((Specimen) o2).getImageCount());
                           if ("down".equals(sortOrder)) {
@@ -551,7 +555,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "latitude":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -564,7 +568,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "lifestage":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -581,7 +585,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "location":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -593,7 +597,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "locatedat":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -605,7 +609,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "longitude":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -618,7 +622,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "medium":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -630,7 +634,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "method":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -642,7 +646,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "microchabitat":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -655,7 +659,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "museum":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -667,7 +671,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "taxonname":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -679,7 +683,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "ownedby":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -691,7 +695,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "specimennotes":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -704,7 +708,7 @@ To fix this proper would involve rewriting Species.sort()
                   });
                   break;
               case "type":
-                  Collections.sort(children, new Comparator() {
+                  children.sort(new Comparator() {
                       public int compare(Object o1, Object o2) {
                           if ("down".equals(sortOrder)) {
                               Object t = o1;
@@ -754,12 +758,12 @@ To fix this proper would involve rewriting Species.sort()
     public boolean hasSpecimenDataSummary() {
         boolean hasSpecimenData = false;
         if (
-             ( (habitats != null) && (habitats.size() > 0) )
-          || ( (methods != null) && (methods.size() > 0) )
-          || ( (microhabitats != null) && (microhabitats.size() > 0) )
-          || (!"".equals(elevations)) 
-          || (!"".equals(collectDateRange))
-          || (!"".equals(types))
+             habitats != null && habitats.size() > 0
+          || methods != null && methods.size() > 0
+          || microhabitats != null && microhabitats.size() > 0
+          || !"".equals(elevations)
+          || !"".equals(collectDateRange)
+          || !"".equals(types)
         ) hasSpecimenData = true;
 
         //A.log("hasSpecimenDataSummary() " + hasSpecimenData);

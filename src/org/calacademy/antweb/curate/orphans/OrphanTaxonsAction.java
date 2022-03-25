@@ -6,6 +6,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -24,7 +26,7 @@ import org.calacademy.antweb.util.*;
 
 public final class OrphanTaxonsAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(OrphanTaxonsAction.class);
+    private static final Log s_log = LogFactory.getLog(OrphanTaxonsAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -32,14 +34,14 @@ public final class OrphanTaxonsAction extends Action {
 
         // Extract attributes we will need
         HttpSession session = request.getSession();
-        java.sql.Connection connection = null;
+        Connection connection = null;
 
         ArrayList taxonList = new ArrayList();
         ArrayList uploadList = new ArrayList();
         Statement stmt1 = null;  
         ResultSet rset1 = null;    
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "OrphanTaxonsAction");
 
             //Take care of the deletion first.
@@ -73,13 +75,13 @@ public final class OrphanTaxonsAction extends Action {
                   uploadList.add("source:" + source + " lastUpload:" + max + " taxonCount:" + count + "");
 
                   Statement stmt2 = connection.createStatement();
-                  query = "select taxon_name from taxon where source = \'" + source + "\' and created < date_sub(\'" + max + "\', INTERVAL 1 DAY)";
+                  query = "select taxon_name from taxon where source = '" + source + "' and created < date_sub('" + max + "', INTERVAL 1 DAY)";
                   ResultSet rset2 = stmt2.executeQuery(query);
  
                   //s_log.warn("orphan() q:" + query);
                   while (rset2.next()) {
                     String taxonName = rset2.getString(1);
-                    Taxon taxon = (new TaxonDb(connection)).getTaxon(taxonName);
+                    Taxon taxon = new TaxonDb(connection).getTaxon(taxonName);
                     taxonList.add(taxon);
                   }
                   stmt2.close();
@@ -88,7 +90,7 @@ public final class OrphanTaxonsAction extends Action {
             }
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, stmt1, rset1, this, "OrphanTaxonsAction");
         }
@@ -96,7 +98,7 @@ public final class OrphanTaxonsAction extends Action {
         request.setAttribute("uploads", uploadList);
         request.setAttribute("orphans", taxonList);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
 
     
@@ -120,7 +122,7 @@ public final class OrphanTaxonsAction extends Action {
               Date max = rset1.getTimestamp(1);
 
               Statement stmt2 = connection.createStatement();
-              query = "select taxon_name from taxon where source = \"" + source + "\" and created < date_sub(\'" + max + "\', INTERVAL 1 DAY)";
+              query = "select taxon_name from taxon where source = \"" + source + "\" and created < date_sub('" + max + "', INTERVAL 1 DAY)";
               ResultSet rset2 = stmt2.executeQuery(query);
  
               //s_log.warn("orphan() q:" + query);

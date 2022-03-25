@@ -23,7 +23,7 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
     private String chartColor;
     private String parentName;
         
-    public static String selectSeparator = "<li>____________________________</li>";
+    public static final String selectSeparator = "<li>____________________________</li>";
 
     // Will be null for most overviews.  Project returns self.  Geolocale of type Country
     // or ADM1 will return the associated project, if it exists.

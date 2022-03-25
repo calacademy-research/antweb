@@ -7,6 +7,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import org.calacademy.antweb.geolocale.*;
@@ -19,10 +21,10 @@ import org.apache.commons.logging.LogFactory;
     
 public final class BigMapAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(BigMapAction.class);
+    private static final Log s_log = LogFactory.getLog(BigMapAction.class);
     
     private static int s_mapCount = 0;
-    private static int s_mapLimit = 3;
+    private static final int s_mapLimit = 3;
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -61,7 +63,7 @@ public final class BigMapAction extends Action {
         String geolocaleFocusVal = (String) df.get("geolocaleFocus");
         boolean geolocaleFocus = "true".equals(geolocaleFocusVal);
         Boolean refresh = (Boolean) df.get("refresh");
-        boolean isRefresh = (refresh != null && refresh);
+        boolean isRefresh = refresh != null && refresh;
         if (taxonName != null && isRefresh) {
           MapMgr.removeMap(taxonName);
           //request.setAttribute("message", "Map cache has been refreshed");
@@ -81,9 +83,9 @@ public final class BigMapAction extends Action {
 
         Project project = ProjectMgr.getProject(projectName);
         
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           
           if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
           
@@ -92,7 +94,7 @@ public final class BigMapAction extends Action {
           if (!Utility.isBlank(specimenCode)) {
               Specimen specimen = (Specimen) session.getAttribute("specimen");
               if (specimen == null || !specimenCode.equals(specimen.getCode())) {
-                specimen = (new Specimen(specimenCode, connection)); //(new SpecimenDb(connection)).getSpecimen(specimenCode);
+                specimen = new Specimen(specimenCode, connection); //(new SpecimenDb(connection)).getSpecimen(specimenCode);
                 session.setAttribute("specimen", specimen);
                 taxonName = specimen.getTaxonName();
               }          
@@ -103,7 +105,7 @@ public final class BigMapAction extends Action {
             String message = "Simultaneous map limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
             request.setAttribute("message", message);
             //s_log.warn("execute() message:" + message);
-            return (mapping.findForward("message"));                  
+            return mapping.findForward("message");
           }           
                 
           Map map = getMap(project, taxonName, specimenCode, localityKey, collectionCode, geolocaleId, museumCode, geolocaleFocus, connection, session);
@@ -114,7 +116,7 @@ public final class BigMapAction extends Action {
             s_log.debug("BigMapAction.execute() title:" + title);
 			session.setAttribute("title", title);          
             session.setAttribute("map", map);
-            return (mapping.findForward("success"));
+            return mapping.findForward("success");
           }
 
         }  catch (SQLException sqle) {
@@ -130,7 +132,7 @@ public final class BigMapAction extends Action {
         s_log.info("execute() :" + message);
         //http://www.antweb.org/bigMapReq.do?name=microps&genus=nylanderia&rank=species&project=worldants
         request.setAttribute("message", message);
-        return (mapping.findForward("message"));
+        return mapping.findForward("message");
     }
     
     private Map getMap(Project project, String taxonName, String specimenCode, String localityKey, String collectionCode
@@ -140,9 +142,9 @@ public final class BigMapAction extends Action {
         //s_log.info("BigMapAction.getMap() project:" + project + " geolocaleId:" + geolocaleId + " taxonName:" + taxonName + " specimenCode:" + specimenCode);
                      
         // Taxon map.  
-        if ((taxonName != null) && (!"".equals(taxonName))) {
+        if (taxonName != null && !"".equals(taxonName)) {
           //A.log("getMap() taxonName:" + taxonName);
-          Taxon taxon = (new TaxonDb(connection)).getTaxon(taxonName);
+          Taxon taxon = new TaxonDb(connection).getTaxon(taxonName);
           if (taxon != null) {
           
             LocalityOverview localityOverview = project;
@@ -170,11 +172,11 @@ public final class BigMapAction extends Action {
           }
         } else
 
-        if ((localityKey != null) && (!"".equals(localityKey))) {
+        if (localityKey != null && !"".equals(localityKey)) {
           //s_log.warn("getMap() locality:" + localityKey);
           Locality locality = null;
           try {
-            locality = (new LocalityDb(connection)).getLocalityByCodeOrName(localityKey);
+            locality = new LocalityDb(connection).getLocalityByCodeOrName(localityKey);
           } catch (SQLException e) {
             s_log.warn("getMap() 1 e:" + e);
           }
@@ -184,11 +186,11 @@ public final class BigMapAction extends Action {
           }
         } else 
          
-        if ((collectionCode != null) && (!"".equals(collectionCode))) {
+        if (collectionCode != null && !"".equals(collectionCode)) {
           //s_log.warn("getMap() collectionCode:" + collectionCode);
           Collection collection = null;
           try {
-            collection = (new CollectionDb(connection)).getCollection(collectionCode);
+            collection = new CollectionDb(connection).getCollection(collectionCode);
           } catch (SQLException e) {
             s_log.warn("getMap() 2 e:" + e);
           }
@@ -198,10 +200,10 @@ public final class BigMapAction extends Action {
           }
         } else 
            
-        if ((specimenCode != null) && (!"".equals(specimenCode))) {
+        if (specimenCode != null && !"".equals(specimenCode)) {
           Locality locality = null;
   		  if (specimenCode != null) {
-  		    boolean exists = (new SpecimenDb(connection)).exists(specimenCode);
+  		    boolean exists = new SpecimenDb(connection).exists(specimenCode);
               A.log("getMap() SpecimenCode:" + specimenCode + " exists:" + exists);
 		    if (!exists) return null;
 		    ArrayList arrayList = new ArrayList();
@@ -230,7 +232,7 @@ public final class BigMapAction extends Action {
         // get the map from the request parameters, or from the session
         //A.log("getMapFromSession()");
         Taxon thisTaxon = (Taxon) session.getAttribute("taxon");
-        if ((thisTaxon != null) && (thisTaxon.getMap() != null)) {
+        if (thisTaxon != null && thisTaxon.getMap() != null) {
             thisMap = thisTaxon.getMap();
         } else {
             thisMap = (Map) session.getAttribute("map");
@@ -242,10 +244,10 @@ public final class BigMapAction extends Action {
     private void logMap(Map thisMap, String taxonName, String specimen, String locality, String collectionCode) {
         if (!thisMap.isLocality() && !thisMap.isCollection()) {
           // must be specimen or taxon
-          if ((taxonName != null) && (!taxonName.equals(""))) {
+          if (taxonName != null && !taxonName.equals("")) {
             s_log.warn("request for taxon:" + taxonName + " map.taxonName:" + thisMap.getTaxonName());
           } 
-          if ((specimen != null) && (!specimen.equals(""))) {
+          if (specimen != null && !specimen.equals("")) {
             s_log.warn("request for specimen:" + specimen + " map.taxonName:" + thisMap.getTaxonName());
           }
         }   

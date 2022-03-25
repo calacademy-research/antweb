@@ -14,7 +14,7 @@ import org.calacademy.antweb.util.*;
 
 public class UploadDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(UploadDb.class);
+    private static final Log s_log = LogFactory.getLog(UploadDb.class);
 
     public UploadDb(Connection connection) {
       super(connection);
@@ -486,7 +486,7 @@ public class UploadDb extends AntwebDb {
         return new Status(Status.INDETERMINED);  
       } else {
       
-        Taxon dummyTaxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
+        Taxon dummyTaxon = new TaxonDb(getConnection()).getTaxon(taxonName);
         String status = dummyTaxon.getStatus();
         String currentValidName = dummyTaxon.getCurrentValidName();
       
@@ -626,7 +626,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         //A.log("insertSubfamily() delete proj_taxon dml:" + dml);
         stmt.executeUpdate(dml);
 
-        (new ProjTaxonDb(getConnection())).insert(source, taxonName, "insertSubfamily");
+        new ProjTaxonDb(getConnection()).insert(source, taxonName, "insertSubfamily");
 
       } catch (SQLException e) {
         // This will happen in cases where the records are not sequential.  It is OK.
@@ -637,7 +637,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
       return c;
     }
 
-    private static ArrayList<String> s_extantIndetSubfamilies = null;
+    private static ArrayList<String> s_extantIndetSubfamilies;
     public ArrayList<String> getExtantIndetSubfamilies() throws SQLException {
       if (s_extantIndetSubfamilies == null) {
         s_extantIndetSubfamilies = new ArrayList<>();
@@ -657,8 +657,8 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         } finally {
           DBUtil.close(stmt, rset, "UploadDb.getExtantIndetSubfamilies()");
         }
-        return s_extantIndetSubfamilies;    
-      } else return s_extantIndetSubfamilies;
+      }
+        return s_extantIndetSubfamilies;
     }
     
     public String getAntwebSubfamily(String genus) 

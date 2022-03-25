@@ -6,6 +6,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -18,7 +20,7 @@ import org.calacademy.antweb.Formatter;
     
 public final class ServerStatusAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ServerStatusAction.class);
+    private static final Log s_log = LogFactory.getLog(ServerStatusAction.class);
 
 /*
 public static double JAVA_VERSION = getVersion ();
@@ -45,7 +47,7 @@ static double getVersion () {
 
 
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "ServerStatusAction.execute");
  
             if (action.equals("toggleDownTime")) {
@@ -73,7 +75,7 @@ static double getVersion () {
         String serverDetails = ServerStatusAction.getServerDetails();
         request.setAttribute("serverDetails", serverDetails);           
                    
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 
     public static boolean isReady() {
@@ -132,7 +134,7 @@ static double getVersion () {
     public static boolean isInDownTime() {
       return !"".equals(ServerStatusAction.getDownTimeMessage());
     }    
-    public static String DOWN = "<h3><font color=red>The Upload Services are down for site maintenance.</font></h3>";
+    public static final String DOWN = "<h3><font color=red>The Upload Services are down for site maintenance.</font></h3>";
     private static String downTimeMessage = "";    
     public static String getDownTimeMessage() { 
       return downTimeMessage;
@@ -140,7 +142,7 @@ static double getVersion () {
     public static String getSimpleDownTimeMessage() { 
       return downTimeMessage;
     }    
-    public static String isDownTime(String action, java.sql.Connection connection)      
+    public static String isDownTime(String action, Connection connection)
       throws SQLException {
         String message = "";      
 
@@ -163,7 +165,7 @@ static double getVersion () {
     }
 
 
-    public static boolean getIsDownTime(java.sql.Connection connection) 
+    public static boolean getIsDownTime(Connection connection)
       throws SQLException {
         int downTime = 0; 
         Statement stmt = null;
@@ -186,10 +188,10 @@ static double getVersion () {
         } finally {
             DBUtil.close(stmt, rset, "ServerStatusAction.isDownTime()");
         }      
-        return (downTime == 1);
+        return downTime == 1;
     }
 
-    public static String toggleDownTime(java.sql.Connection connection) 
+    public static String toggleDownTime(Connection connection)
       throws SQLException {
         int downTime = 0;
         
@@ -222,12 +224,12 @@ static double getVersion () {
 
 // --------------------------------------------------
 	
-    private void setOperationLockAttr(javax.sql.DataSource dataSource, HttpServletRequest request) {
+    private void setOperationLockAttr(DataSource dataSource, HttpServletRequest request) {
         OperationLock operationLock = null;
         Connection connection = null;    
         try {
             connection = DBUtil.getConnection(dataSource, "ServerStatusAction.setOperationLockAttr()");
-            operationLock = (new OperationLockDb(connection)).getOperationLock();
+            operationLock = new OperationLockDb(connection).getOperationLock();
             if (operationLock != null) {
               //s_log.warn("setOperationLockAttr() isLocked:" + operationLock.isLocked());
               request.setAttribute("operationLock", operationLock);

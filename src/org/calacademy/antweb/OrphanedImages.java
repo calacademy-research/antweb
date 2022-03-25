@@ -8,12 +8,13 @@ import java.util.ArrayList;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-        
+import org.calacademy.antweb.util.AntwebUtil;
+
 public class OrphanedImages {
 
     private static final Log s_log = LogFactory.getLog(OrphanedImages.class);
 
-	Connection connection = null;
+	Connection connection;
 	ArrayList orphans = new ArrayList();
 	
 	public ArrayList getOrphans() {
@@ -40,7 +41,7 @@ public class OrphanedImages {
 			stmt.close();
 		} catch (SQLException e) {
 			s_log.error("setOrphans() e: " + e);
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+			AntwebUtil.logStackTrace(e);
 		}		
 	}
 

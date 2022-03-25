@@ -1,32 +1,34 @@
 package org.calacademy.antweb.upload;
 
-import java.util.Date;
-import java.util.*;
-import java.sql.*;
-import java.text.*;
-import java.util.Map;
-
+import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import org.apache.commons.lang3.tuple.Pair;
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.*;
-
-import org.apache.regexp.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.util.*;
+import org.apache.regexp.RE;
+import org.apache.regexp.RESyntaxException;
 import org.calacademy.antweb.Formatter;
+import org.calacademy.antweb.*;
+import org.calacademy.antweb.home.HomonymDb;
+import org.calacademy.antweb.home.ProjTaxonDb;
+import org.calacademy.antweb.home.TaxonDb;
+import org.calacademy.antweb.home.UploadDb;
+import org.calacademy.antweb.util.*;
+
+import java.sql.*;
+import java.text.Normalizer;
+import java.util.Date;
+import java.util.Map;
+import java.util.*;
 
 public class AntwebUpload {
     /**
      * Extended by SpecimenUpload, and SpeciesListUpload
      */
 
-    private Connection m_connection = null;
+    private Connection m_connection;
     private static final Log s_log = LogFactory.getLog(AntwebUpload.class);
     private static final String currentDateFunction = "now()";  // for mysql
-    String[] dateHeaderString = {"spcmrecorddate", "spcmrecchangeddate",
+    final String[] dateHeaderString = {"spcmrecorddate", "spcmrecchangeddate",
             "transecttype", "locrecorddate", "locrecchangeddate"
     };
     private final String[] taxonHeaders = {"kingdom_name", "phylum_name", "class_name", "order_name", "family",
@@ -50,18 +52,18 @@ public class AntwebUpload {
 
 
     private final TaxonQueryHashMap taxonQueryHashMap = new TaxonQueryHashMap();
-    private String lastTaxonName = null;
+    private String lastTaxonName;
 
     private int countUploaded = 0;
     private int uploadSkipped = 0;
 
-    ArrayList<String> goodTaxonHeaders = new ArrayList<>(Arrays.asList(taxonHeaders));
+    final ArrayList<String> goodTaxonHeaders = new ArrayList<>(Arrays.asList(taxonHeaders));
 
-    UploadDb uploadDb = null;
+    final UploadDb uploadDb;
 
     private final DescCounter m_descCounter = new DescCounter();
 
-    private UploadDetails uploadDetails = null;
+    private UploadDetails uploadDetails;
 
     public static int saveSpecimenCount = 0;
 
@@ -118,7 +120,7 @@ public class AntwebUpload {
             return 0;
         }
 
-        if ((taxonName == null) || (taxonName.length() == 0)) return 0;
+        if (taxonName == null || taxonName.length() == 0) return 0;
         if (lastTaxonName != null && lastTaxonName.equals(taxonName)) return 0;
         lastTaxonName = taxonName;
 
@@ -140,9 +142,7 @@ public class AntwebUpload {
             //A.log("saveTaxon() dummyTaxon:" + dummyTaxon + " source:" + source + " taxonName:" + taxonName);
 
             if (dummyTaxon != null) {
-                if (isParent) {
-                    return 0; // Already exists. Great.
-                } else {
+                if (!isParent) {
                     //A.iLog(3, "saveTaxon() update taxonName:" + taxonName + " lineNum:" + lineNum, 1000);
 
                     // Unresolved junior homonyms from worldants are getting inserted (technically updated).
@@ -166,8 +166,9 @@ public class AntwebUpload {
                     //A.log("saveTaxon() dummyTaxon:" + dummyTaxon + " item:" + item + " table:" + table);
 
                     updateTaxon(item, table);
-                    return 0;
                 }
+                // if isParent, already exists. Great.
+                return 0;
             } else {
                 if (isParent) {
                     s_log.debug("saveTaxon() 1 parent doesn't exist rank:" + rank + " taxonName:" + taxonName + " so creating it.");
@@ -259,7 +260,7 @@ public class AntwebUpload {
                 //    TaxonMgr.refreshTaxon(getConnection(), "save", table, taxonName, item);
                 //}
 
-            } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+            } catch (SQLIntegrityConstraintViolationException e) {
                 String message = "e:" + e + " query:" + boundQuery;
                 s_log.warn("saveTaxon() 4 " + message);
                 MessageMgr.addToErrors(message);
@@ -484,7 +485,7 @@ public class AntwebUpload {
 
                 //if (TaxonMgr.isUseRefreshing() && c > 0) {
                 //    TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);
-            } catch (com.mysql.cj.jdbc.exceptions.MysqlDataTruncation e) {
+            } catch (MysqlDataTruncation e) {
                 String message = "e:" + e + " query:" + query;
                 s_log.error("updateTaxon() 1 " + message);
                 MessageMgr.addToErrors(message);
@@ -524,7 +525,7 @@ public class AntwebUpload {
                 String source = (String) item.get("source");
 
 				// XXX without genus null check this seems to fail on worldants without a rollback.
-				if (genus != null && (taxonName.equals(s_testTaxonName))) {
+				if (genus != null && taxonName.equals(s_testTaxonName)) {
 				  s_log.debug("saveTaxonAndProjTaxon() taxonName:" + taxonName + " family:" + family + " project:" + project + " genus:" + genus + " authorDate:" + item.get("author_date"));
 				  //AntwebUtil.logStackTrace();
 				}
@@ -559,7 +560,7 @@ public class AntwebUpload {
                     if (TaxonMgr.isUseRefreshing()) {
                         dummyTaxon = TaxonMgr.getTaxon(taxonName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
                     } else {
-                        dummyTaxon = (new TaxonDb(getConnection())).getTaxon(taxonName);
+                        dummyTaxon = new TaxonDb(getConnection()).getTaxon(taxonName);
                     }
 
 
@@ -579,22 +580,22 @@ public class AntwebUpload {
 				  } 
 
                   boolean isValid = status.getValue().equals(Status.VALID);
-                  boolean isValidSubfamilyForGenus = (new TaxonDb(getConnection())).isValidSubfamilyForGenus(family, subfamily, genus);
+                  boolean isValidSubfamilyForGenus = new TaxonDb(getConnection()).isValidSubfamilyForGenus(family, subfamily, genus);
 
-                  if ((!isValid) && !isValidSubfamilyForGenus) {
+                  if (!isValid && !isValidSubfamilyForGenus) {
                     s_log.debug("saveTaxonAndProjTaxon() isValidSubfamilyForGenus failure.  Add to list.  taxonName:" + taxonName);
                     // add to the Invalid Subfamily for Genus list. - to avoid duplicates
 
-                    isValidSubfamilyForGenus = (new HomonymDb(getConnection())).isValidSubfamilyForGenus(family, subfamily, genus);
-                    if (isValidSubfamilyForGenus) {
-                      String message = Taxon.displaySubfamilyGenus(subfamily, genus);
-                      getMessageMgr().addToMessages(MessageMgr.generaAreHomonyms, message);
+                    isValidSubfamilyForGenus = new HomonymDb(getConnection()).isValidSubfamilyForGenus(family, subfamily, genus);
+                      String message;
+                      if (isValidSubfamilyForGenus) {
+                          message = Taxon.displaySubfamilyGenus(subfamily, genus);
+                          getMessageMgr().addToMessages(MessageMgr.generaAreHomonyms, message);
+                      } else {
+                          message = Taxon.displaySubfamilyGenusLinkToGenus(subfamily, genus);
+                          getMessageMgr().addToMessages(MessageMgr.invalidSubfamilyForGenus, message);
+                      }
                       return 0;
-                    } else {
-                      String message = Taxon.displaySubfamilyGenusLinkToGenus(subfamily, genus);
-                      getMessageMgr().addToMessages(MessageMgr.invalidSubfamilyForGenus, message);
-                      return 0;
-                    }
                   }
 
                   if (status.isPassWorldAntsSpeciesCheck()) {             
@@ -638,7 +639,7 @@ public class AntwebUpload {
               s_log.debug("saveTaxonAndProjTaxon() taxonName:" + taxonName);
             }
         } catch (SQLException e) {
-            if (e instanceof java.sql.DataTruncation) {
+            if (e instanceof DataTruncation) {
                 AntwebUtil.logStackTrace(e);
             }
             s_log.error("saveTaxonAndProjTaxon() project:" + project + " e:" + e);
@@ -672,7 +673,7 @@ public class AntwebUpload {
       //if ("country".equals(key)) return true;
       //if ("bioregion".equals(key)) return true;
 
-      return ("reference_id".equals(key)) && ("".equals(value));   // The ints are sometimes nil "".
+      return "reference_id".equals(key) && "".equals(value);   // The ints are sometimes nil "".
     }
 
     // If an exception, value will not be updated. Only runs on specimen record taxa.
@@ -729,8 +730,8 @@ public class AntwebUpload {
         try {
             // prepare the fields and values
             Enumeration<String> keys = item.keys();
-            StringBuilder fields = new StringBuilder();
-            StringBuilder values = new StringBuilder();
+            StringBuilder fields = new StringBuilder(128);
+            StringBuilder values = new StringBuilder(64);
             fields.append("(");
             values.append("(");
             String key;
@@ -888,7 +889,7 @@ public class AntwebUpload {
             }
 
             ++saveSpecimenCount;
-            if ((saveSpecimenCount % 25000 == 0)) s_log.info("saveSpecimen() count" + saveSpecimenCount + " code:" + code);
+            if (saveSpecimenCount % 25000 == 0) s_log.info("saveSpecimen() count" + saveSpecimenCount + " code:" + code);
                                     
             // Only if successful insert, count and record the museum
             if (item.containsKey("ownedby")) {
@@ -899,12 +900,12 @@ public class AntwebUpload {
             
         } catch (ClassCastException e) {
            AntwebUtil.logStackTrace(e);
-        } catch (java.sql.SQLSyntaxErrorException e) {
+        } catch (SQLSyntaxErrorException e) {
             s_log.error("saveSpecimen() dml:" + dml + " e:" + e);
             String message = "Specimen jdbc exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e; // + " query:" + query;
             s_log.debug("saveSpecimen() " + message);
             getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             String message = "Specimen code:" + code;
             getMessageMgr().addToMessages(MessageMgr.duplicateEntries, "", message);       
         } catch (SQLException e) {
@@ -918,10 +919,10 @@ public class AntwebUpload {
 
             // if a different access_group attempts to load a code of another group's specimen...
 
-            if (e instanceof java.sql.DataTruncation) return;
+            if (e instanceof DataTruncation) return;
             
             // or could we always add to the DBErrorSet and return?
-            if (!(e instanceof java.sql.SQLIntegrityConstraintViolationException)) {
+            if (!(e instanceof SQLIntegrityConstraintViolationException)) {
                 throw e;
             }
         } finally {
@@ -977,10 +978,10 @@ public class AntwebUpload {
 		  //A.log("AntwebUpload.setStatusAndCurrentValidName() taxonName:" + taxonName + " taxon:" + taxon);
 
           if (taxon != null) status = taxon.getStatus();
-          if ((taxon == null) || (status == null) || (Status.UNRECOGNIZED.equals(status))) {
+          if (taxon == null || status == null || Status.UNRECOGNIZED.equals(status)) {
             if (status == null) status = Status.UNRECOGNIZED;
 
-            if ((new HomonymDb(getConnection())).isHomonym(taxonName)) {
+            if (new HomonymDb(getConnection()).isHomonym(taxonName)) {
 //            if (Status.HOMONYM.equals(status)) {
               String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
               getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);            
@@ -1098,7 +1099,7 @@ public class AntwebUpload {
             displayName = "[empty string]";
             // was: getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);
          }
-         String toName = (new org.calacademy.antweb.Formatter()).capitalizeFirstLetter(status.getCurrentValidName());
+         String toName = new Formatter().capitalizeFirstLetter(status.getCurrentValidName());
          String message = displayName + " -> " + toName;
          getMessageMgr().addToMessages(MessageMgr.taxonNamesUpdatedToBeCurrentValidName, message); 
        } else {
@@ -1110,9 +1111,9 @@ public class AntwebUpload {
         // Both "incertae_sedis" and "([subfamily])" are considered exceptional.
 
         boolean isExceptional = "incertae_sedis".equals(subfamily);
-        if ((subfamily != null)
-                && (!"".equals(subfamily))
-                && (subfamily.charAt(0) == '(')
+        if (subfamily != null
+                && !"".equals(subfamily)
+                && subfamily.charAt(0) == '('
         ) {
             isExceptional = true;
         }
@@ -1266,11 +1267,11 @@ public class AntwebUpload {
       return uploadDetails.getMessageMgr();
     }
     
-    protected void setHigherTaxonomicHierarchy(Hashtable item) {
+    protected void setHigherTaxonomicHierarchy(Hashtable<String, Object> item) {
         // set the hierarchy.  This is true for all projects.  Specimens data may differ.
         
         String family = (String) item.get("family");
-        if ( ("formicidae".equals(family)) || (family == null)) {
+        if ( "formicidae".equals(family) || family == null) {
             item.put("kingdom_name", "animalia");
             item.put("phylum_name", "arthropoda");
             item.put("class_name", "insecta");
@@ -1321,8 +1322,8 @@ public class AntwebUpload {
                     float seconds = Float.parseFloat(oldGeo.getParen(3));
                     String direction = oldGeo.getParen(4);
 
-                    decimal = degrees + (minutes / 60) + (seconds / 3600);
-                    if ((direction.equals("s")) || (direction.equals("w"))) {
+                    decimal = degrees + minutes / 60 + seconds / 3600;
+                    if (direction.equals("s") || direction.equals("w")) {
                         decimal = 0 - decimal;
                     }
                     result = decimal;
@@ -1343,7 +1344,7 @@ class UnicodeFormatter  {
          '0', '1', '2', '3', '4', '5', '6', '7',
          '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
       };
-      char[] array = { hexDigit[(b >> 4) & 0x0f], hexDigit[b & 0x0f] };
+      char[] array = { hexDigit[b >> 4 & 0x0f], hexDigit[b & 0x0f] };
       return new String(array);
    }
 

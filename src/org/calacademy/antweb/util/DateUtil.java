@@ -64,7 +64,7 @@ public abstract class DateUtil {
     try {
       // handle date in the format like log4j: 2008-08-28 09:46:55
       DateFormat formatter = new SimpleDateFormat("yyyy-MM");
-      theDay = (Date) formatter.parse(dateStr);
+      theDay = formatter.parse(dateStr);
       //A.log("DateUtil.getFormatDateShort() theDayStr:" + dateStr + " theDay:" + theDay);
     } catch (ParseException e) {
       return null;
@@ -77,7 +77,7 @@ public abstract class DateUtil {
     try {
       // handle date in the format like log4j: 2008-08-28 09:46:55
       DateFormat formatter = new SimpleDateFormat("yyyy");
-      theDay = (Date) formatter.parse(dateStr);
+      theDay = formatter.parse(dateStr);
       //A.log("DateUtil.getFormatDateShortShort() theDayStr:" + dateStr + " theDay:" + theDay);
     } catch (ParseException e) {
       return null;
@@ -108,7 +108,7 @@ public abstract class DateUtil {
     // With an input like: 2012-03-27 15:48:09.0 will return: 2012-03-27
     Date theDate = null;
     try {
-      theDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
+      theDate = new SimpleDateFormat("yyyy-MM-dd").parse(dateStr);
     } catch (ParseException e) {
       s_log.error("e:" + e + " theDate:" + dateStr);
     }
@@ -122,9 +122,9 @@ public abstract class DateUtil {
   public static String formatDateStr(String theDate) {
     if (theDate == null) return null;
     try {
-      java.util.Date utilDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(theDate);
+      Date utilDate = new SimpleDateFormat("yyyy-MM-dd").parse(theDate);
       // A.log("formatDateStr() dateCollectedStartStr:" + dateCollectedStartStr + " utilDate:" + utilDate);
-      return (utilDate.toString());
+      return utilDate.toString();
     } catch (ParseException e) {
       s_log.debug("formatDateStr() theDate:" + theDate + " e:" + e);
       // no action taken.
@@ -140,7 +140,7 @@ public abstract class DateUtil {
   }
 
   public static String getFormatDateStr(Date theDate, String format) {
-    return (new SimpleDateFormat(format)).format(theDate);
+    return new SimpleDateFormat(format).format(theDate);
   }
 
   // Take an String of unknown date format and return a string in the correct format. Used for Specimen upload.
@@ -155,8 +155,8 @@ public abstract class DateUtil {
   private static Date format(String format, String dateStr) {
     Date returnDate = null;
     try {
-      returnDate = (new SimpleDateFormat(format)).parse(dateStr);
-    } catch (java.text.ParseException e) {
+      returnDate = new SimpleDateFormat(format).parse(dateStr);
+    } catch (ParseException e) {
       //if ("2010/08/12".equals(dateStr)) A.log("format() NOT found:" + dateStr + " format:" + format + " e:" + e);
     }
     return returnDate;
@@ -184,7 +184,7 @@ public abstract class DateUtil {
     if (indexOfSecondHyphen < 6) return null;
     if (dateStr.length() > 9) return null;
     String shortYear = dateStr.substring(indexOfSecondHyphen + 1);
-    int year = Integer.valueOf(shortYear);
+    int year = Integer.parseInt(shortYear);
     if (year > 50) {
       year = year + 1900;
     } else {
@@ -260,12 +260,11 @@ public abstract class DateUtil {
           if (firstSpaceI > 0) {
             if (secondSpaceI < 0) {
               A.p("constructDateStr(" + dateStr + ") mo year");
-              returnDate = getDate(dateStr);
             } else {
               A.p("constructDateStr(" + dateStr + ") day mo year");
               // if mo > 12 error
-              returnDate = getDate(dateStr);
             }
+            returnDate = getDate(dateStr);
           }
           s_debugStep = 9;
         }
@@ -318,7 +317,7 @@ public abstract class DateUtil {
           String output = ld.format(fLocalDate);
           returnDate = getDate(output);
           s_debugStep = 13;
-        } catch (java.time.format.DateTimeParseException e) {
+        } catch (DateTimeParseException e) {
         } catch (Exception e) {
           s_log.debug("constructDate() 1 dateStr:" + dateStr + " e:" + e);
         }
@@ -389,7 +388,7 @@ public abstract class DateUtil {
 
     //A.log("handleDMYy() dateStr:" + dateStr + " shortYear:" + shortYear);
 
-    int year = Integer.valueOf(shortYear);
+    int year = Integer.parseInt(shortYear);
     if (year > 50) {
       year = year + 1900;
     } else {
@@ -397,7 +396,7 @@ public abstract class DateUtil {
     }
     dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
     String firstNum = dateStr.substring(0, indexOfFirstHyphen);
-    int firstNumInt = Integer.valueOf(firstNum);
+    int firstNumInt = Integer.parseInt(firstNum);
     Date date = null;
     if (firstNumInt <= 12) {
       date = format("MM/dd/yyyy", dateStr);
@@ -413,9 +412,9 @@ public abstract class DateUtil {
         Date returnDate = null;
         if (dateStr != null) {
           try {
-            returnDate = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
+            returnDate = new SimpleDateFormat("yyyy-MM-dd").parse(dateStr);
             //A.log("constructDate() 2 dateStr:" + dateStr + " returnDate:" + returnDate);
-          } catch (java.text.ParseException e) {
+          } catch (ParseException e) {
             //A.log("constructDate() 2 dateStr:" + dateStr + " e:" + e);
           }
         }
@@ -424,7 +423,7 @@ public abstract class DateUtil {
 
     public static boolean isDate(String dateStr) {
       Date date = DateUtil.constructDate(dateStr);
-      return (date != null);    
+      return date != null;
     }
 
   private static Date getTruncatedDate(String truncDatesCollected) {

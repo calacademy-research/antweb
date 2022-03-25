@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class OverviewAction extends DescriptionAction {
 
-    private static Log s_log = LogFactory.getLog(OverviewAction.class);
+    private static final Log s_log = LogFactory.getLog(OverviewAction.class);
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -38,7 +38,7 @@ public final class OverviewAction extends DescriptionAction {
       OverviewForm overviewForm = (OverviewForm) form;
 	  String action = overviewForm.getAction();
         
-      java.sql.Connection connection = null;
+      Connection connection = null;
       
       try {
         DataSource dataSource = null;
@@ -85,7 +85,7 @@ public final class OverviewAction extends DescriptionAction {
             if (HttpUtil.isPost(request)) {
               boolean success = saveDescriptionEdit(overviewForm, project, accessLogin
                 , request, connection);   
-              if (!success) return (mapping.findForward("message"));  
+              if (!success) return mapping.findForward("message");
             }
   
             OverviewMgr.setOverview(request, project);  
@@ -112,7 +112,7 @@ public final class OverviewAction extends DescriptionAction {
  
            if (museumCode != null && !"".equals(museumCode)) {
               if (LoginMgr.isCurator(request) && "recalc".equals(action)) {		
-                (new TaxonDb(connection)).setSubfamilyChartColor();
+                new TaxonDb(connection).setSubfamilyChartColor();
               	
 	  	   	    MuseumDb museumDb = new MuseumDb(connection);
   	  		    museumDb.populate(museumCode);
@@ -130,11 +130,11 @@ public final class OverviewAction extends DescriptionAction {
               if (HttpUtil.isPost(request)) {
                 boolean success = saveDescriptionEdit(overviewForm,  museum, accessLogin
                  , request, connection);   
-                if (!success) return (mapping.findForward("message"));  
+                if (!success) return mapping.findForward("message");
               }
   
               OverviewMgr.setOverview(request, museum); 
-              museum.setMap((new ObjectMapDb(connection)).getMuseumMap(museum.getCode())); 
+              museum.setMap(new ObjectMapDb(connection).getMuseumMap(museum.getCode()));
 
               request.setAttribute("overview", museum);
               return mapping.findForward("museum");  
@@ -153,7 +153,7 @@ public final class OverviewAction extends DescriptionAction {
            if (name != null && !"".equals(name)) {
 
                if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
-                   (new TaxonDb(connection)).setSubfamilyChartColor();
+                   new TaxonDb(connection).setSubfamilyChartColor();
 
                    BioregionDb bioregionDb = new BioregionDb(connection);
                    bioregionDb.populate(name);
@@ -171,7 +171,7 @@ public final class OverviewAction extends DescriptionAction {
               if (HttpUtil.isPost(request)) {
                 boolean success = saveDescriptionEdit(overviewForm,  bioregion, accessLogin
                  , request, connection);   
-                if (!success) return (mapping.findForward("message"));  
+                if (!success) return mapping.findForward("message");
               }
 
               OverviewMgr.setOverview(request, bioregion);
@@ -258,7 +258,7 @@ public final class OverviewAction extends DescriptionAction {
               if (HttpUtil.isPost(request)) {
                 boolean success = saveDescriptionEdit(overviewForm,  geolocale, accessLogin
                  , request, connection);   
-                if (!success) return (mapping.findForward("message"));  
+                if (!success) return mapping.findForward("message");
               }                
               OverviewMgr.setOverview(request, geolocale);
               request.setAttribute("overview", geolocale);
@@ -292,7 +292,7 @@ public final class OverviewAction extends DescriptionAction {
               if (HttpUtil.isPost(request)) {
                 boolean success = saveDescriptionEdit(overviewForm,  geolocale, accessLogin
                  , request, connection);   
-                if (!success) return (mapping.findForward("message"));  
+                if (!success) return mapping.findForward("message");
               }
               OverviewMgr.setOverview(request, geolocale);
               request.setAttribute("overview", geolocale);
@@ -335,12 +335,12 @@ public final class OverviewAction extends DescriptionAction {
             if (HttpUtil.isPost(request)) {
               boolean success = saveDescriptionEdit(overviewForm, geolocale, accessLogin
                 , request, connection);   
-              if (!success) return (mapping.findForward("message"));  
+              if (!success) return mapping.findForward("message");
             }
 
             geolocale = GeolocaleMgr.getGeolocale(geolocale.getId());
             OverviewMgr.setOverview(request, geolocale);
-			geolocale.setMap((new ObjectMapDb(connection)).getGeolocaleMap(geolocale.getId())); 
+			geolocale.setMap(new ObjectMapDb(connection).getGeolocaleMap(geolocale.getId()));
             request.setAttribute("overview", geolocale); 
             return mapping.findForward("country");
           } else {
@@ -398,7 +398,7 @@ public final class OverviewAction extends DescriptionAction {
               geolocale = GeolocaleMgr.getIsland(name);
               //A.log("OverviewAction.execute() geolocale:" + geolocale + " id:" + geolocale.getId() + " georank:" + geolocale.getGeorank());
               OverviewMgr.setOverview(request, geolocale);   
-              geolocale.setMap((new ObjectMapDb(connection)).getGeolocaleMap(geolocale.getId()));   
+              geolocale.setMap(new ObjectMapDb(connection).getGeolocaleMap(geolocale.getId()));
               request.setAttribute("overview", geolocale); 
               return mapping.findForward("island");              
             }
@@ -422,12 +422,12 @@ public final class OverviewAction extends DescriptionAction {
             if (HttpUtil.isPost(request)) {
               boolean success = saveDescriptionEdit(overviewForm, geolocale, accessLogin
                 , request, connection);   
-              if (!success) return (mapping.findForward("message"));  
+              if (!success) return mapping.findForward("message");
             }
 
             geolocale = GeolocaleMgr.getGeolocale(geolocale.getId());
             OverviewMgr.setOverview(request, geolocale);            
-			geolocale.setMap((new ObjectMapDb(connection)).getGeolocaleMap(geolocale.getId())); 
+			geolocale.setMap(new ObjectMapDb(connection).getGeolocaleMap(geolocale.getId()));
             request.setAttribute("overview", geolocale); 
             return mapping.findForward("adm1");  
           } else {

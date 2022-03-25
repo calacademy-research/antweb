@@ -7,6 +7,7 @@ import java.sql.*;
 import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
@@ -22,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ImageUploadReport extends Action {
 
-    private static Log s_log = LogFactory.getLog(ImageUploadReport.class);
+    private static final Log s_log = LogFactory.getLog(ImageUploadReport.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -37,7 +38,7 @@ public final class ImageUploadReport extends Action {
         ImageUpload imageUpload = null;
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "ImageUploadReport.execute()");
         
             ImageUploadDb imageUploadDb = new ImageUploadDb(connection);        
@@ -45,14 +46,14 @@ public final class ImageUploadReport extends Action {
             DynaActionForm df = (DynaActionForm) form;
             int imageUploadId = 0;
             Integer id = (Integer) df.get("id");
-            if (id != null) imageUploadId = id.intValue();
+            if (id != null) imageUploadId = id;
 
             if (imageUploadId != 0) {            
               imageUpload = imageUploadDb.getImageUpload(imageUploadId);
               request.setAttribute("imageUpload", imageUpload);  
-              return (mapping.findForward("report"));         
+              return mapping.findForward("report");
             } else {          
-              return (mapping.findForward("error"));         
+              return mapping.findForward("error");
             }
         } catch (SQLException e) {
           AntwebUtil.log("ImageUploadReport.execute() e:" + e);
@@ -61,6 +62,6 @@ public final class ImageUploadReport extends Action {
         }
 
         AntwebUtil.log("execute() No messages set. This shouldn't happen");
-        return (mapping.findForward("error"));         
+        return mapping.findForward("error");
 	}	
 }

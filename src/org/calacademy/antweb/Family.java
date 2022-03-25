@@ -15,10 +15,10 @@ import org.calacademy.antweb.home.*;
 /** Class Family keeps track of the information about a specific taxon */
 public class Family extends Taxon implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Family.class);
+    private static final Log s_log = LogFactory.getLog(Family.class);
     
-    public static String FORMICIDAE = "formicidae";
-    public static String ANT_FAMILY = "formicidae";
+    public static final String FORMICIDAE = "formicidae";
+    public static final String ANT_FAMILY = "formicidae";
     
     public String getName() { 
         return getFamily(); 
@@ -37,13 +37,13 @@ public class Family extends Taxon implements Serializable {
 
         // We only use the subgenus clause when rank is genus.
 
-        ArrayList theseChildren = new ArrayList();
+        ArrayList<Taxon> theseChildren = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = null;
         try {
           query =
-            "select distinct taxon.subfamily from taxon" // proj_taxon where " 
+            "select distinct taxon.subfamily from taxon " // proj_taxon where "
                 + fetchChildrenClause                   
                 + " and taxon.subfamily != '' "
                 + " and taxarank = 'subfamily' "
@@ -56,12 +56,11 @@ public class Family extends Taxon implements Serializable {
 
             //A.log("setChildren() query:" + theQuery);
 
-            Subfamily child = null;
-            String theParams = null;
-            
+            Subfamily child;
+
             while (rset.next()) {
                 String subfamily = rset.getString("subfamily");
-                child = (new TaxonDb(connection)).getSubfamily(subfamily);
+                child = new TaxonDb(connection).getSubfamily(subfamily);
 
                 if (getChildImages) {
                     //A.log("setChildren() setImages(" + overview + ")");

@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class AdminAlertMgr {
 
-    private static Log s_log = LogFactory.getLog(AdminAlertMgr.class);
+    private static final Log s_log = LogFactory.getLog(AdminAlertMgr.class);
 
     public static List<AdminAlert> s_adminAlerts = new ArrayList<>();
 
@@ -50,7 +50,7 @@ public final class AdminAlertMgr {
         // Add any alerting queries.
         try {
           s_queryAlerts = QueryManager.adminAlerts(connection);
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
           s_log.warn("checkIntegrity() e:" + e);
         }
 

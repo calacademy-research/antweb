@@ -2,6 +2,7 @@ package org.calacademy.antweb.curate.speciesList;
 
 import java.sql.*;
 import java.io.*;
+import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,7 +30,7 @@ public class SpeciesListUploader {
      /data/antweb/web/speciesList/world/worldants_speciesList.txt
 */
 
-  Connection connection;
+  final Connection connection;
 
   private static final String worldDir = AntwebProps.getWebDir() + "speciesList/world/";
 
@@ -54,7 +55,7 @@ public class SpeciesListUploader {
     uploadDetails.setStartTime(fetchDetails.getStartTime());
     uploadDetails.setOperation("fetchAndReloadWorldants");    
 
-    int worldantsChangeCount = (new WorldantsUploadDb(connection)).getWorldantsChangeCount();
+    int worldantsChangeCount = new WorldantsUploadDb(connection).getWorldantsChangeCount();
     if (worldantsChangeCount == 0) {
       AdminAlertMgr.addIfFresh(AdminAlertMgr.noWorldantsChanges, AdminAlertMgr.noWorldantsChangesContains, AdminAlertMgr.WEEK, connection);
     }  
@@ -71,7 +72,7 @@ public class SpeciesListUploader {
 
    // (new WorldantsUploadDb(connection)).insertWorldantsUpload(backupFileName, backupFileSize, origWorldantsCount, validateMessage, fileSize);
     String fileLoc = worldDir + "worldants_speciesList.txt";
-    int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
+    int origWorldantsCount = new TaxonDb(connection).getWorldantsCount();
     //String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
     String validateMessage = speciesListUpload.getValidateMessage();
     String backupDirFile = record(validateMessage, fileLoc, origWorldantsCount, true);
@@ -103,7 +104,7 @@ public class SpeciesListUploader {
     
     s_log.warn("fetchWorldantsList() Worldants fetched:" + urlLoc + " written here:" + fileLoc + " successfully.");
 
-    int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
+    int origWorldantsCount = new TaxonDb(connection).getWorldantsCount();
 
     String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
     uploadDetails.setMessage(validateMessage);
@@ -120,7 +121,7 @@ public class SpeciesListUploader {
 	SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
 	UploadDetails uploadDetails = speciesListUpload.reloadSpeciesList(Project.WORLDANTS, Group.TESTGROUP);
 
-    int origWorldantsCount = (new TaxonDb(connection)).getWorldantsCount();
+    int origWorldantsCount = new TaxonDb(connection).getWorldantsCount();
     String fileLoc = worldDir + "worldants_speciesList.txt";
 
 
@@ -137,7 +138,7 @@ public class SpeciesListUploader {
     return uploadDetails;
   }
 
-  public static int WORLDANTS_LOW_COUNT = 29000;
+  public static final int WORLDANTS_LOW_COUNT = 29000;
 
   public String validateWorldantsFile(String fileLoc, int origWorldantsCount) {
     if (AntwebProps.isDevOrStageMode()) {
@@ -151,9 +152,8 @@ public class SpeciesListUploader {
     
     int worldantsCount = AntwebSystem.countLines(fileLoc);
     A.log("validateWorldantsFile() worldantsCount:" + worldantsCount);
-    boolean countIsLow = true;
 
-    if (worldantsCount > WORLDANTS_LOW_COUNT) countIsLow = false;
+    boolean countIsLow = worldantsCount <= WORLDANTS_LOW_COUNT;
 
     /*
     // The existing count in the database is low. Waive the 
@@ -196,15 +196,15 @@ public class SpeciesListUploader {
     int backupFileSize = 0;
     if ("success".equals(validateMessage)) {	  
         // make backup copy                        
-        backupDirFile = "upload/" + new Utility().getDateForFileName(new java.util.Date()) + "-worldants.txt";
+        backupDirFile = "upload/" + Utility.getDateForFileName(new Date()) + "-worldants.txt";
         backupFileName = AntwebProps.getWebDir() + backupDirFile;
-        new Utility().copyFile(fileLoc, backupFileName);
+        Utility.copyFile(fileLoc, backupFileName);
         backupFileSize = FileUtil.getFileSize(backupFileName);
     }
 
     if (persistToDb) {
       // we do not persist fetches     
-      (new WorldantsUploadDb(connection)).insertWorldantsUpload(backupDirFile, backupFileSize, origWorldantsCount, validateMessage, fileSize);
+      new WorldantsUploadDb(connection).insertWorldantsUpload(backupDirFile, backupFileSize, origWorldantsCount, validateMessage, fileSize);
     }
     
     return backupDirFile;

@@ -6,6 +6,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -22,7 +24,7 @@ import org.calacademy.antweb.home.*;
 
 public final class OrphanSubfamiliesAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(OrphanSubfamiliesAction.class);
+    private static final Log s_log = LogFactory.getLog(OrphanSubfamiliesAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -33,10 +35,10 @@ public final class OrphanSubfamiliesAction extends Action {
         HttpSession session = request.getSession();
 
         ArrayList orphanTaxonList = new ArrayList();
-        java.sql.Connection connection = null;
+        Connection connection = null;
                         
         try {
-          javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "OrphanSubfamiliesAction.execute()");
 
 
@@ -50,10 +52,10 @@ public final class OrphanSubfamiliesAction extends Action {
             String source = theForm.getSource();
             if (action != null) {       
               if (action.equals("delete")) {
-                 if ((taxonName != null) && (!"".equals(taxonName))) {
+                 if (taxonName != null && !"".equals(taxonName)) {
                    orphansDb.deleteTaxon(taxonName);
                  }
-                 if ((source != null) && (!"".equals(source))) {                   
+                 if (source != null && !"".equals(source)) {
                    orphansDb.deleteOrphanedSubfamiliesFromSource(source);
                    //s_log.warn("execute() option not provided for subfamilies");
                  }
@@ -65,11 +67,11 @@ public final class OrphanSubfamiliesAction extends Action {
             
           request.setAttribute("orphans", orphanTaxonList);
 
-          return (mapping.findForward("success"));
+          return mapping.findForward("success");
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "OrphanSubfamiliesAction.execute()");
         }

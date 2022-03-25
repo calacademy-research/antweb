@@ -6,12 +6,14 @@ import java.util.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.apache.struts.action.*;
 
+import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
@@ -19,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class EditHomePageAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(EditHomePageAction.class);
+    private static final Log s_log = LogFactory.getLog(EditHomePageAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -33,7 +35,7 @@ public final class EditHomePageAction extends Action {
 
 		Connection connection = null;
 		try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "EditHomePageAction");
 
 			connection.setAutoCommit(true);
@@ -42,31 +44,31 @@ public final class EditHomePageAction extends Action {
 			Statement stmt = connection.createStatement();
 			ResultSet rset = stmt.executeQuery(theQuery);
 			while (rset.next()) {
-				contents.put(rset.getString("content_type"), org.calacademy.antweb.Formatter.dequote(rset.getString("content")));
+				contents.put(rset.getString("content_type"), Formatter.dequote(rset.getString("content")));
 			}
 			setFormElements(theForm, contents);
 			          
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "EditHomePageAction");
         }
         
-		return (mapping.findForward("success"));
+		return mapping.findForward("success");
 	}
 	
 	private void setFormElements(HomePageForm form, HashMap contents) {
 
 		Iterator iter = contents.keySet().iterator();
 		String key, value, method;
-		org.calacademy.antweb.Formatter format = new org.calacademy.antweb.Formatter();
+		Formatter format = new Formatter();
 
 		Field field;
 		Class thisClass;
 		try {
 			Class stringClass = Class.forName("java.lang.String");
-			Class params[] = {stringClass};
+			Class[] params = {stringClass};
 			
 			Method thisMethod;
 		
@@ -79,18 +81,8 @@ public final class EditHomePageAction extends Action {
 				Object[] paramsObj = {contents.get(key)};
 				thisMethod.invoke(form, paramsObj);
 			}
-		} catch (SecurityException e) {
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-		} catch (IllegalArgumentException e) {
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-		} catch (ClassNotFoundException e) {
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-		} catch (NoSuchMethodException e) {
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-		} catch (IllegalAccessException e) {
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-		} catch (InvocationTargetException e) {
-			org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+		} catch (SecurityException | IllegalArgumentException | ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			AntwebUtil.logStackTrace(e);
 		}
 
 	}

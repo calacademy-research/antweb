@@ -117,7 +117,7 @@ public class LoginDb extends AntwebDb {
                 if (login != null)
                     postInstantiate(login);
                 //A.log("getLoginByEmail() 2 email:" + email + " login:" + login);                
-            } catch (java.sql.SQLSyntaxErrorException e) {
+            } catch (SQLSyntaxErrorException e) {
               s_log.error("getLoginByEmail() email:" + email + " e:" + e);
             } finally {
               DBUtil.close(stmt, rset, this, "getLoginByEmail()");
@@ -480,9 +480,9 @@ public class LoginDb extends AntwebDb {
         if (login.getId() != 0) {
         
             // Use of ternary operator.  short conditional statement
-            int isAdmin = (login.isAdmin()) ? 1 : 0;
-            int uploadSpecimens = (login.isUploadSpecimens()) ? 1 : 0;
-            int uploadImages = (login.isUploadImages()) ? 1 : 0;
+            int isAdmin = login.isAdmin() ? 1 : 0;
+            int uploadSpecimens = login.isUploadSpecimens() ? 1 : 0;
+            int uploadImages = login.isUploadImages() ? 1 : 0;
         
             if (!isLegalLogin(login)) {
               throw new AntwebException("name or email already in use. id:" + login.getId() + " name:" + login.getName() + " email:" + login.getEmail());
@@ -561,9 +561,9 @@ public class LoginDb extends AntwebDb {
             // Use of ternary operator.  short conditional statement
             //s_log.warn("isUploadSpecimens:" + login.isUploadSpecimens());
             //s_log.warn("isUploadImages:" + login.isUploadImages());
-            int uploadSpecimens = (login.isUploadSpecimens()) ? 1 : 0;
-            int uploadImages = (login.isUploadImages()) ? 1 : 0;
-            int isAdmin = (login.isAdmin()) ? 1 : 0;
+            int uploadSpecimens = login.isUploadSpecimens() ? 1 : 0;
+            int uploadImages = login.isUploadImages() ? 1 : 0;
+            int isAdmin = login.isAdmin() ? 1 : 0;
 
             String theUpdate;
 
@@ -761,7 +761,7 @@ public class LoginDb extends AntwebDb {
                 num = rset.getInt("num");
             }
 
-            returnVal = (num == 0);
+            returnVal = num == 0;
 
             if (AntwebProps.isDevMode() && !returnVal) {
                 s_log.warn("isLegalLogin() returnVal: false for query:" + DBUtil.getPreparedStatementString(stmt));
@@ -794,7 +794,7 @@ public class LoginDb extends AntwebDb {
 
             s_log.info("findInviteId() email:" + email + " num:" + num + " + records:" + records + " query:" + theQuery);
                            
-            if (num > 0) return (Integer.valueOf(num)).toString();
+            if (num > 0) return Integer.valueOf(num).toString();
         } catch (SQLException e) {
             s_log.error("findInviteId() email:" + email + " query:" + theQuery);
             throw e;
@@ -858,7 +858,7 @@ public class LoginDb extends AntwebDb {
                 String groupName = rset.getString("ant_group.name");
                 String url = AntwebProps.getSecureDomainApp() + "/login.do?userName=" + name + "&password=" + password;
                 String groupStr = "";
-                if (!("Default Group".equals(groupName))) { 
+                if (!"Default Group".equals(groupName)) {
                   groupStr = ":" + groupName;
                 }
                 String anchor = "<a href=\"" + url + "\">" + name + "(" + groupId + groupStr + ")" + "</a>";
@@ -895,7 +895,7 @@ public class LoginDb extends AntwebDb {
                 Timestamp lastLogin = rset.getTimestamp("lastLogin");
                  String url = AntwebProps.getDomainApp() + "/login.do?userName=" + name + "&password=" + password;
                 String groupStr = "";
-                if (!("Default Group".equals(groupName))) { 
+                if (!"Default Group".equals(groupName)) {
                   groupStr = ":" + groupName;
                 }
                 String anchor = "<a href=\"" + url + "\">" + name + "(" + groupId + groupStr + ")" + "</a> " + lastLogin;

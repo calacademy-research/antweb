@@ -13,9 +13,9 @@ import org.calacademy.antweb.Formatter;
 public class Adm1Db {
 /* Data from this table is manually fetched in UploadAction to create the search select box. */
 
-    private static Log s_log = LogFactory.getLog(Adm1Db.class);
+    private static final Log s_log = LogFactory.getLog(Adm1Db.class);
     
-    private static ArrayList<String> adm1s = new ArrayList<>();
+    private static final ArrayList<String> adm1s = new ArrayList<>();
     
     public static boolean isValid(Connection connection, String adm1){
       if (adm1s.size() == 0) {
@@ -26,10 +26,9 @@ public class Adm1Db {
       adm1 = Formatter.initCap(adm1);
             
       boolean contains = adm1s.contains(adm1);
-      if (contains) return true;
-
-      //s_log.warn("isValid() contains:" + contains + " adm1:" + adm1);
+      // if (!contains) s_log.warn("isValid() contains:" + contains + " adm1:" + adm1);
       return contains;
+
     }
 
     public static void populate(Connection connection) {

@@ -7,31 +7,34 @@ import org.apache.commons.logging.LogFactory;
     
 public class DataPlace {
     
-    private static Log s_log = LogFactory.getLog(DataPlace.class);
+    private static final Log s_log = LogFactory.getLog(DataPlace.class);
 
     public static String getValidName(String country) {
       String use = null;
       switch (country) {
-            case "Saint Helena, Ascension, and Tristan da Cunha":  use = "Saint Helena, Ascension and Tristan da Cunha"; break;   
-            case "Bahamas, The":  use = "Bahamas"; break;   
-            case "Burma":  use = "Myanmar"; break;
-            case "Cabo Verde":  use = "Cape Verde"; break;   
-            case "Congo, Democratic Republic of the":  use = "Democratic Republic of the Congo"; break;   
-            case "Côte d’Ivoire":  use = "Ivory Coast"; break;   
-            case "Czechia":  use = "Czech Republic"; break;   
-            case "Falkland Islands (Islas Malvinas)":  use = "Falkland Islands"; break;   
-            case "Gambia, The":  use = "Gambia"; break;   
-            case "Jan Mayen":  use = "Svalbard and Jan Mayen Islands"; break;   
-            case "Macau":  use = "Macao"; break;   
-            case "Micronesia, Federated States of":  use = "Micronesia"; break;   
-            case "Pitcairn Islands":  use = "Pitcairn"; break;   
-            case "Saint Barthelemy":  use = "Saint Barthélemy"; break;   
-            case "Saint Helena":  use = "Saint Helena, Ascension and Tristan da Cunha"; break;   
-            case "South Georgia and South Sandwich Islands":  use = "South Georgia and the South Sandwich Islands"; break;   
-            case "Svalbard":  use = "Svalbard and Jan Mayen Islands"; break;   
-            case "The Gaza Strip":  use = "Palestine"; break;   
-            case "Virgin Islands":  use = "United States Virgin Islands/British Virgin Islands"; break;   
-            case "West Bank":  use = "Palestine"; break;   
+        case "Saint Helena, Ascension, and Tristan da Cunha":
+        case "Saint Helena":
+            use = "Saint Helena, Ascension and Tristan da Cunha"; break;
+        case "Bahamas, The":  use = "Bahamas"; break;
+        case "Burma":  use = "Myanmar"; break;
+        case "Cabo Verde":  use = "Cape Verde"; break;
+        case "Congo, Democratic Republic of the":  use = "Democratic Republic of the Congo"; break;
+        case "Côte d’Ivoire":  use = "Ivory Coast"; break;
+        case "Czechia":  use = "Czech Republic"; break;
+        case "Falkland Islands (Islas Malvinas)":  use = "Falkland Islands"; break;
+        case "Gambia, The":  use = "Gambia"; break;
+        case "Jan Mayen":
+        case "Svalbard":
+            use = "Svalbard and Jan Mayen Islands"; break;
+        case "Macau":  use = "Macao"; break;
+        case "Micronesia, Federated States of":  use = "Micronesia"; break;
+        case "Pitcairn Islands":  use = "Pitcairn"; break;
+        case "Saint Barthelemy":  use = "Saint Barthélemy"; break;
+        case "South Georgia and South Sandwich Islands":  use = "South Georgia and the South Sandwich Islands"; break;
+        case "The Gaza Strip":
+        case "West Bank":
+          use = "Palestine"; break;
+        case "Virgin Islands":  use = "United States Virgin Islands/British Virgin Islands"; break;
       }
       if (use == null) return country;
       return use;

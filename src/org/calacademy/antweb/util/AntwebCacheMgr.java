@@ -11,7 +11,6 @@ import java.sql.*;
 import java.util.Date;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -31,9 +30,9 @@ public class AntwebCacheMgr {
 
   private static final Log s_log = LogFactory.getLog(AntwebCacheMgr.class);
 
-    public static boolean CACHING_OFF = true;
+    public static final boolean CACHING_OFF = true;
 
-    public static int MILLIS = 1000;
+    public static final int MILLIS = 1000;
     
     // Above this threshold, queries will be recorded in the long_request table.
     public static int MAX_REQUEST_TIME = MILLIS * 10;  // number of seconds.
@@ -53,7 +52,7 @@ public class AntwebCacheMgr {
     private static final int LONG_REQUEST_LIST_LIMIT = 1000;
     private static final int LONG_REQUEST_CREATED_INTERVAL = 7;
   
-    private static int EXPIRED_DAYS_AGO = 3;
+    private static final int EXPIRED_DAYS_AGO = 3;
    
     // valid cacheTypes are fieldGuide, taxaPage, specimenList, images, browse, description 
 
@@ -106,7 +105,7 @@ public class AntwebCacheMgr {
         if (genus != null) dirFile += "/" + genus;
         dirFile +=  "/fieldGuide.txt";
         // Or if a project
-        if ((subfamily == null) && (genus == null)) {
+        if (subfamily == null && genus == null) {
           dirFile = "data/" + cacheType + "/" + overview.getName() + "/" + rank + ".txt";
         }
         s_log.debug("finish() fieldGuide insert into longRequest table dirFile:" + dirFile);
@@ -124,7 +123,7 @@ public class AntwebCacheMgr {
           return;
         }
 
-        boolean isLoggedIn = (accessLogin != null);
+        boolean isLoggedIn = accessLogin != null;
         int loginId = 0;
         if (isLoggedIn) {
           loginId = accessLogin.getId();
@@ -137,15 +136,11 @@ public class AntwebCacheMgr {
             + "', " + busyConnections + ", " + HttpUtil.getIsBot(request) + ")";
 
         //s_log.warn("insertLongRequest() query:" + theInsert);
-                             
-        Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
+
+        try (Statement stmt = connection.createStatement()) {
             stmt.executeUpdate(theInsert);
         } catch (Exception e) {
-            s_log.warn("insertLongRequest e:" + e);    
-        } finally {
-            stmt.close();   
+            s_log.warn("insertLongRequest e:" + e);
         }
     }
 
@@ -175,22 +170,19 @@ public class AntwebCacheMgr {
       return theQuery;
     }
 
-    public static ArrayList getLongRequests(Connection connection) 
+    public static ArrayList<LongRequest> getLongRequests(Connection connection)
       throws SQLException {
-            ArrayList longRequests = new ArrayList();
-
-            String query = AntwebCacheMgr.getLongRequestsQuery(true, "");
+        String query = AntwebCacheMgr.getLongRequestsQuery(true, "");
             return getRequests(connection, query);
 	}
 
     // called by http://www.antweb.org/cache.do?action=display
-    public static ArrayList getLongRequestDetails(Connection connection, String url, String orderBy) 
+    public static ArrayList<LongRequest> getLongRequestDetails(Connection connection, String url, String orderBy)
       throws SQLException {
-        ArrayList longRequests = new ArrayList();
         String urlClause = "";
         if (!"all".equals(url)) urlClause = " and url = \"" + url + "\"";
         String orderByClause = "";
-        if ((orderBy != null) && (!"".equals(orderBy))) orderByClause = " order by " + orderBy;
+        if (orderBy != null && !"".equals(orderBy)) orderByClause = " order by " + orderBy;
         String query = "select id, cache_type, url, dir_file, millis, cache_millis, created, cached, request_info, busy_connections, is_logged_in, is_bot from long_request where " 
           //+ " is_logged_in != 1 and "
           + " created >= DATE_SUB(SYSDATE(), INTERVAL " + LONG_REQUEST_CREATED_INTERVAL + " DAY) " 
@@ -202,9 +194,9 @@ public class AntwebCacheMgr {
         return getRequests(connection, query);
 	}
 
-    public static ArrayList getRequests(Connection connection, String query)
+    public static ArrayList<LongRequest> getRequests(Connection connection, String query)
       throws SQLException {
-        ArrayList longRequests = new ArrayList();
+        ArrayList<LongRequest> longRequests = new ArrayList<>();
 
         Statement stmt = null;       
         ResultSet resultSet = null;
@@ -247,7 +239,7 @@ public class AntwebCacheMgr {
         try {
           Timestamp cachedDate = resultSet.getTimestamp(field);  // "cached"  or "created", depending.
           if (cachedDate != null) cacheDate = cachedDate.toString();
-        } catch (java.sql.SQLException e) { 
+        } catch (SQLException e) {
           // if the field is empty, and exception will be thrown and ignored
           // It will be logged to the localhost.[date] file with info level.  Can not avoid.
           // s_log.error("e:" + e); 
@@ -258,12 +250,8 @@ public class AntwebCacheMgr {
     public static void forgetCaching(Connection connection) throws SQLException {
         // Then delete all very old records from the table, regardless of cached or logged in, over a certain age.
         String theUpdate = "update long_request set cached = default";
-        Statement stmt = null;
-        try {
-          stmt = connection.createStatement();
-          stmt.executeUpdate(theUpdate);
-        } finally {
-          stmt.close();            
+        try (Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate(theUpdate);
         }
     }
     
@@ -282,19 +270,14 @@ public class AntwebCacheMgr {
    
     public static void deleteLongRequests(Connection connection) throws SQLException {
         String theDelete = "delete from long_request";
-        Statement stmt = null;
-        try {
-          stmt = connection.createStatement();
-          stmt.executeUpdate(theDelete);
-        } finally {
-          stmt.close();            
+        try (Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate(theDelete);
         }
     }
 
     static void deleteCaches() {
-        Utility util = new Utility();
         File file = new File(AntwebProps.getDocRoot() + "web/data/");
-        util.deleteDirectory(file);       
+        Utility.deleteDirectory(file);
     }    
     
     // This gets rid of old long requests from the database table.  Also deletes cache files older than threshold.
@@ -324,10 +307,9 @@ public class AntwebCacheMgr {
 			  stmt = DBUtil.getStatement(connection, "deleteOldLongRequests()");
 			  rset = stmt.executeQuery(theQuery);
 			  while (rset.next()) {
-				String dirFile = rset.getString("dir_file");    
-				Utility util = new Utility();
-				File file = new File(AntwebProps.getDocRoot() + "web/" + dirFile);
-				util.deleteFile(file);                       
+				String dirFile = rset.getString("dir_file");
+                  File file = new File(AntwebProps.getDocRoot() + "web/" + dirFile);
+				Utility.deleteFile(file);
 				//s_log.warn("deleteOldLongRequests() dirFile:" + dirFile);
 			  }
           }
@@ -361,8 +343,8 @@ public class AntwebCacheMgr {
   private static boolean isExpired(String cacheDate) {
     try {
       java.util.Date expireDate = AntwebUtil.getDateNDaysAgo(new java.util.Date(), EXPIRED_DAYS_AGO);
-      java.util.Date cachedDate = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).parse(cacheDate);
-      return (cachedDate.compareTo(expireDate) < 0);
+      java.util.Date cachedDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(cacheDate);
+      return cachedDate.compareTo(expireDate) < 0;
     } catch (ParseException e) {
       s_log.error("isExpired() e:" + e);
       return true;  // arbitrary.  Should not happen.
@@ -404,7 +386,7 @@ public class AntwebCacheMgr {
           ++reqCount;        
           String cacheDate = getCacheDate(rset, "cached");
 
-          if (("".equals(cacheDate)) || (isExpired(cacheDate))) {            
+          if ("".equals(cacheDate) || isExpired(cacheDate)) {
             // if not cached, or cache is expired, then cache
             String dirFile = rset.getString("dir_file");
             String url = rset.getString("url");
@@ -438,7 +420,7 @@ public class AntwebCacheMgr {
 
   private static boolean uncacheableUrl(String url) {
     if (
-        (url.contains("statusSet="))
+            url.contains("statusSet=")
        ) {
          s_log.info("uncacheableUrl() url:" + url);
          return true;
@@ -492,7 +474,7 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
       s_lastCacheItem = dataFile;
 
       tempDataFile = dataFile + "T";
-      (new Utility()).makeDirTree(dataFile); 
+      Utility.makeDirTree(dataFile);
       s_log.debug("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + dataFile);
 
       BufferedWriter out = new BufferedWriter(new FileWriter(tempDataFile, false));
@@ -508,16 +490,15 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
         out.write((char) c);
       }
       out.close();
-      Utility utility = new Utility();
-      if (!AntwebCacheMgr.badFileDontCache(tempDataFile)) {
-        utility.copyFile(tempDataFile, dataFile);
+        if (!AntwebCacheMgr.badFileDontCache(tempDataFile)) {
+        Utility.copyFile(tempDataFile, dataFile);
         didCache = true;
         s_log.debug("cacheItem() caching:" + dataFile);
       } else {
         //s_log.warn("cacheItem() url not cached due to error file:" + theUrl);
         didCache = false;
       }
-      utility.deleteFile(tempDataFile);
+      Utility.deleteFile(tempDataFile);
     } catch (IOException e) {
       s_log.warn("cacheItem():" + e + " theUrl:" + theUrl);
     } catch (Exception e) {
@@ -548,13 +529,9 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
 
         s_log.debug("updateCachedItems() query:" + theUpdate);
 
-        Statement stmt = null;
-        try {
-          stmt = connection.createStatement();
+      try (Statement stmt = connection.createStatement()) {
           stmt.executeUpdate(theUpdate);
-        } finally {
-          stmt.close();     
-        }
+      }
   }
 
 /*
@@ -570,7 +547,7 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
     if (isGetCache) {
       fetchFromCache = true;
     } else {
-      boolean isLoggedIn = (accessLogin != null);  
+      boolean isLoggedIn = accessLogin != null;
       if (!isLoggedIn) fetchFromCache = true;
     }
     return fetchFromCache;
@@ -651,7 +628,7 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
         return false;
       }
                 
-      boolean hasInCache = (new File(AntwebProps.getDocRoot() + dir, fileName)).exists();
+      boolean hasInCache = new File(AntwebProps.getDocRoot() + dir, fileName).exists();
       //s_log.warn("hasInCache() hasInCache:" + hasInCache + " cacheType:" + cacheType + " dir:" + dir + " fileName:" + fileName);
       return hasInCache;
   }
@@ -693,7 +670,7 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
       String fileName = null;
       
       if (cacheType.equals("fieldGuide")) {
-        if ((subfamily == null) && (genus == null)) {
+        if (subfamily == null && genus == null) {
           dir = "/web/data/fieldGuide/" + overview.getName() + "/";
           fileName = rank + ".txt";
         } else {

@@ -1,6 +1,5 @@
 package org.calacademy.antweb.home;
 
-import com.mysql.cj.protocol.x.XMessageHeader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
@@ -145,7 +144,7 @@ public class TaxonDb extends AntwebDb {
                 taxon.setYear(rset.getString("year"));
                 taxon.setIsAvailable(rset.getInt("available") == 1);
                 String currentValidName = rset.getString("current_valid_name");
-                if (currentValidName != null && !taxonName.equals(currentValidName.toLowerCase())) {
+                if (currentValidName != null && !taxonName.equalsIgnoreCase(currentValidName)) {
                     taxon.setCurrentValidName(currentValidName);
                 }
                 taxon.setCurrentValidRank(rset.getString("current_valid_rank"));
@@ -189,7 +188,7 @@ public class TaxonDb extends AntwebDb {
                     taxon.setDefaultSpecimen(Caste.QUEEN, imagePickDb.getDefaultSpecimen(Caste.QUEEN, taxon));
                     //A.log("getTaxon() taxonName:" + taxonName + " class:" + this.getClass() + " workerDefault:" + taxon.getDefaultSpecimen(Caste.WORKER));
                 }
-                TaxonPropDb taxonPropDb = (new TaxonPropDb(getConnection()));
+                TaxonPropDb taxonPropDb = new TaxonPropDb(getConnection());
                 if (Rank.GENUS.equals(taxon.getRank())) {
                     taxon.setBioregionMap(taxonPropDb.getBioregionMap(taxonName));
                 }
@@ -432,7 +431,7 @@ public class TaxonDb extends AntwebDb {
           //A.log("TaxonDb.getTaxa() taxonName:" + taxonName + " taxon:" + taxon + " subfamilyFilter:" + subfamilyFilter);
 
           if (taxon != null) {
-            if (("none".equals(subfamilyFilter) || subfamilyFilter == null) || subfamilyFilter.equals(taxon.getSubfamily())) {
+            if ("none".equals(subfamilyFilter) || subfamilyFilter == null || subfamilyFilter.equals(taxon.getSubfamily())) {
               taxa.add(taxon);
             }
           }
@@ -461,7 +460,7 @@ public class TaxonDb extends AntwebDb {
             DBUtil.close(stmt, rset, "this", "getAntcatCount()");
         }
         if (countStr == null) return 0;
-        return Integer.valueOf(countStr);
+        return Integer.parseInt(countStr);
     }
 
     public int getWorldantsCount() {
@@ -683,7 +682,7 @@ public class TaxonDb extends AntwebDb {
       Statement stmt = null;
       try {
 
-        (new UtilDb(getConnection())).updateField("taxon", "type", "null"); //, "status = 'morphotaxon'");      
+        new UtilDb(getConnection()).updateField("taxon", "type", "null"); //, "status = 'morphotaxon'");
       
         stmt = DBUtil.getStatement(getConnection(), "crawlForType()");
         s_log.info("crawlForType()");
@@ -705,7 +704,7 @@ public class TaxonDb extends AntwebDb {
     }          
 
     public static int s_currentValidFetchCount = 0;
-    private static String s_lastCurrentValidTaxonName = null;
+    private static String s_lastCurrentValidTaxonName;
     public static String getCurrentValidTaxonName(Connection connection, String currentValidName) {
         if (currentValidName == null) return null;
         if (currentValidName.equals(s_lastCurrentValidTaxonName)) return s_lastCurrentValidTaxonName;
@@ -741,7 +740,7 @@ public class TaxonDb extends AntwebDb {
 
          String query = "select distinct subfamily from taxon " 
             + " where taxarank = 'genus' and "; // Added Jun 26, 2014";
-        if ((family != null) && !("null".equals(family))) {
+        if (family != null && !"null".equals(family)) {
             query += " family = '" + family + "' and ";
         } else {
             query += " family = 'formicidae' and ";
@@ -757,7 +756,7 @@ public class TaxonDb extends AntwebDb {
       throws SQLException {
          String query = "select distinct subfamily from taxon " 
             + " where ";
-        if ((family != null) && !("null".equals(family))) {
+        if (family != null && !"null".equals(family)) {
             query += " family = '" + family + "' and ";
         } else {
             query += " family = 'formicidae' and ";
@@ -840,21 +839,21 @@ public class TaxonDb extends AntwebDb {
     
     // Called in Specimen post process.
     public void removeIndetWithoutSpecimen() throws SQLException {
-      (new UtilDb(getConnection())).deleteFrom("taxon", "where source like 'specimen%' and status in ('indetermined', 'unrecognized') and taxon_name not in (select taxon_name from specimen)");
+      new UtilDb(getConnection()).deleteFrom("taxon", "where source like 'specimen%' and status in ('indetermined', 'unrecognized') and taxon_name not in (select taxon_name from specimen)");
     }
 
     public static String deleteSpeciesWithoutSpecimenOrAntcatSource(Connection connection) throws SQLException {
       String dmlWhereClause = "where taxon_name not in (select taxon_name from proj_taxon where project_name = 'worldants') "
         + " and taxon_name not in (select taxon_name from specimen) "
         + " and taxarank in ('species', 'subspecies')";
-      int retVal = (new UtilDb(connection)).deleteFrom("taxon", dmlWhereClause);
+      int retVal = new UtilDb(connection).deleteFrom("taxon", dmlWhereClause);
       return retVal + " deleteSpeciesWithoutSpecimenOrAntcatSource. ";
     }
     public static String deleteGeneraWithoutSpecimenOrAntcatSource(Connection connection) throws SQLException {
       String dmlWhereClause = "where taxon_name not in (select taxon_name from proj_taxon where project_name = 'worldants') "
         + " and (subfamily, genus) not in (select subfamily, genus from specimen) "
         + " and taxarank in ('genus')";
-      int retVal = (new UtilDb(connection)).deleteFrom("taxon", dmlWhereClause);
+      int retVal = new UtilDb(connection).deleteFrom("taxon", dmlWhereClause);
       return retVal + " deletedGeneraWithoutSpecimenOrAntcatSource. ";
     }
 

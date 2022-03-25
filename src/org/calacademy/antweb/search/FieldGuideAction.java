@@ -28,7 +28,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class FieldGuideAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(FieldGuideAction.class);    
+    private static final Log s_log = LogFactory.getLog(FieldGuideAction.class);
     
     private static int s_simultaneousExecutes = 0;
     private final static int MAX_SIMULTANEOUS_EXECUTES = 2;
@@ -48,7 +48,7 @@ public final class FieldGuideAction extends Action {
         //if (session.getAttribute("activeSession") == null) return mapping.findForward("sessionExpired");
         
     	FieldGuide fieldGuide = new FieldGuide();
-		FieldGuideForm fieldGuideForm = ((FieldGuideForm) form);
+		FieldGuideForm fieldGuideForm = (FieldGuideForm) form;
 
 		String rank = fieldGuideForm.getRank();
 		String subfamily = fieldGuideForm.getSubfamily();
@@ -68,16 +68,16 @@ public final class FieldGuideAction extends Action {
             localityOverview = (LocalityOverview) overview;
         }
                     
-		if ((rank != null) && (rank.length() == 0 )) {
+		if (rank != null && rank.length() == 0) {
 			rank = null;
 		}
 	
 		if (rank == null) {
-		  if ((subspecies != null) && (!subspecies.equals(""))) {
+		  if (subspecies != null && !subspecies.equals("")) {
 		    rank = "subspecies";
-		  } else if ((species != null) && (!species.equals(""))) {
+		  } else if (species != null && !species.equals("")) {
 		    rank = "species";
-          } else if  ((genus != null) && (!genus.equals(""))) {
+          } else if  (genus != null && !genus.equals("")) {
             rank = "genus";
           } else rank = "subfamily";
 		}
@@ -92,7 +92,7 @@ public final class FieldGuideAction extends Action {
             LogMgr.appendLog("throttle.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + AntwebUtil.getRequestInfo(request));
             String message = "Only " + s_simultaneousExecutes + " simultaneous field guide creation requests allowed at a time... try again shortly or log in for unrestricted access.";
             request.setAttribute("message", message);
-            return (mapping.findForward("message")); 
+            return mapping.findForward("message");
         }
         ++s_simultaneousExecutes;
 
@@ -109,7 +109,7 @@ public final class FieldGuideAction extends Action {
    		    connection = DBUtil.getConnection(dataSource, "FieldGuideAction.execute()");
 
    		    // Caching Logic Part I
-            boolean isGetCache = ("true".equals(fieldGuideForm.getGetCache()));  // this forces the fetching from cache if available.
+            boolean isGetCache = "true".equals(fieldGuideForm.getGetCache());  // this forces the fetching from cache if available.
             String data = null;               
             boolean isGenCache = "true".equals(fieldGuideForm.getGenCache());
 
@@ -131,7 +131,7 @@ public final class FieldGuideAction extends Action {
                     //if (AntwebProps.isDevOrStageMode()) 
                       s_log.info("Execute() " + message); 
                     request.setAttribute("message", message);
-                    return (mapping.findForward("message"));
+                    return mapping.findForward("message");
                   }
                 }
               }
@@ -147,16 +147,16 @@ public final class FieldGuideAction extends Action {
             
             s_log.debug("execute() overview:" + overview + " subfamily:" + subfamily);
 
-			if ((subfamily != null) || (genus != null) || (species != null)) {
+			if (subfamily != null || genus != null || species != null) {
     		    // Taxon Field Guides
-                Taxon taxon = (new TaxonDb(connection)).getFullTaxon(subfamily, genus, species, subspecies, rank);
+                Taxon taxon = new TaxonDb(connection).getFullTaxon(subfamily, genus, species, subspecies, rank);
                 // Taxon taxon = Taxon.getTaxonOfRank(subfamily, genus, species, subspecies)
 
                 if (taxon == null) {
                     String message = "taxon not found for subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subfamily:" + subfamily;
                     s_log.error("execute() " + message);
                     request.setAttribute("message", message);
-                    return (mapping.findForward("message"));
+                    return mapping.findForward("message");
                 }
 
                 // taxon.setTaxonomicInfo(connection);
@@ -221,7 +221,7 @@ public final class FieldGuideAction extends Action {
             request.setAttribute("message", message);
             return mapping.findForward("message");
         } catch (ArrayIndexOutOfBoundsException e) {
-            s_log.warn("FieldGuideForm:" + fieldGuideForm.toString());
+            s_log.warn("FieldGuideForm:" + fieldGuideForm);
             AntwebUtil.logStackTrace(e);           
         } catch (Exception e) {
             s_log.error("execute() 3 e:" + e);
@@ -247,7 +247,7 @@ public final class FieldGuideAction extends Action {
            it's hashcode and the set is empty */
 		//s_log.warn("fieldGuide taxaSize:" + fieldGuide.getTaxa().size() + " request:" + request + " fieldGuide:" + fieldGuide + " theTaxa:" + fieldGuide.getTaxa() + " hashCode:" + fieldGuide.getTaxa().hashCode());
         
-		return (mapping.findForward("fieldGuideByTaxon"));
+		return mapping.findForward("fieldGuideByTaxon");
 	}
 	
 }

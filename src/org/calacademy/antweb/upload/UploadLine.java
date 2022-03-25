@@ -7,15 +7,15 @@ import org.apache.commons.logging.LogFactory;
     
 public class UploadLine {
 
-    private static Log s_log = LogFactory.getLog(UploadLine.class);
+    private static final Log s_log = LogFactory.getLog(UploadLine.class);
 
     private int id = 0;
-    private String fileName = null;
+    private String fileName;
 	private int lineNum = 0;
 	private int displayLineNum = 0;
 	private int groupId = 0;
-	private String line = null;
-	private Date created = null;
+	private String line;
+	private Date created;
 	
   
     public int getId() {
@@ -60,10 +60,10 @@ public class UploadLine {
 		this.line = line;
     }
 
-    public java.util.Date getCreated() {
+    public Date getCreated() {
         return this.created;
     }
-    public void setCreated(java.util.Date created) {
+    public void setCreated(Date created) {
         this.created = created;
     }
     

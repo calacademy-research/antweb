@@ -5,9 +5,12 @@ import org.calacademy.antweb.*;
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.calacademy.antweb.util.*;
 
@@ -16,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class AdvancedSearchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(AdvancedSearchAction.class);
+    private static final Log s_log = LogFactory.getLog(AdvancedSearchAction.class);
 
     /*
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
@@ -80,29 +83,29 @@ public class AdvancedSearchAction extends Action {
         addToSearch(sb, "statusSet", searchParameters.getStatusSet(), null);
  		
 		String prefix = ""; //"Results from Searching AntWeb where: ";
-		return prefix + sb.toString();
+		return prefix + sb;
 	}
 	
 	private void addToSearch(StringBuffer sb, String field, String value, String searchModifier) {
         //s_log.warn("addToSearch()");		
 	
 		Formatter format = new Formatter();
-		if ((value != null) && (value.length() > 0)) {
+		if (value != null && value.length() > 0) {
 
 			if (searchModifier == null) {
 				if (sb.length() > 0) {
 					sb.append(", ");
 				}
 				sb.append(format.capitalizeFirstLetter(field) + " is " + format.capitalizeFirstLetter(value));
-			} else if ((searchModifier.equals("boolean")) && (value.equals("on"))) {
+			} else if (searchModifier.equals("boolean") && value.equals("on")) {
 				// no need to list images being on, since only things with images are shown
-				if (!(field.equals("images"))) {
+				if (!field.equals("images")) {
 					if (sb.length() > 0) {
 						sb.append(", ");
 					}
 					sb.append("only " + format.capitalizeFirstLetter(field));
 				}
-			} else if ((value != null) && (value.length() > 0)) {
+			} else if (value != null && value.length() > 0) {
 				if (sb.length() > 0) {
 					sb.append(", ");
 				}
@@ -206,10 +209,8 @@ public class AdvancedSearchAction extends Action {
           s_log.warn("getGoogleMap() null searchResults()");
           return null;
         }
-        ArrayList taxonList = null;
-        ArrayList<String> chosenList = null;
-      
-		Map map = (new MapResultsAction()).getMap(searchResults, taxonList, chosenList, resultRank, output, title, connection);
+
+		Map map = new MapResultsAction().getMap(searchResults, null, null, resultRank, output, title, connection);
 		//if (title.contains("AFRC")) s_log.warn("getGoogleMap() title:" + title + " map.points.size:" + map.getPoints().size());
         return map;
     }
@@ -219,9 +220,9 @@ public class AdvancedSearchAction extends Action {
 
 		ArrayList<ResultItem> searchResults = null;
 
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "mediumConPool");
+			DataSource dataSource = getDataSource(request, "mediumConPool");
 			connection = DBUtil.getConnection(dataSource, "AdvancedSearchAction.getSearchResults()");
 
             searchResults = getSearchResults(connection, searchParameters);
@@ -247,7 +248,7 @@ public class AdvancedSearchAction extends Action {
 		AdvancedSearch search = new AdvancedSearch();
 		ArrayList<ResultItem> searchResults = null;
 		
-        java.util.Date startTime = new java.util.Date();	
+        Date startTime = new Date();
         
 //        A.log("getSearchResults() family:" + searchParameters.getFamily());	
 // http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=true&collGroupOpen=none&specGroupOpen=none&geoGroupOpen=&typeGroupOpen=none&searchType=contains&name=&familySearchType=notEquals&family=Formicidae&subfamilySearchType=contains&subfamily=&genusSearchType=contains&genus=&speciesSearchType=contains&species=&subspeciesSearchType=contains&subspecies=&bioregion=&country=&adm1=Ohio&adm2SearchType=contains&adm2=&localityNameSearchType=contains&localityName=&localityCodeSearchType=contains&localityCode=&habitatSearchType=contains&habitat=&elevationSearchType=greaterThanOrEqual&elevation=&methodSearchType=contains&method=&microhabitatSearchType=equals&microhabitat=&collectedBySearchType=equals&collectedBy=&collectionCodeSearchType=contains&collectionCode=&dateCollectedSearchType=greaterThanOrEqual&dateCollected=&specimenCodeSearchType=contains&specimenCode=&locatedAtSearchType=contains&locatedAt=&lifeStageSearchType=contains&lifeStage=&casteSearchType=contains&caste=&mediumSearchType=contains&medium=&specimenNotesSearchType=contains&specimenNotes=&dnaExtractionNotesSearchType=contains&dnaExtractionNotes=&ownedBySearchType=contains&ownedBy=&createdSearchType=equals&created=&groupName=&uploadId=0&type=&types=off&statusSet=all&imagesOnly=off&resultRank=specimen&output=list&x=49&y=14	

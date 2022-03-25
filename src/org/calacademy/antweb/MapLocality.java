@@ -18,9 +18,9 @@ import org.calacademy.antweb.util.*;
 
 public class MapLocality {
 
-    private static Log s_log = LogFactory.getLog(MapLocality.class);
+    private static final Log s_log = LogFactory.getLog(MapLocality.class);
 	
-	protected String staticMapParams = null;
+	protected String staticMapParams;
 	protected ArrayList points = new ArrayList();
 	protected ArrayList mapLocalities = new ArrayList();
 
@@ -50,7 +50,7 @@ public class MapLocality {
    	
    	public MapLocality(ArrayList localityCodes, Connection connection)  {
 		super();
-		if ((localityCodes != null) && (localityCodes.size() > 0)) {
+		if (localityCodes != null && localityCodes.size() > 0) {
      
 			long thisRand = new Random().nextLong();
             
@@ -87,8 +87,8 @@ public class MapLocality {
 		}
 		
 		if (Utility.notBlank(project) 
-		    && (!project.equals(Project.WORLDANTS))
-		    && (!project.equals(Project.ALLANTWEBANTS))
+		    && !project.equals(Project.WORLDANTS)
+		    && !project.equals(Project.ALLANTWEBANTS)
 		) {
 			terms.add("project+like+%27%25" + project + "%25%27");
 		}
@@ -136,7 +136,7 @@ public class MapLocality {
 					thisName = thisName.replace("\"", "");
 					thisCode = thisCode.replace("\"","");
 					
-					if ((thisLon != 0.0) && (thisLat != 0.0)) {
+					if (thisLon != 0.0 && thisLat != 0.0) {
 
 						locality = new Locality();
 						locality.setLocalityCode(thisCode);
@@ -149,7 +149,7 @@ public class MapLocality {
 				}
 			} catch (SQLException e) {
 				s_log.error("setPoints() e:" + e);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
               DBUtil.close(stmt, rset, this, "setPoints()");
 			} 
@@ -186,7 +186,7 @@ public class MapLocality {
 					thisName = thisName.replace("\"", "");
 					thisCode = thisCode.replace("\"","");
 					
-					if ((thisLon != 0.0) && (thisLat != 0.0)) {
+					if (thisLon != 0.0 && thisLat != 0.0) {
 
 						locality = new Locality();
 						locality.setLocalityCode(thisCode);
@@ -201,7 +201,7 @@ public class MapLocality {
 				
 			} catch (SQLException e) {
 				s_log.error("setPointsWithRestrictions() e: " + e);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
               DBUtil.close(stmt, rset, this, "setPointsWithRestrictions()");
 			} 
@@ -245,7 +245,7 @@ public class MapLocality {
 					thisCode = rset.getString("localitycode");
 					thisName = rset.getString("localityname");
 					
-					if ((thisLon != 0.0) && (thisLat != 0.0)) {
+					if (thisLon != 0.0 && thisLat != 0.0) {
 
 						locality = new Locality();
 						locality.setLocalityCode(thisCode);
@@ -257,7 +257,7 @@ public class MapLocality {
 				}
 			} catch (SQLException e) {
 				s_log.error("setPoints() 2 e:" + e);
-				org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+				AntwebUtil.logStackTrace(e);
 			} finally {
               DBUtil.close(stmt, rset, this, "setPoints(2)");
             }			
@@ -285,10 +285,10 @@ public class MapLocality {
 		
 		StringBuffer theString = null;
 		String googleString = null;
-		if ((getPoints() != null) && (getPoints().size() > 0)) {
+		if (getPoints() != null && getPoints().size() > 0) {
 			String latArray = getJavaScriptArray(getPoints(),"lat");
 			String lonArray = getJavaScriptArray(getPoints(),"lon");
-			if ((latArray != null) && (lonArray != null)) {
+			if (latArray != null && lonArray != null) {
 			
 			  theString = new StringBuffer();
 			  if (getPoints().size() > 1) {
@@ -347,7 +347,7 @@ public class MapLocality {
 			}
 			if (thisFloat != 0.0) {
 				
-				if (foundPoint == true) {
+				if (foundPoint) {
 					theArrayString.append(",");
 				} else {
 					foundPoint = true;
@@ -358,7 +358,7 @@ public class MapLocality {
 
 		theArrayString.append(")");
 		
-		if (foundPoint == true) {
+		if (foundPoint) {
 			return theArrayString.toString();
 		} else {
 			return null;
@@ -393,7 +393,7 @@ public class MapLocality {
 					break;
 			}
 			
-			if (foundPoint == true) {
+			if (foundPoint) {
 				theArrayString.append(",");
 			} else {
 				foundPoint = true;
@@ -403,7 +403,7 @@ public class MapLocality {
 
 		theArrayString.append(")");
 		
-		if (foundPoint == true) {
+		if (foundPoint) {
 			return theArrayString.toString();
 		} else {
 			return null;

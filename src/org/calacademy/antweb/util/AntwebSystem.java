@@ -5,7 +5,6 @@ import java.io.*;
 import java.util.concurrent.Executors;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.curate.speciesList.*;
 
 import java.lang.management.ManagementFactory;
 import com.sun.management.OperatingSystemMXBean;
@@ -27,7 +26,7 @@ public class AntwebSystem {
     
   public static int countLines(String fileName) {
     String command = "wc " + fileName;
-    String countLinesStr = (new AntwebSystem()).launchProcess(command, true);
+    String countLinesStr = new AntwebSystem().launchProcess(command, true);
     if (countLinesStr.length() <= 0) {
       s_log.error("countLines() Empty string returned from command:" + command);
       //if (AntwebProps.isDevOrStageMode()) return SpeciesListUploader.WORLDANTS_LOW_COUNT;
@@ -50,7 +49,7 @@ public class AntwebSystem {
       countStr = countLinesStr.substring(0, spaceIndex);
       //s_log.warn("countLines:" + countStr);
     
-      count = (Integer.valueOf(countStr)).intValue();
+      count = Integer.parseInt(countStr);
     } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
       s_log.error("countLines e:" + e + " countStr:" + countStr);
     }
@@ -285,7 +284,7 @@ public class AntwebSystem {
      
     public static long getFreeSpace() {
         
-        long freeSpace = (new java.io.File("/")).getFreeSpace();
+        long freeSpace = new File("/").getFreeSpace();
         return freeSpace;
     }
         
@@ -298,7 +297,7 @@ public class AntwebSystem {
     }
 
     private static boolean messageSent = false;
-    private static double threshold = .9; // 1;
+    private static final double threshold = .9; // 1;
     public static String cpuCheck() {
 		String message = null;
 		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
@@ -374,8 +373,8 @@ public class AntwebSystem {
 
 class StreamGobbler extends Thread
 {
-    InputStream is;
-    String type;
+    final InputStream is;
+    final String type;
     
     StreamGobbler(InputStream is, String type)
     {

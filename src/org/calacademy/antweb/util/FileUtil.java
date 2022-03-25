@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class FileUtil {
 
-  private static Log s_log = LogFactory.getLog(FileUtil.class);
+  private static final Log s_log = LogFactory.getLog(FileUtil.class);
 
   public ArrayList grep(String inputPattern, UploadFile uploadFile) {
     ArrayList result = new ArrayList();
@@ -95,16 +95,16 @@ public class FileUtil {
       s_log.debug("isDiskLow() percentI:" + percentI + " percent:" + percent);
 
       num = Integer.valueOf(percent);
-    } catch (java.lang.StringIndexOutOfBoundsException e) {
+    } catch (StringIndexOutOfBoundsException e) {
       s_log.debug("isDiskLow() e:" + e);
       return -2;
     }
-    return num.intValue();
+    return num;
   }
 
   public static String getDiskFree() {
     // This is done easily in serverStatus.jsp
-    String diskFree = (new AntwebSystem()).launchProcess("df -h", true);
+    String diskFree = new AntwebSystem().launchProcess("df -h", true);
     s_log.warn("DiskFree:" + diskFree);
     return diskFree;
   }
@@ -117,7 +117,7 @@ public class FileUtil {
     long usableSpaceInMB = file.getUsableSpace() / 1024 / 1024 / 1024;
 
     String space = " Total:" + totalSpaceInMB + "GB Free:" + freeSpaceInMB + "GB Usable:" + usableSpaceInMB + "GB";
-    double percent = 100 - ((file.getUsableSpace() * 100d) / file.getTotalSpace());
+    double percent = 100 - file.getUsableSpace() * 100d / file.getTotalSpace();
     String stats = "<b>Disk:</b> <font color=red>"+percent +"%</font>.  " + space;
     return stats;
   }
@@ -152,7 +152,7 @@ public class FileUtil {
   }
   
   public static boolean makeDir(String dirName) {
-      boolean success = (new File(dirName)).mkdir();
+      boolean success = new File(dirName).mkdir();
       return success;
   }
 

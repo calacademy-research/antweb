@@ -1,30 +1,27 @@
 package org.calacademy.antweb;
 
 
-import java.io.IOException;
-import java.sql.SQLException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.*;
+import org.calacademy.antweb.home.LoginDb;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public final class EditLoginAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(EditLoginAction.class);
+    private static final Log s_log = LogFactory.getLog(EditLoginAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -42,14 +39,14 @@ public final class EditLoginAction extends Action {
         A.log("execute() id:" + editForm.getId() + " accessLogin(): " + accessLogin);
 
         Login login = null;
-        java.sql.Connection connection = null;
+        Connection connection = null;
         try {
           DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "updateDefaultSpecimen()");
 
           String idStr = editForm.getId();
-          if (idStr == null) return (mapping.findForward("goToLogin"));
-          int id = (Integer.valueOf(idStr)).intValue();
+          if (idStr == null) return mapping.findForward("goToLogin");
+          int id = Integer.parseInt(idStr);
           //s_log.info("looking up login " + id);
 
           LoginDb loginDb = new LoginDb(connection);
@@ -57,7 +54,7 @@ public final class EditLoginAction extends Action {
 
           if (login == null) {
             s_log.warn("execute() login not found:" + id);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
           }
 
 
@@ -74,7 +71,7 @@ public final class EditLoginAction extends Action {
                s_log.debug("execute() validate() failure message:" + message);
                request.setAttribute("message", message);
                request.getSession().setAttribute("thisLogin", login);
-               return (mapping.findForward("editLogin"));
+               return mapping.findForward("editLogin");
             }
             
             //if (isNoChange(editForm, login)) 
@@ -102,7 +99,7 @@ public final class EditLoginAction extends Action {
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
             request.setAttribute("message", e.toString());
-            return (mapping.findForward("message"));
+            return mapping.findForward("message");
         } finally { 		
             DBUtil.close(connection, this, "EditLoginAction()");
         }
@@ -111,11 +108,11 @@ public final class EditLoginAction extends Action {
     }
     
     private boolean isNoChange(EditLoginForm editForm, Login login) {
-        return (editForm.getEmail().equals(login.getEmail()))
-                && (editForm.getName().equals(login.getName()))
-                && (editForm.getPassword().equals(login.getPassword()))
-                && (editForm.getFirstName().equals(login.getFirstName()))
-                && (editForm.getLastName().equals(login.getLastName()));
+        return editForm.getEmail().equals(login.getEmail())
+                && editForm.getName().equals(login.getName())
+                && editForm.getPassword().equals(login.getPassword())
+                && editForm.getFirstName().equals(login.getFirstName())
+                && editForm.getLastName().equals(login.getLastName());
     }
     
     private String validate(EditLoginForm editForm, HttpServletRequest request) {
@@ -125,22 +122,22 @@ public final class EditLoginAction extends Action {
         String email = editForm.getEmail();
         String message = null;
 
-        if ((email != null) && (!"".equals(email)) && (!AntwebUtil.validEmail(email))) {
+        if (email != null && !"".equals(email) && !AntwebUtil.validEmail(email)) {
             message = "Invalid Email:" + editForm.getEmail();
         }
 
-        if ((editForm.getName() == null) || ("".equals(editForm.getName()))) {
+        if (editForm.getName() == null || "".equals(editForm.getName())) {
             message = "Name must be valid";
         }
 
-        if ((retypePassword == null) || (password == null)
-            || (!password.equals(retypePassword))) {
+        if (retypePassword == null || password == null
+            || !password.equals(retypePassword)) {
             message = "Password and Re-type Password must match";
         }
 
         if (
-           ((password == null) || (password.equals(""))) ||
-           ((retypePassword == null) || (retypePassword.equals("")))
+                password == null || password.equals("") ||
+                        retypePassword == null || retypePassword.equals("")
            ) {
             s_log.debug("validate() password:" + password + " retype:" + retypePassword);
              message = "Password fields may not be empty";

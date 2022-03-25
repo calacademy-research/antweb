@@ -6,7 +6,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class LongRequest {
 
-    private static Log s_log = LogFactory.getLog(LongRequest.class);
+    private static final Log s_log = LogFactory.getLog(LongRequest.class);
     
     private int id;
     private String cacheType;

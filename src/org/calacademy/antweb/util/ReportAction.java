@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
     
 public final class ReportAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ReportAction.class);
+    private static final Log s_log = LogFactory.getLog(ReportAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -59,13 +59,13 @@ public final class ReportAction extends Action {
         }
          
         if (target != null && target.contains("countryAdm1List")) {
-          return (mapping.findForward("countryAdm1List"));
+          return mapping.findForward("countryAdm1List");
         }
 
         if (target != null && target.contains("bioregionCountryList")) {
           ArrayList<HashMap<String, String>> bioregionCountryList = getBioregionCountryList(request);
           request.setAttribute("bioregionCountryList", bioregionCountryList);
-          return (mapping.findForward("bioregionCountryList"));
+          return mapping.findForward("bioregionCountryList");
         }
         
         return null;
@@ -84,7 +84,7 @@ and adm1.bioregion != country.bioregion and adm1.bioregion is not null order by 
     private ArrayList<HashMap<String, String>> getBioregionCountryList(HttpServletRequest request) {
         ArrayList<HashMap<String, String>> bioregionCountryList = new ArrayList<>();
 		boolean success = false;
-		java.sql.Connection connection = null;
+		Connection connection = null;
         Statement stmt = null;
         ResultSet rset = null;
 		try {

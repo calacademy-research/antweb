@@ -12,7 +12,7 @@ import org.calacademy.antweb.imageUploader.*;
 
 public class ImageUploadDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(ImageUploadDb.class);
+    private static final Log s_log = LogFactory.getLog(ImageUploadDb.class);
 
     public ImageUploadDb(Connection connection) {
       super(connection);
@@ -39,7 +39,7 @@ public class ImageUploadDb extends AntwebDb {
                 imageUpload.setImageCount(rset.getInt("image_count"));
                 
                 int year = rset.getInt("copyright_year");
-                Copyright copyright = (new CopyrightDb(getConnection())).getCopyrightByYear(year);
+                Copyright copyright = new CopyrightDb(getConnection()).getCopyrightByYear(year);
                 imageUpload.setCopyright(copyright);
                 imageUpload.setLicense(rset.getString("license"));
                 imageUpload.setIsComplete(rset.getInt("complete") == 1);
@@ -113,7 +113,7 @@ public class ImageUploadDb extends AntwebDb {
                 imageUpload.setArtistId(rset.getInt("artist_id"));
                 imageUpload.setLicense(rset.getString("license"));
                 int year = rset.getInt("copyright_year");
-                Copyright copyright = (new CopyrightDb(getConnection())).getCopyrightByYear(year);
+                Copyright copyright = new CopyrightDb(getConnection()).getCopyrightByYear(year);
                 imageUpload.setCopyright(copyright);
                 imageUpload.setIsComplete(rset.getInt("complete") == 1);
                 imageUploads.add(imageUpload);
@@ -141,7 +141,7 @@ public class ImageUploadDb extends AntwebDb {
                 PreparedStatement ps=getConnection().prepareStatement(dml, Statement.RETURN_GENERATED_KEYS);
                 ps.setInt(1, imageUpload.getCuratorId());
                 ps.setInt(2, imageUpload.getGroupId());
-                ps.setTimestamp(3, new java.sql.Timestamp(imageUpload.getCreated().getTime()));
+                ps.setTimestamp(3, new Timestamp(imageUpload.getCreated().getTime()));
                 ps.setInt(4, imageUpload.getArtistId());
                 ps.setInt(5, imageUpload.getImageCount());
                 ps.setString(6, imageUpload.getLicense());

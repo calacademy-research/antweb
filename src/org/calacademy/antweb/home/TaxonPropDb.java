@@ -1,19 +1,23 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
-import java.sql.*;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Taxon;
+import org.calacademy.antweb.geolocale.Bioregion;
+import org.calacademy.antweb.util.DBUtil;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.geolocale.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 
 public class TaxonPropDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(TaxonPropDb.class);
+    private static final Log s_log = LogFactory.getLog(TaxonPropDb.class);
         
     public TaxonPropDb(Connection connection) {
       super(connection);
@@ -134,8 +138,8 @@ public class TaxonPropDb extends AntwebDb {
                 String bioregion = rset.getString("bioregion");
 
                 if (isWordInArray(bioregion, Bioregion.list)) {
-                  HashSet bioregionSet = bioregionMaps.get(genus);
-                  if (bioregionSet == null) bioregionSet = new HashSet<String>();
+                  HashSet<String> bioregionSet = bioregionMaps.get(genus);
+                  if (bioregionSet == null) bioregionSet = new HashSet<>();
                   bioregionSet.add(bioregion);
                   bioregionMaps.put(genus, bioregionSet);
                 } else {
@@ -223,8 +227,8 @@ public class TaxonPropDb extends AntwebDb {
             rset = stmt.executeQuery(theQuery);
 
             while (rset.next()) {
-                String taxonName = (String) rset.getString("taxon_name");
-                String value = (String) rset.getString("value");
+                String taxonName = rset.getString("taxon_name");
+                String value = rset.getString("value");
                 taxaMap.put(taxonName, value);
             }
         } catch (SQLException e) {

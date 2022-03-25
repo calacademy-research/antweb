@@ -8,6 +8,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -22,7 +24,7 @@ import org.calacademy.antweb.home.*;
 
 public final class SaveProjectAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SaveProjectAction.class);
+    private static final Log s_log = LogFactory.getLog(SaveProjectAction.class);
 
     public ActionForward execute(
         ActionMapping mapping, ActionForm form,
@@ -43,7 +45,7 @@ public final class SaveProjectAction extends Action {
 
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SaveProjectAction");
 
             connection.setAutoCommit(true);
@@ -52,12 +54,12 @@ public final class SaveProjectAction extends Action {
             
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            return (mapping.findForward("error"));
+            return mapping.findForward("error");
         } finally { 		
             DBUtil.close(connection, this, "SaveProjectAction");
         }
           
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
     
         
@@ -72,14 +74,14 @@ public final class SaveProjectAction extends Action {
 
         try {
             projectDb.save(project);        
-        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             s_log.error("no worries on save.");
         }
                 
         projectDb.update(project);
 
         // Update the project lists...
-        (new LoginDb(connection)).refreshLogin(request.getSession());            
+        new LoginDb(connection).refreshLogin(request.getSession());
         
         //String docBase = util.getDocRoot();
         
@@ -89,7 +91,7 @@ public final class SaveProjectAction extends Action {
 
        s_log.info("saveProject() project:" + project.getName() + " root:" + project.getRoot());
 
-      if (!((project.getRoot() == null) || (project.getRoot().equals("")))) {
+      if (!(project.getRoot() == null || project.getRoot().equals(""))) {
         String preview = Project.getSpeciesListPath() + project.getRoot() + "/" + project.getRoot() + "-preview.jsp";
         String genFile = Project.getSpeciesListPath() + project.getRoot() + "/" + project.getRoot() + "-body.jsp";
 //        String preview = docBase + project.getRoot() + "-preview.jsp";
@@ -97,8 +99,7 @@ public final class SaveProjectAction extends Action {
        s_log.info("saveProject() Preview:" + preview + " genFile:" + genFile);
 
         try {
-          Utility util = new Utility();
-          util.copyFile(preview, genFile);
+            Utility.copyFile(preview, genFile);
         
           /* We have stored all of the project files in the root webapp dir.  Beginning move of the
              to the webapps/antweb/projects/ directory. */

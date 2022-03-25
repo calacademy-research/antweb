@@ -9,11 +9,9 @@ import javax.servlet.http.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
-
 public final class EditGeolocaleForm extends ActionForm {
 
-    private static Log s_log = LogFactory.getLog(EditGeolocaleForm.class);
+    private static final Log s_log = LogFactory.getLog(EditGeolocaleForm.class);
 
     protected int id;
     protected String name;

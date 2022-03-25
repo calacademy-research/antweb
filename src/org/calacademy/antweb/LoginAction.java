@@ -6,9 +6,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
+import java.util.Date;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -18,7 +21,7 @@ import org.calacademy.antweb.home.*;
 
 public final class LoginAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(LoginAction.class);
+    private static final Log s_log = LogFactory.getLog(LoginAction.class);
 
     public ActionForward execute(ActionMapping mapping,  ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -103,7 +106,7 @@ public final class LoginAction extends Action {
                     return new ActionForward(target, true);
                 }
             }
-            if ((value == null) || ("Login".equals(value))) {
+            if (value == null || "Login".equals(value)) {
                 login = login(request, userNameOrEmail, password, messages);
                 request.getSession().setAttribute("thisLogin", login);
                 //A.log("login() attempt name:" + userNameOrEmail + " login:" + login + " messages:" + messages.size() + " target:" + target);
@@ -119,12 +122,12 @@ public final class LoginAction extends Action {
             session.setAttribute("accessLogin", login);
             //s_log.warn("Successful login of " + userNameOrEmail + " target:" + target);
 
-            if ((target != null) && (!target.equals("")) 
-                    && (!target.contains("forgotPassword"))
-                    && (!target.contains("curate.do"))
-                    && (!target.contains("login.do"))) {
+            if (target != null && !target.equals("")
+                    && !target.contains("forgotPassword")
+                    && !target.contains("curate.do")
+                    && !target.contains("login.do")) {
               s_log.info("Target is " + target);
-              if ( (target.contains("fieldGuideResults.do"))
+              if (target.contains("fieldGuideResults.do")
                  ) {
                 return new ActionForward(AntwebProps.getDomainApp(), true);
               }               
@@ -140,7 +143,7 @@ public final class LoginAction extends Action {
             s_log.debug("execute() Has messages  user:" + userNameOrEmail + " message:" + message + " messages:" + messages.size());
             saveMessages(request, messages);        
             LoginMgr.removeAccessLogin(request);
-            return (mapping.findForward("failure"));
+            return mapping.findForward("failure");
         }
     }
 
@@ -149,22 +152,22 @@ public final class LoginAction extends Action {
 
         Login login = null;
         
-        if ((userNameOrEmail == null) || (userNameOrEmail.length() == 0)) {
+        if (userNameOrEmail == null || userNameOrEmail.length() == 0) {
             msg = new ActionMessage("error.login.needName");
             messages.add("message", msg);
         }
         
-        if ((password == null) || (password.length() == 0)) {
+        if (password == null || password.length() == 0) {
             msg = new ActionMessage("error.login.needPassword");
             messages.add("message", msg);
         }
         
         if (messages.isEmpty()) {
 
-            java.sql.Connection connection = null;
+            Connection connection = null;
             String connName = "LoginAction.createAccount()" + AntwebUtil.getRandomNumber();
             try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, connName);
                 LoginDb loginDb = new LoginDb(connection);
             
@@ -173,19 +176,19 @@ public final class LoginAction extends Action {
                 login.setEmail("");
                 login.setIsAdmin(false);
         
-                if ((login == null) || (login.getPassword() == null) || (!login.getPassword().equals(password))) {
+                if (login == null || login.getPassword() == null || !login.getPassword().equals(password)) {
                     msg = new ActionMessage("error.login.failedLogin");
                     messages.add("message",msg);
                 } else {
                   // Successful login
                   //s_log.warn("Login.execute()2 userName:" + userNameOrEmail + " login:" + login);                
-                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + (new java.util.Date()).toString());
+                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + new Date());
                   loginDb.updateLastLogin(login);
                 }
             } catch (AntwebException e) {
                 if (e.toString().contains("already in use")) { 
                   msg = new ActionMessage("error.login.nameInUse");
-                  s_log.debug("createAccount() msg:" + msg.toString());
+                  s_log.debug("createAccount() msg:" + msg);
                   messages.add("message",msg);
                 }
                 return null;
@@ -193,7 +196,7 @@ public final class LoginAction extends Action {
                 s_log.warn("Login.createAccount() e:" + e);
                 if (e.toString().contains("already in use")) { 
                   msg = new ActionMessage("error.login.nameInUse");
-                  s_log.debug("createAccount() msg:" + msg.toString());
+                  s_log.debug("createAccount() msg:" + msg);
                   messages.add("message",msg);
                 } else {
                   msg = new ActionMessage("error.login.dbFailure");
@@ -212,37 +215,37 @@ public final class LoginAction extends Action {
         ActionMessage msg = null;
         Login login = null;
         
-        if ((userNameOrEmail == null) || (userNameOrEmail.length() == 0)) {
+        if (userNameOrEmail == null || userNameOrEmail.length() == 0) {
             msg = new ActionMessage("error.login.needName");
             messages.add("message", msg);
             s_log.debug("login() 1 msg:" + msg);
         }
         
-        if ((password == null) || (password.length() == 0)) {
+        if (password == null || password.length() == 0) {
             msg = new ActionMessage("error.login.needPassword");
             messages.add("message", msg);
             s_log.debug("login() 2 msg:" + msg);
         }
 
         if (messages.isEmpty()) {
-            java.sql.Connection connection = null;
+            Connection connection = null;
             String connName = "LoginAction.login()" + AntwebUtil.getRandomNumber();
             try {
-                javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, connName);
                 LoginDb loginDb = new LoginDb(connection);
                 login = loginDb.getLoginByName(userNameOrEmail);
 //A.log("login() A userNameOrEmail:" + userNameOrEmail + " login:" + login);
                 if (login == null) login = loginDb.getLoginByEmail(userNameOrEmail);
 //A.log("login() B userNameOrEmail:" + userNameOrEmail + " login:" + login);
-                if ((login == null) || (login.getPassword() == null) || (!login.getPassword().equals(password))) {
+                if (login == null || login.getPassword() == null || !login.getPassword().equals(password)) {
                     msg = new ActionMessage("error.login.failedLogin");                    
                     messages.add("message",msg);
                     //A.log("login() 3 msg:" + msg + " pwd:" + password);            
                 } else {
                   // Successful login
                   //s_log.warn("Login.execute()2 userName:" + userNameOrEmail + " login:" + login);                
-                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + (new java.util.Date()).toString());
+                  LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + new Date());
                   loginDb.updateLastLogin(login);
                 }      
             } catch (Exception sqle) {

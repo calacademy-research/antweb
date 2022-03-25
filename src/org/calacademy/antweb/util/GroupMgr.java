@@ -17,8 +17,8 @@ public class GroupMgr {
 
     private static final Log s_log = LogFactory.getLog(GroupMgr.class);
 
-    private static ArrayList<Group> s_groups = null;
-    private static ArrayList<Group> s_uploadGroups = null;
+    private static ArrayList<Group> s_groups;
+    private static ArrayList<Group> s_uploadGroups;
         
     public static void populate(Connection connection) {
       populate(connection, false);
@@ -27,9 +27,9 @@ public class GroupMgr {
     public static void populate(Connection connection, boolean forceReload) {
         s_log.debug("populate()");
 
-      if (!forceReload && (s_groups != null)) return;
+      if (!forceReload && s_groups != null) return;
 
-      GroupDb groupDb = (new GroupDb(connection));
+      GroupDb groupDb = new GroupDb(connection);
       try {
         //A.log("populate()");
         s_groups = groupDb.getAllGroups();

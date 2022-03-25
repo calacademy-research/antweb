@@ -1,23 +1,24 @@
 package org.calacademy.antweb;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.text.Normalizer;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.regexp.RE;
+import org.apache.regexp.RESyntaxException;
+import org.apache.struts.upload.FormFile;
+import org.calacademy.antweb.util.AntwebException;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.AntwebUtil;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.Timestamp;
+import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.sql.Timestamp;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.regexp.*;
-
-import org.apache.struts.upload.FormFile;
-
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
 
 /** Class utility keeps track of the information about a specific taxon */
 public class Utility implements Serializable {
@@ -33,12 +34,12 @@ public class Utility implements Serializable {
     }
     public static boolean equal(Object o1, Object o2) {
         if (o1 == null && o2 == null) return true;
-        if (o1 == null && o2 != null) return false;
-        if (o2 == null && o1 != null) return false;
+        if (o1 == null) return false;
+        if (o2 == null) return false;
         if (o1 instanceof String && o2 instanceof String) {
             String s1 = (String) o1;
             String s2 = (String) o2;
-            if (s1.equals(s2)) return true;
+            return s1.equals(s2);
         }
         return false;
     }
@@ -46,7 +47,7 @@ public class Utility implements Serializable {
 
   public static boolean isNumber(String number) {
     try {
-      int num = Integer.valueOf(number);
+        Integer.parseInt(number);
 
       //if (num > 0) 
       return true;
@@ -116,14 +117,16 @@ public class Utility implements Serializable {
         return trimText;
     }
     
-    public boolean isTabDelimited(String fileName) {
+    public static boolean isTabDelimited(String fileName) {
         boolean isTabDelimited = false;
         try {
-            BufferedReader in = new BufferedReader(new FileReader(fileName));
-            if (in == null) {
-              s_log.error("isTabDelimited() BufferedReader is null for file:" + fileName);
-              return false;
-            }
+
+            BufferedReader in = Files.newBufferedReader(Paths.get(fileName));
+            // in is never false
+//            if (in == null) {
+//              s_log.error("isTabDelimited() BufferedReader is null for file:" + fileName);
+//              return false;
+//            }
             
             String theLine = in.readLine();
             if (theLine == null) {
@@ -141,7 +144,7 @@ public class Utility implements Serializable {
     public static String firstLetters(String theString) {
       // Turn a string like "valid without fossil" into "vwf"
       String firstLetters = "";
-      if ((theString == null) || ("".equals(theString))) return ".";
+      if (theString == null || "".equals(theString)) return ".";
       
       firstLetters = theString.substring(0,1);
       int spaceIndex = theString.indexOf(" ");
@@ -186,7 +189,7 @@ public class Utility implements Serializable {
             output.append(" ");
             isASCII = false;
           } else {
-            s_log.info("isAllASCII() false char:" + c + " or:-" + Character.toString ((char) c) + "- at col:" + i + " of input:" + input);
+            s_log.info("isAllASCII() false char:" + c + " or:-" + (char) c + "- at col:" + i + " of input:" + input);
             return "false";            
           }
         } else {
@@ -275,12 +278,12 @@ public class Utility implements Serializable {
       boolean isNotBlank = true;
       if (theTerm == null) return false;
       theTerm = theTerm.trim();
-      if ( (theTerm.length() <= 0) 
-        || (theTerm.equals("null")) 
-        || (theTerm.equals("NULL"))
-        || (theTerm.equals("Null"))
-        || (theTerm.equals("none"))
-        || (theTerm.equals("0.0"))
+      if ( theTerm.length() <= 0
+        || theTerm.equals("null")
+        || theTerm.equals("NULL")
+        || theTerm.equals("Null")
+        || theTerm.equals("none")
+        || theTerm.equals("0.0")
         ) {
         isNotBlank = false;
       }
@@ -307,9 +310,9 @@ public class Utility implements Serializable {
    }
 
    // by toggling this flag we can display empty fields on the specimen, collection and locality pages
-   private static boolean isDisplayEmpty = true;
+   private static final boolean isDisplayEmpty = true;
    public static boolean displayEmptyOrNotBlank(String theTerm) {
-       return isDisplayEmpty || (Utility.notBlank(theTerm));
+       return isDisplayEmpty || Utility.notBlank(theTerm);
    }
    
    public static String andify(ArrayList theList) {
@@ -348,7 +351,7 @@ public class Utility implements Serializable {
     public boolean badFileName(String fileName) {
        RE badFileCharacter;
        boolean result = false;
-       if ((fileName == null) || (fileName.equals(""))) {
+       if (fileName == null || fileName.equals("")) {
            result = true;
        } else {
            try {
@@ -362,7 +365,7 @@ public class Utility implements Serializable {
        return result;
     }
    
-    public void fixNewLines(String fileName) {
+    public static void fixNewLines(String fileName) {
         if (fileName != null) {
             s_log.info("fixNewLines() fixing new lines for " + fileName);
             try {
@@ -370,7 +373,7 @@ public class Utility implements Serializable {
                 BufferedReader br = new BufferedReader(new FileReader(fileName));
                 PrintStream  bw = new PrintStream(new FileOutputStream(fileName + ".tmp"));
  
-                String line = null;
+                String line;
  
                 while ((line = br.readLine()) != null) {
                     line = nlSub.subst(line,"\n");
@@ -381,10 +384,10 @@ public class Utility implements Serializable {
                 copyFile(fileName + ".tmp", fileName);
             } catch (IOException e) {
                 s_log.error("fixNewLines() problem1 fileName:" + fileName + ": " + e);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             } catch (RESyntaxException e) {
                 s_log.error("fixNewLines() problem2 fileName:" + fileName + ": " + e);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             }                                 
         }
     }
@@ -409,7 +412,7 @@ public class Utility implements Serializable {
         String command = "";
         if (zipName != null) {
             // create a new temp directory
-            boolean success = (new File(unzipDir)).mkdir();
+            boolean success = new File(unzipDir).mkdir();
             
             if (new File(zipName).exists()) {
                 try {
@@ -419,7 +422,7 @@ public class Utility implements Serializable {
                     s_log.warn("unzipFile() command:" + command);  // exitValue:" + process.exitValue() + " 
                 } catch (IOException e) {
                     s_log.error("problem unzipping file " + zipName + ": " + e);
-                    org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                    AntwebUtil.logStackTrace(e);
                // } catch (InterruptedException e) {
                //     s_log.error("problem unzipping file " + zipName + ": " + e);
                //     org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
@@ -429,11 +432,11 @@ public class Utility implements Serializable {
         return command;
     }
    
-    public void copyAndUnzipFile(FormFile file, String tempDirName, String outName) {
+    public static void copyAndUnzipFile(FormFile file, String tempDirName, String outName) {
         
         if (file != null) {
             // create a new temp directory
-            boolean success = (new File(tempDirName)).mkdir();
+            boolean success = new File(tempDirName).mkdir();
             
             // unzip into that directory
             String zippedName = outName + ".zip";
@@ -445,21 +448,21 @@ public class Utility implements Serializable {
                     process.waitFor();
                 } catch (IOException e) {
                     s_log.error("copyAndUnzipFile() problem unzipping file1 " + zippedName + ": " + e);
-                    org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                    AntwebUtil.logStackTrace(e);
                 } catch (InterruptedException e) {
                     s_log.error("copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e);
-                    org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                    AntwebUtil.logStackTrace(e);
                 }
             }
             
             // move the file out of that directory and give it the right name
             File dir = new File(tempDirName);
-            String dirListing[] = dir.list();
+            String[] dirListing = dir.list();
             s_log.info("copyAndUnzipFile() dir listing has length: " + dirListing.length);
             String fileName = "";
             for (String s : dirListing) {
                 s_log.info("copyAndUnzipFile() dir listing shows: *" + s + "*");
-                if (!(s.equals(".")) && !(s.equals("..")) && !(s.contains("__"))) {
+                if (!s.equals(".") && !s.equals("..") && !s.contains("__")) {
                     fileName = s;
                 }
             }
@@ -467,7 +470,7 @@ public class Utility implements Serializable {
                 copyFile(tempDirName + "/" + fileName, outName);
             } catch (IOException e) {
                 s_log.error("copyAndUnzipFile() couldn't move " + tempDirName + "/" + fileName + " to " + outName);
-                org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+                AntwebUtil.logStackTrace(e);
             }
             
             // remove the directory
@@ -477,7 +480,7 @@ public class Utility implements Serializable {
     }
 
     public boolean directoryExists(String directory) {
-        return (new File(directory)).exists();
+        return new File(directory).exists();
     }
 
     public static boolean makeDirTree(String dirTree) {
@@ -487,7 +490,7 @@ public class Utility implements Serializable {
       //s_log.warn("splitDirTree:" + splitDirTree + " 1:" + splitDirTree[0] + " 2:" + splitDirTree[2]);
       String thisDir = "";
       for (int i = 1; i < splitDirTree.length; i++) {
-        thisDir = thisDir += "/" + splitDirTree[i];
+        thisDir = "/" + splitDirTree[i];
         File dirFile = new File(thisDir);
         if (!dirFile.exists()) {
 
@@ -503,7 +506,7 @@ public class Utility implements Serializable {
           //if (dirTree.contains("2017")) AntwebUtil.logStackTrace();
 
           try {
-            isSuccess = (dirFile).mkdir();
+            isSuccess = dirFile.mkdir();
             if (isSuccess) {
                 if (debug) s_log.debug("makeDirTree() Success creating dir:" + thisDir);
             } else {
@@ -527,7 +530,7 @@ public class Utility implements Serializable {
     public boolean createDirectory(String dirName) {
       // This one is relative to docRoot
         boolean isSuccess = false;
-        String docRoot = this.getDocRoot();
+        String docRoot = Utility.getDocRoot();
         String directoryName = docRoot + dirName;
 
         File dirFile = new File(directoryName);
@@ -538,7 +541,7 @@ public class Utility implements Serializable {
         }
         // Create a directory; all ancestor directories must exist
         try {
-            isSuccess = (dirFile).mkdir();
+            isSuccess = dirFile.mkdir();
             if (isSuccess) {
                 s_log.warn("createDirectory() Success creating dir:" + directoryName);   
             } else {
@@ -551,11 +554,11 @@ public class Utility implements Serializable {
     }
     
     
-    public boolean deleteDirectory(File dir) {
+    public static boolean deleteDirectory(File dir) {
         
         s_log.info("deletingDirectory() " + dir.getName());
         
-        if ((dir.exists() && (dir.getName().length() > 1))) {
+        if (dir.exists() && dir.getName().length() > 1) {
             File[] files = dir.listFiles();
             for (File file : files) {
                 if (file.isDirectory()) {
@@ -565,62 +568,53 @@ public class Utility implements Serializable {
                 }
             }
         }
-        return (dir.delete());
+        return dir.delete();
     }
     
 
-    public boolean deleteFile(String fileName) {
+    public static boolean deleteFile(String fileName) {
         File file = new File(fileName);
         return deleteFile(file);
     }
     
-    public boolean deleteFile(File file) {
+    public static boolean deleteFile(File file) {
         boolean result = false;
         if (file.exists()) {
             result = file.delete();
         }
         return result;
     }
-    
-    public boolean copyFile(FormFile file, String outName) {
+
+    public static boolean copyFile(FormFile file, String outName) {
         boolean returnVal = false;
-        String data = null;
 
         if (file != null) {
             try {
                 //retrieve the file data
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 InputStream stream = file.getInputStream();
 
                 //write the file to the file specified
-                OutputStream bos = new FileOutputStream(outName);
-                int bytesRead = 0;
-                byte[] buffer = new byte[8192];
-                while ((bytesRead = stream.read(buffer, 0, 8192)) != -1) {
-                    bos.write(buffer, 0, bytesRead);
-                }
-                bos.close();
+                FileUtils.copyInputStreamToFile(stream, new File(outName));
 
-                //close the stream
-                stream.close();
-                returnVal = true;
+                return true;
+
             } catch (IOException fnfe) {
                 s_log.error("copyFile() " + fnfe);
             }
         } else {
-          s_log.error("Can not copy null file to outName:" + outName);
+            s_log.error("Can not copy null file to outName:" + outName);
         }
         return returnVal;
     }
 
-    public void backupFile(String src) throws IOException {
+    public static void backupFile(String src) throws IOException {
         File f = new File(src);
         if (f.exists()) {
             copyFile(src, src + ".bak");
         }
     }
     
-    public boolean rollbackFile(String src) throws IOException {
+    public static boolean rollbackFile(String src) throws IOException {
         boolean success = false;
         String backup = src + ".bak";
         File f = new File(backup);
@@ -636,13 +630,13 @@ public class Utility implements Serializable {
         deleteFile(src);
     }
     
-    public void copyFile(String src, String dst) throws IOException {
+    public static void copyFile(String src, String dst) throws IOException {
         //A.log("copyFile(" + src + ", " + dst + ")");
         FileUtils.copyFile(new File(src), new File(dst));
     }
 
     // To be deprecated
-    public String getDocRoot() { 
+    public static String getDocRoot() {
       // Something like site.docroot=/usr/local/tomcat/webapps/antweb/
       return AntwebProps.getDocRoot(); 
     }
@@ -653,37 +647,33 @@ public class Utility implements Serializable {
     //public String getSiteUrl() { return AntwebProps.getSiteUrl(); }
     
     
-    public String getDateForFileName() {
+    public static String getDateForFileName() {
         return getDateForFileName(new Date());
     }
     
-    public String getDateForFileName(Date date) {
+    public static String getDateForFileName(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HH:mm:ss");
-        String dateString = dateFormat.format(date);
-        return dateString;    
+        return dateFormat.format(date);
     }
     
-    public String getCurrentDateAndTimeString() {
+    public static String getCurrentDateAndTimeString() {
         return getCurrentDateAndTimeString(new Date());
     }
     
-    public String getCurrentDateAndTimeString(Date date) {
+    public static String getCurrentDateAndTimeString(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String dateString = dateFormat.format(date);
-        return dateString;
+        return dateFormat.format(date);
     }
    
     public static String getSimpleDate(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String dateString = dateFormat.format(date);
-        return dateString;
+        return dateFormat.format(date);
     }
        
     public String getCurrentDate(Date date) {
         if (date == null) return "";
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyy");
-        String dateString = dateFormat.format(date);
-        return dateString;
+        return dateFormat.format(date);
     }   
     
     public void saveStringToFile(String theString, String theFile) {
@@ -694,7 +684,7 @@ public class Utility implements Serializable {
             outFile.close();
         } catch (IOException e) {
             s_log.error("saveStringToFile() problem saving to file:" + theFile + " e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         }
     }
 

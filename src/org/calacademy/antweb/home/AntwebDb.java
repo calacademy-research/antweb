@@ -15,18 +15,17 @@ import java.sql.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.*;
-        import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.util.*;
 
 
 public class AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(AntwebDb.class);
+    private static final Log s_log = LogFactory.getLog(AntwebDb.class);
 
     static int MAXLENGTH = 80;
-    String currentDateFunction = "now()";
+    final String currentDateFunction = "now()";
 
-    Connection m_connection = null;
+    Connection m_connection;
     
     AntwebDb() {
     }

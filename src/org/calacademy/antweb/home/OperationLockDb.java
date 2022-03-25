@@ -23,10 +23,10 @@ Useful query to see how lock the locks have lasted:
       super(connection);
     }
 
-    private static Log s_log = LogFactory.getLog(OperationLockDb.class);
+    private static final Log s_log = LogFactory.getLog(OperationLockDb.class);
 
     public void setOperationLock(OperationLock operationLock) throws SQLException {
-        int locked = (operationLock.isLocked()) ? 1 : 0;
+        int locked = operationLock.isLocked() ? 1 : 0;
         String createdStr = DateUtil.getFormatDateTimeStr(operationLock.getCreated());
         
         //s_log.warn("setOperationLock() createdStr:" + createdStr + " created:" + operationLock.getCreated());            
@@ -80,7 +80,7 @@ Useful query to see how lock the locks have lasted:
     public void unlock(int operation, int curatorId) throws SQLException  {
       //String modifiedStr = AntwebUtil.getFormatDateTimeStr(new Date());    
       Statement stmt = getConnection().createStatement();
-      String theUpdate = "update operation_lock set locked=0, modified=now(), unlock_op=\'unlock\' where locked=1" 
+      String theUpdate = "update operation_lock set locked=0, modified=now(), unlock_op='unlock' where locked=1"
         + " and operation = '" + operation + "'" 
         //+ "  and curator_id = " + curatorId
         ;
@@ -91,7 +91,7 @@ Useful query to see how lock the locks have lasted:
     public void enable(int operation) throws SQLException  {
       String modifiedStr = DateUtil.getFormatDateTimeStr(new Date());
       Statement stmt = getConnection().createStatement();
-      String theUpdate = "update operation_lock set locked=0, modified=now(), unlock_op=\'enable\'   where locked=1 and operation = '" + operation + "'";
+      String theUpdate = "update operation_lock set locked=0, modified=now(), unlock_op='enable'   where locked=1 and operation = '" + operation + "'";
       stmt.executeUpdate(theUpdate);    
       stmt.close();
     }

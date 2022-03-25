@@ -3,6 +3,7 @@ package org.calacademy.antweb.upload;
     
 import java.sql.*;
 import java.io.*;
+import java.util.Date;
 
 import org.apache.regexp.*;
 
@@ -15,10 +16,10 @@ import org.apache.commons.logging.LogFactory;
 
 public class SpecimenUploader {
 
-    private static Log s_log = LogFactory.getLog(SpecimenUploader.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenUploader.class);
     private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
 
-    private Connection connection = null;
+    private final Connection connection;
     
     public SpecimenUploader(Connection connection) {
       this.connection = connection;
@@ -44,7 +45,7 @@ public class SpecimenUploader {
             util.copyAndUnzipFile(theForm.getBiota(), workingDir + "group" + group.getId(), specimenFileName);
         } else {
             // copy from uploader's fileName to the biotaFile name.
-            util.copyFile(theForm.getBiota(), specimenFileName);
+            Utility.copyFile(theForm.getBiota(), specimenFileName);
         }
 
         boolean isUpload = true;
@@ -62,10 +63,9 @@ public class SpecimenUploader {
 
         UploadDetails uploadDetails = null;
 
-        java.util.Date startTime = new java.util.Date();
+        Date startTime = new Date();
         if ("default".equals(encoding)) encoding = null;
         Group group = login.getGroup();
-        Utility util = new Utility();
 
         String specimenFileLoc = null;
         String specimenFileName = null;
@@ -90,12 +90,12 @@ public class SpecimenUploader {
 
         if (messageStr != null) {
             // No further tests necessary.
-        } else if ((!formFileName.contains(".txt")) && (!formFileName.contains(".TXT"))) {
+        } else if (!formFileName.contains(".txt") && !formFileName.contains(".TXT")) {
             s_log.warn("uploadSpecimenFile() theFileName not txt.  formFileName:" + formFileName);
             messageStr = "Specimen File must be a .txt file.";
         } else if (isCurrentSpecimenFormat(specimenFileLoc) != null) {
             messageStr = "Specimen File must be in the most current format. " + isCurrentSpecimenFormat(specimenFileLoc);
-        } else if (!util.isTabDelimited(specimenFileLoc)) {
+        } else if (!Utility.isTabDelimited(specimenFileLoc)) {
             messageStr = "Specimen File must be a tab-delimited file.";
         }
         if (messageStr != null) {

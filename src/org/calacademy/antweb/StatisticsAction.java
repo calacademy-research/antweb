@@ -4,6 +4,8 @@ import java.util.*;
 import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
+
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -16,7 +18,7 @@ import org.apache.commons.logging.LogFactory;
     
 public final class StatisticsAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(StatisticsAction.class);
+    private static final Log s_log = LogFactory.getLog(StatisticsAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -24,29 +26,29 @@ public final class StatisticsAction extends Action {
 
         ActionForward c = Check.login(request, mapping); if (c != null) return c;
 
-        String byUpload = (String) request.getParameter("byUpload");
-        String project = (String) request.getParameter("project");
-        String byProject = (String) request.getParameter("byProject");
-        String byBioregion = (String) request.getParameter("byBioregion");
-        String byMuseum = (String) request.getParameter("byMuseum");
-        String byGeolocale = (String) request.getParameter("byGeolocale");
-        String isLinkStr = (String) request.getParameter("isLink");
+        String byUpload = request.getParameter("byUpload");
+        String project = request.getParameter("project");
+        String byProject = request.getParameter("byProject");
+        String byBioregion = request.getParameter("byBioregion");
+        String byMuseum = request.getParameter("byMuseum");
+        String byGeolocale = request.getParameter("byGeolocale");
+        String isLinkStr = request.getParameter("isLink");
         boolean isLink = true;
         if ("false".equals(isLinkStr)) isLink = false;
         request.getSession().setAttribute("isLink", isLink);
-        String bodyStr = (String) request.getParameter("body");
-        boolean body = ("true".equals(bodyStr));
+        String bodyStr = request.getParameter("body");
+        boolean body = "true".equals(bodyStr);
 
         boolean success = false;
 
         Connection connection = null;
         try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "StatisticsAction()");
                 
             if ("true".equals(byUpload)) {
               success = getStatisticsByUpload(request, connection);
-              return (mapping.findForward("statisticsStr"));
+              return mapping.findForward("statisticsStr");
             } else if (project != null) {
               success = getStatisticsByAProject(request, project, isLink, connection);
             } else if ("true".equals(byProject)) {
@@ -59,7 +61,7 @@ public final class StatisticsAction extends Action {
               success = getStatisticsByGeolocale(request, isLink, connection);
             } else {
               success = getStatistics(request, connection);
-              return (mapping.findForward("statisticsStr"));
+              return mapping.findForward("statisticsStr");
             }
        
         } catch (SQLException e) {
@@ -71,12 +73,12 @@ public final class StatisticsAction extends Action {
         
 		if (success) {
 		  if (body) {
-		    return (mapping.findForward("statisticsRealTime-body"));
+		    return mapping.findForward("statisticsRealTime-body");
 		  } else {
-			return (mapping.findForward("statisticsRealTime"));
+			return mapping.findForward("statisticsRealTime");
 		  }
 		} else {
-			return (mapping.findForward("failure"));
+			return mapping.findForward("failure");
 		}
     }
 

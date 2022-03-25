@@ -1,6 +1,9 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 import org.apache.regexp.*;
@@ -8,6 +11,7 @@ import org.apache.regexp.*;
 import org.apache.struts.upload.FormFile;
 
 import java.sql.*;
+import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -77,14 +81,12 @@ generateBiogeographicRegions() in the case of Bolton.
 */
 
 public class SpeciesListUpload extends AntwebUpload {
-    private static Log s_log = LogFactory.getLog(SpeciesListUpload.class);
+    private static final Log s_log = LogFactory.getLog(SpeciesListUpload.class);
 
-    ArrayList dateHeaders = new ArrayList(Arrays.asList(dateHeaderString));
-
-    SpeciesListUploadDb m_speciesListUploadDb = null;
+    private final SpeciesListUploadDb m_speciesListUploadDb;
     private int totalTaxonCountryPrimaryKeyViolations = 0;
-    private int totalFossils = 0; 
-    private int totalNotFossils = 0;   
+    private final int totalFossils = 0;
+    private final int totalNotFossils = 0;
     
     public SpeciesListUpload(Connection connection) {
       super(connection, "worldants");
@@ -104,14 +106,13 @@ public class SpeciesListUpload extends AntwebUpload {
         String message = null;
         
         //s_log.warn("uploadSpeciesList() projectFile:" + project + " theFile:" + theFile + " root:" + uploadFile.getRoot() + " uploadFile:" + uploadFile);
-        Utility util = new Utility();
-        
+
         //String outputFileDir = util.getInputFileHome();
         //String outputFileName = outputFileDir + project + ".txt";
         //String encoding = UploadFile.getEncoding(outputFileName, userAgent);
         s_log.debug("uploadSpeciesList(4) project:" + project + " formFile:" + theFile + " to uploadFileLoc:" + uploadFile.getFileLoc());
         
-        util.copyFile(theFile, uploadFile.getFileLoc()); // Copy to the working directory
+        Utility.copyFile(theFile, uploadFile.getFileLoc()); // Copy to the working directory
 
         String backupDirFile = uploadFile.backup(); // We keep a timestamped copy even if it is bad...
         s_log.debug("uploadSpeciesList:" + backupDirFile);
@@ -119,7 +120,7 @@ public class SpeciesListUpload extends AntwebUpload {
         if (!(theFile.toString().indexOf(".txt") > 0)) {
           message = "Species List must be a .txt file.";
         }
-        if (!util.isTabDelimited(uploadFile.getFileLoc())) {
+        if (!Utility.isTabDelimited(uploadFile.getFileLoc())) {
           message =  "Species List must be a tab-delimited file."; 
         }
         if (!isCurrentProjectFileFormat(uploadFile.getFileLoc())) {
@@ -171,7 +172,7 @@ public class SpeciesListUpload extends AntwebUpload {
         return uploadDetails;
     }
 
-    String validateMessage = null;
+    String validateMessage;
     public void setValidateMessage(String message) {
         validateMessage = message;
     }
@@ -223,8 +224,8 @@ public class SpeciesListUpload extends AntwebUpload {
 
 		// Worldants is a special case.  Download the file and load it.
 		if ("worldants".equals(project)) {
-		    int origWorldantsCount = (new TaxonDb(getConnection())).getWorldantsCount();
-		    String message = (new SpeciesListUploader(getConnection())).validateWorldantsFile(fileLoc, origWorldantsCount);
+		    int origWorldantsCount = new TaxonDb(getConnection()).getWorldantsCount();
+		    String message = new SpeciesListUploader(getConnection()).validateWorldantsFile(fileLoc, origWorldantsCount);
             setValidateMessage(message);
             if (!"success".equals(message)) {
                 s_log.error("importSpeciesList(4) validateWorldantsFile not success. Message:" + message);
@@ -254,10 +255,9 @@ public class SpeciesListUpload extends AntwebUpload {
         // CLEAN UP METHODS.
         TaxonSetDb.updateTaxonSetTaxonNames(getConnection());
 
-        boolean skip = false;
-        if (AntwebProps.isDevMode()) skip = true;
+        boolean skip = AntwebProps.isDevMode();
         if (!skip) {
-            (new ProjTaxonDb(getConnection())).regenerateAllAntweb();
+            new ProjTaxonDb(getConnection()).regenerateAllAntweb();
         } else {
             s_log.debug("Warning ProjTaxonDb.regenerateAllAntweb() is skipped in Dev. See SpeciesListUpload.java:169");
         }
@@ -295,7 +295,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
         String returnStr = null;   
         //A.log("importSpeciesList() project:" + project + " fileName:" + fileName + " shortFileName:" + shortFileName + " encoding:" + encoding);          
-        LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " import:" + fileName);
+        LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + " import:" + fileName);
                
         boolean isWorldants = Project.WORLDANTS.equals(project);
 
@@ -308,8 +308,8 @@ public class SpeciesListUpload extends AntwebUpload {
 
             String[] components;
 
-            BufferedReader in = new BufferedReader(
-                new InputStreamReader(new FileInputStream(fileName), encoding));
+            BufferedReader in = Files.newBufferedReader(Paths.get(fileName), Charset.forName(encoding));
+
                     
             if (in == null) {
                 returnStr = "importSpeciesList() BufferedReader is null for file:" + fileName;
@@ -358,7 +358,7 @@ public class SpeciesListUpload extends AntwebUpload {
             for (String theHead : headers) { 
                 theHead = getGoodHeader(theHead);
 
-                if ((!"subfamily".equals(theHead) && theHead.contains("subfamily"))) {
+                if (!"subfamily".equals(theHead) && theHead.contains("subfamily")) {
                   // We should not have a header that contains subfamily but is not subfamily.
                   s_log.warn("importSpeciesList() theHead like subfamily:" + theHead);
                 }
@@ -420,9 +420,9 @@ public class SpeciesListUpload extends AntwebUpload {
             }
 
             if (! (
-                   (colList.contains("subfamily"))
-                && (colList.contains("genus"))
-                && (colList.contains("species"))
+                   colList.contains("subfamily")
+                && colList.contains("genus")
+                && colList.contains("species")
               )) {
                 s_log.error(returnStr  + " colList:" + colList);
                 returnStr = "Species file required header not included for " + fileName;
@@ -453,9 +453,9 @@ public class SpeciesListUpload extends AntwebUpload {
                 String theLineBefore = theLine;
 //                theLine = AntFormatter.escapeQuotes(theLine);
                 if (false
-                    && (AntwebProps.isDevMode())
-                    && !theLine.equals(theLineBefore)
-                    && (lineNum > 28 && lineNum < 31)
+                        && AntwebProps.isDevMode()
+                        && !theLine.equals(theLineBefore)
+                        && lineNum > 28 && lineNum < 31
                    ) {
                      s_log.debug("importSpeciesList() lineNum:" + lineNum + " theLine:" + theLine); // + " theLineBefore:" + theLineBefore);
                 }
@@ -484,7 +484,7 @@ public class SpeciesListUpload extends AntwebUpload {
                 String goodLineStatus = "true";
 
                 RE multipleSpaces = new RE(" +");
-                while ((iter.hasNext()) && (index < headers.size())) {
+                while (iter.hasNext() && index < headers.size()) {
                     // This loop will populate the hashtable of elements (fields).
                     element = iter.next();
                     element = multipleSpaces.subst(element.trim(), " ");                    
@@ -493,7 +493,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
                     String theElementBefore = element;
                     try {
-                        element = Utility.customTrim(element, "\'");
+                        element = Utility.customTrim(element, "'");
                         element = Utility.customTrim(element, "\"");
                     } catch (AntwebException e) {
                         s_log.warn("importSpeciesList() e:" + e.getMessage());
@@ -525,7 +525,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         //A.iLog("importSpeciesList() index:" + index, 100000);  // + " currentValidRank:" + currentValidRank
                         if (index == speciesHeader) {
                           thisSpecies = element.toLowerCase();
-                          if ((thisSpecies != null) && !"".equals(thisSpecies)) {
+                          if (thisSpecies != null && !"".equals(thisSpecies)) {
 
                             // Subspecies can either be in their own column, or concatenated with the species (backwards compatible)
                             if (thisSpecies.contains(" ")) {
@@ -564,7 +564,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         //if (index == fossilHeader) A.log("importSpeciesList isFossil:" + isFossil + " element:" + element + " fossilHeader:" + fossilHeader);
 
                         try {
-                          if (index == antcatIdHeader) antcatId = (Integer.valueOf(element)).intValue();
+                          if (index == antcatIdHeader) antcatId = Integer.parseInt(element);
                         } catch (NumberFormatException e) {
                           s_log.warn("importSpeciesList() skipping line:" + lineNum + " column:" + index + " element:" + element + " e:" + e); 
                           //String heading = "Trouble parsing lines:";
@@ -576,7 +576,7 @@ public class SpeciesListUpload extends AntwebUpload {
                           // readLine() above does not seem to handle blank lines.  They get skipped, count not incremented.                          
                         }
 
-						String column = (String) colList.get(index);                        
+						String column = colList.get(index);
 						String elementSubfamily = Taxon.getSubfamilyFromName(element);
 						try {                        
 							if ("current_valid_name".equals(column) && elementSubfamily != null) {
@@ -597,15 +597,15 @@ public class SpeciesListUpload extends AntwebUpload {
 						}
 
                         if (element != null && !"".equals(element)) {
-                            String col = (String) colList.get(index);
+                            String col = colList.get(index);
                             
                             //if (col.contains("country")) A.log("importSpeciesList () col:" + col + " element:" + element);
                             
                             taxonHash.put(col, element);
                         }
                     } else if (descriptionList.get(index) != null) {
-                        if (!(element.equals(""))) {
-                            description.put((String) descriptionList.get(index), element);
+                        if (!element.equals("")) {
+                            description.put(descriptionList.get(index), element);
                             //A.log("importSpeciesList() key:" + descriptionList.get(index) + " element:" + element);
                         }
                     }
@@ -629,7 +629,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         taxonHash.put("taxon_name", "formicidae");
                         taxonHash.put("rank", Rank.FAMILY);                     
                         taxonHash.put("subfamily", "");   
-                        (new ProjTaxonDb(getConnection())).addProjectFamily(project);              
+                        new ProjTaxonDb(getConnection()).addProjectFamily(project);
                         //getSpeciesListUploadDb().specialFormicidaeHandling(project);             
                         //s_log.warn("importSpeciesListByValidity in formicidae +++++ taxonHash:" + taxonHash);                
                     } else if (Rank.SUBSPECIES.equals(currentValidRank)) {
@@ -653,11 +653,11 @@ public class SpeciesListUpload extends AntwebUpload {
                         } 
                     }                    
                 } else {  // other species lists
-                    if ((taxonHash.get(Rank.GENUS) == null) || (taxonHash.get(Rank.GENUS).equals(""))) {
+                    if (taxonHash.get(Rank.GENUS) == null || taxonHash.get(Rank.GENUS).equals("")) {
                         taxonHash.put("rank", Rank.SUBFAMILY);                      
-                    } else if ((taxonHash.get(Rank.SPECIES) == null) || (taxonHash.get(Rank.SPECIES).equals(""))) {
+                    } else if (taxonHash.get(Rank.SPECIES) == null || taxonHash.get(Rank.SPECIES).equals("")) {
                         taxonHash.put("rank", Rank.GENUS);                      
-                    } else if ((taxonHash.get(Rank.SUBSPECIES) == null) || (taxonHash.get(Rank.SUBSPECIES).equals(""))) {
+                    } else if (taxonHash.get(Rank.SUBSPECIES) == null || taxonHash.get(Rank.SUBSPECIES).equals("")) {
                         taxonHash.put("rank", Rank.SPECIES);  
                     } else {
                         taxonHash.put("rank", Rank.SUBSPECIES);
@@ -689,13 +689,13 @@ public class SpeciesListUpload extends AntwebUpload {
                     boolean ignoreTaxon = false;
                     if (isWorldants) {
                         if (! (
-                            (Rank.FAMILY.equals(currentValidRank))
-                         || (Rank.SUBFAMILY.equals(currentValidRank))
+                            Rank.FAMILY.equals(currentValidRank)
+                         || Rank.SUBFAMILY.equals(currentValidRank)
                          // || (Rank.TRIBE.equals(currentValidRank))                        
-                         || (Rank.GENUS.equals(currentValidRank))
+                         || Rank.GENUS.equals(currentValidRank)
                          // || (Rank.SUBGENUS.equals(currentValidRank))                        
-                         || (Rank.SPECIES.equals(currentValidRank))
-                         || (Rank.SUBSPECIES.equals(currentValidRank))                        
+                         || Rank.SPECIES.equals(currentValidRank)
+                         || Rank.SUBSPECIES.equals(currentValidRank)
                           ) ) {
                             if (taxonName.contains(debugTaxonName)) s_log.debug("importSpeciesList() 1 ignoreTaxon because unrecognized rank");
                             ignoreTaxon = true;
@@ -733,7 +733,7 @@ public class SpeciesListUpload extends AntwebUpload {
                           if (t != null && !t.equals("") && !t.equals(taxonName)) {
 
                             // Must go to database, unless we start adding inserted taxa to TaxonMgr.
-                            DummyTaxon currentValidTaxon = (new DummyTaxonDb(getConnection())).getDummyTaxon(t);
+                            DummyTaxon currentValidTaxon = new DummyTaxonDb(getConnection()).getDummyTaxon(t);
                             if (currentValidTaxon != null) {
 								currentValidName = t;                            
                             } else {
@@ -788,7 +788,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
                               Taxon current = TaxonMgr.getTaxon(currentValidName);
                               if (current == null) {
-                                  current = (new TaxonDb(getConnection())).getTaxon(currentValidName);
+                                  current = new TaxonDb(getConnection()).getTaxon(currentValidName);
 
                                   if (taxonName.contains(debugTaxonName)) s_log.debug("importSpeciesList() 11 currentValidName:" + currentValidName + " not found in TaxonMgr. Found in DB:" + current);
                                   // If we load a small worldants and then try to load a big one, taxa will not be in the taxonMgr.
@@ -796,7 +796,7 @@ public class SpeciesListUpload extends AntwebUpload {
                               }
                               if (current != null) {
                                   if (current.isValid()) {
-                                      (new GeolocaleTaxonDb(getConnection())).setTaxonSet(country, currentValidName, Source.ANTCAT);
+                                      new GeolocaleTaxonDb(getConnection()).setTaxonSet(country, currentValidName, Source.ANTCAT);
                                   }
                               }
 							} else {
@@ -811,7 +811,7 @@ public class SpeciesListUpload extends AntwebUpload {
 						  if (thisBioregion != null && !"".equals(thisBioregion) && !isFossil) {
                             Bioregion bioregion = BioregionMgr.getBioregion(thisBioregion);           
 						    if (bioregion != null) {
-						      boolean inserted = (new BioregionTaxonDb(getConnection())).insertTaxon(bioregion.getName(), currentValidName, "importSpeciesList", Source.ANTCAT);
+						      boolean inserted = new BioregionTaxonDb(getConnection()).insertTaxon(bioregion.getName(), currentValidName, "importSpeciesList", Source.ANTCAT);
                               if (inserted) {
                                 i = i + 1;
                                 //if ("dorylinaedorylus erraticus".equals(currentValidName)) A.log("importSpeciesList() inserted:" + inserted + " i:" + i + " bioregion:" + bioregion + " currentValidName:" + currentValidName);
@@ -824,13 +824,13 @@ public class SpeciesListUpload extends AntwebUpload {
 							  ++fossilCount;
 							  //A.log("importSpeciesList() fossilCount:" + fossilCount + " Add to fossil list taxonName:" + taxonName);
 							  Project fossilants = ProjectMgr.getProject("fossilants"); 
-							  (new ProjTaxonDb(getConnection())).insert(fossilants, currentValidName, Source.ANTCAT); 
+							  new ProjTaxonDb(getConnection()).insert(fossilants, currentValidName, Source.ANTCAT);
 						  }                   
                         } else {
 							if (taxonName.contains(debugTaxonName)) s_log.debug("importSpeciesList() 13 Not inserted taxonName:" + taxonName + " c:" + c);
                         }
                         
-                        if (taxonName.equals("formicidae") && (!"worldants".equals(project))) {
+                        if (taxonName.equals("formicidae") && !"worldants".equals(project)) {
                           s_log.warn("importSpeciesList() non-worldants insertion of formicidae.  lineNum:" + lineNum + " source:" + shortFileName);
                         }  
 
@@ -843,20 +843,20 @@ public class SpeciesListUpload extends AntwebUpload {
             in.close();
 
             returnStr = "success";
-        } catch (java.io.FileNotFoundException e) {
-            returnStr = "importSpeciesList() c1 project:" + project + " e" + e.toString();
+        } catch (FileNotFoundException e) {
+            returnStr = "importSpeciesList() c1 project:" + project + " e" + e;
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
         } catch (RESyntaxException e) {
-            returnStr = "importSpeciesList() c2 project:" + project + " fileName:" + fileName + " e" + e.toString();
+            returnStr = "importSpeciesList() c2 project:" + project + " fileName:" + fileName + " e" + e;
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
-        } catch (java.util.MissingResourceException e) {
-            returnStr = "importSpeciesList() c3 project:" + project + " fileName:" + fileName + " e" + e.toString();
+        } catch (MissingResourceException e) {
+            returnStr = "importSpeciesList() c3 project:" + project + " fileName:" + fileName + " e" + e;
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
         } catch (IndexOutOfBoundsException e) {
-            returnStr = "importSpeciesList() project:" + project + " e" + e.toString();
+            returnStr = "importSpeciesList() project:" + project + " e" + e;
             s_log.error(returnStr);
             throw new AntwebException(returnStr);
         }
@@ -892,7 +892,7 @@ public class SpeciesListUpload extends AntwebUpload {
 		Statement stmt = null;
 		ResultSet rset = null;
         try {
-            query = "select root from project where project_name = \'" + project + "\'";
+            query = "select root from project where project_name = '" + project + "'";
             stmt = DBUtil.getStatement(getConnection(), "SpeciesListUpload.reloadSpeciesList()");
             rset = stmt.executeQuery(query);
             while (rset.next()) {
@@ -937,11 +937,11 @@ public class SpeciesListUpload extends AntwebUpload {
         //A.log("SpeciesListUpload.reloadSpeciesList(6) fileLoc:" + fileLoc);
 
 		if ("worldants".equals(project)) {
-		    int origWorldantsCount = (new TaxonDb(getConnection())).getWorldantsCount();
-		    String message = (new SpeciesListUploader(getConnection())).validateWorldantsFile(fileLoc, origWorldantsCount);
+		    int origWorldantsCount = new TaxonDb(getConnection()).getWorldantsCount();
+		    String message = new SpeciesListUploader(getConnection()).validateWorldantsFile(fileLoc, origWorldantsCount);
 		    //A.log("SpeciesListUpload.reloadSpeciesList(6) message:" + message);
             if (!"success".equals(message)) {
-              return (new UploadDetails(message));
+              return new UploadDetails(message);
             }
 		}        
 
@@ -957,7 +957,7 @@ public class SpeciesListUpload extends AntwebUpload {
           try {
             Utility.makeDirTree(webWorkingDir);          
             //A.log("reloadSpeciesList(6) fileLoc:" + uploadFile.getFileLoc() + " workingDir:"+ webWorkingDirCopy);
-            (new Utility()).copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);          
+            Utility.copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
           } catch (IOException e) {
             s_log.error("reloadSpeciesListFile(6) copyFile e:" + e);
             throw e;
@@ -1003,7 +1003,7 @@ public class SpeciesListUpload extends AntwebUpload {
       }
     } 
     
-    private void copySpeciesListFile(String project, UploadFile uploadFile) throws IOException {
+    private static void copySpeciesListFile(String project, UploadFile uploadFile) throws IOException {
         Utility util = new Utility();
         try {
             // copy project file to home directory
@@ -1013,16 +1013,16 @@ public class SpeciesListUpload extends AntwebUpload {
             String speciesListFile = uploadFile.getRoot() + Project.getSpeciesListDir() + projectRoot +  "/" + project + UploadFile.getSpeciesListTail();
             String message = " copy " + uploadFile.getFileLoc() + " to " + speciesListFile;
             s_log.info("copySpeciesListFile()" + message);
-            util.copyFile(uploadFile.getFileLoc(), speciesListFile);
+            Utility.copyFile(uploadFile.getFileLoc(), speciesListFile);
 
-            LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + message);
+            LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + message);
 
             // The web/workingdir always has one copy of the latest... in theory.  Similar logic in reloadSpeciesList().
             String webWorkingDir = uploadFile.getRoot() + "web/workingdir/";
-            util.makeDirTree(webWorkingDir); // Didn't work on dev
+            Utility.makeDirTree(webWorkingDir); // Didn't work on dev
             String webWorkingDirCopy = webWorkingDir + project + UploadFile.getSpeciesListTail();
             s_log.info("copySpeciesListFile() copy " + uploadFile.getFileLoc() + " to " + webWorkingDirCopy);
-            util.copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
+            Utility.copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
           } catch (IOException e) {
             s_log.error("copySpeciesListFile() e:" + e);
         }
@@ -1051,9 +1051,9 @@ public class SpeciesListUpload extends AntwebUpload {
 
     private boolean validNameKey(String key, Hashtable taxonHash) {
         boolean valid = false;
-        if ((taxonHash.containsKey(key))
-                && (!((String) taxonHash.get(key)).equals("null"))
-                && (!((String) taxonHash.get(key)).equals(""))) {
+        if (taxonHash.containsKey(key)
+                && !taxonHash.get(key).equals("null")
+                && !taxonHash.get(key).equals("")) {
             valid = true;
         }
         return valid;
@@ -1081,7 +1081,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
             s_log.info("isCurrentProjectFileFormat() testLine:" + theLine);
 
-            if ((!theLine.contains("Subfamily")) && (!theLine.contains("subfamily"))) {
+            if (!theLine.contains("Subfamily") && !theLine.contains("subfamily")) {
               s_log.error("isCurrentProjectFileFormat() " + fileName + " does not contain Subfamily");
               return false;
             }

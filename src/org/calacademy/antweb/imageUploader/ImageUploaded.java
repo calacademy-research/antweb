@@ -4,10 +4,10 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Utility;
-import org.calacademy.antweb.util.A;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.AntwebUtil;
 import org.calacademy.antweb.util.FileUtil;
+import org.im4java.core.CommandException;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IM4JavaException;
 import org.im4java.core.IMOperation;
@@ -30,25 +30,25 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class ImageUploaded {
 
-  private static Log s_log = LogFactory.getLog(ImageUploaded.class);
+  private static final Log s_log = LogFactory.getLog(ImageUploaded.class);
 
-  public static String imagesDir = AntwebProps.getDocRoot() + "images/";
+  public static final String imagesDir = AntwebProps.getDocRoot() + "images/";
 
-  public static Path tempDir = Path.of(AntwebProps.getDocRoot(), "temp", "images");
-  public static String backupDir = imagesDir + "backup/";
+  public static final Path tempDir = Path.of(AntwebProps.getDocRoot(), "temp", "images");
+  public static final String backupDir = imagesDir + "backup/";
 
   private int id = 0;
-  private String fileName = null;  
-  private String code = null;  
-  private String shot = null;  
+  private String fileName;
+  private String code;
+  private String shot;
   private int number = 0;
-  private String ext = null;
-  private Date created = null;
+  private String ext;
+  private Date created;
   boolean reUploaded = false;
-  private String errorMessage = null;
+  private String errorMessage;
   boolean isSpecimenDataExists = false;
 
-  private ImageUpload imageUpload = null;
+  private ImageUpload imageUpload;
 
   public ImageUploaded() {
   }
@@ -82,7 +82,7 @@ public class ImageUploaded {
         if (file.exists()) {
           // move the file to the backupdir.
           FileUtil.makeDir(backupDir);
-          (new Utility()).copyFile(fullName, backupDir + name);
+          Utility.copyFile(fullName, backupDir + name);
           setIsReUploaded(true);
         }
       } catch (FileNotFoundException e) {
@@ -226,7 +226,7 @@ public class ImageUploaded {
 
             Files.move(tempFile, Path.of(imagePath), REPLACE_EXISTING);
 
-        } catch (org.im4java.core.CommandException e) {
+        } catch (CommandException e) {
             AntwebUtil.log("im4java test e:" + e + " imageName:" + imageName + " imagePath:" + imagePath + " tags:" + tags);
         } catch (IOException e) {
             AntwebUtil.log("im4java test 2e:" + e);

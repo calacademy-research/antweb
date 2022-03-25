@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.Class;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -25,10 +26,11 @@ import org.apache.commons.logging.LogFactory;
     
 import org.calacademy.antweb.util.AntwebProps;    
 import org.calacademy.antweb.*;
+import org.calacademy.antweb.util.AntwebUtil;
 
 public final class PreviewHomePageAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(PreviewHomePageAction.class);
+    private static final Log s_log = LogFactory.getLog(PreviewHomePageAction.class);
 
     public ActionForward execute( ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -41,13 +43,12 @@ public final class PreviewHomePageAction extends Action {
         HomePageForm theForm = (HomePageForm) form;
         generateHomePage(theForm);
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
     
     public void generateHomePage(HomePageForm form) {        
         // get the doc root
-        Utility util = new Utility();
-        String docBase = util.getDocRoot();
+        String docBase = Utility.getDocRoot();
         
         // open the new file
         try {
@@ -64,7 +65,7 @@ public final class PreviewHomePageAction extends Action {
             int end;
             while ((str = in.readLine()) != null) {
                 //do the substitutions one at a time
-                if ((str.contains("[%")) && (str.contains("%]"))) {
+                if (str.contains("[%") && str.contains("%]")) {
                     while (str.length() > 0) {
                         start = str.indexOf("[%");
                         end = str.indexOf("%]");
@@ -93,7 +94,7 @@ public final class PreviewHomePageAction extends Action {
             in.close();
         } catch (IOException e) {
             s_log.error("generateHomePage() e:" + e);
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+            AntwebUtil.logStackTrace(e);
         }
     }
     
@@ -101,31 +102,21 @@ public final class PreviewHomePageAction extends Action {
 
         String method;
         Object result = null;
-        Formatter format = new org.calacademy.antweb.Formatter();
+        Formatter format = new Formatter();
         Field field;
         java.lang.Class thisClass;
         Object[] paramsObj = {};
         try {
-            java.lang.Class params[] = {};
+            Class[] params = {};
             Method thisMethod;            
             method = "get" + format.capitalizeFirstLetter(slot);
-            thisClass = java.lang.Class.forName("org.calacademy.antweb.curate.HomePageForm");
+            thisClass = Class.forName("org.calacademy.antweb.curate.HomePageForm");
             thisMethod = thisClass.getDeclaredMethod(method, params);
 
             result = thisMethod.invoke(form, paramsObj);
             
-        } catch (SecurityException e) {
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-        } catch (IllegalArgumentException e) {
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-        } catch (ClassNotFoundException e) {
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-        } catch (NoSuchMethodException e) {
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-        } catch (IllegalAccessException e) {
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-        } catch (InvocationTargetException e) {
-            org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
+        } catch (SecurityException | IllegalArgumentException | ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            AntwebUtil.logStackTrace(e);
         }
         return result;
     }

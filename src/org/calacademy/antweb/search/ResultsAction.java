@@ -9,7 +9,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class ResultsAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ResultsAction.class);
+    private static final Log s_log = LogFactory.getLog(ResultsAction.class);
     
     /* this takes a list of numbers representing which items were chosen,
        and the list of search results, and hands back a list of the taxa chosen
@@ -19,8 +19,8 @@ public class ResultsAction extends Action {
         ArrayList<ResultItem> chosenResults = new ArrayList<>();
 
         for (String choice : chosen) {
-          int chosenInt = (Integer.valueOf(choice)).intValue();
-          ResultItem thisItem = (ResultItem) searchResults.get(chosenInt);
+          int chosenInt = Integer.parseInt(choice);
+          ResultItem thisItem = searchResults.get(chosenInt);
           chosenResults.add(thisItem);
         }
 

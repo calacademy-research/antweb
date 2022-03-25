@@ -12,7 +12,7 @@ import org.calacademy.antweb.home.*;
 
 public class MuseumTaxonCountDb extends CountDb {
     
-    private static Log s_log = LogFactory.getLog(MuseumTaxonCountDb.class);
+    private static final Log s_log = LogFactory.getLog(MuseumTaxonCountDb.class);
         
     public MuseumTaxonCountDb(Connection connection) {
       super(connection);
@@ -64,7 +64,7 @@ public class MuseumTaxonCountDb extends CountDb {
        throws SQLException {
           s_log.debug("imageCountCrawl()");
                 
-          ArrayList<Museum> museums = (new MuseumDb(getConnection())).getMuseums();
+          ArrayList<Museum> museums = new MuseumDb(getConnection()).getMuseums();
           for (Museum museum : museums) {            
              imageCountCrawl(museum);
           }    
@@ -74,7 +74,7 @@ public class MuseumTaxonCountDb extends CountDb {
        throws SQLException {
           //A.log("imageCountCrawl(" + museumCode + ")");
                 
-          Museum museum = (new MuseumDb(getConnection())).getMuseum(museumCode);
+          Museum museum = new MuseumDb(getConnection()).getMuseum(museumCode);
           if (museum != null) {
             imageCountCrawl(museum);
           } else {

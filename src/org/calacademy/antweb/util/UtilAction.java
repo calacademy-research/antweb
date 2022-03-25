@@ -10,6 +10,7 @@ import javax.servlet.http.*;
 //import org.apache.fop.apps.FOPException;
 //import org.apache.fop.messaging.MessageHandler;
 
+import com.zonageek.jpeg.JpegException;
 import org.apache.struts.action.*;
 
 import com.zonageek.jpeg.Jpeg;
@@ -30,7 +31,7 @@ import com.google.gson.*;
 
 public class UtilAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(UtilAction.class);
+    private static final Log s_log = LogFactory.getLog(UtilAction.class);
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
@@ -38,7 +39,7 @@ public class UtilAction extends Action {
         HttpSession session = request.getSession();
         HttpUtil.setUtf8(request, response); 
 
-        java.sql.Connection connection = null;
+        Connection connection = null;
 		ActionForward returnLoc = null;
 
 		UtilForm theForm = (UtilForm) form;
@@ -62,31 +63,31 @@ public class UtilAction extends Action {
 
 			  if (action.equals("unlockImageUpload")) {
 				AntwebUtil.writeFile("/var/www/html/imageUpload/" + "imageUploadInProcess.txt", "0");
-				returnLoc = (mapping.findForward("success"));
+				returnLoc = mapping.findForward("success");
 			  }
 			  if ("testMessage".equals(action)) {
 				   String message = "Test Message";
 				   s_log.warn("execute() " + message);
 				   request.setAttribute("message", message);
-				   return (mapping.findForward("message")); 
+				   return mapping.findForward("message");
 			  }
 			  if ("unboldMessage".equals(action)) {
 				   String message = "Test Message";
 				   s_log.warn("execute() " + message);
 				   request.setAttribute("message", message);
-				   return (mapping.findForward("unboldMessage")); 
+				   return mapping.findForward("unboldMessage");
 			  }
 			  if ("bareMessage".equals(action)) {
 				   String message = "Bare Message";
 				   s_log.warn("execute() " + message);
 				   request.setAttribute("message", message);
-				   return (mapping.findForward("bareMessage")); 
+				   return mapping.findForward("bareMessage");
 			  }
 			  if ("testMobile".equals(action)) {
 				   String message = "Test Mobile";
 				   s_log.warn("execute() " + message);
 				   request.setAttribute("message", message);
-				   return (mapping.findForward("testMobile")); 
+				   return mapping.findForward("testMobile");
 			  }
 			  
 			  if (action.equals("checkIntegrity")) {
@@ -142,23 +143,23 @@ public class UtilAction extends Action {
 				DBUtil.logQueryStats();
 				String message = "Query stats logged to queryStats.log. <a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=queryStatsLog'>Query Stats Log</a>";
 				request.setAttribute("message", message);
-				returnLoc = (mapping.findForward("adminMessage"));                  
+				returnLoc = mapping.findForward("adminMessage");
 			  }
 			  if (action.equals("homonyms")) {
 				HomonymDb homonymDb = new HomonymDb(connection);
 				ArrayList<Taxon> homonyms = homonymDb.getHomonyms();
 				//s_log.error("execute()  homonyms:" + homonyms);
 				request.setAttribute("homonyms", homonyms);
-				returnLoc = (mapping.findForward("homonyms"));                  
+				returnLoc = mapping.findForward("homonyms");
 			  }
 
 			  if (action.equals("events")) {
-				ArrayList<Event> events = (new EventDb(connection)).getEvents();
+				ArrayList<Event> events = new EventDb(connection).getEvents();
 				request.setAttribute("events", events);
-				HashMap<Integer, Login> curators = (new LoginDb(connection)).getCuratorMap();
+				HashMap<Integer, Login> curators = new LoginDb(connection).getCuratorMap();
 				//A.log("execute()  events:" + events + " curators:" + curators);
 				request.setAttribute("curators", curators);
-				returnLoc = (mapping.findForward("events"));                  
+				returnLoc = mapping.findForward("events");
 			  }
 
 			  if (action.equals("reloadAntwebMgr")) {
@@ -203,7 +204,7 @@ public class UtilAction extends Action {
                     AntwebMgr.populate(connection, true);
                     request.setAttribute("message", "AntwebMgr Reloaded.");                
                 }
-                returnLoc = (mapping.findForward("message"));
+                returnLoc = mapping.findForward("message");
                 return returnLoc;                  
 			  }
 
@@ -211,7 +212,7 @@ public class UtilAction extends Action {
 				String message = LogMgr.archiveLogs();
 
 				request.setAttribute("message", message);
-				returnLoc = (mapping.findForward("adminMessage"));                  
+				returnLoc = mapping.findForward("adminMessage");
 			  } 
 
 
@@ -221,7 +222,7 @@ public class UtilAction extends Action {
 				String message = " country:" + country + " gson:" + gson.toJson(country);                    
 
 				request.setAttribute("message", message);
-				returnLoc = (mapping.findForward("adminMessage"));                  
+				returnLoc = mapping.findForward("adminMessage");
 			  }
 
 			  if (action.equals("emailTest")) {
@@ -231,47 +232,44 @@ public class UtilAction extends Action {
 				Emailer.sendMail(recipients, subject, body);
 				String message = "Message sent";                    
 				request.setAttribute("message", message);
-				returnLoc = (mapping.findForward("adminMessage"));                  
+				returnLoc = mapping.findForward("adminMessage");
 			  }
 
 			  if (action.equals("cpuCheck")) {
 			    String message = AntwebSystem.cpuCheck();              
 				request.setAttribute("message", message);
-				returnLoc = (mapping.findForward("adminMessage"));                  
+				returnLoc = mapping.findForward("adminMessage");
 			  }
 
 			  if (action.equals("diskFree")) {
 			    String message = FileUtil.getDiskFree();              
 				request.setAttribute("message", message);
-				returnLoc = (mapping.findForward("adminMessage"));                  
+				returnLoc = mapping.findForward("adminMessage");
 			  }
 
 			  if (action.equals("isDiskLow")) {
 			    int percent = FileUtil.getPercentDiskFull();              
                 String message = "Disk full:" + percent;
 				request.setAttribute("message", message);
-				returnLoc = (mapping.findForward("adminMessage"));                  
+				returnLoc = mapping.findForward("adminMessage");
 			  }
 			  
 			  if (action.equals("imageCheck")) {
 			    AntwebFunctions.imageCheck();     
 			    String message = "imageCheck performed.";         
 				request.setAttribute("message", message);
-				returnLoc = (mapping.findForward("adminMessage"));                  
+				returnLoc = mapping.findForward("adminMessage");
 			  }	  			 
 
 			  if (returnLoc != null) return returnLoc;
 			}               
 			request.setAttribute("message", "action not found:" + action);
-			return (mapping.findForward("message")); 
+			return mapping.findForward("message");
 
-        } catch (SQLException e) {
+        } catch (SQLException | IOException e) {
             s_log.error("execute() action:" + action + " e:" + e);
             AntwebUtil.errorStackTrace(e);
-		} catch (IOException e) {
-			s_log.error("execute() action:" + action + " e:" + e);
-			AntwebUtil.errorStackTrace(e);
-        } finally {
+		} finally {
             DBUtil.close(connection, this, "UploadAction.execute() 1");
         }
 
@@ -302,17 +300,13 @@ public class UtilAction extends Action {
         try {
           jpeg.read(new FileInputStream(imagePath));
   
-        } catch (com.zonageek.jpeg.JpegException e) {
+        } catch (JpegException | IOException e) {
           message = "WSS. zonageekTest() e:" + e + " on " + imagePath;
           AntwebUtil.log(message);
           
           //continue;
-        } catch (java.io.IOException e) {
-          message = "WSS. zonageekTest() e:" + e + " on " + imagePath;
-          AntwebUtil.log(message);
-          //continue;
         }
-      }
+	  }
       return message;
     }
     

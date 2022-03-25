@@ -6,6 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 import java.sql.*;
+import java.util.Date;
 import javax.sql.*;
 
 import org.calacademy.antweb.*;
@@ -20,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 public final class SpeciesListAction extends Action {
 /* /getSpeciesList.do?name=allantwebants   This class returns a link to the species authority file */
 
-    private static Log s_log = LogFactory.getLog(SpeciesListAction.class);
+    private static final Log s_log = LogFactory.getLog(SpeciesListAction.class);
 
     public ActionForward execute (
         ActionMapping mapping, ActionForm form,
@@ -29,14 +30,14 @@ public final class SpeciesListAction extends Action {
 
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
-        java.util.Date startTime = new java.util.Date();     
+        Date startTime = new Date();
         
         DynaActionForm df = (DynaActionForm) form;
         String name = (String) df.get("name");       // (project name)
         if (name != null) {
-          java.sql.Connection connection = null;   
+          Connection connection = null;
           try {
-            javax.sql.DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SpeciesListAction.execute()");
         
             if (name.equals(Project.ALLANTWEBANTS)) {
@@ -57,7 +58,7 @@ public final class SpeciesListAction extends Action {
                     if (dir.equals("mad")) dir = "madagascar";
                     if (dir.equals("cal")) dir = "california";
                     String url = AntwebProps.getDomainApp() + "/web/speciesList/" + dir + "/" + name + UploadFile.getSpeciesListTail();
-                    message = "<b>\'Right-click\' and \'Save Link As\' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
+                    message = "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
                     s_log.info(message);
                 }
                 request.setAttribute("message", message);
@@ -100,7 +101,7 @@ public final class SpeciesListAction extends Action {
 
             String theQuery =
                 "select taxon_name from taxon where family = 'formicidae' "
-                  + " and rank in ('species', 'subspecies') "
+                  + " and taxarank in ('species', 'subspecies') "
                   + " and taxon_name in (select taxon_name from proj_taxon where project_name = '" + name + "')";
  
             Statement stmt = null;
@@ -116,7 +117,7 @@ public final class SpeciesListAction extends Action {
                 while (rset.next()) {
                   ++specimenCount;
                   String taxonName = rset.getString(1);
-                  Species specie = (Species) (new TaxonDb(connection)).getTaxon(taxonName);
+                  Species specie = (Species) new TaxonDb(connection).getTaxon(taxonName);
 
                   data.append(specie.getData() + "\n");
                 }
@@ -127,7 +128,7 @@ public final class SpeciesListAction extends Action {
             s_log.debug("createSpeciesListLink() fullPath:" + fullPath);
             AntwebUtil.writeFile(fullPath, data.toString());
         }
-        String message = "<b>\'Right-click\' and \'Save Link As\' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
+        String message = "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
         s_log.info(message);
         request.setAttribute("message", message);
         return mapping.findForward("message");
@@ -140,7 +141,7 @@ public final class SpeciesListAction extends Action {
         StringBuffer data = new StringBuffer();    
 
         String dir = "/web/data/";
-        (new Utility()).createDirectory(dir);
+        new Utility().createDirectory(dir);
         String fileName = "allantwebants" + UploadFile.getSpeciesListTail();
         String fullPath = AntwebProps.getDocRoot() + dir + fileName;
         
@@ -152,7 +153,7 @@ public final class SpeciesListAction extends Action {
       
             String theQuery =
                 "select taxon_name from taxon where family = 'formicidae' "
-                  + " and rank in ('species', 'subspecies') ";
+                  + " and taxarank in ('species', 'subspecies') ";
 
             Statement stmt = null;
             ResultSet rset = null;
@@ -168,7 +169,7 @@ public final class SpeciesListAction extends Action {
               while (rset.next()) {
                 ++specimenCount;
                 String taxonName = rset.getString(1);
-                Species specie = (Species) (new TaxonDb(connection)).getTaxon(taxonName);
+                Species specie = (Species) new TaxonDb(connection).getTaxon(taxonName);
 
                 data.append(specie.getData() + "\n");
               }
@@ -181,7 +182,7 @@ public final class SpeciesListAction extends Action {
         }
         
         String url = AntwebProps.getDomainApp() + dir + fileName;
-        String message = "<b>\'Right-click\' and \'Save Link As\' to download:</b><br>&nbsp;&nbsp;&nbsp;&nbsp; <a href=\"" + url + "\">" + url + "</a>";
+        String message = "<b>'Right-click' and 'Save Link As' to download:</b><br>&nbsp;&nbsp;&nbsp;&nbsp; <a href=\"" + url + "\">" + url + "</a>";
         s_log.info("getAllAntwebAnts() specimenCount:" + specimenCount);
         request.setAttribute("message", message);
         return mapping.findForward("message");

@@ -22,7 +22,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class MapResultsAction extends ResultsAction {
 
-    private static Log s_log = LogFactory.getLog(MapResultsAction.class);
+    private static final Log s_log = LogFactory.getLog(MapResultsAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -80,14 +80,14 @@ public final class MapResultsAction extends ResultsAction {
 			DBUtil.close(connection, this, "MapResultsAction.execute()");
 		}  
 		        
-        String sizeStr = (map.getChosenList() == null) ? "null" : "" + map.getChosenList().size();
+        String sizeStr = map.getChosenList() == null ? "null" : "" + map.getChosenList().size();
         s_log.debug("MapResultsAction.execute() resultRank:" + resultRank + " title:" + map.getTitle() + " chosenList.size:" + sizeStr + " map:" + map);
 
         session.setAttribute("title", map.getTitle());  // now redundant. Could change the client code as well.
         session.setAttribute("map", map);
         session.setAttribute("chosenList", map.getChosenList());
 
-        return (mapping.findForward("success"));
+        return mapping.findForward("success");
     }
     
     public Map getMap(ArrayList<ResultItem> searchResults, ArrayList<ResultItem> taxonList, ArrayList<String> chosenList, String resultRank
@@ -180,8 +180,8 @@ public final class MapResultsAction extends ResultsAction {
 		}
         for (String chosen : chosenList) {
           if (chosen == null) s_log.warn("getSpecimensCodesForTaxafromResults() chosenList:" + chosenList);
-          int thisChosen = (Integer.valueOf(chosen)).intValue();
-          ResultItem selectedTaxon = (ResultItem) taxonList.get(thisChosen);
+          int thisChosen = Integer.parseInt(chosen);
+          ResultItem selectedTaxon = taxonList.get(thisChosen);
           for (ResultItem item : searchResults) {
 			try {
               //s_log.warn("getSpecimensCodesForTaxaFromResults() selectedTaxon.getFullName():" + selectedTaxon.getFullName() 
@@ -189,7 +189,7 @@ public final class MapResultsAction extends ResultsAction {
               if (selectedTaxon.getFullName().equals(item.getFullName())) {
                 codeList.add(item.getCode());
               }
-			} catch (java.lang.IndexOutOfBoundsException e) {
+			} catch (IndexOutOfBoundsException e) {
 				s_log.warn("getSpecimensCodesForTaxaFromResults() thisChosen:" + thisChosen + " searchResults:" + searchResults);
 				throw e;
 			}
@@ -220,8 +220,8 @@ public final class MapResultsAction extends ResultsAction {
         int thisChosen = 0;
         s_log.debug("getSpecimensFromResults()");
         for (String chosen : chosenList) {
-            thisChosen = (Integer.valueOf(chosen)).intValue();
-            thisItem = (ResultItem) searchResults.get(thisChosen);
+            thisChosen = Integer.parseInt(chosen);
+            thisItem = searchResults.get(thisChosen);
             codeList.add(thisItem.getCode());
         }
         
