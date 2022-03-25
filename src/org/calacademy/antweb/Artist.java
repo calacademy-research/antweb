@@ -11,7 +11,7 @@ import java.util.Comparator;
     
 public class Artist {
 
-    private static Log s_log = LogFactory.getLog(Artist.class);
+    private static final Log s_log = LogFactory.getLog(Artist.class);
     
     private int id;
     private String name;

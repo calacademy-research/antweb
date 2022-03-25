@@ -31,7 +31,7 @@ import com.google.gson.*;
 
 public class UtilAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(UtilAction.class);
+    private static final Log s_log = LogFactory.getLog(UtilAction.class);
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {

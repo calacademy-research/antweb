@@ -23,7 +23,7 @@ Useful query to see how lock the locks have lasted:
       super(connection);
     }
 
-    private static Log s_log = LogFactory.getLog(OperationLockDb.class);
+    private static final Log s_log = LogFactory.getLog(OperationLockDb.class);
 
     public void setOperationLock(OperationLock operationLock) throws SQLException {
         int locked = operationLock.isLocked() ? 1 : 0;

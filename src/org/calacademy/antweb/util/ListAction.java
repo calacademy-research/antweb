@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ListAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ListAction.class);
+    private static final Log s_log = LogFactory.getLog(ListAction.class);
 
     public ActionForward execute(
         ActionMapping mapping,

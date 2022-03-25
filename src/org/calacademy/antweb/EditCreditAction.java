@@ -25,7 +25,7 @@ import org.calacademy.antweb.util.*;
 
 public class EditCreditAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(EditCreditAction.class);
+    private static final Log s_log = LogFactory.getLog(EditCreditAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response) {

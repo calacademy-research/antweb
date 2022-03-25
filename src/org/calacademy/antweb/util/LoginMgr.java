@@ -193,7 +193,7 @@ public class LoginMgr extends Manager {
 
 // ------------------------------------------------
 
-    private static HashMap<String, Counts> imageUploadCounts = new HashMap<>();
+    private static final HashMap<String, Counts> imageUploadCounts = new HashMap<>();
 
     static class Counts {
       int imageUploads = 0;

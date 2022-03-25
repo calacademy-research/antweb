@@ -11,9 +11,9 @@ import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 
 public class SearchDb {
-    private static Log s_log = LogFactory.getLog(SearchDb.class);        
+    private static final Log s_log = LogFactory.getLog(SearchDb.class);
 
-    private Connection connection;
+    private final Connection connection;
     
     public SearchDb(Connection connection) {
       this.connection = connection;

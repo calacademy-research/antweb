@@ -474,7 +474,7 @@ public class Formatter implements Serializable {
     return Formatter.commaFormat(longNum) + "MB";
   }
         
-  public static String ignoreUtf8 = "()/_.,&-]";  
+  public static final String ignoreUtf8 = "()/_.,&-]";
   public static boolean hasSpecialCharacter(String str) {
     String extras = "äáëéìöü";
     extras += "óÑ";  // Added May 202 for Córdoba and Ñuble

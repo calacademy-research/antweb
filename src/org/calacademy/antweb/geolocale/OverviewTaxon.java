@@ -11,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public abstract class OverviewTaxon extends TaxonSet {
 
-    private static Log s_log = LogFactory.getLog(OverviewTaxon.class);
+    private static final Log s_log = LogFactory.getLog(OverviewTaxon.class);
 
     public OverviewTaxon() {
     }

@@ -9,7 +9,7 @@ import org.apache.commons.logging.LogFactory;
 /** Class ResultItem keeps track of the information about a search item */
 public final class ResultItem extends Item implements Serializable, Comparable<ResultItem> {
 
-    private static Log s_log = LogFactory.getLog(ResultItem.class);
+    private static final Log s_log = LogFactory.getLog(ResultItem.class);
 
     public int compareTo(ResultItem other) {
         int compareInt = getFullName().compareTo(other.getFullName());

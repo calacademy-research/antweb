@@ -13,7 +13,7 @@ import org.calacademy.antweb.util.*;
 
 public class UploadUtil {
 
-    private static Log s_log = LogFactory.getLog(UploadUtil.class); 
+    private static final Log s_log = LogFactory.getLog(UploadUtil.class);
             
     static String getFirstLine(String fileName, String encoding) {
         String theLine = "";

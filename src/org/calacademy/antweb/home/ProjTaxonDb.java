@@ -11,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class ProjTaxonDb extends EditableTaxonSetDb {
     
-    private static Log s_log = LogFactory.getLog(ProjTaxonDb.class);
+    private static final Log s_log = LogFactory.getLog(ProjTaxonDb.class);
         
     public ProjTaxonDb(Connection connection) {
       super(connection);

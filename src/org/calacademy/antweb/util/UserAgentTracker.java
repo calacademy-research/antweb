@@ -19,12 +19,12 @@ public class UserAgentTracker {
 
   private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);
 
-  private static Map<String, Integer> agentsMap = new HashMap<>();
+  private static final Map<String, Integer> agentsMap = new HashMap<>();
   private static int nullAgent = 0;
 
-  private static Set<String> knownAgentsSet = new HashSet<>();
+  private static final Set<String> knownAgentsSet = new HashSet<>();
       
-  private static int OVERACTIVE = 1000;
+  private static final int OVERACTIVE = 1000;
 
   public static void init(Connection connection) {
       

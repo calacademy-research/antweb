@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class AdminAlert {
 
-    private static Log s_log = LogFactory.getLog(AdminAlert.class);
+    private static final Log s_log = LogFactory.getLog(AdminAlert.class);
 
     public AdminAlert() {
     }

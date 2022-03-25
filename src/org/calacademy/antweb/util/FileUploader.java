@@ -16,7 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class FileUploader extends HttpServlet {
 
-  private static Log s_log = LogFactory.getLog(FileUploader.class);
+  private static final Log s_log = LogFactory.getLog(FileUploader.class);
 
   // Accessible as: http://localhost/antweb/specimen/CASENT0106322X
     

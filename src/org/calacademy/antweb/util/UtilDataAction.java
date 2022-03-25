@@ -35,7 +35,7 @@ import com.google.gson.*;
 
 public class UtilDataAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(UtilDataAction.class);
+    private static final Log s_log = LogFactory.getLog(UtilDataAction.class);
 
     private static String m_inComputeProcess;
 

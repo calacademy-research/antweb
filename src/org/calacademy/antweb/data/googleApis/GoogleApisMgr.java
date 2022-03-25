@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class GoogleApisMgr {
 
-    private static Log s_log = LogFactory.getLog(GoogleApisMgr.class);
+    private static final Log s_log = LogFactory.getLog(GoogleApisMgr.class);
       
 /*
 https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagascar&key=AntwebProps.getGoogleMapKey()	
@@ -29,8 +29,8 @@ https://maps.googleapis.com/maps/api/geocode/json?address=Antananarivo, Madagasc
 */
 
     static int apiCallCount = 0;      
-    static int maxDevApiCall = 10;
-    static int maxLiveApiCall = 1000;
+    static final int maxDevApiCall = 10;
+    static final int maxLiveApiCall = 1000;
     static int maxApiCall = maxLiveApiCall;
 
     public static String fetchData(Connection connection) {

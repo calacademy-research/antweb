@@ -12,7 +12,7 @@ public class DummyTaxon extends Taxon {
      * are keyed on taxonName
      */
 
-    private static Log s_log = LogFactory.getLog(DummyTaxon.class);
+    private static final Log s_log = LogFactory.getLog(DummyTaxon.class);
 
     private String bioregionMap;
 

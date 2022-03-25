@@ -10,7 +10,7 @@ import org.calacademy.antweb.home.*;
 
 public class ImageCountDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(ImageCountDb.class);
+    private static final Log s_log = LogFactory.getLog(ImageCountDb.class);
 
     public ImageCountDb(Connection connection) {
       super(connection);

@@ -19,7 +19,7 @@ import org.calacademy.antweb.util.AntwebUtil;
 
 public final class SimpleContentEditorReadAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SimpleContentEditorReadAction.class);
+    private static final Log s_log = LogFactory.getLog(SimpleContentEditorReadAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

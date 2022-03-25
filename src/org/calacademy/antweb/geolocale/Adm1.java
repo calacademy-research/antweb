@@ -10,7 +10,7 @@ import org.calacademy.antweb.*;
 
 public class Adm1 extends Geolocale {
 
-    private static Log s_log = LogFactory.getLog(Adm1.class);
+    private static final Log s_log = LogFactory.getLog(Adm1.class);
     
     public Adm1() {
     }

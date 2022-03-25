@@ -19,7 +19,7 @@ public class DescEditImageUploadAction extends Action {
 
     //public static int IMG_WIDTH = 500;
     
-    private static Log s_log = LogFactory.getLog(DescEditImageUploadAction.class);
+    private static final Log s_log = LogFactory.getLog(DescEditImageUploadAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {

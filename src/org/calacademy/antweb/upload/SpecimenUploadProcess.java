@@ -343,11 +343,11 @@ public class SpecimenUploadProcess extends SpecimenUploadSupport {
 		}
     }
 
-    private static int figuredElevation = 0;
-    private static int greaterThanElevation = 0;
-    private static int rangeElevation = 0;
-    private static int decimalElevation = 0;
-    private static int unfathomableElevation = 0;
+    private static final int figuredElevation = 0;
+    private static final int greaterThanElevation = 0;
+    private static final int rangeElevation = 0;
+    private static final int decimalElevation = 0;
+    private static final int unfathomableElevation = 0;
 
     private void elevationReport() {
       s_log.info("FiguredElevations:" + figuredElevation

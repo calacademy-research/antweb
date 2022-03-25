@@ -19,7 +19,7 @@ public final class ImagedAction extends Action {
 
 // Not used?
 
-    private static Log s_log = LogFactory.getLog(ImagedAction.class);
+    private static final Log s_log = LogFactory.getLog(ImagedAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

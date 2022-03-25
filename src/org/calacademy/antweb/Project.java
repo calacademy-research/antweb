@@ -15,17 +15,17 @@ import org.apache.commons.logging.LogFactory;
 
 public class Project extends LocalityOverview implements SpeciesListable, Comparable<Project>, Countable {      // was LocalityOverview
 
-    private static Log s_log = LogFactory.getLog(Project.class);
+    private static final Log s_log = LogFactory.getLog(Project.class);
     
     // This is the directory where all of the generated pages are put...
    // public static final String s_speciesListDir = "web/speciesList/";
 
-    public static String ALLANTWEBANTS = "allantwebants";
-    public static String WORLDANTS = "worldants";
-    public static String FOSSILANTS = "fossilants";
-    public static String BAYAREAANTS = "bayareaants";
+    public static final String ALLANTWEBANTS = "allantwebants";
+    public static final String WORLDANTS = "worldants";
+    public static final String FOSSILANTS = "fossilants";
+    public static final String BAYAREAANTS = "bayareaants";
 
-    public static String PROJECT = "PROJECT";
+    public static final String PROJECT = "PROJECT";
     public static String GLOBAL = "GLOBAL";
 
     //public static String CALANTS = "calants";

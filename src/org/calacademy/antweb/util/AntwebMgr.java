@@ -12,7 +12,6 @@ import org.calacademy.antweb.imageUploader.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.Map;
 
 import java.sql.*;
 

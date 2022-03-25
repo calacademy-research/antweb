@@ -6,11 +6,9 @@ import javax.servlet.http.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.util.*;
-
 public final class BioregionMapMgrForm extends ActionForm {
 
-    private static Log s_log = LogFactory.getLog(BioregionMapMgrForm.class);
+    private static final Log s_log = LogFactory.getLog(BioregionMapMgrForm.class);
 
     protected String taxonName;
     protected boolean isAntarctica = false;

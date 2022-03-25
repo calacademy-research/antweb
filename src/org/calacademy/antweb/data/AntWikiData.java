@@ -9,7 +9,7 @@ import org.apache.regexp.*;
 
 public final class AntWikiData {
 
-    private static Log s_log = LogFactory.getLog(AntWikiData.class);
+    private static final Log s_log = LogFactory.getLog(AntWikiData.class);
 
     private String shortTaxonName;
     private String subfamily;

@@ -16,10 +16,10 @@ import org.apache.commons.logging.LogFactory;
 
 public class SpecimenUploader {
 
-    private static Log s_log = LogFactory.getLog(SpecimenUploader.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenUploader.class);
     private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
 
-    private Connection connection;
+    private final Connection connection;
     
     public SpecimenUploader(Connection connection) {
       this.connection = connection;

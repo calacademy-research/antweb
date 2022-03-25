@@ -82,9 +82,9 @@ Or, if there are stmts and/or rsets...
 */
 
     static class DbRequest {
-      String name;
-      String queryString;
-      Date date;
+      final String name;
+      final String queryString;
+      final Date date;
 
       DbRequest(String name, String queryString, Date date) {
         this.name = name;
@@ -98,8 +98,8 @@ Or, if there are stmts and/or rsets...
     }
 
     private static final Log s_log = LogFactory.getLog(DBUtil.class);
-    private static HashMap<NewProxyConnection, String> connectionMap = new HashMap<>();
-    private static HashMap<NewProxyConnection, DbRequest> connectionRequestMap = new HashMap<>();
+    private static final HashMap<NewProxyConnection, String> connectionMap = new HashMap<>();
+    private static final HashMap<NewProxyConnection, DbRequest> connectionRequestMap = new HashMap<>();
 
     // Called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
     public static DataSource getDataSource() {
@@ -142,12 +142,12 @@ Or, if there are stmts and/or rsets...
       return connection;    
     }
 
-    private static int MAX_BUSY_CONNECTIONS = 10;
+    private static final int MAX_BUSY_CONNECTIONS = 10;
     public static boolean isServerBusy() {
       return getServerBusyConnectionCount() >= MAX_BUSY_CONNECTIONS;
     }
  
-    private static HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<>();
+    private static final HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<>();
     private static HashMap<String, QueryStats> s_queryStatsMap = new HashMap<>();
 
     
@@ -397,8 +397,8 @@ Or, if there are stmts and/or rsets...
       return s_serverBusyConnectionCount;
     }
 
-    static int MAXNUMBUSYCONNECTIONS = 100; // was 13;
-    private static int MINUTES = 1000 * 60;
+    static final int MAXNUMBUSYCONNECTIONS = 100; // was 13;
+    private static final int MINUTES = 1000 * 60;
     private static Date lastLog;
     
     public static boolean isServerBusy(DataSource dataSource, HttpServletRequest request)
@@ -430,7 +430,7 @@ Or, if there are stmts and/or rsets...
       }
     }
 
-    private static int s_threshold = 8;
+    private static final int s_threshold = 8;
     private static String s_lastMethod;
     private static int s_sameMethod = 0;
     public static void profileQuery(String method, Date startTime, String query) {

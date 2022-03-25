@@ -8,7 +8,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class Upload {
 
-    private static Log s_log = LogFactory.getLog(Upload.class);
+    private static final Log s_log = LogFactory.getLog(Upload.class);
 
     private int id;
     private int uploadId;

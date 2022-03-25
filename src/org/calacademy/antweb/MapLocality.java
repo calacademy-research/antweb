@@ -18,7 +18,7 @@ import org.calacademy.antweb.util.*;
 
 public class MapLocality {
 
-    private static Log s_log = LogFactory.getLog(MapLocality.class);
+    private static final Log s_log = LogFactory.getLog(MapLocality.class);
 	
 	protected String staticMapParams;
 	protected ArrayList points = new ArrayList();

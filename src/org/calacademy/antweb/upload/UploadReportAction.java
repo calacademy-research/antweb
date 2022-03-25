@@ -13,7 +13,7 @@ import org.calacademy.antweb.util.*;
     
 public final class UploadReportAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(UploadReportAction.class);
+    private static final Log s_log = LogFactory.getLog(UploadReportAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)

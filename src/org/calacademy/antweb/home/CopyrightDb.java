@@ -13,9 +13,9 @@ import org.calacademy.antweb.util.*;
 
 public class CopyrightDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(CopyrightDb.class);
+    private static final Log s_log = LogFactory.getLog(CopyrightDb.class);
 
-    private static int lastRequest = 0;
+    private static final int lastRequest = 0;
     private static Copyright lastResponse;
     
     public CopyrightDb(Connection connection) {

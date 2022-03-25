@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class SearchItem extends Item implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(SearchItem.class);
+    private static final Log s_log = LogFactory.getLog(SearchItem.class);
 
     // These are not found in ResultItem
 	private SearchItem synonym;

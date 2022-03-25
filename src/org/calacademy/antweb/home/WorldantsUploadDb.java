@@ -12,7 +12,7 @@ import org.calacademy.antweb.util.*;
 
 public class WorldantsUploadDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(WorldantsUploadDb.class);
+    private static final Log s_log = LogFactory.getLog(WorldantsUploadDb.class);
 
     public WorldantsUploadDb(Connection connection) {
       super(connection);

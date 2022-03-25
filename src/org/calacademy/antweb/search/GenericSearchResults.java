@@ -4,7 +4,6 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 import java.io.*;
-import java.sql.ResultSet;
 import java.util.*;
 
 import org.apache.commons.logging.Log; 
@@ -26,7 +25,7 @@ import org.apache.commons.logging.LogFactory;
  
 public class GenericSearchResults implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(GenericSearchResults.class);
+    private static final Log s_log = LogFactory.getLog(GenericSearchResults.class);
 
     protected static int maxResultsToShow = 20;
     protected ArrayList<ResultItem> rset;

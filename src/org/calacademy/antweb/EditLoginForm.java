@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class EditLoginForm extends ActionForm {
 
-    private static Log s_log = LogFactory.getLog(EditLoginForm.class);
+    private static final Log s_log = LogFactory.getLog(EditLoginForm.class);
 
     private String id;
     private String name;

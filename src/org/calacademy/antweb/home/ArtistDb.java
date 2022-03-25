@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Artist;
 import org.calacademy.antweb.Curator;
 import org.calacademy.antweb.Login;
-import org.calacademy.antweb.util.A;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.DBUtil;
 
@@ -22,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class ArtistDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(ArtistDb.class);
+    private static final Log s_log = LogFactory.getLog(ArtistDb.class);
     //private Connection connection = null;
     
     public ArtistDb(Connection connection) {

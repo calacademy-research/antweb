@@ -11,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class HomonymDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(HomonymDb.class);
+    private static final Log s_log = LogFactory.getLog(HomonymDb.class);
         
     public HomonymDb(Connection connection) {
       super(connection);

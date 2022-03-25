@@ -11,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class OrphansDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(OrphansDb.class);
+    private static final Log s_log = LogFactory.getLog(OrphansDb.class);
     
     public OrphansDb(Connection connection) {
       super(connection);

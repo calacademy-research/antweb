@@ -11,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class UtilDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(UtilDb.class);
+    private static final Log s_log = LogFactory.getLog(UtilDb.class);
         
     public UtilDb(Connection connection) {
       super(connection);

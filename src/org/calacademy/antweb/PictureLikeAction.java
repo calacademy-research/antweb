@@ -22,7 +22,7 @@ import org.calacademy.antweb.home.*;
 
 public final class PictureLikeAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(PictureLikeAction.class);
+    private static final Log s_log = LogFactory.getLog(PictureLikeAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

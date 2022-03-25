@@ -21,10 +21,10 @@ import org.apache.commons.logging.LogFactory;
     
 public final class BigMapAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(BigMapAction.class);
+    private static final Log s_log = LogFactory.getLog(BigMapAction.class);
     
     private static int s_mapCount = 0;
-    private static int s_mapLimit = 3;
+    private static final int s_mapLimit = 3;
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

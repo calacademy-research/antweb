@@ -7,13 +7,13 @@ import org.apache.commons.logging.LogFactory;
 
 public class StatSet {
 
-    private static Log s_log = LogFactory.getLog(StatSet.class);
+    private static final Log s_log = LogFactory.getLog(StatSet.class);
 
     public StatSet(String name) {
       this.name = name;
     }
     
-    private String name;
+    private final String name;
 
     private String title1;
     private int value1 = 0;

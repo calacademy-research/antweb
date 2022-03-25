@@ -2,17 +2,14 @@
 package org.calacademy.antweb;
 
 import java.io.Serializable;
-import java.sql.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.home.*;
-
 /** ClassOrder keeps track of the information about a specific taxon */
 public class Order extends Taxon implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Order.class);
+    private static final Log s_log = LogFactory.getLog(Order.class);
     
     public String getNextRank() {
         return "Families";

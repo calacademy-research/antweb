@@ -13,9 +13,9 @@ public class Login implements Comparable {
     private static final Log s_log = LogFactory.getLog(Login.class);
     
     public static int BRIAN = 1;
-    public static int MARK = 22;
+    public static final int MARK = 22;
     public static int MICHELE = 23;
-    public static int TEST_LOGIN = 50;
+    public static final int TEST_LOGIN = 50;
     
     private int id;
     private String firstName;
@@ -35,7 +35,7 @@ public class Login implements Comparable {
 
     private Date created;
 
-    public static String MUST_LOGIN_MESSAGE = "You must log in to access this functionality.  You may create an account, or log in anonymously, <a href='" + AntwebProps.getDomainApp() + "/login.do'>here</a>.";    
+    public static final String MUST_LOGIN_MESSAGE = "You must log in to access this functionality.  You may create an account, or log in anonymously, <a href='" + AntwebProps.getDomainApp() + "/login.do'>here</a>.";
     
     public Login() {
         super();

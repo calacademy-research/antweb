@@ -10,7 +10,7 @@ public class CacheTask {
 
     private static final Log s_log = LogFactory.getLog(CacheTask.class);
 
-    private static int SLEEP_TIME = 2000;
+    private static final int SLEEP_TIME = 2000;
 
     public CacheTask(){
     }

@@ -1,14 +1,11 @@
 package org.calacademy.antweb;
 
-import org.calacademy.antweb.util.*;
-
 import java.io.*;
 import java.util.*;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 

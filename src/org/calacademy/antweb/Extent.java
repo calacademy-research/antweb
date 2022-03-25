@@ -9,7 +9,7 @@ import org.calacademy.antweb.util.*;
 
 public class Extent {
 
-    private static Log s_log = LogFactory.getLog(Extent.class);
+    private static final Log s_log = LogFactory.getLog(Extent.class);
 
     float maxLat;
     float minLat;

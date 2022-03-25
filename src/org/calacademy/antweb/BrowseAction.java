@@ -22,11 +22,11 @@ import org.apache.commons.logging.LogFactory;
 
 public class BrowseAction extends DescriptionAction {
 
-    private static Log s_log = LogFactory.getLog(BrowseAction.class);
+    private static final Log s_log = LogFactory.getLog(BrowseAction.class);
 
-    public static int s_mapComparisonLimit = 2;
+    public static final int s_mapComparisonLimit = 2;
     public static int s_mapComparisonCount = 0;
-    public static int s_getComparisonLimit = 2;
+    public static final int s_getComparisonLimit = 2;
     public static int s_getComparisonCount = 0;
 
     /*

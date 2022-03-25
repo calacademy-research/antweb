@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class AdvancedSearchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(AdvancedSearchAction.class);
+    private static final Log s_log = LogFactory.getLog(AdvancedSearchAction.class);
 
     /*
 	public ActionForward execute(ActionMapping mapping, ActionForm form,

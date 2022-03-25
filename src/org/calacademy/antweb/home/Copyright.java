@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class Copyright {
 
-    private static Log s_log = LogFactory.getLog(Copyright.class);
+    private static final Log s_log = LogFactory.getLog(Copyright.class);
 
     private int id;
     private String copyright;

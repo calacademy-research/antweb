@@ -30,12 +30,12 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class ImageUploaded {
 
-  private static Log s_log = LogFactory.getLog(ImageUploaded.class);
+  private static final Log s_log = LogFactory.getLog(ImageUploaded.class);
 
-  public static String imagesDir = AntwebProps.getDocRoot() + "images/";
+  public static final String imagesDir = AntwebProps.getDocRoot() + "images/";
 
-  public static Path tempDir = Path.of(AntwebProps.getDocRoot(), "temp", "images");
-  public static String backupDir = imagesDir + "backup/";
+  public static final Path tempDir = Path.of(AntwebProps.getDocRoot(), "temp", "images");
+  public static final String backupDir = imagesDir + "backup/";
 
   private int id = 0;
   private String fileName;

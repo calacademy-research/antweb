@@ -7,7 +7,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.Geolocale;
-import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
@@ -38,12 +37,12 @@ public class CountDb extends AntwebDb {
         http://localhost/antweb/utilData.do?action=countCrawl&num=7
 */
 
-    private static Log s_log = LogFactory.getLog(CountDb.class);
+    private static final Log s_log = LogFactory.getLog(CountDb.class);
         
     // Best to use a lightly populated subfamily name.    
     //String debugName = "martialinae";    
-    String debugTaxonName = "dorylinaeacanthostichus davisi";
-    int debugGeolocaleId = 0;
+    final String debugTaxonName = "dorylinaeacanthostichus davisi";
+    final int debugGeolocaleId = 0;
     //int debugGeolocaleId = 2;
     boolean debug = true;
 

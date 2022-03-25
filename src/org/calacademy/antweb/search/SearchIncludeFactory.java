@@ -10,8 +10,8 @@ import org.apache.commons.logging.LogFactory;
 
 public class SearchIncludeFactory {
 
-    private static Log s_log = LogFactory.getLog(SearchIncludeFactory.class);    
-    private Connection connection;
+    private static final Log s_log = LogFactory.getLog(SearchIncludeFactory.class);
+    private final Connection connection;
 
     public SearchIncludeFactory(Connection connection) {
        this.connection = connection;

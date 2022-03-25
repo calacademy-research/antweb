@@ -13,7 +13,7 @@ import org.apache.struts.action.*;
 
 public class JspFetchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(JspFetchAction.class);
+    private static final Log s_log = LogFactory.getLog(JspFetchAction.class);
     
 // DEPRECATED? The calls below do not seem to invoke this class.
 // This class is not included in struts-config.xml. 

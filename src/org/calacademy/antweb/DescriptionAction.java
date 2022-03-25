@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class DescriptionAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(DescriptionAction.class);
+    private static final Log s_log = LogFactory.getLog(DescriptionAction.class);
       
     protected boolean saveDescriptionEdit(DescriptionForm form, Describable editObject, Login accessLogin, HttpServletRequest request, Connection connection) 
         throws SQLException {            

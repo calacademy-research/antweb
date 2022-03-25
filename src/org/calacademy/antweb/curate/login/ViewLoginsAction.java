@@ -22,7 +22,7 @@ import org.calacademy.antweb.util.*;
 
 public class ViewLoginsAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ViewLoginsAction.class);
+    private static final Log s_log = LogFactory.getLog(ViewLoginsAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response) {

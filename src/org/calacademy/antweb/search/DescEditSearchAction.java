@@ -16,7 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class DescEditSearchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(DescEditSearchAction.class);
+    private static final Log s_log = LogFactory.getLog(DescEditSearchAction.class);
 
     public String getSearchTitle(SearchParameters searchParameters) {
         return "Taxons with Description Edits Made to Antweb";

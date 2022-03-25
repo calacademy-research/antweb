@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class FileUtil {
 
-  private static Log s_log = LogFactory.getLog(FileUtil.class);
+  private static final Log s_log = LogFactory.getLog(FileUtil.class);
 
   public ArrayList grep(String inputPattern, UploadFile uploadFile) {
     ArrayList result = new ArrayList();

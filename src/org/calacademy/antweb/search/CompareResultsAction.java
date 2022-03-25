@@ -21,7 +21,7 @@ import org.calacademy.antweb.*;
     
 public final class CompareResultsAction extends ResultsAction {
 
-    private static Log s_log = LogFactory.getLog(CompareResultsAction.class);
+    private static final Log s_log = LogFactory.getLog(CompareResultsAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

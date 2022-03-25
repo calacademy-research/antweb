@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class AntwikiTaxonCountry implements Comparable<AntwikiTaxonCountry> {
 
-    private static Log s_log = LogFactory.getLog(AntwikiTaxonCountry.class);
+    private static final Log s_log = LogFactory.getLog(AntwikiTaxonCountry.class);
 
     private int id = 0;
     private int rev = 0; 

@@ -28,7 +28,7 @@ public final class SpecimenListAction extends Action {
     to generate this file:
 */
 
-    private static Log s_log = LogFactory.getLog(SpecimenListAction.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenListAction.class);
 
     private static int specimenCount = 0;
 

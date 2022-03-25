@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class Group implements Comparable {
 
-    private static Log s_log = LogFactory.getLog(Group.class);
+    private static final Log s_log = LogFactory.getLog(Group.class);
     
     private int id;
     private String name;
@@ -22,7 +22,7 @@ public class Group implements Comparable {
     //private String adminEmail;
         
     public static int ADMINGROUP = 1;
-    public static int TESTGROUP = 25;
+    public static final int TESTGROUP = 25;
     
     // Transient field
     //private Login login;   

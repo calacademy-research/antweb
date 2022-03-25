@@ -11,7 +11,7 @@ import org.calacademy.antweb.Formatter;
 
 public class Adm1LoadDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(Adm1LoadDb.class);
+    private static final Log s_log = LogFactory.getLog(Adm1LoadDb.class);
 
     public Adm1LoadDb(Connection connection) {
       super(connection);

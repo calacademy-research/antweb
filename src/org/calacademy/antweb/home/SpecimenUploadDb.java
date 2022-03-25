@@ -6,20 +6,15 @@ import java.sql.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Group;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.upload.*;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 
 
 public class SpecimenUploadDb extends UploadDb {
 
-    private static Log s_log = LogFactory.getLog(SpecimenUploadDb.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenUploadDb.class);
     private static final Log uploadLog = LogFactory.getLog("uploadLog");
 
     //ArrayList goodHeaders = new ArrayList(Arrays.asList(biotaHeaders));    

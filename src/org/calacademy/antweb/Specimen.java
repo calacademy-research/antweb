@@ -17,7 +17,7 @@ import org.xml.sax.SAXParseException;
 /** Class Species keeps track of the information about a specific taxon */
 public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  {
 
-    private static Log s_log = LogFactory.getLog(Specimen.class);
+    private static final Log s_log = LogFactory.getLog(Specimen.class);
 
     public int compareTo(Taxon other) {
       String thisOne = getTaxonName() + getFullName();
@@ -83,7 +83,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
 
     private String defaultFor;
 
-    private Hashtable features = new Hashtable();
+    private final Hashtable features = new Hashtable();
 
     private int uploadId = 0;
     

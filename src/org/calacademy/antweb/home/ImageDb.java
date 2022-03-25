@@ -12,7 +12,7 @@ import org.calacademy.antweb.imageUploader.*;
 
 public class ImageDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(ImageDb.class);
+    private static final Log s_log = LogFactory.getLog(ImageDb.class);
 
     public ImageDb(Connection connection) {
       super(connection);

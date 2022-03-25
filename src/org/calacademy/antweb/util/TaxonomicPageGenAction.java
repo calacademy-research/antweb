@@ -29,7 +29,7 @@ public final class TaxonomicPageGenAction extends Action {
    Integrate functionality with description.do?
 */
 
-    private static Log s_log = LogFactory.getLog(TaxonomicPageGenAction.class);
+    private static final Log s_log = LogFactory.getLog(TaxonomicPageGenAction.class);
     
 // Called like this: http://localhost/antweb/taxonomicPageGen.do?rank=genus&project=newzealandants&images=true    
     

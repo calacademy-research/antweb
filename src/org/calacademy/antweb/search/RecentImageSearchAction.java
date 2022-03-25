@@ -18,7 +18,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class RecentImageSearchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(RecentImageSearchAction.class);
+    private static final Log s_log = LogFactory.getLog(RecentImageSearchAction.class);
 
     public String getSearchTitle(SearchParameters searchParameters) {
         return "Specimens with Images Recently Uploaded to Antweb";

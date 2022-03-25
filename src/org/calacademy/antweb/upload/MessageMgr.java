@@ -14,7 +14,7 @@ public class MessageMgr {
       init();
     }
 
-    private static Log s_log = LogFactory.getLog(MessageMgr.class);
+    private static final Log s_log = LogFactory.getLog(MessageMgr.class);
 
     private Vector<String> s_messages = new Vector();
     public Vector<String> getMessages() {
@@ -44,7 +44,7 @@ public class MessageMgr {
     public static boolean hasErrors() {
         return getErrors().size() > 0;
     }
-    private static int maxI = 20;
+    private static final int maxI = 20;
     public static String getErrorsReport() {
         String errorReport = "<br>&nbsp;&nbsp;&nbsp;<h3>Errors:</h3> ";
         int i = 0;
@@ -88,7 +88,7 @@ public class MessageMgr {
     private final String MAP = "map";
     private final String NUM = "num";
 
-    ArrayList<Test> testList = new ArrayList<>();
+    final ArrayList<Test> testList = new ArrayList<>();
     private ArrayList<Test> getTests() {
       return testList;
     }
@@ -361,19 +361,19 @@ public class MessageMgr {
       boolean isPassed = true;
       int addCount = 0;
       Group group;
-      String key;
-      String type;
-      String heading;
+      final String key;
+      final String type;
+      final String heading;
       String flag;
 
       String getFlag() { return flag; }
       int count = 0;
 
-      HashMap<String, TreeSet<String>> messageStringHash = new HashMap();            
-      HashMap<String, HashSet<String>> messageSetsHash = new HashMap();        
-      HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap();        
+      final HashMap<String, TreeSet<String>> messageStringHash = new HashMap();
+      final HashMap<String, HashSet<String>> messageSetsHash = new HashMap();
+      final HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap();
 
-      Vector<String> details = new Vector();
+      final Vector<String> details = new Vector();
 
       Test(String key, String type, String heading, String flag) {
         this(key, type, heading);

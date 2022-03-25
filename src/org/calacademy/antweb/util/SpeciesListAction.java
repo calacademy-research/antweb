@@ -21,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 public final class SpeciesListAction extends Action {
 /* /getSpeciesList.do?name=allantwebants   This class returns a link to the species authority file */
 
-    private static Log s_log = LogFactory.getLog(SpeciesListAction.class);
+    private static final Log s_log = LogFactory.getLog(SpeciesListAction.class);
 
     public ActionForward execute (
         ActionMapping mapping, ActionForm form,

@@ -14,7 +14,7 @@ public class DummyTaxonDb extends AntwebDb {
     public static int s_dummyTaxonFetchCount = 0;
     public static int s_dummyHomonymFetchCount = 0;
 
-    private static Log s_log = LogFactory.getLog(DummyTaxonDb.class);
+    private static final Log s_log = LogFactory.getLog(DummyTaxonDb.class);
 
     public DummyTaxonDb(Connection connection) {
       super(connection);

@@ -13,7 +13,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public class GeolocaleTaxonCountDb extends CountDb {
     
-    private static Log s_log = LogFactory.getLog(GeolocaleTaxonCountDb.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleTaxonCountDb.class);
         
     public GeolocaleTaxonCountDb(Connection connection) {
       super(connection);

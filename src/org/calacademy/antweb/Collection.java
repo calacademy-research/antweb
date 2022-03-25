@@ -4,14 +4,13 @@ import java.sql.*;
 import java.util.ArrayList;
 
 import org.calacademy.antweb.search.*;
-import org.calacademy.antweb.util.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
 public class Collection extends AdvancedSearchResults {
 
-    private static Log s_log = LogFactory.getLog(Collection.class);
+    private static final Log s_log = LogFactory.getLog(Collection.class);
 
     private String code = "";
     private String habitat = "";
@@ -22,7 +21,7 @@ public class Collection extends AdvancedSearchResults {
     protected String collectionNotes = "";
     private String dateCollectedStart = "";
     private String dateCollectedEnd = "";
-    private SearchResults specimenResults = new SearchResults();
+    private final SearchResults specimenResults = new SearchResults();
     public SearchResults getSpecimenResults() {
       return specimenResults;
     }

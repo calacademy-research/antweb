@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class BayAreaSearchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(BayAreaSearchAction.class);
+    private static final Log s_log = LogFactory.getLog(BayAreaSearchAction.class);
 
 	public String getSearchTitle(SearchParameters searchParameters) {
 		

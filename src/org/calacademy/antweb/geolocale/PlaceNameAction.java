@@ -8,14 +8,13 @@ import org.apache.struts.action.*;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
 public final class PlaceNameAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(PlaceNameAction.class);
+    private static final Log s_log = LogFactory.getLog(PlaceNameAction.class);
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

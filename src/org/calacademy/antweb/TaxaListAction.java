@@ -18,7 +18,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public final class TaxaListAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(TaxaListAction.class);
+    private static final Log s_log = LogFactory.getLog(TaxaListAction.class);
 
 // taxaList.do?valid=1&extant=1&project=worldants&rank=subfamily
 

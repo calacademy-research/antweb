@@ -13,7 +13,7 @@ import org.calacademy.antweb.curate.speciesList.*;
 
 public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     
-    private static Log s_log = LogFactory.getLog(GeolocaleTaxonLogDb.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleTaxonLogDb.class);
         
     public GeolocaleTaxonLogDb(Connection connection) {
       super(connection);

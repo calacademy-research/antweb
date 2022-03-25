@@ -6,7 +6,7 @@ import org.calacademy.antweb.search.AdvancedSearchAction;
 
 public class SpeciesListSuperAction extends AdvancedSearchAction {
 
-  private static Log s_log = LogFactory.getLog(SpeciesListSuperAction.class);
+  private static final Log s_log = LogFactory.getLog(SpeciesListSuperAction.class);
   /*  
     protected void putLookupDataInRequest(HttpServletRequest request, Connection connection) throws SQLException {
    

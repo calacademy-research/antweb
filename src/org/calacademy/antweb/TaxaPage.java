@@ -17,7 +17,7 @@ import javax.servlet.http.*;
 /** Class Taxon keeps track of the information about a specific taxon */
 public class TaxaPage implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(TaxaPage.class);
+    private static final Log s_log = LogFactory.getLog(TaxaPage.class);
 
 	private String rank;
 	private ArrayList<Taxon> children;

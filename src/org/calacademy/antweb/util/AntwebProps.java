@@ -19,7 +19,7 @@ public abstract class AntwebProps {
     
     public static String guiDefaultContent = "Add your content here";    
     
-    private static boolean s_loadedResources = false;
+    private static final boolean s_loadedResources = false;
     private static ResourceBundle s_appResources;
     private static ResourceBundle s_antwebResources;
     private static ResourceBundle s_platformResources;
@@ -71,7 +71,7 @@ public abstract class AntwebProps {
         return "true".equals(prop);
 	}
 
-    private static HashMap<String, String> s_propMap = new HashMap<>();
+    private static final HashMap<String, String> s_propMap = new HashMap<>();
 
 	public static @Nullable String getProp(String prop) {
 

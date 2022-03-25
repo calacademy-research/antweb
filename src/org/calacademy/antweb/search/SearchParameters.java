@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
  
 public final class SearchParameters extends AdvancedSearchForm {
 
-    private static Log s_log = LogFactory.getLog(SearchParameters.class);
+    private static final Log s_log = LogFactory.getLog(SearchParameters.class);
     
     String daysAgo;
     String numToShow;

@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class EditProjectForm extends ActionForm {
 
-    private static Log s_log = LogFactory.getLog(EditProjectForm.class);
+    private static final Log s_log = LogFactory.getLog(EditProjectForm.class);
 
 /* check name - also make sure to add where clause to update */
 	

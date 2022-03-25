@@ -10,9 +10,9 @@ import org.apache.commons.logging.LogFactory;
 
 public class CustomExceptionServlet extends HttpServlet {
 
-  private static Log s_log = LogFactory.getLog(CustomExceptionServlet.class);
+  private static final Log s_log = LogFactory.getLog(CustomExceptionServlet.class);
   
-  static String errorPageURL = "error.jsp";
+  static final String errorPageURL = "error.jsp";
   
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
   	throws ServletException, IOException {

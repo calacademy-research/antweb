@@ -128,7 +128,7 @@ public class SessionRequestFilter implements Filter {
       }
     }
 
-    public static int MILLIS = 1000;
+    public static final int MILLIS = 1000;
     public static int SECS = 60;
     public static int MAX_REQUEST_TIME = MILLIS * 10;
     public static String finish(HttpServletRequest request, java.util.Date startTime) {

@@ -9,7 +9,7 @@ import com.google.gson.*;
 
 public class GoogleApisAdm1 {
 
-    private static Log s_log = LogFactory.getLog(GoogleApisAdm1.class);
+    private static final Log s_log = LogFactory.getLog(GoogleApisAdm1.class);
 
 
     public static final String source = "GoogleApis";

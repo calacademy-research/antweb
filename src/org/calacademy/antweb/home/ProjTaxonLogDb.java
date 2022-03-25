@@ -12,7 +12,7 @@ import org.calacademy.antweb.curate.speciesList.*;
 
 public class ProjTaxonLogDb extends TaxonSetLogDb {
     
-    private static Log s_log = LogFactory.getLog(ProjTaxonLogDb.class);
+    private static final Log s_log = LogFactory.getLog(ProjTaxonLogDb.class);
         
     public ProjTaxonLogDb(Connection connection) {
       super(connection);

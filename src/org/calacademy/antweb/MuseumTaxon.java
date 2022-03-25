@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class MuseumTaxon extends OverviewTaxon {
 
-    private static Log s_log = LogFactory.getLog(MuseumTaxon.class);
+    private static final Log s_log = LogFactory.getLog(MuseumTaxon.class);
 
     private String museumCode;    
 

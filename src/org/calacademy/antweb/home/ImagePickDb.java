@@ -11,7 +11,7 @@ import org.calacademy.antweb.*;
 
 public class ImagePickDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(ImagePickDb.class);
+    private static final Log s_log = LogFactory.getLog(ImagePickDb.class);
 
     public ImagePickDb(Connection connection) {
       super(connection);

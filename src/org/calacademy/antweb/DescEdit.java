@@ -9,7 +9,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class DescEdit {
 
-    private static Log s_log = LogFactory.getLog(DescEdit.class);
+    private static final Log s_log = LogFactory.getLog(DescEdit.class);
 
     private String taxonName;
     private String code;

@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Group;
 import org.calacademy.antweb.Utility;
-import org.calacademy.antweb.util.A;
 import org.calacademy.antweb.util.DBUtil;
 import org.calacademy.antweb.util.GroupMgr;
 

@@ -30,9 +30,9 @@ public class AntwebCacheMgr {
 
   private static final Log s_log = LogFactory.getLog(AntwebCacheMgr.class);
 
-    public static boolean CACHING_OFF = true;
+    public static final boolean CACHING_OFF = true;
 
-    public static int MILLIS = 1000;
+    public static final int MILLIS = 1000;
     
     // Above this threshold, queries will be recorded in the long_request table.
     public static int MAX_REQUEST_TIME = MILLIS * 10;  // number of seconds.
@@ -52,7 +52,7 @@ public class AntwebCacheMgr {
     private static final int LONG_REQUEST_LIST_LIMIT = 1000;
     private static final int LONG_REQUEST_CREATED_INTERVAL = 7;
   
-    private static int EXPIRED_DAYS_AGO = 3;
+    private static final int EXPIRED_DAYS_AGO = 3;
    
     // valid cacheTypes are fieldGuide, taxaPage, specimenList, images, browse, description 
 

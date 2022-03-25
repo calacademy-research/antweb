@@ -14,7 +14,7 @@ import javax.servlet.http.HttpSession;
 
 
 public class StatusSet extends Status {
-    private static Log s_log = LogFactory.getLog(StatusSet.class);
+    private static final Log s_log = LogFactory.getLog(StatusSet.class);
 
     /*  
       StatusSets are groupings of statuses.  See Status for individual statuses.

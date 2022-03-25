@@ -22,7 +22,7 @@ import org.calacademy.antweb.home.*;
 
 public final class SpecimenAction extends DescriptionAction {
 
-    private static Log s_log = LogFactory.getLog(SpecimenAction.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

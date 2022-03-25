@@ -33,7 +33,7 @@ import org.calacademy.antweb.curate.speciesList.*;
 
 public class UploadAction extends Action {
 
-	private static Log s_log = LogFactory.getLog(UploadAction.class);
+	private static final Log s_log = LogFactory.getLog(UploadAction.class);
 
 	private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
 

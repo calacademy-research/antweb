@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class DataPlace {
     
-    private static Log s_log = LogFactory.getLog(DataPlace.class);
+    private static final Log s_log = LogFactory.getLog(DataPlace.class);
 
     public static String getValidName(String country) {
       String use = null;

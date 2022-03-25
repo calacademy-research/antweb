@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class SearchPageAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SearchPageAction.class);
+    private static final Log s_log = LogFactory.getLog(SearchPageAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

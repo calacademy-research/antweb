@@ -12,7 +12,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public class Museum extends LocalityOverview implements Countable {
     
-    private static Log s_log = LogFactory.getLog(Museum.class);
+    private static final Log s_log = LogFactory.getLog(Museum.class);
 
     private String code;
     private String name;

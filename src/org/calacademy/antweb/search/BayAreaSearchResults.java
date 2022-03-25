@@ -11,7 +11,7 @@ public final class BayAreaSearchResults
 	//extends AdvancedSearchResults
 	implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(BayAreaSearchResults.class);
+    private static final Log s_log = LogFactory.getLog(BayAreaSearchResults.class);
 
 	public void setResults() { // throws Exception
 

@@ -41,7 +41,7 @@ public class A {
   }
 
 
-  private static HashMap<String, Integer> s_logiSet = new HashMap<>();
+  private static final HashMap<String, Integer> s_logiSet = new HashMap<>();
   //Log only once. Enter a unique i. Best to use a contstant.
   public static void logi(String key, String message) {
       logi(key, 1, message);
@@ -78,7 +78,7 @@ public class A {
       return loopCounter == 1 || loopCounter % divNum == 0;
   }
   
-  private static int[] logCounter = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  private static final int[] logCounter = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   public static void iLog(String message) {
     iLog(0, message, 1000);
   }

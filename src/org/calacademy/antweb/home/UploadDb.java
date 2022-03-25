@@ -14,7 +14,7 @@ import org.calacademy.antweb.util.*;
 
 public class UploadDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(UploadDb.class);
+    private static final Log s_log = LogFactory.getLog(UploadDb.class);
 
     public UploadDb(Connection connection) {
       super(connection);

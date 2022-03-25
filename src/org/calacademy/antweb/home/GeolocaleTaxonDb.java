@@ -15,7 +15,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public class GeolocaleTaxonDb extends EditableTaxonSetDb {
     
-    private static Log s_log = LogFactory.getLog(GeolocaleTaxonDb.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleTaxonDb.class);
         
     public GeolocaleTaxonDb(Connection connection) {
       super(connection);

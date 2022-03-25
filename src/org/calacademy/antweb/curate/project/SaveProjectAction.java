@@ -24,7 +24,7 @@ import org.calacademy.antweb.home.*;
 
 public final class SaveProjectAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SaveProjectAction.class);
+    private static final Log s_log = LogFactory.getLog(SaveProjectAction.class);
 
     public ActionForward execute(
         ActionMapping mapping, ActionForm form,

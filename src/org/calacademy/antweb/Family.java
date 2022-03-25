@@ -15,10 +15,10 @@ import org.calacademy.antweb.home.*;
 /** Class Family keeps track of the information about a specific taxon */
 public class Family extends Taxon implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Family.class);
+    private static final Log s_log = LogFactory.getLog(Family.class);
     
-    public static String FORMICIDAE = "formicidae";
-    public static String ANT_FAMILY = "formicidae";
+    public static final String FORMICIDAE = "formicidae";
+    public static final String ANT_FAMILY = "formicidae";
     
     public String getName() { 
         return getFamily(); 

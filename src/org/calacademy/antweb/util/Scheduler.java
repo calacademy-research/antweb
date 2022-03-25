@@ -29,10 +29,10 @@ The requested urls should perhaps be in utilData.do instead of here.
 */
 public class Scheduler extends Action {
 
-    public static int LAUNCHTIME = 5; // 5 am. Referenced from SessionRequestFilter.
+    public static final int LAUNCHTIME = 5; // 5 am. Referenced from SessionRequestFilter.
 
 
-    private static Log s_log = LogFactory.getLog(Scheduler.class);
+    private static final Log s_log = LogFactory.getLog(Scheduler.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {

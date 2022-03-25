@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class Status {
 
-    private static Log s_log = LogFactory.getLog(Status.class);
+    private static final Log s_log = LogFactory.getLog(Status.class);
     
     // status values:
 

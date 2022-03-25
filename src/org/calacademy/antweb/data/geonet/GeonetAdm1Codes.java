@@ -9,7 +9,7 @@ import com.google.gson.*;
     
 public class GeonetAdm1Codes {
 
-    private static Log s_log = LogFactory.getLog(GeonetAdm1Codes.class);
+    private static final Log s_log = LogFactory.getLog(GeonetAdm1Codes.class);
 
     public static final String source = "Geonet";
 

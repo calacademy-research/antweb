@@ -12,7 +12,7 @@ import org.calacademy.antweb.util.*;
 
 public class EventDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(EventDb.class);
+    private static final Log s_log = LogFactory.getLog(EventDb.class);
 
     public EventDb(Connection connection) {
       super(connection);

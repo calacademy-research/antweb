@@ -15,9 +15,9 @@ import org.apache.commons.logging.LogFactory;
 
 public class UploadDetails extends OperationDetails {
 
-    private static Log s_log = LogFactory.getLog(UploadDetails.class);
+    private static final Log s_log = LogFactory.getLog(UploadDetails.class);
 
-    MessageMgr messageMgr;
+    final MessageMgr messageMgr;
 
     private boolean runStatistics = false;
 
@@ -388,7 +388,7 @@ public class UploadDetails extends OperationDetails {
     }
     
     // Maintain a set of museums.  Could have been query but this done for performance.
-    private Map<String, Integer> museumMap = new HashMap<>();
+    private final Map<String, Integer> museumMap = new HashMap<>();
     
     public void addToMuseumMap(String element) {
       for (Museum museum : MuseumMgr.getMuseums()) {

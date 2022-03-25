@@ -20,7 +20,7 @@ public final class DefaultSpecimenAction extends Action {
 
     private static String s_taxonName;
 
-    private static Log s_log = LogFactory.getLog(DefaultSpecimenAction.class);
+    private static final Log s_log = LogFactory.getLog(DefaultSpecimenAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)

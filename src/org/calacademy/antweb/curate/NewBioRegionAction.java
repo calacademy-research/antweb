@@ -26,7 +26,7 @@ import org.calacademy.antweb.curate.project.*;
 
 public final class NewBioRegionAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(NewBioRegionAction.class);
+    private static final Log s_log = LogFactory.getLog(NewBioRegionAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

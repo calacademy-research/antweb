@@ -14,7 +14,7 @@ import java.sql.*;
 
 public abstract class TaxonSetDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(TaxonSetDb.class);
+    private static final Log s_log = LogFactory.getLog(TaxonSetDb.class);
 
     public TaxonSetDb(Connection connection) {
       super(connection);

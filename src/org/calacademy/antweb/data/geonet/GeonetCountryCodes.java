@@ -14,7 +14,7 @@ import com.google.gson.*;
     
 public class GeonetCountryCodes {
 
-    private static Log s_log = LogFactory.getLog(GeonetCountryCodes.class);
+    private static final Log s_log = LogFactory.getLog(GeonetCountryCodes.class);
 
     public static final String source = "Geonet";
     

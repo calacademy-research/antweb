@@ -20,7 +20,7 @@ import org.calacademy.antweb.Formatter;
     
 public final class ServerStatusAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ServerStatusAction.class);
+    private static final Log s_log = LogFactory.getLog(ServerStatusAction.class);
 
 /*
 public static double JAVA_VERSION = getVersion ();
@@ -134,7 +134,7 @@ static double getVersion () {
     public static boolean isInDownTime() {
       return !"".equals(ServerStatusAction.getDownTimeMessage());
     }    
-    public static String DOWN = "<h3><font color=red>The Upload Services are down for site maintenance.</font></h3>";
+    public static final String DOWN = "<h3><font color=red>The Upload Services are down for site maintenance.</font></h3>";
     private static String downTimeMessage = "";    
     public static String getDownTimeMessage() { 
       return downTimeMessage;

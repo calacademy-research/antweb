@@ -2,8 +2,6 @@ package org.calacademy.antweb.curate;
 
 import java.util.*;
 
-import org.calacademy.antweb.util.*;
-
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 
@@ -12,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class OperationDetails {
 
-    private static Log s_log = LogFactory.getLog(OperationDetails.class);
+    private static final Log s_log = LogFactory.getLog(OperationDetails.class);
 
     Date startTime;
     HttpServletRequest request;

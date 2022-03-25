@@ -1,16 +1,13 @@
 package org.calacademy.antweb;
 
 import java.io.Serializable;
-import java.sql.*;
- 
+
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import org.calacademy.antweb.home.*;
-
 public class Tribe extends Genus implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Tribe.class);
+    private static final Log s_log = LogFactory.getLog(Tribe.class);
     
     public String getNextRank() {
         return "Genus";

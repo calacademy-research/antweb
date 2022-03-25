@@ -14,7 +14,7 @@ import org.calacademy.antweb.curate.speciesList.*;
 
 public class SpeciesListDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(SpeciesListDb.class);
+    private static final Log s_log = LogFactory.getLog(SpeciesListDb.class);
 
     public SpeciesListDb(Connection connection) {
       super(connection);

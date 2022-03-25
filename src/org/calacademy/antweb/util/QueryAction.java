@@ -17,7 +17,7 @@ import org.calacademy.antweb.home.*;
 
 public class QueryAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(QueryAction.class);
+    private static final Log s_log = LogFactory.getLog(QueryAction.class);
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {

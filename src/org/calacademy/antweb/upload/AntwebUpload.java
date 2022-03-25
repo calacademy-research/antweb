@@ -27,7 +27,7 @@ public class AntwebUpload {
     private Connection m_connection;
     private static final Log s_log = LogFactory.getLog(AntwebUpload.class);
     private static final String currentDateFunction = "now()";  // for mysql
-    String[] dateHeaderString = {"spcmrecorddate", "spcmrecchangeddate",
+    final String[] dateHeaderString = {"spcmrecorddate", "spcmrecchangeddate",
             "transecttype", "locrecorddate", "locrecchangeddate"
     };
     private final String[] taxonHeaders = {"kingdom_name", "phylum_name", "class_name", "order_name", "family",
@@ -56,9 +56,9 @@ public class AntwebUpload {
     private int countUploaded = 0;
     private int uploadSkipped = 0;
 
-    ArrayList<String> goodTaxonHeaders = new ArrayList<>(Arrays.asList(taxonHeaders));
+    final ArrayList<String> goodTaxonHeaders = new ArrayList<>(Arrays.asList(taxonHeaders));
 
-    UploadDb uploadDb;
+    final UploadDb uploadDb;
 
     private final DescCounter m_descCounter = new DescCounter();
 

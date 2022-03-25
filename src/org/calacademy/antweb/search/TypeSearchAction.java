@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class TypeSearchAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(TypeSearchAction.class);
+    private static final Log s_log = LogFactory.getLog(TypeSearchAction.class);
     
     public TypeSearchResults getResults(HttpServletRequest request,  HttpServletResponse response,
     	SearchParameters searchParameters) throws IOException, ServletException {

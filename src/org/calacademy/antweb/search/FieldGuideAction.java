@@ -28,7 +28,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class FieldGuideAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(FieldGuideAction.class);    
+    private static final Log s_log = LogFactory.getLog(FieldGuideAction.class);
     
     private static int s_simultaneousExecutes = 0;
     private final static int MAX_SIMULTANEOUS_EXECUTES = 2;

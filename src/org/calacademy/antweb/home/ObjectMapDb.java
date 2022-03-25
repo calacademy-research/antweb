@@ -18,7 +18,7 @@ import org.calacademy.antweb.util.*;
 
 public class ObjectMapDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(ObjectMapDb.class);
+    private static final Log s_log = LogFactory.getLog(ObjectMapDb.class);
 
     public ObjectMapDb(Connection connection) {
       super(connection);

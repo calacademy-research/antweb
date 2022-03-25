@@ -13,7 +13,7 @@ import org.calacademy.antweb.util.AntwebProps;
 
 public class SpecimenFieldSummary {
 
-    private static Log s_log = LogFactory.getLog(SpecimenFieldSummary.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenFieldSummary.class);
 	
 	String subfamily;
 	String genus;

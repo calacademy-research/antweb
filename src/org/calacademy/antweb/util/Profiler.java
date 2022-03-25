@@ -16,7 +16,7 @@ public class Profiler {
 
     protected static Date firstOfPeriodTime;
 
-    protected static HashMap<String, Profile> profiles = new HashMap<>();
+    protected static final HashMap<String, Profile> profiles = new HashMap<>();
 
     private static final Log s_log = LogFactory.getLog(Profiler.class);
 

@@ -14,7 +14,7 @@ import org.calacademy.antweb.util.*;
 
 public final class CurateActionB extends Action {
 
-    private static Log s_log = LogFactory.getLog(CurateActionB.class);
+    private static final Log s_log = LogFactory.getLog(CurateActionB.class);
     
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)

@@ -30,7 +30,7 @@ import org.calacademy.antweb.util.AntwebUtil;
 
 public final class PreviewHomePageAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(PreviewHomePageAction.class);
+    private static final Log s_log = LogFactory.getLog(PreviewHomePageAction.class);
 
     public ActionForward execute( ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

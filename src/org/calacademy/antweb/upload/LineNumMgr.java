@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class LineNumMgr {
 
-    private static Log s_log = LogFactory.getLog(LineNumMgr.class);
+    private static final Log s_log = LogFactory.getLog(LineNumMgr.class);
 	private static ArrayList<Integer> badCarriageReturnLines;
 
 

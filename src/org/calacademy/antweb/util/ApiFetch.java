@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class ApiFetch extends HttpServlet {
 
-  private static Log s_log = LogFactory.getLog(ApiFetch.class);
+  private static final Log s_log = LogFactory.getLog(ApiFetch.class);
     
   // Accessible as: http://localhost/antweb/apiV3/specimens?minDate=1970-01-01&maxDate=1979-12-31&genus=Tetramorium   
 

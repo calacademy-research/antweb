@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ChooseComparisonAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ChooseComparisonAction.class);
+    private static final Log s_log = LogFactory.getLog(ChooseComparisonAction.class);
     
     public ActionForward execute(
         ActionMapping mapping, ActionForm form,

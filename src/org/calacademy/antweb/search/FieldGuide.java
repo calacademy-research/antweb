@@ -16,7 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class FieldGuide {
   /* This version of FieldGuide.java does not utilize PDF or XML */
-    private static Log s_log = LogFactory.getLog(FieldGuide.class);
+    private static final Log s_log = LogFactory.getLog(FieldGuide.class);
 
     private ArrayList<Taxon> taxa;
     protected String title;
@@ -26,7 +26,7 @@ public class FieldGuide {
     protected Extent extent;
     protected HashMap localities = new HashMap();
 
-    private int MAX_MARKERS = 50;
+    private final int MAX_MARKERS = 50;
 
     public FieldGuide() {
        super();

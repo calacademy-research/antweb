@@ -12,7 +12,7 @@ import org.calacademy.antweb.util.*;
 
 public class ProjTaxonLog extends ProjTaxon {
 
-    private static Log s_log = LogFactory.getLog(ProjTaxonLog.class);
+    private static final Log s_log = LogFactory.getLog(ProjTaxonLog.class);
 
     private int logId = 0;
     private Timestamp created;

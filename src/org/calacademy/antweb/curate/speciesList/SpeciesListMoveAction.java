@@ -14,7 +14,7 @@ import org.calacademy.antweb.home.*;
 
 public class SpeciesListMoveAction extends SpeciesListSuperAction {
 
-  private static Log s_log = LogFactory.getLog(SpeciesListMoveAction.class);
+  private static final Log s_log = LogFactory.getLog(SpeciesListMoveAction.class);
 
   public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {

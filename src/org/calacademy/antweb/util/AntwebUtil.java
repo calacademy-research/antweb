@@ -32,7 +32,7 @@ public abstract class AntwebUtil {
   
   private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");  
   
-  private static HashMap<String, Integer> s_logHash = new HashMap<>();
+  private static final HashMap<String, Integer> s_logHash = new HashMap<>();
   
   public static void main(String[] args) { 
    // To execute:    ant antwebUtil    
@@ -538,7 +538,7 @@ public abstract class AntwebUtil {
   }
 
 
-  private static int s_shortStackLines = 7  ;
+  private static final int s_shortStackLines = 7  ;
 
   public static String getShortStackTrace() {
     return AntwebUtil.getShortStackTrace(s_shortStackLines);
@@ -828,7 +828,7 @@ public abstract class AntwebUtil {
     }     
     
 
-    public static boolean isDeployed = true;
+    public static final boolean isDeployed = true;
         
     public static boolean isDeployed(HttpServletRequest request) {
       if (isDeployed) return true;

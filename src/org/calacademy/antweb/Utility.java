@@ -308,7 +308,7 @@ public class Utility implements Serializable {
    }
 
    // by toggling this flag we can display empty fields on the specimen, collection and locality pages
-   private static boolean isDisplayEmpty = true;
+   private static final boolean isDisplayEmpty = true;
    public static boolean displayEmptyOrNotBlank(String theTerm) {
        return isDisplayEmpty || Utility.notBlank(theTerm);
    }

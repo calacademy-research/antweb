@@ -11,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class MuseumTaxonDb extends TaxonSetDb {
     
-    private static Log s_log = LogFactory.getLog(MuseumTaxonDb.class);
+    private static final Log s_log = LogFactory.getLog(MuseumTaxonDb.class);
         
     public MuseumTaxonDb(Connection connection) {
       super(connection);

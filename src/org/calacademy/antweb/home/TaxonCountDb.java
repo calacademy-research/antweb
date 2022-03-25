@@ -18,7 +18,7 @@ public class TaxonCountDb extends AntwebDb {
        The [rank]_count fields of taxon are not used as those queries are always against 
          an Overview (generally the project: allantwebants).
     */
-    private static Log s_log = LogFactory.getLog(TaxonCountDb.class);
+    private static final Log s_log = LogFactory.getLog(TaxonCountDb.class);
         
     public TaxonCountDb(Connection connection) {
       super(connection);

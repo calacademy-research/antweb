@@ -23,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ShowLogAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ShowLogAction.class);
+    private static final Log s_log = LogFactory.getLog(ShowLogAction.class);
 
     public ActionForward execute(
         ActionMapping mapping,

@@ -29,7 +29,7 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
         src/org/calacademy/antweb/search/GenericSearch.java
 */
 
-    private static Log s_log = LogFactory.getLog(AdvancedSearch.class);
+    private static final Log s_log = LogFactory.getLog(AdvancedSearch.class);
 
     private String family;
     private String familySearchType;

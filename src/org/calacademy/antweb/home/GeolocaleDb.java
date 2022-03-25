@@ -16,7 +16,7 @@ import org.calacademy.antweb.Formatter;
 
 public class GeolocaleDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(GeolocaleDb.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleDb.class);
 
     public GeolocaleDb(Connection connection) {
       super(connection);
@@ -930,7 +930,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
 public static int a = 0;
 public static int b = 0;
-public static int c = 0;
+public static final int c = 0;
 
     public void updateCentroid(Geolocale geolocale) {
 

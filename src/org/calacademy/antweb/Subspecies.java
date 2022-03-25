@@ -9,11 +9,10 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.home.*;
 
 public final class Subspecies extends Species implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Subspecies.class);
+    private static final Log s_log = LogFactory.getLog(Subspecies.class);
 
     public String getNextRank() {
         return "Specimens";

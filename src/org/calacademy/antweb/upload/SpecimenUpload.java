@@ -32,14 +32,14 @@ public class SpecimenUpload extends SpecimenUploadParse {
     and the data file uploaded.  Biota application is no longer under active development.
     
 */
-    private static Log s_log = LogFactory.getLog(SpecimenUpload.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenUpload.class);
 
     static int MAXLENGTH = 80;
 
     String currentDateFunction = "now()";  // for mysql 
     
-    private TreeSet illegitimateCountries = new TreeSet();
-    private TreeSet illegitimateBioregions = new TreeSet();
+    private final TreeSet illegitimateCountries = new TreeSet();
+    private final TreeSet illegitimateBioregions = new TreeSet();
 
     SpecimenUpload(Connection connection) {
       super(connection);      

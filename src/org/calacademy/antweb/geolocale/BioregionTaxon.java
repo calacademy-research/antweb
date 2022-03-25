@@ -3,7 +3,6 @@ package org.calacademy.antweb.geolocale;
 import java.sql.*;
 
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.Formatter;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -12,7 +11,7 @@ import org.calacademy.antweb.util.*;
 
 public class BioregionTaxon extends OverviewTaxon {
 
-    private static Log s_log = LogFactory.getLog(BioregionTaxon.class);
+    private static final Log s_log = LogFactory.getLog(BioregionTaxon.class);
 
     private String bioregionName;
     //String source = null;

@@ -22,7 +22,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class AdvancedSearchForm extends TaxaFromSearchForm {
 
-    protected static Log s_log = LogFactory.getLog(AdvancedSearchForm.class);
+    protected static final Log s_log = LogFactory.getLog(AdvancedSearchForm.class);
 
     //Search parameters common to all search types
     String types;
@@ -149,7 +149,7 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
         return errors;
     }
 
-    static String s_defaultOperator = "contains";  //"equals";
+    static final String s_defaultOperator = "contains";  //"equals";
 
 /**/
     public void reset(ActionMapping mapping, HttpServletRequest request) {

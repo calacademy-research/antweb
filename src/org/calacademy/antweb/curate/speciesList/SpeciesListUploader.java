@@ -30,7 +30,7 @@ public class SpeciesListUploader {
      /data/antweb/web/speciesList/world/worldants_speciesList.txt
 */
 
-  Connection connection;
+  final Connection connection;
 
   private static final String worldDir = AntwebProps.getWebDir() + "speciesList/world/";
 
@@ -138,7 +138,7 @@ public class SpeciesListUploader {
     return uploadDetails;
   }
 
-  public static int WORLDANTS_LOW_COUNT = 29000;
+  public static final int WORLDANTS_LOW_COUNT = 29000;
 
   public String validateWorldantsFile(String fileLoc, int origWorldantsCount) {
     if (AntwebProps.isDevOrStageMode()) {

@@ -15,7 +15,7 @@ import org.calacademy.antweb.util.*;
 
 public class SpecimenDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(SpecimenDb.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenDb.class);
         
     public SpecimenDb(Connection connection) throws SQLException {
       super(connection);

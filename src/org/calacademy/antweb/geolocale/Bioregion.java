@@ -29,7 +29,7 @@ mysql> select description from bioregion;
 
 public class Bioregion extends LocalityOverview implements Countable {
 
-    private static Log s_log = LogFactory.getLog(Bioregion.class);
+    private static final Log s_log = LogFactory.getLog(Bioregion.class);
 
     private String name;
 
@@ -52,7 +52,7 @@ public class Bioregion extends LocalityOverview implements Countable {
     public static final  String OCEANIA = "Oceania";
     public static final  String PALEARCTIC = "Palearctic";
     
-	public static String[] list = {AFROTROPICAL, ANTARCTICA, AUSTRALASIA, INDOMALAYA, MALAGASY, NEARCTIC, NEOTROPICAL, OCEANIA, PALEARCTIC};
+	public static final String[] list = {AFROTROPICAL, ANTARCTICA, AUSTRALASIA, INDOMALAYA, MALAGASY, NEARCTIC, NEOTROPICAL, OCEANIA, PALEARCTIC};
     
     private ArrayList<Project> projects;
 

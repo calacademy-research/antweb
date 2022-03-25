@@ -24,7 +24,7 @@ import org.calacademy.antweb.util.*;
 
 public class NewLoginAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(NewLoginAction.class);
+    private static final Log s_log = LogFactory.getLog(NewLoginAction.class);
 
     public ActionForward execute( ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {

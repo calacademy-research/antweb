@@ -8,13 +8,13 @@ import org.apache.commons.logging.LogFactory;
 
 public class OperationLock {
 
-    private static Log s_log = LogFactory.getLog(OperationLock.class);
+    private static final Log s_log = LogFactory.getLog(OperationLock.class);
 
-    public static int IMAGE_UPLOAD_LOCK = 1;
+    public static final int IMAGE_UPLOAD_LOCK = 1;
 
-      private static long minute = 60 * 1000;
-      public static long FIFTEENMIN = 15 * minute;
-      public static long ONEHOUR = FIFTEENMIN * 4;
+      private static final long minute = 60 * 1000;
+      public static final long FIFTEENMIN = 15 * minute;
+      public static final long ONEHOUR = FIFTEENMIN * 4;
 
       private int operation = IMAGE_UPLOAD_LOCK;  // Default (and only so far).
       private boolean locked = false;

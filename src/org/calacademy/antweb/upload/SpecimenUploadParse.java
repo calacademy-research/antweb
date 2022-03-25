@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.Date;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.regexp.*;
 
 import java.sql.*;
@@ -662,7 +661,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         return errorMessage;  // end parseLine()
     }
 
-	private static int s_countryOutOfBounds = 0;
+	private static final int s_countryOutOfBounds = 0;
 	private static String s_withinBoundsCountry;
 	private static int s_withinBoundsCountryCount = 0;
 	private static int s_lastCountryCount = 0;

@@ -8,7 +8,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class GeolocaleTaxonLogDetail extends GeolocaleTaxon implements Comparable<GeolocaleTaxonLogDetail>  {
 
-    private static Log s_log = LogFactory.getLog(GeolocaleTaxonLogDetail.class);
+    private static final Log s_log = LogFactory.getLog(GeolocaleTaxonLogDetail.class);
 
     private int logId = 0;
     private Taxon taxon;

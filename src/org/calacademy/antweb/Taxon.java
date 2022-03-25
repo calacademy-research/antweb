@@ -80,7 +80,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected int hasImagesCount = 0;
     
     protected int similarCount;    
-    protected Formatter myFormatter = new Formatter();
+    protected final Formatter myFormatter = new Formatter();
     protected String binomial = "";
     protected boolean fossil;
     protected boolean extant = false;
@@ -144,7 +144,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected String alsoDatabased;
 
     //private static String debugCode = null;
-    private static String debugCode = "ponerinaethaumatomyrmex zeteki";
+    private static final String debugCode = "ponerinaethaumatomyrmex zeteki";
 
     /*
     // Called from getInstance() above.
@@ -1129,7 +1129,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       this.fossil = fossil;
     } 
     
-    private static int MAX_SAFE_CHILDREN_COUNT = 300;        
+    private static final int MAX_SAFE_CHILDREN_COUNT = 300;
         
     public static int getMaxSafeChildrenCount() {
       return MAX_SAFE_CHILDREN_COUNT;

@@ -20,7 +20,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ListUploadsAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ListUploadsAction.class);
+    private static final Log s_log = LogFactory.getLog(ListUploadsAction.class);
 
     public ActionForward execute(
         ActionMapping mapping,

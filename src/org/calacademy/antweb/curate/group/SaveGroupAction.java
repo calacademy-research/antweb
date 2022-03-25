@@ -25,7 +25,7 @@ import org.calacademy.antweb.home.GroupDb;
 
 public final class SaveGroupAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SaveGroupAction.class);
+    private static final Log s_log = LogFactory.getLog(SaveGroupAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm f,
         HttpServletRequest request, HttpServletResponse response)

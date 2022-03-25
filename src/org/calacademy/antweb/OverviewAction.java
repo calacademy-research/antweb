@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class OverviewAction extends DescriptionAction {
 
-    private static Log s_log = LogFactory.getLog(OverviewAction.class);
+    private static final Log s_log = LogFactory.getLog(OverviewAction.class);
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

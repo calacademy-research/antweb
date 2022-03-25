@@ -9,9 +9,9 @@ import org.apache.commons.logging.LogFactory;
 
 public class ImageUpload {
 
-    private static Log s_log = LogFactory.getLog(ImageUpload.class);
+    private static final Log s_log = LogFactory.getLog(ImageUpload.class);
 
-    public static String LICENSE = "Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)";
+    public static final String LICENSE = "Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)";
 
     private int id = 0;
     private int curatorId = 0;

@@ -26,7 +26,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ImageUploaderAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ImageUploaderAction.class);
+    private static final Log s_log = LogFactory.getLog(ImageUploaderAction.class);
 
     private static final int MAX_FILE_SIZE      = 1024 * 1024 * 199; // 199MB
     private static final int MAX_REQUEST_SIZE   = 1024 * 1024 * 200; // 200MB

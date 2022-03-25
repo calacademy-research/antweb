@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 public class LoginForm extends ActionForm {
 
 
-    private static Log s_log = LogFactory.getLog(LoginForm.class);
+    private static final Log s_log = LogFactory.getLog(LoginForm.class);
     
 	private String userName;
 	private String password;

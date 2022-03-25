@@ -24,7 +24,7 @@ import org.calacademy.antweb.home.*;
 
 public final class OrphanSubfamiliesAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(OrphanSubfamiliesAction.class);
+    private static final Log s_log = LogFactory.getLog(OrphanSubfamiliesAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)

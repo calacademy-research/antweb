@@ -260,12 +260,12 @@ public abstract class HttpUtil {
 
 
   
-    private static boolean s_isOffline = false;
+    private static final boolean s_isOffline = false;
     // In order to set to offline, hardcode it above, or turn s_showResults to true and look 
     // at the log results to find a string that will uniquely identify the service
     // (such as gogoinflight or unitied-wifi).
-    private static boolean s_showResults = false;
-    private static String[] s_services = {"gogoinflight", "united-wifi"};
+    private static final boolean s_showResults = false;
+    private static final String[] s_services = {"gogoinflight", "united-wifi"};
       // This is the persisted property resulting from the various conditions that may indicate
     // on of offline.
     private static Boolean s_isOnline;
@@ -974,7 +974,7 @@ public abstract class HttpUtil {
     }
 
 
-    public static int MILLIS = 1000;
+    public static final int MILLIS = 1000;
     public static int SECS = 60;
     public static int MAX_REQUEST_TIME = MILLIS * 20;
 /*

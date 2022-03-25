@@ -18,7 +18,7 @@ See SpecimenUploadParse.java:463
 
 public class Island extends Country {
 
-    private static Log s_log = LogFactory.getLog(Island.class);
+    private static final Log s_log = LogFactory.getLog(Island.class);
     
     public Island() {
     }

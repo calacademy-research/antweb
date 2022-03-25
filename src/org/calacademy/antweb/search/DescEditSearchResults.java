@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
 public final class DescEditSearchResults extends GenericSearchResults
     implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(DescEditSearchResults.class);
+    private static final Log s_log = LogFactory.getLog(DescEditSearchResults.class);
 
     /*
     public void setResultsWithFilters(ArrayList filters) throws Exception {

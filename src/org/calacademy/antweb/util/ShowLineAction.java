@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ShowLineAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(ShowLineAction.class);
+    private static final Log s_log = LogFactory.getLog(ShowLineAction.class);
 
     public ActionForward execute(
         ActionMapping mapping,

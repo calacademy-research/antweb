@@ -13,7 +13,7 @@ import org.calacademy.antweb.*;
 public class BioregionDb extends AntwebDb {
 /* Data from this table is manually fetched in UploadAction to create the search select box. */
 
-    private static Log s_log = LogFactory.getLog(BioregionDb.class);
+    private static final Log s_log = LogFactory.getLog(BioregionDb.class);
 
     public BioregionDb(Connection connection) {
       super(connection);

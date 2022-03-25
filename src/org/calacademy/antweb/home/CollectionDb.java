@@ -15,7 +15,7 @@ import org.calacademy.antweb.util.*;
 
 public class CollectionDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(CollectionDb.class);
+    private static final Log s_log = LogFactory.getLog(CollectionDb.class);
 
     public CollectionDb(Connection connection) {
       super(connection);

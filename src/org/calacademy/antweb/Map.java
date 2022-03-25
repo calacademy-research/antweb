@@ -57,7 +57,7 @@ public class Map {
 
     private ArrayList<String> chosenList;
     public static int displayMapCount = 0;
-    private static HashMap<String, Integer> displayMapHash = new HashMap<>();
+    private static final HashMap<String, Integer> displayMapHash = new HashMap<>();
 
     private String title;
     private String subtitle;
@@ -97,7 +97,7 @@ public class Map {
 
     private Date cached;
 
-    private static Log s_log = LogFactory.getLog(Map.class);
+    private static final Log s_log = LogFactory.getLog(Map.class);
 
 
     public Map() {

@@ -12,7 +12,7 @@ import org.calacademy.antweb.home.*;
 
 public class MuseumTaxonCountDb extends CountDb {
     
-    private static Log s_log = LogFactory.getLog(MuseumTaxonCountDb.class);
+    private static final Log s_log = LogFactory.getLog(MuseumTaxonCountDb.class);
         
     public MuseumTaxonCountDb(Connection connection) {
       super(connection);

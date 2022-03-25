@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class ProjTaxonLogDetail extends ProjTaxon implements Comparable<ProjTaxonLogDetail>  {
 
-    private static Log s_log = LogFactory.getLog(ProjTaxonLogDetail.class);
+    private static final Log s_log = LogFactory.getLog(ProjTaxonLogDetail.class);
 
     private int logId = 0;
     private Taxon taxon;

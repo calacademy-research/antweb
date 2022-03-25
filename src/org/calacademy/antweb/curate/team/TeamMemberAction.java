@@ -14,7 +14,7 @@ import org.calacademy.antweb.home.*;
 
 public class TeamMemberAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(TeamMemberAction.class);
+    private static final Log s_log = LogFactory.getLog(TeamMemberAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm f,
 		HttpServletRequest request, HttpServletResponse response) {

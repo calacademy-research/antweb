@@ -5,16 +5,16 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ResultRank {
 
-    private static Log s_log = LogFactory.getLog(ResultRank.class);
+    private static final Log s_log = LogFactory.getLog(ResultRank.class);
 
-    public static String SUBFAMILY = "subfamily";
-    public static String GENUS = "genus";
-    public static String SPECIES = "species";
-    public static String SPECIMEN = "specimen";    
+    public static final String SUBFAMILY = "subfamily";
+    public static final String GENUS = "genus";
+    public static final String SPECIES = "species";
+    public static final String SPECIMEN = "specimen";
 
     // older...
-    public static String SPECIES_SPECIFIC = "speciesSpecific";
-    public static String BAY_AREA = "bayArea";
+    public static final String SPECIES_SPECIFIC = "speciesSpecific";
+    public static final String BAY_AREA = "bayArea";
 
     public static boolean isTaxonRank(String resultRank) {
         return SPECIES.equals(resultRank) || GENUS.equals(resultRank) || SUBFAMILY.equals(resultRank);

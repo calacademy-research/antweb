@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class TeamMember {
 
-    private static Log s_log = LogFactory.getLog(TeamMember.class);
+    private static final Log s_log = LogFactory.getLog(TeamMember.class);
         
     private int id;
     private String name;

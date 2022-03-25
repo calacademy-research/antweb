@@ -9,7 +9,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class DescEditImageUploadForm extends UploadForm {
 
-    private static Log s_log = LogFactory.getLog(DescEditImageUploadForm.class);
+    private static final Log s_log = LogFactory.getLog(DescEditImageUploadForm.class);
 
 //  protected FormFile theFile2;
 //  protected String homePageDirectory = "";

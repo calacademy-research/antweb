@@ -21,13 +21,13 @@ import org.apache.commons.logging.LogFactory;
 
 public final class SearchAction extends DispatchAction {
 
-    private static Log s_log = LogFactory.getLog(SearchAction.class);
+    private static final Log s_log = LogFactory.getLog(SearchAction.class);
     private static final Log s_searchLog = LogFactory.getLog("searchLog");
 
     public static int tempSpecimenSearchLimit = -1;
     public static int specimenSearchLimit = 50000;   // default can be overridden with setTempSpecimenSearchLimit()
-    public static int devSpecimenSearchLimit = 10000;
-    public static int noSpecimenSearchLimit = 1000000;
+    public static final int devSpecimenSearchLimit = 10000;
+    public static final int noSpecimenSearchLimit = 1000000;
 
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,

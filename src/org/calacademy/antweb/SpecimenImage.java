@@ -17,7 +17,7 @@ public class SpecimenImage implements Serializable {
 
     private static final Log s_log = LogFactory.getLog(SpecimenImage.class);
 
-    public static String DRACULA = "/images/casent0435930/casent0435930_h_1_med.jpg";
+    public static final String DRACULA = "/images/casent0435930/casent0435930_h_1_med.jpg";
     public static String TEXTURED = "/images/casent0171158/casent0171158_h_1_med.jpg";
      
     private static final String image_root = "/images";

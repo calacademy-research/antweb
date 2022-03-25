@@ -23,7 +23,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         return getName().compareTo(other.getName());
     }
 
-    private static Log s_log = LogFactory.getLog(Geolocale.class);
+    private static final Log s_log = LogFactory.getLog(Geolocale.class);
 
     private int id;
     protected String name;

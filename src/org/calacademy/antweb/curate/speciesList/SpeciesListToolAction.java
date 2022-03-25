@@ -20,7 +20,7 @@ import org.calacademy.antweb.search.*;
 
 public class SpeciesListToolAction extends SpeciesListSuperAction {
 
-  private static Log s_log = LogFactory.getLog(SpeciesListToolAction.class);
+  private static final Log s_log = LogFactory.getLog(SpeciesListToolAction.class);
 
   private static ArrayList<Geolocale> s_blackList;
   

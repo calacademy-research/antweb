@@ -82,8 +82,8 @@ public class SpeciesListUpload extends AntwebUpload {
 
     private final SpeciesListUploadDb m_speciesListUploadDb;
     private int totalTaxonCountryPrimaryKeyViolations = 0;
-    private int totalFossils = 0; 
-    private int totalNotFossils = 0;   
+    private final int totalFossils = 0;
+    private final int totalNotFossils = 0;
     
     public SpeciesListUpload(Connection connection) {
       super(connection, "worldants");

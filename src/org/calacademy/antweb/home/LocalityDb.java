@@ -13,7 +13,7 @@ import org.calacademy.antweb.util.*;
 
 public class LocalityDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(LocalityDb.class);
+    private static final Log s_log = LogFactory.getLog(LocalityDb.class);
 
     public LocalityDb(Connection connection) {
       super(connection);

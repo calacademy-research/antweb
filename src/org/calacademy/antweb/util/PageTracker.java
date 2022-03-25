@@ -1,7 +1,6 @@
 package org.calacademy.antweb.util;
 
 import java.util.*;
-import java.util.Collection;
 
 import javax.servlet.http.*;
 

@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
     
 public class Curator extends Login {
 
-    private static Log s_log = LogFactory.getLog(Curator.class);
+    private static final Log s_log = LogFactory.getLog(Curator.class);
 
     private int specimenUploadCount = 0;
     private int imageUploadCount = 0;

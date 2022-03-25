@@ -9,7 +9,7 @@ public class CountryDb extends AntwebDb {
 
 // Deprecated.  Use GeolocaleDb.
 
-    private static Log s_log = LogFactory.getLog(CountryDb.class);
+    private static final Log s_log = LogFactory.getLog(CountryDb.class);
 
     public CountryDb(Connection connection) {
       super(connection);

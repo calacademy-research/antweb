@@ -9,7 +9,7 @@ import java.util.Date;
 
 public class QueryStats {
 
-    private static Log s_log = LogFactory.getLog(QueryStats.class);
+    private static final Log s_log = LogFactory.getLog(QueryStats.class);
 
     private int queryCount = 0;
     private long maxMillis = 0;

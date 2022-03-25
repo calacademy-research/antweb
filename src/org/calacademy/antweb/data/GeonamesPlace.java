@@ -16,7 +16,7 @@ import com.google.gson.*;
     
 public class GeonamesPlace extends DataPlace {
 
-    private static Log s_log = LogFactory.getLog(GeonamesPlace.class);
+    private static final Log s_log = LogFactory.getLog(GeonamesPlace.class);
 
     public static final String source = "Geonames";
     
@@ -112,7 +112,7 @@ public class GeonamesPlace extends DataPlace {
         return message;
     }
 
-	private static int s_cleanedFlickrNameCount = 0;
+	private static final int s_cleanedFlickrNameCount = 0;
     private static int s_cleanCount = 0;
 
     private static void processAdm1(String adm1Name, GeonamesPlace countryPlace, GeolocaleDb geolocaleDb)

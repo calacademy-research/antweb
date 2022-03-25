@@ -13,7 +13,7 @@ import org.calacademy.antweb.geolocale.*;
 /** Class Species keeps track of the information about a specific taxon */
 public class Species extends Genus implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Species.class);
+    private static final Log s_log = LogFactory.getLog(Species.class);
 
     public String getNextRank() {
         return "Specimens";

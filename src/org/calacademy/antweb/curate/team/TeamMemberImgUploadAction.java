@@ -15,7 +15,7 @@ public final class TeamMemberImgUploadAction extends Action {
 
     private static final Log s_log = LogFactory.getLog(TeamMemberImgUploadAction.class);
 
-    public static int MAX_PHOTO_SIZE = 200000;
+    public static final int MAX_PHOTO_SIZE = 200000;
 
     public ActionForward execute(ActionMapping mapping,
                                  ActionForm form,

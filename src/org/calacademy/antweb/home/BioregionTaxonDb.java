@@ -12,7 +12,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public class BioregionTaxonDb extends TaxonSetDb {
     
-    private static Log s_log = LogFactory.getLog(BioregionTaxonDb.class);
+    private static final Log s_log = LogFactory.getLog(BioregionTaxonDb.class);
         
     public BioregionTaxonDb(Connection connection) {
       super(connection);

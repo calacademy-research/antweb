@@ -12,7 +12,7 @@ import org.calacademy.antweb.util.*;
 
 public class ProjectDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(ProjectDb.class);
+    private static final Log s_log = LogFactory.getLog(ProjectDb.class);
         
     public ProjectDb(Connection connection) {
       super(connection);

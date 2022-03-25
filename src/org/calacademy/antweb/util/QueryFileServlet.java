@@ -27,7 +27,7 @@ To make this work, add a section to the web.xml and modify as necessary
 */
 public class QueryFileServlet extends HttpServlet {
 
-    private static Log s_log = LogFactory.getLog(QueryFileServlet.class);
+    private static final Log s_log = LogFactory.getLog(QueryFileServlet.class);
 
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {

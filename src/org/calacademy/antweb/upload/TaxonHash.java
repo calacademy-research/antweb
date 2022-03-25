@@ -7,10 +7,10 @@ import org.apache.commons.logging.LogFactory;
 
 public final class TaxonHash extends Hashtable<String, Object> {
 
-    private static Log s_log = LogFactory.getLog(TaxonHash.class);
+    private static final Log s_log = LogFactory.getLog(TaxonHash.class);
 
-    public static String INFO = "info";
-    public static String WARN = "warn";
+    public static final String INFO = "info";
+    public static final String WARN = "warn";
 
     public TaxonHash() {
     }

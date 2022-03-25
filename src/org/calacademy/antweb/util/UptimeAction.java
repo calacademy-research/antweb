@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
     
 public final class UptimeAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(UptimeAction.class);
+    private static final Log s_log = LogFactory.getLog(UptimeAction.class);
 
     private static boolean isFailOnPurpose = false;
     public static boolean isFailOnPurpose() {

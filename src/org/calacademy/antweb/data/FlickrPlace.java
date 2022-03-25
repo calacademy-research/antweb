@@ -18,7 +18,7 @@ import javax.net.ssl.SSLHandshakeException;
 
 public class FlickrPlace extends DataPlace {
 
-    private static Log s_log = LogFactory.getLog(FlickrPlace.class);
+    private static final Log s_log = LogFactory.getLog(FlickrPlace.class);
 
     public static final String source = "Flickr";
 
@@ -52,7 +52,7 @@ public class FlickrPlace extends DataPlace {
     /util.do?action=fetchFlickrPlaces
 */
 
-    static String s_flickrAdm1 = "flickrAdm1.html";
+    static final String s_flickrAdm1 = "flickrAdm1.html";
 
     // 
     public static String fetchAdm1Data(Connection connection) {

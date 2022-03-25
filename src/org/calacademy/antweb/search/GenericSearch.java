@@ -23,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class GenericSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(GenericSearch.class);
+    private static final Log s_log = LogFactory.getLog(GenericSearch.class);
 
     protected String name;
     protected String taxonName;
@@ -34,7 +34,7 @@ public class GenericSearch implements Serializable {
     protected int geolocaleId;
     protected Connection connection;
     protected ArrayList<ResultItem> results;
-    protected Pattern inQuotes = Pattern.compile("(\".*?\")");
+    protected final Pattern inQuotes = Pattern.compile("(\".*?\")");
 
     public ArrayList<ResultItem> getResults() throws SearchException, SQLException {
 
@@ -387,13 +387,13 @@ public class GenericSearch implements Serializable {
         return smallList;
     }
 
-    public static int GENERIC = 0;
-    public static int RECENT_IMAGE = 1;
-    public static int ADVANCED = 2;
+    public static final int GENERIC = 0;
+    public static final int RECENT_IMAGE = 1;
+    public static final int ADVANCED = 2;
     public static int IMAGEPICK = 3;
     public static int BAY_AREA = 4;
-    public static int DESC_EDIT = 5;
-    public static int SEARCH = 6;
+    public static final int DESC_EDIT = 5;
+    public static final int SEARCH = 6;
 
     protected ArrayList<ResultItem> getListFromRset(int searchType, ResultSet rset, SearchItem synonymousItem, String theQuery) throws SQLException {
         //A.log("GenericSearch.getListFromRset(searchType...)"); 

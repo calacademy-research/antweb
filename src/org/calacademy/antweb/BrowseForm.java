@@ -23,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class BrowseForm extends DescriptionForm {
 
-    private static Log s_log = LogFactory.getLog(BrowseForm.class);
+    private static final Log s_log = LogFactory.getLog(BrowseForm.class);
 
     private int taxonId = 0;
     private String rank;

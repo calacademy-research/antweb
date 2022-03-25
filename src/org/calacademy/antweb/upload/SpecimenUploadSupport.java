@@ -11,9 +11,9 @@ public class SpecimenUploadSupport extends AntwebUpload {
   Class is designed to support SpecimenUploadProcess and SpecimenUploadParse.
 */
 
-    private static Log s_log = LogFactory.getLog(SpecimenUploadSupport.class);
+    private static final Log s_log = LogFactory.getLog(SpecimenUploadSupport.class);
 
-    private ArrayList<String> m_badRankTaxonList = new ArrayList(); 
+    private final ArrayList<String> m_badRankTaxonList = new ArrayList();
     
     SpecimenUploadSupport(Connection connection) {
 

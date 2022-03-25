@@ -21,7 +21,7 @@ import org.calacademy.antweb.util.*;
 
 public final class BigPictureAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(BigPictureAction.class);
+    private static final Log s_log = LogFactory.getLog(BigPictureAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm theForm,
         HttpServletRequest request, HttpServletResponse response)

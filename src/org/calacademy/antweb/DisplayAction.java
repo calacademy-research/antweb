@@ -28,7 +28,7 @@ public final class DisplayAction extends Action {
    Integrate functionality with description.do?
 */
 
-    private static Log s_log = LogFactory.getLog(DisplayAction.class);
+    private static final Log s_log = LogFactory.getLog(DisplayAction.class);
 
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,

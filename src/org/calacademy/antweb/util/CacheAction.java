@@ -24,7 +24,7 @@ http://www.antweb.org/cache.do?action=genCacheThread
     
 public final class CacheAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(CacheAction.class);
+    private static final Log s_log = LogFactory.getLog(CacheAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -130,9 +130,9 @@ public final class CacheAction extends Action {
         }    
     }
 
-    private static int GEN_CACHE_THREAD_MINUTES = 10;
-    private static int PAUSE_SECONDS = 2;
-    private static int SLEEP_SECONDS = 60;
+    private static final int GEN_CACHE_THREAD_MINUTES = 10;
+    private static final int PAUSE_SECONDS = 2;
+    private static final int SLEEP_SECONDS = 60;
     
     private void genCacheThread(HttpServletRequest request) {
 	  DataSource dataSource = getDataSource(request, "conPool");

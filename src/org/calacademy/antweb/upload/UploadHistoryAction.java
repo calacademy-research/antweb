@@ -15,7 +15,7 @@ import org.calacademy.antweb.util.*;
  */
 public class UploadHistoryAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(UploadHistoryAction.class);
+    private static final Log s_log = LogFactory.getLog(UploadHistoryAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {

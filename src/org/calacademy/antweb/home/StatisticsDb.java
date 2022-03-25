@@ -13,7 +13,7 @@ import org.calacademy.antweb.util.*;
 
 public class StatisticsDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(StatisticsDb.class);
+    private static final Log s_log = LogFactory.getLog(StatisticsDb.class);
 
     public StatisticsDb(Connection connection) {
       super(connection);

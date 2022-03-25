@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 
 public final class OverviewForm extends DescriptionForm {
 
-    private static Log s_log = LogFactory.getLog(OverviewForm.class);
+    private static final Log s_log = LogFactory.getLog(OverviewForm.class);
 
     private int id = 0;
     private String name;

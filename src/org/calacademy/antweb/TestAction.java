@@ -20,7 +20,7 @@ import org.apache.commons.logging.LogFactory;
 //http://localhost/antweb/test.do
 public final class TestAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(TestAction.class);
+    private static final Log s_log = LogFactory.getLog(TestAction.class);
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)

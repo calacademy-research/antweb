@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 /** Class Advanced does the searching for the advanced_search.jsp page */
 public class RecentImageSearch extends GenericSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(RecentImageSearch.class);
+    private static final Log s_log = LogFactory.getLog(RecentImageSearch.class);
 
     private String daysAgo;
     private String numToShow;

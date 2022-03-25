@@ -20,9 +20,9 @@ public class ImageUtil {
     private static int fileFoundCount = 0;
     private static int fileNotFoundCount = 0;
     
-    private static Counter counter = new Counter();
+    private static final Counter counter = new Counter();
     
-    private static ArrayList<SpecimenImage> notTifList = new ArrayList<>();
+    private static final ArrayList<SpecimenImage> notTifList = new ArrayList<>();
     
     public static ArrayList<SpecimenImage> getNotTifList() {
       return notTifList;

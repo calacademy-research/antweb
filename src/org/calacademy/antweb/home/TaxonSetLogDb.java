@@ -12,7 +12,7 @@ import org.calacademy.antweb.*;
 
 public abstract class TaxonSetLogDb extends AntwebDb {
 
-    private static Log s_log = LogFactory.getLog(TaxonSetLogDb.class);
+    private static final Log s_log = LogFactory.getLog(TaxonSetLogDb.class);
 
     public TaxonSetLogDb(Connection connection) {
       super(connection);

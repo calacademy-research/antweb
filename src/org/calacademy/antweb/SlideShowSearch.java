@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
 /** Class Search does the searching of the specimen data */
 public class SlideShowSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(SlideShowSearch.class);
+    private static final Log s_log = LogFactory.getLog(SlideShowSearch.class);
 
 	private String rank;
 	private Connection connection;

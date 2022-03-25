@@ -13,7 +13,7 @@ import org.calacademy.antweb.geolocale.*;
 
 public class TaxonPropDb extends AntwebDb {
     
-    private static Log s_log = LogFactory.getLog(TaxonPropDb.class);
+    private static final Log s_log = LogFactory.getLog(TaxonPropDb.class);
         
     public TaxonPropDb(Connection connection) {
       super(connection);

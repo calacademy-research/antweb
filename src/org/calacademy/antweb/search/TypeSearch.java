@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
 /** Class TypeSearch does the searching of the specimen data */
 public class TypeSearch implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(TypeSearch.class);
+    private static final Log s_log = LogFactory.getLog(TypeSearch.class);
 
     private String name;
     private String searchType;

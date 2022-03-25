@@ -14,7 +14,7 @@ import org.calacademy.antweb.home.*;
 /** Class Genus keeps track of the information about a specific taxon */
 public class Genus extends Subfamily implements Serializable {
 
-    private static Log s_log = LogFactory.getLog(Genus.class);
+    private static final Log s_log = LogFactory.getLog(Genus.class);
     
     public String getNextRank() {
         return "Species";

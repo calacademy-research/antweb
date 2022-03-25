@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class SpeciesListDownloadAction extends Action {
 
-    private static Log s_log = LogFactory.getLog(SpeciesListDownloadAction.class);
+    private static final Log s_log = LogFactory.getLog(SpeciesListDownloadAction.class);
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
