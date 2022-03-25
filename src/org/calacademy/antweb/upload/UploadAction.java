@@ -1,31 +1,37 @@
 package org.calacademy.antweb.upload;
 
-import java.io.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.regexp.RE;
+import org.apache.regexp.RESyntaxException;
+import org.apache.struts.action.Action;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+import org.apache.struts.upload.FormFile;
+import org.calacademy.antweb.*;
+import org.calacademy.antweb.curate.speciesList.SpeciesListUploader;
+import org.calacademy.antweb.data.Adm1LoadAction;
+import org.calacademy.antweb.data.AntWikiData;
+import org.calacademy.antweb.data.AntWikiDataAction;
+import org.calacademy.antweb.home.*;
+import org.calacademy.antweb.util.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.sql.DataSource;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.Date;
-
-import org.apache.struts.action.*;
-import org.apache.regexp.*;
-
-import org.apache.struts.upload.FormFile;
-
-import javax.servlet.http.*;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Map;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.data.*;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.curate.speciesList.*;
+import java.util.*;
 
 /**
  * This class takes the UploadForm and retrieves the text value
@@ -1099,8 +1105,8 @@ public class UploadAction extends Action {
 
             String[] components;
             //StringBuffer cvnfContent = new StringBuffer();
-            StringBuffer tnfContent = new StringBuffer(); // Taxa Not Found
-            StringBuffer awContent = new StringBuffer(); // Taxa Not Found
+            StringBuffer tnfContent = new StringBuffer(96); // Taxa Not Found
+            StringBuffer awContent = new StringBuffer(64); // Taxa Not Found
 
             int currentValidFound = 0;
             int currentValidNotFound = 0;
@@ -1194,7 +1200,7 @@ public class UploadAction extends Action {
             RE tab = new RE("\t");
 
             String[] components;
-            StringBuffer cvnfContent = new StringBuffer();
+            StringBuffer cvnfContent = new StringBuffer(96);
             StringBuffer tnfContent = new StringBuffer();
 
             int currentValidFound = 0;

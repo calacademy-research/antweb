@@ -1,32 +1,39 @@
 package org.calacademy.antweb.util;
 
-import java.io.*;
-import java.util.*;
-import java.util.Date;
-import javax.servlet.http.*;
-
-import org.apache.struts.action.*;
-
-import java.sql.*;
-import javax.sql.DataSource;
-
-import org.apache.commons.logging.Log; 
+import com.google.gson.Gson;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.apache.struts.action.Action;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.curate.*;
-import org.calacademy.antweb.Map;
-import org.calacademy.antweb.upload.*;
-import org.calacademy.antweb.search.*;
-import org.calacademy.antweb.geolocale.*;
+import org.calacademy.antweb.curate.OperationDetails;
+import org.calacademy.antweb.curate.speciesList.SpeciesListUploader;
+import org.calacademy.antweb.data.AntWikiDataAction;
+import org.calacademy.antweb.data.FlickrPlace;
+import org.calacademy.antweb.data.GeonamesPlace;
+import org.calacademy.antweb.data.geonet.GeonetMgr;
+import org.calacademy.antweb.data.googleApis.GoogleApisMgr;
+import org.calacademy.antweb.geolocale.Geolocale;
 import org.calacademy.antweb.home.*;
-import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.data.*;
-import org.calacademy.antweb.data.geonet.*;
-import org.calacademy.antweb.data.googleApis.*;
-import org.calacademy.antweb.curate.speciesList.*;
+import org.calacademy.antweb.search.AdvancedSearchAction;
+import org.calacademy.antweb.search.Output;
+import org.calacademy.antweb.search.ResultRank;
+import org.calacademy.antweb.search.SearchAction;
+import org.calacademy.antweb.upload.UploadDetails;
 
-import com.google.gson.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /*
 // Requests look something like:  
@@ -131,8 +138,6 @@ public class UtilDataAction extends Action {
                 request.setAttribute("message", "action not found:" + action);
                 return mapping.findForward("message");
 
-            } catch (IOException | AntwebException e) {
-                message = handleException(e, connection, action, loginName);
             } catch (Exception e) {
                 message = handleException(e, connection, action, loginName);
             } finally {

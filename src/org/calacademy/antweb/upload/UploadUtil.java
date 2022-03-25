@@ -1,15 +1,18 @@
 package org.calacademy.antweb.upload;
 
-import java.io.*;
-import java.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Formatter;
+import org.calacademy.antweb.util.AntwebUtil;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.Formatter;
-import org.calacademy.antweb.util.*;
+import java.util.Date;
+import java.util.Hashtable;
 
 public class UploadUtil {
 
@@ -49,7 +52,7 @@ public class UploadUtil {
     
     public static String makeName(Hashtable item) {
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder(24);
 
         if (validNameKey("taxon_name", item)) {
             if ("formicidae".equals(item.get("taxon_name")))         

@@ -1,21 +1,20 @@
 package org.calacademy.antweb.upload;
 
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.Date;
-
-import org.apache.regexp.*;
-
-import java.sql.*;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.geolocale.*;
+import org.apache.regexp.RE;
+import org.apache.regexp.RESyntaxException;
 import org.calacademy.antweb.Formatter;
+import org.calacademy.antweb.*;
+import org.calacademy.antweb.geolocale.Country;
+import org.calacademy.antweb.geolocale.Geolocale;
+import org.calacademy.antweb.home.SpecimenUploadDb;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.*;
+
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.*;
 
 public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
@@ -55,7 +54,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         Group accessGroup = accessLogin.getGroup();
 
         Date startTime = new Date();
-        StringBuilder otherInfo = new StringBuilder();
+        StringBuilder otherInfo = new StringBuilder(32);
         String otherColumn;
         String errorMessage = null;            
 		String code = null;

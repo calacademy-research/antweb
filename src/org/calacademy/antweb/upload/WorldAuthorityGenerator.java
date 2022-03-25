@@ -1,21 +1,17 @@
 package org.calacademy.antweb.upload;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Formatter;
+import org.calacademy.antweb.Utility;
+import org.calacademy.antweb.util.AntwebUtil;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.AntwebUtil;
 
 public class WorldAuthorityGenerator {
 
@@ -1036,7 +1032,7 @@ public class WorldAuthorityGenerator {
     
     private String duplicatesToString(HashMap<String, ArrayList<String>> contents, String keyLabel, String valueLabel) {
         StringBuffer result = new StringBuffer();
-        String key = "";
+        String key;
         for (String s : contents.keySet()) {
             key = s;
             if (key.length() > 0 && contents.get(key).size() > 1) {

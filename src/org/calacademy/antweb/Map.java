@@ -1,19 +1,16 @@
 package org.calacademy.antweb;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.geolocale.*;
+import org.calacademy.antweb.home.SpecimenDb;
+import org.calacademy.antweb.util.*;
+
 import java.sql.Connection;
-
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
-
-import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.home.SpecimenDb;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
 
 /*
 
@@ -374,7 +371,7 @@ public class Map {
 						//if ("Minnesota".equals(adm1)) A.slog("setPoints() adm1:" + adm1);
 												
                         if (tracker.containsKey(key)) {
-                            keyCount = (Integer) tracker.get(key);
+                            keyCount = tracker.get(key);
                             ++keyCount;
                             tracker.put(key, keyCount);
                             ++nonUniqueLocalities;
@@ -601,7 +598,7 @@ public class Map {
 				if (lon != 0.0 && lat != 0.0) {
 					key = lon + ":" + lat; //taxonName + ":" + 
 					if (distinctLocalities.containsKey(key)) {
-						keyCount = (Integer) distinctLocalities.get(key);
+						keyCount = distinctLocalities.get(key);
 						++keyCount;
 						distinctLocalities.put(key, keyCount);
 					} else {
@@ -671,7 +668,7 @@ public class Map {
         //A.log("setGoogleMapFunction() points:" + points);
         //	AntwebUtil.infoStackTrace();
         
-        StringBuffer theString = null;
+        StringBuffer theString;
         String googleString = null;
         if (getPoints() != null && getPoints().size() > 0) {
           //ArrayList clearPoints = clearZeros(getPoints());

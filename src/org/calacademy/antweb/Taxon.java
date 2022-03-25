@@ -1051,7 +1051,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
     public String diff(Taxon otherTaxon) {
         if (otherTaxon == null) return null;
-        StringBuffer strBuf = new StringBuffer();
+        StringBuffer strBuf = new StringBuffer(1024);
 
         if (!Utility.equal(getTaxonName(), otherTaxon.getTaxonName())) strBuf.append(" taxonName:" + getTaxonName() + "/" + otherTaxon.getTaxonName());
         if (!Utility.equal(getRank(), otherTaxon.getRank())) strBuf.append(" taxarank:" + getRank() + "/" + otherTaxon.getRank());
@@ -1207,7 +1207,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     
         int theCount = 0;
         if (images != null) {
-          if (images.size() > 0) {
+          if (!images.isEmpty()) {
             theCount = images.size();
           }
         } else {
@@ -1233,7 +1233,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     public boolean getHasImages() {
         boolean hasEm = false;
 
-        if (hasImages || images != null && images.size() > 0) {
+        if (hasImages || images != null && !images.isEmpty()) {
             hasEm = true;
         }
 

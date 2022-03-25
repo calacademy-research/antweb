@@ -1,23 +1,24 @@
 package org.calacademy.antweb.upload;
 
-import java.util.Date;
-import java.util.*;
-import java.sql.*;
-import java.text.*;
-import java.util.Map;
-
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import org.apache.commons.lang3.tuple.Pair;
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.*;
-
-import org.apache.regexp.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.util.*;
+import org.apache.regexp.RE;
+import org.apache.regexp.RESyntaxException;
 import org.calacademy.antweb.Formatter;
+import org.calacademy.antweb.*;
+import org.calacademy.antweb.home.HomonymDb;
+import org.calacademy.antweb.home.ProjTaxonDb;
+import org.calacademy.antweb.home.TaxonDb;
+import org.calacademy.antweb.home.UploadDb;
+import org.calacademy.antweb.util.*;
+
+import java.sql.*;
+import java.text.Normalizer;
+import java.util.Date;
+import java.util.Map;
+import java.util.*;
 
 public class AntwebUpload {
     /**
@@ -729,8 +730,8 @@ public class AntwebUpload {
         try {
             // prepare the fields and values
             Enumeration<String> keys = item.keys();
-            StringBuilder fields = new StringBuilder();
-            StringBuilder values = new StringBuilder();
+            StringBuilder fields = new StringBuilder(128);
+            StringBuilder values = new StringBuilder(64);
             fields.append("(");
             values.append("(");
             String key;

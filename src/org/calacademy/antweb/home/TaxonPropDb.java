@@ -1,14 +1,18 @@
 package org.calacademy.antweb.home;
 
-import java.util.*;
-import java.sql.*;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Taxon;
+import org.calacademy.antweb.geolocale.Bioregion;
+import org.calacademy.antweb.util.DBUtil;
 
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.geolocale.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 
 public class TaxonPropDb extends AntwebDb {
@@ -134,8 +138,8 @@ public class TaxonPropDb extends AntwebDb {
                 String bioregion = rset.getString("bioregion");
 
                 if (isWordInArray(bioregion, Bioregion.list)) {
-                  HashSet bioregionSet = bioregionMaps.get(genus);
-                  if (bioregionSet == null) bioregionSet = new HashSet<String>();
+                  HashSet<String> bioregionSet = bioregionMaps.get(genus);
+                  if (bioregionSet == null) bioregionSet = new HashSet<>();
                   bioregionSet.add(bioregion);
                   bioregionMaps.put(genus, bioregionSet);
                 } else {
