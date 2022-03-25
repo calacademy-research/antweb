@@ -48,7 +48,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
     }
 
     public TaxonSet get(int geolocaleId, String taxonName) throws SQLException {
-        String query = "";
+        String query;
         GeolocaleTaxon geolocaleTaxon = null;
         Statement stmt = null;
         ResultSet rset = null;
@@ -85,9 +85,9 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
     public ArrayList<TaxonSet> getTaxonSetList(String taxaRank, int geolocaleId) throws SQLException {
         ArrayList<TaxonSet> taxonSetList = new ArrayList<>();
-        String query = "";
+        String query;
         Statement stmt = null;
-        ResultSet rset = null;
+        ResultSet rset;
         try {
 
             stmt = DBUtil.getStatement(getConnection(), "getTaxonSetList()");
@@ -364,7 +364,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 	 
 // ------------------------- support methods -----------------------------
     private boolean hasItem(int id, String taxonName) throws SQLException {
-        String query = "";
+        String query;
         Statement stmt = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "hasItem()");
@@ -416,7 +416,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
           AntwebUtil.logStackTrace();              
         }
 */          
-        String dml = null;
+        String dml;
         Statement stmt = null;
         int count = 0;
         try {
@@ -870,7 +870,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
     public String populateFromAntwikiData() throws SQLException {
       String disputes = "";
       String unfoundCountriesStr = "";
-      HashSet unfoundCountries = new HashSet<String>();
+      HashSet<String> unfoundCountries = new HashSet<>();
 
       s_subfamilyCount = 0;
       s_generaCount = 0;

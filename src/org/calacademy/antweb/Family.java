@@ -37,13 +37,13 @@ public class Family extends Taxon implements Serializable {
 
         // We only use the subgenus clause when rank is genus.
 
-        ArrayList theseChildren = new ArrayList();
+        ArrayList<Taxon> theseChildren = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
         String query = null;
         try {
           query =
-            "select distinct taxon.subfamily from taxon" // proj_taxon where " 
+            "select distinct taxon.subfamily from taxon " // proj_taxon where "
                 + fetchChildrenClause                   
                 + " and taxon.subfamily != '' "
                 + " and taxarank = 'subfamily' "
@@ -56,9 +56,8 @@ public class Family extends Taxon implements Serializable {
 
             //A.log("setChildren() query:" + theQuery);
 
-            Subfamily child = null;
-            String theParams = null;
-            
+            Subfamily child;
+
             while (rset.next()) {
                 String subfamily = rset.getString("subfamily");
                 child = new TaxonDb(connection).getSubfamily(subfamily);

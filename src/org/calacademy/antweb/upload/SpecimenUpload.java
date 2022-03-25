@@ -1,6 +1,8 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Date;
 import java.sql.*;
@@ -89,9 +91,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
         try {
 
             LineNumMgr.init(uploadFile, getMessageMgr(), getConnection());
-        
-            BufferedReader in = new BufferedReader(
-                new InputStreamReader(new FileInputStream(uploadFile.getFileLoc()), uploadFile.getEncoding()));
+
+
+            BufferedReader in = Files.newBufferedReader(Paths.get(uploadFile.getFileLoc()), uploadFile.getCharset());
 
             // parse the header 
             String theLine = in.readLine();         

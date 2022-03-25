@@ -516,7 +516,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
 
         // we have to get one good specimen and load up all
         // the shots into the images hashtable
-        Hashtable myImages = new Hashtable();
+        Hashtable<String, SpecimenImage> myImages = new Hashtable<>();
 
         String query = null;
         Statement stmt = null;
@@ -735,9 +735,8 @@ update specimen set other = '
         if (!isManualEntry) {
           s_log.warn("setDescription() not is manual entry?");
         }
-        
-        Formatter formatter = new Formatter();
-        Hashtable description = new Hashtable();
+
+        Hashtable<String, String> description = new Hashtable<>();
         String taxonName = null;
         String theQuery = "";
         Statement stmt = null;

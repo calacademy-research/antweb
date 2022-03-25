@@ -1,6 +1,9 @@
 package org.calacademy.antweb.home;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.sql.*;
 
@@ -425,8 +428,8 @@ museum
 
             if (docBase != null) {
 
-                File outputFile = new File(docBase + "/web/genInc/" + "statistics.jsp");
-                FileWriter outFile = new FileWriter(outputFile);
+                Path outputFile = Paths.get(docBase + "/web/genInc/" + "statistics.jsp");
+                BufferedWriter outFile = Files.newBufferedWriter(outputFile);
 
                 // here write out the results
                 //outFile.write("number of types imaged: " + imagedTypes + "<br>\n");

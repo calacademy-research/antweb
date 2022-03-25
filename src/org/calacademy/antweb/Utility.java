@@ -1,23 +1,24 @@
 package org.calacademy.antweb;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.text.Normalizer;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.regexp.RE;
+import org.apache.regexp.RESyntaxException;
+import org.apache.struts.upload.FormFile;
+import org.calacademy.antweb.util.AntwebException;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.AntwebUtil;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.Timestamp;
+import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.sql.Timestamp;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.regexp.*;
-
-import org.apache.struts.upload.FormFile;
-
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
 
 /** Class utility keeps track of the information about a specific taxon */
 public class Utility implements Serializable {
@@ -119,7 +120,8 @@ public class Utility implements Serializable {
     public static boolean isTabDelimited(String fileName) {
         boolean isTabDelimited = false;
         try {
-            BufferedReader in = new BufferedReader(new FileReader(fileName));
+
+            BufferedReader in = Files.newBufferedReader(Paths.get(fileName));
             // in is never false
 //            if (in == null) {
 //              s_log.error("isTabDelimited() BufferedReader is null for file:" + fileName);

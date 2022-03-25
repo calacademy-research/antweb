@@ -31,7 +31,7 @@ public class Locality {
     protected String elevationMaxError = "";
     protected String latLonMaxError = "";
     
-    private ArrayList<Group> groupList = new ArrayList();
+    private ArrayList<Group> groupList = new ArrayList<>();
     
     // MarkMap
     protected Map map;

@@ -87,7 +87,7 @@ public final class SpecimenAction extends DescriptionAction {
                     
                     if (accessLogin != null) getDescEditHistory(specimen, connection, request);
                     
-                    ArrayList specimenList = new ArrayList();
+                    ArrayList<String> specimenList = new ArrayList<>();
                     specimenList.add(specimen.getCode());
                     
                     specimen.setMap(new Map(specimenList, connection));                    

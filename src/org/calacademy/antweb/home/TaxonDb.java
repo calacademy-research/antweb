@@ -144,7 +144,7 @@ public class TaxonDb extends AntwebDb {
                 taxon.setYear(rset.getString("year"));
                 taxon.setIsAvailable(rset.getInt("available") == 1);
                 String currentValidName = rset.getString("current_valid_name");
-                if (currentValidName != null && !taxonName.equals(currentValidName.toLowerCase())) {
+                if (currentValidName != null && !taxonName.equalsIgnoreCase(currentValidName)) {
                     taxon.setCurrentValidName(currentValidName);
                 }
                 taxon.setCurrentValidRank(rset.getString("current_valid_rank"));

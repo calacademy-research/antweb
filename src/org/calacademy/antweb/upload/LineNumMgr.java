@@ -1,6 +1,8 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.sql.*;
 
@@ -49,7 +51,7 @@ public class LineNumMgr {
 		String theHeader = null;
 		String lastLine = null;
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(uploadFile.getFileLoc()), uploadFile.getEncoding()));            
+        BufferedReader in = Files.newBufferedReader(Paths.get(uploadFile.getFileLoc()), uploadFile.getCharset());
         theLine = in.readLine();
         int lineNum = 1;
         int componentCount = 0;

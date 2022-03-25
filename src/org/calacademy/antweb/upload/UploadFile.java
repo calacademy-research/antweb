@@ -148,6 +148,10 @@ public class UploadFile {
       this.encoding = encoding;
     }
 
+    public Charset getCharset() {
+        return Charset.forName(encoding);
+    }
+
     boolean correctEncoding(String encoding) {
       boolean aLineFound = false;
       String theLine = null;

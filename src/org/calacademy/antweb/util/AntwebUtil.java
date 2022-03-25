@@ -8,7 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.*;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
@@ -294,9 +295,7 @@ public abstract class AntwebUtil {
 
   public static void writeFile(String file, String stringData) {
     try {
-      BufferedWriter out = new BufferedWriter(new FileWriter(file, false));
-      out.write(stringData);
-      out.close();
+      FileUtils.writeStringToFile(new File(file), stringData);
     } catch (Exception e) {
       s_log.error("writeFile() file:" + file + " e:" + e);
     }

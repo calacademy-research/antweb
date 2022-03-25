@@ -1,6 +1,9 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 import org.apache.regexp.*;
@@ -305,8 +308,8 @@ public class SpeciesListUpload extends AntwebUpload {
 
             String[] components;
 
-            BufferedReader in = new BufferedReader(
-                new InputStreamReader(new FileInputStream(fileName), encoding));
+            BufferedReader in = Files.newBufferedReader(Paths.get(fileName), Charset.forName(encoding));
+
                     
             if (in == null) {
                 returnStr = "importSpeciesList() BufferedReader is null for file:" + fileName;

@@ -131,12 +131,12 @@ these other _cf1 etc.
 
 
     public String getFullName() {
-        StringBuffer fullName = new StringBuffer();
-        fullName.append(genus + " ");
+        StringBuilder fullName = new StringBuilder();
+        fullName.append(genus).append(" ");
         if (subgenus != null
             && !"".equals(subgenus)
             && !"null".equals(subgenus)) {
-            fullName.append("(" + subgenus + ") ");
+            fullName.append("(").append(subgenus).append(") ");
         }
 /*        
         if ((speciesGroup != null)

@@ -66,7 +66,7 @@ public class Map {
 
     protected String staticMapParams;
     protected ArrayList<Coordinate> points = new ArrayList<>();
-    protected ArrayList mapSpecimens = new ArrayList();
+    protected ArrayList<Specimen> mapSpecimens = new ArrayList<>();
 
     protected String mapName = "";
     protected String googleMapFunction = "";
@@ -205,7 +205,7 @@ public class Map {
     }
 
     public void setStaticMapParams(Taxon taxon, Overview overview) {
-        ArrayList terms = new ArrayList();
+        ArrayList<String> terms = new ArrayList<>();
 
         this.staticMapParams = "";
 
@@ -351,7 +351,7 @@ public class Map {
                 //String thisGenus, thisSpecies, thisSubspecies, thisCode, thisName;
                 Specimen specimen;
                 String key;
-                HashMap tracker = new HashMap();
+                HashMap<String, Integer> tracker = new HashMap<>();
                 int nonUniqueLocalities = 0;
                 int keyCount = 0;
                 int pointCount = 0;
@@ -579,8 +579,8 @@ public class Map {
             String taxonName, code, genus, species, subspecies, localityCode;
             Specimen spec;
             String key;
-            HashMap distinctLocalities = new HashMap();
-            HashMap distinctUnmappableLocalities = new HashMap();
+            HashMap<String, Integer> distinctLocalities = new HashMap<>();
+            HashMap<String, Integer> distinctUnmappableLocalities = new HashMap<>();
             int keyCount = 0;
             int pointCount = 0;
             int counter = 0;
@@ -869,10 +869,10 @@ public class Map {
       return mapSpecimens.size();
     }
     
-    public ArrayList getMapSpecimens() {
+    public ArrayList<Specimen> getMapSpecimens() {
         return mapSpecimens;
     }
-    public void setMapSpecimens(ArrayList mapSpecimens) {
+    public void setMapSpecimens(ArrayList<Specimen> mapSpecimens) {
         this.mapSpecimens = mapSpecimens;
     }
 

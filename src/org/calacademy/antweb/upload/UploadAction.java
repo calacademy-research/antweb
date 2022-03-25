@@ -1,6 +1,9 @@
 package org.calacademy.antweb.upload;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Date;
 
@@ -672,7 +675,7 @@ public class UploadAction extends Action {
     private static UploadDetails uploadFileToFolder(UploadForm theForm, HttpServletRequest request
             , Login accessLogin) throws IOException {
 
-		String messageStr = "";
+		String messageStr;
 
 		FormFile file2 = theForm.getTheFile2();
 		Utility util = new Utility();
@@ -822,8 +825,7 @@ public class UploadAction extends Action {
 
             String encoding = "UTF-8";
 
-            in = new BufferedReader(
-                new InputStreamReader(new FileInputStream(fileName), encoding));
+			in = Files.newBufferedReader(Paths.get(fileName), Charset.forName(encoding));
 
             if (in == null) {
                 messageStr = "uploadDataFile() BufferedReader is null for file:" + fileName;
@@ -886,8 +888,8 @@ public class UploadAction extends Action {
     }
 
     private String  boltonNewGeneraCatalog(BufferedReader in, Connection connection)
-      throws IOException, SQLException {
-        String messageStr = null;
+      throws IOException {
+        String messageStr;
         String line = "";
 
         StringBuffer content = new StringBuffer();
@@ -952,7 +954,7 @@ public class UploadAction extends Action {
 
     private String testFileValid(BufferedReader in, Connection connection)
       throws IOException, SQLException {
-        String messageStr = null;
+        String messageStr;
         String theLine = "";
 
         //try {
@@ -1223,7 +1225,7 @@ public class UploadAction extends Action {
               if (subspecies != null) taxonName += " " + subspecies;
 
               Taxon dummyTaxon = taxonDb.getTaxon(taxonName);
-              String antwebCurrentValidName = null;
+              String antwebCurrentValidName;
               if (dummyTaxon != null) {
                 antwebCurrentValidName = dummyTaxon.getCurrentValidName();
                 if (currentValidName != null && currentValidName.equals(antwebCurrentValidName)) {

@@ -1,21 +1,20 @@
 package org.calacademy.antweb;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.WordUtils;
+import org.apache.regexp.RE;
+import org.apache.regexp.RESyntaxException;
+
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.StringTokenizer;
+import java.text.Normalizer;
+import java.text.NumberFormat;
 import java.util.Date;
 import java.util.Locale;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.regexp.*;
-import java.text.*;
-
-import org.apache.commons.text.*;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-  
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -505,7 +504,7 @@ public class Formatter implements Serializable {
   }
 
   public static boolean hasSpecialCharacter(String str, String patternStr) {
-    if (str == null || str.trim().isEmpty()) {
+    if (str == null || StringUtils.isBlank(str)) {
         s_log.debug("Incorrect format of string");
         return false;
     }

@@ -191,7 +191,7 @@ public class ProjectDb extends AntwebDb {
 // was Project.saveToDb(Project project)
     public void save(Project project) throws SQLException {
         if (project.getName() != null && project.getName().length() > 0) {
-            String theInsert = "";
+            String theInsert;
             if (null != project.getScope()) {
                theInsert = "insert into project (root, project_title, scope, project_name, species_list_mappable) values (";
                theInsert += "'" + project.getRoot() + "','" + project.getTitle() + "','" + project.getScope() + "','" + project.getName() + "', " + project.getSpeciesListMappable() + ")";
@@ -443,7 +443,7 @@ public class ProjectDb extends AntwebDb {
         stmt.executeUpdate(dml);
 
         //From SaveLoginAction, the list of projects comes from a form.  They are strings.
-        String projectName = null;
+        String projectName;
         ArrayList<SpeciesListable> projects = login.getProjects();
         if (projects == null) return;                
         //A.log("updateProjects() projects:" + projects);
@@ -468,7 +468,7 @@ public class ProjectDb extends AntwebDb {
     }
     
     public void deleteSpeciesList(String speciesList) {
-        String query = "";
+        String query;
         try {	
             Statement stmt;
             stmt = getConnection().createStatement();
@@ -631,7 +631,7 @@ public class ProjectDb extends AntwebDb {
         return;
       }
 
-      String dml = null;
+      String dml;
       Statement stmt = null;      
       try {
           stmt = DBUtil.getStatement(getConnection(), "updateCountsFromSpecimenData()");
