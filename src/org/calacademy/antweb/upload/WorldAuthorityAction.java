@@ -32,14 +32,14 @@ public final class WorldAuthorityAction extends Action {
 		// Extract attributes we will need
 		HttpSession session = request.getSession();
 		Utility util = new Utility();
-		String docPath = util.getDocRoot() + "/worldAuthorityFiles";
+		String docPath = Utility.getDocRoot() + "/worldAuthorityFiles";
 		
 		String success = "success";
 		String mode = ((WorldAuthorityForm) form).getMode();
 		String fileName = ((WorldAuthorityForm) form).getFileName();
 		fileName = docPath + "/" + fileName;
 		if (mode.equals("rollback")) {
-			boolean rolledBack = util.rollbackFile(fileName);
+			boolean rolledBack = Utility.rollbackFile(fileName);
 			if (!rolledBack) {
 				success = "failure";
 			}
@@ -49,12 +49,12 @@ public final class WorldAuthorityAction extends Action {
 			String extant = (String) session.getAttribute("extant");
 			
 			if (extinct != null && extinct.length() > 0) {
-				util.backupFile(docPath + "/extinct.xls");
+				Utility.backupFile(docPath + "/extinct.xls");
 				util.saveStringToFile(extinct, docPath + "/extinct.xls");
 			}
 			
 			if (extant != null && extant.length() > 0) {
-				util.backupFile(docPath + "/extant.xls");
+				Utility.backupFile(docPath + "/extant.xls");
 				util.saveStringToFile(extant, docPath + "/extant.xls");
 			}
 		} else {

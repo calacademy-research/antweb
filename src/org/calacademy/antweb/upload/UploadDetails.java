@@ -96,7 +96,7 @@ public class UploadDetails extends OperationDetails {
     public String getLogFileName() {
         if (this.logFileName != null) return this.logFileName;
         
-        String dateString = new Utility().getDateForFileName(getStartTime());
+        String dateString = Utility.getDateForFileName(getStartTime());
         return dateString + "-" + getOperation() + getLogExt();
     }
     

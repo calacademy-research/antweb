@@ -21,7 +21,7 @@ public class WorldAuthorityGenerator {
 
     private static Log s_log = LogFactory.getLog(WorldAuthorityGenerator.class);
     
-    private String authorityFilesDir = new Utility().getDocRoot() + "/worldAuthorityFiles";
+    private String authorityFilesDir = Utility.getDocRoot() + "/worldAuthorityFiles";
     private String uncertain = "Incertae_sedis";
     private Pattern red = Pattern.compile("color:red",Pattern.CASE_INSENSITIVE);
     private Pattern purple = Pattern.compile("color:purple",Pattern.CASE_INSENSITIVE);

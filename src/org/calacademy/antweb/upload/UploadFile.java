@@ -300,17 +300,17 @@ public class UploadFile {
       } else {
         if (file.exists()) {
           Utility util = new Utility();
-          String fullWebDir = util.getDocRoot() + "web";
+          String fullWebDir = Utility.getDocRoot() + "web";
           String fullWebUploadDir = fullWebDir + "/upload";
           //String backupWorkingDir = util.getInputFileHome() + "/backup";
-          util.makeDirTree(fullWebUploadDir);
+          Utility.makeDirTree(fullWebUploadDir);
           s_log.info("backup() makeDirTree:" + fullWebUploadDir);
 
-          this.backupFileName = util.getDateForFileName() + "-" + getShortFileName();
+          this.backupFileName = Utility.getDateForFileName() + "-" + getShortFileName();
           String tempBackupDirFile = fullWebUploadDir + "/" + backupFileName;
           try {
             s_log.info("backup() " + getFileLoc() + " to " + tempBackupDirFile);
-            util.copyFile(getFileLoc(), tempBackupDirFile);
+            Utility.copyFile(getFileLoc(), tempBackupDirFile);
             backupDirFile = "upload/" + backupFileName;
           } catch (IOException e) {
             s_log.error("backup() e:" + e);

@@ -46,7 +46,7 @@ public class Utility implements Serializable {
 
   public static boolean isNumber(String number) {
     try {
-      int num = Integer.parseInt(number);
+        Integer.parseInt(number);
 
       //if (num > 0) 
       return true;
@@ -116,14 +116,15 @@ public class Utility implements Serializable {
         return trimText;
     }
     
-    public boolean isTabDelimited(String fileName) {
+    public static boolean isTabDelimited(String fileName) {
         boolean isTabDelimited = false;
         try {
             BufferedReader in = new BufferedReader(new FileReader(fileName));
-            if (in == null) {
-              s_log.error("isTabDelimited() BufferedReader is null for file:" + fileName);
-              return false;
-            }
+            // in is never false
+//            if (in == null) {
+//              s_log.error("isTabDelimited() BufferedReader is null for file:" + fileName);
+//              return false;
+//            }
             
             String theLine = in.readLine();
             if (theLine == null) {
@@ -362,7 +363,7 @@ public class Utility implements Serializable {
        return result;
     }
    
-    public void fixNewLines(String fileName) {
+    public static void fixNewLines(String fileName) {
         if (fileName != null) {
             s_log.info("fixNewLines() fixing new lines for " + fileName);
             try {
@@ -370,7 +371,7 @@ public class Utility implements Serializable {
                 BufferedReader br = new BufferedReader(new FileReader(fileName));
                 PrintStream  bw = new PrintStream(new FileOutputStream(fileName + ".tmp"));
  
-                String line = null;
+                String line;
  
                 while ((line = br.readLine()) != null) {
                     line = nlSub.subst(line,"\n");
@@ -429,7 +430,7 @@ public class Utility implements Serializable {
         return command;
     }
    
-    public void copyAndUnzipFile(FormFile file, String tempDirName, String outName) {
+    public static void copyAndUnzipFile(FormFile file, String tempDirName, String outName) {
         
         if (file != null) {
             // create a new temp directory
@@ -487,7 +488,7 @@ public class Utility implements Serializable {
       //s_log.warn("splitDirTree:" + splitDirTree + " 1:" + splitDirTree[0] + " 2:" + splitDirTree[2]);
       String thisDir = "";
       for (int i = 1; i < splitDirTree.length; i++) {
-        thisDir = thisDir += "/" + splitDirTree[i];
+        thisDir = "/" + splitDirTree[i];
         File dirFile = new File(thisDir);
         if (!dirFile.exists()) {
 
@@ -527,7 +528,7 @@ public class Utility implements Serializable {
     public boolean createDirectory(String dirName) {
       // This one is relative to docRoot
         boolean isSuccess = false;
-        String docRoot = this.getDocRoot();
+        String docRoot = Utility.getDocRoot();
         String directoryName = docRoot + dirName;
 
         File dirFile = new File(directoryName);
@@ -551,7 +552,7 @@ public class Utility implements Serializable {
     }
     
     
-    public boolean deleteDirectory(File dir) {
+    public static boolean deleteDirectory(File dir) {
         
         s_log.info("deletingDirectory() " + dir.getName());
         
@@ -569,58 +570,49 @@ public class Utility implements Serializable {
     }
     
 
-    public boolean deleteFile(String fileName) {
+    public static boolean deleteFile(String fileName) {
         File file = new File(fileName);
         return deleteFile(file);
     }
     
-    public boolean deleteFile(File file) {
+    public static boolean deleteFile(File file) {
         boolean result = false;
         if (file.exists()) {
             result = file.delete();
         }
         return result;
     }
-    
-    public boolean copyFile(FormFile file, String outName) {
+
+    public static boolean copyFile(FormFile file, String outName) {
         boolean returnVal = false;
-        String data = null;
 
         if (file != null) {
             try {
                 //retrieve the file data
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 InputStream stream = file.getInputStream();
 
                 //write the file to the file specified
-                OutputStream bos = new FileOutputStream(outName);
-                int bytesRead = 0;
-                byte[] buffer = new byte[8192];
-                while ((bytesRead = stream.read(buffer, 0, 8192)) != -1) {
-                    bos.write(buffer, 0, bytesRead);
-                }
-                bos.close();
+                FileUtils.copyInputStreamToFile(stream, new File(outName));
 
-                //close the stream
-                stream.close();
-                returnVal = true;
+                return true;
+
             } catch (IOException fnfe) {
                 s_log.error("copyFile() " + fnfe);
             }
         } else {
-          s_log.error("Can not copy null file to outName:" + outName);
+            s_log.error("Can not copy null file to outName:" + outName);
         }
         return returnVal;
     }
 
-    public void backupFile(String src) throws IOException {
+    public static void backupFile(String src) throws IOException {
         File f = new File(src);
         if (f.exists()) {
             copyFile(src, src + ".bak");
         }
     }
     
-    public boolean rollbackFile(String src) throws IOException {
+    public static boolean rollbackFile(String src) throws IOException {
         boolean success = false;
         String backup = src + ".bak";
         File f = new File(backup);
@@ -636,13 +628,13 @@ public class Utility implements Serializable {
         deleteFile(src);
     }
     
-    public void copyFile(String src, String dst) throws IOException {
+    public static void copyFile(String src, String dst) throws IOException {
         //A.log("copyFile(" + src + ", " + dst + ")");
         FileUtils.copyFile(new File(src), new File(dst));
     }
 
     // To be deprecated
-    public String getDocRoot() { 
+    public static String getDocRoot() {
       // Something like site.docroot=/usr/local/tomcat/webapps/antweb/
       return AntwebProps.getDocRoot(); 
     }
@@ -653,37 +645,33 @@ public class Utility implements Serializable {
     //public String getSiteUrl() { return AntwebProps.getSiteUrl(); }
     
     
-    public String getDateForFileName() {
+    public static String getDateForFileName() {
         return getDateForFileName(new Date());
     }
     
-    public String getDateForFileName(Date date) {
+    public static String getDateForFileName(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HH:mm:ss");
-        String dateString = dateFormat.format(date);
-        return dateString;    
+        return dateFormat.format(date);
     }
     
-    public String getCurrentDateAndTimeString() {
+    public static String getCurrentDateAndTimeString() {
         return getCurrentDateAndTimeString(new Date());
     }
     
-    public String getCurrentDateAndTimeString(Date date) {
+    public static String getCurrentDateAndTimeString(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String dateString = dateFormat.format(date);
-        return dateString;
+        return dateFormat.format(date);
     }
    
     public static String getSimpleDate(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String dateString = dateFormat.format(date);
-        return dateString;
+        return dateFormat.format(date);
     }
        
     public String getCurrentDate(Date date) {
         if (date == null) return "";
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyy");
-        String dateString = dateFormat.format(date);
-        return dateString;
+        return dateFormat.format(date);
     }   
     
     public void saveStringToFile(String theString, String theFile) {

@@ -278,7 +278,7 @@ public abstract class AntwebUtil {
       String docRoot = AntwebProps.getDocRoot();
       String dataRoot = docRoot + "web/data/";
       String dataFile = dataRoot + file;
-      new Utility().makeDirTree(dataFile);
+      Utility.makeDirTree(dataFile);
       s_log.debug("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + file);
       AntwebUtil.writeFile(dataFile, stringData);
   }
@@ -286,7 +286,7 @@ public abstract class AntwebUtil {
   public static void writeDataFile(String dir, String file, String stringData) {
       String docRoot = AntwebProps.getDocRoot();
       String dataRoot = docRoot + dir;
-      new Utility().makeDirTree(dataRoot);
+      Utility.makeDirTree(dataRoot);
       String dataFile = dataRoot + file;
       s_log.warn("writeDataFile() 2 dataRoot:" + dataRoot + " file:" + file);
       AntwebUtil.writeFile(dataFile, stringData);

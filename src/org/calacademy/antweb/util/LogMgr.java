@@ -82,7 +82,7 @@ public class LogMgr {
 
 
   public static void appendFile(String fullPath, String data) {
-    new Utility().makeDirTree(fullPath);
+    Utility.makeDirTree(fullPath);
     try {
       FileWriter fstream = new FileWriter(fullPath, true);
       BufferedWriter out = new BufferedWriter(fstream);
@@ -117,7 +117,7 @@ public class LogMgr {
     String logDir = AntwebProps.getDataRoot() + "log/";
     String bakDir = logDir + "bak/";
     String backupDir = bakDir + yearStr + "/" + dateStr + "/";
-    new Utility().makeDirTree(backupDir);
+    Utility.makeDirTree(backupDir);
     s_log.info("archiveLogs() Make backupDir:" + backupDir);
 
     //String webBackupDir = AntwebProps.getDomainApp() + "/web/log/bak/" + dateStr + "/";

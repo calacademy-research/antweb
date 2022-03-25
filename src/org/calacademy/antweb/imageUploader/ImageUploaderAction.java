@@ -188,8 +188,7 @@ public final class ImageUploaderAction extends Action {
 
     public void writeRecentImages(Connection connection) {
         int maxRecent = 5;
-        Utility util = new Utility();
-        String docBase = util.getDocRoot();
+        String docBase = Utility.getDocRoot();
 
         int currItems = 0;
         String domainApp = AntwebProps.getSecureDomainApp();
@@ -199,7 +198,7 @@ public final class ImageUploaderAction extends Action {
 			String recentImagesList = getRecentImagesList(connection);
 
             docBase += "web/genInc";
-            new Utility().makeDirTree(docBase);
+            Utility.makeDirTree(docBase);
             
             File outputFile = new File(docBase + "/recentImages_gen_inc.jsp");
             FileWriter outFile = new FileWriter(outputFile);

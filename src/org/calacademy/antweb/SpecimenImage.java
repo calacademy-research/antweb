@@ -125,7 +125,7 @@ public class SpecimenImage implements Serializable {
         String withoutNum = image_root + "/" + code + "/" + code.toUpperCase() + "_" + shot.toUpperCase()  + ".tif";
 
         // For performance sake, when done with the debugging move this into the else statement.
-        String docRoot = new Utility().getDocRoot();
+        String docRoot = Utility.getDocRoot();
 
         if (number > 1) {
           path = withNum;
@@ -166,7 +166,7 @@ public class SpecimenImage implements Serializable {
         if (number > 1) {
           return withNum;
         } else {
-            String docRoot = new Utility().getDocRoot();
+            String docRoot = Utility.getDocRoot();
             if (AntwebUtil.fileFound(docRoot + withNum)) {
                 return withNum;
             } else {
@@ -248,7 +248,7 @@ public class SpecimenImage implements Serializable {
 	
 
     public void setMetadata() {
-	  	String docRoot = new Utility().getDocRoot();
+	  	String docRoot = Utility.getDocRoot();
 	  	
     	String imageName = docRoot + getMedres();
     	Formatter formatter = new Formatter();

@@ -4,7 +4,6 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Utility;
-import org.calacademy.antweb.util.A;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.AntwebUtil;
 import org.calacademy.antweb.util.FileUtil;
@@ -83,7 +82,7 @@ public class ImageUploaded {
         if (file.exists()) {
           // move the file to the backupdir.
           FileUtil.makeDir(backupDir);
-          new Utility().copyFile(fullName, backupDir + name);
+          Utility.copyFile(fullName, backupDir + name);
           setIsReUploaded(true);
         }
       } catch (FileNotFoundException e) {

@@ -276,9 +276,8 @@ public class AntwebCacheMgr {
     }
 
     static void deleteCaches() {
-        Utility util = new Utility();
         File file = new File(AntwebProps.getDocRoot() + "web/data/");
-        util.deleteDirectory(file);       
+        Utility.deleteDirectory(file);
     }    
     
     // This gets rid of old long requests from the database table.  Also deletes cache files older than threshold.
@@ -308,10 +307,9 @@ public class AntwebCacheMgr {
 			  stmt = DBUtil.getStatement(connection, "deleteOldLongRequests()");
 			  rset = stmt.executeQuery(theQuery);
 			  while (rset.next()) {
-				String dirFile = rset.getString("dir_file");    
-				Utility util = new Utility();
-				File file = new File(AntwebProps.getDocRoot() + "web/" + dirFile);
-				util.deleteFile(file);                       
+				String dirFile = rset.getString("dir_file");
+                  File file = new File(AntwebProps.getDocRoot() + "web/" + dirFile);
+				Utility.deleteFile(file);
 				//s_log.warn("deleteOldLongRequests() dirFile:" + dirFile);
 			  }
           }
@@ -476,7 +474,7 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
       s_lastCacheItem = dataFile;
 
       tempDataFile = dataFile + "T";
-      new Utility().makeDirTree(dataFile);
+      Utility.makeDirTree(dataFile);
       s_log.debug("writeDataFile() 1 dataRoot:" + dataRoot + " file:" + dataFile);
 
       BufferedWriter out = new BufferedWriter(new FileWriter(tempDataFile, false));
@@ -492,16 +490,15 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
         out.write((char) c);
       }
       out.close();
-      Utility utility = new Utility();
-      if (!AntwebCacheMgr.badFileDontCache(tempDataFile)) {
-        utility.copyFile(tempDataFile, dataFile);
+        if (!AntwebCacheMgr.badFileDontCache(tempDataFile)) {
+        Utility.copyFile(tempDataFile, dataFile);
         didCache = true;
         s_log.debug("cacheItem() caching:" + dataFile);
       } else {
         //s_log.warn("cacheItem() url not cached due to error file:" + theUrl);
         didCache = false;
       }
-      utility.deleteFile(tempDataFile);
+      Utility.deleteFile(tempDataFile);
     } catch (IOException e) {
       s_log.warn("cacheItem():" + e + " theUrl:" + theUrl);
     } catch (Exception e) {

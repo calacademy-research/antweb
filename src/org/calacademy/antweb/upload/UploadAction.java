@@ -669,8 +669,8 @@ public class UploadAction extends Action {
     }
 
 
-    private UploadDetails uploadFileToFolder(UploadForm theForm, HttpServletRequest request
-      , Login accessLogin) throws IOException {
+    private static UploadDetails uploadFileToFolder(UploadForm theForm, HttpServletRequest request
+            , Login accessLogin) throws IOException {
 
 		String messageStr = "";
 
@@ -697,7 +697,7 @@ public class UploadAction extends Action {
 		  dir = "web/" + serverDir;
 		  String fullDir = AntwebProps.getDocRoot() + dir;
 		  s_log.debug("uploadFileToFolder() mk:" + fullDir);
-		  util.makeDirTree(fullDir);
+		  Utility.makeDirTree(fullDir);
 		} else if (!"homepage".equals(dir)) {
 		  dir = Project.getSpeciesListDir() + dir;
 //		} else if ("homepage".equals(dir)) {
@@ -724,8 +724,8 @@ public class UploadAction extends Action {
 		  + " outputFileName2:" + outputFileName2;
 		s_log.info(logMessage);
 
-		util.backupFile(outputFileName2);
-		boolean isSuccess = util.copyFile(theForm.getTheFile2(), outputFileName2);
+		Utility.backupFile(outputFileName2);
+		boolean isSuccess = Utility.copyFile(theForm.getTheFile2(), outputFileName2);
 		if (!isSuccess) {
 		  messageStr = "uploadFileToFolder() copyFile failure";
 		  return new UploadDetails("uploadFile", messageStr, "message");
@@ -802,10 +802,10 @@ public class UploadAction extends Action {
         //String docBase = request.getRealPath("/");
         //if (AntwebProps.isDevMode()) docBase = "/Users/mark/dev/calacademy/workingdir/";
         docBase += "web/workingdir/";
-        new Utility().makeDirTree(docBase);
+        Utility.makeDirTree(docBase);
         //A.log("uploadDataFile() docBase:" + docBase);
         String fileName = docBase + testFile.getFileName();
-        boolean isSuccess = new Utility().copyFile(theForm.getTestFile(), fileName);
+        boolean isSuccess = Utility.copyFile(theForm.getTestFile(), fileName);
 
 		String messageStr = "Warning - file not uploaded:" + fileName;
 		if (!isSuccess) {

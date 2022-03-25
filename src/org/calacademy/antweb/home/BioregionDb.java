@@ -646,7 +646,7 @@ public class BioregionDb extends AntwebDb {
                // + " and b.name = '" + bioregion.getName() + "'"
                 + " and taxon.taxarank in ('species', 'subspecies')"
                 + " and taxon.fossil = 0"
-                + new StatusSet().getAndCriteria(Project.ALLANTWEBANTS)
+                + StatusSet.getAndCriteria(Project.ALLANTWEBANTS)
                 //+ " and  taxon.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
                 + " and taxon.family = 'formicidae'"
                 + " group by bt.taxon_name having count(*) = 1"

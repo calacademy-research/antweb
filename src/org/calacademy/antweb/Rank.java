@@ -208,11 +208,10 @@ public final class Rank implements Serializable {
     
     public static String getRank(String subfamily, String genus, String species, String subspecies) {
     // This is used in the search mechanism 
-        Utility utility = new Utility();
-        if (utility.notBlank(subspecies)) return SUBSPECIES;
-        if (utility.notBlank(species)) return SPECIES;
-        if (utility.notBlank(genus)) return GENUS;
-        if (utility.notBlank(subfamily)) return SUBFAMILY;
+        if (Utility.notBlank(subspecies)) return SUBSPECIES;
+        if (Utility.notBlank(species)) return SPECIES;
+        if (Utility.notBlank(genus)) return GENUS;
+        if (Utility.notBlank(subfamily)) return SUBFAMILY;
         //if (utility.notBlank(family)) return FAMILY;
         return "not found";
     }

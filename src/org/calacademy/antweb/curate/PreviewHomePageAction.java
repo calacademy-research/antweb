@@ -48,8 +48,7 @@ public final class PreviewHomePageAction extends Action {
     
     public void generateHomePage(HomePageForm form) {        
         // get the doc root
-        Utility util = new Utility();
-        String docBase = util.getDocRoot();
+        String docBase = Utility.getDocRoot();
         
         // open the new file
         try {

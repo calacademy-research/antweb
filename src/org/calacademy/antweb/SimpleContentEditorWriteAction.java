@@ -29,7 +29,7 @@ public final class SimpleContentEditorWriteAction extends Action {
         ActionForward c = Check.login(request, mapping); if (c != null) return c;
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
-        String docRoot = new Utility().getDocRoot();
+        String docRoot = Utility.getDocRoot();
         
         String fileName = ((SimpleContentEditorForm) form).getFileName();
         String contents = ((SimpleContentEditorForm) form).getContents();

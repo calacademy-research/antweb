@@ -99,8 +99,7 @@ public final class SaveProjectAction extends Action {
        s_log.info("saveProject() Preview:" + preview + " genFile:" + genFile);
 
         try {
-          Utility util = new Utility();
-          util.copyFile(preview, genFile);
+            Utility.copyFile(preview, genFile);
         
           /* We have stored all of the project files in the root webapp dir.  Beginning move of the
              to the webapps/antweb/projects/ directory. */

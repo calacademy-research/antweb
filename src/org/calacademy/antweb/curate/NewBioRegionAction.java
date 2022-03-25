@@ -64,7 +64,7 @@ public final class NewBioRegionAction extends Action {
                   
                 String dirName = AntwebProps.getDocRoot() + "/" + Project.getSpeciesListDir() + root;
                 s_log.warn("execute() creating:" + dirName);
-                new Utility().makeDirTree(dirName);
+                Utility.makeDirTree(dirName);
                                 
                 //boolean success = createDirectory(theForm.getRoot());
                 //if (! success) return (mapping.findForward("failure"));

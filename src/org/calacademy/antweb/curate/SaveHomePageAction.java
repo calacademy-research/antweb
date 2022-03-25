@@ -72,13 +72,12 @@ public final class SaveHomePageAction extends Action {
         } finally { 		
             DBUtil.close(connection, stmt, this, "SaveHomePageAction");
         }
-        
-        Utility util = new Utility();
-        String docRoot = util.getDocRoot();
+
+        String docRoot = Utility.getDocRoot();
         String previewBody = docRoot + "homePagePreview-body.jsp";
         String indexBody = docRoot + "web/homepage/index-body.jsp";
         s_log.info("execute() copy previewBody:" + previewBody + " to " + indexBody);
-        util.copyFile(previewBody, indexBody);
+        Utility.copyFile(previewBody, indexBody);
         
         return mapping.findForward("success");
     }

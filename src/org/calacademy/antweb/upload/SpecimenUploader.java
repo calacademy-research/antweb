@@ -45,7 +45,7 @@ public class SpecimenUploader {
             util.copyAndUnzipFile(theForm.getBiota(), workingDir + "group" + group.getId(), specimenFileName);
         } else {
             // copy from uploader's fileName to the biotaFile name.
-            util.copyFile(theForm.getBiota(), specimenFileName);
+            Utility.copyFile(theForm.getBiota(), specimenFileName);
         }
 
         boolean isUpload = true;
@@ -66,7 +66,6 @@ public class SpecimenUploader {
         Date startTime = new Date();
         if ("default".equals(encoding)) encoding = null;
         Group group = login.getGroup();
-        Utility util = new Utility();
 
         String specimenFileLoc = null;
         String specimenFileName = null;
@@ -96,7 +95,7 @@ public class SpecimenUploader {
             messageStr = "Specimen File must be a .txt file.";
         } else if (isCurrentSpecimenFormat(specimenFileLoc) != null) {
             messageStr = "Specimen File must be in the most current format. " + isCurrentSpecimenFormat(specimenFileLoc);
-        } else if (!util.isTabDelimited(specimenFileLoc)) {
+        } else if (!Utility.isTabDelimited(specimenFileLoc)) {
             messageStr = "Specimen File must be a tab-delimited file.";
         }
         if (messageStr != null) {

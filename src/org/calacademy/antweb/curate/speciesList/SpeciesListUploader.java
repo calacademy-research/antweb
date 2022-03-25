@@ -196,9 +196,9 @@ public class SpeciesListUploader {
     int backupFileSize = 0;
     if ("success".equals(validateMessage)) {	  
         // make backup copy                        
-        backupDirFile = "upload/" + new Utility().getDateForFileName(new Date()) + "-worldants.txt";
+        backupDirFile = "upload/" + Utility.getDateForFileName(new Date()) + "-worldants.txt";
         backupFileName = AntwebProps.getWebDir() + backupDirFile;
-        new Utility().copyFile(fileLoc, backupFileName);
+        Utility.copyFile(fileLoc, backupFileName);
         backupFileSize = FileUtil.getFileSize(backupFileName);
     }
 

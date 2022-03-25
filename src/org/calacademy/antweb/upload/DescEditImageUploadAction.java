@@ -34,9 +34,7 @@ public class DescEditImageUploadAction extends Action {
         Connection connection = null;
         String query;
         String forwardPage = "";
-        
-        
-        Utility util = new Utility();
+
 
         String messageStr = "";
         
@@ -80,7 +78,7 @@ public class DescEditImageUploadAction extends Action {
                     // Create the curator's directory if it does not already exist.
                     if (dir.equals("curator")) {
                       dir = "web/curator/" + accessLogin.getId();
-                      util.makeDirTree(dir);
+                      Utility.makeDirTree(dir);
                     }
                     
                     String fileName = theForm.getTheFile2().getFileName();
@@ -94,8 +92,8 @@ public class DescEditImageUploadAction extends Action {
                         outputFileName2 = docBase + dir + "/" + outputFileName; 
                     }
 
-                    util.backupFile(outputFileName2);
-                    boolean isSuccess = util.copyFile(theForm.getTheFile2(), outputFileName2);
+                    Utility.backupFile(outputFileName2);
+                    boolean isSuccess = Utility.copyFile(theForm.getTheFile2(), outputFileName2);
                     if (!isSuccess) {
                       s_log.warn("execute() copyFile failure");
                       return mapping.findForward("error");

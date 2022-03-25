@@ -78,11 +78,9 @@ generateBiogeographicRegions() in the case of Bolton.
 */
 
 public class SpeciesListUpload extends AntwebUpload {
-    private static Log s_log = LogFactory.getLog(SpeciesListUpload.class);
+    private static final Log s_log = LogFactory.getLog(SpeciesListUpload.class);
 
-    ArrayList dateHeaders = new ArrayList(Arrays.asList(dateHeaderString));
-
-    SpeciesListUploadDb m_speciesListUploadDb;
+    private final SpeciesListUploadDb m_speciesListUploadDb;
     private int totalTaxonCountryPrimaryKeyViolations = 0;
     private int totalFossils = 0; 
     private int totalNotFossils = 0;   
@@ -105,14 +103,13 @@ public class SpeciesListUpload extends AntwebUpload {
         String message = null;
         
         //s_log.warn("uploadSpeciesList() projectFile:" + project + " theFile:" + theFile + " root:" + uploadFile.getRoot() + " uploadFile:" + uploadFile);
-        Utility util = new Utility();
-        
+
         //String outputFileDir = util.getInputFileHome();
         //String outputFileName = outputFileDir + project + ".txt";
         //String encoding = UploadFile.getEncoding(outputFileName, userAgent);
         s_log.debug("uploadSpeciesList(4) project:" + project + " formFile:" + theFile + " to uploadFileLoc:" + uploadFile.getFileLoc());
         
-        util.copyFile(theFile, uploadFile.getFileLoc()); // Copy to the working directory
+        Utility.copyFile(theFile, uploadFile.getFileLoc()); // Copy to the working directory
 
         String backupDirFile = uploadFile.backup(); // We keep a timestamped copy even if it is bad...
         s_log.debug("uploadSpeciesList:" + backupDirFile);
@@ -120,7 +117,7 @@ public class SpeciesListUpload extends AntwebUpload {
         if (!(theFile.toString().indexOf(".txt") > 0)) {
           message = "Species List must be a .txt file.";
         }
-        if (!util.isTabDelimited(uploadFile.getFileLoc())) {
+        if (!Utility.isTabDelimited(uploadFile.getFileLoc())) {
           message =  "Species List must be a tab-delimited file."; 
         }
         if (!isCurrentProjectFileFormat(uploadFile.getFileLoc())) {
@@ -957,7 +954,7 @@ public class SpeciesListUpload extends AntwebUpload {
           try {
             Utility.makeDirTree(webWorkingDir);          
             //A.log("reloadSpeciesList(6) fileLoc:" + uploadFile.getFileLoc() + " workingDir:"+ webWorkingDirCopy);
-            new Utility().copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
+            Utility.copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
           } catch (IOException e) {
             s_log.error("reloadSpeciesListFile(6) copyFile e:" + e);
             throw e;
@@ -1003,7 +1000,7 @@ public class SpeciesListUpload extends AntwebUpload {
       }
     } 
     
-    private void copySpeciesListFile(String project, UploadFile uploadFile) throws IOException {
+    private static void copySpeciesListFile(String project, UploadFile uploadFile) throws IOException {
         Utility util = new Utility();
         try {
             // copy project file to home directory
@@ -1013,16 +1010,16 @@ public class SpeciesListUpload extends AntwebUpload {
             String speciesListFile = uploadFile.getRoot() + Project.getSpeciesListDir() + projectRoot +  "/" + project + UploadFile.getSpeciesListTail();
             String message = " copy " + uploadFile.getFileLoc() + " to " + speciesListFile;
             s_log.info("copySpeciesListFile()" + message);
-            util.copyFile(uploadFile.getFileLoc(), speciesListFile);
+            Utility.copyFile(uploadFile.getFileLoc(), speciesListFile);
 
             LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + message);
 
             // The web/workingdir always has one copy of the latest... in theory.  Similar logic in reloadSpeciesList().
             String webWorkingDir = uploadFile.getRoot() + "web/workingdir/";
-            util.makeDirTree(webWorkingDir); // Didn't work on dev
+            Utility.makeDirTree(webWorkingDir); // Didn't work on dev
             String webWorkingDirCopy = webWorkingDir + project + UploadFile.getSpeciesListTail();
             s_log.info("copySpeciesListFile() copy " + uploadFile.getFileLoc() + " to " + webWorkingDirCopy);
-            util.copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
+            Utility.copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
           } catch (IOException e) {
             s_log.error("copySpeciesListFile() e:" + e);
         }

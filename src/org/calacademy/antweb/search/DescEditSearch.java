@@ -48,12 +48,11 @@ public class DescEditSearch extends GenericSearch implements Serializable {
 
         s_log.info("days ago is " + daysAgo);
         if (daysAgo != null && daysAgo.length() > 0) {
-                
-            Utility util = new Utility();
+
             int daysToSub = -Integer.parseInt(daysAgo);
             GregorianCalendar cal = new GregorianCalendar();
             cal.add(Calendar.DATE, daysToSub);
-            theQuery += " and image.upload_date > '" + util.getCurrentDateAndTimeString(cal.getTime()) + "'";
+            theQuery += " and image.upload_date > '" + Utility.getCurrentDateAndTimeString(cal.getTime()) + "'";
                 
         } else if (fromDate != null && toDate != null) {
             theQuery += " and image.upload_date >= '" + fromDate + "' and image.upload_date <= '" +

@@ -2769,7 +2769,6 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
     public String getBinomial() {
         //Formatter form = new Formatter();
-        Utility util = new Utility();
         String binomial = "";
         String genus = getGenus();
         String species = getSpecies();
