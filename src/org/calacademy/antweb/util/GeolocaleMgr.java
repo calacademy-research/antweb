@@ -611,8 +611,11 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if (!AntwebMgr.isPopulated()) return null;
         if (adm1Name == null) return null;
         if (countryName == null) {
-            s_log.info("getAnyAdm1(" + adm1Name + ", " + countryName + ") must included countryName.");
-            return null;
+            Geolocale country = inferCountry(adm1Name);
+            if (country == null) {
+                //s_log.info("getAnyAdm1(" + adm1Name + ", " + countryName + ") must included countryName.");
+                return null;
+            } else countryName = country.getName();
         }
         return adm1CountryMap.get(adm1Name, countryName);
     }

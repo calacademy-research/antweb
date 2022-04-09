@@ -1,3 +1,7 @@
+Release 8.75.2
+  Fix for updateSpecimenCounts().
+  Infer country if adm1 is unique.
+
 Release 8.75.1
   Add Source and Local links to worldants section of curate page. Update documentation.
   Remove redundant validateWorldants call.

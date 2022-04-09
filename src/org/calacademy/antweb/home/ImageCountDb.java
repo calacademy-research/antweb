@@ -60,7 +60,7 @@ public class ImageCountDb extends AntwebDb {
 
         try {
             stmt = DBUtil.getStatement(getConnection(), "countSpecimenImages()");
-            stmt.executeQuery(query);
+            stmt.executeUpdate(query);
 
             //if (AntwebProps.isDevMode()) s_log.info("countSpecimen() count:" + count);
             stmt.close();
