@@ -89,7 +89,7 @@ public class ImageCountDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "countSpeciesImages()");
 
-            stmt.executeQuery(query);
+            stmt.executeUpdate(query);
 
         } catch (SQLException e) {
             s_log.warn("countSpeciesImages() query:" + query + " e:" + e);
