@@ -69,7 +69,7 @@ public class CountDb extends AntwebDb {
 
     // Countables include Geolocale, Bioregion, Museum, Project.
     protected void childrenCountCrawl(Countable countable) throws SQLException {
-        A.log("childrenCountCrawl countable:" + countable);
+        //A.log("childrenCountCrawl countable:" + countable);
 
         if (countable == null) A.log("childrenCountCrawl() why is countable null?");
         debug = AntwebProps.isDevMode();
@@ -246,16 +246,16 @@ public class CountDb extends AntwebDb {
     //  select sum(gt.specimen_count) sum, taxon.parent_taxon_name parentTaxonName  from taxon  join geolocale_taxon gt on taxon.taxon_name = gt.taxon_name   where  taxon.taxarank = 'subfamily'   and gt.geolocale_id = 392  group by parentTaxonName;
      protected int countGrandChildren(Countable countable, String rank, String column) 
        throws SQLException {
-       
+
         if (countable == null) {
-          A.log("countGrandChildren() countable:" + countable + " rank:" + rank + " column:" + column);
-          //AntwebUtil.logShortStackTrace();
-          return 0;
+            A.log("countGrandChildren() countable:" + countable + " rank:" + rank + " column:" + column);
+            //AntwebUtil.logShortStackTrace();
+            return 0;
         }
         
-         if ("subfamily".equals(rank)) {
-             A.log("countGrandChildren() countable:" + countable + " rank:" + rank + " column:" + column);
-         }
+        if (false && "subfamily".equals(rank)) {
+            A.log("countGrandChildren() countable:" + countable + " rank:" + rank + " column:" + column);
+        }
 
         int sum = 0;
         int count = 0;
@@ -463,7 +463,7 @@ select s.taxon_name taxonName, s.family family, s.subfamily subfamily
       Statement stmt = null;
       ResultSet rset = null;
       
-      debug = true && "subfamily".equals(rank) && AntwebProps.isDevMode() && !s_isBulk;
+      debug = false && "subfamily".equals(rank) && AntwebProps.isDevMode() && !s_isBulk;
       
       try {
         stmt = DBUtil.getStatement(getConnection(), "getCountableTaxonCount()");

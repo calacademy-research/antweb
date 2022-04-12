@@ -819,7 +819,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
             returnStr = " 1 = 1 ";
         }
 
-        A.log("getSearchString() property:" + property + " searchType:" + searchType + " value:" + value + " returnStr:" + returnStr);
+        //A.log("getSearchString() property:" + property + " searchType:" + searchType + " value:" + value + " returnStr:" + returnStr);
 
         return returnStr;
     }

@@ -1,3 +1,8 @@
+Release 8.75.3
+  Testing of makeDirTree().
+  Create log/details directory.
+  Logging mods.
+
 Release 8.75.2
   Fix for updateSpecimenCounts().
   Infer country if adm1 is unique.

@@ -76,8 +76,8 @@ public class LogMgr {
        If the nested dir does not exist, it will be created. */
     String logRoot = AntwebProps.getDataRoot()+ "log/";
     if (dir != null) logRoot += dir + "/";
-    file = logRoot + file;
-    LogMgr.appendFile(file, data);
+    String fullPath = logRoot + file;
+    LogMgr.appendFile(fullPath, data);
   }
 
 

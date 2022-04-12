@@ -6,12 +6,11 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.regexp.RE;
 import org.apache.regexp.RESyntaxException;
 import org.apache.struts.upload.FormFile;
-import org.calacademy.antweb.util.AntwebException;
-import org.calacademy.antweb.util.AntwebProps;
-import org.calacademy.antweb.util.AntwebUtil;
+import org.calacademy.antweb.util.*;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.Normalizer;
@@ -476,23 +475,43 @@ public class Utility implements Serializable {
             // remove the directory
             deleteDirectory(dir);
         }
-        
     }
 
     public boolean directoryExists(String directory) {
         return new File(directory).exists();
     }
 
+    /*
+         Mon Apr 11, 2022 - Mark
+         There seems to be a problem in makeDirTree(). A call like this:
+             Utility.makeDirTree("/usr/local/antweb/web/log/detail/duplicateEntries1.jsp");
+         is finding the detail directory to exist even when it doesn't. Set debug = true to witness.
+         Can be tested with: https://localhost/util.do?action=testMessage if commands uncommented.
+
+         makeDirTree works
+         Unfit resolution. Just create the detail directy here: mkdir /usr/local/antweb/web/log/detail/
+     */
+
     public static boolean makeDirTree(String dirTree) {
+
        boolean debug = false;
+
       boolean isSuccess = true;
       String[] splitDirTree = dirTree.split("/");
-      //s_log.warn("splitDirTree:" + splitDirTree + " 1:" + splitDirTree[0] + " 2:" + splitDirTree[2]);
+      //if (debug) A.log("splitDirTree:" + splitDirTree + " 1:" + splitDirTree[0] + " 2:" + splitDirTree[2]);
       String thisDir = "";
       for (int i = 1; i < splitDirTree.length; i++) {
         thisDir = "/" + splitDirTree[i];
         File dirFile = new File(thisDir);
-        if (!dirFile.exists()) {
+        boolean exists = dirFile.exists();
+
+        if (debug) A.log("makeDirTree() thisDir:" + thisDir + " exists:" + exists);
+
+        //Path path = Paths.get(thisDir);
+        //boolean exists2 = Files.exists(path);
+        //if (debug) A.log("makeDirTree() thisDir:" + thisDir + " exists2:" + exists2);
+
+        if (!exists) {
 
           if (dirFile.toString().contains(".")) { 
             // This was contains.  Now equals.  If it is equals, then cached items will be
@@ -502,13 +521,12 @@ public class Utility implements Serializable {
             return true;
 
           }
-
           //if (dirTree.contains("2017")) AntwebUtil.logStackTrace();
 
           try {
             isSuccess = dirFile.mkdir();
             if (isSuccess) {
-                if (debug) s_log.debug("makeDirTree() Success creating dir:" + thisDir);
+                if (debug) A.log("makeDirTree() Success creating dir:" + thisDir);
             } else {
                 //if (debug)
                 s_log.warn("makeDirTree() Failure creating dir:" + thisDir);
@@ -518,9 +536,7 @@ public class Utility implements Serializable {
              isSuccess = false;
           }
         } else {
-            if (debug) {
-                s_log.debug("makeDirTree() already exists:" + thisDir);
-            }
+            //if (debug) A.log("makeDirTree() already exists:" + thisDir);
         }
       }
       return isSuccess;

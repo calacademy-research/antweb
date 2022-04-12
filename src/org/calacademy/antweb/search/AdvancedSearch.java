@@ -373,7 +373,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
 
             s_query = theQuery;
             
-            A.log("createInitialResults() theQuery:" + theQuery);
+            //A.log("createInitialResults() theQuery:" + theQuery);
             //s_log.warn("createInitialResults() theQuery:" + theQuery);
               //AntwebUtil.logStackTrace();
 
