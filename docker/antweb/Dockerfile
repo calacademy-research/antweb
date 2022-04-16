@@ -121,6 +121,8 @@ RUN ln -s /mnt/antweb/web/bak bak && \
     ln -s /mnt/antweb/web/workingdir workingdir && \
     ln -s /mnt/antweb/web/log/specimen log/specimen && \
     ln -s /mnt/antweb/web/log/worldants log/worldants && \
+    ln -s /mnt/antweb/web/log/detail log/detail && \
+    ln -s /mnt/antweb/web/log/upload log/upload && \
     ln -s /mnt/backup /data/antweb/backup && \
     ln -s /mnt/antweb/images /data/antweb/images
 
