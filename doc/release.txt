@@ -1,7 +1,10 @@
+Release 8.75.4
+  Fix the login update logic for administrators.
+
 Release 8.75.3
   Testing of makeDirTree().
   Create log/details directory.
-  Logging mods.
+  Logging mods.	
 
 Release 8.75.2
   Fix for updateSpecimenCounts().

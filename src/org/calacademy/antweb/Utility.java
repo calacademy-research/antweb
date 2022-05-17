@@ -489,7 +489,9 @@ public class Utility implements Serializable {
          Can be tested with: https://localhost/util.do?action=testMessage if commands uncommented.
 
          makeDirTree works
-         Unfit resolution. Just create the detail directy here: mkdir /usr/local/antweb/web/log/detail/
+         Unfit resolution. Just create the detail directy(s) here:
+           mkdir /usr/local/antweb/web/log/detail/
+           mkdir /usr/local/antweb/web/log/upload/
      */
 
     public static boolean makeDirTree(String dirTree) {

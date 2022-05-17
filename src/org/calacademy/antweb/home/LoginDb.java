@@ -580,7 +580,7 @@ public class LoginDb extends AntwebDb {
                 theUpdate = userUpdate;
             }
                          
-             s_log.info("updateLogin() isAdminUpdate:" + isAdminUpdate + " update:" + theUpdate);
+             s_log.info("updateLogin() isAdminUpdate:" + isAdminUpdate + " groupId:" + login.getGroupId() + " uploadSpecimens:" + uploadSpecimens + " uploadImages:" + uploadImages);
 
              if (!isAdminUpdate && !isLegalLogin(login)) {
                throw new SQLException("name:" + login.getName() + " or email:" + login.getEmail() + " already in use.");
@@ -588,7 +588,7 @@ public class LoginDb extends AntwebDb {
              
             PreparedStatement stmt = null;
             try {
-                if (isAdminUpdate) {
+                if (!isAdminUpdate) {
                     stmt = DBUtil.getPreparedStatement(getConnection(), "updateLogin()", userUpdate);
                     stmt.setString(1, login.getName());
                     stmt.setString(2, login.getFirstName());
@@ -609,11 +609,11 @@ public class LoginDb extends AntwebDb {
                     stmt.setInt(9, login.getId());
                 }
 
-                s_log.info("updateLogin() update:" + theUpdate);
+                s_log.info("updateLogin() update:" + DBUtil.getPreparedStatementString(stmt));
 
                 stmt.executeUpdate();
               if (isAdminUpdate) {
-  // s_log.info("updateLogin() updateProjects()");
+                // s_log.info("updateLogin() updateProjects()");
                 updateLoginProjects(login);
                 updateLoginCountries(login);
               }
