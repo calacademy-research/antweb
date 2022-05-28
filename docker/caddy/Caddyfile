@@ -6,6 +6,10 @@ antweb.org {
     redir https://www.antweb.org{uri}
 }
 
+api.antweb.org {
+    redir https://www.antweb.org{uri} permanent
+}
+
 www.antweb.org {
     import Caddyfile.common
 }
