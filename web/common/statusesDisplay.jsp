@@ -8,12 +8,16 @@
 <%
   // Do not display for species if a browse.do request.
   String sdRank = (String) request.getParameter("rank");
-  String before = HttpUtil.getTarget(request);
-  String sdTarget = HttpUtil.getTargetMinusParams(request, "statusSet", "statusSetSize");
-  //A.log("statusesDisplay \r\nbefore:" + before + " \r\n after:" + sdTarget);
+  String initialTarget = HttpUtil.getTarget(request);
+
+  String sdTarget = HttpUtil.getTargetMinusParams(initialTarget, "statusSet", "statusSetSize");
+
+  sdTarget = HttpUtil.getUniquedTarget(request, sdTarget);
+
+  //A.log("statusesDisplay \r\ninitialTarget:" + initialTarget + " \r\n after:" + sdTarget);
 
   String sdDisplayChildRank = null;
-  if (HttpUtil.getTarget(request).contains("taxonomicPage")) {
+  if (initialTarget.contains("taxonomicPage")) {
     sdDisplayChildRank = Formatter.initCap(sdRank);
   } else {
     sdDisplayChildRank = Formatter.initCap(Rank.getNextRank(sdRank));
@@ -58,7 +62,8 @@
 %>
                      <li><a href="<%= sdTarget + "&statusSet=" + aStatusSet %>"><span style="text-transform:capitalize;"><%= aStatusSet %></span></a></li>
    <% }
-      //A.log("statusesDisplay() statusSets:" + statusSets + " showStatus:" + showStatuses + " statusSet:" + statusSet + " statusSetSize:" + statusSetSize + " sdTarget:" + sdTarget);  
+      A.log("statusesDisplay() statusSets:" + statusSets + " showStatus:" + showStatuses + " statusSet:" + statusSet + " statusSetSize:" + statusSetSize + " sdTarget:" + sdTarget);
+
       if ("min".equals(statusSetSize)) { %>
                      <li><a href="<%= sdTarget + "&statusSetSize=max" + "&statusSet=" + statusSet %>">Click for more options!</a></li> 
    <% } else { %>

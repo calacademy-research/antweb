@@ -1,4 +1,9 @@
+Release 8.75.5
+  Improve the inferRank() method to reduce traffic and logging.
+  Make request parameters unique in target for Status Display drop down.
+
 Release 8.75.4
+Date: May 17, 2022
   Fix the login update logic for administrators.
 
 Release 8.75.3
@@ -15,7 +20,7 @@ Release 8.75.1
   Remove redundant validateWorldants call.
   
 Release 8.75
-  TaxonDb getTaxon logging fixed.
+  TaxonDb getTaxon() logging fixed.
   ProjTaxonDb.verifyProjTaxon() to make remediations.
 
 Release 8.74

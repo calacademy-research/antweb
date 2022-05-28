@@ -73,6 +73,8 @@ public class BrowseAction extends DescriptionAction {
         boolean isPost = HttpUtil.isPost(request);
 
         if (rank == null || "".equals(rank)) rank = inferredRank(queryString);
+        A.log("Rank:" + rank);
+
         if (Rank.SUBGENUS.equals(rank)) rank = Rank.GENUS;
         //A.log("browseForm.rank:" + browseForm.getRank() + " rank:" + rank);
 
@@ -118,10 +120,10 @@ public class BrowseAction extends DescriptionAction {
           //session.setAttribute("statusSet", StatusSet.ALL);
           s_log.debug("execute() redirect taxonName:" + browseForm.getTaxonName() + " antcatId:" + browseForm.getAntcatId());
           return taxonNameRedirect(browseForm, mapping, request, response);
-        } else if (hasQueryString && request.getQueryString().contains("antcatId=")) {
+        } else if (hasQueryString && queryString.contains("antcatId=")) {
             request.setAttribute("message", "Enter an AntCat ID in the url.");
             return mapping.findForward("message");
-        } else if (hasQueryString && request.getQueryString().contains("taxonName=")) {
+        } else if (hasQueryString && queryString.contains("taxonName=")) {
             request.setAttribute("message", "Enter a taxon name in the url.");
             return mapping.findForward("message");
         }
@@ -321,7 +323,7 @@ public class BrowseAction extends DescriptionAction {
 
           //A.log("execute() desc:" + taxon.getDescription().size());
 
-		  taxon.setBrowserParams(request.getQueryString());                            
+		  taxon.setBrowserParams(queryString);
 		  //taxon.setSimilar(projectName);
 
 		  if (logTimes) s_log.warn("execute() setImages() before");
@@ -637,8 +639,9 @@ We are showin the full map of ponerinae for every adm1.
     }
 
     private String inferredRank(String queryString) {
-        // remove &orderBy=species
-        String testString = HttpUtil.removeParam(queryString, "orderBy");
+        // remove &orderBy=species which would throw off inference.
+        String testString = HttpUtil.getTargetMinusParam(queryString, "orderBy");
+        testString = HttpUtil.getTargetMinusParam(queryString, "orderby");
         //A.log("inferredRank() queryString:" + queryString + " testString:" + testString);
 
         if(testString.contains("subspecies"))return Rank.SUBSPECIES;
@@ -649,4 +652,6 @@ We are showin the full map of ponerinae for every adm1.
         if(testString.contains("family"))return Rank.FAMILY;
         return null;
     }
+
+
 }

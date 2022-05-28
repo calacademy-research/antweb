@@ -558,6 +558,10 @@ public abstract class HttpUtil {
     return paramString;
   }
 
+  public static String getParam(HttpServletRequest request, String param) {
+        return "&" + param + "=" + getParamValue(param, request);
+  }
+
   // Could be multiple ones? This just gets first.
   public static String getParamValue(String param, HttpServletRequest request) {
     String paramsStr = "";            
@@ -892,7 +896,21 @@ public abstract class HttpUtil {
       }
       return target;
     }
-    
+
+
+    // Called from statusesDisplay.jsp  Might be used more where urls get extra parameters. Currently just for orderby.
+    public static String getUniquedTarget(HttpServletRequest request, String target) {
+
+        // Doesn't work to clean up (by getting rid of extra orderby (for example).
+        // https://localhost/browse.do?subfamily=formicinae&statusset=all&caste=male&orderby=status&project=allantwebants&orderby=species&statusSet=Valid%20(with%20fossils)
+
+        String param = HttpUtil.getParam(request, "orderby");
+        String newTarget = HttpUtil.getTargetReplaceParam(target, "orderby", param);
+        //A.log("getUniquedTarget() param:" + param + " newTarget:" + newTarget);
+        return newTarget;
+    }
+
+
     public static String getReferrerUrl(HttpServletRequest request) {
       if (request == null) return null;
       String target = request.getHeader("referer");  //HttpUtil.getTarget(request);
