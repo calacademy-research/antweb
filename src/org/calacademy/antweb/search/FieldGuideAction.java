@@ -150,6 +150,7 @@ public final class FieldGuideAction extends Action {
 			if (subfamily != null || genus != null || species != null) {
     		    // Taxon Field Guides
                 Taxon taxon = new TaxonDb(connection).getFullTaxon(subfamily, genus, species, subspecies, rank);
+                fieldGuide.setShowTaxon(taxon);
                 // Taxon taxon = Taxon.getTaxonOfRank(subfamily, genus, species, subspecies)
 
                 if (taxon == null) {

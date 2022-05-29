@@ -1,5 +1,6 @@
 Release 8.75.6
-  Fix for BrowseAction browser parameters
+  Fix for BrowseAction browser parameters (/?? issue resolved).
+  Field guide changes for better header links.  
 
 Release 8.75.5
   Improve the inferRank() method to reduce traffic and logging.

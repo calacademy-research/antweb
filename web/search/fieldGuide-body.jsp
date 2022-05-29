@@ -14,9 +14,6 @@
 <%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="org.calacademy.antweb.Formatter" %>
 
-<jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" />
-<jsp:useBean id="showTaxon" scope="session" class="org.calacademy.antweb.Taxon" />
-<jsp:setProperty name="taxon" property="*" />
 <jsp:useBean id="specimen" scope="session" class="org.calacademy.antweb.Specimen" />
 <jsp:setProperty name="specimen" property="*" />
 
@@ -28,14 +25,16 @@
     
    Utility fg_util = new Utility(); 
 
-   FieldGuide fieldGuide = (FieldGuide) request.getAttribute("fieldGuide");    
+   FieldGuide fieldGuide = (FieldGuide) request.getAttribute("fieldGuide");
+
+   Taxon taxon = fieldGuide.getShowTaxon();
+   if (taxon == null) taxon = new DummyTaxon();
+
    if (fieldGuide == null) {
        AntwebUtil.log("fieldGuide-body.jsp fieldGuide is null for request:" + HttpUtil.getRequestInfo(request));     
        return;
    }  
    String fgTitle =  fieldGuide.getTitle(); // Sometimes this is null.  After a server restart.  Why?   
-   //String title = (String) request.getAttribute("fieldGuideTitle");
-   // ArrayList<Taxon> fieldGuideTaxa = (ArrayList<Taxon>) request.getAttribute("fieldGuideTaxa");
 
    String requestUri = HttpUtil.getQueryString(request);
    boolean from_search = false;
@@ -49,10 +48,10 @@
        region_fg = true;
    }
    String dagger = "";
-   if (showTaxon.getIsFossil()) dagger = "&dagger;";
+   if (taxon.getIsFossil()) dagger = "&dagger;";
    org.calacademy.antweb.Map map_link = taxon.getMap();
    String taxon_object = "taxonName";
-   String taxon_objectName = showTaxon.getTaxonName();
+   String taxon_objectName = taxon.getTaxonName();
    String rank = request.getParameter("rank");
 
    if (from_search) {
@@ -78,20 +77,20 @@
    } else {
 %>
     <div id="page_contents">
-    <% if (showTaxon.getRank() != null) { %>
+    <% if (taxon.getRank() != null) { %>
       <h1>
-      <%= new Formatter().capitalizeFirstLetter(showTaxon.getRank()) %>: <%= dagger %><bean:write name="showTaxon" property="prettyName" />
-      <% if (showTaxon.getIsValid()) { %>
+      <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %>: <%= dagger %><%= taxon.getPrettyName() %>
+      <% if (taxon.getIsValid()) { %>
         <img src="<%= AntwebProps.getDomainApp() %>/image/valid_name.png" border="0" title="Valid Name">
       <% } %>
       </h1>
     <% } %>
 
-    <%  if (AntwebProps.isDevMode()) AntwebUtil.log("fieldGuide-body.jsp rank:" + showTaxon.getRank() + " from_search:" + from_search + " region_fg:" + region_fg);
+    <%  if (AntwebProps.isDevMode()) AntwebUtil.log("fieldGuide-body.jsp rank:" + taxon.getRank() + " from_search:" + from_search + " region_fg:" + region_fg);
 
         String link_params = "";
-        String taxonRank = taxon.getRank();
 
+        String taxonRank = taxon.getRank();
         if (Rank.SUBFAMILY.equals(taxonRank)) {
             link_params = "subfamily=" + taxon.getSubfamily() + "&name=" + taxon.getSubfamily() + "&rank=subfamily&" + overview.getParams();
         } else if (Rank.GENUS.equals(taxonRank)) {
@@ -124,8 +123,7 @@
             <div id="totals_and_tools">
                 <h2>Field Guide <%= fgTitle %></h2>
                 <div id="thumb_toggle">
-               <% A.log("fieldGuide-body.jsp taxon:" + taxon); %>
-                    <a href="<%= request.getHeader("Referer") %>">Back to <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %> 
+                    <a href="<%= request.getHeader("Referer") %>">Back to <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %>
                         <%= taxon.getTaxonNameDisplay() %>
                     </a>
                 </div>

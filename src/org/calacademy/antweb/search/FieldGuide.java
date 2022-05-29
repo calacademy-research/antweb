@@ -25,6 +25,14 @@ public class FieldGuide {
     protected String rank;
     protected Extent extent;
     protected HashMap localities = new HashMap();
+    private Taxon showTaxon = null;
+
+    public Taxon getShowTaxon() {
+        return showTaxon;
+    }
+    public void setShowTaxon(Taxon taxon) {
+        showTaxon = taxon;
+    }
 
     private final int MAX_MARKERS = 50;
 
