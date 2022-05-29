@@ -897,19 +897,22 @@ public abstract class HttpUtil {
       return target;
     }
 
-
-    // Called from statusesDisplay.jsp  Might be used more where urls get extra parameters. Currently just for orderby.
+    // Currently, orderBy can sometimes require being uniqued. Could be extended to cover others...
     public static String getUniquedTarget(HttpServletRequest request, String target) {
 
-        // Doesn't work to clean up (by getting rid of extra orderby (for example).
-        // https://localhost/browse.do?subfamily=formicinae&statusset=all&caste=male&orderby=status&project=allantwebants&orderby=species&statusSet=Valid%20(with%20fossils)
+        // We still support orderby but it is deprecated.
+        String orderbyParam = HttpUtil.getParam(request, "orderby");
+        target = HttpUtil.getTargetMinusParam(target, "orderby");
 
-        String param = HttpUtil.getParam(request, "orderby");
-        String newTarget = HttpUtil.getTargetReplaceParam(target, "orderby", param);
-        //A.log("getUniquedTarget() param:" + param + " newTarget:" + newTarget);
-        return newTarget;
+        String orderByParam = HttpUtil.getParam(request, "orderBy");
+        if (orderByParam == null || orderByParam.equals("") && !(orderbyParam == null || orderbyParam.equals(""))) {
+            orderByParam = orderbyParam;
+        }
+
+        target = HttpUtil.getTargetReplaceParam(target, "orderBy", orderByParam);
+        //A.log("getUniquedTarget() orderByParam:" + orderByParam + " target:" + target);
+        return target;
     }
-
 
     public static String getReferrerUrl(HttpServletRequest request) {
       if (request == null) return null;
@@ -921,22 +924,6 @@ public abstract class HttpUtil {
       }
       return target;
     }
-
-    /*
-    To do. It seems the code below is faulty.
-
-        public static String getTargetMinusParam(String target, String param) {
-          int i = target.indexOf("&" + param);
-          String newTarget = target;
-          while (i > 0) {
-            newTarget = target.substring(0, i);
-            i = newTarget.indexOf("&" + param);
-          }
-          return newTarget;
-        }
-
-       have a removeParam method. Get called from both methods below.
-     */
 
 
     // These are not (yet) designed to handle if the parameter immediately follows the ?
@@ -986,12 +973,15 @@ public abstract class HttpUtil {
       return target;
     }
     public static String getTargetReplaceParam(String target, String oldParam, String newParam) {
+        //A.log("getTargetReplaceParam() target:" + target + " oldParam:" + oldParam + " newParam:" + newParam);
         if (oldParam == null || newParam == null || !newParam.contains("=")) return null;
         if (!newParam.contains("&")) newParam = "&" + newParam;
         target = HttpUtil.getTargetMinusParam(target, oldParam);
         if (newParam != null && !"".equals(newParam)) {
             target += newParam;
+            A.log("getTargetReplaceParam() added newParam:" + newParam + " to target:" + target);
         }
+        //A.log("getTargetReplaceParam() target:" + target);
         return target;
     }
 

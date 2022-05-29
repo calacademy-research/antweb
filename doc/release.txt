@@ -1,7 +1,8 @@
 Release 8.75.6
   Fix for BrowseAction browser parameters (/?? issue resolved).
   Field guide changes for better header links.  
-
+  BrowseAction rank inference work.
+  
 Release 8.75.5
   Improve the inferRank() method to reduce traffic and logging.
   Make orderby request parameters unique in target for Status Display drop down.

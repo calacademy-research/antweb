@@ -13,8 +13,7 @@
   String sdTarget = HttpUtil.getTargetMinusParams(initialTarget, "statusSet", "statusSetSize");
 
   sdTarget = HttpUtil.getUniquedTarget(request, sdTarget);
-
-  //A.log("statusesDisplay \r\ninitialTarget:" + initialTarget + " \r\n after:" + sdTarget);
+  A.log("statusesDisplay initialTarget:" + initialTarget + " after:" + sdTarget);
 
   String sdDisplayChildRank = null;
   if (initialTarget.contains("taxonomicPage")) {
@@ -29,7 +28,7 @@
   if (false && Rank.SPECIES.equals(sdRank) && !(sdTarget.contains("taxonomicPage.do"))) {
     // Do nothing. False added Oct 14, 2018 to handle missing specimens here:
     //   http://localhost/antweb/browse.do?genus=hypoponera&species=us-ca01&rank=species&project=allantwebants&statusSet=all
-    A.log("statusesDisplay.jsp sdRank:" + sdRank);
+    //A.log("statusesDisplay.jsp sdRank:" + sdRank);
   } else {
     boolean showStatuses = sdTarget.contains("browse.do") 
       || sdTarget.contains("taxonomicPage.do")
