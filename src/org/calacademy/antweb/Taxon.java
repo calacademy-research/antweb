@@ -2063,10 +2063,14 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       return this.specimenCount != null && this.specimenCount > 0;
     }
 
+    // BrowserParams should not start with a ?
     public String getBrowserParams() {
         return browserParams;
     }
     public void setBrowserParams(String browserParams) {
+
+        if (browserParams.contains("?")) AntwebUtil.log("BrowserParams should not start with a ?:" + browserParams);
+
         if (browserParams != null) {
           String stripString = "&genCache=true";
           browserParams = Formatter.stripString(browserParams, stripString);

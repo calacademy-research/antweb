@@ -1,6 +1,10 @@
+Release 8.75.6
+  Fix for BrowseAction browser parameters
+
 Release 8.75.5
   Improve the inferRank() method to reduce traffic and logging.
-  Make request parameters unique in target for Status Display drop down.
+  Make orderby request parameters unique in target for Status Display drop down.
+  View selector adjustment.
 
 Release 8.75.4
 Date: May 17, 2022

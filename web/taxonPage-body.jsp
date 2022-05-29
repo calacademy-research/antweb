@@ -47,8 +47,6 @@
 <%
   } %>
 
-<!-- taxonPage-body.jsp -->
-
 <%
 A.log("taxonPage-body.jsp subfamilyCount:" + TaxonMgr.getSubfamilies().size());
 A.log("taxonPage-body.jsp genus:" + TaxonMgr.getGenus("myrmicinaemyrmica"));
@@ -75,9 +73,13 @@ A.log("taxonPage-body.jsp genus:" + TaxonMgr.getGenus("myrmicinaemyrmica"));
     <input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request)%>">
     <div id="page_contents">
     <%@ include file="/common/taxonTitle.jsp" %>
-
+    <!-- taxonPage-body.jsp -->
         <div class="links">
             <ul>
+<%
+//<% if (taxon.getBrowserParams().contains("?"))
+ A.log("taxonPage-body.jsp BrowserParams with ?:" + taxon.getBrowserParams()); %>
+
                 <li>Overview</li>
                 <li><a href="browse.do?<%= taxon.getBrowserParams() %>"><%= Rank.getNextPluralRank(taxon.getRank()) %></a></li>
                 <li><a href="images.do?<%= taxon.getBrowserParams() %>">Images</a></li>

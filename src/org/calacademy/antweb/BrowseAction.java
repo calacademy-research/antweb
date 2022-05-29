@@ -69,7 +69,7 @@ public class BrowseAction extends DescriptionAction {
           request.setAttribute("message", "Invalid: no query string");
           return mapping.findForward("message");
         }
-        if (!queryString.contains("?")) queryString = "?" + queryString;
+        //if (!queryString.contains("?")) queryString = "?" + queryString;
         boolean isPost = HttpUtil.isPost(request);
 
         if (rank == null || "".equals(rank)) rank = inferredRank(queryString);
@@ -252,7 +252,7 @@ public class BrowseAction extends DescriptionAction {
           // To be removed when threat of lost geolocale_taxa has passed.
           //(new GeolocaleTaxonDb(connection)).hasCalMorphos(); 
 
-		  boolean logTimes = AntwebProps.isDevMode() && true;
+		  boolean logTimes = AntwebProps.isDevMode() && false;
 		  if (logTimes) s_log.warn("execute() 1 time:" +  AntwebUtil.millisSince(startTime));
 
 		  /* --- Here is where we fetch the Taxon or Homonym --- */
