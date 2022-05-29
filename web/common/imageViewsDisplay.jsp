@@ -11,7 +11,7 @@
                         <ul>
                           <%
                             //String browserParams = "";
-                            String changeThumbTarget = HttpUtil.getRequestURI(request) + "?" + browserParams + imagesTrueStr; 
+                            String changeThumbTarget = HttpUtil.getRequestURI(request) + browserParams + imagesTrueStr;
                             //A.log("imageViewsDisplay changeThumbTarget:" + changeThumbTarget + " imagesTrueStr:" + imagesTrueStr); %>
                             <li><a class="clean_url head" href="#" onclick="changeThumbView('h', '<%= changeThumbTarget %>'); return false;">Head</a></li>
                             <li><a class="clean_url profile" href="#" onclick="changeThumbView('p', '<%= changeThumbTarget %>'); return false;">Profile</a></li>
