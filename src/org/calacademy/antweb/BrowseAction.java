@@ -517,7 +517,7 @@ We are showin the full map of ponerinae for every adm1.
             message = "e:" + e;
         } catch (SQLException e) {
             message = "Exception caught on request.";
-            if (!HttpUtil.isBot(request)) s_log.error("execute() e:" + e);
+            if (!HttpUtil.isBot(request) || AntwebProps.isDevMode()) s_log.error("execute() e:" + e);
         } finally {
             if ("mapComparison".equals(cacheType)) --s_mapComparisonCount;
             if ("getComparison".equals(cacheType)) --s_getComparisonCount;
@@ -641,12 +641,12 @@ We are showin the full map of ponerinae for every adm1.
     private String inferredRank(String queryString) {
         // remove &orderBy=species which would throw off inference.
         String testString = HttpUtil.getTargetMinusParam(queryString, "orderBy");
-        testString = HttpUtil.getTargetMinusParam(queryString, "orderby");
+        testString = HttpUtil.getTargetMinusParam(testString, "orderby");
         //A.log("inferredRank() queryString:" + queryString + " testString:" + testString);
 
         if(testString.contains("subspecies"))return Rank.SUBSPECIES;
         if(testString.contains("species"))return Rank.SPECIES;
-        if(testString.contains("genus")&&!queryString.contains("subgenus"))return Rank.GENUS;
+        if(testString.contains("genus") &&!queryString.contains("subgenus"))return Rank.GENUS;
         if(testString.contains("subgenus"))return Rank.SUBGENUS;
         if(testString.contains("subfamily"))return Rank.SUBFAMILY;
         if(testString.contains("family"))return Rank.FAMILY;

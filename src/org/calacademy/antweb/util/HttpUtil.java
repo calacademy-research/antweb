@@ -956,7 +956,9 @@ public abstract class HttpUtil {
     }
     // will remove all instances.
     public static String getTargetMinusParam(String target, String param) {
+        //A.log("getTargetMinusParam() target:" + target + " param:" + param);
         int i1 = target.indexOf("?" + param);
+        if (i1 == -1) i1 = 0;
         boolean isFirstParam = i1 > 0;
         if (!isFirstParam) i1 = target.indexOf("&" + param);
         int j1 = target.indexOf("&", i1 + 1);
@@ -972,8 +974,10 @@ public abstract class HttpUtil {
             i1 = newTarget.indexOf("&" + param);
             j1 = newTarget.indexOf("&" + param, i1 + 1);
         }
+        //A.log("getTargetMinusParam() newTarget:" + newTarget + " i1:" + i1 + " lastTarget:" + lastTarget);
         return newTarget;
     }
+
     // newParam should be of the format: &param=value (either works).
     public static String getTargetReplaceParam(HttpServletRequest request, String oldParam, String newParam) {
       if (oldParam == null || newParam == null || !newParam.contains("=")) return null;
