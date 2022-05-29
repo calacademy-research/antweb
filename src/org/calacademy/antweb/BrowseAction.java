@@ -517,7 +517,7 @@ We are showin the full map of ponerinae for every adm1.
             message = "e:" + e;
         } catch (SQLException e) {
             message = "Exception caught on request.";
-            s_log.error("execute() e:" + e);
+            if (!HttpUtil.isBot(request)) s_log.error("execute() e:" + e);
         } finally {
             if ("mapComparison".equals(cacheType)) --s_mapComparisonCount;
             if ("getComparison".equals(cacheType)) --s_getComparisonCount;
