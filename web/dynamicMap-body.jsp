@@ -200,6 +200,8 @@
 
 <%
     String specimenPrettyName = specimen.getPrettyName();
+    if (specimenPrettyName == null) AntwebUtil.log("dynamicMap-body.jsp specimenPrettyName is null for request:" + HttpUtil.getTarget(request));
+
     if (specimenPrettyName == null || "".equals(specimenPrettyName)) AntwebUtil.log("dynamicMap-body.jsp specimenPrettyName:" + specimenPrettyName + " requestInfo:" + HttpUtil.getRequestInfo(request));
 
 %>
@@ -282,6 +284,8 @@
             %>
             <br>To see a map of <%= prettyStr %> <%= title %>, click: <a href='<%= url %>'>here</a>
           <%
+                 } else {
+                   AntwebUtil.log("dynamicMap-body.jsp taxonPrettyName is null for request:" + HttpUtil.getTarget(request));
                  }
                }
              } %>

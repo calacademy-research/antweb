@@ -214,10 +214,12 @@ public class SpecimenUpload extends SpecimenUploadParse {
                 if (AntwebProps.isDevMode()) governed = false;
                 String message = new OrphansDb(getConnection()).deleteOrphanedSpeciesFromSource(source, governed); // Only if less than allowable size: governed.
                 s_log.debug("deleteOrphanedSpeciesFromSource() returns:" + message);
-                if (message != null && !AntwebProps.isDevMode()) {
-                  getUploadDetails().setMessage(message);
+                if (!AntwebProps.isDevMode()) {
+                    if (message != null) {
+                        getUploadDetails().setMessage(message);
+                    }
                 } else {
-                    s_log.warn("importSpecimens() DEV MODE SKIPPING governed=false and uploadDetails.setMessaage()");
+                    s_log.warn("importSpecimens() DEV MODE SKIPPING");
                 }
 
                 // For debugging purposes. See log file.
