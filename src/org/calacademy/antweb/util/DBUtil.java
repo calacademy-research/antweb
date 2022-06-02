@@ -21,6 +21,8 @@ import com.mchange.v2.c3p0.impl.*;
 import org.calacademy.antweb.AntFormatter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.*;
+
 public class DBUtil {
 
     /* This class helps us manage connection, statements and resultSets.  We open, close,
@@ -98,8 +100,8 @@ Or, if there are stmts and/or rsets...
     }
 
     private static final Log s_log = LogFactory.getLog(DBUtil.class);
-    private static final HashMap<NewProxyConnection, String> connectionMap = new HashMap<>();
-    private static final HashMap<NewProxyConnection, DbRequest> connectionRequestMap = new HashMap<>();
+    private static final ConcurrentHashMap<NewProxyConnection, String> connectionMap = new ConcurrentHashMap<NewProxyConnection, String>();
+    private static final ConcurrentHashMap<NewProxyConnection, DbRequest> connectionRequestMap = new ConcurrentHashMap<NewProxyConnection, DbRequest>();
 
     // Called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
     public static DataSource getDataSource() {

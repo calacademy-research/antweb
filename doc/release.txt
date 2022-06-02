@@ -1,8 +1,15 @@
+Release 8.75.7
+  Make connectionMap and ConnectionRequestMap a ConurrentHashMap to avoid error.
+
 Release 8.75.6
   Fix for BrowseAction browser parameters (/?? issue resolved).
   Field guide changes for better header links.  
   BrowseAction rank inference work.
-  
+  Parameter management method mods.
+Release 8.75.6
+  Concurrent HashMap to handle concurrency issue in DBUtil.getConnection().
+  Session-config tracking-mode cookie  
+ 
 Release 8.75.5
   Improve the inferRank() method to reduce traffic and logging.
   Make orderby request parameters unique in target for Status Display drop down.

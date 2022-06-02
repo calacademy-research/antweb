@@ -366,73 +366,7 @@ public abstract class AntwebUtil {
     }
     return isExpired;
   }
-
-/*
-  public static void emptyLog(String file) {
-    String docRoot = AntwebProps.getDocRoot();
-    String logRoot = docRoot + "web/log/";
-    file = logRoot + "/" + file;
-    AntwebUtil.remove(file); 
-  }
-*/
-
-/*
-  // For backwards compatibility. Should use LogMgr methods.
-  public static void appendLog(String file, String data) {
-    LogMgr.appendLog(file, data, true);
-  }
-
-  public static void appendLog(String file, String data, boolean addTimestamp) {
-    LogMgr.appendLog(file, data, addTimestamp);
-  }
-
-  public static void appendLog(String dir, String file, String data) {
-    LogMgr.appendLog(dir, file, data);
-  }
-
-  public static void appendFile(String fullPath, String data) {
-    LogMgr.appendFile(fullPath, data);
-  }
-*/
-
-/*
-  // Only used for logs.
-  public static void appendLog(String file, String data) {
-    appendLog(file, data, false);
-  }
-
-  public static void appendLog(String file, String data, boolean addTimestamp) {
-    if (addTimestamp) data = AntwebUtil.getFormatDateTimeStr(new java.util.Date()) + " " + data;
-    appendLog(null, file, data);
-  }
-
-  // Only used for logs.
-  public static void appendLog(String dir, String file, String data) {
-    // This method will create and/or append stringData to a file.  If the dir
-    // parameter is not null, the file will be created in a dir of that name.
-    // If /data/antweb/log or the nested dir does not exist, it will be created.
-    String docRoot = AntwebProps.getDocRoot();
-    String logRoot = docRoot + "web/log/";
-    if (dir != null) logRoot += dir;
-  //    (new Utility()).makeDirTree(logRoot);
-    file = logRoot + "/" + file;
-    AntwebUtil.appendFile(file, data);
-  }
-
-  public static void appendFile(String fullPath, String data) {
-    (new Utility()).makeDirTree(fullPath);
-
-    try {
-      FileWriter fstream = new FileWriter(fullPath, true);
-      BufferedWriter out = new BufferedWriter(fstream);
-      out.write(data + "\n");
-      out.close();
-    } catch (Exception e) {
-      s_log.error("appendFile: " + e.getMessage());
-    }    
-  }
-*/
-
+  
 
   public static void infoStackTrace()
   {
