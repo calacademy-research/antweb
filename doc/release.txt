@@ -1,14 +1,16 @@
-Release 8.75.7
-  Make connectionMap and ConnectionRequestMap a ConurrentHashMap to avoid error.
+Release 8.76    Jun 2, 2022
+  Scientific_name of darwin_core_3 and api3_1_specimen to have the genus with initCap.
 
+Release 8.75.7
+  Concurrent HashMap to handle concurrency issue in DBUtil.getConnection().
+    Make connectionMap and ConnectionRequestMap a ConurrentHashMap to avoid error.
+  Session-config tracking-mode cookie  
+  
 Release 8.75.6
   Fix for BrowseAction browser parameters (/?? issue resolved).
   Field guide changes for better header links.  
   BrowseAction rank inference work.
   Parameter management method mods.
-Release 8.75.6
-  Concurrent HashMap to handle concurrency issue in DBUtil.getConnection().
-  Session-config tracking-mode cookie  
  
 Release 8.75.5
   Improve the inferRank() method to reduce traffic and logging.
