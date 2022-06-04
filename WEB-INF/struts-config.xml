@@ -244,15 +244,7 @@
      <forward   name="permissionDenied"         path="/permissionDenied.jsp"/>
   </global-forwards>
 
-  <!-- global-exceptions>
-    <exception
-	      key="error.global.mesage"
-	      type="java.lang.Exception"
-	      handler="org.calacademy.antweb.util.CustomExceptionHandler"
-	      path="/pages/error.jsp" />
-  </global-exceptions -->
 
-	
   <!-- ========== Action Mapping Definitions ============================== -->
   <action-mappings>
 

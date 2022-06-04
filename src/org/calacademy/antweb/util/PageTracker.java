@@ -26,11 +26,7 @@ possible moment - ideally in jsp footer.
       //if (AntwebProps.isDevMode() && getRequestCount() > 3) purge();
 
       if (getRequestCount() > 100) {
-        try {
           purge();
-        } catch (ConcurrentModificationException e) {
-          // nothing to do.  
-        }
       }
       
       String target = HttpUtil.getTarget(request);
@@ -116,7 +112,15 @@ possible moment - ideally in jsp footer.
     public static int getTargetCount(String target) {
         if (target == null) return 0;
         int targetCount = 0;
+
+        // To avoid ConcurrentModificationException
+        //ArrayList<Taxon> children = getChildren();
         Collection<Tracker> trackers = trackerMap.values();
+        int trackerCount = trackers.size();
+        Tracker[] trackerArray = new Tracker[trackerCount];
+        trackers.toArray(trackerArray);
+
+        //Collection<Tracker> trackers = trackerMap.values();
         for (Tracker tracker : trackers) {
             if (target.equals(tracker.getTarget())) targetCount = targetCount + 1;
         }
