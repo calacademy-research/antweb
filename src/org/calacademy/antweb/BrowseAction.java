@@ -320,10 +320,9 @@ public class BrowseAction extends DescriptionAction {
 		  if (!success) return mapping.findForward("message");
 
 		  if (accessLogin != null) getDescEditHistory(taxon, connection, request);
-
-          //A.log("execute() desc:" + taxon.getDescription().size());
-
+		  
 		  taxon.setBrowserParams(queryString);
+		  //A.log("execute() setBrowserParams:" + queryString);
 		  //taxon.setSimilar(projectName);
 
 		  if (logTimes) s_log.warn("execute() setImages() before");

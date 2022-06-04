@@ -219,7 +219,8 @@ public final class Subspecies extends Species implements Serializable {
     }
 
     public String getTaxonomicBrowserParams() {
-        String theParams = "genus=" + this.getGenus();
+        String theParams = "subfamily=" + this.getSubfamily();
+        theParams += "&genus=" + this.getGenus();
         theParams += "&species=" + this.getSpecies();
         theParams += "&subspecies=" + this.getSubspecies();
         theParams += "&rank=subspecies";

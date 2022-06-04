@@ -2069,6 +2069,11 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
     public void setBrowserParams(String browserParams) {
 
+        //if (AntwebProps.isDevMode()) {
+        //    A.log("setBrowserParams:" + browserParams);
+        //    AntwebUtil.logShortStackTrace();
+        //}
+
         if (browserParams.contains("?")) AntwebUtil.log("BrowserParams should not start with a ?:" + browserParams);
 
         if (browserParams != null) {
@@ -2120,7 +2125,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         if (overview != null) {
             params += "&" + overview.getParams();
         }         
-        //A.log("getBrowserParams(" + rank + ", " + project + ") params:" + params);
+        //A.log("getBrowserParams(" + rank + ", " + overview + ") params:" + params);
         return params;   
     }
 

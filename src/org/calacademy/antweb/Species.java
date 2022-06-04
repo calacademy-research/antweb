@@ -213,7 +213,7 @@ these other _cf1 etc.
     }
 
     public String getTaxonomicBrowserParams() {
-        String theParams = "genus=" + this.getGenus() + "&species=" + this.getSpecies() + "&rank=species";
+        String theParams = "subfamily=" + this.getSubfamily() + "&genus=" + this.getGenus() + "&species=" + this.getSpecies() + "&rank=species";
         return theParams;
     }
 

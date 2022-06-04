@@ -229,6 +229,9 @@ Examples of species with images that don't have h1 images:
                     if (thisChild.getIsFossil()) dagger = "&dagger;"; else dagger = "";
 %>
                 <div class="slide medium<% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %>" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%= img.getThumbview() %>');" id="<%= index %>">
+
+<% // AntwebUtil.log("DEBUG params:" + thisChild.getBrowserParams() + " string:" + thisChild.toString() + " class:" + thisChild.getClass()); %>
+
                 <div class="hover medium" onclick="window.location='images.do?<%= thisChild.getBrowserParams() %>';"></div>
                 <div class="top_gradient medium"></div>
                 <div class="name"><% if (thisChild.getIsValid()) { %><span class="is_valid"></span><% } %><a href="images.do?<%= thisChild.getBrowserParams() %>"><%= thisChild.getPrettyName() %></a></div>
