@@ -46,7 +46,7 @@ public class UtilDb extends AntwebDb {
 
             rset = stmt.executeQuery(query);
             while (rset.next()) {
-                Object o = rset.getDate("theDate");
+                Object o = rset.getTimestamp("theDate");
                 if (o != null) result = o.toString();
             }
         } catch (SQLException e) {

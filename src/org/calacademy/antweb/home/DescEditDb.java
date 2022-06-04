@@ -180,7 +180,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
                 descEdit.setTitle(rset.getString("title"));
                 // descEdit.setContent(rset.getString("content"));
                 descEdit.setEditId(rset.getInt("edit_id"));
-                descEdit.setCreated(rset.getDate("created"));
+                descEdit.setCreated(rset.getTimestamp("created"));
                 // descEdit.setTaxonId(rset.getInt("taxon_id"));
                 descEdit.setIsManualEntry(rset.getBoolean("is_manual_entry"));
                 descEdit.setAccessGroupId(rset.getInt("access_group"));

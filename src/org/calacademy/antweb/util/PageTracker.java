@@ -113,18 +113,23 @@ possible moment - ideally in jsp footer.
         if (target == null) return 0;
         int targetCount = 0;
 
-        // To avoid ConcurrentModificationException
-        //ArrayList<Taxon> children = getChildren();
-        Collection<Tracker> trackers = trackerMap.values();
-        int trackerCount = trackers.size();
-        Tracker[] trackerArray = new Tracker[trackerCount];
-        trackers.toArray(trackerArray);
+      try {
+          // To avoid ConcurrentModificationException
+          //ArrayList<Taxon> children = getChildren();
+          Collection<Tracker> trackers = trackerMap.values();
+          int trackerCount = trackers.size();
+          Tracker[] trackerArray = new Tracker[trackerCount];
+          trackers.toArray(trackerArray);
 
-        //Collection<Tracker> trackers = trackerMap.values();
-        for (Tracker tracker : trackers) {
-            if (target.equals(tracker.getTarget())) targetCount = targetCount + 1;
-        }
-        return targetCount;
+          //Collection<Tracker> trackers = trackerMap.values();
+          for (Tracker tracker : trackers) {
+              if (target.equals(tracker.getTarget())) targetCount = targetCount + 1;
+          }
+      } catch (ConcurrentModificationException e) {
+        s_log.error("getTargetCount() e:" + e + " target:" + target);
+        targetCount = 0;
+      }
+      return targetCount;
     }
 
     public static String showRequests() {

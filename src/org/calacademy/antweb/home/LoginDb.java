@@ -204,7 +204,11 @@ public class LoginDb extends AntwebDb {
         login.setFirstName(rset.getString("first_name"));
         login.setLastName(rset.getString("last_name"));
         login.setEmail(rset.getString("email"));
-        login.setCreated(rset.getDate("created"));
+//if (!AntwebProps.isDevMode())
+
+        login.setCreated(rset.getTimestamp("created"));
+        //A.log("instantiateLoginRow() Created:" + login.getCreated());
+
         login.setIsAdmin(rset.getBoolean("is_admin"));
         int groupId = rset.getInt("group_id");
         login.setGroupId(groupId);
@@ -247,7 +251,7 @@ public class LoginDb extends AntwebDb {
             login.setFirstName(rset.getString("first_name"));
             login.setLastName(rset.getString("last_name"));
             login.setEmail(rset.getString("email"));
-            login.setCreated(rset.getDate("created"));
+            login.setCreated(rset.getTimestamp("created"));
             //A.log("instantiateLogin() created:" + login.getCreated());
             login.setIsAdmin(rset.getBoolean("is_admin"));
             int groupId = rset.getInt("group_id");
@@ -892,8 +896,11 @@ public class LoginDb extends AntwebDb {
                 int groupId = rset.getInt("group_id");
                 String groupName = rset.getString("ant_group.name");
                 //String lastLogin = rset.getTimestamp("login.last_login");
-                Timestamp lastLogin = rset.getTimestamp("lastLogin");
-                 String url = AntwebProps.getDomainApp() + "/login.do?userName=" + name + "&password=" + password;
+                Timestamp lastLogin = null;
+
+                lastLogin = rset.getTimestamp("lastLogin");
+
+                String url = AntwebProps.getDomainApp() + "/login.do?userName=" + name + "&password=" + password;
                 String groupStr = "";
                 if (!"Default Group".equals(groupName)) {
                   groupStr = ":" + groupName;

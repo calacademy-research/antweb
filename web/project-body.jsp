@@ -152,6 +152,7 @@ if (!project.isAntProject()) {
 <br><b>Imaged Specimens:&nbsp;<%=  Formatter.commaFormat(overview.getImagedSpecimenCount()) %></b>
 <!-- h3>Last Calculation:&nbsp;< %= overview.getCreated() % ></h3 -->
 
+
 <!--
 < % if (project.getAuthor() != null) { % >
 <h3>< %= project.getAuthor() % > </h3>

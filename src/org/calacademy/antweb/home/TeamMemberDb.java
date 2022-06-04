@@ -75,7 +75,7 @@ public class TeamMemberDb extends AntwebDb {
             teamMember.setSection(rset.getInt("section"));
             teamMember.setRank(rset.getInt("teamrank"));
             teamMember.setText(rset.getString("text"));
-            teamMember.setCreated(rset.getDate("created"));
+            teamMember.setCreated(rset.getTimestamp("created"));
             teamMember.setImgFileBin(rset.getBlob("img_file_bin"));
             teamMember.setImgFileType(rset.getString("img_file_type"));
         }    

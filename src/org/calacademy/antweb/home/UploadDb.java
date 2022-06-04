@@ -40,7 +40,7 @@ public class UploadDb extends AntwebDb {
           upload.setGroupName(rset.getString("group_name"));
           upload.setGroupId(rset.getInt("group_id"));
           upload.setLogFileName(rset.getString("log_file_name"));
-          upload.setCreated(rset.getDate("created"));
+          upload.setCreated(rset.getTimestamp("created"));
 
 		  upload.setSpecimens(rset.getInt("specimens"));
 		  upload.setCollections(rset.getInt("collections"));
@@ -77,7 +77,7 @@ public class UploadDb extends AntwebDb {
 			  upload.setGroupName(rset.getString("group_name"));
 			  upload.setGroupId(rset.getInt("group_id"));
 			  upload.setLogFileName(rset.getString("log_file_name"));
-              upload.setCreated(rset.getDate("created"));  
+              upload.setCreated(rset.getTimestamp("created"));
                 
 			  upload.setSpecimens(rset.getInt("specimens"));
 			  upload.setCollections(rset.getInt("collections"));
@@ -152,7 +152,7 @@ public class UploadDb extends AntwebDb {
 			  uploadLine.setDisplayLineNum(rset.getInt("display_line_num"));
 			  uploadLine.setGroupId(rset.getInt("group_id"));
 			  uploadLine.setLine(rset.getString("line"));
-              uploadLine.setCreated(rset.getDate("created"));  
+              uploadLine.setCreated(rset.getTimestamp("created"));
 		      return uploadLine;
 			}
         } catch (SQLException e) {

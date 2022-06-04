@@ -2472,8 +2472,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
             Date min = null;
             Date max = null;
             while (rset.next()) {
-                min = rset.getDate(1);
-                max = rset.getDate(2);
+                min = rset.getTimestamp(1);
+                max = rset.getTimestamp(2);
             }
 
             //A.log("getDateCollected() min:" + min + " max:" + max + " query:" + theQuery);

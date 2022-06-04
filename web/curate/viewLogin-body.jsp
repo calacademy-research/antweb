@@ -94,8 +94,7 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
 <input type="text" class="input_200" name="lastName" value="<%= thisLogin.getLastName() %>">
 <br><br>
 
-<!-- h3>Created:</h3>
-<input type="text" class="input_200" name="created" value="< %= thisLogin.getCreated() % >" disabled -->
+<h1>Created: <%= thisLogin.getCreated() %></h>
 
 <% if (accessLogin.isAdmin()) { %>
     <h3>Institution:</h3>

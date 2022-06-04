@@ -155,7 +155,7 @@ public final class ListUploadsAction extends Action {
             while (rset.next()) {
                 Upload upload = new Upload();
                 upload.setLogFileName(rset.getString("log_file_name"));
-                upload.setCreated(rset.getDate("created"));
+                upload.setCreated(rset.getTimestamp("created"));
                 groupName = rset.getString("group_name");
                 upload.setGroupName(groupName);
                 upload.setGroupId(rset.getInt("group_id"));

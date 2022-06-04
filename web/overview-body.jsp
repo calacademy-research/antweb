@@ -434,6 +434,7 @@ String author = "";
 String title = "";
 String citeTarget = overview.getThisPageTarget();
 if (overview instanceof Project) {
+  Project project = (Project) overview;
   author = ((Project) overview).getAuthor();
   title = ((Project) overview).getTitle();
   mapType = "project";
