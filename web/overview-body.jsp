@@ -221,9 +221,6 @@
 <%= endemicCountHtml %></b>
 <%= introducedCountHtml %></b>
 
-<!-- h3>Last Calculation:&nbsp;< %= overview.getCreated() % ></h3 -->
-
-
 <% 
 //A.log("*");
    // The Show All Specimen advanced search link.
