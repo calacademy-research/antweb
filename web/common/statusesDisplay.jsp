@@ -13,7 +13,7 @@
   String sdTarget = HttpUtil.getTargetMinusParams(initialTarget, "statusSet", "statusSetSize");
 
   sdTarget = HttpUtil.getUniquedTarget(request, sdTarget);
-  A.log("statusesDisplay initialTarget:" + initialTarget + " after:" + sdTarget);
+  //A.log("statusesDisplay initialTarget:" + initialTarget + " after:" + sdTarget);
 
   String sdDisplayChildRank = null;
   if (initialTarget.contains("taxonomicPage")) {
@@ -61,7 +61,7 @@
 %>
                      <li><a href="<%= sdTarget + "&statusSet=" + aStatusSet %>"><span style="text-transform:capitalize;"><%= aStatusSet %></span></a></li>
    <% }
-      A.log("statusesDisplay() statusSets:" + statusSets + " showStatus:" + showStatuses + " statusSet:" + statusSet + " statusSetSize:" + statusSetSize + " sdTarget:" + sdTarget);
+      //A.log("statusesDisplay() statusSets:" + statusSets + " showStatus:" + showStatuses + " statusSet:" + statusSet + " statusSetSize:" + statusSetSize + " sdTarget:" + sdTarget);
 
       if ("min".equals(statusSetSize)) { %>
                      <li><a href="<%= sdTarget + "&statusSetSize=max" + "&statusSet=" + statusSet %>">Click for more options!</a></li> 

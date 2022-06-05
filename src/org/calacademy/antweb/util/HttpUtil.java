@@ -899,19 +899,20 @@ public abstract class HttpUtil {
 
     // Currently, orderBy can sometimes require being uniqued. Could be extended to cover others...
     public static String getUniquedTarget(HttpServletRequest request, String target) {
+        //A.log("getUniquedTarget() target:" + target);
 
         // We still support orderby but it is deprecated.
         String orderbyParam = HttpUtil.getParam(request, "orderby");
-        target = HttpUtil.getTargetMinusParam(target, "orderby");
+        String newTarget = HttpUtil.getTargetMinusParam(target, "orderby");
 
         String orderByParam = HttpUtil.getParam(request, "orderBy");
         if (orderByParam == null || orderByParam.equals("") && !(orderbyParam == null || orderbyParam.equals(""))) {
             orderByParam = orderbyParam;
         }
 
-        target = HttpUtil.getTargetReplaceParam(target, "orderBy", orderByParam);
-        //A.log("getUniquedTarget() orderByParam:" + orderByParam + " target:" + target);
-        return target;
+        newTarget = HttpUtil.getTargetReplaceParam(newTarget, "orderBy", orderByParam);
+        A.log("getUniquedTarget() orderByParam:" + orderByParam + " newTarget:" + newTarget + " target:" + target);
+        return newTarget;
     }
 
     public static String getReferrerUrl(HttpServletRequest request) {
@@ -942,26 +943,78 @@ public abstract class HttpUtil {
         return target;
     }
     // will remove all instances.
+
+    private static int getParamIndex(String target, String param) {
+        int i1 = target.indexOf("&" + param);
+        if (i1 > 0) return i1;
+        i1 = target.indexOf("?" + param);
+        if (i1 > 0) return i1;
+        i1 = target.indexOf(param);
+        if (i1 == 0) return i1;
+        return -1;
+    }
     public static String getTargetMinusParam(String target, String param) {
-        //A.log("getTargetMinusParam() target:" + target + " param:" + param);
-        int i1 = target.indexOf("?" + param);
-        if (i1 == -1) i1 = 0;
-        boolean isFirstParam = i1 > 0;
-        if (!isFirstParam) i1 = target.indexOf("&" + param);
-        int j1 = target.indexOf("&", i1 + 1);
+        /**
+          Should work for a query string or a full url. If param is "orderby"...
+          something like: https://localhost/browse.do?orderby=species&subfamily=formicinae&caste=normal&orderby=status&orderby=map&orderby=species
+           Should end up: https://localhost/browse.do?subfamily=formicinae&caste=normal
+
+                      or: orderby=species&subfamily=formicinae&caste=normal&orderby=status&orderby=map&orderby=species
+           Should end up: subfamily=formicinae&caste=normal
+        */
+        //A.log("getTargetMinusParam() BEGIN target:" + target + " param:" + param);
+
+        int i1 = getParamIndex(target, param);
+
+        if (i1 == -1) {
+            //A.log("getTargetMinusParam() param:" + param + " not in target:" + target);
+            return target;
+        }
+
+        int j1 = target.indexOf("&", i1 + 1);  // The next parameter, whatever it is.
+        if (j1 == -1) {
+            // It is the last parameter
+            j1 = target.length();
+        }
         String newTarget = target;
         String lastTarget = target;
-        while (i1 > 0) {
-            newTarget = newTarget.substring(0, i1);
-            if (isFirstParam) {
-                if (j1 > i1) newTarget += "?" + lastTarget.substring(j1 + 1);
-            } else {
-                if (j1 > i1) newTarget += lastTarget.substring(j1);
-            }
-            i1 = newTarget.indexOf("&" + param);
-            j1 = newTarget.indexOf("&" + param, i1 + 1);
+        //A.log("getTargetMinusParam() BEFORE LOOP target:" + target + " param:" + param + " i1:" + i1 + " j1:" + j1);
+
+        int escape = 0;
+        while (i1 >= 0) {
+          escape = escape + 1;
+          if (escape > 10) break;
+
+          if (i1 == 0) {  // First parameter
+              if (j1 > i1) newTarget = lastTarget.substring(j1 + 1);
+              //A.log("getTargetMinusParam() firstParam i1:" + i1 + " j1:" + j1 + " newTarget:" + newTarget + " lastTarget:" + lastTarget + " param:" + param);
+          } else {
+              newTarget = newTarget.substring(0, i1);
+              if (j1 > i1) {
+                  String urlTail = lastTarget.substring(j1);
+                  //A.log("getTargetMinusParam() urlTail:" + urlTail);
+                  if (newTarget.contains("https") && !newTarget.contains("?")) {
+                      urlTail = "?" + urlTail.substring(1);
+                  }
+                  newTarget += urlTail;
+              }
+              //A.log("getTargetMinusParam() NOT firstParam i1:" + i1 + " j1:" + j1 + " newTarget:" + newTarget + " lastTarget:" + lastTarget + " param:" + param);
+          }
+
+          i1 = getParamIndex(newTarget, param);
+          //A.log("getTargetMinusParam() getParamIndex() i1:" + i1 + " newTarget:" + newTarget + " param:" + param);
+          j1 = newTarget.indexOf("&", i1 + 1);
+          if (j1 == -1) {
+              // It is the last parameter
+              j1 = newTarget.length();
+          }
+
+          lastTarget = newTarget;
+
+          //A.log("getTargetMinusParam() END of LOOP i1:" + i1 + " j1:" + j1 + " newTarget:" + newTarget + " escape:" + escape);
         }
-        //A.log("getTargetMinusParam() newTarget:" + newTarget + " i1:" + i1 + " lastTarget:" + lastTarget);
+
+        //A.log("getTargetMinusParam() END returning newTarget:" + newTarget);
         return newTarget;
     }
 
@@ -973,7 +1026,9 @@ public abstract class HttpUtil {
       return target;
     }
     public static String getTargetReplaceParam(String target, String oldParam, String newParam) {
-        //A.log("getTargetReplaceParam() target:" + target + " oldParam:" + oldParam + " newParam:" + newParam);
+
+        A.log("getTargetReplaceParam() target:" + target + " oldParam:" + oldParam + " newParam:" + newParam);
+
         if (oldParam == null || newParam == null || !newParam.contains("=")) return null;
         if (!newParam.contains("&")) newParam = "&" + newParam;
         target = HttpUtil.getTargetMinusParam(target, oldParam);
@@ -985,28 +1040,10 @@ public abstract class HttpUtil {
         return target;
     }
 
-
     public static final int MILLIS = 1000;
     public static int SECS = 60;
     public static int MAX_REQUEST_TIME = MILLIS * 20;
-/*
-    public static String finish(java.util.Date startTime) {
-      String execTime = "";
-      long millis = AntwebUtil.millisSince(startTime);
-      if (millis > 2000) {
-        execTime = AntwebUtil.secsSince(startTime) + " secs";
-      } else {
-        execTime = millis + " millis";      
-      }
-      String message = (new Date()).toString() + " time:" + execTime;
-      if (AntwebProps.isDevMode()) {
-        //s_log.warn(message);
-        MAX_REQUEST_TIME = 1;
-      }
-      if (millis > MAX_REQUEST_TIME) LogMgr.appendDataLog("longRequest.log", message);
-      return execTime; 
-    }
-*/
+
     public static String getExecTime(Date startTime) {
         String execTime = "";
         long millis = AntwebUtil.millisSince(startTime);
@@ -1021,7 +1058,6 @@ public abstract class HttpUtil {
     public static String finish(HttpServletRequest request, Date startTime) {
       return getExecTime(startTime);
     }
-
 
     //  Add the following code to JSPs...
     //    if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;

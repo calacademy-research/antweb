@@ -40,12 +40,17 @@ public class BrowseAction extends DescriptionAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        //A.log("execute() sort:" + request.getParameter("sortBy") + " " + request.getParameter("sortOrder"));
+        boolean logTimes = AntwebProps.isDevMode() && false;
+
+        if (logTimes) A.log("execute() sort:" + request.getParameter("sortBy") + " " + request.getParameter("sortOrder"));
+
         String message = null;
         Date startTime = new Date();
 
         AntwebMgr.isPopulated(); // will force populate 
-        
+
+        if (logTimes) A.log("execute() after AntwebMgr.populate()");
+
         //if (!AntwebProps.isDevOrStageMode())
         AntwebSystem.cpuCheck();
 
@@ -53,7 +58,9 @@ public class BrowseAction extends DescriptionAction {
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
                 
         if (ProjectMgr.hasMoved(request, response)) return null;
-                   
+
+        if (logTimes) A.log("execute() 1");
+
         HttpSession session = request.getSession();
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
@@ -62,9 +69,14 @@ public class BrowseAction extends DescriptionAction {
         //boolean local = browseForm.getLocal(); // unnecessary now because non-global is the default.
         boolean global = browseForm.getGlobal();
 
+        if (logTimes) A.log("execute() 1.1");
+
         // When and why would we want to do this?
         // Not for: http://localhost/antweb/description.do?subfamily=formicinae&genus=camponotus
         String queryString = request.getQueryString();
+
+        if (logTimes) A.log("execute() 1.2 queryString:" + queryString);
+
         if (queryString == null) {
           request.setAttribute("message", "Invalid: no query string");
           return mapping.findForward("message");
@@ -73,10 +85,10 @@ public class BrowseAction extends DescriptionAction {
         boolean isPost = HttpUtil.isPost(request);
 
         if (rank == null || "".equals(rank)) rank = inferredRank(queryString);
-        A.log("Rank:" + rank);
 
         if (Rank.SUBGENUS.equals(rank)) rank = Rank.GENUS;
-        //A.log("browseForm.rank:" + browseForm.getRank() + " rank:" + rank);
+
+        if (logTimes) A.log("execute() 2 rank:" + rank);
 
         String family = browseForm.getFamily();
         String subfamily = browseForm.getSubfamily();
@@ -113,6 +125,8 @@ public class BrowseAction extends DescriptionAction {
         String title = overview.getTitle(); 
         //A.log("execute() title:" + title + " overview:" + overview);
 
+        if (logTimes) A.log("execute() 3");
+
         // This block of code will handle a request that comes in with a taxonName parameter 
         // by building up and redirecting to a new request.
         boolean hasQueryString = queryString != null;
@@ -141,7 +155,9 @@ public class BrowseAction extends DescriptionAction {
           request.setAttribute("message", message);
           return mapping.findForward("message");
         }
-     
+
+        if (logTimes) A.log("execute() 4");
+
         if("specimen".equals(rank)) {
            message = "Invalid request.";
            if (browseForm.getCode() != null) {
@@ -252,8 +268,7 @@ public class BrowseAction extends DescriptionAction {
           // To be removed when threat of lost geolocale_taxa has passed.
           //(new GeolocaleTaxonDb(connection)).hasCalMorphos(); 
 
-		  boolean logTimes = AntwebProps.isDevMode() && false;
-		  if (logTimes) s_log.warn("execute() 1 time:" +  AntwebUtil.millisSince(startTime));
+		  if (logTimes) A.log("execute() 1 time:" +  AntwebUtil.millisSince(startTime));
 
 		  /* --- Here is where we fetch the Taxon or Homonym --- */
 
@@ -298,9 +313,9 @@ public class BrowseAction extends DescriptionAction {
           
           taxon.setStatusSetStr(statusSetStr);
           taxon.setStatusSetSize(statusSetSize);
-	      A.log("execute() + statusStr:" + statusStr + " statusSetStr:" + statusSetStr + " statusSetSize:" + statusSetSize);
+	      //A.log("execute() statusStr:" + statusStr + " statusSetStr:" + statusSetStr + " statusSetSize:" + statusSetSize);
 
-          if (true && AntwebProps.isDevMode()) A.log("execute() family:" + family + " subfamily:" + subfamily + " genus:" + genus
+          if (logTimes) A.log("execute() family:" + family + " subfamily:" + subfamily + " genus:" + genus
             + " species:" + species + " subspecies:" + subspecies + " rank:" + rank + " overview:" + overview
             + " statusStr:" + statusStr + " statusSetStr:" + statusSetStr + " resetProject:" + browseForm.getResetProject()
             + " taxon.status:" + taxon.getStatus());
@@ -320,12 +335,12 @@ public class BrowseAction extends DescriptionAction {
 		  if (!success) return mapping.findForward("message");
 
 		  if (accessLogin != null) getDescEditHistory(taxon, connection, request);
-		  
+
 		  taxon.setBrowserParams(queryString);
 		  //A.log("execute() setBrowserParams:" + queryString);
 		  //taxon.setSimilar(projectName);
 
-		  if (logTimes) s_log.warn("execute() setImages() before");
+		  if (logTimes) A.log("execute() setImages() before");
 
 		  String caste = Caste.DEFAULT; //ALL;
 		  if ("images".equals(cacheType)) {
@@ -342,7 +357,7 @@ public class BrowseAction extends DescriptionAction {
 
   		  taxon.setImages(connection, overview, caste);
 
-		  if (logTimes) s_log.warn("execute() statusSetStr:" + statusSetStr);
+		  if (logTimes) A.log("execute() statusSetStr:" + statusSetStr);
 
 		  //A.log("execute() cacheType:" + cacheType + " childImages:" + getChildImages + " childMaps:" + getChildMaps);
 
@@ -364,13 +379,13 @@ public class BrowseAction extends DescriptionAction {
               
 			taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
 
-            A.log("execute() childrenSize:" + taxon.getChildren().size());
+            if (logTimes) A.log("execute() childrenSize:" + taxon.getChildren().size());
 
 			//taxon.setChildren(projectObj, statusSet, getChildImages, getChildMaps);                    
 		  }
 		  //if (logTimes) s_log.warn("execute() *** taxon:" + taxon + " class:" + taxon.getClass() + " getChildImages:" + getChildImages);   
 
-		  if (logTimes) s_log.warn("execute() after setChildren time:" +  AntwebUtil.millisSince(startTime) + " cachetype:" + cacheType + " getChildImages:" + getChildImages);
+		  if (logTimes) A.log("execute() after setChildren time:" +  AntwebUtil.millisSince(startTime) + " cachetype:" + cacheType + " getChildImages:" + getChildImages);
 
 /*
 A page like this has no map, so shouldn't be calculated.
@@ -415,7 +430,7 @@ We are showin the full map of ponerinae for every adm1.
 		  
 		  if (map != null) taxon.setMap(map);
 
-		  if (logTimes) s_log.warn("execute() after setMap time:" +  AntwebUtil.millisSince(startTime));
+		  if (logTimes) A.log("execute() after setMap time:" +  AntwebUtil.millisSince(startTime));
 
 /*
 		  // This code will potentially record the cached page.
@@ -444,6 +459,9 @@ We are showin the full map of ponerinae for every adm1.
                 }
                 request.setAttribute("message", message);
                 LogMgr.appendLog("noExists.txt", new Date() + " - " + AntwebUtil.getRequestInfo(request));
+
+                if (logTimes) A.log("execute() return no taxon found time:" +  AntwebUtil.millisSince(startTime));
+
                 return mapping.findForward("message");
             }
 
@@ -469,9 +487,6 @@ We are showin the full map of ponerinae for every adm1.
                 session.setAttribute("mykids", taxon.getChildren());
             }
 
-
-//'<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getThumbview()
-
             //A.log("execute() taxon:" + taxon + " taxonImages:" + taxon.getImages() );
             //OpenGraphMgr.setOGTitle(Taxon.getPrettyTaxonName(taxon.getTaxonName()));
             request.setAttribute("ogTitle", Taxon.getPrettyTaxonName(taxon.getTaxonName()));
@@ -496,16 +511,22 @@ We are showin the full map of ponerinae for every adm1.
             // saveToken(request);
 
             if (taxon instanceof Homonym) {
-                //s_log.warn("execute() returning homonym:" + taxon);
+                if (logTimes) A.log("execute() return homonym time:" +  AntwebUtil.millisSince(startTime));
+
                 return mapping.findForward("homonym");
             }
 
             if (rank.equals("specimen")) {
+                if (logTimes) A.log("execute() return specimen time:" +  AntwebUtil.millisSince(startTime));
+
                 return mapping.findForward("specimen");
             } else if (request.getParameter("shot") != null) {
+                if (logTimes) A.log("execute() return oneView time:" +  AntwebUtil.millisSince(startTime));
+
                 return mapping.findForward("oneView");
             } else {
-                // A.log("Success");
+                if (logTimes) A.log("execute() return success time:" +  AntwebUtil.millisSince(startTime));
+
                 return mapping.findForward("success");
             }
 
@@ -638,9 +659,14 @@ We are showin the full map of ponerinae for every adm1.
     }
 
     private String inferredRank(String queryString) {
+
+        //A.log("inferredRank() queryString:" + queryString);
         // remove &orderBy=species which would throw off inference.
         String testString = HttpUtil.getTargetMinusParam(queryString, "orderBy");
+        //A.log("inferredRank() 1 testString:" + testString);
+
         testString = HttpUtil.getTargetMinusParam(testString, "orderby");
+        //A.log("inferredRank() 2 testString:" + testString);
         //A.log("inferredRank() queryString:" + queryString + " testString:" + testString);
 
         if(testString.contains("subspecies"))return Rank.SUBSPECIES;
