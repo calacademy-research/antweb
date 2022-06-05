@@ -31,7 +31,9 @@ possible moment - ideally in jsp footer.
       
       String target = HttpUtil.getTarget(request);
 
-      int targetCount = PageTracker.getTargetCount(target);
+//      int targetCount = PageTracker.getTargetCount(target);
+      int targetCount = 0;
+
       if (targetCount > 0) {
           s_log.info("add() targetCount:" + targetCount + " target:" + target);
       }
