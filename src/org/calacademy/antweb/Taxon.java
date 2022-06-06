@@ -979,8 +979,12 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         if (Rank.SPECIES.equals(getRank())) return getSpecies();
         if (Rank.SUBSPECIES.equals(getRank())) return getSubspecies();
 
-        s_log.warn(String.format("getName() for taxonName: %s has no rank: %s %n%s",
-                getTaxonName(), getRank(), AntwebUtil.getShortStackTrace()));
+        // Does not seem to be a problem now. Some dynamicMap-body.jso requests don't have a taxon.
+        //   like: https://www.antweb.org/bigMap.do?adm1Name=Florida&countryName=United%20States
+        // Shouldn't have a taxon object, so could be refactored.
+        
+        //s_log.info(String.format("getName() for taxonName: %s has no rank: %s %n%s",
+        //        getTaxonName(), getRank(), AntwebUtil.getShortStackTrace()));
 
         return null;
     }

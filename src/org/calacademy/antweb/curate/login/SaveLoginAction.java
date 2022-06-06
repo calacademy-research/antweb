@@ -140,7 +140,7 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
                     saveErrors(request, errors);
                     return mapping.findForward("failure");
                 }  
-                loginDb.userUpdateLogin(login);
+                loginDb.updateLogin(login, accessLogin);
               } else {
                 // it is an administrator saving a users data.  Do not modify passwords but allow the save.
 
@@ -159,7 +159,7 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
           
                 } else {
                   s_log.info("execute() 4 step is:" + form.getStep() + " changePassword:" + form.getChangePassword());
-                  loginDb.adminUpdateLogin(login);
+                  loginDb.updateLogin(login, accessLogin);
                 }
               }
             }

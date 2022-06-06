@@ -56,10 +56,41 @@ public class LoginMgr extends Manager {
         }
     }
 
+    public static void Xreload(Login login, Connection connection) {
+        LoginDb loginDb = new LoginDb(connection);
+        try {
+          Login newLogin = loginDb.getLogin(login.getId());
+          int index = s_logins.indexOf(login);
+
+          A.log("reload() attempt login:" + newLogin.getId() + " at index:" + index);
+
+          if (index != -1) {
+            s_logins.set(index, login);
+            A.log("reload login:" + newLogin.getId() + " at index:" + index);
+          }
+
+          Curator newCurator = loginDb.getCurator(login.getId());
+          A.log("reload() attempt curator:" + newCurator.getId());
+
+          if (newCurator != null) {
+            index = s_curators.indexOf(login);
+              A.log("reload() attempt curator:" + newCurator.getId() + " at index:" + index);
+
+            if (index != -1) {
+                s_curators.set(index, newCurator);
+                A.log("reload() curator:" + newCurator.getId() + " at index:" + index);
+            }
+          }
+        } catch (SQLException e) {
+          s_log.error("reload() e:" + e);
+        }
+    }
+
     public static Login getAdminLogin() {
       return getLogin(1);
     }
-    
+
+
     public static Login getAnonLogin() {
         Login login = new Login();
         login.setName("Anonymous");
@@ -68,7 +99,7 @@ public class LoginMgr extends Manager {
         login.setIsAdmin(false);
         return login;            
     }
-    
+
     public static Login getAccessLogin(HttpServletRequest request) {
 		return (Login) request.getSession().getAttribute("accessLogin"); 
     }
@@ -101,11 +132,18 @@ public class LoginMgr extends Manager {
         return accessLogin != null && accessLogin.isAdmin();
     }
 
-    public static boolean isLoggedIn(HttpServletRequest request) {
-        Login accessLogin = getAccessLogin(request);
-        return accessLogin != null;
+    public static boolean isAnonLogin(Login login) {
+        if ("Anonymous".equals(login.getName())) return true;
+        return false;
     }
-    
+
+    public static boolean isLoggedIn(HttpServletRequest request) {
+        Login login = getAccessLogin(request);
+        boolean isLoggedIn = (login != null);
+        A.log("isLogeedIn() isLoggedIn:" + isLoggedIn);
+        return isLoggedIn;
+    }
+
     public static boolean isCurator(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
 	    return isCurator(accessLogin);

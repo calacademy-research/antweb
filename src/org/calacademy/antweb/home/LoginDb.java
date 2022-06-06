@@ -488,7 +488,7 @@ public class LoginDb extends AntwebDb {
             int uploadSpecimens = login.isUploadSpecimens() ? 1 : 0;
             int uploadImages = login.isUploadImages() ? 1 : 0;
         
-            if (!isLegalLogin(login)) {
+            if (!isLoginTaken(login)) {
               throw new AntwebException("name or email already in use. id:" + login.getId() + " name:" + login.getName() + " email:" + login.getEmail());
             }
         
@@ -519,6 +519,7 @@ public class LoginDb extends AntwebDb {
 //s_log.warn("saveLogin() isAdmin:" + login.isAdmin() + " projects:" + login.getProjects());
 
                 updateLoginProjects(login);
+                updateLoginCountries(login);
             } catch (SQLException e) {
                 s_log.error("saveLogin() name:" + login.getName() + " query:" + theInsert);
                 throw e;
@@ -549,6 +550,7 @@ public class LoginDb extends AntwebDb {
         }    
     }
 
+    /*
     public void userUpdateLogin(Login login) throws SQLException {
       updateLogin(login, false);
     }
@@ -557,9 +559,16 @@ public class LoginDb extends AntwebDb {
        // This is just like updateLogin but will not modify password.  Called by administrators
       updateLogin(login, true);
     }
-    
-    private void updateLogin(Login login, boolean isAdminUpdate) throws SQLException {
-    
+    */
+
+    public void updateLogin(Login login, Login accessLogin) throws SQLException {
+
+        boolean isAdminUpdate = accessLogin.isAdmin();
+
+        boolean isSelfUpdate = (login.getId() == accessLogin.getId());
+
+        // True? If isAdminUpdate, password will not be modified.
+
         if (login.getId() != 0) {
 
             // Use of ternary operator.  short conditional statement
@@ -569,38 +578,36 @@ public class LoginDb extends AntwebDb {
             int uploadImages = login.isUploadImages() ? 1 : 0;
             int isAdmin = login.isAdmin() ? 1 : 0;
 
-            String theUpdate;
+            s_log.info("updateLogin() isAdminUpdate:" + isAdminUpdate + " groupId:" + login.getGroupId() + " uploadSpecimens:" + uploadSpecimens + " uploadImages:" + uploadImages);
 
-            String userUpdate = "update login set name = ?, first_name = ?, last_name = ?, email = ?, password = ? " +
-                    "where id = ?";
-
-            String adminUpdate = "update login " +
-                    "set name = ?, first_name = ?, last_name = ?, email = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ? " +
-                    "where id = ?";
-
-            if (isAdminUpdate) {
-                theUpdate = adminUpdate;
-            } else {
-                theUpdate = userUpdate;
+            if (!isAdminUpdate && !isSelfUpdate) {
+                throw new SQLException("name:" + login.getName() + " or email:" + login.getEmail() + " already in use.");
             }
-                         
-             s_log.info("updateLogin() isAdminUpdate:" + isAdminUpdate + " groupId:" + login.getGroupId() + " uploadSpecimens:" + uploadSpecimens + " uploadImages:" + uploadImages);
 
-             if (!isAdminUpdate && !isLegalLogin(login)) {
-               throw new SQLException("name:" + login.getName() + " or email:" + login.getEmail() + " already in use.");
-             }
-             
+            String theUpdate = null;
             PreparedStatement stmt = null;
             try {
-                if (!isAdminUpdate) {
-                    stmt = DBUtil.getPreparedStatement(getConnection(), "updateLogin()", userUpdate);
+                if (isSelfUpdate && !isAdminUpdate) {
+                    String selfUpdate = "update login "
+                            + "set name = ?, first_name = ?, last_name = ?, email = ?, password = ? "
+                            + "where id = ?";
+
+                    theUpdate = selfUpdate;
+
+                    stmt = DBUtil.getPreparedStatement(getConnection(), "updateLogin()", selfUpdate);
                     stmt.setString(1, login.getName());
                     stmt.setString(2, login.getFirstName());
                     stmt.setString(3, login.getLastName());
                     stmt.setString(4, login.getEmail());
                     stmt.setString(5, login.getPassword());
                     stmt.setInt(6, login.getId());
-                } else {
+                } else if (isAdminUpdate && !isSelfUpdate) {
+                    String adminUpdate = "update login "
+                            + "set name = ?, first_name = ?, last_name = ?, email = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ? "
+                            + "where id = ?";
+
+                    theUpdate = adminUpdate;
+
                     stmt = DBUtil.getPreparedStatement(getConnection(), "updateLogin()", adminUpdate);
                     stmt.setString(1, login.getName());
                     stmt.setString(2, login.getFirstName());
@@ -611,19 +618,41 @@ public class LoginDb extends AntwebDb {
                     stmt.setInt(7, uploadSpecimens);
                     stmt.setInt(8, uploadImages);
                     stmt.setInt(9, login.getId());
+                } else if (isAdminUpdate && isSelfUpdate) {
+                    String adminSelfUpdate = "update login "
+                            + "set name = ?, first_name = ?, last_name = ?, email = ?, password = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ? "
+                            + "where id = ?";
+
+                    theUpdate = adminSelfUpdate;
+
+                    stmt = DBUtil.getPreparedStatement(getConnection(), "updateLogin()", adminSelfUpdate);
+                    stmt.setString(1, login.getName());
+                    stmt.setString(2, login.getFirstName());
+                    stmt.setString(3, login.getLastName());
+                    stmt.setString(4, login.getEmail());
+                    stmt.setString(5, login.getPassword());  // distinct from above
+                    stmt.setInt(6, login.getGroupId());
+                    stmt.setInt(7, isAdmin);
+                    stmt.setInt(8, uploadSpecimens);
+                    stmt.setInt(9, uploadImages);
+                    stmt.setInt(10, login.getId());
                 }
 
                 s_log.info("updateLogin() update:" + DBUtil.getPreparedStatementString(stmt));
 
                 stmt.executeUpdate();
-              if (isAdminUpdate) {
-                // s_log.info("updateLogin() updateProjects()");
-                updateLoginProjects(login);
-                updateLoginCountries(login);
-              }
+
+                if (isAdminUpdate) {
+                  A.log("updateLogin() update Login Projects and Countries");
+                  updateLoginProjects(login);
+                  updateLoginCountries(login);
+                }
+
+                //LoginMgr.reload(login, getConnection());
+
             } catch (SQLException e) {
-              s_log.error("updateLogin() name:" + login.getName() + " e:" + e + " query:" + theUpdate);
-              throw e;
+                s_log.error("updateLogin() name:" + login.getName() + " e:" + e + " query:" + theUpdate);
+                throw e;
             } finally {
                 DBUtil.close(stmt, null, this, "updateLogin()");
             }
@@ -642,8 +671,7 @@ public class LoginDb extends AntwebDb {
         if (projects == null) return;
         
         try {
-
-            //A.log("updateLoginProjects() projects:" + projects + " size:" + projects.size());
+            A.log("updateLoginProjects() projects:" + projects + " size:" + projects.size());
 
             stmt = DBUtil.getPreparedStatement(getConnection(), "updateLoginProjects()", theStatement);
 
@@ -697,7 +725,7 @@ public class LoginDb extends AntwebDb {
             String name;
             stmt = DBUtil.getPreparedStatement(getConnection(), "updateLoginCountries()", theStatement);
 
-            //A.log("updateLoginCountries() countries:" + countries + " size:" + countries.size());
+            A.log("updateLoginCountries() countries:" + countries + " size:" + countries.size());
             for (SpeciesListable country : countries) {
                 if (country == null) continue;
                 name = country.getName();
@@ -716,7 +744,7 @@ public class LoginDb extends AntwebDb {
         }
     }
 
-    private boolean isLegalLogin(Login login) throws SQLException {
+    private boolean isLoginTaken(Login login) throws SQLException {
         //Verify that the email and login have not been used before by another account
 
         boolean namePresent = !StringUtils.isBlank(login.getName());
@@ -734,7 +762,7 @@ public class LoginDb extends AntwebDb {
             query = "select count(*) as num from login where (name = ? or email = ?) and id != ?";   // we can fill with either email or name
         }
 
-        A.log("isLegalLogin() namePresent:" + namePresent + " emailPresent:" + emailPresent + " query:" + query);
+        A.log("isLoginTaken() namePresent:" + namePresent + " emailPresent:" + emailPresent + " query:" + query);
 
         PreparedStatement stmt = null;
         ResultSet rset = null;
@@ -768,15 +796,15 @@ public class LoginDb extends AntwebDb {
             returnVal = num == 0;
 
             if (AntwebProps.isDevMode() && !returnVal) {
-                s_log.warn("isLegalLogin() returnVal: false for query:" + DBUtil.getPreparedStatementString(stmt));
+                s_log.warn("isLoginTaken() returnVal: false for query:" + DBUtil.getPreparedStatementString(stmt));
                 //AntwebUtil.logShortStackTrace(6);
             }
 
         } catch (SQLException e) {
-            s_log.error("isLegalLogin() e:" + e + " query:" + query);
+            s_log.error("isLoginTaken() e:" + e + " query:" + query);
             throw e;
         } finally {
-            DBUtil.close(stmt, rset, this, "isLegalLogin()");
+            DBUtil.close(stmt, rset, this, "isLoginTaken()");
         }
         return returnVal;
     }

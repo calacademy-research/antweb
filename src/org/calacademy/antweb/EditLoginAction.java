@@ -30,24 +30,37 @@ public final class EditLoginAction extends Action {
   // We want this...
   //        ActionForward c = Check.login(request, mapping); if (c != null) return c;
 
+        if (!LoginMgr.isLoggedIn(request)) {
+            String theMessage = "Must be logged in to access this resource";
+            request.setAttribute("message", theMessage);
+            return mapping.findForward("message");
+        }
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
+
+        boolean isAdmin = LoginMgr.isAdmin(accessLogin);
 
         HttpSession session = request.getSession();
         EditLoginForm editForm = (EditLoginForm) form;
 
         A.log("execute() id:" + editForm.getId() + " accessLogin(): " + accessLogin);
 
+        String idStr = editForm.getId();
+        if (idStr == null) return mapping.findForward("goToLogin");
+        int id = Integer.parseInt(idStr);
+        //s_log.info("looking up login " + id);
+
+        if (!(isAdmin || accessLogin.getId() == id)) {
+            String theMessage = "Insufficient privileges to modify user: " + idStr;
+            request.setAttribute("message", theMessage);
+            return mapping.findForward("message");
+        }
+
         Login login = null;
         Connection connection = null;
         try {
           DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, "updateDefaultSpecimen()");
-
-          String idStr = editForm.getId();
-          if (idStr == null) return mapping.findForward("goToLogin");
-          int id = Integer.parseInt(idStr);
-          //s_log.info("looking up login " + id);
 
           LoginDb loginDb = new LoginDb(connection);
           login = loginDb.getLogin(id);
@@ -56,7 +69,6 @@ public final class EditLoginAction extends Action {
             s_log.warn("execute() login not found:" + id);
             return mapping.findForward("error");
           }
-
 
           boolean isSubmit = "true".equals(editForm.getIsSubmit());
           boolean isPost = HttpUtil.isPost(request);
@@ -86,11 +98,12 @@ public final class EditLoginAction extends Action {
             
             s_log.debug("execute() loginEmail:" + login.getEmail());
 
-            request.setAttribute("message", "User Account Saved.");          
-            loginDb.userUpdateLogin(login);
-          //} else {
-          //    A.log("execute() form must be submitted. Test with: https://localhost/editLogin.do?id=8564&isSubmit=true");
-          //    request.getSession().setAttribute("thisLogin", new Login());
+            request.setAttribute("message", "User Account Saved.");
+
+            loginDb.updateLogin(login, accessLogin);
+
+            // A.log("execute() form must be submitted. Test with: https://localhost/editLogin.do?id=8564&isSubmit=true");
+            // request.getSession().setAttribute("thisLogin", new Login());
           }
           
           s_log.debug("execute() login:" + login);

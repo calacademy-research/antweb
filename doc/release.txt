@@ -1,3 +1,8 @@
+Release 8.76.4
+  User login information enhancement. 
+  System security tightened.
+  UpdateLoginCountries updated on save.
+
 Release 8.76.3
   Refactor of getTargetMinusParam.
 

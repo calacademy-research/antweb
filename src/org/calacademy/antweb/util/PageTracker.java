@@ -31,12 +31,14 @@ possible moment - ideally in jsp footer.
       
       String target = HttpUtil.getTarget(request);
 
-//      int targetCount = PageTracker.getTargetCount(target);
-      int targetCount = 0;
+      /*
+      // This brings down the server. Ever since concurrency safety added.
+      int targetCount = PageTracker.getTargetCount(target);
 
       if (targetCount > 0) {
           s_log.info("add() targetCount:" + targetCount + " target:" + target);
       }
+      */
 
       // Curator pages can go in here. Things that an admin would notice going wrong may be exempt.
       if (target.contains("curate.do")
@@ -111,6 +113,7 @@ possible moment - ideally in jsp footer.
       return trackerMap.size();
     }
 
+    // THIS BRINGS DOWN THE SERVER. Only live server, not dev. Don't!
     public static int getTargetCount(String target) {
         if (target == null) return 0;
         int targetCount = 0;

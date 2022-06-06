@@ -128,8 +128,8 @@ public final class BigMapAction extends Action {
             DBUtil.close(connection, this, "BigMapAction.execute()");
         }
 
-        String message = "No map found for taxonName:" + taxonName + " specimenCode:" + specimenCode + " locality:" + localityKey + " collectionCode:" + collectionCode;
-        s_log.info("execute() :" + message);
+        String message = "No map found for target:" + HttpUtil.getTarget(request);
+        s_log.info("execute() message:" + message + " taxonName:" + taxonName + " specimenCode:" + specimenCode + " locality:" + localityKey + " collectionCode:" + collectionCode);
         //http://www.antweb.org/bigMapReq.do?name=microps&genus=nylanderia&rank=species&project=worldants
         request.setAttribute("message", message);
         return mapping.findForward("message");

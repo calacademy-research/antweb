@@ -138,6 +138,9 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
 
 %>
 </select>
+<% if (LoginMgr.isAdmin(thisLogin)) { %>
+<br>* Admin automatically get access to all projects.
+<% } %>
 <br><br>
 
 <% //if (AntwebProps.isDevMode()) AntwebUtil.log("viewLogin-body.jsp login.ProjectNames:" + thisLogin.getProjectNames()); %>
@@ -162,7 +165,9 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
 
 %>
 </select>
-
+<% if (LoginMgr.isAdmin(thisLogin)) { %>
+<br>* Admin automatically get access to all countries.
+<% } %>
 
 <div class="admin_action_item">
 <% if (accessLogin.isAdmin()) { %>
