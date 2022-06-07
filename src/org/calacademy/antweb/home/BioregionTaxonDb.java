@@ -165,6 +165,13 @@ See BioregionDb.java:77 where this call is commented out.
       return taxaCount;
     }
 
+    /*
+    public boolean exists(String bioregionName, String taxonName) throws SQLException {
+        TaxonSet taxonSet = get(bioregionName, taxonName);
+        return taxonSet != null;
+    }
+*/
+
     // Overrides so as to get source
     public BioregionTaxon get(String bioregionName, String taxonName) throws SQLException {
         BioregionTaxon bioregionTaxon = null;

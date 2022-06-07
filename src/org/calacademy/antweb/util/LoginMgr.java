@@ -140,7 +140,7 @@ public class LoginMgr extends Manager {
     public static boolean isLoggedIn(HttpServletRequest request) {
         Login login = getAccessLogin(request);
         boolean isLoggedIn = (login != null);
-        A.log("isLogeedIn() isLoggedIn:" + isLoggedIn);
+        //A.log("isLoggedIn() isLoggedIn:" + isLoggedIn);
         return isLoggedIn;
     }
 

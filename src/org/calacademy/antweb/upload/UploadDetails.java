@@ -164,19 +164,12 @@ public class UploadDetails extends OperationDetails {
 
         getMessageMgr().compileMessages(accessGroup);
 
-        //String serverDir = null;
-        
         String encoding = "";
 
-        //A.log("logMessagesToFile() backupDirFile:" + getBackupDirFile());
-                
         if (uploadFile != null) {
           encoding = uploadFile.getEncoding();
         }
-
-        s_log.info("logMessagesToFile() uploadFile:" + uploadFile
-          //+ " serverDir:" + getServerDir() + " backupFileName:" + backupFileName 
-          + " accessLogin:" + accessLogin);
+        //A.log("logMessagesToFile() uploadFile:" + uploadFile + " accessLogin:" + accessLogin);
 
         boolean hasMessages =! getMessageMgr().getMessages().isEmpty();
         

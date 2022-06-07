@@ -10,6 +10,7 @@ import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.HomonymDb;
 import org.calacademy.antweb.home.ProjTaxonDb;
+import org.calacademy.antweb.home.SpecimenDb;
 import org.calacademy.antweb.home.TaxonDb;
 import org.calacademy.antweb.home.UploadDb;
 import org.calacademy.antweb.util.*;
@@ -707,6 +708,14 @@ public class AntwebUpload {
 
         boolean debugItem = false;
         String code = (String) item.get("code");
+
+        // Slightly slower to check for existance but avoids the SQLIntegrityConstrainst below, minimizes logging.
+        if (new SpecimenDb(getConnection()).exists(code)) {
+            String message = "Specimen code:" + code;
+            getMessageMgr().addToMessages(MessageMgr.duplicateEntries, "", message);
+            return;
+        }
+
         if (
           code.equals("casent0427783") || code.equals("casent0122898")
   /*
@@ -906,6 +915,7 @@ public class AntwebUpload {
             s_log.debug("saveSpecimen() " + message);
             getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
         } catch (SQLIntegrityConstraintViolationException e) {
+            // Redundant. We are now checking above before the query is run.
             String message = "Specimen code:" + code;
             getMessageMgr().addToMessages(MessageMgr.duplicateEntries, "", message);       
         } catch (SQLException e) {
@@ -916,7 +926,7 @@ public class AntwebUpload {
             // Should not happen.  We delete all specimens of a given access_group during to upload.
             String message = "Specimen sql exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e; // + " query:" + query;
             getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
-
+            
             // if a different access_group attempts to load a code of another group's specimen...
 
             if (e instanceof DataTruncation) return;

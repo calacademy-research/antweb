@@ -95,7 +95,43 @@ public abstract class TaxonSetDb extends AntwebDb {
       return message;   
     }
 
+    /*
+    public boolean exists(String tableName, String taxonName, String whereClause) throws SQLException {
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select * from " + tableName + " where taxon_name = '" + taxonName + "' and " + whereClause;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "exists()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) {
+                return true;
+            }
+        } catch (SQLException e) {
+            s_log.error("exists() e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, "this", "exists()");
+        }
+        return false;
+    }
+
     // Can be tested with: https://localhost/utilData.do?action=updateTaxonSetTaxonNames
+    protected int updateTaxonSetTaxonName(String tableName, String taxonName, String currentValidName, String whereClause) throws SQLException {
+      // Update can trigger SQLIntegrityConstraintViolationException so check for existence first.
+      // If exists, just delete the old one. If it doesn't, the update will work.
+        int c = 0;
+        int x = 0;
+        if (exists(tableName, currentValidName, whereClause)) {
+            x = deleteTaxonSetTaxonName(tableName, taxonName, whereClause);
+        } else {
+            c = updateTaxonSetTaxonNameExec(tableName, taxonName, currentValidName, whereClause);
+        }
+        A.log("updateTaxonSetTaxonName() c:" + c + " x:" + x + " tableName:" + tableName + " taxonName:" + taxonName + " currentValidName:"+ currentValidName + " whereClause:" + whereClause);
+        return 1;
+    }
+*/
+
+    //protected int updateTaxonSetTaxonNameExec(String tableName, String taxonName, String currentValidName, String whereClause) throws SQLException {
     protected int updateTaxonSetTaxonName(String tableName, String taxonName, String currentValidName, String whereClause) throws SQLException {
       int c = 0;
       Statement stmt = null;
@@ -105,12 +141,11 @@ public abstract class TaxonSetDb extends AntwebDb {
           c = stmt.executeUpdate(dml);
           //A.log("updateTaxonSetTaxonName() c:" + c + " dml: " + dml);
       } catch (SQLIntegrityConstraintViolationException e) {
-        // This will slow things down, but tricky to replace.
-        // We delete the record that we could not update to point at the new key which already exists.
-        //s_log.warn("updateTaxonSetTaxonName() REALLY? why delete if pre-existing? tableName:" + tableName + " taxonName:" + taxonName + " whereClause:" + whereClause);
-        deleteTaxonSetTaxonName(tableName, taxonName, whereClause);
+          // This will slow things down, but tricky to replace.
+          // We delete the record that we could not update to point at the new key which already exists.
+          deleteTaxonSetTaxonName(tableName, taxonName, whereClause);
       } catch (SQLException e) {
-        s_log.error("TaxonSetDb.updateTaxonSetTaxonName() e:" + e);
+        s_log.error("updateTaxonSetTaxonName() e:" + e);
         throw e;
       } finally {
         DBUtil.close(stmt, null, "TaxonSetDb.updateTaxonSetTaxonName()");
@@ -118,19 +153,20 @@ public abstract class TaxonSetDb extends AntwebDb {
       return c;
     }
 
-    protected void deleteTaxonSetTaxonName(String tableName, String taxonName, String whereClause) throws SQLException {
+    protected int deleteTaxonSetTaxonName(String tableName, String taxonName, String whereClause) throws SQLException {
+      int x = 0;
       Statement stmt = null;
       try {
           String dml = "delete from " + tableName + " where taxon_name = '" + taxonName + "' and " + whereClause;
           stmt = DBUtil.getStatement(getConnection(), "TaxonSetDb.deleteTaxonSetTaxonName()");
-          int x = stmt.executeUpdate(dml);
+          x = stmt.executeUpdate(dml);
       } catch (SQLException e) {
         s_log.error("TaxonSetDb.deleteTaxonSetTaxonName() e:" + e);
         throw e;
       } finally {
         DBUtil.close(stmt, null, "TaxonSetDb.deleteTaxonSetTaxonName()");
       }
+      return x;
     }
-
        
 }

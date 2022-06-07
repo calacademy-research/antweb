@@ -492,6 +492,15 @@ public class Utility implements Serializable {
          Unfit resolution. Just create the detail directy(s) here:
            mkdir /usr/local/antweb/web/log/detail/
            mkdir /usr/local/antweb/web/log/upload/
+
+         // /usr/local/antweb/web/log/detail is a softlink to -> /mnt/antweb/web/log/detail
+         so: docker-compose exec antweb bash
+             mkdir /mnt/antweb/web/log/detail
+             mkdir /usr/local/antweb/web/workingdir/speciesList
+
+         // /usr/local/antweb/web/speciesList/world/ -> /mnt/antweb/web/speciesList/world
+             mkdir /mnt/antweb/web/speciesList/
+             mkdir /mnt/antweb/web/speciesList/world
      */
 
     public static boolean makeDirTree(String dirTree) {

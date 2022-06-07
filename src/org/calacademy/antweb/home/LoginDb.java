@@ -550,17 +550,6 @@ public class LoginDb extends AntwebDb {
         }    
     }
 
-    /*
-    public void userUpdateLogin(Login login) throws SQLException {
-      updateLogin(login, false);
-    }
-    
-    public void adminUpdateLogin(Login login) throws SQLException {
-       // This is just like updateLogin but will not modify password.  Called by administrators
-      updateLogin(login, true);
-    }
-    */
-
     public void updateLogin(Login login, Login accessLogin) throws SQLException {
 
         boolean isAdminUpdate = accessLogin.isAdmin();
@@ -578,7 +567,7 @@ public class LoginDb extends AntwebDb {
             int uploadImages = login.isUploadImages() ? 1 : 0;
             int isAdmin = login.isAdmin() ? 1 : 0;
 
-            s_log.info("updateLogin() isAdminUpdate:" + isAdminUpdate + " groupId:" + login.getGroupId() + " uploadSpecimens:" + uploadSpecimens + " uploadImages:" + uploadImages);
+            // A.log("updateLogin() isAdminUpdate:" + isAdminUpdate + " groupId:" + login.getGroupId() + " uploadSpecimens:" + uploadSpecimens + " uploadImages:" + uploadImages);
 
             if (!isAdminUpdate && !isSelfUpdate) {
                 throw new SQLException("name:" + login.getName() + " or email:" + login.getEmail() + " already in use.");
@@ -638,12 +627,12 @@ public class LoginDb extends AntwebDb {
                     stmt.setInt(10, login.getId());
                 }
 
-                s_log.info("updateLogin() update:" + DBUtil.getPreparedStatementString(stmt));
+                //A.log("updateLogin() update:" + DBUtil.getPreparedStatementString(stmt));
 
                 stmt.executeUpdate();
 
                 if (isAdminUpdate) {
-                  A.log("updateLogin() update Login Projects and Countries");
+                  //A.log("updateLogin() update Login Projects and Countries");
                   updateLoginProjects(login);
                   updateLoginCountries(login);
                 }

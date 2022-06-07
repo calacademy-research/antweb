@@ -20,7 +20,8 @@ public class SpecimenDb extends AntwebDb {
     public SpecimenDb(Connection connection) throws SQLException {
       super(connection);
     }
-    
+
+    /*
     public boolean exists(String code) throws SQLException {
       Statement stmt = null;
       ResultSet rset = null;
@@ -34,6 +35,26 @@ public class SpecimenDb extends AntwebDb {
                 if (c == 1) return true;
             }
             //A.log("isDuplicatedTaxonName() count:" + count);
+        } catch (SQLException e) {
+            s_log.error("exists() e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, "this", "exists()");
+        }
+        return false;
+    }*/
+
+    public boolean exists(String code) throws SQLException {
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select code from specimen where code = '" + code + "'";
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "exists()");
+            rset = stmt.executeQuery(query);
+
+            while (rset.next()) {
+                return true;
+            }
         } catch (SQLException e) {
             s_log.error("exists() e:" + e);
             throw e;
