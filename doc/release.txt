@@ -1,9 +1,13 @@
+Release 8.77
+  Recreate views
+
 
 Release 8.76.6
   Test for SQLIntegrityConstraintViolationException before saveSpecimen to avoid
     exceptionHandling and logging.
   Code (inactive) for removing handled SQLIntegrityConstraintViolationExceptions
     from worldants upload.  
+  Document dev configuration directories.
 
 Release 8.76.5
   Logging change for info in dev environment (for specimen upload).
