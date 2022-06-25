@@ -6,6 +6,7 @@ api/v3
 api/v2.1
 build/
 db/
+docker/antcat-export
 out/
 logbak/
 
