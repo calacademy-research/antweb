@@ -1,5 +1,7 @@
 Release 8.77
-  Recreate views
+  database loading modified to support view permissions.
+  Add text to citation info: include photographer attribution.
+  Remove extraneous SpecimenUploadSupport.
 
 
 Release 8.76.6
@@ -18,9 +20,13 @@ Release 8.76.4
   System security tightened.
   UpdateLoginCountries updated on save.
 
+Release 8.77
+  Specimen code list file uploaded will return a tab separated specimen details file.
+
 Release 8.76.3
   Refactor of getTargetMinusParam.
-
+  getAntwebSpecimenCodes() ambiguity removed for museums.
+  
 Release 8.76.2
   Species and Subspecies browserParams to include subfamily to avoid ambiguity for indet.
   getDate() to getTimestamp() changes.

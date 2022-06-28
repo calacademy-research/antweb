@@ -503,10 +503,10 @@ public class UtilDataAction extends Action {
             message = "All Antweb regenerated";
         }
 
-		/*
+
         if (action.equals("runCountCrawls")) {
             ProjTaxonCountDb projTaxonCountDb = (new ProjTaxonCountDb(connection));
-            projTaxonCountDb.countCrawl("allantwebants"); // Proj_taxon counts
+            projTaxonCountDb.childrenCountCrawl(); // Proj_taxon counts
 		    //projTaxonDb.finishRegenerateAllAntweb();
 		    //projTaxonDb.updateCounts("allantwebants");      // Project counts
 
@@ -518,8 +518,8 @@ public class UtilDataAction extends Action {
 
   		    MuseumTaxonCountDb museumTaxonCountDb = (new MuseumTaxonCountDb(connection));
 		    museumTaxonCountDb.childrenCountCrawl();
+            message = "Count Crawls Ran";
 		}
-        */
 
 
     // ---------- Count Crawls -------------------------

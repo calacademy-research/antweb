@@ -1030,7 +1030,102 @@ For a locality name without code (this name has special characters):
 
         return link;
     }
-        
+
+    /*
+    Called from UploadAction.getSpecimenList()
+     */
+    public static String getTabDelimHeader() {
+      String header = "code \t taxon_name \t subgenus \t tribe \t speciesgroup \t subfamily \t genus \t species \t other \t type_status \t subspecies \t country \t adm2 \t adm1 \t localityname \t localitycode \t collectioncode \t biogeographicregion \t decimal_latitude \t decimal_longitude \t last_modified \t habitat \t method \t ownedby \t collectedby \t life_stage \t access_group \t locatedat \t determinedby \t medium \t access_login \t elevation \t latlonmaxerror \t microhabitat \t datedetermined \t elevationmaxerror \t localitynotes \t dnaextractionnotes \t specimennotes \t created \t family \t collectionnotes \t datecollectedstart \t datecollectedend \t datecollectedstartstr \t datecollectedendstr \t datedeterminedstr \t kingdom_name \t phylum_name \t class_name \t order_name \t image_count \t status \t original_taxon_name \t line_num \t is_introduced \t museum \t bioregion \t backup_file_name \t is_male \t is_worker \t is_queen \t upload_id \t caste \t subcaste \t flag \t issue \t island_country \t";
+
+      // Not fetched: toc 	 spcmrecorddate | spcmrecchangeddate | locrecorddate | locrecchangeddate | speciesauthor | region | subregion |
+      return header;
+    }
+    public String getTabDelimString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append(getCode());
+        sb.append("\t" + getTaxonName());
+
+        Taxon taxon = TaxonMgr.getTaxon(getTaxonName());
+        String subgenus = "";
+        if (taxon != null) subgenus = Formatter.initCap(taxon.getSubgenus());
+        A.log("getTabDelimString() specimen.subGenus:" + getSubgenus() + " taxon.subgenus:" + subgenus);
+        sb.append("\t" + subgenus);
+        sb.append("\t" + getTribe());
+        sb.append("\t" + getSpeciesGroup());
+        sb.append("\t" + Formatter.initCap(getSubfamily()));
+        sb.append("\t" + Formatter.initCap(getGenus()));
+        sb.append("\t" + getSpecies());
+        sb.append("\t" + getDetailXml());
+        sb.append("\t" + getTypeStatus());
+        sb.append("\t" + getSubspecies());
+        sb.append("\t" + getCountry());
+        sb.append("\t" + getAdm2());
+        sb.append("\t" + getAdm1());
+        sb.append("\t" + getLocalityName());
+        sb.append("\t" + getLocalityCode());
+        sb.append("\t" + getCollectionCode());
+        sb.append("\t" + getBioregion());
+        sb.append("\t" + getDecimalLatitude());
+        sb.append("\t" + getDecimalLongitude());
+        sb.append("\t" + getLastModified());
+        sb.append("\t" + getHabitat());
+        sb.append("\t" + getMethod());
+        //sb.append("\t" + getToc());
+        sb.append("\t" + getOwnedBy());
+        sb.append("\t" + getCollectedBy());
+        sb.append("\t" + getLifeStage());
+        sb.append("\t" + getGroupId());
+        sb.append("\t" + getLocatedAt());
+        sb.append("\t" + getDeterminedBy());
+        sb.append("\t" + getMedium());
+        //sb.append("\t" + getGetSpcmRecordDate());
+        //sb.append("\t" + getSpcmRecChangedDate());
+        //sb.append("\t" + getLocRecordDate());
+        //sb.append("\t" + getLocRecChangedDate());
+        //sb.append("\t" + getSpeciesAuthor());
+        sb.append("\t" + getCuratorId());
+        sb.append("\t" + getElevation());
+        sb.append("\t" + getLatLonMaxError());
+        sb.append("\t" + getMicrohabitat());
+        sb.append("\t" + getDateDetermined());
+        sb.append("\t" + getElevationMaxError());
+        sb.append("\t" + getLocalityNotes());
+        sb.append("\t" + getDnaExtractionNotes());
+        sb.append("\t" + getSpecimenNotes());
+        sb.append("\t" + getCreated());
+        sb.append("\t" + getFamily());
+        sb.append("\t" + getCollectionNotes());
+        sb.append("\t" + getDateCollectedStart());
+        sb.append("\t" + getDateCollectedEnd());
+        sb.append("\t" + getDateCollectedStartStr());
+        sb.append("\t" + getDateCollectedEndStr());
+        sb.append("\t" + getDateDeterminedStr());
+        sb.append("\t" + getKingdomName());
+        sb.append("\t" + getPhylumName());
+        sb.append("\t" + getClassName());
+        sb.append("\t" + getOrderName());
+        sb.append("\t" + getImageCount());
+        sb.append("\t" + getStatus());
+        sb.append("\t" + getOriginalTaxonName());
+        sb.append("\t" + getLineNum());
+        sb.append("\t" + getIsIntroduced());
+        sb.append("\t" + getMuseum());
+        sb.append("\t" + getBioregion());
+        sb.append("\t" + getBackupFileName());
+        sb.append("\t" + isMale());
+        sb.append("\t" + isWorker());
+        sb.append("\t" + isQueen());
+        sb.append("\t" + getUploadId());
+        sb.append("\t" + getCaste());
+        sb.append("\t" + getSubcaste());
+        //sb.append("\t" + getRegion());
+        //sb.append("\t" + getSubregion());
+        sb.append("\t" + getFlag());
+        sb.append("\t" + getIssue());
+        sb.append("\t" + getIslandCountry());
+        return sb.toString();
+    }
+
     public String getHabitat() {
         return habitat;
     }

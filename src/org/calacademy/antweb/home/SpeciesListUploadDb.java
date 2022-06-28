@@ -20,30 +20,6 @@ public class SpeciesListUploadDb extends UploadDb {
       super(connection);
     }
 
-/*
-    public ArrayList xgetBioGeoRegions() {
-        ArrayList result = new ArrayList();
-        String query = "select distinct bioregion from country_bioregion";
-        try {
-            Statement stmt = getConnection().createStatement();
-            stmt.execute(query);
-            ResultSet rset = null;
-            rset = stmt.getResultSet();
-            while (rset.next()) {
-                result.add(rset.getString(1));
-            }
-            stmt.close();
-            rset.close()
-        } catch (Exception e) {
-            s_log.error("getBioGeoRegions() - error getting distinct bioregions e:" + e);
-        }
-        if (result.size() > 0) {
-            return result;
-        } else {
-            return null;
-        }
-    }
-*/
     public void updateProjectUploadDate(String projectName) {
         String query = "update project set last_changed=" + currentDateFunction + " where project_name='" + projectName + "'"  ;
 
@@ -55,34 +31,6 @@ public class SpeciesListUploadDb extends UploadDb {
             s_log.error("updateProjectUploadDate() projectName:" + projectName + " e:" + e);
         }
     }
-    
-
-/*
-Mid Jan 2012 change...
-
-Original:
-select taxon_name from proj_taxon 
- where project_name = 'eurasianants' 
-   and taxon_name in (select taxon_name from proj_taxon group by taxon_name having count(taxon_name) < 2)  
-   and taxon_name not in (select distinct taxon_name from specimen)
-
-New:
- select taxon_name from proj_taxon
- where project_name = 'eurasianants' 
-   and taxon_name not in (select distinct taxon_name from specimen)
-    group by taxon_name having count(taxon_name) < 2
-
-Testing comparison:
-select taxon_name from proj_taxon 
-   where taxon_name in (select taxon_name from proj_taxon group by taxon_name having count(taxon_name) < 2)  
-   and taxon_name not in (select distinct taxon_name from specimen)
-   
-equals:   
- select taxon_name from proj_taxon
-  where taxon_name not in (select distinct taxon_name from specimen)
-    group by taxon_name having count(taxon_name) < 2
-
-*/
     
     public void prepareDatabase(String project) {
         if (!"worldants".equals(project)) {

@@ -68,18 +68,36 @@ public class AntwebUpload {
 
     public static int saveSpecimenCount = 0;
 
+    private final ArrayList<String> m_badRankTaxonList = new ArrayList();
+    public ArrayList<String> getBadRankTaxonList() {
+        return m_badRankTaxonList;
+    }
+
 /*
-	at org.calacademy.antweb.upload.AntwebUpload.<init>(AntwebUpload.java:70)
-	at org.calacademy.antweb.upload.SpecimenUploadSupport.<init>(SpecimenUploadSupport.java:25)
-	at org.calacademy.antweb.upload.SpecimenUploadProcess.<init>(SpecimenUploadProcess.java:56)
-	at org.calacademy.antweb.upload.SpecimenUploadParse.<init>(SpecimenUploadParse.java:66)
-	at org.calacademy.antweb.upload.SpecimenUpload.<init>(SpecimenUpload.java:45)
+For specimen upload
+	at org.calacademy.antweb.upload.AntwebUpload.<init>(AntwebUpload.java:93)
+	at org.calacademy.antweb.upload.AntwebUpload.<init>(AntwebUpload.java:87)
+	at org.calacademy.antweb.upload.SpecimenUploadProcess.<init>(SpecimenUploadProcess.java:30)
+	at org.calacademy.antweb.upload.SpecimenUploadParse.<init>(SpecimenUploadParse.java:45)
+	at org.calacademy.antweb.upload.SpecimenUpload.<init>(SpecimenUpload.java:47)
 	at org.calacademy.antweb.upload.Uploader.uploadSpecimenFile(Uploader.java:103)
 	at org.calacademy.antweb.upload.UploadAction.execute(UploadAction.java:237)
+
+or for Worldants upload
+    at org.calacademy.antweb.upload.AntwebUpload.<init>(AntwebUpload.java:93)
+	at org.calacademy.antweb.upload.SpeciesListUpload.<init>(SpeciesListUpload.java:92)
+	at org.calacademy.antweb.curate.speciesList.SpeciesListUploader.uploadWorldants(SpeciesListUploader.java:70)
+	at org.calacademy.antweb.upload.UploadAction.execute(UploadAction.java:204)
 */
+
+    AntwebUpload(Connection connection) {
+        this(connection, "specimenUpload");
+    }
 
     AntwebUpload(Connection connection, String operation) {
         saveSpecimenCount = 0;
+
+        //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
 
         setUploadDetails(new UploadDetails(operation));
         setConnection(connection);

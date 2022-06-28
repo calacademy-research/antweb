@@ -13,7 +13,7 @@ import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-public class SpecimenUploadProcess extends SpecimenUploadSupport {
+public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUploadSupport {
 /* 
     Biota Data is uploaded through the curator interface.  It loads data from the "Biota Database"
     (a Windows client database that Michele Esposito uses).  The data is exported from Biota,

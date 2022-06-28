@@ -522,24 +522,7 @@ public class UploadAction extends Action {
 					uploadDetails = uploadDataFile(theForm, request, mapping, connection);
 					return uploadDetails.findForward(mapping, request);
 				} else {
-
-					String message = "<h3>Upload Data</h3><br> requires a tab delimited text file with..."
-							+ "<br><br>'<b>valid_species_list</b>' in the filename and has column headers: subfamily, genus, genus_species, ... - other columns irrelevant"
-							+ "<br><br>or"
-							+ "<br><br>'<b>valid</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns"
-							+ "<br><br>or"
-							+ "<br><br>'<b>fossil</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns"
-							+ "<br><br>or"
-							+ "<br><br>'<b>synonym</b>' in the filename that has columns subfamily, genus, species, [subspecies], current_valid_name (Genus species [subspecies]) - delete other columns"
-							+ "<br><br>or"
-							+ "<br><br>'<b>Regional_Taxon_List</b>' in the filename."
-							+ "<br>File can be downloaded from http://www.antwiki.org/wiki/images/0/0c/AntWiki_Regional_Taxon_List.txt."
-							+ "<br>File likely to require editing/massage.  If file is 'binary', select * in BBEdit and save in a new file (with a name that contains 'Regional_Taxon_List')."
-							+ "<br>After the upload is complete, execute "
-							+ "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a>"
-							+ "<br>in order to push data from the antwiki_taxon_country into the geolocale_taxon table with source = 'antwiki'."
-							+ "<br><br>or"
-							+ "<br><br>'<b>ngc_species</b>' or '<b>NGC Species</b>' in the filename where the contents are the Bolten New Genera Catalog saved as plain text.";
+                    String message = getUploadDataFileDoc();
 					request.setAttribute("message", message);
 					return mapping.findForward("message");
 				}
@@ -595,7 +578,7 @@ public class UploadAction extends Action {
 		return mapping.findForward("message");
 	}
 
-    private void specimenPostProcess(HttpServletRequest request, Connection connection, Login login, UploadDetails uploadDetails) throws IOException, SQLException {
+	private void specimenPostProcess(HttpServletRequest request, Connection connection, Login login, UploadDetails uploadDetails) throws IOException, SQLException {
 		Group group = login.getGroup();
 
 		SpecimenDb specimenDb = new SpecimenDb(connection);
@@ -627,25 +610,25 @@ public class UploadAction extends Action {
 		HttpSession session = request.getSession();
 		try {
 			session.setAttribute("museumMap", uploadDetails.getMuseumMap());
-		} catch(IllegalStateException e) {
+		} catch (IllegalStateException e) {
 			s_log.info("execute() handled:" + e);
 		}
 
 		// Would like to, but it takes a 3min for CAS data. Too expensive?
 		//specimenDb.calcCaste(groupId);
-    }
+	}
 
 	private void specimenPostProcessGlobal(Connection connection) throws SQLException {
 		A.log("start specimenPostProcessGlobal");
 		new GeolocaleDb(connection).calcEndemic();
 
-        new TaxonDb(connection).removeIndetWithoutSpecimen();
+		new TaxonDb(connection).removeIndetWithoutSpecimen();
 		A.log("end specimenPostProcessGlobal");
-    }
+	}
 
 	private ActionForward doAction(String action, Connection connection, HttpServletRequest request
-        , ActionMapping mapping, Login accessLogin)
-        throws SQLException, IOException {
+			, ActionMapping mapping, Login accessLogin)
+			throws SQLException, IOException {
 
 
 		int loginId = 0;
@@ -657,29 +640,29 @@ public class UploadAction extends Action {
 			return mapping.findForward("statisticsDo");
 		}
 		if (action.equals("runCountCrawls")) {
-			s_log.info("doAction() Run Count Crawl should be done through UtilData.do.");
+			s_log.error("doAction() Run Count Crawl should be done through UtilData.do.");
 			//runCountCrawls(connection);
 			//return (mapping.findForward("success"));
 		}
 
 		if (action.equals("genRecentDescEdits") || action.equals("genAll")) {
-		   try {
-			  AntwebFunctions.genRecentDescEdits(connection);
-			  return mapping.findForward("success");
-		   } catch (IOException e) {
-			   String message = e.toString();
-			   s_log.error("doAction() " + message);
-			   request.setAttribute("message", message);
-			   return mapping.findForward("message");
-		   }
+			try {
+				AntwebFunctions.genRecentDescEdits(connection);
+				return mapping.findForward("success");
+			} catch (IOException e) {
+				String message = e.toString();
+				s_log.error("doAction() " + message);
+				request.setAttribute("message", message);
+				return mapping.findForward("message");
+			}
 		}
 		s_log.error("doAction() action not found:" + action);
 		return null;
-    }
+	}
 
 
-    private static UploadDetails uploadFileToFolder(UploadForm theForm, HttpServletRequest request
-            , Login accessLogin) throws IOException {
+	private static UploadDetails uploadFileToFolder(UploadForm theForm, HttpServletRequest request
+			, Login accessLogin) throws IOException {
 
 		String messageStr;
 
@@ -687,13 +670,13 @@ public class UploadAction extends Action {
 		Utility util = new Utility();
 		String dir = theForm.getHomePageDirectory();
 
-        String docBase = AntwebProps.getDocRoot();
+		String docBase = AntwebProps.getDocRoot();
 
 		String fileName = theForm.getTheFile2().getFileName();
 
 		if (HttpUtil.isDisallowedFileType(fileName)) {
-		  messageStr = "Unsupported file upload type for file:" + fileName;
-		  return new UploadDetails("uploadFile", messageStr, "message");
+			messageStr = "Unsupported file upload type for file:" + fileName;
+			return new UploadDetails("uploadFile", messageStr, "message");
 		}
 
 		String serverDir = null;
@@ -702,13 +685,13 @@ public class UploadAction extends Action {
 
 		// Create the curator's directory if it does not already exist.
 		if (dir.equals("curator")) {
-		  serverDir = "curator/" + accessLogin.getId();
-		  dir = "web/" + serverDir;
-		  String fullDir = AntwebProps.getDocRoot() + dir;
-		  s_log.debug("uploadFileToFolder() mk:" + fullDir);
-		  Utility.makeDirTree(fullDir);
+			serverDir = "curator/" + accessLogin.getId();
+			dir = "web/" + serverDir;
+			String fullDir = AntwebProps.getDocRoot() + dir;
+			s_log.debug("uploadFileToFolder() mk:" + fullDir);
+			Utility.makeDirTree(fullDir);
 		} else if (!"homepage".equals(dir)) {
-		  dir = Project.getSpeciesListDir() + dir;
+			dir = Project.getSpeciesListDir() + dir;
 //		} else if ("homepage".equals(dir)) {
 //		  dir = "web/homepage";
 //		  serverDir = "homepage";
@@ -720,50 +703,50 @@ public class UploadAction extends Action {
 		String outputFileName2 = docBase + dirFileName;
 
 		if (outputFileName != null
-		  && !outputFileName.equals("")) {
+				&& !outputFileName.equals("")) {
 			outputFileName2 = docBase + dir + "/" + outputFileName;
 		}
 
 		String logMessage = "uploadFileToFolder() upload file"
-		  + " docBase:" + docBase
-		  + " dir:" + dir
-		  + " fileName:" + fileName
-		  //+ " dirFileName:" + dirFileName
-		  + " outputFileName:" + outputFileName
-		  + " outputFileName2:" + outputFileName2;
+				+ " docBase:" + docBase
+				+ " dir:" + dir
+				+ " fileName:" + fileName
+				//+ " dirFileName:" + dirFileName
+				+ " outputFileName:" + outputFileName
+				+ " outputFileName2:" + outputFileName2;
 		s_log.info(logMessage);
 
 		Utility.backupFile(outputFileName2);
 		boolean isSuccess = Utility.copyFile(theForm.getTheFile2(), outputFileName2);
 		if (!isSuccess) {
-		  messageStr = "uploadFileToFolder() copyFile failure";
-		  return new UploadDetails("uploadFile", messageStr, "message");
+			messageStr = "uploadFileToFolder() copyFile failure";
+			return new UploadDetails("uploadFile", messageStr, "message");
 		}
 
 		s_antwebEventLog.info(logMessage);
 
 		if (outputFileName2.contains(".zip")) {
-		  // If the uploaded file is a zip file, then unzip it.  (Completed?)
-		  if (outputFileName2.contains(" ")) {
-			messageStr = "Space not allowed in uploaded zip filename.";
-			  //request.setAttribute("message", "Space not allowed in uploaded zip filename.");
-			//return mapping.findForward("message");
-		  } else {
+			// If the uploaded file is a zip file, then unzip it.  (Completed?)
+			if (outputFileName2.contains(" ")) {
+				messageStr = "Space not allowed in uploaded zip filename.";
+				//request.setAttribute("message", "Space not allowed in uploaded zip filename.");
+				//return mapping.findForward("message");
+			} else {
 
-			String newDirName = fileName.substring(0, fileName.indexOf(".zip"));
-			String fileLoc = dir + "/" + newDirName; // was "/uploaded"
-			String unzipDir = docBase + fileLoc;
-			String command = util.unzipFile(outputFileName2, unzipDir);
-			s_log.info("uploadFileToFolder() unzipping: " + outputFileName2);
+				String newDirName = fileName.substring(0, fileName.indexOf(".zip"));
+				String fileLoc = dir + "/" + newDirName; // was "/uploaded"
+				String unzipDir = docBase + fileLoc;
+				String command = util.unzipFile(outputFileName2, unzipDir);
+				s_log.info("uploadFileToFolder() unzipping: " + outputFileName2);
 
-			String url = AntwebProps.getDomainApp() + "/" + fileLoc;
+				String url = AntwebProps.getDomainApp() + "/" + fileLoc;
 
-			messageStr = "Your file has been uploaded and unzipped here:<br><br>"
-			  + "  &nbsp;&nbsp;&nbsp;<a href=\"" + url + "\">" + url + "</a>";
+				messageStr = "Your file has been uploaded and unzipped here:<br><br>"
+						+ "  &nbsp;&nbsp;&nbsp;<a href=\"" + url + "\">" + url + "</a>";
 
-			  //request.setAttribute("message", messageStr);
-			//return mapping.findForward("message");
-		  }
+				//request.setAttribute("message", messageStr);
+				//return mapping.findForward("message");
+			}
 			return new UploadDetails("uploadFile", messageStr, "message");
 		}
 
@@ -776,12 +759,12 @@ public class UploadAction extends Action {
 
 		messageStr = "Your uploaded file is here: <a href=\"" + url + "\">" + url + "</a>";
 
-		if ( fileName.contains("jpg")
-		  || fileName.contains("JPG")
-		  || fileName.contains("png")
-		  || fileName.contains("PNG") ) {
-		   messageStr += "<br><br>You may embed this image in a web page with this html tag: "
-			 + "<pre>&lt;img src=\"" + url + "\"&gt;</pre>";
+		if (fileName.contains("jpg")
+				|| fileName.contains("JPG")
+				|| fileName.contains("png")
+				|| fileName.contains("PNG")) {
+			messageStr += "<br><br>You may embed this image in a web page with this html tag: "
+					+ "<pre>&lt;img src=\"" + url + "\"&gt;</pre>";
 		}
 
 		// runStatistics = true;
@@ -790,9 +773,33 @@ public class UploadAction extends Action {
 		s_log.info("uploadFileToFolder() " + messageStr);
 
 		UploadDetails uploadDetails = new UploadDetails(file2.getFileName(), messageStr, request);
-        uploadDetails.setForwardPage("adminMessage");
+		uploadDetails.setForwardPage("adminMessage");
 
-        return uploadDetails;
+		return uploadDetails;
+	}
+
+	public String getUploadDataFileDoc() {
+	    String message = "<h3>Upload Data</h3><br> requires a tab delimited text file with..."
+			+ "<br><br>'<b>valid_species_list</b>' in the filename and has column headers: subfamily, genus, genus_species, ... - other columns irrelevant"
+			+ "<br><br>or"
+			+ "<br><br>'<b>valid</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns"
+			+ "<br><br>or"
+			+ "<br><br>'<b>fossil</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns"
+			+ "<br><br>or"
+			+ "<br><br>'<b>synonym</b>' in the filename that has columns subfamily, genus, species, [subspecies], current_valid_name (Genus species [subspecies]) - delete other columns"
+			+ "<br><br>or"
+			+ "<br><br>'<b>Regional_Taxon_List</b>' in the filename."
+			+ "<br>File can be downloaded from http://www.antwiki.org/wiki/images/0/0c/AntWiki_Regional_Taxon_List.txt."
+			+ "<br>File likely to require editing/massage.  If file is 'binary', select * in BBEdit and save in a new file (with a name that contains 'Regional_Taxon_List')."
+			+ "<br>After the upload is complete, execute "
+			+ "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a>"
+			+ "<br>in order to push data from the antwiki_taxon_country into the geolocale_taxon table with source = 'antwiki'."
+			+ "<br><br>or"
+			+ "<br><br>'<b>ngc_species</b>' or '<b>NGC Species</b>' in the filename where the contents are the Bolten New Genera Catalog saved as plain text."
+			+ "<br><br>or"
+			+ "<br><br>'<b>specimen</b>' in the filename and just a specimen code per line (no tabs required)."
+		;
+   	    return message;
     }
 
     // Can run valid test, synonym test, or load a regional taxon list (from Antwiki).
@@ -800,7 +807,6 @@ public class UploadAction extends Action {
       throws IOException {
 
         UploadDetails uploadDetails = null;
-
         String dir = theForm.getHomePageDirectory();
 
         FormFile testFile = theForm.getTestFile();
@@ -812,10 +818,11 @@ public class UploadAction extends Action {
         docBase += "web/workingdir/";
         Utility.makeDirTree(docBase);
         //A.log("uploadDataFile() docBase:" + docBase);
-        String fileName = docBase + testFile.getFileName();
-        boolean isSuccess = Utility.copyFile(theForm.getTestFile(), fileName);
+		String fileName = testFile.getFileName();
+        String filePath = docBase + testFile.getFileName();
+        boolean isSuccess = Utility.copyFile(theForm.getTestFile(), filePath);
 
-		String messageStr = "Warning - file not uploaded:" + fileName;
+		String messageStr = "Warning - file not uploaded:" + filePath;
 		if (!isSuccess) {
           messageStr = "copyFile failure";
 
@@ -823,7 +830,7 @@ public class UploadAction extends Action {
           return new UploadDetails(operation, messageStr, request);
         }
 
-        s_log.debug("uploadDataFile() dir:" + dir + " docBase:" + docBase + " fileName:" + fileName);
+		s_log.debug("uploadDataFile() dir:" + dir + " docBase:" + docBase + " filePath:" + filePath);
         // project:worldants fileName:/Users/mark/dev/calAcademy/workingdir/worldants.txt shortFileName:worldants.txt encoding:UTF-8 isBioRegion:true
 
 		BufferedReader in = null;
@@ -831,10 +838,10 @@ public class UploadAction extends Action {
 
             String encoding = "UTF-8";
 
-			in = Files.newBufferedReader(Paths.get(fileName), Charset.forName(encoding));
+			in = Files.newBufferedReader(Paths.get(filePath), Charset.forName(encoding));
 
             if (in == null) {
-                messageStr = "uploadDataFile() BufferedReader is null for file:" + fileName;
+                messageStr = "uploadDataFile() BufferedReader is null for file:" + filePath;
             }
 
             // parse the header
@@ -842,10 +849,8 @@ public class UploadAction extends Action {
             if (theLine == null) {
                 messageStr = "uploadDataFile() null line.  Perhaps empty file:" + fileName + "?";
             } else {
-                s_log.info("uploadDataFile() header:" + theLine);
+                A.log("uploadDataFile() 1 fileName:" + fileName + " header:" + theLine);
             }
-
-
             // File comes from: http://antwiki.org/wiki/images/9/9e/AntWiki_Valid_Species.txt
             // Notice the version number inside. Link to current is here:
             //    http://antwiki.org/wiki/Species_Accounts under: List of valid fossil species (names in use)
@@ -855,7 +860,7 @@ public class UploadAction extends Action {
               messageStr = testValidSpeciesList(in, connection);
             } else if (fileName.contains("valid") || fileName.contains("Valid")) {
               messageStr = testFileValid(in, connection);
-            } if (fileName.contains("fossil") || fileName.contains("Fossil")) {
+            } else if (fileName.contains("fossil") || fileName.contains("Fossil")) {
               // File comes from: http://www.antwiki.org/wiki/images/7/7b/AntWiki_Fossil_Species.txt
               // Notice the version number inside. Link to current is here:
               //    http://antwiki.org/wiki/Species_Accounts under: List of valid fossil species (names in use)
@@ -872,7 +877,11 @@ public class UploadAction extends Action {
               messageStr = new Adm1LoadAction().loadList(in, connection);
             } else if (fileName.contains("ngc_species") || fileName.contains("NGC Species")) { // Bolton New Genera Catalog
               messageStr = boltonNewGeneraCatalog(in, connection);
-            }
+            } else if (fileName.contains("specimen")) {
+				messageStr = getSpecimenList(fileName, in, connection);
+			}
+
+			A.log("uploadDataFile() fileName:" + fileName + " messageStr:" + messageStr);
             request.setAttribute("message", messageStr);
             uploadDetails = new UploadDetails(operation, messageStr, request);
             uploadDetails.setForwardPage("adminMessage");
@@ -892,6 +901,89 @@ public class UploadAction extends Action {
         }
         return uploadDetails;
     }
+
+
+	private String getSpecimenList(String fileName, BufferedReader in, Connection connection)
+			throws IOException, SQLException {
+		String messageStr;
+		String line = "";
+
+		StringBuffer content = new StringBuffer();
+
+		int lineNum = 0;
+		int parsedLines = 0;
+
+		String dir = "/tmp";
+		String fullDir = AntwebProps.getDocRoot() + dir;
+		FileUtil.makeDir(fullDir);
+		String outputPath = "/specimenList.txt";
+		String fullPath = fullDir + outputPath;
+		String fullUrl = AntwebProps.getDomainApp() + dir + outputPath;
+		A.log("getSpecimenList() outputPath is:" + fullPath + " fullUrl:" + fullUrl);
+
+		SpecimenDb specimenDb = new SpecimenDb(connection);
+		//TaxonDb taxonDb = new TaxonDb(connection);
+
+		LogMgr.appendFile(fullPath, Specimen.getTabDelimHeader());
+
+		while (line != null) {
+			line = in.readLine();
+			++lineNum;
+
+			if (line == null) continue;
+
+			boolean parseLine = true;
+
+            String specimenCode = line;
+
+            if (specimenCode == null || specimenCode.contains(" ")) {
+            	messageStr = "<h1>Specimen List</h1><br><br>There seems to be a file format error in file: " + fileName;
+            	s_log.error(messageStr);
+            	return messageStr;
+			}
+			//if (lineNum < 5) A.log("output specimen:" + specimenCode);
+
+			Specimen specimen = specimenDb.getSpecimen(specimenCode);
+			//String taxonName = specimen.getTaxonName();
+			//Taxon taxon = taxonDb.getTaxon(taxonName);
+            String outputLine = specimen.getTabDelimString();
+            LogMgr.appendFile(fullPath, outputLine);
+
+			/*
+			// if it follows the pattern of one word, followed by a period, no *
+			if (line.length() > 0 && line.charAt(0) == '*') parseLine = false;
+			if (!line.contains("(")) parseLine = false;
+			int periodIndex = line.indexOf(".");
+			if (periodIndex < 0) continue;
+			if (line.indexOf(" ") < periodIndex) parseLine = false;
+
+			if (parseLine) {
+				String p1 = line.substring(0, periodIndex);
+				int parenIndex = line.indexOf("(");
+				if (parenIndex < 0 || parenIndex < periodIndex) continue;
+				String p2 = line.substring(periodIndex + 2, parenIndex);
+
+				++parsedLines;
+
+				if (parsedLines < 20)
+					content.append(p1 + "\t" + p2 + "<br>\n");
+
+				if (p1.equals("striatus")) s_log.debug("striatus " + p2);
+
+				LogMgr.appendFile(fullPath, p1 + "\t" + p2);
+			}
+			 */
+		} // end while loop through lines
+
+		A.log("getSpecimenList() lineNum:" + lineNum + " parsedLines:" + parsedLines);
+		//http://localhost/antweb//tmp/specimenList.txt
+
+		messageStr = "<h2>Specimen List</h2><br><br>";
+		messageStr += "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + fullUrl + "\">" + outputPath + "</a>";
+		messageStr += "<br><br>" + content;
+
+		return messageStr;
+	}
 
     private String  boltonNewGeneraCatalog(BufferedReader in, Connection connection)
       throws IOException {
@@ -1257,6 +1349,7 @@ public class UploadAction extends Action {
         return messageStr;
     }
 
+
     private String worldAuthGen(HttpServletRequest request) {
 
         HttpSession session = request.getSession();
@@ -1310,34 +1403,6 @@ public class UploadAction extends Action {
         s_log.info("World Authority File upload not running statistics.  Correct?  Struts Forward correct?");
         return "worldAuthorityFiles";
     }
-
-/*
-    private void setNewAncFile(Login accessLogin, HttpSession session, Connection connection) {
-      setNewAncFile(null, accessLogin, session, connection);
-    }
-
-    private void setNewAncFile(String directory, Login accessLogin, HttpSession session, Connection connection) {
-
-        String logMessage = "";
-
-        AncFile ancFile = new AncFile();
-        ancFile.setDirectory(directory);
-
-        if (directory == null) {
-            logMessage = "Curator Anc File";
-        } else if (directory.equals("homepage")) {
-            ancFile.setProject("homepage");
-            logMessage = "adding an ancilary page to the home page.  ";
-        } else {
-            Project proj = getProjectForDirectory(accessLogin, directory, connection);
-            ancFile.setProject(proj.getName());
-            logMessage = "project name is " + proj.getName() + ".  ";
-        }
-
-        session.setAttribute("ancFile", ancFile);
-        A.log("executeNewAncFile() logMessage:" + logMessage + " directory:" + directory);
-    }
-*/
 
 
     public Project getProjectForDirectory(Login login, String directory, Connection connection) {

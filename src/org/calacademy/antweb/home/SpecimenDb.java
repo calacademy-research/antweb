@@ -100,7 +100,7 @@ public class SpecimenDb extends AntwebDb {
 
         Statement stmt = null;
         ResultSet rset = null;
-        String query = "select code from specimen "; 
+        String query = "select specimen.code from specimen ";
 
         if (!Project.ALLANTWEBANTS.equals(overview.getName())) {
           query += ", " + overview.getSpecimenTaxonSetClause() + " and ";
