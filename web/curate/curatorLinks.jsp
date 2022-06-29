@@ -107,6 +107,7 @@
 		<li><a href="<%= domainApp %>/web/log/profiler.jsp">Profiler log</a>
       </ul>
 	  <li><a href="<%= domainApp %>/util.do?action=testMessage"> Test </a>Message
+	  <li><a href="<%= domainApp %>/test.do"> Test </a>
 	  <li><a href="<%= domainApp %>/util.do?action=unboldMessage"> Test </a>Unbold Message
 	  <li><a href="<%= domainApp %>/util.do?action=bareMessage"> Bare </a>Message
 	  <li><a href="<%= domainApp %>/adm1.do?%20(Terr.%20Amazonas)"> Session Request Error </a>Message

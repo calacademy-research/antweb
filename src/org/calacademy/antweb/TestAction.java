@@ -69,7 +69,7 @@ public final class TestAction extends Action {
 			DBUtil.close(connection, this, "TestAction.execute()");
 		}
 		        
-        if (true) {        
+        if (false) {        
 		  request.setAttribute("message", message);
 		  return mapping.findForward("message");
         }

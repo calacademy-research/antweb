@@ -522,7 +522,7 @@ public class UploadAction extends Action {
 					uploadDetails = uploadDataFile(theForm, request, mapping, connection);
 					return uploadDetails.findForward(mapping, request);
 				} else {
-                    String message = getUploadDataFileDoc();
+                    String message = getUploadDataFileDoc(accessLogin);
 					request.setAttribute("message", message);
 					return mapping.findForward("message");
 				}
@@ -778,27 +778,36 @@ public class UploadAction extends Action {
 		return uploadDetails;
 	}
 
-	public String getUploadDataFileDoc() {
-	    String message = "<h3>Upload Data</h3><br> requires a tab delimited text file with..."
-			+ "<br><br>'<b>valid_species_list</b>' in the filename and has column headers: subfamily, genus, genus_species, ... - other columns irrelevant"
-			+ "<br><br>or"
-			+ "<br><br>'<b>valid</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns"
-			+ "<br><br>or"
-			+ "<br><br>'<b>fossil</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns"
-			+ "<br><br>or"
-			+ "<br><br>'<b>synonym</b>' in the filename that has columns subfamily, genus, species, [subspecies], current_valid_name (Genus species [subspecies]) - delete other columns"
-			+ "<br><br>or"
-			+ "<br><br>'<b>Regional_Taxon_List</b>' in the filename."
-			+ "<br>File can be downloaded from http://www.antwiki.org/wiki/images/0/0c/AntWiki_Regional_Taxon_List.txt."
-			+ "<br>File likely to require editing/massage.  If file is 'binary', select * in BBEdit and save in a new file (with a name that contains 'Regional_Taxon_List')."
-			+ "<br>After the upload is complete, execute "
-			+ "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a>"
-			+ "<br>in order to push data from the antwiki_taxon_country into the geolocale_taxon table with source = 'antwiki'."
-			+ "<br><br>or"
-			+ "<br><br>'<b>ngc_species</b>' or '<b>NGC Species</b>' in the filename where the contents are the Bolten New Genera Catalog saved as plain text."
-			+ "<br><br>or"
-			+ "<br><br>'<b>specimen</b>' in the filename and just a specimen code per line (no tabs required)."
-		;
+	public String getUploadDataFileDoc(Login accessLogin) {
+		String message = "";
+		String delimitNote = "";
+		if (accessLogin.isAdmin()) delimitNote = "tab-delimited ";
+	    message = "<h2>Upload Data</h2><br> requires a " + delimitNote + "text file with...";
+
+		if (accessLogin.isAdmin()) {
+			message +=
+					"<br><br>'<b>valid_species_list</b>' in the filename and has column headers: subfamily, genus, genus_species, ... - other columns irrelevant."
+							+ "<br><br>or"
+							+ "<br><br>'<b>valid</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns."
+							+ "<br><br>or"
+							+ "<br><br>'<b>fossil</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns."
+							+ "<br><br>or"
+							+ "<br><br>'<b>synonym</b>' in the filename that has columns subfamily, genus, species, [subspecies], current_valid_name (Genus species [subspecies]) - delete other columns."
+							+ "<br><br>or"
+							+ "<br><br>'<b>Regional_Taxon_List</b>' in the filename."
+							+ "<br>File can be downloaded from http://www.antwiki.org/wiki/images/0/0c/AntWiki_Regional_Taxon_List.txt."
+							+ "<br>File likely to require editing/massage.  If file is 'binary', select * in BBEdit and save in a new file (with a name that contains 'Regional_Taxon_List')."
+							+ "<br>After the upload is complete, execute "
+							+ "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a>"
+							+ "<br>in order to push data from the antwiki_taxon_country into the geolocale_taxon table with source = 'antwiki'."
+							+ "<br><br>or"
+							+ "<br><br>'<b>ngc_species</b>' or '<b>NGC Species</b>' in the filename where the contents are the Bolten New Genera Catalog saved as plain text."
+							+ "<br><br>or";
+		}
+		if (accessLogin.isCurator()) {
+			message +=
+					"<br><br>'<b>specimen</b>' in the filename and just one specimen code per line (no tabs required) to get a tab-delimited file of specimen details.";
+		}
    	    return message;
     }
 
@@ -878,7 +887,7 @@ public class UploadAction extends Action {
             } else if (fileName.contains("ngc_species") || fileName.contains("NGC Species")) { // Bolton New Genera Catalog
               messageStr = boltonNewGeneraCatalog(in, connection);
             } else if (fileName.contains("specimen")) {
-				messageStr = getSpecimenList(fileName, in, connection);
+				messageStr = getSpecimenList(fileName, theLine, in, connection);
 			}
 
 			A.log("uploadDataFile() fileName:" + fileName + " messageStr:" + messageStr);
@@ -903,16 +912,12 @@ public class UploadAction extends Action {
     }
 
 
-	private String getSpecimenList(String fileName, BufferedReader in, Connection connection)
+	private String getSpecimenList(String fileName, String firstLine, BufferedReader in, Connection connection)
 			throws IOException, SQLException {
 		String messageStr;
-		String line = "";
-
-		StringBuffer content = new StringBuffer();
+		String line = firstLine;
 
 		int lineNum = 0;
-		int parsedLines = 0;
-
 		String dir = "/tmp";
 		String fullDir = AntwebProps.getDocRoot() + dir;
 		FileUtil.makeDir(fullDir);
@@ -927,15 +932,23 @@ public class UploadAction extends Action {
 		LogMgr.appendFile(fullPath, Specimen.getTabDelimHeader());
 
 		while (line != null) {
-			line = in.readLine();
+            //A.log("getSpecimenList() lineNum:" + lineNum + " line:" + line);
+
+			// If the file contains simply "*", generate a file with all specimen data.
+			if ("*".equals(line) && 0 == lineNum) {
+				ArrayList<String> allSpecimen = specimenDb.getAntwebSpecimenCodes(Family.FORMICIDAE);
+				A.log("logAll() size:" + allSpecimen.size());
+				for (String code : allSpecimen) {
+					String outputLine = specimenDb.getSpecimen(code).getTabDelimString();
+					LogMgr.appendFile(fullPath, outputLine);
+				}
+				break;
+			}
+
 			++lineNum;
-
 			if (line == null) continue;
-
 			boolean parseLine = true;
-
             String specimenCode = line;
-
             if (specimenCode == null || specimenCode.contains(" ")) {
             	messageStr = "<h1>Specimen List</h1><br><br>There seems to be a file format error in file: " + fileName;
             	s_log.error(messageStr);
@@ -949,38 +962,15 @@ public class UploadAction extends Action {
             String outputLine = specimen.getTabDelimString();
             LogMgr.appendFile(fullPath, outputLine);
 
-			/*
-			// if it follows the pattern of one word, followed by a period, no *
-			if (line.length() > 0 && line.charAt(0) == '*') parseLine = false;
-			if (!line.contains("(")) parseLine = false;
-			int periodIndex = line.indexOf(".");
-			if (periodIndex < 0) continue;
-			if (line.indexOf(" ") < periodIndex) parseLine = false;
-
-			if (parseLine) {
-				String p1 = line.substring(0, periodIndex);
-				int parenIndex = line.indexOf("(");
-				if (parenIndex < 0 || parenIndex < periodIndex) continue;
-				String p2 = line.substring(periodIndex + 2, parenIndex);
-
-				++parsedLines;
-
-				if (parsedLines < 20)
-					content.append(p1 + "\t" + p2 + "<br>\n");
-
-				if (p1.equals("striatus")) s_log.debug("striatus " + p2);
-
-				LogMgr.appendFile(fullPath, p1 + "\t" + p2);
-			}
-			 */
+			line = in.readLine();
 		} // end while loop through lines
 
-		A.log("getSpecimenList() lineNum:" + lineNum + " parsedLines:" + parsedLines);
+		A.log("getSpecimenList() lineNum:" + lineNum + " line:" + line);
 		//http://localhost/antweb//tmp/specimenList.txt
 
 		messageStr = "<h2>Specimen List</h2><br><br>";
 		messageStr += "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + fullUrl + "\">" + outputPath + "</a>";
-		messageStr += "<br><br>" + content;
+		messageStr += "<br><br>";
 
 		return messageStr;
 	}

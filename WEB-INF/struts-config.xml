@@ -384,7 +384,7 @@ if we set getChildImages here, then we do know to add the field guide, but the i
             
     <action  path="/test"
              type="org.calacademy.antweb.TestAction">
-      <forward name="success" path="/testMessage.jsp"/>
+      <forward name="success" path="/common/testMessage.jsp"/>
     </action>
 
     <action  path="/browse"

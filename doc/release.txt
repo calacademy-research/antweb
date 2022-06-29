@@ -1,9 +1,13 @@
+
+Release 8.77.1
+  Alternative testing url. Emailer test code.
+  Specimen dump for curators. All allowed.
+  
 Release 8.77
   database loading modified to support view permissions.
   Add text to citation info: include photographer attribution.
   Remove extraneous SpecimenUploadSupport.
-
-
+  
 Release 8.76.6
   Test for SQLIntegrityConstraintViolationException before saveSpecimen to avoid
     exceptionHandling and logging.

@@ -65,6 +65,7 @@ public class UtilAction extends Action {
 				AntwebUtil.writeFile("/var/www/html/imageUpload/" + "imageUploadInProcess.txt", "0");
 				returnLoc = mapping.findForward("success");
 			  }
+
 			  if ("testMessage".equals(action)) {
 				   String message = "Test Message";
 				   s_log.warn("execute() " + message);

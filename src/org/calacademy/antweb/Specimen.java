@@ -1048,7 +1048,7 @@ For a locality name without code (this name has special characters):
         Taxon taxon = TaxonMgr.getTaxon(getTaxonName());
         String subgenus = "";
         if (taxon != null) subgenus = Formatter.initCap(taxon.getSubgenus());
-        A.log("getTabDelimString() specimen.subGenus:" + getSubgenus() + " taxon.subgenus:" + subgenus);
+        //A.log("getTabDelimString() specimen.subGenus:" + getSubgenus() + " taxon.subgenus:" + subgenus);
         sb.append("\t" + subgenus);
         sb.append("\t" + getTribe());
         sb.append("\t" + getSpeciesGroup());

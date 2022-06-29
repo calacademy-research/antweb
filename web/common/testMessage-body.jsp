@@ -10,6 +10,7 @@
 <%@ page import="org.calacademy.antweb.geolocale.*" %>
 <%@ page import="org.calacademy.antweb.Formatter" %>
 <%@ page import="org.calacademy.antweb.*" %>
+<%@ page import="org.calacademy.antweb.util.*" %>
 
 <div class="left">
 
@@ -21,6 +22,10 @@
 </div>
 
 <% 
+    Emailer.sendMail("re.mark.johnson@gmail.com", "Consider!", "This");
+
+
+/*
   Group group = GroupMgr.getGroup(1);
   MessageMgr messageMgr = new MessageMgr();
   messageMgr.addToMessages(MessageMgr.latLonNotInCountryBounds, "code", "message");  	
@@ -28,7 +33,7 @@
   messageMgr.compileMessages(group);
   String report = messageMgr.getMessagesReport();
   out.println("Report:" + report);
-
+*/
   //Geolocale hawaii = GeolocaleMgr.getCountry("Hawaii");
   //out.println("<br>Hawaii:" + hawaii.toLog());
 
@@ -68,6 +73,7 @@
 
 <br><br>
 <%
+/*
       String taxonName = "(scoliinae)(scoliinae) mg01";
 
       String prettyTaxonName = taxonName;
@@ -87,6 +93,7 @@
 
       prettyTaxonName = (new Formatter()).capitalizeFirstLetter(prettyTaxonName);
       //out.println("inaeIndex:" + inaeIndex + " prettyTaxonName:" + prettyTaxonName);
+*/
 %>
 
 <br><br>

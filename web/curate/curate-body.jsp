@@ -430,6 +430,12 @@ Upload Curator File
   * When creating html links to files in your curator directory use this format: /bfisher/filename.ext
 -->
 
+
+<!-- Projects -->                
+<!-- Download Species List -->   
+
+<% if (accessLogin.isDeveloper()) { %>  <!-- was isAdmin() -->
+
         <div class="admin_action_item">
             <div style="float:left;">
                 <h2>Species Lists</h2>
@@ -437,10 +443,7 @@ Upload Curator File
             <div class="clear"></div>
         </div>
 
-<!-- Projects -->                
-<!-- Download Species List -->   
 
-<% if (accessLogin.isDeveloper()) { %>  <!-- was isAdmin() -->
 <html:form method="POST" action="upload.do" enctype="multipart/form-data">
     <input type="hidden" name="ancFileDirectory" value="none" />
     <input type="hidden" name="updateAdvanced" value="no" />
@@ -600,86 +603,17 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 %>
 
 
-<!-- Edit Region/Project Pages -->
-<script type="text/javascript">
-function goToPage() {
-  var Current = document.homepages.homepages_values.selectedIndex;
-  window.location.href = document.homepages.homepages_values.options[Current].value;
-  return false;
-}
-function goToFiles() {
-  var Current = document.viewpages.viewpages_values.selectedIndex;
-  window.location.href = document.viewpages.viewpages_values.options[Current].value;
-  return false;
-}
-</script>
-
-
-    <div class="admin_action_module">
-        <div class="admin_action_item">
-            <form name="homepages"> 
-            <div class="action_desc"><b>Edit</b> Home Page for:</div>
-            <div class="action_dropdown">
-              <select name="homepages_values"> 
-                <option>Select...</option>
-                <!-- % if (accessLogin.isAdmin()) { % >
-                    <option value="< %= domainApp % >/editHomePage.do">AntWeb Home Page</option>
-                < % } % -->
-
-                <% if (projList != null) {
-                     for (SpeciesListable p : projList) { %>
-                  <option value="<%= domainApp %>/editProject.do?projectName=<%= p.getName() %>"><%= p.getTitle() %></option>
-                <%   } 
-                   }
-                %>
-
-              </select>
-            </div> 
-            <div class="clear"></div>
-            <div class="align_right">
-              <input type="image" border="0" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" onclick="return goToPage();">
-            </div>
-            <div class="clear"></div>
-            </form>
-        </div>
-    </div>        
-
-<!-- View Files -->
-    <div class="admin_action_module">
-        <div class="admin_action_item">
-            <form name="viewpages">
-            <div class="action_desc"><b>View</b> Files in:</div>
-            <div class="action_dropdown">
-              <select name="viewpages_values">
-                <option value="<%= domainApp %>/web/curator/<%= accessLogin.getId() %>/">Curator Dir</option>
-                <% if (accessLogin.isAdmin()) { %>  
-                    <option value="<%= domainApp %>/homepage/">AntWeb Home Page</option>
-                <% } %>
-
-                <% if (projList != null) {
-                     for (SpeciesListable s : projList) { 
-                       Project p = ProjectMgr.getProject(s.getName());
-                       if (p == null) {
-                         //A.log("curate-body.jsp 1 p is null for:" + s.getName());
-                       } else { %>
-                         <option value="<%= domainApp %>/<%= Project.getSpeciesListDir() %><%= p.getRoot() %>"><%= p.getTitle() %></option>
-                    <% } 
-                     } 
-                   } %>
-    
-              </select>
-            </div> 
-            <div class="clear"></div>
-            <div class="align_right">
-              <input type="image" border="0" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" onclick="return goToFiles();">
-            </div>
-            <div class="clear"></div>
-            </form>            
-        </div>
+<div class="admin_action_item">
+    <div style="float:left;">
+        <h2>Other Functions</h2>
     </div>
+    <div class="clear"></div>
+</div>
 
 
+<% // Edit Region content removed %>
 
+<br>
 <!-- Upload a File to a Folder
 <html:form method="POST" action="upload.do" enctype="multipart/form-data">
     <input type="hidden" name="ancFileDirectory" value="none" />
@@ -725,7 +659,7 @@ function goToFiles() {
 
 
 <!-- Data File Upload -->
-<% if (accessLogin.isAdmin()) { %>
+<% if (accessLogin.isCurator()) { %>
 <html:form method="POST" action="upload.do" enctype="multipart/form-data">
     <input type="hidden" name="ancFileDirectory" value="none" />
     <input type="hidden" name="updateAdvanced" value="no" />

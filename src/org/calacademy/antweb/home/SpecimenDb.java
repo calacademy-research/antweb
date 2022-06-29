@@ -64,6 +64,7 @@ public class SpecimenDb extends AntwebDb {
         return false;
     }
 
+
     // This will not return null if it does not exist. Bad object design of specimen.
     public Specimen getSpecimen(String code) throws SQLException {
       Specimen specimen = null;
@@ -74,6 +75,11 @@ public class SpecimenDb extends AntwebDb {
           throw e;
       }
       return specimen;
+    }
+
+    public ArrayList<String> getAntwebSpecimenCodes(String family) throws SQLException {
+        Overview overview = OverviewMgr.getOverview(Project.ALLANTWEBANTS);
+        return getAntwebSpecimenCodes(overview, family, null);
     }
 
     public ArrayList<String> getAntwebSpecimenCodes(Overview overview, String family) throws SQLException {
