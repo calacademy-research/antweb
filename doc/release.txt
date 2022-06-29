@@ -1,3 +1,5 @@
+Release 8.77.2
+  Specimen line number fetch tool fix.
 
 Release 8.77.1
   Alternative testing url. Emailer test code.

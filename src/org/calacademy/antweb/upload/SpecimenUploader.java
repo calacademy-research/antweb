@@ -59,7 +59,7 @@ public class SpecimenUploader {
       , Login login, String userAgent, String encoding, boolean isUpload)
       throws SQLException, IOException, RESyntaxException, TestException, AntwebException
     {
-        s_log.info("uploadSpecimenFile() specimenFileName:" + formFileName + " encoding:" + encoding);
+        s_log.info("uploadSpecimenFile() formFileName:" + formFileName + " encoding:" + encoding);
 
         UploadDetails uploadDetails = null;
 
@@ -78,12 +78,14 @@ public class SpecimenUploader {
             specimenFileName = "specimen" + group.getId() + ".txt";
             uploadFile = new UploadFile(AntwebProps.getWorkingDir(), specimenFileName, userAgent, encoding);
             specimenFileLoc = AntwebProps.getWorkingDir() + specimenFileName;
+            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
         } else {
             SpecimenUploadDb specimenUploadDb = new SpecimenUploadDb(connection);
             specimenFileName = specimenUploadDb.getBackupDirFile(group.getId());
             if (specimenFileName == null) messageStr = "BackupDirFile not found for group:" + group;
             specimenFileLoc = AntwebProps.getWebDir() + specimenFileName;
             uploadFile = new UploadFile(AntwebProps.getWebDir(), specimenFileName, userAgent, encoding);
+            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
         }
 
         if (!uploadFile.correctEncoding(encoding)) messageStr = "Encoding not validated for file:" + uploadFile.getFileLoc() + " encoding:" + uploadFile.getEncoding();
@@ -118,7 +120,8 @@ public class SpecimenUploader {
         uploadDetails.setAction(operation);
 
         if (uploadFile != null) {
-            uploadDetails.setBackupDirFile(uploadFile.backup());
+            uploadFile.backup();
+            uploadDetails.setBackupDirFile(uploadFile.getBackupDirFile());
         }
 
         String execTime = HttpUtil.getExecTime(startTime);

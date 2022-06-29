@@ -157,11 +157,13 @@ public class SpecimenUpload extends SpecimenUploadParse {
                     specimenItem.clear();
                     taxonItem.clear();
 
-                    String shortFileName = uploadFile.getShortFileName();
+                    // Used for the taxon's source. Something like specimen1.txt
+                    String uploadFileName = uploadFile.getFileNameBase(); //uploadFile.getBackupFileName();
+                    //A.log("importSpecimens could use backupFileName:" + uploadFile.getFileNameBase() + " instead of shortFileName:" + shortFileName);
 
 					if (LineNumMgr.isGoodCarriageReturnLine(lineNum)) {        
 						// Do the work to populate the specimenItem, taxonItem
-						String errorMessage = parseLine(theLine, lineNum, specimenItem, taxonItem, otherColumns, colList, shortFileName, accessLogin);
+						String errorMessage = parseLine(theLine, lineNum, specimenItem, taxonItem, otherColumns, colList, uploadFileName, accessLogin);
 						if (errorMessage == null) {
 						  ++buildLineTotal;
 						  //if (!ok) A.log("importSpecimens() lineNum:" + lineNum + " theLine:" + theLine);
@@ -172,7 +174,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
 						  specimenItem.put("backupFileName", uploadFile.getBackupFileName());
 
-						  boolean retVal = processLine(specimenItem, taxonItem, lineNum, shortFileName, accessGroup);
+						  boolean retVal = processLine(specimenItem, taxonItem, lineNum, uploadFileName, accessGroup);
 						  if (retVal) {
 							++processLineTotal;
 							processedSome = true;

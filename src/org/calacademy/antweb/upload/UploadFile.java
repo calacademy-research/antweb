@@ -33,8 +33,6 @@ public class UploadFile {
       isReload = reload; 
     }
 
-    private String backupFileName;
-
 //    public static String oldProjectFileTail = "_authority.txt";
 //    public static String projectFileTail = "_project.txt";
         
@@ -54,22 +52,23 @@ public class UploadFile {
 //, String encoding
     public UploadFile(String base, String fileName, String userAgent, String encoding) {
 
-      //A.log("constructing UploadFile() 1 base:" + base + " fileName:" + fileName + " userAgent:" + userAgent);
-      
-      this.base = base;
-      this.fileName = fileName;
-      String fileLoc = base + fileName;
-      
-      this.userAgent = userAgent;  // we don't actually use this, at all.
+        if (false && AntwebProps.isDevMode()) {
+            A.log("constructing UploadFile() 1 base:" + base + " fileName:" + fileName + " userAgent:" + userAgent);
+            AntwebUtil.logShortStackTrace();
+        }
 
-      figureEncoding(fileLoc, encoding);
-      
+        this.userAgent = userAgent;  // we don't actually use this, at all.
+
+        this.base = base;
+        this.fileName = fileName;
+        String fileLoc = base + fileName;
+
+        figureEncoding(fileLoc, encoding);
     }
     
     private void figureEncoding(String fileLoc, String encoding) {
-
-      setEncoding("UTF-8");
-
+        setEncoding("UTF-8");
+    }
 /*
       if (encoding != null) { 
         setEncoding(encoding);
@@ -98,8 +97,9 @@ public class UploadFile {
       //if (correctEncoding(encoding) == false) {
       //  setEncoding("ISO8859_1");
       //}  
-*/  
     }
+*/
+
 
     // To be ported towards use of UploadFile
     // This is used for Project upload, but not of Worldants
@@ -227,35 +227,64 @@ public class UploadFile {
 
       return true;
     }
-    
-    public String getShortFileName() {
-      String shortFileName = getFileLoc();
-      while (shortFileName.contains("/")) {
-        //s_log.warn("getShortFileName() fileName:" + shortFileName);
-        shortFileName = shortFileName.substring(shortFileName.indexOf("/") + 1);
-      }
 
-      //if (!shortFileName.equals(getFileName())) s_log.error("getShortFileName() shortFileName:" + shortFileName + " does not equal fileName:" + getFileName());
-      // And it should.  When they are proven equal, we may get rid of this method.
-      
-      return shortFileName;
+
+    // From: usr/local/antweb/web/upload/20220627-17:55:08-specimen31.txt   to: specimen31.txt
+    private String m_fileNameBase = null;
+    public String getFileNameBase() {
+        if (m_fileNameBase == null) {
+            String base = getFileLoc();
+            if (base.contains("specimen")) base = base.substring(base.indexOf("specimen"));
+            if (base.contains("worldants")) base = base.substring(base.indexOf("worldants"));
+
+            A.log("getFileNameBase() fileLoc:" + getFileLoc() + " base:" + base);
+            m_fileNameBase = base;
+        }
+        return m_fileNameBase;
     }
-          
+
+
+    // Used for the Taxon source during specimen upload. Something like specimen1.txt
+    // From: usr/local/antweb/web/upload/20220627-17:55:08-specimen31.txt   to: 20220627-17:55:08-specimen31.txt
+    private String m_shortFileName = null;
+    public String getShortFileName() {
+      if (m_shortFileName == null) {
+          String shortFileName = getFileLoc();
+          while (shortFileName.contains("/")) {
+              shortFileName = shortFileName.substring(shortFileName.indexOf("/") + 1);
+          }
+
+          //if (!shortFileName.equals(getFileName())) s_log.error("getShortFileName() shortFileName:" + shortFileName + " does not equal fileName:" + getFileName());
+          // And it should.  When they are proven equal, we may get rid of this method.
+
+          A.log("getShortFileName() fileLoc:" + getFileLoc() + " shortFileName:" + shortFileName);
+          m_shortFileName = shortFileName;
+      }
+      return m_shortFileName;
+    }
+
+/*
     public String getShortName() {
       String shortName = getShortFileName();
-      while (shortName.contains(".txt")) {
-        //s_log.warn("getShortFileName() fileName:" + shortFileName);
-        shortName = shortName.substring(0, shortName.indexOf(".txt"));
-      }
 
-      // A.log("getShortFileName() shortName:" + shortName);
+        if (true && AntwebProps.isDevMode()) {
+            A.log("getShortName() shortName:" + shortName);
+            AntwebUtil.logShortStackTrace();
+        }
 
-      //if (!shortFileName.equals(getFileName())) s_log.error("getShortFileName() shortFileName:" + shortFileName + " does not equal fileName:" + getFileName());
-      // And it should.  When they are proven equal, we may get rid of this method.
+        while (shortName.contains(".txt")) {
+          //s_log.warn("getShortFileName() fileName:" + shortFileName);
+          shortName = shortName.substring(0, shortName.indexOf(".txt"));
+        }
+
+        // A.log("getShortFileName() shortName:" + shortName);
+        //if (!shortFileName.equals(getFileName())) s_log.error("getShortFileName() shortFileName:" + shortFileName + " does not equal fileName:" + getFileName());
+        // And it should.  When they are proven equal, we may get rid of this method.
       
-      return shortName;
+        return shortName;
     }
-                   
+ */
+
     public String getFileLoc() {
       return this.base + this.fileName;
     }
@@ -293,7 +322,46 @@ public class UploadFile {
       return f.exists();
     }
     
-    public String backup() {
+    public void backup() {
+      File file = new File(getFileLoc());
+      s_log.info("backup() exists:" + exists() + " fileLoc:" + getFileLoc() + " exists:" + file.exists());
+
+      if (!exists()) {
+        s_log.warn("backup() fileLoc does not exist:" + getFileLoc());
+      } else {
+          String fullWebDir = Utility.getDocRoot() + "web";
+          String fullWebUploadDir = fullWebDir + "/upload";
+          //String backupWorkingDir = util.getInputFileHome() + "/backup";
+          Utility.makeDirTree(fullWebUploadDir);
+          s_log.info("backup() makeDirTree:" + fullWebUploadDir);
+
+          String tempBackupDirFile = fullWebUploadDir + "/" + getBackupFileName();
+          A.log("backup() date:" + Utility.getDateForFileName() + " base:" + getFileNameBase());   // + " short:" + getShortFileName()
+          try {
+            s_log.info("backup() " + getFileLoc() + " to " + tempBackupDirFile);
+            Utility.copyFile(getFileLoc(), tempBackupDirFile);
+          } catch (IOException e) {
+            s_log.error("backup() e:" + e);
+          }
+      }
+    }
+
+    String backupFileName = null;
+    public String getBackupFileName() {
+      if (backupFileName == null) {
+          backupFileName = Utility.getDateForFileName() + "-" + getFileNameBase();  //getShortFileName();
+      }
+      return backupFileName;
+    }
+
+    // This is what gets persisted in the specimen table.
+    public String getBackupDirFile() {
+        return "upload/" + getBackupFileName();
+    }
+
+
+  /*
+      public String backup() {
       String backupDirFile = null;
 
       File file = new File(getFileLoc());
@@ -312,6 +380,7 @@ public class UploadFile {
 
           this.backupFileName = Utility.getDateForFileName() + "-" + getShortFileName();
           String tempBackupDirFile = fullWebUploadDir + "/" + backupFileName;
+          A.log("backup() date:" + Utility.getDateForFileName() + " short:" + getShortFileName());
           try {
             s_log.info("backup() " + getFileLoc() + " to " + tempBackupDirFile);
             Utility.copyFile(getFileLoc(), tempBackupDirFile);
@@ -319,51 +388,17 @@ public class UploadFile {
           } catch (IOException e) {
             s_log.error("backup() e:" + e);
           }
-        }     
+        }
       }
       return backupDirFile;
     }
 
-/*    
-    String backupDirFile = null;
-    public String getBackupDirFile() {
-      return this.backupDirFile;
-    }
-    public void setBackupDirFile(String backupDirFile) {
-     this.backupDirFile = backupDirFile;
-    }
-*/
- 
-  public String getBackupFileName() {
+    public String getBackupFileName() {
     if (backupFileName != null) {
-      return backupFileName; 
+      return backupFileName;
     } else {
       return getFileName();
     }
-  }    
-
-/*
-  private String serverDir = null;
-  private String getServerDir() {
-    // This tells us where the archived file may be found.
-    String value = null;
-    if (serverDir != null) value = serverDir;
-    if (getIsReload()) {
-      value = "speciesList";
-    } else {
-      value = "upload";
-    }
-    //if (AntwebProps.isDevMode()) {
-      //if (value == null || "null".equals(value)) {
-      //  s_log.warn("getServerDir() value:" + value);
-      // AntwebUtil.logStackTrace();
-      //}
-   // }
-    return value;
   }
-
-  private void setServerDir(String serverDir) {
-    this.serverDir = serverDir;  
-  }
-*/
+   */
 }

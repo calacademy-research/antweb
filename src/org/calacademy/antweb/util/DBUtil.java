@@ -145,8 +145,20 @@ Or, if there are stmts and/or rsets...
     }
 
     private static final int MAX_BUSY_CONNECTIONS = 10;
+    private static boolean wasBusy = false;
     public static boolean isServerBusy() {
-      return getServerBusyConnectionCount() >= MAX_BUSY_CONNECTIONS;
+      boolean isBusy = getServerBusyConnectionCount() >= MAX_BUSY_CONNECTIONS;
+      
+      // To only report on a change of isBusy to true...
+      if (isBusy && !wasBusy) {
+        wasBusy = true;
+        // Send email alert to developers?
+      }
+      if (!isBusy && wasBusy) {
+        wasBusy = false;
+      }      
+      
+      return isBusy;
     }
  
     private static final HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<>();

@@ -114,7 +114,9 @@ public class SpeciesListUpload extends AntwebUpload {
         
         Utility.copyFile(theFile, uploadFile.getFileLoc()); // Copy to the working directory
 
-        String backupDirFile = uploadFile.backup(); // We keep a timestamped copy even if it is bad...
+        uploadFile.backup(); // We keep a timestamped copy even if it is bad...
+        String backupDirFile = uploadFile.getBackupDirFile();
+
         s_log.debug("uploadSpeciesList:" + backupDirFile);
 
         if (!(theFile.toString().indexOf(".txt") > 0)) {
@@ -164,11 +166,11 @@ public class SpeciesListUpload extends AntwebUpload {
     private UploadDetails importSpeciesList(String project, UploadFile uploadFile, int accessGroupId) throws AntwebException, SQLException, IOException {
         UploadDetails uploadDetails = null;
         String fileLoc = uploadFile.getFileLoc();
-        String shortFileName = uploadFile.getShortFileName();
+        String fileNameBase = uploadFile.getFileNameBase();
         String encoding = uploadFile.getEncoding();
         //boolean isBioRegion = uploadFile.getIsBioRegion();
-        //s_log.warn("importSpeciesList() project:" + project + " shortFileName:" + shortFileName + " fileLoc:" + fileLoc);        
-        uploadDetails = importSpeciesList(project, fileLoc, shortFileName, encoding, accessGroupId);
+        //s_log.warn("importSpeciesList() project:" + project + " fileNameBase:" + fileNameBase + " fileLoc:" + fileLoc);
+        uploadDetails = importSpeciesList(project, fileLoc, fileNameBase, encoding, accessGroupId);
         return uploadDetails;
     }
 
@@ -286,7 +288,7 @@ public class SpeciesListUpload extends AntwebUpload {
     }
 
     // Can be called directly from UploadAction for speciesTest
-    public UploadDetails importSpeciesList(String project, String fileName, String shortFileName
+    public UploadDetails importSpeciesList(String project, String fileName, String fileNameBase
         , String encoding, int accessGroupId) throws AntwebException, IOException, SQLException {
           
         UploadDetails uploadDetails = new UploadDetails("failure");
@@ -294,7 +296,7 @@ public class SpeciesListUpload extends AntwebUpload {
         int lineNum = 1;
 
         String returnStr = null;   
-        //A.log("importSpeciesList() project:" + project + " fileName:" + fileName + " shortFileName:" + shortFileName + " encoding:" + encoding);          
+        //A.log("importSpeciesList() project:" + project + " fileName:" + fileName + " fileNameBase:" + fileNameBase + " encoding:" + encoding);
         LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + " import:" + fileName);
                
         boolean isWorldants = Project.WORLDANTS.equals(project);
@@ -831,7 +833,7 @@ public class SpeciesListUpload extends AntwebUpload {
                         }
                         
                         if (taxonName.equals("formicidae") && !"worldants".equals(project)) {
-                          s_log.warn("importSpeciesList() non-worldants insertion of formicidae.  lineNum:" + lineNum + " source:" + shortFileName);
+                          s_log.warn("importSpeciesList() non-worldants insertion of formicidae.  lineNum:" + lineNum + " source:" + fileNameBase);
                         }  
 
                     } else {
