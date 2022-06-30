@@ -228,7 +228,7 @@ public class UtilDataAction extends Action {
                 message += " " + doAction("projectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins
                 message += " " + doAction("populateMuseum", form, accessLogin, accessGroup, connection, request, mapping);  // was 12.05 mins now 22.68 mins. Prod: 8.17
                 message += " " + doAction("populateBioregion", form, accessLogin, accessGroup, connection, request, mapping); // was 6.80 mins. Now 15.63 mins. // Prod: 5.52 mins
-                message += " " + doAction("updateTaxonSetTaxonNames", form, accessLogin, accessGroup, connection, request, mapping);
+                message += " " + doAction("updateTaxonSets", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
             }
 
@@ -364,8 +364,9 @@ public class UtilDataAction extends Action {
 			  	
 		// Update to Current Valid Name.  3.77 mins.
 		// Test if needed: http://localhost/antweb/util.do?action=curiousQuery&name=geolocaleTaxaNotUsingCurrentValidName	  	
- 		if (action.equals("updateTaxonSetTaxonNames")) {
-          message = TaxonSetDb.updateTaxonSetTaxonNames(connection); // works on all taxon sets.
+ 		if (action.equals("updateTaxonSets")) {
+            message = TaxonSetDb.updateTaxonSetTaxonNames(connection); // works on all taxon sets.
+            message += TaxonSetDb.updateTaxonSetSources(connection); // works on all taxon sets.
         }
 		   
         // This should only need to be run once. No! Species list tool will not allow addition.
@@ -518,6 +519,9 @@ public class UtilDataAction extends Action {
 
   		    MuseumTaxonCountDb museumTaxonCountDb = (new MuseumTaxonCountDb(connection));
 		    museumTaxonCountDb.childrenCountCrawl();
+
+            TaxonSetDb.updateTaxonSetSources(connection);
+
             message = "Count Crawls Ran";
 		}
 

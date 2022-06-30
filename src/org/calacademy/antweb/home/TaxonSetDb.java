@@ -168,5 +168,32 @@ public abstract class TaxonSetDb extends AntwebDb {
       }
       return x;
     }
-       
+
+
+    public static String updateTaxonSetSources(Connection connection) throws SQLException {
+        int pc = updateTaxonSetSource("proj_taxon", connection);
+        int bc = updateTaxonSetSource("bioregion_taxon", connection);
+        int gc = updateTaxonSetSource("geolocale_taxon", connection);
+        String message = "updateTaxonSetSources pc:" + pc + " bc:" + bc + " gc:" + gc;
+        s_log.warn(message);
+        return message;
+    }
+
+    protected static int updateTaxonSetSource(String tableName, Connection connection) throws SQLException {
+        int c = 0;
+        Statement stmt = null;
+        String dml = "update " + tableName + " set source = 'specimen' where specimen_count > 0 and source = 'antcat'";
+        try {
+            stmt = DBUtil.getStatement(connection, "TaxonSetDb.updateTaxonSetSource()");
+            c = stmt.executeUpdate(dml);
+            //A.log("updateTaxonSetSource() c:" + c + " dml: " + dml);
+        } catch (SQLException e) {
+            s_log.error("updateTaxonSetSource() e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, null, "TaxonSetDb.updateTaxonSetSource()");
+        }
+        return c;
+    }
+
 }

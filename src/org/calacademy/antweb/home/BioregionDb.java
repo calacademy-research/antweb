@@ -312,7 +312,7 @@ public class BioregionDb extends AntwebDb {
       freshStart(bioregionName);      
 
       // Populate bioregion table with data from specimen table.
-        populateFromSpecimenData(bioregionName);
+      populateFromSpecimenData(bioregionName);
       
       // Populate the bioregion_taxon table.
       populateSpecies(bioregionName);
