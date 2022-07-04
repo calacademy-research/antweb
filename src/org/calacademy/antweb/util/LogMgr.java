@@ -80,6 +80,9 @@ public class LogMgr {
     LogMgr.appendFile(fullPath, data);
   }
 
+  public static void emptyFile(String fullPath) {
+    AntwebUtil.remove(fullPath);
+  }
 
   public static void appendFile(String fullPath, String data) {
     Utility.makeDirTree(fullPath);
@@ -91,7 +94,6 @@ public class LogMgr {
     } catch (Exception e) {
       s_log.error("appendFile() fullPath:" + fullPath + " e: " + e.getMessage());
     }
-
     FileUtil.set775Permission(fullPath);
   }
   

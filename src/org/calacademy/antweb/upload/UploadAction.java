@@ -831,7 +831,8 @@ public class UploadAction extends Action {
         String filePath = docBase + testFile.getFileName();
         boolean isSuccess = Utility.copyFile(theForm.getTestFile(), filePath);
 
-		String messageStr = "Warning - file not uploaded:" + filePath;
+        String UNMATCHED_FUNCTION = "UNMATCHED_FUNCTION";
+		String messageStr = UNMATCHED_FUNCTION;
 		if (!isSuccess) {
           messageStr = "copyFile failure";
 
@@ -890,7 +891,11 @@ public class UploadAction extends Action {
 				messageStr = getSpecimenList(fileName, theLine, in, connection);
 			}
 
-			A.log("uploadDataFile() fileName:" + fileName + " messageStr:" + messageStr);
+            if (UNMATCHED_FUNCTION.equals(messageStr)) {
+            	messageStr = "Upload file function not recognized:" + filePath + ". Submit for documention.";
+			}
+
+			s_log.info("uploadDataFile() fileName:" + fileName + " messageStr:" + messageStr);
             request.setAttribute("message", messageStr);
             uploadDetails = new UploadDetails(operation, messageStr, request);
             uploadDetails.setForwardPage("adminMessage");
@@ -929,6 +934,7 @@ public class UploadAction extends Action {
 		SpecimenDb specimenDb = new SpecimenDb(connection);
 		//TaxonDb taxonDb = new TaxonDb(connection);
 
+		LogMgr.emptyFile(fullPath);
 		LogMgr.appendFile(fullPath, Specimen.getTabDelimHeader());
 
 		while (line != null) {
