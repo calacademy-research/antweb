@@ -101,7 +101,7 @@ public class Scheduler extends Action {
 		  if (!AntwebProps.isDevOrStageMode()) {
 			  waitTime = 60 * waitTime;
 		  }
-		  s_log.warn("doAction() not ready to action:" + action + " num:" + num + " because:" + ServerStatusAction.notReadyReason() + " waitTime:" + waitTime + ". waitI:" + waitI);
+		  s_log.warn("doAction() not ready to action:" + action + " num	:" + num + " because:" + ServerStatusAction.notReadyReason() + " waitTime:" + waitTime + ". waitI:" + waitI);
           try {            
             Thread.sleep(waitTime);
           } catch (InterruptedException e) {
@@ -110,14 +110,19 @@ public class Scheduler extends Action {
         }
 				
 		try {
-			String codeParam = "&secureCode=" + secureCode;
+			if (UtilDataAction.isInComputeProcess()) {
+			String m = "Already in compute proceess:" + UtilDataAction.getIsInComputeProcess();
+				s_log.warn("doAction() " + m);
+				LogMgr.appendLog("compute.log", m, true);
+			}
 
+			String codeParam = "&secureCode=" + secureCode;
 		    UtilDataAction.setInComputeProcess(action);
 
             Object list = DBUtil.getOldConnectionList();
             if (list != null) s_log.warn("doAction() overdue resource:" + list);
 		
-		    LogMgr.appendLog("compute.log", "Begin " + action, true);      
+		    LogMgr.appendLog("compute.log", "Begin " + action, true);
 
 			// -------------- Full Computation ----------------
 
@@ -182,6 +187,8 @@ public class Scheduler extends Action {
 		  UtilDataAction.setInComputeProcess(null);
 
           AntwebUtil.resetSecureCode();
+
+          LogMgr.appendLog("compute.log", "End " + action, true);
 		}	          
 
         //this shouldn't happen in this example

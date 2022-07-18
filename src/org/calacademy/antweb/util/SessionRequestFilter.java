@@ -256,7 +256,7 @@ class CustomTask extends TimerTask  {
       } else {
           AntwebUtil.log("warn", "CustomTask.run() DEV MODE SKIPPING scheduler.doAction()");
       }
-
+    
     } catch (Exception ex) {
         AntwebUtil.log("SessionRequestFilter.CustomTask.run() error running thread " + ex.getMessage());
     }
