@@ -111,9 +111,13 @@ public class Scheduler extends Action {
 				
 		try {
 			if (UtilDataAction.isInComputeProcess()) {
-			String m = "Already in compute proceess:" + UtilDataAction.getIsInComputeProcess();
+			    String m = "Already in compute proceess:" + UtilDataAction.getIsInComputeProcess();
 				s_log.warn("doAction() " + m);
 				LogMgr.appendLog("compute.log", m, true);
+
+				// Would be good to send email alert?
+
+				return m;
 			}
 
 			String codeParam = "&secureCode=" + secureCode;
