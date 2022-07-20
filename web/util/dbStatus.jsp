@@ -45,13 +45,21 @@ String oldConnString = DBUtil.getOldConnectionList();
 </pre>
 <br>
 <%
-
   String cpStats = (String) request.getAttribute("cpDiagnostics");
   //AntwebUtil.log("info", domainApp + "/dbStatus.do.  cpStats:" + cpStats );
 %>
 <pre>
-<br><h3>Connection Pool Diagnostics:</h3><%= cpStats %> 
+<br><h3>Connection Pool Diagnostics:</h3><%= cpStats %>
 </pre>
+
+<pre>
+<br><h3>Medium Connection Pool Diagnostics:</h3><%= request.getAttribute("mediumConPoolDiagnostics") %>
+</pre>
+
+<pre>
+<br><h3>Long Connection Pool Diagnostics:</h3><%= request.getAttribute("longConPoolDiagnostics") %>
+</pre>
+
 
 <%
   String mySqlProcessListHtml = (String) request.getAttribute("mySqlProcessListHtml");

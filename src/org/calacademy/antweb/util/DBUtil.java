@@ -395,6 +395,8 @@ Or, if there are stmts and/or rsets...
           logMessage += "<b>sampleLastIdleTestFailureStackTraceDefaultUser:</b>" + poolSource.sampleLastIdleTestFailureStackTraceDefaultUser() + "<br>";
           logMessage += "<b>sampleLastConnectionTestFailureStackTraceDefaultUser:</b>" + poolSource.sampleLastConnectionTestFailureStackTraceDefaultUser() + "<br>";
           logMessage += "<b>sampleLastCheckoutFailureStackTraceDefaultUser:</b>" + poolSource.sampleLastCheckoutFailureStackTraceDefaultUser();
+
+          logMessage += "<br><b>unreturnedConnection:</b>" + reportUnreturnedConnection(dataSource);
         } catch (SQLException e) {
           logMessage = "Exception:" + e;
         }
@@ -427,12 +429,12 @@ Or, if there are stmts and/or rsets...
           s_log.warn(logMessage);
           Connection connection = null;
           try {
-            connection = DBUtil.getConnection(dataSource, "AntwebUtil.isServerBusy()");
-            logMessage += "<br>" + AntwebFunctions.getMysqlProcessListHtml(connection);
+            connection = DBUtil.getConnection(dataSource, "isServerBusy()");
+            logMessage += "<br>" + DBUtil.getMysqlProcessListHtml(connection);
           } catch (SQLException e) {
             s_log.error("isServerBusy() e:" + e);
           } finally {
-            DBUtil.close(connection, "AntwebUtil", "AntwebUtil.isServerBusy()");
+            DBUtil.close(connection, "isServerBusy()");
           }
           LogMgr.appendLog("serverBusy.html", logMessage);
           s_log.warn("isServerBusy() overdue resource:" + DBUtil.getOldConnectionList());
@@ -442,6 +444,33 @@ Or, if there are stmts and/or rsets...
       } else {
         return false;
       }
+    }
+
+/* Uncloseed Connections
+     In struts-configDbAnt.xml there are properties defined:
+     unreturnedConnectionTimeout and debugUnreturnedConnectionStackTraces
+
+     If timeout > 0 and true then, to track down an unreturnedConnection, go to /home/mjohnson/links/ and"
+
+        grep checkoutPooledConnection detail/antwebInfo.log -A 5 -B 5
+
+     These should be left on for production.
+*/
+
+    public static String reportUnreturnedConnection(DataSource dataSource) {
+        int unreturnedConnectionTimeout = 0;
+        String report = "";
+        String unreturnedConnectionStackTraces = "";
+        String cpDiagnostics = null;
+        ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
+        //try {
+            unreturnedConnectionTimeout = c3p0DataSource.getUnreturnedConnectionTimeout();
+            //unreturnedConnectionStackTraces = c3p0DataSource.getUnreturnedConnectionStackTraces();
+            report = unreturnedConnectionTimeout + " " + unreturnedConnectionStackTraces;
+        //} catch (SQLException e) {
+        //    s_log.error("getUnreturnedConnectionTimeout() error:" + e);
+        //      }
+        return report;
     }
 
     private static final int s_threshold = 8;
@@ -490,7 +519,7 @@ Or, if there are stmts and/or rsets...
 	  return AntFormatter.escapeQuotes(theString);
 	}
 
-    public static String getSimpleCpDiagnosticsAttr(DataSource dataSource) {
+    public static String getSimpleCpDiagnosticsAttr(DataSource dataSource) throws SQLException {
         String cpDiagnostics = "";
         if (dataSource instanceof ComboPooledDataSource) {
             ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
@@ -502,23 +531,19 @@ Or, if there are stmts and/or rsets...
                         + " numBusyConnections:" + c3p0DataSource.getNumBusyConnectionsDefaultUser();
             } catch (SQLException e) {
                 s_log.error("getCpDiagnosticsAttr() error:" + e);
+                throw e;
             }
         }
         return cpDiagnostics;
     }
-
 
     public static String getCpDiagnosticsAttr(DataSource dataSource) {
         String cpDiagnostics = "";
         if (dataSource instanceof ComboPooledDataSource) {
             ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
             try {
-                cpDiagnostics = "C3P0 maxPoolSize:" + c3p0DataSource.getMaxPoolSize()
-                        + " numConnectionsDefaultUser:" + c3p0DataSource.getNumConnectionsDefaultUser()
-                        + " numConnectionsAllUsers:" + c3p0DataSource.getNumConnectionsAllUsers()
-                        + " numIdleConnections:" + c3p0DataSource.getNumIdleConnectionsDefaultUser()
-                        + " numBusyConnections:" + c3p0DataSource.getNumBusyConnectionsDefaultUser()
-                        + " \r\r" + DBUtil.getThreadPoolStatus(dataSource);
+                cpDiagnostics = getSimpleCpDiagnosticsAttr(dataSource)
+                    + " \r\r" + DBUtil.getThreadPoolStatus(dataSource);
             } catch (SQLException e) {
                 s_log.error("getCpDiagnosticsAttr() error:" + e);
             }
@@ -552,6 +577,75 @@ Or, if there are stmts and/or rsets...
             s_log.error("Exception extracting SQL:" + e.getMessage());
             return "";
         }
+    }
+
+
+
+    public static String getMysqlProcessListHtml(Connection connection)
+            throws SQLException {
+        String returnVal = "";
+        ArrayList<String> list = getMysqlProcessList(connection);
+        for (String record : list) {
+            returnVal += record + "<br>";
+        }
+        return returnVal;
+    }
+
+    public static String getMysqlProcessListStr(Connection connection)
+            throws SQLException {
+        String returnVal = "";
+        ArrayList<String> list = getMysqlProcessList(connection);
+        for (String record : list) {
+            returnVal += record + "\n";
+        }
+        return returnVal;
+    }
+
+    public static void logMysqlProcessList(Connection connection)
+            throws SQLException {
+        ArrayList<String> list = getMysqlProcessList(connection);
+        for (String record : list) {
+            s_log.warn("getMysqlProcessList() record:" + record);
+        }
+    }
+
+    public static ArrayList<String> getMysqlProcessList(Connection connection)
+            throws SQLException {
+        String query = "show full processlist";
+        String delim = " | ";
+        ArrayList<String> list = new ArrayList<>();
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(connection, "getMysqlProcessList()");
+            rset = stmt.executeQuery(query);
+            int count = 0;
+            while (rset.next()) {
+                if (count == 0) {
+                    list.add("| Id     | User   | Host            | db   | Command | Time | State                | Info   \r\n");
+                    list.add("--------------------------------------------------------------------------------------------\r\n");
+                }
+                ++count;
+
+                String id = rset.getString("id");
+                String user = rset.getString("user");
+                String host = rset.getString("host");
+                String db = rset.getString("db");
+                String command = rset.getString("command");
+                String time = rset.getString("time");
+                String state = rset.getString("state");
+                String info = rset.getString("info");
+
+                //if ((new Integer(time)).intValue() > 1000) {
+                String record = id + delim + user + delim + host + delim + db + delim + command + delim + time + delim + state + delim + info;
+                list.add(record + "\r\n");
+                //}
+            }
+        } finally {
+            DBUtil.close(stmt, rset, "getMysqlProcessList()");
+        }
+        return list;
     }
 
 

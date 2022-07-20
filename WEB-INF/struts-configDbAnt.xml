@@ -32,10 +32,11 @@ Another connectiono is defined in DBUtil.getDataSource()
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
-      <set-property property="autoCommitOnClose" value="true"/> 
+      <set-property property="autoCommitOnClose" value="true"/>
 
+      <!-- See DBUtil.java for documentation -->
       <set-property property="unreturnedConnectionTimeout" value="500"/>  <!-- was 600 -->
-      <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
+      <set-property property="debugUnreturnedConnectionStackTraces" value="true"/>
 
       <set-property property="testConnectionOnCheckin" value="true"/> 
       <set-property property="idleConnectionTestPeriod" value="60"/> 
@@ -53,8 +54,9 @@ Another connectiono is defined in DBUtil.getDataSource()
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
-      <set-property property="autoCommitOnClose" value="true"/> 
+      <set-property property="autoCommitOnClose" value="true"/>
 
+      <!-- See DBUtil.java for documentation -->
       <set-property property="unreturnedConnectionTimeout" value="600"/>
       <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
 
@@ -62,7 +64,9 @@ Another connectiono is defined in DBUtil.getDataSource()
       <set-property property="idleConnectionTestPeriod" value="300"/> 
       <set-property property="maxIdleTimeExcessConnections" value="240"/>
     </data-source>
-  
+
+
+
     <data-source key="longConPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
       <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
       <set-property property="auth" value="Container"/>
@@ -76,6 +80,7 @@ Another connectiono is defined in DBUtil.getDataSource()
       <set-property property="testConnectionOnCheckout" value="true"/>
       <set-property property="autoCommitOnClose" value="true"/> 
 
+      <!-- See DBUtil.java for documentation -->
       <set-property property="unreturnedConnectionTimeout" value="10800"/> <!-- 4200 / 60 is 70 min -->  <!-- 10800 / 60 is 3 hours -->
       <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
        
@@ -89,11 +94,6 @@ Another connectiono is defined in DBUtil.getDataSource()
 Does not work:
       <set-property property="zeroDateTimeBehavior" value="convertToNull"/> 
 
-To track down an unreturnedConnection, go to /home/mjohnson/links/ and"
-
-    grep checkoutPooledConnection detail/antwebInfo.log -A 5 -B 5
-    
-    
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;characterEncoding=utf-8"/>
 -->
 

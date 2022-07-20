@@ -25,7 +25,8 @@ public final class DbStatusAction extends Action {
 
 		boolean success = true;
         s_log.info("in DbStatusAction");
-        
+
+        String target = HttpUtil.getTarget(request);
         DynaActionForm df = (DynaActionForm) form;
 
         String op = (String) df.get("name");
@@ -38,20 +39,28 @@ public final class DbStatusAction extends Action {
             closeOpenConnection();
           }
         }
-        
-  	    HttpSession session = request.getSession();
-        DataSource dataSource = getDataSource(request, "conPool");
-		
-        setCpDiagnosticsAttr(dataSource, request);
 
-        try {       
-          request.setAttribute("isServerBusy", DBUtil.isServerBusy(dataSource, request));
+        Connection connection = null;
+        try {   
+            HttpSession session = request.getSession();
+            DataSource dataSource = getDataSource(request, "conPool");
+
+            connection = DBUtil.getConnection(dataSource, "DbStatusAction.execute()", target);
+            String mySqlProcessListHtml = DBUtil.getMysqlProcessListHtml(connection);
+            request.setAttribute("mySqlProcessListHtml", mySqlProcessListHtml);
+
+            request.setAttribute("cpDiagnostics", DBUtil.getCpDiagnosticsAttr(dataSource));
+
+            request.setAttribute("mediumConPoolDiagnostics", DBUtil.getCpDiagnosticsAttr(getDataSource(request, "mediumConPool")));
+
+            request.setAttribute("longConPoolDiagnostics", DBUtil.getCpDiagnosticsAttr(getDataSource(request, "longConPool")));
+
+            request.setAttribute("isServerBusy", DBUtil.isServerBusy(dataSource, request));
         } catch (SQLException e) {
-          s_log.error("e:" + e);
+            s_log.error("e:" + e);
+        } finally {
+            DBUtil.close(connection, "DbStatusAction.execute()");
         }
-
-        String mySqlProcessListHtml = getMySqlProcessListHtml(request);
-        request.setAttribute("mySqlProcessListHtml", mySqlProcessListHtml);
 
 		if (success) {
 			return mapping.findForward("success");
@@ -59,27 +68,6 @@ public final class DbStatusAction extends Action {
 			return mapping.findForward("failure");
 		}
 	}
-	
-	private void setCpDiagnosticsAttr(DataSource dataSource, HttpServletRequest request) {
-        String cpDiagnostics = DBUtil.getCpDiagnosticsAttr(dataSource);
-        request.setAttribute("cpDiagnostics", cpDiagnostics);
-	}
-
-    public String getMySqlProcessListHtml(HttpServletRequest request) {
-        String mySqlProcessListHtml = null;
-		DataSource dataSource = getDataSource(request, "conPool");
-        Connection connection = null;
-        try {
-            connection = DBUtil.getConnection(dataSource, "DbStatusAction.getMySqlProcessListHtml()", HttpUtil.getTarget(request));
-            mySqlProcessListHtml = AntwebFunctions.getMysqlProcessListHtml(connection);
-            //AntwebFunctions.logMysqlProcessList(connection);
-        } catch (SQLException e) {
-            s_log.error("getMySqlProcessListHtml() e:" + e);
-        } finally {
-            DBUtil.close(connection, this, "DbStatusAction.getMySqlProcessListHtml()");
-        }
-        return mySqlProcessListHtml;
-    }
 
     private static Connection connection;
 
