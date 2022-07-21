@@ -431,6 +431,13 @@ Or, if there are stmts and/or rsets...
           try {
             connection = DBUtil.getConnection(dataSource, "isServerBusy()");
             logMessage += "<br>" + DBUtil.getMysqlProcessListHtml(connection);
+
+              String recipients = AntwebUtil.getDevEmail();
+              String subject = "Antweb Server Busy";
+              String body = logMessage;
+              //s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
+              Emailer.sendMail(recipients, subject, body);
+
           } catch (SQLException e) {
             s_log.error("isServerBusy() e:" + e);
           } finally {
@@ -446,15 +453,15 @@ Or, if there are stmts and/or rsets...
       }
     }
 
-/* Uncloseed Connections
+/* Unclosed Connections
      In struts-configDbAnt.xml there are properties defined:
      unreturnedConnectionTimeout and debugUnreturnedConnectionStackTraces
 
-     If timeout > 0 and true then, to track down an unreturnedConnection, go to /home/mjohnson/links/ and"
+     If timeout > 0 and true then, to track down an unreturnedConnection, go to /root/antweb/ and"
 
-        grep checkoutPooledConnection detail/antwebInfo.log -A 5 -B 5
+        grep checkoutPooledConnection logs/antwebInfo.log -A 5 -B 5
 
-     These should be left on for production.
+     These should not be left on in production because of performance impact.
 */
 
     public static String reportUnreturnedConnection(DataSource dataSource) {

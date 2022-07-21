@@ -311,14 +311,14 @@ public class AntwebSystem {
            message = "systemCpuLoad:" + systemCpuLoad + " processCpuLoad:" + processCpuLoad;
            if (!messageSent) {
              messageSent = true;
-             String recipients = "re.mark.johnson@gmail.com";
+             String recipients = AntwebUtil.getDevEmail();
              String subject = "Antweb " + message;
              String body = ".";
              s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
-             //Emailer.sendMail(recipients, subject, body);
+             Emailer.sendMail(recipients, subject, body);
            }
           // CpuCheck is called cCheck.log to hide "inner workings to satisfy Joe Russack in IT.
-          LogMgr.appendDataLog("cpuCheck.log", message , true);
+          LogMgr.appendDataLog("cCheck.log", message , true);
         }
         return message;
     }

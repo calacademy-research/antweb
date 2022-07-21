@@ -41,7 +41,7 @@ public final class DbStatusAction extends Action {
         }
 
         Connection connection = null;
-        try {   
+        try {
             HttpSession session = request.getSession();
             DataSource dataSource = getDataSource(request, "conPool");
 
