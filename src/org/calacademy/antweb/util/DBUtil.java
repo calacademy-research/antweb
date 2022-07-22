@@ -515,7 +515,7 @@ Or, if there are stmts and/or rsets...
           }
 
           if (force || !NOT_BUSY_MSG.equals(serverBusyReport)) {
-              if (lastEmail == null || AntwebUtil.minsSince(lastEmail) > emailFreq)) {
+              if (lastEmail == null || AntwebUtil.minsSince(lastEmail) > emailFreq) {
                 lastEmail = new Date();
                 String recipients = AntwebUtil.getDevEmail();
                 String subject = "Antweb Server Busy";
