@@ -429,6 +429,7 @@ Or, if there are stmts and/or rsets...
         return isBusy;
     }
 
+    private static String NOT_BUSY_MSG = "Server not busy.";
     private static int testAgain = 0;
     private static int testAgainLimit = 10;
 
@@ -479,7 +480,7 @@ Or, if there are stmts and/or rsets...
             reportServerBusy(cpds1, cpds2, cpds3);
             isServerBusy = true;
         } else {
-            serverBusyReport = "Server not busy.";
+            serverBusyReport = NOT_BUSY_MSG;
             isServerBusy = false;
         }
         return isServerBusy;
@@ -503,25 +504,26 @@ Or, if there are stmts and/or rsets...
           if (force || (lastLog == null || AntwebUtil.minsSince(lastLog) > logFreq)) {
 
             lastLog = new Date();
-            String logMessage = "<br><br>" + new Date() + " reportServerBusy YES! "
-                    + "shortPool:" + getSimpleCpDiagnosticsAttr(cpds1) + ". mmediumPool:" + getSimpleCpDiagnosticsAttr(cpds2) + ". longPools:" + getSimpleCpDiagnosticsAttr(cpds3) + " "
-                    + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats() + " oldConns:" + DBUtil.getOldConnectionList();
+            String logMessage = "<br><br>" + new Date() + " reportServerBusy forced:" + force
+                    + "shortPool:" + getSimpleCpDiagnosticsAttr(cpds1) + ". mediumPool:" + getSimpleCpDiagnosticsAttr(cpds2) + ". longPools:" + getSimpleCpDiagnosticsAttr(cpds3) + " "
+                    + QueryProfiler.report() + "<br><br> Memory:" + AntwebUtil.getMemoryStats() + " oldConns:" + DBUtil.getOldConnectionList();
             s_log.warn(logMessage);
             connection = DBUtil.getConnection(cpds1, "isServerBusy()");
-            logMessage += " proceesses:" + DBUtil.getMysqlProcessListHtml(connection);
+            logMessage += "\r processes:" + DBUtil.getMysqlProcessListHtml(connection);
             LogMgr.appendLog("serverBusy.html", logMessage);
             serverBusyReport = logMessage;
           }
 
-          if (force || (lastEmail == null || AntwebUtil.minsSince(lastEmail) > emailFreq)) {
-            lastEmail = new Date();
-
-            String recipients = AntwebUtil.getDevEmail();
-            String subject = "Antweb Server Busy";
-            String body = serverBusyReport;
-            //s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
-            Emailer.sendMail(recipients, subject, body);
-          }
+          if (force || !NOT_BUSY_MSG.equals(serverBusyReport)) {
+              if (lastEmail == null || AntwebUtil.minsSince(lastEmail) > emailFreq)) {
+                lastEmail = new Date();
+                String recipients = AntwebUtil.getDevEmail();
+                String subject = "Antweb Server Busy";
+                String body = serverBusyReport;
+                //s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
+                Emailer.sendMail(recipients, subject, body);
+              }
+            }
         } catch (SQLException e) {
             s_log.error("reportServerBusy() e:" + e);
         } finally {
