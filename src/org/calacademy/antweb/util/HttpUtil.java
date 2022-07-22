@@ -461,7 +461,7 @@ public abstract class HttpUtil {
     
     public static boolean tooBusyForBots(DataSource dataSource, HttpServletRequest request)
        throws SQLException {
-        boolean isServerBusy = DBUtil.isServerBusy(dataSource, request);                                  		  
+        boolean isServerBusy = DBUtil.isServerBusy(dataSource);
         if (HttpUtil.getIsBot(request) && isServerBusy) {
           ++serverBusyCount;
           if (serverBusyCount % 100 == 0) {

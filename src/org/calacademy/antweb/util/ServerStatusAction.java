@@ -11,6 +11,8 @@ import javax.sql.DataSource;
 import org.apache.struts.action.*;
 import java.sql.*;
 
+import com.mchange.v2.c3p0.*;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -45,10 +47,12 @@ static double getVersion () {
     
         //A.log("execute action:" + action);
 
-
         try {
-            DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "ServerStatusAction.execute");
+            ComboPooledDataSource dataSource1 = (ComboPooledDataSource) getDataSource(request, "conPool");
+            ComboPooledDataSource dataSource2 = (ComboPooledDataSource) getDataSource(request, "mediumConPool");
+            ComboPooledDataSource dataSource3 = (ComboPooledDataSource) getDataSource(request, "longConPool");
+
+            connection = DBUtil.getConnection(dataSource1, "ServerStatusAction.execute");
  
             if (action.equals("toggleDownTime")) {
                 String message = ServerStatusAction.toggleDownTime(connection); 
@@ -56,16 +60,21 @@ static double getVersion () {
                // return (mapping.findForward("message"));
             }
      
-            setOperationLockAttr(dataSource, request);
-            try {       
-                request.setAttribute("isServerBusy", DBUtil.isServerBusy(dataSource, request));
-            } catch (SQLException e) {
-                s_log.error("e:" + e);
+            setOperationLockAttr(dataSource1, request);
+
+            request.setAttribute("isServerBusy", DBUtil.isServerBusy(dataSource1, dataSource2, dataSource3));
+
+
+            if (action.equals("email")) {
+                DBUtil.reportServerBusy(dataSource1, dataSource2, dataSource3, true);
+                request.setAttribute("message", "message sent");
+                return (mapping.findForward("message"));
             }
 
-            String cpDiagnostics = DBUtil.getSimpleCpDiagnosticsAttr(dataSource);
+            String cpDiagnostics = DBUtil.getSimpleCpDiagnosticsAttr(dataSource1);
             request.setAttribute("cpDiagnostics", cpDiagnostics);
-
+        } catch (SQLException e) {
+            s_log.error("e:" + e);
         } catch (Exception e) {
             s_log.error("e:" + e);
         } finally {

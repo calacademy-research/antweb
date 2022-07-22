@@ -43,19 +43,20 @@ public final class DbStatusAction extends Action {
         Connection connection = null;
         try {
             HttpSession session = request.getSession();
-            DataSource dataSource = getDataSource(request, "conPool");
+            DataSource dataSource1 = getDataSource(request, "conPool");
+            DataSource dataSource2 = getDataSource(request, "mediumConPool");
+            DataSource dataSource3 = getDataSource(request, "longConPool");
 
-            connection = DBUtil.getConnection(dataSource, "DbStatusAction.execute()", target);
+            connection = DBUtil.getConnection(dataSource1, "DbStatusAction.execute()", target);
             String mySqlProcessListHtml = DBUtil.getMysqlProcessListHtml(connection);
             request.setAttribute("mySqlProcessListHtml", mySqlProcessListHtml);
 
-            request.setAttribute("cpDiagnostics", DBUtil.getCpDiagnosticsAttr(dataSource));
+            request.setAttribute("cpDiagnostics", DBUtil.getCpDiagnosticsAttr(dataSource1));
+            request.setAttribute("mediumConPoolDiagnostics", DBUtil.getCpDiagnosticsAttr(dataSource2));
+            request.setAttribute("longConPoolDiagnostics", DBUtil.getCpDiagnosticsAttr(dataSource3));
 
-            request.setAttribute("mediumConPoolDiagnostics", DBUtil.getCpDiagnosticsAttr(getDataSource(request, "mediumConPool")));
-
-            request.setAttribute("longConPoolDiagnostics", DBUtil.getCpDiagnosticsAttr(getDataSource(request, "longConPool")));
-
-            request.setAttribute("isServerBusy", DBUtil.isServerBusy(dataSource, request));
+            request.setAttribute("isServerBusy", DBUtil.isServerBusy(dataSource1, dataSource2, dataSource3));
+            request.setAttribute("message", DBUtil.getServerBusyReport());
         } catch (SQLException e) {
             s_log.error("e:" + e);
         } finally {

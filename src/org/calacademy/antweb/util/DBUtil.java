@@ -407,8 +407,132 @@ Or, if there are stmts and/or rsets...
     }
 
 
-    private static int s_serverBusyConnectionCount = 0;
+    public static String reportUnreturnedConnection(DataSource dataSource) {
+        int unreturnedConnectionTimeout = 0;
+        String report = "";
+        String unreturnedConnectionStackTraces = "";
+        String cpDiagnostics = null;
+        ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
+        //try {
+        unreturnedConnectionTimeout = c3p0DataSource.getUnreturnedConnectionTimeout();
+        //unreturnedConnectionStackTraces = c3p0DataSource.getUnreturnedConnectionStackTraces();
+        report = unreturnedConnectionTimeout + " " + unreturnedConnectionStackTraces;
+        //} catch (SQLException e) {
+        //    s_log.error("getUnreturnedConnectionTimeout() error:" + e);
+        //      }
+        return report;
+    }
 
+    public static boolean isServerBusy(DataSource dataSource)
+            throws SQLException {
+        boolean isBusy = isServerBusy(dataSource, null, null);
+        return isBusy;
+    }
+
+    private static int testAgain = 0;
+    private static int testAgainLimit = 10;
+
+    public static boolean isServerBusy(DataSource dataSource, HttpServletRequest request) throws SQLException {
+        if (testAgain >= testAgainLimit) {
+            testAgain = 0;
+            isServerBusy = isServerBusy(dataSource, null, null);
+        } else {
+            testAgain  = testAgain + 1;
+        }
+
+        String message = getServerBusyReport();
+        request.setAttribute("message", message);
+
+        return isServerBusy;
+    }
+
+    private static boolean isServerBusy = false;
+    public static boolean getIsServerBusy() {
+        return isServerBusy;
+    }
+
+    public static boolean isServerBusy(DataSource dataSource1, DataSource dataSource2, DataSource dataSource3)
+            throws SQLException {
+        int numBusy1 = DBUtil.getNumBusyConnections(dataSource1);
+        int numBusy2 = DBUtil.getNumBusyConnections(dataSource2);
+        int numBusy3 = DBUtil.getNumBusyConnections(dataSource3);
+        String poolName = null;
+        DataSource dataSource = null;
+
+        ComboPooledDataSource cpds1 = (ComboPooledDataSource) dataSource1;
+        ComboPooledDataSource cpds2 = (ComboPooledDataSource) dataSource2;
+        ComboPooledDataSource cpds3 = (ComboPooledDataSource) dataSource3;
+
+        if (numBusy1 > (cpds1.getMaxPoolSize() - 1)) {
+            poolName = "shortPool";
+        }
+        if (numBusy2 > (cpds2.getMaxPoolSize() - 1)) {
+            poolName = "middlePool";
+        }
+        if (numBusy3 > (cpds3.getMaxPoolSize() - 1)) {
+            poolName = "longPool";
+        }
+        boolean busy = false;
+        if (poolName != null) busy = true;
+
+        if (busy)  {
+            reportServerBusy(cpds1, cpds2, cpds3);
+            isServerBusy = true;
+        } else {
+            serverBusyReport = "Server not busy.";
+            isServerBusy = false;
+        }
+        return isServerBusy;
+    }
+
+    private static String serverBusyReport = null;
+    public static String getServerBusyReport() {
+        return serverBusyReport;
+    }
+
+    public static int logFreq = 3;      // Log frequency in minutes
+    public static int emailFreq = 15;   // email frequency in minutes
+
+    public static String reportServerBusy(ComboPooledDataSource cpds1, ComboPooledDataSource cpds2, ComboPooledDataSource cpds3) {
+        return reportServerBusy(cpds1, cpds2, cpds3, false);
+    }
+
+    public static String reportServerBusy(ComboPooledDataSource cpds1, ComboPooledDataSource cpds2, ComboPooledDataSource cpds3, boolean force) {
+        Connection connection = null;
+            try {
+          if (force || (lastLog == null || AntwebUtil.minsSince(lastLog) > logFreq)) {
+
+            lastLog = new Date();
+            String logMessage = "<br><br>" + new Date() + " reportServerBusy YES! "
+                    + "shortPool:" + getSimpleCpDiagnosticsAttr(cpds1) + ". mmediumPool:" + getSimpleCpDiagnosticsAttr(cpds2) + ". longPools:" + getSimpleCpDiagnosticsAttr(cpds3) + " "
+                    + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats() + " oldConns:" + DBUtil.getOldConnectionList();
+            s_log.warn(logMessage);
+            connection = DBUtil.getConnection(cpds1, "isServerBusy()");
+            logMessage += " proceesses:" + DBUtil.getMysqlProcessListHtml(connection);
+            LogMgr.appendLog("serverBusy.html", logMessage);
+            serverBusyReport = logMessage;
+          }
+
+          if (force || (lastEmail == null || AntwebUtil.minsSince(lastEmail) > emailFreq)) {
+            lastEmail = new Date();
+
+            String recipients = AntwebUtil.getDevEmail();
+            String subject = "Antweb Server Busy";
+            String body = serverBusyReport;
+            //s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
+            Emailer.sendMail(recipients, subject, body);
+          }
+        } catch (SQLException e) {
+            s_log.error("reportServerBusy() e:" + e);
+        } finally {
+            DBUtil.close(connection, "reportServerBusy()");
+        }
+
+        return serverBusyReport;
+    }
+
+
+    private static int s_serverBusyConnectionCount = 0;
     public static int getServerBusyConnectionCount() {
       return s_serverBusyConnectionCount;
     }
@@ -416,8 +540,9 @@ Or, if there are stmts and/or rsets...
     static final int MAXNUMBUSYCONNECTIONS = 100; // was 13;
     private static final int MINUTES = 1000 * 60;
     private static Date lastLog;
-    
-    public static boolean isServerBusy(DataSource dataSource, HttpServletRequest request)
+    private static Date lastEmail;
+
+    public static boolean xisServerBusy(DataSource dataSource, HttpServletRequest request)
       throws SQLException {
       int numBusy = DBUtil.getNumBusyConnections(dataSource);
       if (numBusy > DBUtil.MAXNUMBUSYCONNECTIONS) {
@@ -464,21 +589,6 @@ Or, if there are stmts and/or rsets...
      These should not be left on in production because of performance impact.
 */
 
-    public static String reportUnreturnedConnection(DataSource dataSource) {
-        int unreturnedConnectionTimeout = 0;
-        String report = "";
-        String unreturnedConnectionStackTraces = "";
-        String cpDiagnostics = null;
-        ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
-        //try {
-            unreturnedConnectionTimeout = c3p0DataSource.getUnreturnedConnectionTimeout();
-            //unreturnedConnectionStackTraces = c3p0DataSource.getUnreturnedConnectionStackTraces();
-            report = unreturnedConnectionTimeout + " " + unreturnedConnectionStackTraces;
-        //} catch (SQLException e) {
-        //    s_log.error("getUnreturnedConnectionTimeout() error:" + e);
-        //      }
-        return report;
-    }
 
     private static final int s_threshold = 8;
     private static String s_lastMethod;
@@ -503,6 +613,7 @@ Or, if there are stmts and/or rsets...
     }
 
 	public static int getNumBusyConnections(DataSource dataSource) {
+        if (dataSource == null) return -1;
         int numBusy = 0;
         String cpDiagnostics = null;
         if (dataSource instanceof ComboPooledDataSource) {
@@ -539,6 +650,23 @@ Or, if there are stmts and/or rsets...
             } catch (SQLException e) {
                 s_log.error("getCpDiagnosticsAttr() error:" + e);
                 throw e;
+            }
+        }
+        return cpDiagnostics;
+    }
+
+    public static String getAllCpDiagnosticsAttr(DataSource dataSource1, DataSource dataSource2, DataSource dataSource3) {
+        String cpDiagnostics = "";
+        if (dataSource1 instanceof ComboPooledDataSource && dataSource2 instanceof ComboPooledDataSource && dataSource3 instanceof ComboPooledDataSource) {
+            ComboPooledDataSource c3p0DataSource1 = (ComboPooledDataSource) dataSource1;
+            ComboPooledDataSource c3p0DataSource2 = (ComboPooledDataSource) dataSource2;
+            ComboPooledDataSource c3p0DataSource3 = (ComboPooledDataSource) dataSource3;
+            try {
+                cpDiagnostics = getSimpleCpDiagnosticsAttr(dataSource1)
+                  + getSimpleCpDiagnosticsAttr(dataSource2)
+                  + getSimpleCpDiagnosticsAttr(dataSource3);
+            } catch (SQLException e) {
+                s_log.error("getAllCpDiagnosticsAttr() error:" + e);
             }
         }
         return cpDiagnostics;

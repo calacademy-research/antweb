@@ -328,7 +328,7 @@ public final class ShowLogAction extends Action {
 
         message += "<h3>Dev Logs</h3>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=adminAlerts&ext=log'>adminAlerts.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=longRequest&ext=log'>longRequest.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=longRequest&ext=log'>longRequest.adminlog</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=badRequest&ext=log'>badRequest.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=hacks&ext=log'>hacks.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=profiler&ext=jsp'>profiler.jsp</a>";
@@ -351,7 +351,7 @@ public final class ShowLogAction extends Action {
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName= notFound&ext=txt'>notFound.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=speciesListLog&ext=txt'>speciesListLog.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=taxonSet&ext=log'>taxonSet.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=adminTask.log&ext=log'>adminTask.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=adminTask&ext=log'>adminTask.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=invalid&ext=log'>invalid.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=OTNotFound&ext=txt'>OTNotFound.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=throttle&ext=txt'>throttle.txt</a>";

@@ -128,7 +128,9 @@ public class Check {
     // ActionForward b = Check.busy(getDataSource(request, "conPool"), request, mapping); if (b != null) return b; 
     public static ActionForward busy(DataSource dataSource, HttpServletRequest request, ActionMapping mapping) {
       try {
-        if (DBUtil.isServerBusy(dataSource, request)) {
+        if (DBUtil.isServerBusy(dataSource)) {
+          String message = DBUtil.getServerBusyReport();
+          request.setAttribute("message", message);
           return mapping.findForward("message");            
         }	
       } catch (SQLException e) {

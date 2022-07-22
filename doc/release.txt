@@ -1,3 +1,6 @@
+Release 8.78
+  Refactor of dBUtil server activity tools.
+
 Release 8.77.6
   Emails to admin enacted for sever events.
 

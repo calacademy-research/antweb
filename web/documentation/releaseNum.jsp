@@ -1,1 +1,1 @@
-<% antwebRelease = "8.77.6"; %>
+<% antwebRelease = "8.78"; %>
