@@ -455,7 +455,7 @@ Or, if there are stmts and/or rsets...
     public static boolean isServerBusy(DataSource dataSource1, DataSource dataSource2, DataSource dataSource3)
             throws SQLException {
 
-        if (true) return false;
+        if (!AntwebProps.isDevMode()) return false;
 
         int numBusy1 = DBUtil.getNumBusyConnections(dataSource1);
         int numBusy2 = DBUtil.getNumBusyConnections(dataSource2);
@@ -503,16 +503,16 @@ Or, if there are stmts and/or rsets...
 
     public static String reportServerBusy(ComboPooledDataSource cpds1, ComboPooledDataSource cpds2, ComboPooledDataSource cpds3, boolean force) {
         Connection connection = null;
-            try {
+        try {
           if (force || (lastLog == null || AntwebUtil.minsSince(lastLog) > logFreq)) {
 
             lastLog = new Date();
             String logMessage = "<br><br>" + new Date() + " reportServerBusy forced:" + force
-                    + "shortPool:" + getSimpleCpDiagnosticsAttr(cpds1) + ". mediumPool:" + getSimpleCpDiagnosticsAttr(cpds2) + ". longPools:" + getSimpleCpDiagnosticsAttr(cpds3) + " "
-                    + QueryProfiler.report() + "<br><br> Memory:" + AntwebUtil.getMemoryStats() + " oldConns:" + DBUtil.getOldConnectionList();
+                    + "<br><br>shortPool:" + getSimpleCpDiagnosticsAttr (cpds1) + ". <br><br>mediumPool:" + getSimpleCpDiagnosticsAttr(cpds2) + ". <br><br>longPools:" + getSimpleCpDiagnosticsAttr(cpds3) + " "
+                    + "<br><br>" + QueryProfiler.report() + "<br><br> Memory:" + AntwebUtil.getMemoryStats() + "<br><br> oldConns:" + DBUtil.getOldConnectionList();
             s_log.warn(logMessage);
             connection = DBUtil.getConnection(cpds1, "isServerBusy()");
-            logMessage += "\r processes:" + DBUtil.getMysqlProcessListHtml(connection);
+            logMessage += "<br><br> processes:" + DBUtil.getMysqlProcessListHtml(connection);
             LogMgr.appendLog("serverBusy.html", logMessage);
             serverBusyReport = logMessage;
           }

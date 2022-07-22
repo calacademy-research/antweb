@@ -64,10 +64,10 @@ static double getVersion () {
 
             request.setAttribute("isServerBusy", DBUtil.isServerBusy(dataSource1, dataSource2, dataSource3));
 
-
             if (action.equals("email")) {
-                DBUtil.reportServerBusy(dataSource1, dataSource2, dataSource3, true);
-                request.setAttribute("message", "message sent");
+                String report = DBUtil.reportServerBusy(dataSource1, dataSource2, dataSource3, true);
+                request.setAttribute("message", "message sent. <br><br>" + report);
+                df.set("action", null);
                 return (mapping.findForward("message"));
             }
 

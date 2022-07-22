@@ -24,7 +24,7 @@ Another connectiono is defined in DBUtil.getDataSource()
     <data-source key="conPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
       <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
       <set-property property="auth" value="Container"/>
-      <set-property property="maxPoolSize" value="100"/> <!-- was 15 --> <!-- was 200 -->
+      <set-property property="maxPoolSize" value="200"/> <!-- was 15 --> <!-- was 200 -->
       <set-property property="maxIdleTime" value="10"/>
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
