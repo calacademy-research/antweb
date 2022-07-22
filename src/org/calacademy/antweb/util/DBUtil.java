@@ -463,13 +463,13 @@ Or, if there are stmts and/or rsets...
         ComboPooledDataSource cpds2 = (ComboPooledDataSource) dataSource2;
         ComboPooledDataSource cpds3 = (ComboPooledDataSource) dataSource3;
 
-        if (numBusy1 > (cpds1.getMaxPoolSize() - 1)) {
+        if (cpds1 != null && (numBusy1 > (cpds1.getMaxPoolSize() - 1))) {
             poolName = "shortPool";
         }
-        if (numBusy2 > (cpds2.getMaxPoolSize() - 1)) {
+        if (cpds2 != null && (numBusy2 > (cpds2.getMaxPoolSize() - 1))) {
             poolName = "middlePool";
         }
-        if (numBusy3 > (cpds3.getMaxPoolSize() - 1)) {
+        if (cpds3 != null && (numBusy3 > (cpds3.getMaxPoolSize() - 1))) {
             poolName = "longPool";
         }
         boolean busy = false;
