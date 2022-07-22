@@ -454,6 +454,9 @@ Or, if there are stmts and/or rsets...
 
     public static boolean isServerBusy(DataSource dataSource1, DataSource dataSource2, DataSource dataSource3)
             throws SQLException {
+
+        if (true) return false;
+
         int numBusy1 = DBUtil.getNumBusyConnections(dataSource1);
         int numBusy2 = DBUtil.getNumBusyConnections(dataSource2);
         int numBusy3 = DBUtil.getNumBusyConnections(dataSource3);
