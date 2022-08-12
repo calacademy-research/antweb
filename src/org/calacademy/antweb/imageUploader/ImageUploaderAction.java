@@ -36,7 +36,7 @@ public final class ImageUploaderAction extends Action {
 		throws IOException, ServletException {
 
         ActionForward a = Check.init(request, mapping); if (a != null) return a;
-        ActionForward b = Check.busy(getDataSource(request, "conPool"), request, mapping); if (b != null) return b; 
+        //ActionForward b = Check.busy(getDataSource(request, "conPool"), request, mapping); if (b != null) return b;
         ActionForward c = Check.login(request, mapping); if (c != null) return c;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
 
@@ -61,7 +61,9 @@ public final class ImageUploaderAction extends Action {
         Connection connection = null;
         try {
             DataSource dataSource = getDataSource(request, "longConPool");
-            connection = DBUtil.getConnection(dataSource, "ImageUploaderAction.execute()");        
+            connection = DBUtil.getConnection(dataSource, "ImageUploaderAction.execute()");
+
+            ActionForward b = Check.busy(connection, request, mapping); if (b != null) return b;
 
             String action = request.getParameter("action");
             if ("regenerate".equals(action)) {

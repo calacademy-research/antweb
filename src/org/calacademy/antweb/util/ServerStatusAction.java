@@ -62,16 +62,17 @@ static double getVersion () {
      
             setOperationLockAttr(dataSource1, request);
 
-            request.setAttribute("isServerBusy", DBUtil.isServerBusy(dataSource1, dataSource2, dataSource3));
+            request.setAttribute("isServerBusy", DBStatus.isServerBusy(dataSource1, dataSource2, dataSource3));
+//            request.setAttribute("isServerBusy", DBStatus.isServerBusy(dataSource1, dataSource2, dataSource3));
 
             if (action.equals("email")) {
-                String report = DBUtil.reportServerBusy(dataSource1, dataSource2, dataSource3, true);
+                String report = DBStatus.reportServerBusy(dataSource1, dataSource2, dataSource3, true);
                 request.setAttribute("message", "message sent. <br><br>" + report);
                 df.set("action", null);
                 return (mapping.findForward("message"));
             }
 
-            String cpDiagnostics = DBUtil.getSimpleCpDiagnosticsAttr(dataSource1);
+            String cpDiagnostics = DBStatus.getSimpleCpDiagnosticsAttr(dataSource1);
             request.setAttribute("cpDiagnostics", cpDiagnostics);
         } catch (SQLException e) {
             s_log.error("e:" + e);

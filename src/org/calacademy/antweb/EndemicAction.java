@@ -59,10 +59,12 @@ public final class EndemicAction extends Action {
         }
 
         String dbUtilName = "EndemicAction.execute()";
+
+        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
         Connection connection = null;
         try {
   		    DataSource dataSource = getDataSource(request, "conPool");
-            if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 		    connection = DBUtil.getConnection(dataSource, dbUtilName);
 
             if (geolocale != null) {

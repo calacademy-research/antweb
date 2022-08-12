@@ -68,11 +68,13 @@ native bioregions to genera.
         }
 
         String dbUtilName = "IntroducedAction.execute()";
+
+        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
   		DataSource dataSource = null;
         Connection connection = null;
         try {
           dataSource = getDataSource(request, "conPool");
-          if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
           connection = DBUtil.getConnection(dataSource, dbUtilName);
 
             if (geolocale != null) {

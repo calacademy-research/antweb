@@ -56,13 +56,14 @@ public final class SpecimenAction extends DescriptionAction {
         Specimen specimen = null;
 
         if (code != null) {
+
+            if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
             Connection connection = null;
             try {
                 DataSource dataSource = getDataSource(request, "conPool");
-                
-                if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
-                
                 connection = DBUtil.getConnection(dataSource, "SpecimenAction.execute()", HttpUtil.getTarget(request));
+
                 boolean specimenExists = false;
                 specimen = new Specimen();
                 specimen.setCode(code);

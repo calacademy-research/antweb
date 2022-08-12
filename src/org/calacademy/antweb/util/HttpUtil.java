@@ -22,6 +22,7 @@ import org.calacademy.antweb.util.AntwebUtil;
 
 import javax.servlet.jsp.JspWriter;
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import java.util.regex.*;
@@ -456,22 +457,60 @@ public abstract class HttpUtil {
         }
         return false;
     }
-    
+
     public static int serverBusyCount = 0;
-    
-    public static boolean tooBusyForBots(DataSource dataSource, HttpServletRequest request)
-       throws SQLException {
-        boolean isServerBusy = DBUtil.isServerBusy(dataSource);
+
+    public static boolean tooBusyForBots(HttpServletRequest request) {
+        boolean isServerBusy = DBStatus.getIsServerBusy();
         if (HttpUtil.getIsBot(request) && isServerBusy) {
-          ++serverBusyCount;
-          if (serverBusyCount % 100 == 0) {
-              s_log.warn("tooBusyForBots() serverBusyCount:" + serverBusyCount);
-          }
-          return true;
+            serverBusyCount = serverBusyCount + 1;
+            if (serverBusyCount % 100 == 0) {
+                s_log.warn("tooBusyForBots(request) serverBusyCount:" + serverBusyCount);
+            }
+            return true;
         }
-        return false;    
+        return false;
     }
-    
+
+    private static int oneOfMany = 0;
+    private static int oneOfManyLimit = 10;
+
+    public static boolean tooBusyForBots(Connection connection, HttpServletRequest request)
+       throws SQLException {
+        boolean isServerBusy = false;
+        oneOfMany = oneOfMany + 1;        // Test only 1 in N
+        if (oneOfMany >= oneOfManyLimit) {
+            oneOfMany = 0;
+
+            isServerBusy = DBStatus.isServerBusy(connection);
+            if (HttpUtil.getIsBot(request) && isServerBusy) {
+              serverBusyCount = serverBusyCount + 1;
+              if (serverBusyCount % 100 == 0) {
+                  s_log.warn("tooBusyForBots(connection, reequest) serverBusyCount:" + serverBusyCount);
+              }
+              return true;
+            }
+        } else {
+            isServerBusy = DBStatus.getIsServerBusy();
+        }
+        return isServerBusy;
+    }
+
+    /*
+    public static boolean tooBusyForBots(DataSource dataSource, HttpServletRequest request)
+            throws SQLException {
+        boolean isServerBusy = DBStatus.isServerBusy(dataSource);
+        if (HttpUtil.getIsBot(request) && isServerBusy) {
+            ++serverBusyCount;
+            if (serverBusyCount % 100 == 0) {
+                s_log.warn("tooBusyForBots() serverBusyCount:" + serverBusyCount);
+            }
+            return true;
+        }
+        return false;
+    }
+*/
+
     public static ActionForward sendMessage(HttpServletRequest request, ActionMapping mapping, String message) {
       request.setAttribute("message", message);
       return mapping.findForward("message");

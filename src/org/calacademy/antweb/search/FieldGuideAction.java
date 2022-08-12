@@ -101,13 +101,15 @@ public final class FieldGuideAction extends Action {
 		Connection connection = null;
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-			
-            if (DBUtil.isServerBusy(dataSource, request)) {
-              return mapping.findForward("message");            
+
+            connection = DBUtil.getConnection(dataSource, "FieldGuideAction.execute()");
+
+            //if (DBUtil.isServerBusy(dataSource, request)) {
+            if (DBStatus.isServerBusy(connection, request)) {
+              return mapping.findForward("message");
             }
 
-   		    connection = DBUtil.getConnection(dataSource, "FieldGuideAction.execute()");
-
+            /*
    		    // Caching Logic Part I
             boolean isGetCache = "true".equals(fieldGuideForm.getGetCache());  // this forces the fetching from cache if available.
             String data = null;               
@@ -136,6 +138,7 @@ public final class FieldGuideAction extends Action {
                 }
               }
             }
+            */
 
 			fieldGuide.setOverview(overview);
 			fieldGuide.setRank(rank);
@@ -197,13 +200,15 @@ public final class FieldGuideAction extends Action {
                 s_log.debug("after");
 			}
 
+			/*
    		    // Caching Logic Part II
             if (!isGenCache && !isGetCache) {
                 int busy = DBUtil.getNumBusyConnections(dataSource);  
                 // A.log("execute() rank:" + rank + " subfamily:" + subfamily + " genus:" + genus);                                            
                 AntwebCacheMgr.finish(request, connection, busy, startTime, "fieldGuide", subfamily, genus, rank, overview);
             }
-			
+			*/
+
             request.setAttribute("fieldGuide", fieldGuide);
 
 		} catch (SQLException e) {

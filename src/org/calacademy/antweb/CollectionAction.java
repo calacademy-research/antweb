@@ -44,16 +44,15 @@ public final class CollectionAction extends Action {
         
         String queryString = request.getQueryString();
         s_log.debug("CollectionAction.execute() queryString:" + queryString + " p:" + request.getParameter("name"));
-        		
+
+        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
 		Collection collection = null;
 		Connection connection = null;
         Date startTime = new Date();
 
 		try {
 	 		DataSource dataSource = getDataSource(request, "conPool");
-
-            if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
-
             connection = DBUtil.getConnection(dataSource, "CollectionAction.execute()", HttpUtil.getTarget(request));	
             AntwebMgr.populate(connection);            
 

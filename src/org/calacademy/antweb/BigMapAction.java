@@ -82,13 +82,12 @@ public final class BigMapAction extends Action {
         //A.log("BigMapAction.execute() geolocaleId:" + geolocaleId + " countryName:" + countryName + " adm1Name:" + adm1Name + " geolocale:" + geolocale);
 
         Project project = ProjectMgr.getProject(projectName);
-        
+
+        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
         Connection connection = null;
         try {
           DataSource dataSource = getDataSource(request, "conPool");
-          
-          if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
-          
           connection = DBUtil.getConnection(dataSource, "BigMapAction.execute()");                        
 
           if (!Utility.isBlank(specimenCode)) {

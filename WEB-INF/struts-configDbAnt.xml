@@ -35,7 +35,7 @@ Another connectiono is defined in DBUtil.getDataSource()
       <set-property property="autoCommitOnClose" value="true"/>
 
       <!-- See DBUtil.java for documentation -->
-      <set-property property="unreturnedConnectionTimeout" value="500"/>  <!-- was 600 -->
+      <set-property property="unreturnedConnectionTimeout" value="500"/>  <!-- was 600 == 10 min -->
       <set-property property="debugUnreturnedConnectionStackTraces" value="true"/>
 
       <set-property property="testConnectionOnCheckin" value="true"/> 

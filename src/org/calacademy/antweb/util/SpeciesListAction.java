@@ -95,7 +95,8 @@ public final class SpeciesListAction extends Action {
 
         if (true) { //!AntwebCacheMgr.isCached(fullPath)) {
 
-            if (DBUtil.isServerBusy(dataSource, request)) {
+            if (DBStatus.isServerBusy(connection, request)) {
+            //if (DBUtil.isServerBusy(dataSource, request)) {
                 return mapping.findForward("message");            
             }
 
@@ -147,7 +148,8 @@ public final class SpeciesListAction extends Action {
         
         if (true) { //!AntwebCacheMgr.isCached(fullPath)) {
 
-            if (DBUtil.isServerBusy(dataSource, request)) {
+            if (DBStatus.isServerBusy(connection, request)) {
+            //if (DBUtil.isServerBusy(dataSource, request)) {
                 return mapping.findForward("message");            
             }		              
       

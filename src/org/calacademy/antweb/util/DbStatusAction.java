@@ -48,15 +48,15 @@ public final class DbStatusAction extends Action {
             DataSource dataSource3 = getDataSource(request, "longConPool");
 
             connection = DBUtil.getConnection(dataSource1, "DbStatusAction.execute()", target);
-            String mySqlProcessListHtml = DBUtil.getMysqlProcessListHtml(connection);
+            String mySqlProcessListHtml = DBStatus.getMysqlProcessListHtml(connection);
             request.setAttribute("mySqlProcessListHtml", mySqlProcessListHtml);
 
-            request.setAttribute("cpDiagnostics", DBUtil.getCpDiagnosticsAttr(dataSource1));
-            request.setAttribute("mediumConPoolDiagnostics", DBUtil.getCpDiagnosticsAttr(dataSource2));
-            request.setAttribute("longConPoolDiagnostics", DBUtil.getCpDiagnosticsAttr(dataSource3));
+            request.setAttribute("cpDiagnostics", DBStatus.getCpDiagnosticsAttr(dataSource1));
+            request.setAttribute("mediumConPoolDiagnostics", DBStatus.getCpDiagnosticsAttr(dataSource2));
+            request.setAttribute("longConPoolDiagnostics", DBStatus.getCpDiagnosticsAttr(dataSource3));
 
-            request.setAttribute("isServerBusy", DBUtil.isServerBusy(dataSource1, dataSource2, dataSource3));
-            request.setAttribute("message", DBUtil.getServerBusyReport());
+            request.setAttribute("isServerBusy", DBStatus.isServerBusy(dataSource1, dataSource2, dataSource3));
+            request.setAttribute("message", DBStatus.getServerBusyReport());
         } catch (SQLException e) {
             s_log.error("e:" + e);
         } finally {

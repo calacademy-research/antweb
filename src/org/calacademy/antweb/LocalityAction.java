@@ -43,14 +43,13 @@ public final class LocalityAction extends Action {
         // This is weird. Initially name= was used for code. Now we also allow code=.
         // name= can still be used for the code and now also for the name.
         Locality locality = null;
-        
+
+		if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
 		Date startTime = new Date();
 		Connection connection = null;
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-			
-            if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
-			
             connection = DBUtil.getConnection(dataSource, "LocalityAction.execute()");
             LocalityDb localityDb = new LocalityDb(connection);
             locality = localityDb.getLocalityByCode(code);    

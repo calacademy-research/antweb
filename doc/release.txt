@@ -1,3 +1,9 @@
+Release 8.8
+  Connection testing instead of data source testing.
+  Remove last of caching code.
+  Less frequent server checks.
+  Set1 testing/handling.
+
 Release 8.78
   Refactor of dBUtil server activity tools.
 
