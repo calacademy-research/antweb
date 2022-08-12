@@ -300,7 +300,10 @@ Or, if there are stmts and/or rsets...
         try {   
             if (conn != null && !conn.isClosed()) {
               //A.log("close() name:" + name);
-              conn.close();   
+              String str = "close conn:" + conn.toString() + " " + AntwebUtil.getShortStackTrace();
+              LogMgr.appendLog("connections.txt", str, true);
+
+              conn.close();
             }
         } catch (SQLException e)  {
             success = false;
