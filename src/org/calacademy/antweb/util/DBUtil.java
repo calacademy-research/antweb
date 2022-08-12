@@ -176,10 +176,11 @@ Or, if there are stmts and/or rsets...
         try {
           DBUtil.open(name);
           stmt = connection.createStatement();  
-      } catch (Exception e) {
+      } catch (SQLException e) {
         // Fail gracefully, without stacktrace, upon server shutdown
-        AntwebUtil.logShortStackTrace();
-        s_log.error("getStatement() name:" + name + " e:" + e);
+        //AntwebUtil.logShortStackTrace();
+        s_log.error("getStatement() connection:" + connection.toString() + " name:" + name + " e:" + e);
+        throw e;
       }
       if (stmt == null) {
           s_log.error("getStatement() unable to getStatement:" + name + " from connection:" + connection);
