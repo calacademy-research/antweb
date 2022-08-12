@@ -300,8 +300,12 @@ Or, if there are stmts and/or rsets...
         try {   
             if (conn != null && !conn.isClosed()) {
               //A.log("close() name:" + name);
-              String str = "close conn:" + conn.toString() + " " + AntwebUtil.getShortStackTrace();
-              LogMgr.appendLog("connections.txt", str, true);
+
+              // In case of: e:java.sql.SQLException: You can't operate on a closed Connection!!!
+              // Uncomment the two lines below and see output here: https://www.antweb.org/web/log/connections.txt
+              // To find how the connections are closed.
+              //String str = "close conn:" + conn.toString() + " " + AntwebUtil.getShortStackTrace();
+              //LogMgr.appendLog("connections.txt", str, true);
 
               conn.close();
             }
