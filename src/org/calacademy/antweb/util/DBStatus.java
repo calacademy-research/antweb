@@ -150,8 +150,6 @@ public class DBStatus {
             }
         } catch (SQLException e) {
             s_log.error("isServerBusy(connection) e:" + e);
-        } finally {
-            DBUtil.close(connection, "isServerBusy(connection)");
         }
 
         setIsServerBusy(isBusy);
