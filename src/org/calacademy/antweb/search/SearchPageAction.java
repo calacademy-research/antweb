@@ -31,10 +31,11 @@ public final class SearchPageAction extends Action {
         Connection connection = null;
 		try {
           DataSource dataSource = getDataSource(request, "conPool");
-          if (DBUtil.isServerBusy(dataSource, request)) {
-            return mapping.findForward("message");            
-          }			
           connection = DBUtil.getConnection(dataSource, "SearchPageAction.execute()");
+
+            if (DBStatus.isServerBusy(connection, request)) {
+                return mapping.findForward("message");
+            }
 
           session.setAttribute("activeSession", Boolean.TRUE);
 

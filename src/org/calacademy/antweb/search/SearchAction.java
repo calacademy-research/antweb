@@ -41,9 +41,13 @@ public final class SearchAction extends DispatchAction {
 
         // These needs to happen, if only because MapResults will use the project from the session.
         OverviewMgr.setOverview(request, null);
+        Connection connection = null;
 
         try {
-          ActionForward b = Check.busy(getDataSource(request, "conPool"), request, mapping); if (b != null) return b; 
+          DataSource dataSource = getDataSource(request, "conPool");
+          connection = DBUtil.getConnection(dataSource, "SearchAction.execute()");
+
+          ActionForward b = Check.busy(connection, request, mapping); if (b != null) return b;
 
           String target = HttpUtil.getTarget(request);
 
@@ -98,8 +102,10 @@ public final class SearchAction extends DispatchAction {
         } catch (Exception e) {
           s_log.error("execute() e:" + e);
           AntwebUtil.logStackTrace(e);
+        } finally {
+            DBUtil.close(connection, this, "SearchAction.execute()");
         }
-        return null;        
+        return null;
     }
 
     private void searchLog(String str) {

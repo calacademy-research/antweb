@@ -335,7 +335,7 @@ public class AntwebMgr {
     */
 	public static boolean hasServerMessage() {
       // The message would be displayed on the curate page.
-        return ServerStatusAction.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBUtil.isServerBusy() || isInitializing;
+        return ServerStatusAction.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBStatus.getIsServerBusy() || isInitializing;
 	}
     public static String getSimpleServerMessage() {
        if (isInitializing) {
@@ -350,7 +350,7 @@ public class AntwebMgr {
 	   if (UtilDataAction.isInComputeProcess()) {
 		 return "Computation Currently In Process (" + UtilDataAction.getIsInComputeProcess() + "). Some services are down.";
 	   }
-	   if (DBUtil.isServerBusy()) {
+	   if (DBStatus.getIsServerBusy()) {
 		 return "Server is busy.  Some services currently inactivated.";
 	   }
        return "";
@@ -368,7 +368,7 @@ public class AntwebMgr {
 	   if (UtilDataAction.isInComputeProcess()) {
 		 return "<h3><font color='red'>Computation Currently In <a title='" + UtilDataAction.getIsInComputeProcess() + "'>Process</a> (some services are down).</font></h3>";
 	   }
-	   if (DBUtil.isServerBusy()) {
+	   if (DBStatus.getIsServerBusy()) {
 		 return "<h2><font color='red'>Server is busy.  Service currently inactivated.</font></h2>";
 	   }
        return "";

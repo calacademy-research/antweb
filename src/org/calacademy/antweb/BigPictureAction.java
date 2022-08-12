@@ -42,16 +42,16 @@ public final class BigPictureAction extends Action {
         int number = 0;
 
         HttpSession session = request.getSession();
-        
+
+        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
         String query = null;
         Connection connection = null;
         ResultSet rset = null;
         Statement stmt = null;
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            
-            if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
-            
+
             connection = DBUtil.getConnection(dataSource, "BigPictureAction.execute()");
             
             s_log.debug("execute() imageId:" + form.getImageId());

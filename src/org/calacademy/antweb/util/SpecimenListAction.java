@@ -71,6 +71,8 @@ public final class SpecimenListAction extends Action {
           s_log.debug("execute() taxon:" + taxonName + " specimenCount:" + specimenCount + " rightClickSave:" + rightClickSave + " dataLink:" + dataLink);
           request.setAttribute("dataLink", dataLink);
 
+          /*
+
           //String data = null;
           boolean isInCache = false;         
           // This cache logic is different because we do not want to fetch.  We just
@@ -83,27 +85,26 @@ public final class SpecimenListAction extends Action {
             boolean fetchFromCache = AntwebCacheMgr.isFetchFromCache(accessLogin, isGetCache);
             if (fetchFromCache) {
                 isInCache = AntwebCacheMgr.hasInCache("specimenData", taxonName, overview.getName());
-/*
-                data = AntwebCacheMgr.fetchFromCache("specimenData", taxonName, projectName);
-                if (data != null) {
-                  s_log.warn("execute() Fetched cached page.  taxonName:" + taxonName + " projectName:" + projectName + " cacheType:specimenList");              
-                  PrintWriter out = response.getWriter();
-                  out.println(data);
-                  return null;
-                } else {
-                  if (isGetCache) {
-                    String message = "Specimen Data not found in cache for taxonName:" + taxonName + " projectName:" + projectName;
-                    s_log.info("Execute() " + message);
-                    request.setAttribute("message", message);
-                    return (mapping.findForward("message"));
-                  }                
-                }
-*/
+//                data = AntwebCacheMgr.fetchFromCache("specimenData", taxonName, projectName);
+//                if (data != null) {
+//                  s_log.warn("execute() Fetched cached page.  taxonName:" + taxonName + " projectName:" + projectName + " cacheType:specimenList");
+//                  PrintWriter out = response.getWriter();
+//                  out.println(data);
+//                  return null;
+//                } else {
+//                  if (isGetCache) {
+//                    String message = "Specimen Data not found in cache for taxonName:" + taxonName + " projectName:" + projectName;
+//                    s_log.info("Execute() " + message);
+//                    request.setAttribute("message", message);
+//                    return (mapping.findForward("message"));
+//                  }
+//                }
             }
           }
-          
+*/
+
           //if (data == null) {
-          if (!isInCache) {
+          //if (!isInCache) {
             AntwebUtil.remove(fullPath);
             //s_log.warn("execute() writing:" + fullPath);
 
@@ -121,12 +122,14 @@ public final class SpecimenListAction extends Action {
               //}
 
               DataSource dataSource = getDataSource(request, "conPool");
-              
-              if (DBUtil.isServerBusy(dataSource, request)) {
+
+              connection = DBUtil.getConnection(dataSource, "SpecimenListAction.execute()");
+
+              if (DBStatus.isServerBusy(connection, request)) {
+              //if (DBUtil.isServerBusy(dataSource, request)) {
                 return mapping.findForward("message");            
               }		              
       
-              connection = DBUtil.getConnection(dataSource, "SpecimenListAction.execute()");
               Taxon taxon = new TaxonDb(connection).getTaxon(taxonName);
 
               if (taxon == null) {
@@ -167,10 +170,13 @@ public final class SpecimenListAction extends Action {
                 request.setAttribute("message", "rank:" + rank + " not supported.");
                 return mapping.findForward("message");                
               }
+
+              /*
               if (!isGenCache) {
                 int busy = DBUtil.getNumBusyConnections(dataSource);
                 AntwebCacheMgr.finish(request, connection, busy, startTime, "specimenList", overview, taxonName);
               }
+              */
 
             } catch (SQLException e) {
               String message = e.toString();
@@ -182,7 +188,7 @@ public final class SpecimenListAction extends Action {
               DBUtil.close(connection, this, "SpecimenListAction.execute()");
             }
             
-          } // if isInCache
+          //} // if isInCache
           
           String message = dataLink;
           request.setAttribute("message", message);
@@ -283,14 +289,16 @@ public final class SpecimenListAction extends Action {
         Connection connection = null;
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-              
-            if (DBUtil.isServerBusy(dataSource, request)) {
-                request.setAttribute("message", "Server Busy");
-                return mapping.findForward("message");           
-            }
-      
+
             // Use the first connection to get all of the specimen codes
             connection = DBUtil.getConnection(dataSource, "SpecimenListAction.generateAllAntwebAnts()");
+
+            if (DBStatus.isServerBusy(connection, request)) {
+                //if (DBUtil.isServerBusy(dataSource, request)) {
+                request.setAttribute("message", "Server Busy");
+                return mapping.findForward("message");
+            }
+
             ArrayList<String> codes = new SpecimenDb(connection).getAntwebSpecimenCodes(ProjectMgr.getProject(Project.ALLANTWEBANTS), Family.ANT_FAMILY);
 
             int specimenCount = 0;

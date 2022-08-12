@@ -2,6 +2,7 @@
 
 import java.io.*;
 import java.util.Date;
+import java.util.Calendar;
 
 import javax.servlet.http.*;
 
@@ -198,5 +199,33 @@ public class Scheduler extends Action {
         //this shouldn't happen in this example
         return "action:" + action + " not found.";
     }
+
+	private static boolean set1Tested = false;
+	// Return true if set1 running after an hour of scheduled tasks. Only report true once.
+	public static void set1Test() {
+		// Test for the set1 not finishing issue.
+		Calendar rightNow = Calendar.getInstance();
+		int hour = rightNow.get(Calendar.HOUR_OF_DAY);
+		if (hour <= LAUNCHTIME) {
+			set1Tested = false;
+            return;
+		}
+
+		if (set1Tested) return;
+
+		if (hour >= (LAUNCHTIME + 1)) {
+			set1Tested = true;
+			String msg = UtilDataAction.getIsInComputeProcess();
+			boolean stuckInSet1 = (msg != null && msg.contains("set1"));
+			if (stuckInSet1) {
+				// Yes, in set 1 after it should have completed.
+				String body = "Stuck in set1. " + msg;
+				String recipients = AntwebUtil.getDevEmail();
+				String subject = "Antweb Alert";
+				Emailer.sendMail(recipients, subject, body);
+			}
+			s_log.warn("adminTest() stuckInSet1:" + stuckInSet1 + " msg:" + msg);
+		}
+	}
 }
 

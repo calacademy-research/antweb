@@ -37,18 +37,18 @@ public final class OverviewAction extends DescriptionAction {
       
       OverviewForm overviewForm = (OverviewForm) form;
 	  String action = overviewForm.getAction();
-        
+
+      if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
       Connection connection = null;
-      
       try {
         DataSource dataSource = null;
-        
-        if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
-        
+
         if (!"recalc".equals(action)) dataSource = getDataSource(request, "conPool");
           else dataSource = getDataSource(request, "longConPool");
 
         connection = DBUtil.getConnection(dataSource, "OverviewAction.execute()", HttpUtil.getTarget(request));
+
         AntwebMgr.populate(connection);
 
         // Like to check AntewbMgr.isPopulated()?  Otherwise sometimes... NPE. When?

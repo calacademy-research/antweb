@@ -94,13 +94,13 @@ public final class TaxaPageAction extends Action {
           Connection connection = null;
           String connName = "TaxaPageAction.execute()" + AntwebUtil.getRandomNumber();
 
+          if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
           //int uniqueNumber = AntwebUtil.getRandomNumber();
           try {
             DataSource dataSource = getDataSource(request, "conPool");
-
-            if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }            
-            
             connection = DBUtil.getConnection(dataSource, connName, HttpUtil.getTarget(request));
+
             //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
             /*
               Some TaxaPageAction requests are not getting closed. Here we are logging a number
@@ -136,9 +136,10 @@ public final class TaxaPageAction extends Action {
 				return mapping.findForward("message");
 			}
 
+              String data = null;
+
               // Caching Logic Part I
               boolean isGetCache = "true".equals(request.getParameter("getCache"));  //fieldGuideForm.getGetCache()));  // this forces the fetching from cache if available.
-              String data = null;
               boolean isGenCache = "true".equals(request.getParameter("genCache"));   //fieldGuideForm.getGenCache());
               if (withImages && !isGenCache) {
 
@@ -170,7 +171,7 @@ public final class TaxaPageAction extends Action {
                   }
               }
 
-              String statusSetStr = StatusSet.getStatusSet(request, overview);
+            String statusSetStr = StatusSet.getStatusSet(request, overview);
 			String statusSetSize = StatusSet.getStatusSetSize(request);
             taxaPage.setStatusSetStr(statusSetStr);
             taxaPage.setStatusSetSize(statusSetSize);
@@ -201,12 +202,14 @@ public final class TaxaPageAction extends Action {
               http://localhost/antweb/taxonomicPage.do?rank=genus&project=allantwebants                
             */
 
-
+/*
             // Caching Logic Part II
             if (false && withImages && !isGenCache && !isGetCache) {
-              int busy = DBUtil.getNumBusyConnections(dataSource);
-              AntwebCacheMgr.finish(request, connection, busy, startTime, "taxaPage", overview, rank);
+              //int busy = DBStatus.getNumBusyConnections(dataSource);
+                int busy = DBStatus.getNumBusyConnections(connection);
+                AntwebCacheMgr.finish(request, connection, busy, startTime, "taxaPage", overview, rank);
             }
+*/
 
             //if (overview instanceof Adm1) A.log("execute() overview:" + overview + " parent:" + overview.getParentName());
           } catch (SQLException e) {

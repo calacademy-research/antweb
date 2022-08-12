@@ -75,6 +75,7 @@ public class Check {
         return a;
     }
 
+    /*
     // ActionForward a = Check.initLoginValidbusy(getDataSource(request, "conPool"), request, mapping); if (a != null) return a;
     public static ActionForward initLoginValidBusy(DataSource dataSource, HttpServletRequest request, ActionMapping mapping) {
         ActionForward a = Check.initLoginValid(request, mapping);
@@ -82,6 +83,7 @@ public class Check {
         a = Check.busy(dataSource, request, mapping);
         return a;
     }
+*/
 
     // --------------------------------------------------------------------------------------
 
@@ -125,11 +127,29 @@ public class Check {
       return null;
     }
 
+    // ActionForward b = Check.busy(connection, request, mapping); if (b != null) return b;
+    public static ActionForward busy(Connection connection, HttpServletRequest request, ActionMapping mapping) {
+        if (connection == null) s_log.error("busy() connection null");
+        try {
+            if (DBStatus.isServerBusy(connection)) {
+                String message = DBStatus.getServerBusyReport();
+                request.setAttribute("message", message);
+                return mapping.findForward("message");
+            }
+        } catch (SQLException e) {
+            request.setAttribute("message", e.toString());
+            return mapping.findForward("message");
+        }
+        return null;
+    }
+
+    /*
+    // Avoid
     // ActionForward b = Check.busy(getDataSource(request, "conPool"), request, mapping); if (b != null) return b; 
-    public static ActionForward busy(DataSource dataSource, HttpServletRequest request, ActionMapping mapping) {
+    public static ActionForward Xbusy(DataSource dataSource, HttpServletRequest request, ActionMapping mapping) {
       try {
-        if (DBUtil.isServerBusy(dataSource)) {
-          String message = DBUtil.getServerBusyReport();
+        if (DBStatus.isServerBusy(dataSource)) {
+          String message = DBStatus.getServerBusyReport();
           request.setAttribute("message", message);
           return mapping.findForward("message");            
         }	
@@ -139,6 +159,7 @@ public class Check {
       }
       return null;
     }
+    */
 
     // ActionForward c = Check.login(request, mapping); if (c != null) return c;
     public static ActionForward login(HttpServletRequest request, ActionMapping mapping) {
@@ -154,7 +175,11 @@ public class Check {
     // ActionForward d = Check.valid(request, mapping); if (d != null) return d;
     public static ActionForward valid(HttpServletRequest request, ActionMapping mapping) {
       return HttpUtil.invalidRequest(request, mapping);
-    }       
+    }
+
+    public static void adminTest(HttpServletRequest request, ActionMapping mapping) {
+        Scheduler.set1Test();
+    }
 
     // e is sometimes used for exceptions. We will skip.
 

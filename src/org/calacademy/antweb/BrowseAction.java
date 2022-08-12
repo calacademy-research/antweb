@@ -56,7 +56,9 @@ public class BrowseAction extends DescriptionAction {
 
         ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
-                
+
+        Check.adminTest(request, mapping);
+
         if (ProjectMgr.hasMoved(request, response)) return null;
 
         if (logTimes) A.log("execute() 1");
@@ -257,11 +259,11 @@ public class BrowseAction extends DescriptionAction {
 		  DataSource dataSource = getDataSource(request, "conPool");
           //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
 
-          if (HttpUtil.tooBusyForBots(dataSource, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
-
 		  dbUtilName = "BrowseAction.execute()";
 		  connection = DBUtil.getConnection(dataSource, dbUtilName, HttpUtil.getTarget(request));
 		  if (connection == null) s_log.error("execute() Null connection !!!" + AntwebUtil.getRequestInfo(request));
+
+          if (HttpUtil.tooBusyForBots(connection, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
 		  TaxonDb taxonDb = new TaxonDb(connection);
 
