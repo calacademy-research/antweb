@@ -22,7 +22,7 @@
 </div>
 
 <% 
-    Emailer.sendMail("re.mark.johnson@gmail.com", "Consider!", "This");
+    //Emailer.sendMail("re.mark.johnson@gmail.com", "Consider!", "This");
 
 
 /*
@@ -38,7 +38,8 @@
   //out.println("<br>Hawaii:" + hawaii.toLog());
 
   //Group group = GroupMgr.getGroup(48);
-  //out.println("cleanCode:" + SpecimenUpload.cleanCode("AMNH #2984", "locality", group));
+
+  out.println("cleanCode:" + SpecimenUpload.cleanCode("AMNH #2984", "locality", group));
 
 %>
 <div class="right">

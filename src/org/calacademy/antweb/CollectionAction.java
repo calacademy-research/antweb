@@ -67,6 +67,7 @@ public final class CollectionAction extends Action {
 			  String cleanCode = UploadUtil.cleanCode(name);
 			  //A.log("execute() cleanCode:" + cleanCode);
 			  if (!name.equals(cleanCode)) {
+                // Frequently will fail. cleanCode is often a "tc" + a random number. use UploadUtil.genKey()?
 				message = "Unsatisfactory collection code name. Perhaps looking for <a href='" + AntwebProps.getDomainApp() + "/collection.do?name=" + cleanCode + "'>" + cleanCode + "</a>?";
 				request.setAttribute("message", message);
 				return mapping.findForward("message");

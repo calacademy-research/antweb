@@ -98,8 +98,15 @@ public class UploadUtil {
         }
         return valid;
     }
-   
 
+    /* For collection and location we will always generate a new key... */
+    public static String generateKey(String text) {
+       String asciiSum = AntwebUtil.getAsciiSum(text);
+       return asciiSum;
+    }
+
+// To be deprecated. Generate a temporary code if we don't like the existing one. Going forward, always create key.
+// Use genKey for locality and collection.
     public static String cleanCode(String code) {
       /* This method is useful for constructing codes of suitable quality for Antweb.
          Used for locality and collection when the entered value is insufficient */
@@ -111,25 +118,36 @@ public class UploadUtil {
            cleanCode = Formatter.replace(cleanCode, "#", "");
            //A.log("cleanCode() code:" + code + " cleanCode:" + cleanCode);
         }
+
         if (cleanCode.contains("'")) cleanCode = Formatter.replace(cleanCode, "'", "");
+        if (cleanCode.contains("'")) cleanCode = Formatter.replace(cleanCode, "'", ""); // same?
         if (cleanCode.contains(" ")) cleanCode = Formatter.replace(cleanCode, " ", "");
         //if (!Formatter.hasApha(code)) { }
       }
       if (cleanCode == null || cleanCode.length() < 5) {
         // Not a good code. Make a new and better one.
-        String prefix = "tc";
-	
-        if (cleanCode == null) {
-          cleanCode = prefix + AntwebUtil.getRandomNumber();        
-        } else {
-          String tempCode = prefix + code;
-          if (tempCode.length() == 4) cleanCode = prefix + "0" + cleanCode;
-          if (tempCode.length() == 3) cleanCode = prefix + "00" + cleanCode;
-        } 
+
+        cleanCode = createCode(cleanCode);
       }
 
       //if (!cleanCode.equals(code)) A.log("cleanCode() code:" + code + " cleanCode:" + cleanCode);
       return cleanCode;
+    }
+
+    private static String createCode() {
+      return createCode(null);
+    }
+    private static String createCode(String code) {
+        String cleanCode = null;
+        String prefix = "tc";
+        if (cleanCode == null) {
+            cleanCode = prefix + AntwebUtil.getRandomNumber();
+        } else {
+            String tempCode = prefix + code;
+            if (tempCode.length() == 4) cleanCode = prefix + "0" + cleanCode;
+            if (tempCode.length() == 3) cleanCode = prefix + "00" + cleanCode;
+        }
+        return cleanCode;
     }
 
     public static String cleanHtml(String str) {

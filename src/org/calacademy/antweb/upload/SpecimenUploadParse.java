@@ -698,27 +698,36 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 		// then create a temporary localitycode. Store in a static hashtable so can match up.
 		// This is useful for maps so they can link through to find the specimens.
 		// Do similar for collectioncodes.
-        String localityCode = (String) specimenItem.get("localitycode"); 
-        //A.iLog("isWithinCountryBounds() localityCode:" + localityCode);
-        if (localityCode == null) {  // Maybe we have one already by lat/lon.
-          String latLon = "" + lat + "," + lon;
-          localityCode = latLonHash.get(latLon);
-          if (localityCode == null) {
+        String localityCode = (String) specimenItem.get("localitycode");
 
+        String origLocalityCode = localityCode;
+        String localityName = (String) specimenItem.get("localityname");
+
+        //A.iLog("isWithinCountryBounds() localityCode:" + localityCode);
+
+        if (localityCode != null) {  // Maybe we have one already by lat/lon.
             localityCode = UploadUtil.cleanCode(localityCode);
-            if (lat != 0 || lon != 0) latLonHash.put(latLon, localityCode);
-          }
-          //A.iLog("isWithinCountryBounds() code:" + specimenItem.get("code") + " localityCode:" + localityCode);
+        } else {
+            String latLon = "" + lat + "," + lon;
+            localityCode = latLonHash.get(latLon);
+            if (localityCode == null) {
+
+              localityCode = UploadUtil.cleanCode(localityCode);
+              if (lat != 0 || lon != 0) latLonHash.put(latLon, localityCode);
+            }
+            //A.iLog("isWithinCountryBounds() code:" + specimenItem.get("code") + " localityCode:" + localityCode);
         }
+
+        A.log("isWithinCountryBounds() localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode + " localityName:" + localityName);
+
         specimenItem.put("localitycode", localityCode);
         
         //if ("mem89751".equals(specimenItem.get("code"))) A.log("isWithinCountryBounds() lat:" + lat + " lon:" + lon + " localityCode:" + localityCode);
         
         String collectionCode = (String) specimenItem.get("collectioncode"); 
-        collectionCode = UploadUtil.cleanCode(collectionCode);        
+        collectionCode = UploadUtil.cleanCode(collectionCode);
+        // Use UploadUtil.genKey(collection) ? Shouldn't need to clean the code here?
         specimenItem.put("collectioncode", collectionCode);
-
-        
 
         String country = (String) specimenItem.get("country"); 
         //A.log("isWithinBounds() specimen country:" + country + " adm1:" + adm1 + " lat:" + lat + " lon:" + lon);

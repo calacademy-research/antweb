@@ -18,6 +18,7 @@
 <div class="wide_left">
 
 <%
+    // https://localhost/util.do?action=testMessage
 
     // Utility.makeDirTree("/usr/local/antweb/web/log/detail/duplicateEntries1.jsp");
     //LogMgr.appendWebLog("detail/testFile.jsp", "Did it!");
@@ -25,7 +26,10 @@
     // Test this way: http://localhost/util.do?action=testMessage
 
     String message = (String) request.getAttribute("message"); 
+
+    // testMessage will be displayed on the page and in the logs.
     String testMessage = "";
+
     if (AntwebProps.isDevMode()) {
 //      testMessage = "adm1: " + GeolocaleMgr.getAnyAdm1("Enewetak & Ujelang", "Marshall Islands");
 

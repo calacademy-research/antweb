@@ -1,9 +1,13 @@
-Release 8.8
+Release 8.81
+  Handle apostrophes in locality codes.
+
+Release 8.80
   Connection testing instead of data source testing.
   Remove last of caching code.
   Less frequent server checks.
   Set1 testing/handling.
-
+  Closed connection logging  
+    
 Release 8.78
   Refactor of dBUtil server activity tools.
 

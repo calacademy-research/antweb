@@ -12,6 +12,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.upload.UploadUtil;
 
 public class SpecimenDb extends AntwebDb {
     
@@ -965,10 +966,10 @@ public class SpecimenDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateCollectedStartAsNull()");
             String updateStart = null;
-                String dml = "update specimen set datecollectedstart = null where code = '" + code + "'";
-                s_log.warn("updateParsedDates() dml:" + dml);
+            String dml = "update specimen set datecollectedstart = null where code = '" + code + "'";
+            s_log.warn("updateParsedDates() dml:" + dml);
 
-                count = stmt.executeUpdate(dml);
+            count = stmt.executeUpdate(dml);
         } catch (SQLException e) {
             s_log.error("updateCollectedStartAsNull() " + e);
             throw e;
@@ -1004,37 +1005,56 @@ public class SpecimenDb extends AntwebDb {
         return typeStatusList;
     }
 
-
 /*
+    public String processLocalityNames() throws SQLException {
+        int count = 0;
+        int issue = 0;
+        int empty = 0;
 
-select taxon_name, subfamily, genus, species, subspecies, code, 'ideal' as ideal, max(created) as created, microhabitat, method from specimen
-where subfamily = 'ponerinae'
-and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')
-and locatedat = 'CASC'
-group by subfamily, genus, species, subspecies
-union select taxon_name, subfamily, genus, species, subspecies, code, 'not ideal' as ideal, max(created) as created, microhabitat, method
-from specimen  where subfamily = 'ponerinae'
-and (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')
-and locatedat = 'CASC' group by taxon_name, subfamily, genus, species, subspecies
-order by subfamily, genus, species, subspecies
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = "select distinct localityname, localitycode, collectioncode, country from specimenBak";
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "processLocalityNames()");
+            rset = stmt.executeQuery(query);
 
+            while (rset.next()) {
+                ++count;
 
+                if (count % 10000 == 0) s_log.info("processLocalityNames() count:" + count);
 
-select subfamily, genus, species, subspecies, code, "ideal", max(created), microhabitat, method from specimen  where subfamily = "ponerinae"
-and not (method like '%pitfall%' or method like '%malaise%' or method like '%yellow pan%' or method like '%sweeping%' or method like '%winkler%' or method like '%berlese%')
-group by subfamily, genus, species, subspecies
+                String locName = rset.getString("localityname");
+                String locCode = rset.getString("localitycode");
+                String colCode = rset.getString("collectioncode");
+                String country = rset.getString("country");
 
-union
+                String code = UploadUtil.generateKey(locName);
 
-select subfamily, genus, species, subspecies, code, "not ideal", max(created), microhabitat, method  from specimen  where subfamily = "ponerinae"
-group by subfamily, genus, species, subspecies
+                //s_log.warn("processLocalityNames() code:" + code + " locCode:" + locCode + " country:" + country + " locName:" + locName);
 
-order by subfamily, genus, species, subspecies;
+                if (locName == null) {
+                    //s_log.warn("processLocalityNames() loc name is null code:" + code + " locName:" + locName + " locCode:" + locCode + " country:" + country);
+++empty;
+                    continue;
+                }
 
+                if (locName.contains("'") || locName.contains("�")) {
+++issue;
+                    s_log.warn("processLocalityNames() contains code:" + code + " locName:" + locName + " locCode:" + locCode + " country:" + country);
+                    continue;
+                }
+               // updateLocalityCodes(code, name);
+            }
+        } catch (SQLException e) {
+            s_log.error("processLocalityNames() e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, "this", "processLocalityNames)");
+        }
+        return "count:" + count + " issues:" + issue + " empty:" + empty;
+    }
 */
 
-
-    // --------------------------- End Reports -----------------------------------
 
 }
 

@@ -381,8 +381,15 @@ public class UtilDataAction extends Action {
   	 	 // DateUtil.runTests();
           SpecimenDb specimenDb = new SpecimenDb(connection);
           message = specimenDb.parseDates();
-		}	
+		}
 
+		/*
+        if (action.equals("processLocalityNames")) {
+            // DateUtil.runTests();
+            SpecimenDb specimenDb = new SpecimenDb(connection);
+            message = specimenDb.processLocalityNames();
+        }
+       */
 		    		
 		// ---- Geolocale ----------
 		

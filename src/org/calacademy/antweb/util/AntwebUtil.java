@@ -30,13 +30,13 @@ import org.calacademy.antweb.util.AntwebUtil;
 public abstract class AntwebUtil {
 
   private static final Log s_log = LogFactory.getLog(AntwebUtil.class);
-  
-  private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");  
-  
+
+  private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
+
   private static final HashMap<String, Integer> s_logHash = new HashMap<>();
-  
-  public static void main(String[] args) { 
-   // To execute:    ant antwebUtil    
+
+  public static void main(String[] args) {
+    // To execute:    ant antwebUtil
     /*
     String t = "Dlussky, Wappler &amp; Wedmann, 2009<br>";
     String t1 = java.net.URLEncoder.encode(t);
@@ -56,7 +56,21 @@ public abstract class AntwebUtil {
     */
     DateUtil.runTests();
   }
-  
+
+
+  public static String getAsciiSum(String text) {
+    if (text == null) return "0";
+    int charSum = 0;
+    for(char c : text.toCharArray()) {
+      int ascii = c;
+      charSum = charSum + ascii;
+    }
+    //s_log.warn("getAsciiSum() charSum:" + charSum + " text:" + text);
+    String sum = Integer.valueOf(charSum).toString();
+    return sum;
+  }
+
+
     public static int getCaseNumber() {
       return AntwebUtil.getRandomNumber();
     }             
