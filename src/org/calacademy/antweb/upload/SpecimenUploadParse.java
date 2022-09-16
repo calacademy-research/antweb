@@ -42,7 +42,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
     SpecimenUploadParse(Connection connection) {
       
-      super(connection);
+        super(connection);
     }
 
     //public abstract boolean importSpecimens(UploadFile uploadFile, Group group) throws SQLException, TestException, AntwebException;
@@ -58,7 +58,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         String otherColumn;
         String errorMessage = null;            
 		String code = null;
-		
+
         try {      
            
             RE tab = new RE("\t");
@@ -82,6 +82,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 debugLine = true;
             }
 
+            //String s = (String) specimenItem.get("localitycode");
+            //A.log("XXX1 localityCode:" + s);
+
             theLine = multipleQuotes.subst(theLine, "");
 
             //s_log.warn("parseLine() theLine:" + theLine);
@@ -96,6 +99,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 element = Utility.customTrim(element, "'");
                 element = Utility.customTrim(element, "\"");
                 if (element == null) element = "";
+
+
 
                 //A.log("parseLine() next:" + next + " element:" + element);
                 // if (colIndex == 0) code = element;
@@ -141,7 +146,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                               taxonItem.put(col, element);
                             }
                         }
-                                 
+
+                        //s = (String) specimenItem.get("localitycode");
+                        //if ("Brazil".equals(s)) A.log("XXX2 localityCode:" + s + " col:" + col);
+
                         if (col.equals("code")) {
                            String lowerCode = element.toLowerCase();
                            String newCode = new Formatter().removeSpaces(lowerCode);
@@ -154,7 +162,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                              specimenItem.put(col, element);
                              // A.log("parseLine() not code col:" + col + " element:" + element);
                            }
-                        }                                    
+                        }
+
+                        //s = (String) specimenItem.get("localitycode");
+                        //if ("Brazil".equals(s)) A.log("XXX3 localityCode:" + s + " col:" + col);
+
                     } else {
                         /* Columns that require data type conversion are not listed above so that here
                            they cam be handled manually.  adding them to the hashtable.
@@ -162,7 +174,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                               , access_group, access_login, decimal_longitude, decimal_latitude
                               , datedetermined
                          */
-                        
+
+                        //s = (String) specimenItem.get("localitycode");
+                        //if ("Brazil".equals(s)) A.log("XXX4 localityCode:" + (String) specimenItem.get("localitycode") + " colIndex:" + colIndex);
+
                         boolean otherColumnFound = false;
                          
                         if (otherColumns.get(colIndex).equals("loclongitude")) {
@@ -204,6 +219,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             }
                         }
 
+                        //s = (String) specimenItem.get("localitycode");
+                        //if ("Brazil".equals(s)) A.log("XXX7 localityCode:" + s + " other:" + otherColumns.get(colIndex));
+
                         // Elevation is inserted into the database as a simple number so that it is searchable.
                         //   and added to the hashtable in it's original form for display.
                         if (otherColumns.get(colIndex).equals("elevation")) {
@@ -228,6 +246,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             otherInfo.append("<" + otherColumn + ">" + element + "</" + otherColumn + ">");
                         }
                     }
+
+                    //s = (String) specimenItem.get("localitycode");
+                    //if ("Brazil".equals(s)) A.log("XXX5 localityCode:" + s + " other:" + otherColumns.get(colIndex));
+
                     ++colIndex;
                 
                 } else {  //  if ((colIndex < colList.size()) && (colIndex < otherColumns.size())) {
@@ -247,6 +269,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 }
             } // end for looping through columns
 
+            //A.log("XXX10 localityCode:" + (String) specimenItem.get("localitycode"));
             // ONCE WE HAVE THE COLUMNS PARSED, NOW WE CAN TOUCH DATA...
   
 		/*
@@ -606,8 +629,13 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (AntwebProps.isDevMode()) {
               // A.log("parseLine() code:" + (String) specimenItem.get("code") + " withinCountry:" + isWithinCountryBounds(specimenItem) + " withingAdm1:" + isWithinAdm1Bounds(specimenItem));
             }
-            
-            String withinCountryBoundsMsg = isWithinCountryBounds(specimenItem);
+
+            cleanCollectionCode(specimenItem);
+
+            Coordinate coord = getCoordinate(specimenItem);
+            cleanLocalityCode(specimenItem, coord);
+
+            String withinCountryBoundsMsg = isWithinCountryBounds(specimenItem, coord);
 			if (withinCountryBoundsMsg != null) {
 				String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimenItem.get("code") + "'>" + specimenItem.get("code") + "</a>";
 				getMessageMgr().addToMessages(MessageMgr.latLonNotInCountryBounds, displayCode, withinCountryBoundsMsg);  	
@@ -684,52 +712,101 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         return new Coordinate(lon, lat);
     }
 
+    public void cleanLocalityCode(Hashtable specimenItem, Coordinate coord) {
 
-    private String isWithinCountryBounds(Hashtable specimenItem) {
+        // If the localitycode is null but the decimal_longitude and decimal_latitude are not
+        // then create a temporary localitycode. Store in a static hashtable so can match up.
+        // This is useful for maps so they can link through to find the specimens.
+        // Do similar for collectioncodes.
+
+        //A.iLog("cleanLocalityCode() localityCode:" + localityCode);
+        String code = (String) specimenItem.get("code");
+        String localityName = (String) specimenItem.get("localityname");
+        String localityCode = (String) specimenItem.get("localitycode");
+
+        String origLocalityCode = localityCode;
+
+        if (localityCode != null) {
+            localityCode = UploadUtil.cleanCode(localityCode);
+            //A.iLog(1, "cleanLocalityCode() clean localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode, 200);
+        }
+
+        //A.log("cleanLocalityCode() localityCode:" + localityCode + " coord:" + coord);
+
+        String latLon = null;
+
+        if ((("Null".equals(localityCode) || localityCode == null) || localityCode.length() < 5) && coord != null && (coord.getLat() != 0 && coord.getLon() != 0)) {
+            float lat = coord.getLat();
+            float lon = coord.getLon();
+            latLon = "" + lat + "," + lon;
+
+            if ("Null".equals(localityCode) || localityCode == null) localityCode = "loc";
+
+            //localityCode += latLonHash.get(latLon);
+
+            localityCode += latLon;
+            localityCode = UploadUtil.cleanCode(localityCode);
+
+            //if (lat != 0 || lon != 0) latLonHash.put(latLon, localityCode);
+
+            //A.iLog(2, "cleanLocalityCode() coord localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode, 200);
+            //A.log("cleanLocalityCode() code:" + specimenItem.get("code") + " localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode + " latLon:" + latLon);
+        }
+
+        /*
+        if (localityCode == null || localityCode.length() < 5) {
+            // Not a good code. Make a new and better one.
+
+            localityCode = UploadUtil.createCode(localityCode);
+            //A.iLog(3, "cleanLocalityCode() create localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode, 200);
+            A.log("cleanLocalityCode() create localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode);
+        }
+*/
+        localityCode = HttpUtil.encodePath(localityCode);
+
+        if (localityCode != null) {
+            specimenItem.put("localitycode", localityCode);
+
+            //if (localityCode.length() < 8) A.log("cleanLocalityCode() short localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode + " latLon:" + latLon);
+        } else {
+            A.iLog(7, "cleanLocalityCode() null locality for code:" + code, 1000);
+        }
+
+/*
+        // Already encoded above.
+        String encoded = HttpUtil.encodePath(localityCode);
+        if (encoded != null && !encoded.equals(localityCode)) {
+            A.log("cleanLocalityCode() diff localityCode:" + localityCode + " encoded:" + encoded + " code:" + code);
+        }
+*/
+
+        //A.log("cleanLocalityCode() localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode + " localityName:" + localityName);
+        //if ("mem89751".equals(specimenItem.get("code"))) A.log("cleanLocalityCode() lat:" + lat + " lon:" + lon + " localityCode:" + localityCode);
+    }
+
+    public void cleanCollectionCode(Hashtable specimenItem) {
+        String collectionCode = (String) specimenItem.get("collectioncode");
+        String origCollectionCode = collectionCode;
+
+        collectionCode = UploadUtil.cleanCode(collectionCode);
+
+        if (collectionCode != null) {
+            //A.iLog(4, "cleanCollectionCode() clean collectionCode:" + collectionCode + " origCollectionCode:" + origCollectionCode, 200);
+        } else {
+            collectionCode = UploadUtil.createCode(collectionCode);
+            A.iLog(5, "cleanCollectionCode() create collectionCode:" + collectionCode + " origCollectionCode:" + origCollectionCode, 200);
+        }
+        specimenItem.put("collectioncode", collectionCode);
+    }
+
+    private String isWithinCountryBounds(Hashtable specimenItem, Coordinate coord) {
         boolean isWithinBounds = true;
- 
-        Coordinate coord = getCoordinate(specimenItem);
+
         if (coord == null) return null;
         float lat = coord.getLat();
         float lon = coord.getLon();
 
-
-		// If the localitycode is null but the decimal_longitude and decimal_latitude are not
-		// then create a temporary localitycode. Store in a static hashtable so can match up.
-		// This is useful for maps so they can link through to find the specimens.
-		// Do similar for collectioncodes.
-        String localityCode = (String) specimenItem.get("localitycode");
-
-        String origLocalityCode = localityCode;
-        String localityName = (String) specimenItem.get("localityname");
-
-        //A.iLog("isWithinCountryBounds() localityCode:" + localityCode);
-
-        if (localityCode != null) {  // Maybe we have one already by lat/lon.
-            localityCode = UploadUtil.cleanCode(localityCode);
-        } else {
-            String latLon = "" + lat + "," + lon;
-            localityCode = latLonHash.get(latLon);
-            if (localityCode == null) {
-
-              localityCode = UploadUtil.cleanCode(localityCode);
-              if (lat != 0 || lon != 0) latLonHash.put(latLon, localityCode);
-            }
-            //A.iLog("isWithinCountryBounds() code:" + specimenItem.get("code") + " localityCode:" + localityCode);
-        }
-
-        A.log("isWithinCountryBounds() localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode + " localityName:" + localityName);
-
-        specimenItem.put("localitycode", localityCode);
-        
-        //if ("mem89751".equals(specimenItem.get("code"))) A.log("isWithinCountryBounds() lat:" + lat + " lon:" + lon + " localityCode:" + localityCode);
-        
-        String collectionCode = (String) specimenItem.get("collectioncode"); 
-        collectionCode = UploadUtil.cleanCode(collectionCode);
-        // Use UploadUtil.genKey(collection) ? Shouldn't need to clean the code here?
-        specimenItem.put("collectioncode", collectionCode);
-
-        String country = (String) specimenItem.get("country"); 
+        String country = (String) specimenItem.get("country");
         //A.log("isWithinBounds() specimen country:" + country + " adm1:" + adm1 + " lat:" + lat + " lon:" + lon);
 
         if (country == null) return null;
