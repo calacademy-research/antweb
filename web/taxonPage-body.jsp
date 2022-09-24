@@ -177,9 +177,18 @@ To do:
       for (String authorDate : homonymAuthorDates) { 
         ++i;
         if (i > 1) out.println(", ");
-      %>        
+          if (false && authorDate.contains("'")) {
+            // Do not do this. It leads to taxon for some reason. status is ignored. This does not seem to help us with this one
+            // homonym which will not resolve due to special character: https://www.antweb.org/description.do?genus=temnothorax&species=spinosus&rank=species&authorDate=(Arnol%27di,%201968)
+          %>
+          <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= taxon.getTaxonName() %>&status=homonym"><%= authorDate %></a>
+      <%
+          } else {
+      %>
+
           <a href="<%= taxon.getUrl() %>&authorDate=<%= authorDate %>"><%= authorDate %></a>
-   <% } %>
+   <%     }
+       } %>
        <br>
  <% } %>
    

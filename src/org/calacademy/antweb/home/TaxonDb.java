@@ -288,7 +288,9 @@ public class TaxonDb extends AntwebDb {
         String theQuery = "select taxon_name from taxon"
                 + " where 1 = 1"
                 + familyClause + subfamilyClause + genusClause + speciesClause + subspeciesClause
-                + " and taxarank = '" + rank + "'";
+                + " and taxarank = '" + rank + "'"
+                // + " and status != 'synonym'"
+                ;
 
         //A.log("getTaxonName() theQuery:" + theQuery);
 
@@ -305,6 +307,7 @@ public class TaxonDb extends AntwebDb {
             }
             if (i > 1) {
                 String message = "getTaxonName() did not get unique result." + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank;
+                message += " Unresolved homonym, fix in antcat?";
                      //   + " query:" + theQuery;
                 //  AntwebUtil.logStackTrace();
                 throw new AntwebException(message);

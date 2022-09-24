@@ -1620,7 +1620,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       return null;
     }
 
-// ??? *** Shouldn't we pass in the view here. To default to H...?
+    // ??? *** Shouldn't we pass in the view here. To default to H...?
 
     private String getUnpickedFromSpeciesSet(Connection connection, String caste, String speciesSetStr) {
       String shotClause = " and shot_type = 'h'";
@@ -1632,7 +1632,18 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     private String getUnpickedFromSpeciesSet(Connection connection, String caste, String speciesSetStr, String shotClause) {
-        String forceIndex = " FORCE INDEX (specimen_taxon_name)";
+
+      if (speciesSetStr.length() > 10000) return null;
+        // For homonyms, speiesSetStr can be very long (765892 characters).
+        //A.log("getUnpickedFromSpeciesSet() speciesSetString.length: " + speciesSetStr.length()); // + " stackTrace:" + AntwebUtil.getStackTrace());
+        /*
+        at org.calacademy.antweb.Taxon.getUnpickedFromSpeciesSet(Taxon.java:1635)
+	    at org.calacademy.antweb.Taxon.getUnpickedFromSpeciesSetFlex(Taxon.java:1631)
+	    at org.calacademy.antweb.Taxon.getUnpickedDefault(Taxon.java:1785)
+	    at org.calacademy.antweb.Taxon.setImages(Taxon.java:1890)
+	    at org.calacademy.antweb.BrowseAction.execute(BrowseAction.java:360)
+         */
+      String forceIndex = " FORCE INDEX (specimen_taxon_name)";
 	  String query = "select code, taxon_name, caste, subcaste "
 		  + " from specimen " +  forceIndex + ", image "
 		  + " where specimen.code = image.image_of_id "

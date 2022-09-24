@@ -189,6 +189,9 @@ public class HomonymDb extends AntwebDb {
 
         // Criteria should not be null.
         if (authorDate != null) {
+
+            authorDate = DBUtil.escapeQuotes(authorDate);
+
             criteria += " and author_date = '" + authorDate + "'";
         } else {
             switch (taxonName) {
@@ -281,7 +284,7 @@ public class HomonymDb extends AntwebDb {
             if (count > 1) s_log.error("getInfoHomonym() count:" + count + " should never be more than 1. criterion:" + criterion); // TaxonName:" + taxonName + " authorDate:" + authorDate);
 
         } catch (SQLException e) {
-            s_log.error("getInfoHomonym() criterion: " + criterion + " exception:" + e);
+            s_log.warn("getInfoHomonym() criterion: " + criterion + " exception:" + e);
         } finally {
             DBUtil.close(stmt, rset, "this", "getInfoHomonym()");
         }
