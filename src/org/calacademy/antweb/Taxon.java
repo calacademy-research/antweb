@@ -1697,7 +1697,14 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		  stmt = DBUtil.getStatement(connection, "getSpeciesNameSet()");
 		  rset = stmt.executeQuery(query);
 
-          if (taxonDebug()) s_log.debug("getSpeciesNameSet() this:" + this.getClass() + " query:" + query);
+          //if (taxonDebug())
+          A.log("getSpeciesNameSet() this:" + this.getClass() + " query:" + query);
+
+          /* Sometimes, for homonyms, can be very large (22K+ records returned). Could be sped up by breaking out
+             of loop below in cases. Would have to handel null returns in calling methods.
+             Good: https://localhost/description.do?genus=carebara&species=silvestrii&rank=species
+             Bad: https://localhost/description.do?genus=carebara&species=silvestrii&rank=species&authorDate=(Wheeler,%201928)
+           */
 
            int i = 0;
            while (rset.next()) {

@@ -459,15 +459,15 @@ def getSpecimen():
         # print("code:" + code)
         query = query.filter(Specimen.code == code)
     if region != '*':
-        query = query.filter(Specimen.region.contains(region))
+        query = query.filter(Specimen.region == region)
     if subregion != '*':
-        query = query.filter(Specimen.subregion.contains(subregion))
+        query = query.filter(Specimen.subregion ==subregion)
     if country != '*':
         query = query.filter(Specimen.country.contains(country))
     if adm1 != '*':
-        query = query.filter(Specimen.adm1.contains(adm1))
+        query = query.filter(Specimen.adm1 == adm1)
     if bioregion != '*':
-        query = query.filter(Specimen.bioregion.contains(bioregion))
+        query = query.filter(Specimen.bioregion == bioregion)
     if habitat != '*':
         query = query.filter(Specimen.habitat.contains(habitat))
     if type != '*':
@@ -495,6 +495,8 @@ def getSpecimen():
         query = query.filter(Specimen.locatedat == locatedat)
     if collectedby != '*':
         query = query.filter(Specimen.collectedby == collectedby)
+    if lifeStageSex != '*':
+        query = query.filter(Specimen.lifeStageSex.like("%" + lifeStageSex + "%"))
     if caste != '*':
         query = query.filter(Specimen.caste == caste)
     if subcaste != '*':
@@ -514,9 +516,6 @@ def getSpecimen():
     if geolocaleName != '*':
         query = query.join(Taxon).join(GeolocaleTaxon).join(Geolocale).filter(Geolocale.name == geolocaleName)
         query = addExtraGeolocaleListCriteria(query, geolocaleName)
-
-    if lifeStageSex != '*':
-        query = query.filter(Specimen.lifeStageSex.like("%" + lifeStageSex + "%"))
 
     query = query.limit(limit)
     query = query.offset(offset)

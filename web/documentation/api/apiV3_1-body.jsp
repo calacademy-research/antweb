@@ -8,7 +8,7 @@
   String apiDomainApp = "https://antweb.org/v3.1";
   
   if (AntwebProps.isDevMode()) {
-    apiDomainApp = "http://localhost:5000";  
+    apiDomainApp = "http://localhost/v3.1";  
   }
   Login accessLogin = LoginMgr.getAccessLogin(request);
   
@@ -111,10 +111,28 @@
                 <td><b>Specimen Code</b></td>
                 <td>The unique identifier of a particular specimen on Antweb (ex: specimenCode=inb0003695883)</td>
             </tr>
+            
+            <tr>
+                <td><b>Region</b></td>
+                <td>Return only specimens of a specific region</td>
+            </tr>
+            <tr>
+                <td><b>Subregion</b></td>
+                <td>Return only specimens of a specific subregion</td>
+            </tr>
             <tr>
                 <td><b>Country</b></td>
                 <td>This uses a wildcard so a query for ?country=land will return any country containing the word land (ex:. England | Ireland | ...)</td>
             </tr>
+            <tr>
+                <td><b>Adm1</b></td>
+                <td>Return only specimens of a specific adm1</td>
+            </tr> 
+            <tr>
+                <td><b>Bioregion</b></td>
+                <td>Return only specimens of a specific bioregion</td>
+            </tr>      
+                        
             <tr>
                 <td><b>Habitat</b></td>
                 <td>This uses a wildcard so a query for ?habitat=sand will return any habitat containing the word sand (ex: habitat=sandstone)</td>
