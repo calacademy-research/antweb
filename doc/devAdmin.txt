@@ -7,7 +7,6 @@
 
 # To bring up docker.  -d is for daemon.
 docker-compose up --build -d
-	
 
 docker-compose up --build
   # This will also do an ant build
@@ -122,9 +121,13 @@ mysqldump -h 127.0.0.1 -u antweb -p --all-databases --routines --single-transact
 # Enter password:
 
 
+#mysqldump -h 127.0.0.1 -u antweb -p --all-databases --routines --single-transaction --quick --column-statistics=0 | gzip > /mnt/backup/db/t.sql.gz
+#scp root@antweb.org:/mnt/backup/db/t.sql.gz ../bak/db/t.sql.gz     # Use today's date.
+
+
 /mnt/backup/db/ant-current.sql.gz stays up to date.
 
-scp root@antweb.org:/mnt/backup/db/ant-currentDump.sql.gz ../bak/db/20220101.sql.gz     # Use today's date.
+scp root@antweb.org:/mnt/backup/db/ant-currentDump.sql.gz ../bak/db/20220625.sql.gz     # Use today's date.
 
  
 ```
@@ -147,7 +150,9 @@ CID=$(docker run -d --rm \
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
 
-gunzip -c ../bak/db/20220101.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
+docker exec -it $CID mysql -uroot ant -e "create user antweb@localhost identified by '000'; grant all on *.* to antweb@localhost with grant option"
+
+gunzip -c ../bak/db/20220625.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
 
 docker ps -a
   docker stop 3a (if non-"antweb_" resuults, kill process with something like...)
@@ -159,6 +164,7 @@ docker stop 3a
 docker exec -it $CID sh -c "exec mysqlcheck --all-databases --analyze -uroot" && docker stop $CID
 
 docker-compose up &
+
 
 
 
@@ -176,10 +182,10 @@ This creates a temporary mysql container and loads the database dump into a dock
  
 docker-compose logs -f caddy
 
-
-
 # Dash suggestion. Not sure how this might be useful.
 #To connect to the container via mysql, you need to pass the parameter -h 127.0.0.1 . Otherwise, mysql tries to connect via socket instead of TCP.
+
+docker-compose logs api
 
 
 --- Necesssary in dev environment?
@@ -230,6 +236,4 @@ mark@iMark local % ls -lath   time human all list
 Staging Server
 ssh  root@165.232.136.170
 https://165.232.136.170/
-
-
 

@@ -44,12 +44,12 @@
     <div id="subnavigation">
         <div class="header">
 
-<%@ include file="globalMenu.jsp" %>
-<%@ include file="georegionMenu.jsp" %>
-<%@ include file="regionMenu.jsp" %>
-<%@ include file="projectMenu.jsp" %>
-<%@ include file="bioregionMenu.jsp" %>
-<%@ include file="museumMenu.jsp" %>
+<%@ include file="/common/globalMenu.jsp" %>
+<%@ include file="/common/georegionMenu.jsp" %>
+<%@ include file="/common/regionMenu.jsp" %>
+<%@ include file="/common/projectMenu.jsp" %>
+<%@ include file="/common/bioregionMenu.jsp" %>
+<%@ include file="/common/museumMenu.jsp" %>
 
         </div>
 

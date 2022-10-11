@@ -108,7 +108,7 @@ apiUri = "api" + version + ".do"
 
 globalMessage = "Either the server is overloaded or there is an error in the application."
 
-log = False
+log = True
 
 import sys
 
@@ -520,8 +520,10 @@ def getSpecimen():
     query = query.limit(limit)
     query = query.offset(offset)
 
-    if log == 'true':
+    if log:
         print(" query:" + str(query))
+
+    print(" log:" + log + " query:" + str(query))
 
     try:
         data = query.all()
@@ -530,7 +532,7 @@ def getSpecimen():
         print(message)
         return message
     except:
-        message = "specimens error request:" + str(request)
+        message = "specimens error request:" + str(request) + " message:" + error.orig.message
         print(message)  # + error.orig.message, error.params
         return message
 
