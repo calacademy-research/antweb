@@ -42,24 +42,24 @@
         <table class="arguments">
             <tr>
                 <td><b>Limit</b></td>
-                <td>Limit the number of specimen returned on large requests (&limit=100). Default is 10,000.</td>
+                <td>Limit the number of specimen returned on large requests (limit=100). Default is 10,000.</td>
             </tr>
             <tr>
                 <td><b>Offset</b></td>
-                <td>Used to paginate large requests when paired with the limit argument (?limit=100&offset=300 would return records 301-400)</td>
+                <td>Used to paginate large requests when paired with the limit argument (limit=100&offset=300 would return records 301-400)</td>
             </tr>
             <tr>
                 <td><b>Ndjson</b></td>
-                <td>Results will be formatted in ndjson format for use with Elasticsearch (&ndjson=true)</td>
+                <td>Results will be formatted in ndjson format for use with Elasticsearch (ndjson=true)</td>
             </tr>
 <% if (LoginMgr.isAdmin(accessLogin)) { %>
             <tr>
                 <td><b>Log</b></td>
-                <td>Admin only - create output in the apache server log at /var/log/httpd/error_log. (&log=true)</td>
+                <td>Admin only - create output in the apache server log at /var/log/httpd/error_log. (log=true)</td>
             </tr>
             <tr>
                 <td><b>Up</b></td>
-                <td>Admin only - API is currently down by default. Include the up parameter to access. (&up=1)</td>
+                <td>Admin only - API is currently down by default. Include the up parameter to access. (up=1)</td>
             </tr>            
 <% } %>
         </table>
@@ -265,15 +265,15 @@
         <table class="arguments">
             <tr>
                 <td><b>Coords</b></td>
-                <td>Return a list of specimens by decimal coordinates. (?coords=lat,lon)</td>
+                <td>Return a list of specimens by decimal coordinates. (coords=lat,lon)</td>
             </tr>
             <tr>
                 <td><b>Radius</td>
-                <td>Define a specific radius in kilometers (if radius is not defined it will default to 5km). (?coord=latitude,longitude&radius=3)</td>
+                <td>Define a specific radius in kilometers (if radius is not defined it will default to 5km). (coord=latitude,longitude&radius=3)</td>
             </tr>
             <tr>
                 <td><b>Distinct</b></td>
-                <td>You can select a list of distinct species, genus or subfamilies in the area. (?coord=latitude,longitude&r=radius&distinct=rank)</td>
+                <td>You can select a list of distinct species, genus or subfamilies in the area. (coord=latitude,longitude&r=radius&distinct=rank)</td>
             </tr>
         </table>            
         <p><b>Examples:</b>
@@ -296,7 +296,7 @@
             </tr>
              <tr>
                 <td><b>Rank</b></td>
-                <td>Query on a particular rank (&rank=[subfamily, genus, species, subspecies])</td>
+                <td>Query on a particular rank (rank=[subfamily, genus, species, subspecies])</td>
             </tr>
             <tr>
                 <td><b>Subfamily</b></td>
@@ -342,7 +342,7 @@
         <table class="arguments">
             <tr>
                 <td><b>Rank</b></td>
-                <td>Return a list of unique names for a given rank. (?rank=genus)</td>
+                <td>Return a list of unique names for a given rank. (rank=genus)</td>
             </tr>
             <tr>
                 <td><b>Country</b></td>
@@ -354,19 +354,19 @@
             </tr>
             <tr>
                 <td><b>Min Date</b></td>
-                <td>Query for specimen identified on or after a single date (?minDate=yyyy-mm-dd)</td>
+                <td>Query for specimen identified on or after a single date (minDate=yyyy-mm-dd)</td>
             </tr>
              <tr>
                 <td><b>Max Date</b></td>
-                <td>Query for specimen identified on or before a single date (?maxDate=yyyy-mm-dd)</td>
+                <td>Query for specimen identified on or before a single date (maxDate=yyyy-mm-dd)</td>
             </tr>
             <tr>
                 <td><b>Min Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or above a specific elevation (?minElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or above a specific elevation (minElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Max Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or below a specific elevation (?maxElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or below a specific elevation (maxElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Status</b></td>
@@ -392,17 +392,27 @@
                 <td>Return a list of images recently added to antweb, measured in days. (?since=7 returns all images added in the last 7 days)</td>
             </tr>
             <tr>
+                <td><b>Specimen Code</b></td>
+                <td>The unique identifier of a particular specimen on Antweb (specimenCode=inb0003695883)</td>
+            </tr>
+            <tr>
                 <td><b>Shot Type</b></td>
                 <td>Specify which images you would like to see.  H = head shots, D = dorsal shots, P = profile shots and L = labels. (?since=7&shotType=h returns all head shots added in the last 7 days)</td>
             </tr>
             <tr>
-                <td><b>Specimen Code</b></td>
-                <td>The unique identifier of a particular specimen on Antweb (?specimenCode=inb0003695883)</td>
+                <td><b>Shot Number</b></td>
+                <td>Specify which images you would like returned. (shotNumber=1)</td>
             </tr>
+            <tr>
+                <td><b>Has Tiff</b></td>
+                <td>Specify if images should have tiffs. (hasTiff=true or hasTiff=false)</td>
+            </tr>            
         </table>
             <p><b>Examples:</b>  
             <p class="link">Query for all images uploaded in the last 60 days of shotType p, list only 400:
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/images?limit=400&since=60&shotType=p<%= appendStr %>"><%= apiDomainApp %>/images?limit=400&since=60&shotType=p</a>
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/images?shotType=P&shotNumber=11&hasTiff=true<%= appendStr %>"><%= apiDomainApp %>/images?shotType=P&shotNumber=11&hasTiff=true</a>
+
             </p>
             
 
@@ -415,7 +425,7 @@
         <table class="arguments">    
             <tr>
                 <td><b>Taxon Name</b></td>
-                <td>Show all images of taxa using Antweb specific unique identifier for a given taxon (&taxonName= )</td>
+                <td>Show all images of taxa using Antweb specific unique identifier for a given taxon (taxonName= )</td>
             </tr>
             <tr>
                 <td><b>Subfamily</b></td>
@@ -435,11 +445,11 @@
             </tr>
             <tr>
                 <td><b>Specimen Code</b></td>
-                <td>The unique identifier of a particular specimen on Antweb (?specimenCode=inb0003695883)</td>
+                <td>The unique identifier of a particular specimen on Antweb (specimenCode=inb0003695883)</td>
             </tr>
             <tr>
                 <td><b>Image ID</b></td>
-                <td>Antweb specific unique identifier of a given image (&imageId= )</td>
+                <td>Antweb specific unique identifier of a given image (imageId= )</td>
             </tr>
             <!-- tr>
                 <td><b>Upload Date</b></td>
@@ -447,8 +457,18 @@
             </tr -->
             <tr>
                 <td><b>Shot Type</b></td>
-                <td>Specify which images you would like to see.  H = head shots, D = dorsal shots, P = profile shots and L = labels. (?since=7&shotType=h returns all head shots added in the last 7 days)</td>
+                <td>Specify which images you would like returned.  H = head shots, D = dorsal shots, P = profile shots and L = labels.</td>
             </tr>
+
+            <tr>
+                <td><b>Shot Number</b></td>
+                <td>Specify which images you would like returned. (shotNumber=1)</td>
+            </tr>
+            <tr>
+                <td><b>Has Tiff</b></td>
+                <td>Specify if images should have tiffs. (hasTiff=true or hasTiff=false)</td>
+            </tr>
+            
         </table>
             <p><b>Examples:</b>  
             
@@ -458,7 +478,7 @@
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxaImages?species=oberthueri<%= appendStr %>"><%= apiDomainApp %>/taxaImages?species=oberthueri&limit=50</a>
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxaImages?imageId=22777<%= appendStr %>"><%= apiDomainApp %>/taxaImages?imageId=22777</a>
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxaImages?specimenCode=casent0435930<%= appendStr %>"><%= apiDomainApp %>/taxaImages?specimenCode=casent0435930</a>
- 
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxaImages?shotType=P&shotNumber=11&hasTiff=true<%= appendStr %>"><%= apiDomainApp %>/taxaImages?shotType=P&shotNumber=11&hasTiff=true</a>
             </p>
 
 

@@ -521,10 +521,9 @@ def getSpecimen():
     query = query.offset(offset)
 
     if log:
-        print(" query:" + str(query))
-
-    print(" log:" + log + " query:" + str(query))
-
+        #print(" query:" + str(query))
+        print("hasImage:" + hasImage)
+        # print("hasImage:" + hasImage + " query:" + str(query))
     try:
         data = query.all()
     except OperationalError as error:
@@ -536,7 +535,7 @@ def getSpecimen():
         print(message)  # + error.orig.message, error.params
         return message
 
-    if log == 'true':
+    if log:
         print('Query complete')
 
     dataList = []
@@ -629,8 +628,8 @@ def getSpecimen():
             #  print("ownedBy:" + specDict['ownedBy'])  # Would appear (only on server) in terminal as SMNG, G\xc3\xb6rlitz, Germany
             dataList.append(specDict)
 
-    if log == 'true':
-        print(' skipSubfamil:' + str(skipSubfamily) + ' skipGenus:' + str(skipGenus))
+    if log:
+        print('skipSubfamil:' + str(skipSubfamily) + ' skipGenus:' + str(skipGenus))
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'offset': offset,
@@ -1082,8 +1081,10 @@ class Image(Base):
 @application.route('/images', methods=['GET'])
 def getImages():
     since = request.args.get('since', default='*', type=str)
-    shotType = request.args.get('shotType', default='*', type=str)
     code = request.args.get('specimenCode', default='*', type=str)
+    shotType = request.args.get('shotType', default='*', type=str)
+    shotNumber = request.args.get('shotNumber', default='*', type=str)
+    hasTiff = request.args.get('hasTiff', default='*', type=str)
     setGlobals(request)
     if down(request): return ""
 
@@ -1091,10 +1092,17 @@ def getImages():
     if since != '*':
         day_interval_before = datetime.now() - timedelta(days=int(since))
         query = query.filter(Image.uploadDate >= day_interval_before)
-    if shotType != '*':
-        query = query.filter(Image.shotType == shotType)
     if code != '*':
         query = query.filter(Image.code == code)
+    if shotType != '*':
+        query = query.filter(Image.shotType == shotType)
+    if shotNumber != '*':
+        query = query.filter(Image.shotNumber == shotNumber)
+    if hasTiff != '*':
+        if hasTiff == 'true':
+            query = query.filter(Image.hasTiff == 1)
+        if hasTiff == 'false':
+            query = query.filter(Image.hasTiff == 0)
     query = query.limit(limit)
     query = query.offset(offset)
 
@@ -1301,10 +1309,13 @@ def getTaxaImages():
     genus = request.args.get('genus', default='*', type=str)
     species = request.args.get('species', default='*', type=str)
     subspecies = request.args.get('subspecies', default='*', type=str)
-    code = request.args.get('code', default='*', type=str)
+    specimenCode = request.args.get('specimenCode', default='*', type=str)
     imageId = request.args.get('imageId', default='*', type=str)
     # uploadDate = request.args.get('uploadDate', default='*', type=str)
     shotType = request.args.get('shotType', default='*', type=str)
+    shotNumber = request.args.get('shotNumber', default='*', type=str)
+    hasTiff = request.args.get('hasTiff', default='*', type=str)
+
     setGlobals(request)
     if down(request): return ""
 
@@ -1319,14 +1330,22 @@ def getTaxaImages():
         query = query.filter(TaxaImage.species == species)
     if subspecies != '*':
         query = query.filter(TaxaImage.subspecies == subspecies)
-    if code != '*':
-        query = query.filter(TaxaImage.code == code)
+    if specimenCode != '*':
+        query = query.filter(TaxaImage.code == specimenCode)
     if imageId != '*':
         query = query.filter(TaxaImage.uid == imageId)
     # if (uploadDate != '*'):
     #  query = query.filter(TaxaImage.uploadDate like uploadDate)
     if shotType != '*':
         query = query.filter(TaxaImage.shotType == shotType)
+    if shotNumber != '*':
+        query = query.filter(TaxaImage.shotNumber == shotNumber)
+    if hasTiff != '*':
+        if hasTiff == 'true':
+            query = query.filter(TaxaImage.hasTiff == 1)
+        if hasTiff == 'false':
+            query = query.filter(TaxaImage.hasTiff == 0)
+
     query.order_by(TaxaImage.taxonName, TaxaImage.code)
     query = query.limit(limit)
     query = query.offset(offset)
