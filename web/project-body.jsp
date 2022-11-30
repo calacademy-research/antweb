@@ -189,33 +189,33 @@ if (!project.isAntProject()) {
     thisDesc = "contents"; 
     descHeader = "Contents"; 
     descNotes = "";   %>
-   <%@ include file="common/descEdit/descEditFieldCK.jsp" %>
+   <%@ include file="/common/descEdit/descEditFieldCK.jsp" %>
 
  <% thisDesc = "specimenImage1";
     descHeader = "Project Page Image 1"; %>
- <%@ include file="common/descEdit/imageDescEditField.jsp" %>
+ <%@ include file="/common/descEdit/imageDescEditField.jsp" %>
 
  <% thisDesc = "specimenImage2";
     descHeader = "Project Page Image 2"; %>
- <%@ include file="common/descEdit/imageDescEditField.jsp" %>
+ <%@ include file="/common/descEdit/imageDescEditField.jsp" %>
 
  <% thisDesc = "specimenImage3";
     descHeader = "Project Page Image 3"; %>
- <%@ include file="common/descEdit/imageDescEditField.jsp" %>
+ <%@ include file="/common/descEdit/imageDescEditField.jsp" %>
 
  <% thisDesc = "authorImage";
     descHeader = "Author Image"; %>
- <%@ include file="common/descEdit/imageDescEditField.jsp" %>
+ <%@ include file="/common/descEdit/imageDescEditField.jsp" %>
 
 <%  thisDesc = "author"; 
     descHeader = "Author"; 
     descNotes = "";   %>
-   <%@ include file="common/descEdit/descEditFieldCK.jsp" %>
+   <%@ include file="/common/descEdit/descEditFieldCK.jsp" %>
 
 <%  thisDesc = "authorBio"; 
     descHeader = "Author Bio"; 
     descNotes = "";   %>
-   <%@ include file="common/descEdit/descEditFieldCK.jsp" %>
+   <%@ include file="/common/descEdit/descEditFieldCK.jsp" %>
 
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.4/d3.min.js"></script>
 <script src="<%= AntwebProps.getDomainApp() %>/chart/d3pie.min.js"></script>
@@ -227,7 +227,7 @@ if (!project.isAntProject()) {
      String jsonData = overview.getTaxonSubfamilyDistJson();
      //if (AntwebProps.isDevMode()) AntwebUtil.log("museum-body.jsp jsonData1:" + jsonData); 
 %>
-     <%@include file="chart/pieChart.jsp" %>
+     <%@include file="/chart/pieChart.jsp" %>
 <% } %>
 
 
@@ -238,7 +238,7 @@ if (!project.isAntProject()) {
      String jsonData = overview.getSpecimenSubfamilyDistJson();
      //if (AntwebProps.isDevMode()) AntwebUtil.log("museum-body.jsp jsonData2:" + jsonData);
 %>        
-    <%@include file="chart/pieChart.jsp" %>
+    <%@include file="/chart/pieChart.jsp" %>
 <% } %>
 
 <input id="for_print" type="text" value="<%= project.getAuthor() %>, (<%= year %>). AntWeb: Ants of <%= project.getTitle() %>. Available from: <%= AntwebProps.getDomainApp() %>/page.do?name=<%= project.getRoot() %>">

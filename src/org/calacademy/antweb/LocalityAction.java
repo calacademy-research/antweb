@@ -64,18 +64,7 @@ public final class LocalityAction extends Action {
             QueryProfiler.profile("locality", startTime);	 		
 			DBUtil.close(connection, this, "LocalityAction.execute()");
 		}
-		        
-/*        
-        if (code != null && !"".equals(code)) {
-          A.slog("-1:" + code);
-  		  locality = getLocalityWithCode(code, request);
-        } else {
-		  A.slog("0");
-		  locality = getLocalityWithCode(name, request);
-		  A.slog("1:" + locality);
-		  if (locality == null) locality = getLocalityWithName(name, request);
-        }
-*/        
+
         if (locality == null) {        
 		  String message = "  Locality not found for name:" + name + " or code:" + code;
 		  if (UploadAction.isInUploadProcess()) {
@@ -84,7 +73,13 @@ public final class LocalityAction extends Action {
 		  } else {
 			String referer = HttpUtil.getRequestReferer(request);
 			if (referer != null && !referer.contains("referer:null")) {
-			  s_log.error("execute() " + message + " (Not upload). requestInfo:" + referer);
+				message = message + "execute() " + message + " (Not upload). requestInfo:" + HttpUtil.getRequestInfo(request);
+				message += " isBot:" + HttpUtil.isBot(request);
+              if (!HttpUtil.isBot(request)) {
+				  s_log.error(message);
+			  } else {
+				  s_log.info(message);
+			  }
 			}
 		  } 
 		  request.setAttribute("message", message);

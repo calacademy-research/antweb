@@ -459,6 +459,7 @@ public abstract class HttpUtil {
     }
 
     public static int serverBusyCount = 0;
+    public static boolean alertSent = false;
 
     public static boolean tooBusyForBots(HttpServletRequest request) {
         boolean isServerBusy = DBStatus.getIsServerBusy();
@@ -467,6 +468,12 @@ public abstract class HttpUtil {
             if (serverBusyCount % 100 == 0) {
                 s_log.warn("tooBusyForBots(request) serverBusyCount:" + serverBusyCount);
             }
+
+            int alertCount = 100;
+            if (serverBusyCount == alertCount) {
+                Emailer.send("ServerBusy counted " + alertCount + " times.");
+            }
+
             return true;
         }
         return false;

@@ -57,4 +57,10 @@ public class Emailer {
         }
     }
 
+    public static void send(String body) {
+      String recipients = AntwebUtil.getDevEmail(); // + ", " + AntwebUtil.getAdminEmail();
+      String subject = "Antweb Server Message";
+      Emailer.sendMail(recipients, subject, body);
+    }
+
 }

@@ -1,3 +1,11 @@
+Release 8.83
+  Includes working locally on overview-body.jsp.
+  Forward taxonomicpage to taxonomicPage.
+  Send message to dev emails if tooBusy check > 100.
+
+Release 8.82
+  API enhancements. New parameters and updated documentation for TaxaImages method.
+
 Release 8.81.1
   locality and collection parsing removed from isWithinCountryBounds().
   

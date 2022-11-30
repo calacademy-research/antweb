@@ -57,7 +57,7 @@
 
 <div id="page_contents">
 
-<%@ include file="common/overviewHeading.jsp" %>
+<%@ include file="/common/overviewHeading.jsp" %>
 
 <% if (LoginMgr.isAdmin(request)) { %>
   <% if (LoginMgr.isCurator(request)) { %>
@@ -71,7 +71,7 @@
 
 <div class="page_divider taxonomic"></div>
 
-<%@include file="common/taxonSetHeaderNotes.jsp" %>  
+<%@include file="/common/taxonSetHeaderNotes.jsp" %>
 
 <%
 	// To avoid ConcurrentModificationException

@@ -58,7 +58,7 @@
 
 <div id="page_contents">
 
-<%@ include file="common/overviewHeading.jsp" %>
+<%@ include file="/common/overviewHeading.jsp" %>
 
 <%
     String childrenList = "";
@@ -352,33 +352,33 @@ Images:
     thisDesc = "contents"; 
     descHeader = "Contents"; 
     descNotes = ""; %>    
-   <br><%@ include file="common/descEdit/descEditFieldCK.jsp" %>
+   <br><%@ include file="/common/descEdit/descEditFieldCK.jsp" %>
 
  <% thisDesc = "specimenImage1";
     descHeader = "Project Page Image 1"; %>
- <br><%@ include file="common/descEdit/imageDescEditField.jsp" %>
+ <br><%@ include file="/common/descEdit/imageDescEditField.jsp" %>
 
  <% thisDesc = "specimenImage2";
     descHeader = "Project Page Image 2"; %>
- <%@ include file="common/descEdit/imageDescEditField.jsp" %>
+ <%@ include file="/common/descEdit/imageDescEditField.jsp" %>
 
  <% thisDesc = "specimenImage3";
     descHeader = "Project Page Image 3"; %>
- <%@ include file="common/descEdit/imageDescEditField.jsp" %>
+ <%@ include file="/common/descEdit/imageDescEditField.jsp" %>
 
  <% thisDesc = "authorImage";
     descHeader = "Author Image"; %>
- <%@ include file="common/descEdit/imageDescEditField.jsp" %>
+ <%@ include file="/common/descEdit/imageDescEditField.jsp" %>
 
 <%  thisDesc = "author"; 
     descHeader = "Author"; 
     descNotes = "";   %>
-   <%@ include file="common/descEdit/descEditFieldCK.jsp" %>
+   <%@ include file="/common/descEdit/descEditFieldCK.jsp" %>
 
 <%  thisDesc = "authorBio"; 
     descHeader = "Author Bio"; 
     descNotes = "";   %>
-   <%@ include file="common/descEdit/descEditFieldCK.jsp" %>
+   <%@ include file="/common/descEdit/descEditFieldCK.jsp" %>
 
 <% 
 
@@ -402,7 +402,7 @@ if (!HttpUtil.isOffline()) {
 
      if (!jsonData.contains("\"color\": \"null\"")) {    
 %>
-     <%@include file="chart/pieChart.jsp" %>
+     <%@include file="/chart/pieChart.jsp" %>
 <% 
      } else {
        //AntwebUtil.log("overview-body.jsp color is not null for overview:" + overview);
@@ -422,7 +422,7 @@ if (!HttpUtil.isOffline()) {
      //if (AntwebProps.isDevMode()) AntwebUtil.log("museum-body.jsp jsonData2:" + jsonData);
      if (!jsonData.contains("\"color\": \"null\"")) {    
 %>        
-    <%@include file="chart/pieChart.jsp" %>
+    <%@include file="/chart/pieChart.jsp" %>
 <%   }
    }
 } // if !offline

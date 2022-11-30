@@ -1616,6 +1616,10 @@ We would like to remove getChildImages.  Not needed now in the new UI
         <forward name="success" path="/orphanedImages.jsp"/>
     </action>
 
+    <action
+            path="/taxonomicpage"
+            forward="/taxonomicPage.do"/>
+
     <action path="/taxonomicPage"
             type="org.calacademy.antweb.TaxaPageAction"
             name="taxaPageForm"

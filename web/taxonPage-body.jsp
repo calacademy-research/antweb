@@ -211,11 +211,11 @@ To do:
  
     thisDesc = "images";       
     descHeader = "Taxon Page Images"; %>
- <%@ include file="common/descEdit/taxonImageEditField.jsp" %>
+ <%@ include file="/common/descEdit/taxonImageEditField.jsp" %>
 
  <% thisDesc = "videos";
     descHeader = "Taxon Page Video"; %>
- <%@ include file="common/descEdit/taxonVideoEditField.jsp" %>
+ <%@ include file="/common/descEdit/taxonVideoEditField.jsp" %>
 
 <%
    // This is a one-off.  Should get a system.  Perhaps generify Taxon Page Images to support Youtube, Vimeo.
@@ -228,7 +228,7 @@ To do:
  <% thisDesc = "overview"; 
     descHeader = "Overview"; 
     descNotes = "A brief, global overview of select aspects of taxon biology (distribution, biology, identification). Intended to be brief -- not more than 400 or 500 words -- and present highlights of the taxon to engage the reader.";   %>
-   <%@ include file="common/descEdit/taxonEditFieldCK.jsp" %>
+   <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
 // Distribution
    <%@ include file="distribution.jsp" %>
@@ -237,17 +237,17 @@ To do:
  <% thisDesc = "distribution"; 
     descHeader = "Distribution Notes"; 
     descNotes = "A description of the geographic distribution, or range, of the taxon. Be explicit about whether you are referring to global, regional, or political aspects and whether the taxon is native or introduced in portions of the range.";   %>
-   <%@ include file="common/descEdit/taxonEditFieldCK.jsp" %> 
+   <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
  <% thisDesc = "biology";       
     descHeader = "Biology"; 
     descNotes = "A comprehensive description of the characteristics of the taxon (including all aspects of biology, not just physical descriptions). Used primarily when many of the subject categories are treated together in one object, but at length.";   %>
- <%@ include file="common/descEdit/taxonEditFieldCK.jsp" %>
+ <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
  <% thisDesc = "identification";  
     descHeader = "Identification"; 
     descNotes = "A description of the features that distinguish this taxon from close relatives or other similar species. May include, but is not restricted to, synapomorphies.";   %>
- <%@ include file="common/descEdit/taxonEditFieldCK.jsp" %>
+ <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
  <% thisDesc = "comments";       
     descHeader = "Comments"; %>
@@ -256,17 +256,17 @@ To do:
  <% thisDesc = "taxanomicnotes";       
     descHeader = "Taxonomic Notes"; 
     descNotes = "Information about taxonomic history, nomenclatural issues, type specimens, etc. that is not already referred to in the &#39;Taxonomic History&#39; section.";   %>
- <%@ include file="common/descEdit/taxonEditFieldCK.jsp" %>
+ <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
  <!-- to be removed after Eli transfers to comments or Taxonomic Notes -->
  <% thisDesc = "notes";       
     descHeader = "Notes"; 
     descNotes = "A category intended as a place for content that is difficult to fit into available subject headings or that contains content intended for a wide variety of subject headings.";   %>
- <%@ include file="common/descEdit/taxonEditFieldCK.jsp" %>
+ <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
   
  <% thisDesc = "references";       
     descHeader = "References"; %>
- <%@ include file="common/descEdit/taxonEditFieldCK.jsp" %>
+ <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
  <!-- insert author history here -->
  <% ArrayList<String> hist = (ArrayList) request.getAttribute("descEditHist");

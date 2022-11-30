@@ -1,5 +1,6 @@
 package org.calacademy.antweb.util;
 
+import org.calacademy.antweb.util.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -182,6 +183,17 @@ Or, if there are stmts and/or rsets...
      * @return The generated PreparedStatement
      */
     public static @Nullable PreparedStatement getPreparedStatement(Connection connection, String name, String query) {
+
+        /*
+        // For testing graceful failure...
+        if (true && AntwebProps.isDevMode()) {
+          if (query.contains("akebot")) {
+              s_log.error("getPreparedStatement() connection is null for name: " + name + " query");
+              throw new NullPointerException();
+          }
+        }
+        */
+
         if (connection == null) {
             s_log.error("getPreparedStatement() connection is null for name: " + name);
             return null;
