@@ -1,3 +1,7 @@
+
+Release 8.83.1
+  Fix the Group form. Database access was changed to prepared statements. Now it works.
+
 Release 8.83
   Includes working locally on overview-body.jsp.
   Forward taxonomicpage to taxonomicPage.

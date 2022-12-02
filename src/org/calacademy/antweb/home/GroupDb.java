@@ -272,14 +272,20 @@ public class GroupDb extends AntwebDb {
             PreparedStatement stmt = null;
             try {
                 stmt = DBUtil.getPreparedStatement(getConnection(), "updateGroup()", theUpdate);
+                stmt.setString(1, group.getName());
+                stmt.setInt(2, group.getAdminLoginId());
+                stmt.setString(3, group.getAbbrev());
+                stmt.setInt(4, group.getId());
+/*
                 stmt.setInt(1, group.getId());
                 stmt.setString(2, group.getName());
                 stmt.setInt(3, group.getAdminLoginId());
                 stmt.setString(4, group.getAbbrev());
+*/
                 s_log.info(theUpdate);
                 stmt.executeUpdate();
             } catch (SQLException e) {
-                s_log.error("updateGroupInDb() " + group.getName() + ": ");
+                s_log.error("updateGroup() " + group.getName());
                 throw e;
             } finally {
                 DBUtil.close(stmt, null, this, "updateGroup()");

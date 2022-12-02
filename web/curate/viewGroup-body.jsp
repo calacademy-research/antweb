@@ -26,7 +26,7 @@
 </div>
 
 <div class="admin_left">
-    <h1>Institution Form</h1>
+    <h1>Group Form</h1>
 
     <logic:messagesPresent property="error">
         <h2>Sorry, you need to correct the following errors:</h2>
