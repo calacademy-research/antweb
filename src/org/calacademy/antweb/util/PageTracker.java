@@ -17,12 +17,15 @@ possible moment - ideally in jsp footer.
 */
 
     private static final boolean isDebug = AntwebProps.isDevMode();
+    private static final boolean isOn = false;
 
     private static final Log s_log = LogFactory.getLog(PageTracker.class);
 
     private static HashMap<String, Tracker> trackerMap = new HashMap<>();
     
-    public static void add(HttpServletRequest request) {    
+    public static void add(HttpServletRequest request) {
+      if (!isOn) return;
+
       //if (AntwebProps.isDevMode() && getRequestCount() > 3) purge();
 
       if (getRequestCount() > 100) {
@@ -60,6 +63,8 @@ possible moment - ideally in jsp footer.
     }
 
     public static void remove(HttpServletRequest request) {
+      if (!isOn) return;
+
       String target = HttpUtil.getTarget(request);
       String key = (String) request.getAttribute("trackerKey");
       trackerMap.remove(key);

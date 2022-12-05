@@ -35,7 +35,6 @@ if (thisTracker != null) { %>
 <br>&nbsp;&nbsp;Server Busy Connection Count:<%= DBUtil.getServerBusyConnectionCount() %>
 
 <br>&nbsp;&nbsp;Request Count:<%= PageTracker.getRequestCount() %>
-<br>&nbsp;&nbsp;Target list size:<%= trackers.size() %>
 
 <br>&nbsp;&nbsp;Target list:
 <%
