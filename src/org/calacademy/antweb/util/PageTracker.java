@@ -153,5 +153,3 @@ possible moment - ideally in jsp footer.
         return message.toString();
     }
 }
-
-

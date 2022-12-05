@@ -28,13 +28,12 @@ public class SessionRequestFilter implements Filter {
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
 
-        Date startTime = new Date();
+      Date startTime = new Date();
+      HttpServletRequest request = (HttpServletRequest) req;
+      HttpServletResponse response = (HttpServletResponse) res;
+      String target = HttpUtil.getTarget(request);
 
-        HttpServletRequest request = (HttpServletRequest) req;
-        HttpServletResponse response = (HttpServletResponse) res;
-        String target = HttpUtil.getTarget(request);
-
- //A.log("doFilter()");
+      //A.log("doFilter()");
       ServletContext ctx = request.getSession().getServletContext();
 
       PageTracker.add(request);

@@ -22,6 +22,7 @@
 
 <br>Request Details:
 <%
+java.util.Collection<Tracker> trackers = PageTracker.getTrackers();
 Tracker thisTracker = PageTracker.getTracker(request);
 if (thisTracker != null) { %>
 <br>&nbsp;&nbsp;Target:<%= thisTracker.getTarget() %>
@@ -30,20 +31,21 @@ if (thisTracker != null) { %>
 <br>&nbsp;&nbsp;Tracker not found
 <% }%>
 
-
 <br><br>Server Details:
 <br>&nbsp;&nbsp;Server Busy Connection Count:<%= DBUtil.getServerBusyConnectionCount() %>
 
 <br>&nbsp;&nbsp;Request Count:<%= PageTracker.getRequestCount() %>
+<br>&nbsp;&nbsp;Target list size:<%= trackers.size() %>
 
 <br>&nbsp;&nbsp;Target list:
 <%
     String isThisPage = "";
-    for (Tracker tracker : PageTracker.getTrackers()) {
+    for (Tracker tracker : trackers) {
       if (tracker.getKey().equals(request.getAttribute("trackerKey"))) isThisPage = "isThisPage: *";
 %>
       <br>&nbsp;&nbsp;&nbsp;&nbsp;<%= tracker.getTarget() %> code:<%= tracker.getCode() %> time:<%= tracker.getSinceStartTime() %> <%= isThisPage %>
 <%
       isThisPage = "";
-    } %>
+    }
+     %>
 
