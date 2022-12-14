@@ -231,7 +231,7 @@ To do:
    <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
 // Distribution
-   <%@ include file="distribution.jsp" %>
+   <%@ include file="/distribution.jsp" %>
 
 
  <% thisDesc = "distribution"; 
@@ -251,7 +251,7 @@ To do:
 
  <% thisDesc = "comments";       
     descHeader = "Comments"; %>
- <%@ include file="common/descEdit/taxonEditFieldCK.jsp" %>
+ <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
  
  <% thisDesc = "taxanomicnotes";       
     descHeader = "Taxonomic Notes"; 

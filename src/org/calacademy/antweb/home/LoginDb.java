@@ -347,7 +347,7 @@ public class LoginDb extends AntwebDb {
         UploadDb uploadDb = new UploadDb(getConnection());
         curator.setLastUpload(uploadDb.getLastUploadByLogin(curator.getId()));
 
-        stmt = DBUtil.getPreparedStatement(getConnection(), "getUploadCounts()", query);
+        stmt = DBUtil.getPreparedStatement(getConnection(), "setUploadCounts()", query);
         stmt.setInt(1, curator.getId());
         stmt.executeQuery();
         rset = stmt.getResultSet();
@@ -356,9 +356,9 @@ public class LoginDb extends AntwebDb {
             curator.setSpecimenUploadCount(rset.getInt("uploadCount"));
         }
       } catch (SQLException e) {
-          s_log.error("getUploadCounts() e:" + e + " query:" + query);
+          s_log.error("setUploadCounts() e:" + e + " query:" + query);
       } finally {
-        DBUtil.close(stmt, rset, "LoginDb", "getUploadCounts()");
+        DBUtil.close(stmt, rset, "LoginDb", "setUploadCounts()");
       }
     }    
 
@@ -369,7 +369,7 @@ public class LoginDb extends AntwebDb {
       ResultSet rset = null;
       PreparedStatement stmt = null;
       try {
-        stmt = DBUtil.getPreparedStatement(getConnection(), "getDescEditCounts()", query);
+        stmt = DBUtil.getPreparedStatement(getConnection(), "setDescEditCounts()", query);
         stmt.setInt(1, curator.getId());
         stmt.executeQuery();
         rset = stmt.getResultSet();
@@ -378,14 +378,14 @@ public class LoginDb extends AntwebDb {
             count = rset.getInt("count");
         }
       } catch (SQLException e) {
-          s_log.error("getDescEditCounts() e:" + e + " query:" + query);
+          s_log.error("setDescEditCounts() e:" + e + " query:" + query);
       } finally {
-        DBUtil.close(stmt, rset, "LoginDb", "getDescEditCounts()");
+        DBUtil.close(stmt, rset, "LoginDb", "setDescEditCounts()");
       }
 
       query = "select count(*) count from description_hist where access_login = ?";
       try {
-        stmt = DBUtil.getPreparedStatement(getConnection(), "getDescEditCounts()", query);
+        stmt = DBUtil.getPreparedStatement(getConnection(), "setDescEditCounts()", query);
         stmt.setInt(1, curator.getId());
         stmt.executeQuery();
         rset = stmt.getResultSet();
@@ -393,9 +393,9 @@ public class LoginDb extends AntwebDb {
             count += rset.getInt("count");
         }
       } catch (SQLException e) {
-          s_log.error("getDescEditCounts() e:" + e + " query:" + query);
+          s_log.error("setDescEditCounts() e:" + e + " query:" + query);
       } finally {
-        DBUtil.close(stmt, rset, "LoginDb", "getDescEditCounts()");
+        DBUtil.close(stmt, rset, "LoginDb", "setDescEditCounts()");
       }
 
       curator.setDescEditCount(count);

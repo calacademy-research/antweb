@@ -17,6 +17,8 @@ possible moment - ideally in jsp footer.
 */
 
     private static final boolean isDebug = AntwebProps.isDevMode();
+
+    // isOn is false so that PageTracker is non-functioning. Possibly causing serious server issues. See bel    ow.
     private static final boolean isOn = false;
 
     private static final Log s_log = LogFactory.getLog(PageTracker.class);

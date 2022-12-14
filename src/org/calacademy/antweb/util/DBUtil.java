@@ -155,8 +155,9 @@ Or, if there are stmts and/or rsets...
     public static @Nullable Statement getStatement(Connection connection, String name)
       throws SQLException  {
         if (connection == null) {
-            s_log.error("getStatement() connection is null for name: " + name);
-            return null;
+            String message = "getStatement() connection is null for name: " + name;
+            s_log.error(message);
+            throw new SQLException(message);
         }
         Statement stmt = null;
         try {

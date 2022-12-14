@@ -1,3 +1,8 @@
+Release 9.83.3
+  Fix two includes to make absolute in taxonPage-body.jsp.
+  
+Release 9.83.2
+  PageTracking turned off.
 
 Release 8.83.1
   Fix the Group form. Database access was changed to prepared statements. Now it works.
