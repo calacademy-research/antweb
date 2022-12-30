@@ -11,7 +11,7 @@
 
 	if (thisPage.contains("bigMap.do")) thisPage = AntwebProps.getDomainApp() + "/geolocale.do";
 	
-	A.log("countryNav.jsp thisPage:" + thisPage + " isOverviewPage:" + isOverviewPage);
+	//A.log("countryNav.jsp thisPage:" + thisPage + " isOverviewPage:" + isOverviewPage);
 
 	if (isOverviewPage) {        
 		view = "<a href='" + country.getThisPageTarget() + "'>" + country.getName() + "</a>";

@@ -957,7 +957,7 @@ public abstract class HttpUtil {
         }
 
         newTarget = HttpUtil.getTargetReplaceParam(newTarget, "orderBy", orderByParam);
-        A.log("getUniquedTarget() orderByParam:" + orderByParam + " newTarget:" + newTarget + " target:" + target);
+        //A.log("getUniquedTarget() orderByParam:" + orderByParam + " newTarget:" + newTarget + " target:" + target);
         return newTarget;
     }
 
@@ -1073,14 +1073,14 @@ public abstract class HttpUtil {
     }
     public static String getTargetReplaceParam(String target, String oldParam, String newParam) {
 
-        A.log("getTargetReplaceParam() target:" + target + " oldParam:" + oldParam + " newParam:" + newParam);
+        //A.log("getTargetReplaceParam() target:" + target + " oldParam:" + oldParam + " newParam:" + newParam);
 
         if (oldParam == null || newParam == null || !newParam.contains("=")) return null;
         if (!newParam.contains("&")) newParam = "&" + newParam;
         target = HttpUtil.getTargetMinusParam(target, oldParam);
         if (newParam != null && !"".equals(newParam)) {
             target += newParam;
-            A.log("getTargetReplaceParam() added newParam:" + newParam + " to target:" + target);
+            //A.log("getTargetReplaceParam() added newParam:" + newParam + " to target:" + target);
         }
         //A.log("getTargetReplaceParam() target:" + target);
         return target;

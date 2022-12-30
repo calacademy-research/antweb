@@ -48,8 +48,8 @@
   } %>
 
 <%
-A.log("taxonPage-body.jsp subfamilyCount:" + TaxonMgr.getSubfamilies().size());
-A.log("taxonPage-body.jsp genus:" + TaxonMgr.getGenus("myrmicinaemyrmica"));
+//A.log("taxonPage-body.jsp subfamilyCount:" + TaxonMgr.getSubfamilies().size());
+//A.log("taxonPage-body.jsp genus:" + TaxonMgr.getGenus("myrmicinaemyrmica"));
 //A.log("taxonPage-body.jsp subspecies:" + TaxonMgr.getTaxon("myrmica scabrinodis ahngeri"));
 //Taxon t = TaxonMgr.getTaxon("myrmicinaemyrmica scabrinodis ahngeri");
 //A.log("taxonPage-body.jsp taxonName:" + t.getTaxonName() + " name:" + t.getName() + " species:" + t.getSpecies() + " source:" + t.getSource());
@@ -78,7 +78,7 @@ A.log("taxonPage-body.jsp genus:" + TaxonMgr.getGenus("myrmicinaemyrmica"));
             <ul>
 <%
 //<% if (taxon.getBrowserParams().contains("?"))
- A.log("taxonPage-body.jsp BrowserParams with ?:" + taxon.getBrowserParams()); %>
+ //A.log("taxonPage-body.jsp BrowserParams with ?:" + taxon.getBrowserParams()); %>
 
                 <li>Overview</li>
                 <li><a href="browse.do?<%= taxon.getBrowserParams() %>"><%= Rank.getNextPluralRank(taxon.getRank()) %></a></li>

@@ -23,6 +23,7 @@
 
    org.calacademy.antweb.Formatter formatter = new Formatter();
 
+   boolean hasMap = taxon.hasMap();
    org.calacademy.antweb.Map map = taxon.getMap();
    String object = "specimen";
    String objectName = specimen.getName();
@@ -56,9 +57,9 @@
                 <li>Overview</li>
                 <li><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%=specimen.getName() %>">Images</a></li>
 <%
-    //A.log("specimen-body.jsp");
+    //A.log("specimen-body.jsp hasMap:" + taxon.hasMap() + " map:" + map);
     
-    if (taxon.hasMap()) {
+    if (hasMap) {
         String params = "";
         // This removed. Sep 5 2018. Title was carrying over to maps page.
         //if (overview != null) params = "&" + overview.getParams();
@@ -123,7 +124,7 @@
       thisDesc = "notes";       
       descHeader = "Notes"; 
       descNotes = "A category intended as a place for content that is difficult to fit into available subject headings or that contains content intended for a wide variety of subject headings.";   %>
-   <%@ include file="common/descEdit/taxonEditFieldCK.jsp" %>
+   <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
     
 <% } else {
      org.calacademy.antweb.util.AntwebUtil.log("specimen-body.jsp desc is null");
@@ -613,7 +614,8 @@ if (LoginMgr.isAdmin(request)) {
 </div>
 
     <div class="left">
-<% 
+<%
+
 if (!HttpUtil.isBot(request)) {
    if (specimen.getImages() != null) { %>    
 <logic:iterate id="theImage" name="specimen" collection="<%= specimen.getImages() %>">
@@ -622,6 +624,10 @@ if (!HttpUtil.isBot(request)) {
         <div class="clear"></div>
   </logic:equal>
 </logic:iterate>
+
+<%
+ A.log("specimen-body.jsp isBot:" + HttpUtil.isBot(request));
+%>
 
         <div class="small_map">
             <%@include file="/maps/googleMapPreInclude.jsp" %>

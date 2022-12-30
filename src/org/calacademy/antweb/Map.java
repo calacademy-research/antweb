@@ -481,19 +481,32 @@ public class Map {
         String locality;
 
         boolean useProject = overview instanceof Project;
-          if (name.equals(Project.WORLDANTS) || name.equals("ALLANTWEBANTS") || "null".equals(name)) useProject = false;
+        if (name.equals(Project.WORLDANTS) || name.equals("ALLANTWEBANTS") || "null".equals(name)) useProject = false;
         // geolocaleFocus is passed all the way from the web page to indicate query restiction and resulting zoom.
         boolean useGeolocale = geolocaleFocus && overview instanceof Geolocale;
+
+        // Antarctica overview.getClass = org.calacademy.antweb.geolocale.Country
+
+        //A.log("setPoints(5) useGeolocale:" + useGeolocale + " geolocaleFocus:" + geolocaleFocus + " overview:" + overview + " instance:" + (overview instanceof Geolocale));
         boolean useBioregion = overview instanceof Bioregion;
+
+        if (!useProject && !useGeolocale && !useBioregion && Utility.isBlank(taxon.getGenus())) {
+            A.log("setPoints(5) Insufficient Criteria");
+            return;
+        }
 
         query = "select sp.decimal_longitude, sp.decimal_latitude, sp.code, sp.taxon_name, sp.genus, sp.species, sp.subspecies, localitycode "
           + " from specimen as sp";
 
-        if (useProject) query += ", proj_taxon"; 
+        if (useProject) {
+            query += ", proj_taxon";
+        }
         //if (useGeolocale) query += ", geolocale_taxon";
         
         query += " where " + SpecimenDb.getFlagCriteria();
-        if (useProject) query += " and proj_taxon.taxon_name = sp.taxon_name";
+        if (useProject) {
+            query += " and proj_taxon.taxon_name = sp.taxon_name";
+        }
         //if (useGeolocale) query += " and geolocale_taxon.taxon_name = sp.taxon_name";
 
         if (Utility.notBlank(taxon.getSubfamily())) {
@@ -515,7 +528,9 @@ public class Map {
         //terms.add("sp.decimal_longitude is not null");
         //terms.add("sp.decimal_latitude is not null");
 
-        if (useBioregion) terms.add("sp.bioregion = '" + name + "'");  
+        if (useBioregion) {
+            terms.add("sp.bioregion = '" + name + "'");
+        }
 
         if (useProject) {
           locality = overview.getLocality();
@@ -533,9 +548,10 @@ public class Map {
           if (overview instanceof Adm1) {
             terms.add("sp.country = '" + ((Adm1) overview).getParent() + "'");          
             terms.add("sp.adm1 = '" + overview.getName() + "'");
-          }          
+          }
         }
 
+        /*
         if (AntwebProps.isDevMode()) {  // if statusSet != null
             //StatusSet statusSet = new StatusSet(StatusSet.VALID_EXTANT);
             StatusSet statusSet = new StatusSet(StatusSet.VALID_WITH_FOSSIL);
@@ -544,6 +560,7 @@ public class Map {
 
             terms.add(statusCriteria);
         }
+*/
 
         query += " and " + Utility.andify(terms);
 
@@ -645,6 +662,8 @@ public class Map {
             setInfo("Specimen:" + counter + " localities:" + localityCount + " distinctMappableCount:" + distinctMappableCount + " distinctUnmappableCount:" + distinctUnmappableCount + " " + reportStats());
               //setPointCounter(innerCounter);
 
+            A.log("setPoints(5) taxon:" + taxon + " name:" + name + " query:" + query + " useBioregion:" + useBioregion + " useGeolocale:" + useGeolocale + " useProject:" + useProject);
+
         } catch (SQLException e) {
             s_log.error("setPoints(5) e:" + e + " taxon:" + taxon + " name:" + name + " query:" + query);
         } finally {
@@ -656,6 +675,7 @@ public class Map {
         return googleMapFunction;
     }
     public void setGoogleMapFunction(String googleMapFunction) {
+        //A.log("setGoogleMapFunction() function:" + googleMapFunction);
         this.googleMapFunction = googleMapFunction;
     }
     
@@ -738,7 +758,10 @@ public class Map {
           //A.log("Map.setGoogleMapFunction() no points found. localityCode:" + localityCode  + " collectionCode:" + collectionCode);
         }
 
-        //A.log("setGoogleMapFunction() googleString:" + googleString.substring(0, 100) + "... locality:" + isLocality + " collection:" + isCollection + " points:" + getPoints().size());
+        //String googleStringSnippet = "";
+        //if (googleString != null) googleStringSnippet = googleString.substring(0, 100);
+        //A.log("setGoogleMapFunction() googleStringSnippet:" + googleStringSnippet + "... locality:" + isLocality + " collection:" + isCollection + " points:" + getPoints().size());
+
         //A.log("setGoogleMapFunction() points.size:" + getPoints().size() + " locality:" + isLocality + " function:" + googleString);
         //A.slog("setGoogleMapFunction() points.size:" + getPoints().size());
 

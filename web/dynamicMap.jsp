@@ -12,7 +12,7 @@
 
 <bean:define id="showNav" value="search" toScope="request"/>
 
-<%@include file="common/antweb-defs.jsp" %>
+<%@include file="/common/antweb-defs.jsp" %>
 <%
     String taxonRank = null;
     String prettyName = null;

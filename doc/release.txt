@@ -1,5 +1,9 @@
+Release 9.83.4
+  Handle case of insufficient criteria in maps.
+
 Release 9.83.3
   Fix two includes to make absolute in taxonPage-body.jsp.
+  Modify DBUtil.getStatement() to throw SQLException in case of null connection.
   
 Release 9.83.2
   PageTracking turned off.

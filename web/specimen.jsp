@@ -17,7 +17,7 @@
 <jsp:useBean id="specimen" scope="request" class="org.calacademy.antweb.Specimen" />
 <jsp:setProperty name="specimen" property="*" />
 
-<%@include file="common/antweb-defs.jsp" %>
+<%@include file="/common/antweb-defs.jsp" %>
 
 <%
    java.util.Hashtable desc = specimen.getDescription();

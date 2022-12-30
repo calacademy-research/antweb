@@ -13,7 +13,7 @@
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" />
 <jsp:setProperty name="taxon" property="*" />
 
-<%@include file="common/antweb-defs.jsp" %>
+<%@include file="/common/antweb-defs.jsp" %>
 
 <%
   Overview overview = OverviewMgr.getOverview(request);

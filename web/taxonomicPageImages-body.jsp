@@ -56,7 +56,7 @@
 
 <div id="page_contents">
 
-<%@ include file="common/overviewHeading.jsp" %>     
+<%@ include file="/common/overviewHeading.jsp" %>
         
     </div>
     <div class="page_divider taxonomic"></div>

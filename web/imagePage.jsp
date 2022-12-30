@@ -31,7 +31,7 @@
 %>
 
 
-<%@include file="common/antweb-defs.jsp" %>
+<%@include file="/common/antweb-defs.jsp" %>
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
 	<tiles:put name="title" value="<%=titleString%>" />

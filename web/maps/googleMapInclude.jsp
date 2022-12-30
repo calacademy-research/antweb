@@ -1,3 +1,4 @@
+
 <!-- googleMapInclude.jsp -->
 
 
@@ -12,7 +13,8 @@
       // was: return;
     } %>
 
-<!--
+<%
+/*
     Here we generate the actual map.
 
 Includes /maps/googleMapPreInclude.jsp and /maps/googleMapInclude.jsp
@@ -46,15 +48,18 @@ map.jsp
     google.maps.event.addDomListener(window, 'load', initialize);    
     
 map.jsp, googleMap.jsp and includeMap.jsp to be removed once the above is resolved (see incudeMap.jsp).
--->
+*/
+%>
 
 
 <%
+  //A.log("googleMapInclude.jsp map:" + map + " displayMap:" + displayMap);
+
   // We assume that map, object{"specimen", "taxon", "locality", "collection"}, mapType, and objectName are already set
   if (map != null && displayMap) {
   
     String googleMapFunction = map.getGoogleMapFunction();    
-    //A.log("googleMapInclude.jsp googleMapFunction:" + googleMapFunction);  
+    //A.log("googleMapInclude.jsp googleMapFunction:" + googleMapFunction);
 
     if ((googleMapFunction != null) && (googleMapFunction.length() > 0)) { 
 
@@ -145,6 +150,8 @@ map.jsp, googleMap.jsp and includeMap.jsp to be removed once the above is resolv
 %>
 
 <%
-    } 
+    } // googleMapFunction != null
   } // map != null
 %>
+
+<!-- end googleMapInclude.jsp -->
