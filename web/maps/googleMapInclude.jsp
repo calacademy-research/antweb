@@ -59,7 +59,6 @@ map.jsp, googleMap.jsp and includeMap.jsp to be removed once the above is resolv
   if (map != null && displayMap) {
   
     String googleMapFunction = map.getGoogleMapFunction();    
-    //A.log("googleMapInclude.jsp googleMapFunction:" + googleMapFunction);
 
     if ((googleMapFunction != null) && (googleMapFunction.length() > 0)) { 
 
@@ -150,7 +149,13 @@ map.jsp, googleMap.jsp and includeMap.jsp to be removed once the above is resolv
 %>
 
 <%
-    } // googleMapFunction != null
+    } else {
+      if (AntwebProps.isDevMode()) {
+        String message = "No googleMapFunction";
+        A.log("googleMapInclude.jsp " + message);
+        out.println(message);
+      }
+    }
   } // map != null
 %>
 

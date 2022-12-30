@@ -755,7 +755,7 @@ public class Map {
           }
         } else {
           // AntwebUtil.logStackTrace();
-          //A.log("Map.setGoogleMapFunction() no points found. localityCode:" + localityCode  + " collectionCode:" + collectionCode);
+          A.log("Map.setGoogleMapFunction() no points found. localityCode:" + localityCode  + " collectionCode:" + collectionCode);
         }
 
         //String googleStringSnippet = "";

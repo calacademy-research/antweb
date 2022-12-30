@@ -80,7 +80,6 @@
 <%
  //if (taxon.getBrowserParams().contains("?"))
  //A.log("taxonPage-body.jsp BrowserParams with ?:" + taxon.getBrowserParams());
- //A.log("taxonPage-body.jsp BrowserParams with ?:" + taxon.getBrowserParams());
  %>
 
                 <li>Overview</li>
