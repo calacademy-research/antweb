@@ -151,9 +151,9 @@ map.jsp, googleMap.jsp and includeMap.jsp to be removed once the above is resolv
 <%
     } else {
       if (AntwebProps.isDevMode()) {
-        String message = "No googleMapFunction";
-        A.log("googleMapInclude.jsp " + message);
-        out.println(message);
+        String aMessage = "No googleMapFunction";
+        A.log("googleMapInclude.jsp " + aMessage);
+        out.println(aMessage);
       }
     }
   } // map != null
