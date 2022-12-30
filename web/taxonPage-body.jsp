@@ -76,9 +76,12 @@
     <!-- taxonPage-body.jsp -->
         <div class="links">
             <ul>
+
 <%
-//<% if (taxon.getBrowserParams().contains("?"))
- //A.log("taxonPage-body.jsp BrowserParams with ?:" + taxon.getBrowserParams()); %>
+ //if (taxon.getBrowserParams().contains("?"))
+ //A.log("taxonPage-body.jsp BrowserParams with ?:" + taxon.getBrowserParams());
+ //A.log("taxonPage-body.jsp BrowserParams with ?:" + taxon.getBrowserParams());
+ %>
 
                 <li>Overview</li>
                 <li><a href="browse.do?<%= taxon.getBrowserParams() %>"><%= Rank.getNextPluralRank(taxon.getRank()) %></a></li>
@@ -817,7 +820,9 @@ Default Images:
         <div class="slide medium last" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getThumbview() %>');" onclick="window.location='bigPicture.do?name=<%= ((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getCode() %>&shot=h&number=1<%= projectStr %>';">
         </div>
         <div class="clear"></div>        
-<% } %>
+<% } else {
+     if (AntwebProps.isDevMode()) out.print("Dev: images " + taxon.getImages());
+   } %>
 
     <!-- % @include file="/curate/defaultSpecimen/defaultSpecimenPanel.jsp" % --> 
 
@@ -825,8 +830,8 @@ Default Images:
  <%
    if (map != null) { %>
         <div class="small_map">
-            <%@include file="/maps/googleMapPreInclude.jsp" %>  
-            <%@include file="/maps/googleMapInclude.jsp" %>  
+            <%@include file="/maps/googleMapPreInclude.jsp" %>
+            <%@include file="/maps/googleMapInclude.jsp" %>
         </div>
 <% } else { 
      if (AntwebProps.isDevMode()) AntwebUtil.log("taxonPage-body.jsp Map not supported for overview:" + overview);
