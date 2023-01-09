@@ -136,7 +136,14 @@ public class SessionRequestFilter implements Filter {
 
           if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
 
-          DBUtil.close(connection, "doFilter()");
+          
+             try {
+                if (connection != null)
+                    connection.close();
+              } catch (SQLException e2) {
+                s_log.warn("track() failed to close connection:" + connection + " e:" + e2);
+              }
+
       }
     }
 
