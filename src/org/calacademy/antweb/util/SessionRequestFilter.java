@@ -47,6 +47,9 @@ public class SessionRequestFilter implements Filter {
       LogMgr.appendLog("accessLog.txt", logMessage, true);
       //A.log("doFilter() message:" + logMessage);
 
+
+      Connection connection = null;
+
       try {
 
           // Log insecure links.
@@ -67,9 +70,17 @@ public class SessionRequestFilter implements Filter {
               afterPopulated = true;
           }
 
-          UserAgentTracker.track(request);
+
+
+          DataSource ds = DBUtil.getDataSource();
+          connection = ds.getConnection();
+
+
+          UserAgentTracker.track(request, connection);
 
           chain.doFilter(request, response);
+
+
 
           //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
 
@@ -124,6 +135,8 @@ public class SessionRequestFilter implements Filter {
           finish(request, startTime);
 
           if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
+
+          DBUtil.close(connection, "doFilter()");
       }
     }
 

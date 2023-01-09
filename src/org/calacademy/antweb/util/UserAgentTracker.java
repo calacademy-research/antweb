@@ -46,7 +46,7 @@ public class UserAgentTracker {
       }	
   }
         
-  public static void saveAgent(String agent, Connection connection) throws SQLException {
+  public static void saveAgent(String agent, Connection connection) {
       String dml = "";
       Statement stmt = null;
       try {
@@ -58,13 +58,12 @@ public class UserAgentTracker {
           //A.log("saveAgent() agent:" + agent);
       } catch (SQLException e) {
           s_log.error("saveAgent() e:" + e + " dml:" + dml);
-          throw e;
       } finally {
           DBUtil.close(stmt, "saveAgent()");
       }
   }        
 
-  public static void track(HttpServletRequest request) {
+  public static void track(HttpServletRequest request, Connection connection) {
       if (agentsMap.size() > 1000) return;
   
       String userAgent = getUserAgent(request);      
@@ -78,21 +77,8 @@ public class UserAgentTracker {
           
           if (count == OVERACTIVE) {
               // PERSIST!
-
-            Connection connection = null;
-            try {              
-              DataSource ds = DBUtil.getDataSource();
-		      connection = ds.getConnection(); 
-		  
               saveAgent(userAgent, connection);
-            } catch (SQLException e) {
-              try {
-                connection.close();       
-              } catch (SQLException e2) {
-                s_log.warn("track() failed to close connection:" + connection + " e:" + e2);
-              }
-            }
-          }          
+          }
       }
   }
 
