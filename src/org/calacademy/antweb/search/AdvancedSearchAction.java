@@ -21,19 +21,6 @@ public class AdvancedSearchAction extends Action {
 
     private static final Log s_log = LogFactory.getLog(AdvancedSearchAction.class);
 
-    /*
-	public ActionForward execute(ActionMapping mapping, ActionForm form,
-								 HttpServletRequest request, HttpServletResponse response)
-			throws IOException, ServletException {
-
-		A.log("execute()");
-		HttpSession session = request.getSession();
-		AntwebProps.resetSessionProperties(session);
-
-		return (mapping.findForward("success"));
-	}
-*/
-
 	public String getSearchTitle(SearchParameters searchParameters) {
 
 		StringBuffer sb = new StringBuffer();
@@ -81,6 +68,8 @@ public class AdvancedSearchAction extends Action {
         //A.log("getSearchTitle() validNames:" + searchParameters.getValidNames());
 
         addToSearch(sb, "statusSet", searchParameters.getStatusSet(), null);
+
+		addToSearch(sb, "redFlagOption", searchParameters.getRedFlagOption(), null);
  		
 		String prefix = ""; //"Results from Searching AntWeb where: ";
 		return prefix + sb;
@@ -250,8 +239,6 @@ public class AdvancedSearchAction extends Action {
 		
         Date startTime = new Date();
         
-//        A.log("getSearchResults() family:" + searchParameters.getFamily());	
-// http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=true&collGroupOpen=none&specGroupOpen=none&geoGroupOpen=&typeGroupOpen=none&searchType=contains&name=&familySearchType=notEquals&family=Formicidae&subfamilySearchType=contains&subfamily=&genusSearchType=contains&genus=&speciesSearchType=contains&species=&subspeciesSearchType=contains&subspecies=&bioregion=&country=&adm1=Ohio&adm2SearchType=contains&adm2=&localityNameSearchType=contains&localityName=&localityCodeSearchType=contains&localityCode=&habitatSearchType=contains&habitat=&elevationSearchType=greaterThanOrEqual&elevation=&methodSearchType=contains&method=&microhabitatSearchType=equals&microhabitat=&collectedBySearchType=equals&collectedBy=&collectionCodeSearchType=contains&collectionCode=&dateCollectedSearchType=greaterThanOrEqual&dateCollected=&specimenCodeSearchType=contains&specimenCode=&locatedAtSearchType=contains&locatedAt=&lifeStageSearchType=contains&lifeStage=&casteSearchType=contains&caste=&mediumSearchType=contains&medium=&specimenNotesSearchType=contains&specimenNotes=&dnaExtractionNotesSearchType=contains&dnaExtractionNotes=&ownedBySearchType=contains&ownedBy=&createdSearchType=equals&created=&groupName=&uploadId=0&type=&types=off&statusSet=all&imagesOnly=off&resultRank=specimen&output=list&x=49&y=14	
 	    search.setFamily(searchParameters.getFamily().trim());
 		search.setSubfamily(searchParameters.getSubfamily().trim());
 		search.setName(searchParameters.getName().trim());
@@ -285,8 +272,9 @@ public class AdvancedSearchAction extends Action {
 		search.setConnection(connection);
 		
 		//A.log("getSearchResults imagesOnly:" + searchParameters.getImagesOnly());
-		//search.setImagesOnly(searchParameters.getImagesOnly());
-		
+		search.setImagesOnly(searchParameters.getImagesOnly());
+		search.setRedFlagOption(searchParameters.getRedFlagOption());
+
 		search.setTypes(searchParameters.getTypes());
 		search.setProject(searchParameters.getProject());
 

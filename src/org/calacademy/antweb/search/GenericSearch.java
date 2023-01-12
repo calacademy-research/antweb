@@ -28,7 +28,7 @@ public class GenericSearch implements Serializable {
     protected String name;
     protected String taxonName;
     protected String searchType;
-    protected String imagesOnly;
+    //protected String imagesOnly;
     protected String types;
     protected String project;
     protected int geolocaleId;
@@ -607,6 +607,10 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                     uploadId = rset.getInt(rset.findColumn("upload_id"));
                 //A.log("GenericSearch.getListFromRSet() uploadId:" + uploadId);
 
+                //if (theQuery.contains("flag"))
+                //    flag = rset.getString(rset.findColumn("flag"));
+                //if (theQuery.contains("issue"))
+                //    issue = rset.getString(rset.findColumn("issue"));
 
                 rank = Rank.getRankList(name, subfamily, genus, species, subspecies);
                 rankIterator = rank.iterator();

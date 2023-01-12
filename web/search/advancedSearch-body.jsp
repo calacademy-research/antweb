@@ -715,7 +715,7 @@ Click <b>SHOW | HIDE</b> to add more criteria to your search.
 			<% String statusSetDefault = advancedSearchForm.getStatusSet(); %>
 			<%@include file="/common/statusSetSelectDisplay.jsp" %>
 
-			<% 
+			<%
 			A.log("images:" + advancedSearchForm.getImagesOnly()); 
 			String imagesOnSelected = "";
 			String imagesOffSelected = " selected ";
@@ -724,13 +724,25 @@ Click <b>SHOW | HIDE</b> to add more criteria to your search.
 			  imagesOffSelected = "";
 			}
 			%>
+
 			<br clear=all>
 
-			Images only: 
+			<div class=adv_left_col>
+			Images only:
 			<select name="imagesOnly" class="input_150" property="imagesOnly">
 			  <option value="on" <%= imagesOnSelected %>>On</option>
 			  <option value="off" <%= imagesOffSelected %>>Off</option>
 			</select>
+			</div>
+
+			<br clear=all>
+
+			<div class=adv_left_col>
+			Red Flag: <html:select styleClass="input_150" property="redFlagOption" value="exclude">
+			  <html:option value="exclude">Exclude</html:option>
+			  <html:option value="include">Include</html:option>
+			  <html:option value="only">Only</html:option>
+			</html:select>
 			</div>
 
 			<br clear=all>

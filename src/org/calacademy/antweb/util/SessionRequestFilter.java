@@ -136,7 +136,7 @@ public class SessionRequestFilter implements Filter {
 
           if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
 
-          
+
              try {
                 if (connection != null)
                     connection.close();

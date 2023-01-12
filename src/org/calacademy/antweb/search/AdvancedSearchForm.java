@@ -183,6 +183,7 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
 		specimenCodeSearchType = s_defaultOperator;
 		types = null;
 		imagesOnly = null;
+		redFlagOption = null;
 		country = null;
 		bioregion = null;
 		adm1 = null;

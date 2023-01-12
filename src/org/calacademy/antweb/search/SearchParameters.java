@@ -46,6 +46,7 @@ public final class SearchParameters extends AdvancedSearchForm {
         locatedAt = asForm.getLocatedAt();
         types = asForm.getTypes();
         imagesOnly = asForm.getImagesOnly();
+        redFlagOption = asForm.getRedFlagOption();
         country = asForm.getCountry();
         bioregion = asForm.getBioregion();
         adm1 = asForm.getAdm1();
@@ -118,8 +119,9 @@ public final class SearchParameters extends AdvancedSearchForm {
         name = sForm.getName();
         searchType = sForm.getSearchType();
         imagesOnly = sForm.getImagesOnly();
-        types = sForm.getTypes();    
-        project = sForm.getProject();     
+        redFlagOption = sForm.getRedFlagOption();
+        types = sForm.getTypes();
+        project = sForm.getProject();
         geolocaleId = sForm.getGeolocaleId();     
                
         taxonName = sForm.getTaxonName();
@@ -134,7 +136,7 @@ public final class SearchParameters extends AdvancedSearchForm {
           genusSearchType = ""; speciesSearchType = ""; subspeciesSearchType = ""; localityNameSearchType = ""; localityCodeSearchType = "";
           collectedBySearchType = ""; museumCodeSearchType = ""; adm2 = ""; adm2SearchType = "equals"; collectionCodeSearchType = "";
           specimenCodeSearchType = ""; methodSearchType = ""; microhabitatSearchType = ""; habitatSearchType = "";
-          locatedAtSearchType = ""; locatedAt = ""; types = ""; imagesOnly = ""; country = ""; bioregion = "";
+          locatedAtSearchType = ""; locatedAt = ""; types = ""; imagesOnly = ""; redFlagOption = ""; bioregion = "";
           typeDesignation = ""; localityName = ""; localityCode = ""; collectionCode = "";
           specimenCode = ""; habitat = ""; method = ""; microhabitat = ""; project = ""; geolocaleId = 0; ownedBy = ""; collectedBy = ""; museumCode = ""; 
           caste = ""; casteSearchType = "";  
@@ -202,6 +204,7 @@ public final class SearchParameters extends AdvancedSearchForm {
         locatedAt = null;
         types = null;
         imagesOnly = null;
+        redFlagOption = null;
         project = null;
         geolocaleId = 0;
         country = null;
@@ -278,6 +281,7 @@ public final class SearchParameters extends AdvancedSearchForm {
     public String toStringShort() {
         return "types = " + types
                 + ", images=" + imagesOnly
+                + ", redFlagOption=" + redFlagOption
                 + ", project=" + project
                 + ", geolocaleId=" + geolocaleId
                 + ", name=" + name
@@ -289,7 +293,8 @@ public final class SearchParameters extends AdvancedSearchForm {
         return
         "types = "+ types
         + ", images=" + imagesOnly
-        + ", project=" + project 
+        + ", redFlagOption=" + redFlagOption
+        + ", project=" + project
         + ", geolocaleId=" + geolocaleId    
         //Search parameters common to basic searches
         + ", name=" + name

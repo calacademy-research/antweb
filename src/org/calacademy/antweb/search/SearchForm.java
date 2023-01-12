@@ -25,6 +25,7 @@ public class SearchForm extends ActionForm {
     private String taxonName = "";
     private String types;
     public String imagesOnly;
+    public String redFlagOption;
     private String project;
     private int geolocaleId = 0;
 
@@ -63,10 +64,17 @@ public class SearchForm extends ActionForm {
         this.imagesOnly = imagesOnly;
     }
 
+    public String getRedFlagOption() {
+        return this.redFlagOption;
+    }
+    public void setRedFlagOption(String redFlagOption) {
+        A.log("setRedFlagOption() redFlagOption:" + redFlagOption);
+        this.redFlagOption = redFlagOption;
+    }
+
     public String getProject() {
         return project;
     }
-
     public void setProject(String project) {
         this.project = project;
     }
@@ -104,6 +112,7 @@ public class SearchForm extends ActionForm {
         this.name = "";
         this.taxonName = "";
         this.imagesOnly = null;
+        this.redFlagOption = null;
         this.types = null;
         this.project = null;
     }

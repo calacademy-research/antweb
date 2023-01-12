@@ -244,13 +244,18 @@ if (sortedBy == null) {
 
       // Note the advancedSearchResults-body.jsp also has a hardcoded 2000
       //A.log("specimenReport.jsp index:" + index); }
-    
+
       //Specimen thisChild = (Specimen) child;
       String specimenDagger = "";
       if (thisChild.getIsFossil()) specimenDagger = "&dagger;";
       
       String specimenIntroduced = "";    
       if (thisChild.getIsIntroduced()) specimenIntroduced = "<a href='" + AntwebProps.getDomainApp() + "/common/distStatusDisplayPage.jsp' target='new'><img src='" + AntwebProps.getDomainApp() + "/image/redI.png' width='11' height='12' border='0' title='Introduced'></a>";    
+
+      String redFlagged = "";
+      // Will not happen. Not yet implemented in GenericSearch resultItem.
+      if ("red".equals(thisChild.getFlag())) redFlagged = "<a title='Red Flag: " + thisChild.getIssue() + "'><font color=red>*</font></a>";
+	  //A.log("specimenReport.jsp redFlagged:" + thisChild.getFlag());
 
       if (!thisChild.getName().equals("\"\"")) { 
           String moreData = "";
@@ -279,7 +284,7 @@ if (sortedBy == null) {
                 </div>
                 <div class="sd_data">
                     <div class="sd_specimen_code">
-                        <%= specimenDagger %><%= specimenIntroduced %>
+                        <%= specimenDagger %><%= specimenIntroduced %><%= redFlagged %>
                         <a href="<%= AntwebProps.getDomainApp() %>/specimen.do?code=<%= thisChild.getName() %>"><span class="
                           <%= ("code".equals(sortedBy) ? "sorted_by" : "") %>"><%= thisChild.getPrettyName() %></span></a><br />
                             <span class="<%= ("images".equals(sortedBy) ? "sorted_by" : "") %>">

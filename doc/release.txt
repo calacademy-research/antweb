@@ -1,3 +1,7 @@
+Release 8.84
+Date: Jan 11, 2023
+  Red Flag Option drop down list added to Advanced Search.
+
 Release 8.83.5
 Date: Jan 8. 2023
   Database connection closing during SessionRequestFilter.

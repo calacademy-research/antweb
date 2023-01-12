@@ -20,6 +20,8 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
       web/search/advancedSearch-body.jsp
       Here.  src/org/calacademy/antweb/search/AdvancedSearch.java
       src/org/calacademy/antweb/search/AdvancedSearchForm.java
+        or TaxaSearchForm.java
+          or SearchForm.java
       src/org/calacademy/antweb/search/AdvancedSearchAction.java
       src/org/calacademy/antweb/search/SearchParameters.java
       src/org/calacademy/antweb/search/ResultItem.java
@@ -128,14 +130,19 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
                 + ", sp.determinedby, sp.method, sp.dnaextractionnotes, sp.ownedby, sp.locatedat"
                 + ", sp.elevation, sp.decimal_longitude, sp.decimal_latitude"  //Added Feb 1, 2013.                  
                 + ", ant_group.name, sp.museum"
-                + ", sp.bioregion, upload_id";
+                + ", sp.bioregion, upload_id"
+               // + ", sp.flag, issue"
+                    ;
+
+            String redFlagOption = getRedFlagOption();  //SpecimenDb.FLAG_EXCLUDE; //
+            A.log("createInitialResults() redFlagOption:" + redFlagOption);
 
             theQuery = "select " + fieldList
                 + ", count(image.id) as imagecount"
                 + " from specimen as sp " 
                 + " left outer join image on (sp.code = image.image_of_id)"  //  and image.shot_type != \"l\"
                 + " left outer join ant_group on sp.access_group = ant_group.id "
-                + " where " + SpecimenDb.getFlagCriteria()
+                + " where " + SpecimenDb.getFlagCriteria(redFlagOption);
                 ; 
 
 /* 
@@ -392,7 +399,8 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
 		    ArrayList<ResultItem> itemList = getListFromRset(GenericSearch.ADVANCED, rset, null, theQuery);
 		    String message = " listSize:" + itemList.size();
 		    if (itemList != null && !itemList.isEmpty()) message += " 1st:" + itemList.get(0);
-		    //A.log("createInitialResults()" + message + " query:" + theQuery);
+
+		    A.log("createInitialResults()" + message + " query:" + theQuery);
 		    //AntwebUtil.logShortStackTrace();
 		    return itemList;
         } catch (SQLException e) {
@@ -542,8 +550,14 @@ add status to specimen
         return medium;
     }
     public void setMedium(String medium) {
-      //s_log.warn("setMedium:" + medium);    
-      //if (medium == null) AntwebUtil.logStackTrace();
+      /*
+    2023-01-11T18:49:51,936 WARN http-nio-8080-exec-6 org.calacademy.antweb.util.AntwebUtil - warnStackTrace() trace:org.calacademy.antweb.util.StackTraceException
+	at org.calacademy.antweb.search.AdvancedSearch.setMedium(AdvancedSearch.java:553)
+	at org.calacademy.antweb.search.AdvancedSearchAction.getSearchResults(AdvancedSearchAction.java:319)
+	at org.calacademy.antweb.search.AdvancedSearchAction.getSearchResults(AdvancedSearchAction.java:217)
+	at org.calacademy.antweb.search.SearchAction.doAdvancedSearch(SearchAction.java:174)
+	at org.calacademy.antweb.search.SearchAction.advancedSearch(SearchAction.java:137)
+    */
         this.medium = medium;
     }
     public String getMediumSearchType() {
@@ -860,5 +874,24 @@ add status to specimen
     public void setIsIgnoreInsufficientCriteria(boolean ignoreInsufficientCriteria) {
       this.ignoreInsufficientCriteria = ignoreInsufficientCriteria;
     }
+
+    private String imagesOnly = null;
+    private String redFlagOption = null;
+
+    public String getImagesOnly() {
+        return this.imagesOnly;
+    }
+    public void setImagesOnly(String imagesOnly) {
+        this.imagesOnly = imagesOnly;
+    }
+
+    public String getRedFlagOption() {
+        return this.redFlagOption;
+    }
+    public void setRedFlagOption(String redFlagOption) {
+        A.log("setRedFlagOption() redFlagOption:" + redFlagOption);
+        this.redFlagOption = redFlagOption;
+    }
+
     
 }

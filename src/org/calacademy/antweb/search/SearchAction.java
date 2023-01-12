@@ -162,8 +162,12 @@ public final class SearchAction extends DispatchAction {
         
         String types = searchParameters.getTypes();
         String imagesOnly = searchParameters.getImagesOnly();
-         
-        //A.log("SearchAction.doAdvancedSearch() imagesOnly:" + imagesOnly);         
+        //A.log("doAdvancedSearch() imagesOnly:" + imagesOnly);
+
+          String redFlagOption = searchParameters.getRedFlagOption();
+          A.log("doAdvancedSearch() redFlagOption:" + redFlagOption);
+
+
         AdvancedSearchAction searchAction = new AdvancedSearchAction();
         searchAction.setServlet(servlet);
 

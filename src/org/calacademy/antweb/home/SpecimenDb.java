@@ -579,6 +579,21 @@ public class SpecimenDb extends AntwebDb {
     public static String getFlagCriteria() {
       return " (flag is null or flag != 'red') ";
     }
+
+
+    public static String FLAG_INCLUDE = "include";
+    public static String FLAG_ONLY = "only";
+    public static String FLAG_EXCLUDE = "exclude";
+
+    public static String getFlagCriteria(String option) {
+        if (FLAG_INCLUDE.equals(option)) return " 1 = 1 ";
+        if (FLAG_ONLY.equals(option)) return " (flag = 'red') ";
+        if (FLAG_EXCLUDE.equals(option)) return " (flag is null or flag != 'red') ";
+
+        s_log.warn("getFlagCriteria() this should not happen option: " + option);
+        return "1 = 1";
+    }
+
     public static String getStatusCriteria() {
       return new StatusSet().getCriteria("specimen");
     }
