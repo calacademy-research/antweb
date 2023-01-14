@@ -889,7 +889,7 @@ add status to specimen
         return this.redFlagOption;
     }
     public void setRedFlagOption(String redFlagOption) {
-        A.log("setRedFlagOption() redFlagOption:" + redFlagOption);
+        //A.log("setRedFlagOption() redFlagOption:" + redFlagOption);
         this.redFlagOption = redFlagOption;
     }
 
