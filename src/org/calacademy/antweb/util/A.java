@@ -5,7 +5,7 @@ import java.util.*;
 import java.text.*;
 
 import org.calacademy.antweb.*;
-
+import org.calacademy.antweb.home.ServerDb;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
@@ -20,7 +20,11 @@ public class A {
   */
 
   private static final Log s_log = LogFactory.getLog(A.class);
-  
+
+  public static boolean isDebug(String option) {
+      return ServerDb.isDebug(option);
+  }
+
   public static void log(String message) {
     if (AntwebProps.isDevMode()) {
       //s_log.warn(message);   

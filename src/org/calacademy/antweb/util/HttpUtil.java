@@ -193,7 +193,7 @@ public abstract class HttpUtil {
           || userAgent.contains("SemrushBot")
           || userAgent.contains("centurybot")
           || userAgent.contains("bingbot")
-            || userAgent.contains("naver.me")
+          || userAgent.contains("naver.me")
           //|| (userAgent.contains())
            ) {
           isBot = true;   

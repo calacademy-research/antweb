@@ -3,13 +3,17 @@
 
 
 <%@ page import="org.calacademy.antweb.Map" %>
+<%@ page import="org.calacademy.antweb.util.UserAgentTracker" %>
 
-<%  
+<%
     boolean displayMap = true;
 
     if (HttpUtil.isBot(request)) {
       out.println("<a href='" + AntwebProps.getDomainApp() + "/login.do'>Log In</a> to see maps.");
       displayMap = false;
+
+      if (A.isDebug("userAgents") && UserAgentTracker.isOveractive(request)) A.iLog("googleMapInclude.jsp overactive:" + UserAgentTracker.isOveractive(request) + " summary:" + UserAgentTracker.summary());
+
       // was: return;
     } %>
 

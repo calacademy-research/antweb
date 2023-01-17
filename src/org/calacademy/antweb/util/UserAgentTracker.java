@@ -13,6 +13,7 @@ import org.calacademy.antweb.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.home.ServerDb;
 
 
 public class UserAgentTracker {
@@ -64,6 +65,9 @@ public class UserAgentTracker {
   }        
 
   public static void track(HttpServletRequest request, Connection connection) {
+
+      if (ServerDb.isDebug("debugUserAgents")) return;
+
       if (agentsMap.size() > 1000) return;
   
       String userAgent = getUserAgent(request);      
@@ -77,12 +81,13 @@ public class UserAgentTracker {
           
           if (count == OVERACTIVE) {
               // PERSIST!
-              saveAgent(userAgent, connection);
+                  s_log.info("track() persist userAgent:" + userAgent);
+                  saveAgent(userAgent, connection);
           }
       }
   }
 
-  private static String getUserAgent(HttpServletRequest request) {
+  public static String getUserAgent(HttpServletRequest request) {
       String userAgent = request.getHeader("user-agent");
       Login accessLogin = LoginMgr.getAccessLogin(request);
       if (accessLogin != null) userAgent += " (login:" + accessLogin.getName() + ")";
@@ -90,6 +95,9 @@ public class UserAgentTracker {
   }
 
   public static boolean isOveractive(HttpServletRequest request) {
+
+      if (ServerDb.isDebug("debugUserAgents")) return false;
+
       String userAgent = getUserAgent(request);
       if (userAgent == null) { 
         return false;

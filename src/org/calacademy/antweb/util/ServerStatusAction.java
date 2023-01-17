@@ -55,7 +55,7 @@ static double getVersion () {
             connection = DBUtil.getConnection(dataSource1, "ServerStatusAction.execute");
  
             if (action.equals("toggleDownTime")) {
-                String message = ServerStatusAction.toggleDownTime(connection); 
+                String message = ServerDb.toggleDownTime(connection);
                // request.setAttribute("message", message);
                // return (mapping.findForward("message"));
             }
@@ -135,12 +135,13 @@ static double getVersion () {
 
     public static void populate(Connection connection) {
         try {
-            getIsDownTime(connection);
+            ServerDb.getIsDownTime(connection);
         } catch (SQLException e) {
             s_log.debug("populate() e:" + e);
         }
     }	
 
+    /*
     public static boolean isInDownTime() {
       return !"".equals(ServerStatusAction.getDownTimeMessage());
     }    
@@ -160,15 +161,6 @@ static double getVersion () {
         if (downTime) message = ServerStatusAction.getDownTimeMessage();
         s_log.debug("isDownTime() downTime:" + downTime);
 
-/*
-        if ("".equals(message)) {
-          long minUntilReboot = 0;
-          if (!AntwebProps.isDevMode()) minUntilReboot = AntwebUtil.minUntil8pm();
-          if (minUntilReboot > 0 && minUntilReboot < 30) { 
-              message = "<h3><font color=red>Server is going down in " + minUntilReboot + " minutes. Please try again later.</font></h3>";
-          }
-        }
-*/      
         if (!"".equals(message)) s_log.warn("isDownTime message:" + message);
         downTimeMessage = message;
         return message;
@@ -231,6 +223,7 @@ static double getVersion () {
         }
     }
 
+*/
 
 // --------------------------------------------------
 	

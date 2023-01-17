@@ -662,7 +662,7 @@ public class Map {
             setInfo("Specimen:" + counter + " localities:" + localityCount + " distinctMappableCount:" + distinctMappableCount + " distinctUnmappableCount:" + distinctUnmappableCount + " " + reportStats());
               //setPointCounter(innerCounter);
 
-            A.log("setPoints(5) taxon:" + taxon + " name:" + name + " query:" + query + " useBioregion:" + useBioregion + " useGeolocale:" + useGeolocale + " useProject:" + useProject);
+            //A.log("setPoints(5) taxon:" + taxon + " name:" + name + " query:" + query + " useBioregion:" + useBioregion + " useGeolocale:" + useGeolocale + " useProject:" + useProject);
 
         } catch (SQLException e) {
             s_log.error("setPoints(5) e:" + e + " taxon:" + taxon + " name:" + name + " query:" + query);

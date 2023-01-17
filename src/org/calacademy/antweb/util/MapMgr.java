@@ -35,7 +35,7 @@ public abstract class MapMgr {
         } else {
             Date before = new Date();
             map = new Map(taxon, overview, connection);
-            A.log("getMap() millis:" + AntwebUtil.millisSince(before));
+            //A.log("getMap() millis:" + AntwebUtil.millisSince(before));
         }
 
         //A.log("execute() persist:" + persist + " taxon:" + taxon + " map:" + map);

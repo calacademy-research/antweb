@@ -37,7 +37,8 @@
 boolean otherOption = !UptimeAction.isFailOnPurpose();
 %>
 <br><b>Uptime Fail On Purpose:</b> <%= UptimeAction.isFailOnPurpose() %>  <a href='<%= AntwebProps.getDomainApp() %>/uptime.do?fail=<%= otherOption %>'>[toggle fail]</a>
-<br><%= ServerStatusAction.getDownTimeMessage() %>
+<br><%= ServerDb.getDownTimeMessage() %>
+<br><b>Server Debug:</b> <%= ServerDb.getDebug() %>
 <br><b>Status</b>
 &nbsp;&nbsp;&nbsp;(If Upload in process, or Image Upload locked, best to wait to restart the server).
 <% 

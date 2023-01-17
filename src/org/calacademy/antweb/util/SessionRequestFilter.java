@@ -14,7 +14,7 @@ import java.sql.*;
 import javax.sql.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.calacademy.antweb.home.ServerDb;
 
 
 public class SessionRequestFilter implements Filter {
@@ -24,9 +24,14 @@ public class SessionRequestFilter implements Filter {
     private static boolean afterPopulated = false;
     
     boolean justOnce = false;
-    
+
+    private static int s_period = 5; // minutes after which the infrequent code will execute. (Debug string fetch).
+    private static Date s_periodDate = null;
+
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
+
+      if (AntwebProps.isDevMode()) s_period = 0;
 
       Date startTime = new Date();
       HttpServletRequest request = (HttpServletRequest) req;
@@ -70,17 +75,21 @@ public class SessionRequestFilter implements Filter {
               afterPopulated = true;
           }
 
-
-
           DataSource ds = DBUtil.getDataSource();
           connection = ds.getConnection();
 
+          if (s_periodDate == null) s_periodDate = new Date();
+          //A.log("doFilter() s_periodDate:" + s_periodDate + " s_period:" + s_period + " since:" + AntwebUtil.minsSince(s_periodDate));
+          if (AntwebUtil.minsSince(s_periodDate) >= s_period) {
+              // This will happen only every s_period.
+              s_periodDate = new Date();
+              String debug = ServerDb.getDebug(connection);
+              //A.log("doFilter() period s_periodDate:" + s_periodDate + " debug:" + debug);
+          }
 
           UserAgentTracker.track(request, connection);
 
           chain.doFilter(request, response);
-
-
 
           //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
 

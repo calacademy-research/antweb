@@ -144,7 +144,7 @@ public class UploadAction extends Action {
 			}
 
 			if (!"toggleDownTime".equals(action)) {
-				String downTimeMessage = ServerStatusAction.isDownTime(action, connection);
+				String downTimeMessage = ServerDb.isDownTime(action, connection);
 				if (!"".equals(downTimeMessage)) {
 					request.setAttribute("message", downTimeMessage);
 					return mapping.findForward("message");

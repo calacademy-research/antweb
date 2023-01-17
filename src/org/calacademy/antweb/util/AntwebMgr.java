@@ -335,13 +335,13 @@ public class AntwebMgr {
     */
 	public static boolean hasServerMessage() {
       // The message would be displayed on the curate page.
-        return ServerStatusAction.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBStatus.getIsServerBusy() || isInitializing;
+        return ServerDb.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBStatus.getIsServerBusy() || isInitializing;
 	}
     public static String getSimpleServerMessage() {
        if (isInitializing) {
 		 return "The server is initializing...";       
        }
-	   if (ServerStatusAction.isInDownTime()) {
+	   if (ServerDb.isInDownTime()) {
 		 return "The Upload Services are down for site maintenance.";
 	   }
 	   if (UploadAction.isInUploadProcess()) {
@@ -359,8 +359,8 @@ public class AntwebMgr {
        if (isInitializing) {
 		 return "<h3><font color='red'>The server is initializing...</font></h3>";       
        }    
-	   if (ServerStatusAction.isInDownTime()) {
-		 return ServerStatusAction.getDownTimeMessage();
+	   if (ServerDb.isInDownTime()) {
+		 return ServerDb.getDownTimeMessage();
 	   }
 	   if (UploadAction.isInUploadProcess()) {
 		 return "<h3><font color='red'>Upload Currently In <a title='" + UploadAction.getIsInUploadProcess() + "'>Process</a> (some services are down).</font></h3>";
