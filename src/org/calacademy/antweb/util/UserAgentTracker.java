@@ -53,7 +53,7 @@ public class UserAgentTracker {
       } else {
           int count = agentsMap.getOrDefault(userAgent, 0);
           count = count + 1;
-          agentsMap.put(userAgent, count);   
+          if (agentsMap.contains(userAgent)) agentsMap.put(userAgent, count);
           
           if (count == OVERACTIVE && !whiteList.contains(userAgent) && !userAgent.contains("login:")) {
               // So many requests. Known agent. PERSIST!
