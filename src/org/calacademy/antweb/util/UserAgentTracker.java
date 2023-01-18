@@ -54,7 +54,7 @@ public class UserAgentTracker {
           int count = agentsMap.getOrDefault(userAgent, 0);
           count = count + 1;
 
-          s_log.warn("track() count:" + count + " agent:" + userAgent);
+          //s_log.warn("track() count:" + count + " agent:" + userAgent);
           agentsMap.put(userAgent, count);
           
           if (count == OVERACTIVE && !whiteList.contains(userAgent) && !userAgent.contains("login:")) {

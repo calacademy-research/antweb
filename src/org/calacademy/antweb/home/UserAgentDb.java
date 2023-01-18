@@ -98,6 +98,27 @@ public class UserAgentDb extends AntwebDb {
         }
     }
 
+    public void flagWhiteList() {
+        Set<String> whiteList = new HashSet<>();
+
+        String query = "select name from user_agent_whitelist where name in (select name from user_agent)";
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "flagWhiteList()");
+            rset = stmt.executeQuery(query);
+
+            while (rset.next()) {
+                String agent = rset.getString("name");
+                s_log.warn("flagWhiteList() WARNING user agent should not be in WhiteList. name:" + agent);
+                // A bot has logged in? Investigate.
+            }
+        } catch (SQLException e) {
+            s_log.warn("flagWhiteList() query:" + query + " e:" + e);
+        } finally {
+            DBUtil.close(stmt, rset, "flagWhiteList()");
+        }
+    }
 
 }
 

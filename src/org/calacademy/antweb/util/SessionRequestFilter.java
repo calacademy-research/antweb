@@ -2,6 +2,7 @@ package org.calacademy.antweb.util;
 
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.Login;
+import org.calacademy.antweb.home.*;
 
 import java.util.Date;
 import java.io.*;
@@ -189,6 +190,10 @@ public class SessionRequestFilter implements Filter {
 		  ds = DBUtil.getDataSource();
 		  connection = ds.getConnection(); 
 		  AntwebMgr.populate(connection, true, true); // Trusted to close the connection
+
+          // Should be in an set of server init checks.
+          (new UserAgentDb(connection)).flagWhiteList();
+
         } catch (SQLException e) {
           s_log.error("init() e:" + e + " datasource:" + ds + " connection:" + connection);
         } finally {
