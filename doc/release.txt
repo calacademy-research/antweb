@@ -1,9 +1,13 @@
 Release 8.85
 Date: Jan 17
-  Create ServerDb. Move functionality from ServerStatusAction.
   Debug flag feature.
-  UserAgentTracking modifications.
+  UserAgentTracking refactor.
+    Creation of user_agent_whitelist.
   getGeolocaleFromProjectName() to resolve a bulk of legacy requests.
+    Appropriate projectants redirects.
+  Create ServerDb. Move functionality from ServerStatusAction.
+  Create UserAgentDb with functionality from UserAgentTracker.
+  Only allow live adm1s in the Change View Options.
 
 Release 8.84
 Date: Jan 11, 2023

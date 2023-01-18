@@ -3,12 +3,20 @@ package org.calacademy.antweb.util;
 import java.util.*;
 import java.util.Map;
 
+import java.io.IOException;
+import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
 
 import javax.sql.*;
 import java.sql.*;
 
+import org.apache.struts.action.*;
+
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+import org.apache.struts.action.DynaActionForm;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.UserAgentDb;
 
@@ -17,17 +25,34 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.home.ServerDb;
 
 
-public class UserAgentTracker {
+public class UserAgentTracker extends Action {
 
   private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);
 
-  private static final Map<String, Integer> agentsMap = new HashMap<>();
-  private static int nullAgent = 0;
 
-  private static Set<String> knownAgentsSet = null;
-  private static Set<String> whiteList = null;
+    private static Map<String, Integer> agentsMap = new HashMap<>();
+    private static int nullAgent = 0;
 
-  private static final int OVERACTIVE = 1000;
+    private static Set<String> knownAgentsSet = null;
+    private static Set<String> whiteList = null;
+
+    private static final int OVERACTIVE = 1000;
+
+    private static java.util.Date lastRefreshDate = null;
+
+    public ActionForward execute(ActionMapping mapping, ActionForm form,
+                                 HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+
+        String target = HttpUtil.getTarget(request);
+        DynaActionForm df = (DynaActionForm) form;
+
+        String name = (String) df.get("name");
+        if ("refresh".equals(name)) UserAgentTracker.refresh();
+        A.log("name:" + name);
+
+        return mapping.findForward("userAgents");
+    }
 
   public static void init(Connection connection) {
       UserAgentDb userAgentDb = new UserAgentDb(connection);
@@ -36,13 +61,22 @@ public class UserAgentTracker {
       whiteList = userAgentDb.getWhiteList();
   }
 
+  public static void refresh() {
+      lastRefreshDate = new java.util.Date();
+      agentsMap = new HashMap<>();
+  }
+  public static String getLastRefresh() {
+      if (lastRefreshDate == null) return " - ";
+      return lastRefreshDate.toString();
+  }
+
   public static void track(HttpServletRequest request, Connection connection) {
 
       //if (ServerDb.isDebug("debugUserAgents")) return;
 
       if (knownAgentsSet == null) return;  // Not yet initialized.
 
-      if (agentsMap.size() > 1000) return;
+      //if (agentsMap.size() > 1000) return;
 
       UserAgentDb userAgentDb = new UserAgentDb(connection);
 
@@ -62,10 +96,6 @@ public class UserAgentTracker {
               s_log.info("track() persist userAgent:" + userAgent);
               userAgentDb.saveAgent(userAgent);
           }
-      }
-
-      if (AntwebProps.isDevMode()) {
-        s_log.warn("track() report:" + report());
       }
   }
 
@@ -158,14 +188,6 @@ public class UserAgentTracker {
   public static String htmlUserAgents() {
       Set<String> keySet = agentsMap.keySet();
 
-      if (AntwebProps.isDevMode()) {
-          int a = 0;
-          for (String s : keySet) {
-              ++a;
-              A.log("a:" + a + " s:" + s);
-          }
-      }
-
       String report = "<br><br>";
       String agent = "";
 
@@ -196,8 +218,7 @@ public class UserAgentTracker {
           report += "<b>" + count + ": </b>" + agent;
       }
 */
-
-      A.log("htmlReport() report:" + report);
+      //A.log("htmlReport() report:" + report);
 
       return report;
   }

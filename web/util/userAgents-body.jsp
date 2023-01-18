@@ -14,8 +14,7 @@
 <%
   Utility util = new Utility();
   String domainApp = util.getDomainApp();
-%>  
-
+%>
 
 <div class="admin_left">
 
@@ -26,9 +25,13 @@
 
 <br><b><font color=red>X</font></b> means that the agent is a known bot.
 <br><b><font color=red><img src="<%= AntwebProps.getDomainApp() %>/image/greenCheck.png"></font></b> means that the user is logged in.
-<br><br>
-<br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getInitTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) %>.
+<br>
 
+<br><a href=<%= AntwebProps.getDomainApp() %>/userAgents.do?name=>Reload</a>
+<br>
+<br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getInitTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) %>.
+<br><b>Server Start: </b><%= SessionRequestFilter.getInitTime() %>
+<br><b>Refreshed: </b><%= UserAgentTracker.getLastRefresh() %> &nbsp; <a href=<%= AntwebProps.getDomainApp() %>/userAgents.do?name=refresh>Refresh</a>
 <br><br><b>Summary:</b> <%= UserAgentTracker.htmlSummary() %>
 
 <br><br><b>User Agents:</b>

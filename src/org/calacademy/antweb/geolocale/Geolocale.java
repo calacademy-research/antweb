@@ -710,7 +710,11 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
   			  changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + "&" + country.getParams() + "'>" + country.getName() + "</a></li>";
 			  ArrayList<Geolocale> adm1s = geolocaleDb.getChildrenWithTaxon(taxonName, "adm1", country);
 			  for (Geolocale adm1 : adm1s) {
-    			  changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + "&" + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
+			    if (adm1.isLive()) {
+                    A.log("getChangeViewOptions() options:" + adm1.getName());
+                    changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + "&" + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
+
+                }
 			  }
 			}
 		  }
@@ -770,12 +774,14 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
             if (parent == null) return "";
             ArrayList<Geolocale> adm1s = parent.getChildren();
             for (Geolocale adm1 : adm1s) {
-              if (!getName().equals(adm1.getName())) {
-   			    if (isOverviewPage) {
-			      changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + adm1.getThisPageTarget() + "'>" + adm1.getName() + "</a></li>";
-			    } else {
-                  changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
-                }
+              if (adm1.isLive()) {
+                  if (!getName().equals(adm1.getName())) {
+                      if (isOverviewPage) {
+                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + adm1.getThisPageTarget() + "'>" + adm1.getName() + "</a></li>";
+                      } else {
+                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
+                      }
+                  }
               }
             }
         }

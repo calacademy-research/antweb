@@ -1695,9 +1695,9 @@ We would like to remove getChildImages.  Not needed now in the new UI
     </action>
 
       <action path="/userAgents"
-              type = "org.calacademy.antweb.util.DummyAction"
+              type = "org.calacademy.antweb.util.UserAgentTracker"
               name="dummyForm">
-          <forward name ="userAgents" path="/util/dummyPage.jsp"/>
+          <forward name ="userAgents" path="/util/userAgents.jsp"/>
       </action>
 
       <action path="/dbStatus"
