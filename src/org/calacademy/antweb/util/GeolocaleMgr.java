@@ -4,6 +4,7 @@ import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Formatter;
+import org.calacademy.antweb.Overview;
 import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.GeolocaleDb;
@@ -438,6 +439,17 @@ public class GeolocaleMgr extends Manager {
     public static @Nullable Country getCountry(String name) {
         if (name == null) return null;
         if (s_regions == null) return null;
+
+        /*
+        // Queensland is not in list of countries.
+        if (AntwebProps.isDevMode() && "Queensland".equals(name)) {
+            A.log("name:" + name + " size:" + countryNameMap.size() + " mapped:" + countryNameMap.get(name));
+            for (String cName : countryNameMap.keySet()) {
+                A.log("getCountry() name:" + cName);
+            }
+        }
+        */
+
         return countryNameMap.get(name);
     }
 
@@ -835,5 +847,100 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         //A.log("getValidIsland() name:" + name + " island:" + validIsland);
         return validIsland;
     }
+
+
+    public static Overview getGeolocaleFromProjectName(String projectName) {
+
+        // United States Adm1
+        if ("alabamaants".equals(projectName)) return GeolocaleMgr.getAdm1("Alabama", "United States");
+        if ("alaskaants".equals(projectName)) return GeolocaleMgr.getAdm1("Alaska", "United States");
+        if ("arizonaants".equals(projectName)) return GeolocaleMgr.getAdm1("Arizona", "United States");
+        if ("arkansasants".equals(projectName)) return GeolocaleMgr.getAdm1("Arkansas", "United States");
+        if ("californiaants".equals(projectName)) return GeolocaleMgr.getAdm1("California", "United States");
+        if ("coloradoants".equals(projectName)) return GeolocaleMgr.getAdm1("Colorado", "United States");
+        if ("connecticutants".equals(projectName)) return GeolocaleMgr.getAdm1("Connecticut", "United States");
+        if ("delawareants".equals(projectName)) return GeolocaleMgr.getAdm1("Delaware", "United States");
+        if ("floridaants".equals(projectName)) return GeolocaleMgr.getAdm1("Florida", "United States");
+        if ("georgiaants".equals(projectName)) return GeolocaleMgr.getAdm1("Georgia", "United States");
+        if ("idahoants".equals(projectName)) return GeolocaleMgr.getAdm1("Idaho", "United States");
+        if ("illinoisants".equals(projectName)) return GeolocaleMgr.getAdm1("Illinois", "United States");
+        if ("indianaants".equals(projectName)) return GeolocaleMgr.getAdm1("Indiana", "United States");
+        if ("iowaants".equals(projectName)) return GeolocaleMgr.getAdm1("Iowa", "United States");
+        if ("kansasants".equals(projectName)) return GeolocaleMgr.getAdm1("Kansas", "United States");
+        if ("kentuckyants".equals(projectName)) return GeolocaleMgr.getAdm1("Kentucky", "United States");
+        if ("louisianaants".equals(projectName)) return GeolocaleMgr.getAdm1("Louisiana", "United States");
+        if ("maineants".equals(projectName)) return GeolocaleMgr.getAdm1("Maine", "United States");
+        if ("marylandants".equals(projectName)) return GeolocaleMgr.getAdm1("Maryland", "United States");
+        if ("massachusettsants".equals(projectName)) return GeolocaleMgr.getAdm1("Massachusetts", "United States");
+        if ("michiganants".equals(projectName)) return GeolocaleMgr.getAdm1("Michigan", "United States");
+        if ("minnesotaants".equals(projectName)) return GeolocaleMgr.getAdm1("Minnesota", "United States");
+        if ("mississippiants".equals(projectName)) return GeolocaleMgr.getAdm1("Mississippi", "United States");
+        if ("missouriants".equals(projectName)) return GeolocaleMgr.getAdm1("Missouri ", "United States");
+        if ("montanaants".equals(projectName)) return GeolocaleMgr.getAdm1("Montana", "United States");
+        if ("nebraskaants".equals(projectName)) return GeolocaleMgr.getAdm1("Nebraska", "United States");
+        if ("nevadaants".equals(projectName)) return GeolocaleMgr.getAdm1("Nevada", "United States");
+        if ("newhampshireants".equals(projectName)) return GeolocaleMgr.getAdm1("New Hampshire", "United States");
+        if ("newjerseyants".equals(projectName)) return GeolocaleMgr.getAdm1("New Jersey", "United States");
+        if ("newmexicoants".equals(projectName)) return GeolocaleMgr.getAdm1("New Mexico", "United States");
+        if ("newyorkants".equals(projectName)) return GeolocaleMgr.getAdm1("New York", "United States");
+        if ("northcarolina".equals(projectName)) return GeolocaleMgr.getAdm1("North Carolina", "United States");
+        if ("northdakotaantsants".equals(projectName)) return GeolocaleMgr.getAdm1("North Dakota", "United States");
+        if ("ohioants".equals(projectName)) return GeolocaleMgr.getAdm1("Ohio", "United States");
+        if ("oklahomaants".equals(projectName)) return GeolocaleMgr.getAdm1("Oklahoma", "United States");
+        if ("oregonants".equals(projectName)) return GeolocaleMgr.getAdm1("Oregon", "United States");
+        if ("pennsylvaniaants".equals(projectName)) return GeolocaleMgr.getAdm1("Pennsylvania", "United States");
+        if ("rhodeislandants".equals(projectName)) return GeolocaleMgr.getAdm1("Rhode Island", "United States");
+        if ("southcarolinaants".equals(projectName)) return GeolocaleMgr.getAdm1("South Carolina", "United States");
+        if ("southdakotaants".equals(projectName)) return GeolocaleMgr.getAdm1("South Dakota", "United States");
+        if ("tennesseeants".equals(projectName)) return GeolocaleMgr.getAdm1("Tennessee", "United States");
+        if ("texasants".equals(projectName)) return GeolocaleMgr.getAdm1("Texas", "United States");
+        if ("utahants".equals(projectName)) return GeolocaleMgr.getAdm1("Utah", "United States");
+        if ("vermontants".equals(projectName)) return GeolocaleMgr.getAdm1("Vermont", "United States");
+        if ("virginiaants".equals(projectName)) return GeolocaleMgr.getAdm1("Virginia", "United States");
+        if ("washingtonants".equals(projectName)) return GeolocaleMgr.getAdm1("Washington", "United States");
+        if ("washingtondcants".equals(projectName)) return GeolocaleMgr.getAdm1("Washington, D.C.", "United States");
+        if ("westvirginiaants".equals(projectName)) return GeolocaleMgr.getAdm1("West Virginia", "United States");
+        if ("wisconsinants".equals(projectName)) return GeolocaleMgr.getAdm1("Wisconsin", "United States");
+        if ("wyomingants".equals(projectName)) return GeolocaleMgr.getAdm1("Wyoming", "United States");
+
+        // Other country adm1s
+        if ("newsouthwalesants".equals(projectName)) return GeolocaleMgr.getAdm1("New South Wales", "Australia");
+        if ("southaustrailiaants".equals(projectName)) return GeolocaleMgr.getAdm1("South Australia", "Australia");
+        if ("westernaustraliaants".equals(projectName)) return GeolocaleMgr.getAdm1("Western Australia", "Australia");
+        if ("queenslandants".equals(projectName)) return GeolocaleMgr.getAdm1("Queensland", "Australia");
+        if ("victoriaants".equals(projectName)) return GeolocaleMgr.getAdm1("Victoria", "Australia");
+        if ("northernterritoryants".equals(projectName)) return GeolocaleMgr.getAdm1("Northern Territory", "Australia");
+        if ("tasmaniaants".equals(projectName)) return GeolocaleMgr.getAdm1("Tasmania", "Australia");
+        if ("australiancapitalterritoryants".equals(projectName)) return GeolocaleMgr.getAdm1("Australian Capital Territory", "Australia");
+        if ("quebecants".equals(projectName)) return GeolocaleMgr.getAdm1("Quebec", "Canada");
+        if ("albertaants".equals(projectName)) return GeolocaleMgr.getAdm1("Alberta", "Canada");
+        if ("britishcolumbiaants".equals(projectName)) return GeolocaleMgr.getAdm1("British Columbia", "Canada");
+        if ("novascotiaants".equals(projectName)) return GeolocaleMgr.getAdm1("Nova Scotia", "Canada");
+        if ("ontarioants".equals(projectName)) return GeolocaleMgr.getAdm1("Ontario", "Canada");
+        if ("newbrunswickants".equals(projectName)) return GeolocaleMgr.getAdm1("New Brunswick", "Canada");
+        if ("saskatchewanants".equals(projectName)) return GeolocaleMgr.getAdm1("Saskatchewan", "Canada");
+        if ("manitobaants".equals(projectName)) return GeolocaleMgr.getAdm1("Manitoba", "Canada");
+        if ("newfoundlandandlabradorants".equals(projectName)) return GeolocaleMgr.getAdm1("Newfoundland and Labrador", "Canada");
+        if ("northwestterritoriesants".equals(projectName)) return GeolocaleMgr.getAdm1("Northwest Territories", "Canada");
+        if ("nunavutants".equals(projectName)) return GeolocaleMgr.getAdm1("Nunavut", "Canada");
+        if ("princeedwardislandants".equals(projectName)) return GeolocaleMgr.getAdm1("Prince Edward Island", "Canada");
+        if ("yukonants".equals(projectName)) return GeolocaleMgr.getAdm1("Yukon", "Canada");
+
+        // ... incomplete list
+
+        // countries
+        String maybeCountry = Formatter.initCap(projectName);
+        if (maybeCountry == null) return null;
+        int i = maybeCountry.indexOf("ants");
+        if (i > 0) maybeCountry = maybeCountry.substring(0, i);
+        Country country = GeolocaleMgr.getCountry(maybeCountry);
+        A.log("maybeCountry:" + maybeCountry + " country:" + country);
+        if (country != null) return country;
+
+        // Countries that have spaces in names.
+
+        return null;
+    }
+
 }
 

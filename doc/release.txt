@@ -1,7 +1,9 @@
 Release 8.85
 Date: Jan 17
-  Create ServerDb.. Move functionality from ServerStatusAction.
+  Create ServerDb. Move functionality from ServerStatusAction.
   Debug flag feature.
+  UserAgentTracking modifications.
+  getGeolocaleFromProjectName() to resolve a bulk of legacy requests.
 
 Release 8.84
 Date: Jan 11, 2023

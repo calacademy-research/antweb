@@ -2,14 +2,15 @@ package org.calacademy.antweb.util;
 
 import java.util.*;
 import java.util.Map;
-import java.sql.*;
 
 import javax.servlet.http.*;
 
 
-import javax.sql.DataSource;
+import javax.sql.*;
+import java.sql.*;
 
 import org.calacademy.antweb.*;
+import org.calacademy.antweb.home.UserAgentDb;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -23,54 +24,29 @@ public class UserAgentTracker {
   private static final Map<String, Integer> agentsMap = new HashMap<>();
   private static int nullAgent = 0;
 
-  private static final Set<String> knownAgentsSet = new HashSet<>();
-      
+  private static Set<String> knownAgentsSet = null;
+  private static Set<String> whiteList = null;
+
   private static final int OVERACTIVE = 1000;
 
   public static void init(Connection connection) {
-      
-      String query = "select name from user_agent";
-      Statement stmt = null;
-      ResultSet rset = null;
-      try { 
-          stmt = DBUtil.getStatement(connection, "UserAgentTracker.init()"); 
-          rset = stmt.executeQuery(query);
-      
-          while (rset.next()) {
-            String agent = rset.getString("name");
-            knownAgentsSet.add(agent);
-          } 
-      } catch (SQLException e) {
-          s_log.warn("init() query:" + query + " e:" + e);
-      } finally {
-            DBUtil.close(stmt, rset, "UserAgentTracker.init()");
-      }	
-  }
-        
-  public static void saveAgent(String agent, Connection connection) {
-      String dml = "";
-      Statement stmt = null;
-      try {
-          stmt = DBUtil.getStatement(connection, "saveAgent()");
-          String val = AntFormatter.escapeQuotes(agent);
-          dml = "insert into user_agent (name) values ('" + val + "')";  
-          stmt.execute(dml);
+      UserAgentDb userAgentDb = new UserAgentDb(connection);
+      knownAgentsSet = userAgentDb.getKnownAgents();
 
-          //A.log("saveAgent() agent:" + agent);
-      } catch (SQLException e) {
-          s_log.error("saveAgent() e:" + e + " dml:" + dml);
-      } finally {
-          DBUtil.close(stmt, "saveAgent()");
-      }
-  }        
+      whiteList = userAgentDb.getWhiteList();
+  }
 
   public static void track(HttpServletRequest request, Connection connection) {
 
-      if (ServerDb.isDebug("debugUserAgents")) return;
+      //if (ServerDb.isDebug("debugUserAgents")) return;
+
+      if (knownAgentsSet == null) return;  // Not yet initialized.
 
       if (agentsMap.size() > 1000) return;
-  
-      String userAgent = getUserAgent(request);      
+
+      UserAgentDb userAgentDb = new UserAgentDb(connection);
+
+      String userAgent = getUserAgent(request, userAgentDb);
     
       if (userAgent == null) {
          ++nullAgent;
@@ -79,24 +55,44 @@ public class UserAgentTracker {
           count = count + 1;
           agentsMap.put(userAgent, count);   
           
-          if (count == OVERACTIVE) {
-              // PERSIST!
-                  s_log.info("track() persist userAgent:" + userAgent);
-                  saveAgent(userAgent, connection);
+          if (count == OVERACTIVE && !whiteList.contains(userAgent) && !userAgent.contains("login:")) {
+              // So many requests. Known agent. PERSIST!
+              s_log.info("track() persist userAgent:" + userAgent);
+              userAgentDb.saveAgent(userAgent);
           }
       }
   }
 
-  public static String getUserAgent(HttpServletRequest request) {
+    public static String getUserAgent(HttpServletRequest request) {
+        String userAgent = request.getHeader("user-agent");
+        Login accessLogin = LoginMgr.getAccessLogin(request);
+
+        if (accessLogin != null) {
+            userAgent += " (login:" + accessLogin.getName() + ")";
+        }
+
+        return userAgent;
+    }
+
+    public static String getUserAgent(HttpServletRequest request, UserAgentDb userAgentDb) {
       String userAgent = request.getHeader("user-agent");
       Login accessLogin = LoginMgr.getAccessLogin(request);
-      if (accessLogin != null) userAgent += " (login:" + accessLogin.getName() + ")";
+
+      if (accessLogin != null) {
+
+          if (!whiteList.contains(userAgent)) {
+              userAgentDb.addToWhiteList(userAgent);
+              whiteList.add(userAgent);
+          }
+          userAgent += " (login:" + accessLogin.getName() + ")";
+      }
+
       return userAgent;  
   }
 
   public static boolean isOveractive(HttpServletRequest request) {
 
-      if (ServerDb.isDebug("debugUserAgents")) return false;
+      //if (ServerDb.isDebug("debugUserAgents")) return false;
 
       String userAgent = getUserAgent(request);
       if (userAgent == null) { 
@@ -104,18 +100,32 @@ public class UserAgentTracker {
       }
       return isOveractive(userAgent); 
   }
-  
-  private static boolean isOveractive(String userAgent) {
-      if (userAgent.contains("(login:")) return false;
 
+  // overactive agents have had more than OVERACTIVE (was: 1000) requests during one server execution.
+  // (This is not wrong, of course, but is an indicator of bot activity).
+  private static boolean isOveractive(String userAgent) {
+
+      // Logged in users are never "overactive" or treated as bots.
+      if (userAgent.contains("(login:")) {
+          //s_log.warn("isOveractive() userAgent allowed with login:" + userAgent);
+          return false;
+      }
+
+      if (whiteList.contains(userAgent)) return false;
+
+      // If already a known agent,
       if (knownAgentsSet.contains(userAgent)) {
-        s_log.debug("KNOWN AGENT:" + userAgent);
+        //s_log.info("known agent:" + userAgent);
         return true;
       }
+
       Integer countInteger = agentsMap.get(userAgent);
       if (countInteger == null) return false;
+
       int count = countInteger;
-      return count > OVERACTIVE;
+      boolean isOveractive = count > OVERACTIVE;
+
+      return isOveractive;
   }
 
   public static String summary() {
@@ -139,7 +149,7 @@ public class UserAgentTracker {
       }
       return report;
   }
-  public static String htmlReport() {
+  public static String htmlUserAgents() {
       Set<String> keySet = agentsMap.keySet();
       String report = "";
       String agent = "";
@@ -157,15 +167,15 @@ public class UserAgentTracker {
         countMap.put(count, agent);
       }
 
-      report += "<br><br>DevMode:";
+      report += "<br><br>";
 
       TreeSet treeSet = new TreeSet(countMap.keySet());
       ArrayList<Integer> list = new ArrayList<>(treeSet);
 
       for (Integer count : list) {
           agent = countMap.get(count);
-          s_log.debug("htmlReport() count:" + count + " agent:" + agent);
-          report += agent;
+          //s_log.info("htmlReport() count:" + count + " agent:" + agent);
+          report += "<b>" + count + ": </b>" + agent;
       }
 
       return report;
@@ -177,16 +187,28 @@ public class UserAgentTracker {
       for (String key : keySet) {
         int count = agentsMap.get(key);
         if (count > OVERACTIVE) {
-          report += "\n" + key + ": " + count; 
+          report += "\n" + count + ". " + key + ": " + count;
         }
       }
       return report;
   }
 
+    public static String htmlWhiteList() {
+        String whiteListAgents = "";
+        int c = 0;
+        for (String agent : whiteList) {
+            ++c;
+            whiteListAgents += "<br><b>" + c + ": </b>" + agent;
+        }
+        return whiteListAgents;
+    }
+
   public static String htmlKnownAgents() {
     String knownAgents = "";
+    int c = 0;
     for (String agent : knownAgentsSet) {
-      knownAgents += "<br>" + agent;
+        ++c;
+        knownAgents += "<br><b>" + c + ": </b>" + agent;
     }
     return knownAgents;
   }

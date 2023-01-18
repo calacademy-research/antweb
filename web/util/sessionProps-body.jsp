@@ -9,15 +9,23 @@
 <h2>Session Attributes:</h2>
 
 <% 
-     //HttpSession session = request.getSession();
      for (Enumeration e = session.getAttributeNames() ; e.hasMoreElements() ;) {
        String name = (String) e.nextElement();
        if (!"dummyForm".equals(name) && !"statistics".equals(name)) {
-         out.println("<br>name:<b>" + name + "</b> value:" + session.getAttribute(name));
+         out.println("<br><b>" + name + "</b>: " + session.getAttribute(name));
        } else {
-         out.println("<br>name:<b>" + name + "</b>");
+         out.println("<br><b>" + name + "</b>");
          A.log("serverStatus-body.jsp dummyForm:" + session.getAttribute(name));
        }
      }
-%>     
+%>
+
+
+<br><br>
+<h2>Request Attributes:</h2>
+<%
+     out.println("<br><b>User Agent: </b>" + UserAgentTracker.getUserAgent(request));
+
+%>
+
 </div>

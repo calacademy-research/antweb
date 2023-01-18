@@ -42,6 +42,16 @@ public class OverviewMgr {
         OverviewMgr.setOverview(request, overview);   
         return overview;
     }
+
+    /*
+    This could be extended to handle old requests. Could be a lookup table populated by GeolocaleMgr.
+     */
+    private static Overview getProject(String projectName) {
+        Overview overview = ProjectMgr.getProject(projectName, false); // Do not default to Allantwebants
+        if (overview != null) return overview;
+
+        return GeolocaleMgr.getGeolocaleFromProjectName(projectName);
+    }
     
     public static Overview findOverview(HttpServletRequest request) throws AntwebException {
 
@@ -56,8 +66,10 @@ public class OverviewMgr {
 		//A.log("getOverview() 1 projectName:" + projectName);
 		if (projectName != null) {
           hasParams = "project overview";
-		  overview = ProjectMgr.getProject(projectName, false); // Do not default to Allantwebants
-		  // A.log("getOverview() projectName:" + projectName + " overview:" + overview);
+		  //overview = ProjectMgr.getProject(projectName, false); // Do not default to Allantwebants
+          overview = getProject(projectName); // Do not default to Allantwebants
+
+            // A.log("getOverview() projectName:" + projectName + " overview:" + overview);
 		} else {        
 			String museumCode = request.getParameter("museumCode");
 			if (museumCode != null) {

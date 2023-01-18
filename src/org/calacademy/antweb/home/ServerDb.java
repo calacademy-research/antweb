@@ -16,12 +16,12 @@ public class ServerDb extends AntwebDb {
     }
 
 
-    // To be used as such...
+
     // To allow debugging on server without a restart, debug statements can be added to JSP files, and turned
-    // on and off by modifying the server table debug field as such:
+    // on and off by modifying the server database table debug field as such:
     //     update server set debug = "debugUserAgents";
-    // Then in JSP code:
-    //     if (ServerDb.isDebug("debugUserAgents")) AntwebUtil.log("...");
+    // Then in JSP code (or Java code for premeditated live debugging):
+    //     if (A.isDebug("debugUserAgents")) AntwebUtil.log("...");
     // Value will be fetched from database by SessionRequestFilter every SessionRequestFilter.s_period minutes.
     // Suggested user a debug option with "debug" in the term so that it can be easily searched for in the code base.
 
@@ -33,7 +33,6 @@ public class ServerDb extends AntwebDb {
     public static String getDebug() {
         return s_debug;
     }
-
     public static String getDebug(Connection connection) throws SQLException {
         Statement stmt = null;
         ResultSet rset = null;

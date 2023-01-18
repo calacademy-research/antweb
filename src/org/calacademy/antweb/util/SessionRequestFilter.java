@@ -52,7 +52,6 @@ public class SessionRequestFilter implements Filter {
       LogMgr.appendLog("accessLog.txt", logMessage, true);
       //A.log("doFilter() message:" + logMessage);
 
-
       Connection connection = null;
 
       try {

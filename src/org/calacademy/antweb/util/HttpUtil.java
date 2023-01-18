@@ -201,7 +201,8 @@ public abstract class HttpUtil {
         
         if (UserAgentTracker.isOveractive(request)) {
           isBot = true;
-        }        
+        }
+
       }
       return isBot;
     }

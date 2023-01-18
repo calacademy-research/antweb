@@ -12,7 +12,7 @@
       out.println("<a href='" + AntwebProps.getDomainApp() + "/login.do'>Log In</a> to see maps.");
       displayMap = false;
 
-      if (A.isDebug("userAgents") && UserAgentTracker.isOveractive(request)) A.iLog("googleMapInclude.jsp overactive:" + UserAgentTracker.isOveractive(request) + " summary:" + UserAgentTracker.summary());
+      //if (A.isDebug("userAgents") && UserAgentTracker.isOveractive(request)) A.iLog("googleMapInclude.jsp overactive:" + UserAgentTracker.isOveractive(request) + " summary:" + UserAgentTracker.summary());
 
       // was: return;
     } %>

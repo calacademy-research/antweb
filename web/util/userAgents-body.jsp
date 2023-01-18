@@ -22,17 +22,20 @@
 <a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><br><br><br>
 <br>
 
-<h3>User Agents</h3>
+<h2>User Agent Manager</h2>
 
 <br><b><font color=red>X</font></b> means that the agent is a known bot.
 <br><b><font color=red><img src="<%= AntwebProps.getDomainApp() %>/image/greenCheck.png"></font></b> means that the user is logged in.
-
+<br><br>
 <br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getInitTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) %>.
 
 <br><br><b>Summary:</b> <%= UserAgentTracker.htmlSummary() %>
 
 <br><br><b>User Agents:</b>
-<%= UserAgentTracker.htmlReport() %>
+<%= UserAgentTracker.htmlUserAgents() %>
+
+<br><br><b>White List:</b>
+<%= UserAgentTracker.htmlWhiteList() %>
 
 <br><br><b>Known Agents:</b>
 <%= UserAgentTracker.htmlKnownAgents() %>
