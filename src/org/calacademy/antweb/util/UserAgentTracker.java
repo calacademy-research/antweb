@@ -53,13 +53,19 @@ public class UserAgentTracker {
       } else {
           int count = agentsMap.getOrDefault(userAgent, 0);
           count = count + 1;
-          if (agentsMap.contains(userAgent)) agentsMap.put(userAgent, count);
+
+          s_log.warn("track() count:" + count + " agent:" + userAgent);
+          agentsMap.put(userAgent, count);
           
           if (count == OVERACTIVE && !whiteList.contains(userAgent) && !userAgent.contains("login:")) {
               // So many requests. Known agent. PERSIST!
               s_log.info("track() persist userAgent:" + userAgent);
               userAgentDb.saveAgent(userAgent);
           }
+      }
+
+      if (AntwebProps.isDevMode()) {
+        s_log.warn("track() report:" + report());
       }
   }
 
@@ -151,32 +157,47 @@ public class UserAgentTracker {
   }
   public static String htmlUserAgents() {
       Set<String> keySet = agentsMap.keySet();
-      String report = "";
+
+      if (AntwebProps.isDevMode()) {
+          int a = 0;
+          for (String s : keySet) {
+              ++a;
+              A.log("a:" + a + " s:" + s);
+          }
+      }
+
+      String report = "<br><br>";
       String agent = "";
 
       // Used for sorting
-      Map<Integer, String> countMap = new HashMap<>();
+      //Map<Integer, String> countMap = new HashMap<>();
 
+      int c = 0;
       for (String key : keySet) {
+        ++c;
         int count = agentsMap.get(key);
         String star = "";
         if (knownAgentsSet.contains(key)) star = "<b><font color=red>X</font></b>";        
         if (key.contains("(login:")) star = "<b><font color=red><img src='" + AntwebProps.getDomainApp() + "/image/greenCheck.png'></font></b>";
-        agent += "<br>" + key + star + ": <b>" + count + "</b>";
-        //report += agent;
-        countMap.put(count, agent);
+        agent = key + star + ": <b>" + count + "</b>";
+        report += "<br><b>" + c + ": </b> " + agent;
+        //countMap.put(count, agent);
       }
 
-      report += "<br><br>";
-
+/*
       TreeSet treeSet = new TreeSet(countMap.keySet());
       ArrayList<Integer> list = new ArrayList<>(treeSet);
 
+      int c2 = 0;
       for (Integer count : list) {
+          ++c2;
           agent = countMap.get(count);
-          //s_log.info("htmlReport() count:" + count + " agent:" + agent);
+          A.log("htmlReport() c:" + c2 + " count:" + count + " agent:" + agent);
           report += "<b>" + count + ": </b>" + agent;
       }
+*/
+
+      A.log("htmlReport() report:" + report);
 
       return report;
   }
