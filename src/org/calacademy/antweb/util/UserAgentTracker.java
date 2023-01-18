@@ -70,7 +70,25 @@ public class UserAgentTracker extends Action {
       return lastRefreshDate.toString();
   }
 
-  public static void track(HttpServletRequest request, Connection connection) {
+    public static String denyAgent(HttpServletRequest request) {
+        if (isOveractive(request)) {
+            String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
+            String target = HttpUtil.getTarget(request);
+            String agent = getUserAgent(request);
+            String message
+                    = "<br><b>Bot requests unsupported at this time.</b>"
+                    + "<br>If you have received this response in error, Please notify " + AntwebUtil.getAdminEmail() + " with this info and description. Thank you."
+                    + "<br><b>Request: </b>" + target
+                    + "<br><b>Datetime: </b>" + formatDateTime
+                    + "<br><b>User Agent: </b>" + agent
+                    ;
+
+            return message;
+        }
+        return null;
+    }
+
+    public static void track(HttpServletRequest request, Connection connection) {
 
       //if (ServerDb.isDebug("debugUserAgents")) return;
 
@@ -130,6 +148,8 @@ public class UserAgentTracker extends Action {
 
       //if (ServerDb.isDebug("debugUserAgents")) return false;
 
+      if (knownAgentsSet == null) return false;  // Not yet initialized.
+
       String userAgent = getUserAgent(request);
       if (userAgent == null) { 
         return false;
@@ -159,7 +179,7 @@ public class UserAgentTracker extends Action {
       if (countInteger == null) return false;
 
       int count = countInteger;
-      boolean isOveractive = count > OVERACTIVE;
+      boolean isOveractive = count >= OVERACTIVE;
 
       return isOveractive;
   }

@@ -3,6 +3,7 @@ package org.calacademy.antweb.util;
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.Login;
 import org.calacademy.antweb.home.*;
+import org.calacademy.antweb.upload.UploadAction;
 
 import java.util.Date;
 import java.io.*;
@@ -26,8 +27,9 @@ public class SessionRequestFilter implements Filter {
     
     boolean justOnce = false;
 
-    private static int s_period = 5; // minutes after which the infrequent code will execute. (Debug string fetch).
+    private static int s_period = 2; // minutes after which the infrequent code will execute. (Debug string fetch).
     private static Date s_periodDate = null;
+    private static int s_botDenial = 0;
 
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
@@ -43,8 +45,21 @@ public class SessionRequestFilter implements Filter {
       ServletContext ctx = request.getSession().getServletContext();
 
       PageTracker.add(request);
-      
-	  //A.log("target:"+ target);
+
+      if (UploadAction.isInUploadProcess()) {
+          String htmlMessage = UserAgentTracker.denyAgent(request);
+          if (htmlMessage != null) {
+              ++s_botDenial;
+              HttpUtil.write(htmlMessage, response);
+              return;
+          }
+      } else {
+          if (s_botDenial > 0) {
+              s_log.warn("doFilter() botDenial during upload:" + s_botDenial);
+              s_botDenial = 0;
+          }
+      }
+      //A.log("target:"+ target);
 
       Login accessLogin = LoginMgr.getAccessLogin(request);
       String loginName = "-";
@@ -56,10 +71,9 @@ public class SessionRequestFilter implements Filter {
       Connection connection = null;
 
       try {
-
           // Log insecure links.
           if (!HttpUtil.isSecure(request)) {
-              s_log.debug("doFilter() insecure");
+              s_log.info("doFilter() insecure target:" + target);
               String message = "req:" + target + " scheme:" + request.getScheme()
                       + " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
               LogMgr.appendLog("insecure.log", message, true);
@@ -78,6 +92,7 @@ public class SessionRequestFilter implements Filter {
           DataSource ds = DBUtil.getDataSource();
           connection = ds.getConnection();
 
+          // Populate ServerDb Debug flag.
           if (s_periodDate == null) s_periodDate = new Date();
           //A.log("doFilter() s_periodDate:" + s_periodDate + " s_period:" + s_period + " since:" + AntwebUtil.minsSince(s_periodDate));
           if (AntwebUtil.minsSince(s_periodDate) >= s_period) {

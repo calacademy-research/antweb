@@ -875,7 +875,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if ("michiganants".equals(projectName)) return GeolocaleMgr.getAdm1("Michigan", "United States");
         if ("minnesotaants".equals(projectName)) return GeolocaleMgr.getAdm1("Minnesota", "United States");
         if ("mississippiants".equals(projectName)) return GeolocaleMgr.getAdm1("Mississippi", "United States");
-        if ("missouriants".equals(projectName)) return GeolocaleMgr.getAdm1("Missouri ", "United States");
+        if ("missouriants".equals(projectName)) return GeolocaleMgr.getAdm1("Missouri", "United States");
         if ("montanaants".equals(projectName)) return GeolocaleMgr.getAdm1("Montana", "United States");
         if ("nebraskaants".equals(projectName)) return GeolocaleMgr.getAdm1("Nebraska", "United States");
         if ("nevadaants".equals(projectName)) return GeolocaleMgr.getAdm1("Nevada", "United States");
@@ -940,6 +940,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         // Countries that have spaces in names.
         if ("matogrossodosulants".equals(projectName)) return GeolocaleMgr.getCountry("Mato Grosso do Sul");
         if ("costaricaants".equals(projectName)) return GeolocaleMgr.getCountry("Costa Rica");
+        if ("creteants".equals(projectName)) return GeolocaleMgr.getCountry("Crete");
 
         return null;
     }
