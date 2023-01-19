@@ -140,6 +140,7 @@ public class SessionRequestFilter implements Filter {
               htmlMessage += "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
             }
           }
+          s_log.error("doFilter() login:" + loginName + " startTime:" + startTime + " e:" + e + " target:" + target);
 		  HttpUtil.write(htmlMessage, response);   
       } finally {
           PageTracker.remove(request);

@@ -939,9 +939,13 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
 
         // Countries that have spaces in names.
         if ("matogrossodosulants".equals(projectName)) return GeolocaleMgr.getCountry("Mato Grosso do Sul");
+        if ("matogrossoants".equals(projectName)) return GeolocaleMgr.getCountry("Mato Grosso");
         if ("costaricaants".equals(projectName)) return GeolocaleMgr.getCountry("Costa Rica");
+
+        // Why are these showing up in logs as unfound?
         if ("creteants".equals(projectName)) return GeolocaleMgr.getCountry("Crete");
         if ("alicanteants".equals(projectName)) return GeolocaleMgr.getCountry("Alicante");
+
         return null;
     }
 
