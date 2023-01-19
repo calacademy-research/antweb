@@ -124,8 +124,9 @@ public class SessionRequestFilter implements Filter {
           } else {
             int caseNumber = AntwebUtil.getCaseNumber();
             message += " See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber;
-            message += " e:" + e + " target:" + target;
-            s_log.error("doFilter() WST " + message);
+            message += " e:" + e + " target:" + target + " startTime:" + startTime
+                    + " userAgent:" + UserAgentTracker.getUserAgent(request);
+            s_log.error("doFilter() " + message + " info:" + HttpUtil.getLongRequestInfo(request));
             message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
   		    LogMgr.appendLog("srfExceptions.jsp", message);    
             htmlMessage 
@@ -140,7 +141,6 @@ public class SessionRequestFilter implements Filter {
               htmlMessage += "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
             }
           }
-          s_log.error("doFilter() login:" + loginName + " startTime:" + startTime + " e:" + e + " target:" + target);
 		  HttpUtil.write(htmlMessage, response);   
       } finally {
           PageTracker.remove(request);

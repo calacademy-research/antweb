@@ -33,9 +33,9 @@ import org.apache.commons.httpclient.util.URIUtil;
 
 public abstract class HttpUtil {
 
-    private static final Log s_log = LogFactory.getLog(HttpUtil.class);  
+    private static final Log s_log = LogFactory.getLog(HttpUtil.class);
 
-	private final static String USER_AGENT = "Mozilla/5.0";
+    private final static String USER_AGENT = "Mozilla/5.0";
 	
 /*
      If server is suspected of being taken down by ungoverned traffic... 
@@ -70,47 +70,48 @@ public abstract class HttpUtil {
 
     // Useful for diagnostics in a jsp file: <%= HttpUtil.showEncodings(request, response) %>
     public static String showEncodings(HttpServletRequest request, HttpServletResponse response) {
-      return "Encodings - request:" + request.getCharacterEncoding() + " response:" + response.getCharacterEncoding() + " system:" + System.getProperty("file.encoding");
+        return "Encodings - request:" + request.getCharacterEncoding() + " response:" + response.getCharacterEncoding() + " system:" + System.getProperty("file.encoding");
     }
-    
-	public static void setUtf8(HttpServletRequest request, HttpServletResponse response) {
-		try {
-		  request.setCharacterEncoding("UTF-8");
-		  response.setCharacterEncoding("UTF-8");
-		} catch (UnsupportedEncodingException ex) {
-		}
-	}
-    
+
+    public static void setUtf8(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            request.setCharacterEncoding("UTF-8");
+            response.setCharacterEncoding("UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+        }
+    }
+
 
     public static ActionForward invalidRequest(HttpServletRequest request, ActionMapping mapping) {
 
-      String invalidMessage = null;
-      String targetSic = HttpUtil.getTarget(request); //Sic
+        String invalidMessage = null;
+        String targetSic = HttpUtil.getTarget(request); //Sic
 
-      invalidMessage = HttpUtil.isLegitRequest(request);
-      if (AntwebProps.isDevMode() && invalidMessage != null) s_log.warn("invalidRequest() invalidMessage:" + invalidMessage);
-      if (invalidMessage == null && HttpUtil.getIsBot(request) && HttpUtil.isPost(request)) {
-          invalidMessage = "Bot posts not allowed.  " + targetSic;
-      }
+        invalidMessage = HttpUtil.isLegitRequest(request);
+        if (AntwebProps.isDevMode() && invalidMessage != null)
+            s_log.warn("invalidRequest() invalidMessage:" + invalidMessage);
+        if (invalidMessage == null && HttpUtil.getIsBot(request) && HttpUtil.isPost(request)) {
+            invalidMessage = "Bot posts not allowed.  " + targetSic;
+        }
 
-      // *1 Catch offending spammers.  This was added to catch offender on Oct 18 2016.
-      String userAgent = request.getHeader("User-Agent");
-      if (invalidMessage == null && userAgent != null && userAgent.contains("Pcore-HTTP")) {
-        invalidMessage = "disallowed *1. " + HttpUtil.getHeadersStr(request);
-      }
-      
-      if (invalidMessage == null) {
-          int questionMarkI = targetSic.indexOf("?");
-          if (targetSic.indexOf("?", questionMarkI + 1) > 0) {
-              if (!targetSic.contains("&target=")) { // Exceptions
-                  invalidMessage = "Multiple ? in request:" + targetSic;
-              }
-          }
-      }
+        // *1 Catch offending spammers.  This was added to catch offender on Oct 18 2016.
+        String userAgent = request.getHeader("User-Agent");
+        if (invalidMessage == null && userAgent != null && userAgent.contains("Pcore-HTTP")) {
+            invalidMessage = "disallowed *1. " + HttpUtil.getHeadersStr(request);
+        }
 
-      if (invalidMessage == null && targetSic.contains("jsessionid") && !targetSic.contains("?")) {
-          invalidMessage = "Invalid request:" + targetSic;
-      }
+        if (invalidMessage == null) {
+            int questionMarkI = targetSic.indexOf("?");
+            if (targetSic.indexOf("?", questionMarkI + 1) > 0) {
+                if (!targetSic.contains("&target=")) { // Exceptions
+                    invalidMessage = "Multiple ? in request:" + targetSic;
+                }
+            }
+        }
+
+        if (invalidMessage == null && targetSic.contains("jsessionid") && !targetSic.contains("?")) {
+            invalidMessage = "Invalid request:" + targetSic;
+        }
 
 /*
       // This test was breaking Compare Images feature.  By omission, what invalid request is allowed?
@@ -123,137 +124,138 @@ public abstract class HttpUtil {
           }
       } 
 */
-      
-      String queryString = request.getQueryString();
-      if (queryString == null) {
-          return null;
-      }
 
-      String message = BadActorMgr.ifBadActorBlockedGetMessage(request);
-      if (message != null) {
-          request.setAttribute("message", message);
-          return mapping.findForward("message");
-      }
+        String queryString = request.getQueryString();
+        if (queryString == null) {
+            return null;
+        }
 
-      if (HttpUtil.hasIllegalStr(queryString, request)) {
+        String message = BadActorMgr.ifBadActorBlockedGetMessage(request);
+        if (message != null) {
+            request.setAttribute("message", message);
+            return mapping.findForward("message");
+        }
+
+        if (HttpUtil.hasIllegalStr(queryString, request)) {
             request.setAttribute("message", "Illegal characters.");
             return mapping.findForward("message");
-      }
+        }
 
-      boolean hasSpecialChars = false;    
-      if (targetSic.contains("locality.do")) {
-        hasSpecialChars = AntFormatter.hasTextSpecialCharacter(queryString);      
-      } if (targetSic.contains("login.do")) {
-        hasSpecialChars = AntFormatter.hasLoginSpecialCharacter(queryString);
-      } else {
-        hasSpecialChars = AntFormatter.hasWebSpecialCharacter(queryString);
-      }
- 
-      //if (queryString.contains("%20and%20")) hasSpecialChars = true;
+        boolean hasSpecialChars = false;
+        if (targetSic.contains("locality.do")) {
+            hasSpecialChars = AntFormatter.hasTextSpecialCharacter(queryString);
+        }
+        if (targetSic.contains("login.do")) {
+            hasSpecialChars = AntFormatter.hasLoginSpecialCharacter(queryString);
+        } else {
+            hasSpecialChars = AntFormatter.hasWebSpecialCharacter(queryString);
+        }
+
+        //if (queryString.contains("%20and%20")) hasSpecialChars = true;
         // Not sure why had this, but can't because of pages like this...
         //https://www.antweb.org/taxonomicPage.do?rank=genus&countryName=Saint%20Vincent%20and%20the%20Grenadines
 
-      if (queryString.contains("%27")) hasSpecialChars = true;
-      //if (queryString.contains("%28")) hasSpecialChars = true; // parens
-      //if (queryString.contains("%29")) hasSpecialChars = true;
- 
-      if (hasSpecialChars) {
-          request.setAttribute("message", "Unallowed characters.");
-          s_log.info("invalidRequest() unallowed characters: " + HttpUtil.getTarget(request));
-          return mapping.findForward("message");
-      }
-      if (invalidMessage != null) {
-          //LogMgr.appendLog("badRequest.log", targetSic);
-          LogMgr.appendLog("invalid.log", invalidMessage);
-          request.setAttribute("message", invalidMessage);
-          return mapping.findForward("message");
-      }
-    
-      return null; 
-    }     
-        
-    
-    public static boolean isBot(HttpServletRequest request) {
-      return HttpUtil.getIsBot(request);
-    }    
-        
-    public static boolean getIsBot(HttpServletRequest request) {
-      boolean isBot = false;
-      String userAgent = request.getHeader("user-agent");
-      if (userAgent != null) {
-        userAgent = userAgent.toLowerCase();
-        if ( userAgent.contains("bot")
-          || userAgent.contains("spider")
-          || userAgent.contains("slurp")
-          || userAgent.contains("ahrefs")
-          || userAgent.contains("baidu")
-          || userAgent.contains("The Knowledge AI")
-          || userAgent.contains("opensiteexplorer")
-          || userAgent.contains("Gigabot")
-          || userAgent.contains("SemrushBot")
-          || userAgent.contains("centurybot")
-          || userAgent.contains("bingbot")
-          || userAgent.contains("naver.me")
-          //|| (userAgent.contains())
-           ) {
-          isBot = true;   
+        if (queryString.contains("%27")) hasSpecialChars = true;
+        //if (queryString.contains("%28")) hasSpecialChars = true; // parens
+        //if (queryString.contains("%29")) hasSpecialChars = true;
+
+        if (hasSpecialChars) {
+            request.setAttribute("message", "Unallowed characters.");
+            s_log.info("invalidRequest() unallowed characters: " + HttpUtil.getTarget(request));
+            return mapping.findForward("message");
         }
-        
-        if (UserAgentTracker.isOveractive(request)) {
-          isBot = true;
+        if (invalidMessage != null) {
+            //LogMgr.appendLog("badRequest.log", targetSic);
+            LogMgr.appendLog("invalid.log", invalidMessage);
+            request.setAttribute("message", invalidMessage);
+            return mapping.findForward("message");
         }
 
-      }
-      return isBot;
+        return null;
     }
-    
+
+
+    public static boolean isBot(HttpServletRequest request) {
+        return HttpUtil.getIsBot(request);
+    }
+
+    public static boolean getIsBot(HttpServletRequest request) {
+        boolean isBot = false;
+        String userAgent = request.getHeader("user-agent");
+        if (userAgent != null) {
+            userAgent = userAgent.toLowerCase();
+            if (userAgent.contains("bot")
+                    || userAgent.contains("spider")
+                    || userAgent.contains("slurp")
+                    || userAgent.contains("ahrefs")
+                    || userAgent.contains("baidu")
+                    || userAgent.contains("The Knowledge AI")
+                    || userAgent.contains("opensiteexplorer")
+                    || userAgent.contains("Gigabot")
+                    || userAgent.contains("SemrushBot")
+                    || userAgent.contains("centurybot")
+                    || userAgent.contains("bingbot")
+                    || userAgent.contains("naver.me")
+                //|| (userAgent.contains())
+            ) {
+                isBot = true;
+            }
+
+            if (UserAgentTracker.isOveractive(request)) {
+                isBot = true;
+            }
+
+        }
+        return isBot;
+    }
+
     public static boolean isInWhiteList(String input) {
-      // This is used for validating query strings
-      if (input == null) return true;
-      String clean = input.replaceAll("[^A-Za-z0-9\\[\\]=]", "");
+        // This is used for validating query strings
+        if (input == null) return true;
+        String clean = input.replaceAll("[^A-Za-z0-9\\[\\]=]", "");
         return input.equals(clean);
     }
 
-    public static boolean isInWhiteListCheck(String input, HttpServletResponse response) {    
+    public static boolean isInWhiteListCheck(String input, HttpServletResponse response) {
         // See PageAction.java.
         //s_log.warn("execute() url:" + url);
-      boolean isInWhiteList = HttpUtil.isInWhiteList(input);
-      if (!isInWhiteList) {
-        try { 
-          String output = "Illegal characters in input:" + input;
-          HttpUtil.write(output, response);
-        } catch (IOException e) {
-          String message = "isInWhiteListCheck input:" + input + " e:" + e;
-          s_log.warn("isInWhiteListCheck() " + message);
-          AdminAlertMgr.log(message);
+        boolean isInWhiteList = HttpUtil.isInWhiteList(input);
+        if (!isInWhiteList) {
+            try {
+                String output = "Illegal characters in input:" + input;
+                HttpUtil.write(output, response);
+            } catch (IOException e) {
+                String message = "isInWhiteListCheck input:" + input + " e:" + e;
+                s_log.warn("isInWhiteListCheck() " + message);
+                AdminAlertMgr.log(message);
+            }
         }
-      }
-      return isInWhiteList;
+        return isInWhiteList;
     }
-    
+
     public static String isLegitRequest(HttpServletRequest request) {
         boolean botAttackDefence = HttpUtil.isBotAttackDefence(request);
         if (botAttackDefence) {
-          return "Invalid request.";
-        }    
+            return "Invalid request.";
+        }
         String queryString = request.getQueryString();
         if (queryString == null) {
-          return null;
+            return null;
         }
         int reasonCode = 0;
         // Allowed because of locality names: http://localhost/antweb/locality.do?name=Montagne%20d%27Ambre%20975
-          //if (queryString.contains("%27")) reasonCode = 1;    // single quote
+        //if (queryString.contains("%27")) reasonCode = 1;    // single quote
         if (queryString.contains("%22")) reasonCode = 2;    // double quote
-        if (queryString.contains("script")) reasonCode = 3; 
-        if (queryString.contains("..%2f")) reasonCode = 4; 
-        if (queryString.contains("./")) reasonCode = 5; 
-        if (queryString.contains("../")) reasonCode = 6; 
+        if (queryString.contains("script")) reasonCode = 3;
+        if (queryString.contains("..%2f")) reasonCode = 4;
+        if (queryString.contains("./")) reasonCode = 5;
+        if (queryString.contains("../")) reasonCode = 6;
         if (queryString.contains("%2e")) reasonCode = 7;
         //if (queryString.contains("=")) reasonCode = 8;
-        
+
         if (reasonCode > 0) {
-          s_log.info("isLegitRequest() Invalid query string reasonCode:" + reasonCode + " RequestInfo:" + HttpUtil.getRequestInfo(request));
-          return "Invalid query string (" + reasonCode + ")"; 
+            s_log.info("isLegitRequest() Invalid query string reasonCode:" + reasonCode + " RequestInfo:" + HttpUtil.getRequestInfo(request));
+            return "Invalid query string (" + reasonCode + ")";
         }
 
         //A.log("isLegitRequest() legit:yes queryString:" + queryString + " reasonCode:" + reasonCode);
@@ -261,76 +263,75 @@ public abstract class HttpUtil {
     }
 
 
-  
     private static final boolean s_isOffline = false;
     // In order to set to offline, hardcode it above, or turn s_showResults to true and look 
     // at the log results to find a string that will uniquely identify the service
     // (such as gogoinflight or unitied-wifi).
     private static final boolean s_showResults = false;
     private static final String[] s_services = {"gogoinflight", "united-wifi"};
-      // This is the persisted property resulting from the various conditions that may indicate
+    // This is the persisted property resulting from the various conditions that may indicate
     // on of offline.
     private static Boolean s_isOnline;
-  
+
     public static boolean isOnline() {
-      if (!AntwebProps.isDevMode()) {
-        // This is only for dev, when working offline.  Server is always online.
-        return true;
-      }
-      if (s_isOnline != null) {
-        // Only need to test once.
-        return s_isOnline;
-      }
-      if (testOnline()
-          && true
-        // && can fetch a page, ping something, once, at startup, store it.
+        if (!AntwebProps.isDevMode()) {
+            // This is only for dev, when working offline.  Server is always online.
+            return true;
+        }
+        if (s_isOnline != null) {
+            // Only need to test once.
+            return s_isOnline;
+        }
+        if (testOnline()
+                && true
+            // && can fetch a page, ping something, once, at startup, store it.
         ) {
-        s_isOnline = Boolean.TRUE;
-      } else {
-        s_isOnline = Boolean.FALSE;
-        s_log.warn("Warning... Running in Offline Mode.");
-      }
-      return s_isOnline;
-    }
-  
-    public static boolean isOffline() {
-      return !HttpUtil.isOnline();
+            s_isOnline = Boolean.TRUE;
+        } else {
+            s_isOnline = Boolean.FALSE;
+            s_log.warn("Warning... Running in Offline Mode.");
+        }
+        return s_isOnline;
     }
 
-    private static boolean testOnline() {  
-      if (AntwebProps.isDevMode() && s_isOffline) {
-        s_log.warn("testOnline() Offline is hardcoded.  Offline.");
-        return false;
-      }
-      try {
-        String content = HttpUtil.getUrl("http://google.com");
-        if (content == null) {
-          s_log.warn("testOnline() Null returned.  Offline.");
-          return false;
-        }
-        if ("".equals(content)) {
-          s_log.warn("testOnline() Empty string returned.  Offline.");
-          return false;
-        }
-        for (String service : s_services) {
-          if (content.contains(service)) {
-            s_log.warn("testOnline() service:" + service + ".  Offline.");
-            return false; 
-          }
-        }
-        if (AntwebProps.isDevMode()) {
-            // Change this to true if you want to see the page returned
-            // in order to create a condition to return false (as in gogoinflight).
-          if (s_showResults) {   
-            s_log.warn("testOnline content:" + content);
-          }
-        }
-      } catch (IOException e) {
-        return false;
-      }
-      return true;
+    public static boolean isOffline() {
+        return !HttpUtil.isOnline();
     }
-    
+
+    private static boolean testOnline() {
+        if (AntwebProps.isDevMode() && s_isOffline) {
+            s_log.warn("testOnline() Offline is hardcoded.  Offline.");
+            return false;
+        }
+        try {
+            String content = HttpUtil.getUrl("http://google.com");
+            if (content == null) {
+                s_log.warn("testOnline() Null returned.  Offline.");
+                return false;
+            }
+            if ("".equals(content)) {
+                s_log.warn("testOnline() Empty string returned.  Offline.");
+                return false;
+            }
+            for (String service : s_services) {
+                if (content.contains(service)) {
+                    s_log.warn("testOnline() service:" + service + ".  Offline.");
+                    return false;
+                }
+            }
+            if (AntwebProps.isDevMode()) {
+                // Change this to true if you want to see the page returned
+                // in order to create a condition to return false (as in gogoinflight).
+                if (s_showResults) {
+                    s_log.warn("testOnline content:" + content);
+                }
+            }
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
+    }
+
     public static boolean isDisallowedFileType(String fileName) {
         return fileName != null &&
                 (fileName.contains(".jsp")
@@ -343,26 +344,26 @@ public abstract class HttpUtil {
                         || fileName.contains(".SH")
                 );
     }
-    
+
     public static boolean isAlphaNumeric(String str) {
-      // str = "abcdefà";
-      if (str == null) return true;
-      Pattern p = Pattern.compile("[^a-zA-Z0-9@.]");
-      boolean hasSpecialChar = p.matcher(str).find();
-      return !hasSpecialChar;
+        // str = "abcdefà";
+        if (str == null) return true;
+        Pattern p = Pattern.compile("[^a-zA-Z0-9@.]");
+        boolean hasSpecialChar = p.matcher(str).find();
+        return !hasSpecialChar;
     }
-    
+
     public static boolean hasIllegalChars(String[] strings, HttpServletRequest request) {
-      //A.log("hasIllegalChars() strings:" + strings);
-      for (String str : strings) {
-        if (str == null) continue;
-        if (str.contains("&") || isIllegalStr(str)) {
-          AntwebUtil.log("HttpUtil.hasIllegalChars() 1 true str:" + str + " target:" + HttpUtil.getTarget(request));
-          BadActorMgr.addBadActor(request);
-         return true;
+        //A.log("hasIllegalChars() strings:" + strings);
+        for (String str : strings) {
+            if (str == null) continue;
+            if (str.contains("&") || isIllegalStr(str)) {
+                AntwebUtil.log("HttpUtil.hasIllegalChars() 1 true str:" + str + " target:" + HttpUtil.getTarget(request));
+                BadActorMgr.addBadActor(request);
+                return true;
+            }
         }
-      }
-      return false;
+        return false;
     }
 
     public static boolean hasIllegalStr(String str, HttpServletRequest request) {
@@ -383,6 +384,7 @@ public abstract class HttpUtil {
                 || str.contains("3ddbms_pipe.receive_message")
                 || str.contains("waitfor  ");
     }
+
     private static final String[] HEADERS_TO_TRY = {
             "X-Forwarded-For",
             "Proxy-Client-IP",
@@ -394,12 +396,12 @@ public abstract class HttpUtil {
             "HTTP_FORWARDED_FOR",
             "HTTP_FORWARDED",
             "HTTP_VIA",
-            "REMOTE_ADDR" };
+            "REMOTE_ADDR"};
 
     public static String getClientIpAddress(HttpServletRequest request) {
-         if (AntwebProps.isLocal()) return getDevIpAddress(request);
+        if (AntwebProps.isLocal()) return getDevIpAddress(request);
 
-         for (String header : HEADERS_TO_TRY) {
+        for (String header : HEADERS_TO_TRY) {
             String ip = request.getHeader(header);
             if (ip != null && ip.length() != 0 && !"unknown".equalsIgnoreCase(ip)) {
                 return ip;
@@ -407,54 +409,54 @@ public abstract class HttpUtil {
         }
         return request.getRemoteAddr();
     }
-    public static String getDevIpAddress(HttpServletRequest request)
-    {
-        String appUrl = request.getScheme() + "://"+ request.getLocalAddr();
+
+    public static String getDevIpAddress(HttpServletRequest request) {
+        String appUrl = request.getScheme() + "://" + request.getLocalAddr();
         return appUrl;
     }
 
     private static boolean isBadActorBlocked(HttpServletRequest request) {
-      return false; // To be...
+        return false; // To be...
     }
 
     public static boolean abortAction(String content) {
-      // This method looks for jsp injection code.  True to abort.
+        // This method looks for jsp injection code.  True to abort.
         return content != null &&
                 (content.contains("Loesch") // This is the author of Browser.jsp
                         || false
                 );
     }
-    
+
     public static void blockFishingAttack(HttpServletRequest request, ActionErrors errors) {
         //if (AntwebProps.isDevMode()) {
-          String requestString = HttpUtil.getQueryString(request); //Info(request);
+        String requestString = HttpUtil.getQueryString(request); //Info(request);
 
-          requestString = HttpUtil.getRequestInfo(request);
+        requestString = HttpUtil.getRequestInfo(request);
 
-          //s_log.warn("blockFishingAttack() hack attempt.  request:" + requestString.substring(0, 25));
+        //s_log.warn("blockFishingAttack() hack attempt.  request:" + requestString.substring(0, 25));
 
-          if (requestString != null && requestString.contains("..")) {
+        if (requestString != null && requestString.contains("..")) {
             LogMgr.appendLog("hacks.log", DateUtil.getFormatDateTimeStr() + " - " + requestString);
             errors.add("name", new ActionError("error.longfield"));
-          }           
+        }
         //}
     }
 
-    public static int botAttackCount = 0;    
-    
+    public static int botAttackCount = 0;
+
     public static boolean isBotAttackDefence(HttpServletRequest request) {
         String queryString = request.getQueryString();
         if (queryString == null) return false;
-        if ( 
-             queryString.contains("%2Cnull%2Cnull%2")
-          || queryString.contains("union%20all")
-          || queryString.contains("ascii")
-          ) {
-          ++botAttackCount;
-          if (botAttackCount % 100 == 0) {
-            s_log.error("isBotAttackDefence() count:" + botAttackCount);
-          }
-          return true;
+        if (
+                queryString.contains("%2Cnull%2Cnull%2")
+                        || queryString.contains("union%20all")
+                        || queryString.contains("ascii")
+        ) {
+            ++botAttackCount;
+            if (botAttackCount % 100 == 0) {
+                s_log.error("isBotAttackDefence() count:" + botAttackCount);
+            }
+            return true;
         }
         return false;
     }
@@ -484,7 +486,7 @@ public abstract class HttpUtil {
     private static int oneOfManyLimit = 10;
 
     public static boolean tooBusyForBots(Connection connection, HttpServletRequest request)
-       throws SQLException {
+            throws SQLException {
         boolean isServerBusy = false;
         oneOfMany = oneOfMany + 1;        // Test only 1 in N
         if (oneOfMany >= oneOfManyLimit) {
@@ -492,11 +494,11 @@ public abstract class HttpUtil {
 
             isServerBusy = DBStatus.isServerBusy(connection);
             if (HttpUtil.getIsBot(request) && isServerBusy) {
-              serverBusyCount = serverBusyCount + 1;
-              if (serverBusyCount % 100 == 0) {
-                  s_log.warn("tooBusyForBots(connection, reequest) serverBusyCount:" + serverBusyCount);
-              }
-              return true;
+                serverBusyCount = serverBusyCount + 1;
+                if (serverBusyCount % 100 == 0) {
+                    s_log.warn("tooBusyForBots(connection, reequest) serverBusyCount:" + serverBusyCount);
+                }
+                return true;
             }
         } else {
             isServerBusy = DBStatus.getIsServerBusy();
@@ -520,36 +522,36 @@ public abstract class HttpUtil {
 */
 
     public static ActionForward sendMessage(HttpServletRequest request, ActionMapping mapping, String message) {
-      request.setAttribute("message", message);
-      return mapping.findForward("message");
+        request.setAttribute("message", message);
+        return mapping.findForward("message");
     }
-    
-    public static Map<String, String> getHeadersInfo(HttpServletRequest request) {
-		Map<String, String> map = new HashMap<>();
 
-		Enumeration<String> headerNames = request.getHeaderNames();
-		while (headerNames.hasMoreElements()) {
-			String key = headerNames.nextElement();
-			String value = request.getHeader(key);
-			map.put(key, value);			
-		}
+    public static Map<String, String> getHeadersInfo(HttpServletRequest request) {
+        Map<String, String> map = new HashMap<>();
+
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String key = headerNames.nextElement();
+            String value = request.getHeader(key);
+            map.put(key, value);
+        }
         return map;
-    }    
+    }
 
     public static String getHeadersStr(HttpServletRequest request) {
         String headerStr = "headerStr:";
-		Enumeration<String> headerNames = request.getHeaderNames();
-		while (headerNames.hasMoreElements()) {
-			String key = headerNames.nextElement();
-			String value = request.getHeader(key);
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String key = headerNames.nextElement();
+            String value = request.getHeader(key);
             headerStr += " " + key + ":" + value;
-		}
+        }
         return headerStr;
-    }           
-    
+    }
+
     public static boolean isPost(HttpServletRequest request) {
         if (request.getContentType() != null) {
-          String contentType = request.getContentType().toLowerCase();
+            String contentType = request.getContentType().toLowerCase();
             //A.log("isPost:" + request.getContentType());
             return contentType.contains("multipart/form-data")
                     || contentType.contains("application/x-www-form-urlencoded")
@@ -570,11 +572,11 @@ public abstract class HttpUtil {
         return target;
     }
 
-/*
-          // This will turn spaces into +
-          //import org.apache.commons.httpclient.util.URIUtil;
-          //url = URIUtil.encodeQuery(url);
- */
+    /*
+              // This will turn spaces into +
+              //import org.apache.commons.httpclient.util.URIUtil;
+              //url = URIUtil.encodeQuery(url);
+     */
     public static String encode(String toEncode) {
         String encoded = null;
         // ADDED the utf8 below 20200216.
@@ -590,109 +592,111 @@ public abstract class HttpUtil {
     }
 
 
-  public static String getParamString(HttpServletRequest request) 
-      throws SocketTimeoutException {
-   // This gets used by UgSessionRequestFilter to block SQLInjection attacks.
-    String paramString = "";            
-    Enumeration names = request.getParameterNames();
-    while (names.hasMoreElements()) {
-      String name = (String) names.nextElement();
-      String[] values = request.getParameterValues(name);    
-      String value = values[0];
-      if (values.length > 1) value += ",...";
-      paramString += name + ":" + value + " ";
+    public static String getParamString(HttpServletRequest request)
+            throws SocketTimeoutException {
+        // This gets used by UgSessionRequestFilter to block SQLInjection attacks.
+        String paramString = "";
+        Enumeration names = request.getParameterNames();
+        while (names.hasMoreElements()) {
+            String name = (String) names.nextElement();
+            String[] values = request.getParameterValues(name);
+            String value = values[0];
+            if (values.length > 1) value += ",...";
+            paramString += name + ":" + value + " ";
+        }
+        return paramString;
     }
-    return paramString;
-  }
 
-  public static String getParam(HttpServletRequest request, String param) {
+    public static String getParam(HttpServletRequest request, String param) {
         return "&" + param + "=" + getParamValue(param, request);
-  }
-
-  // Could be multiple ones? This just gets first.
-  public static String getParamValue(String param, HttpServletRequest request) {
-    String paramsStr = "";            
-    Enumeration<String> names = request.getParameterNames();
-    while (names.hasMoreElements()) {
-      String name = names.nextElement();
-      if (param.equals(name)) {
-        String[] values = request.getParameterValues(name);    
-        for (String value : values) {
-          return value;
-        }
-      }
     }
-    return paramsStr;
-  }
 
-  // WTF? Based on faulty method?
-  public static String getParamsString(String param, HttpServletRequest request) {
-    return HttpUtil.getParamsStr(param, request);
-  }
-  // WTF? This doesn't seem to use param?
-  public static String getParamsStr(String param, HttpServletRequest request) {
-    // Used by oneView.jsp to get the multiple "chosen" params.
-    String paramsStr = "";            
-    Enumeration<String> names = request.getParameterNames();
-    while (names.hasMoreElements()) {
-      String name = names.nextElement();
-      if ("chosen".equals(name)) {
-        String[] values = request.getParameterValues(name);    
-        for (String value : values) {
-          paramsStr += "&" + name + "=" + value;
+    // Could be multiple ones? This just gets first.
+    public static String getParamValue(String param, HttpServletRequest request) {
+        String paramsStr = "";
+        Enumeration<String> names = request.getParameterNames();
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            if (param.equals(name)) {
+                String[] values = request.getParameterValues(name);
+                for (String value : values) {
+                    return value;
+                }
+            }
         }
-      }
+        return paramsStr;
     }
-    return paramsStr;
-  }
-  
+
+    // WTF? Based on faulty method?
+    public static String getParamsString(String param, HttpServletRequest request) {
+        return HttpUtil.getParamsStr(param, request);
+    }
+
+    // WTF? This doesn't seem to use param?
+    public static String getParamsStr(String param, HttpServletRequest request) {
+        // Used by oneView.jsp to get the multiple "chosen" params.
+        String paramsStr = "";
+        Enumeration<String> names = request.getParameterNames();
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            if ("chosen".equals(name)) {
+                String[] values = request.getParameterValues(name);
+                for (String value : values) {
+                    paramsStr += "&" + name + "=" + value;
+                }
+            }
+        }
+        return paramsStr;
+    }
+
     public static boolean isMobileTest(HttpServletRequest request) {
-      if (LoginMgr.isDeveloper(request)) return true; // for testing
+        if (LoginMgr.isDeveloper(request)) return true; // for testing
 
-      if (HttpUtil.getTarget(request).contains("testMobile.do")) return true; // for testing
+        if (HttpUtil.getTarget(request).contains("testMobile.do")) return true; // for testing
         return HttpUtil.getTarget(request).contains("mobile.do"); // for testing
     }
-    
+
     public static boolean isMobile(HttpServletRequest request) {
-      if (request == null) AntwebUtil.log("isMobile() request is null");
-      //if (AntwebProps.isDevMode()) return true; // for testing
-      boolean returnVal = false;
-      try { // To handle http://localhost/antweb/citing_antweb.jsp
-          String target = HttpUtil.getTarget(request);
-          if (target == null) {
-            //AntwebUtil.log("isMobile() target is null");
-            return false;
-          }
+        if (request == null) AntwebUtil.log("isMobile() request is null");
+        //if (AntwebProps.isDevMode()) return true; // for testing
+        boolean returnVal = false;
+        try { // To handle http://localhost/antweb/citing_antweb.jsp
+            String target = HttpUtil.getTarget(request);
+            if (target == null) {
+                //AntwebUtil.log("isMobile() target is null");
+                return false;
+            }
 
-          String userAgent = request.getHeader("User-Agent");
+            String userAgent = request.getHeader("User-Agent");
 
-          //A.log("isMobile() target:" + target + " userAgent:" + userAgent);      
+            //A.log("isMobile() target:" + target + " userAgent:" + userAgent);
 
-          if (target.contains("mobile.do")) returnVal = true; // for testing
+            if (target.contains("mobile.do")) returnVal = true; // for testing
             // for testing on https://www.antweb.org/mobile.do
-      
-          //A.log("isMobile() userAgent:" + userAgent + " deviceWidth:" + device-width);
-          if (userAgent != null && userAgent.contains("Mobile")) {
-            returnVal = true;
-          }
-      } catch (Exception e) {
-        s_log.warn("isMobile() e:" + e);
-      }
-      return returnVal;
+
+            //A.log("isMobile() userAgent:" + userAgent + " deviceWidth:" + device-width);
+            if (userAgent != null && userAgent.contains("Mobile")) {
+                returnVal = true;
+            }
+        } catch (Exception e) {
+            s_log.warn("isMobile() e:" + e);
+        }
+        return returnVal;
     }
 
     public static boolean isIphone(HttpServletRequest request) {
-      String userAgent = request.getHeader("User-Agent");
+        String userAgent = request.getHeader("User-Agent");
         return userAgent != null && userAgent.contains("iPhone");
     }
-  
+
     public static boolean isSecure(HttpServletRequest request) {
         String target = HttpUtil.getTarget(request);
-        if ("https://".equals(target.substring(0, 8))) return true;      
-        if (!AntwebProps.isDevMode() && target.contains("http://")) s_log.warn("isSecure() http found. Target:" + target);
+        if ("https://".equals(target.substring(0, 8))) return true;
+        if (!AntwebProps.isDevMode() && target.contains("http://"))
+            s_log.warn("isSecure() http found. Target:" + target);
         return false;
     }
-  
+
     /**
      * this is because those crazy browsers don't send the param
      * name back straight if its an image button
@@ -704,99 +708,152 @@ public abstract class HttpUtil {
         return request.getParameter(param + ".x") != null;
     }
 
-  public static boolean redirectPostToGet(HttpServletRequest request
-    , HttpServletResponse response
-    , String requestedPathWithQuery) 
-    throws IOException {
+    public static boolean redirectPostToGet(HttpServletRequest request
+            , HttpServletResponse response
+            , String requestedPathWithQuery)
+            throws IOException {
 
-      String target = AntwebProps.getDomainApp() + requestedPathWithQuery;
-      HttpUtil.sendRedirect(target, request, response);
-      return true;
-  }  
-
-  public static boolean redirectSecure(HttpServletRequest request
-    , HttpServletResponse response
-    , String requestedPathWithQuery) 
-    throws IOException {
-
-    if (!HttpUtil.isSecure(request)) {
-      String target = "https://" + request.getServerName() + requestedPathWithQuery;
-      HttpUtil.sendRedirect(target, request, response);
-      return true;
-    } else {
-      return false;
+        String target = AntwebProps.getDomainApp() + requestedPathWithQuery;
+        HttpUtil.sendRedirect(target, request, response);
+        return true;
     }
-  }  
 
-  //   HttpUtil.getRealPath(request);
-  public String getRealPath(HttpServletRequest request) {
-      return request.getSession().getServletContext().getRealPath("/");
-  }
+    public static boolean redirectSecure(HttpServletRequest request
+            , HttpServletResponse response
+            , String requestedPathWithQuery)
+            throws IOException {
 
-  public static void sendRedirect(String target, HttpServletRequest request, HttpServletResponse response) 
-    throws IOException {
-      PageTracker.remove(request);  
-      response.sendRedirect(target);
-  }
+        if (!HttpUtil.isSecure(request)) {
+            String target = "https://" + request.getServerName() + requestedPathWithQuery;
+            HttpUtil.sendRedirect(target, request, response);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-    
-  public static String redirectCorrectedUrl(HttpServletRequest request  
-    , HttpServletResponse response) {
+    //   HttpUtil.getRealPath(request);
+    public String getRealPath(HttpServletRequest request) {
+        return request.getSession().getServletContext().getRealPath("/");
+    }
 
-    /* Called from BrowseAction in case where rank is null */
-    //        //response.sendRedirect(newPath);  // can't. Response committed.
+    public static void sendRedirect(String target, HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        PageTracker.remove(request);
+        response.sendRedirect(target);
+    }
 
-    String requestedPath = HttpUtil.getRequestURL(request) + "?" + request.getQueryString();
 
-    if (requestedPath != null) {
-      if (requestedPath.contains("%22")) {
-        String newPath = requestedPath.replaceAll("%22", "");
-        String message = "redirectCorrectedURL() requestedPathWithQUery:" + requestedPath + " has \".  Should be:" + newPath
-          + ".  referrer:" + request.getHeader("referer") + " user-agent:" + request.getHeader("user-agent");
-        s_log.info(message);
-        return newPath;
-      }
+    public static String redirectCorrectedUrl(HttpServletRequest request
+            , HttpServletResponse response) {
+
+        /* Called from BrowseAction in case where rank is null */
+        //        //response.sendRedirect(newPath);  // can't. Response committed.
+
+        String requestedPath = HttpUtil.getRequestURL(request) + "?" + request.getQueryString();
+
+        if (requestedPath != null) {
+            if (requestedPath.contains("%22")) {
+                String newPath = requestedPath.replaceAll("%22", "");
+                String message = "redirectCorrectedURL() requestedPathWithQUery:" + requestedPath + " has \".  Should be:" + newPath
+                        + ".  referrer:" + request.getHeader("referer") + " user-agent:" + request.getHeader("user-agent");
+                s_log.info(message);
+                return newPath;
+            }
 /*
     s_log.warn("redirectCorrectedUrl() requestUrl:" + requestUrl + " servletPath:" + servletPath + " domainApp:" + AntwebProps.getDomainApp() + " requestedPath:" + requestedPath);
 */
-      if (requestedPath.contains("&amp")) {
-        String newPath = requestedPath.replaceAll("&amp;", "&");
-        String message = "redirectCorrectedUrl() requestedPathWithQUery:" + requestedPath + " has &amp;'s.  Should be:" + newPath
-          + ".  referrer:" + request.getHeader("referer") + " user-agent:" + request.getHeader("user-agent");
-        s_log.info(message);
-        return newPath;
-      }
-    }
-    return null;
-  }      
-    
-  public static String getRequestURL(HttpServletRequest request) {
-
-    StringBuffer requestUrlBuffer = request.getRequestURL();  // This returns NULL sometimes. 
-    if (requestUrlBuffer != null) {
-        return requestUrlBuffer.toString();
+            if (requestedPath.contains("&amp")) {
+                String newPath = requestedPath.replaceAll("&amp;", "&");
+                String message = "redirectCorrectedUrl() requestedPathWithQUery:" + requestedPath + " has &amp;'s.  Should be:" + newPath
+                        + ".  referrer:" + request.getHeader("referer") + " user-agent:" + request.getHeader("user-agent");
+                s_log.info(message);
+                return newPath;
+            }
+        }
+        return null;
     }
 
-    String requestUrl = AntwebProps.getDomainApp() + request.getServletPath();
-    return requestUrl;
-  }
-      
-  public static String getRequestInfo(HttpServletRequest request) {
-    String requestInfo = "url:" +  HttpUtil.getTarget(request); // HttpUtil.getRequestURL(request); //request.getRequestURL();
+    public static String getRequestURL(HttpServletRequest request) {
+
+        StringBuffer requestUrlBuffer = request.getRequestURL();  // This returns NULL sometimes.
+        if (requestUrlBuffer != null) {
+            return requestUrlBuffer.toString();
+        }
+
+        String requestUrl = AntwebProps.getDomainApp() + request.getServletPath();
+        return requestUrl;
+    }
+
+    public static String getRequestInfo(HttpServletRequest request) {
+        String requestInfo = "url:" + HttpUtil.getTarget(request); // HttpUtil.getRequestURL(request); //request.getRequestURL();
 //    requestInfo += " queryString:" + request.getQueryString();
-    requestInfo += " shortRequestInfo:" + HttpUtil.getShortRequestInfo(request);
-    return requestInfo;
-  }
+        requestInfo += " shortRequestInfo:" + HttpUtil.getShortRequestInfo(request);
+        return requestInfo;
+    }
 
-  public static String getShortRequestInfo(HttpServletRequest request) {
-    int maxLength = 1800;
-    String requestInfo = " referer:" + request.getHeader("referer");
-    requestInfo += " user-agent:" + request.getHeader("user-agent"); 
-    if (requestInfo.length() > maxLength) requestInfo = requestInfo.substring(0, maxLength);
-    return requestInfo;
-  }
+    public static String getShortRequestInfo(HttpServletRequest request) {
+        int maxLength = 1800;
+        String requestInfo = " referer:" + request.getHeader("referer");
+        requestInfo += " user-agent:" + request.getHeader("user-agent");
+        if (requestInfo.length() > maxLength) requestInfo = requestInfo.substring(0, maxLength);
+        return requestInfo;
+    }
 
-  public static String getRequestReferer(HttpServletRequest request) {
+    public static String getLongRequestInfo(HttpServletRequest request) {
+        String info = getShortRequestInfo(request);
+        String params = getRequestParameter(request);
+        String headers = getRequestHeaders(request);
+
+//        A.log("getLongRequestInfo() info:" + info);
+//        A.log("getLongRequestInfo() params:" + params);
+//        A.log("getLongRequestInfo() headers:" + headers);
+
+        info += " ----Params:" + params;
+        info += " ----Headers:" + headers;
+        return info;
+    }
+
+    public static String getRequestParameter(HttpServletRequest request) {
+        StringBuffer allParameter = new StringBuffer();
+        String params = "";
+        Map<String,String[]> parametersName = request.getParameterMap();
+
+        int count=0;
+
+        for (String paramName : parametersName.keySet()) {
+            String[] paramValues=parametersName.get(paramName);
+            if(count>0)
+                allParameter.append("&");
+
+            allParameter.append(paramName);
+            allParameter.append("=");
+            for (int i = 0; i < paramValues.length; i++) {
+                allParameter.append(paramValues[i]);
+                if(paramValues.length>1)
+                    allParameter.append(",");
+            }
+            count++;
+        }
+        params = allParameter.toString();
+        return params;
+    }
+
+    public static String getRequestHeaders(HttpServletRequest request) {
+        String headers = "";
+        Enumeration parms = request.getHeaderNames();
+        String paramName;
+        String paramVal;
+        while (parms.hasMoreElements()) {
+            paramName = (String) parms.nextElement();
+            paramVal = request.getHeader(paramName);
+            headers += (" " + paramName + ":" + paramVal);
+        }
+        return headers;
+    }
+
+
+    public static String getRequestReferer(HttpServletRequest request) {
     int maxLength = 1800;
     String requestInfo = " url:" +  HttpUtil.getTarget(request) + " referer:" + request.getHeader("referer");
     return requestInfo;
