@@ -644,6 +644,13 @@ public abstract class AntwebUtil {
     return hrsUntil;
   }
 
+  public static long daysSince(Date date) {
+    long minsSince = AntwebUtil.minsSince(date);
+    long hrsSince = minsSince / 60;
+    long daysSince = hrsSince / 24;
+    return daysSince;
+  }
+
     //This returns as a decimal value of a minutes. So 40 seconds is .66 mins.
 	public static String getMinsPassed(Date startTime) {
       double timePassed = AntwebUtil.doubleMinsSince(startTime);

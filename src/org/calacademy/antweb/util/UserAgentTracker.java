@@ -5,6 +5,7 @@ import java.util.Map;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.*;
 
 
@@ -23,6 +24,7 @@ import org.calacademy.antweb.home.UserAgentDb;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.home.ServerDb;
+import org.calacademy.antweb.upload.UploadAction;
 
 
 public class UserAgentTracker extends Action {
@@ -65,10 +67,14 @@ public class UserAgentTracker extends Action {
       lastRefreshDate = new java.util.Date();
       agentsMap = new HashMap<>();
   }
-  public static String getLastRefresh() {
-      if (lastRefreshDate == null) return " - ";
-      return lastRefreshDate.toString();
+  public static java.util.Date getLastRefresh() {
+      if (lastRefreshDate == null) return null;
+      return lastRefreshDate;
   }
+    public static String getLastRefreshStr() {
+        if (lastRefreshDate == null) return " - ";
+        return lastRefreshDate.toString();
+    }
 
     public static String denyAgent(HttpServletRequest request) {
         if (isOveractive(request)) {
@@ -82,11 +88,44 @@ public class UserAgentTracker extends Action {
                     + "<br><b>Datetime: </b>" + formatDateTime
                     + "<br><b>User Agent: </b>" + agent
                     ;
-
             return message;
         }
         return null;
     }
+
+    private static int s_botDenial = 0;
+    public static int getBotDenialCount() { return s_botDenial; }
+    private static String s_botDenialReason = null;
+    public static String getBotDenialReason() {
+        if (s_botDenialReason == null) return "";
+        return s_botDenialReason;
+    }
+    private static boolean s_vetMode = false;
+    public static boolean isInVetMode() { return s_vetMode; }
+
+    public static boolean vetForBot(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        boolean isServerBusy = DBUtil.isServerBusy();
+        s_vetMode = UploadAction.isInUploadProcess() || isServerBusy;
+        if (s_vetMode) {
+            String htmlMessage = UserAgentTracker.denyAgent(request);
+            if (htmlMessage != null) {
+                ++s_botDenial;
+                if (isServerBusy) s_botDenialReason = "isServerBusy";
+                if (UploadAction.isInUploadProcess()) s_botDenialReason = "isInUploadProcess";
+                HttpUtil.write(htmlMessage, response);
+                return false;  // Do not allow
+            }
+        } else {
+            if (s_botDenial > 0) {
+                s_log.warn("doFilter() botDenial for reason:" + s_botDenialReason + " count:" + s_botDenial);
+                s_botDenial = 0;
+                s_botDenialReason = null;
+            }
+        }
+        //A.log("target:"+ target);
+        return true; // allow
+    }
+
 
     public static void track(HttpServletRequest request, Connection connection) {
 
@@ -208,7 +247,7 @@ public class UserAgentTracker extends Action {
   public static String htmlUserAgents() {
       Set<String> keySet = agentsMap.keySet();
 
-      String report = "<br><br>";
+      String report = "";
       String agent = "";
 
       // Used for sorting

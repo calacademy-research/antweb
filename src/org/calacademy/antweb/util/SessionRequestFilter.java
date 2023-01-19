@@ -29,7 +29,7 @@ public class SessionRequestFilter implements Filter {
 
     private static int s_period = 2; // minutes after which the infrequent code will execute. (Debug string fetch).
     private static Date s_periodDate = null;
-    private static int s_botDenial = 0;
+
 
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
@@ -46,20 +46,8 @@ public class SessionRequestFilter implements Filter {
 
       PageTracker.add(request);
 
-      if (UploadAction.isInUploadProcess()) {
-          String htmlMessage = UserAgentTracker.denyAgent(request);
-          if (htmlMessage != null) {
-              ++s_botDenial;
-              HttpUtil.write(htmlMessage, response);
-              return;
-          }
-      } else {
-          if (s_botDenial > 0) {
-              s_log.warn("doFilter() botDenial during upload:" + s_botDenial);
-              s_botDenial = 0;
-          }
-      }
-      //A.log("target:"+ target);
+      boolean allow = UserAgentTracker.vetForBot(request, response);
+      if (!allow) return;
 
       Login accessLogin = LoginMgr.getAccessLogin(request);
       String loginName = "-";

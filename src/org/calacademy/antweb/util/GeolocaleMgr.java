@@ -941,7 +941,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if ("matogrossodosulants".equals(projectName)) return GeolocaleMgr.getCountry("Mato Grosso do Sul");
         if ("costaricaants".equals(projectName)) return GeolocaleMgr.getCountry("Costa Rica");
         if ("creteants".equals(projectName)) return GeolocaleMgr.getCountry("Crete");
-
+        if ("alicanteants".equals(projectName)) return GeolocaleMgr.getCountry("Alicante");
         return null;
     }
 
