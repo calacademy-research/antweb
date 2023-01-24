@@ -1,9 +1,17 @@
+
+Release 8.86
+  Simplify doFilter() exception handling.
+  Reset UserAgents list following scheduler.
+  Create hyperActive UserAgent functionality
+
 Release 8.85.1
-Date Jan 18
-  Invoke bot denial in case of server slow.
+Date Jan 19
+  Activate bot denial in case of server slow.
   UserAgentTracker clean up. Move logic from SessionRequestFilter into UserAgentTracker.
   User Agent Manager. Add days. Time dependent on refresh. Add functioning data.
-
+  HttpUtil.getLongRequestInfo() method with parameters and heading info.
+  Output longRequestInfo in case of SessionRequest exception, including userAgent and startTime.
+  
 Release 8.85
 Date: Jan 17
   Debug flag feature.

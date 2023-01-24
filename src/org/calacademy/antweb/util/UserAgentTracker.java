@@ -35,6 +35,12 @@ public class UserAgentTracker extends Action {
     private static Map<String, Integer> agentsMap = new HashMap<>();
     private static int nullAgent = 0;
 
+    private static Map<String, Integer> hyperActiveAgentsMap = new HashMap<String, Integer>();
+
+    private static java.util.Date s_thisSec = null;
+    private static String s_hyperActiveAgent = null;
+    private static int s_hyperActiveLimit = 4;  // Per second. Beyond this is rude!
+
     private static Set<String> knownAgentsSet = null;
     private static Set<String> whiteList = null;
 
@@ -56,37 +62,54 @@ public class UserAgentTracker extends Action {
         return mapping.findForward("userAgents");
     }
 
-  public static void init(Connection connection) {
-      UserAgentDb userAgentDb = new UserAgentDb(connection);
-      knownAgentsSet = userAgentDb.getKnownAgents();
+    public static void init(Connection connection) {
+        UserAgentDb userAgentDb = new UserAgentDb(connection);
+        knownAgentsSet = userAgentDb.getKnownAgents();
 
-      whiteList = userAgentDb.getWhiteList();
-  }
+        whiteList = userAgentDb.getWhiteList();
+    }
 
-  public static void refresh() {
-      lastRefreshDate = new java.util.Date();
-      agentsMap = new HashMap<>();
-  }
-  public static java.util.Date getLastRefresh() {
-      if (lastRefreshDate == null) return null;
-      return lastRefreshDate;
-  }
+    public static void refresh() {
+        lastRefreshDate = new java.util.Date();
+        agentsMap = new HashMap<>();
+        hyperActiveAgentsMap = new HashMap<String, Integer>();
+        s_hyperActiveAgent = null;
+    }
+
+    public static java.util.Date getLastRefresh() {
+        if (lastRefreshDate == null) return null;
+        return lastRefreshDate;
+    }
     public static String getLastRefreshStr() {
         if (lastRefreshDate == null) return " - ";
         return lastRefreshDate.toString();
     }
 
     public static String denyAgent(HttpServletRequest request) {
+        String target = HttpUtil.getTarget(request);
+        String userAgent = getUserAgent(request);
+        if (userAgent == null) userAgent = "Null UserAgent";
+
+        if (isHyperActive(userAgent, target)) {
+            String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
+            String message
+                = "<br><b>Antweb has found this requester making an unsupportable amount of requests on our server.</b>"
+                + "<br>If you have received this response in error, Please notify " + AntwebUtil.getAdminEmail() + " with this info and description. Thank you."
+                + "<br><b>Request: </b>" + target
+                + "<br><b>Datetime: </b>" + formatDateTime
+                + "<br><b>User Agent: </b>" + userAgent
+                ;
+            return message;
+        }
+
         if (isOveractive(request)) {
             String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
-            String target = HttpUtil.getTarget(request);
-            String agent = getUserAgent(request);
             String message
                     = "<br><b>Bot requests unsupported at this time.</b>"
                     + "<br>If you have received this response in error, Please notify " + AntwebUtil.getAdminEmail() + " with this info and description. Thank you."
                     + "<br><b>Request: </b>" + target
                     + "<br><b>Datetime: </b>" + formatDateTime
-                    + "<br><b>User Agent: </b>" + agent
+                    + "<br><b>User Agent: </b>" + userAgent
                     ;
             return message;
         }
@@ -104,6 +127,7 @@ public class UserAgentTracker extends Action {
     public static boolean isInVetMode() { return s_vetMode; }
 
     public static boolean vetForBot(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
         boolean isServerBusy = DBUtil.isServerBusy();
         s_vetMode = UploadAction.isInUploadProcess() || isServerBusy;
         if (s_vetMode) {
@@ -172,7 +196,6 @@ public class UserAgentTracker extends Action {
       Login accessLogin = LoginMgr.getAccessLogin(request);
 
       if (accessLogin != null) {
-
           if (!whiteList.contains(userAgent)) {
               userAgentDb.addToWhiteList(userAgent);
               whiteList.add(userAgent);
@@ -183,7 +206,37 @@ public class UserAgentTracker extends Action {
       return userAgent;  
   }
 
-  public static boolean isOveractive(HttpServletRequest request) {
+    // if in a 1 second time frame we receive more than s_hyperActiveLimit requests
+    private static boolean isHyperActive(String userAgent, String target) {
+        if (userAgent.equals(s_hyperActiveAgent)) {
+            return true;
+        }
+
+        // Every period of time, flush and start over.
+        if (AntwebUtil.secsSince(s_thisSec) > 1) {
+          s_thisSec = new java.util.Date();
+          hyperActiveAgentsMap = new HashMap<String, Integer>();
+        }
+
+        if (target.contains(".do") && hyperActiveAgentsMap.containsKey(userAgent)) {
+            // get the count.
+            int count = hyperActiveAgentsMap.getOrDefault(userAgent, 0);
+            count = count + 1;
+            hyperActiveAgentsMap.put(userAgent, count);
+               //s_log.warn("track() count:" + count + " agent:" + userAgent);
+            //Add one to it. Put it.
+
+            if (count >= s_hyperActiveLimit) {
+                s_log.warn("HyperActive agent: " + userAgent);
+                // add to block list
+                s_hyperActiveAgent = userAgent;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isOveractive(HttpServletRequest request) {
 
       //if (ServerDb.isDebug("debugUserAgents")) return false;
 
@@ -193,13 +246,13 @@ public class UserAgentTracker extends Action {
       if (userAgent == null) { 
         return false;
       }
-      return isOveractive(userAgent); 
+
+        return isOveractive(userAgent);
   }
 
-  // overactive agents have had more than OVERACTIVE (was: 1000) requests during one server execution.
+  // overactive agents have had more than OVERACTIVE (was: 1000) requests during one server execution/reset of userAgents.
   // (This is not wrong, of course, but is an indicator of bot activity).
   private static boolean isOveractive(String userAgent) {
-
       // Logged in users are never "overactive" or treated as bots.
       if (userAgent.contains("(login:")) {
           //s_log.warn("isOveractive() userAgent allowed with login:" + userAgent);

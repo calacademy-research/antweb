@@ -108,40 +108,32 @@ public class SessionRequestFilter implements Filter {
               postActionPeriodPos = target.indexOf(".", actionPeriodPos + 1);
               //String periodStr = target.substring(postActionPeriodPos, postActionPeriodPos + 6);
               if (postActionPeriodPos > 0) {
-                note = " Handled. No periods allowed after action.";
+                note = " Periods not allowed in query String.";
               }
           }
           String message = formatDateTime;
           String htmlMessage = null;
 
-          if (!"".equals(note)) {    // for instance: http://localhost/antweb/adm1.do?%20(Terr.%20Amazonas)
-            message += note + " e:" + e + " target:" + target;
-            s_log.warn("doFilter() " + message);
-            htmlMessage 
-              = "<br><b>Request Error: </b>" + message;
-          //} else if (e instanceof AntwebException) {
-          //    s_log.error("AntwebException handled error:" + e.toString());
-          } else {
-            int caseNumber = AntwebUtil.getCaseNumber();
-            message += " See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber;
-            message += " e:" + e + " target:" + target + " startTime:" + startTime
+          int caseNumber = AntwebUtil.getCaseNumber();
+          message += " See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber;
+          message += " e:" + e + " target:" + target + " startTime:" + startTime
+                    + "<br><b>Exception:</b>" + e
                     + " userAgent:" + UserAgentTracker.getUserAgent(request);
-            s_log.error("doFilter() " + message + " info:" + HttpUtil.getLongRequestInfo(request));
-            message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
-  		    LogMgr.appendLog("srfExceptions.jsp", message);    
-            htmlMessage 
+          s_log.error("doFilter() " + message + " info:" + HttpUtil.getLongRequestInfo(request));
+          message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
+          LogMgr.appendLog("srfExceptions.jsp", message);
+          htmlMessage
               = "<br><b>Request Error</b>"
               + "<br><br><b>Case#:</b>" + caseNumber 
               + "<br>(Please notify " + AntwebUtil.getAdminEmail() + ") with this info and description of use case. Thank you."
-              + "<br><b>Exception:</b>" + e
               + "<br><b>Request:</b>" + target
               + "<br><b>Datetime:</b>" + formatDateTime
               ; 
-            if (AntwebProps.isDevMode()) {
+          if (AntwebProps.isDevMode()) {
               htmlMessage += "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
-            }
           }
-		  HttpUtil.write(htmlMessage, response);   
+
+		  HttpUtil.write(htmlMessage, response);
       } finally {
           PageTracker.remove(request);
 
@@ -288,7 +280,8 @@ class CustomTask extends TimerTask  {
       // Scheduler launch.
       AntwebUtil.log("SessionRequestFilter.CustomTask.run()");
       if (!AntwebProps.isDevMode()) {
-        new Scheduler().doAction();
+          new Scheduler().doAction();
+          UserAgentTracker.refresh();
       } else {
           AntwebUtil.log("warn", "CustomTask.run() DEV MODE SKIPPING scheduler.doAction()");
       }
