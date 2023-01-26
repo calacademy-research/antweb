@@ -44,21 +44,22 @@ public class SessionRequestFilter implements Filter {
       //A.log("doFilter()");
       ServletContext ctx = request.getSession().getServletContext();
 
-      PageTracker.add(request);
-
-      boolean allow = UserAgentTracker.vetForBot(request, response);
-      if (!allow) return;
-
-      Login accessLogin = LoginMgr.getAccessLogin(request);
-      String loginName = "-";
-      if (accessLogin != null) loginName = accessLogin.getName();
-      String logMessage = loginName + " " + AntwebUtil.getRequestInfo(request);
-      LogMgr.appendLog("accessLog.txt", logMessage, true);
-      //A.log("doFilter() message:" + logMessage);
 
       Connection connection = null;
 
       try {
+          PageTracker.add(request);
+
+          boolean allow = UserAgentTracker.vetForBot(request, response);
+          if (!allow) return;
+
+          Login accessLogin = LoginMgr.getAccessLogin(request);
+          String loginName = "-";
+          if (accessLogin != null) loginName = accessLogin.getName();
+          String logMessage = loginName + " " + AntwebUtil.getRequestInfo(request);
+          LogMgr.appendLog("accessLog.txt", logMessage, true);
+          //A.log("doFilter() message:" + logMessage);
+
           // Log insecure links.
           if (!HttpUtil.isSecure(request)) {
               s_log.info("doFilter() insecure target:" + target);
