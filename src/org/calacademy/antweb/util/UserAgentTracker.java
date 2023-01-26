@@ -213,7 +213,7 @@ public class UserAgentTracker extends Action {
         }
 
         // Every period of time, flush and start over.
-        if (AntwebUtil.secsSince(s_thisSec) > 1) {
+        if (s_thisSec == null || AntwebUtil.secsSince(s_thisSec) > 1) {
           s_thisSec = new java.util.Date();
           hyperActiveAgentsMap = new HashMap<String, Integer>();
         }

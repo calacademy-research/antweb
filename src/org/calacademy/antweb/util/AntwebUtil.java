@@ -594,6 +594,7 @@ public abstract class AntwebUtil {
   }
   
   public static long millisSince(Date date) {
+
     Date now = new Date();
     long millisSince = now.getTime() - date.getTime();
     return millisSince;

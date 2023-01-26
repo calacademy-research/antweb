@@ -44,7 +44,6 @@ public class SessionRequestFilter implements Filter {
       //A.log("doFilter()");
       ServletContext ctx = request.getSession().getServletContext();
 
-
       Connection connection = null;
 
       try {
