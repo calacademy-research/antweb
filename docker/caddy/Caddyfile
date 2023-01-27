@@ -1,5 +1,13 @@
 {
     default_sni www.antweb.org      # Sets a default TLS ServerName for when clients do not use SNI in their ClientHello
+        servers {
+                timeouts {
+                        read_body 5m
+			read_header 5m
+			write       5m
+			idle	5m
+                }
+        }
 }
 
 antweb.org {
@@ -13,3 +21,5 @@ api.antweb.org {
 www.antweb.org {
     import Caddyfile.common
 }
+
+
