@@ -40,7 +40,7 @@ public class UserAgentDb extends AntwebDb {
         return knownAgentsSet;
     }
 
-    public void saveAgent(String agent) {
+    public void saveAgent(String agent) throws java.sql.SQLIntegrityConstraintViolationException {
         String dml = "";
         Statement stmt = null;
         try {
