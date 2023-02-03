@@ -134,8 +134,12 @@ public class UserAgentTracker extends Action {
             String htmlMessage = UserAgentTracker.denyAgent(request);
             if (htmlMessage != null) {
                 ++s_botDenial;
+                if (UploadAction.isInUploadProcess()) {
+                    s_botDenialReason = "isInUploadProcess";
+                } else {
+                    s_botDenialReason = null;
+                }
                 if (isServerBusy) s_botDenialReason = "isServerBusy";
-                if (UploadAction.isInUploadProcess()) s_botDenialReason = "isInUploadProcess";
                 HttpUtil.write(htmlMessage, response);
                 return false;  // Do not allow
             }
@@ -175,7 +179,11 @@ public class UserAgentTracker extends Action {
           if (count == OVERACTIVE && !whiteList.contains(userAgent) && !userAgent.contains("login:")) {
               // So many requests. Known agent. PERSIST!
               s_log.info("track() persist userAgent:" + userAgent);
-              userAgentDb.saveAgent(userAgent);
+              try {
+                  userAgentDb.saveAgent(userAgent);
+              } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+                  s_log.info("track() userAgent:" + userAgent + " already exists.");
+              }
           }
       }
   }
