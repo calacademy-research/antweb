@@ -568,6 +568,7 @@ public class UploadAction extends Action {
 		}
 	}
 
+
 	private ActionForward handleException(Exception e, String action, Connection connection, ActionMapping mapping, HttpServletRequest request) {
 		int caseNumber = AntwebUtil.getCaseNumber();
 		A.log("e:" + e);

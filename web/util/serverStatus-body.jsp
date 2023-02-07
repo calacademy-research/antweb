@@ -39,7 +39,7 @@ boolean otherOption = !UptimeAction.isFailOnPurpose();
 <br><b>Uptime Fail On Purpose:</b> <%= UptimeAction.isFailOnPurpose() %>  <a href='<%= AntwebProps.getDomainApp() %>/uptime.do?fail=<%= otherOption %>'>[toggle fail]</a>
 <br><%= ServerDb.getDownTimeMessage() %>
 <br><b>Server Debug:</b> <%= ServerDb.getDebug() %>
-<br><b>Status</b>
+<br><br><b>Processing...</b>
 &nbsp;&nbsp;&nbsp;(If Upload in process, or Image Upload locked, best to wait to restart the server).
 <% 
 String uploadValue = "";
@@ -50,7 +50,8 @@ if (UploadAction.isInUploadProcess()) {
 }
 %>
 <br>&nbsp;&nbsp;&nbsp;Is Upload in process: <%= uploadValue %>
-<% 
+
+<%
 String computeValue = "";
 if (UtilDataAction.isInComputeProcess()) {
   computeValue = "<font color=\"red\">true</font>";
@@ -71,6 +72,11 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
 }
 %>
 <br>&nbsp;&nbsp;&nbsp;Is Image Upload locked: <%= imageUploadLock %>
+
+<br><br><b>UserAgentTracker</b>
+  <br><b>&nbsp;&nbsp;&nbsp;botCount:</b><%= UserAgentTracker.getBotDenialCount() %>
+  <br><b>&nbsp;&nbsp;&nbsp;getBotDenialReason:</b><%= UserAgentTracker.getBotDenialReason() %>
+  <br><b>&nbsp;&nbsp;&nbsp;inVetMode:</b><%= UserAgentTracker.isInVetMode() %>
 
 <br><br><b>CPU:</b> <%= AntwebSystem.getCpuLoad() %>
 <br>

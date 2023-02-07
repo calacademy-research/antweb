@@ -37,7 +37,7 @@
           }
         }
       }
-      //A.log("suggeneraDisplay.jsp displaySubgenera:" + displaySubgenera + " size:" + subgenera.size() + " full:" + fullSetSubgenera.size());
+      //A.log("subgeneraDisplay.jsp displaySubgenera:" + displaySubgenera + " size:" + subgenera.size() + " full:" + fullSetSubgenera.size());
 
       %>
 
@@ -55,7 +55,7 @@
                         <li><a href="<%= subgeneraTarget + "&subgenus=all" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;All</span></a></li>
 <%
       if (subgenera != null && (subgenera.size() > 0 || "none".equals(displaySubgenera))) {
-          A.log("subgeneraDisplay.jsp subgenera:" + subgenera + " genus:" + taxon.getGenus());
+          //A.log("subgeneraDisplay.jsp subgenera:" + subgenera + " genus:" + taxon.getGenus());
 %>
                         <li><a href="<%= subgeneraTarget + "&subgenus=none" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;Unassigned</span></a></li>
                      <% for (String subgenus : subgenera) { %>
