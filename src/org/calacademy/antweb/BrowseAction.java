@@ -561,7 +561,7 @@ We are showin the full map of ponerinae for every adm1.
 
             int alertMins = 8;
             long minsSince = AntwebUtil.minsSince(startTime);
-            if (minsSince > alertMins) {
+            if (minsSince >= alertMins) {
                 s_log.error("execute() request over alertMins:" + minsSince + " request:" + HttpUtil.getRequestInfo(request));
             }
             //s_log.info("execute() closing uniqueNumber:" + uniqueNumber);
@@ -572,7 +572,7 @@ We are showin the full map of ponerinae for every adm1.
         request.setAttribute("message", message);
         return mapping.findForward("message");
     }
-    
+
     protected ActionForward taxonNameRedirect(BrowseForm browseForm, ActionMapping mapping
       , HttpServletRequest request, HttpServletResponse response) {
 
