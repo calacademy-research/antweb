@@ -260,8 +260,13 @@ public class BrowseAction extends DescriptionAction {
           //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
 
 		  dbUtilName = "BrowseAction.execute()";
-		  connection = DBUtil.getConnection(dataSource, dbUtilName, HttpUtil.getTarget(request));
-		  if (connection == null) s_log.error("execute() Null connection !!!" + AntwebUtil.getRequestInfo(request));
+		  String target = HttpUtil.getTarget(request);
+		  connection = DBUtil.getConnection(dataSource, dbUtilName, target);
+		  if (connection == null) {
+		      message = "execute() Null connection !!!" + AntwebUtil.getRequestInfo(request);
+              s_log.error(message);
+		      throw new AntwebException(message);
+          }
 
           if (HttpUtil.tooBusyForBots(connection, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
@@ -535,20 +540,31 @@ We are showin the full map of ponerinae for every adm1.
         } catch (MissingResourceException e) {
 			// This was around the new Map() command above, but we seemed to be not closing the db connection.
 			message = "e:" + e + " MissingResource overview:"+ overview.getName();
-        } catch (AntwebException e) {
-            message = "e:" + e;
         } catch (SQLException e) {
             message = "Exception caught on request.";
-            if (!HttpUtil.isBot(request) || AntwebProps.isDevMode()) s_log.error("execute() e:" + e);
+            if (!HttpUtil.isBot(request) || AntwebProps.isDevMode()) {
+                s_log.error("execute() e:" + e + " requestInfo:" + HttpUtil.getShortRequestInfo(request));
+            }
+        } catch (Exception e) {
+            message = "e:" + e;
         } finally {
+//		  ResourceTracker.remove(dbUtilName + " " + target);
+
             if ("mapComparison".equals(cacheType)) --s_mapComparisonCount;
             if ("getComparison".equals(cacheType)) --s_getComparisonCount;
         
             QueryProfiler.profile(cacheType, startTime);	        
             if (!DBUtil.close(connection, this, dbUtilName)) {
+               s_log.error("execute() DBUtil.close error on dbUtilName:" + dbUtilName);
                AntwebUtil.logStackTrace();
             }
-            //s_log.info("execute() closing uniqueNumber:" + uniqueNumber);            
+
+            int alertMins = 8;
+            long minsSince = AntwebUtil.minsSince(startTime);
+            if (minsSince > alertMins) {
+                s_log.error("execute() request over alertMins:" + minsSince + " request:" + HttpUtil.getRequestInfo(request));
+            }
+            //s_log.info("execute() closing uniqueNumber:" + uniqueNumber);
         }
 
         // Error handling.
@@ -556,8 +572,7 @@ We are showin the full map of ponerinae for every adm1.
         request.setAttribute("message", message);
         return mapping.findForward("message");
     }
-  
-  
+    
     protected ActionForward taxonNameRedirect(BrowseForm browseForm, ActionMapping mapping
       , HttpServletRequest request, HttpServletResponse response) {
 

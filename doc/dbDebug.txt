@@ -81,6 +81,20 @@ sudo chmod 777 /var/lib/mysql/antweb-stg-slow.log
       <set-property property="unreturnedConnectionTimeout" value="3000"/>
       <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
 
+
+docker-compose exec antweb bash
+cd /usr/local/tomcat/logs
+grep "overdue resource"  catalina.2023-02-10.log -A 10
+
+10-Feb-2023 09:18:09.972 INFO [Timer-2] com.mchange.v2.resourcepool.BasicResourcePool.removeResource Logging the stack trace by which the overdue resource was checked-out.
+	java.lang.Exception: DEBUG ONLY: Overdue resource check-out stack trace.
+		at com.mchange.v2.resourcepool.BasicResourcePool.checkoutResource(BasicResourcePool.java:506)
+		at com.mchange.v2.c3p0.impl.C3P0PooledConnectionPool.checkoutPooledConnection(C3P0PooledConnectionPool.java:525)
+		at com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource.getConnection(AbstractPoolBackedDataSource.java:128)
+		at org.calacademy.antweb.util.DBUtil.getConnection(DBUtil.java:129)
+		at org.calacademy.antweb.BrowseAction.execute(BrowseAction.java:263)
+
+
 4. Verify database
 ------------------
 mysqlcheck -c ant -u antweb -p

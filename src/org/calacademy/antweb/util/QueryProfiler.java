@@ -16,11 +16,12 @@ public class QueryProfiler extends Profiler {
     private static final Log s_log = LogFactory.getLog(QueryProfiler.class);
 
     public static void profile(String query, Date startTime) {
-      Profiler.profile(query, startTime);         
+        Profiler.profile(query, startTime);
     }
-        
+
     public static String report(boolean clear) {
-      return report(clear, "queryProfile.log");
+        return report(clear, "queryProfile.log");
     }
 }
+
 

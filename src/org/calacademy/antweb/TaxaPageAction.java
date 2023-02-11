@@ -213,9 +213,9 @@ public final class TaxaPageAction extends Action {
 
             //if (overview instanceof Adm1) A.log("execute() overview:" + overview + " parent:" + overview.getParentName());
           } catch (SQLException e) {
-            GregorianCalendar now = new GregorianCalendar();
-            s_log.error("execute() at time " + now.get(Calendar.HOUR) 
-              + ":" + now.get(Calendar.MINUTE) + ":" + now.get(Calendar.SECOND) + " e:" + e);
+            if (!HttpUtil.isBot(request) || AntwebProps.isDevMode()) {
+                s_log.error("execute() e:" + e + " requestInfo:" + HttpUtil.getShortRequestInfo(request));
+            }
           } finally {
             DBUtil.close(connection, this, connName);
             //s_log.info("execute() closing uniqueNumber:" + uniqueNumber);

@@ -257,8 +257,11 @@ public class TaxaPage implements Serializable {
 			//s_log.error("basic query took " + (again-now) + " millis");
 
 		} catch (SQLException e) {
-		    s_log.error("fetchChildren() e:" + e + " fetchChildrenQuery:" + fetchChildrenQuery);
-		    AntwebUtil.logStackTrace(e);
+            if (AntwebProps.isDevMode()) {
+                s_log.error("execute() e:" + e + " fetchChildrenQuery:" + fetchChildrenQuery);
+            }
+		    //s_log.error("fetchChildren() e:" + e + " fetchChildrenQuery:" + fetchChildrenQuery + " requestInfo:" + HttpUtil.getShortRequestInfo(request));
+		    //AntwebUtil.logStackTrace(e);
 			throw e;
         } finally {
             DBUtil.close(stmt, rset, this, "fetchChildren()");
