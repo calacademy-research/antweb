@@ -137,6 +137,7 @@ public abstract class Queries {
         , "notValidTaxaFromSpeciesList"
         , "notValidTaxaFromSpecimenList"
         , "imageCountByOwner"
+        , "imageCountByStatus"
         , "specimenCountByOwner"
         , "descriptionEditCountByOwner"
         , "importedCountryData"
@@ -1079,6 +1080,13 @@ public abstract class Queries {
           , "All Image Data"
           , "<th>Specimen</th><th>Shot</th><th>Number</th><th>Upload Date</th><th>Photographer</th><th>Uploaded By</th><th></th>"
           , "select specimen.code, image.shot_type, image.shot_number, image.upload_date, artist.name, ant_group.name from  ant_group, artist, group_image, image left join specimen on  specimen.code = image.image_of_id  where group_image.image_id = image.id  and ant_group.id=group_image.group_id  and image.upload_date is not null   and artist.id = image.artist    order by image.upload_date desc, specimen.code, image.shot_type, image.shot_number"
+        ));
+
+        queries.add(new NamedQuery(
+                "imageStatusCounts"
+                , "Image Count by Status"
+                , "<th>Status</th><th>distinct t.taxon_name</th></th>"
+                , "select t.status, count(distinct t.taxon_name) from taxon t, specimen, image where t.taxon_name = specimen.taxon_name and specimen.code = image.image_of_id group by t.status order by count(distinct t.taxon_name) desc;"
         ));
 
         return queries; // end getImageNamedQueries()
