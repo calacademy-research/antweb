@@ -32,13 +32,17 @@ public final class StatsPageAction extends Action {
             connection = DBUtil.getConnection(dataSource, "StatsPageAction()");
 
             StatisticsDb statisticsDb = new StatisticsDb(connection);
+            ImageDb imageDb = new ImageDb(connection);
 
-            HashMap<String, int[]> imageStats = new ImageDb(connection).getImageStats();
+            HashMap<String, int[]> imageStats = imageDb.getImageStats();
             for (String status : imageStats.keySet()) {
               int[] stats = imageStats.get(status);
               //A.log(" key:" + status + " total:" + stats[0] + " worker:" + stats[1] + " male:" + stats[2] + " queen:" + stats[3] + " other:" + stats[4]); 
             }
             request.setAttribute("imageStats", imageStats);
+
+            HashMap<String, Integer> imageTaxonStats = imageDb.getImageTaxonStats();
+            request.setAttribute("imageTaxonStats", imageTaxonStats);
 
 /*
 +----------------+----------+--------+-------+-------+-------+
@@ -53,7 +57,6 @@ public final class StatsPageAction extends Action {
 +----------------+----------+--------+-------+-------+-------+
 6 rows in set (0.93 sec)
 */   
-
 
             request.setAttribute("extantData", statisticsDb.getExtantData()); // StatSet
             request.setAttribute("fossilData", statisticsDb.getFossilData()); // StatSet

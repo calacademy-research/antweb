@@ -464,8 +464,33 @@ public class ImageDb extends AntwebDb {
 | unidentifiable |       29 |     29 |     0 |     0 |     0 |
 +----------------+----------+--------+-------+-------+-------+
 6 rows in set (0.93 sec)
-*/    
-    
-    
+*/
+
+
+    public HashMap<String, Integer> getImageTaxonStats() throws SQLException {
+        HashMap<String, Integer> imageTaxonStats = new HashMap<>();
+        String theQuery = "select t.status, count(distinct t.taxon_name) count from taxon t, specimen, image "
+                + " where t.taxon_name = specimen.taxon_name and specimen.code = image.image_of_id "
+                + " group by t.status order by count(distinct t.taxon_name) desc";
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getImageTaxonStats()");
+            rset = stmt.executeQuery(theQuery);
+            //A.log("getImageTaxonStats() query:" + theQuery);
+            while (rset.next()) {
+                String status = rset.getString("t.status");
+                int count = rset.getInt("count");
+                imageTaxonStats.put(status, Integer.valueOf(count));
+            }
+        } finally {
+            DBUtil.close(stmt, rset, "ImageDb", "getImageTaxonStats()");
+        }
+        return imageTaxonStats;
+    }
+
+
+
 }    
 

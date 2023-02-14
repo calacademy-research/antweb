@@ -96,6 +96,26 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 */
 %>
 
+
+<br><br><br>
+<h2>Imaged Species:</h2>
+<table border=1>
+<tr><th>Species Status</th><th>Species</th></tr>
+<%
+    String[] keys2 = {"valid", "morphotaxon", "indetermined", "unrecognized", "unavailable", "unidentifiable", "obsolete combination"};
+    HashMap<String, Integer> imageTaxonStats = (HashMap<String, Integer>) request.getAttribute("imageTaxonStats");
+    if (imageTaxonStats != null) {
+      //Set statuses = imageTaxonStats.keySet();
+      //for (Object status : statuses) {
+      for (String status : keys2) {
+        Integer count = imageTaxonStats.get(status);
+        out.println("<tr><td align=right>" + Formatter.initCap(status) + "</td><td align=right>" + A.commaFormat(count) + "</td></tr>");
+      }
+    }
+%>
+</table>
+
+
 <br><br>
 <h2>Bioregion Data:</h2>
 <% int i = 0;

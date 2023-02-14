@@ -1086,7 +1086,7 @@ public abstract class Queries {
                 "imageStatusCounts"
                 , "Image Count by Status"
                 , "<th>Status</th><th>distinct t.taxon_name</th></th>"
-                , "select t.status, count(distinct t.taxon_name) from taxon t, specimen, image where t.taxon_name = specimen.taxon_name and specimen.code = image.image_of_id group by t.status order by count(distinct t.taxon_name) desc;"
+                , "select t.status, count(distinct t.taxon_name) from taxon t, specimen, image where t.taxon_name = specimen.taxon_name and specimen.code = image.image_of_id group by t.status order by count(distinct t.taxon_name) desc"
         ));
 
         return queries; // end getImageNamedQueries()
