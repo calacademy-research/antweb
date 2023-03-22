@@ -188,6 +188,7 @@ docker-compose logs -f caddy
 docker-compose logs api
 
 
+
 --- Necesssary in dev environment?
 
 mkdir /mnt/antweb/web/upload
@@ -210,8 +211,10 @@ Antweb directories
   on server: /root/antweb
   on client: /Users/mark/volumes/antweb
   
-To see logs:
-  docker-compose exec antweb bash
+To enter Antweb container:
+   docker-compose exec antweb bash
+
+
   ls /usr/local/antweb/web/log/
     accessLog.txt  adminTask.log  compute.log  dateDetermined.log  deletedImageLog.txt  detail  getUrl.txt	imageNotFound.txt  logins.txt  messages.txt  notFound.txt  profiler.jsp  searches.txt  specimen  srfExceptions.jsp  taxonSet.log  taxonSetBackup.log  worldants
   ls /data/antweb/log/
@@ -219,7 +222,8 @@ To see logs:
   ls /usr/local/tomcat/logs
     catalina.out access_logs.
   
-These are here:
+  /mnt/antweb/web/workingdir
+
   ls antweb/logs/detail    antwebEvent.log  googleEarth.log  search.log
 
   Only these are here: ls /mnt/antweb/web/log    specimen  worldants
@@ -229,6 +233,19 @@ To see JSP compiles:
   ls /usr/local/tomcat/work/Catalina/localhost/ROOT/org/apache/jsp/
 
 
+
+
+--------------------------
+
+To download an uploaded specimen file, find them here:
+  ls /mnt/antweb/web/upload/202301*
+Grab it:
+  curl  https://www.antweb.org/web/upload/20230119-15:51:05-specimen1.txt -o $HOME/Downloads/20230119-15:51:05-specimen1.txt
+
+
+
+--------------------------------------
+
 More useful - Dash
 mark@iMark local % ls -vlah   Natural sort of numbers in text (linux only)
 mark@iMark local % ls -lath   time human all list
@@ -236,4 +253,5 @@ mark@iMark local % ls -lath   time human all list
 Staging Server
 ssh  root@165.232.136.170
 https://165.232.136.170/
+
 

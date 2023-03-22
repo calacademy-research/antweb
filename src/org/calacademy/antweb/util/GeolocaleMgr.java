@@ -926,6 +926,60 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if ("princeedwardislandants".equals(projectName)) return GeolocaleMgr.getAdm1("Prince Edward Island", "Canada");
         if ("yukonants".equals(projectName)) return GeolocaleMgr.getAdm1("Yukon", "Canada");
 
+/*  Species lists found on live server, in antweb container, here: /mnt/antweb/web/workingdir
+      The country species lists were:
+    mexicoants_speciesList.txt
+    serbiaants_speciesList.txt
+    chinaants_speciesList.txt
+    micronesiaants_speciesList.txt
+    seychellesants_speciesList.txt
+    albertaants_speciesList.txt
+    greeceants_speciesList.txt
+    sloveniaants_speciesList.txt
+    alicanteants_speciesList.txt
+    comorosants_speciesList.txt
+    solomonsants_speciesList.txt
+    costaricaants_speciesList.txt
+    netherlandsants_speciesList.txt
+    creteants_speciesList.txt
+    indiaants_speciesList.txt
+    newguineaants_speciesList.txt
+    croatiaants_speciesList.txt
+    czechants_speciesList.txt
+    iranants_speciesList.txt
+    newzealandants_speciesList.txt
+    ecuadorants_speciesList.txt
+    italyants_speciesList.txt
+    kenyaants_speciesList.txt
+    westernaustraliaants_speciesList.txt
+    austriaants_speciesList.txt
+    fijiants_speciesList.txt
+    paraguayants_speciesList.txt
+    macaronesiaants_speciesList.txt
+    barrowants_speciesList.txt
+    madants_speciesList.txt
+    philippinesants_speciesList.txt
+    tanzaniaants_speciesList.txt
+    xishuangbannaants_speciesList.txt
+    malagasyants_speciesList.txt
+    belgiumants_speciesList.txt
+    martiniqueants_speciesList.txt
+    queenslandants_speciesList.txt
+    borneoants_speciesList.txt
+    franceants_speciesList.txt
+    matogrossodosulants_speciesList.txt
+    tokelauants_speciesList.txt
+    britishcolumbiaants_speciesList.txt
+    frenchpolynesiaants_speciesList.txt
+    mauritiusants_speciesList.txt
+    reunionants_speciesList.txt
+    uaeants_speciesList.txt
+    galapagosants_speciesList.txt
+    mayotteants_speciesList.txt
+    saudiants_speciesList.txt
+*/
+
+
         // ... incomplete list
 
         // countries

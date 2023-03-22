@@ -110,7 +110,7 @@ public class UploadAction extends Action {
 		// For instance, ReloadSpeciesList, ...
 
 		String action = theForm.getAction();
-		s_log.warn("execute() action:" + action);
+		s_log.warn("execute() action:" + action + " accessLogin:" + accessLogin);
 
 		boolean runCountCrawls = true;
 
@@ -174,6 +174,7 @@ public class UploadAction extends Action {
 					action = "import:" + theFileName;
 
 					//logFileName += theFileName + UploadDetails.getLogExt();
+					s_log.warn("execute() action:" + action);
 					s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
 					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
@@ -192,7 +193,7 @@ public class UploadAction extends Action {
 					try {
 						TaxonMgr.setIsInWorldants(true);
 
-						s_log.debug("setIsInWorldants(true) + root:" + AntwebProps.getDocRoot());
+						//s_log.debug("setIsInWorldants(true) + root:" + AntwebProps.getDocRoot());
 
 						// Do we need to create /data/antweb/web/workingdir if it does not exist?
 						// Worldants should not be hardcoded. Get from file... (2 times)

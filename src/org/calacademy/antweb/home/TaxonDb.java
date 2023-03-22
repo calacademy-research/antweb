@@ -301,14 +301,20 @@ public class TaxonDb extends AntwebDb {
             stmt =  DBUtil.getStatement(getConnection(), "getTaxonName()");
             rset = stmt.executeQuery(theQuery);
 
+            String multiDebug = "";
+
             while (rset.next()) {
                 i = i + 1;
                 taxonName = rset.getString("taxon_name");
+
+                if (i > 1) multiDebug += ", ";
+                if (i < 4) {
+                    multiDebug += taxonName;
+                } else if (i == 4) multiDebug += "...";
             }
             if (i > 1) {
-                String message = "getTaxonName() did not get unique result." + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank;
-                message += " Unresolved homonym, fix in antcat?";
-                     //   + " query:" + theQuery;
+                String message = "getTaxonName() count:" + i + ". Did not get unique result. family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " " + subspecies + " " + rank;
+                message += " Unresolved homonym to fix in antcat? " + multiDebug;
                 //  AntwebUtil.logStackTrace();
                 throw new AntwebException(message);
             }
