@@ -580,7 +580,7 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 	     }
 	     String value = s.getKey();
 
-         A.log("curate-body.jsp key:" + s.getKey() + " title:" + s.getTitle());
+         //A.log("curate-body.jsp key:" + s.getKey() + " title:" + s.getTitle());
 	     if (s.getIsUseChildren()) {
 	       value = "";           
          }
