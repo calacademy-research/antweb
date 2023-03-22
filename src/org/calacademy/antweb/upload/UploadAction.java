@@ -516,12 +516,17 @@ public class UploadAction extends Action {
 			//A.log("upload a data file:" + testFile);
 			if (testFile != null) {
 				if (!testFile.getFileName().equals("")) {
-					action = "upload:" + testFile.getFileName();
+					//action = "upload:" + testFile.getFileName();
 					//s_log.info("execute() Upload a test file logFileName:" + logFileName);
 					//s_log.info("execute() testFile:" + testFile.getFileName());
 
 					uploadDetails = uploadDataFile(theForm, request, mapping, connection);
-					return uploadDetails.findForward(mapping, request);
+                    if (uploadDetails != null) {
+						return uploadDetails.findForward(mapping, request);
+					} else {
+						request.setAttribute("message", "Upload unsuccessful.");
+						return mapping.findForward("message");
+					}
 				} else {
                     String message = getUploadDataFileDoc(accessLogin);
 					request.setAttribute("message", message);
@@ -854,6 +859,7 @@ public class UploadAction extends Action {
 
             if (in == null) {
                 messageStr = "uploadDataFile() BufferedReader is null for file:" + filePath;
+				return new UploadDetails(operation, messageStr, request);
             }
 
             // parse the header
@@ -891,16 +897,12 @@ public class UploadAction extends Action {
               messageStr = boltonNewGeneraCatalog(in, connection);
             } else if (fileName.contains("specimen")) {
 				messageStr = getSpecimenList(fileName, theLine, in, connection);
-			}
-
-            if (UNMATCHED_FUNCTION.equals(messageStr)) {
+			} else if (UNMATCHED_FUNCTION.equals(messageStr)) {
             	messageStr = "Upload file function not recognized:" + filePath + ". Submit for documention.";
 			}
 
 			s_log.info("uploadDataFile() fileName:" + fileName + " messageStr:" + messageStr);
             request.setAttribute("message", messageStr);
-            uploadDetails = new UploadDetails(operation, messageStr, request);
-            uploadDetails.setForwardPage("adminMessage");
         } catch (FileNotFoundException e) {
             messageStr = "uploadDataFile() e" + e;
             s_log.error(messageStr);
@@ -915,6 +917,10 @@ public class UploadAction extends Action {
         } finally {
             in.close();
         }
+
+		uploadDetails = new UploadDetails(operation, messageStr, request);
+		uploadDetails.setForwardPage("adminMessage");
+
         return uploadDetails;
     }
 
