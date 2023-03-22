@@ -547,7 +547,7 @@ Upload Curator File
         </div>
     </div>
 </html:form>
-<% } %>
+
  
 <!-- Edit Species List - Mapping Tool -->
 <% 
@@ -580,7 +580,7 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 	     }
 	     String value = s.getKey();
 
-         //A.log("curate-body.jsp key:" + s.getKey() + " title:" + s.getTitle());
+         A.log("curate-body.jsp key:" + s.getKey() + " title:" + s.getTitle());
 	     if (s.getIsUseChildren()) {
 	       value = "";           
          }
@@ -602,6 +602,12 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 // } 
 %>
 
+<% } %>
+
+
+<%
+    if (accessLogin.isAdmin()) {
+%>
 
 <div class="admin_action_item">
     <div style="float:left;">
@@ -680,6 +686,10 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
     </div>
 </html:form>
 <% } %>
+
+
+<% }  // isAdmin() %>
+
 
 </div>
 

@@ -114,7 +114,8 @@ public class Login implements Comparable {
         //if (getProjects() != null && getProjects().size() > 0) return true;
         //if (isUploadSpecimens() || isUploadImages()) return true;
 
-        return getGroupId() > 0;
+        boolean isCurator = getGroupId() > 0 || isUploadSpecimens() || isUploadImages();
+        return isCurator;
     }
     
     public boolean isDeveloper() {
