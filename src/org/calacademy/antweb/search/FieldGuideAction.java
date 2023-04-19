@@ -144,7 +144,7 @@ public final class FieldGuideAction extends Action {
 			fieldGuide.setRank(rank);
 
             if (localityOverview != null) {
-                if (Utility.isBlank(localityOverview.getExtent())) s_log.warn("execute() overview:" + overview + " has empty blank extent");
+                if (Utility.isBlank(localityOverview.getExtent())) s_log.info("execute() overview:" + overview + " has empty blank extent");
                 fieldGuide.setExtent(localityOverview.getExtent());
             }
             

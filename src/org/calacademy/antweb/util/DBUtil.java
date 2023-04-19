@@ -335,6 +335,7 @@ Or, if there are stmts and/or rsets...
           if (containsConn) {
               connectionRequestMap.remove(newProxyConn);
               if (connectionRequestMap.size() == connMapSize) {
+                  containsConn = connectionRequestMap.containsKey(newProxyConn);
                   s_log.warn("close() failed to remove name:" + name + " from connectionRequestMap.  connMapSize:" + connMapSize + " contains:" + containsConn);
               }
           }

@@ -233,8 +233,7 @@ public class BrowseAction extends DescriptionAction {
         Taxon taxon = null;
 
         Connection connection = null;
-        String dbUtilName = "";
-        //int uniqueNumber = AntwebUtil.getRandomNumber();        
+        String dbUtilName = "BrowseAction.execute()" + AntwebUtil.getRandomNumber();
         try {
         
           if ("mapComparison".equals(cacheType)) {
@@ -259,7 +258,6 @@ public class BrowseAction extends DescriptionAction {
 		  DataSource dataSource = getDataSource(request, "conPool");
           //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
 
-		  dbUtilName = "BrowseAction.execute()";
 		  String target = HttpUtil.getTarget(request);
 		  connection = DBUtil.getConnection(dataSource, dbUtilName, target);
 		  if (connection == null) {

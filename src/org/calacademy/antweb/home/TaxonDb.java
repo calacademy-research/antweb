@@ -215,7 +215,7 @@ public class TaxonDb extends AntwebDb {
         return taxon;
     }
 
-
+/*
     public Taxon getFullTaxon(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException, AntwebException {
         return getFullTaxon("Formicidae", subfamily, genus, species, subspecies, rank);
     }
@@ -233,7 +233,7 @@ public class TaxonDb extends AntwebDb {
         taxon = getFullTaxon(taxonName);
         return taxon;
     }
-
+*/
     // Will contain all of the data items including countries and bioregions. Expensive.
     public Taxon getFullTaxon(String taxonName) throws SQLException {
         if (false && "amblyoponinaestigmatomma pallipes".equals(taxonName)) {
@@ -307,11 +307,13 @@ public class TaxonDb extends AntwebDb {
                 i = i + 1;
                 taxonName = rset.getString("taxon_name");
 
-                if (i > 1) multiDebug += ", ";
                 if (i < 4) {
+                    if (i > 1) multiDebug += ", ";
                     multiDebug += taxonName;
-                } else if (i == 4) multiDebug += "...";
+                }
             }
+            if (i > 4) multiDebug += "... (" + i + ")";
+
             if (i > 1) {
                 String message = "getTaxonName() count:" + i + ". Did not get unique result. family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " " + subspecies + " " + rank;
                 message += " Unresolved homonym to fix in antcat? " + multiDebug;

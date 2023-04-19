@@ -184,6 +184,10 @@ public abstract class HttpUtil {
         String userAgent = request.getHeader("user-agent");
         if (userAgent != null) {
             userAgent = userAgent.toLowerCase();
+
+            if (userAgent.contains("uptimerobot")) {
+              return false;
+            }
             if (userAgent.contains("bot")
                     || userAgent.contains("spider")
                     || userAgent.contains("slurp")
