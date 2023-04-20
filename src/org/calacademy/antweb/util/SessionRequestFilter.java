@@ -45,6 +45,7 @@ public class SessionRequestFilter implements Filter {
       ServletContext ctx = request.getSession().getServletContext();
 
       Connection connection = null;
+      String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
 
       try {
           PageTracker.add(request);
@@ -92,13 +93,15 @@ public class SessionRequestFilter implements Filter {
 
           UserAgentTracker.track(request, connection);
 
+          if (AntwebProps.isDevMode()) {
+            LogMgr.backupSrf(formatDateTime);
+          }
+
           chain.doFilter(request, response);
 
           //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
 
       } catch (Exception e) {
-
-          String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
           String note = ""; // Usually do nothing, but in cases...
           int postActionPeriodPos = 0;
           if (target != null) {
@@ -121,6 +124,7 @@ public class SessionRequestFilter implements Filter {
                     + " userAgent:" + UserAgentTracker.getUserAgent(request);
           s_log.error("doFilter() " + message + " info:" + HttpUtil.getLongRequestInfo(request));
           message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
+
           LogMgr.appendLog("srfExceptions.jsp", message);
           htmlMessage
               = "<br><b>Request Error</b>"

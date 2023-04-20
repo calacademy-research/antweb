@@ -32,6 +32,19 @@ public class LogMgr {
     appendLog(file, data, false);
   }
 
+  private static int MaxSize = 50000;
+  public static void backupSrf(String formatDateTime) throws IOException  {
+    // if too big
+    String srf = getWebLogRoot() + "srfExceptions.jsp";
+    s_log.warn("backupSrf() size:" + FileUtil.getFileSize(srf));
+    if (FileUtil.getFileSize(srf) > MaxSize) {
+      FileUtil.makeDir(getWebLogRoot() + "srfBak");
+      moveFile(getWebLogRoot(), "srfExceptions.jsp", getWebLogRoot() + "srfBak", "srfExceptions" + formatDateTime + ".jsp");
+      s_log.warn("backupSrf() newSize:" + FileUtil.getFileSize(srf));
+      // Move old one.
+    }
+  }
+
   // All 3 are Deprecated. Use appendWebLog() or appendDataLog() as needed.
   public static void appendLog(String file, String data) {
     appendWebLog(file, data, false);
@@ -42,6 +55,10 @@ public class LogMgr {
   }
   public static void appendLog(String dir, String file, String data) {
     appendWebLog(dir, file, data);
+  }
+
+  public static String getWebLogRoot() {
+    return AntwebProps.getDocRoot() + "web/log/";
   }
 
   // These should be used for things log to a web accessible directory: /data/antweb/web/log
@@ -56,7 +73,7 @@ public class LogMgr {
     /* This method will create and/or append stringData to a file.  If the dir
        parameter is not null, the file will be created in a dir of that name.
        If the nested dir does not exist, it will be created. */
-    String logRoot = AntwebProps.getDocRoot() + "web/log/";
+    String logRoot = getWebLogRoot();
     if (dir != null) logRoot += dir + "/";
     file = logRoot + file;
     LogMgr.appendFile(file, data);
@@ -149,13 +166,18 @@ public class LogMgr {
     return message;
   }
 
-  private static void moveFile(String sourceDir, String fileName, String destDir) 
+  private static void moveFile(String sourceDir, String fileName, String destDir)
+          throws IOException {
+    moveFile(sourceDir, fileName, destDir, fileName);
+  }
+
+  private static void moveFile(String sourceDir, String fileName, String destDir, String destFileName)
     throws IOException {
 
     Path source = FileSystems.getDefault().getPath(sourceDir, fileName);
     Path dest = FileSystems.getDefault().getPath(destDir);
 
-    Files.move(source, dest.resolve(source.getFileName()), REPLACE_EXISTING);
+    Files.move(source, dest.resolve(destFileName), REPLACE_EXISTING);
   }
   
   public static void make777(String file) {
