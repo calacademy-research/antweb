@@ -33,12 +33,14 @@ public class LogMgr {
   }
 
   private static int MaxSize = 50000;
-  public static void backupSrf(String formatDateTime) throws IOException  {
+  public static void backupSrf() throws IOException  {
     // if too big
     String srf = getWebLogRoot() + "srfExceptions.jsp";
     s_log.warn("backupSrf() size:" + FileUtil.getFileSize(srf));
     if (FileUtil.getFileSize(srf) > MaxSize) {
       FileUtil.makeDir(getWebLogRoot() + "srfBak");
+
+      String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
       moveFile(getWebLogRoot(), "srfExceptions.jsp", getWebLogRoot() + "srfBak", "srfExceptions" + formatDateTime + ".jsp");
       s_log.warn("backupSrf() newSize:" + FileUtil.getFileSize(srf));
       // Move old one.

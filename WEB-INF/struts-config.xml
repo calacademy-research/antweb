@@ -359,11 +359,6 @@
     <action path="/berlin" forward="/berlin.jsp"/>
     <action path="/copenhagen" forward="/copenhagen.jsp"/>
 
-    <action
-            path="/logMgr"
-            forward="/showLog.do?action=list"/>
-                    
-
    <!--==========Action Mappings that use the browseForm bean==========-->
 <!--    parameter="getChildImages"  getChildImages added 2013-06-12 
 
@@ -533,12 +528,16 @@ We would like to remove getChildImages.  Not needed now in the new UI
               name="dummyForm" 
               scope="request">
       </action>
-      
-      <action path="/showLog"
-              type = "org.calacademy.antweb.util.ShowLogAction"
-              name="dummyForm" 
+
+    <!-- action
+            path="/logMgr"
+            forward="/showLog.do?action=list"/ -->
+
+    <action path="/logMgr"
+              type = "org.calacademy.antweb.util.LogMgrAction"
+              name="dummyForm"
               scope="request">
-          <forward name ="success" path="/util/showLog.jsp"/>
+          <forward name ="success" path="/util/logMgr.jsp"/>
       </action>
 
       <action path="/jspFetch"

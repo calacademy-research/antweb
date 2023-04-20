@@ -16,14 +16,14 @@ import org.calacademy.antweb.upload.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-//http://localhost/antweb/showLog.do?action=list
-// https://www.antweb.org/showLog.do?action=tomcatLog
-//http://localhost/antweb/showLog.do?fileName=compute&ext=log&action=get&lines=50
+//http://localhost/antweb/logMgr.do?action=list
+// https://www.antweb.org/logMgr.do?action=tomcatLog
+//http://localhost/antweb/logMgr.do?fileName=compute&ext=log&action=get&lines=50
 
 
-public final class ShowLogAction extends Action {
+public final class LogMgrAction extends Action {
 
-    private static final Log s_log = LogFactory.getLog(ShowLogAction.class);
+    private static final Log s_log = LogFactory.getLog(LogMgrAction.class);
 
     public ActionForward execute(
         ActionMapping mapping,
@@ -280,7 +280,7 @@ public final class ShowLogAction extends Action {
 				}
 				++i;
 			  } catch (ArrayIndexOutOfBoundsException e) {
-				s_log.debug("ShowLogAction.getUploadLog() i:" + i + " col:" + col + " e:" + e);
+				s_log.debug("LogMgrAction.getUploadLog() i:" + i + " col:" + col + " e:" + e);
 			  }			      
 			}
 			message += "</table>";
@@ -300,64 +300,92 @@ public final class ShowLogAction extends Action {
         message += "<ul><li><a href='" + AntwebProps.getDomainApp() + "/listUploads.do?groupId=0'>Specimen Uploads</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?name=worldantsUploads'>Worldants Uploads</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/web/bak/taxonSets/'>Taxon Set Backups</a>";
+        message += "<li><a href='" + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp'>SRF Exceptions</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/web/log/'>All Logs</a>";
-        message += "<li><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=tomcatLog'>Tomcat Log</a>";
-        message += "<li><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=apacheLog'>Apache Log</a>";
-        message += "<li><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=antwebLog'>Antweb Log</a>";
-        message += "<li><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=antwebLog'>Antweb Log</a>";
+        message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=tomcatLog'>Tomcat Log</a>";
+        message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=apacheLog'>Apache Log</a>";
+        message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=antwebLog'>Antweb Log</a>";
         message += "</ul><br><br>";
 
 
-        message += "<h3>Domain Data Logs</h3>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=DataPlaceCase&ext=txt'>DataPlaceCase.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=exifData&ext=txt'>exifData.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=dateDetermined&ext=log'>dateDetermined.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=defaultSpecimen&ext=log'>defaultSpecimen.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=geolocaleTaxonFix&ext=log'>geolocaleTaxonFix.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=typeStatusSpeciesNotFound&ext=txt'>typeStatusSpeciesNotFound.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=typeStatusSpeciesFound&ext=txt'>typeStatusSpeciesFound.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=typeStatusHomonym&ext=txt'>typeStatusHomonym.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=typeStatusNoTaxonName&ext=txt'>typeStatusNoTaxonName.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=googleApisAdm1Adm2Data&ext=html'>googleApisAdm1Adm2Data.html</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=googleApisAdm1&ext=log'>googleApisAdm1.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=googleApisAdm1&ext=html'>googleApisAdm1.html</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=googleApisAdm1Issue&ext=html'>googleApisAdm1Issue.html</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=geonames&ext=log'>geonames.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=flickrAdm1&ext=html'>flickrAdm1.html</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=speciesListTool&ext=txt'>speciesListTool.txt</a>";
 
-        message += "<h3>Dev Logs</h3>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=adminAlerts&ext=log'>adminAlerts.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=longRequest&ext=log'>longRequest.adminlog</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=badRequest&ext=log'>badRequest.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=hacks&ext=log'>hacks.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=profiler&ext=jsp'>profiler.jsp</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=compute&ext=log'>compute.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=accessLog&ext=txt'>accessLog.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=appCheck&ext=log'>appCheck.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=appCheckOutput&ext=log'>appCheckOutput.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&loc=data&fileName=cpuCheck&ext=log'>cpuCheck.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=getUrl&ext=txt'>getUrl.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=zonageeks&ext=txt'>zonageeks.txt</a>";
+        //message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=srfExceptions20191206&ext=jsp'>srfExceptions20191206.jsp</a>";
 
-        //message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=srfExceptions20191206&ext=jsp'>srfExceptions20191206.jsp</a>";
+/*
+         accessLog.txt
+         getUrl.txt
+         imageNotFound.txt
+
+         adminTask.log
+         invalid.log
+         logins.txt
+         messages.txt
+         searches.txt
+         taxonSet.log
+
+         profileQuery.log
+         profiler.jsp
+
+         taxonSetBackup.log
+
+
+*/
 
         message += "<h3>Operation Logs</h3>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=taxonSetBackup&ext=log'>taxonSetBackup.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=messages&ext=txt'>messages.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=searches&ext=txt'>searches.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=admin&ext=log'>admin.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=insecure&ext=log'>insecure.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName= notFound&ext=txt'>notFound.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=speciesListLog&ext=txt'>speciesListLog.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=taxonSet&ext=log'>taxonSet.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=adminTask&ext=log'>adminTask.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=invalid&ext=log'>invalid.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=OTNotFound&ext=txt'>OTNotFound.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=throttle&ext=txt'>throttle.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=deletedImageLog&ext=txt'>deletedImageLog.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=logins&ext=txt'>logins.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=get&fileName=pageTracker&ext=log'>pageTracker.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=messages&ext=txt'>messages.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=searches&ext=txt'>searches.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=notFound&ext=txt'>notFound.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=taxonSet&ext=log'>taxonSet.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=adminTask&ext=log'>adminTask.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=invalid&ext=log'>invalid.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=logins&ext=txt'>logins.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=accessLog&ext=txt'>accessLog.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=getUrl&ext=txt'>getUrl.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=profiler&ext=jsp'>profiler.jsp</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=cCheck&ext=log'>cCheck.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=cCheck&ext=log'>cCheck.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=longRequest&ext=log'>longRequest.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=messages&ext=txt'>Messages.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=badRequest&ext=log'>badRequest.log</a>";
+
+        /*
+        message += "<br>Deprecated...?";
+
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=taxonSetBackup&ext=log'>taxonSetBackup.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=admin&ext=log'>admin.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=insecure&ext=log'>insecure.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=speciesListLog&ext=txt'>speciesListLog.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=OTNotFound&ext=txt'>OTNotFound.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=throttle&ext=txt'>throttle.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=deletedImageLog&ext=txt'>deletedImageLog.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=pageTracker&ext=log'>pageTracker.log</a>";
+
+        message += "<h3>Domain Data Logs</h3>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=DataPlaceCase&ext=txt'>DataPlaceCase.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=exifData&ext=txt'>exifData.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=dateDetermined&ext=log'>dateDetermined.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=defaultSpecimen&ext=log'>defaultSpecimen.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=geolocaleTaxonFix&ext=log'>geolocaleTaxonFix.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusSpeciesNotFound&ext=txt'>typeStatusSpeciesNotFound.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusSpeciesFound&ext=txt'>typeStatusSpeciesFound.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusHomonym&ext=txt'>typeStatusHomonym.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusNoTaxonName&ext=txt'>typeStatusNoTaxonName.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=googleApisAdm1Adm2Data&ext=html'>googleApisAdm1Adm2Data.html</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=googleApisAdm1&ext=log'>googleApisAdm1.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=googleApisAdm1&ext=html'>googleApisAdm1.html</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=googleApisAdm1Issue&ext=html'>googleApisAdm1Issue.html</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=geonames&ext=log'>geonames.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=flickrAdm1&ext=html'>flickrAdm1.html</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=speciesListTool&ext=txt'>speciesListTool.txt</a>";
+
+        message += "<h3>Dev Logs</h3>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=adminAlerts&ext=log'>adminAlerts.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=hacks&ext=log'>hacks.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=compute&ext=log'>compute.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=appCheck&ext=log'>appCheck.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=appCheckOutput&ext=log'>appCheckOutput.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=zonageeks&ext=txt'>zonageeks.txt</a>";
+*/
         return message;
     }
 

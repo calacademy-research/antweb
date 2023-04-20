@@ -93,10 +93,6 @@ public class SessionRequestFilter implements Filter {
 
           UserAgentTracker.track(request, connection);
 
-          if (AntwebProps.isDevMode()) {
-            LogMgr.backupSrf(formatDateTime);
-          }
-
           chain.doFilter(request, response);
 
           //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
@@ -193,6 +189,8 @@ public class SessionRequestFilter implements Filter {
 
           // Should be in an set of server init checks.
           (new UserAgentDb(connection)).flagWhiteList();
+
+          LogMgr.backupSrf();
 
         } catch (SQLException e) {
           s_log.error("init() e:" + e + " datasource:" + ds + " connection:" + connection);
