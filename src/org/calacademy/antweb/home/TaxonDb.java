@@ -215,11 +215,12 @@ public class TaxonDb extends AntwebDb {
         return taxon;
     }
 
-/*
+    // Called from FieldGuideAction.java:155
     public Taxon getFullTaxon(String subfamily, String genus, String species, String subspecies, String rank) throws SQLException, AntwebException {
         return getFullTaxon("Formicidae", subfamily, genus, species, subspecies, rank);
     }
 
+    // Called from BrowseAction.java:284
     public Taxon getFullTaxon(String family, String subfamily, String genus, String species, String subspecies, String rank) throws SQLException, AntwebException {
         Taxon taxon = null;
 
@@ -233,7 +234,7 @@ public class TaxonDb extends AntwebDb {
         taxon = getFullTaxon(taxonName);
         return taxon;
     }
-*/
+
     // Will contain all of the data items including countries and bioregions. Expensive.
     public Taxon getFullTaxon(String taxonName) throws SQLException {
         if (false && "amblyoponinaestigmatomma pallipes".equals(taxonName)) {

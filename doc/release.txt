@@ -1,4 +1,7 @@
 
+Release 8.88
+  Upgrade to c3p0 from 0.9.1.2 to 0.9.5.5.
+
 Release 8.87.1
   Add unique to BrowseAction dbUtilName.
   More precise check in DBUtil.close().  
