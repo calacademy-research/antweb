@@ -1,8 +1,10 @@
 
+Release 8.89
+  Tighten security of the LogMgr.
+
 Release 8.88
   Upgrade to c3p0 from 0.9.1.2 to 0.9.5.5.
   Backup a large srfExceptions.jsp file.
-  Make the BrowseAction db name unique as a test.
   Minor refactor of LogMgr. Support for SRFExceptions file.
 
 Release 8.87.1

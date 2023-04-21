@@ -32,6 +32,9 @@ public final class LogMgrAction extends Action {
         HttpServletResponse response)
         throws IOException, ServletException {
 
+
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
+
         // Extract attributes we will need
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
@@ -332,7 +335,7 @@ public final class LogMgrAction extends Action {
 */
 
         message += "<h3>Operation Logs</h3>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=messages&ext=txt'>messages.txt</a>";
+        message += "<a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=messages&ext=txt'>messages.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=searches&ext=txt'>searches.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=notFound&ext=txt'>notFound.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=taxonSet&ext=log'>taxonSet.log</a>";
@@ -342,7 +345,6 @@ public final class LogMgrAction extends Action {
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=accessLog&ext=txt'>accessLog.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=getUrl&ext=txt'>getUrl.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=profiler&ext=jsp'>profiler.jsp</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=cCheck&ext=log'>cCheck.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=cCheck&ext=log'>cCheck.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=longRequest&ext=log'>longRequest.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=messages&ext=txt'>Messages.txt</a>";

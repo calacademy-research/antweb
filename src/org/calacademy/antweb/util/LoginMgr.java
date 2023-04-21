@@ -122,6 +122,12 @@ public class LoginMgr extends Manager {
 		}
         return null;
     }
+    public static ActionForward mustBeCurator(HttpServletRequest request, ActionMapping mapping) {
+        if (!LoginMgr.isCurator(request)) {
+            return mapping.findForward("notLoggedIn");
+        }
+        return null;
+    }
 
     public static boolean isAdmin(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);

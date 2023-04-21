@@ -171,6 +171,10 @@ public class Check {
       return LoginMgr.mustBeAdmin(request, mapping);
     }
 
+    // ActionForward c = Check.curator(request, mapping); if (c != null) return c;
+    public static ActionForward curator(HttpServletRequest request, ActionMapping mapping) {
+        return LoginMgr.mustBeCurator(request, mapping);
+    }
 
     // ActionForward d = Check.valid(request, mapping); if (d != null) return d;
     public static ActionForward valid(HttpServletRequest request, ActionMapping mapping) {
