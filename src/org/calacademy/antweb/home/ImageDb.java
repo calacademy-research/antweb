@@ -222,8 +222,8 @@ public class ImageDb extends AntwebDb {
         } catch (SQLException e) {
             s_log.error("getSpecimenImage() e:" + e + " query:" + query);
         } finally {
-        DBUtil.close(stmt, rset, "ImageDb", "getSpecimenImage()");
-      }
+            DBUtil.close(stmt, rset, "ImageDb", "getSpecimenImage()");
+        }
         return specimenImage;
     }
 
