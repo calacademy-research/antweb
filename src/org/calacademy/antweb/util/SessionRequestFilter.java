@@ -119,7 +119,7 @@ public class SessionRequestFilter implements Filter {
                     + "<br><b>Exception:</b>" + e
                     + " userAgent:" + UserAgentTracker.getUserAgent(request);
           s_log.error("doFilter() " + message + " info:" + HttpUtil.getLongRequestInfo(request));
-          message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
+          message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getShortStackTrace(e) + "</pre>";
 
           LogMgr.appendLog("srfExceptions.jsp", message);
           htmlMessage
@@ -140,7 +140,6 @@ public class SessionRequestFilter implements Filter {
           finish(request, startTime);
 
           if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
-
 
              try {
                 if (connection != null)

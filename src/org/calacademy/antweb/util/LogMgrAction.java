@@ -335,8 +335,7 @@ public final class LogMgrAction extends Action {
 */
 
         message += "<h3>Operation Logs</h3>";
-        message += "<a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=messages&ext=txt'>messages.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=searches&ext=txt'>searches.txt</a>";
+        message += "<a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=searches&ext=txt'>searches.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=notFound&ext=txt'>notFound.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=taxonSet&ext=log'>taxonSet.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=adminTask&ext=log'>adminTask.log</a>";
