@@ -48,7 +48,7 @@ public final class DbStatusAction extends Action {
             DataSource dataSource2 = getDataSource(request, "mediumConPool");
             DataSource dataSource3 = getDataSource(request, "longConPool");
 
-            connection = DBUtil.getConnection(dataSource1, dbMethodName", target);
+            connection = DBUtil.getConnection(dataSource1, dbMethodName, target);
             String mySqlProcessListHtml = DBStatus.getMysqlProcessListHtml(connection);
             request.setAttribute("mySqlProcessListHtml", mySqlProcessListHtml);
 
