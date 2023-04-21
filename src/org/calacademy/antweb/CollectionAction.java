@@ -50,10 +50,10 @@ public final class CollectionAction extends Action {
 		Collection collection = null;
 		Connection connection = null;
         Date startTime = new Date();
-
+        String dbMethodName = DBUtil.getDbMethodName("CollectionAction.execute()");
 		try {
 	 		DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "CollectionAction.execute()", HttpUtil.getTarget(request));	
+            connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
             AntwebMgr.populate(connection);            
 
             collection = new CollectionDb(connection).getCollection(name);
@@ -100,7 +100,7 @@ public final class CollectionAction extends Action {
 		} finally {
 		    // java.util.Date startTime = new java.util.Date();
             QueryProfiler.profile("collection", startTime);	
-            DBUtil.close(connection, this, "CollectionAction.execute()");
+            DBUtil.close(connection, this, dbMethodName);
 		}
 
         //mapping.getScope() is "session"

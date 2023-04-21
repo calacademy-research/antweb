@@ -40,10 +40,11 @@ public final class ListAction extends Action {
         String action = (String) df.get("action");        
         
         
-        Connection connection = null;        
+        Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("ListAction.execute()");
         try {
           DataSource dataSource = getDataSource(request, "conPool");
-          connection = DBUtil.getConnection(dataSource, "ListAction");
+          connection = DBUtil.getConnection(dataSource, dbMethodName);
           
           //dataSource.setZeroDateTimeBehavior("convertToNull");
 
@@ -190,17 +191,14 @@ public final class ListAction extends Action {
                             return mapping.findForward("listOfLists");
                         }
                     }
-
                     request.setAttribute("message", "action:" + action + " not found. Be sure you are logged in.");
                     return mapping.findForward("message");
-
             }
-
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
             return mapping.findForward("error");
         } finally { 		
-            DBUtil.close(connection, this, "ListAction");
+            DBUtil.close(connection, this, dbMethodName);
         }             
         
         return mapping.findForward("success");

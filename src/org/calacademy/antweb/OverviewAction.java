@@ -41,13 +41,14 @@ public final class OverviewAction extends DescriptionAction {
       if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
       Connection connection = null;
+      String dbMethodName = DBUtil.getDbMethodName("OverviewAction.execute()");
       try {
         DataSource dataSource = null;
 
         if (!"recalc".equals(action)) dataSource = getDataSource(request, "conPool");
           else dataSource = getDataSource(request, "longConPool");
 
-        connection = DBUtil.getConnection(dataSource, "OverviewAction.execute()", HttpUtil.getTarget(request));
+        connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
 
         AntwebMgr.populate(connection);
 
@@ -438,7 +439,7 @@ public final class OverviewAction extends DescriptionAction {
       } catch (SQLException e) {
           s_log.error("execute() e:" + e);
       } finally {
-          DBUtil.close(connection, this, "OverviewAction.execute()");
+          DBUtil.close(connection, this, dbMethodName);
       }
 
       // This will not happen

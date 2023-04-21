@@ -60,9 +60,10 @@ public final class SpecimenAction extends DescriptionAction {
             if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
             Connection connection = null;
+            String dbMethodName = DBUtil.getDbMethodName("SpecimenAction.execute()");
             try {
                 DataSource dataSource = getDataSource(request, "conPool");
-                connection = DBUtil.getConnection(dataSource, "SpecimenAction.execute()", HttpUtil.getTarget(request));
+                connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
 
                 boolean specimenExists = false;
                 specimen = new Specimen();
@@ -133,7 +134,7 @@ public final class SpecimenAction extends DescriptionAction {
                 } catch (Exception e) {
                     s_log.error("execute() profiler e:" + e);
                 }
-                DBUtil.close(connection, this, "SpecimenAction.execute()");
+                DBUtil.close(connection, this, dbMethodName);
             }
 
 

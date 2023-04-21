@@ -71,41 +71,26 @@ public final class UptimeAction extends Action {
         return true;
     }
 
-
     private boolean isDatabaseUp(HttpServletRequest request) {
 		boolean success = false;
 		Connection connection = null;
         Statement stmt = null;
+        String dbMethodName = DBUtil.getDbMethodName("UptimeAction.isDatabaseUp()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-			connection = DBUtil.getConnection(dataSource, "UptimeAction.execute()");
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
 			stmt = connection.createStatement();
 			
 			stmt.executeQuery("select count(*) from image");
 
             AntwebMgr.populate(connection);
-/*
-              			
-            String memoryStat = AntwebUtil.getMemoryStats();
-            String cpDiagnostics = "";
-            if (dataSource instanceof ComboPooledDataSource) {
-              ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
-              cpDiagnostics = " C3P0 maxPoolSize:" + c3p0DataSource.getMaxPoolSize()
-                + " numConnectionsDefaultUser:" + c3p0DataSource.getNumConnectionsDefaultUser()
-                + " numConnectionsAllUsers:" + c3p0DataSource.getNumConnectionsAllUsers()
-                + " numIdleConnections:" + c3p0DataSource.getNumIdleConnectionsDefaultUser()
-                + " numBusyConnections:" + c3p0DataSource.getNumBusyConnectionsDefaultUser();
-            }
-            s_log.info("execute().  memory:" + memoryStat + cpDiagnostics);
-*/
-                  
+
             success = true;
 		} catch (SQLException e) {
 			s_log.error("execute() e:" + e);
 		} finally {
-            DBUtil.close(connection, stmt, null, this, "UptimeAction.execute()");
+            DBUtil.close(connection, stmt, null, this, dbMethodName);
 		}
         return success;
     }
-
 }

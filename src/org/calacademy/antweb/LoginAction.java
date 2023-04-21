@@ -165,10 +165,10 @@ public final class LoginAction extends Action {
         if (messages.isEmpty()) {
 
             Connection connection = null;
-            String connName = "LoginAction.createAccount()" + AntwebUtil.getRandomNumber();
+            String dbMethodName = DBUtil.getDbMethodName("LoginAction.createAccount()");
             try {
                 DataSource dataSource = getDataSource(request, "conPool");
-                connection = DBUtil.getConnection(dataSource, connName);
+                connection = DBUtil.getConnection(dataSource, dbMethodName);
                 LoginDb loginDb = new LoginDb(connection);
             
                 login = loginDb.createAccount(userNameOrEmail, password);           
@@ -205,7 +205,7 @@ public final class LoginAction extends Action {
                 }
                 return null;
             } finally {
-                DBUtil.close(connection, this, connName);
+                DBUtil.close(connection, this, dbMethodName);
             }
         }    
         return login;
@@ -229,10 +229,10 @@ public final class LoginAction extends Action {
 
         if (messages.isEmpty()) {
             Connection connection = null;
-            String connName = "LoginAction.login()" + AntwebUtil.getRandomNumber();
+            String dbMethodName = DBUtil.getDbMethodName("LoginAction.login()");
             try {
                 DataSource dataSource = getDataSource(request, "conPool");
-                connection = DBUtil.getConnection(dataSource, connName);
+                connection = DBUtil.getConnection(dataSource, dbMethodName);
                 LoginDb loginDb = new LoginDb(connection);
                 login = loginDb.getLoginByName(userNameOrEmail);
 //A.log("login() A userNameOrEmail:" + userNameOrEmail + " login:" + login);
@@ -254,7 +254,7 @@ public final class LoginAction extends Action {
                 s_log.debug("login() 4 msg:" + msg);
                 s_log.error("Connection.process", sqle);
             } finally {
-                DBUtil.close(connection, this, connName);
+                DBUtil.close(connection, this, dbMethodName);
             }
         }   
         return login; 

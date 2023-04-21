@@ -647,5 +647,8 @@ Or, if there are stmts and/or rsets...
         }
     }
 
+    public static String getDbMethodName(String name) {
+        return name + AntwebUtil.getRandomNumber();
+    }
 
 }

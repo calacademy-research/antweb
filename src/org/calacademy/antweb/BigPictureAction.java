@@ -49,10 +49,11 @@ public final class BigPictureAction extends Action {
         Connection connection = null;
         ResultSet rset = null;
         Statement stmt = null;
+        String dbMethodName = DBUtil.getDbMethodName("BigPictureAction.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
 
-            connection = DBUtil.getConnection(dataSource, "BigPictureAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             
             s_log.debug("execute() imageId:" + form.getImageId());
             if (form.getImageId() != null) {
@@ -117,7 +118,7 @@ public final class BigPictureAction extends Action {
         } catch (SQLException e) {
             s_log.error("execute() e:" + e + " query:" + query);
         } finally {  
-          DBUtil.close(connection, stmt, rset, this, "BigPictureAction.execute()");
+          DBUtil.close(connection, stmt, rset, this, dbMethodName);
         }
         
         // If we could ascertain success here (if the file exists) we could avoid using error.jsp

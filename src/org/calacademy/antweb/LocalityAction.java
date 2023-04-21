@@ -48,9 +48,10 @@ public final class LocalityAction extends Action {
 
 		Date startTime = new Date();
 		Connection connection = null;
+		String dbMethodName = DBUtil.getDbMethodName("LocalityAction.execute()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "LocalityAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             LocalityDb localityDb = new LocalityDb(connection);
             locality = localityDb.getLocalityByCode(code);    
             //A.log("execute() code:" + code + " locality:" + locality);
@@ -62,7 +63,7 @@ public final class LocalityAction extends Action {
 			s_log.error("execute() e:" + e);
 		} finally {
             QueryProfiler.profile("locality", startTime);	 		
-			DBUtil.close(connection, this, "LocalityAction.execute()");
+			DBUtil.close(connection, this, dbMethodName);
 		}
 
         if (locality == null) {        

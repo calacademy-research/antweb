@@ -92,14 +92,14 @@ public final class TaxaPageAction extends Action {
 
         if (rank != null) {
           Connection connection = null;
-          String connName = "TaxaPageAction.execute()" + AntwebUtil.getRandomNumber();
+          String dbMethodName = DBUtil.getDbMethodName("TaxaPageAction.execute()");
 
           if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
           //int uniqueNumber = AntwebUtil.getRandomNumber();
           try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, connName, HttpUtil.getTarget(request));
+            connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
 
             //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
             /*
@@ -217,7 +217,7 @@ public final class TaxaPageAction extends Action {
                 s_log.error("execute() e:" + e + " requestInfo:" + HttpUtil.getShortRequestInfo(request));
             }
           } finally {
-            DBUtil.close(connection, this, connName);
+            DBUtil.close(connection, this, dbMethodName);
             //s_log.info("execute() closing uniqueNumber:" + uniqueNumber);
           }
 

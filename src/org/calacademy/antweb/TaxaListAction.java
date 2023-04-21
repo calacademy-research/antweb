@@ -105,9 +105,10 @@ public final class TaxaListAction extends Action {
         Connection connection = null;
         Statement stmt = null;
         ResultSet rset = null;
+        String dbMethodName = DBUtil.getDbMethodName("TaxaListAction.execute()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-			connection = DBUtil.getConnection(dataSource, "TaxaListAction.execute()");
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             stmt = connection.createStatement();
             rset = stmt.executeQuery(query);
@@ -121,7 +122,7 @@ public final class TaxaListAction extends Action {
 		} catch (SQLException e) {
 			s_log.error("execute() e:" + e);
 		} finally {
-          DBUtil.close(connection, stmt, rset, this, "TaxaListAction.execute()");
+          DBUtil.close(connection, stmt, rset, this, dbMethodName);
 		}
 		
         //s_log.warn("execute() list:" + taxaList);

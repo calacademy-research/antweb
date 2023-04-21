@@ -149,9 +149,10 @@ public final class LogMgrAction extends Action {
         String specimenDetailXml = null;
         Specimen specimen = null;
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("LogMgrAction.getSpecimenDetails()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "getSpecimenDetails");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             specimenDetailXml = new SpecimenDb(connection).getSpecimenDetailXML(code);
             specimen = new SpecimenDb(connection).getSpecimen(code);
@@ -160,7 +161,7 @@ public final class LogMgrAction extends Action {
         } catch (SQLException e) {
             s_log.error("getSpecimenDetails() e:" + e);
         } finally {
-            DBUtil.close(connection, this, "getSpecimenDetails");
+            DBUtil.close(connection, this, dbMethodName);
         }
 
         String specimenDetail = parseXMLIntoHtmlMessage(specimen, specimenDetailXml);

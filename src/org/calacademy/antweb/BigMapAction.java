@@ -86,9 +86,10 @@ public final class BigMapAction extends Action {
         if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("BigMapAction.execute()");
         try {
           DataSource dataSource = getDataSource(request, "conPool");
-          connection = DBUtil.getConnection(dataSource, "BigMapAction.execute()");                        
+          connection = DBUtil.getConnection(dataSource, dbMethodName);
 
           if (!Utility.isBlank(specimenCode)) {
               Specimen specimen = (Specimen) session.getAttribute("specimen");
@@ -124,7 +125,7 @@ public final class BigMapAction extends Action {
             AntwebUtil.logStackTrace(e);        
         } finally {
             --s_mapCount;
-            DBUtil.close(connection, this, "BigMapAction.execute()");
+            DBUtil.close(connection, this, dbMethodName);
         }
 
         String message = "No map found for target:" + HttpUtil.getTarget(request);

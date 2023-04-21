@@ -258,6 +258,7 @@ public class DBStatus {
 
     public static String reportServerBusy(ComboPooledDataSource cpds1, ComboPooledDataSource cpds2, ComboPooledDataSource cpds3, boolean force) {
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("DBStatus.isServerBusy()");
         try {
           if (force || (lastLog == null || AntwebUtil.minsSince(lastLog) > logFreq)) {
 
@@ -266,7 +267,7 @@ public class DBStatus {
                     + "<br><br>shortPool:" + getSimpleCpDiagnosticsAttr (cpds1) + ". <br><br>mediumPool:" + getSimpleCpDiagnosticsAttr(cpds2) + ". <br><br>longPools:" + getSimpleCpDiagnosticsAttr(cpds3) + " "
                     + "<br><br>" + QueryProfiler.report() + "<br><br> Memory:" + AntwebUtil.getMemoryStats() + "<br><br> oldConns:" + DBUtil.getOldConnectionList();
             s_log.warn(logMessage);
-            connection = DBUtil.getConnection(cpds1, "isServerBusy()");
+            connection = DBUtil.getConnection(cpds1, dbMethodName);
             logMessage += "<br><br> processes:" + getMysqlProcessListHtml(connection);
             LogMgr.appendLog("serverBusy.html", logMessage);
             serverBusyReport = logMessage;
@@ -285,7 +286,7 @@ public class DBStatus {
         } catch (SQLException e) {
             s_log.error("reportServerBusy() e:" + e);
         } finally {
-            DBUtil.close(connection, "reportServerBusy()");
+            DBUtil.close(connection, dbMethodName);
         }
 
         return serverBusyReport;
@@ -462,8 +463,9 @@ public class DBStatus {
 
         Statement stmt = null;
         ResultSet rset = null;
+        String dbMethodName = DBUtil.getDbMethodName("DBStatus.getMysqlProcessList()");
         try {
-            stmt = DBUtil.getStatement(connection, "getMysqlProcessList()");
+            stmt = DBUtil.getStatement(connection, "DBStatus.getMysqlProcessList()");
             rset = stmt.executeQuery(query);
             int count = 0;
             while (rset.next()) {
@@ -488,7 +490,7 @@ public class DBStatus {
                 //}
             }
         } finally {
-            DBUtil.close(stmt, rset, "getMysqlProcessList()");
+            DBUtil.close(stmt, rset, dbMethodName);
         }
         return list;
     }

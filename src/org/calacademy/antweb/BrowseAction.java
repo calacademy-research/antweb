@@ -233,7 +233,8 @@ public class BrowseAction extends DescriptionAction {
         Taxon taxon = null;
 
         Connection connection = null;
-        String dbUtilName = "BrowseAction.execute()" + AntwebUtil.getRandomNumber();
+        String dbMethodName = DBUtil.getDbMethodName("BrowseAction.execute()");
+
         try {
         
           if ("mapComparison".equals(cacheType)) {
@@ -259,7 +260,7 @@ public class BrowseAction extends DescriptionAction {
           //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
 
 		  String target = HttpUtil.getTarget(request);
-		  connection = DBUtil.getConnection(dataSource, dbUtilName, target);
+		  connection = DBUtil.getConnection(dataSource, dbMethodName, target);
 		  if (connection == null) {
 		      message = "execute() Null connection !!!" + AntwebUtil.getRequestInfo(request);
               s_log.error(message);
@@ -546,14 +547,14 @@ We are showin the full map of ponerinae for every adm1.
         } catch (Exception e) {
             message = "e:" + e;
         } finally {
-//		  ResourceTracker.remove(dbUtilName + " " + target);
+//		  ResourceTracker.remove(dbMethodName + " " + target);
 
             if ("mapComparison".equals(cacheType)) --s_mapComparisonCount;
             if ("getComparison".equals(cacheType)) --s_getComparisonCount;
         
             QueryProfiler.profile(cacheType, startTime);	        
-            if (!DBUtil.close(connection, this, dbUtilName)) {
-               s_log.error("execute() DBUtil.close error on dbUtilName:" + dbUtilName);
+            if (!DBUtil.close(connection, this, dbMethodName)) {
+               s_log.error("execute() DBUtil.close error on dbMethodName:" + dbMethodName);
                AntwebUtil.logStackTrace();
             }
 
@@ -588,9 +589,10 @@ We are showin the full map of ponerinae for every adm1.
 	  
 	  int antcatId = browseForm.getAntcatId();
 	  Connection connection = null;
+      String dbMethodName = DBUtil.getDbMethodName("BrowseAction.taxonNameRedirect()");
 	  try {
 		DataSource dataSource = getDataSource(request, "conPool");
-		connection = DBUtil.getConnection(dataSource, "BrowseAction.taxonNameRedirect()");
+		connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 		Taxon fetchTaxon = null;
 		
@@ -668,7 +670,7 @@ We are showin the full map of ponerinae for every adm1.
 	  } catch (IOException | SQLException e) {
 		s_log.warn("execute() fetchTaxon e:" + e);
 	  } finally {
-		DBUtil.close(connection, this, "BrowseAction.taxonNameRedirect()");
+		DBUtil.close(connection, this, dbMethodName);
 	  }
 	  return mapping.findForward("error");
     }

@@ -276,8 +276,9 @@ public class DescriptionAction extends Action {
 
       Statement stmt = null;
       ResultSet rset = null;
+      String dbMethodName = DBUtil.getDbMethodName("getDescEditHistory()");
       try {
-          stmt = DBUtil.getStatement(connection, "getDescEditHistory()");
+          stmt = DBUtil.getStatement(connection, dbMethodName);
           rset = stmt.executeQuery(query);
 
           //A.log("getDescEditHistory() query:" + query);
@@ -303,7 +304,7 @@ public class DescriptionAction extends Action {
           //A.log("getDescEditHistory() arrayList:" + arrayList);
           request.setAttribute("descEditHist", arrayList);
       } finally {
-          DBUtil.close(stmt, rset, this, "getDescEditHistory()");
+          DBUtil.close(stmt, rset, this, dbMethodName);
       }
     }
 }
