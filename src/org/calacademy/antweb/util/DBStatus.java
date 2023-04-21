@@ -117,28 +117,7 @@ public class DBStatus {
     }
     */
 
-/*
-    // Better to pass in a connection. See below.
-    public static boolean isServerBusy(DataSource dataSource)
-            throws SQLException {
-        //boolean isBusy = isServerBusy(dataSource, null, null);
 
-        boolean isBusy = false;
-
-        Connection connection = null;
-        try {
-            connection = DBUtil.getConnection(dataSource, "isServerBusy(dataSource)");
-            isBusy = isServerBusy(connection);
-        } catch (SQLException e) {
-            s_log.error("isServerBusy(dataSource) e:" + e);
-        } finally {
-            DBUtil.close(connection, "isServerBusy(dataSource)");
-        }
-
-        return isBusy;
-    }
-*/
-    
     public static boolean isServerBusy(Connection connection)
             throws SQLException {
         boolean isBusy = false;
@@ -313,8 +292,9 @@ public class DBStatus {
           String logMessage = "<br><br>" + new Date() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
           s_log.warn(logMessage);
           Connection connection = null;
+          String dbMethodName = DBUtil.getDbMethodName("DBStatus."isServerBusy()"");
           try {
-            connection = DBUtil.getConnection(dataSource, "isServerBusy()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             logMessage += "<br>" + DBUtil.getMysqlProcessListHtml(connection);
 
               String recipients = AntwebUtil.getDevEmail();
@@ -326,7 +306,7 @@ public class DBStatus {
           } catch (SQLException e) {
             s_log.error("isServerBusy() e:" + e);
           } finally {
-            DBUtil.close(connection, "isServerBusy()");
+            DBUtil.close(connection, dbMethodName);
           }
           LogMgr.appendLog("serverBusy.html", logMessage);
           s_log.warn("isServerBusy() overdue resource:" + DBUtil.getOldConnectionList());

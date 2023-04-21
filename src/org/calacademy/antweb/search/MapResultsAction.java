@@ -63,9 +63,10 @@ public final class MapResultsAction extends ResultsAction {
 		
 		Map map = null;
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("MapResultsAction.execute()");
         try {
             DataSource dataSource = getDataSource(request,"conPool");
-            connection = DBUtil.getConnection(dataSource, "MapResultsAction.execute()");  
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             String title = "Mapping Search Results";
             map = getMap(searchResults, taxonList, chosenList, resultRank, output, title, connection);
         } catch (IndexOutOfBoundsException e2) {
@@ -77,7 +78,7 @@ public final class MapResultsAction extends ResultsAction {
             s_log.error("execute() e:" + e);
             AntwebUtil.logStackTrace(e);
         } finally {
-			DBUtil.close(connection, this, "MapResultsAction.execute()");
+			DBUtil.close(connection, this, dbMethodName);
 		}  
 		        
         String sizeStr = map.getChosenList() == null ? "null" : "" + map.getChosenList().size();

@@ -97,9 +97,10 @@ public final class FieldGuideResultsAction extends ResultsAction {
             }
             FieldGuide fieldGuide = new FieldGuide();
             Connection connection = null;
+            String dbMethodName = DBUtil.getDbMethodName("FieldGuideResultsAction.execute()");
             try {
               DataSource dataSource = getDataSource(request, "conPool");
-              connection = DBUtil.getConnection(dataSource, "FieldGuideResultsAction.execute()");			
+              connection = DBUtil.getConnection(dataSource, dbMethodName);
     		  fieldGuide.setOverview(localityOverview);
     		  String fgRank = "species"; if (ResultRank.SPECIES.equals(resultRank)) fgRank = "genus";
 			  fieldGuide.setRank(fgRank);
@@ -115,7 +116,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
                 s_log.error("execute() e:" + e + " caught on request:" + AntwebUtil.getRequestInfo(request));
                 s_log.info(AntwebUtil.getStackTrace(e));
             } finally {
-               DBUtil.close(connection, this, "FieldGuideResultsAction.execute()");
+               DBUtil.close(connection, this, dbMethodName);
             }
             s_log.debug("chosenTaxa count:" + chosenTaxa.size() + " chosenTaxa field guide taxa count:" + fieldGuide.getTaxa().size());
 

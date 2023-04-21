@@ -72,9 +72,10 @@ searching for yolo counties in specimen table alone takes 50 seconds.  Need inde
 			BayAreaSearch bayAreaSearch = new BayAreaSearch();
 
 			Connection connection = null;
+			String dbMethodName = DBUtil.getDbMethodName("BayAreaSearchAction.getSearchResults");
 			try {
 				DataSource dataSource = getDataSource(request, "conPool");
-				connection = DBUtil.getConnection(dataSource, "BayAreaSearchAction.getSearchResults");
+				connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 				bayAreaSearch.setAdm2s(adm2s);
 				bayAreaSearch.setConnection(connection);
@@ -84,7 +85,7 @@ searching for yolo counties in specimen table alone takes 50 seconds.  Need inde
 			} catch (SQLException sqle) {
 				s_log.error("getSearchResults() e:" + sqle);
 			} finally {
-				DBUtil.close(connection, this, "BayAreaSearchAction.getSearchResults");
+				DBUtil.close(connection, this, dbMethodName);
 			}
 		}
 		return searchResults;

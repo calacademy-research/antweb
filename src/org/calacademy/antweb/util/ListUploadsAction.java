@@ -72,9 +72,10 @@ public final class ListUploadsAction extends Action {
 
         ArrayList<ImageUpload> imageUploads = null;
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("ListUploadsActionListImageUploads()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "listImageUploads()");          
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             String criteria = "";
             if (groupIdInt != 0) {
@@ -88,7 +89,7 @@ public final class ListUploadsAction extends Action {
         } catch (SQLException e) {
             s_log.error("listImageUploads() e:" + e);
         } finally {
-            DBUtil.close(connection, this, "listImageUploads()");
+            DBUtil.close(connection, this, dbMethodName);
         }            
                     
         String message = null;
@@ -134,9 +135,10 @@ public final class ListUploadsAction extends Action {
         Statement stmt = null;
         ResultSet rset = null;
         String query = null;
+        String dbMethodName = DBUtil.getDbMethodName("ListUploadsAction.listSpecimenUploads()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "listSpecimenUploads()");          
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             //s_log.warn("execute groupId:" + groupId);
 
@@ -166,7 +168,7 @@ public final class ListUploadsAction extends Action {
         } catch (SQLException e) {
             s_log.error("listSpecimenUploads() e:" + e + " theQuery:" + query);
         } finally {
-            DBUtil.close(connection, stmt, rset, this, "listSpecimenUploads()");
+            DBUtil.close(connection, stmt, rset, this, dbMethodName);
         }            
                     
         String message = null;

@@ -32,10 +32,10 @@ public class EditCreditAction extends Action {
 
 		Connection connection = null;
 		String query;
-
+		String dbMethodName = DBUtil.getDbMethodName("EditCreditAction.execute()");
 		try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "EditCreditAction");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 			connection.setAutoCommit(true);
 
@@ -69,7 +69,7 @@ public class EditCreditAction extends Action {
             s_log.error("execute() e:" + e);
             return mapping.findForward("error");
         } finally { 		
-            DBUtil.close(connection, this, "EditCreditAction");
+            DBUtil.close(connection, this, dbMethodName);
         }
 
 		return mapping.findForward("success");

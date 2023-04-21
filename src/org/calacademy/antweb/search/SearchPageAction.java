@@ -29,9 +29,10 @@ public final class SearchPageAction extends Action {
         AntwebProps.resetSessionProperties(session);
         
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("SearchPageAction.execute()");
 		try {
           DataSource dataSource = getDataSource(request, "conPool");
-          connection = DBUtil.getConnection(dataSource, "SearchPageAction.execute()");
+          connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             if (DBStatus.isServerBusy(connection, request)) {
                 return mapping.findForward("message");
@@ -47,7 +48,7 @@ public final class SearchPageAction extends Action {
 		} catch (SQLException e) {
 			s_log.error("execute() e:" + e);
 		} finally {
-			DBUtil.close(connection, this, "SearchPageAction.execute()");
+			DBUtil.close(connection, this, dbMethodName);
 		}
         
         return mapping.findForward("success");

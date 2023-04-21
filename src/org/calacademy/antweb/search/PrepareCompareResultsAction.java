@@ -153,9 +153,10 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 		  specHash.put(name,thisItem);
 
           Connection connection = null;
+          String dbMethodName = DBUtil.getDbMethodName("PrepareCompareResultsAction.getExtraSpeciesList()");
           try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "PrepareCompareResultsAction.getExtraSpeciesList()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             
             //Taxon fetchTaxon = Taxon.getInstance(connection, name);
             Taxon fetchTaxon = Taxon.getTaxonOfRank(thisItem.getSubfamily(), thisItem.getGenus(), thisItem.getSpecies(), null);
@@ -171,7 +172,7 @@ public final class PrepareCompareResultsAction extends PrepareAction {
           } catch (SQLException e) {
             s_log.warn("getExtraSpeciesList() fetchTaxon e:" + e);
           } finally {
-            DBUtil.close(connection, this, "PrepareCompareResultsAction.getExtraSpeciesList()");
+            DBUtil.close(connection, this, dbMethodName);
           }
         }
         

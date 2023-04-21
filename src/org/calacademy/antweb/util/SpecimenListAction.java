@@ -112,8 +112,8 @@ public final class SpecimenListAction extends Action {
             //dataBuffer.append(Specimen.getDataHeader() + "\n");
 
             String rank = null;
-          
             Connection connection = null;
+            String dbMethodName = DBUtil.getDbMethodName("SpecimenListAction.execute()");
             try {
 
               // To skip the whole business and just generate a full specimen list...
@@ -123,7 +123,7 @@ public final class SpecimenListAction extends Action {
 
               DataSource dataSource = getDataSource(request, "conPool");
 
-              connection = DBUtil.getConnection(dataSource, "SpecimenListAction.execute()");
+              connection = DBUtil.getConnection(dataSource, dbMethodName);
 
               if (DBStatus.isServerBusy(connection, request)) {
               //if (DBUtil.isServerBusy(dataSource, request)) {
@@ -185,7 +185,7 @@ public final class SpecimenListAction extends Action {
               return mapping.findForward("message");              
             } finally {
               QueryProfiler.profile("specimenList", startTime);            
-              DBUtil.close(connection, this, "SpecimenListAction.execute()");
+              DBUtil.close(connection, this, dbMethodName);
             }
             
           //} // if isInCache
@@ -287,11 +287,12 @@ public final class SpecimenListAction extends Action {
         dataBuffer.append(Specimen.getDataHeader() + "\n");
 
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("SpecimenListAction.generateAllAntwebAnts()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
 
             // Use the first connection to get all of the specimen codes
-            connection = DBUtil.getConnection(dataSource, "SpecimenListAction.generateAllAntwebAnts()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             if (DBStatus.isServerBusy(connection, request)) {
                 //if (DBUtil.isServerBusy(dataSource, request)) {
@@ -315,8 +316,9 @@ public final class SpecimenListAction extends Action {
                 }
                 if (specimenCount % 100000 == 0) {
                     //connection.close();     
-                    DBUtil.close(connection, this, "SpecimenListAction.generateAllAntwebAnts()");                
-                    connection = DBUtil.getConnection(dataSource, "SpecimenListAction.generateAllAntwebAnts()");
+
+                    //DBUtil.close(connection, this, "SpecimenListAction.generateAllAntwebAnts()");
+                    //connection = DBUtil.getConnection(dataSource, "SpecimenListAction.generateAllAntwebAnts()");
 
                     s_log.warn("generateAllAntwebAnts() count:" + specimenCount + " new connection!");
                 }            
@@ -330,7 +332,7 @@ public final class SpecimenListAction extends Action {
             return mapping.findForward("message");              
         } finally {
             //QueryProfiler.profile("specimenList", startTime);            
-            DBUtil.close(connection, this, "SpecimenListAction.generateAllAntwebAnts()");
+            DBUtil.close(connection, this, dbMethodName);
         }
 
         // A.log("execute() writing:" + fullPath);

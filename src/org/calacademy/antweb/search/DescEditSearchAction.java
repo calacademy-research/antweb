@@ -54,9 +54,10 @@ public final class DescEditSearchAction extends Action {
         Connection connection = null;
         Statement stmt = null;
         ResultSet rset = null;
+        String dbMethodName = DBUtil.getDbMethodName("DescEditSearchAction.getSearchResults()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "DescEditSearchAction.getSearchResults()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             stmt = connection.createStatement();
             rset = stmt.executeQuery("select distinct name from ant_group"); // was title
@@ -73,7 +74,7 @@ public final class DescEditSearchAction extends Action {
             s_log.error(e);            
             AntwebUtil.logStackTrace(e);
         } finally {
-            DBUtil.close(connection, stmt, rset, this, "DescEditSearchAction.getSearchResults()");
+            DBUtil.close(connection, stmt, rset, this, dbMethodName);
         }
 
         return searchResults;

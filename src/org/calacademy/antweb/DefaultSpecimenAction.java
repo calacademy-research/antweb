@@ -56,9 +56,10 @@ public final class DefaultSpecimenAction extends Action {
       }
 
       Connection connection = null;
+      String dbMethodName = DBUtil.getDbMethodName("DefaultSpecimenAction.execute()");
       try {
         DataSource dataSource = getDataSource(request, "conPool");
-        connection = DBUtil.getConnection(dataSource, "updateDefaultSpecimen()");
+        connection = DBUtil.getConnection(dataSource, dbMethodName);
 		ImagePickDb imagePickDb = new ImagePickDb(connection);
 
         if ("delete".equals(command)) {
@@ -119,7 +120,7 @@ public final class DefaultSpecimenAction extends Action {
 	  } catch (SQLException e) {
 		s_log.error("execute() e:" + e);
 	  } finally { 		
-		DBUtil.close(connection, this, "updateDefaultSpecimen()");
+		DBUtil.close(connection, this, dbMethodName);
   	  }
 		        
 	  return null;

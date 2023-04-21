@@ -47,16 +47,17 @@ public final class AntWikiDataAction extends Action {
         if ("checkForUpdates".equals(action)) {
         
 			Connection connection = null;
+            String dbMethodName = DBUtil.getDbMethodName("AntwikiDataAction.execute()");
 			try {
 				DataSource dataSource = getDataSource(request, "conPool");
-				connection = DBUtil.getConnection(dataSource, "EditGeolocaleAction.execute()");
+				connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 				message = AntWikiDataAction.checkForUpdates(connection);
 
 			} catch (SQLException | ClassCastException e) {
 				s_log.error("execute() e:" + e);
 			} finally {
-			    DBUtil.close(connection, this, "EditGeolocaleAction.execute()");
+			    DBUtil.close(connection, this, dbMethodName);
 			}        
 		
         } else {

@@ -102,11 +102,12 @@ public class UtilDataAction extends Action {
         }
 
         if (message == null) {
+            String dbMethodName = DBUtil.getDbMethodName("UtilDataAction.execute()");
             try {
                 UtilDataAction.setInComputeProcess(action);
 
                 DataSource dataSource = getDataSource(request, "longConPool");
-                connection = DBUtil.getConnection(dataSource, "UtilAction.execute()", HttpUtil.getTarget(request));
+                connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
                 connection.setAutoCommit(false);
 
                 if (action != null) {
@@ -142,7 +143,7 @@ public class UtilDataAction extends Action {
                 message = handleException(e, connection, action, loginName);
             } finally {
                 UtilDataAction.setInComputeProcess(null);
-                DBUtil.close(connection, this, "UploadAction.execute() 1");
+                DBUtil.close(connection, this, dbMethodName);
             }
         }
         request.setAttribute("message", message);

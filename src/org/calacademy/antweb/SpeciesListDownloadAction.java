@@ -37,10 +37,11 @@ public class SpeciesListDownloadAction extends Action {
         }
 
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("SpeciesListDownloadAction.execute()");
         try {
 
           DataSource dataSource = getDataSource(request, "conPool");
-          connection = DBUtil.getConnection(dataSource, "SpeciesListDownloadAction.execute()");
+          connection = DBUtil.getConnection(dataSource, dbMethodName);
 
           ArrayList<Taxon> taxa = null;
           String message = null;
@@ -87,7 +88,7 @@ public class SpeciesListDownloadAction extends Action {
         } catch (SQLException e) {
           s_log.warn("execute() e:" + e);
         } finally {
-          DBUtil.close(connection, "SpeciesListDownloadAction.execute()");
+          DBUtil.close(connection, dbMethodName);
         }
 
         return mapping.findForward("success");  

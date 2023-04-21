@@ -70,9 +70,10 @@ public final class PictureLikeAction extends Action {
         
         String query = null;
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("PictureLikeAction.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "PictureLikeAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             ImageDb imageDb = new ImageDb(connection);
             theImage = imageDb.getSpecimenImage(code, shot, number);
@@ -99,7 +100,7 @@ public final class PictureLikeAction extends Action {
         } catch (SQLException e) {
             s_log.error("execute() e:" + e + " query:" + query);
         } finally {
-            DBUtil.close(connection, this, "PictureLikeAction.execute()");
+            DBUtil.close(connection, this, dbMethodName);
         }
         //theImage.setPaths();
         
@@ -131,8 +132,9 @@ public final class PictureLikeAction extends Action {
         String query = null;
         Statement stmt = null;
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("PictureLikeAction.likeSpecimenImage()");
         try {
-            connection = DBUtil.getConnection(dataSource, "PictureLikeAction.likeSpecimenImage()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             int groupId = 0;
             int loginId = 0;
@@ -151,7 +153,7 @@ public final class PictureLikeAction extends Action {
         } catch (SQLException e) {
             s_log.error("likeSpecimenImage() e:" + e + " query:" + query);
         } finally {
-            DBUtil.close(connection, stmt, null, this, "PictureLikeAction.likeSpecimenImage()");
+            DBUtil.close(connection, stmt, null, this, dbMethodName);
         }    
     }
 }

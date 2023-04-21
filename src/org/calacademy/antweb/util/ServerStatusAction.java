@@ -46,13 +46,14 @@ static double getVersion () {
         String action = (String) df.get("action");   
     
         //A.log("execute action:" + action);
+        String dbMethodName = DBUtil.getDbMethodName("ServerStatusAction.execute");
 
         try {
             ComboPooledDataSource dataSource1 = (ComboPooledDataSource) getDataSource(request, "conPool");
             ComboPooledDataSource dataSource2 = (ComboPooledDataSource) getDataSource(request, "mediumConPool");
             ComboPooledDataSource dataSource3 = (ComboPooledDataSource) getDataSource(request, "longConPool");
 
-            connection = DBUtil.getConnection(dataSource1, "ServerStatusAction.execute");
+            connection = DBUtil.getConnection(dataSource1, dbMethodName);
  
             if (action.equals("toggleDownTime")) {
                 String message = ServerDb.toggleDownTime(connection);
@@ -79,7 +80,7 @@ static double getVersion () {
         } catch (Exception e) {
             s_log.error("e:" + e);
         } finally {
-            DBUtil.close(connection, this, "ServerStatusAction.execute()");
+            DBUtil.close(connection, this, dbMethodName);
         }
                    
         String serverDetails = ServerStatusAction.getServerDetails();
@@ -229,9 +230,10 @@ static double getVersion () {
 	
     private void setOperationLockAttr(DataSource dataSource, HttpServletRequest request) {
         OperationLock operationLock = null;
-        Connection connection = null;    
+        Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("ServerStatusAction.setOperationLockAttr()");
         try {
-            connection = DBUtil.getConnection(dataSource, "ServerStatusAction.setOperationLockAttr()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             operationLock = new OperationLockDb(connection).getOperationLock();
             if (operationLock != null) {
               //s_log.warn("setOperationLockAttr() isLocked:" + operationLock.isLocked());
@@ -240,7 +242,7 @@ static double getVersion () {
         } catch (SQLException e) {
             s_log.error("setOperationLockAttr() e:" + e);
         } finally {
-            DBUtil.close(connection, this, "ServerStatusAction.setOperationLockAttr()");
+            DBUtil.close(connection, this, dbMethodName);
         }             
     }
 

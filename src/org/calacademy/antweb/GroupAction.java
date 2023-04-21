@@ -52,9 +52,10 @@ public final class GroupAction extends Action {
           }
 
           Connection connection = null;
+          String dbMethodName = DBUtil.getDbMethodName("GroupAction.execute()");
           try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             
             LoginDb loginDb = new LoginDb(connection);
 			group.setCurators(loginDb.getCurators(group.getId()));
@@ -62,7 +63,7 @@ public final class GroupAction extends Action {
           } catch (SQLException e) {
             AntwebUtil.log("GroupAction.execute() e:" + e);
           } finally {
-            DBUtil.close(connection, this, "GroupAction.execute()");
+            DBUtil.close(connection, this, dbMethodName);
           }
           
 //          request.setAttribute("curators" curators);
@@ -93,9 +94,10 @@ public final class GroupAction extends Action {
     private Group getGroup(String name, int groupId, HttpServletRequest request) {
 		Group group = null;
 		Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("GroupAction.getGroup()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             GroupDb groupDb = new GroupDb(connection);
             group = groupDb.getGroup(groupId);    
             //A.log("execute() code:" + code + " group:" + group);
@@ -124,7 +126,7 @@ public final class GroupAction extends Action {
 		} catch (SQLException e) {
 			s_log.error("getGroup() e:" + e);
 		} finally {	
-			DBUtil.close(connection, this, "GroupAction.getGroup()");
+			DBUtil.close(connection, this, dbMethodName);
 		}
 		return group;
 	}	
@@ -132,9 +134,10 @@ public final class GroupAction extends Action {
     private ArrayList<Group> getUploadGroups(HttpServletRequest request, String orderBy) {       
         ArrayList<Group> groups = null;
 		Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("GroupAction.getUploadGroups()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             GroupDb groupDb = new GroupDb(connection);
             groups = groupDb.getUploadGroups(orderBy);
             
@@ -152,9 +155,9 @@ public final class GroupAction extends Action {
 				group.setCuratorList(groupDb.getCuratorList(groupId));
             }
 		} catch (SQLException e) {
-			s_log.error("getGroups() e:" + e);
+			s_log.error("getUploadGroups() e:" + e);
 		} finally {	
-			DBUtil.close(connection, this, "GroupAction.getGroups()");
+			DBUtil.close(connection, this, dbMethodName);
 		}
 		return groups;
 	}	

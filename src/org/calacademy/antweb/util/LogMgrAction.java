@@ -202,9 +202,10 @@ public final class LogMgrAction extends Action {
         UploadLine uploadLine = null;
         
 		Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("LogMgrAction.getUploadLine()");
 		try {
 			DataSource dataSource = getDataSource(request, "mediumConPool");
-			connection = DBUtil.getConnection(dataSource, "getUploadLine");
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
             
             UploadDb uploadDb = new UploadDb(connection);
             uploadLine = uploadDb.getUploadLine(fileName, lineNum);
@@ -213,7 +214,7 @@ public final class LogMgrAction extends Action {
 		} catch (SQLException e) {
 			s_log.error("getUploadLine() 2 e:" + e);
 		} finally {
-			DBUtil.close(connection, this, "getUploadLine");
+			DBUtil.close(connection, this, dbMethodName);
 		}
 
 		return null;

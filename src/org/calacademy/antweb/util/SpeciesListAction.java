@@ -36,9 +36,10 @@ public final class SpeciesListAction extends Action {
         String name = (String) df.get("name");       // (project name)
         if (name != null) {
           Connection connection = null;
+          String dbMethodName = DBUtil.getDbMethodName("SpeciesListAction.execute()");
           try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "SpeciesListAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
         
             if (name.equals(Project.ALLANTWEBANTS)) {
               return getAllAntwebAnts(connection, dataSource, mapping, request);
@@ -72,7 +73,7 @@ public final class SpeciesListAction extends Action {
             request.setAttribute("message", message);
             return mapping.findForward("message");              
           } finally {
-            DBUtil.close(connection, this, "SpeciesListAction.execute()");
+            DBUtil.close(connection, this, dbMethodName);
           }    
         }
 
@@ -107,8 +108,10 @@ public final class SpeciesListAction extends Action {
  
             Statement stmt = null;
             ResultSet rset = null;
+            String dbMethodName = DBUtil.getDbMethodName("SpeciesListAction.createSpeciesListLink()");
+
             try {
-                stmt = DBUtil.getStatement(connection , "SpeciesListAction.createSpeciesListLink()");
+                stmt = DBUtil.getStatement(connection , dbMethodName);
                 rset = stmt.executeQuery(theQuery);
 
                 data.append(Species.getDataHeader() + "\n");
@@ -123,7 +126,7 @@ public final class SpeciesListAction extends Action {
                   data.append(specie.getData() + "\n");
                 }
             } finally {
-                DBUtil.close(stmt, rset, this, "SpeciesListAction.createSpeciesListLink()");
+                DBUtil.close(stmt, rset, this, dbMethodName);
             }
 
             s_log.debug("createSpeciesListLink() fullPath:" + fullPath);

@@ -42,10 +42,10 @@ public final class SearchAction extends DispatchAction {
         // These needs to happen, if only because MapResults will use the project from the session.
         OverviewMgr.setOverview(request, null);
         Connection connection = null;
-
+        String dbMethodName = DBUtil.getDbMethodName("SearchAction.execute()");
         try {
           DataSource dataSource = getDataSource(request, "conPool");
-          connection = DBUtil.getConnection(dataSource, "SearchAction.execute()");
+          connection = DBUtil.getConnection(dataSource, dbMethodName);
 
           ActionForward b = Check.busy(connection, request, mapping); if (b != null) return b;
 
@@ -103,7 +103,7 @@ public final class SearchAction extends DispatchAction {
           s_log.error("execute() e:" + e);
           AntwebUtil.logStackTrace(e);
         } finally {
-            DBUtil.close(connection, this, "SearchAction.execute()");
+            DBUtil.close(connection, this, dbMethodName);
         }
         return null;
     }
@@ -258,9 +258,10 @@ public final class SearchAction extends DispatchAction {
             // Code copied from MapResultsAction.java.  
 			Map map = null;
 			Connection connection = null;
+            String dbMethodName = DBUtil.getDbMethodName("SearchAction.doAdvancedSearch()");
 			try {
 				DataSource dataSource = getDataSource(request,"conPool");
-				connection = DBUtil.getConnection(dataSource, "SearchAction.doAdvancedSearch()");  
+				connection = DBUtil.getConnection(dataSource, dbMethodName);
 				title = "Mapping Search Results";
 				map = new MapResultsAction().getMap(results.getResults(), null, null, resultRank, output, title, connection); // nulls are taxonList, chosenList
 			} catch (IndexOutOfBoundsException e2) {
@@ -272,7 +273,7 @@ public final class SearchAction extends DispatchAction {
 				s_log.error("execute() e:" + e);
 				throw e;
 			} finally {
-				DBUtil.close(connection, this, "SearchAction.doAdvancedSearch()");
+				DBUtil.close(connection, this, dbMethodName);
 			}  
 			
 			String sizeStr = map.getChosenList() == null ? "null" : "" + map.getChosenList().size();

@@ -51,9 +51,10 @@ public final class CuratorAction extends Action {
         if (geolocaleIdInt != null) geolocaleId = geolocaleIdInt;
 
 		Connection connection = null;
+		String dbMethodName = DBUtil.getDbMethodName("CuratorAction.execute()");
 		try {
           DataSource dataSource = getDataSource(request, "conPool");
-          connection = DBUtil.getConnection(dataSource, "CuratorAction.execute()");
+          connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 		  if (!Utility.isBlank(name) || curatorId != 0) {
 			// Show Curator
@@ -104,7 +105,7 @@ public final class CuratorAction extends Action {
 	   } catch (SQLException e) {
 		 AntwebUtil.log("execute() e:" + e);
 	   } finally {
-         DBUtil.close(connection, this, "CuratorAction.execute()");
+         DBUtil.close(connection, this, dbMethodName);
        }
           
 
@@ -112,75 +113,5 @@ public final class CuratorAction extends Action {
 
        return null; // never happen.
 	}
-/*
-    private Group getGroup(String name, int groupId, HttpServletRequest request) {
-		Group group = null;
-		java.sql.Connection connection = null;		
-		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
-            GroupDb groupDb = new GroupDb(connection);
-            group = groupDb.findById(groupId);    
-            //A.log("execute() code:" + code + " group:" + group);
-            if (group == null) {
-              group = (groupDb).findByName(name);
-              //A.log("getGroup() groupId:" + groupId + " name:" + name + " group:" + group);
-            } // else A.log("NOT");
-	
-			if (group == null) {        
-              return null;
-			}
 
-            UploadDb uploadDb = new UploadDb(connection);
-            Upload upload = uploadDb.getLastUpload(groupId);
-            group.setLastUpload(upload);
-            //A.log("GroupAction.getGroup() groupId:" + groupId + " upload:" + upload);
-            
-            group.setFirstUploadDate(uploadDb.getFirstUploadDate(groupId));
-            group.setLastUploadDate(uploadDb.getLastUploadDate(groupId));
-            group.setUploadCount(uploadDb.getUploadCount(groupId));
-            group.setCuratorList(groupDb.getCuratorList(groupId));
-            
-            Map map = (new ObjectMapDb(connection)).getGroupMap(groupId);
-            request.setAttribute("map", map);
-                       
-		} catch (SQLException e) {
-			s_log.error("getGroup() e:" + e);
-		} finally {	
-			DBUtil.close(connection, this, "GroupAction.getGroup()");
-		}
-		return group;
-	}	
- 
-    private ArrayList<Group> getUploadGroups(HttpServletRequest request, String orderBy) {       
-        ArrayList<Group> groups = null;
-		java.sql.Connection connection = null;		
-		try {
-			javax.sql.DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "GroupAction.execute()");
-            GroupDb groupDb = new GroupDb(connection);
-            groups = groupDb.getUploadGroups(orderBy);
-            
-            UploadDb uploadDb = new UploadDb(connection);
-            for (Group group : groups) {
-                int groupId = group.getId();
-				Upload lastUpload = uploadDb.getLastUpload(groupId);
-				group.setLastUpload(lastUpload);
-				//A.log("GroupAction.getGroup() groupId:" + groupId + " lastUpload:" + lastUpload.getCreated	()); // + " upload:" + upload.getId());
-			
-				group.setFirstUploadDate(uploadDb.getFirstUploadDate(groupId));
-				group.setLastUploadDate(uploadDb.getLastUploadDate(groupId));
-				group.setUploadCount(uploadDb.getUploadCount(groupId));
-
-				group.setCuratorList(groupDb.getCuratorList(groupId));
-            }
-		} catch (SQLException e) {
-			s_log.error("getGroups() e:" + e);
-		} finally {	
-			DBUtil.close(connection, this, "GroupAction.getGroups()");
-		}
-		return groups;
-	}	
-*/
-	
 }

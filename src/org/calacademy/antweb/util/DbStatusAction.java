@@ -41,13 +41,14 @@ public final class DbStatusAction extends Action {
         }
 
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("DbStatusAction.execute()");
         try {
             HttpSession session = request.getSession();
             DataSource dataSource1 = getDataSource(request, "conPool");
             DataSource dataSource2 = getDataSource(request, "mediumConPool");
             DataSource dataSource3 = getDataSource(request, "longConPool");
 
-            connection = DBUtil.getConnection(dataSource1, "DbStatusAction.execute()", target);
+            connection = DBUtil.getConnection(dataSource1, dbMethodName", target);
             String mySqlProcessListHtml = DBStatus.getMysqlProcessListHtml(connection);
             request.setAttribute("mySqlProcessListHtml", mySqlProcessListHtml);
 
@@ -60,7 +61,7 @@ public final class DbStatusAction extends Action {
         } catch (SQLException e) {
             s_log.error("e:" + e);
         } finally {
-            DBUtil.close(connection, "DbStatusAction.execute()");
+            DBUtil.close(connection, dbMethodName);
         }
 
 		if (success) {
@@ -76,7 +77,7 @@ public final class DbStatusAction extends Action {
         // This should only be done to test connection expiration...
 		DataSource dataSource = getDataSource(request, "conPool");
 		
-        connection = null;    
+        connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "DbStatusAction.holdOpenConnection()", HttpUtil.getTarget(request));
             new OperationLockDb(connection).getOperationLock();

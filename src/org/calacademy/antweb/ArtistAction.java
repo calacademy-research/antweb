@@ -66,9 +66,10 @@ public final class ArtistAction extends Action {
         boolean goToArtistManager = false;
         
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("ArtistAction.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "ArtistAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             ArtistDb artistDb = new ArtistDb(connection);
 
@@ -134,7 +135,7 @@ public final class ArtistAction extends Action {
             request.setAttribute("message", message);
             return mapping.findForward("message");
         } finally {
-            DBUtil.close(connection, this, "ArtistAction.execute()");
+            DBUtil.close(connection, this, dbMethodName);
         }          
 
         String key = "";

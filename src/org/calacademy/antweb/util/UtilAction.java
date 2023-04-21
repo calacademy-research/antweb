@@ -50,10 +50,11 @@ public class UtilAction extends Action {
 		String name = theForm.getName();
 
         //A.log("execute() name:" + name + " param:" + param);
+		String dbMethodName = DBUtil.getDbMethodName("UtilAction.execute()");
         try {
 
             DataSource dataSource = getDataSource(request, "longConPool");
-            connection = DBUtil.getConnection(dataSource, "UtilAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 			if (action != null) {
 				if (action.equals("postInstantiate")) {
@@ -271,7 +272,7 @@ public class UtilAction extends Action {
             s_log.error("execute() action:" + action + " e:" + e);
             AntwebUtil.errorStackTrace(e);
 		} finally {
-            DBUtil.close(connection, this, "UploadAction.execute() 1");
+            DBUtil.close(connection, this, dbMethodName);
         }
 
         //this shouldn't happen in this example

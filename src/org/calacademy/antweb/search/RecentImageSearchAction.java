@@ -59,11 +59,12 @@ public final class RecentImageSearchAction extends Action {
         Connection connection = null;
         Statement stmt = null;
         ResultSet rset = null;
+        String dbMethodName = DBUtil.getDbMethodName("RecentImageSearchAction.getSearchResults()");
         try {
             String theQuery = "select distinct name from ant_group";
 
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "RecentImageSearchAction.getSearchResults()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);
 
@@ -85,7 +86,7 @@ public final class RecentImageSearchAction extends Action {
             AntwebUtil.logStackTrace(e);
         } finally {
             QueryProfiler.profile("recentImageSearch", startTime);        
-            DBUtil.close(connection, stmt, rset, this, "RecentImageSearchAction.getSearchResults()");
+            DBUtil.close(connection, stmt, rset, this, dbMethodName);
         }        
         return searchResults;
     }

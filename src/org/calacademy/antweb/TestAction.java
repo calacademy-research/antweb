@@ -35,9 +35,10 @@ public final class TestAction extends Action {
         }			
 			
 		Connection connection = null;
+		String dbMethodName = DBUtil.getDbMethodName("TestAction.execute()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "TestAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             int speciesFound = 0;
             if (AntwebProps.isDevMode()) {
             	SpecimenDb specimenDb = new SpecimenDb(connection);
@@ -66,7 +67,7 @@ public final class TestAction extends Action {
 		} catch (SQLException e) {
 			s_log.error("execute() e:" + e);
 		} finally {	 		
-			DBUtil.close(connection, this, "TestAction.execute()");
+			DBUtil.close(connection, this, dbMethodName);
 		}
 		        
         if (false) {        

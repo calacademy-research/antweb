@@ -32,9 +32,10 @@ public final class OrphanedImagesAction extends Action {
 		ArrayList searchResults = null;
 		
 		Connection connection = null;
+		String dbMethodName = DBUtil.getDbMethodName("OrphanedImagesAction.execute()");
 		try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "OrphanedImagesAction");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 			orphans.setConnection(connection);
 			orphans.setOrphans();
@@ -45,7 +46,7 @@ public final class OrphanedImagesAction extends Action {
             s_log.error("execute() e:" + e);
             return mapping.findForward("error");
         } finally { 		
-            DBUtil.close(connection, this, "OrphanedImagesAction");
+            DBUtil.close(connection, this, dbMethodName);
         }
 
         if ("request".equals(mapping.getScope())) {

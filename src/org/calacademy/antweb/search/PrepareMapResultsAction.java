@@ -112,9 +112,10 @@ Request objects:
         Iterator iter = theResults.iterator();
         ResultItem thisItem = null;
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("PrepareMapResultsAction.getModifiedSet()");
         try {
           DataSource dataSource = getDataSource(request, "conPool");
-          connection = DBUtil.getConnection(dataSource, "PrepareMapResultsAction.getModifiedSet()");                    
+          connection = DBUtil.getConnection(dataSource, dbMethodName);
           while (iter.hasNext()) {
             thisItem = (ResultItem) iter.next();            
             if (hasGeoRefInfo(thisItem, connection, resultRank)) {
@@ -124,7 +125,7 @@ Request objects:
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
 		} finally {
-            DBUtil.close(connection, this, "PrepareMapResultsAction.getModifiedSet()");
+            DBUtil.close(connection, this, dbMethodName);
 		}
 		return newResults;
     }
@@ -173,7 +174,7 @@ Request objects:
             s_log.error("hasGeoRefInfo() theQuery:" + theQuery + " e:" + e);
             throw e;
         } finally {
-            DBUtil.close(stmt, rset, this, "hasGeoRefInfo()");
+            DBUtil.close(stmt, rset, this, "hasGeoRefInfo()"); // This will not close the connetion. Name not used.
         }
         
         //s_log.warn("hasGeoRefInfo code:" + theItem.getCode() + " hasInfo:" + hasInfo + " theQuery:" + theQuery);

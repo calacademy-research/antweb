@@ -210,9 +210,10 @@ public class AdvancedSearchAction extends Action {
 		ArrayList<ResultItem> searchResults = null;
 
 		Connection connection = null;
+		String dbMethodName = DBUtil.getDbMethodName("AdvancedSearchAction.getSearchResults()");
 		try {
 			DataSource dataSource = getDataSource(request, "mediumConPool");
-			connection = DBUtil.getConnection(dataSource, "AdvancedSearchAction.getSearchResults()");
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             searchResults = getSearchResults(connection, searchParameters);
             
@@ -222,7 +223,7 @@ public class AdvancedSearchAction extends Action {
 			s_log.error("getSearchResults() 2 e:" + e);
 			throw e;
 		} finally {
-			DBUtil.close(connection, this, "AdvancedSearchAction.getSearchResults()");
+			DBUtil.close(connection, this, dbMethodName);
 		}
 
 		return searchResults;

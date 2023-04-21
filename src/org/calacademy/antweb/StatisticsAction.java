@@ -42,9 +42,10 @@ public final class StatisticsAction extends Action {
         boolean success = false;
 
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("StatisticsAction.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "StatisticsAction()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
                 
             if ("true".equals(byUpload)) {
               success = getStatisticsByUpload(request, connection);
@@ -68,7 +69,7 @@ public final class StatisticsAction extends Action {
             s_log.error("execute() e:" + e);
             success = false;
         } finally { 		
-            DBUtil.close(connection, this, "StatisticAction()");
+            DBUtil.close(connection, this, dbMethodName);
         }
         
 		if (success) {

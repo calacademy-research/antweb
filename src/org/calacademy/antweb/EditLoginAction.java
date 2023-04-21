@@ -58,9 +58,10 @@ public final class EditLoginAction extends Action {
 
         Login login = null;
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("EditLoginAction.execute()");
         try {
           DataSource dataSource = getDataSource(request, "conPool");
-          connection = DBUtil.getConnection(dataSource, "updateDefaultSpecimen()");
+          connection = DBUtil.getConnection(dataSource, dbMethodName);
 
           LoginDb loginDb = new LoginDb(connection);
           login = loginDb.getLogin(id);
@@ -114,7 +115,7 @@ public final class EditLoginAction extends Action {
             request.setAttribute("message", e.toString());
             return mapping.findForward("message");
         } finally { 		
-            DBUtil.close(connection, this, "EditLoginAction()");
+            DBUtil.close(connection, this, dbMethodName);
         }
         
         //return mapping.findForward("goToLogin");

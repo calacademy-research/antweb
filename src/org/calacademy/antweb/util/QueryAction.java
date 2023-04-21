@@ -37,10 +37,11 @@ public class QueryAction extends Action {
 		String name = theForm.getName();
 
         s_log.debug("execute() start action:" + action + " name:" + name + " param:" + param);
-		
+        String dbMethodName = DBUtil.getDbMethodName("QueryAction.execute()");
+
         try {
             DataSource dataSource = getDataSource(request, "longConPool");
-            connection = DBUtil.getConnection(dataSource, "UtilAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 			if (action == null && name == null) {
                 
@@ -160,7 +161,7 @@ public class QueryAction extends Action {
             //AntwebUtil.errorStackTrace(e);
             s_log.debug(AntwebUtil.getAntwebStackTrace(e));
         } finally {
-            DBUtil.close(connection, this, "UploadAction.execute() 1");
+            DBUtil.close(connection, this, dbMethodName);
         }
 
         //this shouldn't happen in this example

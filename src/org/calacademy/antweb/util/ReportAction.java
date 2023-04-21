@@ -87,9 +87,10 @@ and adm1.bioregion != country.bioregion and adm1.bioregion is not null order by 
 		Connection connection = null;
         Statement stmt = null;
         ResultSet rset = null;
+        String dbMethodName = DBUtil.getDbMethodName("ReportAction.getBioregionCountryList()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-			connection = DBUtil.getConnection(dataSource, "getBioregionCountryList()");
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
 			stmt = connection.createStatement();
 			
   	 	    String query = "select g.bioregion, g.name as country, '' as adm1, '' as countryBioregion from geolocale g " 
@@ -117,7 +118,7 @@ and adm1.bioregion != country.bioregion and adm1.bioregion is not null order by 
 		} catch (SQLException e) {
 			s_log.error("getBioregionCountryList() e:" + e);
 		} finally {
-            DBUtil.close(connection, stmt, rset, this, "getBioregionCountryList()");
+            DBUtil.close(connection, stmt, rset, this, dbMethodName);
 		}
         return bioregionCountryList;
     }

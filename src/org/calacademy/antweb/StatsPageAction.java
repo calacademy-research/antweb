@@ -27,9 +27,10 @@ public final class StatsPageAction extends Action {
 		boolean success = false;
 
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("StatsPageAction.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "StatsPageAction()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             StatisticsDb statisticsDb = new StatisticsDb(connection);
             ImageDb imageDb = new ImageDb(connection);
@@ -73,7 +74,7 @@ public final class StatsPageAction extends Action {
             s_log.error("execute() e:" + e);
             return mapping.findForward("error");
         } finally { 		
-            DBUtil.close(connection, this, "StatsPageAction()");
+            DBUtil.close(connection, this, dbMethodName);
         }        
         
 		if (success) {

@@ -185,10 +185,10 @@ public final class CompareResultsAction extends ResultsAction {
 
 		Specimen specimen = null;
 		Connection connection = null;
-
+		String dbMethodName = DBUtil.getDbMethodName("CompareResultsAction.getSpecimenToCompare()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-			connection = DBUtil.getConnection(dataSource, "CompareResultsAction.getSpecimenToCompare()");
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
 			String rank;
 			
 			//This did not seem to do the trick... later, specimens are (were?) getting ordered.
@@ -217,7 +217,7 @@ public final class CompareResultsAction extends ResultsAction {
 		} catch (SQLException e) {
 			s_log.error("getspecimenToCompare() e:" + e);
 		} finally {
-			DBUtil.close(connection, this, "CompareResultsAction.getSpecimenToCompare()");
+			DBUtil.close(connection, this, dbMethodName);
 		}    
 		
 		return specimenToCompare;
@@ -230,10 +230,10 @@ public final class CompareResultsAction extends ResultsAction {
 
 		Taxon taxon = null;
 		Connection connection = null;
-
+		String dbMethodName = DBUtil.getDbMethodName("CompareResultsAction.getTaxaToCompare()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-			connection = DBUtil.getConnection(dataSource, "CompareResultsAction.getTaxaToCompare()");
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
 			String rank;
 			
 			//This did not seem to do the trick...
@@ -279,7 +279,7 @@ public final class CompareResultsAction extends ResultsAction {
 		} catch (SQLException e) {
 			s_log.error("getTaxaToCompare() e:" + e);
 		} finally {
-			DBUtil.close(connection, this, "CompareResultsAction.getTaxaToCompare()");
+			DBUtil.close(connection, this, dbMethodName);
 		}    
 		return taxaToCompare;
     }

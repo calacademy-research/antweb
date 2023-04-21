@@ -24,9 +24,10 @@ public final class AdminAlertAction extends Action {
         ActionForward c = Check.admin(request, mapping); if (c != null) return c;
 
 		Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("AdminAlertAction.execute()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-			connection = DBUtil.getConnection(dataSource, "AdminAlertAction.execute()");
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             DynaActionForm df = (DynaActionForm) form;
             String action = (String) df.get("action"); 
@@ -49,7 +50,7 @@ public final class AdminAlertAction extends Action {
 		} catch (SQLException | ClassCastException e) {
 			s_log.error("execute() e:" + e);
 		} finally {
-			DBUtil.close(connection, this, "AdminAlertAction.execute()");
+			DBUtil.close(connection, this, dbMethodName);
 		}        
  
     	return mapping.findForward("success");

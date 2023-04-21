@@ -99,10 +99,11 @@ public final class FieldGuideAction extends Action {
 		String results = null;
 		ArrayList<Taxon> theTaxa = null;
 		Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("FieldGuideAction.execute()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
 
-            connection = DBUtil.getConnection(dataSource, "FieldGuideAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             //if (DBUtil.isServerBusy(dataSource, request)) {
             if (DBStatus.isServerBusy(connection, request)) {
@@ -235,7 +236,7 @@ public final class FieldGuideAction extends Action {
 		} finally {
 		    --s_simultaneousExecutes;
             QueryProfiler.profile("fieldGuide", startTime);   
-            DBUtil.close(connection, this, "FieldGuideAction.execute()");     		
+            DBUtil.close(connection, this, dbMethodName);
 		}
 
 		// Set a transactional control token to prevent double posting
