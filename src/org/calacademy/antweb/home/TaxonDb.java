@@ -275,16 +275,16 @@ public class TaxonDb extends AntwebDb {
         if (family != null) familyClause = " and family = '" + AntFormatter.escapeQuotes(family) + "'";
 
         String subfamilyClause = "";
-        if (subfamily != null) subfamilyClause = " and subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'";
+        if (subfamily != null && Rank.isSubfamilyOrBelow(rank)) subfamilyClause = " and subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'";
 
         String genusClause = "";
-        if (genus != null) genusClause = " and genus = '" + AntFormatter.escapeQuotes(genus) + "'";
+        if (genus != null && Rank.isGenusOrBelow(rank)) genusClause = " and genus = '" + AntFormatter.escapeQuotes(genus) + "'";
 
         String speciesClause = "";
-        if (species != null) speciesClause = " and species = '" + AntFormatter.escapeQuotes(species) + "'";
+        if (species != null && Rank.isSpeciesOrBelow(rank)) speciesClause = " and species = '" + AntFormatter.escapeQuotes(species) + "'";
 
         String subspeciesClause = "";
-        if (subspecies != null) subspeciesClause = " and subspecies = '" + AntFormatter.escapeQuotes(subspecies) + "'";
+        if (subspecies != null && Rank.isSubspeciesOrBelow(rank)) subspeciesClause = " and subspecies = '" + AntFormatter.escapeQuotes(subspecies) + "'";
 
         String theQuery = "select taxon_name from taxon"
                 + " where 1 = 1"

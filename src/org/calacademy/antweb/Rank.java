@@ -50,7 +50,29 @@ public final class Rank implements Serializable {
       //if (SPECIMEN.equals(rank)) return 1;
       return 0;
     }
-    
+
+
+    //Don't add a criteria if we have criteria but are asking for a higher rank.
+    public static boolean isSubfamilyOrBelow(String rank) {
+        int rankInt = Rank.getRankLevel(rank);
+        return rankInt <= Rank.getRankLevel(Rank.SUBFAMILY);
+    }
+    public static boolean isGenusOrBelow(String rank) {
+        int rankInt = Rank.getRankLevel(rank);
+        return rankInt <= Rank.getRankLevel(Rank.GENUS);
+    }
+    // if I have a speciesName but am asking for a genus, do not add the speciesName to the critiera.
+    public static boolean isSpeciesOrBelow(String rank) {
+        int rankInt = Rank.getRankLevel(rank);
+        return rankInt <= Rank.getRankLevel(Rank.SPECIES);
+    }
+    public static boolean isSubspeciesOrBelow(String rank) {
+        int rankInt = Rank.getRankLevel(rank);
+        return rankInt <= Rank.getRankLevel(Rank.SUBFAMILY);
+    }
+
+
+
     public static boolean isValid(String rank) {
       int rankLevel = getRankLevel(rank);
         return rankLevel > 0;
