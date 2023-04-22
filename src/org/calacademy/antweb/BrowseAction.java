@@ -292,9 +292,13 @@ public class BrowseAction extends DescriptionAction {
                   checkMessage = "Must specify genus:" + genus + " and species:" + species + " to get taxon of rank:" + rank + ". ";
               if (Rank.SUBSPECIES.equals(rank) && (genus == null || species == null || subspecies == null))
                   checkMessage = "Must specify genus:" + genus + ", species:" + species + " and subspecies:" + subspecies + " to getFullTaxon of rank:" + rank + ". ";
-              if (checkMessage != null) s_log.info("execute() " + checkMessage + " requestInfo:" + AntwebUtil.getRequestInfo(request));
+              if (checkMessage != null) {
+                  //s_log.info("execute() " + checkMessage + " requestInfo:" + AntwebUtil.getRequestInfo(request));
+              } else {
 
-			  taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
+                  taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
+
+              }
               //if (taxon != null) s_log.debug("execute() taxon.getSource:" + taxon.getSource() + " desc:" + taxon.getDescription().size());
 			}
 		  }
