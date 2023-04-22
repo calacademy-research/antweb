@@ -1,3 +1,8 @@
+Release 8.90
+  dbMethodName changes (omit curate pages).
+  BrowseAction made request scope.
+  Check for insufficient privileges.
+  Revert to C3P0 .9.1.2.
 
 Release 8.89
   Tighten security of the LogMgr.
@@ -8,7 +13,7 @@ Release 8.88
   Minor refactor of LogMgr. Support for SRFExceptions file.
 
 Release 8.87.1
-  Add unique to BrowseAction dbUtilName.
+  Add unique to BrowseAction dbMethodName.
   More precise check in DBUtil.close().  
   Tighten the logging for ambiguous homonyms.
   Disidentify uptimeRobot as bot.
