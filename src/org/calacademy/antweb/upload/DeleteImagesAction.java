@@ -53,9 +53,10 @@ public final class DeleteImagesAction extends Action {
         if (chosen != null) {
 
             Connection connection = null;
+            String dbMethodName = DBUtil.getDbMethodName("DeleteImagesAction.execute()");
             try {
                 DataSource dataSource = getDataSource(request, "conPool");
-                connection = DBUtil.getConnection(dataSource, "DeleteImagesAction.execute()");
+                connection = DBUtil.getConnection(dataSource, dbMethodName);
 
                 for (String s : chosen) {
                     thisResult = (ResultItem) results.get(Integer.parseInt(s));
@@ -70,7 +71,7 @@ public final class DeleteImagesAction extends Action {
                 request.setAttribute("message", message);
                 return mapping.findForward("message");
             } finally {
-                DBUtil.close(connection, this, "DeleteImagesAction.execute()");
+                DBUtil.close(connection, this, dbMethodName);
             }
             
             // Set a transactional control token to prevent double posting

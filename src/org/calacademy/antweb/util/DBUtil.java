@@ -294,23 +294,32 @@ Or, if there are stmts and/or rsets...
     public static boolean close(Connection conn, Statement stmt, ResultSet rset, Object object, String name) {     
         DBUtil.close(name);
 
+        boolean d = false & "getSpecimenImage()".equals(name);
+        if (d) A.log("close(conn:"+ conn + " stmt:" + stmt + " rset:" + rset + " object:" + object + " name:" + name + ") 1");
+
         boolean success = true;
         //	A.log("close() object:" + object + " name:" + name);  
         String objectName = null;
         if (object != null) objectName = object + " ";
-        try {   
+
+        if (d) A.log("close() 2");
+        try {
             if (rset != null) rset.close();   
         } catch (SQLException e) {
             success = false;
             s_log.error("close() " + objectName + name + " resultSet close Failure:" + e);  
-        }   
+        }
+
+        if (d) A.log("close() 3");
         try {   
             if (stmt != null) stmt.close();   
         } catch (SQLException e) {
             success = false;
             s_log.error("close() " + objectName + name + "statement close Failure:" + e);  
-        }   
-        try {   
+        }
+
+        if (d) A.log("close() 4");
+        try {
             if (conn != null && !conn.isClosed()) {
               //A.log("close() name:" + name);
 
@@ -327,6 +336,7 @@ Or, if there are stmts and/or rsets...
             s_log.error("close() " + objectName + name + "connection close Failure:" + e);  
         }
 
+        if (d) A.log("close() 5");
         if (conn != null) {
           NewProxyConnection newProxyConn = (NewProxyConnection) conn;
           int connMapSize = connectionRequestMap.size(); 
@@ -341,7 +351,8 @@ Or, if there are stmts and/or rsets...
           }
         }
 
-        return success;        
+        if (d) A.log("close() 6");
+        return success;
     }
 
     public static String getOldConnectionList() {

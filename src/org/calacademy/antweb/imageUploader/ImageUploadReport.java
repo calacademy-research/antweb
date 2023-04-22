@@ -37,9 +37,10 @@ public final class ImageUploadReport extends Action {
 
         ImageUpload imageUpload = null;
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("ImageUploadReport.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "ImageUploadReport.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
         
             ImageUploadDb imageUploadDb = new ImageUploadDb(connection);        
 
@@ -58,7 +59,7 @@ public final class ImageUploadReport extends Action {
         } catch (SQLException e) {
           AntwebUtil.log("ImageUploadReport.execute() e:" + e);
         } finally {
-          DBUtil.close(connection, this, "ImageUploadReport.execute()");
+          DBUtil.close(connection, this, dbMethodName);
         }
 
         AntwebUtil.log("execute() No messages set. This shouldn't happen");

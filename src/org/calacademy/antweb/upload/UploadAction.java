@@ -115,12 +115,12 @@ public class UploadAction extends Action {
 		boolean runCountCrawls = true;
 
 		Date worldantsFetchTime = null;
-
+		String dbMethodName = DBUtil.getDbMethodName("UploadAction.execute()");
 		try {
 			setIsInUploadProcess(accessLogin.getName() + ":" + accessGroup.getName());
 
 			DataSource dataSource = getDataSource(request, "longConPool");
-			connection = DBUtil.getConnection(dataSource, "UploadAction.execute()", HttpUtil.getTarget(request));
+			connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
 			connection.setAutoCommit(false);
 
 			s_log.debug("execute() using longConPool:" + dataSource);
@@ -358,10 +358,10 @@ public class UploadAction extends Action {
 									// Perhaps the most recent database snapshot has not been loaded?
 								}
 
-								DBUtil.close(connection, this, "UploadAction.execute() 1");
-
+								// Testing required.
+								DBUtil.close(connection, this, dbMethodName);
 								dataSource = getDataSource(request, "longConPool");
-								connection = DBUtil.getConnection(dataSource, "UploadAction.execute()", HttpUtil.getTarget(request));  // must keep the same name to close at the end.
+								connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));  // must keep the same name to close at the end.
 								connection.setAutoCommit(false);
 
 								//s_log.info("formFileName:" + formFileName + " accessGroup:" + accessGroup + " logFileName:" + logFileName);
@@ -567,7 +567,7 @@ public class UploadAction extends Action {
 
 			UploadMgr.populate(connection, true); // Repopulate UploadMgr.
 
-			DBUtil.close(connection, this, "UploadAction.execute() 1");
+			DBUtil.close(connection, this, dbMethodName);
 
 			Profiler.profile("uploadAction", uploadDetails.getStartTime());
 			Profiler.report();

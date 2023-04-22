@@ -46,6 +46,7 @@ public class LoginMgr extends Manager {
     //Called through UtilAction to, in a separate thread, populate the curators with adm1.
     public static void postInitialize(Connection connection) throws SQLException {
         LoginDb loginDb = new LoginDb(connection);
+
         s_curators = loginDb.getAllCurators();
 
         // Why can't we loop through s_curators?

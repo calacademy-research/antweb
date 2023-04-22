@@ -28,7 +28,6 @@
 Busy Connections:<%= DBUtil.getServerBusyConnectionCount() %>
 
 <%
-//DBUtil.getConnectionList()
 String connString = DBUtil.getConnectionList();  
       //A.log("connString:" + connString);
 %>

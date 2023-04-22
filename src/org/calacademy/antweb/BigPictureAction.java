@@ -50,12 +50,14 @@ public final class BigPictureAction extends Action {
         ResultSet rset = null;
         Statement stmt = null;
         String dbMethodName = DBUtil.getDbMethodName("BigPictureAction.execute()");
+        //A.log("execute() dbMethodName:" + dbMethodName);
+
         try {
             DataSource dataSource = getDataSource(request, "conPool");
 
             connection = DBUtil.getConnection(dataSource, dbMethodName);
             
-            s_log.debug("execute() imageId:" + form.getImageId());
+            //s_log.info("execute() imageId:" + form.getImageId());
             if (form.getImageId() != null) {
               // Poor design. Antipattern.
               ImageDb.getFormProps(form, connection);
@@ -94,6 +96,7 @@ public final class BigPictureAction extends Action {
             ImageDb imageDb = new ImageDb(connection);
             theImage = imageDb.getSpecimenImage(code, shot, number);
 
+
             //A.log("execute() theImage:" + theImage);
 
             if (LoginMgr.isCurator(request)) {
@@ -120,7 +123,7 @@ public final class BigPictureAction extends Action {
         } finally {  
           DBUtil.close(connection, stmt, rset, this, dbMethodName);
         }
-        
+
         // If we could ascertain success here (if the file exists) we could avoid using error.jsp
         if (theImage == null) {
           //s_log.warn("Image not found for image:" + code + " shot:" + shot + " number:" + number);

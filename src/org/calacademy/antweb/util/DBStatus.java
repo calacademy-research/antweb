@@ -246,8 +246,12 @@ public class DBStatus {
                     + "<br><br>shortPool:" + getSimpleCpDiagnosticsAttr (cpds1) + ". <br><br>mediumPool:" + getSimpleCpDiagnosticsAttr(cpds2) + ". <br><br>longPools:" + getSimpleCpDiagnosticsAttr(cpds3) + " "
                     + "<br><br>" + QueryProfiler.report() + "<br><br> Memory:" + AntwebUtil.getMemoryStats() + "<br><br> oldConns:" + DBUtil.getOldConnectionList();
             s_log.warn(logMessage);
+
             connection = DBUtil.getConnection(cpds1, dbMethodName);
             logMessage += "<br><br> processes:" + getMysqlProcessListHtml(connection);
+
+            // Report cpds2 and 3?
+
             LogMgr.appendLog("serverBusy.html", logMessage);
             serverBusyReport = logMessage;
           }

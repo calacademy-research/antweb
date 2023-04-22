@@ -37,10 +37,10 @@ public class DescEditImageUploadAction extends Action {
 
 
         String messageStr = "";
-        
+        String dbMethodName = DBUtil.getDbMethodName("DescEditImageUploadAction.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "DescEditImageUploadAction");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
           
             connection.setAutoCommit(true);
 
@@ -146,7 +146,7 @@ public class DescEditImageUploadAction extends Action {
             s_log.error("execute() e:" + e);
             return mapping.findForward("error");
         } finally {
-            DBUtil.close(connection, this, "DescEditImageUploadAction");
+            DBUtil.close(connection, this, dbMethodName);
         }
 
         //this shouldn't happen in this example

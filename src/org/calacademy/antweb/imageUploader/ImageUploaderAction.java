@@ -59,9 +59,10 @@ public final class ImageUploaderAction extends Action {
         String message = "";
                 
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("BrowseAction.execute()");
         try {
             DataSource dataSource = getDataSource(request, "longConPool");
-            connection = DBUtil.getConnection(dataSource, "ImageUploaderAction.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             ActionForward b = Check.busy(connection, request, mapping); if (b != null) return b;
 
@@ -183,7 +184,7 @@ public final class ImageUploaderAction extends Action {
           s_log.warn(message + " temppDir:" + ImageUploaded.tempDir);
           return mapping.findForward("message");
         } finally {
-          DBUtil.close(connection, this, "ImageUploaderAction.execute()");
+          DBUtil.close(connection, this, dbMethodName);
           UploadAction.setIsInUploadProcess(null);          
         }    
 	}	

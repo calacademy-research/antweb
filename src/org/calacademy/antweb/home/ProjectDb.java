@@ -339,7 +339,7 @@ public class ProjectDb extends AntwebDb {
       return speciesListList;
     }
     
-    public void xgetStats(Project project) {
+    public void XgetStats(Project project) {
 
         String query = "";
         

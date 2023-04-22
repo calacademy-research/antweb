@@ -227,7 +227,7 @@ public class TaxonDb extends AntwebDb {
         String taxonName = getTaxonName(family, subfamily, genus, species, subspecies, rank);
 
         if (taxonName == null) {
-            s_log.debug("getFullTaxon() taxon not found for:" + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " " + rank);
+            s_log.info("getFullTaxon() taxon not found for:" + family + " " + subfamily + " " + genus + " " + species + " " + subspecies + " rank:" + rank);
             return null;
         }
 
@@ -316,7 +316,9 @@ public class TaxonDb extends AntwebDb {
             if (i > 4) multiDebug += "... (" + i + ")";
 
             if (i > 1) {
-                String message = "getTaxonName() count:" + i + ". Did not get unique result. family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " " + subspecies + " " + rank;
+                // BrowseAction and FieldGuideAction seem to be calling innappropriately:
+                //   taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
+                String message = "getTaxonName() count:" + i + ". Did not get unique result. family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " " + subspecies + " rank:" + rank;
                 message += " Unresolved homonym to fix in antcat? " + multiDebug;
                 //  AntwebUtil.logStackTrace();
                 throw new AntwebException(message);

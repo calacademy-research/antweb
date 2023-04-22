@@ -192,12 +192,14 @@ public class ImageDb extends AntwebDb {
 
             stmt = DBUtil.getStatement(getConnection(), "getSpecimenImage()");
             stmt.executeQuery(query);
+
             rset = stmt.getResultSet();
 
             int hasTiff = 0;
             int artistId = 0;
             while (rset.next()) {
-				specimenImage = new SpecimenImage();
+
+                specimenImage = new SpecimenImage();
 
 				specimenImage.setCode(code);
 				specimenImage.setShot(shot);
@@ -206,11 +208,11 @@ public class ImageDb extends AntwebDb {
 
 				specimenImage.setDate(rset.getString("upload_date"));
 
-				hasTiff = rset.getInt("has_tiff");
+                hasTiff = rset.getInt("has_tiff");
 				boolean ifHasTiff = hasTiff == 1;
 				specimenImage.setHasTiff(ifHasTiff);
 
-				specimenImage.setArtistId(rset.getInt("artist"));
+                specimenImage.setArtistId(rset.getInt("artist"));
                 specimenImage.setGroupId(rset.getInt("group_id"));
                 specimenImage.setUploadId(rset.getInt("image_upload_id"));
             }
@@ -222,8 +224,11 @@ public class ImageDb extends AntwebDb {
         } catch (SQLException e) {
             s_log.error("getSpecimenImage() e:" + e + " query:" + query);
         } finally {
+            //A.log("getSpecimenImage() before close");
             DBUtil.close(stmt, rset, "ImageDb", "getSpecimenImage()");
+            //A.log("getSpecimenImage() after close");
         }
+
         return specimenImage;
     }
 

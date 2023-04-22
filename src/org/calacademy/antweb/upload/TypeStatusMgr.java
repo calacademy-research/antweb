@@ -36,9 +36,10 @@ public class TypeStatusMgr extends Action {
         LogMgr.emptyLog("typeStatusHomonym.txt");
 
         Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("TypeStatusMgr.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "TypeStatusMgr.execute()");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
             int speciesFound = 0;
             int speciesNotFound = 0;
             int noTaxonNameFound = 0;
@@ -82,7 +83,7 @@ public class TypeStatusMgr extends Action {
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
         } finally {
-            DBUtil.close(connection, this, "TypeStatusMgr.execute()");
+            DBUtil.close(connection, this, dbMethodName);
         }
 
         message = "<h3>Type Status Reports</h3>";
