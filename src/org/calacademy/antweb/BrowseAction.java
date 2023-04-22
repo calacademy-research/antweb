@@ -285,14 +285,14 @@ public class BrowseAction extends DescriptionAction {
               //Add this check to field guide too..
               String checkMessage = null;
               if (Rank.SUBFAMILY.equals(rank) && (subfamily == null))
-                    message = "Must specify subfamily to get taxon of rank:" + rank;
+                    checkMessage = "Must specify subfamily to get taxon of rank:" + rank;
               if (Rank.GENUS.equals(rank) && (subfamily == null || genus == null))
-                    message = "Must specify subfamily and genus to get taxon of rank:" + rank;
+                  checkMessage = "Must specify subfamily and genus to get taxon of rank:" + rank;
               if (Rank.SPECIES.equals(rank) && (subfamily == null || genus == null || species == null))
-                    message = "Must specify subfamily, genus and species to get taxon of rank:" + rank;
+                  checkMessage = "Must specify subfamily, genus and species to get taxon of rank:" + rank;
               if (Rank.SUBSPECIES.equals(rank) && (subfamily == null || genus == null || species == null || subspecies == null))
-                    message = "Must specify subfamily, genus, species and subspecies to get taxon of rank:" + rank;
-              if (checkMessage != null) s_log.info("execute() " + checkMessage);
+                  checkMessage = "Must specify subfamily, genus, species and subspecies to get taxon of rank:" + rank;
+              if (checkMessage != null) s_log.info("execute() " + checkMessage + AntwebUtil.getRequestInfo(request));
 
 			  taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
               //if (taxon != null) s_log.debug("execute() taxon.getSource:" + taxon.getSource() + " desc:" + taxon.getDescription().size());
