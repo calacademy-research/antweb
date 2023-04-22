@@ -386,7 +386,7 @@ if we set getChildImages here, then we do know to add the field guide, but the i
              type="org.calacademy.antweb.BrowseAction"
              name="browseForm"
              input="/index.jsp"
-             scope="session"
+             scope="request"
              validate="true">
       <forward name="success" path="/showBrowse.jsp"/>
       <forward name="specimen" path="/specimen.jsp"/>
