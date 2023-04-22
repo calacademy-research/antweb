@@ -1,3 +1,7 @@
+Release 8.90.1
+  Criteria checks added to FieldGuideAction.
+  images.do and description.do made request scope.
+
 Release 8.90
   dbMethodName changes (omit curate pages).
   BrowseAction made request scope.

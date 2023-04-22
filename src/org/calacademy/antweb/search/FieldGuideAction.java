@@ -153,9 +153,23 @@ public final class FieldGuideAction extends Action {
 
 			if (subfamily != null || genus != null || species != null) {
     		    // Taxon Field Guides
-                Taxon taxon = new TaxonDb(connection).getFullTaxon(subfamily, genus, species, subspecies, rank);
-                fieldGuide.setShowTaxon(taxon);
-                // Taxon taxon = Taxon.getTaxonOfRank(subfamily, genus, species, subspecies)
+
+                Taxon taxon = null;
+
+                String checkMessage = null;
+                if (Rank.SUBFAMILY.equals(rank) && (subfamily == null))
+                    checkMessage = "Must specify subfamily:" + subfamily + " to get taxon of rank:" + rank + ". ";
+                if (Rank.GENUS.equals(rank) && (genus == null))
+                    checkMessage = "Must specify genus:" + genus + " to get taxon of rank:" + rank + ". ";
+                if (Rank.SPECIES.equals(rank) && (genus == null || species == null))
+                    checkMessage = "Must specify genus:" + genus + " and species:" + species + " to get taxon of rank:" + rank + ". ";
+                if (Rank.SUBSPECIES.equals(rank) && (genus == null || species == null || subspecies == null))
+                    checkMessage = "Must specify genus:" + genus + ", species:" + species + " and subspecies:" + subspecies + " to getFullTaxon of rank:" + rank + ". ";
+                if (checkMessage != null) {
+                    s_log.info("execute() " + checkMessage + " requestInfo:" + AntwebUtil.getRequestInfo(request));
+                } else {
+                    taxon = new TaxonDb(connection).getFullTaxon(subfamily, genus, species, subspecies, rank);
+                }
 
                 if (taxon == null) {
                     String message = "taxon not found for subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subfamily:" + subfamily;
@@ -164,7 +178,7 @@ public final class FieldGuideAction extends Action {
                     return mapping.findForward("message");
                 }
 
-                // taxon.setTaxonomicInfo(connection);
+                fieldGuide.setShowTaxon(taxon);
 
 				if (taxon.getRank().equals(Rank.SPECIES) || taxon.getRank().equals(Rank.SUBSPECIES)) {
 					taxon.setChildrenLocalized(connection, overview);

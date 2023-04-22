@@ -454,7 +454,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action path="/description"
             type="org.calacademy.antweb.BrowseAction"            
             name="browseForm"
-            scope="session">
+            scope="request">
       <forward name="success" path="/taxonPage.jsp"/>
       <forward name="homonym" path="/homonymPage.jsp"/>
     </action>    
@@ -465,7 +465,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
             type="org.calacademy.antweb.BrowseAction"
             parameter="getChildImages"
             name="browseForm"
-            scope="session">
+            scope="request">
       <forward name="success" path="/imagePage.jsp"/>
     </action>    
 
