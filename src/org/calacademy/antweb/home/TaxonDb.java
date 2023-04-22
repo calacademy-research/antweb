@@ -318,7 +318,7 @@ public class TaxonDb extends AntwebDb {
             if (i > 1) {
                 // BrowseAction and FieldGuideAction seem to be calling innappropriately:
                 //   taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
-                String message = "getTaxonName() count:" + i + ". Did not get unique result. family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " " + subspecies + " rank:" + rank;
+                String message = "getTaxonName() count:" + i + ". Did not get unique result. family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank;
                 message += " Unresolved homonym to fix in antcat? " + multiDebug;
                 s_log.info("getTaxonName() theQuery:" + theQuery);
                 AntwebUtil.logShortStackTrace();
