@@ -320,7 +320,8 @@ public class TaxonDb extends AntwebDb {
                 //   taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
                 String message = "getTaxonName() count:" + i + ". Did not get unique result. family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " " + subspecies + " rank:" + rank;
                 message += " Unresolved homonym to fix in antcat? " + multiDebug;
-                //  AntwebUtil.logStackTrace();
+                s_log.info("getTaxonName() theQuery:" + theQuery);
+                AntwebUtil.logShortStackTrace();
                 throw new AntwebException(message);
             }
         } catch (SQLException e) {
