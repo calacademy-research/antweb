@@ -6,6 +6,7 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.search.ResultItem;
 import org.calacademy.antweb.upload.UploadUtil;
 import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.util.exception.*;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -227,9 +228,9 @@ public class TaxonDb extends AntwebDb {
         String taxonName = getTaxonName(family, subfamily, genus, species, subspecies, rank);
 
         if (taxonName == null) {
-            String message = "Taxon not found for family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank;
-            //s_log.info("GetFullTaxon() " + message);
-            throw new AntwebException(message);
+            String message = "family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank;
+            s_log.info("GetFullTaxon() Taxon not found for " + message);
+            throw new TaxonNotFoundException(message);
         }
 
         taxon = getFullTaxon(taxonName);
@@ -319,10 +320,9 @@ public class TaxonDb extends AntwebDb {
             if (i > 1) {
                 // BrowseAction and FieldGuideAction seem to be calling innappropriately:
                 //   taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
-                String message = "getTaxonName() count:" + i + ". Did not get unique result. family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank;
-                message += " Unresolved homonym to fix in antcat? " + multiDebug;
-                s_log.info("getTaxonName() theQuery:" + theQuery);
-                AntwebUtil.logShortStackTrace();
+                String message = "Did not get unique result. family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank;
+                String logMessage = "getTaxonName() " + message + " count:" + i + ". " + multiDebug;  //   Unresolved homonym to fix in antcat?
+                s_log.info("getTaxonName() " + logMessage + " theQuery:" + theQuery);
                 throw new AntwebException(message);
             }
         } catch (SQLException e) {

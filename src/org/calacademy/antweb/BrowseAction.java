@@ -15,6 +15,7 @@ import org.calacademy.antweb.home.HomonymDb;
 
 import org.calacademy.antweb.upload.UploadAction;
 import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.util.exception.*;
 import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
@@ -560,6 +561,12 @@ We are showin the full map of ponerinae for every adm1.
             if (!HttpUtil.isBot(request) || AntwebProps.isDevMode()) {
                 s_log.error("execute() e:" + e + " requestInfo:" + HttpUtil.getShortRequestInfo(request));
             }
+        } catch (TaxonNotFoundException e) {
+            message = e.getMessage();
+            request.setAttribute("message", "Taxon not found for " + message);
+            String logMessage = message + " " + HttpUtil.getTarget(request) + " " + HttpUtil.getReferrerUrl(request);
+            LogMgr.appendWebLog("taxonNotFound.txt", logMessage, true);
+            return mapping.findForward("message");
         } catch (Exception e) {
             message = "e:" + e;
         } finally {
