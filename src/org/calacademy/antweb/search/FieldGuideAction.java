@@ -25,6 +25,7 @@ import org.calacademy.antweb.geolocale.*;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.util.exception.TaxonNotFoundException;
 
 public final class FieldGuideAction extends Action {
 
@@ -243,7 +244,13 @@ public final class FieldGuideAction extends Action {
             return mapping.findForward("message");
         } catch (ArrayIndexOutOfBoundsException e) {
             s_log.warn("FieldGuideForm:" + fieldGuideForm);
-            AntwebUtil.logStackTrace(e);           
+            AntwebUtil.logStackTrace(e);
+        } catch (TaxonNotFoundException e) {
+            String message = e.getMessage();
+            request.setAttribute("message", "Taxon not found for " + message);
+            String logMessage = message + " " + HttpUtil.getTarget(request) + " referrer:" + HttpUtil.getReferrerUrl(request);
+            LogMgr.appendWebLog("taxonNotFound.txt", logMessage, true);
+            return mapping.findForward("message");
         } catch (Exception e) {
             s_log.error("execute() 3 e:" + e);
             AntwebUtil.logStackTrace(e);
