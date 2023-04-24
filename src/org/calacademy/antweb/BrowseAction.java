@@ -564,7 +564,7 @@ We are showin the full map of ponerinae for every adm1.
         } catch (TaxonNotFoundException e) {
             message = e.getMessage();
             request.setAttribute("message", "Taxon not found for " + message);
-            String logMessage = message + " " + HttpUtil.getTarget(request) + " " + HttpUtil.getReferrerUrl(request);
+            String logMessage = message + " " + HttpUtil.getTarget(request) + " referrer:" + HttpUtil.getReferrerUrl(request);
             LogMgr.appendWebLog("taxonNotFound.txt", logMessage, true);
             return mapping.findForward("message");
         } catch (Exception e) {

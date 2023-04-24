@@ -344,12 +344,13 @@ public final class LogMgrAction extends Action {
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=invalid&ext=log'>invalid.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=logins&ext=txt'>logins.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=accessLog&ext=txt'>accessLog.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=getUrl&ext=txt'>getUrl.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=getUrl&ext=txt'>getUrl.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=profiler&ext=jsp'>profiler.jsp</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=cCheck&ext=log'>cCheck.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=longRequest&ext=log'>longRequest.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=messages&ext=txt'>Messages.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=badRequest&ext=log'>badRequest.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=taxonNotFound&ext=txt'>taxonNotFound.txt</a>";
 
         /*
         message += "<br>Deprecated...?";

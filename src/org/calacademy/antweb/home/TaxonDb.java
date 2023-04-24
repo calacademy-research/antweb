@@ -229,7 +229,7 @@ public class TaxonDb extends AntwebDb {
 
         if (taxonName == null) {
             String message = "family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank;
-            s_log.info("GetFullTaxon() Taxon not found for " + message);
+            //s_log.info("GetFullTaxon() Taxon not found for " + message);
             throw new TaxonNotFoundException(message);
         }
 
