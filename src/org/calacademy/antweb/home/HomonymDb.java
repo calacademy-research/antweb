@@ -280,7 +280,10 @@ public class HomonymDb extends AntwebDb {
                 //taxon.setBioregion(rset.getString("bioregion"));
             }
 
-            if (AntwebProps.isDevMode()) if (count == 0) s_log.error("getInfoHomonym() not found. query:" + theQuery); // taxonName:" + taxonName + " authorDate:" + authorDate);
+            if (AntwebProps.isDevMode()) if (count == 0) {
+                AntwebUtil.logShortStackTrace();
+                s_log.error("getInfoHomonym() not found. query:" + theQuery); // taxonName:" + taxonName + " authorDate:" + authorDate);
+            }
             if (count > 1) s_log.error("getInfoHomonym() count:" + count + " should never be more than 1. criterion:" + criterion); // TaxonName:" + taxonName + " authorDate:" + authorDate);
 
         } catch (SQLException e) {

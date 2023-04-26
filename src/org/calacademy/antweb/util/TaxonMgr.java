@@ -66,7 +66,7 @@ public class TaxonMgr extends Manager {
 
         s_populateTime = new Date();
 
-        s_log.warn("populate() " + report());
+        s_log.info("populate() " + report());
        // if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
     }
 

@@ -145,7 +145,7 @@ public class UserAgentTracker extends Action {
             }
         } else {
             if (s_botDenial > 0) {
-                s_log.warn("doFilter() botDenial for reason:" + s_botDenialReason + " count:" + s_botDenial);
+                s_log.info("doFilter() botDenial for reason:" + s_botDenialReason + " count:" + s_botDenial);
                 s_botDenial = 0;
                 s_botDenialReason = null;
             }

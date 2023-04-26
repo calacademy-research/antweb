@@ -288,12 +288,35 @@ public class TaxonDb extends AntwebDb {
         String subspeciesClause = "";
         if (subspecies != null && Rank.isSubspeciesOrBelow(rank)) subspeciesClause = " and subspecies = '" + AntFormatter.escapeQuotes(subspecies) + "'";
 
-        String theQuery = "select taxon_name from taxon"
+        String theQuery = "select taxon_name, status from taxon"
                 + " where 1 = 1"
                 + familyClause + subfamilyClause + genusClause + speciesClause + subspeciesClause
                 + " and taxarank = '" + rank + "'"
                 // + " and status != 'synonym'"
                 ;
+
+/*
+We commented out the synonym check above (Sep 2022) but it breaks this request:
+    https://www.antweb.org/images.do?genus=holcoponera&rank=genus
+
+Documented in done.txt as such:
+    Look into non-response for taxon with synonym Holcoponera.
+
+Because holcoponera has a synonym.
+
+mysql> select taxon_name, status from taxon where genus = "holcoponera" and taxarank = "genus";
++-------------------------+---------+
+| taxon_name              | status  |
++-------------------------+---------+
+| dorylinaeholcoponera    | synonym |
+| ectatomminaeholcoponera | valid   |
++-------------------------+---------+
+2 rows in set (0.00 sec)
+
+Code added below on Apr 26 2023:
+                String status = rset.getString("status");
+                if ("synonym".equals(status)) continue; // Do not count. Ignore.
+ */
 
         //A.log("getTaxonName() theQuery:" + theQuery);
 
@@ -307,9 +330,12 @@ public class TaxonDb extends AntwebDb {
             String multiDebug = "";
 
             while (rset.next()) {
-                i = i + 1;
                 taxonName = rset.getString("taxon_name");
 
+                String status = rset.getString("status");
+                if ("synonym".equals(status)) continue; // Do not count. Ignore.
+
+                i = i + 1;
                 if (i < 4) {
                     if (i > 1) multiDebug += ", ";
                     multiDebug += taxonName;

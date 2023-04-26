@@ -135,7 +135,7 @@ public class BrowseAction extends DescriptionAction {
         boolean hasQueryString = queryString != null;
         if (browseForm.getTaxonName() != null && !"".equals(browseForm.getTaxonName()) || browseForm.getAntcatId() != 0) {
           //session.setAttribute("statusSet", StatusSet.ALL);
-          s_log.debug("execute() redirect taxonName:" + browseForm.getTaxonName() + " antcatId:" + browseForm.getAntcatId());
+          A.log("execute() redirect taxonName:" + browseForm.getTaxonName() + " antcatId:" + browseForm.getAntcatId());
           return taxonNameRedirect(browseForm, mapping, request, response);
         } else if (hasQueryString && queryString.contains("antcatId=")) {
             request.setAttribute("message", "Enter an AntCat ID in the url.");
