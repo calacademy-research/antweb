@@ -1,10 +1,10 @@
-Release 9.91.2
+Release 8.91.2
   Field Guide set to request scope.
 
-Release 9.91.1
+Release 8.91.1
   Taxon not found handling in Field Guide action.
 
-Release 9.91
+Release 8.91
   New log for taxa not found.
 
 Release 8.90.1

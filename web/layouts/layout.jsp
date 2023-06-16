@@ -31,6 +31,9 @@
 <% } %>
 
 <meta name="apple-mobile-web-app-capable" content="yes" />
+
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+
 <% 
    String ogTitle = (String) request.getAttribute("ogTitle"); // OpenGraphMgr.getOGTitle();
    if (ogTitle == null) ogTitle = "Antweb";

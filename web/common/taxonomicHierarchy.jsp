@@ -104,12 +104,14 @@
             out.println("<li>Subspecies: <a href=\"" + targetUrl + "\">" + targetName + "</a></li>"); 
         }            
             
-        if ( Rank.SPECIMEN.equals(taxon.getRank()) ) { 
+        if ( Rank.SPECIMEN.equals(taxon.getRank()) ) {
             if (request.getRequestURI().contains("specimen.jsp"))  {
                targetUrl = "specimen.do"; 
             } else {
                targetUrl = "specimenImages.do"; 
             }
+            targetUrl = domainApp + "/" + targetUrl;
+            //A.log("targetUrl:" + targetUrl);
             if (specimen != null && specimen.getName() != null) {
               out.println("<li>Specimen: <a href=\"" + targetUrl +"?code=" + specimen.getName() + "\">" + specimen.getName().toUpperCase() + "</a></li>"); 
             }
