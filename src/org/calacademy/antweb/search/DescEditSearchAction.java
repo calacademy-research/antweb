@@ -61,7 +61,7 @@ public final class DescEditSearchAction extends Action {
 
             stmt = connection.createStatement();
             rset = stmt.executeQuery("select distinct name from ant_group"); // was title
-            ArrayList groupsArray = new ArrayList();
+            ArrayList<String> groupsArray = new ArrayList<>();
 
             while (rset.next()) {
                 //s_log.warn("Rset:" + rset.getString(1));

@@ -62,10 +62,10 @@ public class FieldGuide {
         
             //s_log.warn("getMaps() taxonName:" + thisTaxon.getName() + " rank:" + thisTaxon.getRank());            
             if (thisTaxon.getRank().equals("specimen")) {
-                ArrayList specimenList = new ArrayList();
+                ArrayList<String> specimenList = new ArrayList<>();
                 specimenList.add(thisTaxon.getName());
                 thisTaxon.setMap(new Map(specimenList, connection));
-            } else {    
+            } else {
                 //A.log("setMaps() taxon:" + thisTaxon + " project:" + project);
                 if (overview instanceof LocalityOverview)
                   thisTaxon.setMap(new Map(thisTaxon, (LocalityOverview) overview, connection));
@@ -137,16 +137,16 @@ public class FieldGuide {
         
         
         if (theMap != null && theMap.getPoints() != null && theMap.getPoints().size() > 0) {
-            ArrayList points = null;
+            ArrayList<Coordinate> points;
             if (theMap.getPoints().size() <= MAX_MARKERS) {
                 points = theMap.getPoints();
             } else {
                 //points = theMap.getCentroidCoords(50);
-                points = new ArrayList();
+                points = new ArrayList<>();
             }
         
             markers.append("markers=");
-            Iterator iter = points.iterator();
+            Iterator<Coordinate> iter = points.iterator();
             while (iter.hasNext()) {
                 coord = (Coordinate) iter.next();
                 markers.append(Float.valueOf(coord.getLat()).toString());

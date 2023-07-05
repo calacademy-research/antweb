@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+import org.calacademy.antweb.Group;
 import org.calacademy.antweb.home.*;
 
 /**
@@ -26,7 +27,7 @@ public class ManageGroupsAction extends Action {
         HttpServletRequest request, HttpServletResponse response) {
 
         Connection connection = null;
-        ArrayList groupList = null;
+        ArrayList<Group> groupList = null;
 
         try {
             connection = getDataSource(request, "conPool").getConnection();

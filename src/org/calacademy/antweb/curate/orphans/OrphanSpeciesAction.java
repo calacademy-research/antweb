@@ -19,6 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import java.util.*;
 import java.sql.*;
 
+import org.calacademy.antweb.Taxon;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
@@ -35,7 +36,7 @@ public final class OrphanSpeciesAction extends Action {
         HttpSession session = request.getSession();
 
 
-        ArrayList orphanTaxonList = new ArrayList();
+        ArrayList<Taxon> orphanTaxonList = new ArrayList<>();
         Connection connection = null;
                         
         try {

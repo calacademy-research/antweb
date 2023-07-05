@@ -1,12 +1,14 @@
 package org.calacademy.antweb.upload;
 
-import java.util.*;
-
-import org.calacademy.antweb.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Group;
+import org.calacademy.antweb.util.A;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.HttpUtil;
+import org.calacademy.antweb.util.LogMgr;
 
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;    
+import java.util.*;
     
 public class MessageMgr {
 
@@ -16,7 +18,7 @@ public class MessageMgr {
 
     private static final Log s_log = LogFactory.getLog(MessageMgr.class);
 
-    private Vector<String> s_messages = new Vector();
+    private Vector<String> s_messages = new Vector<>();
     public Vector<String> getMessages() {
       return s_messages;
     }
@@ -163,7 +165,7 @@ public class MessageMgr {
     // All of the tests below should have constants above, and vice versa.
     public void init() {
         s_message = null;
-        s_messages = new Vector();
+        s_messages = new Vector<>();
         s_errors = new Vector<>();
         flags = new HashMap<>();
 
@@ -369,11 +371,11 @@ public class MessageMgr {
       String getFlag() { return flag; }
       int count = 0;
 
-      final HashMap<String, TreeSet<String>> messageStringHash = new HashMap();
-      final HashMap<String, HashSet<String>> messageSetsHash = new HashMap();
-      final HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap();
+      final HashMap<String, TreeSet<String>> messageStringHash = new HashMap<>();
+      final HashMap<String, HashSet<String>> messageSetsHash = new HashMap<>();
+      final HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap<>();
 
-      final Vector<String> details = new Vector();
+      final Vector<String> details = new Vector<>();
 
       Test(String key, String type, String heading, String flag) {
         this(key, type, heading);
@@ -457,11 +459,11 @@ public class MessageMgr {
 		  //A.log("addToMessageStrings() key:" + key + " value:" + value);
 		  if (!messageStringHash.containsKey(key)) {
     	 	++addCount;
-			TreeSet<String> valueSet = new TreeSet();
+			TreeSet<String> valueSet = new TreeSet<>();
 			valueSet.add(value);
 			messageStringHash.put(key, valueSet);
 		  } else {
-			TreeSet<String> valueSet = (TreeSet) messageStringHash.get(key);
+			TreeSet<String> valueSet = messageStringHash.get(key);
 		    if (!valueSet.contains(value)) ++addCount;
 			valueSet.add(value);
 		  }
@@ -471,11 +473,11 @@ public class MessageMgr {
 
 		  if (!messageSetsHash.containsKey(key)) {
       	    ++addCount;
-			HashSet<String> valueSet = new HashSet();
+			HashSet<String> valueSet = new HashSet<>();
 			valueSet.add(value);
 			messageSetsHash.put(key, valueSet);
 		  } else {
-			HashSet<String> valueSet = (HashSet) messageSetsHash.get(key);
+			HashSet<String> valueSet = messageSetsHash.get(key);
             if (!valueSet.contains(value)) ++addCount;
 			valueSet.add(value);
 		  }        
@@ -492,20 +494,20 @@ public class MessageMgr {
 	
 		  if (!messageMapsHash.containsKey(key)) {
             ++addCount;
-			HashMap<String, HashSet<String>> valueMap = new HashMap();
-			HashSet<String> valueSet = new HashSet();
+			HashMap<String, HashSet<String>> valueMap = new HashMap<>();
+			HashSet<String> valueSet = new HashSet<>();
 			valueSet.add(value);
 			valueMap.put(key2, valueSet);
 			messageMapsHash.put(key, valueMap);
 		  } else {
-			HashMap<String, HashSet<String>> valueMap = (HashMap) messageMapsHash.get(key);
+			HashMap<String, HashSet<String>> valueMap = messageMapsHash.get(key);
 			if (!valueMap.containsKey(key2)) {
               ++addCount;
-			  HashSet<String> valueSet = new HashSet(); 
+			  HashSet<String> valueSet = new HashSet<>();
 			  valueSet.add(value);
 			  valueMap.put(key2, valueSet);  
 			} else {        
-			  HashSet<String> valueSet = (HashSet) valueMap.get(key2);
+			  HashSet<String> valueSet = valueMap.get(key2);
 			  if (valueSet == null) {
 				s_log.error("addToMessageMaps() key:" + key + " key2:" + key2 + " value:" + value);
 			  } else { 
@@ -618,7 +620,7 @@ public class MessageMgr {
             ArrayList<String> list = new ArrayList<>(keySet);
             Collections.sort(list);
             for (String key1 : list) {
-                HashMap<String, HashSet<String>> valueMap = (HashMap) messageMapsHash.get(key1);
+                HashMap<String, HashSet<String>> valueMap = messageMapsHash.get(key1);
                 ArrayList<String> list2 = new ArrayList<>(valueMap.keySet());
                 Collections.sort(list2);
 
@@ -629,7 +631,7 @@ public class MessageMgr {
                 String messages = "&nbsp;<b>" + getHeading() + detailLink + listSize + ": </b>";
                 for (String key2 : list2) {            
                     messages += "<br>&nbsp;&nbsp;<b>" + key2 + "</b>: ";
-                    HashSet<String> values = (HashSet) valueMap.get(key2);
+                    HashSet<String> values = valueMap.get(key2);
     				int i = 0;
                     for (String value : values) {
                        ++i;

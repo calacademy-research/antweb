@@ -116,14 +116,14 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 		return mapping.findForward(forwardString);
 	}
 
-    public ArrayList<ResultItem> getModifiedSet(String resultRank, ArrayList theResults, HttpServletRequest request) {
+    public ArrayList<ResultItem> getModifiedSet(String resultRank, ArrayList<ResultItem> theResults, HttpServletRequest request) {
         // Create a results set that only has results with images.
-		ArrayList newResults = new ArrayList();
+		ArrayList<ResultItem> newResults = new ArrayList<>();
         if (!resultRank.equals("species")) {  // we do a special thing in this case below.
-  		  Iterator iter = theResults.iterator();
- 		  ResultItem thisItem = null;
+  		  Iterator<ResultItem> iter = theResults.iterator();
+ 		  ResultItem thisItem;
 		  while (iter.hasNext()) {
-			thisItem = (ResultItem) iter.next();
+			thisItem = iter.next();
 			if (thisItem.getHasImages()) {
 				newResults.add(thisItem);
 			}

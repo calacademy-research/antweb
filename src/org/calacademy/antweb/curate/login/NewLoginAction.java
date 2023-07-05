@@ -50,7 +50,7 @@ public class NewLoginAction extends Action {
               request.getSession().setAttribute("thisLogin", login);
               request.setAttribute("isNewLogin", "true");
 
-              ArrayList groupList = new GroupDb(connection).getAllGroups();
+              ArrayList<Group> groupList = new GroupDb(connection).getAllGroups();
               request.getSession().setAttribute("antwebGroups", groupList);   
             }
           

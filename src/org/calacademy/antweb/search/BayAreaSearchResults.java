@@ -19,8 +19,8 @@ public final class BayAreaSearchResults
 			return;
 		}
 
-		ArrayList myResults = new ArrayList();
-		HashMap theNames = new HashMap();
+		ArrayList<ResultItem> myResults = new ArrayList<>();
+		HashMap<String, ResultItem> theNames = new HashMap<>();
 
 		String subfamily = null;
 		String genus = null;

@@ -15,13 +15,13 @@ public class OrphanedImages {
     private static final Log s_log = LogFactory.getLog(OrphanedImages.class);
 
 	Connection connection;
-	ArrayList orphans = new ArrayList();
+	ArrayList<String> orphans = new ArrayList<>();
 	
-	public ArrayList getOrphans() {
+	public ArrayList<String> getOrphans() {
 		return orphans;
 	}
 
-	public void setOrphans(ArrayList orphans) {
+	public void setOrphans(ArrayList<String> orphans) {
 		this.orphans = orphans;
 	}
 

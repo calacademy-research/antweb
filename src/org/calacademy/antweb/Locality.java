@@ -5,6 +5,7 @@
 package org.calacademy.antweb;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,7 +25,7 @@ public class Locality {
     private float decimalLatitude= 0.0F;
     private float decimalLongitude = 0.0F ;
     private String elevation = "";
-    private ArrayList collections = new ArrayList();
+    private ArrayList<Collection> collections = new ArrayList<>();
     private String other="";
 
     protected String localityNotes = "";
@@ -123,10 +124,10 @@ public class Locality {
       if (getLocalityCode() != null) return getLocalityCode();
       return getLocalityName();
     }
-    public ArrayList getCollections() {
+    public ArrayList<Collection> getCollections() {
         return collections;
     }
-    public void setCollections(ArrayList collections) {
+    public void setCollections(ArrayList<Collection> collections) {
         this.collections = collections;
     }
     

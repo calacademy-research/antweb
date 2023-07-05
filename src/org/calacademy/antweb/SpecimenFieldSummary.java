@@ -75,7 +75,7 @@ public class SpecimenFieldSummary {
 				while (rset.next()) {
 					fieldValue = formatter.capitalizeFirstLetter(rset.getString(2));
 					if (!results.containsKey(fieldValue)) {
-						results.put(fieldValue, new ArrayList());
+						results.put(fieldValue, new ArrayList<>());
 					}
 					((ArrayList) results.get(fieldValue)).add(rset.getString(1));
 				}

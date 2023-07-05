@@ -55,9 +55,9 @@ public final class SearchListAction extends Action {
         try {
           connection = getDataSource(request, "conPool").getConnection();
 
-  		  ArrayList theResults = results.getResults();
+  		  ArrayList<ResultItem> theResults = results.getResults();
 		  //ArrayList newResults = new ArrayList();
-		  Iterator iter = theResults.iterator();
+		  Iterator<ResultItem> iter = theResults.iterator();
 		  ResultItem thisItem = null;
 		  while (iter.hasNext()) {
 			thisItem = (ResultItem) iter.next();

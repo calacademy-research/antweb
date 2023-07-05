@@ -35,7 +35,7 @@ public final class OrphanAlternateAction extends Action {
         
         HttpSession session = request.getSession();
 
-        ArrayList<Taxon> orphanTaxonList = new ArrayList();
+        ArrayList<Taxon> orphanTaxonList = new ArrayList<>();
         Connection connection = null;
                         
         try {

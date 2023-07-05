@@ -144,8 +144,7 @@ public final class EditLoginAction extends Action {
             message = "Name must be valid";
         }
 
-        if (retypePassword == null || password == null
-            || !password.equals(retypePassword)) {
+        if (password == null || !password.equals(retypePassword)) {
             message = "Password and Re-type Password must match";
         }
 

@@ -3,7 +3,8 @@ package org.calacademy.antweb;
 import java.util.*;
 import java.io.Serializable;
 import java.sql.*;
- 
+import java.util.stream.Collectors;
+
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
@@ -34,8 +35,8 @@ public class Genus extends Subfamily implements Serializable {
     public void filterChildren(String[] goodList) {
         if (children != null) {
             Taxon thisChild;
-            List goodArrayList = Arrays.asList(goodList);
-            ArrayList newChildren = new ArrayList();
+            List<String> goodArrayList = Arrays.asList(goodList);
+            ArrayList<Taxon> newChildren = new ArrayList<>();
             for (Taxon child : children) {
                 thisChild = child;
                 if (goodArrayList.contains(thisChild.getFullName())) {
@@ -79,7 +80,7 @@ public class Genus extends Subfamily implements Serializable {
 
         long now = new GregorianCalendar().getTimeInMillis();
         
-        ArrayList theseChildren = new ArrayList();
+        ArrayList<Taxon> theseChildren = new ArrayList<>();
 
         Statement stmt = null;
         ResultSet rset = null;

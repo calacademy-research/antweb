@@ -14,7 +14,7 @@ public class SpecimenUploadLookup {
 
     private static final Log s_log = LogFactory.getLog(SpecimenUploadLookup.class);
     
-    private static final ArrayList specimenUploads = new ArrayList();
+    private static final ArrayList<String> specimenUploads = new ArrayList<>();
 
     public static void populate(Connection connection) throws SQLException {
         String theQuery = "select g.name name, count(s.code) count from specimen s left join ant_group g on s.access_group = g.id group by s.access_group";
@@ -34,7 +34,7 @@ public class SpecimenUploadLookup {
         }
     }
 
-    public static ArrayList getList(Connection connection) throws SQLException {
+    public static ArrayList<String> getList(Connection connection) throws SQLException {
       if (specimenUploads.size() == 0) {
         populate(connection);
       }    

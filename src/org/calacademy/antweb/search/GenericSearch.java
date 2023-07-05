@@ -94,10 +94,10 @@ public class GenericSearch implements Serializable {
             return currentList;
         }
 
-        ArrayList<ResultItem> theList = new ArrayList();
-        ArrayList<String> addedList = new ArrayList();
+        ArrayList<ResultItem> theList = new ArrayList<>();
+        ArrayList<String> addedList = new ArrayList<>();
 
-        Iterator currIter = currentList.iterator();
+        Iterator<ResultItem> currIter = currentList.iterator();
         ResultItem thisItem = null;
         String theQuery = "select taxon.taxon_name from taxon, proj_taxon where taxon.taxon_name in ";
         String theIn = "";
@@ -105,7 +105,7 @@ public class GenericSearch implements Serializable {
         String thisName = "";
 
         while (currIter.hasNext()) {
-            thisItem = (ResultItem) currIter.next();
+            thisItem = currIter.next();
             thisName = thisItem.getName();
             thisName = AntFormatter.escapeQuotes(thisName);
             if (!addedList.contains(thisName)) {
@@ -132,7 +132,7 @@ public class GenericSearch implements Serializable {
             rset = stmt.executeQuery(theQuery);
             DBUtil.profileQuery("filterByProject", startTime, theQuery);
 
-            ArrayList resArray = new ArrayList();
+            ArrayList<String> resArray = new ArrayList<>();
             while (rset.next()) {
                 resArray.add(rset.getString(1));
             }
@@ -166,12 +166,12 @@ public class GenericSearch implements Serializable {
             return currentList;
         }
 
-        Iterator currIter = currentList.iterator();
+        Iterator<SearchItem> currIter = currentList.iterator();
         SearchItem thisItem = null;
         String family, subfamily, genus, species, code = null;
         StringBuffer theQuery = new StringBuffer();
-        ArrayList where = new ArrayList();
-        HashMap specimens = new HashMap();
+        ArrayList<String> where = new ArrayList<>();
+        HashMap<String, String> specimens = new HashMap<>();
         String type = "";
 
         Date startTime = new Date();
@@ -251,13 +251,13 @@ public class GenericSearch implements Serializable {
         if (specimens.keySet().size() > 0) {
             theQuery.append("select code, type_status from specimen where code in ");
             StringBuffer specString = new StringBuffer();
-            Set specs = specimens.keySet();
-            for (Object spec : specs) {
+            Set<String> specs = specimens.keySet();
+            for (String spec : specs) {
                 if (specString.length() > 0) {
                     specString.append(",");
                 }
                 specString.append("'");
-                specString.append((String) spec);
+                specString.append(spec);
                 specString.append("'");
             }
             theQuery.append("(");
@@ -406,9 +406,9 @@ public class GenericSearch implements Serializable {
         String code = null;
         int imageCount = 0;
         String type = null;
-        ArrayList rank = null;
+        ArrayList<String> rank = null;
         String typeOriginalCombination = null;
-        Iterator rankIterator = null;
+        Iterator<String> rankIterator = null;
         //ResultItem item = null;
         String thisRank = null;
         boolean hasImages = false;

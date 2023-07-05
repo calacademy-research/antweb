@@ -225,7 +225,7 @@ public final class SearchAction extends DispatchAction {
             String resultSetModifier = resultSetSize + " specimens" + greaterThanModifier;
             session.setAttribute("resultSetModifier", resultSetModifier);          
           } else {                    
-            ArrayList taxonList = null;
+            ArrayList<ResultItem> taxonList = null;
             if (resultRank.equals(ResultRank.SUBFAMILY)) taxonList = results.getSubfamilyList(); 
             if (resultRank.equals(ResultRank.GENUS)) taxonList = results.getGenusList(); 
             if (resultRank.equals(ResultRank.SPECIES)) taxonList = results.getSpeciesList(); 

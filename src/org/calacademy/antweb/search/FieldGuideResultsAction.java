@@ -51,7 +51,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 			Taxon taxon = null;
 
 			String[] chosen = taxaForm.getChosen();
-			ArrayList<String> chosenList = new ArrayList(Arrays.asList(chosen));
+			ArrayList<String> chosenList = new ArrayList<>(Arrays.asList(chosen));
 			ArrayList<ResultItem> chosenResults = null;
 			ArrayList<Taxon> chosenTaxa = null;
 
@@ -137,7 +137,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
     // If we want all specimens for a taxa instead of all qualifiying specimens of a taxa:
     private ArrayList<Taxon> getChosenTaxa(HttpServletRequest request, ArrayList<ResultItem> chosenResults
             , String resultRank, String caste, Overview overview, Connection connection) throws SQLException, AntwebException {
-        ArrayList<Taxon> chosenTaxa = new ArrayList();
+        ArrayList<Taxon> chosenTaxa = new ArrayList<>();
 
         s_log.debug("getChosenTaxa() chosenResults:" + chosenResults.size() + " resultRank:" + resultRank + " overview:" + overview);
         String distinctTaxonName = "";
@@ -177,8 +177,8 @@ public final class FieldGuideResultsAction extends ResultsAction {
 
     protected ArrayList<ResultItem> getSpecimensForTaxaFromResults(ArrayList<String> chosenList
             , ArrayList<ResultItem> theTaxa, ArrayList<ResultItem> searchResults) {
-        ArrayList<ResultItem> theSpecimens = new ArrayList();
-        ResultItem thisItem = null;
+        ArrayList<ResultItem> theSpecimens = new ArrayList<>();
+        ResultItem thisItem;
         int thisChosen = 0;
   
         for (String chosenListNext : chosenList) {

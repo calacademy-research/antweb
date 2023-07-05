@@ -82,8 +82,8 @@ public class TeamMemberDb extends AntwebDb {
         return teamMember;
     }
     
-    public ArrayList getCurators() throws SQLException {          
-        ArrayList teamMemberList = new ArrayList();
+    public ArrayList<TeamMember> getCurators() throws SQLException {
+        ArrayList<TeamMember> teamMemberList = new ArrayList<>();
         String theQuery = "select id from team_member order by teamrank";
         Statement stmt = null;
         ResultSet rset = null;

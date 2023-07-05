@@ -35,7 +35,7 @@ public class UserAgentTracker extends Action {
     private static Map<String, Integer> agentsMap = new HashMap<>();
     private static int nullAgent = 0;
 
-    private static Map<String, Integer> hyperActiveAgentsMap = new HashMap<String, Integer>();
+    private static Map<String, Integer> hyperActiveAgentsMap = new HashMap<>();
 
     private static java.util.Date s_thisSec = null;
     private static String s_hyperActiveAgent = null;
@@ -72,7 +72,7 @@ public class UserAgentTracker extends Action {
     public static void refresh() {
         lastRefreshDate = new java.util.Date();
         agentsMap = new HashMap<>();
-        hyperActiveAgentsMap = new HashMap<String, Integer>();
+        hyperActiveAgentsMap = new HashMap<>();
         s_hyperActiveAgent = null;
     }
 
@@ -223,7 +223,7 @@ public class UserAgentTracker extends Action {
         // Every period of time, flush and start over.
         if (s_thisSec == null || AntwebUtil.secsSince(s_thisSec) > 1) {
           s_thisSec = new java.util.Date();
-          hyperActiveAgentsMap = new HashMap<String, Integer>();
+          hyperActiveAgentsMap = new HashMap<>();
         }
 
         if (target.contains(".do") && hyperActiveAgentsMap.containsKey(userAgent)) {

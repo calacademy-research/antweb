@@ -47,8 +47,8 @@ public final class DeleteImagesAction extends Action {
           return mapping.findForward("message");
         }
 
-        ArrayList results = searchResults.getResults();
-        ResultItem thisResult = null;
+        ArrayList<ResultItem> results = searchResults.getResults();
+        ResultItem thisResult;
 
         if (chosen != null) {
 
@@ -59,7 +59,7 @@ public final class DeleteImagesAction extends Action {
                 connection = DBUtil.getConnection(dataSource, dbMethodName);
 
                 for (String s : chosen) {
-                    thisResult = (ResultItem) results.get(Integer.parseInt(s));
+                    thisResult = results.get(Integer.parseInt(s));
 
                     ImageDb imageDb = new ImageDb(connection);
                     int shot = Integer.parseInt(thisResult.getShotNumber());

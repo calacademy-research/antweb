@@ -40,7 +40,7 @@ public final class EditHomePageAction extends Action {
 
 			connection.setAutoCommit(true);
 			String theQuery = "select * from homepage";
-			HashMap contents = new HashMap();
+			HashMap<String, String> contents = new HashMap<>();
 			Statement stmt = connection.createStatement();
 			ResultSet rset = stmt.executeQuery(theQuery);
 			while (rset.next()) {

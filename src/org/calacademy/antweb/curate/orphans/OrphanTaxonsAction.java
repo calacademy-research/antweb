@@ -36,8 +36,8 @@ public final class OrphanTaxonsAction extends Action {
         HttpSession session = request.getSession();
         Connection connection = null;
 
-        ArrayList taxonList = new ArrayList();
-        ArrayList uploadList = new ArrayList();
+        ArrayList<Taxon> taxonList = new ArrayList<>();
+        ArrayList<String> uploadList = new ArrayList<>();
         Statement stmt1 = null;  
         ResultSet rset1 = null;    
         try {

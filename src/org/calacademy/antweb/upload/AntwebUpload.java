@@ -68,7 +68,7 @@ public class AntwebUpload {
 
     public static int saveSpecimenCount = 0;
 
-    private final ArrayList<String> m_badRankTaxonList = new ArrayList();
+    private final ArrayList<String> m_badRankTaxonList = new ArrayList<>();
     public ArrayList<String> getBadRankTaxonList() {
         return m_badRankTaxonList;
     }
