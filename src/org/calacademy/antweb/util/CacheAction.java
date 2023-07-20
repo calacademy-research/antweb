@@ -209,7 +209,7 @@ public final class CacheAction extends Action {
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.getLongRequests()");
-            ArrayList longRequests = AntwebCacheMgr.getLongRequestDetails(connection, "all", orderBy);            
+            ArrayList<LongRequest> longRequests = AntwebCacheMgr.getLongRequestDetails(connection, "all", orderBy);
             request.setAttribute("longRequests", longRequests);
             success = true;
         } catch (SQLException e) {
@@ -227,7 +227,7 @@ public final class CacheAction extends Action {
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(dataSource, "CacheAction.getLongRequestDetails()");
-            ArrayList longRequests = AntwebCacheMgr.getLongRequestDetails(connection, url, orderBy);    
+            ArrayList<LongRequest> longRequests = AntwebCacheMgr.getLongRequestDetails(connection, url, orderBy);
             request.setAttribute("longRequests", longRequests);
             success = true;
         } catch (SQLException e) {

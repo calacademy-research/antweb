@@ -1,13 +1,13 @@
 package org.calacademy.antweb.util;
 
-import java.util.*;
-
-import java.text.*;
-
-import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.ServerDb;
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.Login;
+import org.calacademy.antweb.home.ServerDb;
+
+import java.text.NumberFormat;
+import java.util.HashMap;
+import java.util.Locale;
 
 public class A {
 
@@ -55,7 +55,7 @@ public class A {
       int nth = 1;
       // Apparently we have already logged this message.
       if (s_logiSet.containsKey(key)) {
-         nth = (Integer) s_logiSet.get(key);
+         nth = s_logiSet.get(key);
          ++nth;
          if (nth > i) return;  // done logging that!
          else s_logiSet.put(key, nth);  // increment it.

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+import org.calacademy.antweb.Login;
 import org.calacademy.antweb.util.*;
 
 /**
@@ -29,7 +30,7 @@ public class ViewLoginsAction extends Action {
 
         ActionForward a = Check.init("geolocale", request, mapping); if (a != null) return a;
 
-		ArrayList loginList = new ArrayList();
+		ArrayList<Login> loginList = new ArrayList<>();
 
         Connection connection = null;
         try {

@@ -60,7 +60,7 @@ public final class AppContextListener
 
 		// This manually deregisters JDBC driver, which prevents
 		// Tomcat 7 from complaining about memory leaks wrto this class
-		Enumeration drivers = DriverManager.getDrivers();
+		Enumeration<Driver> drivers = DriverManager.getDrivers();
 		while (drivers.hasMoreElements()) {
 			Driver driver = (Driver) drivers.nextElement();
 			try {

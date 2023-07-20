@@ -44,7 +44,7 @@ public final class MapResultsAction extends ResultsAction {
         ArrayList<String> chosenList = null;
 
         if (chosen != null) { 
-          chosenList = new ArrayList(Arrays.asList(chosen));
+          chosenList = new ArrayList<>(Arrays.asList(chosen));
         }
 
         String resultRank = taxaForm.getResultRank();
@@ -169,7 +169,7 @@ public final class MapResultsAction extends ResultsAction {
            */
         //A.log("getSpecimensCodesForTaxaFromResults()");
 
-		ArrayList<String> codeList = new ArrayList();
+		ArrayList<String> codeList = new ArrayList<>();
 		ArrayList<ResultItem> resultItems = searchResults;
         
         // Added to allow a null chosenList. Use all.

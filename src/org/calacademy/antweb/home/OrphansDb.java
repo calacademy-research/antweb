@@ -113,7 +113,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     
     // This gets the set of specimen upload taxons without specimens, without description edits.
     public ArrayList<Taxon> getOrphanSpeciesList() throws SQLException {
-            ArrayList orphanTaxonList = new ArrayList();
+            ArrayList<Taxon> orphanTaxonList = new ArrayList<>();
                         
             Statement stmt1 = getConnection().createStatement();
             String query = OrphansDb.getOrphanedSpeciesQuery();
@@ -138,7 +138,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     }
 
     public ArrayList<Taxon> getOrphanGeneraList() throws SQLException {
-		ArrayList orphanTaxonList = new ArrayList();
+		ArrayList<Taxon> orphanTaxonList = new ArrayList<>();
 					
 		Statement stmt1 = getConnection().createStatement();
 		String query = OrphansDb.getOrphanedGeneraQuery();
@@ -185,7 +185,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     public ArrayList<Taxon> getDupedGeneraList() throws SQLException {
        /* This will find all of the genus names that are listed in multiple subfamilies.
           This is now blocked during upload, so should not happen.  */
-		ArrayList orphanTaxonList = new ArrayList();                        
+		ArrayList<Taxon> orphanTaxonList = new ArrayList<>();
 		Statement stmt1 = getConnection().createStatement();
 		String query = "select genus, count(distinct subfamily)from taxon where genus != '' " 
 			+ " group by genus having count(distinct subfamily) > 1 " 
@@ -224,7 +224,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     }
 
     public ArrayList<Taxon> getOrphanSubfamiliesList() throws SQLException {
-		ArrayList orphanTaxonList = new ArrayList();
+		ArrayList<Taxon> orphanTaxonList = new ArrayList<>();
 
 		Statement stmt = null;
 		ResultSet rset = null;
@@ -262,12 +262,12 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     }
     
     public ArrayList<Taxon> getSpecimenOrphanDescEditTaxons() throws SQLException {
-        ArrayList<Taxon> list = new ArrayList();
+        ArrayList<Taxon> list = new ArrayList<>();
         
         // Do not work on Specimen Description_edit records.  (code is null).
         
 		// This gets the set of Description edits for specimen upload taxons without specimens.
-		ArrayList<Taxon> orphanTaxonWithDescEditList = new ArrayList();
+		ArrayList<Taxon> orphanTaxonWithDescEditList = new ArrayList<>();
 		orphanTaxonWithDescEditList = getOrphanTaxonWithDescEditList();
 	    s_log.debug("execute() orphanTaxonWithDescEditList:" + orphanTaxonWithDescEditList.size());
 		for (Taxon taxon : orphanTaxonWithDescEditList) {
@@ -298,7 +298,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     }
         
     public ArrayList<Taxon> getTaxonOrphanDescEditTaxons() throws SQLException {
-        ArrayList<Taxon> list = new ArrayList();
+        ArrayList<Taxon> list = new ArrayList<>();
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -336,7 +336,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     
     // This gets the set of specimen upload taxons without specimens, with description edits.
     public ArrayList<Taxon> getOrphanTaxonWithDescEditList() throws SQLException {
-	  ArrayList orphanTaxonWithDescEditList = new ArrayList();
+	  ArrayList<Taxon> orphanTaxonWithDescEditList = new ArrayList<>();
 
 	  Statement stmt = null;
 	  ResultSet rset = null;
@@ -544,20 +544,21 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
             + " and parent_taxon_name not like '%(formicidae)%'"
             + " order by source";
         return orphanAlternatesQuery;
-    }    
+    }
+
     public ArrayList<Taxon> getOrphanAlternatesList() throws SQLException {
-            ArrayList orphanTaxonList = new ArrayList();
-                        
-          Statement stmt = null;
-          ResultSet rset = null;
-          try {
+        ArrayList<Taxon> orphanTaxonList = new ArrayList<>();
+
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
             String query = OrphansDb.getOrphanAlternatesQuery();
-            stmt = DBUtil.getStatement(getConnection(), "OrphansDb.getOrphanAlternatesList()");            
+            stmt = DBUtil.getStatement(getConnection(), "OrphansDb.getOrphanAlternatesList()");
             rset = stmt.executeQuery(query);
             s_log.debug("OrphansDb.getOrphanAlternatesQuery() query:" + query);
             while (rset.next()) {
                 String taxonName = rset.getString("taxon_name");
-                 
+
                 //s_log.warn("orphan() q:" + query);
                 Taxon taxon = new TaxonDb(getConnection()).getTaxon(taxonName);
                 orphanTaxonList.add(taxon);

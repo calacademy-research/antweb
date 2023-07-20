@@ -199,7 +199,7 @@ public final class Rank implements Serializable {
     // Probematic.  Name is going away instead of taxonName.  Logic must change.
     public static ArrayList<String> getRankList(String name, String subfamily, String genus, String species, String subspecies) {
     // This is used in the search mechanism 
-        ArrayList rank = new ArrayList();
+        ArrayList<String> rank = new ArrayList<>();
 /*
         if ((family != null) && (family.indexOf(name) != -1)) {
             rank.add("family");

@@ -213,7 +213,7 @@ public class SpeciesListUpload extends AntwebUpload {
           new BioregionTaxonDb(getConnection()).deleteSource("antcat");
         }
 
-        ArrayList preStats = null;
+        ArrayList<String> preStats = null;
         try {
           if (singleUpload)
             preStats = ProjTaxonDb.getProjectStatistics(project, getConnection());

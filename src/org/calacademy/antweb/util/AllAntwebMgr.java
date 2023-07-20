@@ -37,7 +37,6 @@ public class AllAntwebMgr {
     }
 
     public static ProjTaxon get(String taxonName) {
-      ProjTaxon projTaxon = (ProjTaxon) s_allAntwebMap.get(taxonName);
-      return projTaxon;
+        return s_allAntwebMap.get(taxonName);
     }
 }

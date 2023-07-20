@@ -56,7 +56,7 @@ public final class AntwebInviteAction extends Action {
             login = new LoginDb(connection).getLogin(id);
             session.setAttribute("thisLogin", login);
 
-            ArrayList groupList = new GroupDb(connection).getAllGroups();
+            ArrayList<Group> groupList = new GroupDb(connection).getAllGroups();
             request.getSession().setAttribute("antwebGroups", groupList);  
 
             if (!isInvitee) return mapping.findForward("manageLogin");   

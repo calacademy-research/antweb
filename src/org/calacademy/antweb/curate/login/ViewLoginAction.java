@@ -55,7 +55,7 @@ public final class ViewLoginAction extends Action {
             session.setAttribute("thisLogin", login);
 
             // This fetches the full list for select box population
-            ArrayList groupList = new GroupDb(connection).getAllGroups();
+            ArrayList<Group> groupList = new GroupDb(connection).getAllGroups();
             request.getSession().setAttribute("antwebGroups", groupList);             
 
         } catch (SQLException e) {

@@ -35,13 +35,13 @@ public final class RecentImageSearchResults extends GenericSearchResults
       if (project == null) {
         project = "";
       }
-      ArrayList<ResultItem> myResults = new ArrayList();
-      ResultItem resultItem = null;
+      ArrayList<ResultItem> myResults = new ArrayList<>();
+      ResultItem resultItem;
 
         //for (SearchItem searchItem : rset) {
-        for (Object o : rset) {
+        for (ResultItem o : rset) {
             //System.out.println("adding to result item " + thisItem.getShotType());
-            resultItem = (ResultItem) o;
+            resultItem = o;
         /*
         ResultItem resultItem = makeNewItem(
             resultItem.getCode(), resultItem.getName(), resultItem.getShotType()

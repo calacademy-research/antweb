@@ -1,14 +1,19 @@
-package org.calacademy.antweb; 
+package org.calacademy.antweb;
 
-import java.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.geolocale.LocalityOverview;
+import org.calacademy.antweb.util.AntwebDebug;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.CompareUtil;
+import org.calacademy.antweb.util.DBUtil;
+
 import java.io.Serializable;
 import java.sql.*;
-
-import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;
-
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.geolocale.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Hashtable;
+import java.util.Vector;
 
 /** Class Species keeps track of the information about a specific taxon */
 public class Species extends Genus implements Serializable {
@@ -232,7 +237,7 @@ these other _cf1 etc.
     public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus) throws SQLException {
       // This method does not seem to use project in it's criteria?!  SetChildrenLocalized below does...
   
-        ArrayList theseChildren = new ArrayList();
+        ArrayList<Specimen> theseChildren = new ArrayList<>();
         String overviewCriteria = "";
         //A.log("setChildren() global:" + global);
         if (!global) overviewCriteria = overview.getOverviewCriteria();
@@ -254,7 +259,7 @@ these other _cf1 etc.
         try {
           stmt = DBUtil.getStatement(connection, "setChildren()");
           rset = stmt.executeQuery(query);
-          Specimen child = null;
+          Specimen child;
 
           //A.log("Species.setChildren(5) overview:" + overview + " getChildImages:" + getChildImages + " query:" + query);
 
@@ -302,7 +307,7 @@ these other _cf1 etc.
     /* Called by FieldGuideAction.execute() in the case of species.
        ??? Used to be, this method uses project to figure the locality criteria does not use project in it's criteria.
      */      
-        ArrayList theseChildren = new ArrayList();
+        ArrayList<Specimen> theseChildren = new ArrayList<>();
         String query =
                 "select distinct specimen.code from taxon, specimen" 
                     + " where taxon.taxon_name = specimen.taxon_name" 

@@ -68,7 +68,7 @@ public final class RecentImageSearchAction extends Action {
             stmt = connection.createStatement();
             rset = stmt.executeQuery(theQuery);
 
-            ArrayList groupsArray = new ArrayList();
+            ArrayList<String> groupsArray = new ArrayList<>();
 
             while (rset.next()) {
                 //s_log.warn("Rset:" + rset.getString(1));

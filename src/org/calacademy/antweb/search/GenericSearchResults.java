@@ -404,7 +404,7 @@ public class GenericSearchResults implements Serializable {
 		Hashtable<String, Boolean> imageCheck = new Hashtable<>();
 		Hashtable<String, Boolean> typeCheck = new Hashtable<>();
 
-		ArrayList rank;
+		ArrayList<String> rank;
 		String thisRank;
 		String pageParams;
 		boolean hasImages = false;
@@ -416,7 +416,7 @@ public class GenericSearchResults implements Serializable {
 		String subspecies = null;
 		String code;
 		String type;
-		Iterator rankIterator;
+		Iterator<String> rankIterator;
 		ResultItem item;
 		String typeOriginalCombination = null;
 		String fullName;
@@ -444,7 +444,7 @@ public class GenericSearchResults implements Serializable {
 				
 		while (resIter.hasNext()) {
 			thisItem = (SearchItem) resIter.next();
-			rank = new ArrayList();
+			rank = new ArrayList<>();
 			thisRank = null;
 			pageParams = null;
 			hasImages = false;
@@ -687,7 +687,7 @@ public class GenericSearchResults implements Serializable {
             return null;
         }
             
-        ArrayList<String> specimens = new ArrayList();
+        ArrayList<String> specimens = new ArrayList<>();
         Iterator iter = rset.iterator();
         //Utility util = new Utility();
         SearchItem thisResult;

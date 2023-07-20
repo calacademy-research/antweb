@@ -21,8 +21,8 @@ public class UploadDetails extends OperationDetails {
 
     private boolean runStatistics = false;
 
-    public ArrayList preUploadStatistics;
-    public ArrayList postUploadStatistics;
+    public ArrayList<String> preUploadStatistics;
+    public ArrayList<String> postUploadStatistics;
 
     int countInsertedSpecies = 0;
     int countUpdatedSpecies = 0;
@@ -355,18 +355,18 @@ public class UploadDetails extends OperationDetails {
       return this.runStatistics; 
     }
     
-    public void setPreUploadStatistics(ArrayList stats) {
+    public void setPreUploadStatistics(ArrayList<String> stats) {
       s_log.debug("preUploadStats:" + stats);
       preUploadStatistics = stats;
     }
-    public ArrayList getPreUploadStatistics() {
+    public ArrayList<String> getPreUploadStatistics() {
       return preUploadStatistics;
     }
-    public void setPostUploadStatistics(ArrayList stats) {
+    public void setPostUploadStatistics(ArrayList<String> stats) {
       s_log.debug("postUploadStats:" + stats);
       postUploadStatistics = stats;
     }
-    public ArrayList getPostUploadStatistics() {
+    public ArrayList<String> getPostUploadStatistics() {
       return postUploadStatistics;
     }
     

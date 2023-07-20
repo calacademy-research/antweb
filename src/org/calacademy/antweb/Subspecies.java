@@ -1,14 +1,17 @@
-package org.calacademy.antweb; 
+package org.calacademy.antweb;
 
-import java.util.*;
-import java.io.Serializable;
-import java.sql.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.geolocale.LocalityOverview;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.DBUtil;
 
-import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.geolocale.*;
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 
 public final class Subspecies extends Species implements Serializable {
 
@@ -69,7 +72,7 @@ public final class Subspecies extends Species implements Serializable {
     public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, String subgenus) throws SQLException {
       // This method does not seem to use project in it's criteria?!  SetChildrenLocalized below does...
 
-        ArrayList theseChildren = new ArrayList();      
+        ArrayList<Taxon> theseChildren = new ArrayList<>();
 
         String theQuery =
            "select distinct specimen.code from taxon, specimen " 
@@ -132,7 +135,7 @@ public final class Subspecies extends Species implements Serializable {
        This method uses project to figure the locality criteria does not seem to use project in it's criteria.
      */
         s_log.info("setting localized children");
-        ArrayList theseChildren = new ArrayList();
+        ArrayList<Specimen> theseChildren = new ArrayList<>();
 	
 		// This one is differerent from setChildren in that it will pull back subspecies as well.  Correct?
 		String query =

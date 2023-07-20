@@ -32,7 +32,7 @@ public final class OrphanDescEditsAction extends Action {
 
         ActionForward c = Check.login(request, mapping); if (c != null) return c;   
         
-        ArrayList<Taxon> list = new ArrayList();
+        ArrayList<Taxon> list = new ArrayList<>();
 
         Connection connection = null;
                 

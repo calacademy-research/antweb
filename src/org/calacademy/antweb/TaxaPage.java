@@ -83,7 +83,7 @@ public class TaxaPage implements Serializable {
 		}
 	
         long now = new java.util.Date().getTime();
-	    ArrayList<Taxon> theseChildren = new ArrayList();
+	    ArrayList<Taxon> theseChildren = new ArrayList<>();
 
         isWithSpecimen = withSpecimen;
 

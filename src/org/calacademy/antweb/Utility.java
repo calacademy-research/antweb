@@ -10,7 +10,6 @@ import org.calacademy.antweb.util.*;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.Normalizer;
@@ -314,16 +313,16 @@ public class Utility implements Serializable {
        return isDisplayEmpty || Utility.notBlank(theTerm);
    }
    
-   public static String andify(ArrayList theList) {
+   public static String andify(ArrayList<String> theList) {
            return Utility.andify(theList, " and ");
    }
     
-   public static String andify(ArrayList theList, String theJoin) {
+   public static String andify(ArrayList<String> theList, String theJoin) {
       StringBuffer theString = new StringBuffer();
-      Iterator iter = theList.iterator();
+      Iterator<String> iter = theList.iterator();
 
       while (iter.hasNext()) {
-          theString.append((String) iter.next());
+          theString.append(iter.next());
           if (iter.hasNext()) {
               theString.append(theJoin);
           }

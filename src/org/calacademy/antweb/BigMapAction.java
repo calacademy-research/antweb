@@ -202,15 +202,13 @@ public final class BigMapAction extends Action {
            
         if (specimenCode != null && !"".equals(specimenCode)) {
           Locality locality = null;
-  		  if (specimenCode != null) {
-  		    boolean exists = new SpecimenDb(connection).exists(specimenCode);
-              A.log("getMap() SpecimenCode:" + specimenCode + " exists:" + exists);
-		    if (!exists) return null;
-		    ArrayList arrayList = new ArrayList();
-		    arrayList.add(specimenCode);
-		    thisMap = new Map(arrayList, connection);	    
-	 	  }
-        } else 
+            boolean exists = new SpecimenDb(connection).exists(specimenCode);
+            A.log("getMap() SpecimenCode:" + specimenCode + " exists:" + exists);
+            if (!exists) return null;
+            ArrayList<String> arrayList = new ArrayList<>();
+            arrayList.add(specimenCode);
+            thisMap = new Map(arrayList, connection);
+        } else
         
         if (geolocaleId > 0) {
           ObjectMapDb objectMapDb = new ObjectMapDb(connection);

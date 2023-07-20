@@ -20,7 +20,7 @@ public class Search extends GenericSearch implements Serializable {
         String species = null;
 
         if (name == null || name.equals("")) {
-            return new ArrayList();
+            return new ArrayList<>();
         }
 
         // if this query has more than one term assume the first is the genus and 

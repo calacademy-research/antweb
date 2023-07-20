@@ -60,7 +60,7 @@ public class Subfamily extends Family implements Serializable {
 
         // We only use the subgenus clause when rank is genus.
 
-        ArrayList theseChildren = new ArrayList();
+        ArrayList<Taxon> theseChildren = new ArrayList<>();
         String query;
         Statement stmt = null;
         ResultSet rset = null;

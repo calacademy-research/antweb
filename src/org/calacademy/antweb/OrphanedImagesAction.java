@@ -29,7 +29,7 @@ public final class OrphanedImagesAction extends Action {
 		HttpSession session = request.getSession();
 
 		OrphanedImages orphans = new OrphanedImages();
-		ArrayList searchResults = null;
+		ArrayList<String> searchResults = null;
 		
 		Connection connection = null;
 		String dbMethodName = DBUtil.getDbMethodName("OrphanedImagesAction.execute()");

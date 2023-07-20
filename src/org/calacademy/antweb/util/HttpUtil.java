@@ -18,10 +18,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.*;
 
 import org.calacademy.antweb.Utility;
-import org.calacademy.antweb.util.AntwebUtil;
 
 import javax.servlet.jsp.JspWriter;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -603,7 +601,7 @@ public abstract class HttpUtil {
             throws SocketTimeoutException {
         // This gets used by UgSessionRequestFilter to block SQLInjection attacks.
         String paramString = "";
-        Enumeration names = request.getParameterNames();
+        Enumeration<String> names = request.getParameterNames();
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
             String[] values = request.getParameterValues(name);
@@ -848,11 +846,11 @@ public abstract class HttpUtil {
 
     public static String getRequestHeaders(HttpServletRequest request) {
         String headers = "";
-        Enumeration parms = request.getHeaderNames();
+        Enumeration<String> parms = request.getHeaderNames();
         String paramName;
         String paramVal;
         while (parms.hasMoreElements()) {
-            paramName = (String) parms.nextElement();
+            paramName = parms.nextElement();
             paramVal = request.getHeader(paramName);
             headers += (" " + paramName + ":" + paramVal);
         }

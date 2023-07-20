@@ -21,7 +21,7 @@ public class TeamMemberAction extends Action {
 
         TeamMemberDb teamMemberDb = null;
 		Connection connection = null;
-		ArrayList curatorList = new ArrayList();
+		ArrayList<TeamMember> curatorList = new ArrayList<>();
         try {
           connection = getDataSource(request, "conPool").getConnection();
           teamMemberDb = new TeamMemberDb(connection);

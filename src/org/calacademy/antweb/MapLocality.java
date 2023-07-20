@@ -21,8 +21,8 @@ public class MapLocality {
     private static final Log s_log = LogFactory.getLog(MapLocality.class);
 	
 	protected String staticMapParams;
-	protected ArrayList points = new ArrayList();
-	protected ArrayList mapLocalities = new ArrayList();
+	protected ArrayList<Coordinate> points = new ArrayList<>();
+	protected ArrayList<Locality> mapLocalities = new ArrayList<>();
 
 	protected String grain = "";
 	protected String searchTerm = "";
@@ -70,7 +70,7 @@ public class MapLocality {
 	
 	public void setStaticMapParams(Taxon taxon, String project) {
 
-		ArrayList terms = new ArrayList();
+		ArrayList<String> terms = new ArrayList<>();
 		
 		this.staticMapParams = "";
 		
@@ -104,10 +104,10 @@ public class MapLocality {
 		return mapRoot;
 	}
 */
-	public ArrayList getPoints() {
+	public ArrayList<Coordinate> getPoints() {
 		return points;
 	}
-	public void setPoints(ArrayList points) {
+	public void setPoints(ArrayList<Coordinate> points) {
 		this.points = points;
 	}
 	
@@ -207,10 +207,10 @@ public class MapLocality {
 			} 
 	}
 	
-	public void setPoints(ArrayList localityCodes, Connection connection) {
-		this.points = new ArrayList();
+	public void setPoints(ArrayList<String> localityCodes, Connection connection) {
+		this.points = new ArrayList<>();
 		if (localityCodes.size() > 0) {
-			Iterator iter = localityCodes.iterator();
+			Iterator<String> iter = localityCodes.iterator();
 			
 			String theQuery = "select decimal_latitude, decimal_longitude, elevation, localitycode, localityname from specimen where ";
 			theQuery += " localitycode in ";
@@ -220,7 +220,7 @@ public class MapLocality {
 			
 			theQuery += "(";
 			while (iter.hasNext()) {
-				thisSpec = (String) iter.next();
+				thisSpec = iter.next();
 				theQuery += "'" + thisSpec + "'";
 				if (iter.hasNext()) {
 					theQuery += ",";
@@ -328,18 +328,18 @@ public class MapLocality {
 		setGoogleMapFunction(googleString);
 	}
 	
-	public String getJavaScriptArray(ArrayList points, String coord) {
+	public String getJavaScriptArray(ArrayList<Coordinate> points, String coord) {
 		
 		StringBuffer theArrayString = new StringBuffer();
 		boolean foundPoint = false;
 		theArrayString.append("new Array(");
 		
-		Iterator theIter = points.iterator();
+		Iterator<Coordinate> theIter = points.iterator();
 		Coordinate thisCoord;
 		float thisFloat;
 		
 		while (theIter.hasNext()) {
-			thisCoord = (Coordinate) theIter.next();
+			thisCoord = theIter.next();
 			if (coord.equals("lat")) {	
 				thisFloat = thisCoord.getLat();
 			} else {
@@ -365,13 +365,13 @@ public class MapLocality {
 		}
 	}
 	
-	public String getJavaScriptLocalityArray(ArrayList localities, String field) {
+	public String getJavaScriptLocalityArray(ArrayList<Locality> localities, String field) {
 		
 		StringBuffer theArrayString = new StringBuffer();
 		boolean foundPoint = false;
 		theArrayString.append("new Array(");
 		
-		Iterator theIter = localities.iterator();
+		Iterator<Locality> theIter = localities.iterator();
 		Locality thisLocality;
 		String value="";
 		Formatter format = new Formatter();
@@ -422,13 +422,13 @@ public class MapLocality {
 		this.mapName = mapName;
 	}
 		
-	public ArrayList getMapLocalities() {
+	public ArrayList<Locality> getMapLocalities() {
 		return mapLocalities;
 	}
 	/**
 	 * The mapSpecimens to set.
 	 */
-	public void setMapSpecimens(ArrayList mapLocalities) {
+	public void setMapSpecimens(ArrayList<Locality> mapLocalities) {
 		this.mapLocalities = mapLocalities;
 	}
 

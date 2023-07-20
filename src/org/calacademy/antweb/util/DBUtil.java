@@ -101,8 +101,8 @@ Or, if there are stmts and/or rsets...
     }
 
     private static final Log s_log = LogFactory.getLog(DBUtil.class);
-    private static final ConcurrentHashMap<NewProxyConnection, String> connectionMap = new ConcurrentHashMap<NewProxyConnection, String>();
-    private static final ConcurrentHashMap<NewProxyConnection, DbRequest> connectionRequestMap = new ConcurrentHashMap<NewProxyConnection, DbRequest>();
+    private static final ConcurrentHashMap<NewProxyConnection, String> connectionMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<NewProxyConnection, DbRequest> connectionRequestMap = new ConcurrentHashMap<>();
 
     // Called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
     public static DataSource getDataSource() {

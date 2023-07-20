@@ -40,7 +40,7 @@ public abstract class BadActorMgr {
 
     public static boolean isBadActor(String ip) {
         int BAD_ACTOR_LIMIT = 10;
-        Integer count = (Integer) badActorMap.get(ip);
+        Integer count = badActorMap.get(ip);
         return count != null && count > BAD_ACTOR_LIMIT;
     }
 

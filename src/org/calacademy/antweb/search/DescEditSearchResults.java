@@ -37,7 +37,7 @@ public final class DescEditSearchResults extends GenericSearchResults
         project = "";
       }
 
-      ArrayList myResults = new ArrayList();
+      ArrayList<ResultItem> myResults = new ArrayList<>();
 
      // try {
         

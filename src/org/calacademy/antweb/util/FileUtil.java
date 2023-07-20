@@ -16,8 +16,8 @@ public class FileUtil {
 
   private static final Log s_log = LogFactory.getLog(FileUtil.class);
 
-  public ArrayList grep(String inputPattern, UploadFile uploadFile) {
-    ArrayList result = new ArrayList();
+  public ArrayList<String> grep(String inputPattern, UploadFile uploadFile) {
+    ArrayList<String> result = new ArrayList<>();
     Pattern pattern = Pattern.compile(inputPattern, Pattern.CASE_INSENSITIVE);
     Matcher matcher = pattern.matcher("");
 
