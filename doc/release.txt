@@ -1,3 +1,7 @@
+Release 8.92
+  Refuse requests with 0xc
+  Log in nonLegitRequest.log
+
 Release 8.91.2
   Field Guide set to request scope.
 

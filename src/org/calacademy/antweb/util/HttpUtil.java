@@ -255,7 +255,10 @@ public abstract class HttpUtil {
         if (queryString.contains("./")) reasonCode = 5;
         if (queryString.contains("../")) reasonCode = 6;
         if (queryString.contains("%2e")) reasonCode = 7;
-        //if (queryString.contains("=")) reasonCode = 8;
+        if (queryString.contains("0xc")) {
+            LogMgr.appendWebLog("nonLegitRequest.log", queryString);
+            reasonCode = 8;
+        }
 
         if (reasonCode > 0) {
             s_log.info("isLegitRequest() Invalid query string reasonCode:" + reasonCode + " RequestInfo:" + HttpUtil.getRequestInfo(request));
