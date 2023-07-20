@@ -19,7 +19,7 @@ docker-compose up --build
 # To compile
 docker-compose exec antweb ant deploy
 
-# To restart tomcat (without rebuilding docker)
+# To restart tomcat (without rebuilding docker). Not to be used on live site.
 docker-compose restart antweb
 
 

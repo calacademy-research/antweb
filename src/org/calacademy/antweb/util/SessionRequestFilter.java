@@ -44,7 +44,9 @@ public class SessionRequestFilter implements Filter {
       //A.log("doFilter()");
       ServletContext ctx = request.getSession().getServletContext();
 
+      DataSource ds = null;
       Connection connection = null;
+
       String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
 
       try {
@@ -78,7 +80,11 @@ public class SessionRequestFilter implements Filter {
               afterPopulated = true;
           }
 
-          DataSource ds = DBUtil.getDataSource();
+          // These have been commented out, disabling serverDB debug functionality and UserAgentTracking,
+          // pending verification that the use of DBUtil.getDataSource without connection pool is safe.
+
+
+          ds = DBUtilSimple.getDataSource();
           connection = ds.getConnection();
 
           // Populate ServerDb Debug flag.
@@ -88,15 +94,19 @@ public class SessionRequestFilter implements Filter {
               // This will happen only every s_period.
               s_periodDate = new Date();
               String debug = ServerDb.getDebug(connection);
-              //A.log("doFilter() period s_periodDate:" + s_periodDate + " debug:" + debug);
+              A.log("doFilter() period s_periodDate:" + s_periodDate + " debug:" + debug);
           }
 
           UserAgentTracker.track(request, connection);
+
+
 
           chain.doFilter(request, response);
 
           //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
 
+      } catch (java.beans.PropertyVetoException e) {
+              s_log.error("doFilter() e:" + e);
       } catch (Exception e) {
           String note = ""; // Usually do nothing, but in cases...
           int postActionPeriodPos = 0;
@@ -145,7 +155,7 @@ public class SessionRequestFilter implements Filter {
                 if (connection != null)
                     connection.close();
               } catch (SQLException e2) {
-                s_log.warn("track() failed to close connection:" + connection + " e:" + e2);
+                s_log.warn("doFilter() failed to close connection:" + connection + " e:" + e2);
               }
 
       }
@@ -182,9 +192,9 @@ public class SessionRequestFilter implements Filter {
         DataSource ds = null;
         Connection connection = null;
         try {
-		  ds = DBUtil.getDataSource();
+		  ds = DBUtilSimple.getDataSource();
 		  connection = ds.getConnection(); 
-		  AntwebMgr.populate(connection, true, true); // Trusted to close the connection
+		  AntwebMgr.populate(connection, true, true);
 
           // Should be in an set of server init checks.
           (new UserAgentDb(connection)).flagWhiteList();
@@ -192,9 +202,16 @@ public class SessionRequestFilter implements Filter {
           LogMgr.backupSrf();
 
         } catch (SQLException e) {
-          s_log.error("init() e:" + e + " datasource:" + ds + " connection:" + connection);
+            s_log.error("init() e:" + e + " datasource:" + ds + " connection:" + connection);
+        } catch (java.beans.PropertyVetoException e) {
+            s_log.error("init() e:" + e);
         } finally {
-          // Could we check on connections?
+
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                s_log.error("init() e:" + e);
+            }
         }
 
         long freeSpace = AntwebSystem.getFreeSpace();        

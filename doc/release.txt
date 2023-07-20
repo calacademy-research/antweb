@@ -1,3 +1,7 @@
+Release 8.93
+  DBUtil.getDataSource replaced with DBUtilSimple.getDataSource
+  Download Species List Range Data feature suspended.
+
 Release 8.92
   Refuse requests with 0xc
   Log in nonLegitRequest.log

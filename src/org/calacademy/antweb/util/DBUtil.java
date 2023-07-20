@@ -104,7 +104,8 @@ Or, if there are stmts and/or rsets...
     private static final ConcurrentHashMap<NewProxyConnection, String> connectionMap = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<NewProxyConnection, DbRequest> connectionRequestMap = new ConcurrentHashMap<>();
 
-    // Called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
+/*
+    // Was called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
     public static DataSource getDataSource() {
 		MysqlDataSource ds = null;
 		String jdbcUrl = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&characterSetResults=utf8&connectionCollation=utf8_general_ci";
@@ -114,6 +115,7 @@ Or, if there are stmts and/or rsets...
 		ds.setPassword(AntwebProps.getDbPwd());
 		return ds;
     }
+*/
 
     public static Connection Xopen(DataSource dataSource, String name) throws SQLException {
        // getConnection() is the preferred call.

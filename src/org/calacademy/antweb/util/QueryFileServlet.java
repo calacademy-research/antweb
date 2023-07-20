@@ -49,11 +49,13 @@ public class QueryFileServlet extends HttpServlet {
             NamedQuery namedQuery = null;
             Connection connection = null;
             try {
-                DataSource ds = DBUtil.getDataSource();
+                DataSource ds = DBUtilSimple.getDataSource();
                 connection = ds.getConnection();
 
                 namedQuery = QueryManager.runQueryWithParam(name, param, connection);
             } catch (SQLException e) {
+                s_log.error("init() e:" + e);
+            } catch (java.beans.PropertyVetoException e) {
                 s_log.error("init() e:" + e);
             } finally {
                 try {
