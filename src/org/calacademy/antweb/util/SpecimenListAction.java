@@ -9,6 +9,7 @@ import javax.servlet.http.*;
 import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
+
 import java.sql.*;
 import java.util.Date;
 
@@ -16,11 +17,11 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.AntwebUtil;
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public final class SpecimenListAction extends Action {
-/* This class returns a link to the specimen authority file generate for any given taxon. */
+    /* This class returns a link to the specimen authority file generate for any given taxon. */
 
 
 /*
@@ -33,22 +34,23 @@ public final class SpecimenListAction extends Action {
     private static int specimenCount = 0;
 
     public ActionForward execute(
-        ActionMapping mapping, ActionForm form,
-        HttpServletRequest request, HttpServletResponse response)
-        throws IOException, ServletException {
+            ActionMapping mapping, ActionForm form,
+            HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
 
-        ActionForward a = Check.loginValid(request, mapping); if (a != null) return a; 
+        ActionForward a = Check.loginValid(request, mapping);
+        if (a != null) return a;
         Login accessLogin = LoginMgr.getAccessLogin(request);
-        
+
         s_log.debug("execute() request:" + HttpUtil.getTarget(request));
-        
+
         Date startTime = new Date();
-        
+
         specimenCount = 0;
- 
-        HttpSession session = request.getSession();        
+
+        HttpSession session = request.getSession();
         DynaActionForm df = (DynaActionForm) form;
-        
+
         String rightClickSave = (String) df.get("action");
 
         Overview overview = null;
@@ -57,19 +59,19 @@ public final class SpecimenListAction extends Action {
         } catch (AntwebException e) {
             return OverviewMgr.returnMessage(request, mapping, e);
         }
-        
+
         String taxonName = (String) df.get("taxonName");
         if (taxonName != null) {
 
-          String dir = "/web/data/specimenData";
-          new Utility().createDirectory(dir);
-          String fileName = "/" + overview.getName() + "-" + taxonName + ".txt";
-          String fullPath = AntwebProps.getDocRoot() + dir + fileName;   
+            String dir = "/web/data/specimenData";
+            new Utility().createDirectory(dir);
+            String fileName = "/" + overview.getName() + "-" + taxonName + ".txt";
+            String fullPath = AntwebProps.getDocRoot() + dir + fileName;
 
-          String url = AntwebProps.getDomainApp() + dir + fileName;
-          String dataLink = "&middot; <a href=\"" + url + "\" target=\"new\">Tab-delimited data</a>";
-          s_log.debug("execute() taxon:" + taxonName + " specimenCount:" + specimenCount + " rightClickSave:" + rightClickSave + " dataLink:" + dataLink);
-          request.setAttribute("dataLink", dataLink);
+            String url = AntwebProps.getDomainApp() + dir + fileName;
+            String dataLink = "&middot; <a href=\"" + url + "\" target=\"new\">Tab-delimited data</a>";
+            s_log.debug("execute() taxon:" + taxonName + " specimenCount:" + specimenCount + " rightClickSave:" + rightClickSave + " dataLink:" + dataLink);
+            request.setAttribute("dataLink", dataLink);
 
           /*
 
@@ -103,8 +105,8 @@ public final class SpecimenListAction extends Action {
           }
 */
 
-          //if (data == null) {
-          //if (!isInCache) {
+            //if (data == null) {
+            //if (!isInCache) {
             AntwebUtil.remove(fullPath);
             //s_log.warn("execute() writing:" + fullPath);
 
@@ -116,40 +118,40 @@ public final class SpecimenListAction extends Action {
             String dbMethodName = DBUtil.getDbMethodName("SpecimenListAction.execute()");
             try {
 
-              // To skip the whole business and just generate a full specimen list...
-              //if (taxonName.equals(Family.ANT_FAMILY)) {
-              //    return generateAllAntwebAnts(mapping, request);
-              //}
+                // To skip the whole business and just generate a full specimen list...
+                //if (taxonName.equals(Family.ANT_FAMILY)) {
+                //    return generateAllAntwebAnts(mapping, request);
+                //}
 
-              DataSource dataSource = getDataSource(request, "conPool");
+                DataSource dataSource = getDataSource(request, "conPool");
 
-              connection = DBUtil.getConnection(dataSource, dbMethodName);
+                connection = DBUtil.getConnection(dataSource, dbMethodName);
 
-              if (DBStatus.isServerBusy(connection, request)) {
-              //if (DBUtil.isServerBusy(dataSource, request)) {
-                return mapping.findForward("message");            
-              }		              
-      
-              Taxon taxon = new TaxonDb(connection).getTaxon(taxonName);
+                if (DBStatus.isServerBusy(connection, request)) {
+                    //if (DBUtil.isServerBusy(dataSource, request)) {
+                    return mapping.findForward("message");
+                }
 
-              if (taxon == null) {
-                s_log.warn("execute() taxon not found:" + taxonName);
-                return null;
-              }
-              rank = taxon.getRank();
-              if (rank == null) {
-                s_log.warn("execute() rank is null for taxon:" + taxonName);
-                return null;
-              }
-              if (rank.equals(Rank.SUBSPECIES)) {
-                generateAntwebSpecimenData(overview, taxon.getFamily(), taxon.getSubfamily(), taxon.getGenus(), taxon.getSpecies(), taxon.getSubspecies(), fullPath, connection);
-            
-              } else if (rank.equals(Rank.SPECIES)) {
-                generateAntwebSpecimenData(overview, taxon.getFamily(), taxon.getSubfamily(), taxon.getGenus(), taxon.getSpecies(), fullPath, connection);
-                //dataBuffer.append(getSpeciesSpecimenData(taxon, projectName));
-                
-              } else if (rank.equals(Rank.GENUS)) {
-                generateAntwebSpecimenData(overview, taxon.getFamily(), taxon.getSubfamily(), taxon.getGenus(), fullPath, connection);
+                Taxon taxon = new TaxonDb(connection).getTaxon(taxonName);
+
+                if (taxon == null) {
+                    s_log.warn("execute() taxon not found:" + taxonName);
+                    return null;
+                }
+                rank = taxon.getRank();
+                if (rank == null) {
+                    s_log.warn("execute() rank is null for taxon:" + taxonName);
+                    return null;
+                }
+                if (rank.equals(Rank.SUBSPECIES)) {
+                    generateAntwebSpecimenData(overview, taxon.getFamily(), taxon.getSubfamily(), taxon.getGenus(), taxon.getSpecies(), taxon.getSubspecies(), fullPath, connection);
+
+                } else if (rank.equals(Rank.SPECIES)) {
+                    generateAntwebSpecimenData(overview, taxon.getFamily(), taxon.getSubfamily(), taxon.getGenus(), taxon.getSpecies(), fullPath, connection);
+                    //dataBuffer.append(getSpeciesSpecimenData(taxon, projectName));
+
+                } else if (rank.equals(Rank.GENUS)) {
+                    generateAntwebSpecimenData(overview, taxon.getFamily(), taxon.getSubfamily(), taxon.getGenus(), fullPath, connection);
 /*              
                 taxon.setChildren(projectName);  // project name
                 ArrayList<Taxon> theSpecies = taxon.getChildren();
@@ -159,17 +161,17 @@ public final class SpecimenListAction extends Action {
                 }
 */
 
-              } else if (rank.equals(Rank.SUBFAMILY)) {
-                generateAntwebSpecimenData(overview, taxon.getFamily(), taxon.getSubfamily(), fullPath, connection);
+                } else if (rank.equals(Rank.SUBFAMILY)) {
+                    generateAntwebSpecimenData(overview, taxon.getFamily(), taxon.getSubfamily(), fullPath, connection);
 
-              } else if (rank.equals(Rank.FAMILY)) {
-                generateAntwebSpecimenData(overview, taxon.getFamily(), fullPath, connection);
-              
-              } else {
-                s_log.warn("execute() Specimen List functionality not supported rank:" + rank + " taxon:" + taxonName);
-                request.setAttribute("message", "rank:" + rank + " not supported.");
-                return mapping.findForward("message");                
-              }
+                } else if (rank.equals(Rank.FAMILY)) {
+                    generateAntwebSpecimenData(overview, taxon.getFamily(), fullPath, connection);
+
+                } else {
+                    s_log.warn("execute() Specimen List functionality not supported rank:" + rank + " taxon:" + taxonName);
+                    request.setAttribute("message", "rank:" + rank + " not supported.");
+                    return mapping.findForward("message");
+                }
 
               /*
               if (!isGenCache) {
@@ -179,20 +181,20 @@ public final class SpecimenListAction extends Action {
               */
 
             } catch (SQLException e) {
-              String message = e.toString();
-              s_log.error("execute() e:" + message);
-              request.setAttribute("message", message);
-              return mapping.findForward("message");              
+                String message = e.toString();
+                s_log.error("execute() e:" + message);
+                request.setAttribute("message", message);
+                return mapping.findForward("message");
             } finally {
-              QueryProfiler.profile("specimenList", startTime);            
-              DBUtil.close(connection, this, dbMethodName);
+                QueryProfiler.profile("specimenList", startTime);
+                DBUtil.close(connection, this, dbMethodName);
             }
-            
-          //} // if isInCache
-          
-          String message = dataLink;
-          request.setAttribute("message", message);
-          return mapping.findForward("justMessage");
+
+            //} // if isInCache
+
+            String message = dataLink;
+            request.setAttribute("message", message);
+            return mapping.findForward("justMessage");
 
 /*        // This will return the results directly to the browser
           PrintWriter out = response.getWriter();
@@ -200,8 +202,8 @@ public final class SpecimenListAction extends Action {
           out.println(data);
           return null;
  */
-       }
-       return null;  // should not happen
+        }
+        return null;  // should not happen
     }
 
 /*
@@ -222,30 +224,30 @@ public final class SpecimenListAction extends Action {
 */
 
     private void generateAntwebSpecimenData(Overview overview, String family
-      , String fullPath, Connection connection) throws SQLException {
+            , String fullPath, Connection connection) throws SQLException {
         generateAntwebSpecimenData(overview, family, null, null, fullPath, connection);
     }
-    
+
     private void generateAntwebSpecimenData(Overview overview, String family, String subfamily
-      , String fullPath, Connection connection) throws SQLException {
+            , String fullPath, Connection connection) throws SQLException {
         generateAntwebSpecimenData(overview, family, subfamily, null, fullPath, connection);
     }
-    
+
     private void generateAntwebSpecimenData(Overview overview, String family, String subfamily, String genus
-      , String fullPath, Connection connection) throws SQLException {
+            , String fullPath, Connection connection) throws SQLException {
         generateAntwebSpecimenData(overview, family, subfamily, genus, null, fullPath, connection);
     }
-    
+
     private void generateAntwebSpecimenData(Overview overview, String family, String subfamily, String genus, String species
-      , String fullPath, Connection connection) throws SQLException {
+            , String fullPath, Connection connection) throws SQLException {
         generateAntwebSpecimenData(overview, family, subfamily, genus, species, null, fullPath, connection);
     }
 
     private void generateAntwebSpecimenData(Overview overview, String family, String subfamily, String genus, String species, String subspecies
-      , String fullPath, Connection connection) throws SQLException {
+            , String fullPath, Connection connection) throws SQLException {
         StringBuffer dataBuffer = new StringBuffer();
         dataBuffer.append(Specimen.getDataHeader() + "\n");
-                    
+
         ArrayList<String> codes = new SpecimenDb(connection).getAntwebSpecimenCodes(overview, family, subfamily, genus, species, subspecies);
 
         int specimenCount = 0;
@@ -258,7 +260,7 @@ public final class SpecimenListAction extends Action {
             // Write out
             if (specimenCount % 10000 == 0) {
                 LogMgr.appendFile(fullPath, dataBuffer.toString());
-                dataBuffer = new StringBuffer();                  
+                dataBuffer = new StringBuffer();
             }
             // Log progress
             if (specimenCount % 10000 == 0) {
@@ -269,16 +271,16 @@ public final class SpecimenListAction extends Action {
         LogMgr.appendFile(fullPath, dataBuffer.toString());
         //return dataBuffer;
     }
-    
-    
+
+
     // Functional but deprecated.
     private ActionForward generateAllAntwebAnts(ActionMapping mapping, HttpServletRequest request) throws SQLException {
 
         String dir = "/web/data/specimenData/";
         new Utility().createDirectory(dir);
         String fileName = "allantwebants-formicidae.txt";
-        String fullDir = AntwebProps.getDocRoot() + dir;          
-        String fullPath = AntwebProps.getDocRoot() + dir + fileName;          
+        String fullDir = AntwebProps.getDocRoot() + dir;
+        String fullPath = AntwebProps.getDocRoot() + dir + fileName;
 
         s_log.debug("execute() writing:" + fullPath);
         AntwebUtil.remove(fullPath);
@@ -312,7 +314,7 @@ public final class SpecimenListAction extends Action {
                 if (specimenCount % 10000 == 0) {
                     s_log.warn("generateAllAntwebAnts() specimenCount:" + specimenCount + " writing to:" + fullPath);
                     LogMgr.appendFile(fullPath, dataBuffer.toString());
-                    dataBuffer = new StringBuffer();                
+                    dataBuffer = new StringBuffer();
                 }
                 if (specimenCount % 100000 == 0) {
                     //connection.close();     
@@ -321,7 +323,7 @@ public final class SpecimenListAction extends Action {
                     //connection = DBUtil.getConnection(dataSource, "SpecimenListAction.generateAllAntwebAnts()");
 
                     s_log.warn("generateAllAntwebAnts() count:" + specimenCount + " new connection!");
-                }            
+                }
             }
             LogMgr.appendFile(fullPath, dataBuffer.toString());
 
@@ -329,7 +331,7 @@ public final class SpecimenListAction extends Action {
             String message = e.toString();
             s_log.error("execute() e:" + message);
             request.setAttribute("message", message);
-            return mapping.findForward("message");              
+            return mapping.findForward("message");
         } finally {
             //QueryProfiler.profile("specimenList", startTime);            
             DBUtil.close(connection, this, dbMethodName);
@@ -343,5 +345,5 @@ public final class SpecimenListAction extends Action {
         request.setAttribute("message", message);
         return mapping.findForward("message");
     }
-    
+
 }
