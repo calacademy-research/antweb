@@ -146,7 +146,7 @@ Or, if there are stmts and/or rsets...
       }
       return connection;    
     }
-    
+
     private static final HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<>();
     private static HashMap<String, QueryStats> s_queryStatsMap = new HashMap<>();
 
@@ -161,7 +161,7 @@ Or, if there are stmts and/or rsets...
         }
         Statement stmt = null;
         try {
-          DBUtil.open(name);
+          //DBUtil.open(name);
           stmt = connection.createStatement();  
       } catch (SQLException e) {
         // Fail gracefully, without stacktrace, upon server shutdown
@@ -175,15 +175,15 @@ Or, if there are stmts and/or rsets...
       return stmt;
     }
 
-    public static void open(String name) {
+    private static void open(String name) {
         java.util.Date startTime = new java.util.Date();       
         s_stmtTimeMap.put(name, startTime);
-        LogMgr.appendLog("dbUtil.log", "open name:" + name + " startTime:" + startTime, true);
+        //LogMgr.appendLog("dbUtil.log", "open name:" + name + " startTime:" + startTime, true);
     }
 
-    public static void close(String name) {
+    private static void close(String name) {
         java.util.Date startTime = s_stmtTimeMap.get(name);
-        LogMgr.appendLog("dbUtil.log", "close name:" + name + " startTime:" + startTime, true);
+        //LogMgr.appendLog("dbUtil.log", "close name:" + name + " startTime:" + startTime, true);
         if (startTime == null) return;
         long millisSince = AntwebUtil.millisSince(startTime);
         QueryStats queryStats = s_queryStatsMap.get(name);
@@ -195,7 +195,7 @@ Or, if there are stmts and/or rsets...
     public static void close(Statement stmt, String name)
       //throws SQLException  
     {
-        DBUtil.close(name);
+        //DBUtil.close(name);
         try { 
           if (stmt != null) stmt.close();        
         } catch (SQLException e) {
