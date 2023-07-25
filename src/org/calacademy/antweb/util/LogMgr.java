@@ -38,8 +38,9 @@ public class LogMgr {
 
     try {
       String srf = getWebLogRoot() + "srfExceptions.jsp";
-      s_log.warn("backupSrf() size:" + FileUtil.getFileSize(srf));
-      if (FileUtil.getFileSize(srf) > MaxSize) {
+      s_log.warn("backupSrf() file:" + srf + " size:" + FileUtil.getFileSize(srf));
+      int size = FileUtil.getFileSize(srf);
+      if (size > MaxSize) {
         FileUtil.makeDir(getWebLogRoot() + "srfBak");
 
         String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());

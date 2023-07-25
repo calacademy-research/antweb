@@ -53,7 +53,7 @@ public class DBStatus {
           logMessage += "<b>sampleLastConnectionTestFailureStackTraceDefaultUser:</b>" + poolSource.sampleLastConnectionTestFailureStackTraceDefaultUser() + "<br>";
           logMessage += "<b>sampleLastCheckoutFailureStackTraceDefaultUser:</b>" + poolSource.sampleLastCheckoutFailureStackTraceDefaultUser();
 
-          logMessage += "<br><b>unreturnedConnection:</b>" + reportUnreturnedConnection(dataSource);
+          logMessage += "<br><b>unreturnedConnectionTimeout:</b>" + reportUnreturnedConnection(dataSource);
         } catch (SQLException e) {
           logMessage = "Exception:" + e;
         }

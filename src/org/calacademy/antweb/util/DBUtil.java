@@ -146,9 +146,7 @@ Or, if there are stmts and/or rsets...
       }
       return connection;    
     }
-
-
- 
+    
     private static final HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<>();
     private static HashMap<String, QueryStats> s_queryStatsMap = new HashMap<>();
 
@@ -177,52 +175,15 @@ Or, if there are stmts and/or rsets...
       return stmt;
     }
 
-
-    /**
-     * Create a prepared statement to query the database
-     * @param connection
-     * @param name The name of the calling function, for logging and timing
-     * @param query The SQL query to prepare
-     * @return The generated PreparedStatement
-     */
-    public static @Nullable PreparedStatement getPreparedStatement(Connection connection, String name, String query) {
-
-        /*
-        // For testing graceful failure...
-        if (true && AntwebProps.isDevMode()) {
-          if (query.contains("akebot")) {
-              s_log.error("getPreparedStatement() connection is null for name: " + name + " query");
-              throw new NullPointerException();
-          }
-        }
-        */
-
-        if (connection == null) {
-            s_log.error("getPreparedStatement() connection is null for name: " + name);
-            return null;
-        }
-        PreparedStatement stmt = null;
-        try {
-            DBUtil.open(name);
-            stmt = connection.prepareStatement(query);
-        } catch (Exception e) {
-            // Fail gracefully, without stacktrace, upon server shutdown
-            AntwebUtil.logShortStackTrace();
-            s_log.error("getPreparedStatement() name:" + name + " e:" + e);
-        }
-        if (stmt == null) {
-            s_log.error("getPreparedStatement() unable to getPreparedStatement:" + name + " from connection:" + connection);
-        }
-        return stmt;
-    }
-
     public static void open(String name) {
         java.util.Date startTime = new java.util.Date();       
-        s_stmtTimeMap.put(name, startTime);          
+        s_stmtTimeMap.put(name, startTime);
+        LogMgr.appendLog("dbUtil.log", "open name:" + name + " startTime:" + startTime, true);
     }
 
     public static void close(String name) {
         java.util.Date startTime = s_stmtTimeMap.get(name);
+        LogMgr.appendLog("dbUtil.log", "close name:" + name + " startTime:" + startTime, true);
         if (startTime == null) return;
         long millisSince = AntwebUtil.millisSince(startTime);
         QueryStats queryStats = s_queryStatsMap.get(name);
@@ -409,19 +370,7 @@ Or, if there are stmts and/or rsets...
         return isBusy;
     }
 
-    /*
-    private static Date lastRun = new Date();
-    public static boolean timeToRun() {
-        if (AntwebUtil.secsSince(lastRun) >= 60) {
-            lastRun = new Date();
-            return true;
-        }
-        return false;
-    }
-    */
-
      /*
-
     private static String NOT_BUSY_MSG = "Server not busy.";
     private static int testAgain = 0;
     private static int testAgainLimit = 10;
@@ -440,14 +389,10 @@ Or, if there are stmts and/or rsets...
         return isServerBusy;
     }
 
-
-
     public static boolean isServerBusy(DataSource dataSource1, DataSource dataSource2, DataSource dataSource3)
             throws SQLException {
 
         if (!AntwebProps.isDevMode()) return false;  // Do not run in production
-
-        //if (!timeToRun()) return getIsServerBusy();
 
         int numBusy1 = DBUtil.getNumBusyConnections(dataSource1);
         int numBusy2 = DBUtil.getNumBusyConnections(dataSource2);
@@ -480,9 +425,7 @@ Or, if there are stmts and/or rsets...
         }
         return isServerBusy;
     }
-*/
 
-/*
     public static String reportServerBusy(ComboPooledDataSource cpds1, ComboPooledDataSource cpds2, ComboPooledDataSource cpds3) {
         return reportServerBusy(cpds1, cpds2, cpds3, false);
     }
@@ -528,66 +471,6 @@ Or, if there are stmts and/or rsets...
         return s_serverBusyConnectionCount;
     }
 
-    
-    /*
-
-    static final int MAXNUMBUSYCONNECTIONS = 100; // was 13;
-    private static final int MINUTES = 1000 * 60
-
-    public static boolean xisServerBusy(DataSource dataSource, HttpServletRequest request)
-      throws SQLException {
-      int numBusy = DBUtil.getNumBusyConnections(dataSource);
-      if (numBusy > DBUtil.MAXNUMBUSYCONNECTIONS) {
-        String message = "Due to current server load, Antweb is not able to fulfill this request at this time.  Please try again later.";
-//        if ((lastLog == null) || (AntwebUtil.timePassed(lastLog, new Date()) > (MINUTES * .5))) {
-        if (lastLog == null || AntwebUtil.minsSince(lastLog) > 1) {
-          lastLog = new Date();
-          String logMessage = "<br><br>" + new Date() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
-          s_log.warn(logMessage);
-          Connection connection = null;
-          try {
-            connection = DBUtil.getConnection(dataSource, "isServerBusy()");
-            logMessage += "<br>" + DBUtil.getMysqlProcessListHtml(connection);
-
-              String recipients = AntwebUtil.getDevEmail();
-              String subject = "Antweb Server Busy";
-              String body = logMessage;
-              //s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
-              Emailer.sendMail(recipients, subject, body);
-
-          } catch (SQLException e) {
-            s_log.error("isServerBusy() e:" + e);
-          } finally {
-            DBUtil.close(connection, "isServerBusy()");
-          }
-          LogMgr.appendLog("serverBusy.html", logMessage);
-          s_log.warn("isServerBusy() overdue resource:" + DBUtil.getOldConnectionList());
-        }
-        request.setAttribute("message", message);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-	public static int getNumBusyConnections(DataSource dataSource) {
-        if (dataSource == null) return -1;
-        int numBusy = 0;
-        String cpDiagnostics = null;
-        if (dataSource instanceof ComboPooledDataSource) {
-          ComboPooledDataSource c3p0DataSource = (ComboPooledDataSource) dataSource;
-          try {
-            numBusy = c3p0DataSource.getNumBusyConnectionsDefaultUser();
-            s_serverBusyConnectionCount = numBusy;
-          } catch (SQLException e) {
-            s_log.error("getNumBusyConnections() error:" + e);
-          }
-        }
-        return numBusy;
-	}
-
-*/
-
 
 /* Unclosed Connections
      In struts-configDbAnt.xml there are properties defined:
@@ -631,6 +514,37 @@ Or, if there are stmts and/or rsets...
 	public static String escapeQuotes(String theString) {
 	  return AntFormatter.escapeQuotes(theString);
 	}
+
+
+
+
+    /**
+     * Create a prepared statement to query the database
+     * @param connection
+     * @param name The name of the calling function, for logging and timing
+     * @param query The SQL query to prepare
+     * @return The generated PreparedStatement
+     */
+    public static @Nullable PreparedStatement getPreparedStatement(Connection connection, String name, String query) {
+
+        if (connection == null) {
+            s_log.error("getPreparedStatement() connection is null for name: " + name);
+            return null;
+        }
+        PreparedStatement stmt = null;
+        try {
+            DBUtil.open(name);
+            stmt = connection.prepareStatement(query);
+        } catch (Exception e) {
+            // Fail gracefully, without stacktrace, upon server shutdown
+            AntwebUtil.logShortStackTrace();
+            s_log.error("getPreparedStatement() name:" + name + " e:" + e);
+        }
+        if (stmt == null) {
+            s_log.error("getPreparedStatement() unable to getPreparedStatement:" + name + " from connection:" + connection);
+        }
+        return stmt;
+    }
 
 
     /** Fetch the bound values of a prepared statement and return a complete SQL statement
