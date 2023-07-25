@@ -167,7 +167,7 @@ public class TaxonDb extends AntwebDb {
             if (count > 1 && "taxon".equals(tableName)) s_log.error("getTaxon() count:" + count + " should never be more than 1.  TaxonName:" + taxonName);
 
         } catch (SQLException e) {
-            s_log.error("getTaxon() taxonName:" + taxonName + " e:" + e + " theQuery:" + theQuery);
+            s_log.error("getTaxon() taxonName:" + taxonName + " e:" + e + " theQuery:" + theQuery + " " + AntwebUtil.getShortStackTrace());
             throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getTaxon() taxonName:" + taxonName);

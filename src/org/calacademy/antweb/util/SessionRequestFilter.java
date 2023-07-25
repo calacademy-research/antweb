@@ -80,10 +80,8 @@ public class SessionRequestFilter implements Filter {
               afterPopulated = true;
           }
 
-          // These have been commented out, disabling serverDB debug functionality and UserAgentTracking,
-          // pending verification that the use of DBUtil.getDataSource without connection pool is safe.
 
-
+          // DataSource reliant functions
           ds = DBUtilSimple.getDataSource();
           connection = ds.getConnection();
 
