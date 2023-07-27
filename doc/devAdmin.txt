@@ -146,7 +146,7 @@ CID=$(docker run -d --rm \
 	-e MYSQL_ALLOW_EMPTY_PASSWORD=1 \
 	-e MYSQL_DATABASE=ant \
 	--mount source=antweb_database,target=/var/lib/mysql \
-	 mysql:5)
+	 mysql:5-debian)
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
 
