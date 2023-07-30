@@ -153,14 +153,14 @@ Or, if there are stmts and/or rsets...
       return stmt;
     }
 
-    /*
-    private static void open(String name) {
+
+    public static void open(String name) {
         java.util.Date startTime = new java.util.Date();       
         s_stmtTimeMap.put(name, startTime);
         //LogMgr.appendLog("dbUtil.log", "open name:" + name + " startTime:" + startTime, true);
     }
 
-    private static void close(String name) {
+    public static void close(String name) {
         java.util.Date startTime = s_stmtTimeMap.get(name);
         //LogMgr.appendLog("dbUtil.log", "close name:" + name + " startTime:" + startTime, true);
         if (startTime == null) return;
@@ -170,7 +170,7 @@ Or, if there are stmts and/or rsets...
         queryStats.count(millisSince);
         s_queryStatsMap.put(name, queryStats);
     }
-     */
+    /*    */
 
     public static void close(Statement stmt, String name)
       //throws SQLException  

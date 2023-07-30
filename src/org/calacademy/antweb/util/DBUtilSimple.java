@@ -25,6 +25,7 @@ public class DBUtilSimple {
 
     private static final Log s_log = LogFactory.getLog(DBUtil.class);
 
+    /*
         // Was called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
         public static DataSource getDataSource() {
             MysqlDataSource ds = null;
@@ -35,9 +36,9 @@ public class DBUtilSimple {
             ds.setPassword(AntwebProps.getDbPwd());
             return ds;
         }
+*/
 
 
-    /*
     // Using C3P0. Should be better, but causes errors. Such as:
     // 2023-07-27T04:57:40,353 ERROR http-nio-8080-exec-155 org.calacademy.antweb.util.SessionRequestFilter.class - doFilter() 2023-07-27 04:57:40 See https://www.antweb.org/web/log/srfExceptions.jsp for case#:389430164 e:com.mysql.cj.jdbc.exceptions.CommunicationsException: The last packet successfully received from the server was 109,445,918 milliseconds ago. The last packet sent successfully to the server was 109,445,918 milliseconds ago. is longer than the server configured value of 'wait_timeout'. You should consider either expiring and/or testing connection validity before use in your application, increasing the server configured values for client timeouts, or using the Connector/J connection property 'autoReconnect=true' to avoid this problem. target:https://www.antweb.org/locality.do?code=JTL052550 startTime:Thu Jul 27 04:57:40 PDT 2023<br><b>Exception:</b>com.mysql.cj.jdbc.exceptions.CommunicationsException: The last packet successfully received from the server was 109,445,918 milliseconds ago. The last packet sent successfully to the server was 109,445,918 milliseconds ago. is longer than the server configured value of 'wait_timeout'. You should consider either expiring and/or testing connection validity before use in your application, increasing the server configured values for client timeouts, or using the Connector/J connection property 'autoReconnect=true' to avoid this problem. userAgent:Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/) info: referer:null user-agent:Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/) ----Params:code=JTL052550 ----Headers: host:www.antweb.org user-agent:Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/) accept: accept-encoding:deflate, gzip, br x-forwarded-for:51.222.253.7 x-forwarded-proto:https
 
@@ -57,6 +58,9 @@ public class DBUtilSimple {
             cpds.setMaxStatements(100);
             cpds.setMaxIdleTime(0);
             A.log("getDataSource() cpds:" + cpds);
+        }
+        return cpds;
+    }
 /*
     Maybe this would help with the stacktraces:
  2023-07-25 11:03:47 See https://www.antweb.org/web/log/srfExceptions.jsp for case#:238597394 e:com.mysql.cj.jdbc.exceptions.CommunicationsException: The last packet successfully received from the server was 30,941,989 milliseconds ago. The last packet sent successfully to the server was 30,941,990 milliseconds ago. is longer than the server configured value of 'wait_timeout'. You should consider either expiring and/or testing connection validity before use in your application, increasing the server configured values for client timeouts, or using the Connector/J connection property 'autoReconnect=true' to avoid this problem. target:https://www.antweb.org/images.do?rank=subspecies&genus=polyrhachis&species=mucronata&subspecies=bismarckensis&project=worldants&caste=brachypterous startTime:Tue Jul 25 11:03:47 PDT 2023
@@ -78,11 +82,7 @@ public class DBUtilSimple {
                 fetchDate = new Date();
                 return retVal;
             }
-            * /
-        }
-        return cpds;
-    }
-                */
+        */
 
     public static Connection getConnection(DataSource dataSource) throws SQLException {
         Connection connection = null;
