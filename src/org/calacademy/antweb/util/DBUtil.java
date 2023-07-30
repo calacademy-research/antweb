@@ -104,23 +104,6 @@ Or, if there are stmts and/or rsets...
     private static final ConcurrentHashMap<NewProxyConnection, String> connectionMap = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<NewProxyConnection, DbRequest> connectionRequestMap = new ConcurrentHashMap<>();
 
-/*
-    // Was called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
-    public static DataSource getDataSource() {
-		MysqlDataSource ds = null;
-		String jdbcUrl = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&characterSetResults=utf8&connectionCollation=utf8_general_ci";
-		ds = new MysqlDataSource();
-		ds.setURL(jdbcUrl);
-		ds.setUser("antweb");
-		ds.setPassword(AntwebProps.getDbPwd());
-		return ds;
-    }
-*/
-
-    public static Connection Xopen(DataSource dataSource, String name) throws SQLException {
-       // getConnection() is the preferred call.
-       return DBUtil.getConnection(dataSource, name);
-    }
     public static Connection getConnection(DataSource dataSource, String name) throws SQLException {
       return getConnection(dataSource, name, null);
     }
@@ -135,21 +118,16 @@ Or, if there are stmts and/or rsets...
       }
 
       if (connection != null) {
-          if (connection instanceof NewProxyConnection) {
-              connectionMap.put((NewProxyConnection) connection, name + " " + new Date());
-
-              DbRequest dbRequest = new DbRequest(name, queryString, new java.util.Date());
-              connectionRequestMap.put((NewProxyConnection) connection, dbRequest);
-          }
+          addConn(connection, name, queryString);
       } else {
-        s_log.warn("open() connection is null.  data:" + name);
+          s_log.warn("open() connection is null.  name:" + name);
       }
+
       return connection;    
     }
 
     private static final HashMap<String, java.util.Date> s_stmtTimeMap = new HashMap<>();
     private static HashMap<String, QueryStats> s_queryStatsMap = new HashMap<>();
-
     
     // These methods are for statements, include timing.    
     public static @Nullable Statement getStatement(Connection connection, String name)
@@ -175,6 +153,7 @@ Or, if there are stmts and/or rsets...
       return stmt;
     }
 
+    /*
     private static void open(String name) {
         java.util.Date startTime = new java.util.Date();       
         s_stmtTimeMap.put(name, startTime);
@@ -191,7 +170,8 @@ Or, if there are stmts and/or rsets...
         queryStats.count(millisSince);
         s_queryStatsMap.put(name, queryStats);
     }
-    
+     */
+
     public static void close(Statement stmt, String name)
       //throws SQLException  
     {
@@ -255,7 +235,7 @@ Or, if there are stmts and/or rsets...
         return DBUtil.close(conn, stmt, null, object, name);
     }
     public static boolean close(Connection conn, Statement stmt, ResultSet rset, Object object, String name) {     
-        DBUtil.close(name);
+        //DBUtil.close(name);
 
         boolean d = false & "getSpecimenImage()".equals(name);
         if (d) A.log("close(conn:"+ conn + " stmt:" + stmt + " rset:" + rset + " object:" + object + " name:" + name + ") 1");
@@ -300,22 +280,39 @@ Or, if there are stmts and/or rsets...
         }
 
         if (d) A.log("close() 5");
+
         if (conn != null) {
-          NewProxyConnection newProxyConn = (NewProxyConnection) conn;
-          int connMapSize = connectionRequestMap.size(); 
-          //connectionMap.remove();
-          boolean containsConn = connectionRequestMap.containsKey(newProxyConn);
-          if (containsConn) {
-              connectionRequestMap.remove(newProxyConn);
-              if (connectionRequestMap.size() == connMapSize) {
-                  containsConn = connectionRequestMap.containsKey(newProxyConn);
-                  s_log.warn("close() failed to remove name:" + name + " from connectionRequestMap.  connMapSize:" + connMapSize + " contains:" + containsConn);
-              }
-          }
+            removeConn(conn);
         }
 
         if (d) A.log("close() 6");
         return success;
+    }
+
+    private static void addConn(Connection conn, String name, String queryString) {
+        if (conn instanceof NewProxyConnection) {
+            connectionMap.put((NewProxyConnection) conn, name + " " + new Date());
+
+            DbRequest dbRequest = new DbRequest(name, queryString, new java.util.Date());
+            connectionRequestMap.put((NewProxyConnection) conn, dbRequest);
+        }
+    }
+    private static boolean removeConn(Connection conn) {
+        NewProxyConnection newProxyConn = (NewProxyConnection) conn;
+        int connMapSize = connectionRequestMap.size();
+        //connectionMap.remove();
+        boolean containsConn = connectionRequestMap.containsKey(newProxyConn);
+        if (containsConn) {
+            connectionRequestMap.remove(newProxyConn);
+            if (connectionRequestMap.size() == connMapSize) {
+                containsConn = connectionRequestMap.containsKey(newProxyConn);
+                s_log.warn("removeConn() failed to remove conn:" + conn + " from connectionRequestMap.  connMapSize:" + connMapSize + " contains:" + containsConn);
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static String getOldConnectionList() {
@@ -326,7 +323,7 @@ Or, if there are stmts and/or rsets...
         DbRequest dbRequest = connectionRequestMap.get(conn);
         if (dbRequest != null) {
             Date date = dbRequest.date;
-            if (AntwebUtil.minsSince(date) > 5) {
+            if (AntwebUtil.minsSince(date) > 1) {
                 if (val == null) val = "";
                 val += "i:" + i + " conn:" + conn + " dbRequest:" + dbRequest + "<br>";
             }
@@ -349,8 +346,6 @@ Or, if there are stmts and/or rsets...
       }
       return val;
     }
-
-    // These were moved from AntwebUtil
 
 
     private static final int MAX_BUSY_CONNECTIONS = 10;
@@ -533,7 +528,7 @@ Or, if there are stmts and/or rsets...
         }
         PreparedStatement stmt = null;
         try {
-            DBUtil.open(name);
+            //DBUtil.open(name);
             stmt = connection.prepareStatement(query);
         } catch (Exception e) {
             // Fail gracefully, without stacktrace, upon server shutdown

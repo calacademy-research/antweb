@@ -388,8 +388,8 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
             if (!isIgnoreInsufficientCriteria() && where.size() < sufficientCriteria) {
               // defaults criteria:[sp.family = 'Formicidae',  sp.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')]
               //A.log("createInitialResults() where.size:" + where.size() + " insufficient criteria in query:" + theQuery);
-              s_log.warn("createInitialResults() sufficientCriteria:" + sufficientCriteria + " insufficient criteria:" + where);
-              throw new SearchException("Insufficient criteria in search");            
+              String message = "Insufficient criteria in search - sufficientCriteria:" + sufficientCriteria + " insufficient criteria:" + where;
+              throw new SearchException(message);
             }
 
   		    Statement stmt = connection.createStatement();
