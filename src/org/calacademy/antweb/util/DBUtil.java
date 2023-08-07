@@ -153,7 +153,7 @@ Or, if there are stmts and/or rsets...
       return stmt;
     }
 
-
+    /*
     public static void open(String name) {
         java.util.Date startTime = new java.util.Date();       
         s_stmtTimeMap.put(name, startTime);
@@ -170,7 +170,7 @@ Or, if there are stmts and/or rsets...
         queryStats.count(millisSince);
         s_queryStatsMap.put(name, queryStats);
     }
-    /*    */
+  */
 
     public static void close(Statement stmt, String name)
       //throws SQLException  

@@ -55,8 +55,8 @@ public class QueryFileServlet extends HttpServlet {
                 namedQuery = QueryManager.runQueryWithParam(name, param, connection);
             } catch (SQLException e) {
                 s_log.error("init() e:" + e);
-            } catch (java.beans.PropertyVetoException e) {
-                s_log.error("init() e:" + e);
+    //        } catch (java.beans.PropertyVetoException e) {
+    //            s_log.error("init() e:" + e);
             } finally {
                 try {
                     connection.close();

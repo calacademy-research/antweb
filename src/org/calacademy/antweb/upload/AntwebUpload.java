@@ -1212,7 +1212,7 @@ or for Worldants upload
             //AntwebUtil.logShortStackTrace(8);
         }
  
-        DBUtil.open("addMissingGenus()");
+        //DBUtil.open("addMissingGenus()");
  
         String taxonName;
         Hashtable<String, Object> item;
@@ -1238,7 +1238,7 @@ or for Worldants upload
         }
         c = saveTaxonAndProjTaxon(item, project);
             
-       DBUtil.close("addMissingGenus()");
+       //DBUtil.close("addMissingGenus()");
         
         return c;
     }

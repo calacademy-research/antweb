@@ -103,8 +103,8 @@ public class SessionRequestFilter implements Filter {
 
           //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
 
-      } catch (java.beans.PropertyVetoException e) {
-              s_log.error("doFilter() e:" + e);
+      //} catch (java.beans.PropertyVetoException e) {
+      //        s_log.error("doFilter() e:" + e);
       } catch (Exception e) {
           String note = ""; // Usually do nothing, but in cases...
           int postActionPeriodPos = 0;
@@ -201,8 +201,8 @@ public class SessionRequestFilter implements Filter {
 
         } catch (SQLException e) {
             s_log.error("init() e:" + e + " datasource:" + ds + " connection:" + connection);
-        } catch (java.beans.PropertyVetoException e) {
-            s_log.error("init() e:" + e);
+        //} catch (java.beans.PropertyVetoException e) {
+        //    s_log.error("init() e:" + e);
         } finally {
 
             try {
