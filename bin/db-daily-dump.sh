@@ -30,7 +30,8 @@ tempfile=/tmp/"$date".sql.gz
 datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
-  docker exec -it antweb_mysql_1 mysqldump -u $dbuser --password=$dbpass --routines  --skip-lock-tables --default-character-set=utf8 --all-databases | gzip -c -9 > "$tempfile"
+  docker exec -it antweb_mysql_1 mysqldump -u $dbuser --password=$dbpass --routines  --skip-lock-tables --default-character-set=utf8 --all-databases | tail -n +2 | gzip -c -9 > 
+"$tempfile"
 #  mysqldump --skip-lock-tables -u$dbuser -p$dbpass -h mysql --all-databases --routines --single-transaction --quick --ignore-database sys | gzip -c -9 > "$tempfile"
   mv "$tempfile" "$datedBackupFile"
   echo "Copying $datedBackupFile to $curBak"
