@@ -4,7 +4,9 @@
 
 sh unclosedConnections.sh
 
-sh /antweb/deploy/bin/db-daily-dump.sh
+# Disabled as of 8/11/23 - moving this to system level so we can leverage mysqldump in the 
+# docker database image.
+#sh /antweb/deploy/bin/db-daily-dump.sh
 
 
 #cp /mnt/backup/db/ant-currentDump.sql.gz /data/antweb/web/db/ant-currentDump.sql.gz
