@@ -95,7 +95,7 @@ int intLength = Integer.parseInt(length);
     <div class="page_divider"></div>
 </div>
 
-<html:form action="recentSearchResults">
+<html:form method="GET" action="recentSearchResults">
 <html:hidden property="searchMethod" value="recentImageSearch"/>
 
 View images uploaded by 

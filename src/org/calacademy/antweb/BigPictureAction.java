@@ -52,6 +52,8 @@ public final class BigPictureAction extends Action {
         String dbMethodName = DBUtil.getDbMethodName("BigPictureAction.execute()");
         //A.log("execute() dbMethodName:" + dbMethodName);
 
+        String adminMessage = null;
+
         try {
             DataSource dataSource = getDataSource(request, "conPool");
 
@@ -102,6 +104,7 @@ public final class BigPictureAction extends Action {
             if (LoginMgr.isCurator(request)) {
               if (theImage == null || theImage.getGroup() == null) {
                 s_log.warn("execute() no image:" + theImage + " and/or group for image code:" + code + " shot:" + shot + " number:" + number);
+                //adminMessage = "<%= if (accessLogin.isAdmin()) { out.println(\"<a href='" + AntwebProps.getDomainApp() + "'>Remove</a> \"); } %>";
               } else {
                 //s_log.warn("execute() theImage:" + theImage +  " group:" + theImage.getGroup() + " accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
                 if (theImage.getGroup().getId() == accessGroup.getId() || LoginMgr.isAdmin(request)) {
@@ -128,6 +131,7 @@ public final class BigPictureAction extends Action {
         if (theImage == null) {
           //s_log.warn("Image not found for image:" + code + " shot:" + shot + " number:" + number);
           String message = "BigPicture not found.";
+          if (adminMessage != null) message += adminMessage;
           request.setAttribute("message", message);
           return mapping.findForward("message");
         }

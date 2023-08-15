@@ -63,7 +63,7 @@ public final class SearchAction extends DispatchAction {
               int searchTypeIndex = target.indexOf("recentImageSearch");
               int ampersandIndex = target.indexOf("&", searchTypeIndex);
               if (ampersandIndex < 0) {
-                String message = "RecentImageSearch was expecting &parameter";
+                String message = "RecentImageSearch was expecting ampersand parameter searchTypeIndex:" + searchTypeIndex;
                 return HttpUtil.sendMessage(request, mapping, message);
               }
               String nextChar = target.substring(ampersandIndex, ampersandIndex + 1);
