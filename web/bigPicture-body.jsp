@@ -130,6 +130,7 @@ is called which displays a short stacktrace.  Remove session variables.  Mark, F
     shotsToShow.add("d" + i);
     shotsToShow.add("v" + i);
     shotsToShow.add("l" + i);
+    shotsToShow.add("f" + i);
     ++i;
   }
 
@@ -193,7 +194,9 @@ if (which_shot.equals("p")) {
 } else if (which_shot.equals("v")) { 
    the_shot = "Ventral"; 
 } else if (which_shot.equals("l")) { 
-   the_shot = "Label"; 
+   the_shot = "Label";
+} else if (which_shot.equals("f")) {
+   the_shot = "Field";
 } else {
   the_shot = "";
 }

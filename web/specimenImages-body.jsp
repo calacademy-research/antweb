@@ -85,7 +85,8 @@
       shotsToShow.add("d" + i);
       shotsToShow.add("v" + i);
       shotsToShow.add("l" + i);
-    } 
+      shotsToShow.add("f" + i);
+    }
       
     
     int index = 0;

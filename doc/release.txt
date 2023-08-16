@@ -1,3 +1,7 @@
+Release 8.94
+  Map api latlng solution.
+  Field images, 1st rev.
+
 Release 8.93.1
   Change recent image search to use get instead of post.
   Remove 13 images.

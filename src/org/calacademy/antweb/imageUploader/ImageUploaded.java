@@ -30,6 +30,8 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class ImageUploaded {
 
+  public static String[] SHOT_TYPES = new String[]{"D", "P", "H", "L", "V", "F"};
+
   private static final Log s_log = LogFactory.getLog(ImageUploaded.class);
 
   public static final String imagesDir = AntwebProps.getDocRoot() + "images/";
@@ -147,7 +149,7 @@ public class ImageUploaded {
              setErrorMessage(message);
              return message;
           }
-          if (!Arrays.asList(new String[]{"D", "P", "H", "L", "V"}).contains(shot)){
+          if (!Arrays.asList(SHOT_TYPES).contains(shot)){
              message = "Unsupported shot type";
              setErrorMessage(message);
              return message;

@@ -347,6 +347,8 @@ public class SpecimenImage implements Serializable {
             result = "dorsal";
         } else if (shot.contains("v")) {
             result = "ventral";
+        } else if (shot.contains("f")) {
+            result = "field";
         }
 		return result;
 	}	

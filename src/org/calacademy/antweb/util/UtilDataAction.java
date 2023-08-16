@@ -809,6 +809,14 @@ public class UtilDataAction extends Action {
           message = "message: delete Google Map for id:" + id;
         }
 
+
+        if (action.contains("latlng")) {
+            String latLng = param;
+
+            message = HttpUtil.getUrl("http://maps.googleapis.com/maps/api/geocode/json?latlng=" + latLng);    //10.96667,79.78333
+            //A.log("message-body.jsp apiReq:" + message);
+        }
+
         if (action.contains("genGoogleMapFunction")) {
             // param is country. param2 is adm1
             String country = param;
