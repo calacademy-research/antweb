@@ -813,7 +813,7 @@ public class UtilDataAction extends Action {
         if (action.contains("latlng")) {
             String latLng = param;
 
-            message = HttpUtil.getUrl("http://maps.googleapis.com/maps/api/geocode/json?latlng=" + latLng);    //10.96667,79.78333
+            message = HttpUtil.getUrl("https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyAnuWI9yGnrq4MJt5BRz1M6plhKiD_-SHc&latlng=" + latLng);    //10.96667,79.78333
             //A.log("message-body.jsp apiReq:" + message);
         }
 
