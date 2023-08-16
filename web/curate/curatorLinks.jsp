@@ -28,6 +28,7 @@
       <li><a href="<%= domainApp %>/typeStatus.do">Type Status Manager</a>
       <li><a href="<%= domainApp %>/query.do">Query Manager</a>
       <li><a href="<%= domainApp %>/logMgr.do?action=list">Log Manager</a>
+      <li><a href="<%= domainApp %>/util.do?action=latlng&param=10.96667,79.78333">maps.googleapis</a>
     </ul>
 
     <h3 align=left>Administrator Functions</h2>

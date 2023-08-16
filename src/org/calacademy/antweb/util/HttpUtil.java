@@ -1314,6 +1314,7 @@ public abstract class HttpUtil {
         return json;    
     }
 
+    // fetchUrl() might be better because it doesn't suppress exceptions.
   public static String getUrl(String theUrl, String encode)   
     throws IOException {  
     

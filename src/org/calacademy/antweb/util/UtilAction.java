@@ -261,7 +261,19 @@ public class UtilAction extends Action {
 			    String message = "imageCheck performed.";         
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("adminMessage");
-			  }	  			 
+			  }
+
+			  if (action.contains("latlng")) {
+				String latLng = param;
+				String message = null;
+				try {
+					HttpUtil.fetchUrl("https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyAnuWI9yGnrq4MJt5BRz1M6plhKiD_-SHc&latlng=" + latLng);    //10.96667,79.78333
+				} catch (Exception e) {
+					message = e.toString();
+				}
+				request.setAttribute("message", message);
+				returnLoc = mapping.findForward("adminMessage");
+			  }
 
 			  if (returnLoc != null) return returnLoc;
 			}               
