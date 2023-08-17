@@ -180,7 +180,7 @@ function clickrecall(thisfield, defaulttext) {
      group = "";
   }
 %>
-<html:form action="deleteImages">
+<html:form method="GET" action="deleteImages">
 <input type="hidden" name = "daysAgo" value = "<%= daysAgo %>" />
 <input type="hidden" name="group" value = "<%= group %>" />
 <br />
