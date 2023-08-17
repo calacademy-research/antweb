@@ -264,12 +264,14 @@ public class UtilAction extends Action {
 			  }
 
 			  if (action.contains("latlng")) {
-				String latLng = param;
-				String message = null;
+				  String latLng = param;
+				  String key = AntwebProps.getGoogleMapKey();
+				  String link = "https://maps.googleapis.com/maps/api/geocode/json?key=" + key + "&latlng=" + latLng;  //10.96667,79.78333
+				  String message = null;
 				try {
-					HttpUtil.fetchUrl("https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyAnuWI9yGnrq4MJt5BRz1M6plhKiD_-SHc&latlng=" + latLng);    //10.96667,79.78333
+					HttpUtil.fetchUrl(link);
 				} catch (Exception e) {
-					message = e.toString();
+					message = "For link: " + link + " receiving e:" + e.toString();
 				}
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("adminMessage");
