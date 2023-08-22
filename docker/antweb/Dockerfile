@@ -1,7 +1,7 @@
 FROM tomcat:9-jdk11
 
 ENV TZ="America/Los_Angeles" \
-    CATALINA_OPTS="-Xms1024M -Xmx6144M -server -XX:+UseParallelGC" \
+    CATALINA_OPTS="-Xms1024M -Xmx16384M -server -XX:+UseParallelGC" \
     JAVA_OPTS='-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
 
 RUN adduser --disabled-password --gecos '' antweb && \
