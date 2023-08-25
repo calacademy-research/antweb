@@ -200,6 +200,9 @@ public abstract class AntwebProps {
 	public static String getGoogleMapKey() {
         return AntwebProps.getProp("googleMaps.key");
 	}
+    public static String getGoogleMapServerKey() {
+        return AntwebProps.getProp("googleMaps.serverKey");
+    }
 
     public static String getDbPwd() {
       return AntwebProps.getProp("dbPwd");
