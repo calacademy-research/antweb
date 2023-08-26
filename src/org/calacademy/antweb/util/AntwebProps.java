@@ -204,7 +204,9 @@ public abstract class AntwebProps {
 	}
     public static String getGoogleMapServerKey() {
         String key = AntwebProps.getProp("googleMaps.serverKey");
-        //A.log("key:" + key);
+        String logKey = "none";
+        if (key != null) logKey = key.substring(0, 10);
+        A.log("logKey:" + logKey);
         return key;
     }
 
