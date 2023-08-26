@@ -79,7 +79,7 @@ public abstract class AntwebProps {
 
         if (s_propMap.containsKey(prop)) {
           value = s_propMap.get(prop);
-          //A.log("getProp() propMap has key:" + prop + " value:" + value);
+          //s_log.warn("getProp() propMap has key:" + prop + " value:" + value);
           return value;
         }
 
@@ -96,6 +96,8 @@ public abstract class AntwebProps {
 	    if (value == null) {
             value = getProp(prop, "platform", getPlatformResources());
         }
+
+	    //s_log.warn("getProp() prop:" + prop + " value:" + value + getPlatformResources().keySet());
 
         s_propMap.put(prop, value);
 
@@ -201,7 +203,9 @@ public abstract class AntwebProps {
         return AntwebProps.getProp("googleMaps.key");
 	}
     public static String getGoogleMapServerKey() {
-        return AntwebProps.getProp("googleMaps.serverKey");
+        String key = AntwebProps.getProp("googleMaps.serverKey");
+        //A.log("key:" + key);
+        return key;
     }
 
     public static String getDbPwd() {
@@ -416,6 +420,7 @@ public abstract class AntwebProps {
         return "docRoot:" + getDocRoot()
         // + " inputFileHome:" + getInputFileHome()
           + " googleKey:" + AntwebProps.getGoogleMapKey()
+          + " googleServerKey:" + AntwebProps.getGoogleMapServerKey()
           + " domainApp:" + getDomainApp()
           + " devMode:" + getIsDevMode();
 	}
@@ -427,7 +432,8 @@ public abstract class AntwebProps {
 // + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
                 + " <br>&nbsp;&nbsp;&nbsp;<b>ImagesDir:</b> " + getImagesDir()
                 + " <br>&nbsp;&nbsp;&nbsp;<b>WebDir:</b> " + getWebDir()
-                + " <br>&nbsp;&nbsp;&nbsp;<b>googleKey:</b> " + getGoogleMapKey();
+                + " <br>&nbsp;&nbsp;&nbsp;<b>googleKey:</b> " + getGoogleMapKey()
+                + " <br>&nbsp;&nbsp;&nbsp;<b>googleServerKey:</b> " + getGoogleMapServerKey();
     }
 	
 	public static String getTechAdminContact() {

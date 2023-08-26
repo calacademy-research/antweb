@@ -270,6 +270,7 @@ public class UtilAction extends Action {
 				String message = null;
 				try {
 					message = HttpUtil.getJson(fetchUrl);
+					//A.log("fetchUrl:" + fetchUrl);  // Do not write the key to the log file.
 					//HttpUtil.fetchUrl(fetchUrl);
 				} catch (Exception e) {
 					message = "e:" + e.toString();
