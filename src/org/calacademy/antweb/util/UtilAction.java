@@ -266,12 +266,13 @@ public class UtilAction extends Action {
 			  if (action.contains("latlng")) {
 				String latLng = param;
 				String key = AntwebProps.getGoogleMapServerKey();
-				String fetchUrl = "https://maps.googleapis.com/maps/api/geocode/json?key=" + key + "&latlng=" + latLng;  //10.96667,79.78333
+				String fetchUrl = "https://maps.googleapis.com/maps/api/geocode/json?key=" + key + "&latlng=" + latLng;  //&latlng=10.96667,79.78333
 				String message = null;
 				try {
 					//message = HttpUtil.getJson(fetchUrl);
 					//A.log("fetchUrl:" + fetchUrl);  // Do not write the key to the log file.
 					message = HttpUtil.fetchUrl(fetchUrl);
+					if (message != null && message.contains("Exception")) s_log.warn("execute() latlng:" + message);
 				} catch (Exception e) {
 					message = "e:" + e.toString();
 				}
