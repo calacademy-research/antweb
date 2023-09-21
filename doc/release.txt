@@ -1,3 +1,6 @@
+Release 8.96
+  Add util method to test for set1 condition.
+
 Release 8.95
   New Google API server key.
 

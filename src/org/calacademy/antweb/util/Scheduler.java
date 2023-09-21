@@ -200,6 +200,10 @@ public class Scheduler extends Action {
         return "action:" + action + " not found.";
     }
 
+    private static boolean s_isStuckInSet1 = false;
+    public static boolean isStuckInSet1() {
+      return s_isStuckInSet1;
+	}
 	private static boolean set1Tested = false;
 	// Return true if set1 running after an hour of scheduled tasks. Only report true once.
 	public static void set1Test() {
@@ -216,7 +220,8 @@ public class Scheduler extends Action {
 		if (hour >= (LAUNCHTIME + 1)) {
 			set1Tested = true;
 			String msg = UtilDataAction.getIsInComputeProcess();
-			boolean stuckInSet1 = (msg != null && msg.contains("set1"));
+			s_isStuckInSet1 = (msg != null && msg.contains("set1"));
+            /*
 			if (stuckInSet1) {
 				// Yes, in set 1 after it should have completed.
 				String body = "Stuck in set1. " + msg;
@@ -224,7 +229,8 @@ public class Scheduler extends Action {
 				String subject = "Antweb Alert";
 				Emailer.sendMail(recipients, subject, body);
 			}
-			s_log.warn("adminTest() stuckInSet1:" + stuckInSet1 + " msg:" + msg);
+        	*/
+			s_log.warn("adminTest() stuckInSet1:" + s_isStuckInSet1);
 		}
 	}
 }

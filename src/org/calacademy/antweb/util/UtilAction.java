@@ -263,6 +263,14 @@ public class UtilAction extends Action {
 				returnLoc = mapping.findForward("adminMessage");
 			  }
 
+
+			  if (action.equals("isRestart")) {
+				  String message = "false";
+				  if (Scheduler.isStuckInSet1()) message = "true";
+				  request.setAttribute("message", message);
+				  returnLoc = mapping.findForward("message");
+			  }
+
 			  if (action.contains("latlng")) {
 				String latLng = param;
 				String key = AntwebProps.getGoogleMapServerKey();
