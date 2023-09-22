@@ -42,7 +42,6 @@ public class BrowseAction extends DescriptionAction {
         throws IOException, ServletException {
 
         boolean logTimes = AntwebProps.isDevMode() && false;
-
         if (logTimes) A.log("execute() sort:" + request.getParameter("sortBy") + " " + request.getParameter("sortOrder"));
 
         String message = null;
@@ -275,13 +274,13 @@ public class BrowseAction extends DescriptionAction {
           // To be removed when threat of lost geolocale_taxa has passed.
           //(new GeolocaleTaxonDb(connection)).hasCalMorphos(); 
 
-		  if (logTimes) A.log("execute() 1 time:" +  AntwebUtil.millisSince(startTime));
+		  if (logTimes) A.log("execute() 5 time:" +  AntwebUtil.millisSince(startTime));
 
 		  /* --- Here is where we fetch the Taxon or Homonym --- */
 
 		  if (!"homonym".equals(browseForm.getStatus()) && browseForm.getAuthorDate() == null) {
 			if (taxon == null) {
-              //A.log("execute  () family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank);
+              if (logTimes) A.log("execute  () family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subspecies:" + subspecies + " rank:" + rank);
 
               //Add this check to field guide too..
               String checkMessage = null;
@@ -300,7 +299,7 @@ public class BrowseAction extends DescriptionAction {
                   taxon = taxonDb.getFullTaxon(family, subfamily, genus, species, subspecies, rank);
 
               }
-              //if (taxon != null) s_log.debug("execute() taxon.getSource:" + taxon.getSource() + " desc:" + taxon.getDescription().size());
+              //if (logTimes) A.log("execute() taxon.getSource:" + taxon.getSource() + " desc:" + taxon.getDescription().size());
 			}
 		  }
 		  if (taxon == null) {
@@ -565,6 +564,7 @@ We are showin the full map of ponerinae for every adm1.
             message = e.getMessage();
             request.setAttribute("message", "Taxon not found for " + message);
             String logMessage = message + " " + HttpUtil.getTarget(request) + " referrer:" + HttpUtil.getReferrerUrl(request);
+            A.log("execute() message:" + logMessage);
             LogMgr.appendWebLog("taxonNotFound.txt", logMessage, true);
             return mapping.findForward("message");
         } catch (Exception e) {

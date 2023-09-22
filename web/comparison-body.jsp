@@ -126,19 +126,16 @@ function chooseTarget(theForm) {
 
 		<input type="hidden" name="name" value="<bean:write name="showTaxon" property="name"/>">
 
-		<% if (AntwebProps.isDevMode()) AntwebUtil.log("comparison-body.jsp subfamily:" + showTaxon.getSubfamily()); %>
+		<% if (AntwebProps.isDevMode()) AntwebUtil.log("comparison-body.jsp subfamily:" + showTaxon.getSubfamily() + " genus:" + showTaxon.getGenus()); %>
 
-		<input type="hidden" name="subfamily" value="<bean:write name="showTaxon" property="subfamily"/>">
-		<input type="hidden" name="genus" value="<bean:write name="showTaxon" property="genus"/>">
-		<input type="hidden" name="species" value="<bean:write name="showTaxon" property="species"/>">
-		<input type="hidden" name="subspecies" value="<bean:write name="showTaxon" property="subspecies"/>">
+		<input type="hidden" name="family" value="<%= showTaxon.getFamily() %>">
+		<input type="hidden" name="subfamily" value="<%= showTaxon.getSubfamily() %>">
+		<input type="hidden" name="genus" value="<%= showTaxon.getGenus() %>">
+		<input type="hidden" name="species" value="<%= showTaxon.getSpecies() %>">
+		<input type="hidden" name="subspecies" value="<%= showTaxon.getSubspecies() %>">
 
-		<input type="hidden" name="rank" value="<bean:write name="showTaxon" property="rank"/>">
-		<logic:equal value="species" name="showTaxon" property="rank">
-		<input type="hidden" name="genus" value="<bean:write name="showTaxon" property="genus" />">
-		</logic:equal>
+		<input type="hidden" name="rank" value="<%= showTaxon.getRank() %>">
 
-		<!-- input type="hidden" name="project" value="< %= projectName % >" -->
 		<input type="hidden" name="overview" value="<%= overview.getName() %>">
 
 		<div class="tools" id="compare_tools">

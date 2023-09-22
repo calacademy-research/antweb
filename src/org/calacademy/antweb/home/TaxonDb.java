@@ -277,16 +277,16 @@ public class TaxonDb extends AntwebDb {
         if (family != null) familyClause = " and family = '" + AntFormatter.escapeQuotes(family) + "'";
 
         String subfamilyClause = "";
-        if (subfamily != null && Rank.isSubfamilyOrBelow(rank)) subfamilyClause = " and subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'";
+        if (subfamily != null && !("null".equals(subfamily)) && Rank.isSubfamilyOrBelow(rank)) subfamilyClause = " and subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'";
 
         String genusClause = "";
-        if (genus != null && Rank.isGenusOrBelow(rank)) genusClause = " and genus = '" + AntFormatter.escapeQuotes(genus) + "'";
+        if (genus != null && !("null".equals(genus)) && Rank.isGenusOrBelow(rank)) genusClause = " and genus = '" + AntFormatter.escapeQuotes(genus) + "'";
 
         String speciesClause = "";
-        if (species != null && Rank.isSpeciesOrBelow(rank)) speciesClause = " and species = '" + AntFormatter.escapeQuotes(species) + "'";
+        if (species != null && !("null".equals(species)) && Rank.isSpeciesOrBelow(rank)) speciesClause = " and species = '" + AntFormatter.escapeQuotes(species) + "'";
 
         String subspeciesClause = "";
-        if (subspecies != null && Rank.isSubspeciesOrBelow(rank)) subspeciesClause = " and subspecies = '" + AntFormatter.escapeQuotes(subspecies) + "'";
+        if (subspecies != null && !("null".equals(subspecies)) && Rank.isSubspeciesOrBelow(rank)) subspeciesClause = " and subspecies = '" + AntFormatter.escapeQuotes(subspecies) + "'";
 
         String theQuery = "select taxon_name, status from taxon"
                 + " where 1 = 1"
@@ -351,6 +351,9 @@ Code added below on Apr 26 2023:
                 s_log.info("getTaxonName() " + logMessage + " theQuery:" + theQuery);
                 throw new AntwebException(message);
             }
+
+            //A.log("getTaxonName() theQuery:" + theQuery);
+
         } catch (SQLException e) {
             s_log.error("getTaxonName() e:" + e);
             throw e;

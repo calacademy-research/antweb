@@ -44,12 +44,12 @@
       <li><a href="<%= domainApp %>/list.do?action=usrAdmLastLogin">User Last Login List</a>
 <%
       String content = AntwebUtil.readFile("/data/antweb/web/siteWarning.jsp");
-      if (content != null) A.log("Current: <verbatim>" + HttpUtil.verbatimify(content) + "</verbatim>");
-%>      
-
-      <li><a href="<%= domainApp %>/utilData.do?action=siteWarning&text=<%= content %>">Site Warning</a> 
+      if (content == null || "null".equals(content)) content = "";
+%>
+      <li><a href="<%= domainApp %>/utilData.do?action=siteWarning&text=<%= content %>">Site Warning</a>
          <br><verbatim>&lt;br&gt;&lt;font color=lightgreen&gt;&lt;/font&gt;</verbatim>
-      <li><a href="<%= domainApp %>/utilData.do?action=deleteTaxonProp&taxonName=&prop=">Delete Taxon Property</a> 
+      <li><a href="<%= domainApp %>/utilData.do?action=deleteTaxonProp&taxonName=&prop=">Delete Taxon Property</a>
+      <li><a href="<%= domainApp %>/util.do?action=isRestart">isRestart Test</a>
     </ul>
 
     <h3 align=left>Reports</H3>
