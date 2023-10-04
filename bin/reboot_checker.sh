@@ -10,9 +10,12 @@ if [[ $page_content == *"<b>false</b>"* ]]; then
 elif [[ $page_content == *"<b>true</b>"* ]]; then
     echo "Diagnostic: 'true' found."
     exit 1
+elif [[ $page_content == *"case#"* ]]; then
+    echo "Diagnostic: case found."
+    exit 1
 else
     echo "Warning: Neither 'true' nor 'false' found."
-    exit 128
+    exit 1
 fi
 
 
