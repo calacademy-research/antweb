@@ -11,12 +11,14 @@ if [[ $page_content == *"<b>false</b>"* ]]; then
     echo "Diagnostic: 'false' found."
     exit 0
 elif [[ $page_content == *"<b>true</b>"* ]]; then
-    echo "Diagnostic: 'true' found."
-    echo “reboot: $now"" >> logs/detail/rebootCheck.log
+    str="Diagnostic: 'true' found in rebootCheck.log. reboot: $now"
+    echo $str
+    echo $str >> logs/detail/rebootCheck.log
     exit 1
 elif [[ $page_content == *"case#"* ]]; then
-    echo "Diagnostic: case found."
-    echo “reboot case: $now"" >> logs/detail/rebootCheck.log
+    str="Diagnostic: 'case#' found in rebootCheck.log. reboot: $now"
+    echo $str
+    echo $str >> logs/detail/rebootCheck.log
     exit 1
 else
     echo "Warning: Neither 'true' nor 'false' found."
