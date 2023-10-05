@@ -266,7 +266,7 @@ public class UtilAction extends Action {
 
 			  if (action.equals("isRestart")) {
 				  String message = "false";
-				  if (Scheduler.isStuckInSet1()) message = "true";
+				  if (AntwebSystem.isRestart()) message = "true";
 				  request.setAttribute("message", message);
 				  returnLoc = mapping.findForward("message");
 			  }

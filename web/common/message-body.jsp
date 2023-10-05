@@ -25,7 +25,8 @@
 
     // Test this way: http://localhost/util.do?action=testMessage
 
-    String message = (String) request.getAttribute("message"); 
+    String message = (String) request.getAttribute("message");
+   // A.log("-" + message + "-");
 
     // testMessage will be displayed on the page and in the logs.
     String testMessage = "";
@@ -58,8 +59,10 @@
     // testMessage = "execute() name:" + TaxonMgr.getPrettyTaxaNames(taxonName) + " species:" + species;
     // testMessage = "message-body.jsp andCriteria:" + StatusSet.getAndCriteria(Project.ALLANTWEBANTS));
 
-      A.log("message-body.jsp " + testMessage);    
-      message += " " + testMessage;    
+      A.log("message-body.jsp " + testMessage);
+      if (testMessage != null && !"".equals(testMessage)) {
+        message += " " + testMessage;
+      }
     }
 
     LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));

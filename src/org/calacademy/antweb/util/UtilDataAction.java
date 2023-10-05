@@ -266,10 +266,6 @@ public class UtilDataAction extends Action {
                 AntwebMgr.populate(connection, true);
             }
 
-            if ("restart".equals(action)) {
-                message = AntwebSystem.restartAntweb(accessLogin);
-            }
-
         }
 		// ---------- Data Loading --------------------
 
@@ -733,6 +729,13 @@ public class UtilDataAction extends Action {
         }        
 
 // ----------------- Assorted --------------------
+
+        if ("setIsRestart".equals(action)) {
+            boolean is = false;
+            if ("true".equals(param)) is = true;
+            message = "isRestart set:" + is;
+            AntwebSystem.setIsRestart(is);
+        }
 
         // Takes about 3 minutes.
         if ("testProjTaxon".equals(action)) {

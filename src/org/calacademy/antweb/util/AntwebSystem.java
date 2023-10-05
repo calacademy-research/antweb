@@ -57,6 +57,20 @@ public class AntwebSystem {
     return count;
   }	
 
+  private static boolean s_isRestart = false;
+  public static boolean getIsRestart() {
+    return s_isRestart;
+  }
+  public static void setIsRestart(boolean isRestart) {
+    s_isRestart = isRestart;
+  }
+  public static boolean isRestart() {
+    boolean retVal = false;
+    if (Scheduler.isStuckInSet1()) return true;
+    if (getIsRestart()) return true;
+    return false;
+  }
+
   // NOT WORKING: https://www.antweb.org/utilData.do?action=restart
   public static String restartAntweb(Login accessLogin) {
     String message = "";
