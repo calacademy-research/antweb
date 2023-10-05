@@ -4,6 +4,8 @@
 page_content=$(curl -s "https://www.antweb.org/util.do?action=isRestart")
 #echo page_content: $page_content"" >> logs/detail/rebootCheck.log
 
+now=$(date)
+
 # Check for 'true' or 'false' in the fetched content
 if [[ $page_content == *"<b>false</b>"* ]]; then
     echo "Diagnostic: 'false' found."
