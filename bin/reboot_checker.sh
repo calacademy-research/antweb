@@ -15,16 +15,19 @@ if [[ "$page_content" == *"<b>false</b>"* ]]; then
 elif [[ "$page_content" == *"<b>true</b>"* ]]; then
     str="Diagnostic: 'true' found in reboot_checker.sh. Reboot: $now"
     exit_code=1
+    echo $str
+    echo $str >> $log_path
+    reboot
 elif [[ "$page_content" == *"case#"* ]]; then
     str="Diagnostic: 'case#' found in reboot_checker.sh. Reboot: $now"
     exit_code=1
+    echo $str
+    echo $str >> $log_path
+    reboot
 else
     str="Warning: Neither 'true' nor 'false' found in page. $now"
     exit_code=1
 fi
 
-# Output diagnostic string
-echo $str
-echo $str >> $log_path
 exit $exit_code
 
