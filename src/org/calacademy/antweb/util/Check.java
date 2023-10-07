@@ -235,13 +235,13 @@ For convenience:
 
     private static boolean recursiveTest(String queryString, HttpServletRequest request, HttpServletResponse response, String testStr) throws IOException {
         int i1 = queryString.indexOf(testStr);
-        A.log("blockRecursiveCalls i1:" + i1);
+        //A.log("blockRecursiveCalls i1:" + i1);
         if (i1 > 0) {
-            int i2 = queryString.indexOf("statusSet=all", i1 + 1);
-            A.log("blockRecursiveCalls i2:" + i2);
+            int i2 = queryString.indexOf(testStr, i1 + 1);
+            //A.log("blockRecursiveCalls i2:" + i2);
             if (i2 > 0) {
-                int i3 = queryString.indexOf("statusSet=all", i2 + 1);
-                A.log("blockRecursiveCalls i3:" + i3);
+                int i3 = queryString.indexOf(testStr, i2 + 1);
+                //A.log("blockRecursiveCalls i3:" + i3);
                 if (i3 > 0) {
                     String target = HttpUtil.getTarget(request);
                     String htmlMessage = "Recursive call blocked. If in error, please report to bfisher@antweb.org <br><br>Error: too many instances of '" + testStr + "' in request:" + target + ".";
