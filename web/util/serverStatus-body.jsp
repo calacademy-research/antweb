@@ -135,7 +135,6 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 <br><b>Server Details:</b> <%= serverDetails %>
 <br><b>TaxonMgr</b><%= TaxonMgr.report() %>
 
- %>  
 <br><br><br>
 <h3>Assorted Links</h3>
      <a href = "<%= domainApp %>/uptime.do">Uptime</a>

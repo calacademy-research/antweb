@@ -220,14 +220,25 @@ public final class OverviewAction extends DescriptionAction {
             }
           }
           String adm1Name = overviewForm.getAdm1Name();
-          if (adm1Name != null && countryName != null) {
-            geolocale = GeolocaleMgr.getAdm1(adm1Name, countryName);
-            if (geolocale == null) {
-                request.setAttribute("message", "Adm1:" + adm1Name + " not found");          
-                return mapping.findForward("message");            
-            }
+          if (adm1Name != null) {
+              if (countryName != null) {
+                  geolocale = GeolocaleMgr.getAdm1(adm1Name, countryName);
+                  if (geolocale == null) {
+                      request.setAttribute("message", "Adm1:" + adm1Name + " not found");
+                      return mapping.findForward("message");
+                  }
+              } else {
+                  geolocale = GeolocaleMgr.getAdm1IfUnique(adm1Name);
+                  if (geolocale == null) {
+                      request.setAttribute("message", "Unique Adm1:" + adm1Name + " not found");
+                      return mapping.findForward("message");
+                  }
+              }
           }
-          
+
+          if (geolocale == null) {
+              s_log.error("execute() geolocale not found for id:" + id + " regionName:" + regionName + " subregionName:" + subregionName + " country:" + countryName + " adm1:" + adm1Name);
+          }
 		  String url = geolocale.getThisPageTarget();
 
 		  //HttpUtil.getUrl(url);  // Needed? Guess not.

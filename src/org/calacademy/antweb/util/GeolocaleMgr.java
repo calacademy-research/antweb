@@ -272,6 +272,20 @@ public class GeolocaleMgr extends Manager {
         return null;
     }
 
+    public static Geolocale getAdm1IfUnique(String adm1Name) {
+        Geolocale adm1 = null;
+        for (Geolocale geolocale : s_geolocales) {
+            if ("adm1".equals(geolocale.getGeorank()) && geolocale.getName().equals(adm1Name)) {
+                if (adm1 == null) {
+                    adm1 = geolocale;
+                } else {
+                    return null;  // It was not unique
+                }
+            }
+        }
+        return adm1;
+    }
+
     public static @Nullable Adm1 getAdm1(int geolocaleId) {
         return adm1List.stream().filter(geolocale -> geolocale.getId() == geolocaleId)
                 .findFirst().orElse(null);
