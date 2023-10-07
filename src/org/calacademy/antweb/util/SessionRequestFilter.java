@@ -30,11 +30,17 @@ public class SessionRequestFilter implements Filter {
     private static int s_period = 2; // minutes after which the infrequent code will execute. (Debug string fetch).
     private static Date s_periodDate = null;
 
+    private static int s_concurrentRequests = 0;
+    public static int getConcurrentRequests() {
+        return s_concurrentRequests;
+    }
 
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
 
       if (AntwebProps.isDevMode()) s_period = 0;
+
+      ++s_concurrentRequests;
 
       Date startTime = new Date();
       HttpServletRequest request = (HttpServletRequest) req;
@@ -53,7 +59,10 @@ public class SessionRequestFilter implements Filter {
           PageTracker.add(request);
 
           boolean allow = UserAgentTracker.vetForBot(request, response);
-          if (!allow) return;
+          if (!allow) {
+              --s_concurrentRequests;
+              return;
+          }
 
           Login accessLogin = LoginMgr.getAccessLogin(request);
           String loginName = "-";
@@ -157,6 +166,7 @@ public class SessionRequestFilter implements Filter {
               }
 
       }
+      --s_concurrentRequests;
     }
 
     public static final int MILLIS = 1000;

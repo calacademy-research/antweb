@@ -25,8 +25,10 @@
 
 <% // Object o = null;  o.toString(); // uncomment this line to create stacktrace %>
 
+<% // ------------------------------------------------- %>
+
 <br>
-<h3>Antweb Operation</h3>
+<h2>Antweb Operation</h2>
 
 <br><b>Current Time:</b> <%= (new Date()).toString() %>
 <br><b>Server Start Time:</b> <%= (SessionRequestFilter.getInitTime()).toString() %>
@@ -99,18 +101,25 @@ message += topReport;
 <br><b>isServerBusy:</b> <%= request.getAttribute("isServerBusy") %>
 <br><b>Connection Pool:</b> <%= request.getAttribute("cpDiagnostics") %>
 
-<br><br><br>
-<h3>Server Stats</h3>
 
-<br><b>AntwebMgr Report:</b> <%= AntwebMgr.getHtmlReport() %>
-<br><b>Profile:</b><%= QueryProfiler.report() %>
+<% // ------------------------------------------------- %>
+
+<br><br><br>
+<h2>Server Stats</h2>
+
+<br><b>Concurrent Requests: <%= SessionRequestFilter.getConcurrentRequests() %>
+
+<br><br><b>AntwebMgr Report:</b> <%= AntwebMgr.getHtmlReport() %>
+<br><br><b>Profile:</b><%= QueryProfiler.report() %>
 
 <br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
 <br><b>Bad Actor Report:</b> <%= BadActorMgr.getBadActorReport() %>
 <br><b>ProfileCounter:</b> <%= ProfileCounter.getReport() %>
 
-<br><br><br>
-<h3>Server Properties </h3>
+<% // ------------------------------------------------- %>
+
+<br><br>
+<h2>Server Properties </h2>
 
 <b>DomainApp</b>: <%= domainApp %>
 <br><b>SecureDomainApp</b>: <%= AntwebProps.getSecureDomainApp() %>
@@ -135,14 +144,18 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 <br><b>Server Details:</b> <%= serverDetails %>
 <br><b>TaxonMgr</b><%= TaxonMgr.report() %>
 
+<% // ------------------------------------------------- %>
+
 <br><br><br>
-<h3>Assorted Links</h3>
+<h2>Assorted Links</h2>
      <a href = "<%= domainApp %>/uptime.do">Uptime</a>
      <br><a href = "<%= domainApp %>/sessionExpired.jsp">sessionExpired.jsp</a>
      <br><a href = "<%= domainApp %>/error.jsp">error.jsp</a>
 
+<% // ------------------------------------------------- %>
+
 <br><br><br>
-<h3>Form Actions</h3>
+<h2>Form Actions</h2>
 <html:form action="<%= domainApp %>/serverStatus">
        <input type="submit" name="methodHabitat" value="methodHabitat"/>
 <br>
