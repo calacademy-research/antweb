@@ -84,7 +84,6 @@ public class SessionRequestFilter implements Filter {
           }
 
           if (!allow) {
-              --s_concurrentRequests;
               return;
           }
 
