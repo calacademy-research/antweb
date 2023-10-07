@@ -226,7 +226,11 @@ For convenience:
     public static boolean blockRecursiveCalls(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String queryString = request.getQueryString();
         if (queryString == null) return false;
-        return recursiveTest(queryString, request, response, "statusSet=all");
+        boolean retVal = recursiveTest(queryString, request, response, "statusSet=");
+        if (retVal == true) return true;
+        retVal = recursiveTest(queryString, request, response, "statusset=");
+        if (retVal == true) return true;
+        return false;
     }
 
     private static boolean recursiveTest(String queryString, HttpServletRequest request, HttpServletResponse response, String testStr) throws IOException {
