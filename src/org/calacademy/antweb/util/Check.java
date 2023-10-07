@@ -6,6 +6,8 @@ import java.sql.*;
 
 import javax.servlet.http.*;
 
+import java.io.IOException;
+
 import org.apache.struts.action.*;
 
 import org.apache.commons.logging.Log; 
@@ -207,7 +209,7 @@ public class Check {
         }
         return null;
     }    
-}
+
 
 /*
 For convenience:
@@ -219,6 +221,32 @@ For convenience:
 
     Login accessLogin = LoginMgr.getAccessLogin(request);
     Group accessGroup = GroupMgr.getAccessGroup(request);
-
 */
 
+    public static boolean blockRecursiveCalls(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String queryString = request.getQueryString();
+        if (queryString == null) return false;
+        return recursiveTest(queryString, request, response, "statusSet=all");
+    }
+
+    private static boolean recursiveTest(String queryString, HttpServletRequest request, HttpServletResponse response, String testStr) throws IOException {
+        int i1 = queryString.indexOf(testStr);
+        A.log("blockRecursiveCalls i1:" + i1);
+        if (i1 > 0) {
+            int i2 = queryString.indexOf("statusSet=all", i1 + 1);
+            A.log("blockRecursiveCalls i2:" + i2);
+            if (i2 > 0) {
+                int i3 = queryString.indexOf("statusSet=all", i2 + 1);
+                A.log("blockRecursiveCalls i3:" + i3);
+                if (i3 > 0) {
+                    String target = HttpUtil.getTarget(request);
+                    String htmlMessage = "Recursive call blocked. If in error, please report to bfisher@antweb.org <br><br>Error: too many instances of '" + testStr + "' in request:" + target + ".";
+                    HttpUtil.write(htmlMessage, response);
+                    return true;  // Do not allow
+                }
+            }
+        }
+        return false;
+    }
+
+}

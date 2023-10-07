@@ -78,6 +78,11 @@ public class SessionRequestFilter implements Filter {
           PageTracker.add(request);
 
           boolean allow = UserAgentTracker.vetForBot(request, response);
+
+          if (allow) {
+              allow = !Check.blockRecursiveCalls(request, response);
+          }
+
           if (!allow) {
               --s_concurrentRequests;
               return;
@@ -169,6 +174,8 @@ public class SessionRequestFilter implements Filter {
 
 		  HttpUtil.write(htmlMessage, response);
       } finally {
+          --s_concurrentRequests;
+
           PageTracker.remove(request);
 
           finish(request, startTime);
@@ -183,7 +190,6 @@ public class SessionRequestFilter implements Filter {
               }
 
       }
-      --s_concurrentRequests;
     }
 
     public static final int MILLIS = 1000;
