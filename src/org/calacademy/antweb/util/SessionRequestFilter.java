@@ -35,12 +35,31 @@ public class SessionRequestFilter implements Filter {
         return s_concurrentRequests;
     }
 
+    private static int perCounter = 0;
+    private static Date perStart = new Date();
+    private static int periodInSeconds = 10;
+    private static double countPer = 0;  // requests per period
+    public static String getRequestsPerSecond() {
+        return Double.toString(countPer);
+    }
+
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
 
       if (AntwebProps.isDevMode()) s_period = 0;
 
       ++s_concurrentRequests;
+
+      // Count hits per second.
+      ++perCounter;
+      A.log("doFilter() perCounter:" + perCounter + " countPer:" + countPer + " periodInSeconds:" + periodInSeconds + " perStart:" + perStart);
+      if (AntwebUtil.secsSince(perStart) >= periodInSeconds) {
+          countPer = (double)perCounter /(periodInSeconds);
+          //double actualQuotient = (double)dividend / divisor;
+
+          perStart = new Date();
+          perCounter = 0;
+      }
 
       Date startTime = new Date();
       HttpServletRequest request = (HttpServletRequest) req;
@@ -105,8 +124,6 @@ public class SessionRequestFilter implements Filter {
           }
 
           UserAgentTracker.track(request, connection);
-
-
 
           chain.doFilter(request, response);
 

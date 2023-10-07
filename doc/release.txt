@@ -2,6 +2,7 @@
 Release 8.97
   In OverviewMgr, allow adm1 to be found by name, without country, if name is unique.
   Add Concurrent Requests to Server Stats.
+  isRestart functionality.
 
 Release 8.96.1
   Two fixes for image comparison.

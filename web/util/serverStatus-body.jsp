@@ -109,6 +109,8 @@ message += topReport;
 
 <br><b>Concurrent Requests: <%= SessionRequestFilter.getConcurrentRequests() %>
 
+<br><b>Requests per second: <%= SessionRequestFilter.getRequestsPerSecond() %>
+
 <br><br><b>AntwebMgr Report:</b> <%= AntwebMgr.getHtmlReport() %>
 <br><br><b>Profile:</b><%= QueryProfiler.report() %>
 
