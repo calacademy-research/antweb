@@ -75,6 +75,13 @@ static double getVersion () {
 
             String cpDiagnostics = DBStatus.getSimpleCpDiagnosticsAttr(dataSource1);
             request.setAttribute("cpDiagnostics", cpDiagnostics);
+
+            String cpMediumDiagnostics = DBStatus.getSimpleCpDiagnosticsAttr(dataSource2);
+            request.setAttribute("cpMediumDiagnostics", cpMediumDiagnostics);
+
+            String cpLongDiagnostics = DBStatus.getSimpleCpDiagnosticsAttr(dataSource3);
+            request.setAttribute("cpLongDiagnostics", cpLongDiagnostics);
+
         } catch (SQLException e) {
             s_log.error("e:" + e);
         } catch (Exception e) {

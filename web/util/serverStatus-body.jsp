@@ -104,6 +104,9 @@ message += topReport;
 <br><%= topReport %>
 
 <b>Connection Pool:</b> <%= request.getAttribute("cpDiagnostics") %>
+<br><b>Medium Connection Pool:</b> <%= request.getAttribute("cpMediumDiagnostics") %>
+<br><b>Long Connection Pool:</b> <%= request.getAttribute("cpLongDiagnostics") %>
+
 <br><br><b>DB Status <a href ="<%= domainApp %>/dbStatus.do">Page</a></b>
 
 <% // ------------------------------------------------- %>
