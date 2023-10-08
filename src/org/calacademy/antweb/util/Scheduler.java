@@ -230,7 +230,7 @@ public class Scheduler extends Action {
 				Emailer.sendMail(recipients, subject, body);
 			}
         	*/
-			s_log.warn("set1Test() stuckInSet1:" + s_isStuckInSet1);
+			if (s_isStuckInSet1) s_log.error("set1Test() stuckInSet1:" + s_isStuckInSet1);
 		}
 	}
 }

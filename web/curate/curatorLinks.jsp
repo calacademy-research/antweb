@@ -49,8 +49,7 @@
       <li><a href="<%= domainApp %>/utilData.do?action=siteWarning&text=<%= content %>">Site Warning</a>
          <br><verbatim>&lt;br&gt;&lt;font color=lightgreen&gt;&lt;/font&gt;</verbatim>
       <li><a href="<%= domainApp %>/utilData.do?action=deleteTaxonProp&taxonName=&prop=">Delete Taxon Property</a>
-      <li><a href="<%= domainApp %>/util.do?action=isRestart">isRestart</a>
-      <li><a href="<%= domainApp %>/utilData.do?action=setIsRestart&param=true">setIsRestart true</a>
+      <li><a href="<%= domainApp %>/util.do?action=isRestart">isRestart</a> - (<a href="<%= domainApp %>/utilData.do?action=setIsRestart&param=true">set</a>)
     </ul>
 
     <h3 align=left>Reports</H3>

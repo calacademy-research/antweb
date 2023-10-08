@@ -240,14 +240,14 @@ For convenience:
             int i2 = queryString.indexOf(testStr, i1 + 1);
             //A.log("blockRecursiveCalls i2:" + i2);
             if (i2 > 0) {
-                int i3 = queryString.indexOf(testStr, i2 + 1);
+                //int i3 = queryString.indexOf(testStr, i2 + 1);
                 //A.log("blockRecursiveCalls i3:" + i3);
-                if (i3 > 0) {
+                //if (i3 > 0) {
                     String target = HttpUtil.getTarget(request);
                     String htmlMessage = "Recursive call blocked. If in error, please report to bfisher@antweb.org <br><br>Error: too many instances of '" + testStr + "' in request:" + target + ".";
                     HttpUtil.write(htmlMessage, response);
                     return true;  // Do not allow
-                }
+                //}
             }
         }
         return false;

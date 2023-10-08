@@ -30,17 +30,13 @@
 <br>
 <h2>Antweb Operation</h2>
 
-<br><b>Current Time:</b> <%= (new Date()).toString() %>
-<br><b>Server Start Time:</b> <%= (SessionRequestFilter.getInitTime()).toString() %>
-<br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getInitTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) %>.
-<br><b>AntwebMgr (re)Start Time:</b> <%= AntwebMgr.getStartTime() %>. <b>(Hrs:</b> <%= AntwebUtil.hrsSince(AntwebMgr.getStartTime()) %><b>).</b>
-<br><br><b>Upload services</b> - To take On/Off line:<a href="<%= domainApp %>/serverStatus.do?action=toggleDownTime">Toggle Down Time</a>
-<%
-boolean otherOption = !UptimeAction.isFailOnPurpose();
-%>
-<br><b>Uptime Fail On Purpose:</b> <%= UptimeAction.isFailOnPurpose() %>  <a href='<%= AntwebProps.getDomainApp() %>/uptime.do?fail=<%= otherOption %>'>[toggle fail]</a>
-<br><%= ServerDb.getDownTimeMessage() %>
-<br><b>Server Debug:</b> <%= ServerDb.getDebug() %>
+
+<br><b>Concurrent Requests:</b> <%= SessionRequestFilter.getConcurrentRequests() %>
+
+<br><b>Requests per second:</b> <%= SessionRequestFilter.getRequestsPerSecond() %>
+
+<br><br><b>isServerBusy:</b> <%= request.getAttribute("isServerBusy") %>
+
 <br><br><b>Processing...</b>
 &nbsp;&nbsp;&nbsp;(If Upload in process, or Image Upload locked, best to wait to restart the server).
 <% 
@@ -75,21 +71,24 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
 %>
 <br>&nbsp;&nbsp;&nbsp;Is Image Upload locked: <%= imageUploadLock %>
 
-<br><br><b>UserAgentTracker</b>
-  <br><b>&nbsp;&nbsp;&nbsp;botCount:</b><%= UserAgentTracker.getBotDenialCount() %>
-  <br><b>&nbsp;&nbsp;&nbsp;getBotDenialReason:</b><%= UserAgentTracker.getBotDenialReason() %>
-  <br><b>&nbsp;&nbsp;&nbsp;inVetMode:</b><%= UserAgentTracker.isInVetMode() %>
+<br><br><b>Upload services</b> - To take On/Off line:<a href="<%= domainApp %>/serverStatus.do?action=toggleDownTime">Toggle Down Time</a>
+<%
+boolean otherOption = !UptimeAction.isFailOnPurpose();
+%>
+<br><b>Uptime Fail On Purpose:</b> <%= UptimeAction.isFailOnPurpose() %>  <a href='<%= AntwebProps.getDomainApp() %>/uptime.do?fail=<%= otherOption %>'>[toggle fail]</a>
+<br><%= ServerDb.getDownTimeMessage() %>
+<b>Server Debug:</b> <%= ServerDb.getDebug() %>
+
+
+<br><br><b>Current Time:</b> <%= (new Date()).toString() %>
+<br><b>Server Start Time:</b> <%= (SessionRequestFilter.getInitTime()).toString() %>
+<br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getInitTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) %>.
+<br><b>AntwebMgr (re)Start Time:</b> <%= AntwebMgr.getStartTime() %>. <b>(Hrs:</b> <%= AntwebUtil.hrsSince(AntwebMgr.getStartTime()) %><b>).</b>
+
+<% // --- %>
 
 <br><br><b>CPU:</b> <%= AntwebSystem.getCpuLoad() %>
 <br>
-
-<%
-String topReport = AntwebSystem.getTopReport();
-message += topReport;
-%>
-
-<%= topReport %>
-
 <%= FileUtil.getDiskStats() %>
 <br>
 <%
@@ -98,25 +97,35 @@ message += topReport;
 %>
 <b>Memory Stats</b> - <%= memoryStat %>
 
-<br><b>isServerBusy:</b> <%= request.getAttribute("isServerBusy") %>
-<br><b>Connection Pool:</b> <%= request.getAttribute("cpDiagnostics") %>
+<%
+String topReport = AntwebSystem.getTopReport();
+message += topReport;
+%>
+<br><%= topReport %>
 
+<b>Connection Pool:</b> <%= request.getAttribute("cpDiagnostics") %>
+<br><br><b>DB Status <a href ="<%= domainApp %>/dbStatus.do">Page</a></b>
 
 <% // ------------------------------------------------- %>
 
 <br><br><br>
 <h2>Server Stats</h2>
 
-<br><b>Concurrent Requests: <%= SessionRequestFilter.getConcurrentRequests() %>
+<br><b>AntwebMgr Report:</b> <%= AntwebMgr.getHtmlReport() %>
 
-<br><b>Requests per second: <%= SessionRequestFilter.getRequestsPerSecond() %>
+<br><br><b>TaxonMgr</b><br><%= TaxonMgr.report() %>
 
-<br><br><b>AntwebMgr Report:</b> <%= AntwebMgr.getHtmlReport() %>
 <br><br><b>Profile:</b><%= QueryProfiler.report() %>
 
-<br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
-<br><b>Bad Actor Report:</b> <%= BadActorMgr.getBadActorReport() %>
-<br><b>ProfileCounter:</b> <%= ProfileCounter.getReport() %>
+
+<br><br><b>UserAgentTracker</b>
+  <br><b>&nbsp;&nbsp;&nbsp;botCount:</b><%= UserAgentTracker.getBotDenialCount() %>
+  <br><b>&nbsp;&nbsp;&nbsp;getBotDenialReason:</b><%= UserAgentTracker.getBotDenialReason() %>
+  <br><b>&nbsp;&nbsp;&nbsp;inVetMode:</b><%= UserAgentTracker.isInVetMode() %>
+
+<br><br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
+<br><br><b>Bad Actor Report:</b> <%= BadActorMgr.getBadActorReport() %>
+<br><br><b>ProfileCounter:</b> <%= ProfileCounter.getReport() %>
 
 <% // ------------------------------------------------- %>
 
@@ -144,7 +153,6 @@ message += topReport;
 String serverDetails = (String) request.getAttribute("serverDetails");
 %>
 <br><b>Server Details:</b> <%= serverDetails %>
-<br><b>TaxonMgr</b><%= TaxonMgr.report() %>
 
 <% // ------------------------------------------------- %>
 

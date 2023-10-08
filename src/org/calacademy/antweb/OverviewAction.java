@@ -237,8 +237,12 @@ public final class OverviewAction extends DescriptionAction {
           }
 
           if (geolocale == null) {
-              s_log.error("execute() geolocale not found for id:" + id + " regionName:" + regionName + " subregionName:" + subregionName + " country:" + countryName + " adm1:" + adm1Name);
+              s_log.error("execute() geolocale not found in request. " + HttpUtil.getRequestInfo(request));
+
+              request.setAttribute("message", "Geolocale not found");
+              return mapping.findForward("message");
           }
+
 		  String url = geolocale.getThisPageTarget();
 
 		  //HttpUtil.getUrl(url);  // Needed? Guess not.

@@ -338,11 +338,11 @@ public class AntwebSystem {
     }
 
     public static String getTopReport() {
-      String report = "<b>Top Report for Mysql and Java:</b>";
-      report += "<pre> PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND";
+      //String report = "<b>Top Report for Java:</b>";
+      String report = "<pre> PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND";
       String javaTop = AntwebSystem.top("java");
       if (javaTop != null) report += "<br>" + javaTop;  // causes extra line: "\r\n<br>"
-      String mysqlTop = AntwebSystem.top("mysql");
+      String mysqlTop = null; //AntwebSystem.top("mysql");
       if (mysqlTop != null) report += "<br>" + mysqlTop;
       if (javaTop == null && mysqlTop == null) report += "\r<br>Top results not found for mysql and java";
       report += "</pre>";
