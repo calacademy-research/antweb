@@ -22,7 +22,7 @@ tempfile=/tmp/"$date".sql.gz
 datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
-  docker exec -it antweb_mysql_1 mysqldump -u $dbuser --password=$dbpass --skip-definer --routines  --skip-lock-tables --default-character-set=utf8 --all-databases | tail -n +2 | gzip -c -9 > "$tempfile"
+  docker exec -it antweb_mysql_1 mysqldump -u $dbuser --password=$dbpass --routines  --skip-lock-tables --default-character-set=utf8 --all-databases | tail -n +2 | gzip -c -9 > "$tempfile"
 
   # Check if the tempfile is missing, zero-length, or less than 1K
   if [ ! -f "$tempfile" ] || [ ! -s "$tempfile" ] || [ $(stat -c %s "$tempfile") -lt 1024 ]; then
