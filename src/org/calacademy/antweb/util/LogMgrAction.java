@@ -351,6 +351,7 @@ public final class LogMgrAction extends Action {
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&loc=data&fileName=messages&ext=txt'>Messages.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=badRequest&ext=log'>badRequest.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=taxonNotFound&ext=txt'>taxonNotFound.txt</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=isRestart&ext=log'>isRestart.log.txt</a>";
 
         /*
         message += "<br>Deprecated...?";
