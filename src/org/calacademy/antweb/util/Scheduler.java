@@ -186,6 +186,12 @@ public class Scheduler extends Action {
 				}
 				message = "Scheduler " + action + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
 				s_log.warn("doAction() " + message);
+
+				if (num == 0) {
+				  // This was the full scheduled tasks, now completed.
+				  AntwebSystem.setIsRestart(true);	// This will trigger a reboot within 5 minutes.
+				}
+
 				return message + " output:" + output;
 		    }
 		} finally {
