@@ -445,6 +445,9 @@ public abstract class AntwebUtil {
     return os.toString();
   }
 
+  public static String getStackTrace(ArrayList<String> stackTrace) {
+    return stackTrace.toString();
+  }
 
   public static void logAntwebStackTrace() {
     s_log.warn(getAntwebStackTrace());
@@ -460,7 +463,7 @@ public abstract class AntwebUtil {
   }
 
   public static String getAntwebStackTrace(Exception e) {
-    String trace = getAntwebStackTrace(e);
+    String trace = getStackTrace(e);
     ArrayList<String> traceArray = getAntwebStackTraceArray(trace);
     return traceArray.toString();
   }
@@ -487,9 +490,6 @@ public abstract class AntwebUtil {
     return traceLines;
   }
 
-  public static String getStackTrace(ArrayList<String> stackTrace) {
-    return stackTrace.toString();
-  }
   public static String getAntwebStackTraceHtml(Exception e) {
     String trace = getAntwebStackTrace(e);
     return getAntwebStackTraceHtml(trace);
