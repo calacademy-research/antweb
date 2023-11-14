@@ -297,7 +297,7 @@ public class SpeciesListUpload extends AntwebUpload {
 
         String returnStr = null;   
         //A.log("importSpeciesList() project:" + project + " fileName:" + fileName + " fileNameBase:" + fileNameBase + " encoding:" + encoding);
-        LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + " import:" + fileName);
+        LogMgr.appendLog("worldantsLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + " import:" + fileName);
                
         boolean isWorldants = Project.WORLDANTS.equals(project);
 
@@ -1017,7 +1017,7 @@ public class SpeciesListUpload extends AntwebUpload {
             s_log.info("copySpeciesListFile()" + message);
             Utility.copyFile(uploadFile.getFileLoc(), speciesListFile);
 
-            LogMgr.appendLog("speciesListLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + message);
+            LogMgr.appendLog("worldantsLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + message);
 
             // The web/workingdir always has one copy of the latest... in theory.  Similar logic in reloadSpeciesList().
             String webWorkingDir = uploadFile.getRoot() + "web/workingdir/";

@@ -496,7 +496,7 @@ Or, if there are stmts and/or rsets...
       }
       s_lastMethod = method;
       if (secs > s_threshold) {
-        String message = "profileQuery() method:" + method + " secs:" + secs + " query:" + query;
+        String message = "profileQuery() date:" + DateUtil.getFormatDateTimeStr() + " method:" + method + " secs:" + secs + " query:" + query;
           LogMgr.appendLog("profileQuery.log", message);
       }
     }

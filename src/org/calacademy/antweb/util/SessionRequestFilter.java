@@ -153,13 +153,17 @@ public class SessionRequestFilter implements Filter {
 
           int caseNumber = AntwebUtil.getCaseNumber();
           message += " See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber;
-          message += " e:" + e + " target:" + target + " startTime:" + startTime
-                    + "<br><b>Exception:</b>" + e
-                    + " userAgent:" + UserAgentTracker.getUserAgent(request);
-          s_log.error("doFilter() " + message + " info:" + HttpUtil.getLongRequestInfo(request));
-          message += " stacktrace:" + "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getShortStackTrace(e) + "</pre>";
+          message += " e:" + e + " target:" + target;
+          s_log.error("doFilter() " + message);
 
+          message += " stacktrace:"
+                  + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTrace(e) + "</pre>"
+                  + "<br><b>startTime:</b>" + startTime
+                  + "<br><b>Exception:</b>" + e
+                  + "<br><b>userAgent:</b>" + UserAgentTracker.getUserAgent(request)
+                  + "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request);
           LogMgr.appendLog("srfExceptions.jsp", message);
+
           htmlMessage
               = "<br><b>Request Error</b>"
               + "<br><br><b>Case#:</b>" + caseNumber 
@@ -170,8 +174,8 @@ public class SessionRequestFilter implements Filter {
           if (AntwebProps.isDevMode()) {
               htmlMessage += "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
           }
-
 		  HttpUtil.write(htmlMessage, response);
+
       } finally {
           --s_concurrentRequests;
 

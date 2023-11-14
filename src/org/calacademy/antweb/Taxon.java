@@ -1198,7 +1198,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
               setDefaultSpecimen(Caste.QUEEN, imagePickDb.getDefaultSpecimen(Caste.QUEEN, this));
             }   
         } catch (Exception e) {
-          s_log.warn("setDetails() e:" + e);
+          s_log.warn("setDetails() e:" + e + AntwebUtil.getAntwebStackTrace(e));
           throw e;        
         } finally {
             DBUtil.close(stmt, rset, this, "setDetails()");
