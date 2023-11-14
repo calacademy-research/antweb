@@ -605,7 +605,7 @@ public class UploadAction extends Action {
 		uploadDb.updateGroup(group);
 		s_log.debug("specimenPostProcess() updateUpload");
 
-		if (!AntwebProps.isDevMode()) {
+		if (!AntwebProps.isDevModeSkipping()) {
 			runStatistics(uploadDetails.getAction(), connection, request, login.getId(), uploadDetails.getExecTime());
 		} else {
 			A.log("execTime:" + uploadDetails.getExecTime());

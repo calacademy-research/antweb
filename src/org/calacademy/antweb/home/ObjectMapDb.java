@@ -42,7 +42,7 @@ public class ObjectMapDb extends AntwebDb {
             return;
         }
 
-        boolean skip = AntwebProps.isDevMode() && false;
+        boolean skip = AntwebProps.isDevModeSkipping() && false;
         if (skip) s_log.info("genMuseumObjectMaps() DEV MODE SKIPPING genMuseumObjectMap(). Only gen for museum:AFRC.");
         for (Museum museum : museums) {
         if (museum.getIsActive()) {

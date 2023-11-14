@@ -2312,7 +2312,7 @@ public static final int c = 0;
    public void updateGeolocaleParentHierarchy() throws SQLException {
 
      // First update the subregions of Adm1.
-     if (!AntwebProps.isDevMode()) {
+     if (!AntwebProps.isDevModeSkipping()) {
        ArrayList<Geolocale> adm1s = GeolocaleMgr.getAdm1s();
        for (Geolocale adm1 : adm1s) {
          String parentName = adm1.getParent();

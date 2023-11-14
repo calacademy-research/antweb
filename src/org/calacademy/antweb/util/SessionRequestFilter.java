@@ -112,7 +112,6 @@ public class SessionRequestFilter implements Filter {
               afterPopulated = true;
           }
 
-
           // DataSource reliant functions
           ds = DBUtilSimple.getDataSource();
           connection = ds.getConnection();
@@ -148,20 +147,21 @@ public class SessionRequestFilter implements Filter {
                 note = " Periods not allowed in query String.";
               }
           }
-          String message = formatDateTime;
+          String message = "<br>" + formatDateTime;
           String htmlMessage = null;
 
           int caseNumber = AntwebUtil.getCaseNumber();
-          message += " See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber;
           message += " e:" + e + " target:" + target;
-          s_log.error("doFilter() " + message);
+          s_log.error("doFilter() See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber + " message:" + message);
 
-          message += " stacktrace:"
-                  + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTrace(e) + "</pre>"
+          message = ""
                   + "<br><b>startTime:</b>" + startTime
-                  + "<br><b>Exception:</b>" + e
+                  + "<br><b>case#:</b>" + caseNumber
+                  + "<br><b>target:</b>" + target
+                  + "<br><b>>e:</b>" + e
                   + "<br><b>userAgent:</b>" + UserAgentTracker.getUserAgent(request)
-                  + "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request);
+                  + "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request)
+                  + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTrace(e) + "</pre>";
           LogMgr.appendLog("srfExceptions.jsp", message);
 
           htmlMessage

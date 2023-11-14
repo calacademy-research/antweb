@@ -396,6 +396,16 @@ public abstract class AntwebProps {
 	  return AntwebProps.getIsDevMode();
 	}
 
+    public static Boolean isDevModeSkipping() {  // To shorten processing of uploads in dev.
+        boolean isDevMode = AntwebProps.getIsDevMode();
+
+        boolean skipping = true;   // uncomment to turn ON skipping
+        //boolean skipping = false;  // uncomment to turn OFF skipping
+
+        if (isDevMode && skipping) return true;
+        return false;
+    }
+
 	public static Boolean getIsDevMode() {
 		String devModeStr = AntwebProps.getProp("isDevMode");
         return devModeStr.equals("true");
