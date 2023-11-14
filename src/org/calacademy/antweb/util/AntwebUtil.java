@@ -455,15 +455,18 @@ public abstract class AntwebUtil {
 
   public static String getAntwebStackTrace() {
     String trace = getStackTrace();
-    return getAntwebStackTrace(trace);
-  }
-  public static String getAntwebStackTrace(Exception e) {
-    String trace = getStackTrace(e);
-    return getAntwebStackTrace(trace);
+    ArrayList<String> array = getAntwebStackTraceArray(trace);
+    return getStackTrace(array);
   }
 
-  public static String getAntwebStackTrace(String trace) {
-    ArrayList<String> traceLines = new ArrayList<>();
+  public static String getAntwebStackTrace(Exception e) {
+    String trace = getAntwebStackTrace(e);
+    ArrayList<String> traceArray = getAntwebStackTraceArray(trace);
+    return traceArray.toString();
+  }
+
+  public static ArrayList<String> getAntwebStackTraceArray(String trace) {
+    ArrayList<String> traceLines = getAntwebStackTraceArray(trace);
     //traceLines.add("\r\n");
     String character = "at ";
     int i = 0;
@@ -481,9 +484,25 @@ public abstract class AntwebUtil {
       if (i > 100) break;
     }
     //A.log("TraceLines:" + traceLines);
-    return traceLines.toString();
+    return traceLines;
   }
 
+  public static String getStackTrace(ArrayList<String> stackTrace) {
+    return stackTrace.toString();
+  }
+  public static String getAntwebStackTraceHtml(Exception e) {
+    String trace = getAntwebStackTrace(e);
+    return getAntwebStackTraceHtml(trace);
+  }
+  public static String getAntwebStackTraceHtml(String trace) {
+    String returnVal = "";
+    ArrayList<String> traceLines = getAntwebStackTraceArray(trace);
+    int size =  traceLines.size();
+    for (int i=0; i < size; i++) {
+      returnVal += "<br>" + traceLines.get(i);
+    }
+    return returnVal;
+  }
 
   private static final int s_shortStackLines = 7  ;
 

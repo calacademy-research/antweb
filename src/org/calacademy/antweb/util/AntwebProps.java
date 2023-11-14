@@ -399,8 +399,8 @@ public abstract class AntwebProps {
     public static Boolean isDevModeSkipping() {  // To shorten processing of uploads in dev.
         boolean isDevMode = AntwebProps.getIsDevMode();
 
-        boolean skipping = true;   // uncomment to turn ON skipping
-        //boolean skipping = false;  // uncomment to turn OFF skipping
+        //boolean skipping = true;   // uncomment to turn ON skipping
+        boolean skipping = false;  // uncomment to turn OFF skipping
 
         if (isDevMode && skipping) return true;
         return false;

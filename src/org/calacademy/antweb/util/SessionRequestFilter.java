@@ -158,10 +158,10 @@ public class SessionRequestFilter implements Filter {
                   + "<br><b>startTime:</b>" + startTime
                   + "<br><b>case#:</b>" + caseNumber
                   + "<br><b>target:</b>" + target
-                  + "<br><b>>e:</b>" + e
+                  + "<br><b>e:</b>" + e
                   + "<br><b>userAgent:</b>" + UserAgentTracker.getUserAgent(request)
-                  + "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request)
-                  + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTrace(e) + "</pre>";
+                  //+ "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request)
+                  + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTraceHtml(e) + "</pre>";
           LogMgr.appendLog("srfExceptions.jsp", message);
 
           htmlMessage
