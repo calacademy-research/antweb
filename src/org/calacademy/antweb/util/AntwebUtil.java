@@ -70,14 +70,20 @@ public abstract class AntwebUtil {
     return sum;
   }
 
-
     public static int getCaseNumber() {
       return AntwebUtil.getRandomNumber();
     }             
   
 	// Get Random Number
+    private static long s_lastMillis = 0;
 	public static int getRandomNumber() {
-	    return (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+      long millis = System.currentTimeMillis();
+      if (millis == s_lastMillis) {
+        s_log.error("Millis was not unique.");
+        millis = millis + 1;
+      }
+      s_lastMillis = millis;
+      return (int) (millis % Integer.MAX_VALUE);
 	}
 
     private static int s_secureCode = 0;
