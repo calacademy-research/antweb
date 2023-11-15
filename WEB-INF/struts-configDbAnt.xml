@@ -28,7 +28,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="maxIdleTime" value="10"/>
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
-      <set-property property="driverClass" value="com.mysql.jdbc.Driver" />   <!-- was driverClassName-->
+      <set-property property="driverClass" value="com.mysql.cj.jdbc.Driver" />   <!-- was driverClassName-->
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
@@ -50,7 +50,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <!-- set-property property="maxIdleTime" value="10"/ -->
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
-      <set-property property="driverClass" value="com.mysql.jdbc.Driver" />   <!-- was driverClassName-->
+      <set-property property="driverClass" value="com.mysql.cj.jdbc.Driver" />   <!-- was driverClassName-->
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
@@ -72,7 +72,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <!-- set-property property="maxIdleTime" value="10"/ -->
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
-      <set-property property="driverClass" value="com.mysql.jdbc.Driver" />   <!-- was driverClassName-->
+      <set-property property="driverClass" value="com.mysql.cj.jdbc.Driver" />   <!-- was com.mysql.jdbc.Driver driverClassName-->
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>

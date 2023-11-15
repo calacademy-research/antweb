@@ -35,6 +35,12 @@ public final class LocalityAction extends Action {
         String name = (String) df.get("name"); // Was: Name could be code or name. We try code first.
         String code = (String) df.get("code");
 
+		if (name == null && code == null) {
+			request.setAttribute("message", "Enter a locality name or code.");
+            s_log.warn("Enter a locality name or code.");
+			return mapping.findForward("message");
+		}
+
         if (HttpUtil.isBot(request) && code == null) {
 			request.setAttribute("message", "Locality access by name is restricted. Please use the code.");
 			return mapping.findForward("message");

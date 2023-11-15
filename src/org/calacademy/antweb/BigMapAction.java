@@ -57,6 +57,13 @@ public final class BigMapAction extends Action {
         String adm1Name = (String) df.get("adm1Name");
         String museumCode = (String) df.get("museumCode");
 
+        if (taxonName == null && specimenCode == null && localityKey == null && collectionCode == null
+          && projectName == null && countryName == null && adm1Name == null && museumCode == null) {
+            request.setAttribute("message", "Enter parameters for a map");
+            s_log.warn("Enter parameters for a map");
+            return mapping.findForward("message");
+        }
+
         // GeolocaleFocus feature is for taxon page maps with adm1 or country specified.
         // Example: https://www.antweb.org/bigMap.do?taxonName=myrmicinaewasmannia%20rochai&countryName=Brazil
         //   Will have a link to view just the specified geolocale, if logged in..
