@@ -78,8 +78,12 @@ public abstract class AntwebUtil {
     private static long s_lastMillis = 0;
 	public static int getRandomNumber() {
       long millis = System.currentTimeMillis();
+      if (millis < s_lastMillis) {
+        s_log.warn("Interesting!"); //Unexpected. Should work out alright...
+        millis = s_lastMillis;
+      }
       if (millis == s_lastMillis) {
-        s_log.error("Millis was not unique.");
+        //s_log.error("Millis was not unique.");
         millis = millis + 1;
       }
       s_lastMillis = millis;
