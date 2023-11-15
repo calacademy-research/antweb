@@ -1,5 +1,6 @@
 Release 8.101
   DB connection logging
+  ServerDebug extensions
 
 Release 8.100
   Refine dev mode skipping.
