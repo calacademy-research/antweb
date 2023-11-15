@@ -25,33 +25,49 @@ public class ServerDb extends AntwebDb {
     // Value will be fetched from database by SessionRequestFilter every SessionRequestFilter.s_period minutes.
     // Suggested user a debug option with "debug" in the term so that it can be easily searched for in the code base.
 
+    public static String s_debugs = "logGetConns, debugUserAgents";
     private static String s_debug = null;
-    public static boolean isDebug(String option) {
+    public static boolean isServerDebug(String option) {
         if (s_debug != null && s_debug.equals(option)) return true;
         return false;
     }
-    public static String getDebug() {
+    public static String getServerDebug() {
         return s_debug;
     }
-    public static String getDebug(Connection connection) throws SQLException {
+    public static String getServerDebug(Connection connection) throws SQLException {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = DBUtil.getStatement(connection, "ServerDb.getDebug()");
+            stmt = DBUtil.getStatement(connection, "ServerDb.getServerDebug()");
             String query = "select debug from server";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 s_debug = rset.getString("debug");
             }
         } catch (SQLException e) {
-            s_log.error("getDebug() e:" + e);
+            s_log.error("getServerDebug() e:" + e);
             throw e;
         } finally {
-            DBUtil.close(stmt, rset, "ServerDb.getDebug()");
+            DBUtil.close(stmt, rset, "ServerDb.getServerDebug()");
         }
         return s_debug;
     }
 
+    public static void setServerDebug(String value, Connection connection) throws SQLException {
+        s_debug = value;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(connection, "ServerDb.setServerDebug()");
+            String dml = "update server set debug = '" + value +"'";
+            stmt.executeUpdate(dml);
+        } catch (SQLException e) {
+            s_log.error("setServerDebug() " + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, "ServerDb.setServerDebug()");
+        }
+    }
 
 
     public static boolean isInDownTime() {

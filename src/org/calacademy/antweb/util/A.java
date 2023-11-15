@@ -22,7 +22,7 @@ public class A {
   private static final Log s_log = LogFactory.getLog(A.class);
 
   public static boolean isDebug(String option) {
-      return ServerDb.isDebug(option);
+      return ServerDb.isServerDebug(option);
   }
 
   public static void log(String message) {

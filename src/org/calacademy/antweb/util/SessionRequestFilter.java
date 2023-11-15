@@ -122,7 +122,7 @@ public class SessionRequestFilter implements Filter {
           if (AntwebUtil.minsSince(s_periodDate) >= s_period) {
               // This will happen only every s_period.
               s_periodDate = new Date();
-              String debug = ServerDb.getDebug(connection);
+              String debug = ServerDb.getServerDebug(connection);
               A.log("doFilter() period s_periodDate:" + s_periodDate + " debug:" + debug);
           }
 
@@ -161,7 +161,7 @@ public class SessionRequestFilter implements Filter {
                   + "<br><b>e:</b>" + e
                   + "<br><b>userAgent:</b>" + UserAgentTracker.getUserAgent(request)
                   //+ "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request)
-                  + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTraceHtml(e) + "</pre>";
+                  + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTrace(e) + "</pre>";   // AntwebUtil.getAntwebStackTraceHtml(e) didn't work
           LogMgr.appendLog("srfExceptions.jsp", message);
 
           htmlMessage

@@ -77,7 +77,7 @@ boolean otherOption = !UptimeAction.isFailOnPurpose();
 %>
 <br><b>Uptime Fail On Purpose:</b> <%= UptimeAction.isFailOnPurpose() %>  <a href='<%= AntwebProps.getDomainApp() %>/uptime.do?fail=<%= otherOption %>'>[toggle fail]</a>
 <br><%= ServerDb.getDownTimeMessage() %>
-<b>Server Debug:</b> <%= ServerDb.getDebug() %>
+<b>Server Debug:</b> <%= ServerDb.getServerDebug() %>
 
 
 <br><br><b>Current Time:</b> <%= (new Date()).toString() %>

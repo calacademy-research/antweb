@@ -20,6 +20,8 @@ import org.apache.commons.logging.LogFactory;
 import com.mchange.v2.c3p0.impl.*;
 
 import org.calacademy.antweb.AntFormatter;
+import org.calacademy.antweb.home.ServerDb;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
@@ -108,20 +110,25 @@ Or, if there are stmts and/or rsets...
       return getConnection(dataSource, name, null);
     }
 
+    private static final int logNum = 1000;
+    private static int c = 0;
 
     public static Connection getConnection(DataSource dataSource, String name, String queryString) throws SQLException {
       Connection connection = null;
 
       // Log the getConnection in getConns.log
-      //s_log.warn("stack:" + AntwebUtil.getAntwebStackTrace() );
-      String stackLine = AntwebUtil.getAntwebStackLine();
-      String dataSourceName = "N/a";
-      if (dataSource instanceof com.mchange.v2.c3p0.PooledDataSource) {
-         dataSourceName = ((com.mchange.v2.c3p0.PooledDataSource) dataSource).getDataSourceName();
+      c = c + 1;
+      if (c <= logNum || ServerDb.isServerDebug("logGetConns")) {
+          //s_log.warn("stack:" + AntwebUtil.getAntwebStackTrace() );
+          String stackLine = AntwebUtil.getAntwebStackLine();
+          String dataSourceName = "N/a";
+          if (dataSource instanceof com.mchange.v2.c3p0.PooledDataSource) {
+              dataSourceName = ((com.mchange.v2.c3p0.PooledDataSource) dataSource).getDataSourceName();
+          }
+          // " dataSource:" + dataSourceName +
+          String logLine = (DateUtil.getFormatDateTimeStr() + " " + stackLine + " name:" + name + " queryString:" + queryString);
+          LogMgr.appendLog("getConns.log", logLine);
       }
-      String logLine = (DateUtil.getFormatDateTimeStr() + " " + stackLine + " dataSource:" + dataSourceName + " name:" + name);
-      LogMgr.appendLog("getConns.log", logLine);
-
 
       try {
         connection = dataSource.getConnection();
