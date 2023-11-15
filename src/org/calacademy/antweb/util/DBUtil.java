@@ -108,8 +108,21 @@ Or, if there are stmts and/or rsets...
       return getConnection(dataSource, name, null);
     }
 
+
     public static Connection getConnection(DataSource dataSource, String name, String queryString) throws SQLException {
       Connection connection = null;
+
+      // Log the getConnection in getConns.log
+      //s_log.warn("stack:" + AntwebUtil.getAntwebStackTrace() );
+      String stackLine = AntwebUtil.getAntwebStackLine();
+      String dataSourceName = "N/a";
+      if (dataSource instanceof com.mchange.v2.c3p0.PooledDataSource) {
+         dataSourceName = ((com.mchange.v2.c3p0.PooledDataSource) dataSource).getDataSourceName();
+      }
+      String logLine = (DateUtil.getFormatDateTimeStr() + " " + stackLine + " dataSource:" + dataSourceName + " name:" + name);
+      LogMgr.appendLog("getConns.log", logLine);
+
+
       try {
         connection = dataSource.getConnection();
       } catch (Exception e) {
@@ -140,7 +153,7 @@ Or, if there are stmts and/or rsets...
         Statement stmt = null;
         try {
           //DBUtil.open(name);
-          stmt = connection.createStatement();  
+          stmt = connection.createStatement();
       } catch (SQLException e) {
         // Fail gracefully, without stacktrace, upon server shutdown
         //AntwebUtil.logShortStackTrace();

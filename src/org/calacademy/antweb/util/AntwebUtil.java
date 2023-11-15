@@ -462,6 +462,13 @@ public abstract class AntwebUtil {
     return getStackTrace(array);
   }
 
+
+  public static ArrayList<String> getAntwebStackTraceArray() {
+    String trace = getStackTrace();
+    ArrayList<String> array = getAntwebStackTraceArray(trace);
+    return array;
+  }
+
   public static String getAntwebStackTrace(Exception e) {
     String trace = getStackTrace(e);
     ArrayList<String> traceArray = getAntwebStackTraceArray(trace);
@@ -469,7 +476,7 @@ public abstract class AntwebUtil {
   }
 
   public static ArrayList<String> getAntwebStackTraceArray(String trace) {
-    ArrayList<String> traceLines = getAntwebStackTraceArray(trace);
+    ArrayList<String> traceLines = new ArrayList<String>();
     //traceLines.add("\r\n");
     String character = "at ";
     int i = 0;
@@ -502,6 +509,22 @@ public abstract class AntwebUtil {
       returnVal += "<br>" + traceLines.get(i);
     }
     return returnVal;
+  }
+
+  public static String getAntwebStackLine() {
+    ArrayList<String> stackArray = AntwebUtil.getAntwebStackTraceArray();
+    String line = stackArray.get(1);
+    if (line != null && line.contains("DBUtil")) {
+      line = stackArray.get(2);
+      if (line != null && line.contains("DBUtil")) {
+        line = stackArray.get(3);
+        if (line != null && line.contains("DBUtil")) {
+          line = stackArray.get(4);
+        }
+      }
+    }
+    line = line.trim();
+    return line;
   }
 
   private static final int s_shortStackLines = 7  ;
@@ -555,6 +578,8 @@ public abstract class AntwebUtil {
       return stackTrace;
     }
   }
+
+
 
   public static void throwUndeclaredException() {
     s_log.error("Throwing undeclared exception.  - for testing");  

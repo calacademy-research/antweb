@@ -1,3 +1,9 @@
+Release 8.101
+  DB connection logging
+
+Release 8.100
+  Refine dev mode skipping.
+
 Release 8.99
   Invoke restart after completion of scheduled tasks.
 
