@@ -73,17 +73,19 @@ public abstract class AntwebUtil {
     public static int getCaseNumber() {
       return AntwebUtil.getRandomNumber();
     }             
-  
+
+    private static long s_uniqueNum = 0;
+    public static long getUniqueNumber() {
+      s_uniqueNum = s_uniqueNum + 1;
+      return s_uniqueNum;
+    }
+
 	// Get Random Number
     private static long s_lastMillis = 0;
 	public static int getRandomNumber() {
       long millis = System.currentTimeMillis();
-      if (millis < s_lastMillis) {
-        s_log.warn("Interesting!"); //Unexpected. Should work out alright...
-        millis = s_lastMillis;
-      }
       if (millis == s_lastMillis) {
-        //s_log.error("Millis was not unique.");
+        s_log.error("Millis was not unique. millis:" + millis);
         millis = millis + 1;
       }
       s_lastMillis = millis;
