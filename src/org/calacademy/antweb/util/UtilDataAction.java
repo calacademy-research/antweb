@@ -730,7 +730,7 @@ public class UtilDataAction extends Action {
 
 // ----------------- Assorted --------------------
 
-        if ("serverDebug".equals(action)) {
+        if ("setServerDebug".equals(action)) {
             message = "serverDebug set:" + param;
             ServerDb.setServerDebug(param, connection);
         }

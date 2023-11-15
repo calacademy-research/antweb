@@ -95,6 +95,11 @@ public abstract class DateUtil {
     return getFormatDateStr(theDate, "yyyy-MM-dd HH:mm:ss");
   }
 
+  public static String getFormatDateTimeMilliStr() {
+    Date theDate = new Date();
+    return getFormatDateStr(theDate, "yyyy-MM-dd HH:mm:ss.SSS");
+  }
+
   public static String getFormatDateStr() {
     Date theDate = new Date();
     return getFormatDateStr(theDate, "yyyy-MM-dd");

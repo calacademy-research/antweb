@@ -77,7 +77,10 @@ boolean otherOption = !UptimeAction.isFailOnPurpose();
 %>
 <br><b>Uptime Fail On Purpose:</b> <%= UptimeAction.isFailOnPurpose() %>  <a href='<%= AntwebProps.getDomainApp() %>/uptime.do?fail=<%= otherOption %>'>[toggle fail]</a>
 <br><%= ServerDb.getDownTimeMessage() %>
-<b>Server Debug:</b> <%= ServerDb.getServerDebug() %>
+
+<br><b>Server Debug:</b> <%= ServerDb.getServerDebug() %>
+<br>To set, copy link address and adjust: <a href="<%= domainApp %>/utilData.do?action=setServerDebug&param=">Set serverDebug</a>
+<br>ServerDebugs: <%= org.calacademy.antweb.home.ServerDb.getDebugs() %>
 
 
 <br><br><b>Current Time:</b> <%= (new Date()).toString() %>

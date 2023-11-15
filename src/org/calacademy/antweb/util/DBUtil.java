@@ -126,7 +126,7 @@ Or, if there are stmts and/or rsets...
               dataSourceName = ((com.mchange.v2.c3p0.PooledDataSource) dataSource).getDataSourceName();
           }
           // " dataSource:" + dataSourceName +
-          String logLine = (DateUtil.getFormatDateTimeStr() + " " + stackLine + " name:" + name + " queryString:" + queryString);
+          String logLine = (DateUtil.getFormatDateTimeMilliStr() + " " + stackLine + " name:" + name + " queryString:" + queryString);
           LogMgr.appendLog("getConns.log", logLine);
       }
 

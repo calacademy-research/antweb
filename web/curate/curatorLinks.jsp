@@ -52,6 +52,7 @@
       <li><a href="<%= domainApp %>/util.do?action=isRestart">Restart Status</a>
       <% if (AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) >= 10) { %>
       <br>&nbsp; &nbsp;<a href="<%= domainApp %>/utilData.do?action=setIsRestart&param=true">Restart server now</a> (<5 min)
+
      <% } %>
 
     </ul>
