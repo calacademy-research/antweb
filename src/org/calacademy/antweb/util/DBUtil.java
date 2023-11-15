@@ -531,8 +531,6 @@ Or, if there are stmts and/or rsets...
 	}
 
 
-
-
     /**
      * Create a prepared statement to query the database
      * @param connection
@@ -540,7 +538,9 @@ Or, if there are stmts and/or rsets...
      * @param query The SQL query to prepare
      * @return The generated PreparedStatement
      */
-    public static @Nullable PreparedStatement getPreparedStatement(Connection connection, String name, String query) {
+    public static @Nullable PreparedStatement getPreparedStatement(Connection connection, String name, String query)
+      throws SQLException
+    {
 
         if (connection == null) {
             s_log.error("getPreparedStatement() connection is null for name: " + name);
@@ -554,6 +554,7 @@ Or, if there are stmts and/or rsets...
             // Fail gracefully, without stacktrace, upon server shutdown
             AntwebUtil.logShortStackTrace();
             s_log.error("getPreparedStatement() name:" + name + " e:" + e);
+            throw e;
         }
         if (stmt == null) {
             s_log.error("getPreparedStatement() unable to getPreparedStatement:" + name + " from connection:" + connection);

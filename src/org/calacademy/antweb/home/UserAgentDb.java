@@ -91,6 +91,7 @@ public class UserAgentDb extends AntwebDb {
 
             //A.log("saveAgent() agent:" + agent);
         } catch (SQLIntegrityConstraintViolationException e) {
+            // do nothing.
         } catch (SQLException e) {
             s_log.error("addToWhiteList() e:" + e + " dml:" + dml);
         } finally {

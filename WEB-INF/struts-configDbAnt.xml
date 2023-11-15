@@ -24,7 +24,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
     <data-source key="conPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
       <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
       <set-property property="auth" value="Container"/>
-      <set-property property="maxPoolSize" value="2000"/> <!-- was 15 --> <!-- was 200 -->
+      <set-property property="maxPoolSize" value="140"/> <!-- was 15 --> <!-- was 200 --> <!-- was 200 -->
       <set-property property="maxIdleTime" value="10"/>
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
@@ -46,7 +46,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
     <data-source key="mediumConPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
       <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
       <set-property property="auth" value="Container"/>
-      <set-property property="maxPoolSize" value="400"/> <!-- was 15 -->
+      <set-property property="maxPoolSize" value="6"/> <!-- was 400 -->
       <!-- set-property property="maxIdleTime" value="10"/ -->
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>
@@ -68,7 +68,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
     <data-source key="longConPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
       <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
       <set-property property="auth" value="Container"/>
-      <set-property property="maxPoolSize" value="10"/> <!-- was 15 -->
+      <set-property property="maxPoolSize" value="5"/> <!-- was 15 -->
       <!-- set-property property="maxIdleTime" value="10"/ -->
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="f0rm1c6"/>

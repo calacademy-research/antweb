@@ -18,6 +18,8 @@ public class ServerDb extends AntwebDb {
 
 
     // To allow debugging on server without a restart, debug statements can be added to JSP files, and turned
+    // Value can be viewed and set on the Server Status Page.
+    // Deprecated:
     // on and off by modifying the server database table debug field as such:
     //     update server set debug = "debugUserAgents";
     // Then in JSP code (or Java code for premeditated live debugging):

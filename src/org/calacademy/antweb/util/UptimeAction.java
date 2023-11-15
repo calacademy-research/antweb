@@ -24,7 +24,7 @@ public final class UptimeAction extends Action {
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
 
-        s_log.debug("UptimeAction.execute()");
+        s_log.info("UptimeAction.execute()");
   
         String queryString = HttpUtil.getQueryString(request);
         if (queryString.contains("fail=1") || queryString.contains("fail=true")) isFailOnPurpose = true;
