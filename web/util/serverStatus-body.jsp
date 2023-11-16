@@ -8,7 +8,6 @@
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.upload.*" %>
 <%@ page import="org.calacademy.antweb.home.*" %>
-
 <%@ page import="com.mchange.v2.c3p0.impl.*" %>
 
 <%
@@ -79,9 +78,16 @@ boolean otherOption = !UptimeAction.isFailOnPurpose();
 <br><%= ServerDb.getDownTimeMessage() %>
 
 <br><b>Server Debug:</b> <%= ServerDb.getServerDebug() %>
-<br>To set, copy link address and adjust: <a href="<%= domainApp %>/utilData.do?action=setServerDebug&param=">Set serverDebug</a>
-<br>ServerDebugs: <%= org.calacademy.antweb.home.ServerDb.getDebugs() %>
-
+<br>To <a href="<%= domainApp %>/utilData.do?action=setServerDebug&param=">unset</a>
+<br><b>ServerDebugs:</b> 
+<%
+    String[] serverDebugs = ServerDb.getServerDebugs();
+    if (serverDebugs != null) {
+      for (String serverDebug : serverDebugs) {
+        out.println("<a href=" + domainApp + "/utilData.do?action=setServerDebug&param=" + serverDebug + ">" + serverDebug + "</a>");
+      }
+    }
+%>
 
 <br><br><b>Current Time:</b> <%= (new Date()).toString() %>
 <br><b>Server Start Time:</b> <%= (SessionRequestFilter.getInitTime()).toString() %>
