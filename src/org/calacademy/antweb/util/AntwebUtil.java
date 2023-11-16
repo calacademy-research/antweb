@@ -58,6 +58,11 @@ public abstract class AntwebUtil {
   }
 
 
+  public static boolean isEmpty(String value) {
+    if (value == null || "".equals(value) || "null".equals(value)) return true;
+    return false;
+  }
+
   public static String getAsciiSum(String text) {
     if (text == null) return "0";
     int charSum = 0;

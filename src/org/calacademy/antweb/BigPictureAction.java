@@ -38,8 +38,16 @@ public final class BigPictureAction extends Action {
         Specimen theSpecimen = new Specimen();
         
         SpecimenImageForm form = (SpecimenImageForm) theForm;
-        String code = "", shot = ""; 
-        int number = 0;
+        String code = form.getCode();
+        if (code == null) code = form.getName();
+        code = code.toLowerCase();
+        String shot = form.getShot();
+        int number = number = form.getNumber();
+
+        if (AntwebUtil.isEmpty(code) || AntwebUtil.isEmpty(shot)) {
+            request.setAttribute("message", "Must specify code and shot.");
+            return mapping.findForward("message");
+        }
 
         HttpSession session = request.getSession();
 
@@ -66,21 +74,6 @@ public final class BigPictureAction extends Action {
             }
 
             //s_log.info("execute() code:" + form.getCode());
-
-            code = form.getCode();
-            if (code == null) code = form.getName();
-            code = code.toLowerCase();
-            shot = form.getShot();   
-            if (shot == null || "null".equals(shot)) {
-              request.setAttribute("message", "null is an invalid shot type.");
-              return mapping.findForward("message");
-            }
-            number = form.getNumber();
-            if ("".equals(shot) || shot == null || "".equals(code) || code == null) {
-              String message = "Must specimen code (name) and shot";
-              request.setAttribute("message", message);
-              return mapping.findForward("message");
-            }
                         
             request.setAttribute("code", code);
             request.setAttribute("shot", shot);

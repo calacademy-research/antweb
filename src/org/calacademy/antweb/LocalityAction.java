@@ -35,7 +35,7 @@ public final class LocalityAction extends Action {
         String name = (String) df.get("name"); // Was: Name could be code or name. We try code first.
         String code = (String) df.get("code");
 
-		if (name == null && code == null) {
+		if (AntwebUtil.isEmpty(name) && AntwebUtil.isEmpty(code)) {
 			request.setAttribute("message", "Enter a locality name or code.");
             s_log.warn("Enter a locality name or code.");
 			return mapping.findForward("message");

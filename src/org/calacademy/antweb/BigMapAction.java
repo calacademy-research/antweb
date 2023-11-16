@@ -57,8 +57,8 @@ public final class BigMapAction extends Action {
         String adm1Name = (String) df.get("adm1Name");
         String museumCode = (String) df.get("museumCode");
 
-        if (taxonName == null && specimenCode == null && localityKey == null && collectionCode == null
-          && projectName == null && countryName == null && adm1Name == null && museumCode == null) {
+        if (AntwebUtil.isEmpty(taxonName) && AntwebUtil.isEmpty(specimenCode) && AntwebUtil.isEmpty(localityKey) && AntwebUtil.isEmpty(collectionCode)
+          && AntwebUtil.isEmpty(projectName) && AntwebUtil.isEmpty(countryName) && AntwebUtil.isEmpty(adm1Name) && AntwebUtil.isEmpty(museumCode)) {
             request.setAttribute("message", "Enter parameters for a map");
             s_log.warn("Enter parameters for a map");
             return mapping.findForward("message");
