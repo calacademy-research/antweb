@@ -40,7 +40,6 @@ public final class BigPictureAction extends Action {
         SpecimenImageForm form = (SpecimenImageForm) theForm;
         String code = form.getCode();
         if (code == null) code = form.getName();
-        code = code.toLowerCase();
         String shot = form.getShot();
         int number = number = form.getNumber();
 
@@ -48,6 +47,7 @@ public final class BigPictureAction extends Action {
             request.setAttribute("message", "Must specify code and shot.");
             return mapping.findForward("message");
         }
+        code = code.toLowerCase();
 
         HttpSession session = request.getSession();
 
@@ -65,7 +65,7 @@ public final class BigPictureAction extends Action {
         try {
             DataSource dataSource = getDataSource(request, "conPool");
 
-            connection = DBUtil.getConnection(dataSource, dbMethodName);
+            connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
             
             //s_log.info("execute() imageId:" + form.getImageId());
             if (form.getImageId() != null) {

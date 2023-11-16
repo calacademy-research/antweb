@@ -134,6 +134,12 @@ public class SessionRequestFilter implements Filter {
 
       //} catch (java.beans.PropertyVetoException e) {
       //        s_log.error("doFilter() e:" + e);
+      } catch (SQLNonTransientConnectionException e) {
+          if (AntwebMgr.isServerInitializing()) {
+              s_log.warn("initializing e:" + e);
+          } else {
+              s_log.error("e:" + e);
+          }
       } catch (Exception e) {
           String note = ""; // Usually do nothing, but in cases...
           int postActionPeriodPos = 0;

@@ -57,7 +57,7 @@ public final class LocalityAction extends Action {
 		String dbMethodName = DBUtil.getDbMethodName("LocalityAction.execute()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, dbMethodName);
+            connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
             LocalityDb localityDb = new LocalityDb(connection);
             locality = localityDb.getLocalityByCode(code);    
             //A.log("execute() code:" + code + " locality:" + locality);

@@ -96,7 +96,7 @@ public final class BigMapAction extends Action {
         String dbMethodName = DBUtil.getDbMethodName("BigMapAction.execute()");
         try {
           DataSource dataSource = getDataSource(request, "conPool");
-          connection = DBUtil.getConnection(dataSource, dbMethodName);
+          connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
 
           if (!Utility.isBlank(specimenCode)) {
               Specimen specimen = (Specimen) session.getAttribute("specimen");

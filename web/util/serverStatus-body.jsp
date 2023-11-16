@@ -79,7 +79,7 @@ boolean otherOption = !UptimeAction.isFailOnPurpose();
 
 <br><b>Server Debug:</b> <%= ServerDb.getServerDebug() %>
 <br>To <a href="<%= domainApp %>/utilData.do?action=setServerDebug&param=">unset</a>
-<br><b>ServerDebugs:</b> 
+<br><b>ServerDebugs:</b>
 <%
     String[] serverDebugs = ServerDb.getServerDebugs();
     if (serverDebugs != null) {
