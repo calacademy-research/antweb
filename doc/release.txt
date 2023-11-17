@@ -1,8 +1,10 @@
-Release 8.102
 
 Release 8.101
   DB connection logging
   ServerDebug extensions
+  Alter dbMethodName.
+  Pool size configuration.
+  Upgrade to com.mysql.cj.jdbc.Driver.
 
 Release 8.100
   Refine dev mode skipping.

@@ -80,7 +80,16 @@ public class DBStatus {
     }
 
     private static boolean isServerBusy = false;
+    private static boolean wasServerBusy = false;
+
     public static boolean getIsServerBusy() {
+
+        // serverBusy.log
+        if (isServerBusy != wasServerBusy) {
+            LogMgr.appendDataLog("serverBusy.log", DateUtil.getFormatDateTimeMilliStr() + " state change:" + isServerBusy);
+            wasServerBusy = isServerBusy;
+        }
+
         return isServerBusy;
     }
     public static void setIsServerBusy(boolean isBusy) {
