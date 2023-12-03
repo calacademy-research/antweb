@@ -116,6 +116,7 @@ Or, if there are stmts and/or rsets...
     public static Connection getConnection(DataSource dataSource, String name, String queryString) throws SQLException {
       Connection connection = null;
 
+      String message = null;
       // Log the getConnection in getConns.log
       c = c + 1;
       if (c <= logNum || ServerDb.isServerDebug("logGetConns")) {
@@ -131,10 +132,16 @@ Or, if there are stmts and/or rsets...
       }
 
       try {
-        connection = dataSource.getConnection();
+          connection = dataSource.getConnection();
+      } catch (java.sql.SQLException e) {
+        message = "getConnection() name:" + name + " e:" + e;
+        Logger.iLog(Logger.dBUtilGetConnection, message, 30);
+        throw e;
       } catch (Exception e) {
         // Fail gracefully, without stacktrace, upon server shutdown
-        s_log.error("getConnection() name:" + name + " e:" + e);
+        message = "getConnection() name:" + name + " e:" + e;
+        s_log.error(message);
+        throw e;
       }
 
       if (connection != null) {
@@ -544,7 +551,8 @@ Or, if there are stmts and/or rsets...
 
         if (connection == null) {
             s_log.error("getPreparedStatement() connection is null for name: " + name);
-            return null;
+            //return null;
+            throw new SQLException("No DB Connection");
         }
         PreparedStatement stmt = null;
         try {

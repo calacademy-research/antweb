@@ -884,10 +884,48 @@ public abstract class AntwebUtil {
   }   
   public static String getDevEmail() {
     return "re.mark.johnson@gmail.com";
-  }   
+  }
+
+/*
+  public static String getCallerCallerClassName() {
+    StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+    String callerClassName = null;
+    for (int i=1; i<stElements.length; i++) {
+      StackTraceElement ste = stElements[i];
+      if (!ste.getClassName().equals(KDebug.class.getName())&& ste.getClassName().indexOf("java.lang.Thread")!=0) {
+        if (callerClassName==null) {
+          callerClassName = ste.getClassName();
+        } else if (!callerClassName.equals(ste.getClassName())) {
+          return ste.getClassName();
+        }
+      }
+    }
+    return null;
+  }
+*/
+
+  public static String getCallerCallerClassName() {
+    return KDebug.getCallerCallerClassName();
+  }
 }
 
-
+class KDebug {
+  public static String getCallerCallerClassName() {
+    StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+    String callerClassName = null;
+    for (int i=1; i<stElements.length; i++) {
+      StackTraceElement ste = stElements[i];
+      if (!ste.getClassName().equals(KDebug.class.getName())&& ste.getClassName().indexOf("java.lang.Thread")!=0) {
+        if (callerClassName==null) {
+          callerClassName = ste.getClassName();
+        } else if (!callerClassName.equals(ste.getClassName())) {
+          return ste.getClassName();
+        }
+      }
+    }
+    return null;
+  }
+}
 
 class StackTraceException extends Exception
 {  

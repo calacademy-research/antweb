@@ -146,39 +146,41 @@ public class Scheduler extends Action {
 					// if (AntwebProps.isDevMode()) i = 1;
 					//s_log.warn("doAction() action:" + action + " i:" + i + " num:" + num);
 
+					boolean log = true;
+
 					if (i == 0 || i == 1) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow" + codeParam;
 						output += HttpUtil.fetchUrl(url);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						s_log.info("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 2) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow" + codeParam;
 						output += HttpUtil.fetchUrl(url);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						s_log.info("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 3) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow" + codeParam;
 						output += HttpUtil.fetchUrl(url);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						s_log.info("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 4) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow" + codeParam;
 						output += HttpUtil.fetchUrl(url);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						s_log.info("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 5) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all" + codeParam;
 						output += HttpUtil.fetchUrl(url);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						s_log.info("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + url + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 				} catch (AntwebException | IOException e) {

@@ -31,7 +31,7 @@ public class A {
 
       // This is nice. Can we get the calling method and drop the package info? That would be nice.
       
-      String fullClassName = getCallerCallerClassName();
+      String fullClassName = AntwebUtil.getCallerCallerClassName();
       String className = null;
       String include = "";
       if (fullClassName != null) {
@@ -103,7 +103,7 @@ public class A {
 
 
   // This one will log on the live site for developers.
-  public static void log(String message, Login login) {
+  public static void logDev(String message, Login login) {
     if (AntwebProps.isDevMode() || LoginMgr.isDeveloper(login)) {
       s_log.info(message);
     }
@@ -117,22 +117,6 @@ public class A {
     System.out.println(str);
   }
 
-
-  public static String getCallerCallerClassName() { 
-	  StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
-	  String callerClassName = null;
-	  for (int i=1; i<stElements.length; i++) {
-		  StackTraceElement ste = stElements[i];
-		  if (!ste.getClassName().equals(KDebug.class.getName())&& ste.getClassName().indexOf("java.lang.Thread")!=0) {
-			  if (callerClassName==null) {
-				  callerClassName = ste.getClassName();
-			  } else if (!callerClassName.equals(ste.getClassName())) {
-				  return ste.getClassName();
-			  }
-		  }
-	  }
-	  return null;
-   }    
    
 	public static String commaFormat(String num) {
 	  if (num == null) return "0";
@@ -151,7 +135,7 @@ public class A {
 
 }
 
-
+/*
 class KDebug {
     public static String getCallerClassName() { 
         StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
@@ -165,3 +149,4 @@ class KDebug {
         return null;
      }
 }
+*/

@@ -135,7 +135,7 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
                     ;
 
             String redFlagOption = getRedFlagOption();  //SpecimenDb.FLAG_EXCLUDE; //
-            A.log("createInitialResults() redFlagOption:" + redFlagOption);
+            //A.log("createInitialResults() redFlagOption:" + redFlagOption);
 
             theQuery = "select " + fieldList
                 + ", count(image.id) as imagecount"
@@ -400,7 +400,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
 		    String message = " listSize:" + itemList.size();
 		    if (itemList != null && !itemList.isEmpty()) message += " 1st:" + itemList.get(0);
 
-		    A.log("createInitialResults()" + message + " query:" + theQuery);
+		    //A.log("createInitialResults()" + message + " query:" + theQuery);
 		    //AntwebUtil.logShortStackTrace();
 		    return itemList;
         } catch (SQLException e) {

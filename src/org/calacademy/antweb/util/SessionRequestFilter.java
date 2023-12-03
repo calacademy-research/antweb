@@ -112,6 +112,8 @@ public class SessionRequestFilter implements Filter {
               afterPopulated = true;
           }
 
+        /*
+        // Remove. Datasource method may be complicating. Go without ServerDebug and UserAgentTracking for a bit.
           // DataSource reliant functions
           ds = DBUtilSimple.getDataSource();
           connection = ds.getConnection();
@@ -127,6 +129,7 @@ public class SessionRequestFilter implements Filter {
           }
 
           UserAgentTracker.track(request, connection);
+        */
 
           chain.doFilter(request, response);
 
@@ -134,12 +137,17 @@ public class SessionRequestFilter implements Filter {
 
       //} catch (java.beans.PropertyVetoException e) {
       //        s_log.error("doFilter() e:" + e);
+/*
+// Removed in conjunction with the DBUtilSimple.getDataSource() above.
       } catch (SQLNonTransientConnectionException e) {
           if (AntwebMgr.isServerInitializing()) {
               s_log.warn("initializing e:" + e);
           } else {
-              s_log.error("e:" + e);
+              String message= "e:" + e;
+              Logger.iLog(Logger.doFilterSQLNonTransientConnection, message, 30);
+              //s_log.error("e:" + e);
           }
+*/
       } catch (Exception e) {
           String note = ""; // Usually do nothing, but in cases...
           int postActionPeriodPos = 0;

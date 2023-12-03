@@ -24,38 +24,51 @@ public final class UptimeAction extends Action {
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
 
-        s_log.info("UptimeAction.execute()");
-  
+        ActionForward returnVal = null;
+        String message = null;
+
         String queryString = HttpUtil.getQueryString(request);
         if (queryString.contains("fail=1") || queryString.contains("fail=true")) isFailOnPurpose = true;
         if (queryString.contains("fail=0") || queryString.contains("fail=false")) isFailOnPurpose = false;
+
         if (isFailOnPurpose()) {
-            return mapping.findForward("fail");
-        }
-  
-		HttpSession session = request.getSession();
-		boolean successDB = false;
-		boolean successDisk = false;
-        String message = "";	
-		
-		successDB = isDatabaseUp(request);
-        if (!successDB) {
-            message = "Database is down.  " + AntwebUtil.getRequestInfo(request);
-            s_log.error(message); 
+            message = "fail on purpuse";
+            returnVal = mapping.findForward("fail");
         }
 
-		successDisk = isWebDirAccessible();
-        if (!successDisk) {
-            message = "/data/uptime.txt inaccessible.  " + AntwebUtil.getRequestInfo(request);
-            s_log.error(message); 
+        if (returnVal == null) {
+            HttpSession session = request.getSession();
+            boolean successDB = false;
+            boolean successDisk = false;
+
+            successDB = isDatabaseUp(request);
+            if (!successDB) {
+                message = "Database is down.  " + AntwebUtil.getRequestInfo(request);
+            }
+
+            successDisk = isWebDirAccessible();
+            if (!successDisk) {
+                message = "/data/uptime.txt inaccessible.  " + AntwebUtil.getRequestInfo(request);
+            }
+
+            if (!successDB || !successDisk) {
+                request.setAttribute("message", message);
+                returnVal = mapping.findForward("message");
+            } else {
+                returnVal = mapping.findForward("success");
+            }
         }
 
-        if (!successDB || !successDisk) {
-            request.setAttribute("message", message);
-            return mapping.findForward("message");
+        String logMsg = "UptimeAction.execute()";
+        logMsg = logMsg + " reqInfo:" + HttpUtil.getShortRequestInfo(request);
+        if (message == null) {
+            s_log.info(logMsg);
+        } else {
+            logMsg = logMsg + " message:" + message;
+            s_log.error(logMsg);
         }
-        
-		return mapping.findForward("success");
+
+        return returnVal;
 	}
 
     private boolean isWebDirAccessible() {

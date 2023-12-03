@@ -589,7 +589,7 @@ public class SpecimenDb extends AntwebDb {
         if (FLAG_ONLY.equals(option)) return " (flag = 'red') ";
         if (FLAG_EXCLUDE.equals(option)) return " (flag is null or flag != 'red') ";
 
-        A.iLog("getFlagCriteria() this should not happen option: " + option + " " + AntwebUtil.getStackTrace());
+        //A.iLog("getFlagCriteria() this should not happen option: " + option + " " + AntwebUtil.getStackTrace());
         return " 1 = 1 ";
     }
 
