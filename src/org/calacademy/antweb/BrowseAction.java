@@ -267,6 +267,8 @@ public class BrowseAction extends DescriptionAction {
 		      throw new AntwebException(message);
           }
 
+          SessionRequestFilter.processRequest(request, connection);
+
           if (HttpUtil.tooBusyForBots(connection, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
 		  TaxonDb taxonDb = new TaxonDb(connection);

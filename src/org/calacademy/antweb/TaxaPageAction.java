@@ -101,6 +101,8 @@ public final class TaxaPageAction extends Action {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
 
+            SessionRequestFilter.processRequest(request, connection);
+
             //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
             /*
               Some TaxaPageAction requests are not getting closed. Here we are logging a number

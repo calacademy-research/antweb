@@ -3,6 +3,7 @@ Release 8.103
   DBUtil refactor. getConnection() Exception handling.
   iLog functionality on live server.
   UserAgent and serverDebug features toggled.
+  Log File changes.
 
 Release 8.102
   serverBusy.log

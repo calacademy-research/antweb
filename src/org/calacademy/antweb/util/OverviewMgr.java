@@ -161,7 +161,10 @@ public class OverviewMgr {
 
     public static ActionForward returnMessage(HttpServletRequest request, ActionMapping mapping, AntwebException e) {
         String message = e.toString() + " for " + HttpUtil.getRequestReferer(request) + " " + DateUtil.getFormatDateTimeStr();
-        s_log.info("returnMessage() " + message);
+
+        Logger.iLog("Overview not found see notFound.log", 20);
+        LogMgr.appendLog("notFound.log", message);
+
         message += ". <br><br>If you think this request should have been fulfilled, please email this error message to " + AntwebUtil.getAdminEmail() + ".";
         message += " Please indicate where you found the link, if not evident in the message. Thank you.";
         request.setAttribute("message", message);

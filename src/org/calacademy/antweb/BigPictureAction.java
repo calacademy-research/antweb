@@ -64,9 +64,10 @@ public final class BigPictureAction extends Action {
 
         try {
             DataSource dataSource = getDataSource(request, "conPool");
-
             connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
-            
+
+            SessionRequestFilter.processRequest(request, connection);
+
             //s_log.info("execute() imageId:" + form.getImageId());
             if (form.getImageId() != null) {
               // Poor design. Antipattern.

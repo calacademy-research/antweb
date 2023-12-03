@@ -209,6 +209,24 @@ public class SessionRequestFilter implements Filter {
       }
     }
 
+    public static void processRequest(HttpServletRequest request, Connection connection) {
+        try {
+            // Populate ServerDb Debug flag.
+            if (s_periodDate == null) s_periodDate = new Date();
+            //A.log("doFilter() s_periodDate:" + s_periodDate + " s_period:" + s_period + " since:" + AntwebUtil.minsSince(s_periodDate));
+            if (AntwebUtil.minsSince(s_periodDate) >= s_period) {
+                // This will happen only every s_period.
+                s_periodDate = new Date();
+                String debug = ServerDb.getServerDebug(connection);
+                A.log("doFilter() period s_periodDate:" + s_periodDate + " debug:" + debug);
+            }
+        } catch (SQLException e) {
+            s_log.warn("processRequest() e:" + e);
+        }
+
+        UserAgentTracker.track(request, connection);
+    }
+
     public static final int MILLIS = 1000;
     public static int SECS = 60;
     public static int MAX_REQUEST_TIME = MILLIS * 10;

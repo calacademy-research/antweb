@@ -128,9 +128,9 @@ public abstract class HttpUtil {
             return null;
         }
 
-        String message = BadActorMgr.ifBadActorBlockedGetMessage(request);
-        if (message != null) {
-            request.setAttribute("message", message);
+        String badActorMessage = BadActorMgr.ifBadActorBlockedGetMessage(request);
+        if (badActorMessage != null) {
+            request.setAttribute("message", badActorMessage);
             return mapping.findForward("message");
         }
 
@@ -159,12 +159,20 @@ public abstract class HttpUtil {
 
         if (hasSpecialChars) {
             request.setAttribute("message", "Unallowed characters.");
-            s_log.info("invalidRequest() unallowed characters: " + HttpUtil.getTarget(request));
+
+            //s_log.info("invalidRequest() unallowed characters: " + HttpUtil.getTarget(request));
+            String message = "HttpUtil.unallowed Characters() target:" + HttpUtil.getTarget(request);
+            Logger.iLog("Unallowed Chars see denied.log", 50);
+            LogMgr.appendLog("denied.log", message);
+
             return mapping.findForward("message");
         }
         if (invalidMessage != null) {
             //LogMgr.appendLog("badRequest.log", targetSic);
-            LogMgr.appendLog("invalid.log", invalidMessage);
+
+            Logger.iLog("Invalid Message see denied.log", 50);
+            LogMgr.appendLog("denied.log", "Invalid Message:" + invalidMessage);
+
             request.setAttribute("message", invalidMessage);
             return mapping.findForward("message");
         }
@@ -373,7 +381,10 @@ public abstract class HttpUtil {
 
     public static boolean hasIllegalStr(String str, HttpServletRequest request) {
         if (isIllegalStr(str)) {
-            AntwebUtil.log("HttpUtil.hasIllegalChars() 2 true str:" + str + " target:" + HttpUtil.getTarget(request));
+            String message = "HttpUtil.hasIllegalChars() target:" + HttpUtil.getTarget(request);
+            Logger.iLog("denied.log", 50);
+            LogMgr.appendLog("denied.log", message);
+
             BadActorMgr.addBadActor(request);
             return true;
         }
