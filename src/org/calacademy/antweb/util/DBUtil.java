@@ -164,20 +164,28 @@ Or, if there are stmts and/or rsets...
             s_log.error(message);
             throw new SQLException(message);
         }
+        if (connection instanceof NewProxyConnection) {
+            if (((NewProxyConnection) connection).isClosed()) {
+                String message = "getStatement() connection is closed. Server shutdown in progress?";
+                s_log.error(message);
+                throw new SQLException(message);
+            }
+        }
+
         Statement stmt = null;
         try {
           //DBUtil.open(name);
           stmt = connection.createStatement();
-      } catch (SQLException e) {
-        // Fail gracefully, without stacktrace, upon server shutdown
-        //AntwebUtil.logShortStackTrace();
-        s_log.error("getStatement() connection:" + connection.toString() + " name:" + name + " e:" + e);
-        throw e;
-      }
-      if (stmt == null) {
+        } catch (SQLException e) {
+          // Fail gracefully, without stacktrace, upon server shutdown
+          //AntwebUtil.logShortStackTrace();
+          s_log.error("getStatement() connection:" + connection.toString() + " name:" + name + " e:" + e);
+          throw e;
+        }
+        if (stmt == null) {
           s_log.error("getStatement() unable to getStatement:" + name + " from connection:" + connection);
-      }
-      return stmt;
+        }
+        return stmt;
     }
 
     /*
