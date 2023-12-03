@@ -65,7 +65,11 @@
       }
     }
 
-    LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
+    if (message != null && (
+    !message.contains("Scheduler run:")
+    )) {
+      LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
+    }
 %>
 <br>
 <br>

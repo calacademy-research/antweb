@@ -86,7 +86,10 @@ public class DBStatus {
 
         // serverBusy.log
         if (isServerBusy != wasServerBusy) {
-            LogMgr.appendDataLog("serverBusy.log", DateUtil.getFormatDateTimeMilliStr() + " state change:" + isServerBusy);
+            String message = "";
+            if (!isServerBusy) message += " ";
+            message += DateUtil.getFormatDateTimeMilliStr() + " busy:" + isServerBusy;
+            LogMgr.appendDataLog("serverBusy.log", message);
             wasServerBusy = isServerBusy;
         }
 
