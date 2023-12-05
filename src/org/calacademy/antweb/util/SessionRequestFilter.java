@@ -70,7 +70,7 @@ public class SessionRequestFilter implements Filter {
       ServletContext ctx = request.getSession().getServletContext();
 
       DataSource ds = null;
-      Connection connection = null;
+      //Connection connection = null;
 
       String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
 
@@ -112,42 +112,8 @@ public class SessionRequestFilter implements Filter {
               afterPopulated = true;
           }
 
-        /*
-        // Remove. Datasource method may be complicating. Go without ServerDebug and UserAgentTracking for a bit.
-          // DataSource reliant functions
-          ds = DBUtilSimple.getDataSource();
-          connection = ds.getConnection();
-
-          // Populate ServerDb Debug flag.
-          if (s_periodDate == null) s_periodDate = new Date();
-          //A.log("doFilter() s_periodDate:" + s_periodDate + " s_period:" + s_period + " since:" + AntwebUtil.minsSince(s_periodDate));
-          if (AntwebUtil.minsSince(s_periodDate) >= s_period) {
-              // This will happen only every s_period.
-              s_periodDate = new Date();
-              String debug = ServerDb.getServerDebug(connection);
-              A.log("doFilter() period s_periodDate:" + s_periodDate + " debug:" + debug);
-          }
-
-          UserAgentTracker.track(request, connection);
-        */
-
           chain.doFilter(request, response);
 
-          //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
-
-      //} catch (java.beans.PropertyVetoException e) {
-      //        s_log.error("doFilter() e:" + e);
-/*
-// Removed in conjunction with the DBUtilSimple.getDataSource() above.
-      } catch (SQLNonTransientConnectionException e) {
-          if (AntwebMgr.isServerInitializing()) {
-              s_log.warn("initializing e:" + e);
-          } else {
-              String message= "e:" + e;
-              Logger.iLog(Logger.doFilterSQLNonTransientConnection, message, 30);
-              //s_log.error("e:" + e);
-          }
-*/
       } catch (Exception e) {
           String note = ""; // Usually do nothing, but in cases...
           int postActionPeriodPos = 0;
@@ -197,18 +163,11 @@ public class SessionRequestFilter implements Filter {
 
           finish(request, startTime);
 
-          if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
-
-             try {
-                if (connection != null)
-                    connection.close();
-              } catch (SQLException e2) {
-                s_log.warn("doFilter() failed to close connection:" + connection + " e:" + e2);
-              }
-
+          //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
       }
     }
 
+    // This method used to be inline of doFilter(), but now called by Action classes with their connection.
     public static void processRequest(HttpServletRequest request, Connection connection) {
         try {
             // Populate ServerDb Debug flag.

@@ -63,12 +63,12 @@ public class GeolocaleTaxon extends OverviewTaxon {
                 ProjTaxon projTaxon = AllAntwebMgr.get(taxonName);
                 setGlobalChildCount(projTaxon);                                           
                                 
-                if (AntwebProps.isDevMode() && "ectatomminae".equals(taxonName)) s_log.warn("init() taxonName:" + taxonName + " keyClause:" + getKeyClause() + " genusCount:" + getGenusCount() + " imageCount:" + imageCount);
+                //if (AntwebProps.isDevMode() && "ectatomminae".equals(taxonName)) s_log.warn("init() taxonName:" + taxonName + " keyClause:" + getKeyClause() + " genusCount:" + getGenusCount() + " imageCount:" + imageCount);
             }             
             //A.log("init() warn() taxonName:" + taxonName + " projectName:" + projectName + " imageCount:" + imageCount);
-            stmt.close();
+            //stmt.close();
         } catch (SQLException e) {
-            s_log.error("init() Cannot convert value 0000-00-00 00:00:00 taxonName:" + taxonName + " museumCode:" + museumCode + "  e:" + e + " query:" + query);
+            s_log.error("init() taxonName:" + taxonName + " geolocaleId:" + geolocaleId + "  e:" + e + " query:" + query);
             throw e;
         } finally {
             DBUtil.close(stmt, rset, "GeolocaleTaxon.init()");        

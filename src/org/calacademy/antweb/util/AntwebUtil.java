@@ -27,6 +27,8 @@ import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.Utility;
 import org.calacademy.antweb.util.AntwebUtil;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public abstract class AntwebUtil {
 
   private static final Log s_log = LogFactory.getLog(AntwebUtil.class);
@@ -85,7 +87,8 @@ public abstract class AntwebUtil {
       return s_uniqueNum;
     }
 
-	// Get Random Number
+    /*
+   // Get Random Number
     private static long s_lastMillis = 0;
 	public static int getRandomNumber() {
       long millis = System.currentTimeMillis();
@@ -96,6 +99,12 @@ public abstract class AntwebUtil {
       s_lastMillis = millis;
       return (int) (millis % Integer.MAX_VALUE);
 	}
+*/
+   public static int getRandomNumber() {
+     int random = ThreadLocalRandom.current().nextInt();
+     //A.log("getRandomNumber() random:" + random);
+     return random;
+   }
 
     private static int s_secureCode = 0;
     public static int getSecureCode() {

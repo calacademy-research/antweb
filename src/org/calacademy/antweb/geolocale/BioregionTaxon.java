@@ -64,7 +64,7 @@ public class BioregionTaxon extends OverviewTaxon {
             }             
             //A.log("init() warn() taxonName:" + taxonName + " projectName:" + projectName + " imageCount:" + imageCount);
         } catch (SQLException e) {
-            s_log.error("init() Cannot convert value 0000-00-00 00:00:00? taxonName:" + taxonName + "  e:" + e + " query:" + query);
+            s_log.error("init() taxonName:" + taxonName + " bioregionName:" + bioregionName +    " e:" + e + " query:" + query);
             throw e;
         } finally {
           DBUtil.close(stmt, rset, "BioregionTaxon.init()");

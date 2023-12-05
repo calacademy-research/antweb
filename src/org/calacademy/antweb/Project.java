@@ -608,7 +608,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
       return "<a href='" + getThisPageTarget() + "&action=recalc'>Recalculate " + getName() + "</a>";    
     }        
     
-    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) {
+    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) throws SQLException {
       //TaxonSet taxonSet = null;
       
         TaxonSet taxonSet = new ProjTaxon(getName(), taxonName, rank);
@@ -616,6 +616,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
             taxonSet.init(connection);
         } catch (SQLException e) {
             s_log.error("getTaxonSet(" + taxonName + "," + rank + ", connection) e:" + e);
+            throw e;
         }
         return taxonSet;
 

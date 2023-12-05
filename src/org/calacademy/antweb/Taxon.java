@@ -278,7 +278,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         return intValue;
     }
 
-    public void initTaxonSet(Connection connection, Overviewable overview) {
+    public void initTaxonSet(Connection connection, Overviewable overview) throws SQLException {
         // Overridden by Specimen only.
 
         if (taxonSet == null) { 

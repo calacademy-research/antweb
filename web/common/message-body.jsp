@@ -18,6 +18,8 @@
 <div class="wide_left">
 
 <%
+    //AntwebUtil.getRandomNumber();
+
     // https://localhost/util.do?action=testMessage
 
     // Utility.makeDirTree("/usr/local/antweb/web/log/detail/duplicateEntries1.jsp");

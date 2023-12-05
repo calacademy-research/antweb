@@ -77,6 +77,6 @@ public abstract class OverviewTaxon extends TaxonSet {
       if (projTaxon.getRank().equals(Rank.SPECIES)) setGlobalChildCount(projTaxon.getSpecimenCount());      
       if (projTaxon.getRank().equals(Rank.SUBSPECIES)) setGlobalChildCount(projTaxon.getSpecimenCount());      
       //A.log("setGlobalChildCount() rank:" + projTaxon.getRank() + " sfc:" + projTaxon.getSubfamilyCount() + " gc:" + projTaxon.getGenusCount() + " sc:" + projTaxon.getSpeciesCount());
-      if (taxonName.contains("myrmicinaepheidole minima catella")) s_log.debug("init() taxonName:" + taxonName + " childCount:" + projTaxon.getGlobalChildCount());
+      //if (taxonName.contains("myrmicinaepheidole minima catella")) s_log.debug("init() taxonName:" + taxonName + " childCount:" + projTaxon.getGlobalChildCount());
     }          
 }

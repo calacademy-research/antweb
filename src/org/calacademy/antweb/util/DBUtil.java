@@ -339,13 +339,16 @@ Or, if there are stmts and/or rsets...
         boolean containsConn = connectionRequestMap.containsKey(newProxyConn);
         if (containsConn) {
             connectionRequestMap.remove(newProxyConn);
-            if (connectionRequestMap.size() == connMapSize) {
+            return true;
+ /*        Sometimes the warning is fired. Perhaps not synchronized? No evidence of problem.
+           if (connectionRequestMap.size() == connMapSize) {
                 containsConn = connectionRequestMap.containsKey(newProxyConn);
                 s_log.warn("removeConn() failed to remove conn:" + conn + " from connectionRequestMap.  connMapSize:" + connMapSize + " contains:" + containsConn);
                 return false;
             } else {
                 return true;
             }
+*/
         }
         return false;
     }
