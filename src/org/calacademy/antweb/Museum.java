@@ -131,12 +131,13 @@ public class Museum extends LocalityOverview implements Countable {
         return theQuery;    
     }    
         
-    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) {
+    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) throws SQLException {
         TaxonSet taxonSet = new MuseumTaxon(this, taxonName, rank);
         try {
             taxonSet.init(connection);
         } catch (SQLException e) {
             s_log.error("getTaxonSet(" + getCode() + ") e:" + e);
+            throw e;
         }
         return taxonSet;
     }

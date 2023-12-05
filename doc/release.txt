@@ -1,9 +1,15 @@
 
+
+Release 8.103.1
+  Swap out getRandomNumber logic.
+  throw exceptions from getTaxonSet methods.
+
 Release 8.103
   DBUtil refactor. getConnection() Exception handling.
-  iLog functionality on live server.
-  UserAgent and serverDebug features toggled.
-  Log File changes.
+  iLog functionality on live server (only log 1 of n).
+  UserAgent and serverDebug features toggled.
+  Log File changes (denied.log).
+  Prevent exceptions at servers shutdown.
 
 Release 8.102
   serverBusy.log

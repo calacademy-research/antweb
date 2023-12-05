@@ -548,7 +548,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
             + " and geolocale_taxon.geolocale_id = '"  + getId() + "'";
     }       
                 
-    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) {
+    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) throws SQLException {
       TaxonSet taxonSet = new GeolocaleTaxon(this, taxonName, rank);
       try {
         taxonSet.init(connection);

@@ -424,14 +424,13 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         return isSpecimen;
     }
 
-    public void initTaxonSet(Connection connection, Overview overview) {
+    public void initTaxonSet(Connection connection, Overview overview) throws SQLException {
         // Called by setChildren()
         if (getTaxonSet() == null) { 
           
           super.initTaxonSet(connection, overview);
 
           getTaxonSet().setImageCount(getImageCount());
-
         }
     }    
     

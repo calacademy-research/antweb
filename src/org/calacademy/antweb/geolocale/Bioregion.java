@@ -275,12 +275,13 @@ public class Bioregion extends LocalityOverview implements Countable {
         return theQuery;    
     }
             
-    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) {
+    public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) throws SQLException {
       TaxonSet taxonSet = new BioregionTaxon(this, taxonName, rank);
       try {
         taxonSet.init(connection);
       } catch (SQLException e) {
         s_log.error("getTaxonSet(taxonName, rank, conn) e:" + e);
+        throw e;
       }
       return taxonSet;      
     }           

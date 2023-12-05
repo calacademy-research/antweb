@@ -186,7 +186,7 @@ public class UserAgentTracker extends Action {
               }
           }
       }
-  }
+    }
 
     public static String getUserAgent(HttpServletRequest request) {
         String userAgent = request.getHeader("user-agent");

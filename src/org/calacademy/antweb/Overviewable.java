@@ -25,7 +25,7 @@ public interface Overviewable {
 
     String getImageCountQuery(String taxonName);
 
-    TaxonSet getTaxonSet(String taxonName, String rank, Connection connection);
+    TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) throws SQLException;
 
 
 }
