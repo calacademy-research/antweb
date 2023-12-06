@@ -10,6 +10,7 @@
         }
 }
 
+
 antweb.org {
     redir https://www.antweb.org{uri}
 }
@@ -18,8 +19,19 @@ api.antweb.org {
     redir https://www.antweb.org{uri} permanent
 }
 
+
 www.antweb.org {
     import Caddyfile.common
+
+
+    @bots {
+        header_regexp User-Agent "(?i)(SemrushBot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|facebookexternalhit|Bytespider|AppleBot|Swiftbot|Slurp Bot|CCBot|GoogleOther|Google-InspectionTool|MJ12bot|Alexa crawler|Soso Spider|Pinterestbot|Dotbot|AhrefsBot|archive.org_bot)"
+
+    }
+
+
+    # Use the @bots matcher for blocking bots
+    respond @bots "Access Denied" 403
 }
 
 
