@@ -59,8 +59,8 @@ public final class UptimeAction extends Action {
             }
         }
 
-        String logMsg = "UptimeAction.execute()";
-        logMsg = logMsg + " reqInfo:" + HttpUtil.getShortRequestInfo(request);
+        String logMsg = "UptimeAction.execute() returnVal:" + returnVal;
+        //logMsg = logMsg + " reqInfo:" + HttpUtil.getShortRequestInfo(request);
         if (message == null) {
             s_log.info(logMsg);
         } else {

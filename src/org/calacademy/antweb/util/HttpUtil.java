@@ -267,7 +267,10 @@ public abstract class HttpUtil {
         }
 
         if (reasonCode > 0) {
-            s_log.info("isLegitRequest() Invalid query string reasonCode:" + reasonCode + " RequestInfo:" + HttpUtil.getRequestInfo(request));
+            String message = "isLegitRequest() Invalid query string reasonCode:" + reasonCode + " RequestInfo:" + HttpUtil.getRequestInfo(request);
+            Logger.iLog("denied.log", 50);
+            LogMgr.appendLog("denied.log", message);
+
             return "Invalid query string (" + reasonCode + ")";
         }
 
