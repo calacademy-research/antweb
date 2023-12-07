@@ -23,15 +23,22 @@ api.antweb.org {
 www.antweb.org {
     import Caddyfile.common
 
-
-    @bots {
-        header_regexp User-Agent "(?i)(SemrushBot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|facebookexternalhit|Bytespider|AppleBot|Swiftbot|Slurp Bot|CCBot|GoogleOther|Google-InspectionTool|MJ12bot|Alexa crawler|Soso Spider|Pinterestbot|Dotbot|AhrefsBot|archive.org_bot)"
-
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 100MiB     # Rotate after log file exceeds 100 MiB
+            roll_keep 10          # Keep only the most recent 1 log file
+            roll_keep_days 1     # Keep log files for 1 day
+        format json {
+           remote_ip "{http.request.remote.host}"
+           method "{http.request.method}"
+           uri "{http.request.uri}"
+           user_agent "{http.request.header.User-Agent}"
+           status "{http.response.status_code}"
+           protocol "{http.request.proto}"
+           host "{http.request.host}"
+           referer "{http.request.header.Referer}"
+         }
     }
-
-
-    # Use the @bots matcher for blocking bots
-    respond @bots "Access Denied" 403
 }
 
 
