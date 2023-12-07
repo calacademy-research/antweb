@@ -2,11 +2,7 @@
 
 Release 8.103.1
   Swap out getRandomNumber logic.
-<<<<<<< HEAD
   Throw exceptions from getTaxonSet methods.
-=======
-  throw exceptions from getTaxonSet methods.
->>>>>>> c181729be99cfca1e97a91c0806775e5940ca477
 
 Release 8.103
   DBUtil refactor. getConnection() Exception handling.
