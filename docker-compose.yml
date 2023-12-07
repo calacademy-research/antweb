@@ -26,6 +26,8 @@ services:
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/caddy/Caddyfile.common:/etc/caddy/Caddyfile.common:ro
+      - ./docker/caddy/logs:/var/log/caddy
+
       - antweb_caddy_data:/data
       - caddy_config:/config
 
