@@ -1,5 +1,9 @@
 
 
+
+Release 8.103.2
+  Logging changes.
+
 Release 8.103.1
   Swap out getRandomNumber logic.
   Throw exceptions from getTaxonSet methods.
