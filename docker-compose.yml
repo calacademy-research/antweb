@@ -18,10 +18,10 @@ services:
       - "127.0.0.1:3306:3306"
 
   caddy:
-#    build:
-#      context: .
-#      dockerfile: docker/caddy/Dockerfile
-    image: caddy:2
+    build:
+      context: .
+      dockerfile: docker/caddy/Dockerfile
+#    image: caddy:2
     restart: unless-stopped
     ports:
       - "80:80"

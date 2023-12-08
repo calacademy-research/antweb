@@ -31,13 +31,6 @@
     path /web/bak/taxonSets/*
 }
 
-# Define rate limit zone with required parameters
-rate_limit {
-    zone my_zone {
-        window 1m     # Time window for rate limit
-        events 50  # Maximum allowed requests in the time window
-    }
-}
 
 @static_images {
     path_regexp image_file ^/images/(.+\..+)$
