@@ -1,5 +1,5 @@
 {
-    order rate_limit before basicauth
+#    order rate_limit before basicauth
 
     default_sni www.antweb.org      # Sets a default TLS ServerName for when clients do not use SNI in their ClientHello
         servers {
