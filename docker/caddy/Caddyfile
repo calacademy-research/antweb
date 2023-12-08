@@ -1,4 +1,6 @@
 {
+    order rate_limit before basicauth
+
     default_sni www.antweb.org      # Sets a default TLS ServerName for when clients do not use SNI in their ClientHello
         servers {
                 timeouts {
@@ -21,7 +23,15 @@ api.antweb.org {
 
 
 www.antweb.org {
-    import Caddyfile.common
+    import Caddyfile.common 
+    rate_limit {
+        zone my_zone {
+            key {remote_host}
+            window 1m     # Time window for rate limit
+            events 100  # Maximum allowed requests in the time window
+        }
+    }
+
 
     log {
         output file /var/log/caddy/access.log {
