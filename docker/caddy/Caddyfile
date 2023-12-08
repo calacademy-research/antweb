@@ -24,13 +24,13 @@ api.antweb.org {
 
 www.antweb.org {
     import Caddyfile.common 
-    rate_limit {
-        zone my_zone {
-            key {remote_host}
-            window 1m     # Time window for rate limit
-            events 100  # Maximum allowed requests in the time window
-        }
-    }
+#    rate_limit {
+#        zone my_zone {
+#            key {remote_host}
+#            window 1m     # Time window for rate limit
+#            events 100  # Maximum allowed requests in the time window
+#        }
+#    }
 
 
     log {
