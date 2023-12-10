@@ -1,7 +1,7 @@
 aniso8601==9.0.1
 click==7.1.2
 configparser==5.0.2
-cryptography==3.4.7
+cryptography==39.0.1
 DateTime==4.3
 enum34==1.1.10
 Flask==1.1.2
