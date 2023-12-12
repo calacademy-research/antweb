@@ -31,6 +31,7 @@
     path /web/bak/taxonSets/*
 }
 
+
 @static_images {
     path_regexp image_file ^/images/(.+\..+)$
 }
@@ -38,6 +39,7 @@
 @image_root_dir {
     path_regexp image_dir ^/images/?$
 }
+
 
 # Directive in route block are evaluated in order
 route {

@@ -21,3 +21,5 @@ docker-compose.override.yml
 /logbak/
 
 antweb.iml
+
+/docker/caddy/logs
