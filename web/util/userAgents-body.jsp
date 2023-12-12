@@ -45,13 +45,28 @@ if (refreshStr == null) refreshStr = " - ";
 <br><b>Refreshed: </b><%= refreshStr %> &nbsp; <a href=<%= AntwebProps.getDomainApp() %>/userAgents.do?name=refresh>Refresh</a>
 <br><br><b>Summary:</b> <%= UserAgentTracker.htmlSummary() %>
 
-<br><br><b>User Agents:</b>
-<%= UserAgentTracker.htmlUserAgents() %>
+<%
+String show = request.getParameter("show");
+A.log("show:" + show);
+%>
 
-<br><br><b>White List:</b>
-<%= UserAgentTracker.htmlWhiteList() %>
+<br><br><br>
+<h2>Lists | <a href="<%= AntwebProps.getDomainApp() %>/userAgents.do?show="><img src='<%= AntwebProps.getDomainApp() %>/image/redX.png' width='10' /></a></h2>
 
-<br><br><b>Known Agents:</b>
-<%= UserAgentTracker.htmlKnownAgents() %>
+<br><b><a href="<%= AntwebProps.getDomainApp() %>/userAgents.do?show=userAgents">User Agents</a>: <%= UserAgentTracker.getAgentsSize() %></b>
+<% if ("userAgents".equals(show)) { %>
+UserAgents:<%= UserAgentTracker.htmlUserAgents() %>
+<% } %>
+
+<br><br><b><a href="<%= AntwebProps.getDomainApp() %>/userAgents.do?show=whiteList">White List</a>: <%= UserAgentTracker.getWhiteListSize() %></b>
+<% if ("whiteList".equals(show)) { %>
+whiteList: <%= UserAgentTracker.htmlWhiteList() %>
+<% } %>
+
+<br><br><b><a href="<%= AntwebProps.getDomainApp() %>/userAgents.do?show=knownAgents">Known Agents</a>: <%= UserAgentTracker.getKnownAgentsSize() %></b>
+
+<% if ("knownAgents".equals(show)) { %>
+knownAgents:<%= UserAgentTracker.htmlKnownAgents() %>
+<% } %>
 
 </div>

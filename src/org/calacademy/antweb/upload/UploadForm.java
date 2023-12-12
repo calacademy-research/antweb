@@ -7,6 +7,7 @@ public class UploadForm extends ActionForm {
   protected FormFile theFile;
   protected FormFile theFile2;
   protected FormFile biota;
+  protected FormFile taxonWorks;
   protected FormFile testFile;
   protected String projectFile = "";
   protected String homePageDirectory = "";
@@ -179,7 +180,14 @@ public class UploadForm extends ActionForm {
   public FormFile getBiota() {
     return biota;
   }
-  
+
+  public void setTaxonWorks(FormFile file) {
+    taxonWorks = file;
+  }
+  public FormFile getTaxonWorks() {
+    return taxonWorks;
+  }
+
   public String getWhole() {
 	return whole;
   }

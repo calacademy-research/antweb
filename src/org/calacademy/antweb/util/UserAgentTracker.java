@@ -255,7 +255,7 @@ public class UserAgentTracker extends Action {
         return false;
       }
 
-        return isOveractive(userAgent);
+      return isOveractive(userAgent);
   }
 
   // overactive agents have had more than OVERACTIVE (was: 1000) requests during one server execution/reset of userAgents.
@@ -343,7 +343,11 @@ public class UserAgentTracker extends Action {
       return report;
   }
 
-  public static String overActiveReport() {
+    public static int getAgentsSize() {
+        return agentsMap.size();
+    }
+
+    public static String overActiveReport() {
       Set<String> keySet = agentsMap.keySet();
       String report = "";
       for (String key : keySet) {
@@ -353,7 +357,11 @@ public class UserAgentTracker extends Action {
         }
       }
       return report;
-  }
+    }
+
+    public static int getWhiteListSize() {
+        return whiteList.size();
+    }
 
     public static String htmlWhiteList() {
         String whiteListAgents = "";
@@ -365,15 +373,19 @@ public class UserAgentTracker extends Action {
         return whiteListAgents;
     }
 
-  public static String htmlKnownAgents() {
-    String knownAgents = "";
-    int c = 0;
-    for (String agent : knownAgentsSet) {
+    public static int getKnownAgentsSize() {
+        return knownAgentsSet.size();
+    }
+
+    public static String htmlKnownAgents() {
+      String knownAgents = "";
+      int c = 0;
+      for (String agent : knownAgentsSet) {
         ++c;
         knownAgents += "<br><b>" + c + ": </b>" + agent;
+      }
+      return knownAgents;
     }
-    return knownAgents;
-  }
 }
 
 

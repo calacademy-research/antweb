@@ -167,25 +167,59 @@ public class UploadAction extends Action {
 			if (action != null) {
 
 				// Upload a Specimen File (tab-delimited .txt file):
-				FormFile specimenFile = theForm.getBiota();
-				if ("specimenUpload".equals(action) && specimenFile != null && !specimenFile.getFileName().equals("")) {
+				if ("specimenUpload".equals(action)) {
+					FormFile specimenFile = theForm.getBiota();
+					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
 
-					String theFileName = accessGroup.getAbbrev() + "SpecimenList";
-					action = "import:" + theFileName;
+						String theFileName = accessGroup.getAbbrev() + "SpecimenList";
+						action = "import:" + theFileName;
 
-					//logFileName += theFileName + UploadDetails.getLogExt();
-					s_log.warn("execute() action:" + action);
-					s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
+						A.log(" fileName:" + specimenFile.getFileName());
+						//logFileName += theFileName + UploadDetails.getLogExt();
+						s_log.warn("execute() action:" + action);
+						s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
-					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+						uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 
-					ActionForward af = uploadDetails.returnForward(mapping, request);
-					if (af != null) return af;
+						ActionForward af = uploadDetails.returnForward(mapping, request);
+						if (af != null) return af;
 
-					specimenPostProcess(request, connection, accessLogin, uploadDetails);
-					specimenPostProcessGlobal(connection);
+						specimenPostProcess(request, connection, accessLogin, uploadDetails);
+						specimenPostProcessGlobal(connection);
 
-					runCountCrawls = true;
+						runCountCrawls = true;
+					} else {
+        		  	    request.setAttribute("message", "Must choosen specimen file for upload");
+						return uploadDetails.getErrorForward(mapping);
+					}
+
+				} else if ("taxonWorksUpload".equals(action)) {
+					FormFile specimenFile = theForm.getTaxonWorks();
+					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
+
+
+						String theFileName = accessGroup.getAbbrev() + "TWSpecimenList";
+						action = "import:" + theFileName;
+
+						//logFileName += theFileName + UploadDetails.getLogExt();
+						A.log(" fileName:" + specimenFile.getFileName());
+						s_log.warn("execute() action:" + action);
+						s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
+
+						uploadDetails = new TaxonWorksUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+
+						ActionForward af = uploadDetails.returnForward(mapping, request);
+						if (af != null) return af;
+
+						specimenPostProcess(request, connection, accessLogin, uploadDetails);
+						specimenPostProcessGlobal(connection);
+
+						runCountCrawls = true;
+
+					} else {
+						request.setAttribute("message", "Must choose TaxonWorks Zip File for upload");
+						return uploadDetails.getErrorForward(mapping);
+					}
 
 				} else if (action.equals("uploadSpeciesList")) {
 					// This functionality should probably be inside of SpeciesListUploader.java
