@@ -25,6 +25,7 @@ imagemagick \
 default-mysql-client \
 php \
 python3 \
+unzip \
 zip \
 && rm -rf /var/lib/apt/lists/*
 
