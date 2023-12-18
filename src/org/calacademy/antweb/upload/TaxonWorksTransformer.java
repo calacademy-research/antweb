@@ -32,6 +32,7 @@ public class TaxonWorksTransformer {
         List<String> generatedOutputColumns = Arrays.asList(
                 "datecollectedstart",
                 "datecollectedend",
+                "elevation",
                 "ElevationMaxError",
                 "ownedby",
                 "collectioncode"    // taken from fieldNumber, strip 'eventID:' prefix
@@ -111,6 +112,10 @@ public class TaxonWorksTransformer {
                 line.get("stateProvince"),
                 line.get("county")));
 
+        row.put("elevation", buildElevation(
+                line.get("minimumElevationInMeters"),
+                line.get("maximumElevationInMeters")));
+
         return outputColumnOrder
                 .stream()
                 .map(row::get)
@@ -146,6 +151,33 @@ public class TaxonWorksTransformer {
             return county;
         }
         return adm2;
+    }
+
+    /**
+     * Generate elevation string from min and max elevation strings.
+     * AntWeb converts it to a single number, so no point adding units or >/< signs
+     *
+     * @return empty string if both elevations are blank, one elevation if one is blank,
+     * or "num - num" if both elevations have a value
+     */
+    private String buildElevation(String minElevation, String maxElevation) {
+
+        // this covers the case of (val, "") and ("", "")
+        if (StringUtils.isBlank(maxElevation)) {
+            return minElevation;
+        }
+
+        // covers ("", val)
+        if (StringUtils.isBlank(minElevation)) {
+            return maxElevation;
+        }
+
+        // if both elevations are the same, just return one of them
+        if (minElevation.equals(maxElevation)) {
+            return minElevation;
+        } else {
+            return minElevation + " - " + maxElevation;
+        }
     }
 
     // list of TW headers and their AntWeb counterparts
