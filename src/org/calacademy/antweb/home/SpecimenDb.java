@@ -46,23 +46,21 @@ public class SpecimenDb extends AntwebDb {
     }*/
 
     public boolean exists(String code) throws SQLException {
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
-        String query = "select code from specimen where code = '" + code + "'";
+        String query = "select 1 from specimen where code = ? limit 1";
         try {
-            stmt = DBUtil.getStatement(getConnection(), "exists()");
-            rset = stmt.executeQuery(query);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "exists()", query);
+            stmt.setString(1, code);
+            rset = stmt.executeQuery();
 
-            while (rset.next()) {
-                return true;
-            }
+            return rset.next();
         } catch (SQLException e) {
             s_log.error("exists() e:" + e);
             throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "exists()");
         }
-        return false;
     }
 
 
