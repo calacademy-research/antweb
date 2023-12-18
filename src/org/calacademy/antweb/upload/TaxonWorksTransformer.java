@@ -116,6 +116,8 @@ public class TaxonWorksTransformer {
                 line.get("minimumElevationInMeters"),
                 line.get("maximumElevationInMeters")));
 
+        row.put("ownedby", setOwnedBy(line.get("institutionCode")));
+
         return outputColumnOrder
                 .stream()
                 .map(row::get)
@@ -160,7 +162,7 @@ public class TaxonWorksTransformer {
      * @return empty string if both elevations are blank, one elevation if one is blank,
      * or "num - num" if both elevations have a value
      */
-    private String buildElevation(String minElevation, String maxElevation) {
+    private static String buildElevation(String minElevation, String maxElevation) {
 
         // this covers the case of (val, "") and ("", "")
         if (StringUtils.isBlank(maxElevation)) {
@@ -180,6 +182,19 @@ public class TaxonWorksTransformer {
         }
     }
 
+    /**
+     * Updates ownedBy to use Antweb codes so links can be generated.
+     *
+     * Currently, only replaces CAS with CASC.
+     */
+    private static String setOwnedBy(String ownerRepository) {
+        if ("CAS".equals(ownerRepository)) {
+            return "CASC";
+        }
+
+        return ownerRepository;
+    }
+
     // list of TW headers and their AntWeb counterparts
     private final Pair<String, String>[] directHeaderTranslations = new Pair[]{
             Pair.of("catalogNumber", "SpecimenCode"),
@@ -191,7 +206,7 @@ public class TaxonWorksTransformer {
             Pair.of("TW:DataAttribute:CollectionObject:DatePrepared", "DatePrepared"),
             Pair.of("TW:DataAttribute:CollectionObject:LocatedAt", "LocatedAt"),
             Pair.of("typeStatus", "TypeStatus"),
-            Pair.of("institutionCode", "OwnedBy"),
+//            Pair.of("institutionCode", "OwnedBy"),    // convert CAS to CASC
             Pair.of("TW:DataAttribute:CollectionObject:SpecimenNotes", "SpecimenNotes"),
             Pair.of("TW:DataAttribute:CollectionObject:MolProjectNotes", "DNANotes"),
             Pair.of("recordedBy", "CollectedBy"),
