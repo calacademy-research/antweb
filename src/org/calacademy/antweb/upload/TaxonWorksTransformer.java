@@ -20,14 +20,15 @@ public class TaxonWorksTransformer {
 
     private static final Log s_log = LogFactory.getLog(TaxonWorksUploader.class);
 
-    private final List<String> outputColumnOrder = new ArrayList<>();
+    // The columns to be written in the output file. Using a list to specify column order.
+    private final List<String> outputColumnOrder = new LinkedList<>();
 
     public TaxonWorksTransformer() {
         for (Pair<String, String> pair : directHeaderTranslations) {
             outputColumnOrder.add(pair.getRight());
         }
+
         // generated columns go here
-        // taken from fieldNumber, strip 'eventID:' prefix
         List<String> generatedOutputColumns = Arrays.asList(
                 "datecollectedstart",
                 "datecollectedend",
@@ -44,6 +45,13 @@ public class TaxonWorksTransformer {
             .setSkipHeaderRecord(true)
             .build();
 
+    /**
+     * Transform a TaxonWorks .tsv file into an AntWeb-compatible file. Renames headers, applies data transformations.
+     *
+     * @param inputFile  Path to the TW .tsv file to be read
+     * @param outputFile Path that the transformed file will be written to
+     * @return An error message string? Might be used in the future
+     */
     public String transformFile(Path inputFile, Path outputFile) {
 
         CSVFormat csvOutputFormat = CSVFormat.TDF.builder()
@@ -110,6 +118,12 @@ public class TaxonWorksTransformer {
     }
 
 
+    /**
+     * Splits an ISO-8601 date duration (YYYY-MM-DD/YYYY-MM-DD) into two separate date strings
+     *
+     * @param eventDate The date duration to split
+     * @return a Pair of (first date, second date), or (first date, "") if only one date
+     */
     private Pair<String, String> splitDate(String eventDate) {
         String[] dates = eventDate.split("/", 2);
 
@@ -134,12 +148,7 @@ public class TaxonWorksTransformer {
         return adm2;
     }
 
-//    private String calculateElevationMaxError(String minimumElevation, String maximumElevation) {
-//        if (StringUtils.isBlank(minimumElevation) || StringUtils.isBlank(maximumElevation)) {
-//            return "";
-//        }
-//    }
-
+    // list of TW headers and their AntWeb counterparts
     private final Pair<String, String>[] directHeaderTranslations = new Pair[]{
             Pair.of("catalogNumber", "SpecimenCode"),
             Pair.of("identifiedBy", "DeterminedBy"),
@@ -182,6 +191,8 @@ public class TaxonWorksTransformer {
             Pair.of("TW:DataAttribute:CollectingEvent:VerbatimCoordinateUncertainty", "LocXYAccuracy"),
     };
 
+    // these are just extra headers that we might use, right now the CSV parser doesn't check for header column presence
+    // in the future, we could perform more strict checking that certain headers exist.
     private final String[] extraInputHeaders = {
             "fieldNumber",  // must have 'eventID:' prefix removed
             "country",
