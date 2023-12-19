@@ -164,6 +164,10 @@ public class TaxonWorksTransformer {
      */
     private static String buildElevation(String minElevation, String maxElevation) {
 
+        // strip decimal points off
+        minElevation = StringUtils.substringBefore(minElevation, ".");
+        maxElevation = StringUtils.substringBefore(maxElevation, ".");
+
         // this covers the case of (val, "") and ("", "")
         if (StringUtils.isBlank(maxElevation)) {
             return minElevation;
