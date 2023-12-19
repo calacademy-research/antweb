@@ -345,7 +345,7 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
 
 
 
-    <% if (AntwebProps.isDevMode()) { %>
+    <% if (AntwebProps.isDevMode() || GroupMgr.isCAS(accessGroup)) { %>
         <!-- TaxonWorks Specimen Zip File Upload -->
 
        <html:form method="POST" action="upload.do" enctype="multipart/form-data">
