@@ -369,7 +369,7 @@ class Specimen(Base):
             , 'medium': sp.medium
             , 'collectionCode': sp.collectionCode
             , 'determinedBy': sp.determinedBy
-            , 'localityName': sp.localityNotes
+            , 'localityName': sp.localityName
             , 'localityNotes': sp.localityNotes
             , 'specimenNotes': sp.specimenNotes
             , 'collectionNotes': sp.collectionNotes
