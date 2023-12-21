@@ -1,10 +1,17 @@
 package org.calacademy.antweb.upload;
 
     
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.io.*;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.regexp.*;
 
 import org.apache.struts.upload.FormFile;
@@ -17,7 +24,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class TaxonWorksUploader {
 
-    private static final Log s_log = LogFactory.getLog(SpecimenUploader.class);
+    private static final Log s_log = LogFactory.getLog(TaxonWorksUploader.class);
     private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
 
     private final Connection connection;
@@ -29,7 +36,7 @@ public class TaxonWorksUploader {
 
     // This gets called from an upload post.
     public UploadDetails uploadSpecimenFile(UploadForm theForm, Login login, String userAgent, String encoding)
-      throws SQLException, IOException, RESyntaxException, TestException, AntwebException
+      throws SQLException, TestException, AntwebException
     {
         Group group = login.getGroup();
         //A.log("uploadSpecimenFile() encoding:" + encoding);    
@@ -37,45 +44,49 @@ public class TaxonWorksUploader {
         String formFileName = theForm.getTaxonWorks().getFileName();
         //String specimenUploadType = theForm.getSpecimenUploadType();
 
-        Utility util = new Utility();      
         String workingDir = AntwebProps.getWorkingDir();
         FileUtil.makeDir(workingDir);
-        String specimenFileName = workingDir + "specimenTW" + group.getId() + ".txt";
+        String fileName = "specimenTW" + group.getId() + ".txt";
+        String specimenFileName = workingDir + fileName;
+
+        String preTransformFileName = "specimenTW" + group.getId() + "_temp.txt";
+
+        Path preTransformFilePath = Paths.get(workingDir, preTransformFileName);
+
+        Path specimenFilePath = Paths.get(workingDir, fileName);
 
         A.log("workingDir:" + workingDir + " specimenFileName:" + specimenFileName + " formFileName:" + formFileName + " group:" + group);
 
-        if (formFileName.contains("zip")) {
+        if (formFileName.endsWith(".zip")) {
             try {
-                copyAndUnzipFile(theForm.getTaxonWorks(), workingDir + "group" + group.getId(), specimenFileName);
+                copyAndUnzipFile(theForm.getTaxonWorks(), workingDir + "group" + group.getId(), preTransformFilePath.toString());
             } catch (java.io.IOException e) {
                 s_log.warn("Trapped IOException. Proceeding as if. e:" + e);
                 //s_log.error("copyAndUnzipFile() problem unzipping file1 " + specimenFileName + " e:" + e);
             }
         } else {
             // copy from uploader's fileName to the biotaFile name.
-            Utility.copyFile(theForm.getTaxonWorks(), specimenFileName);
+            Utility.copyFile(theForm.getTaxonWorks(), preTransformFileName);
         }
 
         boolean isUpload = true;
         // was 2nd param: specimenUploadType,
+        TaxonWorksTransformer tf = new TaxonWorksTransformer();
+        tf.transformFile(preTransformFilePath, specimenFilePath);
 
-        // HARD CODED. Zip needs to work above the create this file.
-        specimenFileName = "data.tsv";
-
-        return uploadSpecimenFile(theForm.getAction(), specimenFileName, login, userAgent, encoding, isUpload);
+        return uploadSpecimenFile(theForm.getAction(), fileName, login, userAgent, encoding, isUpload);
     }
 
 
     public static void copyAndUnzipFile(FormFile file, String tempDirName, String outName) throws IOException {
 
-        Utility util = new Utility();
         if (file != null) {
             // create a new temp directory
             boolean success = new File(tempDirName).mkdir();
 
             // unzip into that directory
             String zippedName = outName + ".zip";
-            util.copyFile(file, zippedName);
+            Utility.copyFile(file, zippedName);
             if (new File(zippedName).exists()) {
                 try {
                     Process process = Runtime.getRuntime().exec(
@@ -91,22 +102,17 @@ public class TaxonWorksUploader {
             File dir = new File(tempDirName);
             String[] dirListing = dir.list();
             s_log.info("copyAndUnzipFile() dir listing has length: " + dirListing.length);
-            String fileName = "";
-            for (String s : dirListing) {
-                s_log.info("copyAndUnzipFile() dir listing shows: *" + s + "*");
-                if (!s.equals(".") && !s.equals("..") && !s.contains("__")) {
-                    fileName = s;
-                }
-            }
+            String fileName = "data.tsv";
+
             try {
-                util.copyFile(tempDirName + "/" + fileName, outName);
+                Utility.copyFile(tempDirName + "/" + fileName, outName);
             } catch (IOException e) {
                 s_log.error("copyAndUnzipFile() couldn't move " + tempDirName + "/" + fileName + " to " + outName);
                 AntwebUtil.logStackTrace(e);
             }
 
             // remove the directory
-            util.deleteDirectory(dir);
+            Utility.deleteDirectory(dir);
         }
     }
 
@@ -114,26 +120,27 @@ public class TaxonWorksUploader {
     /* This version can be called directly in the case of specimenTest */    
     // was 2nd param: String specimenUploadType, 
     public UploadDetails uploadSpecimenFile(String operation, String fileName
-      , Login login, String userAgent, String encoding, boolean isUpload)
-      throws SQLException, IOException, RESyntaxException, TestException, AntwebException
+            , Login login, String userAgent, String encoding, boolean isUpload)
+            throws SQLException, TestException, AntwebException
     {
         A.log("uploadSpecimenFile() fileName:" + fileName + " encoding:" + encoding);
 
-        UploadDetails uploadDetails = null;
+        UploadDetails uploadDetails;
 
         Date startTime = new Date();
         if ("default".equals(encoding)) encoding = null;
         Group group = login.getGroup();
 
-        String specimenFileLoc = null;
-        String specimenFileName = null;
+        String specimenFileLoc;
+        String specimenFileName;
 
         String messageStr = null;
 
-        UploadFile uploadFile = null;
+        UploadFile uploadFile;
 
         if (isUpload) {
-            specimenFileName = "specimen" + group.getId() + ".txt";
+            specimenFileName = fileName;
+//            specimenFileName = "specimen" + group.getId() + ".txt";
             uploadFile = new UploadFile(AntwebProps.getWorkingDir(), specimenFileName, userAgent, encoding);
             specimenFileLoc = AntwebProps.getWorkingDir() + specimenFileName;
             A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
