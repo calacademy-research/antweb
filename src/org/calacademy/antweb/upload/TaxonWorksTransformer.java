@@ -67,7 +67,9 @@ public class TaxonWorksTransformer {
 
             for (CSVRecord record : csvParser) {
                 List<String> transformed = transformLine(record);
-                csvPrinter.printRecord(transformed);
+                if (!transformed.isEmpty()) {
+                    csvPrinter.printRecord(transformed);
+                }
             }
 
 
@@ -85,6 +87,10 @@ public class TaxonWorksTransformer {
     private List<String> transformLine(CSVRecord line) {
         
         Map<String, String> row = new HashMap<>();
+
+        if (StringUtils.isBlank(line.get("catalogNumber")) || StringUtils.equals(line.get("catalogNumber"), "\"\"")) {
+            return Collections.emptyList();
+        }
 
         // perform direct header translations
         for (Pair<String, String> pair : directHeaderTranslations) {
