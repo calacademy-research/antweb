@@ -1,6 +1,7 @@
 package org.calacademy.antweb;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.regexp.RE;
@@ -83,35 +84,18 @@ public class Utility implements Serializable {
      * @throws AntwebException if the trim goes out of bounds
      */
     public static String customTrim(String text, String toTrim) throws AntwebException {
-        String trimText = text;
-        try {
-            if (text == null) return null;
-            if ("".equals(text)) return text;
 
-            if (toTrim.equals(text.substring(0, 1))) {     // if first char matches, start the string after it
-                trimText = trimText.substring(1);
-                //A.log("customTrim() cutFirst text:" + text + " trimText:" + trimText);
-
-                // if new first char matches, start the string after it
-                if (toTrim.equals(trimText.substring(0, 1)))
-                    trimText = trimText.substring(1);
-                    //A.log("customTrim() cutFirstAgain text:" + text + " trimText:" + trimText);
-            }
-
-            if (toTrim.equals(trimText.substring(trimText.length() - 1))) {
-                trimText = trimText.substring(0, trimText.length() - 1);
-                //A.log("customTrim() cutLast text:" + text + " trimText:" + trimText);
-
-                if (toTrim.equals(trimText.substring(trimText.length() - 1))) {
-                    trimText = trimText.substring(0, trimText.length() - 1);
-                    //A.log("customTrim() cutLastAgain text:" + text + " trimText:" + trimText);
-                }
-            }
-        } catch (StringIndexOutOfBoundsException e) {
-            String message = "customTrim() trimText:" + trimText + " toTrim:" + toTrim + " e:" + e;
-            throw new AntwebException(message);
+        if (StringUtils.isEmpty(text)) {
+            return text;
         }
-        //if (!trimText.equals(text)) A.log("customTrim() text:" + text + " trimText:" + trimText);   
+
+        String trimText = text;
+        trimText = StringUtils.removeStart(trimText, toTrim);
+        trimText = StringUtils.removeStart(trimText, toTrim);
+        trimText = StringUtils.removeEnd(trimText, toTrim);
+        trimText = StringUtils.removeEnd(trimText, toTrim);
+
+        //if (!trimText.equals(text)) A.log("customTrim() text:" + text + " trimText:" + trimText);
         return trimText;
     }
     
