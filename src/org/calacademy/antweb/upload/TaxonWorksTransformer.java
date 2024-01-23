@@ -94,6 +94,25 @@ public class TaxonWorksTransformer {
             row.put(pair.getRight(), value);
         }
 
+        // copy otu_name into SpeciesName (SpeciesName will be blank if there's an OTU value)
+        if (StringUtils.isNotBlank(line.get("TW:Internal:otu_name"))) {
+            String otu_name = line.get("TW:Internal:otu_name");
+
+            // for a subspecies name,
+            // Plagiolepis jerdonii jerdonii-rogeri
+            String[] name_parts = otu_name.split(" ");
+            String finest_name = name_parts[name_parts.length-1];
+
+            switch (line.get("taxonRank")) {
+                case "genus":
+                    row.put("SpeciesName", finest_name);
+                    break;
+
+                case "species":
+                    row.put("Subspecies", finest_name);
+                    break;
+            }
+        }
 
         // split date collected into two columns
         Pair<String, String> dates = splitDate(line.get("eventDate"));
@@ -164,10 +183,6 @@ public class TaxonWorksTransformer {
      */
     private static String buildElevation(String minElevation, String maxElevation) {
 
-        // strip decimal points off
-        minElevation = StringUtils.substringBefore(minElevation, ".");
-        maxElevation = StringUtils.substringBefore(maxElevation, ".");
-
         // this covers the case of (val, "") and ("", "")
         if (StringUtils.isBlank(maxElevation)) {
             return minElevation;
@@ -178,6 +193,10 @@ public class TaxonWorksTransformer {
             return maxElevation;
         }
 
+        // strip decimal points off when we might output a range.
+        // importer can handle a single number w/ decimal point, but not two
+        minElevation = StringUtils.substringBefore(minElevation, ".");
+        maxElevation = StringUtils.substringBefore(maxElevation, ".");
         // if both elevations are the same, just return one of them
         if (minElevation.equals(maxElevation)) {
             return minElevation;
@@ -227,13 +246,13 @@ public class TaxonWorksTransformer {
             Pair.of("decimalLongitude", "LocLongitude"),
             Pair.of("TW:DataAttribute:CollectingEvent:BiogeographicRegion", "BiogeographicRegion"),
             Pair.of("TW:DataAttribute:CollectingEvent:LocalityNotes", "LocalityNotes"),
-//            Pair.of("TW:CollectingEvent:elevation_precision", "ElevationMaxError"),  // not included in export, not a DwC field
+            Pair.of("TW:Internal:elevation_precision", "ElevationMaxError"),
             Pair.of("genus", "[Species]Genus"),
             Pair.of("specificEpithet", "SpeciesName"),
             Pair.of("infraspecificEpithet", "Subspecies"),
 //            Pair.of("subgenus", "Subgenus"),  // not included in export
             Pair.of("TW:DataAttribute:CollectionObject:SpeciesGroup", "SpeciesGroup"),
-//            Pair.of("subfamily", "Subfamily"),    // not included in export
+            Pair.of("subfamily", "Subfamily"),    // not included in export
             Pair.of("family", "Family"),
             Pair.of("order", "Order"),
             Pair.of("class", "Class"),
@@ -251,5 +270,7 @@ public class TaxonWorksTransformer {
             "county",
             "TW:DataAttribute:CollectionObject:verbatimTypeStatus",
             "TW:DataAttribute:CollectingEvent:VerbatimCollectionCode",  // maybe will use to validate fieldNumber?
+            "TW:Internal:otu_name",
+            "rank",
     };
 }

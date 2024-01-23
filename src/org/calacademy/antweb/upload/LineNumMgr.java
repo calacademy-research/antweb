@@ -155,7 +155,7 @@ public class LineNumMgr {
     private static String[] getComponents(String theLine) {
        //if (true) return getComponentsRE(theLine);
 
-        return theLine.split("\t");
+        return theLine.split("\t", -1);	// split, keeping trailing empty components
 
 //       ArrayList<String> list = new ArrayList<String>();
 //       int i = 0;
