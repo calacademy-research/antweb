@@ -128,6 +128,25 @@ public class TaxonWorksTransformer {
         // trim eventid: from collecting events
         row.put("collectioncode", StringUtils.removeStart(line.get("fieldNumber"), "eventID:"));
 
+        // use auto-generated country & province if not overridden
+        boolean usingGeneratedAdm = false;
+
+        if (StringUtils.isEmpty(line.get("TW:DataAttribute:CollectingEvent:Country"))) {
+            String country = line.get("country");
+            if (StringUtils.isNotEmpty(country)) {
+                row.put("Country", line.get("country"));
+                usingGeneratedAdm = true;
+            }
+        }
+
+        if (StringUtils.isEmpty(line.get("TW:DataAttribute:CollectingEvent:adm1"))) {
+            String stateProvince = line.get("stateProvince");
+            if (StringUtils.isNotEmpty(stateProvince)) {
+                row.put("adm1", stateProvince);
+                usingGeneratedAdm = true;
+            }
+        }
+
         // validate ADM data
         row.put("adm2", setAdm2(
                 line.get("TW:DataAttribute:CollectingEvent:Country"),
