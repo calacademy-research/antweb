@@ -142,13 +142,13 @@ public class TaxonWorksTransformer {
         if (StringUtils.isEmpty(line.get("TW:DataAttribute:CollectingEvent:adm1"))) {
             String stateProvince = line.get("stateProvince");
             if (StringUtils.isNotEmpty(stateProvince)) {
-                row.put("adm1", stateProvince);
+                row.put("Adm1", stateProvince);
                 usingGeneratedAdm = true;
             }
         }
 
         // validate ADM data
-        row.put("adm2", setAdm2(
+        row.put("Adm2", setAdm2(
                 line.get("TW:DataAttribute:CollectingEvent:Country"),
                 line.get("TW:DataAttribute:CollectingEvent:adm1"),
                 line.get("TW:DataAttribute:CollectingEvent:adm2"),
