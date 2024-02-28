@@ -1,5 +1,9 @@
+Release 8.104.1
+  Collection link fix.
 
-
+Release 8.104
+  TaxonWorks support for file upload.
+  Fix localityName in Specimen API.
 
 Release 8.103.2
   Logging changes.

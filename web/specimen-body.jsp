@@ -304,7 +304,8 @@ if (localityLink != null) { %>
 
 <ul>
 <li><b>Collection code: </b></li>
-<li><a href="collection.do?name=<%= formatter.clearNull((String) specimen.getCollectionCode()) %>"><%= formatter.clearNull((String) specimen.getCollectionCode()) %></a> &nbsp;</li>
+<li><a href="<%= AntwebProps.getDomainApp() %>/collection.do?name=<%= formatter.clearNull((String) specimen.getCollectionCode()) %>"><%= formatter.clearNull((String) specimen.getCollectionCode()) %></a> &nbsp;</li>
+
 </ul>
 
 <ul>
