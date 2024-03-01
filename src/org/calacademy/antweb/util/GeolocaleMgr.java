@@ -33,6 +33,8 @@ public class GeolocaleMgr extends Manager {
 
     private static LinkedList<Adm1> adm1List;
 
+    /** map of all country names, not just valid ones
+     */
     private static Map<String, Country> countryNameMap;
 
     /**

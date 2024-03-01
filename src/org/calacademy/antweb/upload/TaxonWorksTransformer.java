@@ -8,6 +8,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.calacademy.antweb.geolocale.Country;
+import org.calacademy.antweb.util.GeolocaleMgr;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -128,24 +130,26 @@ public class TaxonWorksTransformer {
         // trim eventid: from collecting events
         row.put("collectioncode", StringUtils.removeStart(line.get("fieldNumber"), "eventID:"));
 
-        // use auto-generated country & province if not overridden
-        boolean usingGeneratedAdm = false;
-
+        // use auto-generated country if not overridden
         if (StringUtils.isEmpty(line.get("TW:DataAttribute:CollectingEvent:Country"))) {
             String country = line.get("country");
+            // only include if country is recognized by antweb
+            // I think it's easier to debug if we don't transform it into the valid country name here
             if (StringUtils.isNotEmpty(country)) {
-                row.put("Country", line.get("country"));
-                usingGeneratedAdm = true;
+                Country c = GeolocaleMgr.getCountry(country);
+                if (c != null) {
+                    row.put("Country", line.get("country"));
+                }
             }
         }
 
-        if (StringUtils.isEmpty(line.get("TW:DataAttribute:CollectingEvent:adm1"))) {
+        // disabled until GeoBoundaries is added as a data source for TW, generated stateProvince is too inconsistent
+        /*if (StringUtils.isEmpty(line.get("TW:DataAttribute:CollectingEvent:adm1"))) {
             String stateProvince = line.get("stateProvince");
             if (StringUtils.isNotEmpty(stateProvince)) {
                 row.put("Adm1", stateProvince);
-                usingGeneratedAdm = true;
             }
-        }
+        }*/
 
         // validate ADM data
         row.put("Adm2", setAdm2(
