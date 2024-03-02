@@ -487,8 +487,14 @@ public class Utility implements Serializable {
      */
 
     public static boolean makeDirTree(String dirTree) {
+      boolean debug = false;
 
-       boolean debug = false;
+      // if path already exists, skip walking the tree
+        // this whole function could be replaced with file.mkdirs() if we don't care about debugging
+      File file = new File(dirTree);
+      if (file.getParentFile().exists()) {
+          return true;
+      }
 
       boolean isSuccess = true;
       String[] splitDirTree = dirTree.split("/");
