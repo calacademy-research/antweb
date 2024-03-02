@@ -111,11 +111,17 @@ public class LogMgr {
 
   public static void appendFile(String fullPath, String data) {
     Utility.makeDirTree(fullPath);
+    File file = new File(fullPath);
     try {
-      FileWriter fstream = new FileWriter(fullPath, true);
-      BufferedWriter out = new BufferedWriter(fstream);
+      file.createNewFile();   // creates the file if it doesn't already exist
+    } catch (Exception e) {
+      s_log.error("appendFile() fullPath:" + fullPath + " e: " + e.getMessage());
+      return;
+    }
+
+    try (FileWriter fstream = new FileWriter(file, true);
+         BufferedWriter out = new BufferedWriter(fstream)) {
       out.write(data + "\n");
-      out.close();
     } catch (Exception e) {
       s_log.error("appendFile() fullPath:" + fullPath + " e: " + e.getMessage());
     }
