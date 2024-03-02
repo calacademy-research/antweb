@@ -457,6 +457,15 @@ public abstract class AntwebProps {
         session.setAttribute("project", Project.ALLANTWEBANTS);
     }
 
+    public static String getTaxonWorksUrl() {
+        return "https://sfg.taxonworks.org";
+    }
+
+    public static String getTaxonWorksEditSpecimenUrl(String TWCollectionObjectID) {
+        // https://sfg.taxonworks.org/tasks/accessions/comprehensive?collection_object_id=1914499
+        return getTaxonWorksUrl() + "/tasks/accessions/comprehensive?collection_object_id=" + TWCollectionObjectID;
+    }
+
 }
 
 

@@ -288,6 +288,7 @@ public class TaxonWorksTransformer {
             Pair.of("phylum", "Phylum"),
             Pair.of("kingdom", "Kingdom"),
             Pair.of("TW:DataAttribute:CollectingEvent:VerbatimCoordinateUncertainty", "LocXYAccuracy"),
+            Pair.of("TW:Internal:collection_object_id", "taxonworks_co_id"),
     };
 
     // these are just extra headers that we might use, right now the CSV parser doesn't check for header column presence

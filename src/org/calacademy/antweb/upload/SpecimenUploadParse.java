@@ -985,7 +985,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
        m_headerArrayList.add("order");           
 
    // if (!(group.getId() == 1))
-       m_headerArrayList.add("collxyaccuracy");    
+       m_headerArrayList.add("collxyaccuracy");
+
+       m_headerArrayList.add("taxonworks_co_id");
        
       return m_headerArrayList; 
     }

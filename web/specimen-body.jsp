@@ -606,6 +606,13 @@ if (LoginMgr.isAdmin(request)) {
 
 <div class="clear"></div>
 <br /><br />
+
+    <% if (specimen != null && specimen.getTaxonWorksEditUrl() != null && LoginMgr.isLoggedIn(request)) {
+        String TWEditURL = specimen.getTaxonWorksEditUrl(); %>
+    <a href="<%= TWEditURL %>">Edit this specimen in TaxonWorks</a>
+    <br/><br/>
+    <%}%>
+
 <% 
    String amissEmail = AntwebUtil.getAdminEmail();
    if (specimen != null && specimen.getGroup() != null) amissEmail = specimen.getGroup().getAdminEmail();  

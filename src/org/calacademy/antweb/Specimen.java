@@ -90,6 +90,8 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     private String flag;
     private String issue;
 
+    private String taxonworksCollectionObjectID;
+
     public Specimen() {
     }    
 
@@ -167,7 +169,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                     + ", created "
                     + ", backup_file_name "
                     + ", upload_id "
-                    + ", flag, issue, other"
+                    + ", flag, issue, taxonworks_co_id, other"
                     + " from specimen where code='" + AntFormatter.escapeQuotes(getCode())
                     + "'";
 
@@ -247,6 +249,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                 
                 setFlag(rset.getString("flag"));
                 setIssue(rset.getString("issue"));
+                setTaxonworksCollectionObjectID(rset.getString("taxonworks_co_id"));
 
                 setDetailXml(rset.getString("other"));
 
@@ -1509,6 +1512,21 @@ For a locality name without code (this name has special characters):
     }
     public void setIssue(String issue) {
       this.issue = issue;
-    }    
+    }
+
+    public String getTaxonworksCollectionObjectID() {
+        return taxonworksCollectionObjectID;
+    }
+
+    private void setTaxonworksCollectionObjectID(String id) {
+        this.taxonworksCollectionObjectID = id;
+    }
+
+    public String getTaxonWorksEditUrl() {
+        if (taxonworksCollectionObjectID == null || taxonworksCollectionObjectID.isEmpty()) {
+            return null;
+        }
+        return AntwebProps.getTaxonWorksEditSpecimenUrl(getTaxonworksCollectionObjectID());
+    }
     
 }
