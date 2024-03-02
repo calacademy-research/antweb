@@ -31,7 +31,7 @@ public class GeolocaleMgr extends Manager {
     // For Taxon Name Search Autocomplete    
     private static List<String> placeNamesList;
 
-    private static LinkedList<Adm1> adm1List;
+    private static ArrayList<Adm1> adm1List;
 
     /** map of all country names, not just valid ones
      */
@@ -116,7 +116,7 @@ public class GeolocaleMgr extends Manager {
         adm1List = s_geolocales.stream()
                 .filter(Geolocale::isAdm1)
                 .map(adm1 -> (Adm1) adm1)
-                .collect(Collectors.toCollection(LinkedList::new));
+                .collect(Collectors.toCollection(ArrayList::new));
 
 
         adm1List.forEach(adm1 -> adm1CountryMap.put(adm1.getName(), adm1.getCountry(), adm1));
