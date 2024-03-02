@@ -269,6 +269,10 @@ public abstract class AntwebUtil {
 
       int specIndex = kind.indexOf("specimen") + 8;
       if (specIndex == 8) {
+        // TaxonWorks uploads have the filename specimenTW<id>, so we need to trim the TW out
+        if (kind.indexOf("specimenTW") == 0) {
+          specIndex = "specimenTW".length();
+        }
         String groupId = kind.substring(specIndex);
         Integer groupIdInteger = Integer.valueOf(groupId);
         //A.log("groupIdInteger:" + groupIdInteger);
