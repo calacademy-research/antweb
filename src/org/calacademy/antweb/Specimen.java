@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.*;
 import java.sql.*;
 import java.text.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -1527,6 +1529,31 @@ For a locality name without code (this name has special characters):
             return null;
         }
         return AntwebProps.getTaxonWorksEditSpecimenUrl(getTaxonworksCollectionObjectID());
+    }
+
+    // split typeStatus name to get a string of the original name so we can search for it in antcat
+    private String getTypeStatusName() {
+        if (typeStatus.isEmpty()) {
+            return null;
+        }
+        Pattern typeStatusPattern = Pattern.compile("\\w*type of (?<name>(?:[A-Za-z]+ ){1,2}[a-z]+)");
+        Matcher matcher = typeStatusPattern.matcher(typeStatus);
+
+        boolean success = matcher.find();
+        if (success) {
+            return matcher.group("name");
+        }
+        return null;
+    }
+
+    public String getTypeStatusAntcatSearchURL() {
+        String name = getTypeStatusName();
+
+        if (name == null) {
+            return null;
+        }
+
+        return "https://www.antcat.org/catalog/search?qq=" + name.replace(" ", "+") + "&searching_from_header=true";
     }
     
 }

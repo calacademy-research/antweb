@@ -435,11 +435,13 @@ if (casteValue == null) casteValue = "undefined";
 </li>
 </ul>
   
-<% if (Utility.displayEmptyOrNotBlank(specimen.getTypeStatus())) { %>   
+<% if (Utility.displayEmptyOrNotBlank(specimen.getTypeStatus())) {
+    String antcatTypeUrl = specimen.getTypeStatusAntcatSearchURL();
+%>
 <ul>
 <li><b>Type status: </b></li>
 <li>
-<bean:write name="specimen" property="typeStatus"/></li>
+<bean:write name="specimen" property="typeStatus"/> <% if (antcatTypeUrl != null) {%><a href="<%=antcatTypeUrl%>">(search on AntCat)</a><%}%></li>
 </ul>
 <% } %>
 
