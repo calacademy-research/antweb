@@ -1533,7 +1533,7 @@ For a locality name without code (this name has special characters):
 
     // split typeStatus name to get a string of the original name so we can search for it in antcat
     private String getTypeStatusName() {
-        if (typeStatus.isEmpty()) {
+        if (typeStatus == null || typeStatus.isEmpty()) {
             return null;
         }
         Pattern typeStatusPattern = Pattern.compile("\\w*type of (?<name>(?:[A-Za-z]+ ){1,2}[a-z]+)");
@@ -1549,7 +1549,7 @@ For a locality name without code (this name has special characters):
     public String getTypeStatusAntcatSearchURL() {
         String name = getTypeStatusName();
 
-        if (name == null) {
+        if (name == null || name.isEmpty()) {
             return null;
         }
 

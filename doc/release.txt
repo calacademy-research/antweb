@@ -1,3 +1,6 @@
+Release 8.106.1
+  Fix null pointer error in type status names
+
 Release 8.106
   Generate links to AntCat taxon pages from type status names
 
