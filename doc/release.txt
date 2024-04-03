@@ -1,3 +1,6 @@
+Release 8.107
+  add bin/macMount.sh script
+
 Release 8.106.1
   Fix null pointer error in type status names
 

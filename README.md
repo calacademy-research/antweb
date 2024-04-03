@@ -38,14 +38,19 @@ git clone git@github.com:calacademy-research/antweb.git
 ### (Option 1): Staging | using s3 server via VPN
 
 * Install `s3fs` (if running on an IBSS server, use the ansible role)
-* From the lastpass note "Minio Bucket Credentials" copy the line antweb:... and paste into a file `~/.s3fs_antweb_key`
-* Mount the antweb minio bucket on the machine
+* Deprecated. See below:  From the lastpass note "Minio Bucket Credentials" copy the line antweb:... and paste into a file `~/.s3fs_antweb_key`
+* Deprecated. Switched from minio to digitalocean:  Mount the antweb minio bucket on the machine
 
 ```bash
 # this can be anywhere that you have write permission to, but ~/volumes/antweb is an easy place to remember and find
 export ANTWEB_BUCKET_PATH=$HOME/volumes/antweb 
 export ANTWEB_BACKUP_PATH=$HOME/volumes/antweb_backup 
 export ANTWEB_S3FS_KEY=$HOME/.s3fs_antweb_key
+s3fs antweb "$ANTWEB_BUCKET_PATH" -o passwd_file="$ANTWEB_S3FS_KEY" -o url=https://sfo3.digitaloceanspaces.com -o allow_other -o use_path_request_style -o nonempty
+s3fs antweb-dbarchive "$ANTWEB_BUCKET_PATH" -o passwd_file="$ANTWEB_S3FS_KEY" -o url=https://sfo3.digitaloceanspaces.com -o allow_other -o use_path_request_style
+
+
+Deprecated:
 s3fs antweb "$ANTWEB_BUCKET_PATH" -o passwd_file="$ANTWEB_S3FS_KEY" -o url=https://slevin.calacademy.org:9000 -o allow_other -o use_path_request_style
 s3fs antweb-dbarchive "$ANTWEB_BUCKET_PATH" -o passwd_file="$ANTWEB_S3FS_KEY" -o url=https://slevin.calacademy.org:9000 -o allow_other -o use_path_request_style
 ```
@@ -68,17 +73,31 @@ If you're on Ubuntu 18.04, get rclone from the script on the site, not from apt.
 
 To configure rclone, add the following to the file `~/.config/rclone/rclone.conf`.
 
+Get the secret_access_key from the live server rclone.conf.
+Was:
 In the lastpass note "Minio Bucket Credentials", copy the 48 character key after "antweb:"
+  
 
-Replace `SECRET_ACCESS_KEY` with the antweb key.
+Replace `<redacted>` with the antweb key.
 
 ```
+$ cat ~/.config/rclone/rclone.conf
+[digitalocean]
+type = s3
+provider = DigitalOcean
+access_key_id = PIM6E5G3RZ6ANNAAJGKB
+secret_access_key = <redacted>
+endpoint = sfo3.digitaloceanspaces.com
+acl = public-read
+
+Deprecated:
+
 $ cat ~/.config/rclone/rclone.conf
 [minio]
 type = s3
 provider = Minio
 access_key_id = antweb
-secret_access_key = SECRET_ACCESS_KEY
+secret_access_key = <redacted>
 endpoint = https://slevin.calacademy.org:9000
 acl = public-read
 ```
@@ -113,6 +132,25 @@ rclone sync --size-only -P --checkers 32 --fast-list minio:antweb/images data/im
 
 
 #### Mounting into docker-compose
+
+
+```
+Add to fstab file using:
+sudo vifs
+
+root@antweb:~# cat /etc/fstab
+digitalocean:/antweb	/mnt/antweb	fuse.rclonefs	
+config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full,attr-timeout=10s,dir-cache-time=24h,vfs-cache-max-age=24h,daemon-timeout=10m,use-server-modtime,log-file=/root/.config/rclone/rclone.log,log-level=NOTICE	0 0
+digitalocean:/antweb-dbarchive	/mnt/backup	fuse.rclonefs	config=/root/.config/rclone/rclone.conf,default-permissions,vfs-cache-mode=full,s3-acl=private	0 0
+
+root@antweb:~# df -h
+Filesystem                     Size  Used Avail Use% Mounted on
+digitalocean:antweb            1.0P     0  1.0P   0% /mnt/antweb
+digitalocean:antweb-dbarchive  1.0P     0  1.0P   0% /mnt/backup
+
+ls /mnt/antweb
+```
+
 
 These files will be ignored by git and the docker build daemon. You will need to mount the directory into the container
 using the `ANTWEB_BUCKET_PATH` environment variable. 
@@ -244,3 +282,4 @@ Take a look at [deployment.md](doc/deployment.md) for staging/production specifi
 
 The antweb bucket is mounted in the antweb container at `/mnt/antweb`
 The database archive is mounted in the antweb container at `/mnt/backup`
+
