@@ -504,6 +504,8 @@ Or, if there are stmts and/or rsets...
         return s_serverBusyConnectionCount;
     }
 
+    
+    /*
 
 /* Unclosed Connections
      In struts-configDbAnt.xml there are properties defined:
