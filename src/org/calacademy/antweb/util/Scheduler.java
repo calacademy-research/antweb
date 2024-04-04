@@ -191,6 +191,7 @@ public class Scheduler extends Action {
 
 				if (num == 0) {
 				  // This was the full scheduled tasks, now completed.
+					s_log.warn("SET REBOOT TRUE");
 				  AntwebSystem.setIsRestart(true);	// This will trigger a reboot within 5 minutes.
 				}
 

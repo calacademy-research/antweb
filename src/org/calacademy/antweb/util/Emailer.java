@@ -18,6 +18,12 @@ public class Emailer {
     // Testable: https://www.antweb.org/util.do?action=emailTest
     public static void sendMail(String to, String subject, String content) {
 
+        boolean isDisabled = true;
+        if (isDisabled) {
+            s_log.error("sendMail() disabled. Email NOT sent to <" + to + "> with subject '" + subject + "'");
+            return;
+        }
+
         final String username = "antweb@calacademy.org";
         final String passwd = "75txAKc8&%By";
 
