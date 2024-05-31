@@ -54,7 +54,7 @@ public final class BigPictureAction extends Action {
         String imageId = form.getImageId();
         String code = null;
         String shot = null;
-        
+        int number = 0;
 
         try {
             DataSource dataSource = getDataSource(request, "conPool");
@@ -74,19 +74,18 @@ public final class BigPictureAction extends Action {
                     ImageDb.getFormProps(form, connection);
                 }
             } else {
+                code = form.getCode();
+                if (code == null) code = form.getName();
+                code = code.toLowerCase();
+
+                shot = form.getShot();
+                number = number = form.getNumber();
+
                 if (AntwebUtil.isEmpty(code) || AntwebUtil.isEmpty(shot)) {
                     request.setAttribute("message", "Must specify code and shot, or imageId.");
                     return mapping.findForward("message");
                 }
             }
-
-            code = form.getCode();
-            if (code == null) code = form.getName();
-            code = code.toLowerCase();
-
-            shot = form.getShot();
-            int number = number = form.getNumber();
-
 
 
 
