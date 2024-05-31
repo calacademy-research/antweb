@@ -33,21 +33,6 @@ public final class BigPictureAction extends Action {
         
         Login accessLogin = LoginMgr.getAccessLogin(request);
         Group accessGroup = GroupMgr.getAccessGroup(request);
-                            
-        SpecimenImage theImage = null;
-        Specimen theSpecimen = new Specimen();
-        
-        SpecimenImageForm form = (SpecimenImageForm) theForm;
-        String code = form.getCode();
-        if (code == null) code = form.getName();
-        String shot = form.getShot();
-        int number = number = form.getNumber();
-
-        if (AntwebUtil.isEmpty(code) || AntwebUtil.isEmpty(shot)) {
-            request.setAttribute("message", "Must specify code and shot.");
-            return mapping.findForward("message");
-        }
-        code = code.toLowerCase();
 
         HttpSession session = request.getSession();
 
@@ -62,17 +47,48 @@ public final class BigPictureAction extends Action {
 
         String adminMessage = null;
 
+        SpecimenImage theImage = null;
+        Specimen theSpecimen = new Specimen();
+
+        SpecimenImageForm form = (SpecimenImageForm) theForm;
+        String imageId = form.getImageId();
+        String code = null;
+        String shot = null;
+        
+
         try {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
 
             SessionRequestFilter.processRequest(request, connection);
 
-            //s_log.info("execute() imageId:" + form.getImageId());
-            if (form.getImageId() != null) {
-              // Poor design. Antipattern.
-              ImageDb.getFormProps(form, connection);
+
+
+
+
+
+            if (!AntwebUtil.isEmpty(imageId)) {
+                //s_log.info("execute() imageId:" + form.getImageId());
+                if (imageId != null) {
+                    // Poor design. Antipattern.
+                    ImageDb.getFormProps(form, connection);
+                }
+            } else {
+                if (AntwebUtil.isEmpty(code) || AntwebUtil.isEmpty(shot)) {
+                    request.setAttribute("message", "Must specify code and shot, or imageId.");
+                    return mapping.findForward("message");
+                }
             }
+
+            code = form.getCode();
+            if (code == null) code = form.getName();
+            code = code.toLowerCase();
+
+            shot = form.getShot();
+            int number = number = form.getNumber();
+
+
+
 
             //s_log.info("execute() code:" + form.getCode());
                         
