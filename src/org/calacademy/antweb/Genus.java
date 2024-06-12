@@ -120,11 +120,11 @@ public class Genus extends Subfamily implements Serializable {
             long browserTime = 0;
             long setupTime = 0;
             int i = 0;
+            TaxonDb taxonDb = new TaxonDb(connection);
             while (rset.next()) {
                 ++i;
                 String rank = rset.getString("taxarank");
 
-                TaxonDb taxonDb = new TaxonDb(connection);
                 if (Rank.SPECIES.equals(rank)) {
                     child = taxonDb.getSpecies(subfamily, genus, rset.getString("species"));
                 } else {

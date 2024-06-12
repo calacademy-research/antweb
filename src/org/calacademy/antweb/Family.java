@@ -51,7 +51,7 @@ public class Family extends Taxon implements Serializable {
                 + statusSet.getAndCriteria()
                 + " order by taxon.subfamily";
 
-            stmt = DBUtil.getStatement(connection, "setChildren()");
+            stmt = DBUtil.getStatement(connection, "Family.setChildren()");
             rset = stmt.executeQuery(query);
 
             //A.log("setChildren() query:" + theQuery);
