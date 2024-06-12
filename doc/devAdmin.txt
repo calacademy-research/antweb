@@ -108,7 +108,7 @@ Copy over /data directory to antweb/
   Too low will cause failure of specimen upload as well as: 
     https://localhost/query.do?action=curiousQuery&name=lastSpecimenUpload
 
-
+ 
 
 --- DB load instructions
 ### Download the (hopefully soon to be) sanitized database
@@ -116,8 +116,7 @@ Copy over /data directory to antweb/
 Create a full database dump from antweb and copy it to your machine
 
 ```bash
-ssh user@antweb
-mysqldump -h 127.0.0.1 -u antweb -p --all-databases --routines --single-transaction --quick --column-statistics=0 | gzip > /tmp/ant-currentDump.sql.gz
+ssh user@antweb mysqldump -h 127.0.0.1 -u antweb -p --all-databases --routines --single-transaction --quick --column-statistics=0 | gzip > /tmp/ant-currentDump.sql.gz
 # Enter password:
 
 
