@@ -1,7 +1,7 @@
 {
     order rate_limit before basicauth
 
-    default_sni www.antweb.org      # Sets a default TLS ServerName for when clients do not use SNI in their ClientHello
+    default_sni www.antweb.org
     servers {
         timeouts {
             read_body 45m
@@ -22,57 +22,24 @@ api.antweb.org {
 
 www.antweb.org {
     @bots {
-        header_regexp User-Agent "(?i)(CCBot|Googlebot-Images|Sogou|SenutoBot|SiteScoreBot|Twitterbot|YisouSpider|IABot|Turnitin|'CFNetwork/.* Darwin'|ClaudeBot|SemrushBot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|facebookexternalhit|Bytespider|AppleBot|Swiftbot|Slurp Bot|CCBot|GoogleOther|Google-InspectionTool|MJ12bot|Alexa crawler|Soso Spider|Pinterestbot|Dotbot|AhrefsBot|archive.org_bot|scrapy|PetalBot|SemrushBot|Amazonbot|DataForSeoBot|Yeti|Googlebot-Image)"
+        header_regexp User-Agent "(?i)(CCBot|Googlebot-Images|Sogou|SenutoBot|SiteScoreBot|Twitterbot|YisouSpider|IABot|Turnitin|CFNetwork/.* Darwin|ClaudeBot|SemrushBot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|facebookexternalhit|Bytespider|AppleBot|Swiftbot|Slurp Bot|GoogleOther|Google-InspectionTool|MJ12bot|Alexa crawler|Soso Spider|Pinterestbot|Dotbot|AhrefsBot|archive.org_bot|scrapy|PetalBot|Amazonbot|DataForSeoBot|Yeti|Googlebot-Image)"
     }
 
-    @allowed_paths {
-        path /
-        path *.pdf
-        path *.xls
-        path *.xlsx
-        path *.html
-        path *.css
-        path *.ico
-        path *.jsp
-        path *.do
-        path *.jpg
-        path *.jpeg
-        path *.gif
-        path *.png
-        path *.js
-        path *.txt
-        path *.log
-
-        # directories
-        path /images/*
-        path /web/curator/*
-        path /web/log/*
-        path /specimen/*
-        path /web/bak/taxonSets/*
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 100MiB
+            roll_keep 10
+            roll_keep_days 1
+        }
+        format json
+#        format console
     }
 
     @static_images {
         path_regexp image_file ^/images/(.+\..+)$
     }
 
-    @image_root_dir {
-        path_regexp image_dir ^/images/?$
-    }
-
-    log {
-        output file /var/log/caddy/access.log {
-            roll_size 100MiB     # Rotate after log file exceeds 100 MiB
-            roll_keep 10         # Keep only the most recent 10 log files
-            roll_keep_days 1     # Keep log files for 1 day
-        }
-        format console
-    }
-
     route {
-        respond @image_root_dir "Access Denied" 403 {
-            close
-        }
-
         respond @bots "Access Denied" 403 {
             close
         }
@@ -83,7 +50,7 @@ www.antweb.org {
             reverse_proxy api:5000
         }
 
-        reverse_proxy @allowed_paths antweb:8080
+        reverse_proxy antweb:8080
 
         error "Not found" 404
 
@@ -97,5 +64,3 @@ www.antweb.org {
         }
     }
 }
-
-
