@@ -54,6 +54,10 @@ public class BrowseAction extends DescriptionAction {
         //if (!AntwebProps.isDevOrStageMode())
         AntwebSystem.cpuCheck();
 
+        // 1st check without connection.
+        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+
+
         ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
 
@@ -269,6 +273,7 @@ public class BrowseAction extends DescriptionAction {
 
           SessionRequestFilter.processRequest(request, connection);
 
+		  // 2nd check with connection.
           if (HttpUtil.tooBusyForBots(connection, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
 		  TaxonDb taxonDb = new TaxonDb(connection);
