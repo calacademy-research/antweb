@@ -1750,8 +1750,9 @@ public static final int c = 0;
           + " and s.family = 'formicidae' " 
           + " group by subfamily"; 
       return query;
-    }     
-             
+    }
+
+
     // To support Change View options
 	public ArrayList<Geolocale> getChildrenWithTaxon(String taxonName, String georank, Geolocale parent) {
         ArrayList<Geolocale> geolocales = new ArrayList<>();

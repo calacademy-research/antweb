@@ -264,6 +264,9 @@ public class BrowseAction extends DescriptionAction {
           //s_log.info("execute() uniqueNumber:" + uniqueNumber + " request:" + HttpUtil.getTarget(request));
 
 		  String target = HttpUtil.getTarget(request);
+		  // Overdue resource check outs here may be isolated by utilizing two connections.
+          // From: docker-compose exec antweb bash
+          // ls /data/antweb/web/log/unclosedConnections/
 		  connection = DBUtil.getConnection(dataSource, dbMethodName, target);
 		  if (connection == null) {
 		      message = "execute() Null connection !!!" + AntwebUtil.getRequestInfo(request);
