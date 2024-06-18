@@ -268,6 +268,7 @@ public class BrowseAction extends DescriptionAction {
           // From: docker-compose exec antweb bash
           // ls /data/antweb/web/log/unclosedConnections/
 		  connection = DBUtil.getConnection(dataSource, dbMethodName, target);
+
 		  if (connection == null) {
 		      message = "execute() Null connection !!!" + AntwebUtil.getRequestInfo(request);
               s_log.error(message);

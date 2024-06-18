@@ -133,6 +133,14 @@ Or, if there are stmts and/or rsets...
 
       try {
           connection = dataSource.getConnection();
+
+          if (connection.isClosed()) {
+              s_log.error("+++This connection is already closed");
+              // return null;  Better to throw a sqlException
+              //SQLException e = new SQLException();
+              //throw e;
+          }
+
       } catch (java.sql.SQLException e) {
         message = "getConnection() name:" + name + " e:" + e;
         Logger.iLog(Logger.dBUtilGetConnection, message, 30);
