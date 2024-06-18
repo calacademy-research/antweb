@@ -97,7 +97,7 @@ public final class BigPictureAction extends Action {
             if (number == 0) number = 1;
             boolean success = false;
                                 
-            if (code.contains("shot=")) {
+            if (code != null && code.contains("shot=")) {
               String message = "Incorrect specimen identifier:" + code;
               s_log.error("execute() " + message);
               request.setAttribute("message", message);
