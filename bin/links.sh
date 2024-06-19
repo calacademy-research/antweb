@@ -2,7 +2,12 @@
 # This file is useful, on production and stage, for creating a set of handy softlinks to access
 # resoures.  Recommended, in a directory called links, execute this script, like:
 #
-# sh /home/antweb/antweb/bin/links.sh
+# See also linksDocker.sh, to be used similarly from within docker:
+# docker-compose exec antweb bash
+#
+# From within a manually created links directory
+# Create by running something like:
+# sh ../antweb/antweb/bin/links.sh
 
 rm *
 
