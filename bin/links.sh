@@ -6,6 +6,7 @@
 
 ln -s /usr/local/tomcat tomcat
 ln -s tomcat/logs/antweb.log antweb.log
+ln -s tomcat/logs/antwebInfo.log antwebInfo.log
 ln -s tomcat/logs/appCheck.log appCheck.log
 ln -s /usr/local/apache/logs/access_log access_log
 ln -s /usr/local/apache/logs/error_log error_log

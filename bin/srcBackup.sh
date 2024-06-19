@@ -25,7 +25,6 @@ fileDir=$backupDir/$fileName$rel$ext
 
 echo 'Backing up source to:' $fileDir
 
-
 if [ -d $backupDir ]; then
 zip -r --exclude=".git/*" --exclude="build/*" $fileDir .
 fi

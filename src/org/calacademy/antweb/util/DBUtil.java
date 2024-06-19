@@ -187,7 +187,7 @@ Or, if there are stmts and/or rsets...
         } catch (SQLException e) {
           // Fail gracefully, without stacktrace, upon server shutdown
           //AntwebUtil.logShortStackTrace();
-          s_log.error("getStatement() connection:" + connection.toString() + " name:" + name + " e:" + e);
+          s_log.error("getStatement() connection:" + connection.toString() + " name:" + name + " isClosed():" + ((NewProxyConnection) connection).isClosed() + " e:" + e);
           throw e;
         }
         if (stmt == null) {

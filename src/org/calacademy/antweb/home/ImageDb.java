@@ -174,21 +174,37 @@ public class ImageDb extends AntwebDb {
         return images;
     }
 
+
+    public SpecimenImage getSpecimenImage(String imageId) {
+      String clause = "i.id = " + imageId;
+      A.log("clause:" + clause);
+      return getSpecimenImageWithClause(clause);
+    }
+
     public SpecimenImage getSpecimenImage(String code, String shot, int number) {
+        String clause = " i.image_of_id = '" + code + "'"
+                + " and i.shot_type = '" + shot + "'"
+                + " and i.shot_number = " + number;
+        return getSpecimenImageWithClause(clause);
+    }
+
+    public SpecimenImage getSpecimenImageWithClause(String clause) {
+        String code = null;
+        String shot = null;
+        int number = 0;
+
         String query = null;
         ResultSet rset = null;
         Statement stmt = null;
 		SpecimenImage specimenImage = null;
 
         try {
-            query = "select i.upload_date, i.has_tiff, i.artist, gi.group_id, i.image_upload_id " 
+            query = "select i.image_of_id code, i.shot_type shot, i.shot_number number, i.upload_date, i.has_tiff, i.artist, gi.group_id, i.image_upload_id "
                 + " from image i, group_image gi " 
-                + " where i.id = gi.image_id" 
-                + " and i.image_of_id='" + code + "'"
-                + " and i.shot_type='" + shot + "'" 
-                + " and i.shot_number=" + number;
+                + " where i.id = gi.image_id and "
+                + clause;
 
-            //A.log("getSpecimenImage() query:" + query);
+            A.log("getSpecimenImage() query:" + query);
 
             stmt = DBUtil.getStatement(getConnection(), "getSpecimenImage()");
             stmt.executeQuery(query);
@@ -201,10 +217,9 @@ public class ImageDb extends AntwebDb {
 
                 specimenImage = new SpecimenImage();
 
-				specimenImage.setCode(code);
-				specimenImage.setShot(shot);
-
-				specimenImage.setNumber(number);
+				specimenImage.setCode(rset.getString("code"));
+				specimenImage.setShot(rset.getString("shot"));
+                specimenImage.setNumber(rset.getInt("number"));
 
 				specimenImage.setDate(rset.getString("upload_date"));
 
@@ -399,7 +414,7 @@ public class ImageDb extends AntwebDb {
         return likeObjectList;
     }
 
-
+/*
     public static void getFormProps(SpecimenImageForm form, Connection connection) throws SQLException {
         String theQuery = "select shot_type, image_of_id, shot_number, artist from image where id = " + form.getImageId();
 
@@ -408,7 +423,7 @@ public class ImageDb extends AntwebDb {
         try {
           stmt = DBUtil.getStatement(connection, "getFormProps()");
           rset = stmt.executeQuery(theQuery);
-
+A.log("getFormProps() theQuery:" + theQuery);
           while (rset.next()) {
             String shot = rset.getString("shot_type");
             String code = rset.getString("image_of_id");
@@ -423,7 +438,8 @@ public class ImageDb extends AntwebDb {
             DBUtil.close(stmt, rset, "ImageDb", "getFormProps()");
         }
     }
-    
+*/
+
     public HashMap<String, int[]> getImageStats() throws SQLException {
         HashMap<String, int[]> imageStats = new HashMap<>();
         String theQuery = "select "

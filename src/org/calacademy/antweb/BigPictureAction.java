@@ -62,18 +62,20 @@ public final class BigPictureAction extends Action {
 
             SessionRequestFilter.processRequest(request, connection);
 
-
-
-
+            ImageDb imageDb = new ImageDb(connection);
 
 
             if (!AntwebUtil.isEmpty(imageId)) {
                 //s_log.info("execute() imageId:" + form.getImageId());
                 if (imageId != null) {
                     // Poor design. Antipattern.
-                    ImageDb.getFormProps(form, connection);
+
+                    theImage = imageDb.getSpecimenImage(imageId);
+
+                    //ImageDb.getFormProps(form, connection);
                 }
             } else {
+
                 code = form.getCode();
                 if (code == null) code = form.getName();
                 code = code.toLowerCase();
@@ -85,16 +87,16 @@ public final class BigPictureAction extends Action {
                     request.setAttribute("message", "Must specify code and shot, or imageId.");
                     return mapping.findForward("message");
                 }
+                if (number == 0) number = 1;
+
+                theImage = imageDb.getSpecimenImage(code, shot, number);
             }
-
-
 
             //s_log.info("execute() code:" + form.getCode());
                         
-            request.setAttribute("code", code);
-            request.setAttribute("shot", shot);
+            request.setAttribute("code", theImage.getCode());
+            request.setAttribute("shot", theImage.getShot());
 
-            if (number == 0) number = 1;
             boolean success = false;
                                 
             if (code != null && code.contains("shot=")) {
@@ -104,27 +106,28 @@ public final class BigPictureAction extends Action {
               return mapping.findForward("message");
             }
 
-            ImageDb imageDb = new ImageDb(connection);
-            theImage = imageDb.getSpecimenImage(code, shot, number);
-
 
             //A.log("execute() theImage:" + theImage);
 
             if (LoginMgr.isCurator(request)) {
-              if (theImage == null || theImage.getGroup() == null) {
-                s_log.warn("execute() no image:" + theImage + " and/or group for image code:" + code + " shot:" + shot + " number:" + number);
+              if (theImage == null) {
+                s_log.warn("execute() no image:" + theImage + " for imageId:" + imageId + " code:" + code + " shot:" + shot + " number:" + number);
                 //adminMessage = "<%= if (accessLogin.isAdmin()) { out.println(\"<a href='" + AntwebProps.getDomainApp() + "'>Remove</a> \"); } %>";
               } else {
-                //s_log.warn("execute() theImage:" + theImage +  " group:" + theImage.getGroup() + " accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
-                if (theImage.getGroup().getId() == accessGroup.getId() || LoginMgr.isAdmin(request)) {
-                  if ("delete".equals(form.getAction())) {
-                    imageDb = new ImageDb(connection);
-                    boolean isDeleted = imageDb.deleteImage(code, shot, number);
-                    String message = "image NOT deleted"; //. Report error to " + AntwebUtil.getAdminEmail();
-                    if (isDeleted) message = "image deleted";
-                    request.setAttribute("message", message);
-                    return mapping.findForward("message");
+                if (theImage.getGroup() != null) {
+                  //s_log.warn("execute() theImage:" + theImage +  " group:" + theImage.getGroup() + " accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
+                  if (theImage.getGroup().getId() == accessGroup.getId() || LoginMgr.isAdmin(request)) {
+                      if ("delete".equals(form.getAction())) {
+                          imageDb = new ImageDb(connection);
+                          boolean isDeleted = imageDb.deleteImage(code, shot, number);
+                          String message = "image NOT deleted"; //. Report error to " + AntwebUtil.getAdminEmail();
+                          if (isDeleted) message = "image deleted";
+                          request.setAttribute("message", message);
+                          return mapping.findForward("message");
+                      }
                   }
+                } else {
+                   s_log.warn("execute() theImage:" + theImage + " as no group, accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
                 }
               }
             }
