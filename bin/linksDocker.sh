@@ -6,6 +6,8 @@
 # Invoke from the links directory
 # sh ../deploy/bin/linksDocker.sh
 
+# It seems these are wiped away after a restart of the docker container. TBD.
+
 
 rm *
 
