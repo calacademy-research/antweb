@@ -118,28 +118,31 @@ Or, if there are stmts and/or rsets...
 
       String message = null;
       // Log the getConnection in getConns.log
-      c = c + 1;
-      if (c <= logNum || ServerDb.isServerDebug("logGetConns")) {
-          //s_log.warn("stack:" + AntwebUtil.getAntwebStackTrace() );
-          String stackLine = AntwebUtil.getAntwebStackLine();
-          String dataSourceName = "N/a";
-          if (dataSource instanceof com.mchange.v2.c3p0.PooledDataSource) {
-              dataSourceName = ((com.mchange.v2.c3p0.PooledDataSource) dataSource).getDataSourceName();
-          }
-          // " dataSource:" + dataSourceName +
-          String logLine = (DateUtil.getFormatDateTimeMilliStr() + " " + stackLine + " name:" + name + " queryString:" + queryString);
-          LogMgr.appendLog("getConns.log", logLine);
-      }
 
       try {
           connection = dataSource.getConnection();
 
           if (connection.isClosed()) {
+              // This never seems to happen. Even when "Logging the stack trace by which the overdue resource was checked-out."
               s_log.error("+++This connection is already closed");
               // return null;  Better to throw a sqlException
               //SQLException e = new SQLException();
               //throw e;
           }
+
+          c = c + 1;
+          if (c <= logNum || ServerDb.isServerDebug("logGetConns")) {
+              //s_log.warn("stack:" + AntwebUtil.getAntwebStackTrace() );
+              String stackLine = AntwebUtil.getAntwebStackLine();
+              String dataSourceName = "N/a";
+              if (dataSource instanceof com.mchange.v2.c3p0.PooledDataSource) {
+                  dataSourceName = ((com.mchange.v2.c3p0.PooledDataSource) dataSource).getDataSourceName();
+              }
+              // " dataSource:" + dataSourceName +
+              String logLine = (DateUtil.getFormatDateTimeMilliStr() + " connection:" + connection.toString() + " name:" + name + " queryString:" + queryString + " " + stackLine);
+              LogMgr.appendLog("getConns.log", logLine);
+          }
+
 
       } catch (java.sql.SQLException e) {
         message = "getConnection() name:" + name + " e:" + e;
