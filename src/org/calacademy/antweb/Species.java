@@ -257,7 +257,7 @@ these other _cf1 etc.
         Statement stmt = null;
         ResultSet rset = null;
         try {
-          stmt = DBUtil.getStatement(connection, "setChildren()");
+          stmt = DBUtil.getStatement(connection, "Species.setChildren()");
           rset = stmt.executeQuery(query);
           Specimen child;
 

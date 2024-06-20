@@ -81,7 +81,7 @@ is called which displays a short stacktrace.  Remove session variables.  Mark, F
   String object = "taxonName";
   String objectName = taxon.getTaxonName();
 
-  //A.log("bigPicture.jsp taxon:" + taxon.getFullName() + " specimen:" + specimen.getName() + " theImage:" + theImage); 
+  A.log("bigPicture.jsp taxon:" + taxon.getFullName() + " specimen:" + specimen.getName() + " theImage:" + theImage);
 %>
 
 <div id="page_contents">

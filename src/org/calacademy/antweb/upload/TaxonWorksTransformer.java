@@ -103,7 +103,7 @@ public class TaxonWorksTransformer {
         }
 
         // copy otu_name into SpeciesName (SpeciesName will be blank if there's an OTU value)
-        if (StringUtils.isNotBlank(line.get("TW:Internal:otu_name"))) {
+        if (StringUtils.isBlank(line.get("specificEpithet")) && StringUtils.isNotBlank(line.get("TW:Internal:otu_name"))) {
             String otu_name = line.get("TW:Internal:otu_name");
 
             // for a subspecies name,

@@ -75,7 +75,8 @@ public class Subfamily extends Family implements Serializable {
 
             //A.log("setChildren(5) overview:" + overview + " query:" + query);
 
-            stmt = connection.createStatement();
+  //          stmt = connection.createStatement();
+            stmt = DBUtil.getStatement(connection, "Subfamily.setChildren()");
             rset = stmt.executeQuery(query);
 
             String genus = null;

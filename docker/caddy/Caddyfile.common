@@ -1,5 +1,5 @@
 @bots {
-   header_regexp User-Agent "(?i)(CCBot|Googlebot-Images|Sogou|SenutoBot|SiteScoreBot|Twitterbot|YisouSpider|IABot|Turnitin|'CFNetwork/.* Darwin'|ClaudeBot|SemrushBot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|facebookexternalhit|Bytespider|AppleBot|Swiftbot|Slurp Bot|CCBot|GoogleOther|Google-InspectionTool|MJ12bot|Alexa crawler|Soso Spider|Pinterestbot|Dotbot|AhrefsBot|archive.org_bot)"
+   header_regexp User-Agent "(?i)(CCBot|Googlebot-Images|Sogou|SenutoBot|SiteScoreBot|Twitterbot|YisouSpider|IABot|Turnitin|'CFNetwork/.* Darwin'|ClaudeBot|SemrushBot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|facebookexternalhit|Bytespider|AppleBot|Swiftbot|Slurp Bot|CCBot|GoogleOther|Google-InspectionTool|MJ12bot|Alexa crawler|Soso Spider|Pinterestbot|Dotbot|AhrefsBot|archive.org_bot|scrapy|PetalBot|SemrushBot|Amazonbot|DataForSeoBot)"
 }
 
 @allowed_paths {

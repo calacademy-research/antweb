@@ -33,21 +33,6 @@ public final class BigPictureAction extends Action {
         
         Login accessLogin = LoginMgr.getAccessLogin(request);
         Group accessGroup = GroupMgr.getAccessGroup(request);
-                            
-        SpecimenImage theImage = null;
-        Specimen theSpecimen = new Specimen();
-        
-        SpecimenImageForm form = (SpecimenImageForm) theForm;
-        String code = form.getCode();
-        if (code == null) code = form.getName();
-        String shot = form.getShot();
-        int number = number = form.getNumber();
-
-        if (AntwebUtil.isEmpty(code) || AntwebUtil.isEmpty(shot)) {
-            request.setAttribute("message", "Must specify code and shot.");
-            return mapping.findForward("message");
-        }
-        code = code.toLowerCase();
 
         HttpSession session = request.getSession();
 
@@ -62,54 +47,87 @@ public final class BigPictureAction extends Action {
 
         String adminMessage = null;
 
+        SpecimenImage theImage = null;
+        Specimen theSpecimen = new Specimen();
+
+        SpecimenImageForm form = (SpecimenImageForm) theForm;
+        String imageId = form.getImageId();
+        String code = null;
+        String shot = null;
+        int number = 0;
+
         try {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
 
             SessionRequestFilter.processRequest(request, connection);
 
-            //s_log.info("execute() imageId:" + form.getImageId());
-            if (form.getImageId() != null) {
-              // Poor design. Antipattern.
-              ImageDb.getFormProps(form, connection);
+            ImageDb imageDb = new ImageDb(connection);
+
+
+            if (!AntwebUtil.isEmpty(imageId)) {
+                //s_log.info("execute() imageId:" + form.getImageId());
+                if (imageId != null) {
+                    // Poor design. Antipattern.
+
+                    theImage = imageDb.getSpecimenImage(imageId);
+
+                    //ImageDb.getFormProps(form, connection);
+                }
+            } else {
+
+                code = form.getCode();
+                if (code == null) code = form.getName();
+                code = code.toLowerCase();
+
+                shot = form.getShot();
+                number = number = form.getNumber();
+
+                if (AntwebUtil.isEmpty(code) || AntwebUtil.isEmpty(shot)) {
+                    request.setAttribute("message", "Must specify code and shot, or imageId.");
+                    return mapping.findForward("message");
+                }
+                if (number == 0) number = 1;
+
+                theImage = imageDb.getSpecimenImage(code, shot, number);
             }
 
             //s_log.info("execute() code:" + form.getCode());
                         
-            request.setAttribute("code", code);
-            request.setAttribute("shot", shot);
+            request.setAttribute("code", theImage.getCode());
+            request.setAttribute("shot", theImage.getShot());
 
-            if (number == 0) number = 1;
             boolean success = false;
                                 
-            if (code.contains("shot=")) {
+            if (code != null && code.contains("shot=")) {
               String message = "Incorrect specimen identifier:" + code;
               s_log.error("execute() " + message);
               request.setAttribute("message", message);
               return mapping.findForward("message");
             }
 
-            ImageDb imageDb = new ImageDb(connection);
-            theImage = imageDb.getSpecimenImage(code, shot, number);
-
 
             //A.log("execute() theImage:" + theImage);
 
             if (LoginMgr.isCurator(request)) {
-              if (theImage == null || theImage.getGroup() == null) {
-                s_log.warn("execute() no image:" + theImage + " and/or group for image code:" + code + " shot:" + shot + " number:" + number);
+              if (theImage == null) {
+                s_log.warn("execute() no image:" + theImage + " for imageId:" + imageId + " code:" + code + " shot:" + shot + " number:" + number);
                 //adminMessage = "<%= if (accessLogin.isAdmin()) { out.println(\"<a href='" + AntwebProps.getDomainApp() + "'>Remove</a> \"); } %>";
               } else {
-                //s_log.warn("execute() theImage:" + theImage +  " group:" + theImage.getGroup() + " accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
-                if (theImage.getGroup().getId() == accessGroup.getId() || LoginMgr.isAdmin(request)) {
-                  if ("delete".equals(form.getAction())) {
-                    imageDb = new ImageDb(connection);
-                    boolean isDeleted = imageDb.deleteImage(code, shot, number);
-                    String message = "image NOT deleted"; //. Report error to " + AntwebUtil.getAdminEmail();
-                    if (isDeleted) message = "image deleted";
-                    request.setAttribute("message", message);
-                    return mapping.findForward("message");
+                if (theImage.getGroup() != null) {
+                  //s_log.warn("execute() theImage:" + theImage +  " group:" + theImage.getGroup() + " accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
+                  if (theImage.getGroup().getId() == accessGroup.getId() || LoginMgr.isAdmin(request)) {
+                      if ("delete".equals(form.getAction())) {
+                          imageDb = new ImageDb(connection);
+                          boolean isDeleted = imageDb.deleteImage(code, shot, number);
+                          String message = "image NOT deleted"; //. Report error to " + AntwebUtil.getAdminEmail();
+                          if (isDeleted) message = "image deleted";
+                          request.setAttribute("message", message);
+                          return mapping.findForward("message");
+                      }
                   }
+                } else {
+                   s_log.warn("execute() theImage:" + theImage + " as no group, accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
                 }
               }
             }
