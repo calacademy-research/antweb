@@ -156,6 +156,7 @@
         type="org.apache.struts.action.DynaActionForm" 
         dynamic="true">
       <form-property name="action"       type="java.lang.String"/>
+      <form-property name="code"         type="java.lang.String"/>
       <form-property name="name"         type="java.lang.String"/>
       <form-property name="param"         type="java.lang.String"/>
       <form-property name="projectName"  type="java.lang.String"/>

@@ -222,7 +222,7 @@ public class AntwebMgr {
         }
     }
 
-    //Invoked from UtilAction to, in a separate thread..
+    //Invoked from UtilAction to run in a separate thread..
     public static void postInitialize(Connection connection) throws SQLException, IOException {
         Date start = new Date();
         s_log.warn("postInitialize() begin");
