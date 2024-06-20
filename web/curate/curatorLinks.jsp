@@ -77,7 +77,8 @@
 
     <h3 align=left>Technical Functions</h2>
      <ul align=left>
-      <li><a href="<%= domainApp %>/util.do?action=reloadAntwebMgr">Reload</a> All Managers  
+	  <li><a href="<%= domainApp %>/serverDebug.do">Server Debug</a>
+      <li><a href="<%= domainApp %>/util.do?action=reloadAntwebMgr">Reload</a> All Managers
         <br>&nbsp&nbsp;Manager:<a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=group">g</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=allAntweb">a</a> 
         <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=login">l</a> 

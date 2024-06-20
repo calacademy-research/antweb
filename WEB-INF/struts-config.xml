@@ -157,7 +157,7 @@
         dynamic="true">
       <form-property name="action"       type="java.lang.String"/>
       <form-property name="name"         type="java.lang.String"/>
-      <form-property name="code"         type="java.lang.String"/>
+      <form-property name="param"         type="java.lang.String"/>
       <form-property name="projectName"  type="java.lang.String"/>
       <form-property name="project"      type="java.lang.String"/>
       <form-property name="taxonName"    type="java.lang.String"/>
@@ -1684,6 +1684,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
               name="dummyForm">
           <forward name ="success" path="/util/serverStatus.jsp"/>
       </action>
+
+    <action path="/serverDebug"
+            type = "org.calacademy.antweb.util.ServerDebug"
+            name="dummyForm">
+      <forward name ="success" path="/util/serverDebug.jsp"/>
+    </action>
+
 
       <action path="/sessionProps" 
          forward="/util/sessionProps.jsp"/>         

@@ -64,6 +64,7 @@ public final class BigPictureAction extends Action {
 
             ImageDb imageDb = new ImageDb(connection);
 
+            String notFoundMsg = "Image not found.";
 
             if (!AntwebUtil.isEmpty(imageId)) {
                 //s_log.info("execute() imageId:" + form.getImageId());
@@ -72,6 +73,7 @@ public final class BigPictureAction extends Action {
 
                     theImage = imageDb.getSpecimenImage(imageId);
 
+                    if (theImage == null) notFoundMsg = "Image not found for imageId:" + imageId;
                     //ImageDb.getFormProps(form, connection);
                 }
             } else {
@@ -90,10 +92,18 @@ public final class BigPictureAction extends Action {
                 if (number == 0) number = 1;
 
                 theImage = imageDb.getSpecimenImage(code, shot, number);
+                if (theImage == null) notFoundMsg = "Image not found for code:" + code + " shot:" + shot + " number:" + number;
             }
 
             //s_log.info("execute() code:" + form.getCode());
-                        
+
+            if (theImage == null) {
+                String message = notFoundMsg;
+                s_log.error("execute() " + message);
+                request.setAttribute("message", message);
+                return mapping.findForward("message");
+            }
+
             request.setAttribute("code", theImage.getCode());
             request.setAttribute("shot", theImage.getShot());
 

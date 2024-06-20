@@ -3,7 +3,7 @@ package org.calacademy.antweb.util;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Login;
-import org.calacademy.antweb.home.ServerDb;
+//import org.calacademy.antweb.home.ServerDb;
 
 import java.text.NumberFormat;
 import java.util.HashMap;
@@ -20,10 +20,6 @@ public class A {
   */
 
   private static final Log s_log = LogFactory.getLog(A.class);
-
-  public static boolean isDebug(String option) {
-      return ServerDb.isServerDebug(option);
-  }
 
   public static void log(String message) {
     if (AntwebProps.isDevMode()) {

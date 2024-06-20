@@ -77,18 +77,6 @@ boolean otherOption = !UptimeAction.isFailOnPurpose();
 <br><b>Uptime Fail On Purpose:</b> <%= UptimeAction.isFailOnPurpose() %>  <a href='<%= AntwebProps.getDomainApp() %>/uptime.do?fail=<%= otherOption %>'>[toggle fail]</a>
 <br><%= ServerDb.getDownTimeMessage() %>
 
-<br><b>Server Debug:</b> <%= ServerDb.getServerDebug() %>
-<br>To <a href="<%= domainApp %>/utilData.do?action=setServerDebug&param=">unset</a>
-<br><b>ServerDebugs:</b>
-<%
-    String[] serverDebugs = ServerDb.getServerDebugs();
-    if (serverDebugs != null) {
-      for (String serverDebug : serverDebugs) {
-        out.println("<a href=" + domainApp + "/utilData.do?action=setServerDebug&param=" + serverDebug + ">" + serverDebug + "</a>");
-      }
-    }
-%>
-
 <br><br><b>Current Time:</b> <%= (new Date()).toString() %>
 <br><b>Server Start Time:</b> <%= (SessionRequestFilter.getInitTime()).toString() %>
 <br><b>Run Time in hrs: </b><%= AntwebUtil.hrsSince(SessionRequestFilter.getInitTime()) %>. <b>In mins: </b><%= AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) %>.

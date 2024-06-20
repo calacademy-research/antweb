@@ -25,20 +25,9 @@ public class ServerDb extends AntwebDb {
     // Value will be fetched from database by SessionRequestFilter every SessionRequestFilter.s_period minutes.
     // Suggested user a debug option with "debug" in the term so that it can be easily searched for in the code base.
 
-    // Maintain this list. It drives the links on the Server Status Page.
-    private static String[] s_serverDebugs = {"logGetConns", "debugUserAgents"};
-    public static String[] getServerDebugs() { return s_serverDebugs; }
 
-    private static String s_debug = null;
-    public static String getServerDebug() {
-        return s_debug;
-    }
-
-    public static boolean isServerDebug(String option) {
-        if (s_debug != null && s_debug.equals(option)) return true;
-        return false;
-    }
     public static String getServerDebug(Connection connection) throws SQLException {
+        String debug = null;
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -46,7 +35,7 @@ public class ServerDb extends AntwebDb {
             String query = "select debug from server";
             rset = stmt.executeQuery(query);
             while (rset.next()) {
-                s_debug = rset.getString("debug");
+                debug = rset.getString("debug");
             }
         } catch (SQLException e) {
             s_log.error("getServerDebug() e:" + e);
@@ -54,10 +43,9 @@ public class ServerDb extends AntwebDb {
         } finally {
             DBUtil.close(stmt, rset, "ServerDb.getServerDebug()");
         }
-        return s_debug;
+        return debug;
     }
     public static void setServerDebug(String value, Connection connection) throws SQLException {
-        s_debug = value;
         Statement stmt = null;
         ResultSet rset = null;
         try {

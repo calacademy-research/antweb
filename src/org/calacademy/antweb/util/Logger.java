@@ -21,10 +21,12 @@ public class Logger {
 
   private static final Log s_log = LogFactory.getLog(A.class);
 
+  /*
   public static boolean isDebug(String option) {
       return ServerDb.isServerDebug(option);
   }
-
+*/
+  
   public static void log(String message) {
       String fullClassName = AntwebUtil.getCallerCallerClassName();
       String className = null;

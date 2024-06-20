@@ -1807,13 +1807,13 @@ Have parallel methods:
             if (children != null) usedHash = true;
         }
             //} else {
-        if (children == null) {
+        if (children == null && !s_buildComplete) {
             children = getChildrenWithTaxonDB(taxonName, georank, parentName);
         }
 
-        boolean isDebug = org.calacademy.antweb.home.ServerDb.isServerDebug("isDebug");
+        boolean isDebug = ServerDebug.isDebug("isDebug");
         if (isDebug) {
-            s_log.warn("getChildrenWithTaxon() useHash:" + useHash + " usedHash:" + usedHash + " children:" + children);
+            s_log.warn("getChildrenWithTaxon() buildComplete:" + s_buildComplete + " useHash:" + useHash + " usedHash:" + usedHash + " children:" + children);
         }
 
         return children;
@@ -1869,6 +1869,7 @@ Have parallel methods:
 
     // HashMap implementation.
     private static HashMap<String, ArrayList<Geolocale>> childrenWithTaxonHash = null;
+    private static boolean s_buildComplete = false;
 
     public static void buildGetChildrenWithTaxonHash(Connection connection) {
         childrenWithTaxonHash = new HashMap<String, ArrayList<Geolocale>>();
@@ -1892,6 +1893,7 @@ Have parallel methods:
 
                     childrenWithTaxonHash.put(key, childrenArray);
                 }
+                s_buildComplete = true;
             } catch (Exception e) {
                 s_log.error("buildGetChildrenWithTaxonHash() e:" + e);
             } finally {

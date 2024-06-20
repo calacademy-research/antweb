@@ -20,7 +20,6 @@ import org.apache.commons.logging.LogFactory;
 import com.mchange.v2.c3p0.impl.*;
 
 import org.calacademy.antweb.AntFormatter;
-import org.calacademy.antweb.home.ServerDb;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +130,7 @@ Or, if there are stmts and/or rsets...
           }
 
           c = c + 1;
-          if (c <= logNum || ServerDb.isServerDebug("logGetConns")) {
+          if (c <= logNum || ServerDebug.isDebug("logGetConns")) {
               //s_log.warn("stack:" + AntwebUtil.getAntwebStackTrace() );
               String stackLine = AntwebUtil.getAntwebStackLine();
               String dataSourceName = "N/a";
