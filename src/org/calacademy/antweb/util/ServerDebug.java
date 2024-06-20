@@ -25,13 +25,12 @@ public final class ServerDebug extends Action {
 
     private static final Log s_log = LogFactory.getLog(ServerDebug.class);
 
-
 	// Maintain this list. It drives the links on the Server Status Page.
 	private static String[] s_debugs = {"isDebug", "logGetConns", "debugUserAgents"};
 
 	public static String[] getDebugs() { return s_debugs; }
 
-	private static String s_debug = null;
+	private static String s_debug = "";
 	public static String getDebug() {
 		return s_debug;
 	}
@@ -42,7 +41,6 @@ public final class ServerDebug extends Action {
 		if (s_debug != null && s_debug.equals(option)) return true;
 		return false;
 	}
-
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)

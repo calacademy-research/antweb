@@ -1800,6 +1800,8 @@ Have parallel methods:
         }
         //s_log.info("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parent);
 
+        boolean isDebug = ServerDebug.isDebug("isDebug");
+
         boolean useHash = true;
         boolean usedHash = false;
         if (useHash) {
@@ -1807,15 +1809,15 @@ Have parallel methods:
             if (children != null) usedHash = true;
         }
             //} else {
-        if (children == null && !s_buildComplete) {
+        if (children == null && !s_buildComplete) {   // || isDebug)
             children = getChildrenWithTaxonDB(taxonName, georank, parentName);
         }
 
         if (children == null) return new ArrayList<>();
 
-        boolean isDebug = ServerDebug.isDebug("isDebug");
         if (isDebug) {
-            s_log.warn("getChildrenWithTaxon() buildComplete:" + s_buildComplete + " useHash:" + useHash + " usedHash:" + usedHash + " children:" + children);
+            //s_log.warn("getChildrenWithTaxon() buildComplete:" + s_buildComplete + " useHash:" + useHash + " usedHash:" + usedHash + " children:" + children);
+            s_log.warn("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parent + " children:" + children);
         }
 
         return children;
