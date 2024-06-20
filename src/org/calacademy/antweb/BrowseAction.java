@@ -568,8 +568,9 @@ We are showin the full map of ponerinae for every adm1.
 			message = "e:" + e + " MissingResource overview:"+ overview.getName();
         } catch (SQLException e) {
             message = "Exception caught on request.";
+            boolean beBriefInDevMode = true;
             if (!HttpUtil.isBot(request) || AntwebProps.isDevMode()) {
-                s_log.error("execute() e:" + e + " requestInfo:" + HttpUtil.getShortRequestInfo(request));
+                s_log.error("execute() message:" + message + " e:" + e + " requestInfo:" + HttpUtil.getShortRequestInfo(request));
             }
         } catch (TaxonNotFoundException e) {
             message = e.getMessage();
