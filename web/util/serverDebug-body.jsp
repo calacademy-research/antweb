@@ -24,8 +24,8 @@
 <h1><u>Server Debug</u></h1>
 
 <br>
-<br>This feature allows us to set/unset the value of a runtime variable. Useful for debugging where we want
-to turn the debugging on/off without having to recompile or restart the server. One debug can be set at a time
+<br>This feature allows Antweb developers to set/unset the value of a runtime variable. Useful for debugging where
+we want to turn the debugging on/off without having to recompile or restart the server. One debug can be set at a time
 and will persist across restarts.
 <br>
 <br> The available debug options are defined in ServerDebug.java.
