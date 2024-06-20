@@ -1794,12 +1794,13 @@ Have parallel methods:
 
         String parentName = null;
         if (parent == null) {
-            s_log.error("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parent);
+            //s_log.error("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parent);
         } else {
             parentName = Formatter.escapeQuotes(parent.getName());
         }
+        //s_log.info("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parent);
 
-        boolean useHash = org.calacademy.antweb.home.ServerDb.isServerDebug("serverTest");
+        boolean useHash = true;
         boolean usedHash = false;
         if (useHash) {
             children = getChildrenWithTaxonHash(taxonName, georank, parentName);
@@ -1810,8 +1811,11 @@ Have parallel methods:
             children = getChildrenWithTaxonDB(taxonName, georank, parentName);
         }
 
-        A.log("getChildrenWithTaxon() useHash:" + useHash + " usedHash:" + usedHash + " children:" + children);
-        //}
+        boolean isDebug = org.calacademy.antweb.home.ServerDb.isServerDebug("isDebug");
+        if (isDebug) {
+            s_log.warn("getChildrenWithTaxon() useHash:" + useHash + " usedHash:" + usedHash + " children:" + children);
+        }
+
         return children;
     }
 
