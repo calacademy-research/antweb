@@ -15,8 +15,6 @@ public class ServerDb extends AntwebDb {
         super(connection);
     }
 
-
-
     // To allow debugging on server without a restart, debug statements can be added to JSP files, and turned
     // Value can be viewed and set on the Server Status Page.
     // Deprecated:

@@ -39,6 +39,7 @@ public class A {
 
         //s_log.warn("className:" + className);
       }
+      if (className == null) className = "nullClassName";
       if (className.contains("_jsp")) include = " (or include)";
 	  AntwebUtil.log(className + include + "." + message);
     }

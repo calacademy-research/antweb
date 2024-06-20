@@ -52,7 +52,7 @@ public class SessionRequestFilter implements Filter {
 
       // Count hits per second.
       ++perCounter;
-      A.log("doFilter() perCounter:" + perCounter + " countPer:" + countPer + " periodInSeconds:" + periodInSeconds + " perStart:" + perStart);
+      //A.log("doFilter() perCounter:" + perCounter + " countPer:" + countPer + " periodInSeconds:" + periodInSeconds + " perStart:" + perStart);
       if (AntwebUtil.secsSince(perStart) >= periodInSeconds) {
           countPer = (double)perCounter /(periodInSeconds);
           //double actualQuotient = (double)dividend / divisor;
@@ -177,7 +177,7 @@ public class SessionRequestFilter implements Filter {
                 // This will happen only every s_period.
                 s_periodDate = new Date();
                 String debug = ServerDb.getServerDebug(connection);
-                A.log("doFilter() period s_periodDate:" + s_periodDate + " debug:" + debug);
+                //A.log("doFilter() period s_periodDate:" + s_periodDate + " debug:" + debug);
             }
         } catch (SQLException e) {
             s_log.warn("processRequest() e:" + e);

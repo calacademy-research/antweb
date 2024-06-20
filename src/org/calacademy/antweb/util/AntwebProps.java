@@ -206,7 +206,7 @@ public abstract class AntwebProps {
         String key = AntwebProps.getProp("googleMaps.serverKey");
         String logKey = "none";
         if (key != null) logKey = key.substring(0, 10);
-        A.log("logKey:" + logKey);
+        //A.log("logKey:" + logKey);
         return key;
     }
 

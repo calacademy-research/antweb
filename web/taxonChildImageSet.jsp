@@ -245,7 +245,7 @@ Examples of species with images that don't have h1 images:
                   if (isSpecimen) {
                     if ((specChild.getTypeStatus() != null)) { 
                       if (!"".equals(specChild.getTypeStatus())) {
-                        A.log("taxonChildImageSet.jsp specChild:" + specChild.getTypeStatus());
+                        //A.log("taxonChildImageSet.jsp specChild:" + specChild.getTypeStatus());
 %> <img style="margin-top:3px;" src="image/has_type_status.png" title="<%= (new Formatter()).capitalizeFirstLetter(specChild.getTypeStatus()) %>"> <% 
                       }
                     } 

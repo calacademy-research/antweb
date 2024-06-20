@@ -579,7 +579,7 @@ We are showin the full map of ponerinae for every adm1.
             A.log("execute() message:" + logMessage);
             LogMgr.appendWebLog("taxonNotFound.txt", logMessage, true);
             return mapping.findForward("message");
-        } catch (Exception e) {
+        } catch (AntwebException e) {
             message = "e:" + e;
         } finally {
 //		  ResourceTracker.remove(dbMethodName + " " + target);
@@ -602,7 +602,7 @@ We are showin the full map of ponerinae for every adm1.
         }
 
         // Error handling.
-        s_log.error("execute() " + message + " " + AntwebUtil.getRequestInfo(request));
+        s_log.error("execute() END " + message + " " + AntwebUtil.getRequestInfo(request));
         request.setAttribute("message", message);
         return mapping.findForward("message");
     }

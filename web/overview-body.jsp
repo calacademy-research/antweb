@@ -477,7 +477,7 @@ if (!HttpUtil.isBot(request)) {
         }
         //objectName is set above	
 
-A.log("mapType:" + mapType);
+//A.log("mapType:" + mapType);
     %>
         <div class="left">
           <div class="small_map">

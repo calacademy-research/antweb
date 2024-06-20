@@ -923,17 +923,31 @@ public abstract class AntwebUtil {
 }
 
 class KDebug {
+  private static final Log s_log = LogFactory.getLog(AntwebUtil.class);
+
   public static String getCallerCallerClassName() {
     StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
     String callerClassName = null;
     for (int i=1; i<stElements.length; i++) {
       StackTraceElement ste = stElements[i];
-      if (!ste.getClassName().equals(KDebug.class.getName())&& ste.getClassName().indexOf("java.lang.Thread")!=0) {
-        if (callerClassName==null) {
-          callerClassName = ste.getClassName();
-        } else if (!callerClassName.equals(ste.getClassName())) {
-          return ste.getClassName();
+      String className = ste.getClassName();
+
+      if (!className.equals(KDebug.class.getName()) && className.indexOf("java.lang.Thread") != 0) {
+
+        //if (AntwebProps.isDevMode()) s_log.info("getCallerCallerClassName() callerClassName:" + callerClassName + " ste.getClassName():" + ste.getClassName());
+
+        if ((className != null)
+          && !("org.calacademy.antweb.util.A".equals(className))
+          && !("org.calacademy.antweb.util.AntwebUtil".equals(className))) {
+          return className;
         }
+        //if (callerClassName == null || "org.calacademy.antweb.util.AntwebUtil".equals(callerClassName)) {
+        //  callerClassName = ste.getClassName();
+        //} else if (!"org.calacademy.antweb.util.AntwebUtil".equals(callerClassName) && !callerClassName.equals(ste.getClassName())) {
+        //  return ste.getClassName();
+        //}
+
+
       }
     }
     return null;

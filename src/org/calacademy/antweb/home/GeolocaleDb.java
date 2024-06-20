@@ -1789,18 +1789,29 @@ Have parallel methods:
     public ArrayList<Geolocale> getChildrenWithTaxon(String taxonName, String georank, Geolocale parent) {
         ArrayList<Geolocale> children = null;
 
-        String parentName = Formatter.escapeQuotes(parent.getName());
-        if (parentName == null) {
-            s_log.error("getChildrenWithTaxon() must include parent with name");
-            return null;
+        //A.log("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parent);
+        //A.log("getChildrenWithTaxon() shortStackTrace: " + AntwebUtil.getShortStackTrace());
+
+        String parentName = null;
+        if (parent == null) {
+            s_log.error("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parent);
+        } else {
+            parentName = Formatter.escapeQuotes(parent.getName());
         }
 
-        boolean useHash = false;
+        boolean useHash = org.calacademy.antweb.home.ServerDb.isServerDebug("serverTest");
+        boolean usedHash = false;
         if (useHash) {
             children = getChildrenWithTaxonHash(taxonName, georank, parentName);
-        } else {
+            if (children != null) usedHash = true;
+        }
+            //} else {
+        if (children == null) {
             children = getChildrenWithTaxonDB(taxonName, georank, parentName);
         }
+
+        A.log("getChildrenWithTaxon() useHash:" + useHash + " usedHash:" + usedHash + " children:" + children);
+        //}
         return children;
     }
 
@@ -1813,15 +1824,17 @@ Have parallel methods:
 		   + " from geolocale g, geolocale_taxon gt" 
 		   + " where gt.geolocale_id = g.id"
 		   + "  and gt.taxon_name = '" + taxonName + "'"   
-		   + " and g.georank = '" + georank + "'"
-		   + " and g.parent = '" + parentName + "'";
+		   + " and g.georank = '" + georank + "'";
+         if (parentName != null) {
+             query += " and g.parent = '" + parentName + "'";
+         }
 
  	    query += " order by name";
         try {
             Geolocale geolocale = null;
             taxonName = AntFormatter.escapeQuotes(taxonName);
 
-            A.log("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parentName + " query:" + query);
+            //A.log("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parentName + " query:" + query);
 
             stmt = DBUtil.getStatement(getConnection(), "getChildrenWithTaxon()");
             rset = stmt.executeQuery(query);
@@ -1851,15 +1864,17 @@ Have parallel methods:
 	 }
 
     // HashMap implementation.
-    private HashMap<String, ArrayList<Geolocale>> childrenWithTaxonHash = null;
+    private static HashMap<String, ArrayList<Geolocale>> childrenWithTaxonHash = null;
 
-    public void buildGetChildrenWithTaxonHash() {
+    public static void buildGetChildrenWithTaxonHash(Connection connection) {
         childrenWithTaxonHash = new HashMap<String, ArrayList<Geolocale>>();
+
+        GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 
             Statement stmt = null;
             ResultSet rset = null;
             try {
-                stmt = DBUtil.getStatement(getConnection(), "buildGetChildrenWithTaxonHash()");
+                stmt = DBUtil.getStatement(connection, "buildGetChildrenWithTaxonHash()");
                 String query = "select taxon_name, georank, parent from geolocale g, geolocale_taxon gt where gt.geolocale_id = g.id group by parent, taxon_name, georank";
                 rset = stmt.executeQuery(query);
                 while (rset.next()) {
@@ -1869,7 +1884,7 @@ Have parallel methods:
 
                     String key = String.join(":", taxonName, georank, parentName);
 
-                    ArrayList<Geolocale> childrenArray = getChildrenWithTaxonDB(taxonName, georank, parentName);
+                    ArrayList<Geolocale> childrenArray = geolocaleDb.getChildrenWithTaxonDB(taxonName, georank, parentName);
 
                     childrenWithTaxonHash.put(key, childrenArray);
                 }
@@ -1878,10 +1893,13 @@ Have parallel methods:
             } finally {
                 DBUtil.close(stmt, rset, "buildGetChildrenWithTaxonHash()");
             }
+            //A.log("buildGetChildrenWithTaxonHash() size:" + childrenWithTaxonHash.size());
     }
 
     public ArrayList<Geolocale> getChildrenWithTaxonHash(String taxonName, String georank, String parentName) {
         String key = String.join(":", taxonName, georank, parentName);
+
+        if (childrenWithTaxonHash == null) return null;
 
         return childrenWithTaxonHash.get(key);
     }

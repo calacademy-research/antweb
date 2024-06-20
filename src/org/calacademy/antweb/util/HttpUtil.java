@@ -805,7 +805,7 @@ public abstract class HttpUtil {
     }
 
     public static String getRequestInfo(HttpServletRequest request) {
-        String requestInfo = "url:" + HttpUtil.getTarget(request); // HttpUtil.getRequestURL(request); //request.getRequestURL();
+        String requestInfo = "requestInfoTarget:" + HttpUtil.getTarget(request); // HttpUtil.getRequestURL(request); //request.getRequestURL();
 //    requestInfo += " queryString:" + request.getQueryString();
         requestInfo += " shortRequestInfo:" + HttpUtil.getShortRequestInfo(request);
         return requestInfo;

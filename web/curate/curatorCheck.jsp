@@ -4,7 +4,7 @@
 
 <%                            
     Login accessLoginCheck = LoginMgr.getAccessLogin(request);
-    A.log("curatorCheck.jsp accessLoginCheck:" + accessLoginCheck);
+    //A.log("curatorCheck.jsp accessLoginCheck:" + accessLoginCheck);
     
     if (accessLoginCheck == null || !accessLoginCheck.isCurator()) {
         AntwebUtil.log("curatorCheck.jsp notLoggedIn redirection:" + HttpUtil.getRequestInfo(request));          

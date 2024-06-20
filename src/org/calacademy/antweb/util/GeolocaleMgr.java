@@ -73,7 +73,9 @@ public class GeolocaleMgr extends Manager {
 
     //Called through UtilAction to, in a separate thread.
     public static void postInitialize(Connection connection) {
-        //
+        A.log("postInitialize BEFORE");
+        GeolocaleDb.buildGetChildrenWithTaxonHash(connection);
+        A.log("postInitialize AFTER");
     }
 
     private static void populateDeep(Connection connection, boolean forceReload) throws SQLException {
