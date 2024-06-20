@@ -1811,6 +1811,8 @@ Have parallel methods:
             children = getChildrenWithTaxonDB(taxonName, georank, parentName);
         }
 
+        if (children == null) return new ArrayList<>();
+
         boolean isDebug = ServerDebug.isDebug("isDebug");
         if (isDebug) {
             s_log.warn("getChildrenWithTaxon() buildComplete:" + s_buildComplete + " useHash:" + useHash + " usedHash:" + usedHash + " children:" + children);
