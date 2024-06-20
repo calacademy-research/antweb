@@ -27,7 +27,7 @@
 		}
 	  }
 
-	if (AntwebProps.isDevMode()) AntwebUtil.log("subregionNav.jsp isOverviewPage:" + isOverviewPage + " view:" + view);
+	//A.log("subregionNav.jsp isOverviewPage:" + isOverviewPage + " view:" + view);
 
 
 	  out.println(view);      

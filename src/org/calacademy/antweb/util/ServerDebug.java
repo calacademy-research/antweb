@@ -75,7 +75,7 @@ public final class ServerDebug extends Action {
 				if ("setDebug".equals(action)) {
 					message = "serverDebug set:" + param;
 					ServerDb.setServerDebug(param, connection);
-
+                    setDebug(param);
 				}
 			}
 
