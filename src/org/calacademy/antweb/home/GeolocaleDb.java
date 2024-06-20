@@ -1753,8 +1753,59 @@ public static final int c = 0;
     }
 
 
+/*
+mysql> select count(distinct parent, taxon_name, georank) from geolocale g, geolocale_taxon gt where gt.geolocale_id = g.id;
+| count(distinct parent, taxon_name, georank) |
++---------------------------------------------+
+|                                       73658 |
+
+mysql> select distinct parent, taxon_name, georank from geolocale g, geolocale_taxon gt where gt.geolocale_id = g.id;
+...
+| Zimbabwe                         | pseudomyrmecinaetetraponera gerdae                          | adm1      |
++----------------------------------+-------------------------------------------------------------+-----------+
+90623 rows in set (0.48 sec)
+
+mysql> select count(*) from geolocale g, geolocale_taxon gt where gt.geolocale_id = g.id group by parent, taxon_name, georank;
+90623 rows in set (1.51 sec)
+
+
+Use this query to drive the creation of a HashMap
+    select parent, taxon_name, georank from geolocale g, geolocale_taxon gt where gt.geolocale_id = g.id group by parent, taxon_name, georank;
+For each value fetched from
+    getChildrenWithTaxon(String taxonName, String georank, Geolocale parent)
+insert into the HashMap using a string joined key. Akin to this:
+    String key = String.join(":", type, subType, id) ;
+    productMap.put(key, product);
+Have parallel methods:
+    getChildrenWithTaxon(String taxonName, String georank, Geolocale parent)      // used to fetch from HashMap or DB, for app use.
+    getChildrenWithTaxonDB(String taxonName, String georank, Geolocale parent)    // used to build the HashMap
+    getChildrenWithTaxonHash(String taxonName, String georank, Geolocale parent)    // used to fetch from the HashMap
+
+*/
+
+
+
+    // Interface to rest of application.
+    public ArrayList<Geolocale> getChildrenWithTaxon(String taxonName, String georank, Geolocale parent) {
+        ArrayList<Geolocale> children = null;
+
+        String parentName = Formatter.escapeQuotes(parent.getName());
+        if (parentName == null) {
+            s_log.error("getChildrenWithTaxon() must include parent with name");
+            return null;
+        }
+
+        boolean useHash = false;
+        if (useHash) {
+            children = getChildrenWithTaxonHash(taxonName, georank, parentName);
+        } else {
+            children = getChildrenWithTaxonDB(taxonName, georank, parentName);
+        }
+        return children;
+    }
+
     // To support Change View options
-	public ArrayList<Geolocale> getChildrenWithTaxon(String taxonName, String georank, Geolocale parent) {
+	private ArrayList<Geolocale> getChildrenWithTaxonDB(String taxonName, String georank, String parentName) {
         ArrayList<Geolocale> geolocales = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
@@ -1762,17 +1813,16 @@ public static final int c = 0;
 		   + " from geolocale g, geolocale_taxon gt" 
 		   + " where gt.geolocale_id = g.id"
 		   + "  and gt.taxon_name = '" + taxonName + "'"   
-		   + " and g.georank = '" + georank + "'";
-		   if (parent != null) {
-             String parentName = Formatter.escapeQuotes(parent.getName());
-			 query += " and g.parent = '" + parentName + "'";
-		   }
+		   + " and g.georank = '" + georank + "'"
+		   + " and g.parent = '" + parentName + "'";
+
  	    query += " order by name";
         try {
             Geolocale geolocale = null;
             taxonName = AntFormatter.escapeQuotes(taxonName);
 
-            //A.log("getChildrenWithTaxon() query:" + query);
+            A.log("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parentName + " query:" + query);
+
             stmt = DBUtil.getStatement(getConnection(), "getChildrenWithTaxon()");
             rset = stmt.executeQuery(query);
 
@@ -1799,12 +1849,48 @@ public static final int c = 0;
         //A.log("getChidrenWithTaxon() size:" + geolocales.size() + " query:" + query);          
         return geolocales;
 	 }
-    
-// ------------------------------------------------------------------ 
-    
-    
 
-    public void deleteFetchedAdm1(String source) {    
+    // HashMap implementation.
+    private HashMap<String, ArrayList<Geolocale>> childrenWithTaxonHash = null;
+
+    public void buildGetChildrenWithTaxonHash() {
+        childrenWithTaxonHash = new HashMap<String, ArrayList<Geolocale>>();
+
+            Statement stmt = null;
+            ResultSet rset = null;
+            try {
+                stmt = DBUtil.getStatement(getConnection(), "buildGetChildrenWithTaxonHash()");
+                String query = "select taxon_name, georank, parent from geolocale g, geolocale_taxon gt where gt.geolocale_id = g.id group by parent, taxon_name, georank";
+                rset = stmt.executeQuery(query);
+                while (rset.next()) {
+                    String taxonName = rset.getString("taxon_name");
+                    String georank = rset.getString("georank");
+                    String parentName = rset.getString("parent");
+
+                    String key = String.join(":", taxonName, georank, parentName);
+
+                    ArrayList<Geolocale> childrenArray = getChildrenWithTaxonDB(taxonName, georank, parentName);
+
+                    childrenWithTaxonHash.put(key, childrenArray);
+                }
+            } catch (Exception e) {
+                s_log.error("buildGetChildrenWithTaxonHash() e:" + e);
+            } finally {
+                DBUtil.close(stmt, rset, "buildGetChildrenWithTaxonHash()");
+            }
+    }
+
+    public ArrayList<Geolocale> getChildrenWithTaxonHash(String taxonName, String georank, String parentName) {
+        String key = String.join(":", taxonName, georank, parentName);
+
+        return childrenWithTaxonHash.get(key);
+    }
+
+
+	// ------------------------------------------------------------------
+
+
+    public void deleteFetchedAdm1(String source) {
         String dml = "delete from geolocale where georank = 'adm1' and source = '" + AntFormatter.escapeQuotes(source) + "'";
         Statement stmt = null;
         try {
