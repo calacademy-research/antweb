@@ -49,9 +49,11 @@ public final class DbStatusAction extends Action {
             DataSource dataSource2 = getDataSource(request, "mediumConPool");
             DataSource dataSource3 = getDataSource(request, "longConPool");
 
-            if (op.equals("resetDS")) {
-                ((PooledDataSource)dataSource1).hardReset();
-                String message = "conPool hardReset()";
+            if (op.contains("resetDS")) {
+                if (op.equals("resetDS") || op.equals("resetDS1")) ((PooledDataSource) dataSource1).hardReset();
+                if (op.equals("resetDS") || op.equals("resetDS2")) ((PooledDataSource) dataSource2).hardReset();
+                if (op.equals("resetDS") || op.equals("resetDS3")) ((PooledDataSource) dataSource3).hardReset();
+                String message = "conPool hardReset():" + op;
                 s_log.warn("execute() message:" + message);
                 request.setAttribute("message", message);
                 return mapping.findForward("message");
