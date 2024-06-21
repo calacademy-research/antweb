@@ -21,6 +21,10 @@ public class Emailer {
         boolean isDisabled = true;
         if (isDisabled) {
             s_log.error("sendMail() disabled. Email NOT sent to <" + to + "> with subject '" + subject + "'");
+
+            String message = "to:" + to + " subject:" + subject + " content:" + content;
+            LogMgr.appendDataLog("emails.log", message);
+
             return;
         }
 
