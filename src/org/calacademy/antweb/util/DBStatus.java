@@ -85,7 +85,7 @@ public class DBStatus {
         if (isServerBusy != wasServerBusy) {
             String message = "";
             if (!isServerBusy) message += " ";
-            message += DateUtil.getFormatDateTimeMilliStr() + " busy:" + isServerBusy;
+            message += DateUtil.getFormatDateTimeMilliStr() + " busy:" + isServerBusy; // + " busyConnCount:" + DBUtil.getServerBusyConnectionCount()
             LogMgr.appendDataLog("serverBusy.log", message);
             wasServerBusy = isServerBusy;
         }
@@ -215,7 +215,7 @@ public class DBStatus {
 
     public static String reportServerBusy(ComboPooledDataSource cpds1, ComboPooledDataSource cpds2, ComboPooledDataSource cpds3, boolean force) {
         Connection connection = null;
-        String dbMethodName = DBUtil.getDbMethodName("DBStatus.isServerBusy()");
+        String dbMethodName = DBUtil.getDbMethodName("DBStatus.reportServerBusy()");
         try {
           if (force || (lastLog == null || AntwebUtil.minsSince(lastLog) > logFreq)) {
 
@@ -257,51 +257,6 @@ public class DBStatus {
     public static int getServerBusyConnectionCount() {
         return s_serverBusyConnectionCount;
     }
-
-    /*
-
-    static final int MAXNUMBUSYCONNECTIONS = 100; // was 13;
-    private static final int MINUTES = 1000 * 60
-
-    public static boolean xisServerBusy(DataSource dataSource, HttpServletRequest request)
-      throws SQLException {
-      int numBusy = DBUtil.getNumBusyConnections(dataSource);
-      if (numBusy > DBUtil.MAXNUMBUSYCONNECTIONS) {
-        String message = "Due to current server load, Antweb is not able to fulfill this request at this time.  Please try again later.";
-//        if ((lastLog == null) || (AntwebUtil.timePassed(lastLog, new Date()) > (MINUTES * .5))) {
-        if (lastLog == null || AntwebUtil.minsSince(lastLog) > 1) {
-          lastLog = new Date();
-          String logMessage = "<br><br>" + new Date() + " isServerBusy YES!  num:" + numBusy + " " + QueryProfiler.report() + " Memory:" + AntwebUtil.getMemoryStats();
-          s_log.warn(logMessage);
-          Connection connection = null;
-          String dbMethodName = DBUtil.getDbMethodName("DBStatus."isServerBusy()"");
-          try {
-            connection = DBUtil.getConnection(dataSource, dbMethodName);
-            logMessage += "<br>" + DBUtil.getMysqlProcessListHtml(connection);
-
-              String recipients = AntwebUtil.getDevEmail();
-              String subject = "Antweb Server Busy";
-              String body = logMessage;
-              //s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
-              Emailer.sendMail(recipients, subject, body);
-
-          } catch (SQLException e) {
-            s_log.error("isServerBusy() e:" + e);
-          } finally {
-            DBUtil.close(connection, dbMethodName);
-          }
-          LogMgr.appendLog("serverBusy.html", logMessage);
-          s_log.warn("isServerBusy() overdue resource:" + DBUtil.getOldConnectionList());
-        }
-        request.setAttribute("message", message);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-
-*/
 
     private static int getNumBusyConnections(DataSource dataSource) {
         if (dataSource == null) return -1;
@@ -427,7 +382,7 @@ public class DBStatus {
         ResultSet rset = null;
         String dbMethodName = DBUtil.getDbMethodName("DBStatus.getMysqlProcessList()");
         try {
-            stmt = DBUtil.getStatement(connection, "DBStatus.getMysqlProcessList()");
+            stmt = DBUtil.getStatement(connection, dbMethodName);
             rset = stmt.executeQuery(query);
             int count = 0;
             while (rset.next()) {

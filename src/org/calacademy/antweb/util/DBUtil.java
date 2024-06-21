@@ -396,9 +396,9 @@ Or, if there are stmts and/or rsets...
       return val;
     }
 
-
     private static final int MAX_BUSY_CONNECTIONS = 10;
     private static boolean wasBusy = false;
+
     public static boolean isServerOverMaxBusy() {
         boolean isBusy = getServerBusyConnectionCount() >= MAX_BUSY_CONNECTIONS;
 
