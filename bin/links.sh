@@ -16,6 +16,7 @@ ln -s mnt/backup/db dbBackup
 
 ln -s mnt/antweb/web/ webMnt
 ln -s mnt/antweb/web/bak/taxonSets taxonSetsBak
+ln -s mnt/antweb/web/bak/host/ host
 
 
 #ln -s /usr/local/tomcat tomcat
