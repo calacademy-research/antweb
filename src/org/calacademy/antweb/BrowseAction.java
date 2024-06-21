@@ -52,7 +52,7 @@ public class BrowseAction extends DescriptionAction {
         if (logTimes) A.log("execute() after AntwebMgr.populate()");
 
         //if (!AntwebProps.isDevOrStageMode())
-        AntwebSystem.cpuCheck();
+        //AntwebSystem.cpuCheck();
 
         // 1st check without connection.
         if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
