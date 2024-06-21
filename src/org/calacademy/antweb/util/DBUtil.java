@@ -399,7 +399,7 @@ Or, if there are stmts and/or rsets...
 
     private static final int MAX_BUSY_CONNECTIONS = 10;
     private static boolean wasBusy = false;
-    public static boolean isServerBusy() {
+    public static boolean isServerOverMaxBusy() {
         boolean isBusy = getServerBusyConnectionCount() >= MAX_BUSY_CONNECTIONS;
 
         // To only report on a change of isBusy to true...
@@ -414,101 +414,6 @@ Or, if there are stmts and/or rsets...
         return isBusy;
     }
 
-     /*
-    private static String NOT_BUSY_MSG = "Server not busy.";
-    private static int testAgain = 0;
-    private static int testAgainLimit = 10;
-
-    public static boolean isServerBusy(DataSource dataSource, HttpServletRequest request) throws SQLException {
-        if (testAgain >= testAgainLimit) {
-            testAgain = 0;
-            isServerBusy = isServerBusy(dataSource, null, null);
-        } else {
-            testAgain  = testAgain + 1;
-        }
-
-        String message = getServerBusyReport();
-        request.setAttribute("message", message);
-
-        return isServerBusy;
-    }
-
-    public static boolean isServerBusy(DataSource dataSource1, DataSource dataSource2, DataSource dataSource3)
-            throws SQLException {
-
-        if (!AntwebProps.isDevMode()) return false;  // Do not run in production
-
-        int numBusy1 = DBUtil.getNumBusyConnections(dataSource1);
-        int numBusy2 = DBUtil.getNumBusyConnections(dataSource2);
-        int numBusy3 = DBUtil.getNumBusyConnections(dataSource3);
-        String poolName = null;
-        DataSource dataSource = null;
-
-        ComboPooledDataSource cpds1 = (ComboPooledDataSource) dataSource1;
-        ComboPooledDataSource cpds2 = (ComboPooledDataSource) dataSource2;
-        ComboPooledDataSource cpds3 = (ComboPooledDataSource) dataSource3;
-
-        if (cpds1 != null && (numBusy1 > (cpds1.getMaxPoolSize() - 1))) {
-            poolName = "shortPool";
-        }
-        if (cpds2 != null && (numBusy2 > (cpds2.getMaxPoolSize() - 1))) {
-            poolName = "middlePool";
-        }
-        if (cpds3 != null && (numBusy3 > (cpds3.getMaxPoolSize() - 1))) {
-            poolName = "longPool";
-        }
-        boolean busy = false;
-        if (poolName != null) busy = true;
-
-        if (busy)  {
-            reportServerBusy(cpds1, cpds2, cpds3);
-            isServerBusy = true;
-        } else {
-            serverBusyReport = NOT_BUSY_MSG;
-            isServerBusy = false;
-        }
-        return isServerBusy;
-    }
-
-    public static String reportServerBusy(ComboPooledDataSource cpds1, ComboPooledDataSource cpds2, ComboPooledDataSource cpds3) {
-        return reportServerBusy(cpds1, cpds2, cpds3, false);
-    }
-
-    public static String reportServerBusy(ComboPooledDataSource cpds1, ComboPooledDataSource cpds2, ComboPooledDataSource cpds3, boolean force) {
-        Connection connection = null;
-        try {
-          if (force || (lastLog == null || AntwebUtil.minsSince(lastLog) > logFreq)) {
-
-            lastLog = new Date();
-            String logMessage = "<br><br>" + new Date() + " reportServerBusy forced:" + force
-                    + "<br><br>shortPool:" + getSimpleCpDiagnosticsAttr (cpds1) + ". <br><br>mediumPool:" + getSimpleCpDiagnosticsAttr(cpds2) + ". <br><br>longPools:" + getSimpleCpDiagnosticsAttr(cpds3) + " "
-                    + "<br><br>" + QueryProfiler.report() + "<br><br> Memory:" + AntwebUtil.getMemoryStats() + "<br><br> oldConns:" + DBUtil.getOldConnectionList();
-            s_log.warn(logMessage);
-            connection = DBUtil.getConnection(cpds1, "isServerBusy()");
-            logMessage += "<br><br> processes:" + DBUtil.getMysqlProcessListHtml(connection);
-            LogMgr.appendLog("serverBusy.html", logMessage);
-            serverBusyReport = logMessage;
-          }
-
-          if (force || !NOT_BUSY_MSG.equals(serverBusyReport)) {
-              if (lastEmail == null || AntwebUtil.minsSince(lastEmail) > emailFreq) {
-                lastEmail = new Date();
-                String recipients = AntwebUtil.getDevEmail();
-                String subject = "Antweb Server Busy";
-                String body = serverBusyReport;
-                //s_log.warn("cpuCheck() Send " + message + " to recipients:" + recipients);
-                Emailer.sendMail(recipients, subject, body);
-              }
-            }
-        } catch (SQLException e) {
-            s_log.error("reportServerBusy() e:" + e);
-        } finally {
-            DBUtil.close(connection, "reportServerBusy()");
-        }
-
-        return serverBusyReport;
-    }
-*/
 
     private static int s_serverBusyConnectionCount = 0;
     public static int getServerBusyConnectionCount() {

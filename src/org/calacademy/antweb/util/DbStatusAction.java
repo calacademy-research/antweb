@@ -51,6 +51,10 @@ public final class DbStatusAction extends Action {
 
             if (op.equals("resetDS")) {
                 ((PooledDataSource)dataSource1).hardReset();
+                String message = "conPool hardReset()";
+                s_log.warn("execute() message:" + message);
+                request.setAttribute("message", message);
+                return mapping.findForward("message");
             }
 
             connection = DBUtil.getConnection(dataSource1, dbMethodName, target);

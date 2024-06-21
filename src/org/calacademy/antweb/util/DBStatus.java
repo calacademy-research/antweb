@@ -95,37 +95,6 @@ public class DBStatus {
     public static void setIsServerBusy(boolean isBusy) {
         isServerBusy = isBusy;
     }
-    /*
-
-
-    private static Date lastRun = new Date();
-    public static boolean timeToRun() {
-        if (AntwebUtil.secsSince(lastRun) >= 60) {
-            lastRun = new Date();
-            return true;
-        }
-        return false;
-    }
-
-
-    private static final int MAX_BUSY_CONNECTIONS = 10;
-    private static boolean wasBusy = false;
-    public static boolean isServerBusy() {
-        boolean isBusy = getServerBusyConnectionCount() >= MAX_BUSY_CONNECTIONS;
-
-        // To only report on a change of isBusy to true...
-        if (isBusy && !wasBusy) {
-            wasBusy = true;
-            // Send email alert to developers?
-        }
-        if (!isBusy && wasBusy) {
-            wasBusy = false;
-        }
-
-        return isBusy;
-    }
-    */
-
 
     public static boolean isServerBusy(Connection connection)
             throws SQLException {

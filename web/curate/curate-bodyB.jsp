@@ -32,7 +32,7 @@ if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) {
     session.removeAttribute("ancFile");
 
     String active = "";
-    Boolean isServerBusy = DBUtil.isServerBusy();
+    Boolean isServerBusy = DBUtil.isServerOverMaxBusy();
     if (isServerBusy) {
       active = " disabled ";
     }    

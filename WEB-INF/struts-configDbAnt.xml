@@ -36,7 +36,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
 
       <!-- See DBUtil.java for documentation -->
       <set-property property="unreturnedConnectionTimeout" value="200"/>  <!-- was 600 == 10 min -->
-      <set-property property="debugUnreturnedConnectionStackTraces" value="true"/>
+      <set-property property="debugUnreturnedConnectionStackTraces" value="false"/>
 
       <set-property property="testConnectionOnCheckin" value="true"/> 
       <set-property property="idleConnectionTestPeriod" value="60"/> 
@@ -58,7 +58,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
 
       <!-- See DBUtil.java for documentation -->
       <set-property property="unreturnedConnectionTimeout" value="600"/>
-      <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
+      <set-property property="debugUnreturnedConnectionStackTraces" value="false"/>
 
       <set-property property="testConnectionOnCheckin" value="true"/> 
       <set-property property="idleConnectionTestPeriod" value="300"/> 
@@ -80,7 +80,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
 
       <!-- See DBUtil.java for documentation -->
       <set-property property="unreturnedConnectionTimeout" value="3600"/> <!-- 4200 / 60 is 70 min -->  <!-- 10800 / 60 is 3 hours -->
-      <set-property property="debugUnreturnedConnectionStackTraces" value="true"/> 	
+      <set-property property="debugUnreturnedConnectionStackTraces" value="false"/>
        
       <set-property property="testConnectionOnCheckin" value="true"/> 
       <set-property property="idleConnectionTestPeriod" value="300"/>

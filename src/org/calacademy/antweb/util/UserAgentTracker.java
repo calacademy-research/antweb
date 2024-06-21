@@ -128,7 +128,7 @@ public class UserAgentTracker extends Action {
 
     public static boolean vetForBot(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
-        boolean isServerBusy = DBUtil.isServerBusy();
+        boolean isServerBusy = DBUtil.isServerOverMaxBusy();
         s_vetMode = UploadAction.isInUploadProcess() || isServerBusy;
         if (s_vetMode) {
             String htmlMessage = UserAgentTracker.denyAgent(request);

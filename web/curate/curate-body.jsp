@@ -31,7 +31,7 @@
     session.removeAttribute("ancFile");
 
     String active = "";
-    Boolean isServerBusy = DBUtil.isServerBusy();
+    Boolean isServerBusy = DBUtil.isServerOverMaxBusy();
     if (isServerBusy) {
       active = " disabled ";
     }    
