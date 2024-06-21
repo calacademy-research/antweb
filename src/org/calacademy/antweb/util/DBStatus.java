@@ -25,10 +25,7 @@ import java.util.concurrent.*;
 
 public class DBStatus {
 
-
     private static final Log s_log = LogFactory.getLog(DBStatus.class);
-
-
 
     public static String getThreadPoolStatus(DataSource dataSource) {
       String logMessage = "";

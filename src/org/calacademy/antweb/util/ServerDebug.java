@@ -66,7 +66,7 @@ public final class ServerDebug extends Action {
 
         try {
 
-			DataSource dataSource = getDataSource(request, "longConPool");
+			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 			if (action != null) {

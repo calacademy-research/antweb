@@ -1,4 +1,3 @@
-
 package org.calacademy.antweb.util;
 
 import java.io.*;
@@ -36,16 +35,129 @@ public class UtilAction extends Action {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
 
-        HttpSession session = request.getSession();
-        HttpUtil.setUtf8(request, response); 
+		UtilForm theForm = (UtilForm) form;
+		String action = theForm.getAction();
 
-        Connection connection = null;
+		ActionForward forward = null;
+
+		String[] longActions = new String[]{"postInstantiate", "reloadAntwebMgr"};
+		if (Arrays.asList(longActions).contains(action)) {
+			forward = doLongAction(mapping, form, request, response);
+		} else {
+			forward = doAction(mapping, form, request, response);
+		}
+	    return forward;
+    }
+
+	private ActionForward doLongAction(ActionMapping mapping, ActionForm form,
+								   HttpServletRequest request, HttpServletResponse response) {
+
+
+		HttpSession session = request.getSession();
+		HttpUtil.setUtf8(request, response);
+
+		Connection connection = null;
 		ActionForward returnLoc = null;
 
 		UtilForm theForm = (UtilForm) form;
 		String action = theForm.getAction();
-        String param = theForm.getParam();
-        String param2 = theForm.getParam2();
+		String param = theForm.getParam();
+		String param2 = theForm.getParam2();
+		int num = theForm.getNum();
+		String name = theForm.getName();
+
+		//A.log("execute() name:" + name + " param:" + param);
+		String dbMethodName = DBUtil.getDbMethodName("UtilAction.execute()");
+		try {
+
+			DataSource dataSource = getDataSource(request, "longConPool");
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
+
+			if (action != null) {
+				if (action.equals("postInstantiate")) {
+					AntwebMgr.postInitialize(connection);
+					return null;
+				}
+
+
+				if (action.equals("reloadAntwebMgr")) {
+					boolean forceReload = true;
+					if ("group".equals(name)) {
+						GroupMgr.populate(connection, forceReload);
+						request.setAttribute("message", "GroupMgr Reloaded.");
+					} else if ("allAntweb".equals(name)) {
+						AllAntwebMgr.populate(connection);
+						request.setAttribute("message", "AllAntwebMgr Reloaded.");
+					} else if ("login".equals(name)) {
+						LoginMgr.populate(connection, forceReload, true);
+						request.setAttribute("message", "LoginMgr Reloaded.");
+					} else if ("project".equals(name)) {
+						ProjectMgr.populate(connection, forceReload);
+						request.setAttribute("message", "ProjectMgr Reloaded.");
+					} else if ("bioregion".equals(name)) {
+						BioregionMgr.populate(connection, forceReload);
+						request.setAttribute("message", "BioregionMgr Reloaded.");
+					} else if ("museum".equals(name)) {
+						MuseumMgr.populate(connection, forceReload);
+						request.setAttribute("message", "MuseumMgr Reloaded.");
+					} else if ("geolocale".equals(name)) {
+						GeolocaleMgr.populate(connection, forceReload, true);  // Slow!
+						request.setAttribute("message", "GeolocaleMgr Reloaded.");
+					} else if ("taxonProp".equals(name)) {
+						TaxonPropMgr.populate(connection, forceReload);
+						request.setAttribute("message", "TaxonPropMgr Reloaded.");
+					} else if ("taxon".equals(name)) {
+						TaxonMgr.populate(connection, forceReload, true);
+						request.setAttribute("message", "TaxonMgr Reloaded.");
+					} else if ("upload".equals(name)) {
+						UploadMgr.populate(connection, forceReload);
+						request.setAttribute("message", "UploadMgr Reloaded.");
+					} else if ("artist".equals(name)) {
+						ArtistMgr.populate(connection, forceReload, true);
+						request.setAttribute("message", "ArtistMgr Reloaded.");
+					} else if ("adminAlert".equals(name)) {
+						AdminAlertMgr.populate(connection);
+						request.setAttribute("message", "AdminAlertMgr Reloaded.");
+					} else {
+						AntwebMgr.populate(connection, true);
+						request.setAttribute("message", "AntwebMgr Reloaded.");
+					}
+					returnLoc = mapping.findForward("message");
+					return returnLoc;
+				}
+
+				if (returnLoc != null) return returnLoc;
+			}
+			request.setAttribute("message", "action not found:" + action);
+			return mapping.findForward("message");
+
+		} catch (SQLException | IOException e) {
+			s_log.error("execute() action:" + action + " e:" + e);
+			AntwebUtil.errorStackTrace(e);
+		} finally {
+			DBUtil.close(connection, this, dbMethodName);
+		}
+
+		//this shouldn't happen in this example
+		s_log.error("execute()  This should not happen");
+		return mapping.findForward("failure");
+	}
+
+
+    private ActionForward doAction(ActionMapping mapping, ActionForm form,
+	    HttpServletRequest request, HttpServletResponse response) {
+
+
+		HttpSession session = request.getSession();
+		HttpUtil.setUtf8(request, response);
+
+		Connection connection = null;
+		ActionForward returnLoc = null;
+
+		UtilForm theForm = (UtilForm) form;
+		String action = theForm.getAction();
+		String param = theForm.getParam();
+		String param2 = theForm.getParam2();
 		int num = theForm.getNum();
 		String name = theForm.getName();
 
@@ -53,14 +165,10 @@ public class UtilAction extends Action {
 		String dbMethodName = DBUtil.getDbMethodName("UtilAction.execute()");
         try {
 
-            DataSource dataSource = getDataSource(request, "longConPool");
+            DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 			if (action != null) {
-				if (action.equals("postInstantiate")) {
-					AntwebMgr.postInitialize(connection);
-					return null;
-				}
 
 			  if (action.equals("unlockImageUpload")) {
 				AntwebUtil.writeFile("/var/www/html/imageUpload/" + "imageUploadInProcess.txt", "0");
@@ -164,52 +272,6 @@ public class UtilAction extends Action {
 				returnLoc = mapping.findForward("events");
 			  }
 
-			  if (action.equals("reloadAntwebMgr")) {
-			    boolean forceReload = true;
-			    if ("group".equals(name)) {
-                    GroupMgr.populate(connection, forceReload);
-                    request.setAttribute("message", "GroupMgr Reloaded.");    
-			    } else if ("allAntweb".equals(name)) {
-                    AllAntwebMgr.populate(connection);
-                    request.setAttribute("message", "AllAntwebMgr Reloaded.");    
-			    } else if ("login".equals(name)) {
-                    LoginMgr.populate(connection, forceReload, true);
-                    request.setAttribute("message", "LoginMgr Reloaded.");    
-			    } else if ("project".equals(name)) {
-                    ProjectMgr.populate(connection, forceReload);
-                    request.setAttribute("message", "ProjectMgr Reloaded.");    
-			    } else if ("bioregion".equals(name)) {
-                    BioregionMgr.populate(connection, forceReload);
-                    request.setAttribute("message", "BioregionMgr Reloaded.");    
-			    } else if ("museum".equals(name)) {
-                    MuseumMgr.populate(connection, forceReload);
-                    request.setAttribute("message", "MuseumMgr Reloaded.");    
-			    } else if ("geolocale".equals(name)) {
-                    GeolocaleMgr.populate(connection, forceReload, true);  // Slow!
-                    request.setAttribute("message", "GeolocaleMgr Reloaded.");    
-			    } else if ("taxonProp".equals(name)) {
-                    TaxonPropMgr.populate(connection, forceReload);
-                    request.setAttribute("message", "TaxonPropMgr Reloaded.");    
-			    } else if ("taxon".equals(name)) {
-                    TaxonMgr.populate(connection, forceReload, true);
-                    request.setAttribute("message", "TaxonMgr Reloaded.");    
-			    } else if ("upload".equals(name)) {
-                    UploadMgr.populate(connection, forceReload);
-                    request.setAttribute("message", "UploadMgr Reloaded.");    
-			    } else if ("artist".equals(name)) {
-                    ArtistMgr.populate(connection, forceReload, true);
-                    request.setAttribute("message", "ArtistMgr Reloaded.");    
-			    } else if ("adminAlert".equals(name)) {
-                    AdminAlertMgr.populate(connection);        
-                    request.setAttribute("message", "AdminAlertMgr Reloaded.");
-                } else {
-                    AntwebMgr.populate(connection, true);
-                    request.setAttribute("message", "AntwebMgr Reloaded.");                
-                }
-                returnLoc = mapping.findForward("message");
-                return returnLoc;                  
-			  }
-
 			  if (action.equals("archiveLogs")) { 
 				String message = LogMgr.archiveLogs();
 
@@ -263,7 +325,6 @@ public class UtilAction extends Action {
 				returnLoc = mapping.findForward("adminMessage");
 			  }
 
-
 			  if (action.equals("isRestart")) {
 				  String message = "false";
 				  if (AntwebSystem.isRestart()) message = "true";
@@ -293,7 +354,7 @@ public class UtilAction extends Action {
 			request.setAttribute("message", "action not found:" + action);
 			return mapping.findForward("message");
 
-        } catch (SQLException | IOException e) {
+        } catch (SQLException e) {
             s_log.error("execute() action:" + action + " e:" + e);
             AntwebUtil.errorStackTrace(e);
 		} finally {

@@ -7,6 +7,7 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 
+import com.mchange.v2.c3p0.PooledDataSource;
 import org.apache.struts.action.*;
 import java.sql.*;
 
@@ -47,6 +48,10 @@ public final class DbStatusAction extends Action {
             DataSource dataSource1 = getDataSource(request, "conPool");
             DataSource dataSource2 = getDataSource(request, "mediumConPool");
             DataSource dataSource3 = getDataSource(request, "longConPool");
+
+            if (op.equals("resetDS")) {
+                ((PooledDataSource)dataSource1).hardReset();
+            }
 
             connection = DBUtil.getConnection(dataSource1, dbMethodName, target);
             String mySqlProcessListHtml = DBStatus.getMysqlProcessListHtml(connection);

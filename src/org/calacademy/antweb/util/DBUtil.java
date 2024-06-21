@@ -105,6 +105,7 @@ Or, if there are stmts and/or rsets...
     private static final ConcurrentHashMap<NewProxyConnection, String> connectionMap = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<NewProxyConnection, DbRequest> connectionRequestMap = new ConcurrentHashMap<>();
 
+
     public static Connection getConnection(DataSource dataSource, String name) throws SQLException {
       return getConnection(dataSource, name, null);
     }

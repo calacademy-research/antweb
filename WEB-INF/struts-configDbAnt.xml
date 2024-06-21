@@ -21,7 +21,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
 <struts-config>
   <data-sources>
   
-    <data-source key="conPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
+    <data-source key="conPool" type="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">    <!-- add  destroy-method="close" ? -->
       <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
       <set-property property="auth" value="Container"/>
       <set-property property="maxPoolSize" value="140"/> <!-- was 15 --> <!-- was 200 --> <!-- was 200 -->
