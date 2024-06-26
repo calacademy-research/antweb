@@ -38,14 +38,14 @@ public class LogMgr {
 
     try {
       String srf = getWebLogRoot() + "srfExceptions.jsp";
-      s_log.warn("backupSrf() file:" + srf + " size:" + FileUtil.getFileSize(srf));
+      s_log.info("backupSrf() file:" + srf + " size:" + FileUtil.getFileSize(srf));
       int size = FileUtil.getFileSize(srf);
       if (size > MaxSize) {
         FileUtil.makeDir(getWebLogRoot() + "srfBak");
 
         String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
         moveFile(getWebLogRoot(), "srfExceptions.jsp", getWebLogRoot() + "srfBak", "srfExceptions" + formatDateTime + ".jsp");
-        s_log.warn("backupSrf() newSize:" + FileUtil.getFileSize(srf));
+        s_log.info("backupSrf() newSize:" + FileUtil.getFileSize(srf));
         // Move old one.
       }
     } catch (IOException e) {

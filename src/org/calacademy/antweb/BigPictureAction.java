@@ -80,13 +80,13 @@ public final class BigPictureAction extends Action {
 
                 code = form.getCode();
                 if (code == null) code = form.getName();
-                code = code.toLowerCase();
+                if (code != null) code = code.toLowerCase();
 
                 shot = form.getShot();
-                number = number = form.getNumber();
+                number = form.getNumber();
 
                 if (AntwebUtil.isEmpty(code) || AntwebUtil.isEmpty(shot)) {
-                    request.setAttribute("message", "Must specify code and shot, or imageId.");
+                    request.setAttribute("message", "Must specify code and shot, or imageId. code:" + code + " shot:" + shot + " imageId:" + imageId);
                     return mapping.findForward("message");
                 }
                 if (number == 0) number = 1;
@@ -99,7 +99,7 @@ public final class BigPictureAction extends Action {
 
             if (theImage == null) {
                 String message = notFoundMsg;
-                s_log.error("execute() " + message);
+                s_log.warn("execute() " + message);
                 request.setAttribute("message", message);
                 return mapping.findForward("message");
             }
@@ -115,7 +115,6 @@ public final class BigPictureAction extends Action {
               request.setAttribute("message", message);
               return mapping.findForward("message");
             }
-
 
             //A.log("execute() theImage:" + theImage);
 
