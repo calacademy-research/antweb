@@ -129,8 +129,8 @@ public class UploadDetails extends OperationDetails {
       if (getOperation().contains("orldants")) dir = "worldants";
       
       // These don't seem right
-      if (getOperation().contains("taxonWorks")) dir = "upload";
-      if (getOperation().contains("GBIF")) dir = "upload";
+      if (getOperation().contains("taxonWorks")) dir = "specimen";
+      if (getOperation().contains("GBIF")) dir = "specimen";
 
       return dir + "/" + getLogFileName(); //java.net.URLEncoder.encode(getLogFileName());
     }
