@@ -547,11 +547,14 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 // Begin Island Adjust
                 //A.log("parseLine() name:" + islandCountry.getName() + " country:" + islandCountry.getCountry());
 
-			  specimenItem.put("bioregion", islandCountry.getBioregion());
-			  specimenItem.put("country", islandCountry.getCountry());
-			  specimenItem.put("island_country", islandCountry.getName());
-			  specimenItem.remove("adm1");
-			  
+              if (islandCountry.getBioregion() != null & islandCountry.getCountry() != null && islandCountry.getName() != null) {
+                  specimenItem.put("bioregion", islandCountry.getBioregion());
+                  specimenItem.put("country", islandCountry.getCountry());
+                  specimenItem.put("island_country", islandCountry.getName());
+                  specimenItem.remove("adm1");
+              } else {
+                  s_log.warn("parseLine() lineNum:" + lineNum + " code:" + code + " bioregion:" + islandCountry.getBioregion() + " country:" + islandCountry.getCountry() + " name:" + islandCountry.getName());
+              }
 			  //String heading = "<b>Adm1 upgraded to Island Country</b> ";
 			  //String message = islandCountry.getName();
 			  //getMessageMgr().addToMessages(MessageMgr.adm1UpgradeToIsland, message);   
