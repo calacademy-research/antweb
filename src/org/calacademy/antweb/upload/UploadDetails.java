@@ -128,6 +128,10 @@ public class UploadDetails extends OperationDetails {
       if (getOperation().contains("specimen")) dir = "specimen";
       if (getOperation().contains("orldants")) dir = "worldants";
       
+      // These don't seem right
+      if (getOperation().contains("taxonWorks")) dir = "upload";
+      if (getOperation().contains("GBIF")) dir = "upload";
+
       return dir + "/" + getLogFileName(); //java.net.URLEncoder.encode(getLogFileName());
     }
 
@@ -191,7 +195,7 @@ public class UploadDetails extends OperationDetails {
             + warning
             + "<h3>Upload Details:</h3>"
             + "&nbsp;&nbsp;&nbsp;<b>Upload ID:</b> <a href='" + AntwebProps.getDomainApp() + "/uploadReport.do?uploadId=" + AntwebMgr.getNextSpecimenUploadId() + "'>" + AntwebMgr.getNextSpecimenUploadId() + "</a>"
-            + "<br> &nbsp;&nbsp;&nbsp;<b>Operation:" + getOperation() + "</b>"
+            + "<br> &nbsp;&nbsp;&nbsp;<b>Operation: " + getOperation() + "</b>"
             + "<br>&nbsp;&nbsp;&nbsp;<b>This Log File:</b> " + getLogFileAnchor() 
             + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + new Date()
             + "<br>&nbsp;&nbsp;&nbsp;<b>Encoding:</b> " + encoding   

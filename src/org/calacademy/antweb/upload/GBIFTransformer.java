@@ -2,10 +2,6 @@ package org.calacademy.antweb.upload;
 
 import org.calacademy.antweb.util.AntwebProps;
 
-import org.calacademy.antweb.util.*;
-
-import org.calacademy.antweb.util.AntwebProps;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -23,15 +19,15 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TaxonWorksTransformer {
+public class GBIFTransformer {
 
 
-    private static final Log s_log = LogFactory.getLog(TaxonWorksUploader.class);
+    private static final Log s_log = LogFactory.getLog(GBIFUploader.class);
 
     // The columns to be written in the output file. Using a list to specify column order.
     private final List<String> outputColumnOrder = new LinkedList<>();
 
-    public TaxonWorksTransformer() {
+    public GBIFTransformer() {
         for (Pair<String, String> pair : directHeaderTranslations) {
             outputColumnOrder.add(pair.getRight());
         }
@@ -55,13 +51,13 @@ public class TaxonWorksTransformer {
             .build();
 
     /**
-     * Transform a TaxonWorks .tsv file into an AntWeb-compatible file. Renames headers, applies data transformations.
+     * Transform a occurence.txt file into an AntWeb-compatible file. Renames headers, applies data transformations.
      *
      * @param inputFile  Path to the TW .tsv file to be read
      * @param outputFile Path that the transformed file will be written to
      * @return An error message string? Might be used in the future
      */
-    public String transformFile(Path inputFile, Path outputFile) throws AntwebException {
+    public String transformFile(Path inputFile, Path outputFile) {
 
         CSVFormat csvOutputFormat = CSVFormat.TDF.builder()
                 .setAllowMissingColumnNames(true)
@@ -73,19 +69,11 @@ public class TaxonWorksTransformer {
              CSVParser csvParser = new CSVParser(in, csvInputFormat);
              CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
 
-            int c = 0;
             for (CSVRecord record : csvParser) {
-              c++;
-              try {
-                  List<String> transformed = transformLine(record);
-                  if (!transformed.isEmpty()) {
-                      csvPrinter.printRecord(transformed);
-                  }
-              } catch (AntwebException e) {
-                String message = "issue on line:" + c + " e:" + e;
-                //A.log(message);
-                throw new AntwebException(message);
-              }
+                List<String> transformed = transformLine(record);
+                if (!transformed.isEmpty()) {
+                    csvPrinter.printRecord(transformed);
+                }
             }
 
 
@@ -100,7 +88,7 @@ public class TaxonWorksTransformer {
         return null;
     }
 
-    private List<String> transformLine(CSVRecord line) throws AntwebException  {
+    private List<String> transformLine(CSVRecord line) {
         
         Map<String, String> row = new HashMap<>();
 
@@ -120,23 +108,30 @@ public class TaxonWorksTransformer {
             }
         }
 
+
+        //TWUploader should be this careful...
+
+        // Don't do this for GBIF data!
         // copy otu_name into SpeciesName (SpeciesName will be blank if there's an OTU value)
-        if (StringUtils.isBlank(line.get("specificEpithet")) && StringUtils.isNotBlank(line.get("TW:Internal:otu_name"))) {
-            String otu_name = line.get("TW:Internal:otu_name");
+        if (StringUtils.isBlank(line.get("specificEpithet"))) {
+            String field = "TW:Internal:otu_name";
+            if (line.isMapped(field) && StringUtils.isNotBlank(line.get(field))) {
+                String otu_name = line.get(field);
 
-            // for a subspecies name,
-            // Plagiolepis jerdonii jerdonii-rogeri
-            String[] name_parts = otu_name.split(" ");
-            String finest_name = name_parts[name_parts.length-1];
+                // for a subspecies name,
+                // Plagiolepis jerdonii jerdonii-rogeri
+                String[] name_parts = otu_name.split(" ");
+                String finest_name = name_parts[name_parts.length - 1];
 
-            switch (line.get("taxonRank")) {
-                case "genus":
-                    row.put("SpeciesName", finest_name);
-                    break;
+                switch (line.get("taxonRank")) {
+                    case "genus":
+                        row.put("SpeciesName", finest_name);
+                        break;
 
-                case "species":
-                    row.put("Subspecies", finest_name);
-                    break;
+                    case "species":
+                        row.put("Subspecies", finest_name);
+                        break;
+                }
             }
         }
 
@@ -148,21 +143,10 @@ public class TaxonWorksTransformer {
         // trim eventid: from collecting events
         row.put("collectioncode", StringUtils.removeStart(line.get("fieldNumber"), "eventID:"));
 
-
-        // Replace with isMapped.
-        if (AntwebProps.isDevMode()) {
-            String country = null;
-          try {
-              country = line.get("TW:DataAttribute:CollectingEvent:Country");
-
-          } catch (java.lang.IllegalArgumentException e) {
-              String message = " country:" + country + " e:" + e;
-              throw new AntwebException(message);
-          }
-        }
-
+        //if the param is not mapped, or it is mapped but is empty... then use...
         // use auto-generated country if not overridden
-        if (StringUtils.isEmpty(line.get("TW:DataAttribute:CollectingEvent:Country"))) {
+        String header = "TW:DataAttribute:CollectingEvent:Country";
+        if (!line.isMapped(header) || StringUtils.isEmpty(line.get(header))) {
             String country = line.get("country");
             // only include if country is recognized by antweb
             // I think it's easier to debug if we don't transform it into the valid country name here
@@ -184,9 +168,9 @@ public class TaxonWorksTransformer {
 
         // validate ADM data
         row.put("Adm2", setAdm2(
-                line.get("TW:DataAttribute:CollectingEvent:Country"),
-                line.get("TW:DataAttribute:CollectingEvent:adm1"),
-                line.get("TW:DataAttribute:CollectingEvent:adm2"),
+                (line.isMapped("TW:DataAttribute:CollectingEvent:Country")) ? line.get("TW:DataAttribute:CollectingEvent:Country") : null,
+                (line.isMapped("TW:DataAttribute:CollectingEvent:adm1")) ? line.get("TW:DataAttribute:CollectingEvent:adm1") : null,
+                (line.isMapped("TW:DataAttribute:CollectingEvent:adm2")) ? line.get("TW:DataAttribute:CollectingEvent:adm2") : null,
                 line.get("country"),
                 line.get("stateProvince"),
                 line.get("county")));

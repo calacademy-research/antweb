@@ -164,19 +164,22 @@ public class UploadAction extends Action {
 				return mapping.findForward("message");
 			}
 
+			A.log("execute() action:" + action);
 			if (action != null) {
 
 				// Upload a Specimen File (tab-delimited .txt file):
 				if ("specimenUpload".equals(action)) {
-					FormFile specimenFile = theForm.getBiota();
+					FormFile specimenFile = theForm.getTheFile();
 					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
 
 						String theFileName = accessGroup.getAbbrev() + "SpecimenList";
-						action = "import:" + theFileName;
+
+						// WHY redefine action? Seems eroneous.
+						//action = "import:" + theFileName;
+						//s_log.warn("execute() action:" + action);
 
 						A.log(" fileName:" + specimenFile.getFileName());
 						//logFileName += theFileName + UploadDetails.getLogExt();
-						s_log.warn("execute() action:" + action);
 						s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
 						uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
@@ -194,17 +197,17 @@ public class UploadAction extends Action {
 					}
 
 				} else if ("taxonWorksUpload".equals(action)) {
-					FormFile specimenFile = theForm.getTaxonWorks();
+					FormFile specimenFile = theForm.getTheFile();
+					A.log("TaxonWorksUpload specimenFile:" + specimenFile);
 					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
 
-
 						String theFileName = accessGroup.getAbbrev() + "TWSpecimenList";
-						action = "import:" + theFileName;
 
+						//String theAction = "import:" + theFileName;
+						//s_log.warn("execute() action:" + action + " theAction:" + theAction);
 						//logFileName += theFileName + UploadDetails.getLogExt();
-						A.log(" fileName:" + specimenFile.getFileName());
-						s_log.warn("execute() action:" + action);
-						s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
+
+						s_log.info("execute() fileName:" + specimenFile.getFileName() + " type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
 						uploadDetails = new TaxonWorksUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 
@@ -217,7 +220,33 @@ public class UploadAction extends Action {
 						runCountCrawls = true;
 
 					} else {
-						request.setAttribute("message", "Must choose TaxonWorks Zip File for upload");
+						request.setAttribute("message", "Must choose TaxonWorks File or Zip File for upload");
+						return uploadDetails.getErrorForward(mapping);
+					}
+
+				} else if ("GBIFUpload".equals(action)) {
+					FormFile specimenFile = theForm.getTheFile();
+					A.log("GBIFUpload specimenFile:" + specimenFile);
+					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
+
+						String theFileName = accessGroup.getAbbrev() + "TWSpecimenList";
+
+						//logFileName += theFileName + UploadDetails.getLogExt();
+						A.log("execute() fileName:" + specimenFile.getFileName());
+						s_log.info("execute() fileName:" + specimenFile.getFileName() + " type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
+
+						uploadDetails = new GBIFUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+
+						ActionForward af = uploadDetails.returnForward(mapping, request);
+						if (af != null) return af;
+
+						specimenPostProcess(request, connection, accessLogin, uploadDetails);
+						specimenPostProcessGlobal(connection);
+
+						runCountCrawls = true;
+
+					} else {
+						request.setAttribute("message", "Must choose GBIF file or Zip File for upload");
 						return uploadDetails.getErrorForward(mapping);
 					}
 

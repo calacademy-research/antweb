@@ -572,7 +572,7 @@ public class Utility implements Serializable {
     
     public static boolean deleteDirectory(File dir) {
         
-        s_log.info("deletingDirectory() " + dir.getName());
+        A.log("deletingDirectory() " + dir.getName());
         
         if (dir.exists() && dir.getName().length() > 1) {
             File[] files = dir.listFiles();
@@ -601,16 +601,71 @@ public class Utility implements Serializable {
         return result;
     }
 
-    public static boolean copyFile(FormFile file, String outName) {
+
+    // This is preferable to copyFile()
+    public static boolean copyFormFile(FormFile file, String outName) {
+        return copyFile(file, outName, false);
+    }
+
+    public static boolean copyFormFile(FormFile formFile, String outName, boolean debugOn) {
         boolean returnVal = false;
 
-        if (file != null) {
+        int debugLineCount = 2;  // if debugOn, how many lines of file to output?
+
+        if (formFile != null) {
+
             try {
                 //retrieve the file data
-                InputStream stream = file.getInputStream();
+                InputStream stream = formFile.getInputStream();
 
                 //write the file to the file specified
-                FileUtils.copyInputStreamToFile(stream, new File(outName));
+                File newFile = new File(outName);
+                A.log("copyFormFile newFile:" + newFile);
+                FileUtils.copyInputStreamToFile(stream, newFile);
+
+                if (debugOn) {
+                    A.log("copyFormFile() newFile: " + newFile.getPath() + " absoluteFile:" + newFile.getAbsolutePath());
+                    //A.log("copyFile() lines: " + FileUtil.getLines(newFile, debugLineCount));
+                }
+
+                return true;
+
+            } catch (IOException fnfe) {
+                s_log.error("copyFormFile() " + fnfe);
+            }
+        } else {
+            s_log.error("copyFormFile() Can not copy null file to outName:" + outName);
+        }
+        return returnVal;
+    }
+
+
+// These used in Antweb. Adding the workingDir to the outName can cause problems
+// i.e.: /usr/local/antweb/workingdir/usr/local/antweb/workingdir...
+// copyFormFile() is a better method name. Use that over this going forward...
+    public static boolean copyFile(FormFile file, String outName) {
+      return copyFile(file, outName, false);
+    }
+
+    public static boolean copyFile(FormFile formFile, String outName, boolean debugOn) {
+        boolean returnVal = false;
+
+        int debugLineCount = 2;  // if debugOn, how many lines of file to output?
+
+        if (formFile != null) {
+
+            try {
+                //retrieve the file data
+                InputStream stream = formFile.getInputStream();
+
+                //write the file to the file specified
+                File newFile = new File(AntwebProps.getWorkingDir() + outName);
+                FileUtils.copyInputStreamToFile(stream, newFile);
+
+                if (debugOn) {
+                    A.log("copyFile() newFile: " + newFile.getPath() + " absoluteFile:" + newFile.getAbsolutePath());
+                    A.log("copyFile() lines: " + FileUtil.getLines(newFile, debugLineCount));
+                }
 
                 return true;
 
@@ -618,7 +673,7 @@ public class Utility implements Serializable {
                 s_log.error("copyFile() " + fnfe);
             }
         } else {
-            s_log.error("Can not copy null file to outName:" + outName);
+            s_log.error("copyFile() Can not copy null file to outName:" + outName);
         }
         return returnVal;
     }

@@ -68,7 +68,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
         new SpecimenUploadDb(getConnection()).dropSpecimens(group);
     }    
     
-    public UploadDetails importSpecimens(UploadFile uploadFile, Login accessLogin) 
+    public UploadDetails importSpecimens(UploadFile uploadFile, Login accessLogin, String action)
       throws SQLException, TestException, AntwebException
     {
 
@@ -76,7 +76,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
             throw new AntwebException("Taxon Mgr size discrepancy.");
         }
 
-        //UploadDetails uploadDetails = null;
+        getUploadDetails().setOperation(action);
         
         Group accessGroup = accessLogin.getGroup();
      
@@ -91,7 +91,6 @@ public class SpecimenUpload extends SpecimenUploadParse {
         try {
 
             LineNumMgr.init(uploadFile, getMessageMgr(), getConnection());
-
 
             BufferedReader in = Files.newBufferedReader(Paths.get(uploadFile.getFileLoc()), uploadFile.getCharset());
 

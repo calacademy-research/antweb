@@ -6,8 +6,7 @@ import org.apache.struts.upload.FormFile;
 public class UploadForm extends ActionForm {
   protected FormFile theFile;
   protected FormFile theFile2;
-  protected FormFile biota;
-  protected FormFile taxonWorks;
+  //protected FormFile biota;
   protected FormFile testFile;
   protected String projectFile = "";
   protected String homePageDirectory = "";
@@ -172,20 +171,6 @@ public class UploadForm extends ActionForm {
   }
   public String getHomePageDirectory() {
     return homePageDirectory;
-  }
-
-  public void setBiota(FormFile file) {
-    biota = file;
-  }
-  public FormFile getBiota() {
-    return biota;
-  }
-
-  public void setTaxonWorks(FormFile file) {
-    taxonWorks = file;
-  }
-  public FormFile getTaxonWorks() {
-    return taxonWorks;
   }
 
   public String getWhole() {

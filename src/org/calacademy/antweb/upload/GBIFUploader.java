@@ -22,37 +22,39 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class TaxonWorksUploader extends Uploader {
+public class GBIFUploader extends Uploader {
 
-    private static final Log s_log = LogFactory.getLog(TaxonWorksUploader.class);
+    private static final Log s_log = LogFactory.getLog(GBIFUploader.class);
     private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
 
-    public TaxonWorksUploader(Connection connection) {
-        super(connection);
+    public GBIFUploader(Connection connection) {
+      super(connection);
     }
+
 
     // This gets called from an upload post.
     public UploadDetails uploadSpecimenFile(UploadForm theForm, Login login, String userAgent, String encoding)
       throws SQLException, TestException, AntwebException
     {
-        String zipFileTarget = "data.tsv";
-        FormFile theFile = theForm.getTheFile();
+        String zipFileTarget = "occurrence.txt";
+
         Group group = login.getGroup();
+        FormFile theFile = theForm.getTheFile();
         String formFileName = theFile.getFileName();
         String workingDir = AntwebProps.getWorkingDir();
         FileUtil.makeDir(workingDir);
-        String fileName = "specimenTW" + group.getId() + ".txt";
-        String preTransformFileName = "specimenTW" + group.getId() + "_temp.txt";
+        String fileName = "specimenGBIF" + group.getId() + ".txt";
+        String preTransformFileName = "specimenGBIF" + group.getId() + "_temp.txt";
         Path preTransformFilePath = Paths.get(workingDir, preTransformFileName);
         Path specimenFilePath = Paths.get(workingDir, fileName);
 
-        //A.log("uploadSpecimenFile() workingDir:" + workingDir);
+        //A.log("uploadSpecimenFile() workingDir:" + workingDir + " group:" + group);
         A.log("uploadSpecimenFile() formFileName:" + formFileName + " preTransform:" + preTransformFilePath.toString());
 
         if (formFileName.endsWith(".zip")) {
             boolean success = true;
             try {
-                copyAndUnzipFile(theFile, group, preTransformFilePath.toString(), zipFileTarget);
+                copyAndUnzipFile(theForm.getTheFile(), group, preTransformFilePath.toString(), zipFileTarget);
             } catch (IOException e) {
                 success = false;
             }
@@ -62,21 +64,23 @@ public class TaxonWorksUploader extends Uploader {
             }
         } else {
             // copy from uploader's fileName to the biotaFile name.
-            boolean success = Utility.copyFile(theFile, preTransformFileName);
-            A.log("uploadSpecimenFile() success:" + success + " taxonWorks:" + theFile + " preTransformFileName:" + preTransformFileName);
+            boolean success = Utility.copyFile(theForm.getTheFile(), preTransformFileName);
+            A.log("uploadSpecimenFile() success:" + success + " theFile:" + theForm.getTheFile() + " preTransformFileName:" + preTransformFileName);
         }
 
-        //A.log("Start TaxonWorks transformFile");
-        TaxonWorksTransformer tf = new TaxonWorksTransformer();
+        //A.log("Start GBIF transformFile");
+        GBIFTransformer tf = new GBIFTransformer();
         A.log("uploadSpecimenFile() preTransformFilePath:" + preTransformFilePath + " specimenFilePath:" + specimenFilePath);
         tf.transformFile(preTransformFilePath, specimenFilePath);
-        //A.log("End TaxonWorks transformFile");
+        //A.log("End GBIF transformFile");
 
-        String action = theForm.getAction();
-        A.log("uploadSpecimenFile() action:" + action);
-
-        return uploadSpecimenFile(action, fileName, login, userAgent, encoding, true);
+        return uploadSpecimenFile(theForm.getAction(), fileName, login, userAgent, encoding, true);
     }
+
+    static String getZipFileTarget() {
+        return "occurence.txt";
+    }
+
 
 
     /* This version can be called directly in the case of specimenTest */    

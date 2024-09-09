@@ -6,7 +6,9 @@ import javax.servlet.http.*;
 import org.apache.struts.action.*;
 
 import org.apache.commons.logging.Log; 
-import org.apache.commons.logging.LogFactory;    
+import org.apache.commons.logging.LogFactory;
+
+import org.calacademy.antweb.util.*;
     
 public class OperationDetails {
 
@@ -18,7 +20,11 @@ public class OperationDetails {
     String message;
     private String forwardPage;
     
-    public OperationDetails() {     
+    public OperationDetails() {
+        //if (AntwebProps.isDevMode()) {
+        //    A.log("OperationDetails() setting operation: undefined");
+        //    AntwebUtil.logShortStackTrace();
+        //}
       this.operation = "undefined";
       this.startTime = new Date();
     }

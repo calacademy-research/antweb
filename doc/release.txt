@@ -1,8 +1,12 @@
+Release 8.109
+  GBIF preliminary support
+  TW upload issue.
+  Upload process modifications.
+
 Release 8.108
   BigPicture fix.
   Unclosed connection detect script.  
   tooBusyForBots check for browseAction without connection.
-
 
 Release 8.107
   add bin/macMount.sh script

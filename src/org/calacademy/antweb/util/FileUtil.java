@@ -16,6 +16,42 @@ public class FileUtil {
 
   private static final Log s_log = LogFactory.getLog(FileUtil.class);
 
+
+  public static String getLine(File file) {
+    return getLines(file, 1);
+  }
+
+  public static String getLines(File file, int count) {
+      String retVal = "";
+      int counter = 0;
+
+      try {
+        // Open the file with FileReader and wrap it in BufferedReader
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+          // Read the first line of the file
+
+          while (counter < count) {
+            counter = counter + 1;
+
+            String line = br.readLine();
+
+            if (line == null && retVal == null) {
+              return "The file is empty.";
+            }
+
+            if (line != null) {
+              if (counter > 1) retVal += "\r\n";
+              retVal += line;
+            }
+          }
+        }
+      } catch (IOException e) {
+        s_log.error("An error occurred while reading the file: " + e.getMessage());
+      }
+      return retVal;
+  }
+
+
   public ArrayList<String> grep(String inputPattern, UploadFile uploadFile) {
     ArrayList<String> result = new ArrayList<>();
     Pattern pattern = Pattern.compile(inputPattern, Pattern.CASE_INSENSITIVE);
@@ -232,4 +268,5 @@ public class FileUtil {
   public static String makeReportName(String coreName) {
     return "Antweb" + coreName + DateUtil.getFormatDateStr() + ".txt";
   }
+
 }

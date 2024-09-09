@@ -14,17 +14,14 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class SpecimenUploader {
+public class SpecimenUploader extends Uploader {
 
     private static final Log s_log = LogFactory.getLog(SpecimenUploader.class);
     private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
 
-    private final Connection connection;
-    
     public SpecimenUploader(Connection connection) {
-      this.connection = connection;
+      super(connection);
     }
-
 
     // This gets called from an upload post.
     public UploadDetails uploadSpecimenFile(UploadForm theForm, Login login, String userAgent, String encoding)
@@ -33,7 +30,7 @@ public class SpecimenUploader {
         Group group = login.getGroup();
         //A.log("uploadSpecimenFile() encoding:" + encoding);    
 
-        String formFileName = theForm.getBiota().getFileName();
+        String formFileName = theForm.getTheFile().getFileName();
         //String specimenUploadType = theForm.getSpecimenUploadType();
 
         Utility util = new Utility();      
@@ -42,14 +39,16 @@ public class SpecimenUploader {
         String specimenFileName = workingDir + "specimen" + group.getId() + ".txt";
 
         if (formFileName.contains("zip")) {
-            util.copyAndUnzipFile(theForm.getBiota(), workingDir + "group" + group.getId(), specimenFileName);
+            util.copyAndUnzipFile(theForm.getTheFile(), workingDir + "group" + group.getId(), specimenFileName);
         } else {
             // copy from uploader's fileName to the biotaFile name.
-            Utility.copyFile(theForm.getBiota(), specimenFileName);
+            A.log("uploadSpecimenFile() theFile:" + theForm.getTheFile() + " specimenFileName:" + specimenFileName);
+            Utility.copyFormFile(theForm.getTheFile(), specimenFileName, true); // debugOn
         }
 
         boolean isUpload = true;
         // was 2nd param: specimenUploadType, 
+        A.log("uploadSpecimenFile() action:" + theForm.getAction() + " formFileName:" + formFileName);
         return uploadSpecimenFile(theForm.getAction(), formFileName, login, userAgent, encoding, isUpload);
     }
 
@@ -78,14 +77,14 @@ public class SpecimenUploader {
             specimenFileName = "specimen" + group.getId() + ".txt";
             uploadFile = new UploadFile(AntwebProps.getWorkingDir(), specimenFileName, userAgent, encoding);
             specimenFileLoc = AntwebProps.getWorkingDir() + specimenFileName;
-            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
+            A.log("uploadSpecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
         } else {
             SpecimenUploadDb specimenUploadDb = new SpecimenUploadDb(connection);
             specimenFileName = specimenUploadDb.getBackupDirFile(group.getId());
             if (specimenFileName == null) messageStr = "BackupDirFile not found for group:" + group;
             specimenFileLoc = AntwebProps.getWebDir() + specimenFileName;
             uploadFile = new UploadFile(AntwebProps.getWebDir(), specimenFileName, userAgent, encoding);
-            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
+            A.log("uploadSpecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
         }
 
         if (!uploadFile.correctEncoding(encoding)) messageStr = "Encoding not validated for file:" + uploadFile.getFileLoc() + " encoding:" + uploadFile.getEncoding();
@@ -116,7 +115,7 @@ public class SpecimenUploader {
         //LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "Before specimen upload Proj_taxon worldants counts");
 
         SpecimenUpload specimenUpload = new SpecimenUpload(connection);
-		uploadDetails = specimenUpload.importSpecimens(uploadFile, login);
+		uploadDetails = specimenUpload.importSpecimens(uploadFile, login, operation);
         uploadDetails.setAction(operation);
 
         if (uploadFile != null) {

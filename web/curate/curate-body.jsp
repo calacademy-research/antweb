@@ -153,7 +153,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                  <br><div class="action_desc"><b>Upload</b> Specimen File:<br>&nbsp;&nbsp;&nbsp;(tab-delimited .txt file)</div>
                  <div class="action_dropdown"></div>
                  <div class="action_browse">
-                   <html:file property="biota" />
+                   <html:file property="theFile" />
                  </div>
                  <div class="clear"></div>
 
@@ -169,7 +169,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                      </div>
             <% } else { %>
                  <div class="admin_action_item">
-                     <html:checkbox property="whole" value="true"/> Update entire biota file 
+                     <html:checkbox property="whole" value="true"/> Update entire the biota file
                  </div>
             <% } %>
           <% } else { %>
@@ -344,24 +344,15 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
         </html:form>
 
 
-
+<!-- TaxonWorks Specimen Zip File Upload -->
     <% if (AntwebProps.isDevMode() || GroupMgr.isCAS(accessGroup)) { %>
-        <!-- TaxonWorks Specimen Zip File Upload -->
-
        <html:form method="POST" action="upload.do" enctype="multipart/form-data">
-         <input type="hidden" name="ancFileDirectory" value="none" />
          <input type="hidden" name="action" value="taxonWorksUpload" />
-         <input type="hidden" name="updateAdvanced" value="no" />
-         <input type="hidden" name="updateFieldGuide" value="none" />
-         <input type="hidden" name="images" value="no" />
-         <input type="hidden" name="outputFileName" value="" />
-         <input type="hidden" name="successkey" value="null" />
-         <input type="hidden" name="updateAdvanced" value="yes" />
 
              <div class="admin_action_item">
                  <div class="action_desc"><b>Upload</b> TaxonWorks Specimen Zip File:<br>&nbsp;&nbsp;&nbsp;(w/ tab-delimited .tsv file)</div>
                  <div class="action_browse">
-                   <html:file property="taxonWorks" />
+                   <html:file property="theFile" />
                  </div>
                  <div class="clear"></div>
 
@@ -376,6 +367,29 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
     <% } %>
 
 
+<!-- GBIF Specimen Zip File Upload -->
+    <% if (AntwebProps.isDevMode() || GroupMgr.isCAS(accessGroup)) { %>
+        <!-- GBIF Specimen file or Zip File Upload -->
+
+       <html:form method="POST" action="upload.do" enctype="multipart/form-data">
+         <input type="hidden" name="action" value="GBIFUpload" />
+
+             <div class="admin_action_item">
+                 <div class="action_desc"><b>Upload</b> GBIF Specimen File or Zip File:<br>&nbsp;&nbsp;&nbsp;</div>
+                 <div class="action_browse">
+                   <html:file property="theFile" />
+                 </div>
+                 <div class="clear"></div>
+
+             <input type="hidden" name="whole" value="true" />
+
+             <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
+             <div class="clear"></div>
+             </div>
+       </html:form>
+
+        <!-- End GBIF Specimen file or Zip File Upload -->
+    <% } %>
 
 
      <% } %>  <!-- takeDownUpload -->
