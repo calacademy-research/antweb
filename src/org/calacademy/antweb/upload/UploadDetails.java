@@ -72,6 +72,7 @@ public class UploadDetails extends OperationDetails {
       + " logFileName:" + getLogFileName() + " message:" + getMessage() + "}";
     }
 
+    /*
     public String getLogFileDir() {
       if (getLogFileName() != null) {
         if (getLogFileName().contains("orldants")) return "worldants";
@@ -79,7 +80,8 @@ public class UploadDetails extends OperationDetails {
       }
       return "upload";
     }
-    
+*/
+
     String action;
     public void setAction(String action) {
 
@@ -123,14 +125,25 @@ public class UploadDetails extends OperationDetails {
       }
     }
 
+
+    public String getLogDir() {
+        return getLogDir(getOperation());
+    }
+    public static String getLogDir(String operation) {
+        String logDir = "upload";
+        if (operation.contains("specimen")) logDir = "specimen";
+        if (operation.contains("orldants")) logDir = "worldants";
+
+        if (operation.contains("taxonWorks")) logDir = "specimen";
+        if (operation.contains("GBIF")) logDir = "specimen";
+
+        //A.log("getLogDir() operation:" + operation + " logDir:" + logDir);
+        return logDir;
+    }
+
     public String getLogDirFile() {
       String dir = null;
-      if (getOperation().contains("specimen")) dir = "specimen";
-      if (getOperation().contains("orldants")) dir = "worldants";
-      
-      // These don't seem right
-      if (getOperation().contains("taxonWorks")) dir = "upload";
-      if (getOperation().contains("GBIF")) dir = "upload";
+      dir = UploadDetails.getLogDir(getOperation());
 
       return dir + "/" + getLogFileName(); //java.net.URLEncoder.encode(getLogFileName());
     }
@@ -264,8 +277,8 @@ public class UploadDetails extends OperationDetails {
 
         logString += "</body>";
 
-        s_log.warn("genUploadReport() logFileDir:" + getLogFileDir() + " logFileName:" + getLogFileName());
-        LogMgr.appendLog(getLogFileDir(), getLogFileName(), logString);
+        s_log.warn("genUploadReport() logFileDir:" + getLogDir() + " logFileName:" + getLogFileName() + " operation:" + getOperation());
+        LogMgr.appendLog(getLogDir(), getLogFileName(), logString);
         
         String messageStr = getMessageMgr().getMessageStr();
         
@@ -275,7 +288,7 @@ public class UploadDetails extends OperationDetails {
         }
         if (request != null) {   
           // It was a post   well be web/log/log/upload if in dev?
-          String messageLogFile = getLogFileDir() + "/" + getLogFileName();
+          String messageLogFile = getLogDir() + "/" + getLogFileName();
           //request.setAttribute("messageLogFile", messageLogFile);
 
           setMessageLogFile(messageLogFile);
@@ -291,9 +304,13 @@ public class UploadDetails extends OperationDetails {
 
     String messageLogFile;
     public String getMessageLogFile() {
+        A.log("getMessageLogFile() messageLogFile:" + messageLogFile);
+        AntwebUtil.logShortStackTrace();
         return messageLogFile;
     }
     public void setMessageLogFile(String messageLogFile) {
+        A.log("setMessageLogFile() messageLogFile:" + messageLogFile);
+        AntwebUtil.logShortStackTrace();
         this.messageLogFile = messageLogFile;
     }
 

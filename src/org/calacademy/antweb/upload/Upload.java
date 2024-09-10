@@ -76,8 +76,9 @@ public class Upload {
           s_log.warn("ParseException e:" + e);
         }
         if (getCreated() != null && d1 != null && (getCreated().after(d1) || getCreated().equals(d1))) {
-          if (getLogFileName().contains("pecimen")) uploadDir = "specimen";
-          if (getLogFileName().contains("orldants")) uploadDir = "worldants";
+          uploadDir = UploadDetails.getLogDir(getLogFileName());
+          //if (getLogFileName().contains("pecimen")) uploadDir = "specimen";
+          //if (getLogFileName().contains("orldants")) uploadDir = "worldants";
         } else {
           uploadDir = "upload";
         }        

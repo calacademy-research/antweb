@@ -148,7 +148,7 @@ public class SpecimenUploadDb extends UploadDb {
             stmt = DBUtil.getStatement(getConnection(), "updateUpload()");
             insert = "insert into upload(upload_id, login_id, group_name, group_id, log_file_name, backup_dir_file) "
                     + "values (" + AntwebMgr.getNextSpecimenUploadId() + ", " + accessLogin.getId() + ", '" + accessGroup.getName() + "', " + accessGroup.getId() + ", '" + logFileName + "', '" + backupDirFile + "')";
-            A.log("updateUpload() insert:" + insert);
+            //A.log("updateUpload() insert:" + insert);
             stmt.executeUpdate(insert);
         } catch (SQLException e) {
             s_log.error("updateUpload() logFileName:" + logFileName + " e:" + e);

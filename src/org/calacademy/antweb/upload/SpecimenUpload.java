@@ -124,7 +124,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                     if (AntwebProps.isDevMode() && devCount > 0) {
                         if (lineNum >= devCount) {
                             s_log.warn("importSpecimens() DEV MODE only processing devCount:" + devCount);
-                            continue;
+                            break;
                         }
                     }
 

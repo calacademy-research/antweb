@@ -65,11 +65,11 @@ public class AntwebMgr {
             try {
                 AntwebMgr.serverInitializing();
 
-                s_log.debug("AntwebMgr.populate() 1");
+                s_log.info("AntwebMgr.populate() 1");
 
                 AntwebMgr.populateMgrs(connection, forceReload);
 
-                s_log.debug("AntwebMgr.populate() 2");
+                s_log.info("AntwebMgr.populate() 2");
 
                 AntwebMgr.initializationComplete();
             } catch (Exception e) {
