@@ -916,7 +916,7 @@ or for Worldants upload
             }
 
             ++saveSpecimenCount;
-            if (saveSpecimenCount % 25000 == 0) s_log.info("saveSpecimen() count" + saveSpecimenCount + " code:" + code);
+            if (saveSpecimenCount % 25000 == 0) s_log.info("saveSpecimen() count:" + saveSpecimenCount + " code:" + code);
                                     
             // Only if successful insert, count and record the museum
             if (item.containsKey("ownedby")) {

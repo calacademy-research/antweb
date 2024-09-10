@@ -148,7 +148,6 @@ public class GBIFUploader extends Uploader {
 
         SpecimenUpload specimenUpload = new SpecimenUpload(connection);
 		uploadDetails = specimenUpload.importSpecimens(uploadFile, login, operation);
-        uploadDetails.setAction(operation);
 
         if (uploadFile != null) {
             uploadFile.backup();

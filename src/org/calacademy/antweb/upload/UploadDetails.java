@@ -129,8 +129,8 @@ public class UploadDetails extends OperationDetails {
       if (getOperation().contains("orldants")) dir = "worldants";
       
       // These don't seem right
-      if (getOperation().contains("taxonWorks")) dir = "specimen";
-      if (getOperation().contains("GBIF")) dir = "specimen";
+      if (getOperation().contains("taxonWorks")) dir = "upload";
+      if (getOperation().contains("GBIF")) dir = "upload";
 
       return dir + "/" + getLogFileName(); //java.net.URLEncoder.encode(getLogFileName());
     }
@@ -150,11 +150,11 @@ public class UploadDetails extends OperationDetails {
     }
 
 	
-    public void logMessagesToFile(Login accessLogin, HttpServletRequest request) {
-        logMessagesToFile(UploadHelper.getUploadFile(), accessLogin, request);
+    public void genUploadReport(Login accessLogin, HttpServletRequest request) {
+        genUploadReport(UploadHelper.getUploadFile(), accessLogin, request);
     }
 
-    public void logMessagesToFile(UploadFile uploadFile, Login accessLogin, HttpServletRequest request) {
+    public void genUploadReport(UploadFile uploadFile, Login accessLogin, HttpServletRequest request) {
         // Generate the log file for this operation
         Group accessGroup = null;
         
@@ -173,7 +173,7 @@ public class UploadDetails extends OperationDetails {
         if (uploadFile != null) {
           encoding = uploadFile.getEncoding();
         }
-        //A.log("logMessagesToFile() uploadFile:" + uploadFile + " accessLogin:" + accessLogin);
+        //A.log("genUploadReport() uploadFile:" + uploadFile + " accessLogin:" + accessLogin);
 
         boolean hasMessages =! getMessageMgr().getMessages().isEmpty();
         
@@ -183,7 +183,7 @@ public class UploadDetails extends OperationDetails {
 
         String warning = "";
         if (getMessage() != null) warning = "<h3><font color=red>" + getMessage() + "</font></h3><br>";
-        //A.log("logMessagesToFile() warning:" + warning);
+        //A.log("genUploadReport() warning:" + warning);
         
         logString +=
             "<head><title>" + getLogFileName() + "</title>" 
@@ -244,10 +244,10 @@ public class UploadDetails extends OperationDetails {
             logString += "<br>Prior to Upload:<br>" + ProjectDb.getProjectTableHeader() +  ProjectDb.getProjectStatisticsHtml(preUploadStatistics, false) + "</table>";                                       
           }  
         } else {
-          //s_log.warn("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
+          //s_log.warn("genUploadReport pre:" + preUploadStatistics + " post:" + postUploadStatistics);
         }
 
-        //s_log.info("logMessagesToFile pre:" + preUploadStatistics + " post:" + postUploadStatistics);
+        //s_log.info("genUploadReport pre:" + preUploadStatistics + " post:" + postUploadStatistics);
         
         if (postUploadStatistics != null) {
           if (countInsertedSpecies > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> " + countInsertedSpecies + ".";
@@ -264,12 +264,12 @@ public class UploadDetails extends OperationDetails {
 
         logString += "</body>";
 
-        //s_log.info("logMessagesToFile() logFileDir:" + getLogFileDir() + " logFileName:" + getLogFileName());
+        s_log.warn("genUploadReport() logFileDir:" + getLogFileDir() + " logFileName:" + getLogFileName());
         LogMgr.appendLog(getLogFileDir(), getLogFileName(), logString);
         
         String messageStr = getMessageMgr().getMessageStr();
         
-        //A.log("logMessagesToFile() messageStr:" + messageStr + " request:" + request);
+        //A.log("genUploadReport() messageStr:" + messageStr + " request:" + request);
         if (messageStr != null) {
           if (request != null) request.setAttribute("messageStr", messageStr);
         }
@@ -283,7 +283,7 @@ public class UploadDetails extends OperationDetails {
 
           setHasMessages(hasMessages);
           //request.setAttribute("hasMessages", hasMessages);
-          //s_log.warn("logMessagesToFile() logDir:" + logDir + " logFileName:" + logFileName + " messageLogFile:" + messageLogFile + " hasMessages:" + hasMessages + " logString.length():" + logString.length());
+          //s_log.warn("genUploadReport() logDir:" + logDir + " logFileName:" + logFileName + " messageLogFile:" + messageLogFile + " hasMessages:" + hasMessages + " logString.length():" + logString.length());
 
           request.setAttribute("uploadDetails", this);
         }
@@ -346,7 +346,7 @@ public class UploadDetails extends OperationDetails {
         }
         
         if (getForwardPage() == null) {
-          logMessagesToFile(accessLogin, request);
+          genUploadReport(accessLogin, request);
   		  setForwardPage("uploadResults");	
         }
     }  

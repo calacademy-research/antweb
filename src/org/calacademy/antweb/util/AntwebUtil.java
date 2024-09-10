@@ -273,9 +273,15 @@ public abstract class AntwebUtil {
         if (kind.indexOf("specimenTW") == 0) {
           specIndex = "specimenTW".length();
         }
-        String groupId = kind.substring(specIndex);
-        Integer groupIdInteger = Integer.valueOf(groupId);
-        //A.log("groupIdInteger:" + groupIdInteger);
+        String groupId = null;
+        Integer groupIdInteger = 0;
+        try {
+            groupId = kind.substring(specIndex);
+            groupIdInteger = Integer.valueOf(groupId);
+            //A.log("groupIdInteger:" + groupIdInteger);
+        } catch (NumberFormatException e) {
+            s_log.error("getUploadGroupList() Seems to happen at startup requesting a curate page. OK to proceed? specIndex:" + specIndex + " groupId:" + groupId + " e:" + e);
+        }
         if (!s_uploadGroupList.contains(groupIdInteger)) s_uploadGroupList.add(groupIdInteger);
       } else {
         if (kind != null && !kind.contains("worldants")) s_log.debug("getUploadGroupList() ! specIndex:" + specIndex + " file:" + file + " kind:" + kind);

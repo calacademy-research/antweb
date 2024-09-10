@@ -144,7 +144,6 @@ public class TaxonWorksUploader extends Uploader {
 
         SpecimenUpload specimenUpload = new SpecimenUpload(connection);
 		uploadDetails = specimenUpload.importSpecimens(uploadFile, login, operation);
-        uploadDetails.setAction(operation);
 
         if (uploadFile != null) {
             uploadFile.backup();
@@ -154,7 +153,7 @@ public class TaxonWorksUploader extends Uploader {
         String execTime = HttpUtil.getExecTime(startTime);
         uploadDetails.setExecTime(execTime);
 
-		//s_log.warn("uploadSpecimenFile() specimenPostProcess = TRUE");
+        A.log("uploadSpecimenFile() action:" + operation + " uploadDetails.operation:" + uploadDetails.getOperation());
 
         return uploadDetails;     
     }
