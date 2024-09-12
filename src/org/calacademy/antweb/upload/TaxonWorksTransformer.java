@@ -63,45 +63,63 @@ public class TaxonWorksTransformer {
      */
     public String transformFile(Path inputFile, Path outputFile) throws AntwebException {
 
+        String errMsg = null;
+
         CSVFormat csvOutputFormat = CSVFormat.TDF.builder()
                 .setAllowMissingColumnNames(true)
                 .setHeader(outputColumnOrder.toArray(new String[0]))
                 .build();
 
+        int c = 0;
         try (Reader in = new FileReader(inputFile.toFile());
-             BufferedWriter writer = Files.newBufferedWriter(outputFile);
-             CSVParser csvParser = new CSVParser(in, csvInputFormat);
-             CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
-
-            int c = 0;
+            BufferedWriter writer = Files.newBufferedWriter(outputFile);
+            CSVParser csvParser = new CSVParser(in, csvInputFormat);
+            CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
             for (CSVRecord record : csvParser) {
-              c++;
-              try {
-                  List<String> transformed = transformLine(record);
-                  if (!transformed.isEmpty()) {
-                      csvPrinter.printRecord(transformed);
-                  }
-              } catch (AntwebException e) {
-                String message = "issue on line:" + c + " e:" + e;
-                //A.log(message);
-                throw new AntwebException(message);
-              }
+                c++;
+                List<String> transformed = transformLine(record);
+                if (!transformed.isEmpty()) {
+                    csvPrinter.printRecord(transformed);
+                }
             }
-
-
+        } catch (AntwebException e) {
+            String message = "e:" + e + " line:" + c;
+            errMsg = "transformFile() e:" + e;
+            return errMsg;
         } catch (FileNotFoundException e) {
-            s_log.error("FileNotFound", e);
-            return "File not found";
+            errMsg = "transformFile() e:" + e;
+            return errMsg;
         } catch (IOException e) {
-            s_log.error("IOException", e);
-            return "IO Exception";
+            errMsg = "transformFile() e:" + e;
+            return errMsg;
         }
 
-        return null;
+        return errMsg;
     }
 
+
+    // These are the must have fields. Ommission would break transformLine().
+    private void passFieldCheck (CSVRecord line) throws AntwebException {
+        String[] fieldArray = {"TW:Internal:otu_name", "TW:DataAttribute:CollectingEvent:Country"
+            , "TW:DataAttribute:CollectingEvent:adm1", "TW:DataAttribute:CollectingEvent:adm2"};
+        int c = 0;
+        String notMappedMessage = null;
+        ArrayList<String> fieldList = new ArrayList<>(Arrays.asList(fieldArray));
+        for (String field : fieldList) {
+            c++;
+            if (!line.isMapped(field)) {
+                if (c > 1) notMappedMessage += ", ";
+                notMappedMessage += field;
+            }
+        }
+        if (notMappedMessage != null) throw new AntwebException(notMappedMessage);
+    }
+
+
     private List<String> transformLine(CSVRecord line) throws AntwebException  {
-        
+
+        passFieldCheck(line);
+
         Map<String, String> row = new HashMap<>();
 
         if (StringUtils.isBlank(line.get("catalogNumber")) || StringUtils.equals(line.get("catalogNumber"), "\"\"")) {
@@ -147,19 +165,6 @@ public class TaxonWorksTransformer {
 
         // trim eventid: from collecting events
         row.put("collectioncode", StringUtils.removeStart(line.get("fieldNumber"), "eventID:"));
-
-
-        // Replace with isMapped.
-        if (AntwebProps.isDevMode()) {
-            String country = null;
-          try {
-              country = line.get("TW:DataAttribute:CollectingEvent:Country");
-
-          } catch (java.lang.IllegalArgumentException e) {
-              String message = " country:" + country + " e:" + e;
-              throw new AntwebException(message);
-          }
-        }
 
         // use auto-generated country if not overridden
         if (StringUtils.isEmpty(line.get("TW:DataAttribute:CollectingEvent:Country"))) {

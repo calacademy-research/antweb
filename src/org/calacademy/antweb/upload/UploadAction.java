@@ -164,7 +164,7 @@ public class UploadAction extends Action {
 				return mapping.findForward("message");
 			}
 
-			A.log("execute() action:" + action);
+			//A.log("execute() action:" + action);
 			if (action != null) {
 
 				// Upload a Specimen File (tab-delimited .txt file):
@@ -207,7 +207,7 @@ public class UploadAction extends Action {
 						//s_log.warn("execute() action:" + action + " theAction:" + theAction);
 						//logFileName += theFileName + UploadDetails.getLogExt();
 
-						s_log.info("execute() fileName:" + specimenFile.getFileName() + " type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
+						//s_log.info("execute() fileName:" + specimenFile.getFileName() + " type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
 						uploadDetails = new TaxonWorksUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 
@@ -226,14 +226,14 @@ public class UploadAction extends Action {
 
 				} else if ("GBIFUpload".equals(action)) {
 					FormFile specimenFile = theForm.getTheFile();
-					A.log("GBIFUpload specimenFile:" + specimenFile);
+					//A.log("GBIFUpload specimenFile:" + specimenFile);
 					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
 
 						String theFileName = accessGroup.getAbbrev() + "TWSpecimenList";
 
 						//logFileName += theFileName + UploadDetails.getLogExt();
-						A.log("execute() fileName:" + specimenFile.getFileName());
-						s_log.info("execute() fileName:" + specimenFile.getFileName() + " type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
+						//A.log("execute() fileName:" + specimenFile.getFileName());
+						//s_log.info("execute() fileName:" + specimenFile.getFileName() + " type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
 						uploadDetails = new GBIFUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
 

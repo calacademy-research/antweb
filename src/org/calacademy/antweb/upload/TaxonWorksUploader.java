@@ -50,16 +50,14 @@ public class TaxonWorksUploader extends Uploader {
         A.log("uploadSpecimenFile() formFileName:" + formFileName + " preTransform:" + preTransformFilePath.toString());
 
         if (formFileName.endsWith(".zip")) {
-            boolean success = true;
+            String errorMsg = null;
             try {
-                copyAndUnzipFile(theFile, group, preTransformFilePath.toString(), zipFileTarget);
+                errorMsg = copyAndUnzipFile(theFile, group, preTransformFilePath.toString(), zipFileTarget);
             } catch (IOException e) {
-                success = false;
+                errorMsg = "copyAndUnzipFile() e:" + e.toString();
             }
-            if (!success) {
-                s_log.warn("Do we really want to proceed despite failure?");
-                if (AntwebProps.isDevMode()) throw new AntwebException("copyAndUnzip error DEV MODE break.");
-            }
+            if (errorMsg != null) throw new AntwebException(errorMsg);
+
         } else {
             // copy from uploader's fileName to the biotaFile name.
             boolean success = Utility.copyFile(theFile, preTransformFileName);
@@ -69,128 +67,17 @@ public class TaxonWorksUploader extends Uploader {
         //A.log("Start TaxonWorks transformFile");
         TaxonWorksTransformer tf = new TaxonWorksTransformer();
         A.log("uploadSpecimenFile() preTransformFilePath:" + preTransformFilePath + " specimenFilePath:" + specimenFilePath);
-        tf.transformFile(preTransformFilePath, specimenFilePath);
+        String errMsg = tf.transformFile(preTransformFilePath, specimenFilePath);
+        if (errMsg != null) {
+            s_log.error("uploadSpecimenFile() errMsg:" + errMsg);
+            return new UploadDetails(theForm.getAction(), errMsg);
+        }
         //A.log("End TaxonWorks transformFile");
 
-        String action = theForm.getAction();
-        A.log("uploadSpecimenFile() action:" + action);
-
-        return uploadSpecimenFile(action, fileName, login, userAgent, encoding, true);
+        return uploadSpecimenFile(theForm.getAction(), fileName, login, userAgent, encoding, true);
     }
 
 
-    /* This version can be called directly in the case of specimenTest */    
-    // was 2nd param: String specimenUploadType, 
-    public UploadDetails uploadSpecimenFile(String operation, String fileName
-            , Login login, String userAgent, String encoding, boolean isUpload)
-            throws SQLException, TestException, AntwebException
-    {
-        A.log("uploadSpecimenFile() fileName:" + fileName + " encoding:" + encoding);
-
-        UploadDetails uploadDetails;
-
-        Date startTime = new Date();
-        if ("default".equals(encoding)) encoding = null;
-        Group group = login.getGroup();
-
-        String specimenFileLoc;
-        String specimenFileName;
-
-        String messageStr = null;
-
-        UploadFile uploadFile;
-
-        if (isUpload) {
-            specimenFileName = fileName;
-//            specimenFileName = "specimen" + group.getId() + ".txt";
-            uploadFile = new UploadFile(AntwebProps.getWorkingDir(), specimenFileName, userAgent, encoding);
-            specimenFileLoc = AntwebProps.getWorkingDir() + specimenFileName;
-            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
-        } else {
-            SpecimenUploadDb specimenUploadDb = new SpecimenUploadDb(connection);
-            specimenFileName = specimenUploadDb.getBackupDirFile(group.getId());
-            if (specimenFileName == null) messageStr = "BackupDirFile not found for group:" + group;
-            specimenFileLoc = AntwebProps.getWebDir() + specimenFileName;
-            uploadFile = new UploadFile(AntwebProps.getWebDir(), specimenFileName, userAgent, encoding);
-            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
-        }
-
-        if (!uploadFile.correctEncoding(encoding)) messageStr = "Encoding not validated for file:" + uploadFile.getFileLoc() + " encoding:" + uploadFile.getEncoding();
-
-        if (messageStr != null) {
-            // No further tests necessary.
-        } else if (!specimenFileName.contains(".txt") && !specimenFileName.contains(".TXT")) {
-            s_log.warn("uploadSpecimenFile() theFileName not txt. specimenFileName:" + specimenFileName);
-            messageStr = "Specimen File must be a .txt file.";
-        } else if (isCurrentSpecimenFormat(specimenFileLoc) != null) {
-            messageStr = "Specimen File must be in the most current format. " + isCurrentSpecimenFormat(specimenFileLoc);
-        } else if (!Utility.isTabDelimited(specimenFileLoc)) {
-            messageStr = "Specimen File must be a tab-delimited file.";
-        }
-        if (messageStr != null) {
-            s_log.warn("uploadSpecimenFile() " + messageStr);
-            uploadDetails = new UploadDetails("specimen", messageStr, "message");
-            uploadDetails.setAction(operation);
-            return uploadDetails;
-		}
-
-        s_log.info("uploadSpecimenFile() specimenFileLoc:" + specimenFileLoc + " isUpload:" + isUpload);
-        //s_antwebEventLog.info("backupDirFile:" + backupDirFile;
-
-        UploadHelper.init(uploadFile, group);
-
-        //boolean success = false;  // UploadForm.getWhole() can be deprecated
-        //LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "Before specimen upload Proj_taxon worldants counts");
-
-        SpecimenUpload specimenUpload = new SpecimenUpload(connection);
-		uploadDetails = specimenUpload.importSpecimens(uploadFile, login, operation);
-
-        if (uploadFile != null) {
-            uploadFile.backup();
-            uploadDetails.setBackupDirFile(uploadFile.getBackupDirFile());
-        }
-
-        String execTime = HttpUtil.getExecTime(startTime);
-        uploadDetails.setExecTime(execTime);
-
-        A.log("uploadSpecimenFile() action:" + operation + " uploadDetails.operation:" + uploadDetails.getOperation());
-
-        return uploadDetails;     
-    }
-    
-    private String isCurrentSpecimenFormat(String fileName) {
-        String error = null;
-        try {
-            BufferedReader in = new BufferedReader(new FileReader(fileName));
-            if (in == null) {
-                error = "BufferedReader is null for file:" + fileName;
-                //s_log.error("isCurrentSpecimenFormat() error:" + error);
-            }
-            
-            String theLine = in.readLine();
-            if (theLine == null) {
-                error = "null line.  Perhaps empty file:" + fileName + "?";
-                //s_log.error("isCurrentSpecimenFormat() error:" + error);
-            }
-
-            //s_log.warn("isCurrentSpecimenFormat() testLine:" + theLine);
-           
-           if (theLine.contains("/")) {
-              error = "Line contains /.  Must be pre-Antweb 4.13.  The header:" + theLine;
-            } if (theLine.contains("taxonomic history")) {
-              error = "This specimen file contains taxonomic history.  Is it maybe a species file?";
-              //s_log.warn(error);
-            }
-            // This line will determine if Antweb4.12            
-            //if (theLine.contains(SpecimenNotes)) return true;
-
-        } catch (Exception e) {
-            error = "fileName:" + fileName + " e:" + e;
-            //s_log.error("isCurrentSpecimenFormat() error:" + error);
-        }
-        //s_log.warn("isCurrentFormat() mustContainStr:" + mustContainStr + " not found in file:" + fileName);
-        return error;
-    }     
     
     
       

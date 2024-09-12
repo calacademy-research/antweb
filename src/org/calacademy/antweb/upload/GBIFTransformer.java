@@ -12,12 +12,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.geolocale.Country;
 import org.calacademy.antweb.util.GeolocaleMgr;
+import org.calacademy.antweb.util.AntwebException;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 public class GBIFTransformer {
 
@@ -59,6 +61,8 @@ public class GBIFTransformer {
      */
     public String transformFile(Path inputFile, Path outputFile) {
 
+        String errMsg = null;
+
         CSVFormat csvOutputFormat = CSVFormat.TDF.builder()
                 .setAllowMissingColumnNames(true)
                 .setHeader(outputColumnOrder.toArray(new String[0]))
@@ -75,21 +79,45 @@ public class GBIFTransformer {
                     csvPrinter.printRecord(transformed);
                 }
             }
-
-
+        } catch (AntwebException e) {
+            errMsg = "transformFile() e:" + e;
+            return errMsg;
         } catch (FileNotFoundException e) {
-            s_log.error("FileNotFound", e);
-            return "File not found";
+            errMsg = "transformFile() e:" + e;
+            return errMsg;
         } catch (IOException e) {
-            s_log.error("IOException", e);
-            return "IO Exception";
+            errMsg = "transformFile() e:" + e;
+            return errMsg;
         }
 
-        return null;
+        return errMsg;
     }
 
-    private List<String> transformLine(CSVRecord line) {
-        
+    private void passFieldCheck (CSVRecord line) throws AntwebException {
+        // static ArrayList ***
+        String[] fieldArray = {"taxonRank", "specificEpithet"   // "CatalogNumber",
+                , "eventDate", "fieldNumber"
+                , "minimumElevationInMeters", "maximumElevationInMeters"
+                , "eventDate", "country"
+                , "stateProvince", "county", "institutionCode"};  // "ownedBy",
+        int c = 0;
+        String notMappedMessage = null;
+        ArrayList<String> fieldList = new ArrayList<>(Arrays.asList(fieldArray));
+        for (String field : fieldList) {
+            c++;
+            if (!line.isMapped(field)) {
+                if (c > 1) notMappedMessage += ", ";
+                notMappedMessage += field;
+            }
+        }
+        if (notMappedMessage != null) throw new AntwebException(notMappedMessage);
+    }
+
+
+    private List<String> transformLine(CSVRecord line) throws AntwebException {
+
+        passFieldCheck(line);
+
         Map<String, String> row = new HashMap<>();
 
         if (StringUtils.isBlank(line.get("catalogNumber")) || StringUtils.equals(line.get("catalogNumber"), "\"\"")) {
@@ -108,14 +136,12 @@ public class GBIFTransformer {
             }
         }
 
-
-        //TWUploader should be this careful...
-
+        /*
         // Don't do this for GBIF data!
         // copy otu_name into SpeciesName (SpeciesName will be blank if there's an OTU value)
         if (StringUtils.isBlank(line.get("specificEpithet"))) {
             String field = "TW:Internal:otu_name";
-            if (line.isMapped(field) && StringUtils.isNotBlank(line.get(field))) {
+            if (StringUtils.isNotBlank(line.get(field))) {
                 String otu_name = line.get(field);
 
                 // for a subspecies name,
@@ -134,6 +160,7 @@ public class GBIFTransformer {
                 }
             }
         }
+         */
 
         // split date collected into two columns
         Pair<String, String> dates = splitDate(line.get("eventDate"));

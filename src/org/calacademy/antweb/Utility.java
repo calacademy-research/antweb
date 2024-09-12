@@ -620,7 +620,7 @@ public class Utility implements Serializable {
 
                 //write the file to the file specified
                 File newFile = new File(outName);
-                A.log("copyFormFile newFile:" + newFile);
+                //A.log("copyFormFile() newFile:" + newFile);
                 FileUtils.copyInputStreamToFile(stream, newFile);
 
                 if (debugOn) {

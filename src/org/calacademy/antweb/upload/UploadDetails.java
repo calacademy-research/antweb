@@ -31,14 +31,20 @@ public class UploadDetails extends OperationDetails {
     private String logFileName;
     private String backupDirFile;
 
+    public static final String appendLogExt = ".html";
+    public static final String appendLogExtJsp = ".jsp";
+
+    String action;
+    String messageLogFile;
+    boolean hasMessages = false;
+    int buildLineTotal = 0;
+    int processLineTotal = 0;
+    private int recordCount = 0;
+
+    // Maintain a set of museums.  Could have been query but this done for performance.
+    private final Map<String, Integer> museumMap = new HashMap<>();
 
     private boolean offerRunCountCrawlLink = false;
-    public boolean isOfferRunCountCrawlLink() {
-        return offerRunCountCrawlLink;
-    }
-    public void setOfferRunCountCrawlLink(boolean offerRunCountCrawlLink) {
-        this.offerRunCountCrawlLink = offerRunCountCrawlLink;
-    }
 
     public UploadDetails() {
       super();
@@ -66,102 +72,6 @@ public class UploadDetails extends OperationDetails {
       // The presence of a forward implies it is a message, and that was not successful execution.
       messageMgr = new MessageMgr();
     }
-    
-    public String toString() {
-      return "{operation:" + getOperation() + " c:" + getRecordCount() + " forwardPage:" + getForwardPage() 
-      + " logFileName:" + getLogFileName() + " message:" + getMessage() + "}";
-    }
-
-    /*
-    public String getLogFileDir() {
-      if (getLogFileName() != null) {
-        if (getLogFileName().contains("orldants")) return "worldants";
-        if (getLogFileName().contains("pecimen")) return "specimen";
-      }
-      return "upload";
-    }
-*/
-
-    String action;
-    public void setAction(String action) {
-
-        this.action = action;
-
-    }
-    public String getAction() {
-        return action;
-    }
-
-    public void setLogFileName(String logFileName) {
-      this.logFileName = logFileName; 
-    }    
-    public String getLogFileName() {
-        if (this.logFileName != null) return this.logFileName;
-        
-        String dateString = Utility.getDateForFileName(getStartTime());
-        return dateString + "-" + getOperation() + getLogExt();
-    }
-    
-    public void setBackupDirFile(String backupDirFile) {
-        this.backupDirFile = backupDirFile; 
-    }    
-    public String getBackupDirFile() {
-        return backupDirFile;
-    }
-        
-    // JSP log business.
-    public static final String appendLogExt = ".html";
-    public static final String appendLogExtJsp = ".jsp";
-    public static boolean isLogJsp() {
-      boolean jspTurnedOn = true;
-      jspTurnedOn = false;
-        return jspTurnedOn;
-    }    
-    public static String getLogExt() {
-      if (UploadDetails.isLogJsp()) {
-        return appendLogExtJsp;
-      } else {
-        return appendLogExt;
-      }
-    }
-
-
-    public String getLogDir() {
-        return getLogDir(getOperation());
-    }
-    public static String getLogDir(String operation) {
-        String logDir = "upload";
-        if (operation.contains("specimen")) logDir = "specimen";
-        if (operation.contains("orldants")) logDir = "worldants";
-
-        if (operation.contains("taxonWorks")) logDir = "specimen";
-        if (operation.contains("GBIF")) logDir = "specimen";
-
-        //A.log("getLogDir() operation:" + operation + " logDir:" + logDir);
-        return logDir;
-    }
-
-    public String getLogDirFile() {
-      String dir = null;
-      dir = UploadDetails.getLogDir(getOperation());
-
-      return dir + "/" + getLogFileName(); //java.net.URLEncoder.encode(getLogFileName());
-    }
-
-    public String getLogFileAnchor() {
-        String logFileAnchor = "<a href=\"" + AntwebProps.getDomainApp() + "/web/log/" + getLogDirFile() + "\">" + getLogDirFile() + "</a>";            
-        return logFileAnchor;
-    }
-    
-    public String getBackupFileAnchor() {
-        String backupFileAnchor = "";
-        if (getBackupDirFile() != null) {
-          backupFileAnchor = "<a href=\"" + AntwebProps.getDomainApp() + "/web/"
-            + getBackupDirFile() + "\">" + getBackupDirFile() + "</a>";
-        }
-        return backupFileAnchor;    
-    }
-
 	
     public void genUploadReport(Login accessLogin, HttpServletRequest request) {
         genUploadReport(UploadHelper.getUploadFile(), accessLogin, request);
@@ -302,57 +212,6 @@ public class UploadDetails extends OperationDetails {
         }
     }
 
-    String messageLogFile;
-    public String getMessageLogFile() {
-        A.log("getMessageLogFile() messageLogFile:" + messageLogFile);
-        AntwebUtil.logShortStackTrace();
-        return messageLogFile;
-    }
-    public void setMessageLogFile(String messageLogFile) {
-        A.log("setMessageLogFile() messageLogFile:" + messageLogFile);
-        AntwebUtil.logShortStackTrace();
-        this.messageLogFile = messageLogFile;
-    }
-
-    boolean hasMessages = false;
-    public boolean isHasMessages() {
-        return hasMessages;
-    }
-    public void setHasMessages(boolean hasMessages) {
-        this.hasMessages = hasMessages;
-    }
-
-    private boolean offerRunCountCrawlsLink = false;
-    public void setOfferRunCountCrawlsLink(boolean offer) {
-        offerRunCountCrawlsLink = offer;
-    }
-    public boolean isOfferRunCountCrawlsLink() {
-      return offerRunCountCrawlsLink;
-    }
-
-    public void augment(UploadDetails uploadDetails) {
-      if (!uploadDetails.getMessage().equals("success")) {
-        setMessage(getMessage() + uploadDetails.getMessage());
-      }
-    }
-
-    int buildLineTotal = 0;
-    public void setBuildLineTotal(int buildLineTotal) {
-      this.buildLineTotal = buildLineTotal;
-    }
-    public int getBuildLineTotal() {    
-     return buildLineTotal;
-    }
-        
-    int processLineTotal = 0;
-    public void setProcessLineTotal(int processLineTotal) {
-      this.processLineTotal = processLineTotal;
-    }
-    public int getProcessLineTotal() {    
-     return processLineTotal;
-    }
-    
-    
     public void finish(Login accessLogin, HttpServletRequest request, Connection connection) throws SQLException {
         A.log("finish() operation:" +  getOperation());
         String execTime = HttpUtil.finish(request, getStartTime());
@@ -361,16 +220,154 @@ public class UploadDetails extends OperationDetails {
         if (getOperation().contains("orldants")) {
             new WorldantsUploadDb(connection).updateWorldantsUpload(this);
         }
-        
+
         if (getForwardPage() == null) {
-          genUploadReport(accessLogin, request);
-  		  setForwardPage("uploadResults");	
+            genUploadReport(accessLogin, request);
+            setForwardPage("uploadResults");
         }
-    }  
-    
+    }
+
+    public static boolean isLogJsp() {
+        boolean jspTurnedOn = true;
+        jspTurnedOn = false;
+        return jspTurnedOn;
+    }
+    public static String getLogExt() {
+        if (UploadDetails.isLogJsp()) {
+            return appendLogExtJsp;
+        } else {
+            return appendLogExt;
+        }
+    }
+
+    public String getLogDir() {
+        return getLogDir(getOperation());
+    }
+    public static String getLogDir(String operation) {
+        String logDir = "upload";
+        if (operation.contains("specimen")) logDir = "specimen";
+        if (operation.contains("orldants")) logDir = "worldants";
+
+        if (operation.contains("taxonWorks")) logDir = "specimen";
+        if (operation.contains("GBIF")) logDir = "specimen";
+
+        //A.log("getLogDir() operation:" + operation + " logDir:" + logDir);
+        return logDir;
+    }
+
+    public String getLogDirFile() {
+        String dir = null;
+        dir = UploadDetails.getLogDir(getOperation());
+
+        return dir + "/" + getLogFileName(); //java.net.URLEncoder.encode(getLogFileName());
+    }
+
+    public String getLogFileAnchor() {
+        String logFileAnchor = "<a href=\"" + AntwebProps.getDomainApp() + "/web/log/" + getLogDirFile() + "\">" + getLogDirFile() + "</a>";
+        return logFileAnchor;
+    }
+
+    public String getBackupFileAnchor() {
+        String backupFileAnchor = "";
+        if (getBackupDirFile() != null) {
+            backupFileAnchor = "<a href=\"" + AntwebProps.getDomainApp() + "/web/"
+                    + getBackupDirFile() + "\">" + getBackupDirFile() + "</a>";
+        }
+        return backupFileAnchor;
+    }
+
+
+    public void addToMuseumMap(String element) {
+        for (Museum museum : MuseumMgr.getMuseums()) {
+            String code = museum.getCode();
+            if (element.contains(code)) {
+                int count = museumMap.getOrDefault(code, 0);
+                museumMap.put(code, ++count);
+                //A.log("addToMuseumSet() element:" + element + " code:" + code + " count:" + count);
+            }
+        }
+    }
+    public Map<String, Integer> getMuseumMap() {
+        return museumMap;
+    }
+
+
+    public String toString() {
+        return "{operation:" + getOperation() + " c:" + getRecordCount() + " forwardPage:" + getForwardPage()
+                + " logFileName:" + getLogFileName() + " message:" + getMessage() + "}";
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+    public String getAction() {
+        return action;
+    }
+
+    public void setLogFileName(String logFileName) {
+        this.logFileName = logFileName;
+    }
+    public String getLogFileName() {
+        if (this.logFileName != null) return this.logFileName;
+
+        String dateString = Utility.getDateForFileName(getStartTime());
+        return dateString + "-" + getOperation() + getLogExt();
+    }
+
+    public void setBackupDirFile(String backupDirFile) {
+        this.backupDirFile = backupDirFile;
+    }
+    public String getBackupDirFile() {
+        return backupDirFile;
+    }
+
+    public String getMessageLogFile() {
+        //A.log("getMessageLogFile() messageLogFile:" + messageLogFile);
+        //AntwebUtil.logShortStackTrace();
+        return messageLogFile;
+    }
+    public void setMessageLogFile(String messageLogFile) {
+        //A.log("setMessageLogFile() messageLogFile:" + messageLogFile);
+        //AntwebUtil.logShortStackTrace();
+        this.messageLogFile = messageLogFile;
+    }
+
+    public boolean isHasMessages() {
+        return hasMessages;
+    }
+    public void setHasMessages(boolean hasMessages) {
+        this.hasMessages = hasMessages;
+    }
+
+    public boolean isOfferRunCountCrawlLink() {
+        return offerRunCountCrawlLink;
+    }
+    public void setOfferRunCountCrawlLink(boolean offerRunCountCrawlLink) {
+        this.offerRunCountCrawlLink = offerRunCountCrawlLink;
+    }
+
+    public void augment(UploadDetails uploadDetails) {
+      if (!uploadDetails.getMessage().equals("success")) {
+        setMessage(getMessage() + uploadDetails.getMessage());
+      }
+    }
+
+    public void setBuildLineTotal(int buildLineTotal) {
+      this.buildLineTotal = buildLineTotal;
+    }
+    public int getBuildLineTotal() {    
+     return buildLineTotal;
+    }
+
+    public void setProcessLineTotal(int processLineTotal) {
+      this.processLineTotal = processLineTotal;
+    }
+    public int getProcessLineTotal() {    
+     return processLineTotal;
+    }
 
     public void setRunStatistics(boolean runStatistics) {
-    this.runStatistics = runStatistics; 
+      this.runStatistics = runStatistics;
     }
     public boolean getRunStatistics() {
       return this.runStatistics; 
@@ -400,29 +397,12 @@ public class UploadDetails extends OperationDetails {
     public void countInsertedSpecimen() {
       ++countInsertedSpecimens;
     }
-    
-    // Maintain a set of museums.  Could have been query but this done for performance.
-    private final Map<String, Integer> museumMap = new HashMap<>();
-    
-    public void addToMuseumMap(String element) {
-      for (Museum museum : MuseumMgr.getMuseums()) {
-        String code = museum.getCode();
-        if (element.contains(code)) {
-          int count = museumMap.getOrDefault(code, 0);
-          museumMap.put(code, ++count);    
-          //A.log("addToMuseumSet() element:" + element + " code:" + code + " count:" + count);      
-        }
-      }
-    }
-    public Map<String, Integer> getMuseumMap() {
-      return museumMap;
-    }
+
     
     public MessageMgr getMessageMgr() {
       return messageMgr;
     }
-    
-    private int recordCount = 0;
+
     public int getRecordCount() {
       return recordCount;
     }

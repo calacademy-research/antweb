@@ -38,8 +38,8 @@ public class Uploader {
       return "N/A";
     }
 
-    public static boolean copyAndUnzipFile(FormFile file, Group group, String outName, String zipFileTarget) throws IOException {
-        boolean success = true;
+    public static String copyAndUnzipFile(FormFile file, Group group, String outName, String zipFileTarget) throws IOException {
+        String errorMsg = null;
 
         String tempDirName = AntwebProps.getWorkingDir() + "group" + group.getId();
         File tempDir = new File(tempDirName);
@@ -47,8 +47,8 @@ public class Uploader {
 
         if (file != null) {
             // create a new temp directory
-            success = tempDir.mkdir();
-            A.log("copyAndUnzipFile() tempDirName:" + tempDirName + " mkdirSuccess:" + success);
+            boolean success = tempDir.mkdir();
+            //A.log("copyAndUnzipFile() tempDirName:" + tempDirName + " mkdirSuccess:" + success);
 
             // unzip into that directory
             String zippedName = outName + ".zip";
@@ -60,35 +60,155 @@ public class Uploader {
                     A.log("copyAndUnzipFile before command:" + command);
                     Process process = Runtime.getRuntime().exec(command);
                     process.waitFor();
-                    A.log("copyAndUnzipFile after");
+                    //A.log("copyAndUnzipFile after");
                 } catch (InterruptedException e) {
-                    s_log.error("copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e);
-                    AntwebUtil.logStackTrace(e);
+                    errorMsg = "copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e;
+                    s_log.error(errorMsg);
+                    return errorMsg;
                 }
             } else {
-                s_log.error("copyAndUnzipFile() zip does not exist:" + zippedName);
+                return ("copyAndUnzipFile() zip does not exist:" + zippedName);
             }
 
             // move the file out of that directory and give it the right name
             //File dir = new File(tempDirName);
             String[] dirListing = tempDir.list();
-            A.log("copyAndUnzipFile() dir:" + tempDir + " listing has length: " + dirListing.length);
 
             String target = tempDirName + "/" + zipFileTarget;
+            A.log("copyAndUnzipFile() dir:" + tempDir + " listing has length: " + dirListing.length + " target:" + target);
+A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
             try {
                 Utility.copyFile(target, outName);
             } catch (IOException e2) {
-                s_log.error("copyAndUnzipFile() couldn't move " + target + " to " + outName + " e:" + e2);
-                success = false;
+                return "copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2;
+/*
+                String secondTarget = tempDirName + "/" + "dwca-utep_ento-v1.84" + "/" + zipFileTarget;
+                A.log("copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2 + ". Or 2ndTarget:" + secondTarget);
+                try {
+                    Utility.copyFile(secondTarget, outName);
+                } catch (IOException e3) {
+                    return "copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2 + ". Or 2ndTarget:" + secondTarget;
+                }
+*/
             }
 
             boolean isDeleted = false;
             // remove the directory
-            //if (!AntwebProps.isDevMode())    // Helpful to test, diagnose, but must be off to operate correctly.
-            isDeleted = Utility.deleteDirectory(tempDir);
+            if (!AntwebProps.isDevMode())    // Helpful to test, diagnose, but must be off to operate correctly.
+              isDeleted = Utility.deleteDirectory(tempDir);
             A.log("copyAndUnzipFile deleteDir:" + tempDir + " success:" + isDeleted);
         }
-        return success;
+        return errorMsg;
     }
-      
+
+
+
+    /* This version can be called directly in the case of specimenTest */
+    // was 2nd param: String specimenUploadType,
+    public UploadDetails uploadSpecimenFile(String operation, String fileName
+            , Login login, String userAgent, String encoding, boolean isUpload)
+            throws SQLException, TestException, AntwebException
+    {
+        A.log("uploadSpecimenFile() fileName:" + fileName + " encoding:" + encoding);
+
+        UploadDetails uploadDetails = null;
+        Date startTime = new Date();
+        if ("default".equals(encoding)) encoding = null;
+        Group group = login.getGroup();
+        String specimenFileLoc = null;
+        String messageStr = null;
+        UploadFile uploadFile = null;;
+
+        if (isUpload) {
+            //fileName = "specimen" + group.getId() + ".txt";
+            uploadFile = new UploadFile(AntwebProps.getWorkingDir(), fileName, userAgent, encoding);
+            specimenFileLoc = AntwebProps.getWorkingDir() + fileName;
+            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
+        } else {
+            SpecimenUploadDb specimenUploadDb = new SpecimenUploadDb(connection);
+            fileName = specimenUploadDb.getBackupDirFile(group.getId());
+            if (fileName == null) messageStr = "BackupDirFile not found for group:" + group;
+            specimenFileLoc = AntwebProps.getWebDir() + fileName;
+            uploadFile = new UploadFile(AntwebProps.getWebDir(), fileName, userAgent, encoding);
+            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
+        }
+
+        if (!uploadFile.correctEncoding(encoding)) messageStr = "Encoding not validated for file:" + uploadFile.getFileLoc() + " encoding:" + uploadFile.getEncoding();
+
+        if (messageStr != null) {
+            // No further tests necessary.
+        } else if (!fileName.contains(".txt") && !fileName.contains(".TXT")) {
+            s_log.warn("uploadSpecimenFile() fileName not txt. fileName:" + fileName);
+            messageStr = "Specimen File must be a .txt file.";
+        } else if (isCurrentSpecimenFormat(specimenFileLoc) != null) {
+            messageStr = "Specimen File must be in the most current format. " + isCurrentSpecimenFormat(specimenFileLoc);
+        } else if (!Utility.isTabDelimited(specimenFileLoc)) {
+            messageStr = "Specimen File must be a tab-delimited file.";
+        }
+        if (messageStr != null) {
+            s_log.warn("uploadSpecimenFile() " + messageStr);
+            uploadDetails = new UploadDetails("specimen", messageStr, "message");
+            uploadDetails.setAction(operation);
+            return uploadDetails;
+        }
+
+        s_log.info("uploadSpecimenFile() specimenFileLoc:" + specimenFileLoc + " isUpload:" + isUpload);
+        //s_antwebEventLog.info("backupDirFile:" + backupDirFile;
+
+        UploadHelper.init(uploadFile, group);
+
+        //boolean success = false;  // UploadForm.getWhole() can be deprecated
+        //LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "Before specimen upload Proj_taxon worldants counts");
+
+        SpecimenUpload specimenUpload = new SpecimenUpload(connection);
+        uploadDetails = specimenUpload.importSpecimens(uploadFile, login, operation);
+
+        if (uploadFile != null) {
+            uploadFile.backup();
+            uploadDetails.setBackupDirFile(uploadFile.getBackupDirFile());
+        }
+
+        String execTime = HttpUtil.getExecTime(startTime);
+        uploadDetails.setExecTime(execTime);
+
+        //A.log("uploadSpecimenFile() action:" + operation + " uploadDetails.operation:" + uploadDetails.getOperation());
+
+        return uploadDetails;
+    }
+
+
+    protected String isCurrentSpecimenFormat(String fileName) {
+        String error = null;
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(fileName));
+            if (in == null) {
+                error = "BufferedReader is null for file:" + fileName;
+                //s_log.error("isCurrentSpecimenFormat() error:" + error);
+            }
+
+            String theLine = in.readLine();
+            if (theLine == null) {
+                error = "null line.  Perhaps empty file:" + fileName + "?";
+                //s_log.error("isCurrentSpecimenFormat() error:" + error);
+            }
+
+            //s_log.warn("isCurrentSpecimenFormat() testLine:" + theLine);
+
+            if (theLine.contains("/")) {
+                error = "Line contains /.  Must be pre-Antweb 4.13.  The header:" + theLine;
+            } if (theLine.contains("taxonomic history")) {
+                error = "This specimen file contains taxonomic history.  Is it maybe a species file?";
+                //s_log.warn(error);
+            }
+            // This line will determine if Antweb4.12
+            //if (theLine.contains(SpecimenNotes)) return true;
+
+        } catch (Exception e) {
+            error = "fileName:" + fileName + " e:" + e;
+            //s_log.error("isCurrentSpecimenFormat() error:" + error);
+        }
+        //s_log.warn("isCurrentFormat() mustContainStr:" + mustContainStr + " not found in file:" + fileName);
+        return error;
+    }
+
 }
