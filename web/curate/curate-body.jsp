@@ -368,7 +368,7 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
 
 
 <!-- GBIF Specimen Zip File Upload -->
-    <% if (AntwebProps.isDevMode() || GroupMgr.isCAS(accessGroup)) { %>
+    <% if (GroupMgr.isCAS(accessGroup) || LoginMgr.isMingnaUtep(accessLogin)) { %>
         <!-- GBIF Specimen file or Zip File Upload -->
 
        <html:form method="POST" action="upload.do" enctype="multipart/form-data">

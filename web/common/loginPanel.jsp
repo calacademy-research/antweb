@@ -83,7 +83,7 @@
 	 <% } %>
         
      <% if (!HttpUtil.isOnline()) { %>
-          <a href='http://localhost/antweb/login.do'>
+          <a href='http://localhost/login.do'>
      <% } %>
      Login
      <% if (!HttpUtil.isOnline()) { %>

@@ -194,6 +194,11 @@ public class LoginMgr extends Manager {
 	public static boolean isMichele(Login accessLogin) {
         return accessLogin != null && accessLogin.getId() == 23;
     }
+
+    public static boolean isMingnaUtep(Login accessLogin) {
+        return accessLogin != null && accessLogin.getId() == 9716;
+    }
+
     public static boolean isJack(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
 	    return isJack(accessLogin);
