@@ -294,43 +294,25 @@ public class GBIFTransformer {
             Pair.of("catalogNumber", "SpecimenCode"),
             Pair.of("identifiedBy", "DeterminedBy"),
             Pair.of("dateIdentified", "DateDetermined"),
-            Pair.of("TW:DataAttribute:CollectionObject:LifeStageSex", "LifeStageSex"),
             Pair.of("preparations", "Medium"),
-            Pair.of("TW:DataAttribute:CollectionObject:PreparedBy", "PreparedBy"),
-            Pair.of("TW:DataAttribute:CollectionObject:DatePrepared", "DatePrepared"),
-            Pair.of("TW:DataAttribute:CollectionObject:LocatedAt", "LocatedAt"),
             Pair.of("typeStatus", "TypeStatus"),
 //            Pair.of("institutionCode", "OwnedBy"),    // convert CAS to CASC
-            Pair.of("TW:DataAttribute:CollectionObject:SpecimenNotes", "SpecimenNotes"),
-            Pair.of("TW:DataAttribute:CollectionObject:MolProjectNotes", "DNANotes"),
             Pair.of("recordedBy", "CollectedBy"),
             Pair.of("habitat", "Habitat"),
-            Pair.of("TW:DataAttribute:CollectingEvent:Microhabitat", "Microhabitat"),
             Pair.of("samplingProtocol", "Method"),
-            Pair.of("TW:DataAttribute:CollectingEvent:CollectionNotes", "CollXYAccuracy"),
             Pair.of("verbatimLocality", "LocalityName"),
-            Pair.of("TW:DataAttribute:CollectingEvent:LocalityCode", "LocalityCode"),
-            Pair.of("TW:DataAttribute:CollectingEvent:adm2", "Adm2"),
-            Pair.of("TW:DataAttribute:CollectingEvent:adm1", "Adm1"),
-            Pair.of("TW:DataAttribute:CollectingEvent:Country", "Country"),
             Pair.of("decimalLatitude", "LocLatitude"),
             Pair.of("decimalLongitude", "LocLongitude"),
-            Pair.of("TW:DataAttribute:CollectingEvent:BiogeographicRegion", "BiogeographicRegion"),
-            Pair.of("TW:DataAttribute:CollectingEvent:LocalityNotes", "LocalityNotes"),
-            Pair.of("TW:Internal:elevation_precision", "ElevationMaxError"),
             Pair.of("genus", "[Species]Genus"),
             Pair.of("specificEpithet", "SpeciesName"),
             Pair.of("infraspecificEpithet", "Subspecies"),
 //            Pair.of("subgenus", "Subgenus"),  // not included in export
-            Pair.of("TW:DataAttribute:CollectionObject:SpeciesGroup", "SpeciesGroup"),
             Pair.of("subfamily", "Subfamily"),    // not included in export
             Pair.of("family", "Family"),
             Pair.of("order", "Order"),
             Pair.of("class", "Class"),
             Pair.of("phylum", "Phylum"),
             Pair.of("kingdom", "Kingdom"),
-            Pair.of("TW:DataAttribute:CollectingEvent:VerbatimCoordinateUncertainty", "LocXYAccuracy"),
-            Pair.of("TW:Internal:collection_object_id", "taxonworks_co_id"),
     };
 
     // these are just extra headers that we might use, right now the CSV parser doesn't check for header column presence
@@ -340,9 +322,6 @@ public class GBIFTransformer {
             "country",
             "stateProvince",
             "county",
-            "TW:DataAttribute:CollectionObject:verbatimTypeStatus",
-            "TW:DataAttribute:CollectingEvent:VerbatimCollectionCode",  // maybe will use to validate fieldNumber?
-            "TW:Internal:otu_name",
             "rank",
     };
 }
