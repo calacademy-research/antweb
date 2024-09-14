@@ -11,8 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.geolocale.Country;
-import org.calacademy.antweb.util.GeolocaleMgr;
-import org.calacademy.antweb.util.AntwebException;
+import org.calacademy.antweb.util.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -69,26 +68,35 @@ public class GBIFTransformer {
                 .build();
 
         try (Reader in = new FileReader(inputFile.toFile());
-             BufferedWriter writer = Files.newBufferedWriter(outputFile);
-             CSVParser csvParser = new CSVParser(in, csvInputFormat);
-             CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
+            BufferedWriter writer = Files.newBufferedWriter(outputFile);
+            CSVParser csvParser = new CSVParser(in, csvInputFormat);
+            CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
 
-            for (CSVRecord record : csvParser) {
-                List<String> transformed = transformLine(record);
-                if (!transformed.isEmpty()) {
-                    csvPrinter.printRecord(transformed);
+            int c = 0;
+            Iterator<CSVRecord> iterator = csvParser.iterator();
+            while (iterator.hasNext()) {
+                ++c;
+                try {
+                    CSVRecord record = iterator.next();
+                    List<String> transformed = transformLine(record);
+                    if (!transformed.isEmpty()) {
+                        csvPrinter.printRecord(transformed);
+                    }
+                } catch (UncheckedIOException e) {
+                    A.log("tranformFile() line:" + c + " e:" + e.toString());
+                    A.log("transformFile() sampleErrorLine:" + sampleErrorLine);
+                    //errMsg = "transformFile() e:" + e;
+                    // break; or continue;
                 }
             }
+
+
         } catch (AntwebException e) {
             errMsg = "transformFile() e:" + e;
             return errMsg;
         } catch (FileNotFoundException e) {
             errMsg = "transformFile() e:" + e;
             return errMsg;
-        } catch (java.io.UncheckedIOException e) {
-            errMsg = "transformFile() e:" + e;
-            //return errMsg;
-            throw new AntwebException(errMsg);
         } catch (IOException e) {
             errMsg = "transformFile() e:" + e;
             return errMsg;
@@ -97,26 +105,7 @@ public class GBIFTransformer {
         return errMsg;
     }
 
-    private void passFieldCheck (CSVRecord line) throws AntwebException {
-        // static ArrayList ***
-        String[] fieldArray = {"taxonRank", "specificEpithet"   // "CatalogNumber",
-                , "eventDate", "fieldNumber"
-                , "minimumElevationInMeters", "maximumElevationInMeters"
-                , "eventDate", "country"
-                , "stateProvince", "county", "institutionCode"};  // "ownedBy",
-        int c = 0;
-        String notMappedMessage = null;
-        ArrayList<String> fieldList = new ArrayList<>(Arrays.asList(fieldArray));
-        for (String field : fieldList) {
-            c++;
-            if (!line.isMapped(field)) {
-                if (c > 1) notMappedMessage += ", ";
-                notMappedMessage += field;
-            }
-        }
-        if (notMappedMessage != null) throw new AntwebException(notMappedMessage);
-    }
-
+    private static String sampleErrorLine = null;
 
     private List<String> transformLine(CSVRecord line) throws AntwebException {
 
@@ -135,7 +124,8 @@ public class GBIFTransformer {
                 String value = line.get(oldName);
                 row.put(pair.getRight(), value);
             } catch (Exception e) {
-                //A.log("transformLines() e for oldName:" + oldName + " right:" + pair.getRight() + " line:" + line);
+                A.log("transformLines() e:" + e.toString() + " oldName:" + oldName + " right:" + pair.getRight()); // + " line:" + line);
+                if (sampleErrorLine == null) sampleErrorLine = line.toString();
                 if (!AntwebProps.isDevMode()) throw e;
             }
         }
@@ -216,6 +206,27 @@ public class GBIFTransformer {
                 .stream()
                 .map(row::get)
                 .collect(Collectors.toList());
+    }
+
+
+    private void passFieldCheck (CSVRecord line) throws AntwebException {
+        // static ArrayList ***
+        String[] fieldArray = {"taxonRank", "specificEpithet"   // "CatalogNumber",
+                , "eventDate", "fieldNumber"
+                , "minimumElevationInMeters", "maximumElevationInMeters"
+                , "eventDate", "country"
+                , "stateProvince", "county", "institutionCode"};  // "ownedBy",
+        int c = 0;
+        String notMappedMessage = null;
+        ArrayList<String> fieldList = new ArrayList<>(Arrays.asList(fieldArray));
+        for (String field : fieldList) {
+            c++;
+            if (!line.isMapped(field)) {
+                if (c > 1) notMappedMessage += ", ";
+                notMappedMessage += field;
+            }
+        }
+        if (notMappedMessage != null) throw new AntwebException(notMappedMessage);
     }
 
 

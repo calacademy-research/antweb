@@ -94,7 +94,7 @@ A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
 
             boolean isDeleted = false;
             // remove the directory
-            if (!AntwebProps.isDevMode())    // Helpful to test, diagnose, but must be off to operate correctly.
+            //if (!AntwebProps.isDevMode())    // Helpful to test, diagnose, but must be off to operate correctly.
               isDeleted = Utility.deleteDirectory(tempDir);
             A.log("copyAndUnzipFile deleteDir:" + tempDir + " success:" + isDeleted);
         }
