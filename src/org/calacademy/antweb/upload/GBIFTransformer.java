@@ -59,7 +59,7 @@ public class GBIFTransformer {
      * @param outputFile Path that the transformed file will be written to
      * @return An error message string? Might be used in the future
      */
-    public String transformFile(Path inputFile, Path outputFile) {
+    public String transformFile(Path inputFile, Path outputFile) throws AntwebException {
 
         String errMsg = null;
 
@@ -85,6 +85,10 @@ public class GBIFTransformer {
         } catch (FileNotFoundException e) {
             errMsg = "transformFile() e:" + e;
             return errMsg;
+        } catch (java.io.UncheckedIOException e) {
+            errMsg = "transformFile() e:" + e;
+            //return errMsg;
+            throw new AntwebException(errMsg);
         } catch (IOException e) {
             errMsg = "transformFile() e:" + e;
             return errMsg;

@@ -15,7 +15,7 @@
 <div class="left">
 
 <% 
-    // Test this way: http://localhost/antweb/testMessage.do
+    // Test this way: http://localhost/testMessage.do
 %>
 <br>
 <br>
@@ -24,7 +24,8 @@
 <% 
     //Emailer.sendMail("re.mark.johnson@gmail.com", "Consider!", "This");
 
-
+    String o = DateUtil.runTests();
+    out.println(o);
 /*
   Group group = GroupMgr.getGroup(1);
   MessageMgr messageMgr = new MessageMgr();

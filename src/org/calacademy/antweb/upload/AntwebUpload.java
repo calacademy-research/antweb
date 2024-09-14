@@ -715,6 +715,10 @@ or for Worldants upload
         return true;
     }
 
+
+    private static int maxHabitat = 0;
+    private static int maxTypeStatus = 0;
+
     void saveSpecimen(Hashtable<String, Object> item)
       throws SQLException {
       //throws com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException {
@@ -754,6 +758,7 @@ or for Worldants upload
         
         String dml = "";
         Statement stmt = null;
+        String habitat = null;
         try {
             // prepare the fields and values
             Enumeration<String> keys = item.keys();
@@ -813,6 +818,9 @@ or for Worldants upload
                             values.append("'" + formatDate + "',");
                         } else {
                             getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedEnd, dateStr);
+                            A.log("dateCollected - code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
+                            // handle this: code:utep:ento:11767 dateStr:7/94 formatDate:null
+                            // Format into: 2024-02-10
                             //LogMgr.appendLog("dateCollected.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
                         }
                         break;
@@ -850,6 +858,17 @@ or for Worldants upload
                     default:
                         try {
                             value = (String) item.get(key);
+
+                            // for debugging later on...
+                            if ("habitat".equals(key)) {
+                                int habLength = value.length();
+                                if (habLength > maxHabitat) maxHabitat = habLength;
+                            }
+                            if ("type_status".equals(key)) {
+                                int tsLength = value.length();
+                                if (tsLength > maxTypeStatus) maxTypeStatus = tsLength;
+                            }
+
                             fields.append(key + ",");
 
                             // Perhaps a more stringent check here is appropriate.  For now, if the
@@ -930,7 +949,7 @@ or for Worldants upload
         } catch (SQLSyntaxErrorException e) {
             s_log.error("saveSpecimen() dml:" + dml + " e:" + e);
             String message = "Specimen jdbc exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e; // + " query:" + query;
-            s_log.debug("saveSpecimen() " + message);
+            A.log("saveSpecimen() " + message);
             getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
         } catch (SQLIntegrityConstraintViolationException e) {
             // Redundant. We are now checking above before the query is run.
@@ -942,12 +961,16 @@ or for Worldants upload
 
             // if it is the specimen table, we just quit?  Mark, Jan 27, 2011.
             // Should not happen.  We delete all specimens of a given access_group during to upload.
-            String message = "Specimen sql exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e; // + " query:" + query;
+            String message = "Specimen sql exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e;
             getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
             
             // if a different access_group attempts to load a code of another group's specimen...
 
-            if (e instanceof DataTruncation) return;
+            // Debugging
+            if (e instanceof DataTruncation) {
+                A.log("saveSpecimen() maxHabitat:" + maxHabitat + " maxTypeStatus:" + maxTypeStatus);
+                return;
+            }
             
             // or could we always add to the DBErrorSet and return?
             if (!(e instanceof SQLIntegrityConstraintViolationException)) {

@@ -9,8 +9,7 @@ import java.text.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-//import com.joestelmach.natty.*;
-//import com.joestelmach.natty.generated.*;
+import org.apache.commons.lang3.StringUtils;
 
 public abstract class DateUtil {
 
@@ -20,43 +19,50 @@ public abstract class DateUtil {
     return Year.now().getValue();
   }
 
-  public static void runTests() {
-    DateUtil.testConstructDateStr("1 May 2011");
-    DateUtil.testConstructDateStr("2011-05-02");
-    DateUtil.testConstructDateStr("2011-05-00");
-    DateUtil.testConstructDateStr("2012-00-00");
-    DateUtil.testConstructDateStr("2011-05");
-    DateUtil.testConstructDateStr("2011");
-    DateUtil.testConstructDateStr("11 Dec 1995");
-    DateUtil.testConstructDateStr("May 1 2011");
-    DateUtil.testConstructDateStr("May 1, 2011");
-    DateUtil.testConstructDateStr("29.v.1986");
-    DateUtil.testConstructDateStr("iv.1976");
-    DateUtil.testConstructDateStr("11-14.ii.2007");
-    DateUtil.testConstructDateStr("10.VIII.1987");
-    DateUtil.testConstructDateStr("12 2012");
-    DateUtil.testConstructDateStr("10 12 2012"); // How do we know? Flag this!
-    DateUtil.testConstructDateStr("21-Jul-99");
-    DateUtil.testConstructDateStr("21-Jul-1699");
-    DateUtil.testConstructDateStr("21-Jul-2222");
-    DateUtil.testConstructDateStr("08/1957");
-    DateUtil.testConstructDateStr("1986/00/00");
-    DateUtil.testConstructDateStr("2017/");
-    DateUtil.testConstructDateStr("1986/10/");
-    DateUtil.testConstructDateStr("1898/1899");
-    DateUtil.testConstructDateStr("02/1933");
-    DateUtil.testConstructDateStr("19/10/2013");
-    DateUtil.testConstructDateStr("1915-7-00");
-    DateUtil.testConstructDateStr("1995-11-27");
-    DateUtil.testConstructDateStr("2010/08/12");
-    DateUtil.testConstructDateStr("11/08/2011");
-    DateUtil.testConstructDateStr("11-Oct-2015");
-    DateUtil.testConstructDateStr("1996-10-06");
-    DateUtil.testConstructDateStr("4/2/69");
-    DateUtil.testConstructDateStr("04/02/69");
-    DateUtil.testConstructDateStr("1995-08-31");
-    s_log.debug(DateUtil.getConstructDateStr("1962-08-28"));
-    s_log.debug(DateUtil.getConstructDateStr("7/28/1958"));
+  public static String runTests() {
+    String o = "";
+
+    o += "<br>" + DateUtil.testConstructDateStr("1 May 2011");
+    o += "<br>" + DateUtil.testConstructDateStr("2011-05-02");
+    o += "<br>" + DateUtil.testConstructDateStr("2011-05-00");
+    o += "<br>" + DateUtil.testConstructDateStr("2012-00-00");
+    o += "<br>" + DateUtil.testConstructDateStr("2011-05");
+    o += "<br>" + DateUtil.testConstructDateStr("2011");
+    o += "<br>" + DateUtil.testConstructDateStr("11 Dec 1995");
+    o += "<br>" + DateUtil.testConstructDateStr("May 1 2011");
+    o += "<br>" + DateUtil.testConstructDateStr("May 1, 2011");
+    o += "<br>" + DateUtil.testConstructDateStr("29.v.1986");
+    o += "<br>" + DateUtil.testConstructDateStr("iv.1976");
+    o += "<br>" + DateUtil.testConstructDateStr("11-14.ii.2007");
+    o += "<br>" + DateUtil.testConstructDateStr("10.VIII.1987");
+    o += "<br>" + DateUtil.testConstructDateStr("12 2012");
+    o += "<br>" + DateUtil.testConstructDateStr("10 12 2012"); // How do we know? Flag this!
+    o += "<br>" + DateUtil.testConstructDateStr("21-Jul-99");
+    o += "<br>" + DateUtil.testConstructDateStr("21-Jul-1699");
+    o += "<br>" + DateUtil.testConstructDateStr("21-Jul-2222");
+    o += "<br>" + DateUtil.testConstructDateStr("08/1957");
+    o += "<br>" + DateUtil.testConstructDateStr("1986/00/00");
+    o += "<br>" + DateUtil.testConstructDateStr("2017/");
+    o += "<br>" + DateUtil.testConstructDateStr("1986/10/");
+    o += "<br>" + DateUtil.testConstructDateStr("1898/1899");
+    o += "<br>" + DateUtil.testConstructDateStr("02/1933");
+    o += "<br>" + DateUtil.testConstructDateStr("19/10/2013");
+    o += "<br>" + DateUtil.testConstructDateStr("1915-7-00");
+    o += "<br>" + DateUtil.testConstructDateStr("1995-11-27");
+    o += "<br>" + DateUtil.testConstructDateStr("2010/08/12");
+    o += "<br>" + DateUtil.testConstructDateStr("11/08/2011");
+    o += "<br>" + DateUtil.testConstructDateStr("11-Oct-2015");
+    o += "<br>" + DateUtil.testConstructDateStr("1996-10-06");
+    o += "<br>" + DateUtil.testConstructDateStr("4/2/69");
+    o += "<br>" + DateUtil.testConstructDateStr("04/02/69");
+    o += "<br>" + DateUtil.testConstructDateStr("1995-08-31");
+    o += "<br>" + DateUtil.testConstructDateStr("1962-08-28");
+    o += "<br>" + DateUtil.testConstructDateStr("7/28/1958");
+    o += "<br>" + DateUtil.testConstructDateStr("7/28/1958");
+    o += "<br>" + DateUtil.testConstructDateStr("7/94");
+    o += "<br>" + DateUtil.testConstructDateStr("1/22");
+    o += "<br>" + DateUtil.testConstructDateStr("12/22");
+    return o;
   }
 
   public static Date getFormatDateShort(String dateStr) {
@@ -183,31 +189,13 @@ public abstract class DateUtil {
     return date;
   }
 
-  private static Date handleDdMmmYy(String dateStr) {
-    //String dateStr = "21-Jul-99"; Because of University of Pretoria
-    int indexOfSecondHyphen = dateStr.indexOf('-', 6);
-    if (indexOfSecondHyphen < 6) return null;
-    if (dateStr.length() > 9) return null;
-    String shortYear = dateStr.substring(indexOfSecondHyphen + 1);
-    int year = Integer.parseInt(shortYear);
-    if (year > 50) {
-      year = year + 1900;
-    } else {
-      year = year + 2000;
-    }
-    dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
-    //A.log("message-body.jsp i:" + indexOfSecondHyphen + " year:" + year + " dateStr:" + dateStr + " l:" + dateStr.length());
-    Date date = format("dd-MMM-yyyy", dateStr);
-    return date;
-  }
-
   private static int s_debugStep = 0;
   public static String testConstructDateStr(String dateStr) {
     if (dateStr == null) return null;
     // try {
     String constructedDate = getConstructDateStr(dateStr);
-    if (constructedDate == null) s_log.debug("testConstructDateStr() dateStr:" + dateStr + " formatted:" + constructedDate + " step:" + s_debugStep);
-    return constructedDate;
+    String msg = "testConstructDateStr() dateStr:" + dateStr + " formatted:" + constructedDate + " step:" + s_debugStep;
+    return msg;
   }
   // Method designed to take scrappy user entered dates and return Antweb formatted Date
     public static Date constructDate(String dateStr) {
@@ -275,6 +263,7 @@ public abstract class DateUtil {
         }
       }
 
+
       if (returnDate == null) {
         if (DateUtil.getFormatDateShortShort(dateStr) != null) {  // Like: 2011
           returnDate = getDate(dateStr + "-01-01");
@@ -288,29 +277,6 @@ public abstract class DateUtil {
           s_debugStep = 11;
         }
       }
-
-/*
-      if (returnDate == null) {
-        // Using here the Natty date parser. http://natty.joestelmach.com/
-        Parser parser = new Parser();
-        List<DateGroup> groups = parser.parse(dateStr); //"the day before next thursday");
-        for (DateGroup group : groups) {
-          List<Date> dates = group.getDates();
-          if (dates.get(0) != null) returnDate = dates.get(0);
-          s_debugStep = 12;
-          A.log("constructDate() 12 dateStr:" + dateStr + " returnDate:" + returnDate);
-          break;
-
-        //int line = group.getLine();
-        //int column = group.getPosition();
-        //String matchingValue = group.getText();
-        //String syntaxTree = group.getSyntaxTree().toStringTree();
-        //Map> parseMap = group.getParseLocations();
-        //boolean isRecurreing = group.isRecurring();
-        //Date recursUntil = group.getRecursUntil();
-        }
-      }
-*/
 
       // This is the new way. Pretty cumbersome, right?
       if (returnDate == null) {
@@ -368,12 +334,38 @@ public abstract class DateUtil {
           s_debugStep = 21;
           if (returnDate != null) return returnDate;
 
+          // If Ex: 7/94 misread earlier, here we fix.
+          returnDate = handleMYy(dateStr);
+          //A.log("constructDate() 2 dateStr:" + dateStr + " returnDate: " + returnDate);
+          s_debugStep = 22;
+          if (returnDate != null) return returnDate;
+
+
           s_debugStep = 19;
           return null;
       }
 
       return returnDate;
     }
+
+
+  private static Date handleDdMmmYy(String dateStr) {
+    //String dateStr = "21-Jul-99"; Because of University of Pretoria
+    int indexOfSecondHyphen = dateStr.indexOf('-', 6);
+    if (indexOfSecondHyphen < 6) return null;
+    if (dateStr.length() > 9) return null;
+    String shortYear = dateStr.substring(indexOfSecondHyphen + 1);
+    int year = Integer.parseInt(shortYear);
+    if (year > 50) {
+      year = year + 1900;
+    } else {
+      year = year + 2000;
+    }
+    dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
+    //A.log("message-body.jsp i:" + indexOfSecondHyphen + " year:" + year + " dateStr:" + dateStr + " l:" + dateStr.length());
+    Date date = format("dd-MMM-yyyy", dateStr);
+    return date;
+  }
 
 
   private static Date handleDMYy(String dateStr) {
@@ -403,7 +395,7 @@ public abstract class DateUtil {
     String firstNum = dateStr.substring(0, indexOfFirstHyphen);
     int firstNumInt = Integer.parseInt(firstNum);
     Date date = null;
-    if (firstNumInt <= 12) {
+    if (firstNumInt <= 12) {  // Sufficient check??
       date = format("MM/dd/yyyy", dateStr);
     } else {
       date = format("dd/MM/yyyy", dateStr);
@@ -412,7 +404,30 @@ public abstract class DateUtil {
     return date;
   }
 
-   // Basciallly just for validation. Have a dateStr in our preferred format and want a date object.
+
+  private static Date handleMYy(String dateStr) {
+    //String dateStr = "7/94";
+    int slashes = StringUtils.countMatches(dateStr, "/");
+    if (slashes != 1) return null;
+
+    int indexOfSlash = dateStr.indexOf('/');
+    String mon = dateStr.substring(0, indexOfSlash);
+    String shortYear = dateStr.substring(indexOfSlash + 1);
+    //A.log("handleMYy() mon:" + mon + " year:" + shortYear);
+    int year = Integer.parseInt(shortYear);
+    if (year > 50) {
+      year = year + 1900;
+    } else {
+      year = year + 2000;
+    }
+    dateStr = year + "-" + mon + "-01";
+    //A.log("handleMYy year:" + year + " mon:" + mon + " dateStr:" + dateStr + " l:" + dateStr.length());
+    Date date = format("yyyy-MM-dd", dateStr);
+    return date;
+  }
+
+
+  // Basciallly just for validation. Have a dateStr in our preferred format and want a date object.
     public static Date getDate(String dateStr) {
         Date returnDate = null;
         if (dateStr != null) {
@@ -494,156 +509,6 @@ public abstract class DateUtil {
       return month;
     }
 
-
-/*
-    public static void d(String d) {
-		Date theDate = DateUtil.constructDate(d);
-
-        //(new SimpleDateFormat("yy"))
-
-		A.log("date:" + d + " formatted:" + getFormatDateStr(theDate));
-
-    }
-*/
-
-  /* // DEPRECATED ALMOST THERE
-    public static Date getFormatDate(String dateStr) {
-      Date theDay = null;
-      try {
-        // handle date in the format like log4j: 2008-08-28 09:46:55
-        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        theDay = (Date)formatter.parse(dateStr);
-        //A.log("DateUtil.getFormatDate() theDayStr:" + dateStr + " theDay:" + theDay);
-      } catch (ParseException e) {
-        return null;
-      }
-      return theDay;
-    }
-*/
-
-
-/*
-    public static Date getFormatDate() {
-      return getFormatDateOrNow(new Date().toString());
-    }
-
-    public static Date getFormatDateOrNow(String dateStr) {
-      Date theDay = null;
-      try {
-        // handle date in the format like log4j: 2008-08-28 09:46:55
-        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        theDay = (Date)formatter.parse(dateStr);
-        //A.log("DateUtil.getFormatDateOrNow() theDayStr:" + dateStr + " theDay:" + theDay);
-      } catch (ParseException e) {
-        theDay = new Date();
-      }
-      return theDay;
-    }
-*/
-
-/*
-  private Date getParseDate(String thedate) {
-    Date returnDate = null;
-
-    thedate = thedate.trim();
-    if (thedate.equals("")) return null;
-
-    A.log("getParseDate(" + thedate + ") 1 ");
-
-    // many possibilities here...
-    returnDate = getDate(thedate);
-    if (returnDate != null) return returnDate;
-    A.log("getParseDate(" + thedate + ") 1 ");
-
-    // Not a simply parsed date.  perhaps it is like: 8-11 Feb 2010   or like: 1 Feb - Mar 2010
-    if (thedate.contains("-")) {
-      String t = thedate.substring(thedate.indexOf("-") + 1);
-      //s_log.info("getDateCollected() hypen removed from origDatesCollected:" + thedate + " making:" + t);
-      returnDate = getDate(t);
-      if (returnDate != null) return returnDate;
-
-      returnDate = getTruncatedDate(t);
-      if (returnDate != null) return returnDate;
-    }
-
-    A.log("getParseDate(" + thedate + ") 1 ");
-
-    // Maybe it is simply like: Mar 2011   or like: 2010
-    returnDate = getTruncatedDate(thedate);
-
-    A.log("getParseDate(" + thedate + ") 1 ");
-
-    if (returnDate != null) return returnDate;
-
-    s_log.warn("getParseDate() Date not found for date:" + thedate);
-
-    return null;
-  }
-*/
-
-  /*
-  private static Date parseDate(String dateStr) {
-    try {
-      Date d = new Date(dateStr);
-      if (AntwebProps.isDevMode()) {
-        s_log.warn("parseDate() DEPRECATED! Found from dateStr:" + dateStr + " date:" + d);
-      }
-      return d;
-    } catch (Exception e) {
-      // These are expected to occur with our data.
-      A.log("parseDate() failed on datesCollected:" + dateStr + " e:" + e);
-    }
-    return null;
-  }
-  */
-
-/*
-// To Deprecate! Almost there
-    // Method designed to take scrappy user entered dates and return Antweb formatted Date String
-    public static String constructDateStr(String dateStr) {
-    
-      if (dateStr == null) return null;
-    
-      if (DateUtil.isDate(dateStr)) {  // Like: 1 May 2011
-        Date date = DateUtil.constructDate(dateStr);
-        String formatDate = DateUtil.getFormatDateStr(date);
-        return formatDate;
-      }
-
-      if (dateStr.contains(".")) {
-        return DateUtil.romanConvertDate(dateStr);
-      }
-      
-      if (DateUtil.getFormatDate(dateStr) != null) { // Like: 2011-05-01
-        return dateStr;
-      }
-      if (DateUtil.getFormatDateShort(dateStr) != null) {  // Like: 2011-05
-        return dateStr + "-00";      
-      }
-
-      if (dateStr.contains(" ")) {
-        int firstSpaceI = dateStr.indexOf(" ");
-        int secondSpaceI = dateStr.indexOf(" ", firstSpaceI + 1);
-        if (firstSpaceI > 0) {
-           if (secondSpaceI < 0) {
-             A.p("constructDateStr(" + dateStr + ") mo year");    
-             return dateStr;
-           } else {
-             A.p("constructDateStr(" + dateStr + ") day mo year");    
-             // if mo > 12 error
-             return dateStr;
-           }
-        }      
-        return null;
-      }
-
-      if (DateUtil.getFormatDateShortShort(dateStr) != null) {  // Like: 2011
-        return dateStr + "-00-00";      
-      }
-  
-      return null;
-    }
-*/
 }
 
 
