@@ -11,6 +11,7 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+
 public class TaxonProxy {
 
     private Connection m_connection = null;
@@ -35,7 +36,7 @@ public class TaxonProxy {
     }
 */
 
-    
+
     public static ArrayList<Taxon> getSubfamilies() {
         ArrayList<Taxon> subfamilies = null;
         Connection connection = null;
