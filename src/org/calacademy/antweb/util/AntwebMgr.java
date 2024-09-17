@@ -117,41 +117,51 @@ public class AntwebMgr {
 
         //if (log) s_log.warn("populateMgrs() Populating Managers...");
 
-        //if (log) s_log.warn("populateMgrs() GroupMgr");
+        if (log) s_log.warn("populateMgrs() GroupMgr");
         GroupMgr.populate(connection, forceReload);
-        //if (log) s_log.warn("populateMgrs() AllAntwebMgr");
+
+        if (log) s_log.warn("populateMgrs() AllAntwebMgr");
         AllAntwebMgr.populate(connection);
-        //if (log) s_log.warn("populateMgrs() LoginMgr");
+
+        if (log) s_log.warn("populateMgrs() LoginMgr");
         LoginMgr.populate(connection, forceReload, true);
         isLoginMgrPopulated = true;
-        //if (log) s_log.warn("populateMgrs() ProjectMgr");
+
+        if (log) s_log.warn("populateMgrs() ProjectMgr");
         ProjectMgr.populate(connection, forceReload);
         isProjectPopulated = true;
-        //if (log) s_log.warn("populateMgrs() BioregionMgr");
+
+        if (log) s_log.warn("populateMgrs() BioregionMgr");
         BioregionMgr.populate(connection, forceReload);
         isBioregionPopulated = true;
-        //if (log) s_log.warn("populateMgrs() MuseumMgr");
+
+        if (log) s_log.warn("populateMgrs() MuseumMgr");
         MuseumMgr.populate(connection, forceReload);
         isMuseumPopulated = true;
-        //if (log) s_log.warn("populateMgrs() GeolocaleMgr");
-        isGeolocalePopulated = true;
-        GeolocaleMgr.populate(connection, forceReload, true);  // Slow!
-        //if (log) s_log.warn("populateMgrs() TaxonPropMgr");
+
+        if (log) s_log.warn("populateMgrs() TaxonPropMgr");
         TaxonPropMgr.populate(connection, forceReload);
         isTaxonPropMgrPopulated = true;
-        if (log) s_log.info("populateMgrs() TaxonMgr");
-        TaxonMgr.populate(connection, forceReload, true);
-        if (log) s_log.info("populateMgrs() TaxonMgr");
-        isTaxonMgrPopulated = true;
-        //if (log) s_log.warn("populateMgrs() UploadMgr");
+
+        if (log) s_log.warn("populateMgrs() UploadMgr");
         UploadMgr.populate(connection, forceReload);
         isUploadMgrPopulated = true;
-        //if (log) s_log.warn("populateMgrs() ArtistMgr");
+
+        if (log) s_log.warn("populateMgrs() ArtistMgr");
         ArtistMgr.populate(connection, forceReload, true);
         isArtistMgrPopulated = true;
-        //if (log) s_log.warn("populateMgrs() AdminAlertMgr");
+
+        if (log) s_log.warn("populateMgrs() AdminAlertMgr");
         AdminAlertMgr.populate(connection);
         isAdminAlertMgrPopulated = true;
+
+        if (log) s_log.warn("populateMgrs() GeolocaleMgr");
+        isGeolocalePopulated = true;
+        GeolocaleMgr.populate(connection, forceReload, true);  // Slow! local:18 seconds.
+
+        if (log) s_log.info("populateMgrs() TaxonMgr");   // Slow! local:37 seconds.
+        TaxonMgr.populate(connection, forceReload, true);
+        isTaxonMgrPopulated = true;
 
         ServerStatusAction.populate(connection);
 
@@ -183,15 +193,6 @@ public class AntwebMgr {
         } else if ("museum".equals(name)) {
             MuseumMgr.populate(connection, forceReload);
             message = "MuseumMgr Reloaded.";
-        } else if ("geolocale".equals(name)) {
-          GeolocaleMgr.populate(connection, forceReload, true);  // Slow!
-          message = "GeolocaleMgr Reloaded.";
-        } else if ("taxonProp".equals(name)) {
-            TaxonPropMgr.populate(connection, forceReload);
-            message = "TaxonPropMgr Reloaded.";
-        } else if ("taxon".equals(name)) {
-            TaxonMgr.populate(connection, forceReload, true);
-            message = "TaxonMgr Reloaded.";
         } else if ("upload".equals(name)) {
             UploadMgr.populate(connection, forceReload);
             message = "UploadMgr Reloaded.";
@@ -201,6 +202,15 @@ public class AntwebMgr {
         } else if ("adminAlert".equals(name)) {
             AdminAlertMgr.populate(connection);
             message = "AdminAlertMgr Reloaded.";
+        } else if ("taxonProp".equals(name)) {
+            TaxonPropMgr.populate(connection, forceReload);
+            message = "TaxonPropMgr Reloaded.";
+        } else if ("geolocale".equals(name)) {
+          GeolocaleMgr.populate(connection, forceReload, true);  // Slow! 18 sec.
+          message = "GeolocaleMgr Reloaded.";
+        } else if ("taxon".equals(name)) {
+            TaxonMgr.populate(connection, forceReload, true);  // Slow 37 sec.
+            message = "TaxonMgr Reloaded.";
         } else {
             AntwebMgr.populate(connection, true);
             message = "AntwebMgr Reloaded.";

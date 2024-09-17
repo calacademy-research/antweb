@@ -293,7 +293,7 @@ public abstract class Queries {
           , "Show the genera that are in more than one subfamily"
           , "<th>Genus</th><th>Subfamily Count</th><th>Source</th><th>Statuses</th>"      
           , "select genus, count(distinct subfamily), source, group_concat(distinct status) from taxon where taxarank != 'family' and taxarank != 'subfamily' and status not in ('synonym', 'original combination') group by genus, source having count(distinct subfamily) > 1"
-          , "generalInMultipleSubfamiliesDetail"
+          , "generaInMultipleSubfamiliesDetail"
           ));
             
         // This ran for long time and created trouble for site.    
@@ -305,7 +305,7 @@ public abstract class Queries {
           ));
             
         queries.add(new NamedQuery(
-          "generalInMultipleSubfamiliesDetail"
+          "generaInMultipleSubfamiliesDetail"
           , "Show the genera that are in more than one subfamily"
           , "<th>Taxon Name</th><th>Subfamily</th><th>Genus</th><th>Source</th><th>Created</th><th>Insert Method</th>"      
           , "select taxon_name, subfamily, genus, source, created, insert_method from taxon where genus in (select genus from taxon where taxarank != 'family' and taxarank != 'subfamily' and status != 'synonym' group by genus having count(distinct subfamily) > 1)"

@@ -304,7 +304,7 @@ public class MessageMgr {
 		  logString += "\r\r&nbsp;<b> " + i + "</b>:" + test.getHeading();
 	  }          
 
-	  A.log("getMessagesReport() logString:" + logString);
+	  //A.log("getMessagesReport() logString:" + logString);
       return logString;
     }
 

@@ -12,6 +12,10 @@
 <%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 
+<%@ page import="java.sql.*" %>
+<%@ page import="org.calacademy.antweb.home.*" %>
+
+
 <div class="left">
 
 <% 
@@ -23,6 +27,15 @@
 
 <% 
     //Emailer.sendMail("re.mark.johnson@gmail.com", "Consider!", "This");
+
+    out.println("<br>isOnline:" + HttpUtil.isOnline() + "</br>");
+
+    out.println("<br> genus:" + TaxonProxy.getGenus("camponotus") + "<br>");
+    out.println("<br> genus:" + TaxonProxy.getGenus("lasius") + "<br>");
+
+    out.println("<br> taxon:" + TaxonProxy.getTaxon("formicinaecamponotus") + "<br>");
+
+    out.println("<br>subfamily:" + TaxonProxy.getSubfamily("Formicinae") + "<br>");
 
     String o = DateUtil.runTests();
     out.println(o);

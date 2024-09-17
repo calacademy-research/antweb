@@ -797,7 +797,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             //A.iLog(4, "cleanCollectionCode() clean collectionCode:" + collectionCode + " origCollectionCode:" + origCollectionCode, 200);
         } else {
             collectionCode = UploadUtil.createCode(collectionCode);
-            A.iLog(5, "cleanCollectionCode() create collectionCode:" + collectionCode + " origCollectionCode:" + origCollectionCode, 200);
+            A.iLog(5, "cleanCollectionCode() create collectionCode:" + collectionCode + " origCollectionCode:" + origCollectionCode, 1000);
         }
         specimenItem.put("collectioncode", collectionCode);
     }
