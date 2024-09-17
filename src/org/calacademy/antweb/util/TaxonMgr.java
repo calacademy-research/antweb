@@ -16,9 +16,9 @@ public class TaxonMgr extends Manager {
     private static final Log s_log = LogFactory.getLog(TaxonMgr.class);
 
     private static ArrayList<Taxon> s_subfamilies;
-    
+
     private static HashMap<String, Taxon> s_genera;
-    
+
     private static HashMap<String, Taxon> s_species;
 
     // Shallow copies
@@ -29,28 +29,24 @@ public class TaxonMgr extends Manager {
     //private static List<String> taxaNamesList = null;
     private static List<String> prettyTaxaNamesList;
 
-    private static Date s_populateTime;
+    private static Date s_populateTime = null;
+
+    public static boolean isPopulated() {
+        return s_populateTime != null;
+    }
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
         if (!forceReload && s_subfamilies != null) return;
 
-        TaxonDb taxonDb = new TaxonDb(connection);
-        s_subfamilies = taxonDb.getTaxa(Rank.SUBFAMILY);
-        //A.log("populate() subfamilies:" + s_subfamilies);
+        s_subfamilies = popSubfamilies(connection);
 
-        ArrayList<Taxon> genera = taxonDb.getTaxa(Rank.GENUS);
-        s_genera = new HashMap<>();
-
-        //A.log("populate() genera.size:" + genera.size());
-        for (Taxon taxon : genera) {
-            //if ("apterogyna".equals(taxon.getGenus())) A.log("populate() genus:" + taxon);
-            s_genera.put(taxon.getTaxonName(), taxon);
-        }
+        s_genera = popGenera(connection);
 
         // For Taxon Name Search Autocomplete
         prettyTaxaNamesList = new ArrayList<>();
         prettyTaxaNamesList.addAll(CommonNames.getNames());
 
+        TaxonDb taxonDb = new TaxonDb(connection);
         List<String> taxaNamesList = taxonDb.getTaxonNames();
         for (String taxonName : taxaNamesList) {
             prettyTaxaNamesList.add(Taxon.getPrettyTaxonName(taxonName));
@@ -67,11 +63,12 @@ public class TaxonMgr extends Manager {
         s_populateTime = new Date();
 
         s_log.info("populate() " + report());
-       // if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
+        // if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
     }
 
     public static String report() {
-        return "TaxonMgr last loaded:" + s_populateTime + " subfamily:" + getSubfamilies().size() + " genera:" + s_genera.size() + " species:" + getSpeciesCount() + " taxa:" + s_taxa.size();
+        return "TaxonMgr last loaded:" + s_populateTime + " subfamily:" + getSubfamilies().size()
+            + " genera:" + s_genera.size() + " species:" + getSpeciesCount() + " taxa:" + s_taxa.size();
     }
 
     public static int getSpeciesCount() {
@@ -98,18 +95,38 @@ public class TaxonMgr extends Manager {
         return validTaxonCount;
     }
 
-    public static ArrayList<Taxon> getSubfamilies() {
-      //A.log("getSubfamilies() TaxonMgr.subfamilies:" + s_subfamilies);
-      return s_subfamilies;
+    public static ArrayList<Taxon> popSubfamilies(Connection connection) {
+        TaxonDb taxonDb = new TaxonDb(connection);
+        ArrayList<Taxon> subfamilies = taxonDb.getTaxa(Rank.SUBFAMILY);
+        //A.log("populate() subfamilies:" + s_subfamilies);
+        return subfamilies;
     }
-    
+
+    public static ArrayList<Taxon> getSubfamilies() {
+        //A.log("getSubfamilies() TaxonMgr.subfamilies:" + s_subfamilies);
+        return s_subfamilies;
+    }
+
     public static Subfamily getSubfamily(String subfamilyName) {
-      if (subfamilyName == null) return null;
-      Subfamily subfamily = null;
-      for (Taxon taxon : getSubfamilies()) {
-        if (subfamilyName.equals(taxon.getSubfamily())) return (Subfamily) taxon;
-      }
-      return null;
+        if (subfamilyName == null) return null;
+        Subfamily subfamily = null;
+        for (Taxon taxon : getSubfamilies()) {
+            if (subfamilyName.equals(taxon.getSubfamily())) return (Subfamily) taxon;
+        }
+        return null;
+    }
+
+    public static HashMap<String, Taxon> popGenera(Connection connection) {
+        TaxonDb taxonDb = new TaxonDb(connection);
+        ArrayList<Taxon> genusList = taxonDb.getTaxa(Rank.GENUS);
+        HashMap<String, Taxon> genera = new HashMap<String, Taxon>();
+
+        //A.log("populate() genera.size:" + genera.size());
+        for (Taxon taxon : genusList) {
+            //if ("apterogyna".equals(taxon.getGenus())) A.log("populate() genus:" + taxon);
+            genera.put(taxon.getTaxonName(), taxon);
+        }
+        return genera;
     }
 
     public static ArrayList<Genus> getGenera() {
@@ -122,6 +139,7 @@ public class TaxonMgr extends Manager {
     }
 
     private static boolean s_ambiguousGenusReported = false;
+
     // Used from Specimen upload and specimen-body.jsp
     // genusTaxonName is [subfamily][genus]
     public static Genus getGenus(String genusTaxonName) {
@@ -138,12 +156,12 @@ public class TaxonMgr extends Manager {
       if (genusName == null) return null;
 
       Taxon genus = null;
-      //A.log("getGenus() s_genera:" + s_genera.size());
+      //A.log("getGenusFromName() s_genera:" + s_genera.size());
 
       boolean genusFound = false;
       s_ambiguousGenusReported = false;
       for (Taxon g : s_genera.values()) {
-        //A.log("getGenus() genusTaxonName:" + genusName + " genus:" + genus.getName());
+        //A.log("getGenusFromName() genusTaxonName:" + genusName + " genus:" + genus.getName());
         if (genusName.equals(g.getName())) {
             if (Status.SYNONYM.equals(g.getStatus())) {
                 //A.log("Not using synonym " + g.getName());

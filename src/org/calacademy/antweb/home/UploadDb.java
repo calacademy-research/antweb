@@ -684,7 +684,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
               debugSubfamilyList += ", " + subfamily;
             }
           }
-          if (AntwebProps.isDevMode() && count == 0) s_log.error("getAntwebSubfamily() Problem? Not sure.  No subfamily for genus:" + genus + " subfamilySet:" + debugSubfamilyList);
+          if (AntwebProps.isDevMode() && count == 0) A.iLog("getAntwebSubfamily() Problem? Not sure.  No subfamily for genus:" + genus + " subfamilySet:" + debugSubfamilyList);
           if (count > 1) s_log.error("getAntwebSubfamily() more than one subfamily for genus:" + genus + " subfamilySet:" + debugSubfamilyList);
         } finally {
           DBUtil.close(stmt, rset, "UploadDb.getAntwebSubfamily()");

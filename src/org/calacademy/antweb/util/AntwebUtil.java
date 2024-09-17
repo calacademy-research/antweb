@@ -253,7 +253,10 @@ public abstract class AntwebUtil {
 
   private static ArrayList<Integer> s_uploadGroupList;
   public static ArrayList<Integer> getUploadGroupList() {
-    if (s_uploadGroupList != null) return s_uploadGroupList;
+    if (s_uploadGroupList != null) {
+      A.log("getUploadGroupList() found:" + s_uploadGroupList.size());
+      return s_uploadGroupList;
+    }
 
     Date start = new Date();
 
@@ -261,7 +264,7 @@ public abstract class AntwebUtil {
     ArrayList<String> files = getUploadDirFiles();
     for (String file : files) {
       if (file != null && file .length() < 18){
-        s_log.debug("getUploadGroupList() File is short:" + file);
+        A.log("getUploadGroupList() File is short:" + file);
         continue;
       }
       String kind = file.substring(18); // everything after the date
@@ -273,6 +276,9 @@ public abstract class AntwebUtil {
         if (kind.indexOf("specimenTW") == 0) {
           specIndex = "specimenTW".length();
         }
+        if (kind.indexOf("specimenGBIF") == 0) {
+          specIndex = "specimenGBIF".length();
+        }
         String groupId = null;
         Integer groupIdInteger = 0;
         try {
@@ -280,11 +286,11 @@ public abstract class AntwebUtil {
             groupIdInteger = Integer.valueOf(groupId);
             //A.log("groupIdInteger:" + groupIdInteger);
         } catch (NumberFormatException e) {
-            s_log.error("getUploadGroupList() Seems to happen at startup requesting a curate page. OK to proceed? specIndex:" + specIndex + " groupId:" + groupId + " e:" + e);
+            s_log.error("getUploadGroupList() kind:" + kind + " specIndex:" + specIndex + " groupId:" + groupId + " e:" + e);
         }
         if (!s_uploadGroupList.contains(groupIdInteger)) s_uploadGroupList.add(groupIdInteger);
       } else {
-        if (kind != null && !kind.contains("worldants")) s_log.debug("getUploadGroupList() ! specIndex:" + specIndex + " file:" + file + " kind:" + kind);
+        if (kind != null && !kind.contains("worldants")) A.log("getUploadGroupList() ! specIndex:" + specIndex + " file:" + file + " kind:" + kind);
       }
     }
     Collections.sort(s_uploadGroupList);

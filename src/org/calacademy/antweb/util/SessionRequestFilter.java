@@ -208,11 +208,12 @@ public class SessionRequestFilter implements Filter {
         return execTime;
     }
 
-
     public void init(FilterConfig filterConfig) throws ServletException {
         s_log.warn("init() - Server is initializing...");
+
         String message = "";
 		System.setProperty("jsse.enableSNIExtension", "false");
+
 
         DataSource ds = null;
         Connection connection = null;

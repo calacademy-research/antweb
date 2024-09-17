@@ -39,6 +39,10 @@ public class TaxonDb extends AntwebDb {
         String taxonName = getTaxonName(subfamily, genus, null, null, "genus");
         return (Genus) getTaxon(taxonName);
     }
+    public Genus getGenus(String genus) throws SQLException, AntwebException {
+        String taxonName = getTaxonName(null, genus, null, null, "genus");
+        return (Genus) getTaxon(taxonName);
+    }
     public Species getSpecies(String subfamily, String genus, String species) throws SQLException, AntwebException {
         String taxonName = getTaxonName(subfamily, genus, species, null, "species");
         return (Species) getTaxon(taxonName);
@@ -72,7 +76,7 @@ public class TaxonDb extends AntwebDb {
 
         String theQuery = "";
 
-        boolean log = true && "myrmicinaetetramorium vernicosum".equals(taxonName);
+        boolean log = false && AntwebProps.isDevMode() && "formicinaecamponotus".equals(taxonName); // && "myrmicinaetetramorium vernicosum".equals(taxonName);
         ResultSet rset = null;
         PreparedStatement stmt = null;
         try {
@@ -95,7 +99,7 @@ public class TaxonDb extends AntwebDb {
 
             int count = 0;
             while (rset.next()) {
-                if (log) s_log.debug("getTaxon() IN query:" + theQuery);
+                //if (log) A.log("getTaxon() IN query:" + theQuery);
 
                 ++count; // Only one record expected
 
@@ -206,12 +210,13 @@ public class TaxonDb extends AntwebDb {
           //It may not be found during Worldants, for instance amblyoponinae, but after the cleanup process it will...
           String warning = " taxon not found taxonName:" + taxonName;
           //if (AntwebProps.isDevMode()) warning += " theQuery:" + theQuery;
-          s_log.debug("getTaxon() " + warning + " query:" + theQuery + " taxonFromMgr:" + TaxonMgr.getTaxon(taxonName) + " antcatCount:" + getAntcatCount());
+          //A.log("getTaxon() " + warning + " query:" + theQuery + " taxonFromMgr:" + TaxonMgr.getTaxon(taxonName) + " antcatCount:" + getAntcatCount());
           return null;
         }
         
-        if (AntwebProps.isDevMode() && "myrmicinaestrumigenys emmae".equals("taxonName")) {
-            s_log.warn("getTaxon() name:" + taxonName + " taxon:" + taxon.getTaxonName() + " query:" + theQuery);
+        if (log) {
+            A.log("getTaxon() name:" + taxonName + " taxon:" + taxon.getTaxonName() + " query:" + theQuery);
+            //AntwebUtil.logShortStackTrace(10);
         }
         return taxon;
     }

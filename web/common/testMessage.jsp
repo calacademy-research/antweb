@@ -12,7 +12,7 @@
 
 <% 
     String header = (String) request.getAttribute("header"); 
-    if (header == null) header = "message...";
+    if (header == null) header = "testMessage";
 %>    
     
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">

@@ -1,5 +1,6 @@
 package org.calacademy.antweb.upload;
 
+import org.calacademy.antweb.Genus;
 import org.calacademy.antweb.util.AntwebProps;
 
 import org.apache.commons.csv.CSVFormat;
@@ -22,11 +23,37 @@ import java.util.stream.Collectors;
 
 public class GBIFTransformer {
 
-
     private static final Log s_log = LogFactory.getLog(GBIFUploader.class);
 
     // The columns to be written in the output file. Using a list to specify column order.
     private final List<String> outputColumnOrder = new LinkedList<>();
+
+    // list of GBIF headers and their AntWeb counterparts
+    // On the left are GBIF header values. On the right are Antweb header values.
+    private final Pair<String, String>[] directHeaderTranslations = new Pair[]{
+            Pair.of("id", "SpecimenCode"),
+            Pair.of("identifiedBy", "DeterminedBy"),
+            Pair.of("dateIdentified", "DateDetermined"),
+            Pair.of("preparations", "Medium"),
+            Pair.of("typeStatus", "TypeStatus"),
+            Pair.of("institutionCode", "OwnedBy"),    // convert CAS to CASC
+            Pair.of("recordedBy", "CollectedBy"),
+            Pair.of("habitat", "Habitat"),
+            Pair.of("samplingProtocol", "Method"),
+            Pair.of("verbatimLocality", "LocalityName"),
+            Pair.of("decimalLatitude", "LocLatitude"),
+            Pair.of("decimalLongitude", "LocLongitude"),
+            Pair.of("genus", "[Species]Genus"),
+            Pair.of("specificEpithet", "SpeciesName"),
+            Pair.of("infraspecificEpithet", "Subspecies"),
+//            Pair.of("subgenus", "Subgenus"),  // not included in export
+//            Pair.of("subfamily", "Subfamily"),    // not included in export
+            Pair.of("family", "Family"),
+            Pair.of("order", "Order"),
+            Pair.of("class", "Class"),
+            Pair.of("phylum", "Phylum"),
+            Pair.of("kingdom", "Kingdom"),
+    };
 
     public GBIFTransformer() {
         for (Pair<String, String> pair : directHeaderTranslations) {
@@ -35,14 +62,23 @@ public class GBIFTransformer {
 
         // generated columns go here
         List<String> generatedOutputColumns = Arrays.asList(
-                "datecollectedstart",
-                "datecollectedend",
-                "elevation",
-                "ElevationMaxError",
-                "ownedby",
-                "collectioncode"    // taken from fieldNumber, strip 'eventID:' prefix
+         //       "subfamily"
         );
+/*
+                  "datecollectedstart"
+                , "datecollectedend"
+                , "elevation"
+                , "ElevationMaxError"
+                , "ownedby"
+                , "collectioncode"    // taken from fieldNumber, strip 'eventID:' prefix
+                // , "subfamily"
+        );
+*/
         outputColumnOrder.addAll(generatedOutputColumns);
+
+        //outputColumnOrder.add("subfamily");
+
+        A.log("outputColumnOrder:" + String.join(", ", outputColumnOrder));
     }
 
     private final CSVFormat csvInputFormat = CSVFormat.TDF.builder()
@@ -68,28 +104,33 @@ public class GBIFTransformer {
                 .build();
 
         try (Reader in = new FileReader(inputFile.toFile());
-            BufferedWriter writer = Files.newBufferedWriter(outputFile);
-            CSVParser csvParser = new CSVParser(in, csvInputFormat);
-            CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
+             BufferedWriter writer = Files.newBufferedWriter(outputFile);
+             CSVParser csvParser = new CSVParser(in, csvInputFormat);
+             CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
 
             int c = 0;
             Iterator<CSVRecord> iterator = csvParser.iterator();
-            while (iterator.hasNext()) {
+            while (true) {
                 ++c;
                 try {
+                    // So we can have the condition inside the try/catch block.
+                    if (!iterator.hasNext()) {
+                        A.log("tranformFile() break on hasNext at line:" + c);
+                        break;
+                    }
+
                     CSVRecord record = iterator.next();
-                    List<String> transformed = transformLine(record);
-                    if (!transformed.isEmpty()) {
+                    List<String> transformed = transformLine(record, c);
+                    if (transformed != null && !transformed.isEmpty()) {
                         csvPrinter.printRecord(transformed);
                     }
                 } catch (UncheckedIOException e) {
                     A.log("tranformFile() line:" + c + " e:" + e.toString());
-                    A.log("transformFile() sampleErrorLine:" + sampleErrorLine);
+                    //A.log("transformFile() sampleErrorLine:" + sampleErrorLine);
                     //errMsg = "transformFile() e:" + e;
-                    // break; or continue;
+                    continue;
                 }
             }
-
 
         } catch (AntwebException e) {
             errMsg = "transformFile() e:" + e;
@@ -102,12 +143,20 @@ public class GBIFTransformer {
             return errMsg;
         }
 
+        A.log("TranformFile() complete. NotAntCount:" + s_notAntCount + " subfamilyFoundCount:" + s_subfamilyFoundCount
+        + " noGenusCount:"+ s_noGenusCount + " noSpeciesCount:"+ s_noSpeciesCount);
+
         return errMsg;
     }
 
     private static String sampleErrorLine = null;
+    private static int s_notAntCount = 0;
+    private static int s_subfamilyFoundCount = 0;
+    private static int s_noGenusCount = 0;
+    private static int s_noSpeciesCount = 0;
+    private static int s_noSubfamilyCount = 0;
 
-    private List<String> transformLine(CSVRecord line) throws AntwebException {
+    private List<String> transformLine(CSVRecord line, int c) throws AntwebException {
 
         passFieldCheck(line);
 
@@ -117,44 +166,73 @@ public class GBIFTransformer {
             return Collections.emptyList();
         }
 
+        // Do we have to do this for every line??
+
         // perform direct header translations
         for (Pair<String, String> pair : directHeaderTranslations) {
-            String oldName = pair.getLeft();
+            String GBIFName = pair.getLeft();
+            String antwebName = pair.getRight();
             try {
-                String value = line.get(oldName);
-                row.put(pair.getRight(), value);
+
+                // This weird logic is to work around the missing subfamily in the header of the occurrence.txt file.
+                // If it is subfamily, skip it.
+                //if ("subfamily".equals(GBIFName)) {
+                //    A.iLog("tranformLine() subfamily isMapped:" + line.isMapped("subfamily"));
+                //    continue;
+                //}
+
+                String value = line.get(GBIFName);
+
+                if ("genus".equals(GBIFName)) {
+                    String subfamily = TaxonProxy.inferSubfamily(value);
+                    //A.log("transformLine() genus:" + value + " subfamily:" + subfamily);
+                    row.put("Subfamily", subfamily);
+                }
+                row.put(antwebName, value);
+
+                //if (List.of("subfamily", "genus", "specificEpithet").contains(GBIFName))
+                  //A.log("transformLine() directTranslations GBIFName:" + GBIFName + " antwebName:" + antwebName + " value:" + value);
             } catch (Exception e) {
-                A.log("transformLines() e:" + e.toString() + " oldName:" + oldName + " right:" + pair.getRight()); // + " line:" + line);
+                A.log("transformLine() GBIFName:" + GBIFName + " antwebName:" + antwebName + " e:" + e); // + " line:" + line);
                 if (sampleErrorLine == null) sampleErrorLine = line.toString();
-                if (!AntwebProps.isDevMode()) throw e;
+                AntwebUtil.logStackTrace(e);
             }
         }
 
         /*
-        // Don't do this for GBIF data!
-        // copy otu_name into SpeciesName (SpeciesName will be blank if there's an OTU value)
-        if (StringUtils.isBlank(line.get("specificEpithet"))) {
-            String field = "TW:Internal:otu_name";
-            if (StringUtils.isNotBlank(line.get(field))) {
-                String otu_name = line.get(field);
-
-                // for a subspecies name,
-                // Plagiolepis jerdonii jerdonii-rogeri
-                String[] name_parts = otu_name.split(" ");
-                String finest_name = name_parts[name_parts.length - 1];
-
-                switch (line.get("taxonRank")) {
-                    case "genus":
-                        row.put("SpeciesName", finest_name);
-                        break;
-
-                    case "species":
-                        row.put("Subspecies", finest_name);
-                        break;
-                }
-            }
-        }
+         *  subfamily ias not Mapped: line.isMapped("subfamily") always false. Header not exists, and values ignored.
+         *  We infer the subfamily from genus.
          */
+
+        String family = row.get("Family");
+        if (!("formicidae".equals(family) || "Formicidae".equals(family))) {
+            //A.log("transformLine() ignore non-ants:" + family);
+            s_notAntCount++;
+            return null;
+        }
+
+        String subfamily = row.get("Subfamily");
+        if (subfamily == null) {
+            s_noSubfamilyCount++;
+        }
+
+        String genus = row.get("[Species]Genus");
+        if (genus == null) {
+            s_noGenusCount++;
+        }
+
+        String species = row.get("SpeciesName");
+        if (species == null) {
+            s_noSpeciesCount++;
+        }
+
+        if (c < 5) {
+            //A.log("species:" + line.isMapped("specificEpithet"));
+            A.log("c:" + c + " family:" + family + " subfamily:" + subfamily + " genus:" + genus + " genusMapped:" + line.isMapped("genus") + " species:" + species);
+        } else {
+             //A.iLog("family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
+             //if (AntwebProps.isDevMode()) throw new AntwebException("Terminate test");
+        }
 
         // split date collected into two columns
         Pair<String, String> dates = splitDate(line.get("eventDate"));
@@ -164,6 +242,7 @@ public class GBIFTransformer {
         // trim eventid: from collecting events
         row.put("collectioncode", StringUtils.removeStart(line.get("fieldNumber"), "eventID:"));
 
+        /*
         //if the param is not mapped, or it is mapped but is empty... then use...
         // use auto-generated country if not overridden
         String header = "TW:DataAttribute:CollectingEvent:Country";
@@ -178,6 +257,7 @@ public class GBIFTransformer {
                 }
             }
         }
+        */
 
         // disabled until GeoBoundaries is added as a data source for TW, generated stateProvince is too inconsistent
         /*if (StringUtils.isEmpty(line.get("TW:DataAttribute:CollectingEvent:adm1"))) {
@@ -209,7 +289,7 @@ public class GBIFTransformer {
     }
 
 
-    private void passFieldCheck (CSVRecord line) throws AntwebException {
+    private void passFieldCheck(CSVRecord line) throws AntwebException {
         // static ArrayList ***
         String[] fieldArray = {"taxonRank", "specificEpithet"   // "CatalogNumber",
                 , "eventDate", "fieldNumber"
@@ -293,7 +373,7 @@ public class GBIFTransformer {
 
     /**
      * Updates ownedBy to use Antweb codes so links can be generated.
-     *
+     * <p>
      * Currently, only replaces CAS with CASC.
      */
     private static String setOwnedBy(String ownerRepository) {
@@ -304,39 +384,95 @@ public class GBIFTransformer {
         return ownerRepository;
     }
 
-    // list of TW headers and their AntWeb counterparts
-    private final Pair<String, String>[] directHeaderTranslations = new Pair[]{
-            Pair.of("catalogNumber", "SpecimenCode"),
-            Pair.of("identifiedBy", "DeterminedBy"),
-            Pair.of("dateIdentified", "DateDetermined"),
-            Pair.of("preparations", "Medium"),
-            Pair.of("typeStatus", "TypeStatus"),
-//            Pair.of("institutionCode", "OwnedBy"),    // convert CAS to CASC
-            Pair.of("recordedBy", "CollectedBy"),
-            Pair.of("habitat", "Habitat"),
-            Pair.of("samplingProtocol", "Method"),
-            Pair.of("verbatimLocality", "LocalityName"),
-            Pair.of("decimalLatitude", "LocLatitude"),
-            Pair.of("decimalLongitude", "LocLongitude"),
-            Pair.of("genus", "[Species]Genus"),
-            Pair.of("specificEpithet", "SpeciesName"),
-            Pair.of("infraspecificEpithet", "Subspecies"),
-//            Pair.of("subgenus", "Subgenus"),  // not included in export
-            Pair.of("subfamily", "Subfamily"),    // not included in export
-            Pair.of("family", "Family"),
-            Pair.of("order", "Order"),
-            Pair.of("class", "Class"),
-            Pair.of("phylum", "Phylum"),
-            Pair.of("kingdom", "Kingdom"),
-    };
+    /*
+    TaxonWorks headers
 
+id	basisOfRecord	occurrenceID	catalogNumber	otherCatalogNumbers	individualCount	preparations	country
+stateProvince	county	eventDate	year	month	day	startDayOfYear	endDayOfYear	fieldNumber
+maximumElevationInMeters	minimumElevationInMeters	samplingProtocol	habitat	verbatimElevation
+verbatimEventDate	verbatimLocality	identifiedBy	identifiedByID	dateIdentified	nomenclaturalCode	kingdom
+phylum	class	order	higherClassification	family	subfamily	tribe	genus	specificEpithet	infraspecificEpithet
+scientificName	scientificNameAuthorship	taxonRank	previousIdentifications	typeStatus	institutionCode
+institutionID	recordedBy	recordedByID	verbatimCoordinates	verbatimLatitude	verbatimLongitude	decimalLatitude
+decimalLongitude	footprintWKT	coordinateUncertaintyInMeters	geodeticDatum	georeferenceProtocol
+georeferenceRemarks	georeferenceSources	georeferencedBy	georeferencedDate	occurrenceStatus	occurrenceRemarks
+verbatimLabel	TW:DataAttribute:CollectionObject:DatePrepared	TW:DataAttribute:CollectionObject:LifeStageSex
+TW:DataAttribute:CollectionObject:LocatedAt	TW:DataAttribute:CollectionObject:MolProjectNotes
+TW:DataAttribute:CollectionObject:PreparedBy	TW:DataAttribute:CollectionObject:SpeciesGroup
+TW:DataAttribute:CollectionObject:SpecimenNotes	TW:DataAttribute:CollectionObject:VerbatimTypeStatus
+TW:DataAttribute:CollectingEvent:adm1	TW:DataAttribute:CollectingEvent:adm2
+TW:DataAttribute:CollectingEvent:BiogeographicRegion	TW:DataAttribute:CollectingEvent:CollectionNotes
+TW:DataAttribute:CollectingEvent:Country	TW:DataAttribute:CollectingEvent:LocalityCode
+TW:DataAttribute:CollectingEvent:LocalityNotes	TW:DataAttribute:CollectingEvent:Microhabitat
+TW:DataAttribute:CollectingEvent:VerbatimCollectionCode	TW:DataAttribute:CollectingEvent:VerbatimCoordinateUncertainty
+TW:Internal:otu_name	TW:Internal:collecting_event_id	TW:Internal:elevation_precision	TW:Internal:collection_object_id
+     */
+
+    /*
+Antweb Specimen Upload headers
+
+SpecimenCode	DeterminedBy	DateDetermined	LifeStageSex	Medium	PreparedBy	DatePrepared	LocatedAt
+TypeStatus	SpecimenNotes	DNANotes	CollectedBy	Habitat	Microhabitat	Method	CollXYAccuracy	LocalityName
+LocalityCode	Adm2	Adm1	Country	LocLatitude	LocLongitude	BiogeographicRegion	LocalityNotes
+ElevationMaxError	[Species]Genus	SpeciesName	Subspecies	SpeciesGroup	Subfamily	Family	Order	Class	Phylum
+Kingdom	LocXYAccuracy	taxonworks_co_id	datecollectedstart	datecollectedend	elevation	ElevationMaxError
+ownedby	collectioncode
+
+
+Occurrence.txt headers
+
+id	type	modified	language
+license	accessRights	references	institutionID	collectionID	institutionCode
+collectionCode	basisOfRecord	informationWithheld	dynamicProperties	occurrenceID	catalogNumber	recordNumber
+recordedBy	individualCount	sex	lifeStage	establishmentMeans	georeferenceVerificationStatus	associatedMedia
+associatedOccurrences	associatedTaxa	otherCatalogNumbers	occurrenceRemarks	organismID	previousIdentifications
+preparations	associatedSequences	fieldNumber	eventDate	eventTime	endDayOfYear	year	month	day
+verbatimEventDate	habitat	samplingProtocol	eventRemarks	higherGeography	continent	waterBody	islandGroup
+island	country	stateProvince	county	locality	verbatimLocality	minimumElevationInMeters
+maximumElevationInMeters	minimumDepthInMeters	maximumDepthInMeters	locationAccordingTo	locationRemarks
+decimalLatitude	decimalLongitude	geodeticDatum	coordinateUncertaintyInMeters	verbatimCoordinates
+verbatimCoordinateSystem	footprintWKT	georeferencedBy	georeferencedDate	georeferenceProtocol
+georeferenceSources	earliestEonOrLowestEonothem	earliestEraOrLowestErathem	earliestPeriodOrLowestSystem
+earliestEpochOrLowestSeries	earliestAgeOrLowestStage	group	formation	member	identificationQualifier	typeStatus
+identifiedBy	dateIdentified	identificationReferences	identificationVerificationStatus	identificationRemarks
+scientificNameID	scientificName	higherClassification	kingdom	phylum	class	order	family	genus
+specificEpithet	infraspecificEpithet
+taxonRank	nomenclaturalCode
+
+
+Sample Occurrence.txt record:
+
+http://arctos.database.museum/guid/UTEP:Ento:24305?seid=4797616	PhysicalObject	2024-07-17 15:32:00.015143	en
+http://vertnet.org/resources/norms.html	http://arctos.database.museum/guid/UTEP:Ento:24305	UTEP	https://arctos.database.museum/collection/UTEP:Ento	UTEP	Ento	PreservedSpecimen
+http://arctos.database.museum/guid/UTEP:Ento:24305?seid=4797616	UTEP:Ento:24305	Mackay 20936
+Collector(s): William P. Mackay, Emma Mackay				wild
+[{"remarks": null, "issued_by": null, "identifier": "Mackay 20936", "assigned_by": "unknown", "assigned_date": "2022-04-27", "identifier_type": "collector number"}]
+http://arctos.database.museum/guid/UTEP:Ento:24305
+[{"idby": "unknown", "made_date": null, "concept_label": null, "short_citation": null, "scientific_name": "Odontomachus", "sensu_publication": null, "identification_taxa": [{"taxon": {"ftn": "Animalia, Arthropoda, Insecta, Hymenoptera, Apocrita, Formicidae, Ponerinae, Ponerini, Odontomachus", "name": "Odontomachus", "ctrms": [{"psn": 1, "typ": "kingdom", "term": "Animalia"}, {"psn": 2, "typ": "phylum", "term": "Arthropoda"}, {"psn": 3, "typ": "class", "term": "Insecta"}, {"psn": 4, "typ": "order", "term": "Hymenoptera"}, {"psn": 5, "typ": "suborder", "term": "Apocrita"}, {"psn": 6, "typ": "family", "term": "Formicidae"}, {"psn": 7, "typ": "subfamily", "term": "Ponerinae"}, {"psn": 8, "typ": "tribe", "term": "Ponerini"}, {"psn": 9, "typ": "genus", "term": "Odontomachus"}], "nctrms": [{"typ": "author_text", "term": "Latreille, 1804"}, {"typ": "display_name", "term": "<i>Odontomachus</i> Latreille, 1804"}, {"typ": "nomenclatural_code", "term": "ICZN"}, {"typ": "remark", "term": "Imported from ITIS 6 Feb 2007"}, {"typ": "scientific_name", "term": "Odontomachus"}, {"typ": "source_authority", "term": "ITIS"}, {"typ": "taxon_status", "term": "valid"}], "source": "Arctos", "classification_id": "https://arctos.database.museum/name/Odontomachus#Arctos"}, "taxon_id": "https://arctos.database.museum/name/Odontomachus", "variable": "A"}], "identification_order": 1, "identification_agents": [{"agent_name": "unknown", "agent_identifier": "https://arctos.database.museum/agent/0", "identifier_order": 1}], "identification_remarks": null, "identification_attributes": [{"agent_name": null, "attribute_type": "nature of identification", "attribute_units": null, "attribute_value": "features", "determined_date": null, "agent_identifier": null, "attribute_remark": null, "determination_method": null}]}]
+whole organism (pinned)			2004-08-06	2004-08-06	219	2004	08	06	2004-08-06				Costa Rica, Heredia
+Costa Rica	Heredia		Estacion Biologica La Selva, Sarapiqui	Costa Rica, Heredia, Sarapiqui, Estacion Biologica La Selva
+William P. Mackay	Added Canton, Is "Sarapiqui"	10.4333333333	-84.0166666667	unknown		10d 26m N/84d 1m W	degrees dec. minutes
+POLYGON((-84.01666210458322 10.433333290673202,-84.0166622006444 10.433332410464319,-84.01666246833614 10.433331565719298,-84.01666289737119 10.433330788901218,-84.01666347126195 10.433330109862762,-84.01666416795415 10.433329554698997,-84.01666496067428 10.433329144744551,-84.01666581895856 10.433328895753748,-84.0166667098236 10.433328817295157,-84.01666759903395 10.433328912383908,-84.01666845241779 10.433329177365787,-84.01666923718003 10.433329602057693,-84.0166699231627 10.433330170138952,-84.01667048400388 10.433330859778525,-84.01667089815076 10.433331644473945,-84.01667114968788 10.433332494069813,-84.01667122894884 10.433333375916632,-84.01667113288767 10.433334256125525,-84.01667086519595 10.433335100870558,-84.01667043616092 10.43333587768865,-84.01666986227013 10.433336556727122,-84.01666916557794 10.433337111890898,-84.01666837285778 10.433337521845349,-84.01666751457348 10.433337770836152,-84.01666662370842 10.433337849294738,-84.01666573449803 10.433337754205976,-84.01666488111418 10.433337489224087,-84.01666409635193 10.433337064532166,-84.01666341036926 10.433336496450893,-84.0166628495281 10.43333580681131,-84.01666243538124 10.433335022115882,-84.01666218384413 10.433334172520013,-84.01666210458322 10.433333290673202))
+William P. Mackay	2004-08-06 00:00:00	not recorded	collector's notes									A		unknown
+Odontomachus	Animalia, Arthropoda, Insecta, Hymenoptera, Apocrita, Formicidae, Ponerinae, Ponerini,	Animalia	Arthropoda	Insecta	Hymenoptera	Formicidae	Odontomachus
+genus	ICZN
+
+
+     */
+
+
+    /*
     // these are just extra headers that we might use, right now the CSV parser doesn't check for header column presence
     // in the future, we could perform more strict checking that certain headers exist.
     private final String[] extraInputHeaders = {
-            "fieldNumber",  // must have 'eventID:' prefix removed
-            "country",
-            "stateProvince",
-            "county",
-            "rank",
+              "fieldNumber"  // must have 'eventID:' prefix removed
+            , "country"
+            , "stateProvince"
+            , "county"
+            , "rank"
+            // , "subfamily"   // Seems to have been omitted from dwca-v1.85.
+
     };
+*/
+
 }
