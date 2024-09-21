@@ -131,6 +131,10 @@ or for Worldants upload
         //Called from both SpeciesListUpload and SpecimenUpload.
         int c = 0;
 
+        //Set<String> keys = item.keySet();
+        //java.util.Collection vs = item.values();
+        //A.log("saveTaxon() item:" + item + " table:" + table + " parent:" + isParent + " keys:" + keys + " values:" + vs);
+
         String taxonName = (String) item.get("taxon_name");
 
         if (Formatter.hasSpecialCharacter(taxonName)) {
@@ -261,13 +265,12 @@ or for Worldants upload
                 // probably better to just print query and list of values when not in dev mode
                 boundQuery = DBUtil.getPreparedStatementString(stmt);
 
-
                 if (table.equals("taxon")) {
                     taxonQueryHashMap.put(taxonName, boundQuery);
                 }
 
-                if (AntwebProps.isDevMode() && taxonName.equals(s_testTaxonName))
-                    s_log.warn("saveTaxon() taxonName:" + taxonName + " query:" + boundQuery);
+                //if (AntwebProps.isDevMode() && c < 5); // && taxonName.equals(s_testTaxonName))
+                //    A.log("saveTaxon() lastRowCount:" + c + " taxonName:" + taxonName + " query:" + boundQuery);
 
                 int rowCount = stmt.executeUpdate();
 

@@ -31,28 +31,34 @@ public class GBIFTransformer {
     // list of GBIF headers and their AntWeb counterparts
     // On the left are GBIF header values. On the right are Antweb header values.
     private final Pair<String, String>[] directHeaderTranslations = new Pair[]{
-            Pair.of("id", "SpecimenCode"),
-            Pair.of("identifiedBy", "DeterminedBy"),
-            Pair.of("dateIdentified", "DateDetermined"),
-            Pair.of("preparations", "Medium"),
-            Pair.of("typeStatus", "TypeStatus"),
-            Pair.of("institutionCode", "OwnedBy"),    // convert CAS to CASC
-            Pair.of("recordedBy", "CollectedBy"),
-            Pair.of("habitat", "Habitat"),
-            Pair.of("samplingProtocol", "Method"),
-            Pair.of("verbatimLocality", "LocalityName"),
-            Pair.of("decimalLatitude", "LocLatitude"),
-            Pair.of("decimalLongitude", "LocLongitude"),
-            Pair.of("genus", "[Species]Genus"),
-            Pair.of("specificEpithet", "SpeciesName"),
-            Pair.of("infraspecificEpithet", "Subspecies"),
-//            Pair.of("subgenus", "Subgenus"),  // not included in export
-//            Pair.of("subfamily", "Subfamily"),    // not included in export
-            Pair.of("family", "Family"),
-            Pair.of("order", "Order"),
-            Pair.of("class", "Class"),
-            Pair.of("phylum", "Phylum"),
-            Pair.of("kingdom", "Kingdom"),
+            //Pair.of("id", "SpecimenCode"),
+              Pair.of("catalogNumber", "SpecimenCode")
+            , Pair.of("identifiedBy", "DeterminedBy")
+            , Pair.of("dateIdentified", "DateDetermined")
+            , Pair.of("preparations", "Medium")
+            , Pair.of("typeStatus", "TypeStatus")
+            , Pair.of("institutionCode", "OwnedBy")    // convert CAS to CASC
+            , Pair.of("recordedBy", "CollectedBy")
+            , Pair.of("habitat", "Habitat")
+            , Pair.of("samplingProtocol", "Method")
+            , Pair.of("verbatimLocality", "LocalityName")
+            , Pair.of("decimalLatitude", "LocLatitude")
+            , Pair.of("decimalLongitude", "LocLongitude")
+            , Pair.of("genus", "[Species]Genus")
+            , Pair.of("specificEpithet", "SpeciesName")
+            , Pair.of("infraspecificEpithet", "Subspecies")
+            //, Pair.of("subgenus", "Subgenus"),  // not included in export
+            //, Pair.of("subfamily", "Subfamily"),    // not included in export
+            , Pair.of("family", "Family")
+            , Pair.of("order", "Order")
+            , Pair.of("class", "Class")
+            , Pair.of("phylum", "Phylum")
+            , Pair.of("kingdom", "Kingdom")
+            //, Pair.of("collectionCode", "collectionCode")
+            , Pair.of("country", "country")
+            , Pair.of("county", "county")
+            , Pair.of("stateProvince", "adm1")
+            , Pair.of("type", "type")
     };
 
     public GBIFTransformer() {
@@ -62,18 +68,15 @@ public class GBIFTransformer {
 
         // generated columns go here
         List<String> generatedOutputColumns = Arrays.asList(
-         //       "subfamily"
-        );
-/*
-                  "datecollectedstart"
+                  "Subfamily"
+                , "datecollectedstart"
                 , "datecollectedend"
                 , "elevation"
                 , "ElevationMaxError"
                 , "ownedby"
                 , "collectioncode"    // taken from fieldNumber, strip 'eventID:' prefix
-                // , "subfamily"
         );
-*/
+
         outputColumnOrder.addAll(generatedOutputColumns);
 
         //outputColumnOrder.add("subfamily");
@@ -103,15 +106,24 @@ public class GBIFTransformer {
                 .setHeader(outputColumnOrder.toArray(new String[0]))
                 .build();
 
+        //A.log("transformFile() header:" + csvOutputFormat);
+        // [SpecimenCode, DeterminedBy, DateDetermined, Medium, TypeStatus, OwnedBy, CollectedBy, Habitat, Method, LocalityName,
+        // LocLatitude, LocLongitude, [Species]Genus, SpeciesName, Subspecies, Family, Order, Class, Phylum, Kingdom]
+        //A.log("transformFile() header:" + csvOutputFormat.getHeader());
+        //A.log("transformFile() columns:" + outputColumnOrder.toArray(new String[0]));
+
         try (Reader in = new FileReader(inputFile.toFile());
              BufferedWriter writer = Files.newBufferedWriter(outputFile);
              CSVParser csvParser = new CSVParser(in, csvInputFormat);
              CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
 
             int c = 0;
+            int testLimit = 5;
             Iterator<CSVRecord> iterator = csvParser.iterator();
             while (true) {
                 ++c;
+                if (AntwebProps.isDevMode() && c > testLimit) break;
+
                 try {
                     // So we can have the condition inside the try/catch block.
                     if (!iterator.hasNext()) {
@@ -121,6 +133,13 @@ public class GBIFTransformer {
 
                     CSVRecord record = iterator.next();
                     List<String> transformed = transformLine(record, c);
+                    //A.log("transformFile() c:" + c + " transformed:" + transformed);
+// transformed:[http://arctos.database.museum/guid/UTEP:Ento:3034?seid=4325710, unknown, , whole organism (pinned), , UTEP,
+// Collector(s): William P. Mackay, Emma Mackay, Position: Level, Vegetation Description: forest, rain, next to road,
+// Vegetation Abundance: Sparse, Soil Texture: Clay-loam, Soil Drainage: Poor, Soil Moisture: Moist,
+// Organic Content in Soil: High; Microhabitat: Stone (under), nest female, , Mexico, Nayarit, Jala, 60 k SW Tepic (rest area on camino cuota),
+// elev. 1159 (21Deg, 8', 43secN 104Deg, 29', 4secW), 21.1452777778, -104.4844444444, Pheidole, obtusospinosa, ,
+// Formicidae, Hymenoptera, Insecta, Arthropoda, Animalia]
                     if (transformed != null && !transformed.isEmpty()) {
                         csvPrinter.printRecord(transformed);
                     }
@@ -158,6 +177,8 @@ public class GBIFTransformer {
 
     private List<String> transformLine(CSVRecord line, int c) throws AntwebException {
 
+        int testNum = 5;
+
         passFieldCheck(line);
 
         Map<String, String> row = new HashMap<>();
@@ -183,11 +204,17 @@ public class GBIFTransformer {
 
                 String value = line.get(GBIFName);
 
+
+                //if (c <= testNum) A.log("GBIFName:" + GBIFName + " value:" + value);
+
                 if ("genus".equals(GBIFName)) {
                     String subfamily = TaxonProxy.inferSubfamily(value);
                     //A.log("transformLine() genus:" + value + " subfamily:" + subfamily);
                     row.put("Subfamily", subfamily);
+                    //if (c <= testNum) A.log("antwebName:Subfamily" + " value:" + subfamily);
                 }
+                //if (c <= testNum) A.log("transformLine() antwebName:" + antwebName + " GBIFName:" + GBIFName + " value:" + value);
+
                 row.put(antwebName, value);
 
                 //if (List.of("subfamily", "genus", "specificEpithet").contains(GBIFName))
@@ -226,9 +253,8 @@ public class GBIFTransformer {
             s_noSpeciesCount++;
         }
 
-        if (c < 5) {
-            //A.log("species:" + line.isMapped("specificEpithet"));
-            A.log("c:" + c + " family:" + family + " subfamily:" + subfamily + " genus:" + genus + " genusMapped:" + line.isMapped("genus") + " species:" + species);
+        if (c <= testNum) {
+            A.log("transformLine() c:" + c + " family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
         } else {
              //A.iLog("family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
              //if (AntwebProps.isDevMode()) throw new AntwebException("Terminate test");
@@ -282,6 +308,8 @@ public class GBIFTransformer {
 
         row.put("ownedby", setOwnedBy(line.get("institutionCode")));
 
+        //if (c == 1) A.log("transformLine() country:" + line.get("country") + " stateProvince" + line.get("stateProvince") + " county:" + line.get("county") + " minElev:" + line.get("minimumElevationInMeters") + " maxElev:" + line.get("maximumElevationInMeters"));
+
         return outputColumnOrder
                 .stream()
                 .map(row::get)
@@ -297,6 +325,7 @@ public class GBIFTransformer {
                 , "eventDate", "country"
                 , "stateProvince", "county", "institutionCode"};  // "ownedBy",
         int c = 0;
+        //A.log("passFieldCheck() fields:" + String.join(", ", fieldArray));
         String notMappedMessage = null;
         ArrayList<String> fieldList = new ArrayList<>(Arrays.asList(fieldArray));
         for (String field : fieldList) {
