@@ -218,7 +218,7 @@ public class GBIFTransformer {
                 row.put(antwebName, value);
 
                 //if (List.of("subfamily", "genus", "specificEpithet").contains(GBIFName))
-                  //A.log("transformLine() directTranslations GBIFName:" + GBIFName + " antwebName:" + antwebName + " value:" + value);
+                //A.log("transformLine() directTranslations GBIFName:" + GBIFName + " antwebName:" + antwebName + " value:" + value);
             } catch (Exception e) {
                 A.log("transformLine() GBIFName:" + GBIFName + " antwebName:" + antwebName + " e:" + e); // + " line:" + line);
                 if (sampleErrorLine == null) sampleErrorLine = line.toString();
@@ -253,17 +253,29 @@ public class GBIFTransformer {
             s_noSpeciesCount++;
         }
 
+        dataMassaging(line, row);
+
         if (c <= testNum) {
             A.log("transformLine() c:" + c + " family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
         } else {
-             //A.iLog("family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
-             //if (AntwebProps.isDevMode()) throw new AntwebException("Terminate test");
+            //A.iLog("family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
+            //if (AntwebProps.isDevMode()) throw new AntwebException("Terminate test");
         }
+
+        return outputColumnOrder
+                .stream()
+                .map(row::get)
+                .collect(Collectors.toList());
+    }
+
+    private void dataMassaging(CSVRecord line, Map<String, String> row) {
+        // line and row are using GBIF headers as values.
 
         // split date collected into two columns
         Pair<String, String> dates = splitDate(line.get("eventDate"));
         row.put("datecollectedstart", dates.getLeft());
         row.put("datecollectedend", dates.getRight());
+
 
         // trim eventid: from collecting events
         row.put("collectioncode", StringUtils.removeStart(line.get("fieldNumber"), "eventID:"));
@@ -293,7 +305,21 @@ public class GBIFTransformer {
             }
         }*/
 
+        //decimalLatitude", "LocLatitude")
+        String lat = line.get("decimalLatitude");
+        String lon = line.get("decimalLongitude");
+        A.log("dataMassaging() lon:" + lon);
+
+        String col = "catalogNumber";
+        String oldVal = line.get(col);
+        String newVal = oldVal.replaceAll("\\p{Punct}","");
+        A.log("dataMassaging() oldVal:" + oldVal + " newVal:" + newVal);
+        row.put("SpecimenCode", newVal);
+
+
+
         // validate ADM data
+        /*
         row.put("Adm2", setAdm2(
                 (line.isMapped("TW:DataAttribute:CollectingEvent:Country")) ? line.get("TW:DataAttribute:CollectingEvent:Country") : null,
                 (line.isMapped("TW:DataAttribute:CollectingEvent:adm1")) ? line.get("TW:DataAttribute:CollectingEvent:adm1") : null,
@@ -301,6 +327,7 @@ public class GBIFTransformer {
                 line.get("country"),
                 line.get("stateProvince"),
                 line.get("county")));
+*/
 
         row.put("elevation", buildElevation(
                 line.get("minimumElevationInMeters"),
@@ -308,12 +335,7 @@ public class GBIFTransformer {
 
         row.put("ownedby", setOwnedBy(line.get("institutionCode")));
 
-        //if (c == 1) A.log("transformLine() country:" + line.get("country") + " stateProvince" + line.get("stateProvince") + " county:" + line.get("county") + " minElev:" + line.get("minimumElevationInMeters") + " maxElev:" + line.get("maximumElevationInMeters"));
-
-        return outputColumnOrder
-                .stream()
-                .map(row::get)
-                .collect(Collectors.toList());
+        //if (c == 1) A.log("dataMassaging() country:" + line.get("country") + " stateProvince" + line.get("stateProvince") + " county:" + line.get("county") + " minElev:" + line.get("minimumElevationInMeters") + " maxElev:" + line.get("maximumElevationInMeters"));
     }
 
 
@@ -359,6 +381,7 @@ public class GBIFTransformer {
     /**
      * Fills the adm2 entry with TW-computed county data if country & stateprovince data match, and original adm2 is empty
      */
+/*
     private String setAdm2(String verbatimCountry, String adm1, String adm2, String computedCountry, String stateProvince, String county) {
         if (StringUtils.equals(verbatimCountry, computedCountry)
                 && StringUtils.equals(adm1, stateProvince)
@@ -368,6 +391,7 @@ public class GBIFTransformer {
         }
         return adm2;
     }
+*/
 
     /**
      * Generate elevation string from min and max elevation strings.
