@@ -212,9 +212,9 @@ public class GBIFTransformer {
                 if ("genus".equals(GBIFName)) {
                     String subfamily = TaxonProxy.inferSubfamily(value);
                     row.put("Subfamily", subfamily);
-                    if (c <= testNum) A.log("transformLine() GBIFName:" + GBIFName + " antwebName:" + antwebName + " subfamily:" + subfamily + " value:" + value);
+                    //if (c <= testNum) A.log("transformLine() GBIFName:" + GBIFName + " antwebName:" + antwebName + " subfamily:" + subfamily + " value:" + value);
                 }
-                if (c <= testNum) A.log("transformLine() antwebName:" + antwebName + " GBIFName:" + GBIFName + " value:" + value);
+                //if (c <= testNum) A.log("transformLine() antwebName:" + antwebName + " GBIFName:" + GBIFName + " value:" + value);
 
                 row.put(antwebName, value);
 
@@ -225,6 +225,13 @@ public class GBIFTransformer {
                 if (sampleErrorLine == null) sampleErrorLine = line.toString();
                 AntwebUtil.logStackTrace(e);
             }
+        }
+
+        String family = row.get("Family");
+        if (!("formicidae".equals(family) || "Formicidae".equals(family))) {
+            //A.log("transformLine() ignore non-ants:" + family);
+            s_notAntCount++;
+            return null;
         }
 
         dataMassaging(line, row);
@@ -250,7 +257,7 @@ public class GBIFTransformer {
         row.put("SpecimenCode", newVal);
 
         String code = newVal; // used for debugging later.
-        boolean debug = code.contains("10648");
+        boolean debug = false; //code.contains("10648");
 
         // split date collected into two columns
         Pair<String, String> dates = splitDate(line.get("eventDate"));
@@ -339,12 +346,7 @@ public class GBIFTransformer {
          *  We infer the subfamily from genus.
          */
 
-        String family = row.get("Family");
-        if (!("formicidae".equals(family) || "Formicidae".equals(family))) {
-            //A.log("transformLine() ignore non-ants:" + family);
-            s_notAntCount++;
-            return;
-        }
+        String family = row.get("Ffamily");
 
         String subfamily = row.get("Subfamily");
         if (subfamily == null) {
