@@ -3,8 +3,11 @@ package org.calacademy.antweb.geolocale;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
+import org.calacademy.antweb.util.*;
+
 //import javax.media.j3d.*;
 import org.apache.regexp.*;
+
 
 /*
 
@@ -103,7 +106,6 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
     }
     public void setExtent(String extent) {
         this.extent = extent;
-
         //parseExtent(); // for performance, use within isWithinBounds()
     }
 
@@ -185,8 +187,7 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
     
     private static double getDoubleListVal(String list, int i) {
         // list will be a comma separated list (with spaces). Could be a bounding box or a centroid.
-
-//if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();
+        //if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();
 
         if (i < 1 || i > 4) return 0;
 
@@ -201,12 +202,10 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
             RE tab = new RE(" ");
             String[] listArray = tab.split(list + " ");
 
-//A.log("getDoubleListVal() 1 i:" + i + " list:" + list + " listArray:" + listArray);
-
+            //A.log("getDoubleListVal() 1 i:" + i + " list:" + list + " listArray:" + listArray);
             val = Double.parseDouble(listArray[i - 1]);
 
-//A.log("getDoubleListVal() val:" + val);
-
+            //A.log("getDoubleListVal() val:" + val);
             return val;
           } catch (Exception e) {
             s_log.debug("getDoubleListVal() list:" + list + " val:" + val + " e:" + e);
@@ -254,8 +253,13 @@ Ex USA:
 
     public static String getSpeciesListDir() {
         return s_speciesListDir;
-    }    
-    
+    }
+
+
+    public boolean isWithinBounds(LatLon latLon) {
+        return isWithinBounds(latLon.getLatitude(), latLon.getLongitude());
+    }
+
     public boolean isWithinBounds(double latitude, double longitude) {
     
       loadBoundingBox();  // To populate the left,... from the extent (bounding box).
@@ -276,7 +280,7 @@ Ex USA:
         if (left == 0 || bottom == 0 || right == 0 || top == 0 || lat == 0 || lon == 0) return false;
         return LocalityOverview.isWithinBounds(left, bottom, right, top, lat, lon);    
     }
-    
+
    /*
     * top: north latitude of bounding box.
     * left: left longitude of bounding box (western bound). 
@@ -285,9 +289,8 @@ Ex USA:
     * latitude: latitude of the point to check.
     * longitude: longitude of the point to check.
     */
-    public static boolean isWithinBounds(double left, 
-	  double bottom, double right, double top,  
-	  double latitude, double longitude) {
+    public static boolean isWithinBounds(double left, double bottom, double right, double top
+	    , double latitude, double longitude) {
 	  
 	    // This method only looks for negatives. If we can't tell, return true.
 
@@ -327,6 +330,16 @@ Ex USA:
 	      }
 	    }
 
+        if (AntwebProps.isDevMode() && !isWithin && false) {
+            A.log("isWithinBounds() isWithin:" + isWithin + " left:" + left + " bottom:" + bottom + " right:" + right + " top:" + top + " lat:" + latitude + " lon:" + longitude); // + " lonModified:" + lonModified);
+        }
+
+        //if ("R".equals(lonModified))
+        //  A.log("LocalityOverview.isWithinBounds() isWithin:" + isWithin + " left:" + left + " bottom:" + bottom + " right:" + right + " top:" + top + " lat:" + latitude + " lon:" + longitude + " lonModified:" + lonModified);
+
+	    return isWithin;
+    }
+
 /*
 Bounds:
   New Zealand	179.07 -52.62 -178.9 -29.22     165.8838, -52.6186, -175.9872, -29.2100	(-40.916667, -179.9166665)	-43.586	170.370
@@ -334,24 +347,44 @@ Bounds:
   Russia	    null	                        19.6389, 41.1859, -168.9978, 81.8569	null	                    59.453	108.830
 
 Out of bounds:
-  code:casent0922016 country:New Zealand boundingBox:left:165.8838 bottom:-52.6186 right:-175.9872 top:-29.21 lat:-35.89 lon:174.75 
+  code:casent0922016 country:New Zealand boundingBox:left:165.8838 bottom:-52.6186 right:-175.9872 top:-29.21 lat:-35.89 lon:174.75
   code:casent0173151 country:Russia boundingBox:left:19.6389 bottom:41.1859 right:-168.9978 top:81.8569 lat:58.16083 lon:44.40083
 */
 
-        //if (true) {
-        if (!isWithin
-         && false
-  		  ) {
-  		  //if (longitude == 109.23999786376953) 
-            s_log.debug("LocalityOverview.isWithinBounds() isWithin:" + isWithin + " left:" + left + " bottom:" + bottom + " right:" + right + " top:" + top + " lat:" + latitude + " lon:" + longitude); // + " lonModified:" + lonModified);
+
+
+    /*
+      The lat or lon may have been enterred with a bad sign. Test to see if we have a match.
+      We assume it is not already correct. Return a LatLon if we find a match.
+     */
+    public LatLon correctIntoBounds(LatLon latLon) {
+        loadBoundingBox();
+
+        double latitude = latLon.getLatitude();
+        double longitude = latLon.getLongitude();
+
+        double negLatitude = latitude * -1;
+        String negLat = negLatitude + ", " + longitude;
+        boolean isWithinNegLat = isWithinBounds(negLat, getBoundingBox());
+        //A.log("correctIntoBounds() negLat:" + negLat);
+        if (isWithinNegLat) {
+            LatLon negLatLon = new LatLon(negLatitude, longitude);
+            return negLatLon;
         }
 
-        //if ("R".equals(lonModified))
-        //  A.log("LocalityOverview.isWithinBounds() isWithin:" + isWithin + " left:" + left + " bottom:" + bottom + " right:" + right + " top:" + top + " lat:" + latitude + " lon:" + longitude + " lonModified:" + lonModified);
+        // Maybe the Longitude is negative.
+        double negLongitude = longitude * -1;
+        String negLon = latitude + ", " + negLongitude;
+        boolean isWithinNegLon = isWithinBounds(negLon, getBoundingBox());
+        //A.log("correctIntoBounds() negLon:" + negLon);
+        if (isWithinNegLon) {
+            LatLon latNegLon = new LatLon(latitude, negLongitude);
+            return latNegLon;
+        }
 
-	    return isWithin;
-    }    
-    
+        return null;
+    }
+
     public String getBoundingBoxStr() {
       return "left:" + left + " bottom:" + bottom + " right:" + right + " top:" + top;
     }

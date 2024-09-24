@@ -152,7 +152,7 @@ public class TaxonProxy {
 
     public static String inferSubfamily(String genusName) {
         Genus genus = getGenus(genusName);
-        //A.log("inferSubfamily() genusName:" + genusName + " genus:" + genus);
+        if ("goeldii".equals(genusName)) A.log("inferSubfamily() genusName:" + genusName + " genus:" + genus + " subfamily:" + (genus == null ? "null" : genus.getSubfamily()));
         if (genus == null) return null;
         //A.log("inferSubfamily() genusName:" + genusName + " genus:" + genus + " subfamily:" + genus.getSubfamily());
         return genus.getSubfamily();

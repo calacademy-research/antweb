@@ -11,7 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.calacademy.antweb.geolocale.Country;
+
+import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 
 import java.io.*;
@@ -122,7 +123,8 @@ public class GBIFTransformer {
             Iterator<CSVRecord> iterator = csvParser.iterator();
             while (true) {
                 ++c;
-                if (AntwebProps.isDevMode() && c > testLimit) break;
+
+                //if (AntwebProps.isDevMode() && c > testLimit) break;
 
                 try {
                     // So we can have the condition inside the try/catch block.
@@ -134,15 +136,18 @@ public class GBIFTransformer {
                     CSVRecord record = iterator.next();
                     List<String> transformed = transformLine(record, c);
                     //A.log("transformFile() c:" + c + " transformed:" + transformed);
+
 // transformed:[http://arctos.database.museum/guid/UTEP:Ento:3034?seid=4325710, unknown, , whole organism (pinned), , UTEP,
 // Collector(s): William P. Mackay, Emma Mackay, Position: Level, Vegetation Description: forest, rain, next to road,
 // Vegetation Abundance: Sparse, Soil Texture: Clay-loam, Soil Drainage: Poor, Soil Moisture: Moist,
 // Organic Content in Soil: High; Microhabitat: Stone (under), nest female, , Mexico, Nayarit, Jala, 60 k SW Tepic (rest area on camino cuota),
 // elev. 1159 (21Deg, 8', 43secN 104Deg, 29', 4secW), 21.1452777778, -104.4844444444, Pheidole, obtusospinosa, ,
 // Formicidae, Hymenoptera, Insecta, Arthropoda, Animalia]
+
                     if (transformed != null && !transformed.isEmpty()) {
                         csvPrinter.printRecord(transformed);
                     }
+
                 } catch (UncheckedIOException e) {
                     A.log("tranformFile() line:" + c + " e:" + e.toString());
                     //A.log("transformFile() sampleErrorLine:" + sampleErrorLine);
@@ -204,16 +209,12 @@ public class GBIFTransformer {
 
                 String value = line.get(GBIFName);
 
-
-                //if (c <= testNum) A.log("GBIFName:" + GBIFName + " value:" + value);
-
                 if ("genus".equals(GBIFName)) {
                     String subfamily = TaxonProxy.inferSubfamily(value);
-                    //A.log("transformLine() genus:" + value + " subfamily:" + subfamily);
                     row.put("Subfamily", subfamily);
-                    //if (c <= testNum) A.log("antwebName:Subfamily" + " value:" + subfamily);
+                    if (c <= testNum) A.log("transformLine() GBIFName:" + GBIFName + " antwebName:" + antwebName + " subfamily:" + subfamily + " value:" + value);
                 }
-                //if (c <= testNum) A.log("transformLine() antwebName:" + antwebName + " GBIFName:" + GBIFName + " value:" + value);
+                if (c <= testNum) A.log("transformLine() antwebName:" + antwebName + " GBIFName:" + GBIFName + " value:" + value);
 
                 row.put(antwebName, value);
 
@@ -226,50 +227,30 @@ public class GBIFTransformer {
             }
         }
 
-        /*
-         *  subfamily ias not Mapped: line.isMapped("subfamily") always false. Header not exists, and values ignored.
-         *  We infer the subfamily from genus.
-         */
-
-        String family = row.get("Family");
-        if (!("formicidae".equals(family) || "Formicidae".equals(family))) {
-            //A.log("transformLine() ignore non-ants:" + family);
-            s_notAntCount++;
-            return null;
-        }
-
-        String subfamily = row.get("Subfamily");
-        if (subfamily == null) {
-            s_noSubfamilyCount++;
-        }
-
-        String genus = row.get("[Species]Genus");
-        if (genus == null) {
-            s_noGenusCount++;
-        }
-
-        String species = row.get("SpeciesName");
-        if (species == null) {
-            s_noSpeciesCount++;
-        }
-
         dataMassaging(line, row);
 
         if (c <= testNum) {
-            A.log("transformLine() c:" + c + " family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
-        } else {
-            //A.iLog("family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
-            //if (AntwebProps.isDevMode()) throw new AntwebException("Terminate test");
+            debug(line, row);
         }
 
         return outputColumnOrder
-                .stream()
-                .map(row::get)
-                .collect(Collectors.toList());
+            .stream()
+            .map(row::get)
+            .collect(Collectors.toList());
     }
 
     private void dataMassaging(CSVRecord line, Map<String, String> row) {
-        // line and row are using GBIF headers as values.
+        // line uses GBIF headers as keys. Row uses Antweb headers as keys.
+
+
+        String col = "catalogNumber";
+        String oldVal = line.get(col);
+        String newVal = oldVal.replaceAll("\\p{Punct}", "");
+        //A.log("dataMassaging() oldVal:" + oldVal + " newVal:" + newVal);
+        row.put("SpecimenCode", newVal);
+
+        String code = newVal; // used for debugging later.
+        boolean debug = code.contains("10648");
 
         // split date collected into two columns
         Pair<String, String> dates = splitDate(line.get("eventDate"));
@@ -305,19 +286,6 @@ public class GBIFTransformer {
             }
         }*/
 
-        //decimalLatitude", "LocLatitude")
-        String lat = line.get("decimalLatitude");
-        String lon = line.get("decimalLongitude");
-        A.log("dataMassaging() lon:" + lon);
-
-        String col = "catalogNumber";
-        String oldVal = line.get(col);
-        String newVal = oldVal.replaceAll("\\p{Punct}","");
-        A.log("dataMassaging() oldVal:" + oldVal + " newVal:" + newVal);
-        row.put("SpecimenCode", newVal);
-
-
-
         // validate ADM data
         /*
         row.put("Adm2", setAdm2(
@@ -327,13 +295,78 @@ public class GBIFTransformer {
                 line.get("country"),
                 line.get("stateProvince"),
                 line.get("county")));
-*/
+        */
+
+
+        String countryStr = row.get("country");
+        Country country = GeolocaleMgr.getCountry(countryStr);
+        String adm1Str = row.get("adm1");
+        Adm1 adm1 = (Adm1) GeolocaleMgr.getAdm1(adm1Str, countryStr);
+        //A.log("dataMassaging() country:" + countryStr + " adm1:" + adm1Str);
+
+
+        //decimalLatitude", "LocLatitude")
+        String lat = line.get("decimalLatitude");
+        String lon = line.get("decimalLongitude");
+        LatLon latLon = new LatLon(lat, lon);
+        if (country != null && latLon.isValid()) {
+            boolean isWithinCountryBounds = country.isWithinBounds(latLon);
+            if (!isWithinCountryBounds) {
+                LatLon newBounds = country.correctIntoBounds(latLon);
+                if (newBounds != null) {
+                    latLon = newBounds;
+                    lat = newBounds.getLat();
+                    row.put("LocLatitude", lat);
+                    lon = newBounds.getLon();
+                    row.put("LocLongitude", lon);
+                    if (debug) A.log("dataMassaging() lat:" + lat + " lon:" + lon + " withinCountry:" + isWithinCountryBounds + " newBounds:" + newBounds);
+                }
+            }
+        }
+        if (debug) A.log("dataMassaging() lat:" + lat + " lon:" + lon + " withinAdm1:" + adm1.isWithinBounds(lat, lon));
 
         row.put("elevation", buildElevation(
                 line.get("minimumElevationInMeters"),
                 line.get("maximumElevationInMeters")));
 
         row.put("ownedby", setOwnedBy(line.get("institutionCode")));
+
+    }
+
+    private void debug(CSVRecord line, Map<String, String> row) {
+        /*
+         *  subfamily ias not Mapped: line.isMapped("subfamily") always false. Header not exists, and values ignored.
+         *  We infer the subfamily from genus.
+         */
+
+        String family = row.get("Family");
+        if (!("formicidae".equals(family) || "Formicidae".equals(family))) {
+            //A.log("transformLine() ignore non-ants:" + family);
+            s_notAntCount++;
+            return;
+        }
+
+        String subfamily = row.get("Subfamily");
+        if (subfamily == null) {
+            s_noSubfamilyCount++;
+        }
+
+        String genus = row.get("[Species]Genus");
+        if (genus == null) {
+            s_noGenusCount++;
+        }
+
+        String species = row.get("SpeciesName");
+        if (species == null) {
+            s_noSpeciesCount++;
+        }
+
+        if (AntwebProps.isDevMode()) {
+            A.log("transformLine() family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
+        } else {
+            //A.iLog("family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
+            //if (AntwebProps.isDevMode()) throw new AntwebException("Terminate test");
+        }
 
         //if (c == 1) A.log("dataMassaging() country:" + line.get("country") + " stateProvince" + line.get("stateProvince") + " county:" + line.get("county") + " minElev:" + line.get("minimumElevationInMeters") + " maxElev:" + line.get("maximumElevationInMeters"));
     }
