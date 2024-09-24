@@ -23,10 +23,10 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TaxonWorksTransformer {
+public class TaxonWorksTransformer extends Transformer {
 
 
-    private static final Log s_log = LogFactory.getLog(TaxonWorksUploader.class);
+    private static final Log s_log = LogFactory.getLog(TaxonWorksTransformer.class);
 
     // The columns to be written in the output file. Using a list to specify column order.
     private final List<String> outputColumnOrder = new LinkedList<>();
@@ -266,79 +266,5 @@ public class TaxonWorksTransformer {
                 .collect(Collectors.toList());
     }
 
-
-    /**
-     * Splits an ISO-8601 date duration (YYYY-MM-DD/YYYY-MM-DD) into two separate date strings
-     *
-     * @param eventDate The date duration to split
-     * @return a Pair of (first date, second date), or (first date, "") if only one date
-     */
-    private Pair<String, String> splitDate(String eventDate) {
-        String[] dates = eventDate.split("/", 2);
-
-        // split will always return at least 1 element ({""} if eventDate is empty)
-        if (dates.length == 2) {
-            return Pair.of(dates[0], dates[1]);
-        } else {
-            return Pair.of(dates[0], "");
-        }
-    }
-
-    /**
-     * Fills the adm2 entry with TW-computed county data if country & stateprovince data match, and original adm2 is empty
-     */
-    private String setAdm2(String verbatimCountry, String adm1, String adm2, String computedCountry, String stateProvince, String county) {
-        if (StringUtils.equals(verbatimCountry, computedCountry)
-                && StringUtils.equals(adm1, stateProvince)
-                && StringUtils.isBlank(adm2)
-                && StringUtils.isNotBlank(county)) {
-            return county;
-        }
-        return adm2;
-    }
-
-    /**
-     * Generate elevation string from min and max elevation strings.
-     * AntWeb converts it to a single number, so no point adding units or >/< signs
-     *
-     * @return empty string if both elevations are blank, one elevation if one is blank,
-     * or "num - num" if both elevations have a value
-     */
-    private static String buildElevation(String minElevation, String maxElevation) {
-
-        // this covers the case of (val, "") and ("", "")
-        if (StringUtils.isBlank(maxElevation)) {
-            return minElevation;
-        }
-
-        // covers ("", val)
-        if (StringUtils.isBlank(minElevation)) {
-            return maxElevation;
-        }
-
-        // strip decimal points off when we might output a range.
-        // importer can handle a single number w/ decimal point, but not two
-        minElevation = StringUtils.substringBefore(minElevation, ".");
-        maxElevation = StringUtils.substringBefore(maxElevation, ".");
-        // if both elevations are the same, just return one of them
-        if (minElevation.equals(maxElevation)) {
-            return minElevation;
-        } else {
-            return minElevation + " - " + maxElevation;
-        }
-    }
-
-    /**
-     * Updates ownedBy to use Antweb codes so links can be generated.
-     *
-     * Currently, only replaces CAS with CASC.
-     */
-    private static String setOwnedBy(String ownerRepository) {
-        if ("CAS".equals(ownerRepository)) {
-            return "CASC";
-        }
-
-        return ownerRepository;
-    }
 
 }
