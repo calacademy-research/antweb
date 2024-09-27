@@ -77,6 +77,13 @@ public class UploadDetails extends OperationDetails {
         genUploadReport(UploadHelper.getUploadFile(), accessLogin, request);
     }
 
+    private Curator curator = null;
+    public void setCurator(Curator curator) {
+        this.curator = curator;
+    }
+    public Curator getCurator() {
+        return this.curator;
+    }
     public void genUploadReport(UploadFile uploadFile, Login accessLogin, HttpServletRequest request) {
         // Generate the log file for this operation
         Group accessGroup = null;
@@ -127,12 +134,26 @@ public class UploadDetails extends OperationDetails {
 
         // AccessGroup should have a getCurator link. Will always be a curator.
         // Should load properly in the first place.
-        Curator curator = LoginMgr.getCurator(accessLogin.getId());
-
-        if (curator != null) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Login Id:</b> " + curator.getLink();
-        else logString += "<br>&nbsp;&nbsp;&nbsp;<b>Login Id:</b> " + accessLogin.getId();
-
-        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + accessGroup.getLink();
+        Curator accessCurator = LoginMgr.getCurator(accessLogin.getId());
+        if (accessCurator != null) {
+            if (getCurator() == null) {
+                logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + accessCurator.getGroup().getLink();
+                logString += "<br>&nbsp;&nbsp;&nbsp;<b>Curator:</b> " + accessCurator.getLink();
+            } else {
+                /*
+                setCurator() is set during SpecimenUpload.importSpecimens. This curator may be the effective curator and
+                not necessarily the uploader (which could be an admin). At the end of the upload process the accessLogin is
+                utilized. This will be the curator if the curator was not set differently already.
+                */
+                logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + getCurator().getGroup().getLink();
+                logString += "<br>&nbsp;&nbsp;&nbsp;<b>Curator:</b> " + getCurator().getLink();
+                if (accessCurator != getCurator())
+                    logString += "<br>&nbsp;&nbsp;&nbsp;<b>Admin:</b> " + accessCurator.getLink();
+            }
+        } else {
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + accessLogin.getGroup().getLink();
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Login Id:</b> " + accessLogin.getId();
+        }
 
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Record Count:</b> " + getRecordCount();
 
@@ -304,9 +325,11 @@ public class UploadDetails extends OperationDetails {
         return action;
     }
 
+/*
     public void setLogFileName(String logFileName) {
         this.logFileName = logFileName;
     }
+ */
     public String getLogFileName() {
         if (this.logFileName != null) return this.logFileName;
 

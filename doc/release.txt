@@ -1,5 +1,5 @@
-Release 8.111.2
-  GBIF upload adjustments including Adm2.
+Release 8.112
+  Unified curate page specimen upload mechanism.
   
 Release 8.111.1
   Field Adjustments

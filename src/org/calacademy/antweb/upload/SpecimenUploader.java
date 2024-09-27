@@ -24,10 +24,10 @@ public class SpecimenUploader extends Uploader {
     }
 
     // This gets called from an upload post.
-    public UploadDetails uploadSpecimenFile(UploadForm theForm, Login login, String userAgent, String encoding)
+    public UploadDetails uploadSpecimenFile(UploadForm theForm, Curator curator, String userAgent, String encoding)
       throws SQLException, IOException, RESyntaxException, TestException, AntwebException
     {
-        Group group = login.getGroup();
+        Group group = curator.getGroup();
         //A.log("uploadSpecimenFile() encoding:" + encoding);    
 
         String formFileName = theForm.getTheFile().getFileName();
@@ -50,7 +50,7 @@ public class SpecimenUploader extends Uploader {
         // was 2nd param: specimenUploadType, 
         A.log("uploadSpecimenFile() action:" + theForm.getAction() + " formFileName:" + formFileName);
         String fileName = "specimen" + group.getId() + ".txt";
-        return uploadSpecimenFile(theForm.getAction(), fileName, login, userAgent, encoding, isUpload);
+        return uploadSpecimenFile(theForm.getAction(), fileName, curator, userAgent, encoding, isUpload);
     }
       
 }

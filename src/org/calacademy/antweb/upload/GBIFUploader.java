@@ -33,11 +33,11 @@ public class GBIFUploader extends Uploader {
 
 
     // This gets called from an upload post.
-    public UploadDetails uploadSpecimenFile(UploadForm theForm, Login login, String userAgent, String encoding)
+    public UploadDetails uploadSpecimenFile(UploadForm theForm, Curator curator, String userAgent, String encoding)
       throws SQLException, TestException, AntwebException
     {
         String zipFileTarget = "occurrence.txt";
-        Group group = login.getGroup();
+        Group group = curator.getGroup();
         FormFile theFile = theForm.getTheFile();
         String formFileName = theFile.getFileName();
         String workingDir = AntwebProps.getWorkingDir();
@@ -75,7 +75,7 @@ public class GBIFUploader extends Uploader {
         }
         //A.log("End GBIF transformFile");
 
-        return uploadSpecimenFile(theForm.getAction(), fileName, login, userAgent, encoding, true);
+        return uploadSpecimenFile(theForm.getAction(), fileName, curator, userAgent, encoding, true);
     }
 
     static String getZipFileTarget() {

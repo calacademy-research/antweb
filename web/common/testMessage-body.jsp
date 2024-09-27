@@ -28,6 +28,8 @@
 <% 
     //Emailer.sendMail("re.mark.johnson@gmail.com", "Consider!", "This");
 
+    out.println("<br>a:" + AntwebMgr.isInitialized() + " b:" + AntwebMgr.isServerInitializing(Check.LOGIN));
+
     out.println("<br>isOnline:" + HttpUtil.isOnline() + "</br>");
 
     out.println("<br> genus:" + TaxonProxy.getGenus("camponotus") + "<br>");
@@ -36,6 +38,7 @@
     out.println("<br> taxon:" + TaxonProxy.getTaxon("formicinaecamponotus") + "<br>");
 
     out.println("<br>subfamily:" + TaxonProxy.getSubfamily("Formicinae") + "<br>");
+
 
     String o = DateUtil.runTests();
     out.println(o);

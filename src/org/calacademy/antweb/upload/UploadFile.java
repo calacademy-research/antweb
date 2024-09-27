@@ -32,9 +32,6 @@ public class UploadFile {
     public void setIsReload(boolean reload) { 
       isReload = reload; 
     }
-
-//    public static String oldProjectFileTail = "_authority.txt";
-//    public static String projectFileTail = "_project.txt";
         
     public static final String s_speciesListTail = "_speciesList.txt";
     public static String getSpeciesListTail() { 
@@ -49,7 +46,6 @@ public class UploadFile {
     public UploadFile() {
     }
 
-//, String encoding
     public UploadFile(String base, String fileName, String userAgent, String encoding) {
 
         if (false && AntwebProps.isDevMode()) {
@@ -69,12 +65,8 @@ public class UploadFile {
     private void figureEncoding(String fileLoc, String encoding) {
         setEncoding("UTF-8");
     }
-/*
-      if (encoding != null) { 
-        setEncoding(encoding);
-        return;
-      }
 
+    /*
       //encoding = "ISO8859_1"; // No hyphen?  Not: ISO-8859-1?
       
       // These files are Jack Longino's (Utah).
@@ -91,13 +83,10 @@ public class UploadFile {
       //}
 
       //if (isWorldAnts()) encoding = "UTF-8";
-      
-      //setEncoding(encoding);
 
       //if (correctEncoding(encoding) == false) {
       //  setEncoding("ISO8859_1");
       //}  
-    }
 */
 
 
@@ -263,28 +252,6 @@ public class UploadFile {
       return m_shortFileName;
     }
 
-/*
-    public String getShortName() {
-      String shortName = getShortFileName();
-
-        if (true && AntwebProps.isDevMode()) {
-            A.log("getShortName() shortName:" + shortName);
-            AntwebUtil.logShortStackTrace();
-        }
-
-        while (shortName.contains(".txt")) {
-          //s_log.warn("getShortFileName() fileName:" + shortFileName);
-          shortName = shortName.substring(0, shortName.indexOf(".txt"));
-        }
-
-        // A.log("getShortFileName() shortName:" + shortName);
-        //if (!shortFileName.equals(getFileName())) s_log.error("getShortFileName() shortFileName:" + shortFileName + " does not equal fileName:" + getFileName());
-        // And it should.  When they are proven equal, we may get rid of this method.
-      
-        return shortName;
-    }
- */
-
     public String getFileLoc() {
       return this.base + this.fileName;
     }
@@ -360,45 +327,4 @@ public class UploadFile {
     }
 
 
-  /*
-      public String backup() {
-      String backupDirFile = null;
-
-      File file = new File(getFileLoc());
-      s_log.info("backup() exists:" + exists() + " fileLoc:" + getFileLoc() + " exists:" + file.exists());
-
-      if (!exists()) {
-        s_log.warn("backup() file does not exist:" + getFileLoc());
-      } else {
-        if (file.exists()) {
-          Utility util = new Utility();
-          String fullWebDir = Utility.getDocRoot() + "web";
-          String fullWebUploadDir = fullWebDir + "/upload";
-          //String backupWorkingDir = util.getInputFileHome() + "/backup";
-          Utility.makeDirTree(fullWebUploadDir);
-          s_log.info("backup() makeDirTree:" + fullWebUploadDir);
-
-          this.backupFileName = Utility.getDateForFileName() + "-" + getShortFileName();
-          String tempBackupDirFile = fullWebUploadDir + "/" + backupFileName;
-          A.log("backup() date:" + Utility.getDateForFileName() + " short:" + getShortFileName());
-          try {
-            s_log.info("backup() " + getFileLoc() + " to " + tempBackupDirFile);
-            Utility.copyFile(getFileLoc(), tempBackupDirFile);
-            backupDirFile = "upload/" + backupFileName;
-          } catch (IOException e) {
-            s_log.error("backup() e:" + e);
-          }
-        }
-      }
-      return backupDirFile;
-    }
-
-    public String getBackupFileName() {
-    if (backupFileName != null) {
-      return backupFileName;
-    } else {
-      return getFileName();
-    }
-  }
-   */
 }

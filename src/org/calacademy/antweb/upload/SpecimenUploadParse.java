@@ -48,10 +48,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     //public abstract boolean importSpecimens(UploadFile uploadFile, Group group) throws SQLException, TestException, AntwebException;
         
     protected String parseLine(String theLine, int lineNum, Hashtable specimenItem, Hashtable taxonItem
-      , ArrayList<String> otherColumns, ArrayList<String> colList, String shortFileName, Login accessLogin)
+      , ArrayList<String> otherColumns, ArrayList<String> colList, String shortFileName, Login curator)
       throws SQLException, AntwebException {
 
-        Group accessGroup = accessLogin.getGroup();
+        Group accessGroup = curator.getGroup();
 
         Date startTime = new Date();
         StringBuilder otherInfo = new StringBuilder(32);
@@ -618,7 +618,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
             specimenItem.put("line_num", Integer.valueOf(lineNum).toString());
             specimenItem.put("access_group", accessGroup.getId());
-            specimenItem.put("access_login", accessLogin.getId());
+            specimenItem.put("access_login", curator.getId());
 
             // put a subfamily in front of the TOC
             if (taxonItem.containsKey("toc") && !"".equals(taxonItem.get("toc"))) {
@@ -658,8 +658,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             
             setHigherTaxonomicHierarchy(specimenItem);
             setHigherTaxonomicHierarchy(taxonItem);
-          
-            if (accessLogin.isAdmin()) {
+
+            /*
+            if (curator.isAdmin()) {
               // boolean isAllAscii = Utility.isAllASCII(speciesName);
               String isAscii = Utility.getASCII(speciesName);
               if ("false".equals(isAscii)) {
@@ -673,7 +674,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 //ok = false;
               }
             }
-
+            */
             //A.log("parseLine() logFileName:" + getUploadDetails().getLogFileName());
 
         } catch (RESyntaxException e) {

@@ -93,6 +93,15 @@ public class UploadAction extends Action {
 			return mapping.findForward("goToLogin");
 		}
 
+
+		//A.log("execute() AntwebMgr.init:" + AntwebMgr.isInitialized() + " postInit:" + AntwebMgr.isPostInitialized() + " curator:" + LoginMgr.getCurator("9716"));
+
+		if (!AntwebMgr.isPostInitialized()) {
+			ActionForward af = AntwebUtil.returnMessage("AntwebMgr not yet initialized.", mapping, request);
+			//A.log("execute() postInit:" + AntwebMgr.isPostInitialized() + " af:" + af);
+            return af;
+		}
+
 		if (UploadAction.isInUploadProcess()) {
 			String message = "Server is currently in an Upload Process. Please try again in a little while.";
 			if (LoginMgr.isAdmin(request)) message += " " + getIsInUploadProcess();
@@ -129,19 +138,6 @@ public class UploadAction extends Action {
 
 			AntwebMgr.incrementSpecimenUploadId(connection);
 
-			/*
-			AccessGroup is the group that is logged in.
-			SubmitGroup is the effective group. Actions are taken as... can be passed in with the form.
-			Not all actions consider the submitGroup (currently).
-			*/
-			Login submitLogin = accessLogin;
-			int groupId = theForm.getGroupId();
-			if (groupId > 0) {
-				Group group = GroupMgr.getGroup(theForm.getGroupId());
-				if (group != null) {
-					submitLogin = group.getAdminLogin();
-				}
-			}
 
 			if (!"toggleDownTime".equals(action)) {
 				String downTimeMessage = ServerDb.isDownTime(action, connection);
@@ -167,88 +163,60 @@ public class UploadAction extends Action {
 			//A.log("execute() action:" + action);
 			if (action != null) {
 
-				// Upload a Specimen File (tab-delimited .txt file):
-				if ("specimenUpload".equals(action)) {
+				if ("specimenUpload".equals(action) || "taxonWorksUpload".equals(action) || "GBIFUpload".equals(action)) {
+
+					String curateAs = theForm.getUploadAs();
+					Curator curator = LoginMgr.getCurator(curateAs);
+					if (curator == null) curator = LoginMgr.getCurator(accessLogin);
+					A.log("execute action:" + action + " curateAs:" + curateAs + " curator:" + curator + " login:" + accessLogin);
+
+					boolean abort = AntwebProps.isDevMode();
+
 					FormFile specimenFile = theForm.getTheFile();
 					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
 
-						String theFileName = accessGroup.getAbbrev() + "SpecimenList";
+						if ("specimenUpload".equals(action)) {
+							String theFileName = accessGroup.getAbbrev() + "SpecimenList";
+							A.log("specimenUpload specimenFile:" + specimenFile.getFileName() + " fileName:" + theFileName);
 
-						// WHY redefine action? Seems eroneous.
-						//action = "import:" + theFileName;
-						//s_log.warn("execute() action:" + action);
+							s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
 
-						A.log(" fileName:" + specimenFile.getFileName());
-						//logFileName += theFileName + UploadDetails.getLogExt();
-						s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
+							if (abort) AntwebUtil.returnMessage("abort Antweb specimen upload", mapping, request);
 
-						uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
+							uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theForm, curator, request.getHeader("User-Agent"), theForm.getEncoding());
+
+						} else if ("taxonWorksUpload".equals(action)) {
+							String theFileName = accessGroup.getAbbrev() + "TWSpecimenList";
+							A.log("TaxonWorksUpload specimenFile:" + specimenFile + " fileName:" + theFileName);
+
+							if (abort) AntwebUtil.returnMessage("abort TaxonWorks specimen upload", mapping, request);
+
+							uploadDetails = new TaxonWorksUploader(connection).uploadSpecimenFile(theForm, curator, request.getHeader("User-Agent"), theForm.getEncoding());
+
+						} else if ("GBIFUpload".equals(action)) {
+							String theFileName = accessGroup.getAbbrev() + "GBIFSpecimenList";
+							A.log("GBIFUpload specimenFile:" + specimenFile.getFileName() + " fileName:" + theFileName);
+
+							if (abort) AntwebUtil.returnMessage("abort GBIF specimen upload", mapping, request);
+
+							uploadDetails = new GBIFUploader(connection).uploadSpecimenFile(theForm, curator, request.getHeader("User-Agent"), theForm.getEncoding());
+						}
 
 						ActionForward af = uploadDetails.returnForward(mapping, request);
 						if (af != null) return af;
 
-						specimenPostProcess(request, connection, accessLogin, uploadDetails);
-						specimenPostProcessGlobal(connection);
-
-						runCountCrawls = true;
-					} else {
-        		  	    request.setAttribute("message", "Must choosen specimen file for upload");
-						return uploadDetails.getErrorForward(mapping);
-					}
-
-				} else if ("taxonWorksUpload".equals(action)) {
-					FormFile specimenFile = theForm.getTheFile();
-					A.log("TaxonWorksUpload specimenFile:" + specimenFile);
-					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
-
-						String theFileName = accessGroup.getAbbrev() + "TWSpecimenList";
-
-						//String theAction = "import:" + theFileName;
-						//s_log.warn("execute() action:" + action + " theAction:" + theAction);
-						//logFileName += theFileName + UploadDetails.getLogExt();
-
-						//s_log.info("execute() fileName:" + specimenFile.getFileName() + " type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
-
-						uploadDetails = new TaxonWorksUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
-
-						ActionForward af = uploadDetails.returnForward(mapping, request);
-						if (af != null) return af;
-
-						specimenPostProcess(request, connection, accessLogin, uploadDetails);
+						specimenPostProcess(request, connection, curator, uploadDetails);
 						specimenPostProcessGlobal(connection);
 
 						runCountCrawls = true;
 
 					} else {
-						request.setAttribute("message", "Must choose TaxonWorks File or Zip File for upload");
+						request.setAttribute("message", "Must choosen specimen file for upload");
 						return uploadDetails.getErrorForward(mapping);
 					}
 
-				} else if ("GBIFUpload".equals(action)) {
-					FormFile specimenFile = theForm.getTheFile();
-					//A.log("GBIFUpload specimenFile:" + specimenFile);
-					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
 
-						String theFileName = accessGroup.getAbbrev() + "TWSpecimenList";
-
-						//logFileName += theFileName + UploadDetails.getLogExt();
-						//A.log("execute() fileName:" + specimenFile.getFileName());
-						//s_log.info("execute() fileName:" + specimenFile.getFileName() + " type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
-
-						uploadDetails = new GBIFUploader(connection).uploadSpecimenFile(theForm, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding());
-
-						ActionForward af = uploadDetails.returnForward(mapping, request);
-						if (af != null) return af;
-
-						specimenPostProcess(request, connection, accessLogin, uploadDetails);
-						specimenPostProcessGlobal(connection);
-
-						runCountCrawls = true;
-
-					} else {
-						request.setAttribute("message", "Must choose GBIF file or Zip File for upload");
-						return uploadDetails.getErrorForward(mapping);
-					}
+					//if (!curator.equals(accessLogin)) uploadDetails.setCurator(accessLogin);
 
 				} else if (action.equals("uploadSpeciesList")) {
 					// This functionality should probably be inside of SpeciesListUploader.java
@@ -323,9 +291,25 @@ public class UploadAction extends Action {
 					specimenUploadDb.dropSpecimens(accessGroup);
 
 				} else if (action.equals("reloadSpecimenList")) {
-					String abbrev = submitLogin.getGroup().getAbbrev();
 
-					s_log.info("action:" + action + " submitGroup:" + submitLogin.getGroup());
+					/*
+					AccessGroup is the group that is logged in.
+					SubmitGroup is the effective group. Actions are taken as... can be passed in with the form.
+					Not all actions consider the submitGroup (currently).
+					*/
+					Curator submitCurator = LoginMgr.getCurator(accessLogin.getId());
+					int groupId = theForm.getGroupId();
+					if (groupId > 0) {
+						Group group = GroupMgr.getGroup(theForm.getGroupId());
+						if (group != null) {
+     						int groupAdminId = group.getAdminLogin().getId();
+							submitCurator = LoginMgr.getCurator(groupAdminId);
+						}
+					}
+
+					String abbrev = submitCurator.getGroup().getAbbrev();
+
+					s_log.info("action:" + action + " submitGroup:" + submitCurator.getGroup());
 
 					// Happening in Uploader now.
 					// LogMgr.logQuery(connection, "Before specimen upload Proj_taxon worldants counts", "select project_name, source, count(*) from proj_taxon where source = 'worldants' group by project_name, source");
@@ -334,11 +318,11 @@ public class UploadAction extends Action {
 					String theFileName = abbrev + "SpecimenList";
 					action = "reload:" + theFileName;
 					// logFileName += theFileName + UploadDetails.getLogExt();
-					String formFileName = new Date() + "reloadSpecimen" + submitLogin.getGroup() + ".txt";
+					String formFileName = new Date() + "reloadSpecimen" + submitCurator.getGroup() + ".txt";
 
 					boolean isUpload = false; // It is a reload.
 					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theFileName, formFileName
-							, submitLogin, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
+							, submitCurator, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
 
 					if (AntwebProps.isDevMode()) {
 						s_log.debug("DEV SKIPPING, post specimen processing aborted.");
@@ -352,7 +336,7 @@ public class UploadAction extends Action {
 					//LogMgr.logQuery(connection, "After specimen upload Proj_taxon worldants counts", "select project_name, source, count(*) from proj_taxon where source = 'worldants' group by project_name, source");
 					// LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "After specimen upload Proj_taxon worldants counts");
 
-					specimenPostProcess(request, connection, submitLogin, uploadDetails);
+					specimenPostProcess(request, connection, submitCurator, uploadDetails);
 					specimenPostProcessGlobal(connection);
 
 					httpPostOK = true;
@@ -373,6 +357,7 @@ public class UploadAction extends Action {
 					//String testAccessLoginName = "SShattuck";
 					String testAccessLoginName = "testLogin";
 					Login testLogin = loginDb.getLoginByName(testAccessLoginName);
+					Curator testCurator = LoginMgr.getCurator(testLogin);
 					accessGroup = testLogin.getGroup();
 
 					// Fetched from AppResources site.inputfilehome=/Users/mark/dev/calAcademy/workingdir/
@@ -384,23 +369,23 @@ public class UploadAction extends Action {
 					s_log.info("execute() specimenTest");
 					boolean isUpload = false; // This is a reload
 					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(accessGroup.getAbbrev() + "specimenTest", formFileName
-							, accessLogin, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
+							, testCurator, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
 
 					ActionForward af = uploadDetails.returnForward(mapping, request);
 					if (af != null) return af;
 
-					specimenPostProcess(request, connection, accessLogin, uploadDetails);
+					specimenPostProcess(request, connection, testCurator, uploadDetails);
 					specimenPostProcessGlobal(connection);
 
 					return uploadDetails.findForward(mapping, request);
 
 					//  Yes it should, unless there are errors.  s_log.info("execute() specimenTest.  This should not happen");
 				} else if ("allSpecimenFiles".equals(action)) {
-				/*
-				// All specimen*.txt files should be downloaded to the machine from the production site, prior to this command.
-				cd /antweb/workingdir/
-				scp mjohnson@antweb-prod:/antweb/workingdir/specimen*.txt .
-				*/
+					/*
+					// All specimen*.txt files should be downloaded to the machine from the production site, prior to this command.
+					cd /antweb/workingdir/
+					scp mjohnson@antweb-prod:/antweb/workingdir/specimen*.txt .
+					*/
 					//logFileName += "allSpecimenFiles" + UploadDetails.getLogExt();
 					for (int i = 0; i < 100; ++i) {
 						String formFileName = AntwebProps.getWorkingDir() + "specimen" + i + ".txt";
@@ -415,6 +400,7 @@ public class UploadAction extends Action {
 
 								Group submitAsGroup = GroupMgr.getGroup(i);
 								Login submitAsLogin = submitAsGroup.getAdminLogin();
+								Curator submitAsCurator = LoginMgr.getCurator(submitAsLogin.getId());
 
 								if (submitAsGroup.getAdminLoginId() == 0) {
 									s_log.info("allSpecimenFiles accessLoginId == 0.  Update database.");
@@ -431,12 +417,12 @@ public class UploadAction extends Action {
 
 								boolean isUpload = false; // This is a reload
 								uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile("allSpecimenFiles", formFileName
-										, submitAsLogin, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
+										, submitAsCurator, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
 
 								ActionForward af = uploadDetails.returnForward(mapping, request);
 								if (af != null) return af;
 
-								specimenPostProcess(request, connection, accessLogin, uploadDetails);
+								specimenPostProcess(request, connection, submitAsCurator, uploadDetails);
 
 								connection.commit();
 							} else {
@@ -648,8 +634,8 @@ public class UploadAction extends Action {
 		return mapping.findForward("message");
 	}
 
-	private void specimenPostProcess(HttpServletRequest request, Connection connection, Login login, UploadDetails uploadDetails) throws IOException, SQLException {
-		Group group = login.getGroup();
+	private void specimenPostProcess(HttpServletRequest request, Connection connection, Curator curator, UploadDetails uploadDetails) throws IOException, SQLException {
+		Group group = curator.getGroup();
 
 		SpecimenDb specimenDb = new SpecimenDb(connection);
 		specimenDb.updateSpecimenStatus(group.getId());
@@ -664,12 +650,12 @@ public class UploadAction extends Action {
 		s_log.debug("specimenPostProcess() genGroupObjectMap");
 
 		SpecimenUploadDb uploadDb = new SpecimenUploadDb(connection);
-		uploadDb.updateUpload(login, uploadDetails);
+		uploadDb.updateUpload(curator, uploadDetails);
 		uploadDb.updateGroup(group);
 		s_log.debug("specimenPostProcess() updateUpload");
 
 		if (!AntwebProps.isDevModeSkipping()) {
-			runStatistics(uploadDetails.getAction(), connection, request, login.getId(), uploadDetails.getExecTime());
+			runStatistics(uploadDetails.getAction(), connection, request, curator.getId(), uploadDetails.getExecTime());
 		} else {
 			A.log("execTime:" + uploadDetails.getExecTime());
 			s_log.warn("execute() DEV MODE SKIPPING runStatistics");

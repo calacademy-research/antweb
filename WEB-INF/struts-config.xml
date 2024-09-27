@@ -514,14 +514,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name="likes" path="/imageLikes.jsp"/>
       </action>
 
-<!--
-      <action path="/toUpload"
-              type = "org.calacademy.antweb.util.ToUploadAction"
-              name="dummyForm" 
-              scope="request">
-          <forward name ="success" path="/util/toUpload.jsp"/>
-      </action>
--->
 
 <!-- still in use? -->      
       <action path="/uploadReport"

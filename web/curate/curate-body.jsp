@@ -165,7 +165,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                          <option value="incremental">Incremental
                          <option value="diff">Diff
                          <option value="augment">Augment
-                       </select>
+                       </select><br>
                      </div>
             <% } else { %>
                  <div class="admin_action_item">
@@ -390,6 +390,66 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
 
         <!-- End GBIF Specimen file or Zip File Upload -->
     <% } %>
+
+            <div class="admin_action_item">
+            <br><b><small>Testing: For Admin only:</small></b>
+            </div>
+
+
+<!-- Universal Specimen Upload -->
+    <% if (AntwebProps.isDevMode() || LoginMgr.isAdmin(accessLogin)) { %>
+        <!-- Antweb, TaxonWorks, or GBIF Specimen (file or Zip File) Upload -->
+
+       <html:form method="POST" action="upload.do" enctype="multipart/form-data">
+
+            <div class="admin_action_item">
+                <div class="action_desc"><b>Upload</b> Specimen File or Zip File:<br>&nbsp;&nbsp;&nbsp;</div>
+                <div class="action_browse">
+                    <html:file property="theFile" />
+                </div>
+                <div class="clear"></div>
+
+            <% if (LoginMgr.isAdmin(accessLogin)) { %>
+
+                   <div class="align_left">
+                       &nbsp;&nbsp;Upload Type:
+                       <select name="action">
+                         <option value="specimenUpload" selected>Antweb
+                         <option value="taxonWorksUpload">TaxonWorks
+                         <option value="GBIFUpload">GBIF
+                       </select>
+                   </div>
+
+                   <div class="align_left">
+                       &nbsp;&nbsp;Upload as:
+                       <select name="uploadAs">
+                         <option value="<%= accessLogin.getId() %>" selected><%= accessLogin.getName() %>
+                         <option value="23">Michele
+                         <option value="9716">Mingna
+                       </select>
+                   </div>
+
+            <% } else { %>
+                   <input type="hidden" name="specimenUploadLoginId" value="<%= accessLogin.getId() %>" />
+
+                   <!-- How do we know what upload file options a user has? Do we discern by file type or specify?
+                    i.e. Minga is always GBIF?
+                    -->
+
+            <% } %>
+
+
+
+             <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
+             <div class="clear"></div>
+             </div>
+       </html:form>
+
+        <!-- End GBIF Specimen file or Zip File Upload -->
+    <% } %>
+
+
+
 
 
      <% } %>  <!-- takeDownUpload -->

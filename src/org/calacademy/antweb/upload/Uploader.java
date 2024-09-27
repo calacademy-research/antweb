@@ -106,7 +106,7 @@ A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
     /* This version can be called directly in the case of specimenTest */
     // was 2nd param: String specimenUploadType,
     public UploadDetails uploadSpecimenFile(String operation, String fileName
-            , Login login, String userAgent, String encoding, boolean isUpload)
+            , Curator curator, String userAgent, String encoding, boolean isUpload)
             throws SQLException, TestException, AntwebException
     {
         A.log("uploadSpecimenFile() fileName:" + fileName + " encoding:" + encoding);
@@ -114,7 +114,7 @@ A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
         UploadDetails uploadDetails = null;
         Date startTime = new Date();
         if ("default".equals(encoding)) encoding = null;
-        Group group = login.getGroup();
+        Group group = curator.getGroup();
         String specimenFileLoc = null;
         String messageStr = null;
         UploadFile uploadFile = null;;
@@ -161,7 +161,7 @@ A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
         //LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "Before specimen upload Proj_taxon worldants counts");
 
         SpecimenUpload specimenUpload = new SpecimenUpload(connection);
-        uploadDetails = specimenUpload.importSpecimens(uploadFile, login, operation);
+        uploadDetails = specimenUpload.importSpecimens(uploadFile, curator, operation);
 
         if (uploadFile != null) {
             uploadFile.backup();

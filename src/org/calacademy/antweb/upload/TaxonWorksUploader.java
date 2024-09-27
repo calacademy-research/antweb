@@ -32,12 +32,12 @@ public class TaxonWorksUploader extends Uploader {
     }
 
     // This gets called from an upload post.
-    public UploadDetails uploadSpecimenFile(UploadForm theForm, Login login, String userAgent, String encoding)
+    public UploadDetails uploadSpecimenFile(UploadForm theForm, Curator curator, String userAgent, String encoding)
       throws SQLException, TestException, AntwebException
     {
         String zipFileTarget = "data.tsv";
         FormFile theFile = theForm.getTheFile();
-        Group group = login.getGroup();
+        Group group = curator.getGroup();
         String formFileName = theFile.getFileName();
         String workingDir = AntwebProps.getWorkingDir();
         FileUtil.makeDir(workingDir);
@@ -74,7 +74,7 @@ public class TaxonWorksUploader extends Uploader {
         }
         //A.log("End TaxonWorks transformFile");
 
-        return uploadSpecimenFile(theForm.getAction(), fileName, login, userAgent, encoding, true);
+        return uploadSpecimenFile(theForm.getAction(), fileName, curator, userAgent, encoding, true);
     }
 
 

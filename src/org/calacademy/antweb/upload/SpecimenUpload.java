@@ -68,7 +68,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
         new SpecimenUploadDb(getConnection()).dropSpecimens(group);
     }    
     
-    public UploadDetails importSpecimens(UploadFile uploadFile, Login accessLogin, String action)
+    public UploadDetails importSpecimens(UploadFile uploadFile, Curator curator, String action)
       throws SQLException, TestException, AntwebException
     {
 
@@ -77,8 +77,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
         }
 
         getUploadDetails().setOperation(action);
+        getUploadDetails().setCurator(curator);
         
-        Group accessGroup = accessLogin.getGroup();
+        Group accessGroup = curator.getGroup();
      
 	    Date startTime = new Date();
 
@@ -170,7 +171,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
 					if (LineNumMgr.isGoodCarriageReturnLine(lineNum)) {        
 						// Do the work to populate the specimenItem, taxonItem
-						String errorMessage = parseLine(theLine, lineNum, specimenItem, taxonItem, otherColumns, colList, uploadFileName, accessLogin);
+						String errorMessage = parseLine(theLine, lineNum, specimenItem, taxonItem, otherColumns, colList, uploadFileName, curator);
 						if (errorMessage == null) {
 						  ++buildLineTotal;
 						  //if (!ok) A.log("importSpecimens() lineNum:" + lineNum + " theLine:" + theLine);

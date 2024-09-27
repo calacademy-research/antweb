@@ -124,7 +124,7 @@ public class GBIFTransformer extends Transformer {
             while (true) {
                 ++c;
 
-                //if (AntwebProps.isDevMode() && c > testLimit) break;
+                if (AntwebProps.isDevMode() && c > testLimit) break;
 
                 try {
                     // So we can have the condition inside the try/catch block.
@@ -330,7 +330,7 @@ public class GBIFTransformer extends Transformer {
         }
 
         if (AntwebProps.isDevMode()) {
-            A.log("transformLine() family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
+            //A.log("transformLine() family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
         } else {
             //A.iLog("family:" + family + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);
             //if (AntwebProps.isDevMode()) throw new AntwebException("Terminate test");

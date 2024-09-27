@@ -65,11 +65,9 @@ public class AntwebMgr {
             try {
                 AntwebMgr.serverInitializing();
 
-                s_log.info("AntwebMgr.populate() 1");
-
+                //s_log.info("AntwebMgr.populate() 1");
                 AntwebMgr.populateMgrs(connection, forceReload);
-
-                s_log.info("AntwebMgr.populate() 2");
+                //s_log.info("AntwebMgr.populate() 2");
 
                 AntwebMgr.initializationComplete();
             } catch (Exception e) {
@@ -249,21 +247,24 @@ public class AntwebMgr {
 
         AntwebMgr.genRecentContent(connection); // Takes about a second. Mostly redundant but good for new installations.
 
+        s_isPostInitialized = true;
+
         s_log.warn("postInitialize() end in " + AntwebUtil.reportTime(start));
     }
 
-    // Dynamically generated content. Useful for home page.
-    //   web/genInc/recentImages_gen_inc.jsp
-    //   web/genInc/recentDescEdits.jsp
-    public static void genRecentContent(Connection connection) throws SQLException, IOException {
-        Date startTime = new Date();
-        AntwebFunctions.genRecentDescEdits(connection);
 
-        new ImageUploaderAction().writeRecentImages(connection);
 
-        s_log.debug("genRecentContent() secs:" + AntwebUtil.secsSince(startTime));
-        // (new StatisticsDb(connection)).populateStatistics();
+    private static boolean s_isPostInitialized = false;
+    public static boolean isPostInitialized() {
+        return s_isPostInitialized;
     }
+
+     /*
+      There is initialization and then postInitialization. The server is not up until the end of initialization,
+      But not all services are available. UploadActions are only available after postInitialization.
+     */
+
+
 
     public static boolean isServerInitializing(String manager) {
         if (Check.MUSEUM.equals(manager) && isMuseumPopulated) return false;
@@ -318,6 +319,7 @@ public class AntwebMgr {
         AntwebMgr.removeSiteWarning();    
     }
 
+
     public static String getReport() {
       String report = " MapMgr:" + MapMgr.report();  
       report += " MapCount:" + Map.getDisplayMapCount() + " MapHashCounts:" + Map.getDisplayMapHashCounts();
@@ -327,6 +329,19 @@ public class AntwebMgr {
       String report = "<br><b>MapMgr: </b>" + MapMgr.report();
       report += "<br><b>MapCount: </b>" + Map.getDisplayMapCount() + " MapHashCounts:" + Map.getDisplayMapHashCounts();
       return report;
+    }
+
+    // Dynamically generated content. Useful for home page.
+    //   web/genInc/recentImages_gen_inc.jsp
+    //   web/genInc/recentDescEdits.jsp
+    public static void genRecentContent(Connection connection) throws SQLException, IOException {
+        Date startTime = new Date();
+        AntwebFunctions.genRecentDescEdits(connection);
+
+        new ImageUploaderAction().writeRecentImages(connection);
+
+        s_log.debug("genRecentContent() secs:" + AntwebUtil.secsSince(startTime));
+        // (new StatisticsDb(connection)).populateStatistics();
     }
 
     /*

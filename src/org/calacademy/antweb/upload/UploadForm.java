@@ -2,6 +2,7 @@ package org.calacademy.antweb.upload;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.upload.FormFile;
+import org.calacademy.antweb.util.*;
 
 public class UploadForm extends ActionForm {
   protected FormFile theFile;
@@ -28,6 +29,11 @@ public class UploadForm extends ActionForm {
   protected String action;
   private String specimenUploadType = "full";
   protected String recrawl = "true";
+
+  protected String uploadAs = null;      // Login id of uploader
+  protected String uploadType = null;    // Antweb, TaxonWorks, GBIF
+
+
 
   /*
   private boolean isUp = false;
@@ -198,7 +204,8 @@ public class UploadForm extends ActionForm {
 	return action;
   }
   public void setAction(String action) {
-	this.action = action;
+    //A.log("setAction() action:" + action);
+    this.action = action;
   }
 
   public String getRecrawl() {
@@ -207,7 +214,23 @@ public class UploadForm extends ActionForm {
   public void setRecrawl(String recrawl) {
 	this.recrawl = recrawl;
   }
-  
+
+  // Login id of uploader
+  public String getUploadAs() {
+    return uploadAs;
+  }
+  public void setUploadAs(String uploadAs) {
+    this.uploadAs = uploadAs;
+  }
+
+  // Antweb, TaxonWorks, GBIF
+  public String getUploadType() {
+    return uploadType;
+  }
+  public void setUploadType(String uploadType) {
+    this.uploadType = uploadType;
+  }
+
 }
 
 

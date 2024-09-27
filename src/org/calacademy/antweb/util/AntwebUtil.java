@@ -167,6 +167,14 @@ public abstract class AntwebUtil {
     s_log.error("Unsupported AntwebUtil.log() level: " + level + " " + message);
   }
 
+
+  //Convenience method
+  public static ActionForward returnMessage(String message, ActionMapping mapping, HttpServletRequest request) {
+    request.setAttribute("message", message);
+    return mapping.findForward("message");
+  }
+
+
   // Useful for logging stack traces. Only need one. Server restart will reset.
   private static boolean isFirstTime = true;
   public static boolean isFirstTime() {

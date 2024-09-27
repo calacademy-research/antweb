@@ -233,9 +233,20 @@ public class LoginMgr extends Manager {
       return s_curators;
     }
 
+    public static @Nullable Curator getCurator(Login login) {
+        if (login == null) return null;
+        return getCurator(login.getId());
+    }
+
+    public static @Nullable Curator getCurator(String idStr) {
+        if (idStr == null) return null;
+        int id = Integer.parseInt(idStr);
+        return getCurator(id);
+    }
     public static @Nullable Curator getCurator(int id) {
         if (getCurators() == null) return null;
         for (Curator curator : getCurators()) {
+            //A.log("getCurator() id:" + id + " curatorID:" + curator.getId());
             if (id == curator.getId()) return curator;
         }
         return null;
