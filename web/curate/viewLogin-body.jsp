@@ -196,7 +196,7 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
 </h3>
 
 <% if (LoginMgr.isAdmin(accessLogin)) { %>
-<br> 
+<br>
 <H3>Upload As (comma separated list of curator IDs):
 <input type="text" name="uploadAs" <%= (LoginMgr.isAdmin(accessLogin)) ? "" : " disabled" %> value="<%= thisLogin.getUploadAs() %>">
 </h3>

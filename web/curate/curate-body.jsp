@@ -142,7 +142,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 <!-- Universal Specimen Upload -->
         <!-- Antweb, TaxonWorks, or GBIF Specimen (file or Zip File) Upload -->
 
-       <html:form method="POST" action="upload.do" enctype="multipart/form-data">
+        <html:form method="POST" action="upload.do" enctype="multipart/form-data">
 
             <div class="admin_action_item">
             <br>
@@ -155,47 +155,57 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
             <%
             if (LoginMgr.isAdmin(accessLogin)) { %>
 
-                   <div class="align_left">
-                       &nbsp;&nbsp;Upload Type:
-                       <select name="action">
-                         <option value="specimenUpload" selected>Antweb
-                         <option value="taxonWorksUpload">TaxonWorks
-                         <option value="GBIFUpload">GBIF
-                       </select>
-                   </div>
+                <div class="align_left">
+                   &nbsp;&nbsp;Upload Type:
+                    <select name="action">
+                        <option value="specimenUpload" selected>Antweb
+                        <option value="taxonWorksUpload">TaxonWorks
+                        <option value="GBIFUpload">GBIF
+                    </select>
 
-                   <div class="align_left">
-                       &nbsp;&nbsp;Upload as:
-                       <select name="uploadAs">
-                         <option value="<%= accessLogin.getId() %>" selected><%= accessLogin.getName() %>
-
+                    &nbsp;&nbsp;Upload as:
+                    <select name="uploadAs">
+                        <option value="<%= accessLogin.getId() %>" selected><%= accessLogin.getName() %>
                 <%
                 String uploadAs = accessLogin.getUploadAs();
-                if (uploadAs != null) {
+                if (uploadAs != null && !"".equals(uploadAs)) {
                     List<String> curatorList = new ArrayList<String>(Arrays.asList(uploadAs.split(",")));
                     for (String curatorIdStr : curatorList) {
+                      try {
                         int curatorId = Integer.parseInt((curatorIdStr.trim()));
                         Login curator = LoginMgr.getCurator(curatorId);
                 %>
-                         <option value="<%= curator.getId() %>"><%= curator.getName() %>
-                 <% } %>
-                       </select>
-                   </div>
-
+                        <option value="<%= curator.getId() %>"><%= curator.getName() %>
+                 <%
+                      } catch (NumberFormatException e) {
+                         AntwebUtil.log("NumberFormatException for curatorID:" + curatorIdStr);
+                      }
+                    } %>
              <% } %>
+
+                    </select>
+                </div>
+                <div class="clear"></div>
+
          <% } else { %>
                   <input type="hidden" name="action" value="specimenUpload" />
-                   <input type="hidden" name="specimenUploadLoginId" value="<%= accessLogin.getId() %>" />
-
+                  <input type="hidden" name="specimenUploadLoginId" value="<%= accessLogin.getId() %>" />
          <% } %>
 
-             <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
-             <div class="clear">
+             <div class="clear"></div>
+
+                <div class="align_right">
+                    <input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>>
+                </div>
+
+             <div class="clear"></div>
+
 To calculate the taxon children counts run the <a href='<%= domainApp %>/utilData.do?action=runCountCrawls' title="If taxon children counts are not calculated subsequent to the upload, it will happen nightly.">Count Crawls<img src=<%= domainApp%>/image/new1.png width=20></a>
 <br>If not returned an upload report, find it in the <a href='<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>'>Specimen Upload Reports</a>. <br><br>
-             </div>
-             </div>
-       </html:form>
+
+            </div>
+            <div class="clear"></div>
+        </html:form>
 
         <!-- End Specimen file or Zip File Upload -->
 
