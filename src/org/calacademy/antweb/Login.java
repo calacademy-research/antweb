@@ -136,7 +136,14 @@ public class Login implements Comparable {
     public void setIsUploadImages(boolean isUploadImages) {
       this.isUploadImages = isUploadImages;
     }
-    
+
+    private String uploadAs = null;
+    public void setUploadAs(String uploadAs) {
+        this.uploadAs = uploadAs;
+    }
+    public String getUploadAs() {
+        return uploadAs;
+    }
     
     public ArrayList<SpeciesListable> getProjects() {
         return projects;

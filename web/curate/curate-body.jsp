@@ -132,16 +132,6 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
         }
         if (!takeDownUpload || LoginMgr.isAdmin(accessLogin)) { %>
 
-       <html:form method="POST" action="upload.do" enctype="multipart/form-data">
-         <input type="hidden" name="ancFileDirectory" value="none" />
-         <input type="hidden" name="action" value="specimenUpload" />
-         <input type="hidden" name="updateAdvanced" value="no" />
-         <input type="hidden" name="updateFieldGuide" value="none" />
-         <input type="hidden" name="images" value="no" />
-         <input type="hidden" name="outputFileName" value="" />
-         <input type="hidden" name="successkey" value="null" />
-         <input type="hidden" name="updateAdvanced" value="yes" />
-
              <div class="admin_action_item">
                  <div style="float:left;">
                      <h2>Specimen Data</h2>
@@ -149,53 +139,66 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                  <div class="clear"></div>
              </div>
 
-             <div class="admin_action_item">
-                 <br><div class="action_desc"><b>Upload</b> Specimen File:<br>&nbsp;&nbsp;&nbsp;(tab-delimited .txt file)</div>
-                 <div class="action_dropdown"></div>
-                 <div class="action_browse">
-                   <html:file property="theFile" />
-                 </div>
-                 <div class="clear"></div>
+<!-- Universal Specimen Upload -->
+        <!-- Antweb, TaxonWorks, or GBIF Specimen (file or Zip File) Upload -->
 
-          <% if (AntwebProps.isDevMode()) {
-               if (true) { %>
-                     <div class="align_left">
-                       <select name="specimenUploadType">
-                         <option value="full" selected>Full
-                         <option value="incremental">Incremental
-                         <option value="diff">Diff
-                         <option value="augment">Augment
-                       </select><br>
-                     </div>
-            <% } else { %>
-                 <div class="admin_action_item">
-                     <html:checkbox property="whole" value="true"/> Update entire the biota file
-                 </div>
-            <% } %>
-          <% } else { %>
-               <input type="hidden" name="whole" value="true" />
-          <% } %>
+       <html:form method="POST" action="upload.do" enctype="multipart/form-data">
 
-          <% if (false && LoginMgr.isCurator(accessLogin)) { // || accessLogin.getId() == 16) { //  || accessLogin.getId() == 338   %>
-                     <div class="align_left">
-                       <select name="encoding">
-                         <option value="default" selected>Default
-                         <option value="UTF-8">UTF-8
-                         <option value="MacRoman">MacRoman
-                         <option value="ISO8859_1">ISO8859_1
+            <div class="admin_action_item">
+            <br>
+                <div class="action_desc"><b>Upload</b> Specimen File or Zip File:<br>&nbsp;&nbsp;&nbsp;</div>
+                <div class="action_browse">
+                    <html:file property="theFile" />
+                </div>
+                <div class="clear"></div>
+
+            <%
+            if (LoginMgr.isAdmin(accessLogin)) { %>
+
+                   <div class="align_left">
+                       &nbsp;&nbsp;Upload Type:
+                       <select name="action">
+                         <option value="specimenUpload" selected>Antweb
+                         <option value="taxonWorksUpload">TaxonWorks
+                         <option value="GBIFUpload">GBIF
                        </select>
-                     </div>
-          <% } %>
+                   </div>
 
+                   <div class="align_left">
+                       &nbsp;&nbsp;Upload as:
+                       <select name="uploadAs">
+                         <option value="<%= accessLogin.getId() %>" selected><%= accessLogin.getName() %>
+
+                <%
+                String uploadAs = accessLogin.getUploadAs();
+                if (uploadAs != null) {
+                    List<String> curatorList = new ArrayList<String>(Arrays.asList(uploadAs.split(",")));
+                    for (String curatorIdStr : curatorList) {
+                        int curatorId = Integer.parseInt((curatorIdStr.trim()));
+                        Login curator = LoginMgr.getCurator(curatorId);
+                %>
+                         <option value="<%= curator.getId() %>"><%= curator.getName() %>
+                 <% } %>
+                       </select>
+                   </div>
+
+             <% } %>
+         <% } else { %>
+                  <input type="hidden" name="action" value="specimenUpload" />
+                   <input type="hidden" name="specimenUploadLoginId" value="<%= accessLogin.getId() %>" />
+
+         <% } %>
+
+             <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
+             <div class="clear">
 To calculate the taxon children counts run the <a href='<%= domainApp %>/utilData.do?action=runCountCrawls' title="If taxon children counts are not calculated subsequent to the upload, it will happen nightly.">Count Crawls<img src=<%= domainApp%>/image/new1.png width=20></a>
-<br>If not returned an upload report, find it in the <a href='<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>'>Specimen Upload Reports</a>.
-
-
-                 <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
-                 <div class="clear"></div>
+<br>If not returned an upload report, find it in the <a href='<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>'>Specimen Upload Reports</a>. <br><br>
              </div>
-
+             </div>
        </html:form>
+
+        <!-- End Specimen file or Zip File Upload -->
+
 
        <!-- Reload Specimen Data -->
 
@@ -342,115 +345,6 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
                 </div>
             </div>
         </html:form>
-
-
-<!-- TaxonWorks Specimen Zip File Upload -->
-    <% if (AntwebProps.isDevMode() || GroupMgr.isCAS(accessGroup)) { %>
-       <html:form method="POST" action="upload.do" enctype="multipart/form-data">
-         <input type="hidden" name="action" value="taxonWorksUpload" />
-
-             <div class="admin_action_item">
-                 <div class="action_desc"><b>Upload</b> TaxonWorks Specimen Zip File:<br>&nbsp;&nbsp;&nbsp;(w/ tab-delimited .tsv file)</div>
-                 <div class="action_browse">
-                   <html:file property="theFile" />
-                 </div>
-                 <div class="clear"></div>
-
-             <input type="hidden" name="whole" value="true" />
-
-             <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
-             <div class="clear"></div>
-             </div>
-       </html:form>
-
-        <!-- End TaxonWorks Specimen Zip File Upload -->
-    <% } %>
-
-
-<!-- GBIF Specimen Zip File Upload -->
-    <% if (GroupMgr.isCAS(accessGroup) || LoginMgr.isMingnaUtep(accessLogin)) { %>
-        <!-- GBIF Specimen file or Zip File Upload -->
-
-       <html:form method="POST" action="upload.do" enctype="multipart/form-data">
-         <input type="hidden" name="action" value="GBIFUpload" />
-
-             <div class="admin_action_item">
-                 <div class="action_desc"><b>Upload</b> GBIF Specimen File or Zip File:<br>&nbsp;&nbsp;&nbsp;</div>
-                 <div class="action_browse">
-                   <html:file property="theFile" />
-                 </div>
-                 <div class="clear"></div>
-
-             <input type="hidden" name="whole" value="true" />
-
-             <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
-             <div class="clear"></div>
-             </div>
-       </html:form>
-
-        <!-- End GBIF Specimen file or Zip File Upload -->
-    <% } %>
-
-            <div class="admin_action_item">
-            <br><b><small>Testing: For Admin only:</small></b>
-            </div>
-
-
-<!-- Universal Specimen Upload -->
-    <% if (AntwebProps.isDevMode() || LoginMgr.isAdmin(accessLogin)) { %>
-        <!-- Antweb, TaxonWorks, or GBIF Specimen (file or Zip File) Upload -->
-
-       <html:form method="POST" action="upload.do" enctype="multipart/form-data">
-
-            <div class="admin_action_item">
-                <div class="action_desc"><b>Upload</b> Specimen File or Zip File:<br>&nbsp;&nbsp;&nbsp;</div>
-                <div class="action_browse">
-                    <html:file property="theFile" />
-                </div>
-                <div class="clear"></div>
-
-            <% if (LoginMgr.isAdmin(accessLogin)) { %>
-
-                   <div class="align_left">
-                       &nbsp;&nbsp;Upload Type:
-                       <select name="action">
-                         <option value="specimenUpload" selected>Antweb
-                         <option value="taxonWorksUpload">TaxonWorks
-                         <option value="GBIFUpload">GBIF
-                       </select>
-                   </div>
-
-                   <div class="align_left">
-                       &nbsp;&nbsp;Upload as:
-                       <select name="uploadAs">
-                         <option value="<%= accessLogin.getId() %>" selected><%= accessLogin.getName() %>
-                         <option value="23">Michele
-                         <option value="9716">Mingna
-                       </select>
-                   </div>
-
-            <% } else { %>
-                   <input type="hidden" name="specimenUploadLoginId" value="<%= accessLogin.getId() %>" />
-
-                   <!-- How do we know what upload file options a user has? Do we discern by file type or specify?
-                    i.e. Minga is always GBIF?
-                    -->
-
-            <% } %>
-
-
-
-             <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>></div>
-             <div class="clear"></div>
-             </div>
-       </html:form>
-
-        <!-- End GBIF Specimen file or Zip File Upload -->
-    <% } %>
-
-
-
-
 
      <% } %>  <!-- takeDownUpload -->
  <% } %>  <!-- accessLogin.isUploadSpecimens() -->

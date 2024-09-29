@@ -40,6 +40,7 @@
     boolean isSelf = (accessLogin.getId() == thisLogin.getId());
     ArrayList<Group> groups = (ArrayList) request.getSession().getAttribute("antwebGroups");
 
+A.log("viewLogin-body.jsp uploadAs:" + thisLogin.getUploadAs());
 %>
  
 <div class=admin_left>
@@ -193,6 +194,13 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
 <h3>Can Upload Images:
 <input type="checkbox" name="isUploadImages" <%= (thisLogin.isUploadImages() == true)?"checked":"" %> <%= (accessLogin.isAdmin()) ? "" : " disabled" %>>
 </h3>
+
+<% if (LoginMgr.isAdmin(accessLogin)) { %>
+<br> 
+<H3>Upload As (comma separated list of curator IDs):
+<input type="text" name="uploadAs" <%= (LoginMgr.isAdmin(accessLogin)) ? "" : " disabled" %> value="<%= thisLogin.getUploadAs() %>">
+</h3>
+<% } %>
 
 <input type="hidden" name="id" value="<%= thisLogin.getId() %>">
 <logic:present parameter="isNewLogin">

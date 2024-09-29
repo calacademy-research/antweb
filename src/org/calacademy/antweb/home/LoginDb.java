@@ -216,6 +216,8 @@ public class LoginDb extends AntwebDb {
         login.setIsUploadSpecimens(rset.getBoolean("is_upload_specimens"));
         login.setIsUploadImages(rset.getBoolean("is_upload_images"));
 
+        login.setUploadAs(rset.getString("upload_as"));
+
         if (login.getId() == 0) return null;
         return login;
     }
@@ -260,6 +262,8 @@ public class LoginDb extends AntwebDb {
             //curator.getGroup().setCurator(curator);  // backwards, but allows code to remain unchanged.                    
             login.setIsUploadSpecimens(rset.getBoolean("is_upload_specimens"));
             login.setIsUploadImages(rset.getBoolean("is_upload_images"));
+
+            login.setUploadAs(rset.getString("upload_as"));
         }
         return login;
     }
@@ -493,8 +497,8 @@ public class LoginDb extends AntwebDb {
             }
         
             String theInsert = "insert into login" +
-                    " (id, name, first_name, last_name, email, password, group_id, is_admin, is_upload_specimens, is_upload_images)" +
-                    " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    " (id, name, first_name, last_name, email, password, group_id, is_admin, is_upload_specimens, is_upload_images, upload_as)" +
+                    " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                        
             //s_log.info("saveLogin() insert:" + theInsert);
              
@@ -514,6 +518,7 @@ public class LoginDb extends AntwebDb {
                 stmt.setInt(8, isAdmin);
                 stmt.setInt(9, uploadSpecimens);
                 stmt.setInt(10, uploadImages);
+                stmt.setString(11, login.getUploadAs());
 
                 stmt.executeUpdate();
 //s_log.warn("saveLogin() isAdmin:" + login.isAdmin() + " projects:" + login.getProjects());
@@ -592,7 +597,7 @@ public class LoginDb extends AntwebDb {
                     stmt.setInt(6, login.getId());
                 } else if (isAdminUpdate && !isSelfUpdate) {
                     String adminUpdate = "update login "
-                            + "set name = ?, first_name = ?, last_name = ?, email = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ? "
+                            + "set name = ?, first_name = ?, last_name = ?, email = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ?, upload_as = ? "
                             + "where id = ?";
 
                     theUpdate = adminUpdate;
@@ -606,10 +611,11 @@ public class LoginDb extends AntwebDb {
                     stmt.setInt(6, isAdmin);
                     stmt.setInt(7, uploadSpecimens);
                     stmt.setInt(8, uploadImages);
-                    stmt.setInt(9, login.getId());
+                    stmt.setString(9, login.getUploadAs());
+                    stmt.setInt(10, login.getId());
                 } else if (isAdminUpdate && isSelfUpdate) {
                     String adminSelfUpdate = "update login "
-                            + "set name = ?, first_name = ?, last_name = ?, email = ?, password = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ? "
+                            + "set name = ?, first_name = ?, last_name = ?, email = ?, password = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ?, upload_as = ? "
                             + "where id = ?";
 
                     theUpdate = adminSelfUpdate;
@@ -624,7 +630,8 @@ public class LoginDb extends AntwebDb {
                     stmt.setInt(7, isAdmin);
                     stmt.setInt(8, uploadSpecimens);
                     stmt.setInt(9, uploadImages);
-                    stmt.setInt(10, login.getId());
+                    stmt.setString(10, login.getUploadAs());
+                    stmt.setInt(11, login.getId());
                 }
 
                 //A.log("updateLogin() update:" + DBUtil.getPreparedStatementString(stmt));
