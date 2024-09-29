@@ -154,6 +154,15 @@ public class SaveLoginForm extends ActionForm {
         this.changePassword = changePassword;
     }
 
+    private String uploadAs;
+    public String getUploadAs() {
+        return uploadAs;
+    }
+    public void setUploadAs(String uploadAs) {
+        this.uploadAs = uploadAs;
+    }
+
+
     public ActionErrors validate(ActionMapping mapping, HttpServletRequest request) {
 
         ActionErrors errors = null;

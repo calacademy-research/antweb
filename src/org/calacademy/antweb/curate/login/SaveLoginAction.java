@@ -77,6 +77,7 @@ public final class SaveLoginAction extends Action {
             login.setIsAdmin(form.isAdmin());
             login.setIsUploadSpecimens(form.isUploadSpecimens());
             login.setIsUploadImages(form.isUploadImages());
+            login.setUploadAs(form.getUploadAs());
 
             // Handle Projects Access
             String[] projects = form.getProjects();
