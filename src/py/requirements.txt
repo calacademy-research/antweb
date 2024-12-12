@@ -24,7 +24,7 @@ zipp==3.4.1
 
 pip~=21.0.1
 wheel~=0.36.2
-setuptools==56.0.0
+setuptools==65.5.1
 mysqlclient~=2.0.3
 Wand~=0.6.6
 Pillow~=8.2.0
