@@ -22,7 +22,7 @@ api.antweb.org {
 
 www.antweb.org {
     @bots {
-        header_regexp User-Agent "(?i)(CCBot|Googlebot-Images|Sogou|SenutoBot|SiteScoreBot|Twitterbot|YisouSpider|IABot|Turnitin|CFNetwork/.* Darwin|ClaudeBot|SemrushBot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|facebookexternalhit|Bytespider|AppleBot|Swiftbot|Slurp Bot|GoogleOther|Google-InspectionTool|MJ12bot|Alexa crawler|Soso Spider|Pinterestbot|Dotbot|AhrefsBot|archive.org_bot|scrapy|PetalBot|Amazonbot|DataForSeoBot|Yeti|Googlebot-Image)"
+        header_regexp User-Agent "(?i)(CCBot|GPTBot|Googlebot-Images|Sogou|SenutoBot|SiteScoreBot|Twitterbot|YisouSpider|IABot|Turnitin|CFNetwork/.* Darwin|ClaudeBot|SemrushBot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|facebookexternalhit|Bytespider|AppleBot|Swiftbot|Slurp Bot|GoogleOther|Google-InspectionTool|MJ12bot|Alexa crawler|Soso Spider|Pinterestbot|Dotbot|AhrefsBot|archive.org_bot|scrapy|PetalBot|Amazonbot|DataForSeoBot|Yeti|Googlebot-Image|meta-externalagent)"
     }
 
     log {
