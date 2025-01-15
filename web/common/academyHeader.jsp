@@ -6,9 +6,7 @@
 <%@ page import = "org.calacademy.antweb.Login" %>
 <% String antwebRelease = "0"; %>
 
-
 <%@ include file="location.jsp" %>
-
 
 <%
     if (!AntwebMgr.isPopulated()) { %>
