@@ -262,7 +262,7 @@ $(function() {
 <tiles:insert attribute="siteNav"/>
 
 <%
-    // Determine if we should block all users (to prevent bot traffic bringing down server).
+    // Hmm. Determine if we should block all users (to prevent bot traffic bringing down server).
     boolean blockUnLoggedInUsers = false;
     String reqPage = HttpUtil.getTarget(request);
     if ((reqPage != null) && !(reqPage.contains("login") && !(reqPage.contains("index")))) {    // index might return null;
