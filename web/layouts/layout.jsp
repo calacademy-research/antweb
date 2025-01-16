@@ -276,7 +276,8 @@ $(function() {
     }
 
     if (blockUnLoggedInUsers) {
-          out.println("<br><h2>Due to current Bot traffic, we are supporting logged in users. Login: <a href=" +  AntwebProps.getDomainApp() + "/login.do>Login</a></h2>");
+          out.println("<br><h2>Due to current Bot traffic, we are supporting logged in users: ");
+          out.pringon("<a href=" +  AntwebProps.getDomainApp() + "/login.do>Login</a></h2><!-- reqPage:" + reqPage + " -->");
     } else { %>
 
         <tiles:insert attribute="body-content"/>
