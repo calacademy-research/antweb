@@ -176,12 +176,14 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                       try {
                         curatorId = Integer.parseInt((curatorIdStr.trim()));
                         curator = LoginMgr.getCurator(curatorId);
-                 %>
-                        <option value="<%= curator.getId() %>"><%= curator.getName() %>
-                 <%
+                        if (curator != null) { %>
+                            <option value="<%= curator.getId() %>"><%= curator.getName() %>
+                     <% } else {
+                         AntwebUtil.log("curate-body.jsp curator:null for " + curatorList + " curatorIDStr:" + curatorIdStr + " curatorId:" + curatorId + " curator:" + curator);
+                        }
                       } catch (NullPointerException e) {
                          // Why is this not getting trapped outside/above?
-                         AntwebUtil.log("NumberFormatException for curatorList:" + curatorList + " curatorIDStr:" + curatorIdStr + " curatorId:" + curatorId + " curator:" + curator);
+                         AntwebUtil.log("NullPointerException for curatorList:" + curatorList + " curatorIDStr:" + curatorIdStr + " curatorId:" + curatorId + " curator:" + curator);
                       } catch (NumberFormatException e) {
                          AntwebUtil.log("NumberFormatException for curatorID:" + curatorIdStr);
                       }

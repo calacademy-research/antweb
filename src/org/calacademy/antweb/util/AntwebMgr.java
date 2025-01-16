@@ -115,6 +115,8 @@ public class AntwebMgr {
 
         //if (log) s_log.warn("populateMgrs() Populating Managers...");
 
+
+
         if (log) s_log.warn("populateMgrs() GroupMgr");
         GroupMgr.populate(connection, forceReload);
 
@@ -163,7 +165,7 @@ public class AntwebMgr {
 
         ServerStatusAction.populate(connection);
 
-        UserAgentTracker.init(connection);
+        //UserAgentTracker.init(connection);
         MapMgr.refresh();
 
         if (log) s_log.warn("populateMgrs() completed in " + AntwebUtil.reportTime(start));

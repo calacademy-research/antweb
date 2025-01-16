@@ -211,9 +211,9 @@ public abstract class HttpUtil {
                 isBot = true;
             }
 
-            if (UserAgentTracker.isOveractive(request)) {
-                isBot = true;
-            }
+            //if (UserAgentTracker.isOveractive(request)) {
+            //    isBot = true;
+            //}
 
         }
         return isBot;
@@ -444,27 +444,6 @@ public abstract class HttpUtil {
                 (content.contains("Loesch") // This is the author of Browser.jsp
                         || false
                 );
-    }
-
-
-    private static String[] allowPages = new String[]{"login", "index", "basicLayout", "about.do", "documentation", "press.do", "favs.do", "contact.do", "api.do", "statsPage.do"};
-    private static List<String> allowPagesList = Arrays.asList(allowPages);
-
-    public static boolean isBlockUnLoggedInUser(HttpServletRequest request) {
-
-        if (LoginMgr.isLoggedIn(request)) return false;
-
-        // Block ALL not logged in traffic, and link to login page.  Block bots nuclear option.
-        // Determine if we should block all users (to prevent bot traffic bringing down server).
-        String reqPage = HttpUtil.getTarget(request);
-        if (reqPage == null) return false;  // Maybe the home page?
-
-        boolean blockUnLoggedInUser = true;
-        for (String pageStr : allowPagesList) {
-          if (reqPage.contains(pageStr)) blockUnLoggedInUser = false;
-        }
-
-        return blockUnLoggedInUser;
     }
 
 

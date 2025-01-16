@@ -46,137 +46,145 @@ public class SessionRequestFilter implements Filter {
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
 
-      if (AntwebProps.isDevMode()) s_period = 0;
+        if (AntwebProps.isDevMode()) s_period = 0;
 
-      ++s_concurrentRequests;
+        ++s_concurrentRequests;
 
-      // Count hits per second.
-      ++perCounter;
-      //A.log("doFilter() perCounter:" + perCounter + " countPer:" + countPer + " periodInSeconds:" + periodInSeconds + " perStart:" + perStart);
-      if (AntwebUtil.secsSince(perStart) >= periodInSeconds) {
-          countPer = (double)perCounter /(periodInSeconds);
-          //double actualQuotient = (double)dividend / divisor;
+        // Count hits per second.
+        ++perCounter;
+        //A.log("doFilter() perCounter:" + perCounter + " countPer:" + countPer + " periodInSeconds:" + periodInSeconds + " perStart:" + perStart);
+        if (AntwebUtil.secsSince(perStart) >= periodInSeconds) {
+            countPer = (double) perCounter / (periodInSeconds);
+            //double actualQuotient = (double)dividend / divisor;
 
-          perStart = new Date();
-          perCounter = 0;
-      }
+            perStart = new Date();
+            perCounter = 0;
+        }
 
+        String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
 
-      Date startTime = new Date();
-      HttpServletRequest request = (HttpServletRequest) req;
-      HttpServletResponse response = (HttpServletResponse) res;
-      String target = HttpUtil.getTarget(request);
+        Date startTime = new Date();
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpServletResponse response = (HttpServletResponse) res;
+        String target = HttpUtil.getTarget(request);
 
-
-      // Block bots nuclear option. All not logged in users forced to login.
-      boolean blockUnLoggedInUsers = true && HttpUtil.isBlockUnLoggedInUser(request);
-      if (blockUnLoggedInUsers) {
-        String message = "<br><h2>Due to current Bot traffic, we are supporting only logged in users:"
-          + "<a href=" +  AntwebProps.getDomainApp() + "/login.do>Login</a></h2><!-- reqPage:" + target + " -->";
-        HttpUtil.write(message, response);
-        return;
-      }
+        try {
 
 
-      //A.log("doFilter()");
-      ServletContext ctx = request.getSession().getServletContext();
+            try {
 
-      DataSource ds = null;
-      //Connection connection = null;
+                // Block bots nuclear option. All not logged in users forced to login.
+                boolean blockUser = UserAgentTracker.isBlockUser(request);
+                if (blockUser) {
+                    String message = "<br><h2>Due to current Bot traffic, we are supporting only logged in users: "
+                            + "<a href=" + AntwebProps.getDomainApp() + "/login.do>Login</a></h2><!-- reqPage:" + target + " -->";
+                    HttpUtil.write(message, response);
+                    return;
+                }
 
-      String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
+            } catch (Exception e) {
+                s_log.error("e:" + e);
+                AntwebUtil.logStackTrace(e);
+            }
 
-      try {
-          PageTracker.add(request);
 
-          boolean allow = UserAgentTracker.vetForBot(request, response);
+            //A.log("doFilter()");
+            ServletContext ctx = request.getSession().getServletContext();
 
-          if (allow) {
-              allow = !Check.blockRecursiveCalls(request, response);
-          }
+            DataSource ds = null;
+            //Connection connection = null;
 
-          if (!allow) {
-              return;
-          }
+            PageTracker.add(request);
 
-          Login accessLogin = LoginMgr.getAccessLogin(request);
-          String loginName = "-";
-          if (accessLogin != null) loginName = accessLogin.getName();
-          String logMessage = loginName + " " + AntwebUtil.getRequestInfo(request);
-          LogMgr.appendLog("accessLog.txt", logMessage, true);
-          //A.log("doFilter() message:" + logMessage);
+            boolean allow = true;
+            //boolean allow = UserAgentTracker.vetForBot(request, response);
 
-          // Log insecure links.
-          if (!HttpUtil.isSecure(request)) {
-              s_log.info("doFilter() insecure target:" + target);
-              String message = "req:" + target + " scheme:" + request.getScheme()
-                      + " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
-              LogMgr.appendLog("insecure.log", message, true);
-          }
+            if (allow) {
+                allow = !Check.blockRecursiveCalls(request, response);
+            }
 
-          HttpUtil.setUtf8(request, response);
+            if (!allow) {
+                return;
+            }
 
-          // To fix the Desc Edit Image Upload
-          response.setHeader("X-XSS-Protection", "0");
+            Login accessLogin = LoginMgr.getAccessLogin(request);
+            String loginName = "-";
+            if (accessLogin != null) loginName = accessLogin.getName();
+            String logMessage = loginName + " " + AntwebUtil.getRequestInfo(request);
+            LogMgr.appendLog("accessLog.txt", logMessage, true);
+            //A.log("doFilter() message:" + logMessage);
 
-          if (!afterPopulated && AntwebMgr.isPopulated()) {
-              //s_log.warn("doFilter() Pop done. target:" + target);
-              afterPopulated = true;
-          }
+            // Log insecure links.
+            if (!HttpUtil.isSecure(request)) {
+                s_log.info("doFilter() insecure target:" + target);
+                String message = "req:" + target + " scheme:" + request.getScheme()
+                        + " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
+                LogMgr.appendLog("insecure.log", message, true);
+            }
 
-          chain.doFilter(request, response);
+            HttpUtil.setUtf8(request, response);
 
-      } catch (Exception e) {
-          String note = ""; // Usually do nothing, but in cases...
-          int postActionPeriodPos = 0;
-          if (target != null) {
-            int actionPeriodPos = target.indexOf(".do");
-            // Periods are not allowed after the .do. This is a struts I limitation.
-            if (actionPeriodPos > 0)
-              postActionPeriodPos = target.indexOf(".", actionPeriodPos + 1);
-              //String periodStr = target.substring(postActionPeriodPos, postActionPeriodPos + 6);
-              if (postActionPeriodPos > 0) {
-                note = " Periods not allowed in query String.";
-              }
-          }
-          String message = "<br>" + formatDateTime;
-          String htmlMessage = null;
+            // To fix the Desc Edit Image Upload
+            response.setHeader("X-XSS-Protection", "0");
 
-          int caseNumber = AntwebUtil.getCaseNumber();
-          message += " e:" + e + " target:" + target;
-          s_log.error("doFilter() See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber + " message:" + message);
+            if (!afterPopulated && AntwebMgr.isPopulated()) {
+                //s_log.warn("doFilter() Pop done. target:" + target);
+                afterPopulated = true;
+            }
 
-          message = ""
-                  + "<br><b>startTime:</b>" + startTime
-                  + "<br><b>case#:</b>" + caseNumber
-                  + "<br><b>target:</b>" + target
-                  + "<br><b>e:</b>" + e
-                  + "<br><b>userAgent:</b>" + UserAgentTracker.getUserAgent(request)
-                  //+ "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request)
-                  + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTrace(e) + "</pre>";   // AntwebUtil.getAntwebStackTraceHtml(e) didn't work
-          LogMgr.appendLog("srfExceptions.jsp", message);
+            chain.doFilter(request, response);
 
-          htmlMessage
-              = "<br><b>Request Error</b>"
-              + "<br><br><b>Case#:</b>" + caseNumber 
-              + "<br>(Please notify " + AntwebUtil.getAdminEmail() + ") with this info and description of use case. Thank you."
-              + "<br><b>Request:</b>" + target
-              + "<br><b>Datetime:</b>" + formatDateTime
-              ; 
-          if (AntwebProps.isDevMode()) {
-              htmlMessage += "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
-          }
-		  HttpUtil.write(htmlMessage, response);
+        } catch (Exception e) {
+            String note = ""; // Usually do nothing, but in cases...
+            int postActionPeriodPos = 0;
+            if (target != null) {
+                int actionPeriodPos = target.indexOf(".do");
+                // Periods are not allowed after the .do. This is a struts I limitation.
+                if (actionPeriodPos > 0)
+                    postActionPeriodPos = target.indexOf(".", actionPeriodPos + 1);
+                //String periodStr = target.substring(postActionPeriodPos, postActionPeriodPos + 6);
+                if (postActionPeriodPos > 0) {
+                    note = " Periods not allowed in query String.";
+                }
+            }
+            String message = "<br>" + formatDateTime;
+            String htmlMessage = null;
 
-      } finally {
-          --s_concurrentRequests;
+            int caseNumber = AntwebUtil.getCaseNumber();
+            message += " e:" + e + " target:" + target;
+            s_log.error("doFilter() See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber + " message:" + message);
 
-          PageTracker.remove(request);
+            message = ""
+                    + "<br><b>startTime:</b>" + startTime
+                    + "<br><b>case#:</b>" + caseNumber
+                    + "<br><b>target:</b>" + target
+                    + "<br><b>e:</b>" + e
+                    //+ "<br><b>userAgent:</b>" + UserAgentTracker.getUserAgent(request)
+                    //+ "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request)
+                    + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTrace(e) + "</pre>";   // AntwebUtil.getAntwebStackTraceHtml(e) didn't work
+            LogMgr.appendLog("srfExceptions.jsp", message);
 
-          finish(request, startTime);
+            htmlMessage
+                    = "<br><b>Request Error</b>"
+                    + "<br><br><b>Case#:</b>" + caseNumber
+                    + "<br>(Please notify " + AntwebUtil.getAdminEmail() + ") with this info and description of use case. Thank you."
+                    + "<br><b>Request:</b>" + target
+                    + "<br><b>Datetime:</b>" + formatDateTime
+            ;
+            if (AntwebProps.isDevMode()) {
+                htmlMessage += "<br><pre><br><b> StackTrace:</b>" + AntwebUtil.getStackTrace(e) + "</pre>";
+            }
+            HttpUtil.write(htmlMessage, response);
 
-          //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
-      }
+        } finally {
+            --s_concurrentRequests;
+
+            PageTracker.remove(request);
+
+            finish(request, startTime);
+
+            //if (target.contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) s_log.warn("MarkNote() finished:" + target);
+        }
     }
 
     // This method used to be inline of doFilter(), but now called by Action classes with their connection.
@@ -195,7 +203,7 @@ public class SessionRequestFilter implements Filter {
             s_log.warn("processRequest() e:" + e);
         }
 
-        UserAgentTracker.track(request, connection);
+        //UserAgentTracker.track(request, connection);
     }
 
     public static final int MILLIS = 1000;
@@ -235,7 +243,7 @@ public class SessionRequestFilter implements Filter {
 		  AntwebMgr.populate(connection, true, true);
 
           // Should be in an set of server init checks.
-          (new UserAgentDb(connection)).flagWhiteList();
+          //(new UserAgentDb(connection)).flagWhiteList();
 
           LogMgr.backupSrf();
 
@@ -278,7 +286,7 @@ public class SessionRequestFilter implements Filter {
 
     public void report() {
         s_log.warn("runTime:" + AntwebUtil.hrsSince(getInitTime()) + " " + AntwebMgr.getReport());
-        s_log.warn(UserAgentTracker.summary() + "overactive:" + UserAgentTracker.overActiveReport());
+        //s_log.warn(UserAgentTracker.summary() + "overactive:" + UserAgentTracker.overActiveReport());
         s_log.warn("Overdue resource:" + DBUtil.getOldConnectionList());
         s_log.warn("Bad Actor Report:" + BadActorMgr.getBadActorReport());
         s_log.warn(AntwebSystem.getTopReport());
@@ -337,7 +345,7 @@ class CustomTask extends TimerTask  {
       AntwebUtil.log("SessionRequestFilter.CustomTask.run()");
       if (!AntwebProps.isDevMode()) {
           new Scheduler().doAction();
-          UserAgentTracker.refresh();
+          //UserAgentTracker.refresh();
       } else {
           AntwebUtil.log("warn", "CustomTask.run() DEV MODE SKIPPING scheduler.doAction()");
       }

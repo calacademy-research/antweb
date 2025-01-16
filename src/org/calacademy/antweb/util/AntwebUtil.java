@@ -686,9 +686,24 @@ public abstract class AntwebUtil {
      // s_log.warn("GarbageCollected:" + duration);
       return Long.valueOf(duration).toString();
   }
-  
-  public static long millisSince(Date date) {
 
+
+  public static long millisBetween(Date date1, Date date2) {
+    long millisSince = date2.getTime() - date1.getTime();
+    return millisSince;
+  }
+  public static long secsBetween(Date date1, Date date2) {
+    long millisSince = AntwebUtil.millisBetween(date1, date2);
+    long secsSince = millisSince / 1000;
+    return secsSince;
+  }
+  public static long minsBetween(Date date1, Date date2) {
+    long secsSince = AntwebUtil.secsBetween(date1, date2);
+    long minsSince = secsSince / 60;
+    return minsSince;
+  }
+
+  public static long millisSince(Date date) {
     Date now = new Date();
     long millisSince = now.getTime() - date.getTime();
     return millisSince;

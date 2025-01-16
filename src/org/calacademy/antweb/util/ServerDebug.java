@@ -26,7 +26,7 @@ public final class ServerDebug extends Action {
     private static final Log s_log = LogFactory.getLog(ServerDebug.class);
 
 	// Maintain this list. It drives the links on the Server Status Page.
-	private static String[] s_debugs = {"isDebug", "logGetConns", "debugUserAgents"};
+	private static String[] s_debugs = {"isDebug", "logGetConns", "debugUserAgents", "isBlockUnLoggedIn"};
 
 	public static String[] getDebugs() { return s_debugs; }
 

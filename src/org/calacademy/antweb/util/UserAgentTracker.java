@@ -1,7 +1,6 @@
 package org.calacademy.antweb.util;
 
 import java.util.*;
-import java.util.Map;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -9,29 +8,232 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.*;
 
 
-import javax.sql.*;
-import java.sql.*;
-
 import org.apache.struts.action.*;
 
-import org.apache.struts.action.ActionForm;
-import org.apache.struts.action.ActionForward;
-import org.apache.struts.action.ActionMapping;
-import org.apache.struts.action.DynaActionForm;
 import org.calacademy.antweb.*;
-import org.calacademy.antweb.home.UserAgentDb;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
-import org.calacademy.antweb.home.ServerDb;
-import org.calacademy.antweb.upload.UploadAction;
 
 
 public class UserAgentTracker extends Action {
 
-  private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);
+    private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);
+
+    private static LinkedList<Request> requestLinkList = new LinkedList<>();
+
+    private static int MAX_LINKLIST_SIZE = 100;
+    private static int PERIOD_IN_SECONDS = 100;
+    private static int ALLOWED_PERCENT = 25;
+
+    private static int blockCount = 0;
+    private static int notBlockCount = 0;
+
+    /*
+    public UserAgentTracker() {
+        this.requestLinkList = new LinkedList<>();
+    }
+    */
 
 
+
+    private static String[] allowPages = new String[]{"login", "index", "basicLayout", "about.do", "documentation.do", "antShare.do", "press.do", "favs.do", "contact.do", "api.do"};
+    // Kind of slow: , "statsPage.do"
+    private static List<String> allowPagesList = Arrays.asList(allowPages);
+
+    public static boolean isBlockUser(HttpServletRequest request) {
+
+        addRequest(request);
+
+        boolean block = blockTest(request);
+
+        if (block == true) {
+            blockCount++;
+        } else {
+            notBlockCount++;
+        }
+
+        return block;
+    }
+
+    private static boolean blockTest(HttpServletRequest request) {
+
+        // For now, if logged in, allow. If bots start logging in, this could be removed.
+        if (LoginMgr.isLoggedIn(request)) return false;
+
+        // Even if rate of requests is too high, respond to these pages...
+        String reqPage = HttpUtil.getTarget(request);
+        if (reqPage == null) return false;  // Maybe the home page?
+        for (String pageStr : allowPagesList) {
+            if (reqPage.contains(pageStr)) return false;
+        }
+
+        // Nuclear block bot option. Block all non-logged-in users. If this gets used, change implemntation.
+        if (ServerDebug.isDebug("isBlockUnLoggedIn")) return true;
+
+        // If the list is yet to be filled...
+        if (requestLinkList.size() < MAX_LINKLIST_SIZE) return false;
+
+        // If the oldest in the list is less than PERIOD_IN_SECONDS..
+        Request first = (Request) requestLinkList.getFirst();
+        long secsSinceFirst = AntwebUtil.secsSince(first.getDate());
+        if (secsSinceFirst > PERIOD_IN_SECONDS) return false;
+
+        // Finally, is this the offending user-agent?
+        if (getPercentage(request) >= ALLOWED_PERCENT) return true;
+
+        return false;
+    }
+
+    private static void addRequest(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        boolean isLoggedIn = LoginMgr.isLoggedIn(request);
+        requestLinkList.add(new Request(userAgent, isLoggedIn, new Date()));
+        if (requestLinkList.size() > MAX_LINKLIST_SIZE) requestLinkList.removeFirst();
+    }
+
+    public static double getPercentage(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        return getPercentageByName(userAgent);
+    }
+    public static double getPercentageByName(String name) {
+        if (requestLinkList.isEmpty()) {
+            return 0.0;  // Avoid division by zero
+        }
+
+        long count = requestLinkList.stream()
+                .filter(req -> req.getUserAgent().equals(name))
+                .count();
+
+        return (count * 100.0) / requestLinkList.size();
+    }
+
+
+
+    public static String getDataAsHtml() {
+
+        String returnStr = "UserAgentTracker";
+
+        int size = requestLinkList.size();
+        returnStr += "<br>linkListSize:" + size;
+
+        if (size > 2) {
+            Date date1 = ((Request) requestLinkList.getFirst()).getDate();
+            Date date2 = ((Request) requestLinkList.getLast()).getDate();
+            long seconds = AntwebUtil.secsBetween(date1, date2);
+            long minutes = AntwebUtil.minsBetween(date1, date2);
+            returnStr += "<br>seconds:" + seconds + " (minutes:" + minutes + ")";
+        }
+
+        returnStr += "<br>MAX_LINKLIST_SIZE:" + MAX_LINKLIST_SIZE + " PERIOD_IN_SECONDS:" + PERIOD_IN_SECONDS + " ALLOWED_PERCENT:"+ ALLOWED_PERCENT;
+
+        returnStr += "<br> Max linked list size: " + MAX_LINKLIST_SIZE;
+        returnStr += "<br> Full Linked List timestamp spread for busy threshold ( < seconds): " + PERIOD_IN_SECONDS;
+        returnStr += "<br> Allowed percentage of list before being blocked: " + ALLOWED_PERCENT + "%";
+
+        returnStr += "<br>Requests:<br>";
+        int i = 0;
+        String requests = "";
+        for (Request req : requestLinkList) {
+            ++i;
+            requests += "<br>" + i + ": ";
+            if (req.isLoggedIn()) requests += "*";
+            requests += req.getUserAgent() + " - " + req.getDate();
+        }
+
+        returnStr += " Requests:" + requests;
+        return returnStr;
+    }
+
+}
+
+
+    class Request {
+        private String userAgent;
+        private boolean isLoggedIn;
+        private Date date;
+        private int count; // Used for summaries.
+
+        public Request(String userAgent, boolean isLoggedIn, Date date) {
+            this.userAgent = userAgent;
+            this.isLoggedIn = isLoggedIn;
+            this.date = date;
+        }
+
+        public String getUserAgent() {
+            return userAgent;
+        }
+
+        public boolean isLoggedIn() {
+            return isLoggedIn;
+        }
+
+        public Date getDate() {
+            return date;
+        }
+
+        public void setCount(int count) {
+            this.count = count;
+        }
+        public int getCount(int count) {
+            return count;
+        }
+
+    }
+
+
+
+    /*
+    public static String getData() {
+
+        String returnStr = "UserAgentTracker";
+
+        int size = requestLinkList.size();
+        returnStr += "\r linkListSize:" + size;
+
+        if (size > 2) {
+            Date date1 = ((Request) requestLinkList.getFirst()).getDate();
+            Date date2 = ((Request) requestLinkList.getLast()).getDate();
+            long seconds = AntwebUtil.secsBetween(date1, date2);
+            long minutes = AntwebUtil.minsBetween(date1, date2);
+            returnStr += "\r Difference between earliest and latest in seconds: " + seconds + " (Minutes: " + minutes + ")";
+        }
+
+        returnStr += "\r Max linked list size: " + MAX_LINKLIST_SIZE;
+        returnStr += "\r Full Linked List timestamp spread for busy threshold ( < seconds): " + PERIOD_IN_SECONDS;
+        returnStr += "\r Allowed percentage of list before being blocked: " + ALLOWED_PERCENT + "%";
+
+        int i = 0;
+        String requests = "";
+        for (Request req : requestLinkList) {
+            ++i;
+            requests += "\r " + i + ": " + req.getUserAgent() + " - " + req.getDate();
+        }
+
+        returnStr += " Requests:" + requests;
+        return returnStr;
+    }
+*/
+
+    /*
+    public static String test() {
+        UserAgentTracker userAgentTracker = new UserAgentTracker();
+
+        userAgentTracker.addRequest("Order", new Date());
+        userAgentTracker.addRequest("Cancel", new Date());
+        userAgentTracker.addRequest("Order", new Date());
+        userAgentTracker.addRequest("Order", new Date());
+        userAgentTracker.addRequest("Return", new Date());
+
+        A.log("requests:" + userAgentTracker.getRequestLinkListStr());
+
+        return "Percentage of 'Order' requests: " + userAgentTracker.getPercentageByName("Order") + "%";
+    }
+*/
+
+
+
+/*
     private static Map<String, Integer> agentsMap = new HashMap<>();
     private static int nullAgent = 0;
 
@@ -326,18 +528,6 @@ public class UserAgentTracker extends Action {
         //countMap.put(count, agent);
       }
 
-/*
-      TreeSet treeSet = new TreeSet(countMap.keySet());
-      ArrayList<Integer> list = new ArrayList<>(treeSet);
-
-      int c2 = 0;
-      for (Integer count : list) {
-          ++c2;
-          agent = countMap.get(count);
-          A.log("htmlReport() c:" + c2 + " count:" + count + " agent:" + agent);
-          report += "<b>" + count + ": </b>" + agent;
-      }
-*/
       //A.log("htmlReport() report:" + report);
 
       return report;
@@ -388,4 +578,4 @@ public class UserAgentTracker extends Action {
     }
 }
 
-
+*/

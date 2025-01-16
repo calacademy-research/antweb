@@ -23,13 +23,10 @@
        <br><h3 align=left>ISMARK</h3>
        <% } %>
 
-
-
        <%
-       if (false) { %>
-         response.sendRedirect("notLoggedIn.jsp");
-         return;
-       <% % } %>
+       if (true) {
+           out.println(UserAgentTracker.getDataAsHtml());
+       } %>
 
 <%   } %>
 
