@@ -61,10 +61,39 @@ public class SessionRequestFilter implements Filter {
           perCounter = 0;
       }
 
+
       Date startTime = new Date();
       HttpServletRequest request = (HttpServletRequest) req;
       HttpServletResponse response = (HttpServletResponse) res;
       String target = HttpUtil.getTarget(request);
+
+
+
+      if (true) {   // Block ALL not logged in traffic. Link to login page.  Block bots nuclear option.
+        // Determine if we should block all users (to prevent bot traffic bringing down server).
+        boolean blockUnLoggedInUsers = false;
+        String reqPage = HttpUtil.getTarget(request);
+        if ( (reqPage != null) && !(reqPage.contains("login")) && !(reqPage.contains("index")) && !(reqPage.contains("basicLayout")) ) {    // index might return null;
+            if (!LoginMgr.isLoggedIn(request)) {
+                blockUnLoggedInUsers = true;
+            } else {
+                AntwebUtil.log("Logged in Page:" + reqPage);
+            }
+        } else {
+            AntwebUtil.log("Page is:" + reqPage);
+        }
+
+        if (blockUnLoggedInUsers) {
+            String message = "<br><h2>Due to current Bot traffic, we are supporting logged in users:"
+              + "<a href=" +  AntwebProps.getDomainApp() + "/login.do>Login</a></h2><!-- reqPage:" + reqPage + " -->";
+
+            HttpUtil.write(message, response);
+            return;
+        }
+      }
+
+
+
 
       //A.log("doFilter()");
       ServletContext ctx = request.getSession().getServletContext();
