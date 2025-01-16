@@ -16,6 +16,25 @@
 <%@ page import="org.calacademy.antweb.home.*" %>
 
 
+// Test
+
+<%   if (LoginMgr.isMark(request)) {
+       if (true) { %>
+       <br><h3 align=left>ISMARK</h3>
+       <% } %>
+
+
+
+       <%
+       if (false) { %>
+         response.sendRedirect("notLoggedIn.jsp");
+         return;
+       <% % } %>
+
+<%   } %>
+
+
+
 <div class="left">
 
 <% 
