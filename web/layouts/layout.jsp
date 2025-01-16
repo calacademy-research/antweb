@@ -265,7 +265,7 @@ $(function() {
     // Hmm. Determine if we should block all users (to prevent bot traffic bringing down server).
     boolean blockUnLoggedInUsers = false;
     String reqPage = HttpUtil.getTarget(request);
-    if ((reqPage != null) && !(reqPage.contains("login") && !(reqPage.contains("index")))) {    // index might return null; 
+    if ( (reqPage != null) && !(reqPage.contains("login")) && !(reqPage.contains("index")) && !(reqPage.contains("basicLayout")) ) {    // index might return null;
       if (!LoginMgr.isLoggedIn(request)) {
           blockUnLoggedInUsers = true;
         } else {
@@ -277,7 +277,7 @@ $(function() {
 
     if (blockUnLoggedInUsers) {
           out.println("<br><h2>Due to current Bot traffic, we are supporting logged in users: ");
-          out.pringon("<a href=" +  AntwebProps.getDomainApp() + "/login.do>Login</a></h2><!-- reqPage:" + reqPage + " -->");
+          out.println("<a href=" +  AntwebProps.getDomainApp() + "/login.do>Login</a></h2><!-- reqPage:" + reqPage + " done  -->");
     } else { %>
 
         <tiles:insert attribute="body-content"/>
