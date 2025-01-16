@@ -171,17 +171,22 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                 if (uploadAs != null && !"".equals(uploadAs)) {
                     List<String> curatorList = new ArrayList<String>(Arrays.asList(uploadAs.split(",")));
                     for (String curatorIdStr : curatorList) {
+                      int curatorId = 0;
+                      Login curator = null;
                       try {
-                        int curatorId = Integer.parseInt((curatorIdStr.trim()));
-                        Login curator = LoginMgr.getCurator(curatorId);
-                %>
+                        curatorId = Integer.parseInt((curatorIdStr.trim()));
+                        curator = LoginMgr.getCurator(curatorId);
+                 %>
                         <option value="<%= curator.getId() %>"><%= curator.getName() %>
                  <%
+                      } catch (NullPointerException e) {
+                         // Why is this not getting trapped outside/above?
+                         AntwebUtil.log("NumberFormatException for curatorList:" + curatorList + " curatorIDStr:" + curatorIdStr + " curatorId:" + curatorId + " curator:" + curator);
                       } catch (NumberFormatException e) {
                          AntwebUtil.log("NumberFormatException for curatorID:" + curatorIdStr);
                       }
-                    } %>
-             <% } %>
+                    }
+                } %>
 
                     </select>
                 </div>

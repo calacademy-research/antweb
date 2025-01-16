@@ -259,30 +259,10 @@ $(function() {
 */ %>
 
 <tiles:insert attribute="academyHeader"/>
+
 <tiles:insert attribute="siteNav"/>
 
-<%
-    // Hmm. Determine if we should block all users (to prevent bot traffic bringing down server).
-    boolean blockUnLoggedInUsers = false;
-    String reqPage = HttpUtil.getTarget(request);
-    if ( (reqPage != null) && !(reqPage.contains("login")) && !(reqPage.contains("index")) && !(reqPage.contains("basicLayout")) ) {    // index might return null;
-      if (!LoginMgr.isLoggedIn(request)) {
-          blockUnLoggedInUsers = true;
-        } else {
-          AntwebUtil.log("Logged in Page:" + reqPage);
-      }
-    } else {
-      AntwebUtil.log("Page is:" + reqPage);
-    }
-
-    if (blockUnLoggedInUsers) {
-          out.println("<br><h2>Due to current Bot traffic, we are supporting logged in users: ");
-          out.println("<a href=" +  AntwebProps.getDomainApp() + "/login.do>Login</a></h2><!-- reqPage:" + reqPage + " done  -->");
-    } else { %>
-
-        <tiles:insert attribute="body-content"/>
-
- <% } %>
+<tiles:insert attribute="body-content"/>
 
 
 <div class="clear"></div>
