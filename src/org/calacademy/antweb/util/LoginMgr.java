@@ -101,6 +101,9 @@ public class LoginMgr extends Manager {
         return login;            
     }
 
+    public static Login getLogin(HttpServletRequest request) {
+        return getAccessLogin(request);
+    }
     public static Login getAccessLogin(HttpServletRequest request) {
 		return (Login) request.getSession().getAttribute("accessLogin"); 
     }

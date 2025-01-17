@@ -16,32 +16,26 @@
 <%@ page import="org.calacademy.antweb.home.*" %>
 
 
-// Test
+<%  if (LoginMgr.isMark(request)) { %>
+        <br><h3 align=left>User Agent Tracker</h3>
 
-<%   if (LoginMgr.isMark(request)) {
-       if (true) { %>
-       <br><h3 align=left>ISMARK</h3>
-       <% } %>
+        <%= UserAgentTracker.getDataAsHtml() %>
+        <%= UserAgentTracker.getAgentSummaryReport() %>
 
-       <%
-       if (true) {
-           out.println(UserAgentTracker.getDataAsHtml());
-       } %>
-
-<%   } %>
+<%  } %>
 
 
 
 <div class="left">
 
-<% 
+<%
     // Test this way: http://localhost/testMessage.do
 %>
 <br>
 <br>
 </div>
 
-<% 
+<%
     //Emailer.sendMail("re.mark.johnson@gmail.com", "Consider!", "This");
 
     out.println("<br>a:" + AntwebMgr.isInitialized() + " b:" + AntwebMgr.isServerInitializing(Check.LOGIN));
@@ -61,8 +55,8 @@
 /*
   Group group = GroupMgr.getGroup(1);
   MessageMgr messageMgr = new MessageMgr();
-  messageMgr.addToMessages(MessageMgr.latLonNotInCountryBounds, "code", "message");  	
-  messageMgr.addToMessages(MessageMgr.notValidBioregion, "bullshit"); 
+  messageMgr.addToMessages(MessageMgr.latLonNotInCountryBounds, "code", "message");
+  messageMgr.addToMessages(MessageMgr.notValidBioregion, "bullshit");
   messageMgr.compileMessages(group);
   String report = messageMgr.getMessagesReport();
   out.println("Report:" + report);
@@ -90,7 +84,7 @@
 
 // Because it has a check in the IntroducedMgr - meaning that it is native to Malagasy.
 //out.println("WHY?! :" + TaxonPropMgr.isIntroduced("formicinaebrachymyrmex cordemoyi", "Malagasy"));
- 
+
 
 /*
   isValid: < %= GeolocaleMgr.isValid("Saint-Paul", "Reunion") % >
@@ -117,7 +111,7 @@
       } else if (taxonName.contains("inae")) {
         prettyTaxonName = taxonName.substring(inaeIndex + 4);
       }
-      
+
       if (taxonName.contains("incertae_sedis")) {
         prettyTaxonName = taxonName.substring(14);
       }

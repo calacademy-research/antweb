@@ -24,7 +24,7 @@
 <br><br>
 <h2>Request Attributes:</h2>
 <%
-     out.println("<br><b>User Agent: </b>" + UserAgentTracker.getUserAgent(request));
+     //out.println("<br><b>User Agent: </b>" + UserAgentTracker.getUserAgent(request));
 
 %>
 

@@ -689,6 +689,7 @@ public abstract class AntwebUtil {
 
 
   public static long millisBetween(Date date1, Date date2) {
+    if (date1 == null || date2 == null) return 0;
     long millisSince = date2.getTime() - date1.getTime();
     return millisSince;
   }

@@ -118,13 +118,16 @@ message += topReport;
 <br><br><b>Profile:</b><%= QueryProfiler.report() %>
 
 
+<% /*
 <br><br><b>UserAgentTracker</b>
-  <br><b>&nbsp;&nbsp;&nbsp;botCount:</b><%= UserAgentTracker.getBotDenialCount() %>
-  <br><b>&nbsp;&nbsp;&nbsp;getBotDenialReason:</b><%= UserAgentTracker.getBotDenialReason() %>
-  <br><b>&nbsp;&nbsp;&nbsp;inVetMode:</b><%= UserAgentTracker.isInVetMode() %>
+  <br><b>&nbsp;&nbsp;&nbsp;botCount:</b>< %= UserAgentTracker.getBotDenialCount() % >
+  <br><b>&nbsp;&nbsp;&nbsp;getBotDenialReason:</b>< %= UserAgentTracker.getBotDenialReason() % >
+  <br><b>&nbsp;&nbsp;&nbsp;inVetMode:</b>< %= UserAgentTracker.isInVetMode() % >
 
-<br><br><b>User Agents:</b> <a href='<%= AntwebProps.getDomainApp() %>/userAgents.do'><%= UserAgentTracker.htmlSummary() %></a>
-<br><br><b>Bad Actor Report:</b> <%= BadActorMgr.getBadActorReport() %>
+<br><br><b>User Agents:</b> <a href='< %= AntwebProps.getDomainApp() % >/userAgents.do'>< %= UserAgentTracker.htmlSummary() % ></a>
+<br><br><b>Bad Actor Report:</b> < %= BadActorMgr.getBadActorReport() % >
+*/ %>
+
 <br><br><b>ProfileCounter:</b> <%= ProfileCounter.getReport() %>
 
 <% // ------------------------------------------------- %>

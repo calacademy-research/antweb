@@ -8,6 +8,10 @@
 
 
 <%
+AntwebUtil.log("in userAgents.jsp");
+
+
+
    String header = (String) request.getAttribute("header");
    if (header == null) header = "testMessage";
 
@@ -16,11 +20,11 @@
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
 	<tiles:put name="title" value="User Agents" />
-	<tiles:put name="body-content" value="/util/userAgents-body.jsp" />	
+	<tiles:put name="body-content" value="/util/userAgents-body.jsp" />
 </tiles:insert>
 
 <% } else {
-      AntwebUtil.logInfo("Unexpected target:" + target);
+      AntwebUtil.log("Unexpected target:" + target);
    } %>
 
 

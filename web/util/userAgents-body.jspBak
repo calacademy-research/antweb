@@ -12,8 +12,7 @@
 <%@ page import="com.mchange.v2.c3p0.impl.*" %>
 
 <%
-  Utility util = new Utility();
-  String domainApp = util.getDomainApp();
+  String domainApp = AntwebUtil.getDomainApp();
 %>
 
 <div class="admin_left">
