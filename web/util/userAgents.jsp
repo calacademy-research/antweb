@@ -4,7 +4,7 @@
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 
-<%@include file="/common/antweb_admin-defs.jsp" %>
+<%@include file="/common/antweb-defs.jsp" %>
 
 
 <%

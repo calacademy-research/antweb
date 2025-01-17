@@ -16,16 +16,6 @@
 <%@ page import="org.calacademy.antweb.home.*" %>
 
 
-<%  if (LoginMgr.isMark(request)) { %>
-        <br><h3 align=left>User Agent Tracker</h3>
-
-        <%= UserAgentTracker.getDataAsHtml() %>
-        <%= UserAgentTracker.getAgentSummaryReport() %>
-
-<%  } %>
-
-
-
 <div class="left">
 
 <%
