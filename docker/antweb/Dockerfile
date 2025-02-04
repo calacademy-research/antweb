@@ -4,7 +4,7 @@ ENV TZ="America/Los_Angeles" \
     CATALINA_OPTS="-Xms1024M -Xmx16384M -server -XX:+UseParallelGC" \
     JAVA_OPTS='-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
 
-RUN adduser --disabled-password --gecos '' antweb && \
+RUN adduser --disabled-password --gecos '' --uid 1002 antweb && \
     adduser --disabled-password --shell /bin/false --home /usr/local/tomcat --disabled-password --gecos '' --uid 1001 tomcat && \
     adduser tomcat antweb   # add tomcat user to antweb group
 
