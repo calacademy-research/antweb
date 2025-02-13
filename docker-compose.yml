@@ -11,7 +11,7 @@ services:
       - antweb_database:/var/lib/mysql
     environment:
       TZ: America/Los_Angeles
-      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+#      MYSQL_RANDOM_ROOT_PASSWORD: "true"
     expose:
       - 3306
     ports:

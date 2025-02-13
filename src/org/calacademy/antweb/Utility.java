@@ -413,52 +413,7 @@ public class Utility implements Serializable {
         }
         return command;
     }
-   
-    public static void copyAndUnzipFile(FormFile file, String tempDirName, String outName) {
-        
-        if (file != null) {
-            // create a new temp directory
-            boolean success = new File(tempDirName).mkdir();
-            
-            // unzip into that directory
-            String zippedName = outName + ".zip";
-            copyFile(file, zippedName);
-            if (new File(zippedName).exists()) {
-                try {
-                    Process process = Runtime.getRuntime().exec(
-                            "unzip -d " + tempDirName + " " + zippedName);
-                    process.waitFor();
-                } catch (IOException e) {
-                    s_log.error("copyAndUnzipFile() problem unzipping file1 " + zippedName + ": " + e);
-                    AntwebUtil.logStackTrace(e);
-                } catch (InterruptedException e) {
-                    s_log.error("copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e);
-                    AntwebUtil.logStackTrace(e);
-                }
-            }
-            
-            // move the file out of that directory and give it the right name
-            File dir = new File(tempDirName);
-            String[] dirListing = dir.list();
-            s_log.info("copyAndUnzipFile() dir listing has length: " + dirListing.length);
-            String fileName = "";
-            for (String s : dirListing) {
-                s_log.info("copyAndUnzipFile() dir listing shows: *" + s + "*");
-                if (!s.equals(".") && !s.equals("..") && !s.contains("__")) {
-                    fileName = s;
-                }
-            }
-            try {
-                copyFile(tempDirName + "/" + fileName, outName);
-            } catch (IOException e) {
-                s_log.error("copyAndUnzipFile() couldn't move " + tempDirName + "/" + fileName + " to " + outName);
-                AntwebUtil.logStackTrace(e);
-            }
-            
-            // remove the directory
-            deleteDirectory(dir);
-        }
-    }
+
 
     public boolean directoryExists(String directory) {
         return new File(directory).exists();

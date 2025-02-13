@@ -65,8 +65,8 @@ public class Scheduler extends Action {
 
         int secureCode = AntwebUtil.getSecureCode();
 
-        if (!AntwebMgr.isInitialized() || AntwebMgr.isServerInitializing()) {
-            String message = "Scheduler failed because isInitialized:" + AntwebMgr.isInitialized() + " isInitializing:" + AntwebMgr.isServerInitializing();
+        if (AntwebMgr.isServerInitializing()) {
+            String message = "Scheduler failed because isInitializing:" + AntwebMgr.isServerInitializing();
             s_log.error("execute() " + message);
 			request.setAttribute("message", message);
 			return mapping.findForward("adminMessage");

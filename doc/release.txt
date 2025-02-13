@@ -1,3 +1,8 @@
+Release 8.114
+  Work to allow zip file specimen uploads.
+  Add isInitialized indicator to curate page for developers.
+  Exception thrown from Utility copyAndUnzipFile() for more accurate error messages.
+
 Release 8.113
   Solutions to resolve the proliferation of crawling bots.
 

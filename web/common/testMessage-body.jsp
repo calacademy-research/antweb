@@ -28,7 +28,7 @@
 <%
     //Emailer.sendMail("re.mark.johnson@gmail.com", "Consider!", "This");
 
-    out.println("<br>a:" + AntwebMgr.isInitialized() + " b:" + AntwebMgr.isServerInitializing(Check.LOGIN));
+    out.println("<br>a:" + AntwebMgr.isServerInitializing() + " b:" + AntwebMgr.isServerInitializing(Check.LOGIN));
 
     out.println("<br>isOnline:" + HttpUtil.isOnline() + "</br>");
 

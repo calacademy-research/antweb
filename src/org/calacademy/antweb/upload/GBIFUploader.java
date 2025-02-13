@@ -82,4 +82,6 @@ public class GBIFUploader extends Uploader {
         return "occurence.txt";
     }
 
+
+
 }

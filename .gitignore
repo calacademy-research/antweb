@@ -23,3 +23,5 @@ docker-compose.override.yml
 antweb.iml
 
 /docker/caddy/logs
+
+docker-compose.dev.yml

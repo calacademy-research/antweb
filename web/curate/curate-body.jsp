@@ -107,7 +107,9 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
  %>
 </div>
 
-
+<% if (LoginMgr.isDeveloper(request)) { %>
+  <H4>Is AntwebMgr initialized: <%= AntwebMgr.isPostInitialized() %> </h4><br>
+<% } %>
 
 <!-- Specimen Data -->
 
@@ -179,7 +181,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                         if (curator != null) { %>
                             <option value="<%= curator.getId() %>"><%= curator.getName() %>
                      <% } else {
-                         AntwebUtil.log("curate-body.jsp curator:null for " + curatorList + " curatorIDStr:" + curatorIdStr + " curatorId:" + curatorId + " curator:" + curator);
+                         //A.log("curate-body.jsp curator:null for " + curatorList + " curatorIDStr:" + curatorIdStr + " curatorId:" + curatorId + " curator:" + curator);
                         }
                       } catch (NullPointerException e) {
                          // Why is this not getting trapped outside/above?

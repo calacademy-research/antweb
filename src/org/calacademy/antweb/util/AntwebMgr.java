@@ -100,8 +100,6 @@ public class AntwebMgr {
     private static boolean isArtistMgrPopulated = false; 
     private static boolean isAdminAlertMgrPopulated = false;
 
-    //private static boolean isInitializationComplete = false;
-
     public static boolean isLog() {
       return true; // false;
     }
@@ -303,9 +301,12 @@ public class AntwebMgr {
         return null;
     }
 
+    /*
+    // returns false positives!? isPostInitialized() probably works better.
     public static boolean isInitialized() {
       return !isServerInitializing();
     }
+    */
 
     public static boolean isServerInitializing() {
         return isInitializing;

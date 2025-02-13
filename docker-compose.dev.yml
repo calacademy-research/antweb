@@ -12,11 +12,13 @@ services:
       - antweb_database:/var/lib/mysql
     environment:
       TZ: America/Los_Angeles
-      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_ALLOW_EMPTY_PASSWORD=1
     expose:
       - 3306
     ports:
       - "127.0.0.1:3306:3306"
+
+
 
   antweb:
     build:

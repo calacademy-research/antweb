@@ -262,7 +262,7 @@ public abstract class AntwebUtil {
   private static ArrayList<Integer> s_uploadGroupList;
   public static ArrayList<Integer> getUploadGroupList() {
     if (s_uploadGroupList != null) {
-      A.log("getUploadGroupList() found:" + s_uploadGroupList.size());
+      //A.log("getUploadGroupList() found:" + s_uploadGroupList.size());
       return s_uploadGroupList;
     }
 

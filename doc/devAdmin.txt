@@ -6,6 +6,9 @@
 
 
 # To bring up docker.  -d is for daemon.
+
+
+
 docker-compose up --build -d	
 
 docker-compose up --build
@@ -22,6 +25,9 @@ docker-compose exec antweb ant deploy
 # To restart tomcat (without rebuilding docker). Not to be used on live site.
 docker-compose restart antweb
 
+# To Mysql
+ docker compose exec mysql mysql -u antweb -p ant
+ 
 
 IntelliJ
   Command ;
@@ -146,7 +152,7 @@ CID=$(docker run -d --rm \
 	
 sleep 15	# Wait for the container to start up. If you get ERROR 2002 (HY000): Can't connect to local MySQL server, keep waiting
 
-gunzip -c ../bak/db/20240304.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
+gunzip -c ../bak/db/20250207.sql.gz | docker exec -i $CID sh -c "exec mysql -uroot ant"
 
 docker ps -a
   docker stop 3a (if non-"antweb_" resuults, kill process with something like...)
@@ -160,6 +166,7 @@ docker exec -it $CID sh -c "exec mysqlcheck --all-databases --analyze -uroot" &&
 docker-compose up &
 
 
+connect to database like this?  docker exec -it mysql mysql -u ant -p
 
 
 
@@ -230,32 +237,14 @@ Staging Server
 ssh  root@165.232.136.170
 https://165.232.136.170/
 
-
-Bots
-----
-cd /root/antweb/docker/caddy/logs
-
-Maintain bot list here:
-  antweb/docker/caddy/Caddyfile
-
-you can insert any string (e.g.: anything from a line printed by 'analyze.sh' ) between | delimeters, and it will block any queries from that string
-
-./analyze.sh | grep -v 'meta-externalagent' | less
-
-root@antweb:~/antweb/docker/caddy/logs# ./analyze.sh > res
-root@antweb:~/antweb/docker/caddy/logs# wc res
-  48654  543555 6112277 res
-root@antweb:~/antweb/docker/caddy/logs# cat res | grep -v 'meta-externalagent' | grep -v '537.36' | wc
-   4907   67272  643830
-   
-   
-   
-   
+Antweb Server 
+165.232.137.86
 
 
 
+In case of:  Access denied for user 'ant'@'localhost' (using password: YES)
 
-
+create user antweb@'%' identified by 'f0rm1c6'; grant all on *.* to antweb@'%' with grant option
 
 
 

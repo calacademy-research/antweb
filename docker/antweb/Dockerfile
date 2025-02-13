@@ -5,7 +5,7 @@ ENV TZ="America/Los_Angeles" \
     JAVA_OPTS='-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
 
 RUN adduser --disabled-password --gecos '' antweb && \
-    adduser --disabled-password --shell /bin/false --home /usr/local/tomcat --disabled-password --gecos '' --uid 1001 tomcat && \
+    adduser --disabled-password --shell /bin/false --home /usr/local/tomcat --disabled-password --gecos ''  tomcat && \
     adduser tomcat antweb   # add tomcat user to antweb group
 
 

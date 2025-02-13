@@ -38,70 +38,6 @@ public class Uploader {
       return "N/A";
     }
 
-    public static String copyAndUnzipFile(FormFile file, Group group, String outName, String zipFileTarget) throws IOException {
-        String errorMsg = null;
-
-        String tempDirName = AntwebProps.getWorkingDir() + "group" + group.getId();
-        File tempDir = new File(tempDirName);
-        A.log("copyAndUnzipFile() file:" + file + " tempDirName:" + tempDirName + " outName:" + outName + " zipFileTarget:" + zipFileTarget);
-
-        if (file != null) {
-            // create a new temp directory
-            boolean success = tempDir.mkdir();
-            //A.log("copyAndUnzipFile() tempDirName:" + tempDirName + " mkdirSuccess:" + success);
-
-            // unzip into that directory
-            String zippedName = outName + ".zip";
-            boolean debugOn = true;
-            Utility.copyFormFile(file, zippedName, debugOn);
-            if (new File(zippedName).exists()) {
-                try {
-                    String command = "unzip -d " + tempDirName + " " + zippedName;
-                    A.log("copyAndUnzipFile before command:" + command);
-                    Process process = Runtime.getRuntime().exec(command);
-                    process.waitFor();
-                    //A.log("copyAndUnzipFile after");
-                } catch (InterruptedException e) {
-                    errorMsg = "copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e;
-                    s_log.error(errorMsg);
-                    return errorMsg;
-                }
-            } else {
-                return ("copyAndUnzipFile() zip does not exist:" + zippedName);
-            }
-
-            // move the file out of that directory and give it the right name
-            //File dir = new File(tempDirName);
-            String[] dirListing = tempDir.list();
-
-            String target = tempDirName + "/" + zipFileTarget;
-            A.log("copyAndUnzipFile() dir:" + tempDir + " listing has length: " + dirListing.length + " target:" + target);
-A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
-            try {
-                Utility.copyFile(target, outName);
-            } catch (IOException e2) {
-                return "copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2;
-/*
-                String secondTarget = tempDirName + "/" + "dwca-utep_ento-v1.84" + "/" + zipFileTarget;
-                A.log("copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2 + ". Or 2ndTarget:" + secondTarget);
-                try {
-                    Utility.copyFile(secondTarget, outName);
-                } catch (IOException e3) {
-                    return "copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2 + ". Or 2ndTarget:" + secondTarget;
-                }
-*/
-            }
-
-            boolean isDeleted = false;
-            // remove the directory
-            //if (!AntwebProps.isDevMode())    // Helpful to test, diagnose, but must be off to operate correctly.
-              isDeleted = Utility.deleteDirectory(tempDir);
-            A.log("copyAndUnzipFile deleteDir:" + tempDir + " success:" + isDeleted);
-        }
-        return errorMsg;
-    }
-
-
 
     /* This version can be called directly in the case of specimenTest */
     // was 2nd param: String specimenUploadType,
@@ -123,14 +59,14 @@ A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
             //fileName = "specimen" + group.getId() + ".txt";
             uploadFile = new UploadFile(AntwebProps.getWorkingDir(), fileName, userAgent, encoding);
             specimenFileLoc = AntwebProps.getWorkingDir() + fileName;
-            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
+            A.log("uploadSpecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
         } else {
             SpecimenUploadDb specimenUploadDb = new SpecimenUploadDb(connection);
             fileName = specimenUploadDb.getBackupDirFile(group.getId());
             if (fileName == null) messageStr = "BackupDirFile not found for group:" + group;
             specimenFileLoc = AntwebProps.getWebDir() + fileName;
             uploadFile = new UploadFile(AntwebProps.getWebDir(), fileName, userAgent, encoding);
-            A.log("uploadSppecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
+            A.log("uploadSpecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
         }
 
         if (!uploadFile.correctEncoding(encoding)) messageStr = "Encoding not validated for file:" + uploadFile.getFileLoc() + " encoding:" + uploadFile.getEncoding();
@@ -210,5 +146,72 @@ A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
         //s_log.warn("isCurrentFormat() mustContainStr:" + mustContainStr + " not found in file:" + fileName);
         return error;
     }
+
+
+    // Called by TaxonWorksUploader and GBIFUploader. Not by SpecimenUploader.
+    protected static String copyAndUnzipFile(FormFile file, Group group, String outName, String zipFileTarget) throws IOException {
+        String errorMsg = null;
+
+        String tempDirName = AntwebProps.getWorkingDir() + "group" + group.getId();
+        File tempDir = new File(tempDirName);
+        A.log("copyAndUnzipFile() file:" + file + " tempDirName:" + tempDirName + " outName:" + outName + " zipFileTarget:" + zipFileTarget);
+
+        if (file != null) {
+            // create a new temp directory
+            boolean success = tempDir.mkdir();
+            //A.log("copyAndUnzipFile() tempDirName:" + tempDirName + " mkdirSuccess:" + success);
+
+            // unzip into that directory
+            String zippedName = outName + ".zip";
+            boolean debugOn = true;
+            Utility.copyFormFile(file, zippedName, debugOn);
+            if (new File(zippedName).exists()) {
+                try {
+                    String command = "unzip -d " + tempDirName + " " + zippedName;
+                    A.log("copyAndUnzipFile before command:" + command);
+                    Process process = Runtime.getRuntime().exec(command);
+                    process.waitFor();
+                    //A.log("copyAndUnzipFile after");
+                } catch (InterruptedException e) {
+                    errorMsg = "copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e;
+                    s_log.error(errorMsg);
+                    return errorMsg;
+                }
+            } else {
+                return ("copyAndUnzipFile() zip does not exist:" + zippedName);
+            }
+
+            // move the file out of that directory and give it the right name
+            //File dir = new File(tempDirName);
+            String[] dirListing = tempDir.list();
+
+            String target = tempDirName + "/" + zipFileTarget;
+            A.log("copyAndUnzipFile() dir:" + tempDir + " listing has length: " + dirListing.length + " target:" + target);
+            A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
+            try {
+                Utility.copyFile(target, outName);
+            } catch (IOException e2) {
+                return "copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2;
+/*
+                String secondTarget = tempDirName + "/" + "dwca-utep_ento-v1.84" + "/" + zipFileTarget;
+                A.log("copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2 + ". Or 2ndTarget:" + secondTarget);
+                try {
+                    Utility.copyFile(secondTarget, outName);
+                } catch (IOException e3) {
+                    return "copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2 + ". Or 2ndTarget:" + secondTarget;
+                }
+*/
+            }
+
+            boolean isDeleted = false;
+            // remove the directory
+            //if (!AntwebProps.isDevMode())    // Helpful to test, diagnose, but must be off to operate correctly.
+            isDeleted = Utility.deleteDirectory(tempDir);
+            A.log("copyAndUnzipFile deleteDir:" + tempDir + " success:" + isDeleted);
+        }
+        return errorMsg;
+    }
+
+
 
 }
