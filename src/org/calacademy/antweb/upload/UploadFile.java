@@ -226,7 +226,7 @@ public class UploadFile {
             if (base.contains("specimen")) base = base.substring(base.indexOf("specimen"));
             if (base.contains("worldants")) base = base.substring(base.indexOf("worldants"));
 
-            A.log("getFileNameBase() fileLoc:" + getFileLoc() + " base:" + base);
+            //A.log("getFileNameBase() fileLoc:" + getFileLoc() + " base:" + base);
             m_fileNameBase = base;
         }
         return m_fileNameBase;

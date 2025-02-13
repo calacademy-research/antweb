@@ -29,6 +29,9 @@ public final class ArtistAction extends Action {
         //ActionForward a = Check.init(request, mapping); if (a != null) return a;
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
+
+        boolean allowEdit = LoginMgr.isCurator(request);
+
         Group accessGroup = GroupMgr.getAccessGroup(request);
 
         HttpUtil.setUtf8(request, response);
@@ -46,17 +49,23 @@ public final class ArtistAction extends Action {
         Integer moveToInt = (Integer) df.get("moveTo");
         if (moveToInt != null) moveTo = moveToInt;
 
-        Boolean isCreateBool = (Boolean) df.get("isCreate");
         boolean isCreate = false;
-        if (isCreateBool != null) isCreate = isCreateBool;
+        boolean isRemove = false;
+        boolean isEdit = false;
 
-        Boolean isRemoveBool = (Boolean) df.get("isRemove");
-        boolean isRemove = isRemoveBool != null && isRemoveBool;
+        if (allowEdit) {
 
-        Boolean isEditBool = (Boolean) df.get("isEdit");
-        boolean isEdit = isEditBool != null && isEditBool;
-        
-        //A.log("GroupAction.execute() name:" + name + " groupId:" + groupId);
+            Boolean isCreateBool = (Boolean) df.get("isCreate");
+            isCreate = false;
+            if (isCreateBool != null) isCreate = isCreateBool;
+
+            Boolean isRemoveBool = (Boolean) df.get("isRemove");
+            isRemove = isRemoveBool != null && isRemoveBool;
+
+            Boolean isEditBool = (Boolean) df.get("isEdit");
+            isEdit = (isEditBool != null) && isEditBool;
+        }
+        A.log("ArtistAction.execute() name:" + name + " artistId:" + artistId + " isEdit:" + isEdit + " allowEdit:" + allowEdit);
 
         if ((name == null || "".equals(name)) && isCreate) {
 			request.setAttribute("message", "Enter an Artist Name in the URL bar...");

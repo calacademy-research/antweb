@@ -41,7 +41,7 @@ public final class ShowLineAction extends Action {
         if (message != null && message.length() < 100) shortMessage = "-" + message + "-";
         if (message != null && message.length() >= 100) shortMessage = message.substring(0, 100);
 
-        if (AntwebProps.isDevMode()) AntwebUtil.log("command:" + command + " results:" + shortMessage);
+        A.log("command:" + command + " results:" + shortMessage);
 
         request.setAttribute("message", message);
         return mapping.findForward("success");
