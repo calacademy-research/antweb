@@ -523,11 +523,9 @@ public class Utility implements Serializable {
         }
         return isSuccess;
     }
-    
-    
+
     public static boolean deleteDirectory(File dir) {
-        
-        A.log("deletingDirectory() " + dir.getName());
+        //A.log("deletingDirectory() " + dir.getName());
         
         if (dir.exists() && dir.getName().length() > 1) {
             File[] files = dir.listFiles();

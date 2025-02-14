@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
   
 import java.util.Comparator;
+import org.apache.commons.text.StringEscapeUtils;
     
 public class Artist {
 
@@ -96,7 +97,8 @@ public class Artist {
 
     public String getLink() {
       String link = "";
-      link += "<a href='" + AntwebProps.getDomainApp() + "/artist.do?id=" + getId() + "'>" + getName() + "</a>";
+      String safeName = StringEscapeUtils.escapeHtml4(getName());
+      link += "<a href='" + AntwebProps.getDomainApp() + "/artist.do?id=" + getId() + "'>" + safeName + "</a>";
       return link;
     }     
     

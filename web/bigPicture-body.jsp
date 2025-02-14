@@ -264,7 +264,6 @@ if (theImage.getNumber() > 1) {
     <img src="<%= AntwebProps.getImgDomainApp() %><%= theImage.getHighres() %>">
 </div>
 
-
 <% if (LoginMgr.isCurator(request)) { %>
     <div id="overview_data" class="plain">
  

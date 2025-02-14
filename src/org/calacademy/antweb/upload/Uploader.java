@@ -167,11 +167,11 @@ public class Uploader {
             Utility.copyFormFile(file, zippedName, debugOn);
             if (new File(zippedName).exists()) {
                 try {
-                    String command = "unzip -d " + tempDirName + " " + zippedName;
-                    A.log("copyAndUnzipFile before command:" + command);
+                    String command = "unzip -d -o " + tempDirName + " " + zippedName;
+                    //A.log("copyAndUnzipFile() before command:" + command);
                     Process process = Runtime.getRuntime().exec(command);
                     process.waitFor();
-                    //A.log("copyAndUnzipFile after");
+                    //A.log("copyAndUnzipFile() after");
                 } catch (InterruptedException e) {
                     errorMsg = "copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e;
                     s_log.error(errorMsg);
@@ -182,32 +182,22 @@ public class Uploader {
             }
 
             // move the file out of that directory and give it the right name
-            //File dir = new File(tempDirName);
-            String[] dirListing = tempDir.list();
+            //String[] dirListing = tempDir.list();
+            //A.log("copyAndUnzipFile() tempDir:" + tempDir + " dirListing.length: " + dirListing.length);
 
             String target = tempDirName + "/" + zipFileTarget;
-            A.log("copyAndUnzipFile() dir:" + tempDir + " listing has length: " + dirListing.length + " target:" + target);
-            A.log("copyAndUnzipFile() outFile:" + outName + " zippedName:" + zippedName);
+            //A.log("copyAndUnzipFile() target:" + target + " zipFileTarget:" + zipFileTarget);
             try {
+                //A.log("copyAndUnzipFile() target:" + target + " outName:" + outName);
                 Utility.copyFile(target, outName);
             } catch (IOException e2) {
                 return "copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2;
-/*
-                String secondTarget = tempDirName + "/" + "dwca-utep_ento-v1.84" + "/" + zipFileTarget;
-                A.log("copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2 + ". Or 2ndTarget:" + secondTarget);
-                try {
-                    Utility.copyFile(secondTarget, outName);
-                } catch (IOException e3) {
-                    return "copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2 + ". Or 2ndTarget:" + secondTarget;
-                }
-*/
             }
 
-            boolean isDeleted = false;
-            // remove the directory
-            //if (!AntwebProps.isDevMode())    // Helpful to test, diagnose, but must be off to operate correctly.
-            isDeleted = Utility.deleteDirectory(tempDir);
-            A.log("copyAndUnzipFile deleteDir:" + tempDir + " success:" + isDeleted);
+            // remove the temporary directory
+            boolean isDebug = false && AntwebProps.isDevMode();
+            if (!isDebug) Utility.deleteDirectory(tempDir);
+            A.log("copyAndUnzipFile() deleteDir:" + tempDir + " deleted:" + !isDebug);
         }
         return errorMsg;
     }

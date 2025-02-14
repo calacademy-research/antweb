@@ -124,7 +124,10 @@ public class GBIFTransformer extends Transformer {
             while (true) {
                 ++c;
 
-                if (AntwebProps.isDevMode() && c > testLimit) break;
+                if (AntwebProps.isDevMode() && c > testLimit && true) {
+                    A.log("DEV MODE limit:" + testLimit);
+                    break;
+                }
 
                 try {
                     // So we can have the condition inside the try/catch block.

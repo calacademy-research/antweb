@@ -187,7 +187,7 @@ public class UploadAction extends Action {
 
 						} else if ("taxonWorksUpload".equals(action)) {
 							String theFileName = accessGroup.getAbbrev() + "TWSpecimenList";
-							A.log("TaxonWorksUpload specimenFile:" + specimenFile + " fileName:" + theFileName);
+							A.log("specimenFile:" + specimenFile + " fileName:" + theFileName);
 
 							if (abort) AntwebUtil.returnMessage("abort TaxonWorks specimen upload", mapping, request);
 
@@ -598,9 +598,7 @@ public class UploadAction extends Action {
 			if (runCountCrawls) {
 				uploadDetails.setOfferRunCountCrawlLink(true);
 			}
-
 			return mapping.findForward(uploadDetails.getForwardPage());
-
 
 		} catch (TestException | SQLException | IOException | AntwebException | RESyntaxException e) {
 			return handleException(e, action, connection, mapping, request);
@@ -625,10 +623,19 @@ public class UploadAction extends Action {
 
 
 	private ActionForward handleException(Exception e, String action, Connection connection, ActionMapping mapping, HttpServletRequest request) {
+
 		int caseNumber = AntwebUtil.getCaseNumber();
-		A.log("e:" + e);
-		String errorMessage = "Error. Case number:" + caseNumber + ". No changes made. e:" + e.toString();
-		s_log.error("execute() errorMessage:" + errorMessage + " action:" + action);
+		String errorMessage = null;
+
+		if (errorMessage == null && ("GBIFUpload").equals(action) && e.toString().contains("occurrence.txt")) {
+			errorMessage = "occurrence.txt should be uploaded as TaxonWorks.";
+		}
+
+		if (errorMessage == null) {
+			errorMessage = "Error. Case number:" + caseNumber + ". No changes made. e:" + e.toString();
+	    }
+
+		s_log.error("execute() errorMessage:" + errorMessage + " action:" + action + " e:" + e);
 		DBUtil.rollback(connection);
 		request.setAttribute("message", errorMessage);
 		return mapping.findForward("message");

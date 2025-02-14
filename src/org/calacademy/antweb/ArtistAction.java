@@ -29,9 +29,6 @@ public final class ArtistAction extends Action {
         //ActionForward a = Check.init(request, mapping); if (a != null) return a;
 
         Login accessLogin = LoginMgr.getAccessLogin(request);
-
-        boolean allowEdit = LoginMgr.isCurator(request);
-
         Group accessGroup = GroupMgr.getAccessGroup(request);
 
         HttpUtil.setUtf8(request, response);
@@ -53,6 +50,7 @@ public final class ArtistAction extends Action {
         boolean isRemove = false;
         boolean isEdit = false;
 
+        boolean allowEdit = LoginMgr.isCurator(request);
         if (allowEdit) {
 
             Boolean isCreateBool = (Boolean) df.get("isCreate");

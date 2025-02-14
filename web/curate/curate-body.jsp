@@ -209,6 +209,18 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
              <div class="clear"></div>
 
+<% if (LoginMgr.isDeveloper(request)) { %>
+<small>
+<b>For Developers:</b>
+<br>To test Upload Type:Antweb as zip user:longinoj file:20250209allantsbiota.txt.zip
+<br>To test Upload Type:Antweb user:longinoj file:20250209allantsbiota.txt
+<br>To test Upload Type:TaxonWorks, user:aerochild file:dwc-a_2025-01-31T20_39_16+00_00.zip
+<br>To Test Upload Type:GBIF, user:  file:dwca-utep_ento-v1.85.zip
+<br>
+</small>
+<% } %>
+
+
 To calculate the taxon children counts run the <a href='<%= domainApp %>/utilData.do?action=runCountCrawls' title="If taxon children counts are not calculated subsequent to the upload, it will happen nightly.">Count Crawls<img src=<%= domainApp%>/image/new1.png width=20></a>
 <br>If not returned an upload report, find it in the <a href='<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>'>Specimen Upload Reports</a>. <br><br>
 

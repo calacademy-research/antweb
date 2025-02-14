@@ -78,7 +78,7 @@ public class SpecimenUploader extends Uploader {
             A.log("copyAndUnzipFile() exists:" + exists + " zippedName:" + zippedName + " tempDirName:" + tempDirName + " outName:" + outName + " fullOutputPath:" + fullOutputPath);
             if (exists) {
                 try {
-                    String command = "unzip -d " + tempDirName + " " + fullOutputPath;  // zippedName;
+                    String command = "unzip -d -o " + tempDirName + " " + fullOutputPath;  // zippedName;
                     A.log("copyAndUnzip() command:" + command);
                     Process process = Runtime.getRuntime().exec(command);
 
@@ -105,13 +105,13 @@ public class SpecimenUploader extends Uploader {
             }
 
             // move the file out of that directory and give it the right name
-            File dir = new File(tempDirName);
-            A.log("copyAndUnzipFile() dir: " + dir);
-            String[] dirListing = dir.list();
-            A.log("copyAndUnzipFile() dir listing has length: " + dirListing.length);
+            File tempDir = new File(tempDirName);
+            A.log("copyAndUnzipFile() tempDir: " + tempDir);
+            String[] dirListing = tempDir.list();
+            A.log("copyAndUnzipFile() tempDir listing has length: " + dirListing.length);
             String fileName = "";
             for (String s : dirListing) {
-                A.log("copyAndUnzipFile() dir listing shows: *" + s + "*");
+                A.log("copyAndUnzipFile() tempDir listing shows: *" + s + "*");
                 if (!s.equals(".") && !s.equals("..") && !s.contains("__")) {
                     fileName = s;
                 }
@@ -129,15 +129,15 @@ public class SpecimenUploader extends Uploader {
                 throw e;
             }
 
-            // remove the directory
-            if (true) {
-                A.log("copyAndUnzipFile() delete:" + dir);
-                util.deleteDirectory(dir);
-            }
+            // remove the temporary directory
+            boolean isDebug = false && AntwebProps.isDevMode();
+            if (!isDebug) Utility.deleteDirectory(tempDir);
+            A.log("copyAndUnzipFile() deleteDir:" + tempDir + " deleted:" + !isDebug);
         }
     }
 
-/*
+
+    /*
     //Called from this (SpecimenUploader), but not by GBIFUploader or TaxonWorksUploader.
     private static void copyAndUnzipFile(FormFile file, Group group, String outName) throws IOException {
 

@@ -53,6 +53,7 @@ public class TaxonWorksUploader extends Uploader {
             String errorMsg = null;
             try {
                 errorMsg = copyAndUnzipFile(theFile, group, preTransformFilePath.toString(), zipFileTarget);
+                //A.log("uploadSpecimenFile() post unzip");
             } catch (IOException e) {
                 errorMsg = "copyAndUnzipFile() e:" + e.toString();
             }
@@ -66,7 +67,7 @@ public class TaxonWorksUploader extends Uploader {
 
         //A.log("Start TaxonWorks transformFile");
         TaxonWorksTransformer tf = new TaxonWorksTransformer();
-        A.log("uploadSpecimenFile() preTransformFilePath:" + preTransformFilePath + " specimenFilePath:" + specimenFilePath);
+        //A.log("uploadSpecimenFile() preTransformFilePath:" + preTransformFilePath + " specimenFilePath:" + specimenFilePath);
         String errMsg = tf.transformFile(preTransformFilePath, specimenFilePath);
         if (errMsg != null) {
             s_log.error("uploadSpecimenFile() errMsg:" + errMsg);

@@ -14,23 +14,22 @@
 <% 
     if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
 %>
- 
+
 <div class=left>
-
 <%
-
     String domainApp = AntwebProps.getDomainApp();
-    
-    
+
     String message = (String) request.getAttribute("message"); 
     if (message != null) out.println("<h2>&nbsp;" + message + "</h2>");
     
     // Sloppy. If there is a curator or a group there will be a colon in the message (title).
     boolean isAllGroups = !message.contains(":");
-     
 %>
 &nbsp;&nbsp;&nbsp;<a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><br><br><br>
+
 <%
+    if (!isAllGroups) { out.println("&nbsp;&nbsp;&nbsp;Group Uploads: <a href='" + AntwebProps.getDomainApp() + "/listSpecimenUploads.do" + "'>All</a><br><br>"); }
+
     ArrayList<Upload> list = (ArrayList) request.getAttribute("uploads"); 
     int count = 0;
     out.println("<table cellpadding=10><tr><th>#</th>");
@@ -44,7 +43,6 @@
     }
     out.println("</tr></table>");
     if (count == 0) out.println("<br> No uploads for this group");
-
 %>
 
 </div > 
