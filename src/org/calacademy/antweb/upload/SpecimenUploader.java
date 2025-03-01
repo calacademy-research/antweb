@@ -78,7 +78,7 @@ public class SpecimenUploader extends Uploader {
             A.log("copyAndUnzipFile() exists:" + exists + " zippedName:" + zippedName + " tempDirName:" + tempDirName + " outName:" + outName + " fullOutputPath:" + fullOutputPath);
             if (exists) {
                 try {
-                    String command = "unzip -d -o " + tempDirName + " " + fullOutputPath;  // zippedName;
+                    String command = "unzip -o -d " + tempDirName + " " + fullOutputPath;  // zippedName;
                     A.log("copyAndUnzip() command:" + command);
                     Process process = Runtime.getRuntime().exec(command);
 
