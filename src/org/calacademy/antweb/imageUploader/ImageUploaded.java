@@ -36,7 +36,7 @@ public class ImageUploaded {
 
   public static final String imagesDir = AntwebProps.getDocRoot() + "images/";
 
-  public static final Path tempDir = Path.of(AntwebProps.getDocRoot(), "temp", "images");
+  public static final Path tempDir = Path.of(AntwebProps.getDocRoot(), "images", "temp");
   public static final String backupDir = imagesDir + "backup/";
 
   private int id = 0;
