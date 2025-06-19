@@ -167,8 +167,8 @@ public class Uploader {
             Utility.copyFormFile(file, zippedName, debugOn);
             if (new File(zippedName).exists()) {
                 try {
-                    String command = "unzip -d -o " + tempDirName + " " + zippedName;
-                    //A.log("copyAndUnzipFile() before command:" + command);
+                    String command = "unzip -o -d " + tempDirName + " " + zippedName;
+                    A.log("copyAndUnzipFile() before command:" + command);
                     Process process = Runtime.getRuntime().exec(command);
                     process.waitFor();
                     //A.log("copyAndUnzipFile() after");
@@ -201,7 +201,5 @@ public class Uploader {
         }
         return errorMsg;
     }
-
-
 
 }
