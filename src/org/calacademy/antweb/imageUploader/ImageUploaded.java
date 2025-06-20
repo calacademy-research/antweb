@@ -35,8 +35,12 @@ public class ImageUploaded {
   private static final Log s_log = LogFactory.getLog(ImageUploaded.class);
 
   public static final String imagesDir = AntwebProps.getDocRoot() + "images/";
-
-  public static final Path tempDir = Path.of(AntwebProps.getDocRoot(), "images", "temp");
+  // NOTE: We are using /usr/local/antweb/temp/images as the temporary directory and this
+  // is not a volumn mount which means it will be stored in docker containers, which
+  // means the host machine need to have at least 20 GiB or more of free space to handle
+  // large uploads. If you ever get out of space error don't use the s3 mount as temp since
+  // it has high latency, we just need free up host machine storage with docker system df insights.
+  public static final Path tempDir = Path.of(AntwebProps.getDocRoot(), "temp", "images");
   public static final String backupDir = imagesDir + "backup/";
 
   private int id = 0;
