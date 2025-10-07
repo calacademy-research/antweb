@@ -1,7 +1,7 @@
-// /web/maps/drawGoogleMap.js  (Leaflet adapter)
+// /web/maps/drawGoogleMap.js (Leaflet adapter)
 (function (global) {
     var calls = global.calls || (global.calls = []);
-    document.addEventListener("DOMContentLoaded", function(){
+    document.addEventListener("DOMContentLoaded", function () {
         try { runThese(); } catch (e) { console.error("runThese() failed:", e); }
     });
 
@@ -12,17 +12,17 @@
         }
     }
 
-    function toArray(x){ return Array.isArray(x)? x : [x]; }
-    function toNumArray(a){ return toArray(a).map(function(v){ return parseFloat(v); }); }
-    function need(fnName){
+    function toArray(x) { return Array.isArray(x) ? x : [x]; }
+    function toNumArray(a) { return toArray(a).map(function (v) { return parseFloat(v); }); }
+    function need(fnName) {
         if (typeof global[fnName] !== "function") {
-            console.error(fnName+" not available. Did your microservice /sdk/drawMap.js load?");
+            console.error(fnName+" not available. Did /sdk/drawMap.js load from the microservice?");
             return false;
         }
         return true;
     }
 
-    // Simple arrays (no popups)
+    // Simple coordinate arrays
     global.drawGoogleMap = function (mapType, divName, latArray, lonArray) {
         var lats = toNumArray(latArray), lons = toNumArray(lonArray);
         if (!lats.length || !lons.length) return;
@@ -52,7 +52,7 @@
         else if (need("drawMap"))           global.drawMap(divName, lats, lons);
     };
 
-    // Collections (codes only → use as both name & code)
+    // Collections (codes only)
     global.drawGoogleMapCollection = function (mapType, divName, latArray, lonArray, codeArray) {
         var codes = toArray(codeArray||[]);
         global.drawGoogleMapLocalities(mapType, divName, latArray, lonArray, codes, codes);
