@@ -2,12 +2,13 @@
   // ---- SETTINGS ----
   const USE_CLUSTER = false; // set to true if you ever want the numeric balloons back
   const DOT_STYLE = {
-    radius: 4,        // size of each red dot
-    color: "#b30000", // stroke
-    weight: 1,
-    fillColor: "#ff3b3b",
-    fillOpacity: 0.9
+    radius: 5,
+    color: "#ffffff",       // white border stroke
+    weight: 2,              // thicker border
+    fillColor: "#ff3b3b",   // inner red
+    fillOpacity: 1
   };
+
 
   let map = null;
   let layer = null;        // LayerGroup (no cluster) OR MarkerClusterGroup
