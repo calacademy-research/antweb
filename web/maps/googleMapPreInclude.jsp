@@ -1,4 +1,4 @@
-<%-- /web/maps/googleMapPreInclude.jsp (Local Integrated Leaflet Setup) --%>
+<%-- /web/maps/googleMapPreInclude.jsp (Local Leaflet Integration) --%>
 <% if (!HttpUtil.isBot(request)) { %>
 
 <!-- Leaflet core and plugins -->
@@ -11,7 +11,7 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
 
-<!-- Local SDK & adapter -->
+<!-- Local SDK and adapter -->
 <script src="/maps/sdk/drawMap.js" type="text/javascript"></script>
 <script src="/maps/drawGoogleMap.js" type="text/javascript"></script>
 
