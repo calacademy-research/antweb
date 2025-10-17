@@ -55,13 +55,12 @@
   `;
   document.head.appendChild(style);
 
-  let map = null;
-  let layer = null;
-  let dots = [];
+  // ---- Registry for multiple maps ----
+  const mapRegistry = {};
 
-  // ---- Initialize map ----
-  function ensureMap(divName, lat, lon, zoom) {
-    if (map) return map;
+  function initMap(divName, lat, lon, zoom) {
+    // return existing if already created
+    if (mapRegistry[divName]) return mapRegistry[divName];
 
     let el = document.getElementById(divName) ||
         document.getElementById("map") ||
@@ -75,8 +74,7 @@
       document.body.appendChild(el);
     }
 
-    // Map initialization
-    map = L.map(el, {
+    const map = L.map(el, {
       preferCanvas: true,
       zoomControl: false,
       attributionControl: false
@@ -105,10 +103,8 @@
 
     const hybridLayer = L.layerGroup([satelliteLayer, labelOverlay]);
 
-    // ---- Default layer ----
+    // ---- Default + control ----
     mapLayer.addTo(map);
-
-    // ---- Layer control ----
     const baseLayers = {
       "Map": mapLayer,
       "Terrain": terrainLayer,
@@ -124,57 +120,62 @@
     }
 
     // ---- Marker layer ----
-    layer = L.layerGroup().addTo(map);
-    return map;
+    const layer = L.layerGroup().addTo(map);
+    mapRegistry[divName] = { map, layer, dots: [] };
+
+    // Fix for grid/hidden div rendering
+    setTimeout(() => map.invalidateSize(), 400);
+
+    return mapRegistry[divName];
   }
 
   // ---- Add dots ----
-  function addDot(lat, lon, html) {
-    if (lat == null || lon == null) return null;
+  function addDot(bucket, lat, lon, html) {
+    if (!bucket) return null;
     const y = parseFloat(lat), x = parseFloat(lon);
     if (isNaN(y) || isNaN(x)) return null;
 
     const m = L.circleMarker([y, x], DOT_STYLE);
     if (html) m.bindPopup(html);
-    layer.addLayer(m);
-    dots.push(m);
+    bucket.layer.addLayer(m);
+    bucket.dots.push(m);
     return m;
   }
 
-  function fitToDots() {
-    if (!dots.length) return;
-    const group = L.featureGroup(dots);
-    map.fitBounds(group.getBounds(), { padding: [30, 30] });
+  function fitToDots(bucket) {
+    if (!bucket || !bucket.dots.length) return;
+    const group = L.featureGroup(bucket.dots);
+    bucket.map.fitBounds(group.getBounds(), { padding: [30, 30] });
   }
 
-  // ---- Public APIs (same as your current version) ----
+  // ---- Public APIs ----
   global.drawMap = function (divName, latArray, lonArray) {
     const lat0 = parseFloat(latArray?.[0]) || 0;
     const lon0 = parseFloat(lonArray?.[0]) || 0;
-    ensureMap(divName, lat0, lon0, 5);
+    const bucket = initMap(divName, lat0, lon0, 5);
     const n = Math.min(latArray?.length || 0, lonArray?.length || 0);
-    for (let i = 0; i < n; i++) addDot(latArray[i], lonArray[i]);
-    fitToDots();
+    for (let i = 0; i < n; i++) addDot(bucket, latArray[i], lonArray[i]);
+    fitToDots(bucket);
   };
 
   global.drawMapLocalities = function (divName, latArray, lonArray, nameArray, codeArray) {
     const lat0 = parseFloat(latArray?.[0]) || 0;
     const lon0 = parseFloat(lonArray?.[0]) || 0;
-    ensureMap(divName, lat0, lon0, 5);
+    const bucket = initMap(divName, lat0, lon0, 5);
     const n = Math.min(latArray?.length || 0, lonArray?.length || 0);
     for (let i = 0; i < n; i++) {
       const name = nameArray?.[i] || "";
       const code = codeArray?.[i] || "";
       const html = `<b>${name}</b><br>${code}`;
-      addDot(latArray[i], lonArray[i], html);
+      addDot(bucket, latArray[i], lonArray[i], html);
     }
-    fitToDots();
+    fitToDots(bucket);
   };
 
   global.drawMapSpecimens = function (divName, latArray, lonArray, nameArray, codeArray, imageArray) {
     const lat0 = parseFloat(latArray?.[0]) || 0;
     const lon0 = parseFloat(lonArray?.[0]) || 0;
-    ensureMap(divName, lat0, lon0, 5);
+    const bucket = initMap(divName, lat0, lon0, 5);
     const n = Math.min(latArray?.length || 0, lonArray?.length || 0);
     for (let i = 0; i < n; i++) {
       const name = nameArray?.[i] || "";
@@ -182,16 +183,23 @@
       const img = imageArray?.[i] || "";
       const imgTag = img ? `<br><img src="${img}" style="max-width:160px">` : "";
       const html = `<div><b>${name}</b><br>${code}${imgTag}</div>`;
-      addDot(latArray[i], lonArray[i], html);
+      addDot(bucket, latArray[i], lonArray[i], html);
     }
-    fitToDots();
+    fitToDots(bucket);
   };
 
   global.drawMapSinglePoint = function (divName, lat, lon, name, code, img) {
-    ensureMap(divName, lat, lon, 8);
+    const bucket = initMap(divName, lat, lon, 8);
     const imgTag = img ? `<br><img src="${img}" style="max-width:160px">` : "";
     const html = `<div>${name || ""}<br>${code || ""}${imgTag}</div>`;
-    addDot(lat, lon, html);
-    fitToDots();
+    addDot(bucket, lat, lon, html);
+    fitToDots(bucket);
   };
+
+  // ---- Auto-refresh all maps after render ----
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      Object.values(mapRegistry).forEach(b => b.map.invalidateSize());
+    }, 800);
+  });
 })(window);
