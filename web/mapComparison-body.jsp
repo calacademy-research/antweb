@@ -96,7 +96,7 @@
         //AntwebUtil.log("mapComparison-body.jsp taxon:" + thisChild);
 
         innerloop = 0;
-        while (innerloop < 3) {
+        while (innerloop < 1) {
 
             //AntwebUtil.log("mapComparison-body.jsp taxon:" + thisChild + " innerloop:" + innerloop);
 
