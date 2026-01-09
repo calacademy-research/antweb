@@ -10,7 +10,11 @@ See doc/releaseNotes.txt
 See doc/toDo.txt
 
 See doc/install.txt
+## 📚 Documentation
 
+Complete technical documentation is available in the [/docs](docs/) directory.
+
+New contributors should start with [docs/README.md](docs/README.md).
 Configuration
 ---
 ###Logging levels
