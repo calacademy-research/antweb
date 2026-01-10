@@ -25,3 +25,4 @@ antweb.iml
 /docker/caddy/logs
 
 docker-compose.dev.yml
+antweb-docs.zip
