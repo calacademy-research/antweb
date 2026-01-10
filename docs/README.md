@@ -12,6 +12,21 @@
 
 This documentation suite provides comprehensive technical information about AntWeb's architecture, data model, API, and development processes.
 
+### Planning & Roadmap
+
+⭐ **NEW** - Strategic development planning
+
+0. **[ROADMAP.md](ROADMAP.md)** - 20-Year Development Roadmap
+   - Strategic modernization priorities
+   - Phase-by-phase implementation plan
+   - Technology decisions and trade-offs
+   - Timeline and success metrics
+
+0. **[PHASE1.md](PHASE1.md)** - Phase 1: Security & Foundation (Detailed)
+   - Week-by-week implementation guide
+   - Release management & versioning
+   - Authentication system overhaul
+   - Dependency updates and database migration
 ### Core Documentation
 
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - System Architecture Overview
