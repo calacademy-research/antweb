@@ -1,0 +1,39 @@
+---
+name: General Issue
+about: General questions, discussions, or issues that don't fit other categories
+title: ''
+labels: question
+assignees: ''
+---
+
+## Issue Type
+
+- [ ] Question about AntWeb
+- [ ] Documentation issue
+- [ ] Discussion or suggestion
+- [ ] Development setup help
+- [ ] Other
+
+## Description
+
+Clear description of your question or issue.
+
+## Context
+
+Any relevant context or background information.
+
+## What I've Tried (if applicable)
+
+- Checked documentation at https://github.com/calacademy-research/antweb/tree/master/docs
+- Searched existing issues
+- Reviewed roadmap at https://github.com/calacademy-research/antweb/blob/master/docs/ROADMAP.md
+
+## Environment (if applicable)
+
+- AntWeb Version:
+- Browser/Tool:
+- Operating System:
+
+## Additional Information
+
+Any other relevant details.

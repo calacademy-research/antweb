@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/calacademy-research/antweb/tree/master/docs
+    about: Read the complete technical documentation
+  - name: 🗺️ Development Roadmap
+    url: https://github.com/calacademy-research/antweb/blob/master/docs/ROADMAP.md
+    about: View the 20-year development plan
+  - name: 🔒 Private Security Report
+    url: mailto:bpescador@gmail.com
+    about: Report sensitive security vulnerabilities privately (do not create public issue)
+  - name: 🌐 AntWeb Website
+    url: https://www.antweb.org
+    about: Visit the live AntWeb application
