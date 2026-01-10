@@ -39,7 +39,7 @@ public class SpecimenUploader extends Uploader {
         String workingDir = AntwebProps.getWorkingDir();
         FileUtil.makeDir(workingDir);
 
-        if (formFileName.contains("zip")) {
+        if (formFileName.endsWith(".zip")) {  // was: contains("zip")
             String specimenFileName = "specimen" + group.getId() + ".txt"; // was: workingDir +
             String groupName = "group" + group.getId();
             //            A.log("uploadSpecimenFile() tempDirName:" + tempDirName + " specimenFileName:" + specimenFileName);
@@ -55,7 +55,7 @@ public class SpecimenUploader extends Uploader {
         boolean isUpload = true;
         // was 2nd param: specimenUploadType, 
         A.log("uploadSpecimenFile() action:" + theForm.getAction() + " formFileName:" + formFileName);
-        String fileName = "specimen" + group.getId() + ".txt";
+        String fileName = specimenFileName;  // was: "specimen" + group.getId() + ".txt"
         return uploadSpecimenFile(theForm.getAction(), fileName, curator, userAgent, encoding, isUpload);
     }
 
