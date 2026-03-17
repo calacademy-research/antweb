@@ -153,8 +153,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         if (col.equals("code")) {
                            String lowerCode = element.toLowerCase();
                            String newCode = new Formatter().removeSpaces(lowerCode);
+                           if (!lowerCode.equals(newCode)) {
+                               getMessageMgr().addToMessages(MessageMgr.specimenIdSpacesRemoved, newCode);
+                           }
                            code = newCode;
-                           //if (!lowerCode.equals(newCode)) ++spacesRemoved;
                            specimenItem.put(col, newCode);
                            //A.log("parseLine() code col:" + col + " element:" + element);
                         } else {

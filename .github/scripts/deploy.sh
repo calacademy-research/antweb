@@ -7,8 +7,9 @@ cd $HOME/antweb
 
 # Get the latest source code
 git checkout master
-git pull origin master --no-edit
+git pull --rebase origin master
 
 # Restart docker compose services
-docker-compose exec antweb ant deploy
-docker-compose restart antweb
+# -T disables pseudo-TTY allocation (required when running non-interactively via SSH/CI)
+docker compose exec -T antweb ant deploy || docker-compose exec -T antweb ant deploy
+docker compose restart antweb || docker-compose restart antweb

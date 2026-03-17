@@ -159,6 +159,7 @@ public class MessageMgr {
     public static final String nonAntTaxa = "nonAntTaxa";
     public static final String invalidSpeciesName = "invalidSpeciesName";
     public static final String specialCharacterFound = "specialCharacterFound";
+    public static final String specimenIdSpacesRemoved = "specimenIdSpacesRemoved";
     // public static final String  = "";
     
      
@@ -232,6 +233,7 @@ public class MessageMgr {
       testList.add(new Test(invalidSpeciesName, SET, "<b>Invalid species name <font color=red>(not uploaded)</font></b>"));
 
       testList.add(new Test(specialCharacterFound, SET, "<b>Special Character Found <font color=red>(not uploaded)</font></b>"));
+      testList.add(new Test(specimenIdSpacesRemoved, SET, "<b>Spaces removed from specimen code (auto-corrected — please fix your source data)</b>"));
     }      
     
     public static String getMessageDisplay(String key) {
