@@ -508,6 +508,23 @@ Upload Curator File
 <!-- Projects -->                
 <!-- Download Species List -->   
 
+<% if (accessLogin.isCurator()) { %>
+    <div class="admin_action_module">
+        <div class="admin_action_item">
+            <div style="float:left;">
+                <h2>Read-Only Tools</h2>
+            </div>
+            <div class="clear"></div>
+        </div>
+        <div class="admin_action_item">
+          <div class="action_desc">
+            &nbsp;&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/validateSpeciesList.do">Validate Species List (Pre-flight checker)</a>
+          </div>  
+          <div class="clear"></div>
+        </div>
+    </div>
+<% } %>
+
 <% if (accessLogin.isDeveloper()) { %>  <!-- was isAdmin() -->
 
         <div class="admin_action_item">

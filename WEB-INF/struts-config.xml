@@ -222,6 +222,8 @@
       <form-property name="toSpecies"     type="java.lang.String"/>
       <form-property name="toSubspecies"     type="java.lang.String"/>
   </form-bean>  
+
+  <form-bean name="validateSpeciesListForm" type="org.calacademy.antweb.curate.speciesList.ValidateSpeciesListForm"/>
       
   </form-beans>
 
@@ -608,6 +610,15 @@ We would like to remove getChildImages.  Not needed now in the new UI
             scope="request"
             name="uploadForm">
       <forward name="success" path="/uploadHistory.jsp" />
+    </action>
+
+    <action path="/validateSpeciesList"
+            type="org.calacademy.antweb.curate.speciesList.ValidateSpeciesListAction"
+            scope="request"
+            validate="false"
+            input="/curate/speciesList/validateSpeciesList.jsp"
+            name="validateSpeciesListForm">
+      <forward name="validateSpeciesList" path="/curate/speciesList/validateSpeciesList.jsp" />
     </action>
 
     <action path="/speciesListTool"
