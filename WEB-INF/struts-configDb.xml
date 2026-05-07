@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 
-<!-- 
+<!--
 On dev and live server there is a softlink created pointing to the DB config file.
 
 root@antweb:~/antweb# ls -al WEB-INF/struts-configDb*
@@ -20,7 +20,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
 
 <struts-config>
   <data-sources>
-  
+
     <data-source key="conPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
       <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
       <set-property property="auth" value="Container"/>
@@ -38,8 +38,8 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="unreturnedConnectionTimeout" value="200"/>  <!-- was 600 == 10 min -->
       <set-property property="debugUnreturnedConnectionStackTraces" value="false"/>
 
-      <set-property property="testConnectionOnCheckin" value="true"/> 
-      <set-property property="idleConnectionTestPeriod" value="60"/> 
+      <set-property property="testConnectionOnCheckin" value="true"/>
+      <set-property property="idleConnectionTestPeriod" value="60"/>
       <set-property property="maxIdleTimeExcessConnections" value="60"/>
     </data-source>
 
@@ -60,8 +60,8 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="unreturnedConnectionTimeout" value="600"/>
       <set-property property="debugUnreturnedConnectionStackTraces" value="false"/>
 
-      <set-property property="testConnectionOnCheckin" value="true"/> 
-      <set-property property="idleConnectionTestPeriod" value="300"/> 
+      <set-property property="testConnectionOnCheckin" value="true"/>
+      <set-property property="idleConnectionTestPeriod" value="300"/>
       <set-property property="maxIdleTimeExcessConnections" value="240"/>
     </data-source>
 
@@ -76,19 +76,19 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
-      <set-property property="autoCommitOnClose" value="true"/> 
+      <set-property property="autoCommitOnClose" value="true"/>
 
       <!-- See DBUtil.java for documentation -->
       <set-property property="unreturnedConnectionTimeout" value="3600"/> <!-- 4200 / 60 is 70 min -->  <!-- 10800 / 60 is 3 hours -->
       <set-property property="debugUnreturnedConnectionStackTraces" value="false"/>
-       
-      <set-property property="testConnectionOnCheckin" value="true"/> 
+
+      <set-property property="testConnectionOnCheckin" value="true"/>
       <set-property property="idleConnectionTestPeriod" value="300"/>
       <set-property property="maxIdleTimeExcessConnections" value="240"/>
-              
+
     </data-source>
 
-<!--  
+<!--
 Does not work:
       <set-property property="zeroDateTimeBehavior" value="convertToNull"/>
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;characterEncoding=utf-8"/>
