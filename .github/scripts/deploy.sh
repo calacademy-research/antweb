@@ -1,14 +1,25 @@
 #!/usr/bin/env bash
-# Having sensitive error checking making the script fail.
-#set -euxo pipefail
+set -euo pipefail
+
+compose() {
+  if docker compose version >/dev/null 2>&1; then
+    docker compose "$@"
+  else
+    docker-compose "$@"
+  fi
+}
+
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-master}"
 
 # Let's assume antweb is in home directory of the ssh user
-cd $HOME/antweb
+cd "$HOME/antweb"
 
 # Get the latest source code
-git checkout master
-git pull origin master --no-edit
+git fetch origin "$DEPLOY_BRANCH"
+git checkout "$DEPLOY_BRANCH"
+git pull --rebase origin "$DEPLOY_BRANCH"
 
 # Restart docker compose services
-docker-compose exec antweb ant deploy
-docker-compose restart antweb
+# -T disables pseudo-TTY allocation (required when running non-interactively via SSH/CI)
+compose exec -T antweb ant deploy
+compose restart antweb

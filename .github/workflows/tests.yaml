@@ -20,10 +20,8 @@ jobs:
 
       - name: Test API Build
         run: |
-          cd docker/api
-          docker build -t antweb/api:dev .
+          docker build -t antweb/api:dev -f docker/api/Dockerfile .
 
       - name: Test Antweb Build
         run: |
-          cd docker/api
-          docker build -t antweb/antweb:dev .
+          docker build -t antweb/antweb:dev -f docker/antweb/Dockerfile .
