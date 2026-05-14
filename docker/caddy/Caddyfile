@@ -54,7 +54,10 @@ www.antweb.org {
 
         error "Not found" 404
 
-        rate_limit {
+        @not_upload {
+            not path /upload.do
+        }
+        rate_limit @not_upload {
             zone requests {
                 key {http.request.remote.host}
                 window 1m

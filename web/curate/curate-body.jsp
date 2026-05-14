@@ -145,6 +145,9 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
         <!-- Antweb, TaxonWorks, or GBIF Specimen (file or Zip File) Upload -->
         
         <script type="text/javascript">
+            var uploadReportUrl = '<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>';
+            var uploadTimeoutId = null;
+
             function validateZipUpload(form) {
                 var fileInput = form.elements['theFile'];
                 if (!fileInput || !fileInput.value) {
@@ -155,6 +158,17 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                     alert('Error: Only ZIP files are allowed.');
                     return false;
                 }
+                document.getElementById('upload-submit-btn').disabled = true;
+                document.getElementById('upload-processing-msg').style.display = 'block';
+                // Cloudflare times out at 100s — redirect to upload report after 85s
+                // The upload continues processing server-side even after a Cloudflare timeout
+                uploadTimeoutId = setTimeout(function() {
+                    document.getElementById('upload-processing-msg').innerHTML =
+                        '<b>This is taking a while.</b> Your data is still being processed on the server.<br>' +
+                        'You will be redirected to your <a href="' + uploadReportUrl + '">Upload Report</a> shortly, ' +
+                        'where you can check the result.';
+                    setTimeout(function() { window.location.href = uploadReportUrl; }, 5000);
+                }, 85000);
                 return true;
             }
         </script>
@@ -167,10 +181,15 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                     <html:file property="theFile" accept=".zip" />
                 </div>
                 <div class="clear"></div>
-                
+
+                <div id="upload-processing-msg" style="display:none; color: blue; font-weight: bold; margin: 10px 0;">
+                    Uploading and processing your file&hellip; please wait.
+                </div>
+
                 <div style="color: red; font-weight: bold; margin: 10px 0;">
                     1. Only ZIP Files Allowed<br>
-                    2. If you see Cloudflare timeout just go back to the homepage.
+                    2. If you see a Cloudflare timeout, your data is still processing &mdash;
+                       check your <a href="<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>">Upload Report</a>.
                 </div>
 
             <%
@@ -223,7 +242,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
              <div class="clear"></div>
 
                 <div class="align_right">
-                    <input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>>
+                    <input id="upload-submit-btn" border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit" <%= active %>>
                 </div>
 
              <div class="clear"></div>
