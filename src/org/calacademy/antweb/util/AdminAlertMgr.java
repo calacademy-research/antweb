@@ -70,7 +70,10 @@ public final class AdminAlertMgr {
         s_log.warn("AdminAlertMgr.add(message)");
         Statement stmt = null;
         String dml = "insert into admin_alerts (alert) values ('" + AntFormatter.escapeQuotes(message) + "')	";
-        try {
+        s_log.warn("AdminAlertMgr.add(): skipping... ");
+	return;
+	/*
+	try {
           stmt = DBUtil.getStatement(connection, "AdminAlertMgr.add()");  
           stmt.executeUpdate(dml);
           s_log.debug("add() dml:" + dml);
@@ -81,7 +84,8 @@ public final class AdminAlertMgr {
           DBUtil.close(stmt, "AdminAlertMgr.add()");        
         }
 
-        AdminAlertMgr.populate(connection);      
+        AdminAlertMgr.populate(connection);  
+	*/
     }
     
     public static final String noWorldantsChanges = "No Worldants changes in last week. See: <a href='" + AntwebProps.getDomainApp() + "/query.do?name=worldantsUploads'>Worldants Upload Report</a>.";
