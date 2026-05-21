@@ -1289,9 +1289,16 @@ public abstract class HttpUtil {
   public static boolean s_beenReported = false;
 
 
-  public static String getUrlIso(String theUrl) 
+  public static String getUrlIso(String theUrl)
     throws IOException {
     return HttpUtil.getUrl(theUrl, "ISO-8859-1");
+  }
+
+  private static URLConnection openWithTimeouts(String theUrl) throws IOException {
+    URLConnection conn = new URL(theUrl).openConnection();
+    conn.setConnectTimeout(60_000);
+    conn.setReadTimeout(300_000);
+    return conn;
   }
 
     public static boolean urlExists(String url) {
@@ -1361,9 +1368,9 @@ public abstract class HttpUtil {
 		String UTF8 = "utf8";
 		int BUFFER_SIZE = 8192;
 		url = new URL(theUrl) ;
-				
+
 		//BufferedReader br = new BufferedReader(new InputStreamReader(is, UTF8), BUFFER_SIZE);
-		BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), encode));  //"UTF-8" ?
+		BufferedReader in = new BufferedReader(new InputStreamReader(openWithTimeouts(theUrl).getInputStream(), encode));  //"UTF-8" ?
 
 		String str = null;
 		while ((str = in.readLine()) != null) {
@@ -1417,9 +1424,9 @@ public abstract class HttpUtil {
       String UTF8 = "utf8";
       int BUFFER_SIZE = 8192;
       url = new URL(theUrl) ;
-              
+
       //BufferedReader br = new BufferedReader(new InputStreamReader(is, UTF8), BUFFER_SIZE);
-      BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), encode));  //"UTF-8" ?
+      BufferedReader in = new BufferedReader(new InputStreamReader(openWithTimeouts(theUrl).getInputStream(), encode));  //"UTF-8" ?
 
       String str = null;
       while ((str = in.readLine()) != null) {
@@ -1525,9 +1532,7 @@ public abstract class HttpUtil {
       if (AntwebProps.isStageMode()) if (theUrl.contains("https:")) s_log.error("getUtf8UrlUrl() contains https.  May not work on stage.  url:" + theUrl);
       
       StringBuffer strVal = new StringBuffer();
-      URL url = new URL(theUrl) ;
-      
-      URLConnection urlConn = url.openConnection();
+      URLConnection urlConn = openWithTimeouts(theUrl);
       urlConn.setRequestProperty("Accept-Charset", "UTF-8");
 
       try {
@@ -1556,9 +1561,7 @@ public abstract class HttpUtil {
       ArrayList<String> lines = new ArrayList<>();
 
       StringBuffer strVal = new StringBuffer();
-      URL url = new URL(theUrl) ;
-      
-      URLConnection urlConn = url.openConnection();
+      URLConnection urlConn = openWithTimeouts(theUrl);
       urlConn.setRequestProperty("Accept-Charset", "UTF-8");
 
       try {
@@ -1584,7 +1587,7 @@ public abstract class HttpUtil {
         // speedy download that skips application memory, direct to disk
         // https://stackoverflow.com/questions/921262/how-can-i-download-and-save-a-file-from-the-internet-using-java
         // https://www.techiedelight.com/download-file-from-url-java/
-        try (InputStream in = new URL(theUrl).openStream();
+        try (InputStream in = openWithTimeouts(theUrl).getInputStream();
              ReadableByteChannel rbc = Channels.newChannel(in);
              FileOutputStream fos = new FileOutputStream(fileName)) {
 
