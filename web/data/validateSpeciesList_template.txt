@@ -1,0 +1,4 @@
+subfamily	genus	species	subspecies
+Myrmicinae	Acromyrmex	balzani	multituber
+Dorylinae	Aenictus	clavatus	atripennis
+Myrmicinae	Atta	cephalotes	lutea
