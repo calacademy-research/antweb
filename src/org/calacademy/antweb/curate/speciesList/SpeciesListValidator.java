@@ -38,7 +38,8 @@ public class SpeciesListValidator {
         for (ParsedRow row : rows) {
             if (row.hasError) {
                 report.addResult(new ValidateSpeciesResultItem(
-                        row.rowNum, row.rawLine, "", ValidateSpeciesResultItem.Status.FORMAT_ERROR, row.errorMsg, ""));
+                        row.rowNum, row.rawLine, "", ValidateSpeciesResultItem.Status.FORMAT_ERROR,
+                        "", false, row.errorMsg, "", false));
                 continue;
             }
 
@@ -50,7 +51,8 @@ public class SpeciesListValidator {
 
             if (genus == null || species == null) {
                 report.addResult(new ValidateSpeciesResultItem(
-                    row.rowNum, row.rawLine, "", ValidateSpeciesResultItem.Status.FORMAT_ERROR, "Genus and species are required.", ""));
+                    row.rowNum, row.rawLine, "", ValidateSpeciesResultItem.Status.FORMAT_ERROR,
+                    "", false, "Genus and species are required.", "", false));
                 continue;
             }
 
@@ -71,34 +73,33 @@ public class SpeciesListValidator {
                 taxonName = lookupTaxonName(genusLower, species, subspecies);
             }
 
-            // Lean DB lookup — only status + current_valid_name (avoids expensive image/bioregion queries)
+            // Lean DB lookup - only validation fields, avoiding expensive image/bioregion queries.
             TaxonLookupResult result = taxonName != null ? lookupTaxon(taxonName) : null;
             
             if (result != null) {
                 if ("valid".equals(result.status)) {
                     report.addResult(new ValidateSpeciesResultItem(
-                            row.rowNum, row.rawLine, displayName, ValidateSpeciesResultItem.Status.EXACT_MATCH, "Exact match.", ""));
+                            row.rowNum, row.rawLine, displayName, ValidateSpeciesResultItem.Status.EXACT_MATCH,
+                            result.status, false, "Exact match.", "", result.fossil));
                     matchedTaxonNames.add(taxonName);
-                } else if ("fossil".equals(result.status)) {
-                    report.addResult(new ValidateSpeciesResultItem(
-                            row.rowNum, row.rawLine, displayName, ValidateSpeciesResultItem.Status.NOT_FOUND, "Fossil taxon — not an extant valid name.", ""));
-                } else if ("synonym".equals(result.status) || "homonym".equals(result.status)) {
+                } else if ("synonym".equals(result.status)) {
                     // current_valid_name is an internal DB key (all lowercase, subfamily-prefixed).
                     // Resolve it to a human-readable display name.
                     String suggestion = resolveDisplayName(result.currentValidName);
                     report.addResult(new ValidateSpeciesResultItem(
                             row.rowNum, row.rawLine, displayName, ValidateSpeciesResultItem.Status.AMBIGUOUS, 
-                            "Matched a " + result.status + ".", suggestion != null ? suggestion : ""));
+                            result.status, suggestion != null, "Matched a synonym.", suggestion != null ? suggestion : "", result.fossil));
                 } else {
                     report.addResult(new ValidateSpeciesResultItem(
                             row.rowNum, row.rawLine, displayName, ValidateSpeciesResultItem.Status.AMBIGUOUS, 
-                            "Status is '" + result.status + "'. Expected 'valid'.", ""));
+                            result.status, false, "Status is '" + result.status + "'. Expected 'valid'.", "", result.fossil));
                 }
             } else {
                 // Fuzzy match using display names for accurate distance calculation
-                String suggestion = getBestFuzzyMatch(displayName, genus);
+                FuzzyMatch suggestion = getBestFuzzyMatch(displayName, genus);
                 report.addResult(new ValidateSpeciesResultItem(
-                        row.rowNum, row.rawLine, displayName, ValidateSpeciesResultItem.Status.NOT_FOUND, "Taxon not found.", suggestion));
+                        row.rowNum, row.rawLine, displayName, ValidateSpeciesResultItem.Status.NOT_FOUND,
+                        "", suggestion.hasValidTaxon(), "Taxon not found.", suggestion.displayText, suggestion.fossil));
             }
         }
 
@@ -114,12 +115,15 @@ public class SpeciesListValidator {
      * expensive image / bioregion queries for every row in production.
      */
     private TaxonLookupResult lookupTaxon(String taxonName) throws SQLException {
-        String q = "SELECT status, current_valid_name FROM taxon WHERE taxon_name = ?";
+        String q = "SELECT status, current_valid_name, fossil FROM taxon WHERE taxon_name = ?";
         try (PreparedStatement stmt = connection.prepareStatement(q)) {
             stmt.setString(1, taxonName);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return new TaxonLookupResult(rs.getString("status"), rs.getString("current_valid_name"));
+                    return new TaxonLookupResult(
+                            rs.getString("status"),
+                            rs.getString("current_valid_name"),
+                            rs.getInt("fossil") == 1);
                 }
             }
         }
@@ -133,7 +137,8 @@ public class SpeciesListValidator {
     private String lookupTaxonName(String genus, String species, String subspecies) throws SQLException {
         String subspClause = subspecies != null ? " AND subspecies = ?" : " AND (subspecies IS NULL OR subspecies = '')";
         String q = "SELECT taxon_name FROM taxon WHERE genus = ? AND species = ?" + subspClause
-                 + " AND status != 'synonym' AND taxarank IN ('species','subspecies') LIMIT 1";
+                 + " AND taxarank IN ('species','subspecies')"
+                 + " ORDER BY CASE WHEN status = 'valid' THEN 0 ELSE 1 END LIMIT 1";
         try (PreparedStatement stmt = connection.prepareStatement(q)) {
             stmt.setString(1, genus.toLowerCase());
             stmt.setString(2, species);
@@ -188,9 +193,25 @@ public class SpeciesListValidator {
     private static class TaxonLookupResult {
         final String status;
         final String currentValidName;
-        TaxonLookupResult(String status, String currentValidName) {
+        final boolean fossil;
+        TaxonLookupResult(String status, String currentValidName, boolean fossil) {
             this.status = status;
             this.currentValidName = currentValidName;
+            this.fossil = fossil;
+        }
+    }
+
+    private static class FuzzyMatch {
+        final String displayText;
+        final boolean hasValidTaxon;
+        final boolean fossil;
+        FuzzyMatch(String displayText, boolean hasValidTaxon, boolean fossil) {
+            this.displayText = displayText;
+            this.hasValidTaxon = hasValidTaxon;
+            this.fossil = fossil;
+        }
+        boolean hasValidTaxon() {
+            return hasValidTaxon;
         }
     }
 
@@ -207,34 +228,34 @@ public class SpeciesListValidator {
     
     // Limits fuzzy matching to species sharing the same genus for performance.
     // Queries genus/species/subspecies columns to build proper display names for comparison.
-    private String getBestFuzzyMatch(String displayName, String genus) {
-        if (genus == null) return "Check spelling.";
+    private FuzzyMatch getBestFuzzyMatch(String displayName, String genus) {
+        if (genus == null) return new FuzzyMatch("Check spelling.", false, false);
         
-        List<String> candidates = new ArrayList<>();
+        List<FuzzyMatch> candidates = new ArrayList<>();
         // Query individual columns so we can build proper display names
-        String query = "SELECT genus, species, subspecies FROM taxon WHERE genus = ? AND status = 'valid'";
+        String query = "SELECT genus, species, subspecies, fossil FROM taxon WHERE genus = ? AND status = 'valid'";
         
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, genus.toLowerCase());
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     String candidate = buildDisplayName(rs.getString("genus"), rs.getString("species"), rs.getString("subspecies"));
-                    if (candidate != null) candidates.add(candidate);
+                    if (candidate != null) candidates.add(new FuzzyMatch(candidate, true, rs.getInt("fossil") == 1));
                 }
             }
         } catch (SQLException e) {
             s_log.warn("Fuzzy match query failed: " + e.getMessage());
-            return "Check spelling. (DB error)";
+            return new FuzzyMatch("Check spelling. (DB error)", false, false);
         }
         
-        if (candidates.isEmpty()) return "No valid species found for genus " + genus + ".";
+        if (candidates.isEmpty()) return new FuzzyMatch("No valid species found for genus " + genus + ".", false, false);
         
         int bestDistance = Integer.MAX_VALUE;
-        String bestMatch = null;
+        FuzzyMatch bestMatch = null;
         LevenshteinDistance ld = new LevenshteinDistance();
         
-        for (String candidate : candidates) {
-            int dist = ld.apply(displayName, candidate);
+        for (FuzzyMatch candidate : candidates) {
+            int dist = ld.apply(displayName, candidate.displayText);
             if (dist < bestDistance) {
                 bestDistance = dist;
                 bestMatch = candidate;
@@ -245,7 +266,7 @@ public class SpeciesListValidator {
             return bestMatch;
         }
         
-        return "Check spelling.";
+        return new FuzzyMatch("Check spelling.", false, false);
     }
     
     private void populateUnmatched(ValidateSpeciesReport report, Set<String> matchedTaxa) {
