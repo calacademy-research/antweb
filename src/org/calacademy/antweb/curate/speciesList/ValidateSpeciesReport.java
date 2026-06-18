@@ -41,13 +41,35 @@ public class ValidateSpeciesReport {
     public int getProblemCount() { return problems.size(); }
     public int getFormatErrorCount() { return formatErrors.size(); }
     public int getUnmatchedCount() { return unmatchedValidTaxa.size(); }
+    public int getNeedAttentionCount() {
+        int count = 0;
+        for (ValidateSpeciesResultItem item : problems) {
+            String category = item.getCategory();
+            if (ValidateSpeciesResultItem.CATEGORY_SPELLING.equals(category)
+                    || ValidateSpeciesResultItem.CATEGORY_JUNIOR_SYNONYM.equals(category)
+                    || ValidateSpeciesResultItem.CATEGORY_COMBINATION_CHANGED.equals(category)
+                    || ValidateSpeciesResultItem.CATEGORY_NOT_FOUND.equals(category)) {
+                count++;
+            }
+        }
+        return count;
+    }
+    public int getInformationalCount() {
+        int count = 0;
+        for (ValidateSpeciesResultItem item : problems) {
+            if (ValidateSpeciesResultItem.CATEGORY_KNOWN_NOT_VALID.equals(item.getCategory())) {
+                count++;
+            }
+        }
+        return count;
+    }
 
     public void setRowLimitExceeded(boolean exceeded) { this.rowLimitExceeded = exceeded; }
     public boolean isRowLimitExceeded() { return rowLimitExceeded; }
 
     public String generateTsvReport() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Row\tInput Raw\tNormalized Taxon Name\tStatus\tMessage\tSuggestion\n");
+        sb.append("Row\tInput Raw\tNormalized Taxon Name\tStatus\tCategory\tFossil\tMessage\tSuggestion\n");
         
         List<ValidateSpeciesResultItem> all = new ArrayList<>();
         all.addAll(formatErrors);
@@ -64,6 +86,8 @@ public class ValidateSpeciesReport {
               .append(safeRaw).append("\t")
               .append(item.getNormalizedName()).append("\t")
               .append(item.getStatus().name()).append("\t")
+              .append(item.getCategory()).append("\t")
+              .append(item.getFossilDisplay()).append("\t")
               .append(item.getMessage()).append("\t")
               .append(item.getSuggestion()).append("\n");
         }
