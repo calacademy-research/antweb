@@ -90,7 +90,8 @@
             <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; margin-bottom: 15px;">
                 <tr><th align="left">Total Rows Processed</th><td><%= report.getTotalInputRows() %></td></tr>
                 <tr><th align="left">Exact Matches</th><td style="color: green; font-weight: bold;"><%= report.getExactMatchCount() %></td></tr>
-                <tr><th align="left">Not Found / Ambiguous</th><td style="color: orange; font-weight: bold;"><%= report.getProblemCount() %></td></tr>
+                <tr><th align="left">Need attention</th><td style="color: orange; font-weight: bold;"><%= report.getNeedAttentionCount() %></td></tr>
+                <tr><th align="left">Informational</th><td style="color: #666; font-weight: bold;"><%= report.getInformationalCount() %></td></tr>
                 <tr><th align="left">Format Errors</th><td style="color: red; font-weight: bold;"><%= report.getFormatErrorCount() %></td></tr>
                 <% if (validateSpeciesListForm.isShowUnmatched()) { %>
                     <tr><th align="left">Unmatched AntWeb Taxa</th><td style="font-weight: bold;"><%= report.getUnmatchedCount() %></td></tr>
@@ -118,6 +119,8 @@
                         <th>Input Raw</th>
                         <th>Normalized Taxon Name</th>
                         <th>Status</th>
+                        <th>Category</th>
+                        <th>Fossil</th>
                         <th>Message</th>
                         <th>Suggestion</th>
                     </tr>
@@ -136,6 +139,8 @@
                             <td><%= item.getInputRaw() != null ? item.getInputRaw().replace("<", "&lt;").replace(">", "&gt;") : "" %></td>
                             <td><%= item.getNormalizedName() != null ? item.getNormalizedName() : "" %></td>
                             <td style="font-weight: bold;"><%= item.getStatus().name() %></td>
+                            <td style="font-weight: bold;"><%= item.getCategory() %></td>
+                            <td><%= item.getFossilDisplay() %></td>
                             <td><%= item.getMessage() %></td>
                             <% if (item.getSuggestion() != null && !item.getSuggestion().isEmpty()) { %>
                                 <td style="font-weight: bold; color: #000;"><%= item.getSuggestion() %>
@@ -153,7 +158,7 @@
 
             <% if (report.getFormatErrorCount() == 0 && report.getProblemCount() == 0) { %>
                 <div style="color: green; font-weight: bold; margin-top: 10px;">
-                    ✓ All rows matched valid extant taxa exactly.
+                    ✓ All rows matched valid taxa exactly.
                 </div>
             <% } %>
             
