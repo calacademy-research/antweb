@@ -111,14 +111,29 @@
                 </html:form>
             </div>
 
-            <% if (report.getNeedAttentionCount() > 0) { %>
-                <div style="border: 2px solid #d98200; background-color: #fff3cd; padding: 10px; margin-bottom: 15px; font-weight: bold;">
-                    Needs attention: <%= report.getNeedAttentionCount() %> rows require curator review. Sort or filter by Category in the downloaded TSV.
-                </div>
-            <% } %>
-
             <% if (report.getProblemCount() > 0 || report.getFormatErrorCount() > 0) { %>
-                <h3>Rows Needing Attention, Informational Notes & Format Errors</h3>
+                <%
+                List<ValidateSpeciesResultItem> needsAttentionRows = new ArrayList<>();
+                List<ValidateSpeciesResultItem> otherIssues = new ArrayList<>();
+
+                for (ValidateSpeciesResultItem item : report.getProblems()) {
+                    if (item.isNeedAttention()) {
+                        needsAttentionRows.add(item);
+                    } else {
+                        otherIssues.add(item);
+                    }
+                }
+                otherIssues.addAll(report.getFormatErrors());
+
+                needsAttentionRows.sort((a, b) -> Integer.compare(a.getRowNum(), b.getRowNum()));
+                otherIssues.sort((a, b) -> Integer.compare(a.getRowNum(), b.getRowNum()));
+                %>
+
+                <% if (!needsAttentionRows.isEmpty()) { %>
+                <div style="border-left: 5px solid #d98200; background-color: #fff3cd; padding: 10px 12px; margin: 20px 0 10px 0;">
+                    <h3 style="margin: 0 0 4px 0;">Needs Attention</h3>
+                    <div style="font-weight: bold;"><%= needsAttentionRows.size() %> rows require review before upload.</div>
+                </div>
                 <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
                     <tr style="background-color: #eee;">
                         <th>Row</th>
@@ -131,14 +146,45 @@
                         <th>Suggestion</th>
                     </tr>
                     
-                    <% 
-                    List<ValidateSpeciesResultItem> issues = new ArrayList<>();
-                    issues.addAll(report.getFormatErrors());
-                    issues.addAll(report.getProblems());
-                    issues.sort((a, b) -> Integer.compare(a.getRowNum(), b.getRowNum()));
+                    <% for (ValidateSpeciesResultItem item : needsAttentionRows) { %>
+                        <tr style="background-color: #fff3cd;">
+                            <td><%= item.getRowNum() %></td>
+                            <td><%= item.getInputRaw() != null ? item.getInputRaw().replace("<", "&lt;").replace(">", "&gt;") : "" %></td>
+                            <td><%= item.getNormalizedName() != null ? item.getNormalizedName() : "" %></td>
+                            <td style="font-weight: bold;"><%= item.getStatus().name() %></td>
+                            <td style="font-weight: bold;"><%= item.getCategory() %></td>
+                            <td><%= item.getFossilDisplay() %></td>
+                            <td><%= item.getMessage() %></td>
+                            <% if (item.getSuggestion() != null && !item.getSuggestion().isEmpty()) { %>
+                                <td style="font-weight: bold; color: #000;"><%= item.getSuggestion() %>
+                                    <% if (item.getStatus() == ValidateSpeciesResultItem.Status.NOT_FOUND) { %>
+                                        <div style="font-size: 0.8em; color: green; margin-top: 4px;">↑ Try replacing with this valid name.</div>
+                                    <% } %>
+                                </td>
+                            <% } else { %>
+                                <td></td>
+                            <% } %>
+                        </tr>
+                    <% } %>
+                </table>
+                <% } %>
+
+                <% if (!otherIssues.isEmpty()) { %>
+                <h3 style="margin-top: 25px;">Informational Notes & Format Errors (<%= otherIssues.size() %>)</h3>
+                <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+                    <tr style="background-color: #eee;">
+                        <th>Row</th>
+                        <th>Input</th>
+                        <th>Input Normalized</th>
+                        <th>Comparison</th>
+                        <th>Category</th>
+                        <th>Fossil</th>
+                        <th>Comment</th>
+                        <th>Suggestion</th>
+                    </tr>
                     
-                    for (ValidateSpeciesResultItem item : issues) { 
-                        String bg = item.getStatus() == ValidateSpeciesResultItem.Status.FORMAT_ERROR ? "#ffe6e6" : (item.isNeedAttention() ? "#fff3cd" : "#f5f5f5");
+                    <% for (ValidateSpeciesResultItem item : otherIssues) {
+                        String bg = item.getStatus() == ValidateSpeciesResultItem.Status.FORMAT_ERROR ? "#ffe6e6" : "#f5f5f5";
                     %>
                         <tr style="background-color: <%= bg %>;">
                             <td><%= item.getRowNum() %></td>
@@ -160,6 +206,7 @@
                         </tr>
                     <% } %>
                 </table>
+                <% } %>
             <% } %>
 
             <% if (report.getFormatErrorCount() == 0 && report.getProblemCount() == 0) { %>
