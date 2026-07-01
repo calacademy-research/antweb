@@ -1,6 +1,12 @@
 package test.org.calacademy.antweb.curate.speciesList;
 
+import java.io.ByteArrayInputStream;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 import junit.framework.TestCase;
+import org.calacademy.antweb.curate.speciesList.SpeciesListValidator;
 import org.calacademy.antweb.curate.speciesList.ValidateSpeciesReport;
 import org.calacademy.antweb.curate.speciesList.ValidateSpeciesResultItem;
 
@@ -37,7 +43,7 @@ public class ValidateSpeciesReportTest extends TestCase {
         assertEquals(1, report.getExactMatchCount());
     }
 
-    public void testTsvIncludesCategoryAndFossilColumns() {
+    public void testTsvUsesCuratorFriendlyColumnNames() {
         ValidateSpeciesReport report = new ValidateSpeciesReport();
         report.addResult(new ValidateSpeciesResultItem(
                 2, "Acromyrmex\tbalzani", "Acromyrmex balzani",
@@ -46,8 +52,22 @@ public class ValidateSpeciesReportTest extends TestCase {
 
         String tsv = report.generateTsvReport();
 
-        assertTrue(tsv.startsWith("Row\tInput Raw\tNormalized Taxon Name\tStatus\tCategory\tFossil\tMessage\tSuggestion\n"));
+        assertTrue(tsv.startsWith("Row\tInput\tInput Normalized\tComparison\tCategory\tFossil\tComment\tSuggestion\n"));
         assertTrue(tsv.contains("2\tAcromyrmex  balzani\tAcromyrmex balzani\tAMBIGUOUS\tJunior synonym\tyes\tMatched a synonym.\tAcromyrmex validus\n"));
+    }
+
+    public void testParserAcceptsUtf16LittleEndianTextFiles() throws Exception {
+        String content = "subfamily\tgenus\tspecies\tsubspecies\r\n"
+                + "Myrmicinae\tAcanthognathus\tbrevicornis\t\r\n";
+        byte[] payload = withUtf16LeBom(content);
+
+        SpeciesListValidator validator = new SpeciesListValidator(null);
+        Method parseStream = SpeciesListValidator.class.getDeclaredMethod("parseStream", java.io.InputStream.class, String.class);
+        parseStream.setAccessible(true);
+
+        List rows = (List) parseStream.invoke(validator, new ByteArrayInputStream(payload), "UTF-8");
+
+        assertEquals(1, rows.size());
     }
 
     private static void assertCategory(String expected, ValidateSpeciesResultItem item) {
@@ -79,5 +99,14 @@ public class ValidateSpeciesReportTest extends TestCase {
                 1, "input", "",
                 ValidateSpeciesResultItem.Status.FORMAT_ERROR,
                 "", false, "Missing genus or species token.", "", false);
+    }
+
+    private static byte[] withUtf16LeBom(String value) {
+        byte[] text = value.getBytes(StandardCharsets.UTF_16LE);
+        byte[] withBom = new byte[text.length + 2];
+        withBom[0] = (byte) 0xff;
+        withBom[1] = (byte) 0xfe;
+        System.arraycopy(text, 0, withBom, 2, text.length);
+        return withBom;
     }
 }

@@ -107,21 +107,27 @@
                 <html:form method="POST" action="validateSpeciesList.do">
                     <input type="hidden" name="action" value="downloadCorrected" />
                     <input type="hidden" name="showUnmatched" value="<%= validateSpeciesListForm.isShowUnmatched() %>" />
-                    <input type="submit" value="Download Corrected Curated Dataset" style="padding: 5px 15px; font-weight: bold; color: green;" />
+                    <input type="submit" value="Download Valid Subset" style="padding: 5px 15px; font-weight: bold; color: green;" />
                 </html:form>
             </div>
 
+            <% if (report.getNeedAttentionCount() > 0) { %>
+                <div style="border: 2px solid #d98200; background-color: #fff3cd; padding: 10px; margin-bottom: 15px; font-weight: bold;">
+                    Needs attention: <%= report.getNeedAttentionCount() %> rows require curator review. Sort or filter by Category in the downloaded TSV.
+                </div>
+            <% } %>
+
             <% if (report.getProblemCount() > 0 || report.getFormatErrorCount() > 0) { %>
-                <h3>Problems & Format Errors Log</h3>
+                <h3>Rows Needing Attention, Informational Notes & Format Errors</h3>
                 <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
                     <tr style="background-color: #eee;">
                         <th>Row</th>
-                        <th>Input Raw</th>
-                        <th>Normalized Taxon Name</th>
-                        <th>Status</th>
+                        <th>Input</th>
+                        <th>Input Normalized</th>
+                        <th>Comparison</th>
                         <th>Category</th>
                         <th>Fossil</th>
-                        <th>Message</th>
+                        <th>Comment</th>
                         <th>Suggestion</th>
                     </tr>
                     
@@ -132,7 +138,7 @@
                     issues.sort((a, b) -> Integer.compare(a.getRowNum(), b.getRowNum()));
                     
                     for (ValidateSpeciesResultItem item : issues) { 
-                        String bg = item.getStatus() == ValidateSpeciesResultItem.Status.FORMAT_ERROR ? "#ffe6e6" : "#fff3cd";
+                        String bg = item.getStatus() == ValidateSpeciesResultItem.Status.FORMAT_ERROR ? "#ffe6e6" : (item.isNeedAttention() ? "#fff3cd" : "#f5f5f5");
                     %>
                         <tr style="background-color: <%= bg %>;">
                             <td><%= item.getRowNum() %></td>
