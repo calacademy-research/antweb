@@ -1,9 +1,13 @@
 package org.calacademy.antweb.curate.speciesList;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -286,7 +290,10 @@ public class SpeciesListValidator {
 
     private List<ParsedRow> parseStream(InputStream is, String charset) throws ValidationParseException, IOException {
         List<ParsedRow> results = new ArrayList<>();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is, charset));
+        DecodedInput decodedInput = decodeInput(is, charset);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                new ByteArrayInputStream(decodedInput.bytes, decodedInput.offset, decodedInput.bytes.length - decodedInput.offset),
+                decodedInput.charset));
         
         String headerLine = reader.readLine();
         if (headerLine == null) throw new ValidationParseException("File is empty.");
@@ -368,6 +375,84 @@ public class SpeciesListValidator {
         }
         
         return results;
+    }
+
+    private DecodedInput decodeInput(InputStream is, String fallbackCharset) throws IOException {
+        byte[] bytes = readAllBytes(is);
+        if (bytes.length >= 3
+                && (bytes[0] & 0xff) == 0xef
+                && (bytes[1] & 0xff) == 0xbb
+                && (bytes[2] & 0xff) == 0xbf) {
+            return new DecodedInput(bytes, 3, StandardCharsets.UTF_8);
+        }
+        if (bytes.length >= 2
+                && (bytes[0] & 0xff) == 0xff
+                && (bytes[1] & 0xff) == 0xfe) {
+            return new DecodedInput(bytes, 2, StandardCharsets.UTF_16LE);
+        }
+        if (bytes.length >= 2
+                && (bytes[0] & 0xff) == 0xfe
+                && (bytes[1] & 0xff) == 0xff) {
+            return new DecodedInput(bytes, 2, StandardCharsets.UTF_16BE);
+        }
+        Charset detected = detectUtf16WithoutBom(bytes);
+        if (detected != null) {
+            return new DecodedInput(bytes, 0, detected);
+        }
+        return new DecodedInput(bytes, 0, charsetOrUtf8(fallbackCharset));
+    }
+
+    private byte[] readAllBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] chunk = new byte[4096];
+        int read;
+        while ((read = is.read(chunk)) != -1) {
+            buffer.write(chunk, 0, read);
+        }
+        return buffer.toByteArray();
+    }
+
+    private Charset detectUtf16WithoutBom(byte[] bytes) {
+        int limit = Math.min(bytes.length, 200);
+        if (limit < 20) return null;
+
+        int evenNulls = 0;
+        int oddNulls = 0;
+        int pairs = limit / 2;
+        for (int i = 0; i + 1 < limit; i += 2) {
+            if (bytes[i] == 0) evenNulls++;
+            if (bytes[i + 1] == 0) oddNulls++;
+        }
+        if (oddNulls > pairs / 3 && evenNulls == 0) {
+            return StandardCharsets.UTF_16LE;
+        }
+        if (evenNulls > pairs / 3 && oddNulls == 0) {
+            return StandardCharsets.UTF_16BE;
+        }
+        return null;
+    }
+
+    private Charset charsetOrUtf8(String charset) {
+        if (charset == null || charset.trim().isEmpty()) {
+            return StandardCharsets.UTF_8;
+        }
+        try {
+            return Charset.forName(charset);
+        } catch (Exception e) {
+            s_log.warn("Unsupported charset '" + charset + "'. Falling back to UTF-8.");
+            return StandardCharsets.UTF_8;
+        }
+    }
+
+    private static class DecodedInput {
+        final byte[] bytes;
+        final int offset;
+        final Charset charset;
+        DecodedInput(byte[] bytes, int offset, Charset charset) {
+            this.bytes = bytes;
+            this.offset = offset;
+            this.charset = charset;
+        }
     }
     
     private String safeGet(String[] t, int idx) {

@@ -44,11 +44,7 @@ public class ValidateSpeciesReport {
     public int getNeedAttentionCount() {
         int count = 0;
         for (ValidateSpeciesResultItem item : problems) {
-            String category = item.getCategory();
-            if (ValidateSpeciesResultItem.CATEGORY_SPELLING.equals(category)
-                    || ValidateSpeciesResultItem.CATEGORY_JUNIOR_SYNONYM.equals(category)
-                    || ValidateSpeciesResultItem.CATEGORY_COMBINATION_CHANGED.equals(category)
-                    || ValidateSpeciesResultItem.CATEGORY_NOT_FOUND.equals(category)) {
+            if (item.isNeedAttention()) {
                 count++;
             }
         }
@@ -69,7 +65,7 @@ public class ValidateSpeciesReport {
 
     public String generateTsvReport() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Row\tInput Raw\tNormalized Taxon Name\tStatus\tCategory\tFossil\tMessage\tSuggestion\n");
+        sb.append("Row\tInput\tInput Normalized\tComparison\tCategory\tFossil\tComment\tSuggestion\n");
         
         List<ValidateSpeciesResultItem> all = new ArrayList<>();
         all.addAll(formatErrors);

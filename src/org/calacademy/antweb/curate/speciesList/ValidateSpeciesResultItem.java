@@ -47,6 +47,12 @@ public final class ValidateSpeciesResultItem {
     public String getLookupStatus() { return lookupStatus; }
     public boolean hasSuggestedValidName() { return hasSuggestedValidName; }
     public String getCategory() { return category; }
+    public boolean isNeedAttention() {
+        return CATEGORY_SPELLING.equals(category)
+                || CATEGORY_JUNIOR_SYNONYM.equals(category)
+                || CATEGORY_COMBINATION_CHANGED.equals(category)
+                || CATEGORY_NOT_FOUND.equals(category);
+    }
     public boolean isFossil() { return fossil; }
     public String getFossilDisplay() { return fossil ? "yes" : "no"; }
     public String getMessage() { return message; }
