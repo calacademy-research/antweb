@@ -23,7 +23,7 @@ public class UserAgentTracker extends Action {
 
     private static int MAX_QUEUE_SIZE    = 100;
     private static int PERIOD_IN_SECONDS = 100;
-    private static int ALLOWED_PERCENT = 25;
+    private static int ALLOWED_PERCENT = 101;
 
     private static int totalCount = 0;
     private static int blockCount = 0;
