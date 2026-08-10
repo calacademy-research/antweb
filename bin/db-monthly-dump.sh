@@ -20,7 +20,7 @@ tempfile=/tmp/"$date".sql.gz
 datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
-  mysqldump --skip-lock-tables -u$dbuser -p$dbpass -h mysql --all-databases --routines --single-transaction --quick --ignore-database sys | gzip -c -9 > "$tempfile"
+  mysqldump --skip-lock-tables -u$dbuser -p$dbpass -h mysql --databases "$dbname" --routines --single-transaction --quick | gzip -c -9 > "$tempfile"
   mv "$tempfile" "$datedBackupFile"
 fi
 # keep monthly backups for a year

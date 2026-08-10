@@ -565,7 +565,7 @@ CountDb.recrawl();
 ```bash
 # Full database dump
 mysqldump -h mysql -u antweb -p \
-  --all-databases \
+  --databases ant \
   --routines \
   --single-transaction \
   --quick \

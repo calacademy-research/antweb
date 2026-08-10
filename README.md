@@ -178,7 +178,7 @@ Create a full database dump from antweb and copy it to your machine
 
 ```bash
 ssh user@antweb
-mysqldump -h 127.0.0.1 -u antweb -p --all-databases --routines --single-transaction --quick --column-statistics=0 | gzip > /tmp/ant-currentDump.sql.gz
+mysqldump -h 127.0.0.1 -u antweb -p --databases ant --routines --single-transaction --quick --column-statistics=0 | gzip > /tmp/ant-currentDump.sql.gz
 # Enter password:
 
 scp user@antweb:/tmp/ant-currentDump.sql.gz ./
