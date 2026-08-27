@@ -146,125 +146,112 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     }
 
 
+    public static String getTaxonomicInfoColumns() {
+        return "code, subfamily, speciesgroup, genus, subgenus, species, subspecies, type_status, country, adm1, adm2, island_country"
+                + ", localityName, collectionCode, bioregion, habitat, method, ownedby, collectedby"
+                + ", life_stage, caste, subcaste, locatedAt, localityCode, museum"
+                + ", access_group, access_login, last_modified, medium, determinedby"
+                + ", specimenNotes, dnaExtractionNotes, microhabitat"
+                + ", elevation, elevationMaxError, decimal_latitude, decimal_longitude, latlonmaxerror"
+                + ", datedetermined, datedeterminedstr, localitynotes, collectionnotes"
+                + ", datecollectedstart, datecollectedend, datecollectedstartStr, datecollectedendStr"
+                + ", family, kingdom_name, phylum_name, class_name, order_name"
+                + ", taxon_name, image_count, original_taxon_name, line_num, is_introduced"
+                + ", created, backup_file_name, upload_id, flag, issue, taxonworks_co_id, other";
+    }
+
+    public static Specimen fromTaxonomicInfoResult(ResultSet rset) throws SQLException {
+        Specimen specimen = new Specimen();
+        specimen.setCode(rset.getString("code"));
+        specimen.populateTaxonomicInfo(rset);
+        specimen.setRank("specimen");
+        return specimen;
+    }
+
     public void setTaxonomicInfo(Connection connection) throws SQLException {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            String theQuery =
-                "select subfamily, speciesgroup, genus, subgenus, species, subspecies, type_status, country, adm1, adm2, island_country"  // was province, county"
-                    + ", localityName, collectionCode, bioregion, habitat, method, ownedby, collectedby"
-                    + ", life_stage, caste, subcaste"
-                    + ", locatedAt, localityCode, museum "
-                    
-                    //Added by Mark, Aug, 2011.
-                    + ", access_group, access_login, last_modified, medium, determinedby " 
-                    + ", specimenNotes, dnaExtractionNotes, microhabitat" //, datescollected "
-                    
-                    // Locality info added for the crazy link we create.
-                    + ", elevation, elevationMaxError, decimal_latitude, decimal_longitude, latlonmaxerror"  // locxyaccuracy " 
-                    + ", datedetermined, datedeterminedstr, localitynotes, collectionnotes"
-                    + ", datecollectedstart, datecollectedend, datecollectedstartStr, datecollectedendStr"
-                    + ", family, kingdom_name, phylum_name, class_name, order_name "
-                    //+ ", parent_taxon_id, image_count "
-                    + ", taxon_name, image_count "
-                    + ", original_taxon_name, line_num, is_introduced" //, is_endemic "
-                    + ", created "
-                    + ", backup_file_name "
-                    + ", upload_id "
-                    + ", flag, issue, taxonworks_co_id, other"
-                    + " from specimen where code='" + AntFormatter.escapeQuotes(getCode())
-                    + "'";
+            String theQuery = "select " + getTaxonomicInfoColumns()
+                    + " from specimen where code='" + AntFormatter.escapeQuotes(getCode()) + "'";
 
             stmt = DBUtil.getStatement(connection, "setTaxonomicInfo()");
             rset = stmt.executeQuery(theQuery);
 
             while (rset.next()) {
-                setSubfamily(rset.getString("subfamily"));
-                setSpeciesGroup(rset.getString("speciesgroup"));
-                setGenus(rset.getString("genus"));
-                setSubgenus(rset.getString("subgenus"));
-                //A.log("setTaxonomicInfo() subgenus:" + getSubgenus());
-
-                setSpecies(rset.getString("species"));
-                setSubspecies(rset.getString("subspecies"));
-                setTypeStatus(rset.getString("type_status"));
-                setCountry(rset.getString("country"));
-                setAdm1(rset.getString("adm1"));
-                setAdm2(rset.getString("adm2"));
-                setIslandCountry(rset.getString("island_country"));
-                setLocalityName(rset.getString("localityName"));
-                setCollectionCode(rset.getString("collectionCode"));
-                setBioregion(rset.getString("bioregion"));
-                setHabitat(rset.getString("habitat"));
-                setMethod(rset.getString("method"));
-                setOwnedBy(rset.getString("ownedby"));
-                setCollectedBy(rset.getString("collectedby"));
-
-                setLifeStage(rset.getString("life_stage"));
-                setCaste(rset.getString("caste"));
-                setSubcaste(rset.getString("subcaste"));
-
-                setLocatedAt(rset.getString("locatedAt"));
-                setLocalityCode(rset.getString("localityCode"));
-                setLastModified(rset.getTimestamp("last_modified"));
-                setMedium(rset.getString("medium"));
-                setDeterminedBy(rset.getString("determinedby"));
-                setSpecimenNotes(rset.getString("specimenNotes"));
-                setDnaExtractionNotes(rset.getString("dnaExtractionNotes"));
-                setMicrohabitat(rset.getString("microhabitat"));
-                
-                // The above is poor design, discontinued.  Be explicit.
-                //setDatesCollected(rset.getString("datescollected"));
-                setDecimalLatitude(rset.getFloat("decimal_latitude"));
-                setDecimalLongitude(rset.getFloat("decimal_longitude"));
-                //setLocXYAccuracy(rset.getString("locxyaccuracy"));
-                setLatLonMaxError(rset.getString("latlonmaxerror"));
-                setElevation(rset.getString("elevation"));
-                setElevationMaxError(rset.getString("elevationmaxerror"));
-                setDateDetermined(rset.getString("datedetermined"));
-                setDateDeterminedStr(rset.getString("datedeterminedStr"));
-                setLocalityNotes(rset.getString("localitynotes"));
-                setCollectionNotes(rset.getString("collectionnotes"));
-                setDateCollectedStart(rset.getString("datecollectedstart"));
-                setDateCollectedEnd(rset.getString("datecollectedend"));
-                setDateCollectedStartStr(rset.getString("datecollectedstartstr"));
-                setDateCollectedEndStr(rset.getString("datecollectedendstr"));
-                setKingdomName(rset.getString("kingdom_name"));
-                setPhylumName(rset.getString("phylum_name"));
-                setClassName(rset.getString("class_name"));
-                setOrderName(rset.getString("order_name"));
-                setFamily(rset.getString("family"));         
-                //setParentTaxonId(rset.getInt("parent_taxon_id"));   
-                setParentTaxonName(rset.getString("taxon_name"));
-                setImageCount(rset.getInt("image_count"));
-                setOriginalTaxonName(rset.getString("original_taxon_name"));
-                setLineNum(rset.getInt("line_num"));
-                setCreated(rset.getTimestamp("created"));
-                setIsIntroduced(rset.getInt("is_introduced") == 1);
-                //setIsEndemic((rset.getInt("is_endemic") == 1) ? true : false);                
-                setMuseumCode(rset.getString("museum"));
-                setBackupFileName(rset.getString("backup_file_name"));
-                setUploadId(rset.getInt("upload_id"));
-                
-                setGroupId(rset.getInt("access_group"));
-                setCuratorId(rset.getInt("access_login"));
-                
-                setFlag(rset.getString("flag"));
-                setIssue(rset.getString("issue"));
-                setTaxonworksCollectionObjectID(rset.getString("taxonworks_co_id"));
-
-                setDetailXml(rset.getString("other"));
-
-                //goSetStatus(connection);
-                goSetDetails();
-                            
-              //A.log("setTaxonomicInfo() code:" + getCode() + " uploadId:" + getUploadId() + " query:" + theQuery);      
+                populateTaxonomicInfo(rset);
             }
         } catch (SQLException e) {
             s_log.error("setTaxonomicInfo() e:" + e);
         } finally {
             DBUtil.close(stmt, rset, this, "setTaxonomicInfo()");
         }
+    }
+
+    private void populateTaxonomicInfo(ResultSet rset) throws SQLException {
+        setSubfamily(rset.getString("subfamily"));
+        setSpeciesGroup(rset.getString("speciesgroup"));
+        setGenus(rset.getString("genus"));
+        setSubgenus(rset.getString("subgenus"));
+        setSpecies(rset.getString("species"));
+        setSubspecies(rset.getString("subspecies"));
+        setTypeStatus(rset.getString("type_status"));
+        setCountry(rset.getString("country"));
+        setAdm1(rset.getString("adm1"));
+        setAdm2(rset.getString("adm2"));
+        setIslandCountry(rset.getString("island_country"));
+        setLocalityName(rset.getString("localityName"));
+        setCollectionCode(rset.getString("collectionCode"));
+        setBioregion(rset.getString("bioregion"));
+        setHabitat(rset.getString("habitat"));
+        setMethod(rset.getString("method"));
+        setOwnedBy(rset.getString("ownedby"));
+        setCollectedBy(rset.getString("collectedby"));
+        setLifeStage(rset.getString("life_stage"));
+        setCaste(rset.getString("caste"));
+        setSubcaste(rset.getString("subcaste"));
+        setLocatedAt(rset.getString("locatedAt"));
+        setLocalityCode(rset.getString("localityCode"));
+        setLastModified(rset.getTimestamp("last_modified"));
+        setMedium(rset.getString("medium"));
+        setDeterminedBy(rset.getString("determinedby"));
+        setSpecimenNotes(rset.getString("specimenNotes"));
+        setDnaExtractionNotes(rset.getString("dnaExtractionNotes"));
+        setMicrohabitat(rset.getString("microhabitat"));
+        setDecimalLatitude(rset.getFloat("decimal_latitude"));
+        setDecimalLongitude(rset.getFloat("decimal_longitude"));
+        setLatLonMaxError(rset.getString("latlonmaxerror"));
+        setElevation(rset.getString("elevation"));
+        setElevationMaxError(rset.getString("elevationmaxerror"));
+        setDateDetermined(rset.getString("datedetermined"));
+        setDateDeterminedStr(rset.getString("datedeterminedStr"));
+        setLocalityNotes(rset.getString("localitynotes"));
+        setCollectionNotes(rset.getString("collectionnotes"));
+        setDateCollectedStart(rset.getString("datecollectedstart"));
+        setDateCollectedEnd(rset.getString("datecollectedend"));
+        setDateCollectedStartStr(rset.getString("datecollectedstartstr"));
+        setDateCollectedEndStr(rset.getString("datecollectedendstr"));
+        setKingdomName(rset.getString("kingdom_name"));
+        setPhylumName(rset.getString("phylum_name"));
+        setClassName(rset.getString("class_name"));
+        setOrderName(rset.getString("order_name"));
+        setFamily(rset.getString("family"));
+        setParentTaxonName(rset.getString("taxon_name"));
+        setImageCount(rset.getInt("image_count"));
+        setOriginalTaxonName(rset.getString("original_taxon_name"));
+        setLineNum(rset.getInt("line_num"));
+        setCreated(rset.getTimestamp("created"));
+        setIsIntroduced(rset.getInt("is_introduced") == 1);
+        setMuseumCode(rset.getString("museum"));
+        setBackupFileName(rset.getString("backup_file_name"));
+        setUploadId(rset.getInt("upload_id"));
+        setGroupId(rset.getInt("access_group"));
+        setCuratorId(rset.getInt("access_login"));
+        setFlag(rset.getString("flag"));
+        setIssue(rset.getString("issue"));
+        setTaxonworksCollectionObjectID(rset.getString("taxonworks_co_id"));
+        setDetailXml(rset.getString("other"));
+        goSetDetails();
     }
 
     private void goSetDetails() {
