@@ -519,7 +519,13 @@ Upload Curator File
         <div class="admin_action_item">
           <div class="action_desc">
             &nbsp;&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/validateSpeciesList.do">Validate Species List (Pre-flight checker)</a>
-          </div>  
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="admin_action_item">
+          <div class="action_desc">
+            &nbsp;&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/specimenListLookup.do">Specimen List Lookup</a>
+          </div>
           <div class="clear"></div>
         </div>
     </div>
@@ -696,92 +702,6 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 <% } %>
 
 
-<%
-    if (accessLogin.isAdmin()) {
-%>
-
-<div class="admin_action_item">
-    <div style="float:left;">
-        <h2>Other Functions</h2>
-    </div>
-    <div class="clear"></div>
-</div>
-
-
-<% // Edit Region content removed %>
-
-<br>
-<!-- Upload a File to a Folder
-<html:form method="POST" action="upload.do" enctype="multipart/form-data">
-    <input type="hidden" name="ancFileDirectory" value="none" />
-    <input type="hidden" name="updateAdvanced" value="no" />
-    <input type="hidden" name="updateFieldGuide" value="none" />
-    <input type="hidden" name="images" value="no" />
-    <input type="hidden" name="outputFileName" value="" />
-    <input type="hidden" name="successkey" value="null" />
-    <div class="admin_action_module">
-        <div class="admin_action_item">
-            <div class="action_desc"><b>Upload</b> a File to Folder:</div>
-            <div class="action_dropdown">
-  <html:select property="homePageDirectory">
-	<html:option value="curator">Curator Dir</html:option>
-< % if (accessLogin.isAdmin()) { % >
-		<html:option value="homepage">AntWeb Home Page</html:option>
-< % } % >
-
-	<% if (projList != null) {
-	     for (SpeciesListable s : projList) { 
-	       Project p = ProjectMgr.getProject(s.getName());
-	       if (p == null) {
-	         //A.log("curate-body.jsp 2 p is null for:" + s.getName());
-	       } else { %>
-             <option value="< %= p.getRoot() % >">< %= p.getTitle() % ></option>
-	    <% }
-	     }
-	   } %>
-	
-  </html:select>
-            </div>
-            <div class="action_browse">
-  <html:file property="theFile2" />
-            </div>
-            <div class="clear"></div>
-
-            <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit"></div>
-            <div class="clear"></div>
-        </div>
-    </div>
-</html:form>
--->
-
-
-<!-- Data File Upload -->
-<% if (accessLogin.isCurator()) { %>
-<html:form method="POST" action="upload.do" enctype="multipart/form-data">
-    <input type="hidden" name="ancFileDirectory" value="none" />
-    <input type="hidden" name="updateAdvanced" value="no" />
-    <input type="hidden" name="updateFieldGuide" value="none" />
-    <input type="hidden" name="images" value="no" />
-    <input type="hidden" name="outputFileName" value="" />
-    <input type="hidden" name="successkey" value="null" />
-    <div class="admin_action_module">
-        <div class="admin_action_item">
-            <div class="action_desc"><b>Upload</b> Data File<br>&nbsp;&nbsp;&nbsp;For specimen list lookup: upload a .txt file with 'specimen' in the filename (one specimen code per line, no spaces)<br></div>
-            <div class="action_browse">
-  <html:file property="testFile" />
-            </div>
-            <div class="clear"></div>
-            <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit"></div>
-            <div class="clear"></div>
-        </div>
-    </div>
-</html:form>
-<% } %>
-
-
-<% }  // isAdmin() %>
-
-
 </div>
 
 <div class="admin_right">
@@ -810,4 +730,3 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 <%@include file="/curate/curatorLinks.jsp" %>
 	  
 </div>
-
