@@ -76,6 +76,38 @@ public class SpecimenDb extends AntwebDb {
       return specimen;
     }
 
+    public java.util.Map<String, Specimen> getSpecimensByCodes(List<String> codes) throws SQLException {
+        java.util.Map<String, Specimen> specimens = new HashMap<>();
+        final int batchSize = 500;
+
+        for (int start = 0; start < codes.size(); start += batchSize) {
+            int end = Math.min(start + batchSize, codes.size());
+            List<String> batch = codes.subList(start, end);
+            StringBuilder placeholders = new StringBuilder();
+            for (int i = 0; i < batch.size(); i++) {
+                if (i > 0) placeholders.append(',');
+                placeholders.append('?');
+            }
+
+            String query = "select " + Specimen.getTaxonomicInfoColumns()
+                    + " from specimen where code in (" + placeholders + ")";
+            PreparedStatement stmt = null;
+            ResultSet rset = null;
+            try {
+                stmt = DBUtil.getPreparedStatement(getConnection(), "getSpecimensByCodes()", query);
+                for (int i = 0; i < batch.size(); i++) stmt.setString(i + 1, batch.get(i));
+                rset = stmt.executeQuery();
+                while (rset.next()) {
+                    Specimen specimen = Specimen.fromTaxonomicInfoResult(rset);
+                    specimens.put(specimen.getCode().toLowerCase(Locale.ROOT), specimen);
+                }
+            } finally {
+                DBUtil.close(stmt, rset, this, "getSpecimensByCodes()");
+            }
+        }
+        return specimens;
+    }
+
     public ArrayList<String> getAntwebSpecimenCodes(String family) throws SQLException {
         Overview overview = OverviewMgr.getOverview(Project.ALLANTWEBANTS);
         return getAntwebSpecimenCodes(overview, family, null);

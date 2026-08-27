@@ -250,6 +250,7 @@ To successfully compile jsps from ant you must set this environment property:
 <target name="test" depends="compile">
   <junit printsummary="true" fork="true">
     <test name="test.org.calacademy.antweb.AntWebStrutsTest" />
+    <test name="test.org.calacademy.antweb.curate.specimen.SpecimenListLookupServiceTest" />
     <classpath>
       <pathelement location="${build.home}/WEB-INF/classes" />
       <pathelement location="${lib.home}" />
