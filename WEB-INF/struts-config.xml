@@ -224,6 +224,7 @@
   </form-bean>  
 
   <form-bean name="validateSpeciesListForm" type="org.calacademy.antweb.curate.speciesList.ValidateSpeciesListForm"/>
+  <form-bean name="specimenListLookupForm" type="org.calacademy.antweb.curate.specimen.SpecimenListLookupForm"/>
       
   </form-beans>
 
@@ -619,6 +620,15 @@ We would like to remove getChildImages.  Not needed now in the new UI
             input="/curate/speciesList/validateSpeciesList.jsp"
             name="validateSpeciesListForm">
       <forward name="validateSpeciesList" path="/curate/speciesList/validateSpeciesList.jsp" />
+    </action>
+
+    <action path="/specimenListLookup"
+            type="org.calacademy.antweb.curate.specimen.SpecimenListLookupAction"
+            scope="request"
+            validate="false"
+            input="/curate/specimen/specimenListLookup.jsp"
+            name="specimenListLookupForm">
+      <forward name="specimenListLookup" path="/curate/specimen/specimenListLookup.jsp" />
     </action>
 
     <action path="/speciesListTool"
