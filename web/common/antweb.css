@@ -2,8 +2,7 @@
 body {
     font-size:12px;
 }
-*/
-
+f
 html,body
 {
     font-size:12px;
@@ -1605,7 +1604,7 @@ padding:0;
 
 }
 .taxon_page_img {
-    width:650px;
+    max-width:650px;
 }
 /* style for thumbnail image layout */
 .row { 
