@@ -612,8 +612,7 @@ public class Utility implements Serializable {
                 InputStream stream = formFile.getInputStream();
 
                 //write the file to the file specified
-                File newFile = new File(AntwebProps.getWorkingDir() + outName);
-                FileUtils.copyInputStreamToFile(stream, newFile);
+                File newFile = new File(outName.startsWith("/") ? outName : AntwebProps.getWorkingDir() + outName);                FileUtils.copyInputStreamToFile(stream, newFile);
 
                 if (debugOn) {
                     A.log("copyFile() newFile: " + newFile.getPath() + " absoluteFile:" + newFile.getAbsolutePath());
