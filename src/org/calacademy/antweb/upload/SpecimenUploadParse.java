@@ -38,6 +38,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             "kingdom_name", "phylum_name", "class_name", "order_name", "specimencode", "family", "subfamily", "tribe",
             "genus", "subgenus", "speciesgroup", "species", "subspecies"));
 
+    // Fields that must never contain whitespace. Deliberately excludes specimencode
+    // (spaces auto-corrected, see MessageMgr.specimenIdSpacesRemoved) and taxon_name
+    // (legitimately contains a space between genus and species).
+    private final HashSet<String> noWhitespaceHeaders = new HashSet<>(Arrays.asList(
+            "subfamily", "genus", "species", "subspecies"));
+
     private final SpecimenXML specimenXML = new SpecimenXML();
 
     SpecimenUploadParse(Connection connection) {
@@ -111,8 +117,14 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         col = col.toLowerCase();
  
                         /* This code block handles columns and headers as listed and defined in AntwebUpload */
-                        if (taxonomyHeaders.contains(col)) {
+                    if (taxonomyHeaders.contains(col)) {
                             element = element.toLowerCase();
+                        }
+
+                        if (noWhitespaceHeaders.contains(col) && element.contains(" ")) {
+                            errorMessage = "whitespace in taxonomic field col:" + col + " element:" + element;
+                            getMessageMgr().addToMessages(MessageMgr.whitespaceInTaxonField, col + ": " + element);
+                            return errorMessage;
                         }
 
                         if (col.equals("kingdom_name")) {
