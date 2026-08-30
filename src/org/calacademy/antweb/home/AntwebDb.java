@@ -94,7 +94,26 @@ public class AntwebDb {
         if ("leptanillinaeprotanilla".equals(taxonName)) s_log.debug("isExists() taxonName:" + taxonName + " retVal:" + retVal + " query:" + query);
         return retVal;
     }
-            
+    public boolean isGenusExists(String subfamily, String genus) {
+        boolean retVal = false;
+        String query = "select taxon_name from taxon where subfamily = '" + subfamily + "' and genus = '" + genus + "' and taxarank = 'genus'";
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+          Connection connection = getConnection();
+          stmt = DBUtil.getStatement(connection, "AntwebDb.isGenusExists()");
+          stmt.execute(query);
+          rset = stmt.getResultSet();
+          while (rset.next()) {
+            retVal = true;
+          }
+        } catch (SQLException e) {
+          s_log.warn("isGenusExists() subfamily:" + subfamily + " genus:" + genus + " e:" + e);
+        } finally {
+          DBUtil.close(stmt, "AntwebDb.isGenusExists()");
+        }
+        return retVal;
+    }        
     public int delete(String taxonName) {
         String dml = "delete from taxon where taxon_name = '" + taxonName + "'";
         Statement stmt = null;
