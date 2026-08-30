@@ -579,8 +579,13 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
       Statement stmt = null; 
       try {
       
-        //new TaxonDb(getConnection()).delete(taxonName);
+                //new TaxonDb(getConnection()).delete(taxonName);
         if (new TaxonDb(getConnection()).isExists(taxonName)) return 0;
+
+        if (new TaxonDb(getConnection()).isGenusExists(subfamily, genus)) {
+            s_log.warn("insertGenus() genus row already exists for subfamily:" + subfamily + " genus:" + genus + ". Not inserting taxonName:" + taxonName);
+            return 0;
+        }
         
         dml = "insert into taxon (taxon_name, family, subfamily, genus, taxarank, source, insert_method, status, access_group) "
             + " values ('" + taxonName + "', '" + family + "', '" + subfamily + "', '" + genus + "', 'genus', '" 
