@@ -1182,6 +1182,234 @@ def getImages():
         return getNdjson(dataList)  # return flask Response
 
 
+# --- Measurements API -------------------------------------------------------------------------------------
+# Image-level trait measurements (myrmetrics ant body-size dataset). Table: measurement (db/upgrade/8.106).
+# One row per image x trait x release. Specimen attributes (taxonomy, caste, locality) come from the
+# linked specimen record via api3_1_specimen, not from the measurement row.
+
+class Measurement(Base):
+    __tablename__ = 'measurement'
+
+    id = Column(Integer, primary_key=True)
+    release = Column('data_release', String)
+    recordId = Column('record_id', String)
+    code = Column('specimen_code', String)
+    imageFilename = Column('image_filename', String)
+    imageUrl = Column('image_url', String)
+    view = Column('image_view', String)
+    imageWidth = Column('image_width', Integer)
+    imageHeight = Column('image_height', Integer)
+    trait = Column('trait', String)
+    traitName = Column('trait_name', String)
+    value = Column('value', Numeric(asdecimal=False))
+    unit = Column('unit', String)
+    valuePx = Column('value_px', Numeric(asdecimal=False))
+    traitKpA = Column('trait_kp_a', String)
+    traitKpB = Column('trait_kp_b', String)
+    scaleValueRaw = Column('scale_value_raw', Numeric(asdecimal=False))
+    scaleUnitRaw = Column('scale_unit_raw', String)
+    scaleMm = Column('scale_mm', Numeric(asdecimal=False))
+    scaleValueSource = Column('scale_value_source', String)
+    scaleBarPx = Column('scale_bar_px', Numeric(asdecimal=False))
+    scaleBarSource = Column('scale_bar_source', String)
+    pxPerMm = Column('px_per_mm', Numeric(asdecimal=False))
+    kp1Name = Column('kp1_name', String)
+    kp1X = Column('kp1_x', Numeric(asdecimal=False))
+    kp1Y = Column('kp1_y', Numeric(asdecimal=False))
+    kp1Conf = Column('kp1_conf', Numeric(asdecimal=False))
+    kp2Name = Column('kp2_name', String)
+    kp2X = Column('kp2_x', Numeric(asdecimal=False))
+    kp2Y = Column('kp2_y', Numeric(asdecimal=False))
+    kp2Conf = Column('kp2_conf', Numeric(asdecimal=False))
+    kp3Name = Column('kp3_name', String)
+    kp3X = Column('kp3_x', Numeric(asdecimal=False))
+    kp3Y = Column('kp3_y', Numeric(asdecimal=False))
+    kp3Conf = Column('kp3_conf', Numeric(asdecimal=False))
+    kp4Name = Column('kp4_name', String)
+    kp4X = Column('kp4_x', Numeric(asdecimal=False))
+    kp4Y = Column('kp4_y', Numeric(asdecimal=False))
+    kp4Conf = Column('kp4_conf', Numeric(asdecimal=False))
+    kp5Name = Column('kp5_name', String)
+    kp5X = Column('kp5_x', Numeric(asdecimal=False))
+    kp5Y = Column('kp5_y', Numeric(asdecimal=False))
+    kp5Conf = Column('kp5_conf', Numeric(asdecimal=False))
+    kp6Name = Column('kp6_name', String)
+    kp6X = Column('kp6_x', Numeric(asdecimal=False))
+    kp6Y = Column('kp6_y', Numeric(asdecimal=False))
+    kp6Conf = Column('kp6_conf', Numeric(asdecimal=False))
+    nDetections = Column('n_detections', Integer)
+    keypointsCorrected = Column('keypoints_corrected', Boolean)
+    scaleCorrected = Column('scale_corrected', Boolean)
+    qaKpOk = Column('qa_kp_ok', Boolean)
+    qaRulerOk = Column('qa_ruler_ok', Boolean)
+    qaMissingHead = Column('qa_missing_head', Boolean)
+    qaMissingGaster = Column('qa_missing_gaster', Boolean)
+    status = Column('status', String)
+    flagReason = Column('flag_reason', String)
+    flagNote = Column('flag_note', String)
+    poseModel = Column('pose_model', String)
+    rulerModel = Column('ruler_model', String)
+    contributor = Column('contributor', String)
+    recordDate = Column('record_date', String)
+
+    def __repr__(self):
+        return "<Measurement(release='%s', recordId='%s')>" % (self.release, self.recordId)
+
+    def getDict(m, sp):
+        keypoints = []
+        for i in range(1, 7):
+            name = getattr(m, 'kp%dName' % i)
+            if name:
+                keypoints.append({'name': name, 'x': getattr(m, 'kp%dX' % i), 'y': getattr(m, 'kp%dY' % i),
+                                  'conf': getattr(m, 'kp%dConf' % i)})
+        d = {
+            'release': m.release
+            , 'recordId': m.recordId
+            , 'specimenCode': m.code
+            , 'imageFilename': m.imageFilename
+            , 'imageUrl': m.imageUrl
+            , 'view': m.view
+            , 'imageWidth': m.imageWidth
+            , 'imageHeight': m.imageHeight
+            , 'trait': m.trait
+            , 'traitName': m.traitName
+            , 'value': m.value
+            , 'unit': m.unit
+            , 'valuePx': m.valuePx
+            , 'traitKeypoints': [m.traitKpA, m.traitKpB]
+            , 'scale': {
+                'valueRaw': m.scaleValueRaw
+                , 'unitRaw': m.scaleUnitRaw
+                , 'mm': m.scaleMm
+                , 'valueSource': m.scaleValueSource
+                , 'barPx': m.scaleBarPx
+                , 'barSource': m.scaleBarSource
+                , 'pxPerMm': m.pxPerMm
+            }
+            , 'keypoints': keypoints
+            , 'nDetections': m.nDetections
+            , 'keypointsCorrected': m.keypointsCorrected
+            , 'scaleCorrected': m.scaleCorrected
+            , 'qa': {
+                'kpOk': m.qaKpOk
+                , 'rulerOk': m.qaRulerOk
+                , 'missingHead': m.qaMissingHead
+                , 'missingGaster': m.qaMissingGaster
+            }
+            , 'status': m.status
+            , 'flagReason': m.flagReason
+            , 'flagNote': m.flagNote
+            , 'poseModel': m.poseModel
+            , 'rulerModel': m.rulerModel
+            , 'contributor': m.contributor
+            , 'recordDate': str(m.recordDate) if m.recordDate else None
+            , 'specimenUrl': prodServer + '/specimen.do?code=' + m.code
+        }
+        if sp is not None:
+            d['specimen'] = {
+                'subfamily': sp.subfamily
+                , 'genus': sp.genus
+                , 'species': sp.species
+                , 'subspecies': sp.subspecies
+                , 'scientificName': sp.scientific_name
+                , 'taxonStatus': sp.status
+                , 'fossil': sp.fossil
+                , 'lifeStageSex': sp.lifeStageSex
+                , 'caste': sp.caste
+                , 'subcaste': sp.subcaste
+                , 'country': sp.country
+                , 'adm1': sp.adm1
+                , 'bioregion': sp.bioregion
+                , 'decimalLatitude': sp.decimalLatitude
+                , 'decimalLongitude': sp.decimalLongitude
+                , 'museum': sp.museum
+            }
+        else:
+            d['specimen'] = None  # specimen record no longer on AntWeb
+        return d
+
+
+# http://localhost:5000/measurements?genus=pheidole&trait=WL&release=1.0&status=reviewed
+@application.route('/measurements', methods=['GET'])
+def getMeasurements():
+    release = request.args.get('release', default='*', type=str)
+    trait = request.args.get('trait', default='*', type=str)
+    view = request.args.get('view', default='*', type=str)
+    mStatus = request.args.get('status', default='*', type=str)
+    hasValue = request.args.get('hasValue', default='*', type=str)
+    code = request.args.get('specimenCode', default='*', type=str)
+    subfamily = request.args.get('subfamily', default='*', type=str)
+    genus = request.args.get('genus', default='*', type=str)
+    species = request.args.get('species', default='*', type=str)
+    country = request.args.get('country', default='*', type=str)
+    adm1 = request.args.get('adm1', default='*', type=str)
+    bioregion = request.args.get('bioregion', default='*', type=str)
+    caste = request.args.get('caste', default='*', type=str)
+    taxonStatus = request.args.get('taxonStatus', default='*', type=str)
+    setGlobals(request)
+    if down(request): return ""
+
+    query = session.query(Measurement, Specimen).outerjoin(Specimen, Specimen.code == Measurement.code)
+
+    if release != '*':
+        query = query.filter(Measurement.release == release)
+    if trait != '*':
+        query = query.filter(Measurement.trait.in_(trait.split(',')))
+    if view != '*':
+        query = query.filter(Measurement.view == view)
+    if mStatus != '*':
+        query = query.filter(Measurement.status.in_(mStatus.split(',')))
+    if hasValue == 'true':
+        query = query.filter(Measurement.value != None)
+    if hasValue == 'false':
+        query = query.filter(Measurement.value == None)
+    if code != '*':
+        query = query.filter(Measurement.code == code)
+    if subfamily != '*':
+        query = query.filter(Specimen.subfamily == subfamily)
+    if genus != '*':
+        query = query.filter(Specimen.genus == genus)
+    if species != '*':
+        query = query.filter(Specimen.species == species)
+    if country != '*':
+        query = query.filter(Specimen.country.contains(country))
+    if adm1 != '*':
+        query = query.filter(Specimen.adm1 == adm1)
+    if bioregion != '*':
+        query = query.filter(Specimen.bioregion == bioregion)
+    if caste != '*':
+        query = query.filter(Specimen.caste == caste)
+    if taxonStatus != '*':
+        query = query.filter(Specimen.status == taxonStatus)
+
+    query = query.order_by(Measurement.id)
+    query = query.limit(limit)
+    query = query.offset(offset)
+
+    try:
+        data = query.all()
+    except OperationalError as error:
+        message = "measurements operational error:" + str(error) + " on request:" + str(request)
+        print(message)
+        return message
+    except Exception as error:
+        message = "measurements error:" + str(error) + " request:" + str(request)
+        print(message)
+        return message
+
+    dataList = [Measurement.getDict(m, sp) for (m, sp) in data]
+
+    params = [request.args]
+    metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'offset': offset,
+                    'count': len(dataList),
+                    'queryTime': time.strftime("%H:%M:%S", time.gmtime(time.time() - startTime))}
+
+    if ndjson != 'true':
+        return jsonify(metaData=metaDataDict, measurements=dataList)
+    else:
+        return getNdjson(dataList)
+
+
 # --- Taxa Images API -------------------------------------------------------------------------------------
 
 # noinspection PyMethodParameters
