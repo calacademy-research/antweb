@@ -4,8 +4,8 @@
     default_sni www.antweb.org
     servers {
         # dmz-shield files live only on prod (caddy_config volume, /config/dmz-shield).
-        # The [y] makes this a glob, so Caddy skips it quietly where the file is absent.
-        import /config/dmz-shield/servers.cadd[y]
+        # The * makes this a glob, so Caddy skips it quietly where the file is absent.
+        import /config/dmz-shield/servers*.caddy
         timeouts {
             read_body 45m
             read_header 45m
@@ -46,7 +46,7 @@ www.antweb.org {
     }
 
     route {
-        import /config/dmz-shield/banned.cadd[y]
+        import /config/dmz-shield/banned*.caddy
 
         respond @bots "Access Denied" 403 {
             close
