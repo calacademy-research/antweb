@@ -3,6 +3,9 @@
 
     default_sni www.antweb.org
     servers {
+        # dmz-shield files live only on prod (caddy_config volume, /config/dmz-shield).
+        # The [y] makes this a glob, so Caddy skips it quietly where the file is absent.
+        import /config/dmz-shield/servers.cadd[y]
         timeouts {
             read_body 45m
             read_header 45m
@@ -43,6 +46,8 @@ www.antweb.org {
     }
 
     route {
+        import /config/dmz-shield/banned.cadd[y]
+
         respond @bots "Access Denied" 403 {
             close
         }
@@ -50,10 +55,14 @@ www.antweb.org {
         redir @static_images {$IMAGE_BUCKET_DOMAIN}{uri}
 
         handle_path /v3.1/* {
-            reverse_proxy api:5000
+            reverse_proxy api:5000 {
+                header_up X-Forwarded-For {http.request.remote.host}
+            }
         }
 
-        reverse_proxy antweb:8080
+        reverse_proxy antweb:8080 {
+            header_up X-Forwarded-For {http.request.remote.host}
+        }
 
         error "Not found" 404
 
