@@ -4,7 +4,7 @@ configparser~=4.0.2
 Flask~=1.1.1
 Flask-RESTful~=0.3.8
 Flask-SQLAlchemy~=2.4.1
-gunicorn~=20.0.4
+gunicorn~=23.0
 itsdangerous~=1.1.0
 MarkupSafe~=1.1.1
 # pprint==0.1 # now a default python library
