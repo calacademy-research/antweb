@@ -222,7 +222,6 @@ public final class ImageUploaderAction extends Action {
             String theGenus;
             String theSpecies;
             String theSubspecies;
-            String theRank = "species";
             String lastValue = "";
             int homepageMaxRecent = 5;
             Formatter format = new Formatter();
@@ -248,7 +247,11 @@ public final class ImageUploaderAction extends Action {
 						String url = domainApp + "/images.do?" 
 						  + "genus=" + theGenus 
 						  + "&species=" + theSpecies;
-						if (theSubspecies != null) {
+						// Decide the rank per row; it used to stay "subspecies" for every
+						// row after the first subspecies in the list.
+						boolean hasSubspecies = theSubspecies != null && theSubspecies.length() > 0;
+						String theRank = Rank.SPECIES;
+						if (hasSubspecies) {
 						  url += "&subspecies=" + theSubspecies; 
 						  theRank = Rank.SUBSPECIES;
 						}
@@ -256,7 +259,7 @@ public final class ImageUploaderAction extends Action {
 
 						String taxonHrefStr =  ":  <a  href='" + url + "'>" 
 							+ format.capitalizeFirstLetter(theGenus) + " " + theSpecies;
-						if (theSubspecies != null) {
+						if (hasSubspecies) {
 						  taxonHrefStr += " " + theSubspecies;
 						}
 						taxonHrefStr += "</a>";
