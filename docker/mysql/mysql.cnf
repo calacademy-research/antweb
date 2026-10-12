@@ -7,6 +7,8 @@ group_concat_max_len=15360
 character-set-server=utf8mb3
 collation-server=utf8mb3_general_ci
 explicit_defaults_for_timestamp=OFF
+# 5.7 had binary logging off; 8.x turns it on (extra GBs of binlog files). No replication here.
+skip-log-bin
 
 # To speed up the specimen uploads
 innodb_buffer_pool_size=2G
