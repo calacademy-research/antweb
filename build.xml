@@ -106,6 +106,10 @@ includeantruntime="false"
   <fileset dir="WEB-INF" includes="**/log4j.properties" />
   </copy>
 
+  <!-- Remove jars left from earlier builds so replaced library versions do not linger -->
+  <delete failonerror="false">
+    <fileset dir="${build.home}/WEB-INF/lib" includes="*.jar"/>
+  </delete>
   <copy  todir="${build.home}/WEB-INF/lib">
   <fileset dir="WEB-INF/lib" includes="**/*.jar"/>
   <fileset dir="WEB-INF" includes="**/*.dtd"/>
@@ -165,6 +169,11 @@ To successfully compile jsps from ant you must set this environment property:
   <!-- Copy the contents of the build directory -->
 
   <mkdir     dir="${deploy.home}"/>
+
+  <!-- Remove deployed jars first so old library versions (replaced in WEB-INF/lib) are not left on the classpath -->
+  <delete failonerror="false">
+    <fileset dir="${deploy.home}/WEB-INF/lib" includes="*.jar"/>
+  </delete>
 
   <copy    todir="${deploy.home}" failonerror="false">
     <fileset dir="${build.home}" followsymlinks="false"/>
