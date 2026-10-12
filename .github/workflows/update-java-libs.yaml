@@ -1,0 +1,32 @@
+# One-time helper (2026-10-11): fetch commons-lang3 3.18.0 (needed by commons-text 1.13.0),
+# verify SHA-1, build the image, commit. Delete this file before merging.
+name: Update Java libs (one-time)
+on:
+  push:
+    branches: [chore/java-libs]
+    paths: [.github/workflows/update-java-libs.yaml]
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and verify jar
+        run: |
+          set -euo pipefail
+          M=https://repo1.maven.org/maven2; cd WEB-INF/lib
+          f=commons-lang3-3.18.0.jar
+          curl -fsSL -o $f $M/org/apache/commons/commons-lang3/3.18.0/$f
+          want=$(curl -fsSL $M/org/apache/commons/commons-lang3/3.18.0/$f.sha1 | cut -c1-40)
+          [ "$want" = "$(sha1sum $f | cut -c1-40)" ] && echo "OK $f $want"
+          git rm -q commons-lang3-3.11.jar
+      - name: Build AntWeb image (compiles all code)
+        run: set -o pipefail; docker build -f docker/antweb/Dockerfile -t aw11 . 2>&1 | tail -30
+      - name: Commit jar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add WEB-INF/lib
+          git commit -m "Update commons-lang3 3.11 -> 3.18.0 (required by commons-text 1.13.0)"
+          git push origin HEAD:chore/java-libs
