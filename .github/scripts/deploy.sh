@@ -21,6 +21,13 @@ git pull --rebase origin "$DEPLOY_BRANCH"
 
 # Restart docker compose services
 # -T disables pseudo-TTY allocation (required when running non-interactively via SSH/CI)
+# Remove deployed jars that are no longer in the repo's WEB-INF/lib (e.g. after a
+# library upgrade). ant deploy only adds files, and build.xml is a single-file bind
+# mount the running container may not see updated, so do it here. Two copies of a
+# library (e.g. log4j-web) stop Tomcat from starting.
+echo "Removing stale jars..."
+compose exec -T antweb sh -c 'for d in /usr/local/antweb/WEB-INF/lib /antweb/deploy/build/WEB-INF/lib; do [ -d "$d" ] || continue; for j in "$d"/*.jar; do [ -e "$j" ] || continue; [ -e "/antweb/deploy/WEB-INF/lib/$(basename "$j")" ] || { echo "removing $j"; rm -f "$j"; }; done; done' < /dev/null
+
 echo "Running ant deploy..."
 compose exec -T antweb ant deploy < /dev/null
 
