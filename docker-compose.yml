@@ -4,12 +4,13 @@ services:
   mysql:
     container_name: antweb_mysql_1
     restart: unless-stopped
-    image: mysql:5-debian
-    command: "--default-authentication-plugin=mysql_native_password"
+    image: mysql:8.4
+    # 8.4 removed --default-authentication-plugin; keep the existing mysql_native_password logins working
+    command: "--mysql-native-password=ON"
 
     volumes:
       - ./docker/mysql/mysql.cnf:/etc/mysql/conf.d/custom.cnf
-      - antweb_database:/var/lib/mysql
+      - antweb_database84:/var/lib/mysql
     environment:
       TZ: America/Los_Angeles
 #      MYSQL_RANDOM_ROOT_PASSWORD: "true"
@@ -104,7 +105,9 @@ services:
 
 volumes:
   antweb_genInc:
-  antweb_database:
+  antweb_database:     # MySQL 5.7 data, kept for rollback (2026-10)
+    external: true
+  antweb_database84:   # MySQL 8.4 data (create with: docker volume create antweb_database84)
     external: true
   caddy_config:   # Don't need to prefix with antweb_ since it's an internal volume, docker-compose will do it automatically
   antweb_caddy_data:
