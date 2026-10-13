@@ -22,7 +22,7 @@
 import configparser
 from flask import Flask, jsonify, json, request, Response
 
-from sqlalchemy import create_engine, or_
+from sqlalchemy import create_engine, or_, text
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric
 from sqlalchemy.orm import sessionmaker, relationship
 
@@ -778,7 +778,7 @@ def getGeoSpeciesStats():
     if geolocale is None:
         return "Geolocale not found"
     georank = geolocale.georank
-    extraClause = " s." + georank + " = '" + geolocaleName + "'"
+    extraClause = " s." + georank + " = :geolocaleName"
 
     query = "select s.taxon_name, s.genus, s.species " \
             + " , count(case when caste='queen' then 1 end)" \
@@ -795,13 +795,13 @@ def getGeoSpeciesStats():
             + " where s.taxon_name = t.taxon_name and gt.taxon_name = t.taxon_name " \
             + "   and gt.geolocale_id = g.id and " \
             + extraClause \
-            + " and g.name = '" + geolocaleName + "'" \
+            + " and g.name = :geolocaleName" \
             + "  and s.status = 'valid'" \
             + " group by s.taxon_name, s.genus, s.species"
 
     # print(query)
     dataList = []
-    result = session.execute(query)
+    result = session.execute(text(query), {"geolocaleName": geolocaleName})
     for row in result:
         geoSpeciesStats = getGeoSpeciesStatsDict(row)
         dataList.append(geoSpeciesStats)
@@ -2143,11 +2143,11 @@ def getUnimagedGeolocaleTaxa():
 
     rankClause = " and t.taxarank in ('species', 'subspecies')"
     if taxarank != '*':
-        rankClause = " and t.taxarank = '" + taxarank + "'"
+        rankClause = " and t.taxarank = :taxarank"
 
     statusClause = ""
     if status != '*':
-        statusClause = " and t.status = '" + status + "'"
+        statusClause = " and t.status = :status"
 
     casteFieldW = ""
     casteFieldQ = ""
@@ -2191,7 +2191,8 @@ def getUnimagedGeolocaleTaxa():
         print("query:" + query)
 
     connection = engine.connect()
-    result = connection.execute(query)
+    # taxarank and status come from the URL: pass them as bound parameters, never pasted into the SQL.
+    result = connection.execute(text(query), {"taxarank": taxarank, "status": status})
 
     unimagedGeolocaleTaxaCount = 0
     unimagedGeolocaleTaxaCasteCount = 0
