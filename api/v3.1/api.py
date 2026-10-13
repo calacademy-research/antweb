@@ -20,9 +20,7 @@
 # assert os.path.exists('/var/www/html/apiV3/api_db.conf')
 
 import configparser
-from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify, json, request, Response
-from flask_restful import Api
 
 from sqlalchemy import create_engine, or_
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric
@@ -65,8 +63,24 @@ import time
 from datetime import datetime, timedelta
 
 application = Flask(__name__)
+
+
+# Flask 3 writes Decimal values (e.g. decimalLatitude) as quoted strings.
+# Keep them as plain JSON numbers, as the API has always returned them.
+from decimal import Decimal
+from flask.json.provider import DefaultJSONProvider
+
+
+class AntwebJSONProvider(DefaultJSONProvider):
+    @staticmethod
+    def default(o):
+        if isinstance(o, Decimal):
+            return float(o)
+        return DefaultJSONProvider.default(o)
+
+
+application.json = AntwebJSONProvider(application)
 # app.run(port=80)
-api = Api(application)
 
 isDevMode = 0
 
@@ -92,12 +106,9 @@ except Exception as e:
     # print('Exception e: ' + str(e),' reading configuration file')
 
 # app = Flask(__name__)
-application.config['SQLALCHEMY_DATABASE_URI'] = dbUrl
-application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 # application.config['JSON_AS_ASCII'] = False
 
-db = SQLAlchemy(application)
 
 version = "V3.1"
 localPhpServer = "http://localhost:5000"
