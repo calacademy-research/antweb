@@ -1,0 +1,32 @@
+# One-time helper (2026-10-13): commons-beanutils 1.9.4 -> 1.11.0 (CVE-2025-48734).
+# Fetch from Maven Central, verify SHA-1, build the image (full ant compile), commit. Delete before merging.
+name: Update Java libs (one-time)
+on:
+  push:
+    branches: [chore/beanutils-1.11]
+    paths: [.github/workflows/update-java-libs.yaml]
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and verify jar
+        run: |
+          set -euo pipefail
+          M=https://repo1.maven.org/maven2; cd WEB-INF/lib
+          f=commons-beanutils-1.11.0.jar
+          curl -fsSL -o $f $M/commons-beanutils/commons-beanutils/1.11.0/$f
+          want=$(curl -fsSL $M/commons-beanutils/commons-beanutils/1.11.0/$f.sha1 | cut -c1-40)
+          [ "$want" = "$(sha1sum $f | cut -c1-40)" ] && echo "OK $f $want"
+          git rm -q commons-beanutils-1.9.4.jar
+      - name: Build AntWeb image (compiles all code)
+        run: set -o pipefail; docker build -f docker/antweb/Dockerfile -t aw . 2>&1 | tail -20
+      - name: Commit jar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add WEB-INF/lib
+          git commit -m "commons-beanutils 1.9.4 -> 1.11.0 (CVE-2025-48734)"
+          git push origin HEAD:chore/beanutils-1.11
