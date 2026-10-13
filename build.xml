@@ -61,6 +61,7 @@
 <target name="clean"
    description="Delete old build and dist directories">
     <delete dir="${build.home}"/>
+    <delete dir="build-test"/>
     <delete dir="${dist.home}"/>
 </target>
 
@@ -88,14 +89,6 @@ includeantruntime="false"
      <classpath refid="compile.classpath"/>
   </javac>
 
-  <javac srcdir="test"
-        destdir="${build.home}/WEB-INF/classes"
-         debug="${compile.debug}"
-   deprecation="${compile.deprecation}"
-includeantruntime="false"
-      optimize="${compile.optimize}">
-      <classpath refid="compile.classpath"/>
-  </javac>
 
   <copy  todir="${build.home}/WEB-INF">
   <fileset dir="WEB-INF" includes="**/*.xml"/>
@@ -256,11 +249,32 @@ To successfully compile jsps from ant you must set this environment property:
 
 
 
-<target name="test" depends="compile">
+<!-- Unit tests. Test classes and their jars (test/lib: junit, strutstest) are kept
+     out of the deployed web app; run with "ant test". -->
+<property name="test.classes" value="build-test/classes"/>
+<property name="test.lib.home" value="test/lib"/>
+
+<target name="compile-tests" depends="compile">
+  <mkdir dir="${test.classes}"/>
+  <javac srcdir="test"
+        destdir="${test.classes}"
+         debug="${compile.debug}"
+includeantruntime="false">
+    <classpath>
+      <pathelement location="${build.home}/WEB-INF/classes"/>
+      <path refid="compile.classpath"/>
+      <fileset dir="${test.lib.home}" includes="*.jar"/>
+    </classpath>
+  </javac>
+</target>
+
+<target name="test" depends="compile-tests">
   <junit printsummary="true" fork="true">
     <test name="test.org.calacademy.antweb.AntWebStrutsTest" />
     <test name="test.org.calacademy.antweb.curate.specimen.SpecimenListLookupServiceTest" />
     <classpath>
+      <pathelement location="${test.classes}" />
+      <fileset dir="${test.lib.home}" includes="*.jar"/>
       <pathelement location="${build.home}/WEB-INF/classes" />
       <pathelement location="${lib.home}" />
       <fileset dir="${lib.home}">

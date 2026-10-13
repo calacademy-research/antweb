@@ -28,6 +28,15 @@ git pull --rebase origin "$DEPLOY_BRANCH"
 echo "Removing stale jars..."
 compose exec -T antweb sh -c 'for d in /usr/local/antweb/WEB-INF/lib /antweb/deploy/build/WEB-INF/lib; do [ -d "$d" ] || continue; for j in "$d"/*.jar; do [ -e "$j" ] || continue; [ -e "/antweb/deploy/WEB-INF/lib/$(basename "$j")" ] || { echo "removing $j"; rm -f "$j"; }; done; done' < /dev/null
 
+# build.xml is a single-file bind mount: after git changes it, the running container
+# still sees the old copy until it restarts. Restart first in that case so ant uses
+# the new build file.
+if ! compose exec -T antweb cat /antweb/deploy/build.xml < /dev/null | cmp -s - build.xml; then
+  echo "build.xml changed; restarting antweb so the container sees it..."
+  compose restart antweb
+  sleep 5
+fi
+
 echo "Running ant deploy..."
 compose exec -T antweb ant deploy < /dev/null
 
