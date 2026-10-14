@@ -1,7 +1,7 @@
 package org.calacademy.antweb.curate.project;
 
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.struts.action.*;
 
 import org.calacademy.antweb.util.*;

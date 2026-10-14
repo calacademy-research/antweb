@@ -10,8 +10,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import java.sql.*;
 import javax.sql.*;
 import org.apache.commons.logging.Log;

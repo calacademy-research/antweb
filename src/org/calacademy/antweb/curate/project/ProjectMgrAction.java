@@ -2,10 +2,10 @@ package org.calacademy.antweb.curate.project;
 
 import java.io.IOException;
 import java.util.*;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.struts.action.*;
 
 import org.apache.commons.logging.Log; 

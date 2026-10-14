@@ -9,7 +9,7 @@ import org.calacademy.antweb.SpeciesListable;
 import org.calacademy.antweb.util.*;
 import org.jetbrains.annotations.Nullable;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;

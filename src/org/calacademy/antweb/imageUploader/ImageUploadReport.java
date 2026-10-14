@@ -7,8 +7,8 @@ import org.apache.struts.action.*;
 import java.sql.*;
 
 import java.io.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 
 import org.calacademy.antweb.home.*;

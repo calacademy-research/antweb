@@ -4,8 +4,8 @@ import java.io.*;
 //import java.nio.file.*;  // need Java 7
 
 import java.util.*;
-import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 
 import org.apache.struts.action.*;

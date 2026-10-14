@@ -1,7 +1,7 @@
 package org.calacademy.antweb.curate.speciesList;
 
 import org.apache.struts.action.*;
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 
 public class SpeciesListMoveForm extends ActionForm {
 

@@ -1,9 +1,9 @@
 package org.calacademy.antweb.curate.team;
 
 import org.apache.struts.action.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletOutputStream;
 import java.io.InputStream;
 import java.sql.Connection;
 

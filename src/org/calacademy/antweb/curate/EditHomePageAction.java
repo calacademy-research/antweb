@@ -6,8 +6,8 @@ import java.io.*;
 import java.sql.*;
 import java.util.*;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

@@ -1,7 +1,7 @@
 package org.calacademy.antweb.util;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 
 

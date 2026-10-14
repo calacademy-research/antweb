@@ -2,7 +2,7 @@ package org.calacademy.antweb.curate.speciesList;
 
 import org.calacademy.antweb.search.AdvancedSearchForm;
 import org.apache.struts.action.*;
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 
 /*
 There are a lot of data items stored in the session. They are aggregated in SpeciesListToolProps.

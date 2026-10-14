@@ -3,8 +3,8 @@ package org.calacademy.antweb.search;
 import org.calacademy.antweb.AntwebAction;
 
 import java.io.IOException;
-import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 
 import org.apache.struts.action.*;

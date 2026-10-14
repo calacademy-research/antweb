@@ -1,8 +1,8 @@
 package org.calacademy.antweb.data;
 
 import java.io.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 
 import org.apache.regexp.*;

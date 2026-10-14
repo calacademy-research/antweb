@@ -3,7 +3,7 @@ package org.calacademy.antweb.util;
 //import java.util.*;
 
 import org.apache.struts.action.*;
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;

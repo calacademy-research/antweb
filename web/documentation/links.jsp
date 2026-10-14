@@ -64,7 +64,7 @@ Plazi
 
 <!--
 Error code 500 for: http://plazi.cs.umb.edu/exist/rest/db/taxonx_docs  
-javax.servlet.ServletException: Servlet.init() for servlet EXistServlet threw exception
+jakarta.servlet.ServletException: Servlet.init() for servlet EXistServlet threw exception
 	org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:102)
 	org.apache.catalina.valves.AccessLogValve.invoke(AccessLogValve.java:615)
 	org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:293)

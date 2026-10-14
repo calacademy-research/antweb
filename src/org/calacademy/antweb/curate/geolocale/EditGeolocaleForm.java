@@ -4,7 +4,7 @@ package org.calacademy.antweb.curate.geolocale;
 import java.sql.*;
 
 import org.apache.struts.action.*;
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

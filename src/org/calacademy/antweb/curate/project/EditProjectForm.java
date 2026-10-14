@@ -3,7 +3,7 @@ package org.calacademy.antweb.curate.project;
 
 import java.sql.Date;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;

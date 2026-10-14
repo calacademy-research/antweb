@@ -1,6 +1,6 @@
 package org.calacademy.antweb.util;
 
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

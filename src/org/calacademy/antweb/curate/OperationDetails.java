@@ -2,7 +2,7 @@ package org.calacademy.antweb.curate;
 
 import java.util.*;
 
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 import org.apache.struts.action.*;
 
 import org.apache.commons.logging.Log; 

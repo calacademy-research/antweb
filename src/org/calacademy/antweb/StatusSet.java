@@ -2,7 +2,7 @@ package org.calacademy.antweb;
 
 import java.util.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 
 public class StatusSet extends Status {
