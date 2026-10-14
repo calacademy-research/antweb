@@ -1,4 +1,4 @@
-FROM tomcat:9-jdk21
+FROM tomcat:11-jdk21
 
 ENV TZ="America/Los_Angeles" \
     CATALINA_OPTS="-Xms1024M -Xmx16384M -server -XX:+UseParallelGC" \

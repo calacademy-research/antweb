@@ -31,7 +31,7 @@ jobs:
     # servlet/JSP APIs of the same Tomcat image production runs, so a change
     # that does not compile is caught on the pull request, not at deploy.
     runs-on: ubuntu-latest
-    container: tomcat:9-jdk21
+    container: tomcat:11-jdk21
 
     steps:
       - name: Checkout repository

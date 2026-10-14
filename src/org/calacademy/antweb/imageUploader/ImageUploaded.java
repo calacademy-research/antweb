@@ -1,6 +1,6 @@
 package org.calacademy.antweb.imageUploader;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Utility;
@@ -59,7 +59,7 @@ public class ImageUploaded {
   public ImageUploaded() {
   }
 
-  public void setFileItem(FileItem fileItem) throws Exception {
+  public void setFileItem(FileItem<?> fileItem) throws Exception {
 
       if (!getIsContinueUpload()) return;
 
@@ -74,12 +74,9 @@ public class ImageUploaded {
       // Write the file
       String specimenDir = imagesDir + getCode() + "/";
       FileUtil.makeDir(specimenDir);
-      String name = null;
-      if( fileName.lastIndexOf("\\") >= 0 ) {                       
-         name = fileName.substring(fileName.lastIndexOf("\\"));
-      } else {
-         name = fileName.substring(fileName.lastIndexOf("\\")+1);
-      }
+      // Keep only the file's own name: browsers may send a full path ("C:\\x\\y.jpg"),
+      // and a name must never lead outside the specimen's directory.
+      String name = Path.of(fileName.replace('\\', '/')).getFileName().toString();
       String fullName = specimenDir + name;
       File file = new File(fullName);
       //s_log.warn("execute() fullName:" + fullName);
@@ -94,7 +91,7 @@ public class ImageUploaded {
       } catch (FileNotFoundException e) {
         s_log.debug(" setFileItem() e:" + e + " backupDir:" + backupDir);
       }
-      fileItem.write(file);
+      fileItem.write(file.toPath());
   }
 
   public static String getTestString(String fileName) {

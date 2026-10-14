@@ -11,9 +11,9 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 
-import org.apache.commons.fileupload.*;
-import org.apache.commons.fileupload.disk.*;
-import org.apache.commons.fileupload.servlet.*;
+import org.apache.commons.fileupload2.core.DiskFileItem;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;
@@ -94,23 +94,23 @@ public final class ImageUploaderAction extends AntwebAction {
                 ImageDb imageDb = new ImageDb(connection);
                 SpecimenDb specimenDb = new SpecimenDb(connection);
    
-                DiskFileItemFactory factory = new DiskFileItemFactory();
+                // Files larger than the in-memory threshold are buffered in tempDir.
+                DiskFileItemFactory factory = DiskFileItemFactory.builder().setPath(ImageUploaded.tempDir).get();
                 //factory.setSizeThreshold(MAX_REQUEST_SIZE); // maximum size that will be stored in memory      
-                factory.setRepository(ImageUploaded.tempDir.toFile()); // Location to save data that is larger than maxMemSize.
   
-                ServletFileUpload upload = new ServletFileUpload(factory); // Create a new file upload handler                            
+                JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload = new JakartaServletFileUpload<>(factory); // Create a new file upload handler                            
                 //upload.setSizeMax(MAX_REQUEST_SIZE); // maximum file size to be uploaded.
 
                 ArrayList<ImageUploaded> images = new ArrayList<>();
           
-                List<FileItem> fileItems = upload.parseRequest(request); // Parse the request to get file items.
+                List<DiskFileItem> fileItems = upload.parseRequest(request); // Parse the request to get file items.
 
                 if (fileItems.size() == 0) {
                    request.setAttribute("message", "No files uploaded.");
                    return mapping.findForward("message");
                 }
                 // The files and other items come mixed together. Handle all, process later.
-                for (FileItem fileItem : fileItems) {
+                for (DiskFileItem fileItem : fileItems) {
                     if (!fileItem.isFormField()) {
                         ImageUploaded imageUploaded = new ImageUploaded();
                         message = imageUploaded.init(fileItem.getName()); // parse
