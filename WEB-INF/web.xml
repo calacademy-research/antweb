@@ -84,14 +84,6 @@
 	<url-pattern>/queryFile</url-pattern>
   </servlet-mapping>  
 	
-  <servlet>
-    <servlet-name>FileUploader</servlet-name>
-    <servlet-class>org.calacademy.antweb.util.FileUploader</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>FileUploader</servlet-name>
-    <url-pattern>/fileUploader/*</url-pattern>
-  </servlet-mapping>
 
   <!-- if antweb_test is not running on server, redirect all requests to corresponding antweb page instead of creating error  -->
   <!-- if antweb_test is in use, comment out this block -->
