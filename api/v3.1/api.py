@@ -24,7 +24,7 @@ from flask import Flask, jsonify, json, request, Response
 
 from sqlalchemy import create_engine, or_, text
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 
 from sqlalchemy.exc import OperationalError
 
@@ -41,7 +41,9 @@ from sqlalchemy.ext.declarative import declarative_base
 
 dbUrl = 'mysql+pymysql://antweb:f0rm1c6@mysql:3306/ant?autocommit=true'
 # dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant?autocommit=true'
-engine = create_engine(dbUrl, pool_recycle=280)
+# pool_pre_ping: check a pooled connection before use, so a connection MySQL closed
+# while idle is replaced instead of failing the request ("MySQL server has gone away").
+engine = create_engine(dbUrl, pool_recycle=280, pool_pre_ping=True)
 
 '''
 connection = engine.connect()
@@ -54,7 +56,10 @@ connection.close()
 Base = declarative_base()
 
 Session = sessionmaker(bind=engine)
-session = Session()
+# One session per request (scoped_session), released in remove_session() below.
+# A single module-level session kept a dead connection after MySQL restarts and
+# was shared between gunicorn threads.
+session = scoped_session(Session)
 
 # import MySQLdb as mysqldb
 
@@ -63,6 +68,12 @@ import time
 from datetime import datetime, timedelta
 
 application = Flask(__name__)
+
+
+@application.teardown_appcontext
+def remove_session(exception=None):
+    session.remove()
+
 
 
 # Flask 3 writes Decimal values (e.g. decimalLatitude) as quoted strings.
@@ -668,10 +679,15 @@ def getGeoSpecimens():
 
     query = session.query(Specimen)
     coordsArray = coords.split(",")
-    query = query.filter(Specimen.decimalLatitude <= (int(coordsArray[0]) + int(radius)),
-                         Specimen.decimalLatitude >= (int(coordsArray[0]) - int(radius)))
-    query = query.filter(Specimen.decimalLongitude <= (int(coordsArray[1]) + int(radius)),
-                         Specimen.decimalLongitude >= (int(coordsArray[1]) - int(radius)))
+    try:
+        # Decimal coordinates (37.77,-122.47) used to raise ValueError (HTTP 500).
+        lat, lon = float(coordsArray[0]), float(coordsArray[1])
+    except (ValueError, IndexError):
+        return 'coords must be "latitude,longitude", for example coords=37.77,-122.47', 400
+    query = query.filter(Specimen.decimalLatitude <= (lat + int(radius)),
+                         Specimen.decimalLatitude >= (lat - int(radius)))
+    query = query.filter(Specimen.decimalLongitude <= (lon + int(radius)),
+                         Specimen.decimalLongitude >= (lon - int(radius)))
 
     if distinct != '*':
         if distinct == 'subfamily':
