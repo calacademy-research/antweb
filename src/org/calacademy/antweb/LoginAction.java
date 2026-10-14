@@ -83,6 +83,12 @@ public final class LoginAction extends AntwebAction {
             } else {
              */
 
+                if (!Turnstile.passed(request)) {
+                    // Bot check (Cloudflare Turnstile) missing or failed: no account.
+                    messages.add("message", new ActionMessage("error.login.botCheck"));
+                    saveMessages(request, messages);
+                    return mapping.findForward("failure");
+                }
                 login = createAccount(request, userNameOrEmail, password, messages);
                 if (login == null) {
                     s_log.debug("execute() createAccount login is null for userNameOrEmail:" + userNameOrEmail);
