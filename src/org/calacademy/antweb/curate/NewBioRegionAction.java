@@ -31,6 +31,8 @@ public final class NewBioRegionAction extends Action {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
+        // Require a logged-in administrator: this action changes data.
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
 
         // Extract attributes we will need
         HttpSession session = request.getSession();

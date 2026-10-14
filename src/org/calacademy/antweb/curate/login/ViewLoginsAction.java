@@ -27,6 +27,8 @@ public class ViewLoginsAction extends Action {
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response) {
+        // Require a logged-in administrator: this action changes data.
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
 
         ActionForward a = Check.init("geolocale", request, mapping); if (a != null) return a;
 

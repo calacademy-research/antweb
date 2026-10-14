@@ -1,5 +1,7 @@
 package org.calacademy.antweb.upload;
 
+import org.calacademy.antweb.util.LoginMgr;
+
 import java.io.IOException;
 
 import javax.servlet.ServletException;
@@ -28,6 +30,8 @@ public final class WorldAuthorityAction extends Action {
 		HttpServletRequest request,
 		HttpServletResponse response)
 		throws IOException, ServletException {
+        // Require a logged-in administrator: this action changes data.
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
 
 		// Extract attributes we will need
 		HttpSession session = request.getSession();

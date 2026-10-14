@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.team;
 
+import org.calacademy.antweb.util.LoginMgr;
+
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 
@@ -29,6 +31,8 @@ public class TeamMemberAction extends Action {
           TeamMemberForm form = (TeamMemberForm) f;
 
           if (form.getId() != null) {
+            // Saving a team member requires an administrator.
+            ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
             // A submit!
             s_log.warn("execute() id:" + form.getId());
             TeamMember teamMember = new TeamMember();

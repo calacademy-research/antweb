@@ -21,6 +21,8 @@ public final class TeamMemberImgUploadAction extends Action {
                                  ActionForm form,
                                  HttpServletRequest request,
                                  HttpServletResponse response) throws Exception {
+        // Require a logged-in administrator: this action changes data.
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
                                  
         TeamMemberDb teamMemberDb = null;
         

@@ -30,6 +30,8 @@ public final class SaveGroupAction extends Action {
     public ActionForward execute(ActionMapping mapping, ActionForm f,
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
+        // Require a logged-in administrator: this action changes data.
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
 
         HttpSession session = request.getSession();
 
