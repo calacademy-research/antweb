@@ -76,12 +76,12 @@ def test_curator_page(curator, url):
 @pytest.mark.parametrize("url", ADMIN_ONLY)
 def test_admin_page_refused_for_curator(curator, url):
     outcome = get(curator, url)
-    assert outcome.category == "login", f"{url} was not refused for an ordinary curator: {outcome}"
+    assert outcome.category in ("login", "denied"), f"{url} was not refused for an ordinary curator: {outcome}"
 
 
-@pytest.mark.xfail(strict=True, reason="editLogin pre-fills the current password; fixed with password hashing")
 def test_password_not_in_pages(curator):
-    """The curator's own password must never be echoed into a page."""
+    """The curator's own password must never be echoed into a page they open themselves.
+    (Admin login pages still pre-fill passwords: fixed with password hashing.)"""
     for url in ("/curate.do", "/editLogin.do", "/curator.do"):
         r = curator.get(BASE_URL + url, timeout=60)
         assert PASSWORD not in r.text, f"{url} contains the password"

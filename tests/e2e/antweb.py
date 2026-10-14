@@ -62,7 +62,7 @@ def struts_actions() -> list[Action]:
 
 @dataclass
 class Outcome:
-    category: str      # ok | login | message | error_page | stack_trace | server_error | not_found | other
+    category: str      # ok | login | denied | message | error_page | stack_trace | server_error | not_found | other
     status: int
     final_url: str
     title: str
@@ -85,6 +85,8 @@ def classify(resp: requests.Response) -> Outcome:
         return Outcome("not_found", 404, final, title)
     if LOGIN_TITLE in title or "notLoggedIn.jsp" in final or final.startswith("/login.do"):
         return Outcome("login", resp.status_code, final, title)
+    if "permissionDenied.jsp" in final:
+        return Outcome("denied", resp.status_code, final, title)
     if title.startswith("message..."):
         return Outcome("message", resp.status_code, final, title)
     if 200 <= resp.status_code < 400:
