@@ -29,6 +29,8 @@ jobs:
       ANTWEB_URL: ${{ inputs.antweb_url || 'https://staging.antweb.org' }}
       ANTWEB_PROBE_WRITE_ACTIONS: ${{ inputs.probe_write_actions || '1' }}
       MODE: ${{ inputs.mode || 'test' }}
+      ANTWEB_TEST_USER: ${{ secrets.ANTWEB_TEST_USER }}
+      ANTWEB_TEST_PASSWORD: ${{ secrets.ANTWEB_TEST_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
         with:
