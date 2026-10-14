@@ -1,5 +1,7 @@
 package org.calacademy.antweb.search;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -8,7 +10,7 @@ import org.apache.struts.action.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class TypeSearchAction extends Action {
+public final class TypeSearchAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TypeSearchAction.class);
     

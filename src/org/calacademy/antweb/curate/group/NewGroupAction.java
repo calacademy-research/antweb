@@ -20,7 +20,7 @@ import org.calacademy.antweb.util.*;
  *
  */
 
-public class NewGroupAction extends Action {
+public class NewGroupAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(NewGroupAction.class);
 

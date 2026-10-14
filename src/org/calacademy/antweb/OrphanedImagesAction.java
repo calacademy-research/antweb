@@ -15,7 +15,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class OrphanedImagesAction extends Action {
+public final class OrphanedImagesAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(OrphanedImagesAction.class);
 

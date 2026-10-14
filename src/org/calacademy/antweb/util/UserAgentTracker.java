@@ -15,7 +15,7 @@ import org.calacademy.antweb.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class UserAgentTracker extends Action {
+public class UserAgentTracker extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);
 

@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
-public final class BigPictureAction extends Action {
+public final class BigPictureAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(BigPictureAction.class);
 

@@ -1,5 +1,7 @@
 package org.calacademy.antweb.util;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.util.ArrayList;
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -22,7 +24,7 @@ Purge the database every week or so.
 http://www.antweb.org/cache.do?action=genCacheThread
 */    
     
-public final class CacheAction extends Action {
+public final class CacheAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(CacheAction.class);
 

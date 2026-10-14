@@ -21,7 +21,7 @@ import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
 
-public final class EditProjectAction extends Action {
+public final class EditProjectAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EditProjectAction.class);
 

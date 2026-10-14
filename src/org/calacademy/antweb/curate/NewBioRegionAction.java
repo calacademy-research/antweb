@@ -24,7 +24,7 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.curate.project.*;
 
-public final class NewBioRegionAction extends Action {
+public final class NewBioRegionAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(NewBioRegionAction.class);
 

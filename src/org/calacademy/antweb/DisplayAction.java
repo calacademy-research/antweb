@@ -14,7 +14,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class DisplayAction extends Action {
+public final class DisplayAction extends AntwebAction {
 
 /* Currently this is a proof of concept class.  By calling a URL such as:
       http://localhost/antweb/display.do?name=tetramorium&rank=genus&project=allantwebants

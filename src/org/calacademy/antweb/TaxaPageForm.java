@@ -2,7 +2,7 @@ package org.calacademy.antweb;
 
 
 import javax.servlet.http.HttpServletRequest;
-import org.apache.struts.action.ActionError;
+import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
@@ -41,7 +41,7 @@ public final class TaxaPageForm extends ActionForm {
 
         ActionErrors errors = new ActionErrors();
         if (rank == null || rank.length() < 1)
-            errors.add("rank", new ActionError("error.rank.required"));
+            errors.add("rank", new ActionMessage("error.rank.required"));
 
         AntwebUtil.blockFishingAttack(request, errors);
         

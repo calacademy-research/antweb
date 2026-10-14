@@ -22,7 +22,7 @@ import java.util.*;
 import java.sql.*;
 
 
-public final class OrphanDescEditsAction extends Action {
+public final class OrphanDescEditsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(OrphanDescEditsAction.class);
 

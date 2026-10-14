@@ -455,7 +455,7 @@ public abstract class HttpUtil {
 
         if (requestString != null && requestString.contains("..")) {
             LogMgr.appendLog("hacks.log", DateUtil.getFormatDateTimeStr() + " - " + requestString);
-            errors.add("name", new ActionError("error.longfield"));
+            errors.add("name", new ActionMessage("error.longfield"));
         }
         //}
     }

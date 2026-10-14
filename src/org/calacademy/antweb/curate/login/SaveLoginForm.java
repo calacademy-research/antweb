@@ -1,7 +1,7 @@
 package org.calacademy.antweb.curate.login;
 
 import javax.servlet.http.HttpServletRequest;
-import org.apache.struts.action.ActionError;
+import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
@@ -172,11 +172,11 @@ public class SaveLoginForm extends ActionForm {
             errors = new ActionErrors();
 
             if (email != null && !"".equals(email) && !AntwebUtil.validEmail(email)) {
-                errors.add("error", new ActionError("error.login.invalidEmail"));
+                errors.add("error", new ActionMessage("error.login.invalidEmail"));
             }
 
             if (retypePassword == null || !password.equals(retypePassword)) {
-                errors.add("error", new ActionError("error.login.retypePasswordMismatch"));        
+                errors.add("error", new ActionMessage("error.login.retypePasswordMismatch"));        
             }
 
             Login accessLogin = LoginMgr.getAccessLogin(request);
@@ -188,7 +188,7 @@ public class SaveLoginForm extends ActionForm {
               if (getName() != null &&
                       getName().equals(accessLogin.getName())) {
                   // This condition is to catch and block the error of form autofill 
-                errors.add("error", new ActionError("error.login.invalidUsername"));
+                errors.add("error", new ActionMessage("error.login.invalidUsername"));
               } else {
                 s_log.warn("validate() name:" + getName() + " accessName:" + accessLogin.getName());
               }
@@ -196,14 +196,14 @@ public class SaveLoginForm extends ActionForm {
                   getPassword() != null && !getPassword().equals("") ||
                           getRetypePassword() != null && !getRetypePassword().equals("")
                   ) {
-                errors.add("error", new ActionError("error.login.notEmptyPasswords"));              
+                errors.add("error", new ActionMessage("error.login.notEmptyPasswords"));              
               }
             } else {
               //s_log.warn("is NOT invite form validation");
               if (accessLogin != null && accessLogin.isAdmin()) {
                 // And admin can modify a user without entering username/pwd.  They are not updated.
                 if (getPassword() != null && getPassword().equals("")) {
-                  errors.add("error", new ActionError("error.login.emptyPassword"));              
+                  errors.add("error", new ActionMessage("error.login.emptyPassword"));              
                 }
               }
             }

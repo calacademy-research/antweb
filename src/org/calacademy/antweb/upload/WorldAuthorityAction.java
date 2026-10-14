@@ -22,7 +22,7 @@ import org.calacademy.antweb.*;
   * This is called only from worldAuthoritySave.do, invoked from web/world_authority_admin_results-body.jsp\  
   */
   
-public final class WorldAuthorityAction extends Action {
+public final class WorldAuthorityAction extends AntwebAction {
 	
 	public ActionForward execute(
 		ActionMapping mapping,

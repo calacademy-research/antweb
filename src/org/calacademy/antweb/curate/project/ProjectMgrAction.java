@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
-public final class ProjectMgrAction extends Action {
+public final class ProjectMgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ProjectMgrAction.class);
     

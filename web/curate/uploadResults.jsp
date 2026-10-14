@@ -11,7 +11,7 @@
 
 <% String domainApp = (new Utility()).getDomainApp(); %>
 
-<html:html locale="true">
+<html:html lang="true">
 <head>
 <title>Thanks</title>
 <html:base/>

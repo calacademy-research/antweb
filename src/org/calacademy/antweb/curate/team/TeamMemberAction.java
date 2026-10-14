@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 
-public class TeamMemberAction extends Action {
+public class TeamMemberAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TeamMemberAction.class);
 

@@ -21,7 +21,7 @@ import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-public final class SaveLoginAction extends Action {
+public final class SaveLoginAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(SaveLoginAction.class);
 
@@ -208,9 +208,9 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
         String newPassword2 = form.getRetypePassword();
 		
         if (newPassword == null || newPassword.length() == 0) {
-            errors.add("error", new ActionError("error.login.needPassword"));
+            errors.add("error", new ActionMessage("error.login.needPassword"));
         } else if (!newPassword.equals(newPassword2)) {
-            errors.add("error", new ActionError("error.login.passwordsMustMatch"));
+            errors.add("error", new ActionMessage("error.login.passwordsMustMatch"));
         }
 
         s_log.debug("passPwdCheck newPassword:" + newPassword + " errors:" + errors);

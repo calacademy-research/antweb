@@ -1,11 +1,13 @@
 package org.calacademy.antweb.search;
 
+import org.calacademy.antweb.AntwebAction;
+
 import org.apache.struts.action.Action;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
-public class PrepareAction extends Action {
+public class PrepareAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(PrepareAction.class);
 

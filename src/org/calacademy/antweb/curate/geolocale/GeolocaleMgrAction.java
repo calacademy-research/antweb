@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.geolocale;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.util.*;
 import java.io.*;
 import java.sql.*;
@@ -17,7 +19,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class GeolocaleMgrAction extends Action {
+public final class GeolocaleMgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(GeolocaleMgrAction.class);
 

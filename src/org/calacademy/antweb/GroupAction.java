@@ -21,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 //import org.apache.commons.collections.*;
 //import com.google.common.collect.*;
 
-public final class GroupAction extends Action {
+public final class GroupAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(GroupAction.class);
 

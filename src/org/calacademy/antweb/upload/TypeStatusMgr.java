@@ -21,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 
 // See documentation of Type Status at end of file.
 
-public class TypeStatusMgr extends Action {
+public class TypeStatusMgr extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TypeStatusMgr.class);
 

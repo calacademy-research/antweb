@@ -11,7 +11,7 @@
 <%@include file="/curate/adminCheck.jsp" %>
 
 
-<html:html locale="true">
+<html:html lang="true">
 <head>
 <title>Simple Editor</title>
 <html:base/>

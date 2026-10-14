@@ -15,7 +15,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
-public class DescEditImageUploadAction extends Action {
+public class DescEditImageUploadAction extends AntwebAction {
 
     //public static int IMG_WIDTH = 500;
     

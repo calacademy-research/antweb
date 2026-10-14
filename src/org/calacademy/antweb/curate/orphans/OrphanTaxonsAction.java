@@ -24,7 +24,7 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.TaxonDb;
 import org.calacademy.antweb.util.*;
 
-public final class OrphanTaxonsAction extends Action {
+public final class OrphanTaxonsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(OrphanTaxonsAction.class);
 

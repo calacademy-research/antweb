@@ -19,7 +19,7 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-public final class AntWikiDataAction extends Action {
+public final class AntWikiDataAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(AntWikiDataAction.class);
 

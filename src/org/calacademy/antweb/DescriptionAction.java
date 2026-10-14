@@ -13,7 +13,7 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class DescriptionAction extends Action {
+public class DescriptionAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(DescriptionAction.class);
       

@@ -20,7 +20,7 @@ import org.calacademy.antweb.util.AntwebUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class SpecimenListAction extends Action {
+public final class SpecimenListAction extends AntwebAction {
     /* This class returns a link to the specimen authority file generate for any given taxon. */
 
 

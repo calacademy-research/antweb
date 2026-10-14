@@ -72,7 +72,7 @@ public class SpeciesListHistoryForm extends ActionForm {
 	public ActionErrors validate(ActionMapping mapping, HttpServletRequest request) {
 		ActionErrors errors = new ActionErrors();
 		//if ((taxa == null) || (Arrays.asList(taxa).size() < 1))
-		//	errors.add("rank", new ActionError("error.rank.required"));
+		//	errors.add("rank", new ActionMessage("error.rank.required"));
 
 		return errors;
 	}

@@ -17,7 +17,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class IntroducedMapMgrAction extends Action {
+public final class IntroducedMapMgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(IntroducedMapMgrAction.class);
 

@@ -1,5 +1,7 @@
 package org.calacademy.antweb.upload;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.*;
@@ -23,7 +25,7 @@ import org.calacademy.antweb.search.RecentImageSearchResults;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
-public final class DeleteImagesAction extends Action {
+public final class DeleteImagesAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(DeleteImagesAction.class);
 

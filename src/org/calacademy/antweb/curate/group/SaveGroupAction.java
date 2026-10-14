@@ -23,7 +23,7 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.GroupDb;
 
-public final class SaveGroupAction extends Action {
+public final class SaveGroupAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(SaveGroupAction.class);
 

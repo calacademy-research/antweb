@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.orphans;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 
 import javax.servlet.ServletException;
@@ -23,7 +25,7 @@ import org.calacademy.antweb.Taxon;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-public final class OrphanSpeciesAction extends Action {
+public final class OrphanSpeciesAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(OrphanSpeciesAction.class);
 

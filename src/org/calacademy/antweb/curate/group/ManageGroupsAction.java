@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.group;
 
+import org.calacademy.antweb.AntwebAction;
+
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
 
@@ -19,7 +21,7 @@ import org.calacademy.antweb.home.*;
  *
  */
 
-public class ManageGroupsAction extends Action {
+public class ManageGroupsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ManageGroupsAction.class);
 

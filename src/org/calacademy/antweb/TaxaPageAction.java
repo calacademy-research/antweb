@@ -16,7 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
-public final class TaxaPageAction extends Action {
+public final class TaxaPageAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TaxaPageAction.class);
 

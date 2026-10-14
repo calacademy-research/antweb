@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.login;
 
+import org.calacademy.antweb.AntwebAction;
+
 import javax.servlet.http.*;
 import javax.sql.DataSource;
 
@@ -21,7 +23,7 @@ import org.calacademy.antweb.util.*;
  *
  */
 
-public class ViewLoginsAction extends Action {
+public class ViewLoginsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ViewLoginsAction.class);
 

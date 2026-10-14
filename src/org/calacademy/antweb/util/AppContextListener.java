@@ -34,6 +34,7 @@ public final class AppContextListener
      
     public void contextDestroyed(ServletContextEvent event)
     {
+        AntwebDataSources.closeAll();
         /** This method is invoked when the Web Application
             has been removed and is no longer able to accept
           requests

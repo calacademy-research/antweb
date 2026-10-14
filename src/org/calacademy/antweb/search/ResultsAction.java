@@ -1,5 +1,7 @@
 package org.calacademy.antweb.search;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.util.*;
 
 import org.apache.struts.action.Action;
@@ -7,7 +9,7 @@ import org.apache.struts.action.Action;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class ResultsAction extends Action {
+public class ResultsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ResultsAction.class);
     

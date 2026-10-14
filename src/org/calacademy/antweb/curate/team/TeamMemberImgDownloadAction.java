@@ -12,7 +12,7 @@ import org.calacademy.antweb.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class TeamMemberImgDownloadAction extends Action {
+public final class TeamMemberImgDownloadAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TeamMemberImgDownloadAction.class);
     

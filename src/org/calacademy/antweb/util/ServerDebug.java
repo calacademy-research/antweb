@@ -1,5 +1,7 @@
 package org.calacademy.antweb.util;
 
+import org.calacademy.antweb.AntwebAction;
+
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 
-public final class ServerDebug extends Action {
+public final class ServerDebug extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ServerDebug.class);
 

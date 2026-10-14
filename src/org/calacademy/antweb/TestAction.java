@@ -18,7 +18,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 //http://localhost/antweb/test.do
-public final class TestAction extends Action {
+public final class TestAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TestAction.class);
 

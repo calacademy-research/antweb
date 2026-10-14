@@ -2,7 +2,7 @@ package org.calacademy.antweb.upload;
 
 
 import javax.servlet.http.HttpServletRequest;
-//import org.apache.struts.action.ActionError;
+//import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.*;
 
 import org.apache.commons.logging.Log; 
@@ -51,9 +51,9 @@ public final class DeleteImagesForm extends ActionForm {
 
         ActionErrors errors = new ActionErrors();
         //if ((name == null) || (name.length() < 1))
-        //    errors.add("name", new ActionError("error.name.required"));
+        //    errors.add("name", new ActionMessage("error.name.required"));
        // if ((rank == null) || (rank.length() < 1))
-        //    errors.add("rank", new ActionError("error.rank.required"));
+        //    errors.add("rank", new ActionMessage("error.rank.required"));
 
         return errors;
     }

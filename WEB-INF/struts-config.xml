@@ -1764,6 +1764,9 @@ We would like to remove getChildImages.  Not needed now in the new UI
   <controller maxFileSize="200M" />  
   
   <!-- plugin for project -->
+  <!-- Was the "application" ActionServlet parameter in Struts 1.1. -->
+  <message-resources parameter="ApplicationResources"/>
+
     <plug-in className="org.calacademy.antweb.util.StartupPlugIn"/>
 
   <!--plug-in for tiles -->

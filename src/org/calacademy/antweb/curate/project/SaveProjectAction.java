@@ -22,7 +22,7 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-public final class SaveProjectAction extends Action {
+public final class SaveProjectAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(SaveProjectAction.class);
 

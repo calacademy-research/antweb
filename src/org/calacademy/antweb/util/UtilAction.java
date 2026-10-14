@@ -28,7 +28,7 @@ import org.calacademy.antweb.util.*;
 import com.google.gson.*;
 
 
-public class UtilAction extends Action {
+public class UtilAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UtilAction.class);
     

@@ -17,7 +17,7 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class SpeciesListDownloadAction extends Action {
+public class SpeciesListDownloadAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(SpeciesListDownloadAction.class);
     

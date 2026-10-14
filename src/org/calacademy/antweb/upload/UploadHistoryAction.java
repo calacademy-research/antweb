@@ -1,5 +1,7 @@
 package org.calacademy.antweb.upload;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.util.*;
 import javax.servlet.http.*;
 import org.apache.struts.action.*;
@@ -13,7 +15,7 @@ import org.calacademy.antweb.util.*;
  * and file attributes and puts them in the request for the display.jsp
  * page to display them
  */
-public class UploadHistoryAction extends Action {
+public class UploadHistoryAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UploadHistoryAction.class);
 

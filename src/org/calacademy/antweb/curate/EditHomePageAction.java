@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.*;
 import java.sql.*;
 import java.util.*;
@@ -19,7 +21,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class EditHomePageAction extends Action {
+public final class EditHomePageAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EditHomePageAction.class);
 
