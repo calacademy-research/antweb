@@ -164,6 +164,7 @@ public final class ImageUploaderAction extends AntwebAction {
                 }
                 
                 imageUploadDb.completeImageUpload(imageUpload); // Flag as finished.
+                imageUpload.setIsComplete(true); // so the report shown now says so too
                                 
                 writeRecentImages(connection);
                 
