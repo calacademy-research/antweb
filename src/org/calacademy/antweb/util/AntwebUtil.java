@@ -44,8 +44,8 @@ public abstract class AntwebUtil {
     String t1 = java.net.URLEncoder.encode(t);
     String t2 = null;
     try { 
-      t2 = org.apache.commons.httpclient.util.URIUtil.encodePath(t, "ISO-8859-1");
-    } catch (org.apache.commons.httpclient.URIException e) {
+      t2 = UriEncoder.encodePath(t, "ISO-8859-1");
+    } catch (RuntimeException e) {
       AntwebUtil.log("main() e:" + e);
     }
     AntwebUtil.log("AntwebUtil - t1:" + t1 + " t2:" + t2);
