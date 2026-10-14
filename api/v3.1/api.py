@@ -679,10 +679,15 @@ def getGeoSpecimens():
 
     query = session.query(Specimen)
     coordsArray = coords.split(",")
-    query = query.filter(Specimen.decimalLatitude <= (int(coordsArray[0]) + int(radius)),
-                         Specimen.decimalLatitude >= (int(coordsArray[0]) - int(radius)))
-    query = query.filter(Specimen.decimalLongitude <= (int(coordsArray[1]) + int(radius)),
-                         Specimen.decimalLongitude >= (int(coordsArray[1]) - int(radius)))
+    try:
+        # Decimal coordinates (37.77,-122.47) used to raise ValueError (HTTP 500).
+        lat, lon = float(coordsArray[0]), float(coordsArray[1])
+    except (ValueError, IndexError):
+        return 'coords must be "latitude,longitude", for example coords=37.77,-122.47', 400
+    query = query.filter(Specimen.decimalLatitude <= (lat + int(radius)),
+                         Specimen.decimalLatitude >= (lat - int(radius)))
+    query = query.filter(Specimen.decimalLongitude <= (lon + int(radius)),
+                         Specimen.decimalLongitude >= (lon - int(radius)))
 
     if distinct != '*':
         if distinct == 'subfamily':
