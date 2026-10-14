@@ -40,12 +40,13 @@ jobs:
       - name: Survey (report in the job summary)
         run: python tests/e2e/survey.py
       - name: Record baseline (first run, or mode=record)
-        if: ${{ env.MODE == 'record' || hashFiles('tests/e2e/expectations.json') == '' }}
+        if: ${{ env.MODE == 'record' || hashFiles('tests/e2e/expectations.json') == '' || hashFiles('tests/e2e/snapshots.json') == '' }}
         run: |
-          cp tests/e2e/out/expectations.json tests/e2e/expectations.json
+          [ -f tests/e2e/expectations.json ] && [ "$MODE" != record ] || cp tests/e2e/out/expectations.json tests/e2e/expectations.json
+          [ -f tests/e2e/snapshots.json ] && [ "$MODE" != record ] || cp tests/e2e/out/snapshots.json tests/e2e/snapshots.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tests/e2e/expectations.json
+          git add tests/e2e/expectations.json tests/e2e/snapshots.json
           git commit -m "e2e: record baseline from $ANTWEB_URL" && git push
       - name: Tests
         if: ${{ env.MODE == 'test' && hashFiles('tests/e2e/expectations.json') != '' }}
