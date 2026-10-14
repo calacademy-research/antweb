@@ -99,8 +99,8 @@ alter table artist add curator_id int(11);
 
 update image set artist = 225 where uid in (select uid from (SELECT * FROM image) as image where artist = 237 and image_of_id != "antweb1038931");
 
-update login set password = "qf_fWj-7jl" where email = "saemi.schaer@gmail.com";
-update login set password = "LLAMAres5LL" where email = "mmprebus@ucdavis.edu";
+-- (password reset for one login removed from the repository, 2026-10-14)
+-- (password reset for one login removed from the repository, 2026-10-14)
 
 
 
