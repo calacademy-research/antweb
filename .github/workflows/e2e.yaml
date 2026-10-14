@@ -1,0 +1,38 @@
+name: End-to-end tests
+
+# Drives a running AntWeb (staging by default) over HTTP. See tests/e2e/README.md.
+on:
+  workflow_dispatch:
+    inputs:
+      antweb_url:
+        description: "AntWeb to test (never production for write probes)"
+        default: "https://staging.antweb.org"
+      mode:
+        description: "survey (report only) or test (pytest)"
+        default: "survey"
+      probe_write_actions:
+        description: "Also call data-changing actions anonymously (staging only, after #75)"
+        default: "0"
+  pull_request:
+    branches: [master]
+    paths: ["tests/e2e/**", ".github/workflows/e2e.yaml"]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      ANTWEB_URL: ${{ inputs.antweb_url || 'https://staging.antweb.org' }}
+      ANTWEB_PROBE_WRITE_ACTIONS: ${{ inputs.probe_write_actions || '0' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r tests/e2e/requirements.txt
+      - name: Survey
+        if: ${{ (inputs.mode || 'survey') == 'survey' }}
+        run: python tests/e2e/survey.py
+      - name: Tests
+        if: ${{ inputs.mode == 'test' }}
+        run: pytest tests/e2e -q -rA
