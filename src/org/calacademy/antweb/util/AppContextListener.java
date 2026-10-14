@@ -2,11 +2,11 @@ package org.calacademy.antweb.util;
 
 import java.util.*;
 import java.util.Date;
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import java.sql.*;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;

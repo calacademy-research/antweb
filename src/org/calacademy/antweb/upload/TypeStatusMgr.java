@@ -5,11 +5,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.apache.struts.action.*;
 
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 
 import org.calacademy.antweb.*;

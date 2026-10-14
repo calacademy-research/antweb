@@ -1,6 +1,6 @@
 package org.calacademy.antweb;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import javax.sql.DataSource;
 
 import org.apache.struts.action.Action;

@@ -4,8 +4,8 @@ import org.calacademy.antweb.AntwebAction;
 
 import java.io.IOException;
 import java.util.*;
-import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.*;
 import org.apache.struts.action.*;
 
 import org.calacademy.antweb.util.AntwebUtil;

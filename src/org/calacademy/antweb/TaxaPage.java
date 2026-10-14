@@ -12,7 +12,7 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 
 /** Class Taxon keeps track of the information about a specific taxon */
 public class TaxaPage implements Serializable {

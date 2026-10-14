@@ -2,7 +2,7 @@ package org.calacademy.antweb.curate.team;
 
 import org.calacademy.antweb.util.LoginMgr;
 
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 import org.apache.struts.action.*;
 
 import java.sql.*;

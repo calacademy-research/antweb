@@ -1,8 +1,8 @@
 package org.calacademy.antweb;
 
 import java.util.*;
-import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 
 import org.apache.struts.action.*;

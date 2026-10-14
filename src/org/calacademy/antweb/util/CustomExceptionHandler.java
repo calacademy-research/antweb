@@ -1,7 +1,7 @@
 package org.calacademy.antweb.util;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 
 import org.apache.struts.action.*;
 import org.apache.struts.config.*;

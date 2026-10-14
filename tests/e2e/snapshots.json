@@ -176,7 +176,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 2,
-  "text_length": 7621,
+  "text_length": 7463,
   "title": "Curator: Ana Jesovnik - AntWeb"
  },
  "/curators.do": {
@@ -321,7 +321,7 @@
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
-  "images": 107,
+  "images": 110,
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
@@ -467,9 +467,9 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Specimen: CASENT4045392 Dorylus nigricans",
-   "h2:3 Images"
+   "h2:6 Images"
   ],
-  "images": 18,
+  "images": 21,
   "specimen_links": 1,
   "status": 200,
   "table_rows": 2,

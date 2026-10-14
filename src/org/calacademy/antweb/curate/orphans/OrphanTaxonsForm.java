@@ -2,7 +2,7 @@ package org.calacademy.antweb.curate.orphans;
 
 import org.calacademy.antweb.*;
 import org.apache.struts.action.*;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class OrphanTaxonsForm extends ActionForm {
 

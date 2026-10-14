@@ -2,7 +2,7 @@ package org.calacademy.antweb.curate.group;
 
 import org.calacademy.antweb.AntwebAction;
 
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 import org.apache.struts.action.*;
 
 import java.sql.*;

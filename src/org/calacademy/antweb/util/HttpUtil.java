@@ -7,8 +7,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import javax.servlet.http.*;
-import javax.servlet.*;
+import jakarta.servlet.http.*;
+import jakarta.servlet.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,7 +18,7 @@ import org.apache.struts.action.*;
 
 import org.calacademy.antweb.Utility;
 
-import javax.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.JspWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -875,13 +875,13 @@ public abstract class HttpUtil {
     public static String getQueryString(HttpServletRequest request) {
       // Returning null indicates an "issue".  Empty is fine.
       // This will not work when called directly from a jsp page.
-      String queryString = (String) request.getAttribute("javax.servlet.forward.query_string");
+      String queryString = (String) request.getAttribute("jakarta.servlet.forward.query_string");
 
 //      A.log("getQueryString() 1 queryString:" + queryString);
       
       if (queryString == null) {
         // using getAttribute allows us to get the orginal url out of the page when a include has taken place.
-        queryString = (String) request.getAttribute("javax.servlet.include.query_string");
+        queryString = (String) request.getAttribute("jakarta.servlet.include.query_string");
       }
 
       //A.log("getQueryString() 2 queryString:" + queryString);
@@ -956,13 +956,13 @@ public abstract class HttpUtil {
     
     public static String getRequestURI(HttpServletRequest request) {
       // using getAttribute allows us to get the orginal url out of the page when a forward has taken place.
-      String requestURI = "" + request.getAttribute("javax.servlet.forward.request_uri");
+      String requestURI = "" + request.getAttribute("jakarta.servlet.forward.request_uri");
       
       //A.log("getRequestURI() 1 requestURI:" + requestURI);      
       
       if (requestURI.equals("null")) {
               // using getAttribute allows us to get the orginal url out of the page when a include has taken place.
-        requestURI = "" + request.getAttribute("javax.servlet.include.request_uri");
+        requestURI = "" + request.getAttribute("jakarta.servlet.include.request_uri");
         //A.log("getRequestURI() 2 requestURI:" + requestURI);      
       }
 
@@ -1207,7 +1207,7 @@ public abstract class HttpUtil {
       if (HttpUtil.isPost(request)) return false;
       
       String requestedPath = HttpUtil.getRequestURI(request);
-      //(String) request.getAttribute("javax.servlet.forward.request_uri");
+      //(String) request.getAttribute("jakarta.servlet.forward.request_uri");
 
       //A.log("isStaticCall() 2 requestedPath:" + requestedPath);
       

@@ -1,6 +1,6 @@
 package org.calacademy.antweb.curate.login;
 
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
