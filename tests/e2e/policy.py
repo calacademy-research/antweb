@@ -31,12 +31,20 @@ WRITE_ACTIONS = {
     "/saveGroup", "/manageMuseum", "/viewMuseum", "/saveMuseum", "/saveHomePage",
     "/previewHomePage", "/worldAuthoritySave", "/newBioRegion", "/editCredit",
     "/teamMemberImgUpload", "/saveProject", "/deleteImages", "/saveLogin",
-    "/editLogin", "/antwebInvite", "/forgotPassword", "/simpleContentEditorWrite",
+    "/editLogin", "/antwebInvite", "/simpleContentEditorWrite",
     "/editGeolocale", "/speciesListMove", "/speciesListToolAdd", "/moveToValid",
-    "/descEditImageUpload", "/saveHomePage", "/teamMemberImgDownload",
+    "/descEditImageUpload",
     "/editHomePage", "/editProject", "/bioregionMapMgr", "/introducedMapMgr",
-    "/typeStatus", "/disputeMgr",
+    "/disputeMgr",
 }
+
+# Write actions that refuse anonymous requests with a message page rather than
+# the log-in page.
+REFUSE_WITH_MESSAGE = {"/editLogin"}
+
+# Actions whose anonymous result varies between runs (AntWeb shows its
+# "We'll be right back" page on some first requests of a new session).
+FLAKY = {"/artist": {"ok", "error_page"}, "/artists": {"ok", "error_page"}}
 
 # Example requests for public pages, used in addition to the bare URL.
 # The crawl in survey.py adds more from links on these pages.

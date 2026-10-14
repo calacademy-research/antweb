@@ -11,7 +11,7 @@ API_CASES = {
     "specimens_genus": "/v3.1/specimens?genus=camponotus&limit=5&up=1",
     "specimens_country": "/v3.1/specimens?country=Madagascar&limit=5&up=1",
     "geoSpecimens": "/v3.1/geoSpecimens?coords=37.77,-122.47&radius=10&limit=5&up=1",
-    "geoSpeciesStats": "/v3.1/geoSpeciesStats?geolocaleName=Madagascar&up=1",
+    "geoSpeciesStats": "/v3.1/geoSpeciesStats?geolocaleName=California&up=1",
     "distinctTaxa": "/v3.1/distinctTaxa?country=Madagascar&taxarank=genus&limit=5&up=1",
     "images": "/v3.1/images?since=30&limit=5&up=1",
     "measurements": "/v3.1/measurements?genus=camponotus&limit=5&up=1",
