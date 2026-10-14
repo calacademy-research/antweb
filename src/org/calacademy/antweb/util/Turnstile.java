@@ -1,11 +1,14 @@
 package org.calacademy.antweb.util;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -19,11 +22,13 @@ import org.apache.commons.logging.LogFactory;
  * Cloudflare Turnstile: a free, privacy-friendly bot check (usually just a
  * checkbox, often invisible) shown on the Create Account form.
  *
- * Configured through environment variables of the antweb container, set in
- * the server's .env file (not in the repository):
- *   TURNSTILE_SITE_KEY   public key, put in the page
- *   TURNSTILE_SECRET     secret key, used to check the answer with Cloudflare
- * When they are not set the check is off and Create Account works as before.
+ * Configured in etc/turnstile.properties on the server (~/antweb/etc/, which
+ * the container sees as /antweb/deploy/etc/; the file is in .gitignore and
+ * never in the repository):
+ *   siteKey=...   public key, put in the page
+ *   secret=...    secret key, used to check the answer with Cloudflare
+ * Changes are picked up within a minute, without a restart. With no file
+ * (or empty values) the check is off and Create Account works as before.
  */
 public final class Turnstile {
 
@@ -33,14 +38,34 @@ public final class Turnstile {
 
     private Turnstile() {}
 
+    static final String CONFIG = "/antweb/deploy/etc/turnstile.properties";
+    private static Properties s_props = new Properties();
+    private static long s_loaded = 0;
+
+    private static synchronized Properties props() {
+        long now = System.currentTimeMillis();
+        if (now - s_loaded > 60_000) {
+            s_loaded = now;
+            Properties p = new Properties();
+            File f = new File(CONFIG);
+            if (f.isFile()) {
+                try (InputStream in = new FileInputStream(f)) {
+                    p.load(in);
+                } catch (Exception e) {
+                    s_log.error("props() could not read " + CONFIG + " e:" + e);
+                }
+            }
+            s_props = p;
+        }
+        return s_props;
+    }
+
     public static String getSiteKey() {
-        String key = System.getenv("TURNSTILE_SITE_KEY");
-        return key == null ? "" : key.trim();
+        return props().getProperty("siteKey", "").trim();
     }
 
     private static String getSecret() {
-        String secret = System.getenv("TURNSTILE_SECRET");
-        return secret == null ? "" : secret.trim();
+        return props().getProperty("secret", "").trim();
     }
 
     public static boolean isEnabled() {
