@@ -927,6 +927,10 @@ def getTaxa():
     if status != '*':
         query = query.filter(Taxon.status == status)
 
+    # limit and offset (from setGlobals) were ignored here, unlike the other endpoints.
+    query = query.limit(limit)
+    query = query.offset(offset)
+
     try:
         data = query.all()
     except OperationalError as error:

@@ -28,13 +28,13 @@ NEVER = {
 # expect the log-in page. Only allowed where the fix is deployed
 # (ANTWEB_PROBE_WRITE_ACTIONS=1), never against production.
 WRITE_ACTIONS = {
-    "/saveGroup", "/manageMuseum", "/viewMuseum", "/saveMuseum", "/saveHomePage",
-    "/previewHomePage", "/worldAuthoritySave", "/newBioRegion", "/editCredit",
+    "/saveGroup", "/manageMuseum", "/viewMuseum", "/saveMuseum",
+    "/worldAuthoritySave", "/newBioRegion", "/editCredit",
     "/teamMemberImgUpload", "/saveProject", "/deleteImages", "/saveLogin",
     "/editLogin", "/antwebInvite", "/simpleContentEditorWrite",
-    "/editGeolocale", "/speciesListMove", "/speciesListToolAdd", "/moveToValid",
+    "/editGeolocale", "/speciesListMove", "/speciesListToolAdd",
     "/descEditImageUpload",
-    "/editHomePage", "/editProject", "/bioregionMapMgr", "/introducedMapMgr",
+    "/editProject", "/bioregionMapMgr", "/introducedMapMgr",
     "/disputeMgr",
 }
 

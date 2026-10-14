@@ -536,12 +536,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name ="success" path="/util/logMgr.jsp"/>
       </action>
 
-      <action path="/jspFetch"
-              type = "org.calacademy.antweb.util.JspFetch"
-              name="dummyForm" 
-              scope="request">
-          <forward name ="success" path="/util/jspFetch.jsp"/>
-      </action>
       
       <action path="/showLine"
               type = "org.calacademy.antweb.util.ShowLineAction"
@@ -585,12 +579,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="statisticsStr" path="/util/statisticsStr.jsp"/>           
     </action>
 
-    <action 
-            path="/taxonCountryMgr"
-            type="org.calacademy.antweb.curate.TaxonCountryMgrAction"
-            scope="request">
-      <forward name="masterAdmin" path="/curate/geolocale/taxonCountryMgr.jsp" />
-    </action>
 
     <action path="/bioregionCountryList"
             type="org.calacademy.antweb.util.ReportAction"
@@ -752,12 +740,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       </action>    
 
 
-    <action path="/moveToValid"
-            type="org.calacademy.antweb.curate.moveToValid.MoveToValidAction"
-            scope="request"
-            name="moveToValidForm">
-      <forward name="success" path="/curate/moveToValid.jsp" />
-    </action>
 
     <action path="/orphanSpecies"
             type="org.calacademy.antweb.curate.orphans.OrphanSpeciesAction"
@@ -1351,31 +1333,9 @@ We would like to remove getChildImages.  Not needed now in the new UI
 				
 <!-- Home Pages --> 
 
-	<action path="/editHomePage"
-					type="org.calacademy.antweb.curate.EditHomePageAction"
-					name="homePageForm">
-			<forward name="success" path="/curate/project/editHome.jsp"/>
-			<!-- forward name="failure" path="/index.jsp"/ -->
-	</action>
 																									
 																									
-	<action path="/previewHomePage"
-					type="org.calacademy.antweb.curate.PreviewHomePageAction"
-					name="homePageForm"
-					input="/curate/project/editHome.jsp">
-			<forward name="success" path="/homePagePreview.jsp"/>
-			<forward name="failure" path="/curate/project/editHome.jsp"/>
-			<!-- forward name="failure" path="/edit_home.jsp"/ -->
-	</action>
 																									
-	<action path="/saveHomePage"
-					type="org.calacademy.antweb.curate.SaveHomePageAction"
-					name="homePageForm"
-					input="/edit_home.jsp">
-			<forward name="success" path="/index.jsp"/>
-			<forward name="failure" path="/curate/project/editHome.jsp"/>
-			<!-- forward name="failure" path="/edit_home.jsp"/ -->
-	</action>                                                                             
 
 	 <action path="/page"
 					type = "org.calacademy.antweb.PageAction"
@@ -1555,12 +1515,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
 
 <!-- AncPage -->
 
-   <action path="/ancPageMgr"
-					type = "org.calacademy.antweb.curate.ancFile.AncPageMgrAction"
-					name="dummyForm"
-					scope="request">
-			<forward name ="success" path="/curate/anc/ancPageMgr.jsp"/>
-   </action>
 
 <!--==========End of Project Managment Action Mappings==========-->
 
@@ -1709,11 +1663,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <action path="/sessionProps" 
          forward="/util/sessionProps.jsp"/>         
 
-    <action path="/serverStatusB"
-            type = "org.calacademy.antweb.util.ServerStatusActionB"
-            name="dummyForm">
-      <forward name ="success" path="/util/serverStatusB.jsp"/>
-    </action>
 
       <action path="/userAgents"
               type = "org.calacademy.antweb.util.UserAgentTracker"
@@ -1764,12 +1713,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name ="fail" path="/util/uptimeFail.jsp"/>
       </action>
       
-      <action path="/autoComplete"
-              type = "org.calacademy.antweb.AutoCompleteAction"
-              name="dummyForm">
-          <forward name ="success" path="/autoFill.jsp"/>
-          <forward name ="autoCompleteData" path="/autoFill.jsp"/>
-      </action>
 
       
 <!--  This uptime test tests the database connection     

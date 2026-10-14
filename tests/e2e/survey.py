@@ -78,7 +78,7 @@ def main() -> int:
             o = classify(resp)
             results["pages"][url] = o.__dict__
             if o.category == "ok":
-                for href in HREF.findall(resp.text):
+                for href in HREF.findall(re.sub(r"<!--.*?-->", "", resp.text, flags=re.S)):
                     absu = urljoin(BASE_URL + url, href.strip())
                     pu = urlparse(absu)
                     if pu.netloc and pu.netloc != urlparse(BASE_URL).netloc:

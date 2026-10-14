@@ -17,3 +17,8 @@ def test_api(name):
         r.json()
     except ValueError:
         pytest.fail(f"{name}: not JSON: {r.text[:200]!r}")
+
+
+def test_taxa_respects_limit():
+    r = new_session().get(BASE_URL + "/v3.1/taxa?genus=camponotus&limit=3&up=1", timeout=120)
+    assert len(r.json()["taxa"]) <= 3
