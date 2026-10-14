@@ -37,6 +37,12 @@ if ! compose exec -T antweb cat /antweb/deploy/build.xml < /dev/null | cmp -s - 
   sleep 5
 fi
 
+# The API's code is copied into its image, so rebuild it. Docker's build cache makes
+# this quick when api/ has not changed, and compose only recreates the container
+# when the image changed.
+echo "Rebuilding the API image if api/ changed..."
+compose up -d --build api < /dev/null
+
 echo "Running ant deploy..."
 compose exec -T antweb ant deploy < /dev/null
 
