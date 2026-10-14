@@ -14,7 +14,7 @@
 
     Curator curator = (Curator) request.getAttribute("curator");
 
-	String titleString = "Curator" + curator.toString();
+	String titleString = "Curator: " + curator.getDisplayName() + " - AntWeb";
 
 %>
 <%@include file="/common/antweb-defs.jsp" %>

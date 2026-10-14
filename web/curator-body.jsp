@@ -50,6 +50,7 @@
         </ul>
     </div>
 
+<% if (LoginMgr.getAccessLogin(request) != null) { // email and admin flag only for logged-in users %>
     <div id="overview_data" class="plain">
         <ul>
         <li><b>Email:</b></li>
@@ -63,6 +64,7 @@
         <li><%= curator.isAdmin() %></li>
         </ul>
     </div>
+<% } %>
 
     <div id="overview_data" class="plain">
         <ul>
