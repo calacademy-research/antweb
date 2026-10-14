@@ -5,17 +5,21 @@ on:
   workflow_dispatch:
     inputs:
       antweb_url:
-        description: "AntWeb to test (never production for write probes)"
+        description: "AntWeb to test (write probes are refused on production)"
         default: "https://staging.antweb.org"
       mode:
-        description: "survey (report only) or test (pytest)"
-        default: "survey"
+        description: "test (pytest), survey (report only) or record (re-record the baseline and commit it)"
+        default: "test"
       probe_write_actions:
-        description: "Also call data-changing actions anonymously (staging only, after #75)"
-        default: "0"
+        description: "Also check that data-changing actions refuse anonymous requests"
+        default: "1"
   pull_request:
     branches: [master]
-    paths: ["tests/e2e/**", ".github/workflows/e2e.yaml"]
+  schedule:
+    - cron: "17 14 * * *"   # daily 07:17 Pacific (PDT), after the 5 AM jobs
+
+permissions:
+  contents: write
 
 jobs:
   e2e:
@@ -23,16 +27,26 @@ jobs:
     timeout-minutes: 45
     env:
       ANTWEB_URL: ${{ inputs.antweb_url || 'https://staging.antweb.org' }}
-      ANTWEB_PROBE_WRITE_ACTIONS: ${{ inputs.probe_write_actions || '0' }}
+      ANTWEB_PROBE_WRITE_ACTIONS: ${{ inputs.probe_write_actions || '1' }}
+      MODE: ${{ inputs.mode || 'test' }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref || github.ref }}
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install -r tests/e2e/requirements.txt
-      - name: Survey
-        if: ${{ (inputs.mode || 'survey') == 'survey' }}
+      - name: Survey (report in the job summary)
         run: python tests/e2e/survey.py
+      - name: Record baseline (first run, or mode=record)
+        if: ${{ env.MODE == 'record' || hashFiles('tests/e2e/expectations.json') == '' }}
+        run: |
+          cp tests/e2e/out/expectations.json tests/e2e/expectations.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/e2e/expectations.json
+          git commit -m "e2e: record baseline from $ANTWEB_URL" && git push
       - name: Tests
-        if: ${{ inputs.mode == 'test' }}
-        run: pytest tests/e2e -q -rA
+        if: ${{ env.MODE == 'test' && hashFiles('tests/e2e/expectations.json') != '' }}
+        run: pytest tests/e2e -q -rfE -p no:cacheprovider

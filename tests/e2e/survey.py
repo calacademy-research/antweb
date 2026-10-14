@@ -108,6 +108,14 @@ def main() -> int:
             results["api"][name] = {"status": 0, "detail": str(e)[:200]}
 
     (OUT / "survey.json").write_text(json.dumps(results, indent=1, sort_keys=True))
+    # Candidate baseline: what each action and crawled page returns today.
+    baseline = {
+        "recorded_from": BASE_URL, "recorded_at": results["time"],
+        "actions": {p: r["category"] for p, r in sorted(results["actions"].items()) if r["category"] != "skipped"},
+        "pages": {u: r["category"] for u, r in sorted(results["pages"].items())},
+        "api": {n: r.get("status") for n, r in sorted(results["api"].items())},
+    }
+    (OUT / "expectations.json").write_text(json.dumps(baseline, indent=1, sort_keys=True) + "\n")
     md = summary(results)
     print(md)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
