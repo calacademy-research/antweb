@@ -59,6 +59,12 @@ if (target != null) {
 
 <input border="0" type="submit" name="value" class="tool_label" style="float:none;" value="Create Account">
 </p>
+<% if (Turnstile.isEnabled()) { %>
+<!-- Bot check for Create Account (Cloudflare Turnstile); not needed to log in. -->
+<p align="center"><small>New account? Please complete this check first:</small></p>
+<div class="cf-turnstile" data-sitekey="<%= Turnstile.getSiteKey() %>" style="display:flex; justify-content:center;"></div>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<% } %>
 
 <br><br><br><br>To access full Antweb functionality anonymously: <input border="0" type="submit" name="value" class="tool_label" style="float:none;" value="Browse">  
 
