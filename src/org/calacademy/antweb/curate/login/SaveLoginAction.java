@@ -71,7 +71,10 @@ public final class SaveLoginAction extends AntwebAction {
             }
             login.setName(form.getName());
             login.setEmail(form.getEmail());
-            login.setPassword(form.getPassword()); 
+            // A blank password means: keep the current one (the form no longer shows it).
+            // An invitation (new login) has no password yet: "" until the user accepts.
+            String newPassword = form.getPassword();
+            if (newPassword != null && !newPassword.isEmpty()) login.setPassword(newPassword);
             login.setFirstName(form.getFirstName());
             login.setLastName(form.getLastName());
             login.setIsAdmin(form.isAdmin());
@@ -136,7 +139,8 @@ s_log.debug("execute() groupName:" + groupName + " loginGroupId:" + login.getGro
 s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLogin + " formName:" + form.getName());
               if (accessLogin == null   // as is the case for invites
                 || isOwnLogin) {        // as is for users logged in through the invite page
-                ActionErrors errors = passPwdCheck(form);
+                // Accepting an invite requires a password; editing your own login may leave it blank (unchanged).
+                ActionErrors errors = accessLogin == null ? passPwdCheck(form) : passPwdMatch(form);
                 if (!errors.isEmpty()) {
                     saveErrors(request, errors);
                     return mapping.findForward("failure");
@@ -154,8 +158,7 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
                     return mapping.findForward("failure");
                   }    
 		
-                  String newPassword = form.getPassword();
-                  loginDb.changePassword(login, newPassword);
+                  loginDb.changePassword(login, form.getPassword());
                   return mapping.findForward("success");
           
                 } else {
@@ -200,6 +203,17 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
 	}
 
 
+    // Password may be blank (keep the current one); if given, both fields must match.
+    private ActionErrors passPwdMatch(SaveLoginForm form) {
+        ActionErrors errors = new ActionErrors();
+        String newPassword = form.getPassword() == null ? "" : form.getPassword();
+        String newPassword2 = form.getRetypePassword() == null ? "" : form.getRetypePassword();
+        if (!newPassword.equals(newPassword2)) {
+            errors.add("error", new ActionMessage("error.login.passwordsMustMatch"));
+        }
+        return errors;
+    }
+
     private ActionErrors passPwdCheck(SaveLoginForm form) {
         ActionErrors errors = new ActionErrors();
         ActionMessage msg = null;
@@ -213,7 +227,7 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
             errors.add("error", new ActionMessage("error.login.passwordsMustMatch"));
         }
 
-        s_log.debug("passPwdCheck newPassword:" + newPassword + " errors:" + errors);
+        s_log.debug("passPwdCheck errors:" + errors);
         return errors;
     }
     private ActionMessages passPwdCheck2(SaveLoginForm form) {
@@ -233,7 +247,7 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
             s_log.debug("passPwdCheck passwords must match");
         }
 
-        s_log.debug("passPwdCheck newPassword:" + newPassword + " messages:" + messages);
+        s_log.debug("passPwdCheck messages:" + messages);
         return messages;
     }
 

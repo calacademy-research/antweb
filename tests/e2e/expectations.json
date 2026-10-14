@@ -94,6 +94,7 @@
   "/locality": "message",
   "/logMgr": "login",
   "/login": "login",
+  "/loginAs": "login",
   "/manageMuseum": "login",
   "/mapComparison": "message",
   "/mapResults": "login",

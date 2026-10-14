@@ -70,10 +70,10 @@
 <input type="text" class="input_200" name="name" value="<%= thisLogin.getName() %>">
 
 <h3>Password:</h3>
-<input type="password" class="input_200" name="password" value="<%= thisLogin.getPassword() %>">
+<input type="password" class="input_200" name="password" value="" autocomplete="new-password" placeholder="leave blank to keep">
 
 <h3>Retype Password:</h3>
-<input type="password" class="input_200" name="retypePassword" value="<%= thisLogin.getPassword() %>">
+<input type="password" class="input_200" name="retypePassword" value="" autocomplete="new-password" placeholder="leave blank to keep">
 
 <% if (LoginMgr.isAdmin(request)) { %>
 <div class="action_hint">
@@ -223,7 +223,7 @@ NOTE: To allow access to multiple areas, hold the Ctrl key, or the command key w
 
 
 <% if (LoginMgr.isAdmin(request)) { %>
-&nbsp;&nbsp;&nbsp;Login as: <a href="<%= secureDomainApp %>/login.do?userName=<%= thisLogin.getName() %>&password=<%= thisLogin.getPassword() %>"><%= thisLogin.getName() %></a>
+&nbsp;&nbsp;&nbsp;Login as: <a href="<%= secureDomainApp %>/loginAs.do?id=<%= thisLogin.getId() %>"><%= thisLogin.getName() %></a>
 <% } %>
 
 

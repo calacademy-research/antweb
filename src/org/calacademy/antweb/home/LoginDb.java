@@ -513,6 +513,7 @@ public class LoginDb extends AntwebDb {
                 stmt.setString(3, login.getFirstName());
                 stmt.setString(4, login.getLastName());
                 stmt.setString(5, login.getEmail());
+                login.setPassword(PasswordHash.forStorage(login.getPassword()));  // never store plain text
                 stmt.setString(6, login.getPassword());
                 stmt.setInt(7, login.getGroupId());
                 stmt.setInt(8, isAdmin);
@@ -593,6 +594,7 @@ public class LoginDb extends AntwebDb {
                     stmt.setString(2, login.getFirstName());
                     stmt.setString(3, login.getLastName());
                     stmt.setString(4, login.getEmail());
+                    login.setPassword(PasswordHash.forStorage(login.getPassword()));  // never store plain text
                     stmt.setString(5, login.getPassword());
                     stmt.setInt(6, login.getId());
                 } else if (isAdminUpdate && !isSelfUpdate) {
@@ -625,6 +627,7 @@ public class LoginDb extends AntwebDb {
                     stmt.setString(2, login.getFirstName());
                     stmt.setString(3, login.getLastName());
                     stmt.setString(4, login.getEmail());
+                    login.setPassword(PasswordHash.forStorage(login.getPassword()));  // never store plain text
                     stmt.setString(5, login.getPassword());  // distinct from above
                     stmt.setInt(6, login.getGroupId());
                     stmt.setInt(7, isAdmin);
@@ -841,10 +844,12 @@ public class LoginDb extends AntwebDb {
             String theUpdate = "update login set password = ? where id = ?";
             stmt = getConnection().prepareStatement(theUpdate);
 
-            stmt.setString(1, newPassword);
+            String stored = PasswordHash.forStorage(newPassword);  // never store plain text
+            stmt.setString(1, stored);
             stmt.setInt(2, login.getId());
 
             stmt.executeUpdate();
+            login.setPassword(stored);
         } catch (SQLException e) {
             s_log.error("changePassword() id:" + login.getId() + " e:" + e);
             throw e;
@@ -852,6 +857,49 @@ public class LoginDb extends AntwebDb {
             DBUtil.close(stmt, null, this, "changePassword()");
         }
     }        
+
+    /**
+     * Replace every plain-text password in the login table with its hash.
+     * Safe to run more than once: hashed and empty values are skipped.
+     * Returns the number of logins converted, or -1 if the password column
+     * is still too short for hashes (run db/upgrade/8.107/2026-10-14.sql first).
+     */
+    public int hashLegacyPasswords() throws SQLException {
+        int width = 0;
+        try (Statement stmt = getConnection().createStatement();
+             ResultSet rset = stmt.executeQuery("select character_maximum_length from information_schema.columns"
+                 + " where table_schema = database() and table_name = 'login' and column_name = 'password'")) {
+            if (rset.next()) width = rset.getInt(1);
+        }
+        if (width < 128) {
+            s_log.error("hashLegacyPasswords() login.password is varchar(" + width + "); needs varchar(255). Passwords not converted.");
+            return -1;
+        }
+        ArrayList<Integer> ids = new ArrayList<>();
+        ArrayList<String> plain = new ArrayList<>();
+        try (Statement stmt = getConnection().createStatement();
+             ResultSet rset = stmt.executeQuery("select id, password from login where password is not null and password != ''")) {
+            while (rset.next()) {
+                String value = rset.getString("password");
+                if (!PasswordHash.isHashed(value)) {
+                    ids.add(rset.getInt("id"));
+                    plain.add(value);
+                }
+            }
+        }
+        int count = 0;
+        // Only replace the value we read, in case the user changed it meanwhile.
+        try (PreparedStatement update = getConnection().prepareStatement("update login set password = ? where id = ? and password = ?")) {
+            for (int i = 0; i < ids.size(); i++) {
+                update.setString(1, PasswordHash.hash(plain.get(i)));
+                update.setInt(2, ids.get(i));
+                update.setString(3, plain.get(i));
+                count += update.executeUpdate();
+            }
+        }
+        s_log.warn("hashLegacyPasswords() converted " + count + " of " + ids.size() + " plain-text passwords");
+        return count;
+    }
     
     public void deleteById(int id) throws SQLException {
         String theQuery = "delete from login where id = ?";
@@ -871,7 +919,7 @@ public class LoginDb extends AntwebDb {
     
     public static ArrayList<String> getUsrAdmList(Connection connection) throws SQLException {
         ArrayList<String> usrAdmList = new ArrayList<>();
-        String theQuery = "select login.name, password, group_id, ant_group.name from login, ant_group where login.group_id = ant_group.id ";
+        String theQuery = "select login.id, login.name, group_id, ant_group.name from login, ant_group where login.group_id = ant_group.id ";
 
         PreparedStatement stmt = null;
         ResultSet rset = null;
@@ -881,10 +929,9 @@ public class LoginDb extends AntwebDb {
 
             while (rset.next()) {
                 String name = rset.getString("login.name");
-                String password = rset.getString("password");
                 int groupId = rset.getInt("group_id");
                 String groupName = rset.getString("ant_group.name");
-                String url = AntwebProps.getSecureDomainApp() + "/login.do?userName=" + name + "&password=" + password;
+                String url = AntwebProps.getSecureDomainApp() + "/loginAs.do?id=" + rset.getInt("login.id");
                 String groupStr = "";
                 if (!"Default Group".equals(groupName)) {
                   groupStr = ":" + groupName;
@@ -904,7 +951,7 @@ public class LoginDb extends AntwebDb {
 
     public static ArrayList<String> getUsrAdmLastLoginList(Connection connection) throws SQLException {
         ArrayList<String> usrAdmList = new ArrayList<>();
-        String theQuery = "select login.name, password, group_id, ant_group.name, login.last_login as lastLogin "
+        String theQuery = "select login.id, login.name, group_id, ant_group.name, login.last_login as lastLogin "
                 + "from login, ant_group where login.group_id = ant_group.id and last_login IS NOT NULL "
                 + "order by last_login";
 
@@ -916,7 +963,6 @@ public class LoginDb extends AntwebDb {
 
             while (rset.next()) {
                 String name = rset.getString("login.name");
-                String password = rset.getString("password");
                 int groupId = rset.getInt("group_id");
                 String groupName = rset.getString("ant_group.name");
                 //String lastLogin = rset.getTimestamp("login.last_login");
@@ -924,7 +970,7 @@ public class LoginDb extends AntwebDb {
 
                 lastLogin = rset.getTimestamp("lastLogin");
 
-                String url = AntwebProps.getDomainApp() + "/login.do?userName=" + name + "&password=" + password;
+                String url = AntwebProps.getDomainApp() + "/loginAs.do?id=" + rset.getInt("login.id");
                 String groupStr = "";
                 if (!"Default Group".equals(groupName)) {
                   groupStr = ":" + groupName;

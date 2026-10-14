@@ -1223,6 +1223,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="failure" path="/curate/antwebAdmin.jsp" />
     </action>
     
+    <!-- Administrators only: act as another login, e.g. to upload for a curator. -->
+    <action path="/loginAs"
+            type="org.calacademy.antweb.curate.login.LoginAsAction"
+            scope="request"
+            validate="false">
+    </action>
+
     <action path="/viewLogin"
             type="org.calacademy.antweb.curate.login.ViewLoginAction"
             scope="request"

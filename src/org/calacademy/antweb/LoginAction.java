@@ -176,7 +176,7 @@ public final class LoginAction extends AntwebAction {
                 login.setEmail("");
                 login.setIsAdmin(false);
         
-                if (login == null || login.getPassword() == null || !login.getPassword().equals(password)) {
+                if (login == null || !PasswordHash.matches(login.getPassword(), password)) {
                     msg = new ActionMessage("error.login.failedLogin");
                     messages.add("message",msg);
                 } else {
@@ -238,7 +238,7 @@ public final class LoginAction extends AntwebAction {
 //A.log("login() A userNameOrEmail:" + userNameOrEmail + " login:" + login);
                 if (login == null) login = loginDb.getLoginByEmail(userNameOrEmail);
 //A.log("login() B userNameOrEmail:" + userNameOrEmail + " login:" + login);
-                if (login == null || login.getPassword() == null || !login.getPassword().equals(password)) {
+                if (login == null || !PasswordHash.matches(login.getPassword(), password)) {
                     msg = new ActionMessage("error.login.failedLogin");                    
                     messages.add("message",msg);
                     //A.log("login() 3 msg:" + msg + " pwd:" + password);            
@@ -247,6 +247,14 @@ public final class LoginAction extends AntwebAction {
                   //s_log.warn("Login.execute()2 userName:" + userNameOrEmail + " login:" + login);                
                   LogMgr.appendLog("logins.txt", userNameOrEmail + " - " + new Date());
                   loginDb.updateLastLogin(login);
+                  if (PasswordHash.needsRehash(login.getPassword())) {
+                    // Still stored as plain text: store the hash instead.
+                    try {
+                      loginDb.changePassword(login, password);
+                    } catch (SQLException e) {
+                      s_log.error("login() could not hash the password of login id:" + login.getId() + " e:" + e);
+                    }
+                  }
                 }      
             } catch (Exception sqle) {
                 msg = new ActionMessage("error.login.dbFailure");

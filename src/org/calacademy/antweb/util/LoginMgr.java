@@ -25,6 +25,8 @@ public class LoginMgr extends Manager {
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
       if (!forceReload && s_logins != null) return;
       
+      startPasswordConversion();
+
       LoginDb loginDb = new LoginDb(connection);
       try {
         s_logins = loginDb.getAllLogins();
@@ -41,6 +43,25 @@ public class LoginMgr extends Manager {
                 s_log.warn("populate() e:" + e);
             }
         }
+    }
+
+    private static boolean s_passwordConversionStarted = false;
+
+    // Once per application start, in the background: replace any plain-text
+    // passwords left in the login table with hashes (see PasswordHash).
+    private static synchronized void startPasswordConversion() {
+      if (s_passwordConversionStarted) return;
+      s_passwordConversionStarted = true;
+      Thread t = new Thread(() -> {
+        try (Connection conn = DBUtilSimple.getDataSource().getConnection()) {
+          int count = new LoginDb(conn).hashLegacyPasswords();
+          if (count > 0) populate(conn, true, true);  // drop the cached plain-text values
+        } catch (Exception e) {
+          s_log.error("startPasswordConversion() e:" + e);
+        }
+      }, "password-conversion");
+      t.setDaemon(true);
+      t.start();
     }
 
     //Called through UtilAction to, in a separate thread, populate the curators with adm1.
