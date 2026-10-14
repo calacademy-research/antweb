@@ -124,10 +124,6 @@ window.api = root.data("scrollable");
     <div class="msg_actions" align="center">
     </div>
 </div>
-<form action="saveHomePage.do" method="post">
-<input border="0" type="image" src="<%= domainApp %>/image/orange_done.gif" width="98" height="36" value="Save This Project">
-<a href="<%= domainApp %>/editHomePage.do"><img border=0" src="<%= domainApp %>/image/grey_edit.gif" width="98" height="36"</a>
-</form>
 </logic:present>
 
     </div>

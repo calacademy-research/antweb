@@ -8,6 +8,6 @@
 <%@include file="/common/antweb-defs.jsp" %>
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
-	<tiles:put name="title" value="Functionality deprecated... contact <%= AntwebUtil.getAdminEmail() %>" />
+	<tiles:put name="title" value="Functionality deprecated" />
 	<tiles:put name="body-content" value="/common/deprecate-body.jsp" />	
 </tiles:insert>

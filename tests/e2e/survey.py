@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from antweb import BASE_URL, BROKEN, IS_PRODUCTION, get, new_session, struts_actions  # noqa: E402
 from policy import NEVER, SEEDS, WRITE_ACTIONS  # noqa: E402
 from api_cases import API_CASES  # noqa: E402
+from fingerprint import KEY_PAGES, fingerprint  # noqa: E402
 
 OUT = Path(__file__).parent / "out"
 CRAWL_BUDGET = int(os.environ.get("ANTWEB_CRAWL_BUDGET", "300"))
@@ -78,7 +79,7 @@ def main() -> int:
             o = classify(resp)
             results["pages"][url] = o.__dict__
             if o.category == "ok":
-                for href in HREF.findall(resp.text):
+                for href in HREF.findall(re.sub(r"<!--.*?-->", "", resp.text, flags=re.S)):
                     absu = urljoin(BASE_URL + url, href.strip())
                     pu = urlparse(absu)
                     if pu.netloc and pu.netloc != urlparse(BASE_URL).netloc:
@@ -89,7 +90,17 @@ def main() -> int:
         except Exception as e:
             results["pages"][url] = {"category": "request_failed", "detail": str(e)[:200]}
 
-    # 3. API v3.1.
+    # 3. Content fingerprints of key pages (tiers 2 and 5).
+    snapshots = {}
+    for url in KEY_PAGES:
+        try:
+            r = new_session().get(BASE_URL + url, timeout=120)
+            snapshots[url] = {"status": r.status_code, **fingerprint(r.text)}
+        except Exception as e:
+            snapshots[url] = {"status": 0, "detail": str(e)[:200]}
+    (OUT / "snapshots.json").write_text(json.dumps(snapshots, indent=1, sort_keys=True) + "\n")
+
+    # 4. API v3.1.
     for name, url in API_CASES.items():
         try:
             r = session.get(BASE_URL + url, timeout=120)
