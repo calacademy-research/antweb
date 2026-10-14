@@ -25,3 +25,23 @@ jobs:
       - name: Test Antweb Build
         run: |
           docker build -t antweb/antweb:dev -f docker/antweb/Dockerfile .
+
+  java-compile:
+    # Compiles every Java source against the jars in WEB-INF/lib and the
+    # servlet/JSP APIs of the same Tomcat image production runs, so a change
+    # that does not compile is caught on the pull request, not at deploy.
+    runs-on: ubuntu-latest
+    container: tomcat:9-jdk21
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile
+        run: |
+          find src -name '*.java' > /tmp/sources.txt
+          mkdir -p /tmp/classes
+          javac -nowarn -encoding UTF-8 -proc:none \
+            -cp "WEB-INF/lib/*:/usr/local/tomcat/lib/*" \
+            -d /tmp/classes @/tmp/sources.txt
+          echo "Compiled $(wc -l < /tmp/sources.txt) source files" >> "$GITHUB_STEP_SUMMARY"
