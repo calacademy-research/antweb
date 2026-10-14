@@ -15,9 +15,27 @@ DEPLOY_BRANCH="${DEPLOY_BRANCH:-master}"
 cd "$HOME/antweb"
 
 # Get the latest source code
+PREV=$(git rev-parse HEAD)
 git fetch origin "$DEPLOY_BRANCH"
 git checkout "$DEPLOY_BRANCH"
 git pull --rebase origin "$DEPLOY_BRANCH"
+
+# If the antweb image itself changed (Dockerfile, Tomcat config, base image), ant
+# deploy into the running container is not enough: rebuild the image (which runs
+# ant deploy) and replace the container. The old container keeps serving during
+# the build. Uses the same compose project and files the running container was
+# started with, so prod and staging each keep their own settings.
+if ! git diff --quiet "$PREV" HEAD -- docker/antweb; then
+  echo "docker/antweb changed since $PREV; rebuilding the antweb image..."
+  files=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}')
+  project=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project"}}')
+  dc="docker compose -p $project $(echo "$files" | tr ',' '\n' | sed 's/^/-f /')"
+  $dc build antweb < /dev/null
+  $dc up -d --build api antweb < /dev/null
+  echo "Rebuilt; antweb container started at:"
+  docker inspect -f 'StartedAt={{.State.StartedAt}}' antweb_antweb_1
+  exit 0
+fi
 
 # Restart docker compose services
 # -T disables pseudo-TTY allocation (required when running non-interactively via SSH/CI)
