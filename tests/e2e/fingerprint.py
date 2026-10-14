@@ -109,7 +109,9 @@ def differences(recorded: dict, current: dict) -> list[str]:
     out = []
     if recorded["title"] != current["title"]:
         out.append(f"title {recorded['title']!r} -> {current['title']!r}")
-    missing = [h for h in recorded["headings"] if h not in current["headings"]]
+    # Numbers in headings ("3 Images") are data; the counts below cover them.
+    norm = lambda hs: [re.sub(r"\d[\d,]*", "#", h) for h in hs]
+    missing = [h for h in norm(recorded["headings"]) if h not in norm(current["headings"])]
     if missing:
         out.append(f"headings missing: {missing[:5]}")
     for k in COUNT_KEYS:
