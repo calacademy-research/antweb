@@ -1,5 +1,7 @@
 package org.calacademy.antweb.search;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 
 import javax.servlet.*;
@@ -16,7 +18,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class RecentImageSearchAction extends Action {
+public final class RecentImageSearchAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(RecentImageSearchAction.class);
 

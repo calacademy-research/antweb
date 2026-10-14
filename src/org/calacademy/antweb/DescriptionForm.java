@@ -44,7 +44,7 @@ public class DescriptionForm extends ActionForm {
 
         ActionErrors errors = new ActionErrors();
         //if ((name == null) || (name.length() < 1))
-        //    errors.add("name", new ActionError("error.name.required"));
+        //    errors.add("name", new ActionMessage("error.name.required"));
        // if ((rank == null) || (rank.length() < 1)) {
            //if ((AntwebUtil.getRequestInfo(request)).contains("taxonName=")) {
              // no problem.  New direct access method.  For example:
@@ -53,17 +53,17 @@ public class DescriptionForm extends ActionForm {
              //s_log.warn("Bad rank:" + rank);
              //s_log.info("Bad rank:" + rank + " requestInfo:" + AntwebUtil.getRequestInfo(request));
            //}
-           // errors.add("rank", new ActionError("error.rank.required"));
+           // errors.add("rank", new ActionMessage("error.rank.required"));
        // }
 /*
         if ((name.length() > 50)) {
-            errors.add("name", new ActionError("error.longfield"));
+            errors.add("name", new ActionMessage("error.longfield"));
         }
         if ((rank.length() > 50)) {
-            errors.add("rank", new ActionError("error.longfield"));
+            errors.add("rank", new ActionMessage("error.longfield"));
         }
         if ((project.length() > 50)) {
-            errors.add("project", new ActionError("error.longfield"));
+            errors.add("project", new ActionMessage("error.longfield"));
         }
 */
         AntwebUtil.blockFishingAttack(request, errors);

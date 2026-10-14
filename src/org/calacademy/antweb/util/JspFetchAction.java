@@ -1,5 +1,7 @@
 package org.calacademy.antweb.util;
 
+import org.calacademy.antweb.AntwebAction;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.apache.struts.action.*;
 
-public class JspFetchAction extends Action {
+public class JspFetchAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(JspFetchAction.class);
     

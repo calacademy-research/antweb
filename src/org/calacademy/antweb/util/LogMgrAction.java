@@ -21,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 //http://localhost/antweb/logMgr.do?fileName=compute&ext=log&action=get&lines=50
 
 
-public final class LogMgrAction extends Action {
+public final class LogMgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(LogMgrAction.class);
 

@@ -9,7 +9,7 @@
 <bean:parameter id="project" name="project"/>
 </logic:present>
 
-<html:html locale="true">
+<html:html lang="true">
 <head>
 <title>Choose Ants - AntWeb</title>
 <html:base/>

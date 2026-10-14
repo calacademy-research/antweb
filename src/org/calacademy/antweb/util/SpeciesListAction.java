@@ -18,7 +18,7 @@ import org.calacademy.antweb.home.ProjectDb;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class SpeciesListAction extends Action {
+public final class SpeciesListAction extends AntwebAction {
 /* /getSpeciesList.do?name=allantwebants   This class returns a link to the species authority file */
 
     private static final Log s_log = LogFactory.getLog(SpeciesListAction.class);

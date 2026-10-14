@@ -16,7 +16,7 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
 
-public class ManageMuseumsAction extends Action {
+public class ManageMuseumsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ManageMuseumsAction.class);
 

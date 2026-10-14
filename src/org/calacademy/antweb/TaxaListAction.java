@@ -16,7 +16,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
-public final class TaxaListAction extends Action {
+public final class TaxaListAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TaxaListAction.class);
 

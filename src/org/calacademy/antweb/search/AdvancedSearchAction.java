@@ -17,7 +17,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public class AdvancedSearchAction extends Action {
+public class AdvancedSearchAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(AdvancedSearchAction.class);
 

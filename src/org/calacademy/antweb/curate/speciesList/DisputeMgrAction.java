@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.speciesList;
 
+import org.calacademy.antweb.AntwebAction;
+
 import javax.servlet.http.*;
 import javax.sql.DataSource;
 
@@ -12,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-public class DisputeMgrAction extends Action {
+public class DisputeMgrAction extends AntwebAction {
 
   private static final Log s_log = LogFactory.getLog(DisputeMgrAction.class);
 

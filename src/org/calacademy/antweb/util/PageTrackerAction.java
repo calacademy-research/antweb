@@ -1,5 +1,7 @@
 package org.calacademy.antweb.util;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
@@ -10,7 +12,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class PageTrackerAction extends Action {
+public final class PageTrackerAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(PageTrackerAction.class);
 

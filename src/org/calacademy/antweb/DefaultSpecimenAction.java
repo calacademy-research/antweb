@@ -16,7 +16,7 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class DefaultSpecimenAction extends Action {
+public final class DefaultSpecimenAction extends AntwebAction {
 
     private static String s_taxonName;
 

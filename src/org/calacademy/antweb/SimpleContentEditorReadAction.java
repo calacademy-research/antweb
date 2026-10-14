@@ -17,7 +17,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.AntwebUtil;
 
-public final class SimpleContentEditorReadAction extends Action {
+public final class SimpleContentEditorReadAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(SimpleContentEditorReadAction.class);
 

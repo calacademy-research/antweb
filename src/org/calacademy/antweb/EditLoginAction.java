@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public final class EditLoginAction extends Action {
+public final class EditLoginAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EditLoginAction.class);
 

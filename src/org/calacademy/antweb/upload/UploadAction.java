@@ -40,7 +40,7 @@ import java.util.*;
  *
  */
 
-public class UploadAction extends Action {
+public class UploadAction extends AntwebAction {
 
 	private static final Log s_log = LogFactory.getLog(UploadAction.class);
 

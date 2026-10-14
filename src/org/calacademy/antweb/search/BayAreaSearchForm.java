@@ -3,7 +3,7 @@ package org.calacademy.antweb.search;
 import org.calacademy.antweb.util.*;
 
 import javax.servlet.http.HttpServletRequest;
-import org.apache.struts.action.ActionError;
+import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 
@@ -26,7 +26,7 @@ public final class BayAreaSearchForm extends SearchForm {
         ActionErrors errors = new ActionErrors();
         
         if (adm2s == null) {
-			errors.add("name", new ActionError("error.name.required"));
+			errors.add("name", new ActionMessage("error.name.required"));
         }
         
         AntwebUtil.blockFishingAttack(request, errors);

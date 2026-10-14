@@ -1,7 +1,7 @@
 package org.calacademy.antweb;
 
 import javax.servlet.http.HttpServletRequest;
-import org.apache.struts.action.ActionError;
+import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
@@ -109,11 +109,11 @@ public class EditLoginForm extends ActionForm {
             errors = new ActionErrors();
 
             if (email == null || !AntwebUtil.validEmail(email)) {
-                errors.add("error", new ActionError("error.login.invalidEmail"));
+                errors.add("error", new ActionMessage("error.login.invalidEmail"));
             }
 
             if (retypePassword == null || !password.equals(retypePassword)) {
-                errors.add("error", new ActionError("error.login.retypePasswordMismatch"));        
+                errors.add("error", new ActionMessage("error.login.retypePasswordMismatch"));        
             }
 
             Login accessLogin = LoginMgr.getAccessLogin(request);  
@@ -125,7 +125,7 @@ public class EditLoginForm extends ActionForm {
                getPassword() != null && !getPassword().equals("") ||
                        getRetypePassword() != null && !getRetypePassword().equals("")
                ) {
-                errors.add("error", new ActionError("error.login.notEmptyPasswords"));              
+                errors.add("error", new ActionMessage("error.login.notEmptyPasswords"));              
             }
 
                  

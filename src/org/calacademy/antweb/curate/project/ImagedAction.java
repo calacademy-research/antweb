@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.project;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import java.util.*;
 import javax.servlet.ServletException;
@@ -15,7 +17,7 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class ImagedAction extends Action {
+public final class ImagedAction extends AntwebAction {
 
 // Not used?
 

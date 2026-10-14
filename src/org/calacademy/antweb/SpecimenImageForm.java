@@ -2,7 +2,7 @@ package org.calacademy.antweb;
 
 
 import javax.servlet.http.HttpServletRequest;
-import org.apache.struts.action.ActionError;
+import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
@@ -90,7 +90,7 @@ public final class SpecimenImageForm extends ActionForm {
         if (name == null || name.length() < 1)
           if (code == null || code.length() < 1)
             if (imageId == null || imageId.length() < 1)
-              errors.add("name", new ActionError("error.name.required"));
+              errors.add("name", new ActionMessage("error.name.required"));
               
         HttpUtil.blockFishingAttack(request, errors);
                       

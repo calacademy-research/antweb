@@ -20,7 +20,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 
-public final class ViewGroupAction extends Action {
+public final class ViewGroupAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ViewGroupAction.class);
 

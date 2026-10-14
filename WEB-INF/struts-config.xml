@@ -252,6 +252,10 @@
   <!-- ========== Action Mapping Definitions ============================== -->
   <action-mappings>
 
+    <!-- Requests for a *.do path with no mapping: a 404 page (Struts 1.4 otherwise answers 200 with an empty body). -->
+    <action path="/notFound" unknown="true" forward="/notFound.jsp"/>
+
+
 
   <!-- Static Mappings - that do not require action or form classes -->
 
@@ -1764,6 +1768,9 @@ We would like to remove getChildImages.  Not needed now in the new UI
   <controller maxFileSize="200M" />  
   
   <!-- plugin for project -->
+  <!-- Was the "application" ActionServlet parameter in Struts 1.1. -->
+  <message-resources parameter="ApplicationResources"/>
+
     <plug-in className="org.calacademy.antweb.util.StartupPlugIn"/>
 
   <!--plug-in for tiles -->

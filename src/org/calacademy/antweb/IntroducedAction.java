@@ -15,7 +15,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
-public final class IntroducedAction extends Action {
+public final class IntroducedAction extends AntwebAction {
 
 /*
 Primary documentation spot for Introduced functionality.

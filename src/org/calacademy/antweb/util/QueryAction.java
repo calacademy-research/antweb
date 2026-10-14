@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 
-public class QueryAction extends Action {
+public class QueryAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(QueryAction.class);
     

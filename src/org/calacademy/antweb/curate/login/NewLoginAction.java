@@ -22,7 +22,7 @@ import org.calacademy.antweb.util.*;
  *
  */
 
-public class NewLoginAction extends Action {
+public class NewLoginAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(NewLoginAction.class);
 

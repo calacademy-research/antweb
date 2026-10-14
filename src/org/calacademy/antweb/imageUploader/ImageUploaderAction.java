@@ -24,7 +24,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class ImageUploaderAction extends Action {
+public final class ImageUploaderAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ImageUploaderAction.class);
 

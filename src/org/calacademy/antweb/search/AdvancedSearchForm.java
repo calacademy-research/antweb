@@ -136,12 +136,12 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
 /*
         if ((name == null) || (name.length() < 1)) {
           if (((images == null) || (images.length() < 1))  && ((types == null) || (types.length() < 1))) {
-            errors.add("name", new ActionError("error.name.required"));
+            errors.add("name", new ActionMessage("error.name.required"));
           } 
         }
 
         if ((searchType == null) || (searchType.length() < 1))
-            errors.add("searchType", new ActionError("error.searchType.required"));
+            errors.add("searchType", new ActionMessage("error.searchType.required"));
 */
 
         AntwebUtil.blockFishingAttack(request, errors);

@@ -20,7 +20,7 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
 
-public final class PictureLikeAction extends Action {
+public final class PictureLikeAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(PictureLikeAction.class);
 

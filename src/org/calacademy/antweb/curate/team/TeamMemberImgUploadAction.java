@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.team;
 
+import org.calacademy.antweb.AntwebAction;
+
 import org.apache.struts.action.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,7 +13,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class TeamMemberImgUploadAction extends Action {
+public final class TeamMemberImgUploadAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TeamMemberImgUploadAction.class);
 

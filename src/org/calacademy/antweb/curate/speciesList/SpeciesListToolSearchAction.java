@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.speciesList;
 
+import org.calacademy.antweb.AntwebAction;
+
 import javax.servlet.http.*;
 import javax.sql.DataSource;
 
@@ -12,7 +14,7 @@ import org.calacademy.antweb.util.*;
 
 import org.calacademy.antweb.search.*;
 
-public class SpeciesListToolSearchAction extends Action { //extends SpeciesListToolAction 
+public class SpeciesListToolSearchAction extends AntwebAction { //extends SpeciesListToolAction 
 
   private static final Log s_log = LogFactory.getLog(SpeciesListToolSearchAction.class);
 

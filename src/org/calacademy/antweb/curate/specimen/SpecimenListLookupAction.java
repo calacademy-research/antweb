@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.specimen;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -26,7 +28,7 @@ import org.calacademy.antweb.util.Check;
 import org.calacademy.antweb.util.DBUtil;
 import org.calacademy.antweb.util.HttpUtil;
 
-public class SpecimenListLookupAction extends org.apache.struts.action.Action {
+public class SpecimenListLookupAction extends AntwebAction {
     private static final Log s_log = LogFactory.getLog(SpecimenListLookupAction.class);
 
     @Override

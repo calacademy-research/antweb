@@ -28,7 +28,7 @@ be a executed sequentially in a separate web request.
 
 The requested urls should perhaps be in utilData.do instead of here.
 */
-public class Scheduler extends Action {
+public class Scheduler extends AntwebAction {
 
     public static final int LAUNCHTIME = 5; // 5 am. Referenced from SessionRequestFilter.
 

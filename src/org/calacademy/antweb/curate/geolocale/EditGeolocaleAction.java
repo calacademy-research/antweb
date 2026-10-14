@@ -19,7 +19,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class EditGeolocaleAction extends Action {
+public final class EditGeolocaleAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EditGeolocaleAction.class);
 

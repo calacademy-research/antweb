@@ -1,5 +1,7 @@
 package org.calacademy.antweb.util;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -15,7 +17,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class TaxonomicPageGenAction extends Action {
+public final class TaxonomicPageGenAction extends AntwebAction {
 
 /* Currently this is a proof of concept class.  By calling a URL such as:
       http://localhost/antweb/display.do?name=tetramorium&rank=genus&project=allantwebants

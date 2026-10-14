@@ -1,5 +1,7 @@
 package org.calacademy.antweb.imageUploader;
 
+import org.calacademy.antweb.AntwebAction;
+
 import org.apache.struts.action.*;
 
 import java.sql.*;
@@ -21,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
    https://stackoverflow.com/questions/20183295/uploading-multiple-files-using-jsp-servlets
 */
 
-public final class ImageUploadReport extends Action {
+public final class ImageUploadReport extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ImageUploadReport.class);
 

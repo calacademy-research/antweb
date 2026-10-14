@@ -1,5 +1,7 @@
 package org.calacademy.antweb.util;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import java.io.File;
 import javax.servlet.ServletException;
@@ -20,7 +22,7 @@ import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.Formatter;
     
-public final class ServerStatusAction extends Action {
+public final class ServerStatusAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ServerStatusAction.class);
 

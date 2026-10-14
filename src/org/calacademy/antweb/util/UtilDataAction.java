@@ -40,7 +40,7 @@ import java.util.List;
    https://www.antweb.org/utilData.do?action=deleteConflictedDefaultImages
 */
 
-public class UtilDataAction extends Action {
+public class UtilDataAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UtilDataAction.class);
 

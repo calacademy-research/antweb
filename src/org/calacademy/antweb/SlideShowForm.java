@@ -70,9 +70,9 @@ public final class SlideShowForm extends ActionForm {
 
         ActionErrors errors = new ActionErrors();
         //if ((name == null) || (name.length() < 1))
-        //    errors.add("name", new ActionError("error.name.required"));
+        //    errors.add("name", new ActionMessage("error.name.required"));
         //if ((rank == null) || (rank.length() < 1))
-        //    errors.add("rank", new ActionError("error.rank.required"));
+        //    errors.add("rank", new ActionMessage("error.rank.required"));
 
         AntwebUtil.blockFishingAttack(request, errors);
 

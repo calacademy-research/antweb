@@ -14,7 +14,7 @@
 	String groupName = accessGroup.getName();	
 %>
 
-<html:html locale="true">
+<html:html lang="true">
 <head>
 <title>Changing Password for <%= groupName %></title>
 <html:base/>

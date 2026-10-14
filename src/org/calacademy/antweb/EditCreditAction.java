@@ -23,7 +23,7 @@ import org.calacademy.antweb.util.*;
  *
  */
 
-public class EditCreditAction extends Action {
+public class EditCreditAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EditCreditAction.class);
 

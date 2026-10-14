@@ -1,5 +1,7 @@
 package org.calacademy.antweb.search;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -14,7 +16,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class DescEditSearchAction extends Action {
+public final class DescEditSearchAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(DescEditSearchAction.class);
 

@@ -14,7 +14,7 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-public final class SearchListAction extends Action {
+public final class SearchListAction extends AntwebAction {
 /* This class returns a link to the file generated for search results. */
 
     private static final Log s_log = LogFactory.getLog(SearchListAction.class);

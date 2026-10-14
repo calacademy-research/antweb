@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -12,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
-public final class CurateAction extends Action {
+public final class CurateAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(CurateAction.class);
     

@@ -58,10 +58,10 @@ public class TeamMemberForm extends ActionForm {
        //     errors = new ActionErrors();
             
        //     if ((name == null) || (name.length() < 1))
-       //         errors.add("error", new ActionError("error.group.namerequired"));
+       //         errors.add("error", new ActionMessage("error.group.namerequired"));
             
             //if ((name != null) && (name.indexOf(" ") != -1))
-            //    errors.add("error", new ActionError("error.group.nonamespaces"));
+            //    errors.add("error", new ActionMessage("error.group.nonamespaces"));
        // }
         return errors;
     }

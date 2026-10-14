@@ -1,5 +1,7 @@
 package org.calacademy.antweb.upload;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -11,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
     
-public final class UploadReportAction extends Action {
+public final class UploadReportAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UploadReportAction.class);
 

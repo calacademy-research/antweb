@@ -1,5 +1,7 @@
 package org.calacademy.antweb.util;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -16,7 +18,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.home.*;
     
-public final class DbStatusAction extends Action {
+public final class DbStatusAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(DbStatusAction.class);
 

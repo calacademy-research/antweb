@@ -27,7 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.exception.TaxonNotFoundException;
 
-public final class FieldGuideAction extends Action {
+public final class FieldGuideAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(FieldGuideAction.class);
     

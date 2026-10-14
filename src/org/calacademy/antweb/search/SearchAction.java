@@ -8,7 +8,7 @@ import javax.servlet.http.*;
 import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
-import org.apache.struts.actions.DispatchAction;
+import org.apache.struts.extras.actions.DispatchAction;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public final class SearchAction extends DispatchAction {
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("SearchAction.execute()");
         try {
-          DataSource dataSource = getDataSource(request, "conPool");
+          DataSource dataSource = org.calacademy.antweb.util.AntwebDataSources.get(request.getServletContext(), "conPool");
           connection = DBUtil.getConnection(dataSource, dbMethodName);
 
           ActionForward b = Check.busy(connection, request, mapping); if (b != null) return b;
@@ -260,7 +260,7 @@ public final class SearchAction extends DispatchAction {
 			Connection connection = null;
             String dbMethodName = DBUtil.getDbMethodName("SearchAction.doAdvancedSearch()");
 			try {
-				DataSource dataSource = getDataSource(request,"conPool");
+				DataSource dataSource = org.calacademy.antweb.util.AntwebDataSources.get(request.getServletContext(), "conPool");
 				connection = DBUtil.getConnection(dataSource, dbMethodName);
 				title = "Mapping Search Results";
 				map = new MapResultsAction().getMap(results.getResults(), null, null, resultRank, output, title, connection); // nulls are taxonList, chosenList

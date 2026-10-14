@@ -1,5 +1,7 @@
 package org.calacademy.antweb.data;
 
+import org.calacademy.antweb.AntwebAction;
+
 import java.io.*;
 
 import org.apache.regexp.*;
@@ -14,7 +16,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
-public final class Adm1LoadAction extends Action {
+public final class Adm1LoadAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(Adm1LoadAction.class);
 
