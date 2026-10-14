@@ -46,7 +46,7 @@
     <div id="overview_data" class="plain">
         <ul>
         <li><b>Curator: </b></li>
-        <li><%= curator.getLink() %> - <a href="<%= AntwebProps.getDomainApp() %>/listImageUploads.do?curatorId=<%= (curator.getId()) %>">[Reports]</a>
+        <li><%= curator != null ? curator.getLink() : "id " + imageUpload.getCuratorId() %> - <a href="<%= AntwebProps.getDomainApp() %>/listImageUploads.do?curatorId=<%= imageUpload.getCuratorId() %>">[Reports]</a>
 </li>
         </ul>
     </div>
