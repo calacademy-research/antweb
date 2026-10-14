@@ -10,7 +10,6 @@ import java.util.*;
 import javax.servlet.http.*;
 import javax.servlet.*;
 
-import org.apache.commons.httpclient.URIException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -26,7 +25,6 @@ import java.sql.SQLException;
 import java.util.regex.*;
 
 import org.calacademy.antweb.AntFormatter;
-import org.apache.commons.httpclient.util.URIUtil;
 
 
 public abstract class HttpUtil {
@@ -583,19 +581,14 @@ public abstract class HttpUtil {
     public static String encodePath(String str) {
         String target = null;
         if (str != null) {
-            try {
-                target = URIUtil.encodePath(str, "ISO-8859-1");
-            } catch (URIException e) {
-                // do nothing.
-            }
+            target = UriEncoder.encodePath(str, "ISO-8859-1");
         }
         return target;
     }
 
     /*
               // This will turn spaces into +
-              //import org.apache.commons.httpclient.util.URIUtil;
-              //url = URIUtil.encodeQuery(url);
+              //url = UriEncoder.encodeQuery(url);
      */
     public static String encode(String toEncode) {
         String encoded = null;
@@ -1304,8 +1297,8 @@ public abstract class HttpUtil {
     public static boolean urlExists(String url) {
       String content = null;
       try {
-          // This will turn spaces into +
-          url = URIUtil.encodeQuery(url);
+          // Percent-encodes spaces (%20) and other characters not allowed in a URL.
+          url = UriEncoder.encodeQuery(url);
 
           content = fetchUrl(url);
       } catch (IOException e) {
