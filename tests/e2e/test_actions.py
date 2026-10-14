@@ -20,8 +20,6 @@ PROBE_WRITES = os.environ.get("ANTWEB_PROBE_WRITE_ACTIONS") == "1" and not IS_PR
 # Actions broken when the baseline was recorded. They must not get worse, and
 # the list should shrink; remove an entry once it is fixed.
 KNOWN_BROKEN = {
-    "/taxonomicPage": "500 without parameters (works with rank/project)",
-    "/taxonomicpage": "500 without parameters (works with rank/project)",
     "/chooseComparison": "error page without parameters",
     "/viewGroup": "error page without parameters",
 }
@@ -32,6 +30,9 @@ def test_removed_actions_stay_removed():
     for path in ("/ancPageMgr", "/jspFetch", "/saveHomePage", "/previewHomePage", "/editHomePage"):
         outcome = get(new_session(), f"{path}.do")
         assert outcome.category not in BROKEN and outcome.status in (400, 404), f"{path}: {outcome}"
+    # Any unknown path: a 404 page, not a blank 200.
+    outcome = get(new_session(), "/noSuchAction.do")
+    assert outcome.status in (400, 404), f"/noSuchAction.do: {outcome}"
 
 
 def test_every_action_has_a_decision():
