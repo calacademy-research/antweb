@@ -22,6 +22,8 @@ public class ManageMuseumsAction extends Action {
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
+        // Require a logged-in administrator: this action changes data.
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
 
         ArrayList<Museum> museumList = null;
         Museum museum = null;

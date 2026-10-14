@@ -30,6 +30,8 @@ public final class DeleteImagesAction extends Action {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
+        // Require a logged-in curator: this action changes data.
+        ActionForward denied = LoginMgr.mustBeCurator(request, mapping); if (denied != null) return denied;
 
         String message = null;
         
