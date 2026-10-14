@@ -40,6 +40,7 @@ ADMIN_ONLY = [
     "/newBioRegion.do",
     "/serverDebug.do",
     "/dbStatus.do",
+    "/loginAs.do?id=1",
 ]
 
 
@@ -81,7 +82,7 @@ def test_admin_page_refused_for_curator(curator, url):
 
 def test_password_not_in_pages(curator):
     """The curator's own password must never be echoed into a page they open themselves.
-    (Admin login pages still pre-fill passwords: fixed with password hashing.)"""
+    Passwords are stored hashed and never pre-filled into forms."""
     for url in ("/curate.do", "/editLogin.do", "/curator.do"):
         r = curator.get(BASE_URL + url, timeout=60)
         assert PASSWORD not in r.text, f"{url} contains the password"

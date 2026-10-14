@@ -93,7 +93,9 @@ public final class EditLoginAction extends AntwebAction {
             
             login.setName(editForm.getName());
             login.setEmail(editForm.getEmail());
-            login.setPassword(editForm.getPassword()); 
+            // A blank password means: keep the current one (the form no longer shows it).
+            String newPassword = editForm.getPassword();
+            if (newPassword != null && !newPassword.isEmpty()) login.setPassword(newPassword);
             login.setFirstName(editForm.getFirstName());
             login.setLastName(editForm.getLastName());
             
@@ -124,7 +126,7 @@ public final class EditLoginAction extends AntwebAction {
     private boolean isNoChange(EditLoginForm editForm, Login login) {
         return editForm.getEmail().equals(login.getEmail())
                 && editForm.getName().equals(login.getName())
-                && editForm.getPassword().equals(login.getPassword())
+                && (editForm.getPassword() == null || editForm.getPassword().isEmpty())
                 && editForm.getFirstName().equals(login.getFirstName())
                 && editForm.getLastName().equals(login.getLastName());
     }
@@ -144,17 +146,12 @@ public final class EditLoginAction extends AntwebAction {
             message = "Name must be valid";
         }
 
-        if (password == null || !password.equals(retypePassword)) {
+        // Both password fields blank: keep the current password.
+        if (password == null) password = "";
+        if (retypePassword == null) retypePassword = "";
+        if (!password.equals(retypePassword)) {
             message = "Password and Re-type Password must match";
         }
-
-        if (
-                password == null || password.equals("") ||
-                        retypePassword == null || retypePassword.equals("")
-           ) {
-            s_log.debug("validate() password:" + password + " retype:" + retypePassword);
-             message = "Password fields may not be empty";
-        }  
         return message;  
     }
 }

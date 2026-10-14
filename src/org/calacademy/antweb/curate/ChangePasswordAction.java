@@ -42,7 +42,7 @@ public final class ChangePasswordAction extends AntwebAction {
 		String newPassword = theForm.getNewPassword1();
 		String newPassword2 = theForm.getNewPassword2();
 		
-		if (!accessLogin.getPassword().equals(oldPassword)) {
+		if (!PasswordHash.matches(accessLogin.getPassword(), oldPassword)) {
 			msg = new ActionMessage("error.login.failedLogin");
 			messages.add("message",msg);
 		}

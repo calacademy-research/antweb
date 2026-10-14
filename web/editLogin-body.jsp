@@ -51,13 +51,13 @@
 
 <h3>Password:
 <br>
-<input type="password" class="login_input" name="password" value="<%= thisLogin.getPassword() %>">
+<input type="password" class="login_input" name="password" value="" autocomplete="new-password" placeholder="leave blank to keep">
 </h3>
 <p>
 
 <h3>Retype Password:
 <br>
-<input type="password" class="login_input" name="retypePassword" value="<%= thisLogin.getPassword() %>">
+<input type="password" class="login_input" name="retypePassword" value="" autocomplete="new-password" placeholder="leave blank to keep">
 </h3>
 <p>
 

@@ -73,11 +73,11 @@ A.log("viewLogin-body.jsp uploadAs:" + thisLogin.getUploadAs());
 <br><br>
 
 <h3>Password:</h3>
-<input type="password" class="input_200" name="password" value="<%= thisLogin.getPassword() %>">
+<input type="password" class="input_200" name="password" value="" autocomplete="new-password" placeholder="leave blank to keep">
 <br><br>
 
 <h3>Retype Password:</h3>
-<input type="password" class="input_200" name="retypePassword" value="<%= thisLogin.getPassword() %>">
+<input type="password" class="input_200" name="retypePassword" value="" autocomplete="new-password" placeholder="leave blank to keep">
 
 <% if (accessLogin.isAdmin()) { %>
 <div class="action_hint">
@@ -247,7 +247,7 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
 
 
 <% if (accessLogin.isAdmin()) { %>
-&nbsp;&nbsp;&nbsp;Login as: <a href="<%= secureDomainApp %>/login.do?userName=<%= thisLogin.getName() %>&password=<%= thisLogin.getPassword() %>"><%= thisLogin.getName() %></a>
+&nbsp;&nbsp;&nbsp;Login as: <a href="<%= secureDomainApp %>/loginAs.do?id=<%= thisLogin.getId() %>"><%= thisLogin.getName() %></a>
 <% } %>
 
 
