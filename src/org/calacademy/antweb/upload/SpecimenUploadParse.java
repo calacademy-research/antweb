@@ -38,6 +38,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             s_log.warn("isKnownCombination() name:" + name + " e:" + e);
             return false;
         }
+    }
 
     static int MAXLENGTH = 80;
 
@@ -1227,5 +1228,4 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
     
     
-    }
 }
