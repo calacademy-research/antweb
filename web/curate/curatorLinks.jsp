@@ -43,7 +43,7 @@
       <li><a href="<%= AntwebProps.getSecureDomainApp() %>/query.do?action=curiousQuery&name=lastSpecimenUpload">Last Upload List</a>
       <li><a href="<%= domainApp %>/list.do?action=usrAdmLastLogin">User Last Login List</a>
 <%
-      String content = AntwebUtil.readFile("/data/antweb/web/siteWarning.jsp");
+      String content = AntwebUtil.readFile("/data/antweb/web/siteWarning.txt");
       if (content == null || "null".equals(content)) content = "";
 %>
       <li><a href="<%= domainApp %>/utilData.do?action=siteWarning&text=<%= content %>">Site Warning</a>

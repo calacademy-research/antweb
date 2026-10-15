@@ -36,7 +36,7 @@
     int after = nowTimeStamp.compareTo(beginDisplay);
     int before = nowTimeStamp.compareTo(endDisplay);
     boolean display = after == 1 && before == -1;
-    String siteWarning = AntwebUtil.readFile("/data/antweb/web/siteWarning.jsp");
+    String siteWarning = AntwebUtil.readFile("/data/antweb/web/siteWarning.txt");
     if (siteWarning == null) siteWarning = "";
     //A.log("academyHeader now:" + nowTimeStamp + " display:" + display + " after:" + after + " before:" + before);
     //if (siteWarning != null) out.println("<li><br>" + siteWarning + "</li>");    

@@ -40,6 +40,13 @@ public class UtilAction extends AntwebAction {
 
 		ActionForward forward = null;
 
+		// Everything here is an admin tool, except isRestart (polled by the host's
+		// reboot_checker.sh) and postInstantiate (AntWeb's own call after startup).
+		if (!"isRestart".equals(action) && !"postInstantiate".equals(action) && !LoginMgr.isAdmin(request)) {
+			request.setAttribute("message", "Administrators only.");
+			return mapping.findForward("message");
+		}
+
 		String[] longActions = new String[]{"postInstantiate", "reloadAntwebMgr"};
 		if (Arrays.asList(longActions).contains(action)) {
 			forward = doLongAction(mapping, form, request, response);
