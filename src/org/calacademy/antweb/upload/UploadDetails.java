@@ -73,6 +73,12 @@ public class UploadDetails extends OperationDetails {
       messageMgr = new MessageMgr();
     }
 	
+    // How the upload was made, shown in the report header: null for the upload page,
+    // or e.g. "Nightly TaxonWorks job (automatic)" (GitHub #27).
+    private String uploadSource;
+    public void setUploadSource(String uploadSource) { this.uploadSource = uploadSource; }
+    public String getUploadSource() { return uploadSource; }
+
     public void genUploadReport(Login accessLogin, HttpServletRequest request) {
         genUploadReport(UploadHelper.getUploadFile(), accessLogin, request);
     }
@@ -131,6 +137,12 @@ public class UploadDetails extends OperationDetails {
             + "<br>&nbsp;&nbsp;&nbsp;<b>Encoding:</b> " + encoding   
             + "<br>&nbsp;&nbsp;&nbsp;<b>Antweb version:</b> " + AntwebUtil.getReleaseNum()
             + "<br>&nbsp;&nbsp;&nbsp;<b>Uploaded File:</b> " + getBackupFileAnchor();
+
+        if (uploadSource != null) {
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Uploaded by:</b> " + uploadSource;
+        } else if ("specimenUpload".equals(getOperation()) || "taxonWorksUpload".equals(getOperation())) {
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Uploaded by:</b> Upload page (manual)";
+        }
 
         // AccessGroup should have a getCurator link. Will always be a curator.
         // Should load properly in the first place.
