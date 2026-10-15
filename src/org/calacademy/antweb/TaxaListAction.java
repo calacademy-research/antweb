@@ -42,6 +42,7 @@ public final class TaxaListAction extends AntwebAction {
 		String imaged = request.getParameter("imaged");		
     
         String title = "";
+        java.util.List<String> args = new java.util.ArrayList<>();  // values for the ? placeholders, in order
         if (status != null) title += Formatter.initCap(status) + " ";
         if ("1".equals(extant)) title += "Extant ";
         if ("1".equals(imaged)) title += "Imaged ";
@@ -58,14 +59,14 @@ public final class TaxaListAction extends AntwebAction {
           if ("species".equals(rank)) {
             query += " and (taxarank = 'species' or taxarank = 'subspecies')";
           } else
-            query += " and taxarank = '" + rank + "'";
+            { query += " and taxarank = ?"; args.add(rank); }
         }
         
         if (!"".equals(status) && status != null) {
-          query += " and status = '" + status + "'";
+          query += " and status = ?"; args.add(status);
         }
         if (!"".equals(extant) && extant != null) {
-          query += " and fossil != " + extant;
+          query += " and fossil != " + ("1".equals(extant) ? "1" : "0");
         }
         if ("1".equals(imaged)) {
           query += " and image_count > 0";
@@ -75,21 +76,21 @@ public final class TaxaListAction extends AntwebAction {
 
         String param = "";
         if (!"".equals(projectName) && projectName != null) {
-          query += " and taxon_name in (select taxon_name from proj_taxon where project_name = '" + projectName + "')";
-          param = "&project=" + projectName;
+          query += " and taxon_name in (select taxon_name from proj_taxon where project_name = ?)"; args.add(projectName);
+          param = "&project=" + urlEncode(projectName);
           Project project = ProjectMgr.getProject(projectName);
           title += project.getTitle();
         }
         if (!"".equals(bioregionName) && bioregionName != null) {
-          query += " and taxon_name in (select taxon_name from bioregion_taxon where bioregion_name = '" + bioregionName + "')";
-          param = "&bioregionName=" + bioregionName;
+          query += " and taxon_name in (select taxon_name from bioregion_taxon where bioregion_name = ?)"; args.add(bioregionName);
+          param = "&bioregionName=" + urlEncode(bioregionName);
           Bioregion bioregion = BioregionMgr.getBioregion(bioregionName);
           title += bioregion;
         }
         if (!"".equals(museumCode) && museumCode != null) {
-          query += " and taxon_name in (select taxon_name from museum_taxon where code = '" + museumCode + "')";
+          query += " and taxon_name in (select taxon_name from museum_taxon where code = ?)"; args.add(museumCode);
           Museum museum = MuseumMgr.getMuseum(museumCode);
-          param = "&museumName=" + museumCode;
+          param = "&museumName=" + urlEncode(museumCode);
           title += museum;
         }
         if (!"".equals(geolocaleName) && geolocaleName != null) {
@@ -103,20 +104,22 @@ public final class TaxaListAction extends AntwebAction {
 
         ArrayList<String> taxaList = new ArrayList<>();
         Connection connection = null;
-        Statement stmt = null;
+        java.sql.PreparedStatement stmt = null;
         ResultSet rset = null;
         String dbMethodName = DBUtil.getDbMethodName("TaxaListAction.execute()");
 		try {
 			DataSource dataSource = getDataSource(request, "conPool");
 			connection = DBUtil.getConnection(dataSource, dbMethodName);
 
-            stmt = connection.createStatement();
-            rset = stmt.executeQuery(query);
+            // Request values are bound as parameters, never pasted into the SQL (security audit 2026-10).
+            stmt = connection.prepareStatement(query);
+            for (int i = 0; i < args.size(); i++) stmt.setString(i + 1, args.get(i));
+            rset = stmt.executeQuery();
             s_log.debug("execute() query:" + query);
 
             while (rset.next()) {
                 String taxonName = rset.getString(1);
-                String taxonLink = "<a href=\"" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + param + "\">" + taxonName + "</a>";
+                String taxonLink = "<a href=\"" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + urlEncode(taxonName) + param + "\">" + escapeHtml(taxonName) + "</a>";
                 taxaList.add(taxonLink);
             }
 		} catch (SQLException e) {
@@ -126,8 +129,17 @@ public final class TaxaListAction extends AntwebAction {
 		}
 		
         //s_log.warn("execute() list:" + taxaList);
-		request.setAttribute("title", title);
+		request.setAttribute("title", escapeHtml(title));
 	    request.setAttribute("list", taxaList);        
         return mapping.findForward("success");
 	}
+
+    private static String urlEncode(String value) {
+        return java.net.URLEncoder.encode(value == null ? "" : value, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private static String escapeHtml(String value) {
+        if (value == null) return "";
+        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
+    }
 }
