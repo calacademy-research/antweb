@@ -1287,10 +1287,19 @@ public abstract class HttpUtil {
     return HttpUtil.getUrl(theUrl, "ISO-8859-1");
   }
 
+  // Default timeouts for URL fetches (issue #39). A remote that stops sending
+  // bytes gives up after 5 minutes instead of blocking the thread forever.
+  public static final int DEFAULT_CONNECT_TIMEOUT_MS = 60_000;
+  public static final int DEFAULT_READ_TIMEOUT_MS = 300_000;
+
   private static URLConnection openWithTimeouts(String theUrl) throws IOException {
+    return openWithTimeouts(theUrl, DEFAULT_READ_TIMEOUT_MS);
+  }
+
+  private static URLConnection openWithTimeouts(String theUrl, int readTimeoutMs) throws IOException {
     URLConnection conn = new URL(theUrl).openConnection();
-    conn.setConnectTimeout(60_000);
-    conn.setReadTimeout(300_000);
+    conn.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT_MS);
+    conn.setReadTimeout(readTimeoutMs);
     return conn;
   }
 
@@ -1386,6 +1395,16 @@ public abstract class HttpUtil {
   // SpecimenFetch uses it.
   public static String fetchUrl(String theUrl)   
     throws IOException {  
+      return fetchUrl(theUrl, DEFAULT_READ_TIMEOUT_MS);
+  }
+
+  /**
+   * Same as fetchUrl(theUrl) but with a caller-chosen read timeout, for requests
+   * that legitimately take longer than DEFAULT_READ_TIMEOUT_MS to answer, such as
+   * the Scheduler's utilData.do?action=set1..set5 calls to this server (#62).
+   */
+  public static String fetchUrl(String theUrl, int readTimeoutMs)   
+    throws IOException {  
 
       String encode = "UTF-8";
     
@@ -1419,7 +1438,7 @@ public abstract class HttpUtil {
       url = new URL(theUrl) ;
 
       //BufferedReader br = new BufferedReader(new InputStreamReader(is, UTF8), BUFFER_SIZE);
-      BufferedReader in = new BufferedReader(new InputStreamReader(openWithTimeouts(theUrl).getInputStream(), encode));  //"UTF-8" ?
+      BufferedReader in = new BufferedReader(new InputStreamReader(openWithTimeouts(theUrl, readTimeoutMs).getInputStream(), encode));  //"UTF-8" ?
 
       String str = null;
       while ((str = in.readLine()) != null) {
