@@ -150,6 +150,27 @@ public class TaxonMgr extends Manager {
       return (Genus) s_genera.get(genusTaxonName);
     }
 
+    /** The synonymized genus with this name (e.g. "wasmannia"), or null. GitHub #95. */
+    public static Genus getSynonymGenusFromName(String genusName) {
+      if (genusName == null || s_genera == null) return null;
+      for (Taxon g : s_genera.values()) {
+        if (genusName.equals(g.getName()) && Status.SYNONYM.equals(g.getStatus()) && g instanceof Genus) return (Genus) g;
+      }
+      return null;
+    }
+
+    /** The valid genus a synonymized genus now belongs to (e.g. Wasmannia -> Allomerus), or null. */
+    public static Genus getCurrentValidGenus(Genus synonymGenus) {
+      if (synonymGenus == null) return null;
+      String cvn = synonymGenus.getCurrentValidName();
+      if (cvn == null || cvn.isBlank()) return null;
+      cvn = cvn.trim().toLowerCase();
+      Genus valid = getGenus(cvn);  // current_valid_name is usually [subfamily][genus]
+      if (valid == null) valid = getGenusFromName(cvn);  // or just the genus name
+      if (valid == null || Status.SYNONYM.equals(valid.getStatus())) return null;
+      return valid;
+    }
+
     public static Genus getGenusFromName(String genusName) {
       //ProfileCounter.add("TaxonMgr.getGenusFromName()" + AntwebUtil.getShortStackTrace());
 

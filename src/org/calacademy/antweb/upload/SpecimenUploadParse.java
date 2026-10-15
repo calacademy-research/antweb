@@ -325,6 +325,29 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
      	    if (!Genus.isIndet(genusName)) {
      	        // Perhaps replace subfamilyName with the parent of the genus...
 			    Genus genus = TaxonMgr.getGenusFromName(genusName);
+
+                // A synonymized genus (e.g. Wasmannia, now Allomerus) is not found above, and its
+                // records used to be refused as "No valid Subfamily For Genus" (GitHub #95).
+                boolean keepSynonymGenus = false;
+                if (genus == null) {
+                    Genus synonymGenus = TaxonMgr.getSynonymGenusFromName(genusName);
+                    Genus validGenus = TaxonMgr.getCurrentValidGenus(synonymGenus);
+                    if (validGenus != null) {
+                        if (isKnownCombination(synonymGenus.getSubfamily(), genusName, speciesName, subspeciesName)) {
+                            // AntCat has a current valid name for this combination (e.g. Wasmannia
+                            // auropunctata -> Allomerus auropunctatus). Keep it as uploaded; the
+                            // species step replaces the whole name ("Recognized invalid species").
+                            keepSynonymGenus = true;
+                        } else {
+                            // Morphospecies, indets and names AntCat does not know: move to the
+                            // current valid genus.
+                            getMessageMgr().addToMessages(MessageMgr.synonymGenusReplaced,
+                                Formatter.initCap(genusName) + " -> " + Formatter.initCap(validGenus.getName()));
+                            genusName = validGenus.getName();
+                            genus = validGenus;
+                        }
+                    }
+                }
 			    //if (genus != null) A.log("parseLine() genusName:" + genusName + " genus:" + genus + " genusSubfamily:" + genus.getSubfamily());
 
                 //if ("antweb1008548".equals(code)) AntwebUtil.log("parseLine() 1 code:" + code + " not ant? genus:" + genusName + " genus:" + genus);
@@ -357,6 +380,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                       //A.log("parseLine() preferredSubfamilyForGenusReplaced: subfamily:" + subfamily + " subfamilyName:" + subfamilyName + " genus:" + genus + " genusName:" + genusName + " displayTaxonName:" + displayTaxonName);
                   }
                   subfamilyName = subfamily;
+				} else if (keepSynonymGenus) {
+				  subfamilyName = TaxonMgr.getSynonymGenusFromName(genusName).getSubfamily();
 				} else {
 				  // If we don't find it, maybe it is not an ant. Then insert it, no error message.
 				  if (!("(Formicidae)".equals(subfamilyName) || Subfamily.isValidAntSubfamily(subfamilyName))) {
@@ -1189,4 +1214,18 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
     
     
+
+    /** Is this combination a taxon AntWeb knows with a current valid name from AntCat? (GitHub #95) */
+    private boolean isKnownCombination(String subfamily, String genusName, String speciesName, String subspeciesName) {
+        if (Utility.isBlank(speciesName) || Taxon.isMorphoOrIndet(speciesName)) return false;
+        String name = subfamily + genusName + " " + speciesName;
+        if (!Utility.isBlank(subspeciesName)) name += " " + subspeciesName;
+        try {
+            Taxon taxon = new org.calacademy.antweb.home.TaxonDb(getConnection()).getTaxon(name);
+            return taxon != null && !Utility.isBlank(taxon.getCurrentValidName());
+        } catch (SQLException e) {
+            s_log.warn("isKnownCombination() name:" + name + " e:" + e);
+            return false;
+        }
+    }
 }
