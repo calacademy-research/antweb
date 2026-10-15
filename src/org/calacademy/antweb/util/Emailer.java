@@ -107,6 +107,14 @@ public class Emailer {
             return;
         }
 
+        // Mark mail from anything but the live site, e.g. "[staging.antweb.org] ...".
+        String site = AntwebProps.getDomainApp();
+        if (site != null && !site.contains("www.antweb.org")) {
+            String host = site.replaceFirst("^https?://", "").replaceFirst("/.*$", "");
+            subject = "[" + host + "] " + subject;
+            content = content + "<br><br><small>Sent from " + host + "</small>";
+        }
+
         Properties p = props();
         final String username = p.getProperty("username").trim();
         final String passwd = p.getProperty("password").trim();
