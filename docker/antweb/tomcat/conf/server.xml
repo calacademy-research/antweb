@@ -67,12 +67,13 @@
          AJP  Connector: /docs/config/ajp.html
          Define a non-SSL/TLS HTTP/1.1 Connector on port 8080
     -->
-    <!-- AntWeb: behind Caddy (TLS ends there, hence scheme="https").
+    <!-- AntWeb: behind Caddy (TLS ends there, hence scheme="https" and secure="true",
+         which also gives the session cookie the Secure flag).
          connectionTimeout 1 hour: long batch uploads.
          maxParameterCount / maxPartCount: Tomcat 11 defaults (1000 / 10) are too
          low for AntWeb's large forms and multi-image uploads. -->
     <Connector port="8080" protocol="HTTP/1.1"
-               connectionTimeout="3600000" scheme="https"
+               connectionTimeout="3600000" scheme="https" secure="true"
                maxParameterCount="10000"
                maxPartCount="1000" />
     <!-- A "Connector" using the shared thread pool-->
