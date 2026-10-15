@@ -54,6 +54,16 @@ www.antweb.org {
 
         redir @static_images {$IMAGE_BUCKET_DOMAIN}{uri}
 
+        # Never served: Tomcat admin apps, database dumps, private logs, working files,
+        # raw exception logs. (Checked first, so the allow-list below cannot let them through.)
+        @denied_paths {
+            path /manager /manager/* /host-manager /host-manager/*
+            path /backup /backup/* /log /log/* /logbak /logbak/*
+            path /web/workingdir /web/workingdir/* /web/log/srf* /web/log/bak /web/log/bak/*
+            path /WEB-INF/* /META-INF/*
+        }
+        respond @denied_paths "Not found" 404
+
         # Login records (who logged in, when): admins read them through /logMgr.do.
         respond /web/log/logins* "Not found" 404
 
@@ -77,7 +87,14 @@ www.antweb.org {
             }
         }
 
-        reverse_proxy antweb:8080 {
+        # Only these paths reach Tomcat (same list as staging's Caddyfile.common);
+        # anything else falls through to the 404 below.
+        @allowed_paths {
+            path / *.do *.jsp *.html *.css *.js *.txt *.log *.pdf *.xls *.xlsx
+            path *.ico *.jpg *.jpeg *.gif *.png *.svg *.woff *.woff2 *.ttf *.xml *.xsl
+            path /images/* /web/curator/* /web/log/* /specimen/* /web/bak/taxonSets/*
+        }
+        reverse_proxy @allowed_paths antweb:8080 {
             header_up X-Forwarded-For {http.request.remote.host}
         }
 
