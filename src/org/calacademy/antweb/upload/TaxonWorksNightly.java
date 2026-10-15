@@ -161,6 +161,7 @@ public final class TaxonWorksNightly {
             }
             UploadAction.postProcessSpecimenUpload(connection, curator, details);
             UploadAction.specimenPostProcessGlobal(connection);
+            details.setUploadSource("Nightly TaxonWorks job (automatic)");
             details.finish(curator, null, connection);
             connection.commit();
             Files.writeString(shaFile, sha);
