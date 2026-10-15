@@ -311,6 +311,13 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (Utility.isBlank(subfamilyName)) {
               subfamilyName = "(formicidae)";
             }
+
+            // A subfamily is a name, never a placeholder: "(Ampulicinae)" in an upload file is
+            // read as "ampulicinae". Kept in parentheses it re-created the broken genus rows
+            // (ampulicinae)ampulex and (pepsinae)pepsis, which every later upload of those
+            // genera then copied (GitHub #94). "(formicidae)" is AntWeb's own placeholder for a
+            // missing subfamily and is left alone.
+            subfamilyName = stripSubfamilyParentheses(subfamilyName);
             
             // If it is blank, make it a specified indet.
             if (Utility.isBlank(genusName) || "(indet)".equals(genusName)) {
@@ -1189,4 +1196,15 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
     
     
+
+    /** "(Ampulicinae)" -> "Ampulicinae"; "(formicidae)" (AntWeb's placeholder) and other values unchanged. */
+    public static String stripSubfamilyParentheses(String subfamilyName) {
+        if (subfamilyName == null) return null;
+        String s = subfamilyName.trim();
+        if (s.length() > 2 && s.startsWith("(") && s.endsWith(")") && s.indexOf('(', 1) < 0
+                && !"(formicidae)".equalsIgnoreCase(s)) {
+            return s.substring(1, s.length() - 1).trim();
+        }
+        return subfamilyName;
+    }
 }
