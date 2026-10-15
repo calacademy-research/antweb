@@ -3,5 +3,8 @@
 }
 
 staging.antweb.org {
+    # Cloudflare Origin Certificate (same as prod; files in the caddy data volume).
+    # Cloudflare sits in front, so Let's Encrypt renewals would be blocked.
+    tls /data/cf-origin.crt /data/cf-origin.key
     import Caddyfile.common
 }
