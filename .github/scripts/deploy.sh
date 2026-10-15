@@ -14,6 +14,22 @@ DEPLOY_BRANCH="${DEPLOY_BRANCH:-master}"
 # Let's assume antweb is in home directory of the ssh user
 cd "$HOME/antweb"
 
+restart_caddy_if_changed() {
+  # The Caddyfiles are single-file bind mounts too: restart Caddy (a few seconds)
+  # when the running copy differs from the repo's, so config changes take effect.
+  live=$(mktemp)
+  caddy_changed=0
+  compose exec -T caddy cat /etc/caddy/Caddyfile.common > "$live" < /dev/null 2>/dev/null || true
+  cmp -s "$live" docker/caddy/Caddyfile.common || caddy_changed=1
+  compose exec -T caddy cat /etc/caddy/Caddyfile > "$live" < /dev/null 2>/dev/null || true
+  cmp -s "$live" docker/caddy/Caddyfile || cmp -s "$live" docker/caddy/Caddyfile.staging || caddy_changed=1
+  rm -f "$live"
+  if [ "$caddy_changed" = 1 ]; then
+    echo "Caddyfile changed; restarting caddy..."
+    compose restart caddy
+  fi
+}
+
 # Get the latest source code
 PREV=$(git rev-parse HEAD)
 git fetch origin "$DEPLOY_BRANCH"
@@ -32,6 +48,7 @@ if ! git diff --quiet "$PREV" HEAD -- docker/antweb; then
   dc="docker compose -p $project $(echo "$files" | tr ',' '\n' | sed 's/^/-f /')"
   $dc build antweb < /dev/null
   $dc up -d --build api antweb < /dev/null
+  restart_caddy_if_changed
   echo "Rebuilt; antweb container started at:"
   docker inspect -f 'StartedAt={{.State.StartedAt}}' antweb_antweb_1
   exit 0
@@ -67,19 +84,7 @@ compose exec -T antweb ant deploy < /dev/null
 echo "Restarting antweb container..."
 compose restart antweb
 
-# The Caddyfiles are single-file bind mounts too: restart Caddy (a few seconds)
-# when the running copy differs from the repo's, so config changes take effect.
-live=$(mktemp)
-caddy_changed=0
-compose exec -T caddy cat /etc/caddy/Caddyfile.common > "$live" < /dev/null 2>/dev/null || true
-cmp -s "$live" docker/caddy/Caddyfile.common || caddy_changed=1
-compose exec -T caddy cat /etc/caddy/Caddyfile > "$live" < /dev/null 2>/dev/null || true
-cmp -s "$live" docker/caddy/Caddyfile || cmp -s "$live" docker/caddy/Caddyfile.staging || caddy_changed=1
-rm -f "$live"
-if [ "$caddy_changed" = 1 ]; then
-  echo "Caddyfile changed; restarting caddy..."
-  compose restart caddy
-fi
+restart_caddy_if_changed
 
 echo "Container status after restart:"
 compose ps antweb

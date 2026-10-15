@@ -18,6 +18,13 @@ jobs:
           cd docker/caddy
           docker build -t antweb/caddy:dev .
 
+      - name: Check Caddyfiles (prod and staging)
+        run: |
+          for f in Caddyfile Caddyfile.staging; do
+            docker run --rm -v "$PWD/docker/caddy:/etc/caddy:ro" antweb/caddy:dev \
+              caddy adapt --config /etc/caddy/$f --adapter caddyfile > /dev/null && echo "$f OK"
+          done
+
       - name: Test API Build
         run: |
           docker build -t antweb/api:dev -f docker/api/Dockerfile .

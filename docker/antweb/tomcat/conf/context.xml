@@ -31,4 +31,9 @@
     <!-- AntWeb: larger static resource cache; allowLinking because the web app
          serves files through symbolic links (see bin/links.sh). -->
     <Resources cachingAllowed="true" cacheMaxSize="300000" allowLinking="true" />
+
+    <!-- AntWeb: session cookie not sent with requests from other sites' forms
+         (SameSite=Lax), which blocks most cross-site request forgery. Tomcat
+         already marks it HttpOnly. -->
+    <CookieProcessor sameSiteCookies="lax" />
 </Context>

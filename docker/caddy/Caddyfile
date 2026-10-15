@@ -57,6 +57,20 @@ www.antweb.org {
         # Login records (who logged in, when): admins read them through /logMgr.do.
         respond /web/log/logins* "Not found" 404
 
+        # Logins: at most 10 attempts a minute per visitor (password guessing).
+        # Cloudflare sits in front, so the visitor is CF-Connecting-IP.
+        @login_post {
+            method POST
+            path /login.do
+        }
+        rate_limit @login_post {
+            zone logins {
+                key {http.request.header.CF-Connecting-IP}-{http.request.remote.host}
+                window 1m
+                events 10
+            }
+        }
+
         handle_path /v3.1/* {
             reverse_proxy api:5000 {
                 header_up X-Forwarded-For {http.request.remote.host}

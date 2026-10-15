@@ -63,6 +63,11 @@ public final class LoginAction extends AntwebAction {
         }
 */
         String value = loginForm.getValue();
+
+        // Just opening the login page: show the form, without "Please provide a username" messages.
+        if (userNameOrEmail == null && password == null && value == null) {
+            return mapping.findForward("failure");
+        }
         
         s_log.debug("execute() value:" + value + " target:" + target + " userNameOrEmail:" + userNameOrEmail);
         //AntwebUtil.logShortStackTrace(10);
@@ -105,6 +110,7 @@ public final class LoginAction extends AntwebAction {
                     login = login(request, userNameOrEmail, password, messages);
 
                     // If the user is editing their own.
+                    request.changeSessionId();  // new session id at login (prevents session fixation)
                     request.getSession().setAttribute("accessLogin", login);  // Log in the user.
 
                     request.getSession().setAttribute("thisLogin", login);  // The one being edited.
@@ -124,6 +130,9 @@ public final class LoginAction extends AntwebAction {
             //session.setAttribute("userName", userName);
             if (login == null) {
               s_log.error("execute() login is null for value:" + value);
+            }
+            if (login != null) {
+                request.changeSessionId();  // new session id at login (prevents session fixation)
             }
             session.setAttribute("accessLogin", login);
             //s_log.warn("Successful login of " + userNameOrEmail + " target:" + target);
