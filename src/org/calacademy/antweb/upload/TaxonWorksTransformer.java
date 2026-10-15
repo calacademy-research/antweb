@@ -106,11 +106,40 @@ public class TaxonWorksTransformer extends Transformer {
         outputColumnOrder.addAll(generatedOutputColumns);
     }
 
+    // TaxonWorks writes one record per line, fields separated by tabs. Quote marks are
+    // ordinary characters: a value such as  "Smith" collection  must not start a quoted
+    // field (that merged columns and stopped uploads). See readLines() for "..." values.
     private final CSVFormat csvInputFormat = CSVFormat.TDF.builder()
             .setAllowMissingColumnNames(true)
             .setHeader()
             .setSkipHeaderRecord(true)
+            .setQuote(null)
+            .setIgnoreSurroundingSpaces(false)
             .build();
+
+    /**
+     * Copy the file, turning a field written in CSV quoting ("a ""b"" c") into its plain
+     * value (a "b" c). Other fields, including ones that merely contain quote marks,
+     * are left alone.
+     */
+    static void unquoteFields(Path inputFile, Path outputFile) throws IOException {
+        try (BufferedReader in = Files.newBufferedReader(inputFile, java.nio.charset.StandardCharsets.UTF_8);
+             BufferedWriter out = Files.newBufferedWriter(outputFile, java.nio.charset.StandardCharsets.UTF_8)) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                String[] fields = line.split("\t", -1);
+                for (int i = 0; i < fields.length; i++) {
+                    String f = fields[i];
+                    if (f.length() >= 2 && f.startsWith("\"") && f.endsWith("\"")
+                            && f.substring(1, f.length() - 1).replace("\"\"", "").indexOf('"') < 0) {
+                        fields[i] = f.substring(1, f.length() - 1).replace("\"\"", "\"");
+                    }
+                }
+                out.write(String.join("\t", fields));
+                out.write('\n');
+            }
+        }
+    }
 
     /**
      * Transform a TaxonWorks .tsv file into an AntWeb-compatible file. Renames headers, applies data transformations.
@@ -136,8 +165,15 @@ public class TaxonWorksTransformer extends Transformer {
                 .setHeader(outputColumnOrder.toArray(new String[0]))
                 .build();
 
+        Path plainInput = inputFile.resolveSibling(inputFile.getFileName() + ".plain");
+        try {
+            unquoteFields(inputFile, plainInput);
+        } catch (IOException e) {
+            return "transformFile() e:" + e;
+        }
+
         int c = 0;
-        try (Reader in = new FileReader(inputFile.toFile());
+        try (Reader in = Files.newBufferedReader(plainInput, java.nio.charset.StandardCharsets.UTF_8);
             BufferedWriter writer = Files.newBufferedWriter(outputFile);
             CSVParser csvParser = new CSVParser(in, csvInputFormat);
             CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
@@ -165,6 +201,8 @@ public class TaxonWorksTransformer extends Transformer {
         } catch (IOException e) {
             errMsg = "transformFile() e:" + e;
             return errMsg;
+        } finally {
+            try { Files.deleteIfExists(plainInput); } catch (IOException ignore) { }
         }
 
         return errMsg;
