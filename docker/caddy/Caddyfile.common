@@ -59,7 +59,7 @@ route {
         path /manager /manager/* /host-manager /host-manager/*
         path /backup /backup/* /log /log/* /logbak /logbak/*
         path /web/workingdir /web/workingdir/* /web/log/srf* /web/log/bak /web/log/bak/*
-        path /workingDir /workingDir/* /web/log/getUrl* /staff_gen_inc.jsp
+        path /workingDir /workingDir/* /web/log/getUrl* /web/log/accessLog* /web/log/insecure* /staff_gen_inc.jsp
         path /WEB-INF/* /META-INF/*
     }
     respond @denied_paths "Not found" 404

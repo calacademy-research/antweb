@@ -28,6 +28,7 @@ public class TypeStatusMgr extends AntwebAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
                                  HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
+        ActionForward c = Check.admin(request, mapping); if (c != null) return c;
         String message = null;
 
         LogMgr.emptyLog("typeStatusSpeciesFound.txt");

@@ -110,7 +110,8 @@ public class SessionRequestFilter implements Filter {
             Login accessLogin = LoginMgr.getAccessLogin(request);
             String loginName = "-";
             if (accessLogin != null) loginName = accessLogin.getName();
-            String logMessage = loginName + " " + AntwebUtil.getRequestInfo(request);
+            // Never write the nightly secureCode (or other query secrets) to a log.
+            String logMessage = HttpUtil.forLog(loginName + " " + AntwebUtil.getRequestInfo(request));
             LogMgr.appendLog("accessLog.txt", logMessage, true);
             //A.log("doFilter() message:" + logMessage);
 
@@ -119,7 +120,7 @@ public class SessionRequestFilter implements Filter {
                 s_log.info("doFilter() insecure target:" + target);
                 String message = "req:" + target + " scheme:" + request.getScheme()
                         + " forward:" + request.getHeader("x-forwarded-proto") + " protocol:" + target.contains("https");
-                LogMgr.appendLog("insecure.log", message, true);
+                LogMgr.appendLog("insecure.log", HttpUtil.forLog(message), true);
             }
 
             HttpUtil.setUtf8(request, response);

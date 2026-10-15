@@ -484,10 +484,11 @@ We would like to remove getChildImages.  Not needed now in the new UI
             name="browseForm">
       <forward name="success" path="/taxonPage.jsp"/>
     </action>    
+    <!-- /taxonomicPageGen removed 2026-10-15: unused proof of concept that wrote files under the web root.
     <action path="/taxonomicPageGen"
             type="org.calacademy.antweb.util.TaxonomicPageGenAction"
             name="browseForm">
-    </action>    
+    </action> -->    
     
  <!-- And also imagePickImageGetter which is down below in search -->
 
