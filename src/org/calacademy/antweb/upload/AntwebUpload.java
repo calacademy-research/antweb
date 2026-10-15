@@ -55,6 +55,17 @@ public class AntwebUpload {
     private final TaxonQueryHashMap taxonQueryHashMap = new TaxonQueryHashMap();
     private String lastTaxonName;
 
+    // True when the most recent non-parent saveTaxon() call updated an existing taxon row
+    // instead of inserting one (saveTaxon() then returns 0). The worldants load uses this so
+    // that a pre-existing placeholder row (antcat=0, created by a specimen upload before
+    // AntCat published the name) still gets its taxonomichistory and antcat geolocale_taxon
+    // rows (GitHub #63).
+    private boolean lastSaveWasUpdate = false;
+
+    protected boolean wasLastSaveAnUpdate() {
+        return lastSaveWasUpdate;
+    }
+
     private int countUploaded = 0;
     private int uploadSkipped = 0;
 
@@ -137,6 +148,8 @@ or for Worldants upload
 
         String taxonName = (String) item.get("taxon_name");
 
+        if (!isParent) lastSaveWasUpdate = false;
+
         if (Formatter.hasSpecialCharacter(taxonName)) {
             s_log.warn("saveTaxon() special character found in:" + taxonName);
             getMessageMgr().addToMessages(MessageMgr.specialCharacterFound, taxonName);
@@ -189,6 +202,7 @@ or for Worldants upload
                     //A.log("saveTaxon() dummyTaxon:" + dummyTaxon + " item:" + item + " table:" + table);
 
                     updateTaxon(item, table);
+                    lastSaveWasUpdate = true;
                 }
                 // if isParent, already exists. Great.
                 return 0;
