@@ -93,3 +93,41 @@ def test_logout():
     login(s)
     s.get(BASE_URL + "/logout.do", timeout=60)
     assert get(s, "/curate.do").category == "login"
+
+
+# Specimen List Lookup (GitHub #64): a read-only tool, so safe to exercise here.
+KNOWN_CODES = ["casent0872013", "casent0922067"]  # CAS specimens (TaxonWorks upload 2026-10-14)
+MISSING_CODES = ["zz-e2e-missing-001", "ZZ-E2E-MISSING-002"]
+
+
+def _lookup(curator, lines):
+    body = ("\n".join(lines) + "\n").encode()
+    return curator.post(BASE_URL + "/specimenListLookup.do",
+                        files={"file": ("e2e_specimens.txt", body, "text/plain")},
+                        timeout=120, allow_redirects=True)
+
+
+def test_specimen_lookup_all_found_downloads_tsv(curator):
+    r = _lookup(curator, KNOWN_CODES)
+    assert r.status_code == 200
+    assert "tab-separated-values" in r.headers.get("Content-Type", ""), r.text[:300]
+    rows = r.text.strip().split("\n")
+    assert len(rows) == 1 + len(KNOWN_CODES)
+
+
+def test_specimen_lookup_lists_missing_codes_and_keeps_found_data(curator):
+    r = _lookup(curator, [KNOWN_CODES[0], MISSING_CODES[0], "casent 0872013", MISSING_CODES[1], MISSING_CODES[0].upper()])
+    assert r.status_code == 200
+    assert "text/html" in r.headers.get("Content-Type", "")
+    assert "Not found in AntWeb" in r.text
+    # Each missing code once, as typed, in file order, inside the copy box.
+    box = r.text.split('id="notFoundCodes"', 1)[1].split("</textarea>", 1)[0]
+    assert box.split(">", 1)[1].strip().split("\n") == MISSING_CODES
+    assert "specimenListLookup.do?download=tsv" in r.text
+    spaced = r.text.split('id="invalidCodes"', 1)[1].split("</textarea>", 1)[0]
+    assert spaced.split(">", 1)[1].strip() == "casent 0872013"
+
+    d = curator.get(BASE_URL + "/specimenListLookup.do?download=tsv", timeout=60)
+    assert "tab-separated-values" in d.headers.get("Content-Type", ""), d.text[:300]
+    rows = d.text.strip().split("\n")
+    assert len(rows) == 2 and rows[1].lower().startswith(KNOWN_CODES[0])

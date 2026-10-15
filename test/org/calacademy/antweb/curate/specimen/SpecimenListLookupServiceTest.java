@@ -38,31 +38,92 @@ public class SpecimenListLookupServiceTest extends TestCase {
         assertTrue(lines[3].startsWith("CASENT0104501\t"));
     }
 
-    public void testMissingCodeProducesErrorsAndNoDownload() throws Exception {
+    public void testMissingCodesAreListedAndFoundCodesStillReturned() throws Exception {
+        RecordingSource source = new RecordingSource();
+        source.add(specimen("casent0104501", "myrmicinaetest species"));
+        source.add(specimen("casent0104502", "myrmicinaeother species"));
+        StringWriter output = new StringWriter();
+
+        SpecimenListLookupResult result = new SpecimenListLookupService().lookup(
+                stream("casent0104501\nMISSING002\ncasent0104502\nmissing001\nmissing002\nCASENT0104501\n"),
+                source, output);
+
+        assertTrue(result.isSuccess());
+        assertEquals(0, result.getErrorCount());
+        assertEquals(6, result.getRowCount());
+        assertEquals(3, result.getFoundRowCount());
+        assertEquals(3, result.getNotFoundRowCount());
+        // Each missing code once, as first typed, in file order.
+        assertEquals(List.of("MISSING002", "missing001"), result.getNotFoundCodes());
+        assertEquals("MISSING002\nmissing001", result.getNotFoundText());
+
+        String[] lines = output.toString().split("\n");
+        assertEquals(4, lines.length);
+        assertEquals(Specimen.getTabDelimHeader(), lines[0]);
+        assertTrue(lines[1].startsWith("casent0104501\t"));
+        assertTrue(lines[2].startsWith("casent0104502\t"));
+        assertTrue(lines[3].startsWith("CASENT0104501\t"));
+    }
+
+    public void testAllMissingCodesAreReportedBeyondTheErrorCap() throws Exception {
+        RecordingSource source = new RecordingSource();
+        StringBuilder input = new StringBuilder();
+        for (int i = 0; i < 250; i++) input.append("missing").append(i).append('\n');
+        StringWriter output = new StringWriter();
+
+        SpecimenListLookupResult result = new SpecimenListLookupService().lookup(
+                stream(input.toString()), source, output);
+
+        assertTrue(result.isSuccess());
+        assertEquals(250, result.getNotFoundCodes().size());
+        assertEquals("missing249", result.getNotFoundCodes().get(249));
+        assertEquals(0, result.getFoundRowCount());
+        assertEquals("", output.toString());
+    }
+
+    public void testAllFoundHasNoMissingCodes() throws Exception {
+        RecordingSource source = new RecordingSource();
+        source.add(specimen("casent0104501", "myrmicinaetest species"));
+        SpecimenListLookupResult result = new SpecimenListLookupService().lookup(
+                stream("casent0104501\n"), source, new StringWriter());
+        assertTrue(result.isSuccess());
+        assertFalse(result.hasNotFoundCodes());
+        assertEquals(1, result.getFoundRowCount());
+    }
+
+    public void testEscapeHtml() {
+        assertEquals("a&lt;b&gt;&amp;&quot;&#39;", SpecimenListLookupResult.escapeHtml("a<b>&\"'"));
+    }
+
+    public void testCodesWithWhitespaceAreListedAndTheRestStillLookedUp() throws Exception {
         RecordingSource source = new RecordingSource();
         source.add(specimen("casent0104501", "myrmicinaetest species"));
         StringWriter output = new StringWriter();
 
         SpecimenListLookupResult result = new SpecimenListLookupService().lookup(
-                stream("casent0104501\nmissing001\n"), source, output);
+                stream("casent 0104502\ncasent0104501\ncasent\t0104503\n"), source, output);
 
-        assertFalse(result.isSuccess());
-        assertEquals(1, result.getErrorCount());
-        assertEquals("Line 2: specimen code was not found.", result.getErrors().get(0));
-        assertEquals("", output.toString());
+        assertTrue(result.isSuccess());
+        assertEquals(List.of("casent 0104502", "casent\t0104503"), result.getInvalidCodes());
+        assertTrue(result.hasProblems());
+        assertEquals(3, result.getSubmittedCount());
+        assertEquals(1, result.getFoundRowCount());
+        assertFalse(result.hasNotFoundCodes());
+        assertTrue(output.toString().split("\n")[1].startsWith("casent0104501\t"));
     }
 
-    public void testWhitespaceAndEmptyFilesAreRejectedBeforeLookup() throws Exception {
+    public void testOnlyWhitespaceCodesGiveAResultNotAnError() throws Exception {
         RecordingSource source = new RecordingSource();
-        SpecimenListLookupService service = new SpecimenListLookupService();
+        SpecimenListLookupResult result = new SpecimenListLookupService().lookup(
+                stream("casent 0104501\n"), source, new StringWriter());
+        assertTrue(result.isSuccess());
+        assertEquals(1, result.getInvalidCodes().size());
+        assertEquals(0, result.getFoundRowCount());
+    }
 
-        SpecimenListLookupResult malformed = service.lookup(
-                stream("casent 0104501\ncasent\t0104502\n"), source, new StringWriter());
-        assertFalse(malformed.isSuccess());
-        assertEquals(2, malformed.getErrorCount());
-        assertEquals(0, source.calls);
-
-        SpecimenListLookupResult empty = service.lookup(
+    public void testEmptyFileIsRejected() throws Exception {
+        RecordingSource source = new RecordingSource();
+        SpecimenListLookupResult empty = new SpecimenListLookupService().lookup(
                 stream("\n  \n"), source, new StringWriter());
         assertFalse(empty.isSuccess());
         assertEquals("File must contain at least one specimen code.", empty.getErrors().get(0));
