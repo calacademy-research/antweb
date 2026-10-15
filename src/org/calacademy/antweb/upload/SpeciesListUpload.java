@@ -769,7 +769,10 @@ public class SpeciesListUpload extends AntwebUpload {
 
                         if (taxonName.contains(debugTaxonName)) s_log.debug("importSpeciesList() 8 c:" + c + " taxonName:" + taxonName + " currentValidRank:" + currentValidRank + " status:" + status + " thisCountry:" + thisCountry + " ignore:" + ignoreTaxon + " currentValidName:" + currentValidName);
 
-                        if (c > 0) {
+                        // c is 0 when the taxon row already existed and was updated rather than inserted
+                        // (e.g. a placeholder from a specimen upload that preceded AntCat). Still write
+                        // taxonomichistory and the antcat geolocale_taxon rows in that case (#63).
+                        if (c > 0 || (isWorldants && wasLastSaveAnUpdate())) {
                           description.put("taxon_name", taxonName); // We do NOT use currentValidName here, so as not to overwrite.
                           description.put("proj_name", project);  // This is not used.  ?
                           saveDescriptionEdit(description);
