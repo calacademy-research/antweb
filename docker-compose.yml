@@ -58,6 +58,10 @@ services:
     expose:
       - 5000
 
+    # etc/api-db.properties (not in git) holds the API's read-only database login.
+    volumes:
+      - ./etc:/antweb-etc:ro
+
   antweb:
     container_name: antweb_antweb_1
     build:
