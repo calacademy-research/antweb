@@ -16,7 +16,7 @@ on:
   pull_request:
     branches: [master]
   schedule:
-    - cron: "17 14 * * *"   # daily 07:17 Pacific (PDT), after the 5 AM jobs
+    - cron: "17 20 * * *"   # daily 13:17 Pacific (PDT); the 5 AM jobs run until ~8 AM since #62
 
 permissions:
   contents: write

@@ -66,6 +66,10 @@ public class AntwebSystem {
   }
   public static boolean isRestart() {
     boolean retVal = false;
+    // Never restart in the middle of an upload (a curator's, or the nightly TaxonWorks
+    // upload in set1): the restart would kill it and roll it back. reboot_checker.sh asks
+    // again every 5 minutes, so the restart just waits until the upload has finished.
+    if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) return false;
     if (Scheduler.isStuckInSet1()) return true;
     if (getIsRestart()) return true;
     return false;
