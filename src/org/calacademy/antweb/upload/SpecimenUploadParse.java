@@ -26,6 +26,19 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
     private static final Log s_log = LogFactory.getLog(SpecimenUploadParse.class);
 
+    /** Is this combination a taxon AntWeb knows with a current valid name from AntCat? (GitHub #95) */
+    private boolean isKnownCombination(String subfamily, String genusName, String speciesName, String subspeciesName) {
+        if (Utility.isBlank(speciesName) || Taxon.isMorphoOrIndet(speciesName)) return false;
+        String name = subfamily + genusName + " " + speciesName;
+        if (!Utility.isBlank(subspeciesName)) name += " " + subspeciesName;
+        try {
+            Taxon taxon = new org.calacademy.antweb.home.TaxonDb(getConnection()).getTaxon(name);
+            return taxon != null && !Utility.isBlank(taxon.getCurrentValidName());
+        } catch (SQLException e) {
+            s_log.warn("isKnownCombination() name:" + name + " e:" + e);
+            return false;
+        }
+
     static int MAXLENGTH = 80;
 
     String currentDateFunction = "now()";  // for mysql 
@@ -1214,18 +1227,5 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
     
     
-
-    /** Is this combination a taxon AntWeb knows with a current valid name from AntCat? (GitHub #95) */
-    private boolean isKnownCombination(String subfamily, String genusName, String speciesName, String subspeciesName) {
-        if (Utility.isBlank(speciesName) || Taxon.isMorphoOrIndet(speciesName)) return false;
-        String name = subfamily + genusName + " " + speciesName;
-        if (!Utility.isBlank(subspeciesName)) name += " " + subspeciesName;
-        try {
-            Taxon taxon = new org.calacademy.antweb.home.TaxonDb(getConnection()).getTaxon(name);
-            return taxon != null && !Utility.isBlank(taxon.getCurrentValidName());
-        } catch (SQLException e) {
-            s_log.warn("isKnownCombination() name:" + name + " e:" + e);
-            return false;
-        }
     }
 }
