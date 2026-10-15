@@ -30,7 +30,7 @@ public final class OrphanDescEditsAction extends AntwebAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;   
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;   
         
         ArrayList<Taxon> list = new ArrayList<>();
 

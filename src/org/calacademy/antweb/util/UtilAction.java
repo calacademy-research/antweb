@@ -80,6 +80,10 @@ public class UtilAction extends AntwebAction {
 				}
 
 
+				if (action.equals("reloadAntwebMgr") && !LoginMgr.isAdmin(request)) {
+					request.setAttribute("message", "Administrators only.");
+					return mapping.findForward("message");
+				}
 				if (action.equals("reloadAntwebMgr")) {
 					boolean forceReload = true;
 					if ("group".equals(name)) {

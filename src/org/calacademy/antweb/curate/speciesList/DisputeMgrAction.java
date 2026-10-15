@@ -21,7 +21,7 @@ public class DisputeMgrAction extends AntwebAction {
   public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {
 
-    ActionForward c = Check.login(request, mapping); if (c != null) return c;
+    ActionForward c = Check.curator(request, mapping); if (c != null) return c;
     //Login accessLogin = LoginMgr.getAccessLogin(request);
 
     Connection connection = null;

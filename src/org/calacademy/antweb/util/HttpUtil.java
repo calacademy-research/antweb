@@ -31,6 +31,12 @@ public abstract class HttpUtil {
 
     private static final Log s_log = LogFactory.getLog(HttpUtil.class);
 
+    /** The URL as written to getUrl.txt: the secureCode value is never logged. */
+    public static String forLog(String url) {
+        if (url == null) return null;
+        return url.replaceAll("(?i)(secureCode=)[^&]*", "$1***");
+    }
+
     private final static String USER_AGENT = "Mozilla/5.0";
 	
 /*
@@ -1344,7 +1350,7 @@ public abstract class HttpUtil {
     
       String output = "";
       
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + forLog(theUrl));
 
       if (false && AntwebProps.isDevMode()) {
         s_log.warn("getUrl() the url:" + theUrl);
@@ -1410,7 +1416,7 @@ public abstract class HttpUtil {
     
       String output = "";
       
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + forLog(theUrl));
 
       if (false && AntwebProps.isDevMode()) {
         s_log.warn("getUrl() the url:" + theUrl);
@@ -1534,7 +1540,7 @@ public abstract class HttpUtil {
   
   public static String getUtf8Url(String theUrl, String delimit) 
     throws IOException {  
-      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + theUrl);
+      LogMgr.appendLog("getUrl.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + forLog(theUrl));
 
       if (false && AntwebProps.isDevMode()) {
         s_log.warn("getUtf8Url() the url:" + theUrl);

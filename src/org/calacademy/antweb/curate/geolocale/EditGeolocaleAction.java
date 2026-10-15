@@ -30,7 +30,7 @@ public final class EditGeolocaleAction extends AntwebAction {
         HttpSession session = request.getSession();
         HttpUtil.setUtf8(request, response);       
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
 		Login accessLogin = LoginMgr.getAccessLogin(request);
 
         EditGeolocaleForm editGeolocaleForm = (EditGeolocaleForm) form;

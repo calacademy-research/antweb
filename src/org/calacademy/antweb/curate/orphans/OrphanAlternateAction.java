@@ -31,7 +31,7 @@ public final class OrphanAlternateAction extends AntwebAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;  
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;  
         
         HttpSession session = request.getSession();
 

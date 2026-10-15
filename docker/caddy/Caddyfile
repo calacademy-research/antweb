@@ -60,9 +60,15 @@ www.antweb.org {
             path /manager /manager/* /host-manager /host-manager/*
             path /backup /backup/* /log /log/* /logbak /logbak/*
             path /web/workingdir /web/workingdir/* /web/log/srf* /web/log/bak /web/log/bak/*
+            path /workingDir /workingDir/* /web/log/getUrl* /staff_gen_inc.jsp
             path /WEB-INF/* /META-INF/*
         }
         respond @denied_paths "Not found" 404
+
+        # A ";" in the path (or its encoded form %3B) is never needed here, and Tomcat strips
+        # ";..." from a path while Caddy does not, which could slip past the lists above.
+        @path_params expression {http.request.uri}.matches("(?i)^[^?]*(;|%3b)")
+        respond @path_params "Not found" 404
 
         # Login records (who logged in, when): admins read them through /logMgr.do.
         respond /web/log/logins* "Not found" 404

@@ -72,6 +72,10 @@ public final class ServerDebug extends AntwebAction {
 			connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 			if (action != null) {
+				if ("setDebug".equals(action) && !LoginMgr.isAdmin(request)) {
+					request.setAttribute("message", "Administrators only.");
+					return mapping.findForward("message");
+				}
 				if ("setDebug".equals(action)) {
 					message = "serverDebug set:" + param;
 					ServerDb.setServerDebug(param, connection);

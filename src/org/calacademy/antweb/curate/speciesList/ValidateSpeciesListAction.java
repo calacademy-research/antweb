@@ -26,7 +26,7 @@ public class ValidateSpeciesListAction extends SpeciesListSuperAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {
 
-        ActionForward loginCheck = Check.login(request, mapping);
+        ActionForward loginCheck = Check.curator(request, mapping);
         if (loginCheck != null) return loginCheck;
 
         ValidateSpeciesListForm toolForm = (ValidateSpeciesListForm) form;

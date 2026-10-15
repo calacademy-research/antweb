@@ -305,7 +305,7 @@ public final class LogMgrAction extends AntwebAction {
         message += "<ul><li><a href='" + AntwebProps.getDomainApp() + "/listUploads.do?groupId=0'>Specimen Uploads</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?name=worldantsUploads'>Worldants Uploads</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/web/bak/taxonSets/'>Taxon Set Backups</a>";
-        message += "<li><a href='" + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp'>SRF Exceptions</a>";
+        message += "<li><a href='" + AntwebProps.getDomainApp() + "/web/log/srfExceptions.txt'>SRF Exceptions</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/web/log/'>All Logs</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=tomcatLog'>Tomcat Log</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=apacheLog'>Apache Log</a>";

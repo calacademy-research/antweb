@@ -28,7 +28,7 @@ public final class Adm1MgrAction extends AntwebAction {
         HttpSession session = request.getSession();
         HttpUtil.setUtf8(request, response);      
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
 
         DynaActionForm df = (DynaActionForm) form;
         String adm1 = (String) df.get("adm1Name");

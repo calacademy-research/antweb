@@ -21,7 +21,7 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
 
       HttpSession session = request.getSession();
 
-      ActionForward c = Check.login(request, mapping); if (c != null) return c;
+      ActionForward c = Check.curator(request, mapping); if (c != null) return c;
       Login accessLogin = LoginMgr.getAccessLogin(request);
       int loginId = accessLogin.getId();
       //Group accessGroup = accessLogin.getGroup();

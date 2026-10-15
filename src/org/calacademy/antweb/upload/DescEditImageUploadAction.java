@@ -23,11 +23,37 @@ public class DescEditImageUploadAction extends AntwebAction {
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {
+        return doExecute(mapping, form, request, response);
+    }
+
+    private static final java.util.regex.Pattern SAFE_NAME = java.util.regex.Pattern.compile("^[A-Za-z0-9][A-Za-z0-9._-]{0,150}$");
+    private static final java.util.Set<String> CURATOR_TYPES = java.util.Set.of(
+        "jpg", "jpeg", "png", "gif", "tif", "tiff", "pdf", "txt", "csv", "tsv", "xls", "xlsx", "doc", "docx");
+    private static final java.util.Set<String> NEVER_TYPES = java.util.Set.of(
+        "jsp", "jspx", "jspf", "jsw", "jsv", "tag", "tagx", "war", "class", "jar", "sh", "properties", "xml");
+
+    public static boolean isSafeDir(String dir) {
+        if (dir == null) return false;
+        if (dir.contains("..") || dir.contains("\\") || dir.contains(":") || dir.startsWith("/")) return false;
+        return dir.matches("[A-Za-z0-9_/-]+");
+    }
+
+    public static boolean isSafeFileName(String name, boolean isAdmin) {
+        if (name == null || !SAFE_NAME.matcher(name).matches() || name.contains("..")) return false;
+        int dot = name.lastIndexOf('.');
+        if (dot < 0) return false;
+        String ext = name.substring(dot + 1).toLowerCase(java.util.Locale.ROOT);
+        if (NEVER_TYPES.contains(ext)) return false;
+        return isAdmin || CURATOR_TYPES.contains(ext);
+    }
+
+    private ActionForward doExecute(ActionMapping mapping, ActionForm form,
+            HttpServletRequest request, HttpServletResponse response) {
                    
         // make sure person is logged in first
         HttpSession session = request.getSession();
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c; 
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c; 
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
         String root = request.getSession().getServletContext().getRealPath("") + "/";
@@ -71,6 +97,19 @@ public class DescEditImageUploadAction extends AntwebAction {
                   //logFileName = theFileName;
                   if (!theFileName.equals("")) {
                     String dir = theForm.getHomePageDirectory();
+                    boolean isAdminUser = LoginMgr.isAdmin(accessLogin);
+                    // Curators may only write into their own curator folder.
+                    if (!isAdminUser || dir == null || dir.isEmpty()) dir = "curator";
+                    if (!isSafeDir(dir)) {
+                      s_log.warn("execute() rejected dir:" + dir + " login:" + accessLogin.getId());
+                      return mapping.findForward("permissionDenied");
+                    }
+                    String requestedName = theForm.getOutputFileName();
+                    if (requestedName == null || requestedName.isEmpty()) requestedName = theForm.getTheFile2().getFileName();
+                    if (!isSafeFileName(requestedName, isAdminUser)) {
+                      request.setAttribute("message", "That file name or file type is not allowed. Use letters, digits, dot, dash or underscore, and an image, PDF, text or spreadsheet file.");
+                      return mapping.findForward("message");
+                    }
                     
 //                    String docBase = request.getRealPath("/");
                     String docBase = AntwebProps.getDocRoot();
