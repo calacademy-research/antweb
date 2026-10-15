@@ -82,4 +82,35 @@ public class TaxonWorksUploader extends Uploader {
     
     
       
+
+    /**
+     * Unzip data.tsv from a TaxonWorks DwC archive and transform it into an AntWeb
+     * specimen file, without a web form (used by the nightly TaxonWorks job).
+     * Returns the transformed file, or throws with the reason.
+     */
+    public static Path prepareFromArchive(Path zipFile, Group group) throws AntwebException {
+        String workingDir = AntwebProps.getWorkingDir();
+        FileUtil.makeDir(workingDir);
+        Path preTransform = Paths.get(workingDir, "specimenTW" + group.getId() + "_temp.txt");
+        Path specimenFile = Paths.get(workingDir, "specimenTW" + group.getId() + ".txt");
+        try (ZipFile zip = new ZipFile(zipFile.toFile())) {
+            ZipEntry entry = zip.getEntry("data.tsv");
+            if (entry == null) throw new AntwebException("The TaxonWorks archive has no data.tsv");
+            try (InputStream in = zip.getInputStream(entry); OutputStream out = new FileOutputStream(preTransform.toFile())) {
+                IOUtils.copy(in, out);
+            }
+        } catch (IOException e) {
+            throw new AntwebException("Could not read the TaxonWorks archive: " + e);
+        }
+        String errMsg = new TaxonWorksTransformer().transformFile(preTransform, specimenFile);
+        if (errMsg != null) throw new AntwebException(errMsg);
+        return specimenFile;
+    }
+
+    /** Upload a specimen file made by prepareFromArchive(), as the given curator. */
+    public UploadDetails uploadPreparedFile(Path specimenFile, Curator curator)
+      throws SQLException, TestException, AntwebException {
+        return uploadSpecimenFile("taxonWorksUpload", specimenFile.getFileName().toString(), curator
+            , "AntWeb nightly TaxonWorks job", null, true);
+    }
 }

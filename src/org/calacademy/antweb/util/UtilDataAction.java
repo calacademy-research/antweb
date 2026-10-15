@@ -210,6 +210,8 @@ public class UtilDataAction extends AntwebAction {
                 message = "set1 - ";
                 message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
+                // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
+                message += " " + doAction("taxonWorksNightly", form, accessLogin, accessGroup, connection, request, mapping);
                 TaxonMgr.populate(connection, true, false);
             }
 
@@ -286,6 +288,11 @@ public class UtilDataAction extends AntwebAction {
           return operationDetails;		  
 		}
 		
+		// Fetch the CAS TaxonWorks Darwin Core archive and upload it (GitHub #27).
+		if (action.equals("taxonWorksNightly")) {
+		  message = "taxonWorksNightly: " + org.calacademy.antweb.upload.TaxonWorksNightly.run(connection);
+		}
+
 		// 17.67 mins. success in 13.45 mins. success in 12.28 mins (after 1 constraint check removed).
 		// success in 12.97 mins.		
 		if (action.equals("worldantsFetchAndReload")) { 
