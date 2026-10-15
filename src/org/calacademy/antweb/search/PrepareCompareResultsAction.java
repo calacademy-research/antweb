@@ -70,7 +70,7 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 			results = (BayAreaSearchResults) session.getAttribute("searchResults");
 			forwardString = "bayAreaSearch";
 		} else {
-			String message = "Unsupported Result Rank for Prepare Compare Results:" + resultRank;
+			String message = "Unsupported Result Rank for Prepare Compare Results:" + Html.esc(resultRank);
 			s_log.error("execute() " + message);
 			request.setAttribute("message", message);
 		    return mapping.findForward("message");

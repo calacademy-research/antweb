@@ -26,9 +26,9 @@
 
                   if (displayGlobal) {
                      if (isGlobal) { %>
-                       <li><a href="<%= HttpUtil.getTargetReplaceParam(request, "global=true", "") %>">See <%= overview %> only</a></li>
+                       <li><a href="<%= org.calacademy.antweb.util.Html.escAttr(HttpUtil.getTargetReplaceParam(request, "global=true", "")) %>">See <%= org.calacademy.antweb.util.Html.esc(overview) %> only</a></li>
                      <% } else if (!isGlobal) { %>
-                       <li><a href="<%= HttpUtil.getTarget(request) + "&global=true" %>">See global set</a></li>                
+                       <li><a href="<%= org.calacademy.antweb.util.Html.escAttr(HttpUtil.getTarget(request) + "&global=true") %>">See global set</a></li>                
                 <%   }
                    } %>
 

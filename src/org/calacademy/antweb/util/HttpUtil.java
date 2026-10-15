@@ -177,7 +177,7 @@ public abstract class HttpUtil {
             Logger.iLog("Invalid Message see denied.log", 50);
             LogMgr.appendLog("denied.log", "Invalid Message:" + invalidMessage);
 
-            request.setAttribute("message", invalidMessage);
+            request.setAttribute("message", Html.esc(invalidMessage));
             return mapping.findForward("message");
         }
 
@@ -550,6 +550,45 @@ public abstract class HttpUtil {
         return mapping.findForward("message");
     }
 
+    /**
+     * Login/logout redirect targets: allow only a relative path starting with a single "/"
+     * (not "//", no backslash or control characters), or a URL on this AntWeb site
+     * (AntwebProps.getDomainApp(), https://www.antweb.org, https://staging.antweb.org).
+     */
+    public static boolean isSafeRedirectTarget(String target) {
+        String domainApp = null;
+        try {
+            domainApp = AntwebProps.getDomainApp();
+        } catch (Exception e) {
+            // Properties not loaded (e.g. unit tests). Fall back to the fixed AntWeb hosts.
+        }
+        return isSafeRedirectTarget(target, domainApp);
+    }
+
+    public static boolean isSafeRedirectTarget(String target, String domainApp) {
+        if (target == null || target.isEmpty()) return false;
+        for (int i = 0; i < target.length(); i++) {
+            char c = target.charAt(i);
+            if (c == '\\' || c < 0x20 || c == 0x7f) return false;
+        }
+        if (target.startsWith("/")) return !target.startsWith("//");
+        String lower = target.toLowerCase(java.util.Locale.ROOT);
+        String[] allowed = {domainApp, "https://www.antweb.org", "https://staging.antweb.org"};
+        for (String prefix : allowed) {
+            if (prefix == null) continue;
+            String p = prefix.toLowerCase(java.util.Locale.ROOT);
+            while (p.endsWith("/")) p = p.substring(0, p.length() - 1);
+            if (!p.startsWith("http://") && !p.startsWith("https://")) continue;
+            if (p.length() <= p.indexOf("://") + 3) continue; // no host
+            if (lower.equals(p)) return true;
+            if (lower.startsWith(p)) {
+                char next = lower.charAt(p.length());
+                if (next == '/' || next == '?' || next == '#') return true;
+            }
+        }
+        return false;
+    }
+
     public static Map<String, String> getHeadersInfo(HttpServletRequest request) {
         Map<String, String> map = new HashMap<>();
 
@@ -661,7 +700,7 @@ public abstract class HttpUtil {
             if ("chosen".equals(name)) {
                 String[] values = request.getParameterValues(name);
                 for (String value : values) {
-                    paramsStr += "&" + name + "=" + value;
+                    paramsStr += "&" + name + "=" + Html.url(value);
                 }
             }
         }

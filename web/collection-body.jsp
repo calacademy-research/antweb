@@ -57,11 +57,11 @@ function selectAll(thisForm) {
   Formatter formatter = new Formatter();
 %>
 
-<input id="for_print" type="text" value="AntWeb. Available from: <%= HttpUtil.getFullJspTarget(request) %>">
-<input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request) %>">
+<input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
+<input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
 <br>
 <div class="page_contents">
-<h1>Collection: <%= collection.getCode() %>	</h1>
+<h1>Collection: <%= Html.esc(collection.getCode()) %>	</h1>
 </div>
 
 <div class="page_divider"></div>
@@ -91,7 +91,7 @@ function selectAll(thisForm) {
 <% if (Utility.displayEmptyOrNotBlank(collection.getDateCollectedEnd())) { %>   
 <ul>
 <li>Date collected end:</li>
-<li><b><%= formatter.clearNull(collection.getDateCollectedEnd()) %></b></li>
+<li><b><%= Html.esc(collection.getDateCollectedEnd()) %></b></li>
 </ul>
 <% } %>
 
@@ -124,12 +124,12 @@ function selectAll(thisForm) {
 
 <ul>
 <li>Bioregion:</li>
-  <li><b><%= locality.getBioregion() %></b></li>
+  <li><b><%= Html.esc(locality.getBioregion()) %></b></li>
 </ul>
 
 <ul>
 <li>Locality Code:</li>
-<li><b><a href='locality.do?code=<%= locality.getLocalityCode() %> '><%= locality.getLocalityCode() %></a></b></li>
+<li><b><a href='locality.do?code=<%= Html.escAttr(Html.url(locality.getLocalityCode())) %> '><%= Html.esc(locality.getLocalityCode()) %></a></b></li>
 </ul>
 
 <% } %>
@@ -138,9 +138,9 @@ function selectAll(thisForm) {
 <ul>
 <li>Locality Name:</li>
 <% if (locality.getLocalityCode() != null) { %>
-<li><b><%= locality.getLocalityName() %></a></b></li>
+<li><b><%= Html.esc(locality.getLocalityName()) %></a></b></li>
 <% } else { %>
-<li><b><a href='locality.do?name=<%= locality.getLocalityName() %> '><%= locality.getLocalityName() %></a></b></li>
+<li><b><a href='locality.do?name=<%= Html.escAttr(Html.url(locality.getLocalityName())) %> '><%= Html.esc(locality.getLocalityName()) %></a></b></li>
 <% } %>
 </ul>
 
@@ -152,7 +152,7 @@ function selectAll(thisForm) {
 <%
    String countryLink = "";
    if (locality.getCountry() != null) {
-     countryLink = "<a href='" + AntwebProps.getDomainApp() + "/country.do?name=" + locality.getCountry() + "'>" + locality.getCountry() + "</a>";
+     countryLink = "<a href='" + AntwebProps.getDomainApp() + "/country.do?name=" + Html.escAttr(Html.url(locality.getCountry())) + "'>" + Html.esc(locality.getCountry()) + "</a>";
    } %>
 <li><b><%= countryLink %></b></li>
 </ul>
@@ -177,7 +177,7 @@ function selectAll(thisForm) {
         <%
            String adm1Link = "";
            if (locality.getAdm1() != null) {
-             adm1Link = "<a href='" + AntwebProps.getDomainApp() + "/adm1.do?name=" + java.net.URLEncoder.encode(locality.getAdm1()) + "&country=" + locality.getCountry() + "'>" + locality.getAdm1() + "</a>";
+             adm1Link = "<a href='" + AntwebProps.getDomainApp() + "/adm1.do?name=" + Html.escAttr(Html.url(locality.getAdm1())) + "&amp;country=" + Html.escAttr(Html.url(locality.getCountry())) + "'>" + Html.esc(locality.getAdm1()) + "</a>";
            } %>
         <li><b><%= adm1Link %></b></li>
         </ul>
@@ -198,7 +198,7 @@ function selectAll(thisForm) {
 		if (Utility.displayEmptyOrNotBlank(lat)) { %>
 		<ul>
 		<li>Latitude:</li>
-		<li><b><%= Utility.notBlankValue(lat) %></b></li>
+		<li><b><%= Html.esc(Utility.notBlankValue(lat)) %></b></li>
 		</ul>
 		<% } %>
 
@@ -207,35 +207,35 @@ function selectAll(thisForm) {
 		if (Utility.displayEmptyOrNotBlank(lon)) { %>
 		<ul>
 		<li>Longitude:</li>
-		<li><b><%= Utility.notBlankValue(lon) %></b></li>
+		<li><b><%= Html.esc(Utility.notBlankValue(lon)) %></b></li>
 		</ul>
 		<% } %>
 
 		<% if (Utility.displayEmptyOrNotBlank(locality.getLatLonMaxError())) { %>
 		<ul>
 		<li>Lat. Lon. max error:</li>
-		<li><b><%= Utility.notBlankValue(locality.getLatLonMaxError()) %></b></li>
+		<li><b><%= Html.esc(Utility.notBlankValue(locality.getLatLonMaxError())) %></b></li>
 		</ul>
 		<% } %>
 
 		<% if (Utility.displayEmptyOrNotBlank(locality.getElevation())) { %>
 		<ul>
 		<li>Elevation:</li>
-		<li><b><%= Utility.notBlankValue(locality.getElevation()) %> <%= (locality.getElevation() != null) ? "m" : "" %></b></li>   
+		<li><b><%= Html.esc(Utility.notBlankValue(locality.getElevation())) %> <%= (locality.getElevation() != null) ? "m" : "" %></b></li>   
 		</ul>
 		<% } %>
 
 		<% if (Utility.displayEmptyOrNotBlank(locality.getElevationMaxError())) { %>
 		<ul>
 		<li>Elevation max error:</li>
-		<li><b><%= Utility.notBlankValue(locality.getElevationMaxError()) %></b></li>
+		<li><b><%= Html.esc(Utility.notBlankValue(locality.getElevationMaxError())) %></b></li>
 		</ul>
 		<% } %>
 
 		<% if (Utility.displayEmptyOrNotBlank(locality.getLocalityNotes())) { %>
 		<ul>
 		<li>Locality notes:</li>
-		<li><%= Utility.notBlankValue(locality.getLocalityNotes()) %></li>
+		<li><%= Html.esc(Utility.notBlankValue(locality.getLocalityNotes())) %></li>
 		</ul>
 		<% } %>
 
@@ -374,7 +374,7 @@ No specimens in this collection.
 </logic:present>
 
 <a href="specimen.do?name=<bean:write name="row" property="code"/>">
-<b><%= ((String) prettyCode).toUpperCase() %></b>
+<b><%= Html.esc(((String) prettyCode).toUpperCase()) %></b>
 </a>
 </logic:notEmpty>
 </div>
@@ -382,20 +382,20 @@ No specimens in this collection.
 <div class="browse_col_two">
 <logic:notEmpty name="row" property="pageParams">
 <a href="description.do?<bean:write name="row" property="pageParams"/>">
-<%= new Formatter().capitalizeFirstLetter((String) prettyName) %>
+<%= Html.esc(new Formatter().capitalizeFirstLetter((String) prettyName)) %>
 </a>
 </logic:notEmpty>
 </div>
 
 <div class="browse_col_three">
 <logic:notEmpty name="row" property="type">
-<%= new Formatter().capitalizeFirstLetter((String) prettyType) %>
+<%= Html.esc(new Formatter().capitalizeFirstLetter((String) prettyType)) %>
 </logic:notEmpty>
 </div>
 
 <div class="browse_col_four">
 <logic:notEmpty name="row" property="caste">
-<%= new Formatter().capitalizeFirstLetter((String) prettyCaste) %>
+<%= Html.esc(new Formatter().capitalizeFirstLetter((String) prettyCaste)) %>
 </logic:notEmpty>
 </div>
 
@@ -421,5 +421,5 @@ No specimens in this collection.
  %>
 <div class=clear></div>
 <br />
-<p>Specimen data uploaded by <%= institutionsStr %> | <a href="mailto:<%= amissEmail %>?subject=Regarding AntWeb page <%= the_page %>">See something amiss? Send us an email.</a></p>
+<p>Specimen data uploaded by <%= institutionsStr %> | <a href="mailto:<%= amissEmail %>?subject=Regarding AntWeb page <%= Html.escAttr(the_page) %>">See something amiss? Send us an email.</a></p>
 </div>

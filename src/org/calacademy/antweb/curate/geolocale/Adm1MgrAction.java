@@ -43,7 +43,7 @@ public final class Adm1MgrAction extends AntwebAction {
         Geolocale country = GeolocaleMgr.getValidCountry(countryName);
 
         if (countryName == null || adm1 == null || country == null) {
-          String message = "Adm1Mgr Error. Country:" + countryName + "   Adm1:" + adm1;
+          String message = "Adm1Mgr Error. Country:" + Html.esc(countryName) + "   Adm1:" + Html.esc(adm1);
           request.setAttribute("message", message);
           return mapping.findForward("message");
         }

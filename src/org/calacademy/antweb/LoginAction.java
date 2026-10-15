@@ -42,6 +42,10 @@ public final class LoginAction extends AntwebAction {
              
         LoginForm loginForm = (LoginForm) form;             
         String target = loginForm.getTarget();
+        if (target != null && !target.isEmpty() && !HttpUtil.isSafeRedirectTarget(target)) {
+            s_log.warn("execute() ignoring unsafe login target");
+            target = null;
+        }
 
         String userNameOrEmail = loginForm.getUserName();  // we allow email as a login term.
         String password = loginForm.getPassword();
@@ -101,7 +105,7 @@ public final class LoginAction extends AntwebAction {
                 }
 
                 if (login != null) {
-                    message = "User Account created:" + userNameOrEmail;
+                    message = "User Account created:" + Html.esc(userNameOrEmail);
                     request.getSession().setAttribute("thisLogin", login);
                     //if (messages.isEmpty())
                     target = "/editLogin.do?id=" + login.getId();

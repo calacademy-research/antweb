@@ -47,7 +47,7 @@ public final class UploadReportAction extends AntwebAction {
 	    	return null;
 		  }
 		}
-   	    request.setAttribute("message", "Upload Report not found:" + uploadId);
+   	    request.setAttribute("message", "Upload Report not found:" + Html.esc(uploadId));
 		return mapping.findForward("message");
 	}
 

@@ -131,7 +131,7 @@ public final class FieldGuideAction extends AntwebAction {
                   return null;
                 } else {
                   if (isGetCache) {
-                    String message = "not fetched from cache.  Subfamily:" + subfamily + " genus:" + genus + " rank:" + rank + " overview:" + overview.getName() + " cacheType:fieldGuide";
+                    String message = "not fetched from cache.  Subfamily:" + Html.esc(subfamily) + " genus:" + Html.esc(genus) + " rank:" + Html.esc(rank) + " overview:" + Html.esc(overview.getName()) + " cacheType:fieldGuide";
                     //if (AntwebProps.isDevOrStageMode()) 
                       s_log.info("Execute() " + message); 
                     request.setAttribute("message", message);
@@ -173,7 +173,7 @@ public final class FieldGuideAction extends AntwebAction {
                 }
 
                 if (taxon == null) {
-                    String message = "taxon not found for subfamily:" + subfamily + " genus:" + genus + " species:" + species + " subfamily:" + subfamily;
+                    String message = "taxon not found for subfamily:" + Html.esc(subfamily) + " genus:" + Html.esc(genus) + " species:" + Html.esc(species) + " subfamily:" + Html.esc(subfamily);
                     s_log.error("execute() " + message);
                     request.setAttribute("message", message);
                     return mapping.findForward("message");
@@ -238,7 +238,7 @@ public final class FieldGuideAction extends AntwebAction {
             return mapping.findForward("message");  		
         } catch (NumberFormatException e) {
             if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace(e);
-            String message = e.toString();
+            String message = Html.esc(e.toString());
             s_log.error("execute() 2 e:" + e + " requestInfo:" + AntwebUtil.getRequestInfo(request));	
             request.setAttribute("message", message);
             return mapping.findForward("message");
@@ -247,7 +247,7 @@ public final class FieldGuideAction extends AntwebAction {
             AntwebUtil.logStackTrace(e);
         } catch (TaxonNotFoundException e) {
             String message = e.getMessage();
-            request.setAttribute("message", "Taxon not found for " + message);
+            request.setAttribute("message", "Taxon not found for " + Html.esc(message));
             String logMessage = message + " " + HttpUtil.getTarget(request) + " referrer:" + HttpUtil.getReferrerUrl(request);
             LogMgr.appendWebLog("taxonNotFound.txt", logMessage, true);
             return mapping.findForward("message");

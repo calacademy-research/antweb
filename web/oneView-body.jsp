@@ -42,6 +42,7 @@ if (AntwebProps.isDevMode()) AntwebUtil.log("oneView-body.jsp shot:" + shot);
     String rank = request.getParameter("rank");
     String showRank = request.getParameter("showRank");
     if (showRank == null) { showRank = rank; }
+    if (showRank != null) showRank = showRank.replaceAll("[^A-Za-z]", "");
     // this hack is because specimens have their shots as h1, p1....
     if (Rank.SPECIES.equals(showRank) || Rank.SUBSPECIES.equals(showRank)) { // ADDED
       shortHand = shortHand + "1";

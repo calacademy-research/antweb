@@ -32,10 +32,10 @@ Your uploaded file is here: <a href="<%= imageUrl %>"><%= imageUrl %></a>
   AntwebUtil.log("info", "descEditImageConfirm-body.jsp newEditAction:" + newEditAction); 
 %>
 <html:form method="POST" action="<%= newEditAction %>" enctype="multipart/form-data">
-<input type="hidden" name="editField" value="<%= descForm.getEditField() %>">
+<input type="hidden" name="editField" value="<%= Html.escAttr(descForm.getEditField()) %>">
 <input type="hidden" name="isSaveEditField" value="true">
-<input type="hidden" name="name" value="<%= descForm.getName() %>">
-<input type="hidden" name="contents" value="<%= descForm.getContents() %>">
+<input type="hidden" name="name" value="<%= Html.escAttr(descForm.getName()) %>">
+<input type="hidden" name="contents" value="<%= Html.escAttr(descForm.getContents()) %>">
 <input type="hidden" name="imageUrl" value="<%= imageUrl %>">
 
 <input border="0" type="image" src="<%= AntwebProps.getDomainApp() %>/image/orange_done.gif" width="98" height="36" value="Save">

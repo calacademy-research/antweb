@@ -29,7 +29,7 @@
   } else {
 	String delim = "&";
 	if (!thisPage.contains("?")) delim = "?";	  
-	view = "<a href='" + thisPage + delim + adm1.getParams()  + "'>" + adm1.getName() + "</a>";     
+	view = "<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + adm1.getParams())  + "'>" + adm1.getName() + "</a>";     
   }
 
   if (adm1 != null) {
@@ -44,7 +44,7 @@
 		// for taxonomic pages
 		String delim = "&";
 		if (!thisPage.contains("?")) delim = "?";		
-		view = "<a href='" + thisPage + delim + country.getParams()  + "'>" + country.getName() + "</a>" + " - " + view;     
+		view = "<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + country.getParams())  + "'>" + country.getName() + "</a>" + " - " + view;     
 	}
 
 	if (country.getId() != 0) {

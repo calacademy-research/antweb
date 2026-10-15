@@ -44,7 +44,7 @@ public class Check {
     public static String requestAttribute(HttpServletRequest request, String objectName) {
 		Object object = request.getAttribute(objectName);
 		if (object == null) {
-		  String message = "requestAttribute() No object:" + objectName + " for request:" + HttpUtil.getRequestInfo(request);
+		  String message = "requestAttribute() No object:" + Html.esc(objectName) + " for request:" + Html.esc(HttpUtil.getRequestInfo(request));
 		  s_log.error("requestAttribute() message:" + message);
 		  return message;
 		}
@@ -139,7 +139,7 @@ public class Check {
                 return mapping.findForward("message");
             }
         } catch (SQLException e) {
-            request.setAttribute("message", e.toString());
+            request.setAttribute("message", Html.esc(e.toString()));
             return mapping.findForward("message");
         }
         return null;
@@ -244,7 +244,7 @@ For convenience:
                 //A.log("blockRecursiveCalls i3:" + i3);
                 //if (i3 > 0) {
                     String target = HttpUtil.getTarget(request);
-                    String htmlMessage = "Recursive call blocked. If in error, please report to bfisher@antweb.org <br><br>Error: too many instances of '" + testStr + "' in request:" + target + ".";
+                    String htmlMessage = "Recursive call blocked. If in error, please report to bfisher@antweb.org <br><br>Error: too many instances of '" + Html.esc(testStr) + "' in request:" + Html.esc(target) + ".";
                     HttpUtil.write(htmlMessage, response);
                     return true;  // Do not allow
                 //}

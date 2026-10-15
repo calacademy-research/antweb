@@ -46,7 +46,7 @@ public final class GroupAction extends AntwebAction {
           Group group = getGroup(name, groupId, request);
 
           if (group == null) {
-			  String message = "  Group not found:" + name + ".";
+			  String message = "  Group not found:" + Html.esc(name) + ".";
 			  request.setAttribute("message", message);
 			  return mapping.findForward("message");
           }
@@ -78,7 +78,7 @@ public final class GroupAction extends AntwebAction {
           }
           ArrayList<Group> groups = getUploadGroups(request, orderBy);
           if (groups == null) {
-			  String message = " Problem fetching groups with orderBy:" + orderBy;
+			  String message = " Problem fetching groups with orderBy:" + Html.esc(orderBy);
               s_log.warn("execute() " + message);
 			  request.setAttribute("message", message);
 			  return mapping.findForward("message");

@@ -95,8 +95,8 @@
     String objectName = taxon.getTaxonName();
 %> 
 
-    <input id="for_print" type="text" value="AntWeb. Available from: <%= HttpUtil.getFullJspTarget(request)%>">
-    <input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request)%>">
+    <input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
+    <input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
     <div id="page_contents">
     <%@ include file="/common/taxonTitle.jsp" %>
 
@@ -160,5 +160,5 @@
 
 <div class="clear"></div>
 <br /><br />
-<a href="mailto:antweb@calacademy.org?subject=Regarding AntWeb page <%= the_page %>">See something amiss? Send us an email.</a>
+<a href="mailto:antweb@calacademy.org?subject=Regarding AntWeb page <%= Html.escAttr(the_page) %>">See something amiss? Send us an email.</a>
 

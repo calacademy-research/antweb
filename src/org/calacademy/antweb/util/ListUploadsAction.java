@@ -97,13 +97,13 @@ public final class ListUploadsAction extends AntwebAction {
         if (groupIdInt != 0) {
           Group group = GroupMgr.getGroup(groupId);
           String title = "" + groupId;
-          if (group != null) title = group.getAbbrev();
+          if (group != null) title = Html.esc(group.getAbbrev());
           title = "<a href='" + AntwebProps.getDomainApp() + "/group.do?id=" + groupId + "'>" + title + "</a>";
           message = "Image Uploads Reports for Group: " + title;
         } else if (curatorIdInt != 0) {
           Curator curator = LoginMgr.getCurator(curatorId);
           String title = "" + curatorId;
-          if (curator != null) title = curator.getDisplayName();
+          if (curator != null) title = Html.esc(curator.getDisplayName());
           title = "<a href='" + AntwebProps.getDomainApp() + "/curator.do?id=" + curatorId + "'>" + title + "</a>";
           message = "Image Upload Reports for Login: " + title;
         } else {
@@ -176,13 +176,13 @@ public final class ListUploadsAction extends AntwebAction {
         if (groupIdInt != 0) {
           Group group = GroupMgr.getGroup(groupId);
           String title = "" + groupId;
-          if (group != null) title = group.getAbbrev();
+          if (group != null) title = Html.esc(group.getAbbrev());
           title = "<a href='" + AntwebProps.getDomainApp() + "/group.do?id=" + groupId + "'>" + title + "</a>";
           message = "Specimen Upload Reports for Group: " + title;
         } else if (loginIdInt != 0) {
           Login login = LoginMgr.getLogin(loginId);
           String title = "" + loginId;
-          if (login != null) title = login.getDisplayName();
+          if (login != null) title = Html.esc(login.getDisplayName());
           title = "<a href='" + AntwebProps.getDomainApp() + "/curator.do?id=" + loginId + "'>" + title + "</a>";
           message = "Specimen Upload Reports for Login: " + title;
         } else {

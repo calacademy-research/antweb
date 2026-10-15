@@ -195,7 +195,7 @@ public class Scheduler extends AntwebAction {
 					// Make the failure visible in the web-readable compute.log, not only in catalina.out.
 					LogMgr.appendLog("compute.log", "Scheduler FAILED (remaining sets skipped) url:" + HttpUtil.forLog(url) + " e:" + e, true);
 				}
-				message = "Scheduler " + action + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
+				message = "Scheduler " + Html.esc(action) + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
 				s_log.warn("doAction() " + message);
 
 				if (num == 0) {

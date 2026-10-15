@@ -525,7 +525,7 @@ public class UploadAction extends AntwebAction {
 
 				loginDb.refreshLogin(session);
 
-				String message = "Species List deleted:" + deleteProject + ".";
+				String message = "Species List deleted:" + Html.esc(deleteProject) + ".";
 				s_log.info("execute() " + message);
 
 				ProjectMgr.populate(connection, true);
@@ -543,9 +543,9 @@ public class UploadAction extends AntwebAction {
 					return mapping.findForward("message");
 				}
 
-				String url = AntwebProps.getDomainApp() + "/editProject.do?projectName=" + createProject;
-				String anchorTag = "<a href='" + url + "'>Here</a>";
-				String message = "To create project <b>" + createProject + "</b> click: <b>" + anchorTag + "</b>. <br><br>&nbsp;&nbsp;&nbsp;Once you click 'Done', the project will be created.";
+				String url = AntwebProps.getDomainApp() + "/editProject.do?projectName=" + Html.url(createProject);
+				String anchorTag = "<a href='" + Html.escAttr(url) + "'>Here</a>";
+				String message = "To create project <b>" + Html.esc(createProject) + "</b> click: <b>" + anchorTag + "</b>. <br><br>&nbsp;&nbsp;&nbsp;Once you click 'Done', the project will be created.";
 				//s_log.into("execute() " + message);
 
 				request.setAttribute("message", message);
@@ -679,7 +679,7 @@ public class UploadAction extends AntwebAction {
 		}
 
 		if (errorMessage == null) {
-			errorMessage = "Error. Case number:" + caseNumber + ". No changes made. e:" + e.toString();
+			errorMessage = "Error. Case number:" + caseNumber + ". No changes made. e:" + Html.esc(e.toString());
 	    }
 
 		s_log.error("execute() errorMessage:" + errorMessage + " action:" + action + " e:" + e);
@@ -791,7 +791,7 @@ public class UploadAction extends AntwebAction {
 		String fileName = theForm.getTheFile2().getFileName();
 
 		if (HttpUtil.isDisallowedFileType(fileName)) {
-			messageStr = "Unsupported file upload type for file:" + fileName;
+			messageStr = "Unsupported file upload type for file:" + Html.esc(fileName);
 			return new UploadDetails("uploadFile", messageStr, "message");
 		}
 
@@ -873,7 +873,7 @@ public class UploadAction extends AntwebAction {
 //		A.log("uploadFileToFolder() serverDir:" + serverDir);
 //		uploadFile.setServerDir(serverDir);
 
-		messageStr = "Your uploaded file is here: <a href=\"" + url + "\">" + url + "</a>";
+		messageStr = "Your uploaded file is here: <a href=\"" + Html.escAttr(url) + "\">" + Html.esc(url) + "</a>";
 
 		if (fileName.contains("jpg")
 				|| fileName.contains("JPG")
@@ -967,14 +967,14 @@ public class UploadAction extends AntwebAction {
 			in = Files.newBufferedReader(Paths.get(filePath), Charset.forName(encoding));
 
             if (in == null) {
-                messageStr = "uploadDataFile() BufferedReader is null for file:" + filePath;
+                messageStr = "uploadDataFile() BufferedReader is null for file:" + Html.esc(filePath);
 				return new UploadDetails(operation, messageStr, request);
             }
 
             // parse the header
             String theLine = in.readLine();
             if (theLine == null) {
-                messageStr = "uploadDataFile() null line.  Perhaps empty file:" + fileName + "?";
+                messageStr = "uploadDataFile() null line.  Perhaps empty file:" + Html.esc(fileName) + "?";
             } else {
                 A.log("uploadDataFile() 1 fileName:" + fileName + " header:" + theLine);
             }
@@ -1007,21 +1007,21 @@ public class UploadAction extends AntwebAction {
             } else if (fileName.contains("specimen")) {
 				messageStr = getSpecimenList(fileName, theLine, in, connection);
 			} else if (UNMATCHED_FUNCTION.equals(messageStr)) {
-            	messageStr = "Upload file function not recognized:" + filePath + ". Submit for documention.";
+            	messageStr = "Upload file function not recognized:" + Html.esc(filePath) + ". Submit for documention.";
 			}
 
 			s_log.info("uploadDataFile() fileName:" + fileName + " messageStr:" + messageStr);
             request.setAttribute("message", messageStr);
         } catch (FileNotFoundException e) {
-            messageStr = "uploadDataFile() e" + e;
+            messageStr = "uploadDataFile() e" + Html.esc(e);
             s_log.error(messageStr);
         } catch (IndexOutOfBoundsException e) {
-            messageStr = "uploadDataFile() e" + e;
+            messageStr = "uploadDataFile() e" + Html.esc(e);
             AntwebUtil.logStackTrace(e);
             s_log.error(messageStr);
         } catch (Exception e) {
             AntwebUtil.logStackTrace(e);
-            messageStr = "uploadDataFile() e" + e;
+            messageStr = "uploadDataFile() e" + Html.esc(e);
             s_log.error(messageStr);
         } finally {
             in.close();

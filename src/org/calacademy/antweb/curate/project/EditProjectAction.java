@@ -52,7 +52,7 @@ public final class EditProjectAction extends AntwebAction {
               LoginDb loginDb = new LoginDb(connection);
               loginDb.refreshLogin(session);
                     
-              String message = "Project deleted:" + projectName + ".";
+              String message = "Project deleted:" + Html.esc(projectName) + ".";
               s_log.warn("execute() " + message);
 
 			  ProjectMgr.populate(connection, true);

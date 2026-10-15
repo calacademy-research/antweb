@@ -20,22 +20,22 @@
                 <span id="which_caste"><span style="text-transform:capitalize;"><%= displayCaste %></span></span>
                 <div id="caste_choices" class="options">
                     <ul>
-                        <li><a href="<%= casteTarget + "&caste=default" %>"><span style="text-transform:capitalize;">All</span></a></li>                        
-                        <li><a href="<%= casteTarget + "&caste=male" %>"><span style="text-transform:capitalize;">Male</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=ergatoidMale" %>"><span style="text-transform:capitalize;">Ergatoid</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=alateMale" %>"><span style="text-transform:capitalize;">Alate</span></a></li>                        
-                        <li><a href="<%= casteTarget + "&caste=worker" %>"><span style="text-transform:capitalize;">Worker</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=majorSoldier" %>"><span style="text-transform:capitalize;">Major/Soldier</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=normal" %>"><span style="text-transform:capitalize;">Normal</span></a></li>                        
-                        <li><a href="<%= casteTarget + "&caste=queen" %>"><span style="text-transform:capitalize;">Queen</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=ergatoidQueen" %>"><span style="text-transform:capitalize;">Ergatoid</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=alateDealateQueen" %>"><span style="text-transform:capitalize;">Alate/Dealate</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=brachypterous" %>"><span style="text-transform:capitalize;">Brachypterous</span></a></li>                        
+                        <li><a href="<%= Html.escAttr(casteTarget) + "&caste=default" %>"><span style="text-transform:capitalize;">All</span></a></li>                        
+                        <li><a href="<%= Html.escAttr(casteTarget) + "&caste=male" %>"><span style="text-transform:capitalize;">Male</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=ergatoidMale" %>"><span style="text-transform:capitalize;">Ergatoid</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=alateMale" %>"><span style="text-transform:capitalize;">Alate</span></a></li>                        
+                        <li><a href="<%= Html.escAttr(casteTarget) + "&caste=worker" %>"><span style="text-transform:capitalize;">Worker</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=majorSoldier" %>"><span style="text-transform:capitalize;">Major/Soldier</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=normal" %>"><span style="text-transform:capitalize;">Normal</span></a></li>                        
+                        <li><a href="<%= Html.escAttr(casteTarget) + "&caste=queen" %>"><span style="text-transform:capitalize;">Queen</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=ergatoidQueen" %>"><span style="text-transform:capitalize;">Ergatoid</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=alateDealateQueen" %>"><span style="text-transform:capitalize;">Alate/Dealate</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=brachypterous" %>"><span style="text-transform:capitalize;">Brachypterous</span></a></li>                        
 
-                        <li><a href="<%= casteTarget + "&caste=other" %>"><span style="text-transform:capitalize;">Other</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=intercaste" %>"><span style="text-transform:capitalize;">Intercaste</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=gynandromorph" %>"><span style="text-transform:capitalize;">Gynandromorph</span></a></li>                        
-                          <li>&nbsp;&nbsp;<a href="<%= casteTarget + "&caste=larvaPupa" %>"><span style="text-transform:capitalize;">Larva/pupa</span></a></li>                        
+                        <li><a href="<%= Html.escAttr(casteTarget) + "&caste=other" %>"><span style="text-transform:capitalize;">Other</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=intercaste" %>"><span style="text-transform:capitalize;">Intercaste</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=gynandromorph" %>"><span style="text-transform:capitalize;">Gynandromorph</span></a></li>                        
+                          <li>&nbsp;&nbsp;<a href="<%= Html.escAttr(casteTarget) + "&caste=larvaPupa" %>"><span style="text-transform:capitalize;">Larva/pupa</span></a></li>                        
                     </ul>
                 </div>
                 <div class="clear"></div>

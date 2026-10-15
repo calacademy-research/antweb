@@ -282,7 +282,7 @@ public class AntwebSystem {
     while (!procDone(p)) {
       //int afterErrorCount = 0;
       while ((s = stdOut.readLine()) != null) {
-        strBuf.append("<br>" + s);  
+        strBuf.append("<br>" + Html.esc(s));  
       }
     } 
     return strBuf.toString();

@@ -31,8 +31,8 @@
     String dagger = "";
     if (specimen.getIsFossil()) dagger = "&dagger;";
 %>
-<input id="for_print" type="text" value="AntWeb. Available from:  <%= HttpUtil.getFullJspTarget(request)%>">
-<input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request)%>">
+<input id="for_print" type="text" value="AntWeb. Available from:  <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
+<input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
 <div id="page_contents">
 
 <%@ include file="/common/taxonTitle.jsp" %>
@@ -204,7 +204,7 @@
    String amissEmail = AntwebUtil.getAdminEmail();
    if (specimen != null && specimen.getGroup() != null) amissEmail = specimen.getGroup().getAdminEmail();  
 %> 
-<a href="mailto:<%= amissEmail %>?subject=Regarding AntWeb page <%= thePage %>">See something amiss? Send us an email.</a>
+<a href="mailto:<%= amissEmail %>?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
 
 </div>
 

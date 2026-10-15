@@ -73,7 +73,7 @@ public final class OverviewAction extends DescriptionAction {
 
             Project project = projectDb.getProject(projectName);
             if (project == null) {
-              request.setAttribute("message", "Project:" + name + " not found.");
+              request.setAttribute("message", "Project:" + Html.esc(name) + " not found.");
               return mapping.findForward("message");
             }
 
@@ -199,7 +199,7 @@ public final class OverviewAction extends DescriptionAction {
           if (regionName != null) {
             geolocale = GeolocaleMgr.getGeolocale(regionName);
             if (geolocale == null) {
-                request.setAttribute("message", "region:" + regionName + " not found");          
+                request.setAttribute("message", "region:" + Html.esc(regionName) + " not found");          
                 return mapping.findForward("message");            
             }
           }
@@ -207,7 +207,7 @@ public final class OverviewAction extends DescriptionAction {
           if (subregionName != null) {
             geolocale = GeolocaleMgr.getGeolocale(subregionName);
             if (geolocale == null) {
-                request.setAttribute("message", "Subregion:" + subregionName + " not found");          
+                request.setAttribute("message", "Subregion:" + Html.esc(subregionName) + " not found");          
                 return mapping.findForward("message");            
             }
           }
@@ -215,7 +215,7 @@ public final class OverviewAction extends DescriptionAction {
           if (countryName != null) {
             geolocale = GeolocaleMgr.getGeolocale(countryName);
             if (geolocale == null) {
-                request.setAttribute("message", "Country:" + countryName + " not found");          
+                request.setAttribute("message", "Country:" + Html.esc(countryName) + " not found");          
                 return mapping.findForward("message");            
             }
           }
@@ -224,13 +224,13 @@ public final class OverviewAction extends DescriptionAction {
               if (countryName != null) {
                   geolocale = GeolocaleMgr.getAdm1(adm1Name, countryName);
                   if (geolocale == null) {
-                      request.setAttribute("message", "Adm1:" + adm1Name + " not found");
+                      request.setAttribute("message", "Adm1:" + Html.esc(adm1Name) + " not found");
                       return mapping.findForward("message");
                   }
               } else {
                   geolocale = GeolocaleMgr.getAdm1IfUnique(adm1Name);
                   if (geolocale == null) {
-                      request.setAttribute("message", "Unique Adm1:" + adm1Name + " not found");
+                      request.setAttribute("message", "Unique Adm1:" + Html.esc(adm1Name) + " not found");
                       return mapping.findForward("message");
                   }
               }
@@ -266,7 +266,7 @@ public final class OverviewAction extends DescriptionAction {
             key = "name:" + name;
           }
           if ((id > 0 || name != null) && geolocale == null) {
-            request.setAttribute("message", key + " not found.");
+            request.setAttribute("message", Html.esc(key) + " not found.");
             return mapping.findForward("message");
           }            
             
@@ -301,7 +301,7 @@ public final class OverviewAction extends DescriptionAction {
              key = "name:" + name;
            }
            if ((id > 0 || name != null) && geolocale == null) {
-             request.setAttribute("message", key + " not found.");
+             request.setAttribute("message", Html.esc(key) + " not found.");
              return mapping.findForward("message");
            }
            if (geolocale != null) {
@@ -336,7 +336,7 @@ public final class OverviewAction extends DescriptionAction {
             key = "name:" + name;
           }
           if ((id > 0 || name != null) && geolocale == null) {
-            request.setAttribute("message", key + " not found.");
+            request.setAttribute("message", Html.esc(key) + " not found.");
             return mapping.findForward("message");
           }
 
@@ -423,7 +423,7 @@ public final class OverviewAction extends DescriptionAction {
           //A.log("execute() Adm1.do geolocale:" + geolocale + " geoId:" + geolocale.getId() + " id:" + id + " name:" + name);          
           if ((id > 0 || name != null) && (geolocale == null || geolocale.getId() == 0)) {
             //A.log("execute() Adm1.do not found");
-            request.setAttribute("message", key + " not found.");
+            request.setAttribute("message", Html.esc(key) + " not found.");
             return mapping.findForward("message");
           }
           

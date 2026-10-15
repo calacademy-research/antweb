@@ -1,5 +1,7 @@
 package org.calacademy.antweb.curate.speciesList;
 
+import org.calacademy.antweb.util.Html;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -91,15 +93,15 @@ public class ValidateSpeciesListAction extends SpeciesListSuperAction {
 
         } catch (ValidationParseException e) {
             s_log.warn("ValidateSpeciesListAction parse error: " + e.getMessage());
-            request.setAttribute("message", e.getMessage());
+            request.setAttribute("message", Html.esc(e.getMessage()));
             return mapping.findForward("validateSpeciesList");
         } catch (SQLException e) {
             s_log.error("ValidateSpeciesListAction DB error: " + e);
-            request.setAttribute("message", "Database error occurred during validation: " + e.getMessage());
+            request.setAttribute("message", "Database error occurred during validation: " + Html.esc(e.getMessage()));
             return mapping.findForward("validateSpeciesList");
         } catch (IOException e) {
             s_log.error("ValidateSpeciesListAction IO error: " + e);
-            request.setAttribute("message", "Error reading uploaded file: " + e.getMessage());
+            request.setAttribute("message", "Error reading uploaded file: " + Html.esc(e.getMessage()));
             return mapping.findForward("validateSpeciesList");
         } finally {
             if (connection != null) {

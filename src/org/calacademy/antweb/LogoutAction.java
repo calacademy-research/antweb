@@ -39,6 +39,7 @@ public final class LogoutAction extends AntwebAction {
         LoginMgr.removeAccessLogin(request);
 
         String target = ((LoginForm) form).getTarget();
+        if (!HttpUtil.isSafeRedirectTarget(target)) target = null;
 
         if (target != null && !target.equals("") && !target.contains("login.do")) {
           //s_log.warn("Logout:" + target);

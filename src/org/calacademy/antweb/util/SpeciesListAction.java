@@ -52,14 +52,14 @@ public final class SpeciesListAction extends AntwebAction {
                 String message = null;
                 int antsIndex = name.indexOf("ants");
                 if (antsIndex < 0) {
-                    message = "antsIndex:" + antsIndex + " for name:" + name;
+                    message = "antsIndex:" + antsIndex + " for name:" + Html.esc(name);
                     s_log.error(message);
                 } else {
                     String dir = name.substring(0, antsIndex);
                     if (dir.equals("mad")) dir = "madagascar";
                     if (dir.equals("cal")) dir = "california";
                     String url = AntwebProps.getDomainApp() + "/web/speciesList/" + dir + "/" + name + UploadFile.getSpeciesListTail();
-                    message = "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
+                    message = "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + Html.escAttr(url) + "\">" + Html.esc(url) + "</a>";
                     s_log.info(message);
                 }
                 request.setAttribute("message", message);
@@ -68,7 +68,7 @@ public final class SpeciesListAction extends AntwebAction {
             }
            
           } catch (SQLException e) {
-            String message = e.toString();
+            String message = Html.esc(e.toString());
             s_log.error("execute() e:" + message);
             request.setAttribute("message", message);
             return mapping.findForward("message");              
@@ -132,7 +132,7 @@ public final class SpeciesListAction extends AntwebAction {
             s_log.debug("createSpeciesListLink() fullPath:" + fullPath);
             AntwebUtil.writeFile(fullPath, data.toString());
         }
-        String message = "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + url + "\">" + url + "</a>";
+        String message = "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + Html.escAttr(url) + "\">" + Html.esc(url) + "</a>";
         s_log.info(message);
         request.setAttribute("message", message);
         return mapping.findForward("message");

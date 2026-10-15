@@ -41,7 +41,7 @@ String target = null;
 if (loginForm != null) target = loginForm.getTarget();
 if (target == null && !HttpUtil.isPost(request)) target = HttpUtil.getTarget(request);
 if (target != null) {
-  out.println("<input type=\"hidden\" name=\"target\" value=\"" + target + "\">");
+  out.println("<input type=\"hidden\" name=\"target\" value=\"" + Html.escAttr(target) + "\">");
 }
 %>
 <input type="hidden" name="isSubmit" value="true">

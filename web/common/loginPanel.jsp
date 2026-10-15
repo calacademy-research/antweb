@@ -94,7 +94,7 @@
 
         <div id="login_form" style="display:none;">
             <form name="loginForm" method="post" action="<%= AntwebProps.getSecureDomainApp() %>/login.do">  
-            <input type="hidden" name="target" value="<%= target %>"> 
+            <input type="hidden" name="target" value="<%= org.calacademy.antweb.util.Html.escAttr(target) %>"> 
             Username: <input id="login_username" type="text" class="login_input" name="userName"> Password: <input type="password" class="login_input" name="password"> 
             <input type="submit" class="login_submit" value="Go">
             <br />

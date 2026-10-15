@@ -73,7 +73,7 @@ public final class BigPictureAction extends AntwebAction {
 
                     theImage = imageDb.getSpecimenImage(imageId);
 
-                    if (theImage == null) notFoundMsg = "Image not found for imageId:" + imageId;
+                    if (theImage == null) notFoundMsg = "Image not found for imageId:" + Html.esc(imageId);
                     //ImageDb.getFormProps(form, connection);
                 }
             } else {
@@ -86,13 +86,13 @@ public final class BigPictureAction extends AntwebAction {
                 number = form.getNumber();
 
                 if (AntwebUtil.isEmpty(code) || AntwebUtil.isEmpty(shot)) {
-                    request.setAttribute("message", "Must specify code and shot, or imageId. code:" + code + " shot:" + shot + " imageId:" + imageId);
+                    request.setAttribute("message", "Must specify code and shot, or imageId. code:" + Html.esc(code) + " shot:" + Html.esc(shot) + " imageId:" + Html.esc(imageId));
                     return mapping.findForward("message");
                 }
                 if (number == 0) number = 1;
 
                 theImage = imageDb.getSpecimenImage(code, shot, number);
-                if (theImage == null) notFoundMsg = "Image not found for code:" + code + " shot:" + shot + " number:" + number;
+                if (theImage == null) notFoundMsg = "Image not found for code:" + Html.esc(code) + " shot:" + Html.esc(shot) + " number:" + number;
             }
 
             //s_log.info("execute() code:" + form.getCode());
@@ -110,7 +110,7 @@ public final class BigPictureAction extends AntwebAction {
             boolean success = false;
                                 
             if (code != null && code.contains("shot=")) {
-              String message = "Incorrect specimen identifier:" + code;
+              String message = "Incorrect specimen identifier:" + Html.esc(code);
               s_log.error("execute() " + message);
               request.setAttribute("message", message);
               return mapping.findForward("message");
