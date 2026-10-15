@@ -119,7 +119,15 @@ public class TaxonWorksTransformer extends Transformer {
      * @param outputFile Path that the transformed file will be written to
      * @return An error message string? Might be used in the future
      */
+    private final List<String> skippedRecords = new ArrayList<>();
+
+    /** Records left out by the last transformFile() because their column count was wrong. */
+    public List<String> getSkippedRecords() {
+        return skippedRecords;
+    }
+
     public String transformFile(Path inputFile, Path outputFile) throws AntwebException {
+        skippedRecords.clear();
 
         String errMsg = null;
 
@@ -135,14 +143,21 @@ public class TaxonWorksTransformer extends Transformer {
             CSVPrinter csvPrinter = new CSVPrinter(writer, csvOutputFormat)) {
             for (CSVRecord record : csvParser) {
                 c++;
+                if (!record.isConsistent()) {
+                    // Fewer or more columns than the header: usually a line break or tab inside
+                    // a text field in TaxonWorks. Skip this record rather than the whole file.
+                    String code = record.isSet("catalogNumber") ? record.get("catalogNumber") : "";
+                    skippedRecords.add("line " + record.getRecordNumber() + " (" + record.size() + " of "
+                        + csvParser.getHeaderNames().size() + " columns)" + (code.isEmpty() ? "" : " catalogNumber " + code));
+                    continue;
+                }
                 List<String> transformed = transformLine(record);
                 if (!transformed.isEmpty()) {
                     csvPrinter.printRecord(transformed);
                 }
             }
-        } catch (AntwebException e) {
-            String message = "e:" + e + " line:" + c;
-            errMsg = "transformFile() e:" + e;
+        } catch (AntwebException | RuntimeException e) {
+            errMsg = "transformFile() record " + c + ": " + e;
             return errMsg;
         } catch (FileNotFoundException e) {
             errMsg = "transformFile() e:" + e;

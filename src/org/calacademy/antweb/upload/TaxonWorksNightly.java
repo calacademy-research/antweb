@@ -124,6 +124,11 @@ public final class TaxonWorksNightly {
         int groupId = curator.getGroup().getId();
         Path specimenFile = TaxonWorksUploader.prepareFromArchive(zip, curator.getGroup());
         long newCount = countRecords(specimenFile);
+        java.util.List<String> skipped = TaxonWorksUploader.getLastSkipped();
+        Path skippedFile = workDir.resolve("taxonworksSkipped.txt");
+        Files.write(skippedFile, skipped, StandardCharsets.UTF_8);
+        String skippedNote = skipped.isEmpty() ? "" : "; " + skipped.size() + " malformed records left out (fix in TaxonWorks): "
+            + String.join(", ", skipped.subList(0, Math.min(10, skipped.size()))) + (skipped.size() > 10 ? ", ..." : "");
         long currentCount = countGroupSpecimens(connection, groupId);
         if (currentCount > 0 && newCount < minRatio * currentCount) {
             return "SKIPPED BY GUARD: archive has " + newCount + " records, group " + groupId + " has "
@@ -150,7 +155,7 @@ public final class TaxonWorksNightly {
             connection.commit();
             Files.writeString(shaFile, sha);
             return "uploaded " + newCount + " records for group " + groupId + " (was " + currentCount
-                + " specimens) in " + details.getExecTime();
+                + " specimens) in " + details.getExecTime() + skippedNote;
         } catch (Exception e) {
             connection.rollback();
             throw e;

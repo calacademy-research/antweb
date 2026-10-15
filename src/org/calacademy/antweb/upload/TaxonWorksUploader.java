@@ -69,6 +69,9 @@ public class TaxonWorksUploader extends Uploader {
         TaxonWorksTransformer tf = new TaxonWorksTransformer();
         //A.log("uploadSpecimenFile() preTransformFilePath:" + preTransformFilePath + " specimenFilePath:" + specimenFilePath);
         String errMsg = tf.transformFile(preTransformFilePath, specimenFilePath);
+        if (!tf.getSkippedRecords().isEmpty()) {
+            s_log.warn("uploadSpecimenFile() skipped " + tf.getSkippedRecords().size() + " malformed records: " + tf.getSkippedRecords());
+        }
         if (errMsg != null) {
             s_log.error("uploadSpecimenFile() errMsg:" + errMsg);
             return new UploadDetails(theForm.getAction(), errMsg);
@@ -102,9 +105,18 @@ public class TaxonWorksUploader extends Uploader {
         } catch (IOException e) {
             throw new AntwebException("Could not read the TaxonWorks archive: " + e);
         }
-        String errMsg = new TaxonWorksTransformer().transformFile(preTransform, specimenFile);
+        TaxonWorksTransformer transformer = new TaxonWorksTransformer();
+        String errMsg = transformer.transformFile(preTransform, specimenFile);
         if (errMsg != null) throw new AntwebException(errMsg);
+        s_lastSkipped = new java.util.ArrayList<>(transformer.getSkippedRecords());
         return specimenFile;
+    }
+
+    private static java.util.List<String> s_lastSkipped = new java.util.ArrayList<>();
+
+    /** Records prepareFromArchive() left out because their column count was wrong. */
+    public static java.util.List<String> getLastSkipped() {
+        return s_lastSkipped;
     }
 
     /** Upload a specimen file made by prepareFromArchive(), as the given curator. */
