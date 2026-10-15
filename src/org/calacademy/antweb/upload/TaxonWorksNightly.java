@@ -61,13 +61,23 @@ public final class TaxonWorksNightly {
 
     private TaxonWorksNightly() {}
 
+    private static final java.util.concurrent.atomic.AtomicBoolean s_running = new java.util.concurrent.atomic.AtomicBoolean(false);
+
     public static String run(Connection connection) {
         String result;
-        try {
-            result = runOnce(connection);
-        } catch (Exception e) {
-            result = "FAILED: " + e;
-            s_log.error("run() " + result, e);
+        // One run at a time: a second request (a browser retry, say) would read the
+        // files the first run is still writing.
+        if (!s_running.compareAndSet(false, true)) {
+            result = "skipped: already running";
+        } else {
+            try {
+                result = runOnce(connection);
+            } catch (Exception e) {
+                result = "FAILED: " + e;
+                s_log.error("run() " + result, e);
+            } finally {
+                s_running.set(false);
+            }
         }
         LogMgr.appendLog(LOG, DateUtil.getFormatDateTimeStr() + " " + result);
         LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " taxonWorksNightly: " + result);
