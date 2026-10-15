@@ -200,12 +200,12 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
 
         } catch (AntwebException e) {
             s_log.error("execute() e:" + e + "isNew:" + isNew);
-            request.setAttribute("message", e.getMessage());
+            request.setAttribute("message", Html.esc(e.getMessage()));
             return mapping.findForward("message");
         } catch (SQLException e) {
             s_log.error("execute() e:" + e + "isNew:" + isNew);
             AntwebUtil.logStackTrace(e);
-            request.setAttribute("message", e.getMessage());
+            request.setAttribute("message", Html.esc(e.getMessage()));
             return mapping.findForward("message");
         // So that exception is sent to log.  Still will appear on web page as stacktrace.
         } catch (Exception e) {

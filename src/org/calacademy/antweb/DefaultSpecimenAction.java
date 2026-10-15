@@ -83,8 +83,8 @@ public final class DefaultSpecimenAction extends AntwebAction {
 
 		  // Have to use session because of sendRedirect.  Will be deleted after display in specimen-body.jsp
           message = "<h3><img src='" + AntwebProps.getDomainApp() + "/image/antIcon1.jpg' width=30><font color=green>&nbsp;Specimen</font>:<b>" 
-            + specimenCode + "</b> is unset as the default " + caste + " image of <font color=green>taxon</font>:<b>" 
-            + "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.getPrettyTaxonName(taxonName) + "</a></b></h3>";
+            + Html.esc(specimenCode) + "</b> is unset as the default " + Html.esc(caste) + " image of <font color=green>taxon</font>:<b>" 
+            + "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(Html.url(taxonName)) + "'>" + Html.esc(Taxon.getPrettyTaxonName(taxonName)) + "</a></b></h3>";
 		  session.setAttribute("message", message);
 
           HttpUtil.sendRedirect(target, request, response);
@@ -101,9 +101,9 @@ public final class DefaultSpecimenAction extends AntwebAction {
 
 		  // Have to use session because of sendRedirect.  Will be deleted after display in specimen-body.jsp
           message = "<h3><img src='" + AntwebProps.getDomainApp() + "/image/antIcon1.jpg' width=30><font color=green>&nbsp;Specimen</font>:<b>"  
-           + "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimenCode + "'>" + specimenCode + "</a>"
-           + "</b> is set as the default " + caste + " image for <font color=green>taxon</font>:<b>" 
-           + "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.getPrettyTaxonName(taxonName) + "</a></b></h3>";
+           + "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.escAttr(Html.url(specimenCode)) + "'>" + Html.esc(specimenCode) + "</a>"
+           + "</b> is set as the default " + Html.esc(caste) + " image for <font color=green>taxon</font>:<b>" 
+           + "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(Html.url(taxonName)) + "'>" + Html.esc(Taxon.getPrettyTaxonName(taxonName)) + "</a></b></h3>";
 		  session.setAttribute("message", message);
 
           HttpUtil.sendRedirect(target, request, response);

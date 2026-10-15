@@ -142,7 +142,7 @@ message += topReport;
 <br><b>Your Local Address:</b> <%= request.getLocalAddr() %>
 <br><b>Your Remote Address:</b> <%= request.getRemoteAddr() %>
 <br><b>Your RemoteHost:</b> <%= request.getRemoteHost() %>
-<br><b>User Agent:</b> <%= request.getHeader("User-Agent") %>
+<br><b>User Agent:</b> <%= Html.esc(request.getHeader("User-Agent")) %>
 <br><b>File Encoding:</b> <%= System.getProperty("file.encoding") %> : <%=java.nio.charset.Charset.defaultCharset() %>
 <br><b>Legacy Merge Sort:</b> <%= System.getProperty("java.util.Arrays.useLegacyMergeSort") %>
 <br><b>trimSpaces:</b> <%= getServletConfig().getInitParameter("trimSpaces") %>

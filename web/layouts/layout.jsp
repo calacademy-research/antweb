@@ -189,7 +189,7 @@ if ($.cookie('thumbs')) {
      function on the browse.do specimen page and advanced search results. Also see layoutMobile.jsp -->
 
 $(function() {
-    var full_query = '<%= sortByExtras %>';
+    var full_query = '<%= Html.js(sortByExtras) %>';
     var regex = '[?&]sortBy=([^&]*)'; 
     var regex2 = '[?&]t=([^&]*)'; 
     var re = new RegExp(regex, "g");

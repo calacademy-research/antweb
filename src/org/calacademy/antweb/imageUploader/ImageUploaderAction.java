@@ -124,7 +124,7 @@ public final class ImageUploaderAction extends AntwebAction {
                         String code = imageUploaded.getCode();
                         boolean exists = new SpecimenDb(connection).exists(code);
                         if (!exists) {
-                            message = "Specimen:" + code + " not found in the Antweb database.";
+                            message = "Specimen:" + Html.esc(code) + " not found in the Antweb database.";
                             request.setAttribute("message", message);
                             s_log.warn(message);
                             return mapping.findForward("message");
@@ -179,7 +179,7 @@ public final class ImageUploaderAction extends AntwebAction {
         } catch (Exception ex) {
           //AntwebUtil.logStackTrace(ex);
           AntwebUtil.log("ImageUploaderAction.execute() e:" + ex);
-          message = "Error uploading images. ex:" + ex;
+          message = "Error uploading images. ex:" + Html.esc(ex);
           AdminAlertMgr.add(message, connection);
           request.setAttribute("message", message);
           s_log.warn(message + " temppDir:" + ImageUploaded.tempDir);

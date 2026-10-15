@@ -1,5 +1,7 @@
 package org.calacademy.antweb.home;
 
+import org.calacademy.antweb.util.Html;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Artist;
@@ -135,7 +137,7 @@ public class ArtistDb extends AntwebDb {
     
         Artist artist = getArtist("name = '" + name + "'");
         if (artist != null) {
-          return "Artist already exists with name:" + name;
+          return "Artist already exists with name:" + Html.esc(name);
         }
         
         Statement stmt = null;
@@ -227,10 +229,10 @@ public class ArtistDb extends AntwebDb {
  
             boolean deleted = deleteArtist(artist, accessLogin);
             if (deleted) {
-              returnVal += " Artist:" + artist + " removed.";
+              returnVal += " Artist:" + Html.esc(artist) + " removed.";
               return returnVal;
             } else {
-              returnVal += " Artist:" + artist + " NOT deleted.";
+              returnVal += " Artist:" + Html.esc(artist) + " NOT deleted.";
             }
         } catch (Exception e) {
             return "error:" + e;

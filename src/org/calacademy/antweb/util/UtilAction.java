@@ -132,7 +132,7 @@ public class UtilAction extends AntwebAction {
 
 				if (returnLoc != null) return returnLoc;
 			}
-			request.setAttribute("message", "action not found:" + action);
+			request.setAttribute("message", "action not found:" + Html.esc(action));
 			return mapping.findForward("message");
 
 		} catch (SQLException | IOException e) {
@@ -347,7 +347,7 @@ public class UtilAction extends AntwebAction {
 					message = HttpUtil.fetchUrl(fetchUrl);
 					if (message != null && message.contains("Exception")) s_log.warn("execute() latlng:" + message);
 				} catch (Exception e) {
-					message = "e:" + e.toString();
+					message = "e:" + Html.esc(e.toString());
 				}
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("adminMessage");
@@ -355,7 +355,7 @@ public class UtilAction extends AntwebAction {
 
 			  if (returnLoc != null) return returnLoc;
 			}               
-			request.setAttribute("message", "action not found:" + action);
+			request.setAttribute("message", "action not found:" + Html.esc(action));
 			return mapping.findForward("message");
 
         } catch (SQLException e) {

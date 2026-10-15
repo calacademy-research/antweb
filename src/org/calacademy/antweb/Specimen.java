@@ -865,11 +865,11 @@ update specimen set other = '
 
         String encodeCode = HttpUtil.encodePath(localityCode);
         if (encodeCode != null) {  // use the localityCode to link, if there is one.
-            String label = localityName != null ? localityName : localityCode;  // but use the localityName to label, if there is one.
-            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + encodeCode + "\">" + label + "</a>";
+            String label = Html.esc(localityName != null ? localityName : localityCode);  // but use the localityName to label, if there is one.
+            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + Html.escAttr(encodeCode) + "\">" + label + "</a>";
         } else { // use the localityName
             //String encodeName = HttpUtil.encodePath(localityName);
-            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + localityName + "\">" + localityName + "</a>"; // was name = target
+            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + Html.escAttr(Html.url(localityName)) + "\">" + Html.esc(localityName) + "</a>"; // was name = target
         }
         s_log.debug("getLocalityInfo() localityLink:" + localityLink + " encodeCode:" + encodeCode + " localityName:" + localityName);
 
@@ -893,9 +893,9 @@ For a locality name without code (this name has special characters:
 	    String localityInfoString = null;
         Formatter formatter = new Formatter();
         String localityCode = getLocalityCode();
-        String countryColon = formatter.appendToNonNull(formatter.clearNull(getCountry()),":");
-        String adm1Colon = formatter.appendToNonNull(formatter.clearNull(getAdm1()),":");
-        String adm2Semicolon = formatter.appendToNonNull(formatter.clearNull(getAdm2()),":");
+        String countryColon = formatter.appendToNonNull(Html.esc(getCountry()),":");
+        String adm1Colon = formatter.appendToNonNull(Html.esc(getAdm1()),":");
+        String adm2Semicolon = formatter.appendToNonNull(Html.esc(getAdm2()),":");
         String latLonMaxError = formatter.clearNull(getLatLonMaxError()); 
         // <!-- was:specimen.getLocXYAccuracy()  was: desc.get("locxyaccuracy") -->
 
@@ -908,13 +908,13 @@ For a locality name without code (this name has special characters:
         String localityLink = null; // getLocalityName();
 
         if (encodeCode != null) {  // use the localityCode to link, if there is one.
-            String label = getLocalityName() != null ? getLocalityName() : localityCode;
+            String label = Html.esc(getLocalityName() != null ? getLocalityName() : localityCode);
             //out.println("LocalityLink1:" + localityLink + " target:" + target + " name:" + getLocalityName());
             //if ("locality".equals(sortBy)) localityName =  "<span class=\"sorted_by\">" + localityName + "</span>";
-            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + localityCode + "\">" + label + "</a>"; // was name = target
+            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + Html.escAttr(encodeCode) + "\">" + label + "</a>"; // was name = target
         } else { // use the localityName
             String encodeName = HttpUtil.encodePath(localityName);
-            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + localityName + "\">" + localityName + "</a>"; // was name = target
+            localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + Html.escAttr(Html.url(localityName)) + "\">" + Html.esc(localityName) + "</a>"; // was name = target
         }
 
         if (localityLink == null) localityLink = "";
@@ -1178,15 +1178,15 @@ For a locality name without code (this name has special characters):
 
 
     public String getOwnedByLink() {
-      String link = new Formatter().clearNull(getOwnedBy());
+      String link = Html.esc(getOwnedBy());
       if (getMuseumCode() != null) {
-        link = "<a href='" + AntwebProps.getDomainApp() + "/museum.do?code=" + getMuseumCode() + "'>" + link + "</a>";
+        link = "<a href='" + AntwebProps.getDomainApp() + "/museum.do?code=" + Html.escAttr(Html.url(getMuseumCode())) + "'>" + link + "</a>";
       }
       return link;
     }
    
     public String getLocatedAtLink() {
-        String link = new Formatter().clearNull(locatedAt);
+        String link = Html.esc(locatedAt);
         Museum museum = MuseumMgr.getInferredMuseum(locatedAt);
         if (museum != null) link = museum.getLink();        
         return link;

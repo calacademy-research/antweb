@@ -90,7 +90,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
 				title = new Formatter().capitalizeFirstLetter(resultRank) + " Field Guide";
 				s_log.debug("execute() chosenResults (taxon) count:" + chosenResults.size());   // For Bay Area ants Marin: 383
 			} else {
-			    String message = "Unsupported Result Rank for Field Guide:" + resultRank;
+			    String message = "Unsupported Result Rank for Field Guide:" + Html.esc(resultRank);
 			    s_log.error("execute() " + message);
 			    request.setAttribute("message", message);
 			    return mapping.findForward("message");
@@ -124,7 +124,7 @@ public final class FieldGuideResultsAction extends ResultsAction {
             request.setAttribute("title", title);                
             request.setAttribute("chosenTaxa", chosenTaxa);
         } else {
-            String message = "No taxa chosen/found for target:" + HttpUtil.getTarget(request);
+            String message = "No taxa chosen/found for target:" + Html.esc(HttpUtil.getTarget(request));
             s_log.warn(message);
             request.setAttribute("message", message);
             return mapping.findForward("message");

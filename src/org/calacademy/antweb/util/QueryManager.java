@@ -125,7 +125,7 @@ public abstract class QueryManager {
     public static String queryBattery(String name, Connection connection) throws SQLException {
         ArrayList<NamedQuery> battery = null;
 
-        String message = "</b><h1>Query: " + name + "</h1>";
+        String message = "</b><h1>Query: " + Html.esc(name) + "</h1>";
 
         String queryBatter = null;
         if ("projectTaxonCounts".equals(name)) {
@@ -143,7 +143,7 @@ public abstract class QueryManager {
     }
     
     public static String curiousQuery(String name, Connection connection) throws SQLException {
-        String message = "</b><h1>Query: " + name + "</h1>";
+        String message = "</b><h1>Query: " + Html.esc(name) + "</h1>";
 
         NamedQuery namedQuery = null;
         for (NamedQuery query : Queries.getNamedQueries()) {
@@ -153,7 +153,7 @@ public abstract class QueryManager {
             break;
           }
         }
-        if (namedQuery == null) return "Query not found:" + name;
+        if (namedQuery == null) return "Query not found:" + Html.esc(name);
         String result = runNamedQueryHtml(namedQuery, connection);
         if (result != null) message += result;
         return message;

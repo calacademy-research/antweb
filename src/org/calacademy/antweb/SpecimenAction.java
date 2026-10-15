@@ -99,10 +99,10 @@ public final class SpecimenAction extends DescriptionAction {
                     specimen.setDefaultFor(taxonPropDb.getDefaultFor(specimen.getCode()));
                     
                 } else {
-                    String message = "Specimen:" + code + " is not in the AntWeb database";
+                    String message = "Specimen:" + Html.esc(code) + " is not in the AntWeb database";
 
                     if (overview != null && !overview.toString().equals("allantwebants") && !overview.toString().equals("")) {
-                      message += " for overview:" + overview + ".  <br><br>Go to <a href=" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "&project=allantwebants>All Antweb</a>.";
+                      message += " for overview:" + Html.esc(overview) + ".  <br><br>Go to <a href=\"" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.escAttr(Html.url(code)) + "&amp;project=allantwebants\">All Antweb</a>.";
                     } else {
                       message += ".";
                     }

@@ -157,7 +157,7 @@ public class BrowseAction extends DescriptionAction {
         // Some requests have "&;" in the queryString.  EOL data feed?
         String correctedUrl = HttpUtil.redirectCorrectedUrl(request, response);      // Can't.  Response committed.  Diagnostic.
         if (correctedUrl != null) {
-          message = "Error found with URL.  Try this link <a href=\"" + correctedUrl + "\">here</a>.";
+          message = "Error found with URL.  Try this link <a href=\"" + Html.escAttr(correctedUrl) + "\">here</a>.";
           request.setAttribute("message", message);
           return mapping.findForward("message");
         }
@@ -167,8 +167,8 @@ public class BrowseAction extends DescriptionAction {
         if("specimen".equals(rank)) {
            message = "Invalid request.";
            if (browseForm.getCode() != null) {
-              String link =  AntwebProps.getDomainApp() + "/specimen.do?code=" + browseForm.getCode();
-              message += "  Try:<a href='" + link + "'>" + link + "</a>";
+              String link =  AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.url(browseForm.getCode());
+              message += "  Try:<a href='" + Html.escAttr(link) + "'>" + Html.esc(link) + "</a>";
            } else {
               message += "  Description.do requests are for taxa, not specimens.";
            }
@@ -177,7 +177,7 @@ public class BrowseAction extends DescriptionAction {
         }
      
         if (Taxon.getTaxonOfRank(rank) == null) {
-             message = "Bad rank:" + rank + " " + AntwebUtil.getRequestInfo(request);
+             message = "Bad rank:" + Html.esc(rank) + " " + Html.esc(AntwebUtil.getRequestInfo(request));
              s_log.info("execute() " + message);
              request.setAttribute("message", message);
              return mapping.findForward("message");
@@ -270,7 +270,7 @@ public class BrowseAction extends DescriptionAction {
 		  connection = DBUtil.getConnection(dataSource, dbMethodName, target);
 
 		  if (connection == null) {
-		      message = "execute() Null connection !!!" + AntwebUtil.getRequestInfo(request);
+		      message = "execute() Null connection !!!" + Html.esc(AntwebUtil.getRequestInfo(request));
               s_log.error(message);
 		      throw new AntwebException(message);
           }
@@ -355,7 +355,7 @@ public class BrowseAction extends DescriptionAction {
 
 		  if (taxon.getTaxonSet() == null) {
               // if (!ProjectDb.projectHasTaxon(projectName, taxon, connection)) {
-			  message = "Taxon:" + taxon.getTaxonName() + " not found for overview:" + overview;
+			  message = "Taxon:" + Html.esc(taxon.getTaxonName()) + " not found for overview:" + Html.esc(overview);
 			  request.setAttribute("message", message);
 			  return mapping.findForward("message");
 		  }
@@ -479,7 +479,7 @@ We are showin the full map of ponerinae for every adm1.
             if (taxon == null) {
                 message = "Taxon not found";
                 if (!overview.getName().equals(Project.ALLANTWEBANTS)) {
-                    message += " for overview:" + overview.getName();
+                    message += " for overview:" + Html.esc(overview.getName());
                 } else {
                     message += ".";
                 }
@@ -565,7 +565,7 @@ We are showin the full map of ponerinae for every adm1.
 
         } catch (MissingResourceException e) {
 			// This was around the new Map() command above, but we seemed to be not closing the db connection.
-			message = "e:" + e + " MissingResource overview:"+ overview.getName();
+			message = "e:" + Html.esc(e) + " MissingResource overview:"+ Html.esc(overview.getName());
         } catch (SQLException e) {
             message = "Exception caught on request.";
             boolean beBriefInDevMode = true;
@@ -574,13 +574,13 @@ We are showin the full map of ponerinae for every adm1.
             }
         } catch (TaxonNotFoundException e) {
             message = e.getMessage();
-            request.setAttribute("message", "Taxon not found for " + message);
+            request.setAttribute("message", "Taxon not found for " + Html.esc(message));
             String logMessage = message + " " + HttpUtil.getTarget(request) + " referrer:" + HttpUtil.getReferrerUrl(request);
             A.log("execute() message:" + logMessage);
             LogMgr.appendWebLog("taxonNotFound.txt", logMessage, true);
             return mapping.findForward("message");
         } catch (AntwebException e) {
-            message = "e:" + e;
+            message = "e:" + Html.esc(e);
         } finally {
 //		  ResourceTracker.remove(dbMethodName + " " + target);
 
@@ -668,7 +668,7 @@ We are showin the full map of ponerinae for every adm1.
           taxonName = taxonDb.getTaxonNameFromAntcatId("taxon", antcatId);
 
 		  if (taxonName == null) {
-			request.setAttribute("message", "Taxon name not found for antcatId:" + antcatId);
+			request.setAttribute("message", "Taxon name not found for antcatId:" + Html.esc(antcatId));
 			return mapping.findForward("message");
 		  }
 		  fetchTaxon = new TaxonDb(connection).getTaxon(taxonName);
@@ -699,7 +699,7 @@ We are showin the full map of ponerinae for every adm1.
 		  HttpUtil.sendRedirect(url, request, response);  
           return null;
         } else {
-		  request.setAttribute("message", taxonName + " does not exist in the database");
+		  request.setAttribute("message", Html.esc(taxonName) + " does not exist in the database");
 		  return mapping.findForward("message");
 		}
 	  } catch (IOException | SQLException e) {

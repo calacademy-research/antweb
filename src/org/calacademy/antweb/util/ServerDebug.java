@@ -77,7 +77,7 @@ public final class ServerDebug extends AntwebAction {
 					return mapping.findForward("message");
 				}
 				if ("setDebug".equals(action)) {
-					message = "serverDebug set:" + param;
+					message = "serverDebug set:" + Html.esc(param);
 					ServerDb.setServerDebug(param, connection);
                     setDebug(param);
 				}

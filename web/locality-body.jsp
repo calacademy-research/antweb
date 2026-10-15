@@ -23,8 +23,8 @@
     String the_page = HttpUtil.getTarget(request);
     String pageContainer = "showBrowse";
 %>
-<input id="for_print" type="text" value="AntWeb. Available from: <%= HttpUtil.getFullJspTarget(request)%>">
-<input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request)%>">
+<input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
+<input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
 <div class="page_contents">
     <h1>Locality: <bean:write name="locality" property="localityName"/></h1>
 </div>
@@ -35,7 +35,7 @@
     <div id="overview_data" class="plain">
 		<ul>
 		<li>Code:</li>
-		<li><b><%= locality.getLocalityCode() %></b></li>
+		<li><b><%= Html.esc(locality.getLocalityCode()) %></b></li>
 		</ul>
 
 		<ul>
@@ -50,7 +50,7 @@
 
 		<ul>
 		<li>Museum:</li>
-		  <li><b><a href="<%= AntwebProps.getDomainApp() %>/museum.do?name=<%= locality.getMuseumCode() %>"><%= locality.getMuseumName() %></a></b></li>
+		  <li><b><a href="<%= AntwebProps.getDomainApp() %>/museum.do?name=<%= Html.escAttr(Html.url(locality.getMuseumCode())) %>"><%= Html.esc(locality.getMuseumName()) %></a></b></li>
 		</ul>
 
 		<% if (Utility.displayEmptyOrNotBlank(locality.getCountry())) { %>
@@ -58,7 +58,7 @@
 		<%
 		   String countryLink = "";
 		   if (locality.getCountry() != null) {
-			 countryLink = "<a href='" + AntwebProps.getDomainApp() + "/country.do?name=" + locality.getCountry() + "'>" + locality.getCountry() + "</a>";
+			 countryLink = "<a href='" + AntwebProps.getDomainApp() + "/country.do?name=" + Html.escAttr(Html.url(locality.getCountry())) + "'>" + Html.esc(locality.getCountry()) + "</a>";
 		   } %>
 		<li><b><%= countryLink %></b></li></ul>
 		<% }
@@ -82,7 +82,7 @@
            Geolocale adm1 = GeolocaleMgr.getAdm1(locality.getAdm1(), locality.getCountry());
            A.log("locality-body.jsp adm1:" + adm1 + " country:" + locality.getCountry() + " adm1:" + locality.getAdm1());
            if (adm1 == null) {
-             adm1Link = locality.getAdm1();
+             adm1Link = Html.esc(locality.getAdm1());
            } else {
              //A.log("locality-body.jsp parent:" + adm1.getParent() + " adm1:" + adm1.getName());
              adm1Link = "<a href='" + AntwebProps.getDomainApp() + "/adm1.do?id=" + adm1.getId() + "'>" + adm1.getName() + "</a>";
@@ -100,7 +100,7 @@
 		if (Utility.displayEmptyOrNotBlank(lat)) { %>
 		<ul>
 		<li>Latitude:</li>
-		<li><b><%= Utility.notBlankValue(lat) %></b></li>
+		<li><b><%= Html.esc(Utility.notBlankValue(lat)) %></b></li>
 		</ul>
 		<% } %>		
 		
@@ -109,7 +109,7 @@
 		if (Utility.displayEmptyOrNotBlank(lon)) { %>
 		<ul>
 		<li>Longitude:</li>
-		<li><b><%= Utility.notBlankValue(lon) %></b></li>
+		<li><b><%= Html.esc(Utility.notBlankValue(lon)) %></b></li>
 		</ul>
 		<% } %>
 
@@ -220,7 +220,7 @@
 	<div class="browse_col_one">
 		<logic:notEmpty name="row" property="collectionCode">
 		<a href="collection.do?name=<bean:write name="row" property="collectionCode"/>">
-		<b><%= ((String) prettycode).toUpperCase() %></b>
+		<b><%= Html.esc(((String) prettycode).toUpperCase()) %></b>
 		</a>
 		</logic:notEmpty>
 	</div>
@@ -264,5 +264,5 @@
 	   String amissEmail = locality.getAmissEmail();
 	%>
 	<br />
-	<p>Specimen data uploaded by <%= institutionsStr %> | <a href="mailto:<%= amissEmail %>?subject=Regarding AntWeb page <%= the_page %>">See something amiss? Send us an email.</a></p>
+	<p>Specimen data uploaded by <%= institutionsStr %> | <a href="mailto:<%= amissEmail %>?subject=Regarding AntWeb page <%= Html.escAttr(the_page) %>">See something amiss? Send us an email.</a></p>
 </div>

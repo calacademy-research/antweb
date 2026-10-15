@@ -43,8 +43,8 @@
           return;  // Could we return an error page here, please?
         }
    
-        String metaString = "<meta name='keywords' content='Specimen " + code + ", " + shotString + " ,AntWeb, ants,ant,formicidae '/>";
-        metaString+= "<meta name='description' content='Closeup " + shotString + " view of Specimen " + code + " from AntWeb.'/>";
+        String metaString = "<meta name='keywords' content='Specimen " + Html.escAttr(code) + ", " + shotString + " ,AntWeb, ants,ant,formicidae '/>";
+        metaString+= "<meta name='description' content='Closeup " + shotString + " view of Specimen " + Html.escAttr(code) + " from AntWeb.'/>";
 
 %>
 
@@ -52,7 +52,7 @@
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
   <tiles:put name="title" type="string">
-    Closeup of the <%= shotString %> of Specimen <%= code %>
+    Closeup of the <%= Html.esc(shotString) %> of Specimen <%= Html.esc(code) %>
   </tiles:put>
         <tiles:put name="meta" value="<%= metaString %>" />
 	<tiles:put name="body-content" value="/bigPicture-body.jsp" />	

@@ -61,7 +61,7 @@ public final class PlaceNameAction extends AntwebAction {
             HttpUtil.sendRedirect(target, request, response);
             return null;
           } else {
-			  request.setAttribute("message", "Place not found:" + placeName);
+			  request.setAttribute("message", "Place not found:" + Html.esc(placeName));
 			  return mapping.findForward("message");		              
           }
         }

@@ -70,7 +70,7 @@ public final class MapResultsAction extends ResultsAction {
             String title = "Mapping Search Results";
             map = getMap(searchResults, taxonList, chosenList, resultRank, output, title, connection);
         } catch (IndexOutOfBoundsException e2) {
-		  String message = "Case#:" + AntwebUtil.getCaseNumber() + " e:" + e2 + " target:" + HttpUtil.getTarget(request);
+		  String message = "Case#:" + AntwebUtil.getCaseNumber() + " e:" + Html.esc(e2) + " target:" + Html.esc(HttpUtil.getTarget(request));
 		  s_log.warn("execute() message:" + message);
 		  request.setAttribute("message", message);
 		  return mapping.findForward("message");                   

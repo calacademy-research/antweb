@@ -81,7 +81,7 @@ Examples of species with images that don't have h1 images:
 <div class="data_overlay"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= code %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a>
 <%
                 if (specChild.getTypeStatus() != null) { %>
-<img style="margin-top:3px;" src="image/has_type_status.png" title="<%= (new Formatter()).capitalizeFirstLetter(specChild.getTypeStatus()) %>">  
+<img style="margin-top:3px;" src="image/has_type_status.png" title="<%= org.calacademy.antweb.util.Html.escAttr((new Formatter()).capitalizeFirstLetter(specChild.getTypeStatus())) %>">  
              <% }
 
                 if (isDefault) {
@@ -246,7 +246,7 @@ Examples of species with images that don't have h1 images:
                     if ((specChild.getTypeStatus() != null)) { 
                       if (!"".equals(specChild.getTypeStatus())) {
                         //A.log("taxonChildImageSet.jsp specChild:" + specChild.getTypeStatus());
-%> <img style="margin-top:3px;" src="image/has_type_status.png" title="<%= (new Formatter()).capitalizeFirstLetter(specChild.getTypeStatus()) %>"> <% 
+%> <img style="margin-top:3px;" src="image/has_type_status.png" title="<%= org.calacademy.antweb.util.Html.escAttr((new Formatter()).capitalizeFirstLetter(specChild.getTypeStatus())) %>"> <% 
                       }
                     } 
                   }

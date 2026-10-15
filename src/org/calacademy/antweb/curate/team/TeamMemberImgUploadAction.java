@@ -53,7 +53,7 @@ public final class TeamMemberImgUploadAction extends AntwebAction {
            // Get TeamMember from ID   // new User();
                 if (myFile.getFileSize() > MAX_PHOTO_SIZE) {
                 
-                    String message = "File:" + myFile.getFileName() + " is to big (" + myFile.getFileSize() + ") to upload.";
+                    String message = "File:" + Html.esc(myFile.getFileName()) + " is to big (" + myFile.getFileSize() + ") to upload.";
                     s_log.warn(message);
                     request.setAttribute("message", message);
                     return mapping.findForward("message");

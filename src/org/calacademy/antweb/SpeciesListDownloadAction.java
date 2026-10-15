@@ -64,7 +64,7 @@ public class SpeciesListDownloadAction extends AntwebAction {
           }
 
           if (taxa == null || taxa.size() == 0) {
-              message = "Overview:" + overview + " not found.";
+              message = "Overview:" + Html.esc(overview) + " not found.";
           }
 
           if (message != null) {

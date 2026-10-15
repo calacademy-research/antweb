@@ -41,10 +41,10 @@ function setSection(section, value) {
 }
 
 function setSectionOpens() {
-  setSection("coll", "<%= advancedSearchForm.getCollGroupOpen() %>");
-  setSection("spec", "<%= advancedSearchForm.getSpecGroupOpen() %>");
-  setSection("geo", "<%= advancedSearchForm.getGeoGroupOpen() %>");
-  setSection("type", "<%= advancedSearchForm.getTypeGroupOpen() %>");
+  setSection("coll", "<%= Html.js(advancedSearchForm.getCollGroupOpen()) %>");
+  setSection("spec", "<%= Html.js(advancedSearchForm.getSpecGroupOpen()) %>");
+  setSection("geo", "<%= Html.js(advancedSearchForm.getGeoGroupOpen()) %>");
+  setSection("type", "<%= Html.js(advancedSearchForm.getTypeGroupOpen()) %>");
 //  setSection("other", "< %= advancedSearchForm.getOtherGroupOpen() % >");
 }
 	

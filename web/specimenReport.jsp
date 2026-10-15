@@ -61,7 +61,7 @@ if (sortedBy == null) {
             String sortByExtras = HttpUtil.getAfterQuestionMark(targetMinusSort);
 
             %>
-            <input type="hidden" id="ns_sortby_extras" name="b" value="<%= sortByExtras %>" />
+            <input type="hidden" id="ns_sortby_extras" name="b" value="<%= Html.escAttr(sortByExtras) %>" />
             <input type="hidden" id="show_tool" name="t" value="" />
             <span class="label">Sort by:</span>
             <select name="sortBy" id="sortBy_select">
@@ -118,12 +118,12 @@ if (sortedBy == null) {
             String sortOrder = (String) request.getParameter("sortOrder");
             if (sortOrder != null) {
               if (sortOrder.equals("up")) {
-                sortImgLink = "<a href='" + HttpUtil.getTargetMinusParam(request, "sortOrder=up") + addIn + "&sortOrder=down'><img src='" + AntwebProps.getDomainApp() + "/image/downArrow.jpg' width=12></a>";
+                sortImgLink = "<a href='" + Html.escAttr(HttpUtil.getTargetMinusParam(request, "sortOrder=up") + addIn) + "&amp;sortOrder=down'><img src='" + AntwebProps.getDomainApp() + "/image/downArrow.jpg' width=12></a>";
               } else {
-                sortImgLink = "<a href='" + HttpUtil.getTargetMinusParam(request, "sortOrder=down") + addIn + "&sortOrder=up'><img src='" + AntwebProps.getDomainApp() + "/image/upArrow.jpg' width=12></a>";
+                sortImgLink = "<a href='" + Html.escAttr(HttpUtil.getTargetMinusParam(request, "sortOrder=down") + addIn) + "&amp;sortOrder=up'><img src='" + AntwebProps.getDomainApp() + "/image/upArrow.jpg' width=12></a>";
               }
             } else {
-              sortImgLink = "<a href='" + HttpUtil.getTargetMinusParam(request, "sortOrder=up") + addIn + "&sortOrder=down'><img src='" + AntwebProps.getDomainApp() + "/image/downArrow.jpg' width=12></a>";
+              sortImgLink = "<a href='" + Html.escAttr(HttpUtil.getTargetMinusParam(request, "sortOrder=up") + addIn) + "&amp;sortOrder=down'><img src='" + AntwebProps.getDomainApp() + "/image/downArrow.jpg' width=12></a>";
             }
             //sortImgLink = HttpUtil.getTargetMinusParam(sortImgLink, "t"); // Does not seem to get rid of the extra &t= that are added by the sort drop down.
             if (sortImgLink != null) { %>
@@ -194,7 +194,7 @@ if (sortedBy == null) {
       if ((srAccessLogin == null) && ((username != "photo_review") || (srAccessLogin.isUploadImages() == false))) { 
 
         if (useShot) { %>
-    <input id="thumb_choice" type="hidden" name="shot" value="<%= choice_is %>" checked>
+    <input id="thumb_choice" type="hidden" name="shot" value="<%= Html.escAttr(choice_is) %>" checked>
      <% }
       }
     } else { %>
@@ -218,7 +218,7 @@ if (sortedBy == null) {
 
 <% 
       if (useShot) { %>
-<input id="thumb_choice" type="hidden" name="shot" value="<%=choice_is%>" checked>
+<input id="thumb_choice" type="hidden" name="shot" value="<%= Html.escAttr(choice_is) %>" checked>
    <% } %>
 <%  } // if advancedSearch or else
 
@@ -280,13 +280,13 @@ if (sortedBy == null) {
                 <% String indexNote = "";
                    if (LoginMgr.isAdmin(request)) indexNote = (index + 1) + ".&nbsp;&nbsp;";
                 %>
-                    <b><%= indexNote %></b><span class="sdcb<% if (!thisChild.getHasImages()) { %> np<% } %>"><input type="checkbox" class="thecb" name="chosen" value="<%= for_chosen %>"></span>
+                    <b><%= indexNote %></b><span class="sdcb<% if (!thisChild.getHasImages()) { %> np<% } %>"><input type="checkbox" class="thecb" name="chosen" value="<%= Html.escAttr(for_chosen) %>"></span>
                 </div>
                 <div class="sd_data">
                     <div class="sd_specimen_code">
                         <%= specimenDagger %><%= specimenIntroduced %><%= redFlagged %>
-                        <a href="<%= AntwebProps.getDomainApp() %>/specimen.do?code=<%= thisChild.getName() %>"><span class="
-                          <%= ("code".equals(sortedBy) ? "sorted_by" : "") %>"><%= thisChild.getPrettyName() %></span></a><br />
+                        <a href="<%= AntwebProps.getDomainApp() %>/specimen.do?code=<%= Html.escAttr(Html.url(thisChild.getName())) %>"><span class="
+                          <%= ("code".equals(sortedBy) ? "sorted_by" : "") %>"><%= Html.esc(thisChild.getPrettyName()) %></span></a><br />
                             <span class="<%= ("images".equals(sortedBy) ? "sorted_by" : "") %>">
 
                    <% if (thisChild instanceof Specimen) {            
@@ -347,9 +347,9 @@ if (sortedBy == null) {
 
                      <div class="clear"></div>
                     </div>
-                    <div class="sd_latlong" title="Latitude/Longitude"><span class="<%= ("latitude".equals(sortedBy) ? "sorted_by" : "") %>"><%= Utility.notBlankValue(thisChild.getDecimalLatitude()) %></span>
-                      &deg;,<span class="<%= ("longitude".equals(sortedBy) ? "sorted_by" : "") %>"><%= Utility.notBlankValue(thisChild.getDecimalLongitude()) %>&deg;</span></div>
-                    <div class="sd_elevation"><span class="<%= ("elevation".equals(sortedBy) ? "sorted_by" : "") %>">Elevation: <%= Utility.notBlankValue(thisChild.getElevation()) %>m</span></div>
+                    <div class="sd_latlong" title="Latitude/Longitude"><span class="<%= ("latitude".equals(sortedBy) ? "sorted_by" : "") %>"><%= Html.esc(Utility.notBlankValue(thisChild.getDecimalLatitude())) %></span>
+                      &deg;,<span class="<%= ("longitude".equals(sortedBy) ? "sorted_by" : "") %>"><%= Html.esc(Utility.notBlankValue(thisChild.getDecimalLongitude())) %>&deg;</span></div>
+                    <div class="sd_elevation"><span class="<%= ("elevation".equals(sortedBy) ? "sorted_by" : "") %>">Elevation: <%= Html.esc(Utility.notBlankValue(thisChild.getElevation())) %>m</span></div>
                     <div class="clear"></div>
                 </div>
                 <div class="clear"></div>
@@ -364,18 +364,18 @@ if (sortedBy == null) {
                      <% String habitatStr = ((Specimen) thisChild).getHabitat();
                         if (habitatStr != null && habitatStr.length() > maxStrLength) habitatStr = habitatStr.substring(0, maxStrLength) + "...";
                          %>
-                        <span class="<%= ("habitat".equals(sortedBy) ? "sorted_by" : "") %>">Habitat: <%= Utility.notBlankValue(habitatStr) %></span><br />
-                        <span class="<%= ("microhabitat".equals(sortedBy) ? "sorted_by" : "") %>">Microhabitat: <%= Utility.notBlankValue(thisChild.getMicrohabitat()) %></span><br />
+                        <span class="<%= ("habitat".equals(sortedBy) ? "sorted_by" : "") %>">Habitat: <%= Html.esc(Utility.notBlankValue(habitatStr)) %></span><br />
+                        <span class="<%= ("microhabitat".equals(sortedBy) ? "sorted_by" : "") %>">Microhabitat: <%= Html.esc(Utility.notBlankValue(thisChild.getMicrohabitat())) %></span><br />
                      <% String specNotes = ((Specimen) thisChild).getSpecimenNotes();
                         if (specNotes != null && specNotes.length() > maxStrLength) specNotes = specNotes.substring(0, maxStrLength) + "...";
                         %>
-                        <span class="<%= ("specimennotes".equals(sortedBy) ? "sorted_by" : "") %>">Notes: <%= Utility.notBlankValue(specNotes) %></span><br />
-                        <span class="<%= ("medium".equals(sortedBy) ? "sorted_by" : "") %>">Medium: <%= Utility.notBlankValue(thisChild.getMedium()) %></span><br />
+                        <span class="<%= ("specimennotes".equals(sortedBy) ? "sorted_by" : "") %>">Notes: <%= Html.esc(Utility.notBlankValue(specNotes)) %></span><br />
+                        <span class="<%= ("medium".equals(sortedBy) ? "sorted_by" : "") %>">Medium: <%= Html.esc(Utility.notBlankValue(thisChild.getMedium())) %></span><br />
                     </div>
                     <div class="sd_subdata_items">      
-                        <span class="<%= ("collectedby".equals(sortedBy) ? "sorted_by" : "") %>">Collected By: <%= Utility.notBlankValue(thisChild.getCollectedBy()) %></span><br />
+                        <span class="<%= ("collectedby".equals(sortedBy) ? "sorted_by" : "") %>">Collected By: <%= Html.esc(Utility.notBlankValue(thisChild.getCollectedBy())) %></span><br />
 <% //A.log("specimenReport.jsp code:" + thisChild.getCode() + " sortedBy:" + sortedBy + " dateCollectedStart:" + thisChild.getDateCollectedStart()); %>
-                        <span class="<%= ("datecollected".equals(sortedBy) ? "sorted_by" : "") %>">Date Collected: <%= Utility.notBlankValue(thisChild.getDateCollectedStart()) %></span><br />
+                        <span class="<%= ("datecollected".equals(sortedBy) ? "sorted_by" : "") %>">Date Collected: <%= Html.esc(Utility.notBlankValue(thisChild.getDateCollectedStart())) %></span><br />
                         <span class="<%= ("created".equals(sortedBy) ? "sorted_by" : "") %>">Uploaded: <%= Utility.notBlankValue(thisChild.getCreated()) %></span><br />
                         <% String groupLink = "";
                            groupLink = thisChild.getGroup().getLink();
@@ -388,19 +388,19 @@ if (sortedBy == null) {
                         <span class="<%= ("ownedby".equals(sortedBy) ? "sorted_by" : "") %>">Owned By: <%= thisChild.getOwnedByLink() %></span><br />
 
                         <span class="<%= ("locatedat".equals(sortedBy) ? "sorted_by" : "") %>">Located At: <%= thisChild.getLocatedAtLink() %></span><br />
-                        <span class="<%= ("determinedby".equals(sortedBy) ? "sorted_by" : "") %>">Determined By: <%= Utility.notBlankValue(thisChild.getDeterminedBy()) %></span><br />
+                        <span class="<%= ("determinedby".equals(sortedBy) ? "sorted_by" : "") %>">Determined By: <%= Html.esc(Utility.notBlankValue(thisChild.getDeterminedBy())) %></span><br />
                     </div>
                     <div class="sd_subdata_items">
-                        <span class="<%= ("method".equals(sortedBy) ? "sorted_by" : "") %>">Method: <%= Utility.notBlankValue(thisChild.getMethod()) %></span><br />
-                        <span class="<%= ("dna".equals(sortedBy) ? "sorted_by" : "") %>">DNA Notes: <%= Utility.notBlankValue(thisChild.getDnaExtractionNotes()) %></span><br />
-                        <span class="<%= ("bioregion".equals(sortedBy) ? "sorted_by" : "") %>">Bioregion: <% if (!Utility.isBlank(((Specimen) thisChild).getBioregion())) { %><%= ((Specimen) thisChild).getBioregion() %><% } %></span><br />
+                        <span class="<%= ("method".equals(sortedBy) ? "sorted_by" : "") %>">Method: <%= Html.esc(Utility.notBlankValue(thisChild.getMethod())) %></span><br />
+                        <span class="<%= ("dna".equals(sortedBy) ? "sorted_by" : "") %>">DNA Notes: <%= Html.esc(Utility.notBlankValue(thisChild.getDnaExtractionNotes())) %></span><br />
+                        <span class="<%= ("bioregion".equals(sortedBy) ? "sorted_by" : "") %>">Bioregion: <% if (!Utility.isBlank(((Specimen) thisChild).getBioregion())) { %><%= Html.esc(((Specimen) thisChild).getBioregion()) %><% } %></span><br />
                     </div>
                     <div class="sd_subdata_items">
-                        <span class="<%= ("type".equals(sortedBy) ? "sorted_by" : "") %>">Type Status: <% if (thisChild.getTypeStatus() != null && !"".equals(thisChild.getTypeStatus())) { %><img style="top:1px;position:relative;" src="<%= AntwebProps.getDomainApp() %>/image/has_type_status_icon.png"><% } %> <%= Utility.notBlankValue(thisChild.getTypeStatus()) %></span><br />
+                        <span class="<%= ("type".equals(sortedBy) ? "sorted_by" : "") %>">Type Status: <% if (thisChild.getTypeStatus() != null && !"".equals(thisChild.getTypeStatus())) { %><img style="top:1px;position:relative;" src="<%= AntwebProps.getDomainApp() %>/image/has_type_status_icon.png"><% } %> <%= Html.esc(Utility.notBlankValue(thisChild.getTypeStatus())) %></span><br />
                         <% // A.log("specimenReport.jsp sortedBy:" + sortedBy); %>
-                        <span class="<%= ("lifestage".equals(sortedBy) ? "sorted_by" : "") %>">Life Stage: <%= Utility.notBlankValue(new Formatter().capitalizeFirstLetter((String) thisChild.getLifeStage())) %></span><br />
-                        <span class="<%= ("caste".equals(sortedBy) ? "sorted_by" : "") %>">Caste: <%= Utility.notBlankValue(new Formatter().capitalizeFirstLetter((String) thisChild.getCaste())) %></span><br />
-                        <span class="<%= ("caste".equals(sortedBy) ? "sorted_by" : "") %>">Subcaste: <%= Utility.notBlankValue(new Formatter().capitalizeFirstLetter((String) thisChild.getSubcaste())) %></span><br />
+                        <span class="<%= ("lifestage".equals(sortedBy) ? "sorted_by" : "") %>">Life Stage: <%= Html.esc(Utility.notBlankValue(new Formatter().capitalizeFirstLetter((String) thisChild.getLifeStage()))) %></span><br />
+                        <span class="<%= ("caste".equals(sortedBy) ? "sorted_by" : "") %>">Caste: <%= Html.esc(Utility.notBlankValue(new Formatter().capitalizeFirstLetter((String) thisChild.getCaste()))) %></span><br />
+                        <span class="<%= ("caste".equals(sortedBy) ? "sorted_by" : "") %>">Subcaste: <%= Html.esc(Utility.notBlankValue(new Formatter().capitalizeFirstLetter((String) thisChild.getSubcaste()))) %></span><br />
                     </div>
                 </div>
                    <% } // "specimen".equals(thisChild.getRank() %>
@@ -416,7 +416,7 @@ if (sortedBy == null) {
             <%@include file="/common/statusDisplayChild.jsp" %>
          <% if ("specimen".equals(thisChild.getRank())) { %>            
                 <%= specimenDagger %>&nbsp<%= specimenIntroduced %>&nbsp;
-                <div class=browse_col_one><a href="specimen.do?name=<%= thisChild.getName() %>">
+                <div class=browse_col_one><a href="specimen.do?name=<%= Html.escAttr(Html.url(thisChild.getName())) %>">
          <% } else { 
                 if (thisChild.getHasImages()) {
          %>
@@ -429,7 +429,7 @@ if (sortedBy == null) {
                     <a href="<%= AntwebProps.getDomainApp() %>/description.do?<%= thisChild.getBrowserParams() %>">
              <% } %>
          <% } %>
-            <%= thisChild.getPrettyName() %>
+            <%= Html.esc(thisChild.getPrettyName()) %>
 
             <!-- Close the anchor tag -->
          <% if ("species".equals(thisChild.getRank()) || "specimen".equals(thisChild.getRank())) { %>

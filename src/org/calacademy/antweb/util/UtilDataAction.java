@@ -146,7 +146,7 @@ public class UtilDataAction extends AntwebAction {
                     s_log.info("execute() AntwebMgr.reload NOT reloaded because allow.");
                 }
 
-                request.setAttribute("message", "action not found:" + action);
+                request.setAttribute("message", "action not found:" + Html.esc(action));
                 return mapping.findForward("message");
 
             } catch (Exception e) {
@@ -161,7 +161,7 @@ public class UtilDataAction extends AntwebAction {
     }
 
     private String handleException(Exception e, Connection connection, String action, String loginName) {
-        String message = "Error. No changes made for action:" + action + " user:" + loginName + " e:" + e;
+        String message = "Error. No changes made for action:" + Html.esc(action) + " user:" + Html.esc(loginName) + " e:" + Html.esc(e);
         s_log.error("handleException() " + message);
         if (e instanceof NullPointerException) s_log.error(AntwebUtil.getShortStackTrace(e));
         try {
@@ -560,7 +560,7 @@ public class UtilDataAction extends AntwebAction {
             } else {
                 projTaxonCountDb.childrenCountCrawl(name);
             }
-            message = "Finished Project Count Crawl (" + name + ")";
+            message = "Finished Project Count Crawl (" + Html.esc(name) + ")";
         }
 
 
@@ -593,7 +593,7 @@ public class UtilDataAction extends AntwebAction {
 		  } else {
 		    museumTaxonCountDb.childrenCountCrawl(code);
 		  }
-		  message = "Finished Museum Count Crawl (" + code + ")";
+		  message = "Finished Museum Count Crawl (" + Html.esc(code) + ")";
 		}
 
 		if (action.equals("bioregionTaxonCountCrawl")) {
@@ -604,7 +604,7 @@ public class UtilDataAction extends AntwebAction {
 		  } else {
 		    bioregionTaxonCountDb.childrenCountCrawl(name);
 		  }
-		  message = "Finished Bioregion Count Crawl (" + form.getName() + ")";
+		  message = "Finished Bioregion Count Crawl (" + Html.esc(form.getName()) + ")";
 		}
 
         // Useful for debugging? Code to execute and get results or a particular count.
@@ -796,7 +796,7 @@ public class UtilDataAction extends AntwebAction {
         if (action.equals("siteWarning")) {
           s_log.debug("text:" + text);
           AntwebMgr.createSiteWarning(text);
-          message = "SiteWarning set:" + text;
+          message = "SiteWarning set:" + Html.esc(text);
         }
 
 
@@ -854,7 +854,7 @@ public class UtilDataAction extends AntwebAction {
               s_log.debug("UtilDataAction.genGoogleMapFunction georank:" + geolocale.getGeorank() + " geolocale:" + geolocale + " country:" + country + " adm1:" + adm1);
             }
             if (geolocale == null || !("country".equals(geolocale.getGeorank()) || "adm1".equals(geolocale.getGeorank()))) {
-              message = "Geolocale not found for num(id):" + num + " param(country):" + param + " param2(adm1):" + param2;
+              message = "Geolocale not found for num(id):" + num + " param(country):" + Html.esc(param) + " param2(adm1):" + Html.esc(param2);
             } else {
               s_log.debug("UtilData.genGoogleMapFunction() id:" + id + " country:" + country + " adm1:" + adm1 + " geolocale:" + geolocale);
               SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);

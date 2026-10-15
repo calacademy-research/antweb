@@ -181,8 +181,8 @@ function clickrecall(thisfield, defaulttext) {
   }
 %>
 <html:form method="GET" action="deleteImages">
-<input type="hidden" name = "daysAgo" value = "<%= daysAgo %>" />
-<input type="hidden" name="group" value = "<%= group %>" />
+<input type="hidden" name = "daysAgo" value = "<%= Html.escAttr(daysAgo) %>" />
+<input type="hidden" name="group" value = "<%= Html.escAttr(group) %>" />
 <br />
 
 <div class="adv_search_header <logic:equal name="sortBy" value="code">sorted </logic:equal>recent_image">
@@ -274,8 +274,8 @@ Sorry, nothing matches your request.
 <% } %>
 
 <!-- <a href="specimen.do?name=<bean:write name="row" property="code"/>"> -->
-<a href="<%= domainApp %>/bigPicture.do?name=<%= ((String) prettycode) %>&number=<logic:notEmpty name="row" property="shotNumber"><%= ((String) prettynumber) %></logic:notEmpty>&shot=<logic:notEmpty name="row" property="shotType"><%= prettyshot %></logic:notEmpty>">
-<b><%= ((String) prettycode).toUpperCase() %></b>
+<a href="<%= domainApp %>/bigPicture.do?name=<%= Html.escAttr(Html.url(prettycode)) %>&number=<logic:notEmpty name="row" property="shotNumber"><%= Html.escAttr(Html.url(prettynumber)) %></logic:notEmpty>&shot=<logic:notEmpty name="row" property="shotType"><%= Html.escAttr(Html.url(prettyshot)) %></logic:notEmpty>">
+<b><%= Html.esc(((String) prettycode).toUpperCase()) %></b>
 </a>
 </logic:notEmpty>
 &nbsp;
@@ -284,30 +284,30 @@ Sorry, nothing matches your request.
 
 <div class="adv_search_shot">
 <logic:notEmpty name="row" property="shotType">
-<%= prettyshot %>
+<%= Html.esc(prettyshot) %>
 </logic:notEmpty>
 &nbsp;
 </div>
 
 <div class="adv_search_number">
 <logic:notEmpty name="row" property="shotNumber">
-<%= prettynumber %>
+<%= Html.esc(prettynumber) %>
 </logic:notEmpty>
 &nbsp;
 </div>
 
 <div class="adv_search_name">
-<a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= ((ResultItem) row).getName() %>">
+<a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= Html.escAttr(Html.url(((ResultItem) row).getName())) %>">
 <logic:notEmpty name="row" property="genus">
-<%= new Formatter().capitalizeFirstLetter((String) prettygenus) %>
+<%= Html.esc(new Formatter().capitalizeFirstLetter((String) prettygenus)) %>
 </logic:notEmpty>
 
 <logic:notEmpty name="row" property="species">
-<%= prettyspecies %>
+<%= Html.esc(prettyspecies) %>
 </logic:notEmpty>
 
 <logic:notEmpty name="row" property="subspecies">
-<%= prettysubspecies %>
+<%= Html.esc(prettysubspecies) %>
 </logic:notEmpty>
 </a>
 &nbsp;
@@ -315,21 +315,21 @@ Sorry, nothing matches your request.
 
 <div class="adv_search_author">
 <logic:notEmpty name="row" property="artist">
-<%= prettyartist %>
+<%= Html.esc(prettyartist) %>
 </logic:notEmpty>
 &nbsp;
 </div>
 
 <div class="adv_search_institution">
 <logic:notEmpty name="row" property="group">
-<%= prettygroup %>
+<%= Html.esc(prettygroup) %>
 </logic:notEmpty>
 &nbsp;
 </div>
 
 <div class="adv_search_upload_date">
 <logic:notEmpty name="row" property="uploadDate">
-<%= prettyuploaddate %>
+<%= Html.esc(prettyuploaddate) %>
 </logic:notEmpty>
 &nbsp;
 </div>
@@ -362,18 +362,18 @@ Sorry, nothing matches your request.
     if (numNexts > 1) {
         if (the_page > 1) {
 %>
-<span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=0&length=<%= length %>&sortBy=<%= request.getParameter("sortBy") %>">&lsaquo; FIRST</a></span> <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= prev %>&length=<%= length %>&sortBy=<%= request.getParameter("sortBy") %>">&#171; PREVIOUS</a></span>
+<span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=0&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>">&lsaquo; FIRST</a></span> <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= prev %>&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>">&#171; PREVIOUS</a></span>
 <%
         }
         if (numNexts < 7 + (adjacents * 2)) {
             for (int counter = 1; counter <= numNexts; counter++) {
                 if (counter == the_page) {
 %>
-<span class="on_page"><a href="<%= HttpUtil.getTarget(request) %>"><%=counter %></a></span>
+<span class="on_page"><a href="<%= Html.escAttr(HttpUtil.getTarget(request)) %>"><%=counter %></a></span>
 <%
                 } else {
 %>
-      <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (counter*intLength) - intLength %>&length=<%= length %>&sortBy=<%= request.getParameter("sortBy") %>"><%=counter%></a></span>
+      <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (counter*intLength) - intLength %>&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>"><%=counter%></a></span>
 <%
                 }
             }
@@ -384,11 +384,11 @@ Sorry, nothing matches your request.
                 for (int counter = 1; counter < 4 + (adjacents * 2); counter++) {
                     if (counter == the_page) {
 %>
-<span class="on_page"><a href="<%= HttpUtil.getTarget(request) %>"><%=counter %></a></span>
+<span class="on_page"><a href="<%= Html.escAttr(HttpUtil.getTarget(request)) %>"><%=counter %></a></span>
 <%
                     } else {
 %>
-      <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (counter*intLength) - intLength %>&length=<%= length %>&sortBy=<%= request.getParameter("sortBy") %>"><%=counter%></a></span>
+      <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (counter*intLength) - intLength %>&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>"><%=counter%></a></span>
 <%
                     }
                 }		
@@ -396,11 +396,11 @@ Sorry, nothing matches your request.
                 for (int counter = the_page - adjacents; counter <= the_page + adjacents; counter++) {
                     if (counter == the_page) {
 %>
-<span class="on_page"><a href="<%= HttpUtil.getTarget(request) %>"><%=counter %></a></span>
+<span class="on_page"><a href="<%= Html.escAttr(HttpUtil.getTarget(request)) %>"><%=counter %></a></span>
 <%
                     } else {
 %>
-      <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (counter*intLength) - intLength %>&length=<%= length %>&sortBy=<%= request.getParameter("sortBy") %>"><%=counter%></a></span>
+      <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (counter*intLength) - intLength %>&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>"><%=counter%></a></span>
 <%
                     }
                 }
@@ -412,7 +412,7 @@ Sorry, nothing matches your request.
 <%
                     } else {
 %>
-      <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (counter*intLength) - intLength %>&length=<%= length %>&sortBy=<%= request.getParameter("sortBy") %>"><%=counter%></a></span>
+      <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (counter*intLength) - intLength %>&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>"><%=counter%></a></span>
 <%
                     }
                 }
@@ -420,7 +420,7 @@ Sorry, nothing matches your request.
         }
         if (the_page < numNexts-1) {
 %>
-<span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= next %>&length=<%= length %>&sortBy=<%= request.getParameter("sortBy") %>">NEXT &rsaquo;</a></span> <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (numNexts-1)*intLength %>&length=<%= length %>&sortBy=<%= request.getParameter("sortBy") %>">LAST &#187;</a></span>
+<span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= next %>&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>">NEXT &rsaquo;</a></span> <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (numNexts-1)*intLength %>&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>">LAST &#187;</a></span>
 <%
         }
     } // end   

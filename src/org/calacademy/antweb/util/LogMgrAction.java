@@ -115,7 +115,7 @@ public final class LogMgrAction extends AntwebAction {
         }
 
         if (log == null) {
-            message = "Must enter a log name for action:" + action;
+            message = "Must enter a log name for action:" + Html.esc(action);
             request.setAttribute("message", message);
             return mapping.findForward("message");
         }
@@ -138,7 +138,7 @@ public final class LogMgrAction extends AntwebAction {
         String logMessage = "";
         if (message != null && message.length() > 100) logMessage = message.substring(100) + "...";
 
-        if (message == null || message.equals("")) message = "File empty or not found: " + log;
+        if (message == null || message.equals("")) message = "File empty or not found: " + Html.esc(log);
         //A.log("command:" + command + " results:" + logMessage);
 
         request.setAttribute("message", message);

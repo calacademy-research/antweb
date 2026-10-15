@@ -194,7 +194,7 @@ if ($.cookie('thumbs')) {
     String sortByExtras = HttpUtil.getAfterQuestionMark(targetMinusSort);
 %>
 $(function() {
-    var full_query = '<%= sortByExtras %>';
+    var full_query = '<%= Html.js(sortByExtras) %>';
     var regex = '[?&]sortBy=([^&]*)'; 
     var regex2 = '[?&]t=([^&]*)'; 
     var re = new RegExp(regex, "g");

@@ -59,14 +59,14 @@
       for (String aStatusSet : statusSets) { 
         if (aStatusSet.equals(Status.VALID)) aStatusSet = "Valid (with fossils)";
 %>
-                     <li><a href="<%= sdTarget + "&statusSet=" + aStatusSet %>"><span style="text-transform:capitalize;"><%= aStatusSet %></span></a></li>
+                     <li><a href="<%= Html.escAttr(sdTarget + "&statusSet=" + aStatusSet) %>"><span style="text-transform:capitalize;"><%= Html.esc(aStatusSet) %></span></a></li>
    <% }
       //A.log("statusesDisplay() statusSets:" + statusSets + " showStatus:" + showStatuses + " statusSet:" + statusSet + " statusSetSize:" + statusSetSize + " sdTarget:" + sdTarget);
 
       if ("min".equals(statusSetSize)) { %>
-                     <li><a href="<%= sdTarget + "&statusSetSize=max" + "&statusSet=" + statusSet %>">Click for more options!</a></li> 
+                     <li><a href="<%= Html.escAttr(sdTarget + "&statusSetSize=max" + "&statusSet=" + statusSet) %>">Click for more options!</a></li> 
    <% } else { %>
-                     <li><a href="<%= sdTarget + "&statusSetSize=min" + "&statusSet=" + statusSet %>">Click for less options!</a></li> 
+                     <li><a href="<%= Html.escAttr(sdTarget + "&statusSetSize=min" + "&statusSet=" + statusSet) %>">Click for less options!</a></li> 
    <% } %>
                    </ul>
                </div>

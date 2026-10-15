@@ -140,7 +140,7 @@
 
 <td><%= genusDisplay %></td>
 <input type="hidden" class="input_200" name="taxonName" value="<%= taxonName %>">
-<input type="hidden" class="input_200" name="orderBy" value="<%= orderBy %>">
+<input type="hidden" class="input_200" name="orderBy" value="<%= Html.escAttr(orderBy) %>">
 <td><a title="Afrotropical">At</a>:<input type="checkbox" name="isAfrotropical" <%= isAfrotropical ? "checked":"" %>></td>
 <td><a title="Antarctica">A</a>:<input type="checkbox" name="isAntarctica" <%= isAntarctica ? "checked":"" %>></td>
 <td><a title="Australasia">AA</a>:<input type="checkbox" name="isAustralasia" <%= isAustralasia ? "checked":"" %>></td>
