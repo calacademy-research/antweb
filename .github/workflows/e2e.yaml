@@ -39,6 +39,28 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r tests/e2e/requirements.txt
+      # Staging only accepts web traffic from Cloudflare, and Cloudflare's bot protection
+      # challenges test robots. So the tests reach staging through an SSH tunnel to the
+      # server itself (same hostname, same Caddy, no Cloudflare in between).
+      - name: Tunnel to staging over SSH
+        if: ${{ env.ANTWEB_URL == 'https://staging.antweb.org' }}
+        env:
+          SSH_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          sudo ssh -i ~/.ssh/id_rsa -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o ExitOnForwardFailure=yes \
+            -o ServerAliveInterval=30 -f -N -L 443:127.0.0.1:443 "$SSH_USER@$SSH_HOST"
+          echo "127.0.0.1 staging.antweb.org" | sudo tee -a /etc/hosts
+          # Staging may use a Cloudflare Origin Certificate: trust Cloudflare's origin CA too.
+          curl -sSf -o /tmp/cf-origin-ca.pem https://developers.cloudflare.com/ssl/static/origin_ca_rsa_root.pem
+          cat "$(python -m certifi)" /tmp/cf-origin-ca.pem > /tmp/ca-bundle.pem
+          echo "REQUESTS_CA_BUNDLE=/tmp/ca-bundle.pem" >> "$GITHUB_ENV"
+          curl -sS --cacert /tmp/ca-bundle.pem -o /dev/null -w 'staging via tunnel: HTTP %{http_code}\n' https://staging.antweb.org/
       - name: Survey (report in the job summary)
         run: python tests/e2e/survey.py
       - name: Record baseline (first run, or mode=record)
