@@ -39,7 +39,25 @@ from sqlalchemy.ext.declarative import declarative_base
 # from home.specimen import Specimen
 
 
-dbUrl = 'mysql+pymysql://antweb:f0rm1c6@mysql:3306/ant?autocommit=true'
+def _db_credentials():
+    # The API only reads. On the servers it logs in as a read-only MySQL user whose
+    # name and password are in etc/api-db.properties (not in the repository; the
+    # api container sees ./etc as /antweb-etc). Without that file it falls back to
+    # the main antweb account, as before.
+    user, password = 'antweb', 'f0rm1c6'
+    try:
+        with open('/antweb-etc/api-db.properties') as f:
+            props = dict(line.strip().split('=', 1) for line in f if '=' in line and not line.startswith('#'))
+        if props.get('user') and props.get('password'):
+            user, password = props['user'], props['password']
+    except OSError:
+        pass
+    print('API database user:', user, flush=True)
+    return user, password
+
+
+_dbUser, _dbPass = _db_credentials()
+dbUrl = f'mysql+pymysql://{_dbUser}:{_dbPass}@mysql:3306/ant?autocommit=true'
 # dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant?autocommit=true'
 # pool_pre_ping: check a pooled connection before use, so a connection MySQL closed
 # while idle is replaced instead of failing the request ("MySQL server has gone away").

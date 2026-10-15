@@ -28,3 +28,4 @@ docker-compose.dev.yml
 antweb-docs.zip
 /build-test/
 /etc/turnstile.properties
+/etc/api-db.properties
