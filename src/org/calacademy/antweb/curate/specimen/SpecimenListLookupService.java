@@ -94,14 +94,15 @@ public class SpecimenListLookupService {
                     return codes;
                 }
                 if (containsWhitespace(code)) {
-                    result.addError("Line " + lineNumber
-                            + ": specimen code contains whitespace, which is not permitted.");
+                    // Not looked up (AntWeb codes have no spaces or tabs), but no longer fatal:
+                    // listed separately so the rest of the file is still returned.
+                    result.addInvalidCode(code);
                     continue;
                 }
                 codes.add(new CodeLine(lineNumber, code));
             }
         }
-        if (codes.isEmpty() && result.isSuccess()) {
+        if (codes.isEmpty() && result.isSuccess() && !result.hasInvalidCodes()) {
             result.addError("File must contain at least one specimen code.");
         }
         return codes;

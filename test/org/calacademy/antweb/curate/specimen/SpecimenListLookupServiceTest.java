@@ -95,17 +95,35 @@ public class SpecimenListLookupServiceTest extends TestCase {
         assertEquals("a&lt;b&gt;&amp;&quot;&#39;", SpecimenListLookupResult.escapeHtml("a<b>&\"'"));
     }
 
-    public void testWhitespaceAndEmptyFilesAreRejectedBeforeLookup() throws Exception {
+    public void testCodesWithWhitespaceAreListedAndTheRestStillLookedUp() throws Exception {
         RecordingSource source = new RecordingSource();
-        SpecimenListLookupService service = new SpecimenListLookupService();
+        source.add(specimen("casent0104501", "myrmicinaetest species"));
+        StringWriter output = new StringWriter();
 
-        SpecimenListLookupResult malformed = service.lookup(
-                stream("casent 0104501\ncasent\t0104502\n"), source, new StringWriter());
-        assertFalse(malformed.isSuccess());
-        assertEquals(2, malformed.getErrorCount());
-        assertEquals(0, source.calls);
+        SpecimenListLookupResult result = new SpecimenListLookupService().lookup(
+                stream("casent 0104502\ncasent0104501\ncasent\t0104503\n"), source, output);
 
-        SpecimenListLookupResult empty = service.lookup(
+        assertTrue(result.isSuccess());
+        assertEquals(List.of("casent 0104502", "casent\t0104503"), result.getInvalidCodes());
+        assertTrue(result.hasProblems());
+        assertEquals(3, result.getSubmittedCount());
+        assertEquals(1, result.getFoundRowCount());
+        assertFalse(result.hasNotFoundCodes());
+        assertTrue(output.toString().split("\n")[1].startsWith("casent0104501\t"));
+    }
+
+    public void testOnlyWhitespaceCodesGiveAResultNotAnError() throws Exception {
+        RecordingSource source = new RecordingSource();
+        SpecimenListLookupResult result = new SpecimenListLookupService().lookup(
+                stream("casent 0104501\n"), source, new StringWriter());
+        assertTrue(result.isSuccess());
+        assertEquals(1, result.getInvalidCodes().size());
+        assertEquals(0, result.getFoundRowCount());
+    }
+
+    public void testEmptyFileIsRejected() throws Exception {
+        RecordingSource source = new RecordingSource();
+        SpecimenListLookupResult empty = new SpecimenListLookupService().lookup(
                 stream("\n  \n"), source, new StringWriter());
         assertFalse(empty.isSuccess());
         assertEquals("File must contain at least one specimen code.", empty.getErrors().get(0));

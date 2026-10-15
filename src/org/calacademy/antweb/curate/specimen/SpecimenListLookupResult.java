@@ -16,6 +16,9 @@ public class SpecimenListLookupResult {
     private final List<String> notFoundCodes = new ArrayList<>();
     private int foundRowCount;
 
+    // Lines with a space or tab inside the code: not looked up, listed as typed (file order).
+    private final List<String> invalidCodes = new ArrayList<>();
+
     /** False only for problems with the file itself (name, size, whitespace, empty, too many codes). */
     public boolean isSuccess() {
         return errorCount == 0;
@@ -57,6 +60,32 @@ public class SpecimenListLookupResult {
 
     public boolean hasNotFoundCodes() {
         return !notFoundCodes.isEmpty();
+    }
+
+    void addInvalidCode(String code) {
+        invalidCodes.add(code);
+    }
+
+    public List<String> getInvalidCodes() {
+        return Collections.unmodifiableList(invalidCodes);
+    }
+
+    public boolean hasInvalidCodes() {
+        return !invalidCodes.isEmpty();
+    }
+
+    public String getInvalidText() {
+        return String.join("\n", invalidCodes);
+    }
+
+    /** All non-blank lines in the file, including codes with spaces. */
+    public int getSubmittedCount() {
+        return rowCount + invalidCodes.size();
+    }
+
+    /** True when the results page is needed instead of a direct download. */
+    public boolean hasProblems() {
+        return hasNotFoundCodes() || hasInvalidCodes();
     }
 
     /** The not-found codes, one per line, for copying into a file. */

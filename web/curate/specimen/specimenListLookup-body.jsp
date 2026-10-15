@@ -34,16 +34,20 @@
         </div>
     <% } %>
 
-    <% if (result != null && result.isSuccess() && result.hasNotFoundCodes()) {
+    <% if (result != null && result.isSuccess() && result.hasProblems()) {
            java.text.NumberFormat nf = java.text.NumberFormat.getIntegerInstance(java.util.Locale.US);
-           List<String> notFound = result.getNotFoundCodes(); %>
+           List<String> notFound = result.getNotFoundCodes();
+           List<String> invalid = result.getInvalidCodes(); %>
     <div class="admin_action_module" id="lookupResults">
         <div class="admin_action_item">
             <h2>Lookup Results</h2>
             <table style="margin-bottom:15px;">
-                <tr><td style="padding-right:20px;">Specimen codes submitted:</td><td style="text-align:right;"><b><%= nf.format(result.getRowCount()) %></b></td></tr>
+                <tr><td style="padding-right:20px;">Specimen codes submitted:</td><td style="text-align:right;"><b><%= nf.format(result.getSubmittedCount()) %></b></td></tr>
                 <tr><td style="padding-right:20px;">Found in AntWeb:</td><td style="text-align:right;"><b><%= nf.format(result.getFoundRowCount()) %></b></td></tr>
                 <tr><td style="padding-right:20px;">Not found in AntWeb:</td><td style="text-align:right;"><b><%= nf.format(result.getNotFoundRowCount()) %></b></td></tr>
+                <% if (!invalid.isEmpty()) { %>
+                <tr><td style="padding-right:20px;">Not looked up (space or tab in the code):</td><td style="text-align:right;"><b><%= nf.format(invalid.size()) %></b></td></tr>
+                <% } %>
             </table>
             <% if (result.getNotFoundRowCount() != notFound.size()) { %>
                 <p style="color:#666;">The file lists some of the missing codes more than once; each is shown once below.</p>
@@ -56,15 +60,29 @@
                 <p><b>None of the specimen codes in the file are in AntWeb, so there is no specimen data to download.</b></p>
             <% } %>
 
+            <% if (!notFound.isEmpty()) { %>
             <h3 style="margin-top:20px;">Codes not found in AntWeb (<%= nf.format(notFound.size()) %>)</h3>
             <p style="margin:5px 0;">One code per line, as typed in your file. Copy them into a file, query or spreadsheet.</p>
             <textarea id="notFoundCodes" readonly rows="<%= Math.min(15, Math.max(3, notFound.size())) %>" cols="40"
                       style="font-family:monospace; width:100%; max-width:420px;"><%= SpecimenListLookupResult.escapeHtml(result.getNotFoundText()) %></textarea>
             <div style="margin-top:8px;">
-                <button type="button" onclick="copyNotFoundCodes()">Copy to clipboard</button>
-                <button type="button" onclick="downloadNotFoundCodes()">Download specimen_codes_not_found.txt</button>
+                <button type="button" onclick="copyCodes('notFoundCodes', 'copyStatus')">Copy to clipboard</button>
+                <button type="button" onclick="downloadCodes('notFoundCodes', 'specimen_codes_not_found.txt')">Download specimen_codes_not_found.txt</button>
                 <span id="copyStatus" aria-live="polite" style="margin-left:10px; color:#666;"></span>
             </div>
+            <% } %>
+
+            <% if (!invalid.isEmpty()) { %>
+            <h3 style="margin-top:20px;">Codes with a space or tab, not looked up (<%= nf.format(invalid.size()) %>)</h3>
+            <p style="margin:5px 0;">AntWeb specimen codes never contain spaces or tabs. These lines are shown as typed, in file order; correct them and look them up again.</p>
+            <textarea id="invalidCodes" readonly rows="<%= Math.min(15, Math.max(3, invalid.size())) %>" cols="40"
+                      style="font-family:monospace; width:100%; max-width:420px; white-space:pre;"><%= SpecimenListLookupResult.escapeHtml(result.getInvalidText()) %></textarea>
+            <div style="margin-top:8px;">
+                <button type="button" onclick="copyCodes('invalidCodes', 'copyStatus2')">Copy to clipboard</button>
+                <button type="button" onclick="downloadCodes('invalidCodes', 'specimen_codes_with_spaces.txt')">Download specimen_codes_with_spaces.txt</button>
+                <span id="copyStatus2" aria-live="polite" style="margin-left:10px; color:#666;"></span>
+            </div>
+            <% } %>
         </div>
     </div>
     <% } %>
@@ -78,7 +96,7 @@
                 <li>Good filename: <code>my_specimens.txt</code></li>
                 <li>Bad filename: <code>codes.txt</code></li>
                 <li>Enter one specimen code per line.</li>
-                <li>Do not include spaces or tabs in specimen codes.</li>
+                <li>Do not include spaces or tabs in specimen codes. Lines that contain them are listed on the results page and not looked up; the rest of the file is still processed.</li>
                 <li>Maximum: <b>5 MB and 100,000 specimen codes</b>, whichever limit is reached first.</li>
                 <li>If every code is in AntWeb, the tab-delimited file downloads directly. If some codes are not in AntWeb, they are listed on a results page, and the data for the codes that were found can still be downloaded there.</li>
             </ul>
@@ -115,9 +133,9 @@
 </div>
 
 <script type="text/javascript">
-function copyNotFoundCodes() {
-    var box = document.getElementById('notFoundCodes');
-    var status = document.getElementById('copyStatus');
+function copyCodes(boxId, statusId) {
+    var box = document.getElementById(boxId);
+    var status = document.getElementById(statusId);
     var done = function () { status.innerHTML = 'Copied.'; };
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(box.value).then(done, function () { box.select(); document.execCommand('copy'); done(); });
@@ -128,12 +146,12 @@ function copyNotFoundCodes() {
     }
 }
 
-function downloadNotFoundCodes() {
-    var text = document.getElementById('notFoundCodes').value + '\n';
+function downloadCodes(boxId, fileName) {
+    var text = document.getElementById(boxId).value + '\n';
     var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
     var link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'specimen_codes_not_found.txt';
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     setTimeout(function () { URL.revokeObjectURL(link.href); link.remove(); }, 1000);

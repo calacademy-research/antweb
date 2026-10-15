@@ -116,7 +116,7 @@ def test_specimen_lookup_all_found_downloads_tsv(curator):
 
 
 def test_specimen_lookup_lists_missing_codes_and_keeps_found_data(curator):
-    r = _lookup(curator, [KNOWN_CODES[0], MISSING_CODES[0], MISSING_CODES[1], MISSING_CODES[0].upper()])
+    r = _lookup(curator, [KNOWN_CODES[0], MISSING_CODES[0], "casent 0872013", MISSING_CODES[1], MISSING_CODES[0].upper()])
     assert r.status_code == 200
     assert "text/html" in r.headers.get("Content-Type", "")
     assert "Not found in AntWeb" in r.text
@@ -124,6 +124,8 @@ def test_specimen_lookup_lists_missing_codes_and_keeps_found_data(curator):
     box = r.text.split('id="notFoundCodes"', 1)[1].split("</textarea>", 1)[0]
     assert box.split(">", 1)[1].strip().split("\n") == MISSING_CODES
     assert "specimenListLookup.do?download=tsv" in r.text
+    spaced = r.text.split('id="invalidCodes"', 1)[1].split("</textarea>", 1)[0]
+    assert spaced.split(">", 1)[1].strip() == "casent 0872013"
 
     d = curator.get(BASE_URL + "/specimenListLookup.do?download=tsv", timeout=60)
     assert "tab-separated-values" in d.headers.get("Content-Type", ""), d.text[:300]

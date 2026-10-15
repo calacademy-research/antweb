@@ -100,7 +100,7 @@ public class SpecimenListLookupAction extends AntwebAction {
 
             HttpSession session = request.getSession();
             session.removeAttribute(SESSION_TSV); // deletes the previous lookup's file
-            if (result.hasNotFoundCodes()) {
+            if (result.hasProblems()) {
                 if (result.getFoundRowCount() > 0) {
                     session.setAttribute(SESSION_TSV, new SavedTsv(outputFile.toString()));
                     outputFile = null; // kept for the download link; SavedTsv deletes it
