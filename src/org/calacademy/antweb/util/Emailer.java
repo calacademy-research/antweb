@@ -29,7 +29,7 @@ public class Emailer {
         }
 
         final String username = "antweb@calacademy.org";
-        final String passwd = "75txAKc8&%By";
+        final String passwd = System.getenv().getOrDefault("ANTWEB_MAIL_PASSWORD", "");  // never in the code
 
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");

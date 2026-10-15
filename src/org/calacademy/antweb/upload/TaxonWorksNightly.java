@@ -1,0 +1,211 @@
+package org.calacademy.antweb.upload;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.util.HexFormat;
+import java.util.Properties;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.calacademy.antweb.Curator;
+import org.calacademy.antweb.home.LoginDb;
+import org.calacademy.antweb.util.AntwebMgr;
+import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.DateUtil;
+import org.calacademy.antweb.util.LogMgr;
+
+/**
+ * Nightly TaxonWorks -> AntWeb specimen upload (GitHub issue #27).
+ *
+ * Fetches the CAS project's "complete" Darwin Core archive from TaxonWorks and
+ * uploads it exactly as an administrator would with the TaxonWorks option on the
+ * specimen upload page. Run from the nightly scheduler (set1), or by an
+ * administrator: /utilData.do?action=taxonWorksNightly
+ *
+ * Settings: etc/taxonworks.properties on the server (not in git; the antweb
+ * container sees it as /antweb/deploy/etc/taxonworks.properties):
+ *   url=        the project's "Public download link" from TaxonWorks
+ *               (Project -> Darwin core export); it contains the project token
+ *   curatorId=  AntWeb login the upload is made as (its group owns the records)
+ *   minRatio=   optional, default 0.95: skip the upload if the archive has fewer
+ *               than this fraction of the group's current specimen records
+ * Without the file the job does nothing.
+ *
+ * The job skips (and logs why) when TaxonWorks is still building the archive,
+ * when the archive is identical to the last one uploaded, or when it would
+ * shrink the group's records by more than the guard allows.
+ */
+public final class TaxonWorksNightly {
+
+    private static final Log s_log = LogFactory.getLog(TaxonWorksNightly.class);
+    static final String CONFIG = "/antweb/deploy/etc/taxonworks.properties";
+    private static final String LOG = "taxonworksNightly.log";
+
+    private TaxonWorksNightly() {}
+
+    private static final java.util.concurrent.atomic.AtomicBoolean s_running = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    public static String run(Connection connection) {
+        String result;
+        // One run at a time: a second request (a browser retry, say) would read the
+        // files the first run is still writing.
+        if (!s_running.compareAndSet(false, true)) {
+            result = "skipped: already running";
+        } else {
+            try {
+                result = runOnce(connection);
+            } catch (Exception e) {
+                result = "FAILED: " + e;
+                s_log.error("run() " + result, e);
+            } finally {
+                s_running.set(false);
+            }
+        }
+        LogMgr.appendLog(LOG, DateUtil.getFormatDateTimeStr() + " " + result);
+        LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " taxonWorksNightly: " + result);
+        s_log.warn("run() " + result);
+        return result;
+    }
+
+    private static String runOnce(Connection connection) throws Exception {
+        Properties props = new Properties();
+        File config = new File(CONFIG);
+        if (!config.isFile()) return "skipped: no " + CONFIG;
+        try (InputStream in = new FileInputStream(config)) {
+            props.load(in);
+        }
+        String url = props.getProperty("url", "").trim();
+        int curatorId = Integer.parseInt(props.getProperty("curatorId", "0").trim());
+        double minRatio = Double.parseDouble(props.getProperty("minRatio", "0.95").trim());
+        if (url.isEmpty() || curatorId == 0) return "skipped: url or curatorId missing in " + CONFIG;
+
+        Curator curator = new LoginDb(connection).getCurator(curatorId);
+        if (curator == null || curator.getGroup() == null) return "skipped: no curator/group for curatorId " + curatorId;
+
+        // 1. Fetch the archive.
+        Path workDir = Paths.get(AntwebProps.getWorkingDir());
+        Files.createDirectories(workDir);
+        Path zip = workDir.resolve("taxonworksNightly.zip");
+        Path tmp = workDir.resolve("taxonworksNightly.zip.part");
+        HttpClient client = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .connectTimeout(Duration.ofSeconds(30))
+            .build();
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+            .timeout(Duration.ofMinutes(60))
+            .header("User-Agent", "AntWeb nightly TaxonWorks job (https://www.antweb.org)")
+            .GET().build();
+        HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(tmp));
+        if (response.statusCode() != 200 || !isZip(tmp)) {
+            String body = "";
+            try { body = Files.readString(tmp, StandardCharsets.UTF_8); } catch (IOException ignore) { }
+            if (body.length() > 200) body = body.substring(0, 200);
+            Files.deleteIfExists(tmp);
+            return "skipped: TaxonWorks answered HTTP " + response.statusCode() + " " + body.replaceAll("\\s+", " ");
+        }
+        Files.move(tmp, zip, StandardCopyOption.REPLACE_EXISTING);
+
+        // 2. Same archive as last time?
+        String sha = sha256(zip);
+        Path shaFile = workDir.resolve("taxonworksNightly.sha256");
+        if (Files.exists(shaFile) && sha.equals(Files.readString(shaFile).trim())) {
+            return "skipped: archive unchanged since the last upload";
+        }
+
+        // 3. Unzip and transform, then check the record count.
+        int groupId = curator.getGroup().getId();
+        Path specimenFile = TaxonWorksUploader.prepareFromArchive(zip, curator.getGroup());
+        long newCount = countRecords(specimenFile);
+        java.util.List<String> skipped = TaxonWorksUploader.getLastSkipped();
+        Path skippedFile = workDir.resolve("taxonworksSkipped.txt");
+        Files.write(skippedFile, skipped, StandardCharsets.UTF_8);
+        String skippedNote = skipped.isEmpty() ? "" : "; " + skipped.size() + " malformed records left out (fix in TaxonWorks): "
+            + String.join(", ", skipped.subList(0, Math.min(10, skipped.size()))) + (skipped.size() > 10 ? ", ..." : "");
+        long currentCount = countGroupSpecimens(connection, groupId);
+        if (currentCount > 0 && newCount < minRatio * currentCount) {
+            return "SKIPPED BY GUARD: archive has " + newCount + " records, group " + groupId + " has "
+                + currentCount + " specimens now (minimum " + Math.round(minRatio * 100) + "%). Nothing changed.";
+        }
+
+        // 4. Upload, as the manual TaxonWorks upload does.
+        if (UploadAction.getIsInUploadProcess() != null) {
+            return "skipped: another upload is running (" + UploadAction.getIsInUploadProcess() + ")";
+        }
+        boolean autoCommit = connection.getAutoCommit();
+        UploadAction.setIsInUploadProcess("TaxonWorks nightly:" + curator.getName());
+        try {
+            connection.setAutoCommit(false);
+            AntwebMgr.incrementSpecimenUploadId(connection);
+            UploadDetails details = new TaxonWorksUploader(connection).uploadPreparedFile(specimenFile, curator);
+            if (details.getForwardPage() != null) {
+                connection.rollback();
+                return "FAILED: " + details.getMessage();
+            }
+            UploadAction.postProcessSpecimenUpload(connection, curator, details);
+            UploadAction.specimenPostProcessGlobal(connection);
+            details.finish(curator, null, connection);
+            connection.commit();
+            Files.writeString(shaFile, sha);
+            return "uploaded " + newCount + " records for group " + groupId + " (was " + currentCount
+                + " specimens) in " + details.getExecTime() + skippedNote;
+        } catch (Exception e) {
+            connection.rollback();
+            throw e;
+        } finally {
+            UploadAction.setIsInUploadProcess(null);
+            connection.setAutoCommit(autoCommit);
+        }
+    }
+
+    private static boolean isZip(Path file) throws IOException {
+        if (Files.size(file) < 4) return false;
+        try (InputStream in = Files.newInputStream(file)) {
+            byte[] b = in.readNBytes(2);
+            return b[0] == 'P' && b[1] == 'K';
+        }
+    }
+
+    private static String sha256(Path file) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        try (InputStream in = Files.newInputStream(file)) {
+            byte[] buf = new byte[1 << 16];
+            int n;
+            while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
+        }
+        return HexFormat.of().formatHex(md.digest());
+    }
+
+    /** Data lines in the transformed specimen file (header excluded). */
+    private static long countRecords(Path file) throws IOException {
+        try (var lines = Files.lines(file, StandardCharsets.UTF_8)) {
+            return Math.max(0, lines.filter(l -> !l.isBlank()).count() - 1);
+        }
+    }
+
+    private static long countGroupSpecimens(Connection connection, int groupId) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement("select count(*) from specimen where access_group = ?")) {
+            stmt.setInt(1, groupId);
+            try (ResultSet rset = stmt.executeQuery()) {
+                return rset.next() ? rset.getLong(1) : 0;
+            }
+        }
+    }
+}

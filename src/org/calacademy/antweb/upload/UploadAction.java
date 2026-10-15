@@ -642,6 +642,20 @@ public class UploadAction extends AntwebAction {
 	}
 
 	private void specimenPostProcess(HttpServletRequest request, Connection connection, Curator curator, UploadDetails uploadDetails) throws IOException, SQLException {
+		postProcessSpecimenUpload(connection, curator, uploadDetails);
+
+		//A.log("execute() populate Museum map:" + uploadDetails.getMuseumMap());
+		// We will hold this for a separate curator driven museum calculation
+		HttpSession session = request.getSession();
+		try {
+			session.setAttribute("museumMap", uploadDetails.getMuseumMap());
+		} catch (IllegalStateException e) {
+			s_log.info("execute() handled:" + e);
+		}
+	}
+
+	/** The database work after a specimen upload. Also used by the nightly TaxonWorks job (no web request). */
+	public static void postProcessSpecimenUpload(Connection connection, Curator curator, UploadDetails uploadDetails) throws IOException, SQLException {
 		Group group = curator.getGroup();
 
 		SpecimenDb specimenDb = new SpecimenDb(connection);
@@ -662,26 +676,18 @@ public class UploadAction extends AntwebAction {
 		s_log.debug("specimenPostProcess() updateUpload");
 
 		if (!AntwebProps.isDevModeSkipping()) {
-			runStatistics(uploadDetails.getAction(), connection, request, curator.getId(), uploadDetails.getExecTime());
+			String execTime = uploadDetails.getExecTime() == null ? "N/A" : uploadDetails.getExecTime();
+			new StatisticsDb(connection).populateStatistics(uploadDetails.getAction(), curator.getId(), execTime, AntwebProps.getDocRoot());
 		} else {
 			A.log("execTime:" + uploadDetails.getExecTime());
 			s_log.warn("execute() DEV MODE SKIPPING runStatistics");
-		}
-
-		//A.log("execute() populate Museum map:" + uploadDetails.getMuseumMap());
-		// We will hold this for a separate curator driven museum calculation
-		HttpSession session = request.getSession();
-		try {
-			session.setAttribute("museumMap", uploadDetails.getMuseumMap());
-		} catch (IllegalStateException e) {
-			s_log.info("execute() handled:" + e);
 		}
 
 		// Would like to, but it takes a 3min for CAS data. Too expensive?
 		//specimenDb.calcCaste(groupId);
 	}
 
-	private void specimenPostProcessGlobal(Connection connection) throws SQLException {
+	public static void specimenPostProcessGlobal(Connection connection) throws SQLException {
 		A.log("start specimenPostProcessGlobal");
 		new GeolocaleDb(connection).calcEndemic();
 

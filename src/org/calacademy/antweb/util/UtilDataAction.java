@@ -77,6 +77,16 @@ public class UtilDataAction extends AntwebAction {
         if (accessLogin != null) loginName = accessLogin.getName();
 
         String message = null;
+
+        // Data jobs change or recompute data: administrators only, or the scheduler
+        // (which passes the one-time secureCode). "param=allow" alone is not enough.
+        boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
+        if (!isAdmin && !AntwebUtil.isSecureCode(theForm.getSecureCode())) {
+            s_log.warn("execute() refused action:" + action + " for " + loginName + " target:" + HttpUtil.getTarget(request));
+            ActionForward denied = LoginMgr.mustBeAdmin(request, mapping);
+            if (denied != null) return denied;
+        }
+
         // Being called from a getUrl() by Schedule.do, Scheduler.java.
         if (!isAllow) { 
 
@@ -210,6 +220,8 @@ public class UtilDataAction extends AntwebAction {
                 message = "set1 - ";
                 message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
+                // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
+                message += " " + doAction("taxonWorksNightly", form, accessLogin, accessGroup, connection, request, mapping);
                 TaxonMgr.populate(connection, true, false);
             }
 
@@ -286,6 +298,11 @@ public class UtilDataAction extends AntwebAction {
           return operationDetails;		  
 		}
 		
+		// Fetch the CAS TaxonWorks Darwin Core archive and upload it (GitHub #27).
+		if (action.equals("taxonWorksNightly")) {
+		  message = "taxonWorksNightly: " + org.calacademy.antweb.upload.TaxonWorksNightly.run(connection);
+		}
+
 		// 17.67 mins. success in 13.45 mins. success in 12.28 mins (after 1 constraint check removed).
 		// success in 12.97 mins.		
 		if (action.equals("worldantsFetchAndReload")) { 
