@@ -33,10 +33,7 @@ public final class DupedGeneraAction extends AntwebAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        boolean isLoggedIn = LoginMgr.isLoggedIn(request);
-        if (!isLoggedIn) {
-          return mapping.findForward("notLoggedIn");
-        }
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
         
         HttpSession session = request.getSession();
 

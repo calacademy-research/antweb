@@ -29,7 +29,7 @@ public final class EditProjectAction extends AntwebAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;   
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;   
         ActionForward f = Check.upload(request, mapping); if (f != null) return f;
 
         HttpSession session = request.getSession();

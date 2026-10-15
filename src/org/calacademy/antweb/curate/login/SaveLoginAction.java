@@ -44,7 +44,23 @@ public final class SaveLoginAction extends AntwebAction {
 
 		s_log.debug("execute() 0 id:" + form.getId() + " step:" + form.getStep() + " delete:" + form.getDelete());
         
-        int id = Integer.parseInt(form.getId());
+        int id;
+        try {
+            id = Integer.parseInt(form.getId());
+        } catch (NumberFormatException e) {
+            return mapping.findForward("permissionDenied");
+        }
+
+        // Admins may create, edit and delete any login. Everyone else may only edit their own
+        // (role fields are protected again in LoginDb.updateLogin) and may not delete.
+        boolean isAdminUser = LoginMgr.isAdmin(accessLogin);
+        if (!isAdminUser) {
+            boolean isOwn = accessLogin != null && accessLogin.getId() > 0 && accessLogin.getId() == id;
+            if (!isOwn || "delete".equals(form.getDelete())) {
+                s_log.warn("execute() denied: login:" + (accessLogin == null ? null : accessLogin.getId()) + " tried to save id:" + id);
+                return mapping.findForward("permissionDenied");
+            }
+        }
         Login login = null;
 
         Connection connection = null;

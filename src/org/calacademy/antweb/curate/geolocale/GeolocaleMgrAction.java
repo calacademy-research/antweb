@@ -30,7 +30,7 @@ public final class GeolocaleMgrAction extends AntwebAction {
         HttpUtil.setUtf8(request, response);       
         HttpSession session = request.getSession();
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
 
         EditGeolocaleForm editGeolocaleForm = (EditGeolocaleForm) form;
 

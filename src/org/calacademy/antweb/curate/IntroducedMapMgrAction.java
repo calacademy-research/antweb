@@ -27,7 +27,7 @@ public final class IntroducedMapMgrAction extends AntwebAction {
 
         HttpSession session = request.getSession();
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;  
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;  
 
 		BioregionMapMgrForm bioregionMapMgrForm = (BioregionMapMgrForm) form;
         String orderBy = bioregionMapMgrForm.getOrderBy();

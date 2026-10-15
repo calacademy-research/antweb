@@ -32,7 +32,7 @@ public final class ImageUploadReport extends AntwebAction {
 		throws IOException, ServletException {
 
         ActionForward a = Check.init(request, mapping); if (a != null) return a;
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;        
  
         HttpUtil.setUtf8(request, response);

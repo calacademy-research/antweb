@@ -37,14 +37,14 @@ public class LogMgr {
     // if too big
 
     try {
-      String srf = getWebLogRoot() + "srfExceptions.jsp";
+      String srf = getWebLogRoot() + "srfExceptions.txt";
       s_log.info("backupSrf() file:" + srf + " size:" + FileUtil.getFileSize(srf));
       int size = FileUtil.getFileSize(srf);
       if (size > MaxSize) {
         FileUtil.makeDir(getWebLogRoot() + "srfBak");
 
         String formatDateTime = DateUtil.getFormatDateTimeStr(new java.util.Date());
-        moveFile(getWebLogRoot(), "srfExceptions.jsp", getWebLogRoot() + "srfBak", "srfExceptions" + formatDateTime + ".jsp");
+        moveFile(getWebLogRoot(), "srfExceptions.txt", getWebLogRoot() + "srfBak", "srfExceptions" + formatDateTime + ".txt");
         s_log.info("backupSrf() newSize:" + FileUtil.getFileSize(srf));
         // Move old one.
       }
@@ -141,7 +141,7 @@ public class LogMgr {
       , "longRequest.log", "messages.txt", "moveTaxonAndSupportingTaxa.log", "nonWorldAntsDeleted.txt"
       , "noExists.txt", "notFound.txt", "profile.log", "queryStats.log", "searches.txt"
       , "serverBusy.html", "serverBusy.log", "speciesListLog.txt", "invalid.log", "hacks.log"
-      , "badRequest.log", "srfExceptions.jsp"};
+      , "badRequest.log", "srfExceptions.txt"};
   
     String dateStr = DateUtil.getFormatDateTimeStr();
   

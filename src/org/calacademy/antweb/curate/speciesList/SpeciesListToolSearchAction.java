@@ -22,7 +22,7 @@ public class SpeciesListToolSearchAction extends AntwebAction { //extends Specie
             HttpServletRequest request, HttpServletResponse response) {
 
     HttpSession session = request.getSession();
-    ActionForward c = Check.login(request, mapping); if (c != null) return c; 
+    ActionForward c = Check.curator(request, mapping); if (c != null) return c; 
 
     SpeciesListToolForm toolForm = (SpeciesListToolForm) form;
     s_log.debug("SpeciesListToolSearchAction.execute() toolForm:" + toolForm);

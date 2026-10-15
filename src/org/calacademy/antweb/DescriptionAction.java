@@ -20,7 +20,8 @@ public class DescriptionAction extends AntwebAction {
     protected boolean saveDescriptionEdit(DescriptionForm form, Describable editObject, Login accessLogin, HttpServletRequest request, Connection connection) 
         throws SQLException {            
         boolean success = true;
-        if (accessLogin != null) {
+        // Only curators and admins may save page text (not the anonymous "Browse" login or self-registered accounts).
+        if (LoginMgr.isCurator(accessLogin) || LoginMgr.isAdmin(accessLogin)) {
             // The descriptionEdit.do allows for the posting and saving of Description Edit records.
             String editField = form.getEditField();
             boolean isSaveEditField = form.getIsSaveEditField();

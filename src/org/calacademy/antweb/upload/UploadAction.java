@@ -44,6 +44,30 @@ public class UploadAction extends AntwebAction {
 
 	private static final Log s_log = LogFactory.getLog(UploadAction.class);
 
+	// Site-wide jobs: admins only.
+	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
+			"uploadSpeciesList", "fetchAndReloadWorldants", "reloadSpeciesLists", "museumCalc",
+			"speciesTest", "runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits");
+
+	// Need the login's "upload specimens" permission (or admin).
+	static final java.util.Set<String> SPECIMEN_UPLOAD_ACTIONS = java.util.Set.of(
+			"specimenUpload", "taxonWorksUpload", "GBIFUpload", "reloadSpecimenList", "removeSpecimenList", "specimenTest");
+
+	/** Upload as another curator: admins, or a curator listed in this login's "upload as" setting. */
+	public static boolean isAllowedUploadAs(Login accessLogin, String curateAs) {
+		if (curateAs == null || curateAs.trim().isEmpty()) return true;
+		if (accessLogin == null) return false;
+		if (accessLogin.isAdmin()) return true;
+		String target = curateAs.trim();
+		if (target.equals(String.valueOf(accessLogin.getId()))) return true;
+		String allowed = accessLogin.getUploadAs();
+		if (allowed == null) return false;
+		for (String id : allowed.split(",")) {
+			if (target.equals(id.trim())) return true;
+		}
+		return false;
+	}
+
 	private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
 
 	static int MAXLENGTH = 80;
@@ -91,6 +115,25 @@ public class UploadAction extends AntwebAction {
 		if (accessLogin == null && !"genAll".equals(theForm.getAction())) {
 			s_log.info("execute() login failure.  No accessGroup.");
 			return mapping.findForward("goToLogin");
+		}
+
+		// Uploads are for curators only (not the anonymous "Browse" login or self-registered
+		// accounts), and the site-wide jobs are for admins only.
+		if (accessLogin != null) {
+			String requested = theForm.getAction();
+			boolean isAdmin = LoginMgr.isAdmin(accessLogin);
+			if (!isAdmin && !LoginMgr.isCurator(accessLogin)) {
+				return mapping.findForward("goToLogin");
+			}
+			if (!isAdmin && requested != null && ADMIN_ONLY_ACTIONS.contains(requested)) {
+				request.setAttribute("message", "Only administrators can run this upload action.");
+				return mapping.findForward("message");
+			}
+			if (!isAdmin && requested != null && SPECIMEN_UPLOAD_ACTIONS.contains(requested)
+					&& !Boolean.TRUE.equals(accessLogin.isUploadSpecimens())) {
+				request.setAttribute("message", "This login does not have permission to upload specimens.");
+				return mapping.findForward("message");
+			}
 		}
 
 
@@ -166,6 +209,10 @@ public class UploadAction extends AntwebAction {
 				if ("specimenUpload".equals(action) || "taxonWorksUpload".equals(action) || "GBIFUpload".equals(action)) {
 
 					String curateAs = theForm.getUploadAs();
+					if (!isAllowedUploadAs(accessLogin, curateAs)) {
+						s_log.warn("execute() uploadAs:" + curateAs + " not allowed for login:" + accessLogin.getId());
+						curateAs = null;
+					}
 					Curator curator = LoginMgr.getCurator(curateAs);
 					if (curator == null) curator = LoginMgr.getCurator(accessLogin);
 					A.log("execute action:" + action + " curateAs:" + curateAs + " curator:" + curator + " login:" + accessLogin);

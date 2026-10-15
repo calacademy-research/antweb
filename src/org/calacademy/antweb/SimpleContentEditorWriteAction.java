@@ -26,7 +26,7 @@ public final class SimpleContentEditorWriteAction extends AntwebAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;
+        ActionForward c = Check.admin(request, mapping); if (c != null) return c;
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
         String docRoot = Utility.getDocRoot();

@@ -152,7 +152,7 @@ public class SessionRequestFilter implements Filter {
 
             int caseNumber = AntwebUtil.getCaseNumber();
             message += " e:" + e + " target:" + target;
-            s_log.error("doFilter() See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.jsp for case#:" + caseNumber + " message:" + message);
+            s_log.error("doFilter() See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.txt for case#:" + caseNumber + " message:" + message);
 
             message = ""
                     + "<br><b>startTime:</b>" + startTime
@@ -162,7 +162,7 @@ public class SessionRequestFilter implements Filter {
                     //+ "<br><b>userAgent:</b>" + UserAgentTracker.getUserAgent(request)
                     //+ "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request)
                     + "<br><b>StackTrace:</b><pre>" + AntwebUtil.getAntwebStackTrace(e) + "</pre>";   // AntwebUtil.getAntwebStackTraceHtml(e) didn't work
-            LogMgr.appendLog("srfExceptions.jsp", message);
+            LogMgr.appendLog("srfExceptions.txt", message);
 
             htmlMessage
                     = "<br><b>Request Error</b>"

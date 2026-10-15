@@ -28,7 +28,7 @@ public final class BioregionMapMgrAction extends AntwebAction {
         HttpSession session = request.getSession();
         HttpUtil.setUtf8(request, response);
 
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
 
 /*
           String message = "Adm1Mgr Error. Country:" + countryName + "   Adm1:" + adm1;

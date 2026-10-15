@@ -37,7 +37,7 @@ public final class ImageUploaderAction extends AntwebAction {
 
         ActionForward a = Check.init(request, mapping); if (a != null) return a;
         //ActionForward b = Check.busy(getDataSource(request, "conPool"), request, mapping); if (b != null) return b;
-        ActionForward c = Check.login(request, mapping); if (c != null) return c;
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
 
         if (UploadAction.isInUploadProcess()) {
