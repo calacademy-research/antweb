@@ -61,6 +61,11 @@ public final class SpecimenListAction extends AntwebAction {
         }
 
         String taxonName = (String) df.get("taxonName");
+        // taxonName becomes part of a file name: plain taxon names only (no paths).
+        if (taxonName != null && (!taxonName.matches("[A-Za-z0-9 ._()-]{1,200}") || taxonName.contains(".."))) {
+            request.setAttribute("message", "Invalid taxon name.");
+            return mapping.findForward("message");
+        }
         if (taxonName != null) {
 
             String dir = "/web/data/specimenData";
