@@ -77,6 +77,16 @@ public class UtilDataAction extends AntwebAction {
         if (accessLogin != null) loginName = accessLogin.getName();
 
         String message = null;
+
+        // Data jobs change or recompute data: administrators only, or the scheduler
+        // (which passes the one-time secureCode). "param=allow" alone is not enough.
+        boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
+        if (!isAdmin && !AntwebUtil.isSecureCode(theForm.getSecureCode())) {
+            s_log.warn("execute() refused action:" + action + " for " + loginName + " target:" + HttpUtil.getTarget(request));
+            ActionForward denied = LoginMgr.mustBeAdmin(request, mapping);
+            if (denied != null) return denied;
+        }
+
         // Being called from a getUrl() by Schedule.do, Scheduler.java.
         if (!isAllow) { 
 
