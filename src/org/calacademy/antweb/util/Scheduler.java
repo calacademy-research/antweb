@@ -159,41 +159,41 @@ public class Scheduler extends AntwebAction {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow" + codeParam;
 						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 2) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow" + codeParam;
 						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 3) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow" + codeParam;
 						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 4) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow" + codeParam;
 						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 5) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all" + codeParam;
 						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + url + " " + note);
+						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 				} catch (AntwebException | IOException e) {
 					s_log.error("doAction() Scheduler failed. Investigate log files. e:" + e + " url:" + url);
 					// Make the failure visible in the web-readable compute.log, not only in catalina.out.
-					LogMgr.appendLog("compute.log", "Scheduler FAILED (remaining sets skipped) url:" + url + " e:" + e, true);
+					LogMgr.appendLog("compute.log", "Scheduler FAILED (remaining sets skipped) url:" + HttpUtil.forLog(url) + " e:" + e, true);
 				}
 				message = "Scheduler " + action + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
 				s_log.warn("doAction() " + message);
