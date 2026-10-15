@@ -31,3 +31,10 @@ def test_session_cookie_flags():
 def test_login_page_has_no_error_before_submit():
     r = new_session().get(BASE_URL + "/login.do", timeout=60)
     assert "Please provide a username" not in r.text
+
+
+def test_data_jobs_need_admin():
+    """utilData.do runs data jobs; "param=allow" must not let anonymous visitors in."""
+    from antweb import get
+    outcome = get(new_session(), "/utilData.do?action=taxonWorksNightly&param=allow")
+    assert outcome.category == "login", outcome
