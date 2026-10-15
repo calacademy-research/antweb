@@ -931,8 +931,9 @@ public abstract class AntwebUtil {
   public static String getAdminName() {
     return "Brian Fisher";
   }   
+  // Server alerts go to the AntWeb address (Cloudflare forwards it to Brian).
   public static String getDevEmail() {
-    return "re.mark.johnson@gmail.com";
+    return "antweb@antweb.org";
   }
 
 /*

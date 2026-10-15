@@ -449,7 +449,7 @@ public abstract class AntwebProps {
     }
 	
 	public static String getTechAdminContact() {
-	  return "re.mark.johnson@gmail.com";
+	  return "antweb@antweb.org";
 	}
 
 	public static void resetSessionProperties(HttpSession session) {

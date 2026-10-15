@@ -293,6 +293,10 @@ public class UtilAction extends AntwebAction {
 				returnLoc = mapping.findForward("adminMessage");
 			  }
 
+			  if (action.equals("emailTest") && !LoginMgr.isAdmin(request)) {
+			    request.setAttribute("message", "Administrators only.");
+			    return mapping.findForward("message");
+			  }
 			  if (action.equals("emailTest")) {
 			    String recipients = AntwebUtil.getDevEmail(); // + ", " + AntwebUtil.getAdminEmail();
 			    String subject = "Test Message from Antweb";
