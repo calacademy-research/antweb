@@ -42,21 +42,27 @@ public class SpecimenListLookupService {
         }
 
         Map<String, Specimen> specimens = source.findByCodes(new ArrayList<>(uniqueCodes.values()));
-        for (CodeLine codeLine : codeLines) {
-            if (!specimens.containsKey(normalize(codeLine.code))) {
-                result.addError("Line " + codeLine.lineNumber + ": specimen code was not found.");
-            }
-        }
-        if (!result.isSuccess()) return result;
 
-        output.write(Specimen.getTabDelimHeader());
-        output.write('\n');
+        // Codes not in AntWeb are reported, not fatal (GitHub #64): list each distinct code
+        // once, as first typed, in file order, and still return the rows that were found.
+        for (Map.Entry<String, String> entry : uniqueCodes.entrySet()) {
+            if (!specimens.containsKey(entry.getKey())) result.addNotFoundCode(entry.getValue());
+        }
+
+        int found = 0;
         for (CodeLine codeLine : codeLines) {
             Specimen specimen = specimens.get(normalize(codeLine.code));
+            if (specimen == null) continue;
+            if (found == 0) {
+                output.write(Specimen.getTabDelimHeader());
+                output.write('\n');
+            }
             specimen.setCode(codeLine.code);
             output.write(specimen.getTabDelimString());
             output.write('\n');
+            found++;
         }
+        result.setFoundRowCount(found);
         output.flush();
         return result;
     }
