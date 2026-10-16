@@ -74,7 +74,9 @@ class _Parser(HTMLParser):
             self.counts["table_rows"] += 1
         elif tag == "a":
             href = a.get("href") or ""
-            if "specimen.do" in href:
+            if "/login.do" in href.split("?")[0]:
+                pass  # the header Login link carries the current page as target=
+            elif "specimen.do" in href:
                 self.counts["specimen_links"] += 1
             elif "description.do" in href or "browse.do" in href:
                 self.counts["taxon_links"] += 1
