@@ -30,7 +30,7 @@ public class OrphansDb extends AntwebDb {
         + " where taxon_name not in (select taxon_name from specimen)";
       //if (!AntwebProps.isDevMode()) 
       query += " and taxarank in ('species', 'subspecies')";   // Added in Aug 28th 2013
-      query += " and source like '%" + source + "%'" // or source like 'addMissingGenera')"
+      query += " and source like '%" + DBUtil.escapeQuotes(source) + "%'" // or source like 'addMissingGenera')"
         + orderBy;
 
       s_log.info("getOrphanedSpeciesQuery() query:" + query);        
@@ -52,7 +52,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         + " where taxarank = 'genus'"
         + " and taxon_name not in (select parent_taxon_name from taxon)";
       if (source != null) {
-        query += " and source like '%" + source + "%'";
+        query += " and source like '%" + DBUtil.escapeQuotes(source) + "%'";
       }
       query += " order by source desc, taxon_name";
       s_log.debug("getOrphanedGeneraQuery() query:" + query);
@@ -76,7 +76,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         + " where taxarank = 'subfamily'"
         + " and taxon_name not in (select parent_taxon_name from taxon)";   
       if (source != null) {
-        query += " and source like '%" + source + "%'";
+        query += " and source like '%" + DBUtil.escapeQuotes(source) + "%'";
       }
       query += " order by source desc, taxon_name";
       s_log.debug("getOrphanedSubfamiliesQuery() query:" + query);
@@ -87,7 +87,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         // taxonName may be a subfamily, which is fine.
         throws SQLException {
         Statement stmt1 = connection.createStatement();
-        String query = "select taxon_name from description_edit where taxon_name = '" + taxonName + "' ";
+        String query = "select taxon_name from description_edit where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "' ";
         
         // Do we want to work on specimen description edits?
         // query += " and code is null ";
@@ -102,7 +102,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     private boolean subfamilyHasSpecimen(Connection connection, String subfamily)
         throws SQLException {
         Statement stmt1 = connection.createStatement();
-        String query = "select code from specimen where subfamily = '" + subfamily + "' ";
+        String query = "select code from specimen where subfamily = '" + DBUtil.escapeQuotes(subfamily) + "' ";
 
         ResultSet rset = stmt1.executeQuery(query);
         while (rset.next()) {
@@ -196,7 +196,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 			String genus = rset1.getString("genus");
 			Statement stmt2 = getConnection().createStatement();
 			query = " select subfamily, count(subfamily) from taxon " 
-				+ " where genus = '" + genus 
+				+ " where genus = '" + DBUtil.escapeQuotes(genus) 
 				+ "' group by subfamily order by count(subfamily) limit 1";
 			ResultSet rset2 = stmt2.executeQuery(query);
 			s_log.debug("execute() 2 query:" + query);
@@ -204,8 +204,8 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
 				String subfamily = rset2.getString("subfamily");
 				Statement stmt3 = getConnection().createStatement();
 				query = "select taxon_name from taxon " 
-				  + " where genus = '" + genus + "'" 
-				  + "   and subfamily = '" + subfamily + "'"
+				  + " where genus = '" + DBUtil.escapeQuotes(genus) + "'" 
+				  + "   and subfamily = '" + DBUtil.escapeQuotes(subfamily) + "'"
 				  + "   and source != 'worldants.txt'";
 				ResultSet rset3 = stmt3.executeQuery(query);
 				s_log.debug("execute() 3 query:" + query);
@@ -405,17 +405,17 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         try {
           // A.log("deleteTaxon() taxon:" + taxonName);
           stmt = getConnection().createStatement();
-          String delete = "delete from taxon where taxon_name = '" + taxonName + "'"; 
+          String delete = "delete from taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
           stmt.executeUpdate(delete);    
-          delete = "delete from proj_taxon where taxon_name = '" + taxonName + "'"; 
+          delete = "delete from proj_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
           stmt.executeUpdate(delete);    
-          delete = "delete from geolocale_taxon where taxon_name = '" + taxonName + "'"; 
+          delete = "delete from geolocale_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
           stmt.executeUpdate(delete);    
-          delete = "delete from bioregion_taxon where taxon_name = '" + taxonName + "'"; 
+          delete = "delete from bioregion_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
           stmt.executeUpdate(delete);    
-          delete = "delete from museum_taxon where taxon_name = '" + taxonName + "'"; 
+          delete = "delete from museum_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
           stmt.executeUpdate(delete);
-          delete = "delete from taxon_prop where taxon_name = '" + taxonName + "'"; 
+          delete = "delete from taxon_prop where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
           stmt.executeUpdate(delete);    
         } catch (SQLException e) {
           s_log.warn("deleteTaxon(" + taxonName + ") e:" + e);
@@ -591,7 +591,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
           s_log.debug("nowDeleteTaxon() taxon:" + taxonName);
           stmt = DBUtil.getStatement(getConnection(), "OrphansDb.nowDeleteTaxon()");
           try {
-            update = "delete from taxon where taxon_name = '" + taxonName + "'";
+            update = "delete from taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'";
             stmt.executeUpdate(update);    
           } catch (SQLIntegrityConstraintViolationException e) {
             // ignore.
@@ -611,7 +611,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
         ResultSet rset = null;
         String query = "select " + column1;
         if (column2 != null) query += ", " + column2;
-        query += " from " + table + " where taxon_name = '" + oldTaxonName + "'";
+        query += " from " + table + " where taxon_name = '" + DBUtil.escapeQuotes(oldTaxonName) + "'";
         try { 
             stmt = DBUtil.getStatement(getConnection(), "OrphansDB.moveSupportingDataGeneric()");
             rset = stmt.executeQuery(query);
@@ -635,16 +635,16 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
           stmt = DBUtil.getStatement(getConnection(), "OrphansDb.updateFailGraceful()");
          
           try {
-            update = "update " + table + " set taxon_name = '" + taxonName + "' where taxon_name = '" + oldTaxonName + "'";
-            if (alternateColumn != null && alternateValue != null) update += " and " + alternateColumn + " = '" + alternateValue + "'";
-            if (alternateColumn2 != null && alternateValue2 != null) update += " and " + alternateColumn2 + " = '" + alternateValue2 + "'";
+            update = "update " + table + " set taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "' where taxon_name = '" + DBUtil.escapeQuotes(oldTaxonName) + "'";
+            if (alternateColumn != null && alternateValue != null) update += " and " + alternateColumn + " = '" + DBUtil.escapeQuotes(alternateValue) + "'";
+            if (alternateColumn2 != null && alternateValue2 != null) update += " and " + alternateColumn2 + " = '" + DBUtil.escapeQuotes(alternateValue2) + "'";
             //if (true) s_log.warn("updateFailGraceful() update:" + update); else
             stmt.executeUpdate(update);    
           } catch (SQLIntegrityConstraintViolationException e) {
             // If a primary key conflict, then delete the old.
-            update = "delete from " + table + " where taxon_name = '" + oldTaxonName + "'";
-            if (alternateColumn != null && alternateValue != null) update += " and " + alternateColumn + " = '" + alternateValue + "'";
-            if (alternateColumn2 != null && alternateValue2 != null) update += " and " + alternateColumn2 + " = '" + alternateValue2 + "'";
+            update = "delete from " + table + " where taxon_name = '" + DBUtil.escapeQuotes(oldTaxonName) + "'";
+            if (alternateColumn != null && alternateValue != null) update += " and " + alternateColumn + " = '" + DBUtil.escapeQuotes(alternateValue) + "'";
+            if (alternateColumn2 != null && alternateValue2 != null) update += " and " + alternateColumn2 + " = '" + DBUtil.escapeQuotes(alternateValue2) + "'";
           //if (true) s_log.warn("updateFailGraceful() update:" + update); else
             stmt.executeUpdate(update);    
           }

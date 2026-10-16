@@ -75,7 +75,7 @@ public final class OrphanTaxonsAction extends AntwebAction {
                   uploadList.add("source:" + source + " lastUpload:" + max + " taxonCount:" + count + "");
 
                   Statement stmt2 = connection.createStatement();
-                  query = "select taxon_name from taxon where source = '" + source + "' and created < date_sub('" + max + "', INTERVAL 1 DAY)";
+                  query = "select taxon_name from taxon where source = '" + DBUtil.escapeQuotes(source) + "' and created < date_sub('" + max + "', INTERVAL 1 DAY)";
                   ResultSet rset2 = stmt2.executeQuery(query);
  
                   //s_log.warn("orphan() q:" + query);
@@ -106,7 +106,7 @@ public final class OrphanTaxonsAction extends AntwebAction {
         throws SQLException {
         s_log.warn("deleteTaxon() taxon:" + taxonName);
         Statement stmt1 = connection.createStatement();
-        String delete = "delete from taxon where taxon_name = \"" + taxonName + "\""; 
+        String delete = "delete from taxon where taxon_name = \"" + DBUtil.escapeQuotes(taxonName) + "\""; 
         stmt1.executeUpdate(delete);    
     }
 
@@ -115,21 +115,21 @@ public final class OrphanTaxonsAction extends AntwebAction {
         s_log.warn("deleteTaxonFromSource() source:" + source);
         
             Statement stmt1 = connection.createStatement();
-            String query = "select max(created) from taxon where source = \"" + source + "\" group by source";
+            String query = "select max(created) from taxon where source = \"" + DBUtil.escapeQuotes(source) + "\" group by source";
             
             ResultSet rset1 = stmt1.executeQuery(query);
             while (rset1.next()) {
               Date max = rset1.getTimestamp(1);
 
               Statement stmt2 = connection.createStatement();
-              query = "select taxon_name from taxon where source = \"" + source + "\" and created < date_sub('" + max + "', INTERVAL 1 DAY)";
+              query = "select taxon_name from taxon where source = \"" + DBUtil.escapeQuotes(source) + "\" and created < date_sub('" + max + "', INTERVAL 1 DAY)";
               ResultSet rset2 = stmt2.executeQuery(query);
  
               //s_log.warn("orphan() q:" + query);
               while (rset2.next()) {
                 String taxonName = rset2.getString(1);
                 Statement stmt3 = connection.createStatement();
-                String delete = "delete from taxon where taxon_name = \"" + taxonName + "\""; 
+                String delete = "delete from taxon where taxon_name = \"" + DBUtil.escapeQuotes(taxonName) + "\""; 
                 stmt3.executeUpdate(delete);   
                 stmt3.close();
               }

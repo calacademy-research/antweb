@@ -104,7 +104,7 @@ public final class SpeciesListAction extends AntwebAction {
             String theQuery =
                 "select taxon_name from taxon where family = 'formicidae' "
                   + " and taxarank in ('species', 'subspecies') "
-                  + " and taxon_name in (select taxon_name from proj_taxon where project_name = '" + name + "')";
+                  + " and taxon_name in (select taxon_name from proj_taxon where project_name = '" + DBUtil.escapeQuotes(name) + "')";
  
             Statement stmt = null;
             ResultSet rset = null;

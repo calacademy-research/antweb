@@ -70,7 +70,7 @@ public class Scheduler extends AntwebAction {
 
 		s_log.warn("execute() action:" + action + " num:" + num + " target:" + HttpUtil.getTarget(request));
 
-        int secureCode = AntwebUtil.getSecureCode();
+        String secureCode = AntwebUtil.getSecureCode();
 
         if (AntwebMgr.isServerInitializing()) {
             String message = "Scheduler failed because isInitializing:" + AntwebMgr.isServerInitializing();
@@ -89,12 +89,12 @@ public class Scheduler extends AntwebAction {
     // Called from SessionRequestFilter
     public String doAction() {
       //return doAction("justLog", 0); // Perform all
-      int secureCode = AntwebUtil.getSecureCode();
+      String secureCode = AntwebUtil.getSecureCode();
       String value = doAction("run", 0, secureCode); // Perform all
       return value;
     }
 
-    public String doAction(String action, int num, int secureCode) {
+    public String doAction(String action, int num, String secureCode) {
     
         if (action == null) return "Null action";
     
@@ -183,6 +183,12 @@ public class Scheduler extends AntwebAction {
 						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
+					// set5 (object maps, reload all) needs more memory than staging's 4 GB droplet has:
+					// skip it there in the nightly run (an admin can still request it by hand).
+					if (i == 0 && AntwebProps.isStageMode()) {
+						s_log.warn("doAction() set5 skipped on staging (memory)");
+						LogMgr.appendLog("compute.log", "  set5 skipped on staging (memory)", true);
+					} else
 					if (i == 0 || i == 5) {
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all" + codeParam;
 						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);

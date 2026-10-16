@@ -296,7 +296,7 @@ To Do
   
     String displaySubfamilyCriteria = "";
     if (!"none".equals(displaySubfamily)) {
-        displaySubfamilyCriteria = "   and t.taxon_name like '" + displaySubfamily + "%'";
+        displaySubfamilyCriteria = "   and t.taxon_name like '" + DBUtil.escapeQuotes(displaySubfamily) + "%'";
     }
 
     //A.log("SpeciesListToolAction.setSpeciesListMappines() refSpeciesListName:" + refSpeciesListName + " geolocaleCriteria:" + geolocaleCriteria + " refSpeciesListName:" + refSpeciesListName + " displaySubfamily:" + displaySubfamily);
@@ -433,17 +433,17 @@ To Do
     String criteria = "";
     boolean nonEmpty = false;
     if (!"none".equals(mapSpeciesList1Name) && !Project.isProjectName(mapSpeciesList1Name) && !Utility.isNumber(mapSpeciesList1Name)) {
-      criteria += "'" + mapSpeciesList1Name + "'"; // Project.getLocalityName(mapSpeciesList1Name)
+      criteria += "'" + DBUtil.escapeQuotes(mapSpeciesList1Name) + "'"; // Project.getLocalityName(mapSpeciesList1Name)
       nonEmpty = true;
     }
     if (!"none".equals(mapSpeciesList2Name) && !Project.isProjectName(mapSpeciesList2Name) && !Utility.isNumber(mapSpeciesList2Name)) {
       if (nonEmpty) criteria += ", ";
-      criteria += "'" + mapSpeciesList2Name + "'";
+      criteria += "'" + DBUtil.escapeQuotes(mapSpeciesList2Name) + "'";
       nonEmpty = true;
     }
     if (!"none".equals(mapSpeciesList3Name) && !Project.isProjectName(mapSpeciesList3Name) && !Utility.isNumber(mapSpeciesList3Name)) {
       if (nonEmpty) criteria += ", ";
-      criteria += "'" + mapSpeciesList3Name + "'";
+      criteria += "'" + DBUtil.escapeQuotes(mapSpeciesList3Name) + "'";
       nonEmpty = true;
     }
     
@@ -473,17 +473,17 @@ To Do
     // So, get the speciesListable and use the name?
     
     if (!"none".equals(mapSpeciesList1Name) && Utility.isNumber(mapSpeciesList1Name)) {
-      criteria += "'" + SpeciesListMgr.getName(mapSpeciesList1Name) + "'";  // Project.getLocalityName(mapSpeciesList1Name) + "'";
+      criteria += "'" + DBUtil.escapeQuotes(SpeciesListMgr.getName(mapSpeciesList1Name)) + "'";  // Project.getLocalityName(mapSpeciesList1Name) + "'";
       nonEmpty = true;
     }
     if (!"none".equals(mapSpeciesList2Name) && Utility.isNumber(mapSpeciesList2Name)) {
       if (nonEmpty) criteria += ", ";
-      criteria += "'" + SpeciesListMgr.getName(mapSpeciesList2Name) + "'";
+      criteria += "'" + DBUtil.escapeQuotes(SpeciesListMgr.getName(mapSpeciesList2Name)) + "'";
       nonEmpty = true;
     }
     if (!"none".equals(mapSpeciesList3Name) && Utility.isNumber(mapSpeciesList3Name)) {
       if (nonEmpty) criteria += ", ";
-      criteria += "'" + SpeciesListMgr.getName(mapSpeciesList3Name) + "'";
+      criteria += "'" + DBUtil.escapeQuotes(SpeciesListMgr.getName(mapSpeciesList3Name)) + "'";
       nonEmpty = true;
     }
 
@@ -510,7 +510,7 @@ To Do
       for (Taxon taxon : speciesList) {
       String taxonName = taxon.getTaxonName();
       query = "select distinct country as country from specimen" 
-        + " where taxon_name = '" + taxonName + "'"
+        + " where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"
         + " and " + countryCriteria;
       
       boolean debug = "myrmicinaeacanthognathus brevicornis".equals(taxonName);
@@ -547,7 +547,7 @@ To Do
       for (Taxon taxon : speciesList) {
       String taxonName = taxon.getTaxonName();
       query = "select distinct adm1 as adm1 from specimen" 
-        + " where taxon_name = '" + taxonName + "'"
+        + " where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"
         + " and " + adm1Criteria;
       //A.log("setAdm1Lists query:" + query);
       ArrayList<String> adm1s = new ArrayList<>();
@@ -586,7 +586,7 @@ To Do
         }
 
         query = "select pt.specimen_count specimenCount from proj_taxon pt" 
-          + " where pt.taxon_name = '" + taxon.getTaxonName() + "'"
+          + " where pt.taxon_name = '" + DBUtil.escapeQuotes(taxon.getTaxonName()) + "'"
           + "   and pt.project_name = '" + Project.ALLANTWEBANTS + "'"
           ;
       

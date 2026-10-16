@@ -50,19 +50,19 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
 
         String dml = "";
         // Update the existing proj_taxon_log record for the current proj_taxon data, or insert one.  Old curator id remains intact.
-        dml = "update proj_taxon_log set is_current = 0 where project_name = '" + projectName + "' and is_current = 1";
+        dml = "update proj_taxon_log set is_current = 0 where project_name = '" + DBUtil.escapeQuotes(projectName) + "' and is_current = 1";
         if (debug) s_log.warn("archiveSpeciesList() 1 dml:" + dml);
         int result = stmt.executeUpdate(dml);
         if (result == 0) {
           // We could not update it.  Record did not exist.  Create it with curator_id = 0;
-          dml = "insert into proj_taxon_log (project_name, curator_id, is_current) values ('" + projectName + "', 0, 0)";
+          dml = "insert into proj_taxon_log (project_name, curator_id, is_current) values ('" + DBUtil.escapeQuotes(projectName) + "', 0, 0)";
           stmt.executeUpdate(dml);
         }
         if (debug) s_log.warn("archiveSpeciesList() 2 result:" + result + " dml:" + dml);
 
         // Get the maxLogId.
         int maxLogId = 0;
-        String query = "select max(log_id) as log_id from proj_taxon_log where project_name = '" + projectName + "'";
+        String query = "select max(log_id) as log_id from proj_taxon_log where project_name = '" + DBUtil.escapeQuotes(projectName) + "'";
         rset = stmt.executeQuery(query);
         while (rset.next()) {
             maxLogId = rset.getInt("log_id");
@@ -70,7 +70,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
         if (debug) s_log.warn("archiveSpeciesList() 3 maxLogId:" + maxLogId + " projectName:" + projectName);
 
         // Create a new proj_taxon_log to point at the live data with this curator's id
-        dml = "insert into proj_taxon_log (project_name, curator_id, is_current) values ('" + projectName + "', '" + curatorLogin.getId() + "', 1)";
+        dml = "insert into proj_taxon_log (project_name, curator_id, is_current) values ('" + DBUtil.escapeQuotes(projectName) + "', '" + curatorLogin.getId() + "', 1)";
         stmt.executeUpdate(dml);        
 
         if (debug) s_log.warn("archiveSpeciesList() 4 dml:" + dml);
@@ -79,7 +79,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
           + " select project_name, pt.taxon_name, pt.created, pt.subfamily_count, pt.genus_count, pt.species_count, pt.specimen_count, pt.image_count " 
           + " from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name " 
           + " and ( taxarank = 'species' or taxarank = 'subspecies')"
-          + " and project_name = '" + projectName + "'";
+          + " and project_name = '" + DBUtil.escapeQuotes(projectName) + "'";
         stmt.executeUpdate(dml);
 
         if (debug) s_log.warn("archiveSpeciesList() 5 dml:" + dml);
@@ -117,7 +117,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             theQuery = " select log_id, project_name, created, curator_id, is_current" 
               + " from proj_taxon_log " 
               + " where 1=1";
-              if (projectName != null) theQuery += " and project_name='" + projectName + "'";
+              if (projectName != null) theQuery += " and project_name='" + DBUtil.escapeQuotes(projectName) + "'";
               if (logId != 0) theQuery += " and (log_id <= " + logId + " or is_current = 1)";
               //if (created != null) theQuery += " and created = '" + AntwebUtil.getFormatDateTimeStr(created) + "'";
               //if (curatorId != 0) theQuery += " and curator_id = " + curatorId;
@@ -180,7 +180,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             stmt = DBUtil.getStatement(getConnection(), "getProjTaxonLogDetails() projectName:" + projectName);
 
             String subfamilyClause = "";
-            if (displaySubfamily != null) subfamilyClause = " and t.subfamily = '" + displaySubfamily + "'";
+            if (displaySubfamily != null) subfamilyClause = " and t.subfamily = '" + DBUtil.escapeQuotes(displaySubfamily) + "'";
 
             String fields = " pt.project_name, pt.taxon_name, pt.created"
               + ", pt.subfamily_count, pt.genus_count, pt.species_count, pt.specimen_count, pt.image_count";
@@ -190,7 +190,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
               + " and (t.taxarank = 'species' or t.taxarank = 'subspecies')"
               + subfamilyClause
               ;
-            if (projectName != null) theQuery += " and pt.project_name = '" + projectName + "'";
+            if (projectName != null) theQuery += " and pt.project_name = '" + DBUtil.escapeQuotes(projectName) + "'";
                             
             //A.log("getProjTaxonLogDetails() query:" + theQuery);
 
@@ -243,7 +243,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
               + " where 1=1";
             if (logId != 0) theQuery += " and log_id = " + logId;
             if (displaySubfamily != null && !"none".equals(displaySubfamily)) 
-              theQuery += " and taxon_name like '" + displaySubfamily + "%'"; 
+              theQuery += " and taxon_name like '" + DBUtil.escapeQuotes(displaySubfamily) + "%'"; 
                             
             //A.log("getProjTaxonLogDetails() query:" + theQuery);
 
@@ -356,7 +356,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             stmt = DBUtil.getStatement(getConnection(), "removeDispute()");
 
             dml = "delete from proj_taxon_dispute "
-              + " where project_name = '" + projectName + "'"
+              + " where project_name = '" + DBUtil.escapeQuotes(projectName) + "'"
               + "   and taxon_name = '" + taxonName + "'";
 
             stmt.execute(dml);
@@ -410,7 +410,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
         String query = "";
         Statement stmt = null;
         ResultSet rset = null;
-        String projectClause = ""; if (projectName != null) projectClause = " and project_name = '" + projectName + "'";
+        String projectClause = ""; if (projectName != null) projectClause = " and project_name = '" + DBUtil.escapeQuotes(projectName) + "'";
         String taxonClause = ""; if (taxonName != null) taxonClause = " and taxon_name = '" + taxonName + "'";
         try {
 

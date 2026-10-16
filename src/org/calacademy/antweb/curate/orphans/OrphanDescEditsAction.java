@@ -162,7 +162,7 @@ public final class OrphanDescEditsAction extends AntwebAction {
         // Do not operate on Specimen Description_edit records (code is null);
         
         Statement stmt1 = connection.createStatement();
-        String delete = "delete from description_edit where taxon_name = '" + taxonName + "' and code is null"; 
+        String delete = "delete from description_edit where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "' and code is null"; 
         stmt1.executeUpdate(delete);
         s_log.warn("deleteTaxonDescEdits taxon_name:" + taxonName + " dml:" + delete);
     }
@@ -171,15 +171,15 @@ public final class OrphanDescEditsAction extends AntwebAction {
         throws SQLException {
 
         Statement stmt1 = connection.createStatement();
-        String delete = "delete from taxon where taxon_name = '" + taxonName + "'"; 
+        String delete = "delete from taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
         stmt1.executeUpdate(delete);
-        delete = "delete from proj_taxon where taxon_name = '" + taxonName + "'"; 
+        delete = "delete from proj_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
         stmt1.executeUpdate(delete);
-        delete = "delete from geolocale_taxon where taxon_name = '" + taxonName + "'"; 
+        delete = "delete from geolocale_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
         stmt1.executeUpdate(delete);
-        delete = "delete from bioregion_taxon where taxon_name = '" + taxonName + "'"; 
+        delete = "delete from bioregion_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
         stmt1.executeUpdate(delete);
-        delete = "delete from museum_taxon where taxon_name = '" + taxonName + "'"; 
+        delete = "delete from museum_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
         stmt1.executeUpdate(delete);
         s_log.warn("deleteTaxon taxon_name:" + taxonName + " dml:" + delete);
     }
@@ -216,7 +216,7 @@ public final class OrphanDescEditsAction extends AntwebAction {
 
         s_log.warn("transferEditsToTaxon() from:" + oldTaxonName + " to:" + newTaxonName);
         Statement stmt1 = connection.createStatement();
-        String transfer = "update description_edit set taxon_name = \"" + newTaxonName + "\" where taxon_name = \"" + oldTaxonName + "\" and code is null"; 
+        String transfer = "update description_edit set taxon_name = \"" + DBUtil.escapeQuotes(newTaxonName) + "\" where taxon_name = \"" + DBUtil.escapeQuotes(oldTaxonName) + "\" and code is null"; 
         int returnVal = stmt1.executeUpdate(transfer);    
         s_log.warn("ReturnVal = " + returnVal);
         return "Description Edits successfully transfered to " + newTaxonName;

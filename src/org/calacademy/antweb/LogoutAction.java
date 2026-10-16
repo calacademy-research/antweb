@@ -26,13 +26,20 @@ public final class LogoutAction extends AntwebAction {
         throws IOException, ServletException {
 
         Locale locale = getLocale(request);
-        HttpSession session = request.getSession();
         
-
-        LoginMgr.removeAccessLogin(request);
-
         String target = ((LoginForm) form).getTarget();
         if (!HttpUtil.isSafeRedirectTarget(target)) target = null;
+
+        // End the session entirely (not just the login attribute). Pages create a fresh one if they need it.
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+          LoginMgr.removeAccessLogin(request);
+          try {
+            session.invalidate();
+          } catch (IllegalStateException e) {
+            // already invalidated
+          }
+        }
 
         if (target != null && !target.equals("") && !target.contains("login.do")) {
           //s_log.warn("Logout:" + target);

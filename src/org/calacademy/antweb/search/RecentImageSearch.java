@@ -58,12 +58,12 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
                 theQuery += " and image.upload_date > '" + Utility.getCurrentDateAndTimeString(cal.getTime()) + "'";
                 
             } else if (fromDate != null && toDate != null) {
-                theQuery += " and image.upload_date >= '" + fromDate + "' and image.upload_date <= '" +
-                     toDate + "' ";
+                theQuery += " and image.upload_date >= '" + DBUtil.escapeQuotes(fromDate) + "' and image.upload_date <= '" +
+                     DBUtil.escapeQuotes(toDate) + "' ";
             }
 
             if (group != null && group.length() > 0) {
-                theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + group + "'";
+                theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + DBUtil.escapeQuotes(group) + "'";
             }
 
             theQuery += 

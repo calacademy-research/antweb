@@ -214,11 +214,11 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
 
             if (bioregion != null
                 && bioregion.length() > 0) {
-                where.add("sp.bioregion='" + bioregion + "'");
+                where.add("sp.bioregion='" + DBUtil.escapeQuotes(bioregion) + "'");
             }
             if (typeDesignation != null && typeDesignation.length() > 0) {
                 //where.add("sp.type='" + typeDesignation + "'");
-                where.add("sp.type_status like '%" + typeDesignation + "%'");
+                where.add("sp.type_status like '%" + DBUtil.escapeQuotes(typeDesignation) + "%'");
             }
             if (method != null && method.length() > 0) {
                 where.add(getSearchString("sp.method", methodSearchType, method));

@@ -561,13 +561,13 @@ public class ProjectDb extends AntwebDb {
       throws SQLException {
 
       boolean isSpeciesListMappingProject = false;
-      Statement stmt = null;
+      PreparedStatement stmt = null;
       try {
-          stmt = DBUtil.getStatement(connection, "isSpeciesListMappingProject()");
-
           String query = "select project_name from project"
-                  + " where project_name = '" + projectName + "' and species_list_mappable = 1";
-          ResultSet rset1 = stmt.executeQuery(query);
+                  + " where project_name = ? and species_list_mappable = 1";
+          stmt = DBUtil.getPreparedStatement(connection, "isSpeciesListMappingProject()", query);
+          stmt.setString(1, projectName);
+          ResultSet rset1 = stmt.executeQuery();
           while (rset1.next()) {
               isSpeciesListMappingProject = true;
           }

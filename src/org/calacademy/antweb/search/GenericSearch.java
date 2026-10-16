@@ -121,7 +121,7 @@ public class GenericSearch implements Serializable {
             }
         }
         theQuery += "(" + inBuffer + ") ";
-        theQuery += " and proj_taxon.project_name = '" + project + "' and ";
+        theQuery += " and proj_taxon.project_name = '" + AntFormatter.escapeQuotes(project) + "' and ";
         theQuery += " taxon.taxon_name = proj_taxon.taxon_name";
 
         Statement stmt = null;
@@ -195,7 +195,7 @@ public class GenericSearch implements Serializable {
                 && !project.equals(Project.WORLDANTS)
                 && !project.equals(Project.ALLANTWEBANTS)
         ) {
-            preparedQuery += " and proj_taxon.project_name = '" + project + "' ";
+            preparedQuery += " and proj_taxon.project_name = '" + AntFormatter.escapeQuotes(project) + "' ";
             preparedQuery += " and proj_taxon.taxon_name = specimen.taxon_name ";
         }
         preparedQuery += " and specimen.family = ? and specimen.subfamily = ? and specimen.genus = ? and specimen.species = ?";
@@ -750,7 +750,8 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         rightPercent = getRightPercent(searchType);
 
         //A.log("getSearchString() property:" + property + " ");
-        if ("sp.taxon_name".equals(property) && value != null && "(".equals(value.substring(0, 1))) {
+        // A parenthesized list of quoted names is passed straight into an IN clause, so only accept a strictly formed one.
+        if ("sp.taxon_name".equals(property) && value != null && value.matches("\\(\\s*'[^'\\\\]*'(\\s*,\\s*'[^'\\\\]*')*\\s*\\)")) {
             s_log.debug("getSearchString() value:" + value);
             return property + " in " + value;
         }
@@ -831,7 +832,9 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
     protected String getDateSearchString(String property, String searchType, String value) {
         String searchStr = null;
         String operator = getOperator(searchType);
-        searchStr = property + " " + operator + " " + "convert('" + value + "', DATE)";
+        // Only plain date characters may reach the SQL; anything else matches nothing (as an unparseable date did before).
+        if (value == null || !value.matches("[0-9A-Za-z/.: -]{1,30}")) return " 1 = 0 ";
+        searchStr = property + " " + operator + " " + "convert('" + AntFormatter.escapeQuotes(value) + "', DATE)";
         return searchStr;
     }
 

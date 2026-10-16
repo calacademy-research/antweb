@@ -409,29 +409,32 @@ public abstract class HttpUtil {
                 || str.contains("waitfor  ");
     }
 
-    private static final String[] HEADERS_TO_TRY = {
-            "X-Forwarded-For",
-            "Proxy-Client-IP",
-            "WL-Proxy-Client-IP",
-            "HTTP_X_FORWARDED_FOR",
-            "HTTP_X_FORWARDED",
-            "HTTP_X_CLUSTER_CLIENT_IP",
-            "HTTP_CLIENT_IP",
-            "HTTP_FORWARDED_FOR",
-            "HTTP_FORWARDED",
-            "HTTP_VIA",
-            "REMOTE_ADDR"};
-
+    /**
+     * The visitor's IP, for bans and rate checks. Traffic arrives Cloudflare -> Caddy -> Tomcat:
+     * 1. CF-Connecting-IP (set by Cloudflare to the real visitor);
+     * 2. otherwise the LAST X-Forwarded-For entry, which Caddy sets to the TCP peer it saw
+     *    (header_up X-Forwarded-For {remote.host}); earlier entries are client-supplied and ignored;
+     * 3. otherwise request.getRemoteAddr().
+     * Proxy-Client-IP, HTTP_CLIENT_IP etc. are client-controlled and no longer consulted.
+     */
     public static String getClientIpAddress(HttpServletRequest request) {
         if (AntwebProps.isLocal()) return getDevIpAddress(request);
 
-        for (String header : HEADERS_TO_TRY) {
-            String ip = request.getHeader(header);
-            if (ip != null && ip.length() != 0 && !"unknown".equalsIgnoreCase(ip)) {
-                return ip;
-            }
+        String ip = request.getHeader("CF-Connecting-IP");
+        if (isIpLike(ip)) return ip.trim();
+
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null) {
+            String last = xff.substring(xff.lastIndexOf(',') + 1).trim();
+            if (isIpLike(last)) return last;
         }
         return request.getRemoteAddr();
+    }
+
+    private static boolean isIpLike(String ip) {
+        if (ip == null) return false;
+        String s = ip.trim();
+        return !s.isEmpty() && s.length() <= 45 && s.matches("[0-9A-Fa-f:.]+");
     }
 
     public static String getDevIpAddress(HttpServletRequest request) {

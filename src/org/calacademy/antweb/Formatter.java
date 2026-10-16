@@ -132,6 +132,9 @@ public class Formatter implements Serializable {
 
 	public static String escapeQuotes(String theString) {
 		if (theString == null) return null;
+		// MySQL treats backslash as an escape character inside string literals, so escape it
+		// first; otherwise a trailing backslash would neutralize the closing quote.
+		theString = theString.replace("\\", "\\\\");
 		theString = replace(theString, "'", "''");
 		theString = replace(theString, "\"", "\"\"");
 		return theString;

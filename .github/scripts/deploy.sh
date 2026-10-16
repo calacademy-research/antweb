@@ -36,6 +36,13 @@ git fetch origin "$DEPLOY_BRANCH"
 git checkout "$DEPLOY_BRANCH"
 git pull --rebase origin "$DEPLOY_BRANCH"
 
+# Nothing the site runs changed (only CI, tests, docs or release notes): no restart.
+changed=$(git diff --name-only "$PREV" HEAD)
+if [ -n "$changed" ] && ! printf '%s\n' "$changed" | grep -qvE '^(\.github/|tests/|doc/|docs/|release-notes/|[^/]*\.md$)'; then
+  echo "Only CI, tests or docs changed since $PREV; antweb not restarted."
+  exit 0
+fi
+
 # If the antweb image itself changed (Dockerfile, Tomcat config, base image), ant
 # deploy into the running container is not enough: rebuild the image (which runs
 # ant deploy) and replace the container. The old container keeps serving during
