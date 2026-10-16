@@ -268,7 +268,8 @@ public final class LoginAction extends AntwebAction {
                     // Correct password, but this account must set a new one first: email a reset link.
                     String result = PasswordResetMgr.sendResetLink(connection, login.getId(), login.getDisplayName(), login.getEmail(),
                         HttpUtil.getClientIpAddress(request), PasswordResetMgr.SUBJECT_RESET,
-                        "For security, AntWeb asks you to set a new password before you log in again.");
+                        "For security, AntWeb asks you to set a new password before you log in again.",
+                        PasswordResetMgr.VALID_MINUTES, true);
                     PasswordResetMgr.logEvent("login refused until password reset (must_reset) login:" + login.getId() + " link:" + result);
                     String text = PasswordResetMgr.NO_EMAIL.equals(result)
                         ? "For security, please set a new password. There is no email address on this account, so please write to antweb@calacademy.org."
