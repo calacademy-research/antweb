@@ -84,15 +84,15 @@ function selectAll(thisForm) {
 </logic:equal>
 
 <logic:equal name="mode" value="map">
-<form action="<%= AntwebProps.getDomainApp() %>/mapResults.do" name="taxaFromSearchForm" method="POST">
+<form action="<%= AntwebProps.getDomainApp() %>/mapResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="resultRank" value="species"/>
 </logic:equal>
 <logic:equal name="mode" value="compare">
-<form action="<%= AntwebProps.getDomainApp() %>/compareResults.do" name="taxaFromSearchForm" method="POST">
+<form action="<%= AntwebProps.getDomainApp() %>/compareResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="resultRank" value="species"/>
 </logic:equal>
 <logic:equal name="mode" value="fieldGuide">
-<form action="<%= AntwebProps.getDomainApp() %>/fieldGuideResults.do" name="taxaFromSearchForm" method="POST">
+<form action="<%= AntwebProps.getDomainApp() %>/fieldGuideResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="resultRank" value="<%= resultRank %>"/>
 </logic:equal>
 
@@ -198,7 +198,7 @@ Sorry, nothing matches your request.
     
 %>
 <div id="page_data">
-<form id="theform" name="taxaFromSearchForm" method="POST">
+<form id="theform" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
     <input type="hidden" name="resultRank" value="species"/>
 <% if (useShot) { %>
     <input id="thumb_choice" type="hidden" name="shot" value="<%= choice_is %>" checked> 

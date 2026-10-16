@@ -2,7 +2,7 @@
 
 <div id="page_data">
 
-<form action="<%= domainApp %>/defaultSpecimen.do" method="POST">
+<form action="<%= domainApp %>/defaultSpecimen.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 Select as the default specimen for taxon<b>: <%= Taxon.getPrettyTaxonName(defaultSpecimenTaxon) %></b>
 

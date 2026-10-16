@@ -318,11 +318,11 @@ No specimens in this collection.
 <hr></hr>
 
 <logic:equal name="mode" value="map">
-<form action="mapResults.do" name="taxaFromSearchForm" method="POST">
+<form action="mapResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="resultRank" value="specimen"/>
 </logic:equal>
 <logic:equal name="mode" value="compare">
-<form action="compareResults.do" name="taxaFromSearchForm" method="POST">
+<form action="compareResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="resultRank" value="specimen"/>
 </logic:equal>
 

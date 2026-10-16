@@ -55,7 +55,7 @@ remove them in the case of conflict.  This is not reversible.
 %>
 
 
-<html:form method="POST" action="orphanAlternates.do" enctype="multipart/form-data">
+<html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "orphanAlternates.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
     <input type="hidden" name="action" value="moveOrDelete" />
     <input type="hidden" name="taxonName" value="<%= ((Taxon) orphan).getTaxonName() %>" />
     <div class="admin_action_module">

@@ -129,7 +129,7 @@ a taxon with a taxon_prop introducedMap, and a geolocale within that introducedM
 
 <tr>
 
-<form id="introducedMgrForm" action="<%=domainApp %>/introducedMapMgr.do#<%= i %>" method="POST">
+<form id="introducedMgrForm" action="<%=domainApp %>/introducedMapMgr.do#<%= i %>" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <td><a name="<%= i %>"></a><%= i %></td>
 
 <%

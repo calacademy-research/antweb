@@ -169,7 +169,7 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 
 <br><br><br>
 <h2>Form Actions</h2>
-<html:form action="<%= domainApp %>/serverStatus">
+<html:form action="<%= domainApp %>/serverStatus"><%= org.calacademy.antweb.util.Csrf.field(request) %>
        <input type="submit" name="methodHabitat" value="methodHabitat"/>
 <br>
        <input type="submit" name="name" value="holdOpenConnection"/>

@@ -120,7 +120,7 @@
 
 <tr>
 
-<form id="bioregionMgrForm" action="<%=domainApp %>/bioregionMapMgr.do#<%= i %>" method="POST">
+<form id="bioregionMgrForm" action="<%=domainApp %>/bioregionMapMgr.do#<%= i %>" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <td><a name="<%= i %>"></a>
 <%= i %></td>

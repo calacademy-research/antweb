@@ -180,7 +180,7 @@ function clickrecall(thisfield, defaulttext) {
      group = "";
   }
 %>
-<html:form method="POST" action="deleteImages">
+<html:form method="POST" action="deleteImages"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name = "daysAgo" value = "<%= Html.escAttr(daysAgo) %>" />
 <input type="hidden" name="group" value = "<%= Html.escAttr(group) %>" />
 <br />

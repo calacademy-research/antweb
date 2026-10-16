@@ -183,7 +183,7 @@ if (sortedBy == null) {
      
     if (isAdvancedSearchPage) { %> 
 
-    <form id="theform" name="taxaFromSearchForm" method="POST">
+    <form id="theform" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <%    
       Login srAccessLogin = LoginMgr.getAccessLogin(request);
 
@@ -198,7 +198,7 @@ if (sortedBy == null) {
      <% }
       }
     } else { %>
-<form id="theform" name="browseForm" method="POST">
+<form id="theform" name="browseForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <%
 	  // Probably caused by direct JSP access.
 	  if (taxon.toString() == null) {

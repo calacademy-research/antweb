@@ -13,7 +13,7 @@ ArrayList<Taxon> specimenChildren = taxon.getChildren();
 
 <div id="page_data">
 
-<form action="<%= AntwebProps.getDomainApp() %>/defaultSpecimen.do" method="POST">
+<form action="<%= AntwebProps.getDomainApp() %>/defaultSpecimen.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <b>Choose</b> 
 

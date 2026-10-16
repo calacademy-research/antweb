@@ -37,7 +37,7 @@ To Upload A File, go to the <a href="<%= domainApp %>/curate.do" target="new">An
 
 <hr></hr>
 
-<form method="post" action="<%= domainApp %>/editProject.do?projectName=<%= thisProject.getName() %>">
+<form method="post" action="<%= domainApp %>/editProject.do?projectName=<%= thisProject.getName() %>"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <h3>Key: <%= thisProject.getName() %></h3>
 <p>

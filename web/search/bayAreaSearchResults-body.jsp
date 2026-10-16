@@ -61,11 +61,11 @@ function selectAll(thisForm) {
 <tr>
 <td bgcolor="#000000">
 <logic:equal name="mode" value="map">
-	<form action="<%= domainApp %>/mapResults.do" name="taxaFromSearchForm" method="POST">
+	<form action="<%= domainApp %>/mapResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 	<input type="hidden" name="resultRank" value="bayArea"/>
 </logic:equal>
 <logic:equal name="mode" value="compare">
-	<form action="<%= domainApp %>/compareResults.do" name="taxaFromSearchForm" method="POST">
+	<form action="<%= domainApp %>/compareResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 	<input type="hidden" name="resultRank" value="bayArea"/>
 </logic:equal>
 

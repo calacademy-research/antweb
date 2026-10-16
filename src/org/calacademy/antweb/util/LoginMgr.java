@@ -160,6 +160,8 @@ public class LoginMgr extends Manager {
     public static void logIn(HttpServletRequest request, Login login) {
         request.getSession();
         request.changeSessionId();
+        // New CSRF token for the logged-in session (a token seen before login is not reused).
+        request.getSession().removeAttribute(Csrf.SESSION_ATTR);
         setAccessLogin(request, login);
     }
 

@@ -21,7 +21,7 @@
 <h1>Simple Editor</h1>
 
 
-<html:form method="POST" action="simpleContentEditorWrite.do">
+<html:form method="POST" action="simpleContentEditorWrite.do"><%= org.calacademy.antweb.util.Csrf.field(request) %>
   <html:textarea property="contents" rows="20" cols="80"/>
   <html:submit/>
 </html:form>

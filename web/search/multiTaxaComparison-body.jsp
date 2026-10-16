@@ -51,7 +51,7 @@ function submitAndFocus(theForm) {
 			<h2><%= taxaToCompare.size() %> specimens to compare.</h2>
 			<div id="thumb_toggle"><b><a href="#" onclick="history.back(); return false;">Back</a></b></div>
 			<div class="clear"></div>
-			<html:form action="compareResults">
+			<html:form action="compareResults"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 			<div class="tools" id="compare_tools">
 				<div class="tool_select_toggle" title="Click to select all">
 					<input type="checkbox" name="selectall" id="selectall">

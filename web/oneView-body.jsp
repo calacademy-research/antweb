@@ -133,7 +133,7 @@ function changeView(newView, linkParams, showRank) {
 
 <div id="page_data">
 
-<html:form action="/chooseComparison">
+<html:form action="/chooseComparison"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <%
    java.util.ArrayList theChildren = showTaxon.getChildren();

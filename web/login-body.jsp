@@ -33,7 +33,7 @@
 </html:messages>
 
 <!-- html:form action="login" -->
-<form name="loginForm" method="POST" action="<%= AntwebProps.getSecureDomainApp() %>/login.do">
+<form name="loginForm" method="POST" action="<%= AntwebProps.getSecureDomainApp() %>/login.do"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <%
 LoginForm loginForm = (LoginForm) request.getAttribute("loginForm");

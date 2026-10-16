@@ -28,7 +28,7 @@
             <%= Queries.getQueryList("Login") %>
 
     <br><br>
-    <form action="<%= secureDomainApp %>/newLogin.do" method="POST">
+    <form action="<%= secureDomainApp %>/newLogin.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
     <b>Add New Login: <input type=submit class=submit value="Add &#187;"></b>
     <p><p><p><p>
     </form>
