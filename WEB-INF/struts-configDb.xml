@@ -27,7 +27,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="maxPoolSize" value="140"/> <!-- was 15 --> <!-- was 200 --> <!-- was 200 -->
       <set-property property="maxIdleTime" value="10"/>
       <set-property property="user" value="antweb"/>
-      <set-property property="password" value="f0rm1c6"/>
+      <set-property property="password" value="CHANGE_ME"/>
       <set-property property="driverClass" value="com.mysql.cj.jdbc.Driver" />   <!-- was driverClassName-->
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
@@ -49,7 +49,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="maxPoolSize" value="6"/> <!-- was 400 -->
       <!-- set-property property="maxIdleTime" value="10"/ -->
       <set-property property="user" value="antweb"/>
-      <set-property property="password" value="f0rm1c6"/>
+      <set-property property="password" value="CHANGE_ME"/>
       <set-property property="driverClass" value="com.mysql.cj.jdbc.Driver" />   <!-- was driverClassName-->
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
@@ -71,7 +71,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="maxPoolSize" value="5"/> <!-- was 15 -->
       <!-- set-property property="maxIdleTime" value="10"/ -->
       <set-property property="user" value="antweb"/>
-      <set-property property="password" value="f0rm1c6"/>
+      <set-property property="password" value="CHANGE_ME"/>
       <set-property property="driverClass" value="com.mysql.cj.jdbc.Driver" />   <!-- was com.mysql.jdbc.Driver driverClassName-->
       <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->

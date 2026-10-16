@@ -44,7 +44,7 @@ ON bioregion(last_survey_date);
 
 **Apply migration:**
 ```bash
-docker-compose exec mysql mysql -uantweb -pf0rm1c6 ant < db/upgrade/8.106/2026-01-15-bioregion-survey-date.sql
+docker-compose exec mysql mysql -uantweb -pCHANGE_ME ant < db/upgrade/8.106/2026-01-15-bioregion-survey-date.sql
 ```
 
 ### Step 2: Update Java Model Class
@@ -212,7 +212,7 @@ ON specimen(preservation_method);
 
 **Apply:**
 ```bash
-docker-compose exec mysql mysql -uantweb -pf0rm1c6 ant < db/upgrade/8.106/2026-01-15-specimen-preservation.sql
+docker-compose exec mysql mysql -uantweb -pCHANGE_ME ant < db/upgrade/8.106/2026-01-15-specimen-preservation.sql
 ```
 
 ### Step 2: Update Upload File Format

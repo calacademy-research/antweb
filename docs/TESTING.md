@@ -142,7 +142,7 @@ Upload specimens with:
 
 **Step 1: Verify Migration Applied**
 ```bash
-docker-compose exec mysql mysql -uantweb -pf0rm1c6 ant
+docker-compose exec mysql mysql -uantweb -pCHANGE_ME ant
 ```
 
 ```sql
@@ -668,7 +668,7 @@ docker-compose logs api | tail -50
 # Test database connection
 docker-compose exec api python3 -c "
 import pymysql
-conn = pymysql.connect(host='mysql', user='antweb', password='f0rm1c6', db='ant')
+conn = pymysql.connect(host='mysql', user='antweb', password='CHANGE_ME', db='ant')
 print('Connected!')
 conn.close()
 "
@@ -890,7 +890,7 @@ When you add a new feature, document how to test it:
 
 ```bash
 # Database
-docker-compose exec mysql mysql -uantweb -pf0rm1c6 ant
+docker-compose exec mysql mysql -uantweb -pCHANGE_ME ant
 
 # View logs
 docker-compose logs -f antweb

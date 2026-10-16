@@ -244,7 +244,7 @@ Antweb Server
 
 In case of:  Access denied for user 'ant'@'localhost' (using password: YES)
 
-create user antweb@'%' identified by 'f0rm1c6'; grant all on *.* to antweb@'%' with grant option
+create user antweb@'%' identified by 'CHANGE_ME'; grant all on *.* to antweb@'%' with grant option
 
 
 

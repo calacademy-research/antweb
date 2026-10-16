@@ -7,7 +7,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 8,
+  "taxon_links": 7,
   "text_length": 9593,
   "title": "AntWeb"
  },
@@ -21,7 +21,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 7946,
   "title": "Adm1: Antananarivo, Madagascar - Antweb"
  },
@@ -35,7 +35,7 @@
   "specimen_links": 2001,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2003,
+  "taxon_links": 2002,
   "text_length": 1209519,
   "title": "Advanced Specimen Search - AntWeb"
  },
@@ -48,7 +48,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 296,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 15129,
   "title": "Artists"
  },
@@ -62,7 +62,7 @@
   "specimen_links": 1,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 7592,
   "title": "Closeup of the head of Specimen CASENT4045392"
  },
@@ -75,7 +75,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 8212,
   "title": "Browsing Afrotropical Ants - AntWeb"
  },
@@ -87,7 +87,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 12,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 7262,
   "title": "BioRegions - AntWeb"
  },
@@ -103,7 +103,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 64,
+  "taxon_links": 63,
   "text_length": 9457,
   "title": "Browsing family Formicidae in All Antweb - AntWeb"
  },
@@ -119,7 +119,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 215,
+  "taxon_links": 214,
   "text_length": 13762,
   "title": "Browsing subfamily Formicinae in All Antweb - AntWeb"
  },
@@ -132,7 +132,7 @@
   "specimen_links": 1,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 3,
+  "taxon_links": 2,
   "text_length": 7663,
   "title": "Collection Search - AntWeb"
  },
@@ -144,7 +144,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 331,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 14172,
   "title": "Countries - AntWeb"
  },
@@ -162,7 +162,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 5,
+  "taxon_links": 4,
   "text_length": 11513,
   "title": "Country Comoros - Antweb"
  },
@@ -175,7 +175,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 7463,
   "title": "Curator: Ana Jesovnik - AntWeb"
  },
@@ -187,7 +187,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 108,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 12161,
   "title": "Curators"
  },
@@ -209,7 +209,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 31,
-  "taxon_links": 11,
+  "taxon_links": 10,
   "text_length": 39245,
   "title": "Genus: Camponotus - AntWeb"
  },
@@ -231,7 +231,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 11,
+  "taxon_links": 10,
   "text_length": 12029,
   "title": "Species: Nesomyrmex clavipilis - AntWeb"
  },
@@ -253,7 +253,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 5,
-  "taxon_links": 9,
+  "taxon_links": 8,
   "text_length": 26007,
   "title": "Subfamily: Formicinae - AntWeb"
  },
@@ -266,7 +266,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 5,
+  "taxon_links": 4,
   "text_length": 7365,
   "title": "Endemic - AntWeb"
  },
@@ -280,7 +280,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 7680,
   "title": "Ant GroupUniversity of Texas Insect Collection (UTIC)"
  },
@@ -293,7 +293,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 76,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 10437,
   "title": "Groups"
  },
@@ -309,7 +309,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 54,
+  "taxon_links": 53,
   "text_length": 102316,
   "title": "Genus: Camponotus - AntWeb"
  },
@@ -325,7 +325,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 4,
+  "taxon_links": 3,
   "text_length": 8494,
   "title": "Species: Dorylus nigricans - AntWeb"
  },
@@ -338,7 +338,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 23,
+  "taxon_links": 22,
   "text_length": 7925,
   "title": "Introduced - AntWeb"
  },
@@ -356,7 +356,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 5,
+  "taxon_links": 4,
   "text_length": 12673,
   "title": "Island Hawaii - Antweb"
  },
@@ -369,7 +369,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 7499,
   "title": "Locality - AntWeb"
  },
@@ -385,7 +385,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 9059,
   "title": "British Museum of Natural History Ants - AntWeb"
  },
@@ -398,7 +398,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 36,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 9963,
   "title": "Museums - AntWeb"
  },
@@ -416,7 +416,7 @@
   "specimen_links": 1,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 10803,
   "title": "Fossil Ants - AntWeb"
  },
@@ -428,7 +428,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 12,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 7382,
   "title": "Projects - AntWeb"
  },
@@ -441,7 +441,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 7702,
   "title": "Region: Africa - Antweb"
  },
@@ -459,7 +459,7 @@
   "specimen_links": 3,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 6,
+  "taxon_links": 5,
   "text_length": 8591,
   "title": "AntWeb Specimen: Polyrhachis amana - CASENT0103190"
  },
@@ -473,7 +473,7 @@
   "specimen_links": 1,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 7533,
   "title": "Specimen: Dorylus nigricans - CASENT4045392 - AntWeb"
  },
@@ -493,7 +493,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 100,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 9070,
   "title": "Antweb Statistics"
  },
@@ -506,7 +506,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2,
+  "taxon_links": 1,
   "text_length": 8016,
   "title": "Subegion: Polynesia - Antweb"
  },
@@ -520,7 +520,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 1053,
+  "taxon_links": 1052,
   "text_length": 38603,
   "title": "Bolton World Catalog Ants (Genera) - Antweb"
  },
@@ -535,7 +535,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 700,
+  "taxon_links": 699,
   "text_length": 32628,
   "title": "Algeria Ants (Species) - Antweb"
  },
@@ -549,7 +549,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 48,
+  "taxon_links": 47,
   "text_length": 9005,
   "title": "All Antweb Ants (Subfamilies) - Antweb"
  }

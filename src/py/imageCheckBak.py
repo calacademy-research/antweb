@@ -28,7 +28,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 
 from sqlalchemy.ext.declarative import declarative_base
 
-# was engine = create_engine('mysql+mysqldb://antweb:f0rm1c6@mysql:3306/ant')
+# was engine = create_engine('mysql+mysqldb://antweb:CHANGE_ME@mysql:3306/ant')
 
 # CHANGED APR 2, 2021 - attempting to get working with new docker config
 #import MySQLdb as mysqldb
@@ -38,7 +38,7 @@ from sqlalchemy.ext.declarative import declarative_base
 NEW_PROTOCOL = 'mysql+pymysql://'
 PROTOCOL = NEW_PROTOCOL
 
-SQLALCHEMY_DATABASE_URI = PROTOCOL + 'antweb:f0rm1c6@127.0.0.1:3306/ant'
+SQLALCHEMY_DATABASE_URI = PROTOCOL + 'antweb:CHANGE_ME@127.0.0.1:3306/ant'
 engine = create_engine(SQLALCHEMY_DATABASE_URI)
 
 Base = declarative_base()

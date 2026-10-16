@@ -77,6 +77,15 @@ public final class AntwebDataSources {
                         s_log.debug("load() " + key + ": ignoring property " + name);
                     }
                 }
+                // The login comes from etc/db.properties when present (DbCredentials).
+                if (PropertyUtils.isWriteable(ds, "user")) {
+                    Object u = PropertyUtils.getProperty(ds, "user");
+                    BeanUtils.setProperty(ds, "user", DbCredentials.user(u == null ? null : u.toString()));
+                }
+                if (PropertyUtils.isWriteable(ds, "password")) {
+                    Object pw = PropertyUtils.isReadable(ds, "password") ? PropertyUtils.getProperty(ds, "password") : null;
+                    BeanUtils.setProperty(ds, "password", DbCredentials.password(pw == null ? null : pw.toString()));
+                }
                 out.put(key, (DataSource) ds);
                 s_log.info("load() data source " + key + " (" + type + ")");
             }

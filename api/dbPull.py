@@ -45,7 +45,7 @@ def loadDbDump():
 
   try:
     dbLoadCommandShort = 'gunzip < ' + fileLoc + ' | mysql -u antweb -p'
-    dbLoadCommand = dbLoadCommandShort + 'f0rm1c6' + ' ant'
+    dbLoadCommand = dbLoadCommandShort + 'CHANGE_ME' + ' ant'
     print("command:" + dbLoadCommandShort + ' ant')
     retVal = os.system(dbLoadCommand)
     print('loading database retVal:' + str(retVal))

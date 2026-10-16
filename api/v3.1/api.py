@@ -44,7 +44,7 @@ def _db_credentials():
     # name and password are in etc/api-db.properties (not in the repository; the
     # api container sees ./etc as /antweb-etc). Without that file it falls back to
     # the main antweb account, as before.
-    user, password = 'antweb', 'f0rm1c6'
+    user, password = 'antweb', 'CHANGE_ME'
     try:
         with open('/antweb-etc/api-db.properties') as f:
             props = dict(line.strip().split('=', 1) for line in f if '=' in line and not line.startswith('#'))
@@ -58,7 +58,7 @@ def _db_credentials():
 
 _dbUser, _dbPass = _db_credentials()
 dbUrl = f'mysql+pymysql://{_dbUser}:{_dbPass}@mysql:3306/ant?autocommit=true'
-# dbUrl = 'mysql+mysqldb://antweb:f0rm1c6@localhost:3306/ant?autocommit=true'
+# dbUrl = 'mysql+mysqldb://antweb:CHANGE_ME@localhost:3306/ant?autocommit=true'
 # pool_pre_ping: check a pooled connection before use, so a connection MySQL closed
 # while idle is replaced instead of failing the request ("MySQL server has gone away").
 engine = create_engine(dbUrl, pool_recycle=280, pool_pre_ping=True)
