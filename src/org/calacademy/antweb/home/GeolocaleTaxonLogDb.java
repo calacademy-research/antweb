@@ -184,7 +184,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             stmt = DBUtil.getStatement(getConnection(), "getGeolocaleTaxonLogDetailsFromGeo()");
 
             String subfamilyClause = "";
-            if (displaySubfamily != null) subfamilyClause = " and t.subfamily = '" + displaySubfamily + "'";
+            if (displaySubfamily != null) subfamilyClause = " and t.subfamily = '" + DBUtil.escapeQuotes(displaySubfamily) + "'";
 
             String fields = " gt.geolocale_id, gt.taxon_name, gt.created"
               + ", gt.subfamily_count, gt.genus_count, gt.species_count, gt.specimen_count, gt.image_count";
@@ -250,7 +250,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
               + " where 1=1";
             if (logId != 0) query += " and log_id = " + logId;
             if (displaySubfamily != null && !"none".equals(displaySubfamily)) 
-              query += " and taxon_name like '" + displaySubfamily + "%'";
+              query += " and taxon_name like '" + DBUtil.escapeQuotes(displaySubfamily) + "%'";
 
             //if (geolocaleId != 0) query += " and gt.geolocale_id = " + geolocaleId;
                             

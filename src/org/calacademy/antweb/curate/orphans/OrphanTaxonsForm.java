@@ -18,6 +18,13 @@ public class OrphanTaxonsForm extends ActionForm {
     protected String subspecies;
     protected String browse;
 
+    // These values are used in SQL. Accept only letters, digits, space and . _ - ( ); anything else becomes "".
+    private static String safe(String value) {
+        if (value == null) return null;
+        if (value.matches("[\\p{L}\\p{N} ._\\-()]*")) return value;
+        return "";
+    }
+
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         this.action = null;
         this.taxon = null;
@@ -50,55 +57,55 @@ public class OrphanTaxonsForm extends ActionForm {
 	    return taxonName;
     }
     public void setTaxonName(String taxonName) {
-    	this.taxonName = taxonName;
+    	this.taxonName = safe(taxonName);
     }
     
     public String getToTaxonName() {
 	    return toTaxonName;
     }
     public void setToTaxonName(String taxonName) {
-    	this.toTaxonName = taxonName;
+    	this.toTaxonName = safe(taxonName);
     }
     
     public String getSuggestedTaxonName() {
 	    return suggestedTaxonName;
     }
     public void setSuggestedTaxonName(String taxonName) {
-    	this.suggestedTaxonName = taxonName;
+    	this.suggestedTaxonName = safe(taxonName);
     }
     
     public String getSource() {
 	    return source;
     }
     public void setSource(String source) {
-    	this.source = source;
+    	this.source = safe(source);
     }  
 
     public String getSubfamily() {
 	    return subfamily;
     }
     public void setSubfamily(String subfamily) {
-    	this.subfamily = subfamily;
+    	this.subfamily = safe(subfamily);
     }  
     public String getGenus() {
 	    return genus;
     }
     public void setGenus(String genus) {
-    	this.genus = genus;
+    	this.genus = safe(genus);
     }  
 
     public String getSpecies() {
 	    return species;
     }
     public void setSpecies(String species) {
-    	this.species = species;
+    	this.species = safe(species);
     }  
 
     public String getSubspecies() {
 	    return subspecies;
     }
     public void setSubspecies(String subspecies) {
-    	this.subspecies = subspecies;
+    	this.subspecies = safe(subspecies);
     }  
 
     public String getBrowse() {

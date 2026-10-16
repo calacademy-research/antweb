@@ -124,14 +124,15 @@ native bioregions to genera.
         ArrayList<String> introduced = new ArrayList<>();
 
         String query = "select bt.taxon_name from bioregion_taxon bt, taxon t where bt.taxon_name = t.taxon_name "
-                + " and bt.bioregion_name = '" + bioregionName + "' and bt.is_introduced = 1 order by t.genus, t.species, t.subspecies";
+                + " and bt.bioregion_name = ? and bt.is_introduced = 1 order by t.genus, t.species, t.subspecies";
 
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = DBUtil.getStatement(connection, "getBioregionIntroduced()");
+            stmt = DBUtil.getPreparedStatement(connection, "getBioregionIntroduced()", query);
+            stmt.setString(1, bioregionName);
 
-            rset = stmt.executeQuery(query);
+            rset = stmt.executeQuery();
             String taxonName = null;
             while (rset.next()) {
                 taxonName = rset.getString("taxon_name");

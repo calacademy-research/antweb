@@ -51,24 +51,23 @@ public final class Adm1MgrAction extends AntwebAction {
         ArrayList<Geolocale> list = new ArrayList<>();
         String codeStr = "";
 
-        String escapeCountryName = AntFormatter.escapeQuotes(countryName);
-        String escapeAdm1 = AntFormatter.escapeQuotes(adm1);
-        String query1 = "select id, name, parent, valid_name, is_valid, source from geolocale where parent = '" + escapeCountryName + "' order by is_valid desc, name"; 
+        String query1 = "select id, name, parent, valid_name, is_valid, source from geolocale where parent = ? order by is_valid desc, name"; 
         String groupClause = "";
         if (groupId > 0) groupClause = " and access_group = " + groupId;
-        String query2 = "select code from specimen where adm1 = '" + escapeAdm1 + "' and country = '" + escapeCountryName + "' " + groupClause + " limit 20";
+        String query2 = "select code from specimen where adm1 = ? and country = ? " + groupClause + " limit 20";
         
         s_log.debug("Adm1MgrAction execute() query1:" + query1);
 
         Connection connection = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         try {         
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "SpeciesListToolAction.execute()");
 
-            stmt = connection.createStatement();
-            rset = stmt.executeQuery(query1);
+            stmt = connection.prepareStatement(query1);
+            stmt.setString(1, countryName);
+            rset = stmt.executeQuery();
             while (rset.next()) {
               Geolocale geolocale = new Geolocale();
               geolocale.setId(rset.getInt("id"));
@@ -82,8 +81,11 @@ public final class Adm1MgrAction extends AntwebAction {
             }
 
             int i = 0;
-            stmt = connection.createStatement();
-            rset = stmt.executeQuery(query2);
+            DBUtil.close(stmt, rset, "Adm1MgrAction.execute() query1");
+            stmt = connection.prepareStatement(query2);
+            stmt.setString(1, adm1);
+            stmt.setString(2, countryName);
+            rset = stmt.executeQuery();
             while (rset.next()) {
               ++i;
               String code = rset.getString("code");

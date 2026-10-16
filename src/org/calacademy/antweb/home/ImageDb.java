@@ -70,9 +70,9 @@ public class ImageDb extends AntwebDb {
 
             for (SpecimenImage image : notTifList) {
                 dml = "update image set has_tiff = 0";
-                String whereClause = " where image_of_id = '" + image.getCode() + "'";
+                String whereClause = " where image_of_id = '" + AntFormatter.escapeQuotes(image.getCode()) + "'";
                 whereClause += " and shot_number = " + image.getShotNumber();
-                whereClause += " and shot_type = '" + image.getShotType() + "'";
+                whereClause += " and shot_type = '" + AntFormatter.escapeQuotes(image.getShotType()) + "'";
                 dml += whereClause;
                 s_log.debug("updateHasTif() dml:" + dml);
                 int c = stmt.executeUpdate(dml); 
@@ -176,14 +176,21 @@ public class ImageDb extends AntwebDb {
 
 
     public SpecimenImage getSpecimenImage(String imageId) {
-      String clause = "i.id = " + imageId;
+      int id;
+      try {
+        id = Integer.parseInt(imageId == null ? "" : imageId.trim());
+      } catch (NumberFormatException e) {
+        s_log.info("getSpecimenImage() non-numeric imageId rejected");
+        return null;
+      }
+      String clause = "i.id = " + id;
       A.log("clause:" + clause);
       return getSpecimenImageWithClause(clause);
     }
 
     public SpecimenImage getSpecimenImage(String code, String shot, int number) {
-        String clause = " i.image_of_id = '" + code + "'"
-                + " and i.shot_type = '" + shot + "'"
+        String clause = " i.image_of_id = '" + AntFormatter.escapeQuotes(code) + "'"
+                + " and i.shot_type = '" + AntFormatter.escapeQuotes(shot) + "'"
                 + " and i.shot_number = " + number;
         return getSpecimenImageWithClause(clause);
     }
@@ -255,7 +262,7 @@ public class ImageDb extends AntwebDb {
             stmt = DBUtil.getStatement(getConnection(), "deleteImage()");
 
             //A.log("execute()  deleting:" + code + " " + shotType + " " + shotNumber);
-            String whereClause = "where image_of_id = '" + code + "' and shot_type='" + shotType + "' and shot_number=" + shotNumber;
+            String whereClause = "where image_of_id = '" + AntFormatter.escapeQuotes(code) + "' and shot_type='" + AntFormatter.escapeQuotes(shotType) + "' and shot_number=" + shotNumber;
             
             dml = "delete from group_image where image_id in (select id from image " + whereClause + ")";                                    
             int c = stmt.executeUpdate(dml);                    
@@ -335,7 +342,7 @@ public class ImageDb extends AntwebDb {
                   + ", artist, copyright, license" 
                   + ", upload_date, has_tiff, image_upload_id)" 
               + " values (" + id
-                  + ", '" + imageUploaded.getCode() + "', 'specimen', '" + imageUploaded.getShot() + "', " + imageUploaded.getNumber() 
+                  + ", '" + AntFormatter.escapeQuotes(imageUploaded.getCode()) + "', 'specimen', '" + AntFormatter.escapeQuotes(imageUploaded.getShot()) + "', " + imageUploaded.getNumber() 
                   + ", " + imageUpload.getArtistId() + ", " + imageUpload.getCopyright().getId() + ", " + 1
                   + ", now(), " + imageUploaded.hasTiff() + ", " + imageUploaded.getImageUpload().getId() + ")";
 

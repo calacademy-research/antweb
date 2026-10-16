@@ -180,9 +180,10 @@ public class AntwebCacheMgr {
     public static ArrayList<LongRequest> getLongRequestDetails(Connection connection, String url, String orderBy)
       throws SQLException {
         String urlClause = "";
-        if (!"all".equals(url)) urlClause = " and url = \"" + url + "\"";
+        if (!"all".equals(url)) urlClause = " and url = \"" + DBUtil.escapeQuotes(url) + "\"";
         String orderByClause = "";
-        if (orderBy != null && !"".equals(orderBy)) orderByClause = " order by " + orderBy;
+        String safeOrderBy = getSafeLongRequestOrderBy(orderBy);
+        if (safeOrderBy != null) orderByClause = " order by " + safeOrderBy;
         String query = "select id, cache_type, url, dir_file, millis, cache_millis, created, cached, request_info, busy_connections, is_logged_in, is_bot from long_request where " 
           //+ " is_logged_in != 1 and "
           + " created >= DATE_SUB(SYSDATE(), INTERVAL " + LONG_REQUEST_CREATED_INTERVAL + " DAY) " 
@@ -193,6 +194,17 @@ public class AntwebCacheMgr {
         if (AntwebProps.isDevMode()) s_log.info("getLongRequestDetails() query:" + query);   
         return getRequests(connection, query);
 	}
+
+    // ORDER BY cannot be a bound parameter; only allow the columns offered by curate/cacheMgr.jsp.
+    private static final List<String> s_longRequestOrderBys = Arrays.asList(
+        "id", "cache_type", "url", "millis", "cache_millis", "created", "cached", "busy_connections", "is_bot", "is_logged_in, created");
+
+    private static String getSafeLongRequestOrderBy(String orderBy) {
+        if (orderBy == null) return null;
+        String normalized = orderBy.trim().replaceAll("\\s*,\\s*", ", ");
+        if (s_longRequestOrderBys.contains(normalized)) return normalized;
+        return null;
+    }
 
     public static ArrayList<LongRequest> getRequests(Connection connection, String query)
       throws SQLException {

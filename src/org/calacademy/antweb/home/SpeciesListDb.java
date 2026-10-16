@@ -110,11 +110,11 @@ public class SpeciesListDb extends AntwebDb {
 
   public ArrayList<Taxon> getProjectSpeciesList(String displaySubfamily, String speciesListName) {
 
-      String speciesListCriteria = "(project_name = '" + speciesListName + "')";   
+      String speciesListCriteria = "(project_name = '" + DBUtil.escapeQuotes(speciesListName) + "')";   
     
       String displaySubfamilyCriteria = "";
       if (!"none".equals(displaySubfamily)) {
-        displaySubfamilyCriteria = "   and t.taxon_name like '" + displaySubfamily + "%'";
+        displaySubfamilyCriteria = "   and t.taxon_name like '" + DBUtil.escapeQuotes(displaySubfamily) + "%'";
       }
 
       String query = "select distinct pt.taxon_name, pt.specimen_count from proj_taxon pt" 
@@ -155,7 +155,7 @@ public class SpeciesListDb extends AntwebDb {
 
       String displaySubfamilyCriteria = "";
       if (!"none".equals(displaySubfamily)) {
-        displaySubfamilyCriteria = "   and t.taxon_name like '" + displaySubfamily + "%'";
+        displaySubfamilyCriteria = "   and t.taxon_name like '" + DBUtil.escapeQuotes(displaySubfamily) + "%'";
       }
 
       String query = "select distinct gt.taxon_name, gt.specimen_count from geolocale_taxon gt" 
@@ -182,23 +182,23 @@ public class SpeciesListDb extends AntwebDb {
 
       if (!Utility.isBlank(mapSpeciesList1Name)) {
         if (Project.isProjectName(mapSpeciesList1Name)) {
-          projectCriteria += " or project_name = '" + mapSpeciesList1Name + "'";
+          projectCriteria += " or project_name = '" + DBUtil.escapeQuotes(mapSpeciesList1Name) + "'";
         }
       }
       if (!Utility.isBlank(mapSpeciesList2Name)) {
         if (Project.isProjectName(mapSpeciesList2Name)) {
-          projectCriteria += " or project_name = '" + mapSpeciesList2Name + "'";
+          projectCriteria += " or project_name = '" + DBUtil.escapeQuotes(mapSpeciesList2Name) + "'";
         }
       }
       if (!Utility.isBlank(mapSpeciesList3Name)) {
         if (Project.isProjectName(mapSpeciesList3Name)) {
-          projectCriteria += " or project_name = '" + mapSpeciesList3Name + "'";
+          projectCriteria += " or project_name = '" + DBUtil.escapeQuotes(mapSpeciesList3Name) + "'";
         }
       }
 
       if (!Utility.isBlank(refSpeciesListType) && !refSpeciesListType.contains("search")) {
         if (refSpeciesListType.contains("specimen")) {
-          projectCriteria += " or source = '" + refSpeciesListType + "'";      
+          projectCriteria += " or source = '" + DBUtil.escapeQuotes(refSpeciesListType) + "'";      
         } if (refSpeciesListType.contains("antcatNames")) {
           /*
             Craft shortcut, not recommended. The "and 'antcatNames' = 'antcatNames'" clause is added so that we can make
@@ -209,7 +209,7 @@ public class SpeciesListDb extends AntwebDb {
           projectCriteria += " or t.taxon_name in (select t2.taxon_name from taxon t2 where status in ('valid', 'unidentifiable', 'homonym')" + antcatClause + ") ";
         } else {
           if (Project.isProjectName(refSpeciesListName)) {
-            projectCriteria += " or project_name = '" + refSpeciesListName + "'";
+            projectCriteria += " or project_name = '" + DBUtil.escapeQuotes(refSpeciesListName) + "'";
           }
         }
       }
@@ -245,7 +245,7 @@ public class SpeciesListDb extends AntwebDb {
 
       if (!Utility.isBlank(refSpeciesListType) && !refSpeciesListType.contains("search")) {
         if (refSpeciesListType.contains("specimen")) {
-          geolocaleCriteria += " or source = '" + refSpeciesListName + "'";      
+          geolocaleCriteria += " or source = '" + DBUtil.escapeQuotes(refSpeciesListName) + "'";      
         } 
         if (refSpeciesListType.contains("antcatNames")) {
           /*
@@ -517,10 +517,10 @@ public class SpeciesListDb extends AntwebDb {
         String query = "select t.taxon_name from taxon t join proj_taxon pt " 
             + " on t.taxon_name = pt.taxon_name "            
             + " where "
-            + "   ( pt.project_name = '" + speciesList1Name + "'" 
-            + "  or pt.project_name = '" + speciesList2Name + "'" 
-            + "  or pt.project_name = '" + speciesList3Name + "'" 
-            + "  or pt.project_name = '" + refSpeciesList + "' )" 
+            + "   ( pt.project_name = '" + DBUtil.escapeQuotes(speciesList1Name) + "'" 
+            + "  or pt.project_name = '" + DBUtil.escapeQuotes(speciesList2Name) + "'" 
+            + "  or pt.project_name = '" + DBUtil.escapeQuotes(speciesList3Name) + "'" 
+            + "  or pt.project_name = '" + DBUtil.escapeQuotes(refSpeciesList) + "' )" 
             + " and (t.taxarank = 'species' or t.taxarank = 'subspecies')"  // Added subspecies on Nov 16, 2014
             + " and t.status != 'valid'";
 

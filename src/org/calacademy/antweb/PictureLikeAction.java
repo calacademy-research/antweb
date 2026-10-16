@@ -78,14 +78,16 @@ public final class PictureLikeAction extends AntwebAction {
             ImageDb imageDb = new ImageDb(connection);
             theImage = imageDb.getSpecimenImage(code, shot, number);
 
-            query = "select id, has_tiff from image where image_of_id = '" + code 
-                  + "' and shot_type = '" + shot + "' and shot_number = " + number;
+            query = "select id, has_tiff from image where image_of_id = ?"
+                  + " and shot_type = ? and shot_number = ?";
 
-            s_log.info("execute() tiffQuery:" + query);            
+            s_log.info("execute() tiffQuery:" + query + " code:" + code + " shot:" + shot + " number:" + number);
 
-            Statement stmt = connection.createStatement();
-            stmt.executeQuery(query);
-            ResultSet rset = stmt.getResultSet();
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, code);
+            stmt.setString(2, shot);
+            stmt.setInt(3, number);
+            ResultSet rset = stmt.executeQuery();
             int id = 0;
             int hasTiff = 0;
             while (rset.next()) {
