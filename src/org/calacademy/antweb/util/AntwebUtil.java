@@ -106,17 +106,26 @@ public abstract class AntwebUtil {
      return random;
    }
 
-    private static int s_secureCode = 0;
-    public static int getSecureCode() {
-      s_secureCode = getRandomNumber();
+    // One-time code the Scheduler passes to utilData.do: 128 bits from SecureRandom, hex.
+    private static final java.security.SecureRandom s_secureRandom = new java.security.SecureRandom();
+    private static volatile String s_secureCode = null;
+    public static String getSecureCode() {
+      byte[] bytes = new byte[16];
+      s_secureRandom.nextBytes(bytes);
+      StringBuilder sb = new StringBuilder(32);
+      for (byte b : bytes) sb.append(String.format("%02x", b));
+      s_secureCode = sb.toString();
       return s_secureCode;
     }
-    public static boolean isSecureCode(int secureCode) {
-      if (s_secureCode == 0) return false;
-      return s_secureCode == secureCode;
+    public static boolean isSecureCode(String secureCode) {
+      String current = s_secureCode;
+      if (current == null || secureCode == null) return false;
+      return java.security.MessageDigest.isEqual(
+          current.getBytes(java.nio.charset.StandardCharsets.US_ASCII),
+          secureCode.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
     }
     public static void resetSecureCode() {
-      s_secureCode = 0;
+      s_secureCode = null;
     }
 
     //public static void adminAlert(String message, Connection connection) { // use AdminAlertMgr.add(String, connection);
