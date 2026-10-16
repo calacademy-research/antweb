@@ -35,7 +35,7 @@
 </logic:messagesPresent>
 
 <br>
-<h2>Antweb User: <%= thisLogin.getDisplayName() %></h2>
+<h2>Antweb User: <%= Html.esc(thisLogin.getDisplayName()) %></h2>
 <br>
 
 <form name="editLoginForm" action="<%= secureDomainApp %>/editLogin.do?id=<%= thisLogin.getId() %>" method="POST">
@@ -45,11 +45,19 @@
 
 <h3>Username:
 <br>
-<input type="text" class="login_input" name="name" value="<%= thisLogin.getName() %>">
+<input type="text" class="login_input" name="name" value="<%= Html.escAttr(thisLogin.getName()) %>">
 </h3>
 <p>
 
-<h3>Password:
+<% if (accessLogin != null && accessLogin.getId() == thisLogin.getId()) { %>
+<h3>Current Password (only needed to change your password):
+<br>
+<input type="password" class="login_input" name="currentPassword" value="" autocomplete="current-password">
+</h3>
+<p>
+<% } %>
+
+<h3>New Password (at least <%= PasswordPolicy.MIN_LENGTH %> characters):
 <br>
 <input type="password" class="login_input" name="password" value="" autocomplete="new-password" placeholder="leave blank to keep">
 </h3>
@@ -63,19 +71,19 @@
 
 <h3>Email:
 <br>
-<input type="text" class="login_input" name="email" value="<%= thisLogin.getEmail() %>">
+<input type="text" class="login_input" name="email" value="<%= Html.escAttr(thisLogin.getEmail()) %>">
 </h3>
 <p>
 
 <h3>First Name:
 <br>
-<input type="text" class="login_input" name="firstName" value="<%= thisLogin.getFirstName() %>">
+<input type="text" class="login_input" name="firstName" value="<%= Html.escAttr(thisLogin.getFirstName()) %>">
 </h3>
 <p>
 
 <h3>Last Name:
 <br>
-<input type="text" class="login_input" name="lastName" value="<%= thisLogin.getLastName() %>">
+<input type="text" class="login_input" name="lastName" value="<%= Html.escAttr(thisLogin.getLastName()) %>">
 </h3>
 <p>
 <p>

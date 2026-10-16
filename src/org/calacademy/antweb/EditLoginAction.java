@@ -8,6 +8,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.calacademy.antweb.home.LoginDb;
+import org.calacademy.antweb.home.PasswordResetDb;
 import org.calacademy.antweb.util.*;
 
 import jakarta.servlet.ServletException;
@@ -77,9 +78,12 @@ public final class EditLoginAction extends AntwebAction {
           s_log.debug("execute() method:" + request.getMethod());
           s_log.debug("execute() isSubmit:" + editForm.getIsSubmit() + " isPost:" + isPost);
 
-          if (isSubmit || isPost) {
+          if (isSubmit && !isPost) {
+            // Changes are saved only from the form (POST), never from a link.
+            request.setAttribute("message", "Please use the form to save changes.");
+          } else if (isPost) {
 
-            String message = validate(editForm, request);
+            String message = validate(editForm, login, accessLogin);
             if (message != null) {
                s_log.debug("execute() validate() failure message:" + message);
                request.setAttribute("message", message);
@@ -95,7 +99,8 @@ public final class EditLoginAction extends AntwebAction {
             login.setEmail(editForm.getEmail());
             // A blank password means: keep the current one (the form no longer shows it).
             String newPassword = editForm.getPassword();
-            if (newPassword != null && !newPassword.isEmpty()) login.setPassword(newPassword);
+            boolean passwordChanged = newPassword != null && !newPassword.isEmpty();
+            if (passwordChanged) login.setPassword(newPassword);
             login.setFirstName(editForm.getFirstName());
             login.setLastName(editForm.getLastName());
             
@@ -104,6 +109,17 @@ public final class EditLoginAction extends AntwebAction {
             request.setAttribute("message", "User Account Saved.");
 
             loginDb.updateLogin(login, accessLogin);
+
+            // updateLogin() stores a password only for your own login: end your other sessions.
+            if (passwordChanged && accessLogin.getId() == login.getId()) {
+              int version = new PasswordResetDb(connection).afterPasswordChange(login.getId());
+              PasswordResetMgr.noteVersion(login.getId(), version);
+              session.setAttribute(PasswordResetMgr.SESSION_VERSION_ATTR, version);  // keep this session
+              PasswordResetMgr.logEvent("password changed by the user login:" + login.getId());
+            }
+            editForm.setPassword(null);
+            editForm.setRetypePassword(null);
+            editForm.setCurrentPassword(null);
 
             // A.log("execute() form must be submitted. Test with: https://localhost/editLogin.do?id=8564&isSubmit=true");
             // request.getSession().setAttribute("thisLogin", new Login());
@@ -131,7 +147,7 @@ public final class EditLoginAction extends AntwebAction {
                 && editForm.getLastName().equals(login.getLastName());
     }
     
-    private String validate(EditLoginForm editForm, HttpServletRequest request) {
+    private String validate(EditLoginForm editForm, Login login, Login accessLogin) {
 
         String password = editForm.getPassword();
         String retypePassword = editForm.getRetypePassword();
@@ -151,6 +167,15 @@ public final class EditLoginAction extends AntwebAction {
         if (retypePassword == null) retypePassword = "";
         if (!password.equals(retypePassword)) {
             message = "Password and Re-type Password must match";
+        } else if (!password.isEmpty()) {
+            // Changing the password of your own login needs your current password.
+            if (accessLogin.getId() == login.getId()
+                    && !PasswordHash.matches(login.getPassword(), editForm.getCurrentPassword())) {
+                message = "To change your password, please enter your current password.";
+            } else {
+                String problem = PasswordPolicy.check(password, retypePassword, editForm.getName(), editForm.getEmail());
+                if (problem != null) message = Html.esc(problem);
+            }
         }
         return message;  
     }

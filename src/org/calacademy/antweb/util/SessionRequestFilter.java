@@ -152,13 +152,13 @@ public class SessionRequestFilter implements Filter {
             String htmlMessage = null;
 
             int caseNumber = AntwebUtil.getCaseNumber();
-            message += " e:" + e + " target:" + target;
+            message += " e:" + e + " target:" + HttpUtil.forLog(target);
             s_log.error("doFilter() See " + AntwebProps.getDomainApp() + "/web/log/srfExceptions.txt for case#:" + caseNumber + " message:" + message);
 
             message = ""
                     + "<br><b>startTime:</b>" + startTime
                     + "<br><b>case#:</b>" + caseNumber
-                    + "<br><b>target:</b>" + target
+                    + "<br><b>target:</b>" + HttpUtil.forLog(target)
                     + "<br><b>e:</b>" + e
                     //+ "<br><b>userAgent:</b>" + UserAgentTracker.getUserAgent(request)
                     //+ "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request)

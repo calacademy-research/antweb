@@ -25,6 +25,10 @@ import org.apache.commons.logging.LogFactory;
  *
  * Safety limits: the same subject is sent at most once an hour, and at most
  * 100 messages a day, so an alert loop cannot flood anyone's inbox.
+ *
+ * Transactional mail to one user (password reset links) goes through
+ * sendTransactional() instead: no per-subject limit, its own cap of
+ * 2000 a day, and the body is never written to a log (it holds a secret link).
  */
 public class Emailer {
 
@@ -34,12 +38,15 @@ public class Emailer {
     static final String CONFIG = "/antweb/deploy/etc/mail.properties";
     static final int MAX_PER_DAY = 100;
     static final long SAME_SUBJECT_MS = 60 * 60 * 1000L;
+    static final int MAX_TRANSACTIONAL_PER_DAY = 2000;
 
     private static Properties s_props = new Properties();
     private static long s_loaded = 0;
     private static final Map<String, Long> s_lastBySubject = new HashMap<>();
     private static int s_sentToday = 0;
     private static long s_dayStart = 0;
+    private static int s_transactionalToday = 0;
+    private static long s_transactionalDayStart = 0;
 
     public static void main(String[] args) {
     }
@@ -87,11 +94,24 @@ public class Emailer {
         return null;
     }
 
+    /** The daily limit for transactional mail. Returns null if allowed, else the reason. */
+    public static synchronized String throttleTransactional(long now) {
+        if (now - s_transactionalDayStart > 24 * 60 * 60 * 1000L) {
+            s_transactionalDayStart = now;
+            s_transactionalToday = 0;
+        }
+        if (s_transactionalToday >= MAX_TRANSACTIONAL_PER_DAY) return "daily transactional limit of " + MAX_TRANSACTIONAL_PER_DAY + " reached";
+        s_transactionalToday++;
+        return null;
+    }
+
     /** Resets the limits (tests only). */
     public static synchronized void resetThrottle() {
         s_lastBySubject.clear();
         s_sentToday = 0;
         s_dayStart = 0;
+        s_transactionalToday = 0;
+        s_transactionalDayStart = 0;
     }
 
     public static void sendMail(String to, String subject, String content) {
@@ -106,6 +126,30 @@ public class Emailer {
             LogMgr.appendDataLog("emails.log", "NOT SENT (" + reason + ") to:" + to + " subject:" + subject);
             return;
         }
+        deliver(to, subject, content);
+    }
+
+    /**
+     * Mail to one user that must not be held back by the per-subject limit
+     * (e.g. password reset links). Capped at MAX_TRANSACTIONAL_PER_DAY.
+     * The content is never logged. Returns true if handed to the mail server.
+     */
+    public static boolean sendTransactional(String to, String subject, String content) {
+        if (!isConfigured()) {
+            s_log.warn("sendTransactional() mail not configured. Email NOT sent to <" + to + "> with subject '" + subject + "'");
+            LogMgr.appendDataLog("emails.log", "NOT SENT (mail not configured) to:" + to + " subject:" + subject + " (content withheld)");
+            return false;
+        }
+        String reason = throttleTransactional(System.currentTimeMillis());
+        if (reason != null) {
+            s_log.warn("sendTransactional() not sent (" + reason + ") to <" + to + "> subject '" + subject + "'");
+            LogMgr.appendDataLog("emails.log", "NOT SENT (" + reason + ") to:" + to + " subject:" + subject);
+            return false;
+        }
+        return deliver(to, subject, content);
+    }
+
+    private static boolean deliver(String to, String subject, String content) {
 
         // Mark mail from anything but the live site, e.g. "[staging.antweb.org] ...".
         String site = AntwebProps.getDomainApp();
@@ -148,10 +192,12 @@ public class Emailer {
 
             email_log.info("Email sent to <" + to + "> with subject '" + subject + "'");
             LogMgr.appendDataLog("emails.log", "SENT to:" + to + " subject:" + subject);
+            return true;
 
         } catch (Exception e) {
             s_log.error("Email to <" + to + "> with subject '" + subject + "' raised exception: " + e);
             LogMgr.appendDataLog("emails.log", "FAILED to:" + to + " subject:" + subject + " e:" + e);
+            return false;
         }
     }
 

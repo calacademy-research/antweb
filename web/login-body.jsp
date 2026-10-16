@@ -78,7 +78,7 @@ document.loginForm.userName.focus();
 <br>
 <hr>
 <br>
-<p>Forgot your password? <a href="<%= AntwebProps.getDomainApp() %>/forgotPassword.do">Click here</a>.</p>
+<p><a href="<%= AntwebProps.getSecureDomainApp() %>/forgotPassword.do">Forgot your password?</a></p>
 
     </div>
 </div>

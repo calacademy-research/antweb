@@ -82,6 +82,15 @@ public class SaveLoginForm extends ActionForm {
     public void setRetypePassword(String retypePassword) {
         this.retypePassword = retypePassword;
     }    
+
+    // Needed to change the password of your own login.
+    private String currentPassword;
+    public String getCurrentPassword() {
+        return currentPassword;
+    }
+    public void setCurrentPassword(String currentPassword) {
+        this.currentPassword = currentPassword;
+    }
     
     public boolean isAdmin() {
         return this.isAdmin;

@@ -72,7 +72,13 @@ A.log("viewLogin-body.jsp uploadAs:" + thisLogin.getUploadAs());
 <input type="text" class="input_200" name="name" value="<%= thisLogin.getName() %>">
 <br><br>
 
-<h3>Password:</h3>
+<% if (isSelf) { %>
+<h3>Current Password (only needed to change your password):</h3>
+<input type="password" class="input_200" name="currentPassword" value="" autocomplete="current-password">
+<br><br>
+<% } %>
+
+<h3>New Password (at least <%= PasswordPolicy.MIN_LENGTH %> characters):</h3>
 <input type="password" class="input_200" name="password" value="" autocomplete="new-password" placeholder="leave blank to keep">
 <br><br>
 

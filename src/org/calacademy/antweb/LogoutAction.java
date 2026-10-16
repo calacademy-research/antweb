@@ -28,14 +28,7 @@ public final class LogoutAction extends AntwebAction {
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
         
-        
-        // This block of code, and only this block, is in service of forgotPassword.do
-        String requestURI = request.getRequestURI();
-        if (requestURI.contains("forgotPassword")) {
-          //s_log.warn("Yes, forgotTarget");
-          return mapping.findForward("success");
-        }
-        
+
         LoginMgr.removeAccessLogin(request);
 
         String target = ((LoginForm) form).getTarget();

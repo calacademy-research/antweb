@@ -115,7 +115,7 @@ public final class LoginAction extends AntwebAction {
 
                     // If the user is editing their own.
                     request.changeSessionId();  // new session id at login (prevents session fixation)
-                    request.getSession().setAttribute("accessLogin", login);  // Log in the user.
+                    LoginMgr.setAccessLogin(request, login);  // Log in the user.
 
                     request.getSession().setAttribute("thisLogin", login);  // The one being edited.
 
@@ -138,11 +138,12 @@ public final class LoginAction extends AntwebAction {
             if (login != null) {
                 request.changeSessionId();  // new session id at login (prevents session fixation)
             }
-            session.setAttribute("accessLogin", login);
+            LoginMgr.setAccessLogin(request, login);
             //s_log.warn("Successful login of " + userNameOrEmail + " target:" + target);
 
             if (target != null && !target.equals("")
                     && !target.contains("forgotPassword")
+                    && !target.contains("resetPassword")
                     && !target.contains("curate.do")
                     && !target.contains("login.do")) {
               s_log.info("Target is " + target);
@@ -261,6 +262,17 @@ public final class LoginAction extends AntwebAction {
                     msg = new ActionMessage("error.login.failedLogin");                    
                     messages.add("message",msg);
                     //A.log("login() 3 msg:" + msg + " pwd:" + password);            
+                } else if (isMustReset(connection, login)) {
+                    // Correct password, but this account must set a new one first: email a reset link.
+                    String result = PasswordResetMgr.sendResetLink(connection, login.getId(), login.getDisplayName(), login.getEmail(),
+                        HttpUtil.getClientIpAddress(request), PasswordResetMgr.SUBJECT_RESET,
+                        "For security, AntWeb asks you to set a new password before you log in again.");
+                    PasswordResetMgr.logEvent("login refused until password reset (must_reset) login:" + login.getId() + " link:" + result);
+                    String text = PasswordResetMgr.NO_EMAIL.equals(result)
+                        ? "For security, please set a new password. There is no email address on this account, so please write to antweb@calacademy.org."
+                        : "For security, please set a new password. We have emailed you a link to do so (please check your inbox and spam folder).";
+                    messages.add("message", new ActionMessage(text, false));
+                    login = null;
                 } else {
                   // Successful login
                   //s_log.warn("Login.execute()2 userName:" + userNameOrEmail + " login:" + login);                
@@ -286,5 +298,14 @@ public final class LoginAction extends AntwebAction {
         }   
         return login; 
     }    
+
+    private static boolean isMustReset(Connection connection, Login login) {
+        try {
+            return new PasswordResetDb(connection).isMustReset(login.getId());
+        } catch (SQLException e) {
+            s_log.warn("isMustReset() login:" + login.getId() + " e:" + e);  // e.g. column not created yet
+            return false;
+        }
+    }
     
 }

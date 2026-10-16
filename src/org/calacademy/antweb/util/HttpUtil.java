@@ -34,7 +34,8 @@ public abstract class HttpUtil {
     /** The URL as written to getUrl.txt: the secureCode value is never logged. */
     public static String forLog(String url) {
         if (url == null) return null;
-        return url.replaceAll("(?i)(secureCode=)[^&]*", "$1***");
+        // Also password reset tokens (resetPassword.do?token=...) and any *password= value.
+        return url.replaceAll("(?i)((?:secureCode|token|[a-z]*password)=)[^&\\s]*", "$1***");
     }
 
     private final static String USER_AGENT = "Mozilla/5.0";
