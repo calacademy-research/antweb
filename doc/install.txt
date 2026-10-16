@@ -95,7 +95,7 @@ On local machine:
 cat ./bak/rel/antweb8.24/WEB-INF/classes/platform.properties
 # This file is NOT checked into git. Included in the .gitignore file.
 
-googleMaps.key=AIzaSyB4uZ86svzETQkxHReeUEAPqgHmx5X3li4
+# googleMaps.key: retired October 2026 (maps use OpenStreetMap)
 dbPwd=CHANGE_ME
 
 /*

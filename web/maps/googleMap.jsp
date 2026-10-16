@@ -13,98 +13,27 @@ See overview-body.jsp for where it is included.
 */
 %>
 
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3&key=<%= AntwebProps.getGoogleMapKey() %>"></script>
-<!-- was with: &sensor=false -->
+<%-- The small overview map, drawn with Leaflet and OpenStreetMap (Google Maps retired October 2026). --%>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-var geocoder;
-var map;
-var coords = $("#coords_for_geo").val();
-var zoom_level = $("#zoom_level").val();
-
-//alert("googleMap coords:" + coords + " zoom_level:" + zoom_level);
-
-var west = $("#west").val();
-var south = $("#south").val();
-var east = $("#east").val();
-var north = $("#north").val();
-
-function makeMap() {
-  geocoder = new google.maps.Geocoder();
-  var stripParen = coords.replace(/[\(\)\s]/g, "");
-  var str = stripParen;
-  var substr = str.split(',');
-  var latLng = new google.maps.LatLng(substr[0],substr[1]);
-/*
- The coords are used just to make sure the google.maps.GeocoderStatus is OK. But there
-are issues. For some of the islands the logitude needs to be 43 (like Comoros) in order
-to pass. Makes no sense. Perhaps we should remove the coords entirely and not check
-status.
-*/  
-  //latLng = new google.maps.LatLng(-11.577506, 47.297277500000064);  // The Grand Glorious latLng doesn't work.
-  //latLng = new google.maps.LatLng(-11.651, 43.35900000000004);  // The Comoros longitude does work
-  //latLng = new google.maps.LatLng(-11.651, 43);  // For testing.
-  geocoder.geocode( { 'location': latLng}
-    , function(results, status) {
-        var message = "googleMap results:" + results + " status:" + status + " coords:" + coords
-           + " w:" + west + " s:" + south + " e:" + east + " n:" + north + " zoom:" + zoom_level;
-        console.log("googleMap.jsp message:" + message);
-                  
-		if (status == google.maps.GeocoderStatus.OK) {
-
-		  var mapOptions = {
-			zoom: parseInt(zoom_level),
-			navigationControl: true,
-			navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},
-			mapTypeControl: false,
-			streetViewControl: false,
-			mapTypeId: google.maps.MapTypeId.TERRAIN
-		  }      
-		  //alert("mapOptions:" + mapOptions);
-
-		  map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-		  map.setCenter(results[0].geometry.location);
-
-		  // If zoom is set (in overview-body.jsp then it will override the bounds.
-		  // This is useful for united states and Russia, so large that the maps are vague.
-		  if (zoom_level <= 0) {
-			var bounds = new google.maps.LatLngBounds();
-			var point;
-			point = new google.maps.LatLng(north, west);
-			bounds.extend(point);
-			point = new google.maps.LatLng(south, east);
-			bounds.extend(point);
-			map.fitBounds(bounds);  
-		  }
-		} else {
-  		  console.log("googleMap.jsp message google.maps.GeocoderStatus is NOT OK");
-          /*  
-            This is the alert that displays the failure of Kosovo requests.
-            Also: 
-              https://www.antweb.org/country.do?name=Kosovo
-              https://www.antweb.org/country.do?name=French%20Southern%20Territories
-              https://www.antweb.org/country.do?name=Grande+Glorieuse
-              https://www.antweb.org/country.do?name=Juan+de+Nova+Island
-          */
-          //alert(message);  
-		
-		  $('.small_map').hide();
-		  if ($('#static_map img').length>0) {
-			  $('#static_map').show();
-		  }
-		}
-  });
-}
-
-function forceIntoArray(theItem) {
-	if (!(theItem instanceof Array)) {
-		var temp = theItem;
-		theItem = new Array();
-		theItem.push(temp);
-	}
-  return theItem;
-}
-    
-google.maps.event.addDomListener(window, 'load', makeMap);
+window.addEventListener('load', function () {
+  var val = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
+  var el = document.getElementById('map-canvas');
+  if (!el || typeof L === 'undefined') return;
+  var parts = val('coords_for_geo').replace(/[()\s]/g, '').split(',');
+  var lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+  var zoom = parseInt(val('zoom_level'), 10) || 0;
+  var w = parseFloat(val('west')), s = parseFloat(val('south')), e = parseFloat(val('east')), n = parseFloat(val('north'));
+  if (isNaN(lat) || isNaN(lng)) { el.style.display = 'none'; return; }
+  var map = L.map(el, { scrollWheelZoom: false, attributionControl: true });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  if (zoom <= 0 && !isNaN(w) && !isNaN(s) && !isNaN(e) && !isNaN(n)) {
+    map.fitBounds([[s, w], [n, e]]);
+  } else {
+    map.setView([lat, lng], zoom > 0 ? zoom : 5);
+  }
+});
 </script>
-

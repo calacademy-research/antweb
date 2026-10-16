@@ -738,7 +738,11 @@ public class UtilDataAction extends AntwebAction {
           //Adm1 adm1 = (Adm1) GeolocaleMgr.getAdm1("Wainikeli", "Fiji");	                    
           id = form.getId();
           //if (AntwebProps.isDevMode() && id == 0) id = 5315;				  
-          if (id > 0) {
+          // Google geocoding was retired in October 2026 (no API key).
+          String key = AntwebProps.getGoogleMapKey();
+          if (key == null || key.isEmpty()) {
+            message += "Google geocoding is no longer available.";
+          } else if (id > 0) {
             message += GoogleApisMgr.fetchData(connection, id);
           } else {
             message += GoogleApisMgr.fetchData(connection);
