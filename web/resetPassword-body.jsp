@@ -47,7 +47,7 @@
 <% if (resetError != null) { %>
 <p><font color="red"><b><%= Html.esc(resetError) %></b></font></p>
 <% } %>
-<p><b>This link is not valid.</b> It may have expired (links last 2 hours), or it has already been used.</p>
+<p><b>This link is not valid.</b> It may have expired, or it has already been used. Ask for a new link below: it arrives within a minute.</p>
 <p><a href="<%= secureDomainApp %>/forgotPassword.do">Ask for a new link</a></p>
 <% } %>
 

@@ -28,7 +28,7 @@ import org.calacademy.antweb.home.PasswordResetDb;
  * Password reset by email link, and ending a login's other sessions.
  *
  * A reset link carries a random token (32 bytes, base64url). Only its SHA-256
- * is stored (password_reset.token_hash). A link is valid for 2 hours and works
+ * is stored (password_reset.token_hash). A link is valid for 24 hours (14 days from the campaign) and works
  * once. At most 3 links per login per hour, and at most 10 requests per IP
  * address per hour from the "Forgot your password?" page.
  *
@@ -45,7 +45,10 @@ public final class PasswordResetMgr {
     private static final Log s_log = LogFactory.getLog(PasswordResetMgr.class);
 
     public static final int TOKEN_BYTES = 32;
-    public static final int VALID_MINUTES = 120;
+    // Links someone asks for (forgot password, or logging in while a reset is required).
+    public static final int VALID_MINUTES = 24 * 60;
+    // Links sent by the admin campaign: people may not read the email for days.
+    public static final int CAMPAIGN_VALID_MINUTES = 14 * 24 * 60;
     public static final int MAX_PER_LOGIN_PER_HOUR = 3;
     public static final int MAX_PER_IP_PER_HOUR = 10;
 
@@ -135,6 +138,11 @@ public final class PasswordResetMgr {
      */
     public static String sendResetLink(Connection connection, int loginId, String displayName, String email,
                                        String ip, String subject, String intro) {
+        return sendResetLink(connection, loginId, displayName, email, ip, subject, intro, VALID_MINUTES);
+    }
+
+    public static String sendResetLink(Connection connection, int loginId, String displayName, String email,
+                                       String ip, String subject, String intro, int validMinutes) {
         if (email == null || !email.contains("@")) return NO_EMAIL;
         try {
             PasswordResetDb db = new PasswordResetDb(connection);
@@ -143,9 +151,9 @@ public final class PasswordResetMgr {
                 return RATE_LIMITED;
             }
             String token = newToken();
-            db.insertToken(loginId, hashToken(token), VALID_MINUTES, ip);
+            db.insertToken(loginId, hashToken(token), validMinutes, ip);
             String link = AntwebProps.getSecureDomainApp() + "/resetPassword.do?token=" + token;
-            boolean sent = Emailer.sendTransactional(email, subject, emailBody(displayName, intro, link));
+            boolean sent = Emailer.sendTransactional(email, subject, emailBody(displayName, intro, link, validMinutes));
             logEvent("reset link " + (sent ? "emailed" : "NOT emailed") + " login:" + loginId + " subject:" + subject);
             return sent ? SENT : MAIL_FAILED;
         } catch (SQLException e) {
@@ -154,13 +162,26 @@ public final class PasswordResetMgr {
         }
     }
 
+    static String validFor(int minutes) {
+        if (minutes % (24 * 60) == 0) { int d = minutes / (24 * 60); return d == 1 ? "24 hours" : d + " days"; }
+        if (minutes % 60 == 0) { int h = minutes / 60; return h == 1 ? "1 hour" : h + " hours"; }
+        return minutes + " minutes";
+    }
+
     static String emailBody(String displayName, String intro, String link) {
+        return emailBody(displayName, intro, link, VALID_MINUTES);
+    }
+
+    static String emailBody(String displayName, String intro, String link, int validMinutes) {
+        String login = AntwebProps.getSecureDomainApp() + "/login.do";
         String hello = displayName == null || displayName.trim().isEmpty() ? "Hello," : "Hello " + Html.esc(displayName.trim()) + ",";
         return hello + "<br><br>\n"
             + (intro == null ? "" : Html.esc(intro) + "<br><br>\n")
-            + "To set a new password for your AntWeb account, open this link within 2 hours:<br>\n"
+            + "To set a new password for your AntWeb account, open this link (it works for " + validFor(validMinutes) + "):<br>\n"
             + "<a href=\"" + Html.escAttr(link) + "\">" + Html.esc(link) + "</a><br><br>\n"
             + "The link works only once. Your new password must be at least " + PasswordPolicy.MIN_LENGTH + " characters long.<br><br>\n"
+            + "If the link has expired, go to <a href=\"" + Html.escAttr(login) + "\">" + Html.esc(login) + "</a>,"
+            + " click \"Forgot your password?\" and enter your email address: a new link arrives within a minute.<br><br>\n"
             + "If you did not ask for this, you can ignore this email.<br><br>\n"
             + "AntWeb<br>California Academy of Sciences";
     }
@@ -230,7 +251,8 @@ public final class PasswordResetMgr {
                         noEmail++;
                     } else {
                         String r = sendResetLink(c, a.id, a.getDisplayName(), a.email, "campaign:" + adminId, SUBJECT_CAMPAIGN,
-                            "As a security precaution, AntWeb is asking all curators and administrators to set a new password.");
+                            "As a security precaution, AntWeb is asking all curators and administrators to set a new password.",
+                            CAMPAIGN_VALID_MINUTES);
                         if (SENT.equals(r)) sent++;
                         else if (RATE_LIMITED.equals(r)) limited++;
                         else failed++;

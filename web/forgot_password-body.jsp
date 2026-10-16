@@ -18,7 +18,7 @@
 
 <% if ("sent".equals(resetState)) { %>
 <p><b>If an account exists for what you entered, we've sent a link to its email address.</b></p>
-<p>The link works once and expires in 2 hours. If no email arrives within a few minutes, please check your spam folder, or try your other username or email address.</p>
+<p>The link works once and expires in 24 hours. If no email arrives within a few minutes, please check your spam folder, or try your other username or email address.</p>
 <p><a href="<%= secureDomainApp %>/login.do">Back to log in</a></p>
 <% } else { %>
 
