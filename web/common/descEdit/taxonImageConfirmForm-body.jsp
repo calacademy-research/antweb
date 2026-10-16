@@ -29,7 +29,7 @@ Your uploaded file is here: <a href="<%= imageUrl %>"><%= imageUrl %></a>
 
 <% // String newEditAction = Utility.stripParams(thisPageTarget, "editField"); %>
 <% // AntwebUtil.log("info", "thisPageTarget:" + thisPageTarget + " newEditAction:" + newEditAction); %>
-<html:form method="POST" action="<%= descForm.getTarget() %>" enctype="multipart/form-data">
+<html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, (descForm.getTarget())) %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="editField" value="images">
 <input type="hidden" name="isSaveEditField" value="true">
 <input type="hidden" name="rank" value="<%= Html.escAttr(descForm.getRank()) %>">

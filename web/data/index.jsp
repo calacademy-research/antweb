@@ -12,7 +12,7 @@
      %>
 
      </p>
-     <form method="POST" action="index.jsp">
+     <form method="POST" action="index.jsp"><%= org.calacademy.antweb.util.Csrf.field(request) %>
        <input type="text" name="mydata">
        <input type="submit" value="Submit" />
        <input type="reset" value="Reset" />

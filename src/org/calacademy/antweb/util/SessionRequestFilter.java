@@ -128,6 +128,20 @@ public class SessionRequestFilter implements Filter {
 
             HttpUtil.setUtf8(request, response);
 
+            // CSRF: a POST from a logged-in user must carry this session's token and must not
+            // come from another site (see Csrf). Checked after setUtf8 so form values decode as UTF-8.
+            if (accessLogin != null && "POST".equalsIgnoreCase(request.getMethod()) && !Csrf.isExempt(request)) {
+                String refused = Csrf.check(request);
+                if (refused != null) {
+                    String note = "csrf refused: " + refused + " login:" + accessLogin.getId()
+                        + " path:" + request.getServletPath() + " ip:" + HttpUtil.getClientIpAddress(request);
+                    s_log.warn("doFilter() " + note);
+                    LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " " + note);
+                    Csrf.deny(response);
+                    return;
+                }
+            }
+
             // To fix the Desc Edit Image Upload
             response.setHeader("X-XSS-Protection", "0");
 

@@ -363,7 +363,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             // Morphospecies, indets and names AntCat does not know: move to the
                             // current valid genus.
                             getMessageMgr().addToMessages(MessageMgr.synonymGenusReplaced,
-                                Formatter.initCap(genusName) + " -> " + Formatter.initCap(validGenus.getName()));
+                                Html.esc(Formatter.initCap(genusName) + " -> " + Formatter.initCap(validGenus.getName())));
                             genusName = validGenus.getName();
                             genus = validGenus;
                         }
@@ -396,8 +396,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
                     // Should this be: (formicidae) ?
                   if (!"(Formicidae)".equals(subfamilyName) && !subfamily.equals(subfamilyName)) {                  
- 					  String displayTaxonName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + subfamily + genusName + "'>" + Taxon.displaySubfamilyGenus(subfamily, genusName) + "</a>";
-					  getMessageMgr().addToMapMessages(MessageMgr.preferredSubfamilyForGenusReplaced, subfamilyName, displayTaxonName);                  
+ 					  String displayTaxonName = Taxon.makeDescriptionLink(subfamily + genusName, Taxon.displaySubfamilyGenus(subfamily, genusName));
+					  getMessageMgr().addToMapMessages(MessageMgr.preferredSubfamilyForGenusReplaced, Html.esc(subfamilyName), displayTaxonName);                  
                       //A.log("parseLine() preferredSubfamilyForGenusReplaced: subfamily:" + subfamily + " subfamilyName:" + subfamilyName + " genus:" + genus + " genusName:" + genusName + " displayTaxonName:" + displayTaxonName);
                   }
                   subfamilyName = subfamily;
@@ -501,7 +501,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (adm1 == null) {
               if (validCountry != null && validCountry.hasLiveValidAdm1()) {
                 //A.log("parseLine() adm:" + adm1 + " validCountry:" + validCountry + " hasAdm1:" + validCountry.hasLiveValidAdm1());
-                getMessageMgr().addToMessages(MessageMgr.adm1Missing, validCountry.getName(), (String) specimenItem.get("code"));              
+                getMessageMgr().addToMessages(MessageMgr.adm1Missing, Html.esc(validCountry.getName()), (String) specimenItem.get("code"));              
               }
             } else {
 				if (adm1.contains("’")) {
@@ -576,7 +576,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				  if (adm1 != null && !"".equals(adm1)) message += " adm1:" + adm1;
 
 				  String detail = "code:" + code + " country:" + country + " adm1:" + adm1 + " useBioregion:" + useBioregion + " listedBioregion:" + listedBioregion;
-				  getMessageMgr().addToMessages(MessageMgr.correctedBioregion, message, detail);
+				  getMessageMgr().addToMessages(MessageMgr.correctedBioregion, Html.esc(message), detail);
 	          }
             } else {
               if (BioregionMgr.isValid(listedBioregion)) {
@@ -1221,7 +1221,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             // getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);
          //String heading = "<b>Taxon names not found in Bolton World Catalog.  <font color=green>(uploaded)</font></b>";
          //if (AntwebProps.isDevMode()) heading += "SpecimenUpload.handleWorldantsSpeciesCheck()";
-         String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+         String displayName = Taxon.makeDescriptionLink(taxonName);
 
          //getMessageMgr().addToMessageSets(heading, displayName);
          getMessageMgr().addToMessages(MessageMgr.taxonNameNotFoundInBolton, displayName);

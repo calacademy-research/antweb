@@ -1230,7 +1230,7 @@ public class UploadAction extends AntwebAction {
                   ++validTaxonCount;
                 } else {
                   ++notValidTaxonCount;
-                  content.append("line:" + lineNum + " <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + taxonName + "</a> - " + dummyTaxon.getStatus() + " <br>\n");
+                  content.append("line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, taxonName) + " - " + Html.esc(dummyTaxon.getStatus()) + " <br>\n");
                 }
               } else {
                 ++notValidTaxonCount;
@@ -1305,7 +1305,7 @@ public class UploadAction extends AntwebAction {
                   ++notFossilTaxonCount;
 
 //??
-                  content.append("line:" + lineNum + " <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + taxonName + "</a> - not fossil<br>\n");
+                  content.append("line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, taxonName) + " - not fossil<br>\n");
                 }
               } else {
                 ++notFossilTaxonCount;
@@ -1393,13 +1393,13 @@ public class UploadAction extends AntwebAction {
                 if (currentValidName != null && currentValidName.equals(antwebCurrentValidName)) {
                   ++currentValidFound;
                 } else {
-                  cvnfContent.append("line:" + lineNum + " <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + taxonName + "</a> refers:" + currentValidName + " antwebCurrentValidName:" + antwebCurrentValidName + "<br>\n");
+                  cvnfContent.append("line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, taxonName) + " refers:" + Html.esc(currentValidName) + " antwebCurrentValidName:" + Html.esc(antwebCurrentValidName) + "<br>\n");
                   ++currentValidNotFound;
                 }
 */
               } else {
                 ++c;
-                tnfContent.append(c + ". line:" + lineNum + " <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + species +  "</a><br>&nbsp;&nbsp;" + theLine + "<br>\n"); //" refers:" + currentValidName +
+                tnfContent.append(c + ". line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, species) + "<br>&nbsp;&nbsp;" + Html.esc(theLine) + "<br>\n"); //" refers:" + currentValidName +
                 ++taxonNotFound;
               }
             } // end while loop through lines
@@ -1407,7 +1407,7 @@ public class UploadAction extends AntwebAction {
             int c2 = 0;
             for (Taxon taxon : validSpeciesMap.values()) {
               ++c2;
-              awContent.append("<br>" + c2 + ". <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxon.getTaxonName() + "'>" + Taxon.getPrettyTaxonName(taxon.getTaxonName()) + "</a>");
+              awContent.append("<br>" + c2 + ". " + Taxon.makeDescriptionLink(taxon.getTaxonName()));
             }
 
             messageStr = "<h2>Valid Species List</h2>"
@@ -1472,7 +1472,7 @@ public class UploadAction extends AntwebAction {
                 if (currentValidName != null && currentValidName.equals(antwebCurrentValidName)) {
                   ++currentValidFound;
                 } else {
-                  cvnfContent.append("line:" + lineNum + " <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + taxonName + "</a> refers:" + currentValidName + " antwebCurrentValidName:" + antwebCurrentValidName + "<br>\n");
+                  cvnfContent.append("line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, taxonName) + " refers:" + Html.esc(currentValidName) + " antwebCurrentValidName:" + Html.esc(antwebCurrentValidName) + "<br>\n");
                   ++currentValidNotFound;
                 }
               } else {

@@ -5,6 +5,7 @@ curator ("Default Group", can upload specimens and images, not an admin).
 These tests only read pages; they do not upload or change data.
 """
 import os
+import re
 from urllib.parse import urlparse
 
 import pytest
@@ -42,6 +43,7 @@ ADMIN_ONLY = [
     "/serverDebug.do",
     "/dbStatus.do",
     "/loginAs.do?id=1",
+    "/sanitizeDescriptions.do",
 ]
 
 
@@ -103,9 +105,21 @@ MISSING_CODES = ["zz-e2e-missing-001", "ZZ-E2E-MISSING-002"]
 
 def _lookup(curator, lines):
     body = ("\n".join(lines) + "\n").encode()
-    return curator.post(BASE_URL + "/specimenListLookup.do",
+    # A multipart POST carries the CSRF token in the URL (the filter does not read the body).
+    return curator.post(BASE_URL + "/specimenListLookup.do?_csrf=" + csrf_token(curator),
                         files={"file": ("e2e_specimens.txt", body, "text/plain")},
                         timeout=120, allow_redirects=True)
+
+
+CSRF_FIELD = re.compile(r'name="_csrf" value="([A-Za-z0-9_-]+)"')
+
+
+def csrf_token(session, url="/specimenListLookup.do"):
+    """The session's CSRF token, read from the hidden _csrf field of a page with a POST form."""
+    r = session.get(BASE_URL + url, timeout=60)
+    m = CSRF_FIELD.search(r.text)
+    assert m, f"no _csrf field on {url}"
+    return m.group(1)
 
 
 def test_specimen_lookup_all_found_downloads_tsv(curator):
@@ -179,3 +193,34 @@ def test_login_without_remember_me_sets_no_cookie():
 def test_forged_remember_cookie_is_refused():
     b = _browser_with_remember("A" * 16 + ":" + "B" * 43)
     assert get(b, "/curate.do").category == "login"
+
+
+# CSRF protection: a logged-in POST must carry the session's token. deleteImages is used
+# because, with nothing chosen, it changes nothing even if a request got through.
+def test_post_without_csrf_token_is_refused(curator):
+    r = curator.post(BASE_URL + "/deleteImages.do", data={"group": "0"}, timeout=60, allow_redirects=False)
+    assert r.status_code == 403, f"POST without _csrf answered HTTP {r.status_code}"
+    r = curator.post(BASE_URL + "/deleteImages.do", data={"_csrf": "x" * 43}, timeout=60, allow_redirects=False)
+    assert r.status_code == 403, f"POST with a wrong _csrf answered HTTP {r.status_code}"
+
+
+def test_post_with_csrf_token_is_accepted(curator):
+    r = curator.post(BASE_URL + "/deleteImages.do", data={"_csrf": csrf_token(curator)}, timeout=60, allow_redirects=False)
+    assert r.status_code != 403, "POST with the session's _csrf was refused"
+
+
+def test_post_from_another_site_is_refused(curator):
+    r = curator.post(BASE_URL + "/deleteImages.do", data={"_csrf": csrf_token(curator)},
+                     headers={"Origin": "https://example.com"}, timeout=60, allow_redirects=False)
+    assert r.status_code == 403, f"cross-site POST answered HTTP {r.status_code}"
+
+
+def test_curate_page_forms_carry_csrf_token(curator):
+    html = curator.get(BASE_URL + "/curate.do", timeout=60).text
+    forms = re.findall(r"<form\b([^>]*)>(.*?)</form>", html, re.S | re.I)
+    posts = [(attrs, body) for attrs, body in forms if re.search(r"method\s*=\s*[\"']?post", attrs, re.I)]
+    assert posts, "no POST forms found on /curate.do"
+    for attrs, body in posts:
+        assert 'name="_csrf"' in body, f"form without _csrf field: {attrs[:120]}"
+        if "multipart" in attrs.lower():
+            assert "_csrf=" in attrs, f"upload form without _csrf in its action: {attrs[:120]}"

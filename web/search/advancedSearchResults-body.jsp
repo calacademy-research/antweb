@@ -117,7 +117,7 @@ int intOffset = Integer.parseInt(offset);
     if ("map".equals(mode)) {
 %>
 <!-- 0 -->
-<form action="<%= util.getDomainApp() %>/mapResults.do" name="taxaFromSearchForm" method="POST">
+<form action="<%= util.getDomainApp() %>/mapResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <!-- 1 -->
 <%
       String resultRank = (String) session.getAttribute("resultRank");
@@ -132,13 +132,13 @@ int intOffset = Integer.parseInt(offset);
 
     if ("compare".equals(mode)) {
 %>
-<form action="<%= util.getDomainApp() %>/compareResults.do" name="taxaFromSearchForm" method="POST">
+<form action="<%= util.getDomainApp() %>/compareResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="resultRank" value="specimen"/>
 <%  }
 
     if ("fieldGuide".equals(mode)) {
 %>
-<form action="<%= util.getDomainApp() %>/fieldGuideResults.do" name="taxaFromSearchForm" method="POST">
+<form action="<%= util.getDomainApp() %>/fieldGuideResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="resultRank" value="specimen"/>
 <%  }
 

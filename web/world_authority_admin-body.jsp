@@ -23,7 +23,7 @@
   All uploaded files must be Microsoft Word documents which have been saved as HTML.  The 
   The system currently understands the HTML output by whatever version of Word Brian is using.
   </p>
-  <html:form method="POST" action="upload.do" enctype="multipart/form-data">
+  <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
   <p>
   Upload a catalog file 
   <html:select property="outputFileName">

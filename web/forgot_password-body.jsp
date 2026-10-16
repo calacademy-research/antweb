@@ -28,7 +28,7 @@
 
 <p>Enter your AntWeb username or email address. If an account exists, we will email it a link to set a new password.</p>
 
-<form name="forgotPasswordForm" method="POST" action="<%= secureDomainApp %>/forgotPassword.do">
+<form name="forgotPasswordForm" method="POST" action="<%= secureDomainApp %>/forgotPassword.do"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <p>Username or email address:<br>
 <input type="text" name="identifier" value="" maxlength="255" autocomplete="username" style="border: 1px solid #B9B9B9; font-family: inherit; padding: 2px; width: 260px;">
 </p>

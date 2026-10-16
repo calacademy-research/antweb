@@ -42,7 +42,7 @@
         </font>
     </logic:messagesPresent>
 
-    <form action="<%= domainApp %>/viewMuseum.do" method="POST">
+    <form action="<%= domainApp %>/viewMuseum.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
     <p><p><b>Museum Code:</b>
     <input type="text" class="input_200" name="code" value="<%= thisMuseum.getCode() %>">

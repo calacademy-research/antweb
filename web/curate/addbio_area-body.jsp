@@ -15,7 +15,7 @@
 <h1>Adding a Biogeographic Region</h1>
 <hr></hr>
 
-<form action="<%= AntwebProps.getDomainApp() %>/newBioRegion.do" method="POST">
+<form action="<%= AntwebProps.getDomainApp() %>/newBioRegion.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <p><h3>New Biogeographic Region Title:</h3>
 <input type=text class=input_450 name="title" value="e.g. the Nearctic">
 

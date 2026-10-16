@@ -19,7 +19,7 @@
 <bean:write name="message"/><br>
 </b></font>
 </html:messages>
-<html:form action="login">
+<html:form action="login"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <%
     String query = request.getQueryString();
 %>

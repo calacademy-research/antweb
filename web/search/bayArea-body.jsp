@@ -43,7 +43,7 @@ Did you know that three kinds of Army Ants live in the Bay Area? Other interesti
 <div class=green_module><span class=module_header>SEARCH BAY AREA ANTS:</span></div>
 <div class=module_contents>
 
-<html:form method="POST" action="bayAreaSearch"> <!--  -->
+<html:form method="POST" action="bayAreaSearch"><%= org.calacademy.antweb.util.Csrf.field(request) %> <!--  -->
 <input type="hidden" name="searchMethod" value="bayAreaSearch"> <!-- was:  -->
 
 <html:checkbox property="adm2s" value="alameda"/> Alameda<br>

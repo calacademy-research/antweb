@@ -191,7 +191,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 				isExistingHomonymSubfamilyForAGenus = new HomonymDb(getConnection()).isExistingSubfamilyForAGenus(family, subfamily, genus);
 				if (isExistingHomonymSubfamilyForAGenus) {
 				  //A.log("processLine() Homonym found in antweb.  Subfamily:" + subfamily + " genus:" + genus);
-				  String displayTaxonName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + subfamily+genus + "'>" + Taxon.displaySubfamilyGenus(subfamily, genus) + "</a>";                          
+				  String displayTaxonName = Taxon.makeDescriptionLink(subfamily+genus, Taxon.displaySubfamilyGenus(subfamily, genus));                          
 				  getMessageMgr().addToMessages(MessageMgr.subfamilyForGenusFoundInHomonym, displayTaxonName);
 				} else {
 				  //A.log("processLine() not existing homonym subfamily for a genus.  family:" + family + " subfamily:" + subfamily + " genus:" + genus);				
@@ -210,7 +210,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 				boolean subfamilyNotFoundInAntweb = "".equals(antwebSubfamily) || subfamily == null || antwebTaxonName == null;
 				if (true && subfamilyNotFoundInAntweb) {
 				  //A.log("processLine() 2 subfamily not found in antweb.  antwebTaxonName:" + antwebTaxonName + " subfamily:" + subfamily + " genus:" + genus + " antwebSubfamily:" + antwebSubfamily);
-				  getMessageMgr().addToMessages(MessageMgr.invalidSubfamilyForGenus, Taxon.displaySubfamilyGenus(subfamily, genus));
+				  getMessageMgr().addToMessages(MessageMgr.invalidSubfamilyForGenus, Html.esc(Taxon.displaySubfamilyGenus(subfamily, genus)));
 				  skipRecord = "antwebSubfamilyNotFound";
 				} else { 
 				  subfamily = antwebSubfamily;
@@ -227,8 +227,8 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 				  subfamilyGenus = antwebSubfamily + genus;	
 		
 		// ??? *** odd: "-> " found at beginning of following string
-				  String displayTaxonName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + subfamilyGenus + "'>" + Taxon.displaySubfamilyGenus(antwebSubfamily, genus) + "</a>";
-				  getMessageMgr().addToMapMessages(MessageMgr.invalidSubfamilyForGenusReplaced, uploadedSubfamilyGenus, displayTaxonName); 
+				  String displayTaxonName = Taxon.makeDescriptionLink(subfamilyGenus, Taxon.displaySubfamilyGenus(antwebSubfamily, genus));
+				  getMessageMgr().addToMapMessages(MessageMgr.invalidSubfamilyForGenusReplaced, Html.esc(uploadedSubfamilyGenus), displayTaxonName); 
 				}
 				//Profiler.profile("genus2", startTime1);                     
 
@@ -239,8 +239,8 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 				// Date startTime1 = new Date();
 						  
 				  // Add to the Subfamily/Genus combo not found and DO upload
-				  String displaySubfamilyGenus = "<a href=" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + subfamilyGenus + ">" + Taxon.displaySubfamilyGenus(subfamilyGenus) + "</a>";
-				  String displayTaxonName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+				  String displaySubfamilyGenus = Taxon.makeDescriptionLink(subfamilyGenus, Taxon.displaySubfamilyGenus(subfamilyGenus));
+				  String displayTaxonName = Taxon.makeDescriptionLink(taxonName);
 
 				  //A.log("processLine() subfamily/Genus combo not found taxonName:" + taxonName + " displayTaxonName:" + displayTaxonName);
 				  addMissingGenus(subfamily, genus, Project.ALLANTWEBANTS, shortFileName, lineNum, group.getId());
@@ -301,8 +301,8 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
    	  	  	      //A.log("processLine() isInvalidBioregion:" + isInvalidBioregion + " bioregion:" + bioregion + " useTaxonName:" + useTaxonName + " isFossil:" + isFossil);
 
 				  String message = Formatter.initCap(Taxon.getGenusFromName(taxonName)) + " not native to " + bioregion + " Region";
-				  String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
-				  getMessageMgr().addToMapMessages(MessageMgr.genusOutsideNativeBioregion, message, displayCode);   
+				  String displayCode = Specimen.makeReportLink(code);
+				  getMessageMgr().addToMapMessages(MessageMgr.genusOutsideNativeBioregion, Html.esc(message), displayCode);   
 				  specimenItem.put("flag", "red");
 				  specimenItem.put("issue", MessageMgr.genusOutsideNativeBioregion);  
 				  //skipRecord = "invalidBioregionForGenus";
@@ -480,19 +480,19 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 
             if (new HomonymDb(getConnection()).isHomonym(taxonName)) {
               //String heading = "<b>Taxon names recognized as Homonyms.  Names are not verified against AntCat.org  Submission <font color=green>(uploaded)</font></b>";
-              String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+              String displayName = Taxon.makeDescriptionLink(taxonName);
               getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);            
             } else {
               // if quadrinomial put in a separate list.  Do upload, otherwise don't.
               if (Taxon.isQuadrinomial(taxonName)) {
                 //String heading = "<b>Unavailable quadrinomial. Submission <font color=green>(uploaded)</font></b>";
-                String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+                String displayName = Taxon.makeDescriptionLink(taxonName);
                 getMessageMgr().addToMessages(MessageMgr.unavailableQuadrinomial, displayName);            
               } else {
                 if (Taxon.isAnt(taxonName)) {
                 	  // Currently we allow these to be uploaded.  In the future we won't.
 					//String heading = "<b>Unrecognized Invalid species.  Names not found in AntCat.org. Submission <font color=green>(uploaded)</font></b>";
-					String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+					String displayName = Taxon.makeDescriptionLink(taxonName);
 					getMessageMgr().addToMessages(MessageMgr.unrecognizedInvalidSpecies, displayName);            
     		    }
               }
@@ -576,7 +576,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
       } // end if/else
 
 	  if (!Taxon.isAnt(taxonName)) {
-		String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+		String displayName = Taxon.makeDescriptionLink(taxonName);
         if (taxonName.contains("odontomachus cephalotes")) {
 		  s_log.debug("setStatusAndCurrentValidName() NOT ANT taxonName:" + taxonName + " displayName:" + displayName);
           //AntwebUtil.logStackTrace();
@@ -631,12 +631,12 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
         //A.log("makeSpecimenUseTaxon() taxonItem.put:" + currentTaxon.getSpecies());
 
         //String heading = "<b>Recognized invalid species.  Submission replaced with current valid name from AntCat.org <font color=green>(uploaded)</font></b>";
-        String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + originalTaxonName + "'>" + Taxon.displayTaxonName(originalTaxonName) + "</a>";
+        String displayName = Taxon.makeDescriptionLink(originalTaxonName);
         if ("".equals(originalTaxonName)) {
            displayName = "[empty string]";
              // was: getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);
         }
-        String toName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + currentTaxonName + "'>" + Taxon.displayTaxonName(currentTaxonName) + "</a>";
+        String toName = Taxon.makeDescriptionLink(currentTaxonName);
 
         //uploadDetails.getMessageMgr().addToMessages(MessageMgr.recognizedInvalidSpecies, displayName + " -> " + toName);
 

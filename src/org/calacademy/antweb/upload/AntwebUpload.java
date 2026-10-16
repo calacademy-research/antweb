@@ -188,7 +188,7 @@ or for Worldants upload
                         if (!Status.VALID.equals(status) && !Status.UNRECOGNIZED.equals(dummyTaxon.getStatus())) {
                             // log. Nope. Won't update a non-valid taxon from worldants.
                             String display = taxonName + " " + status;
-                            getMessageMgr().addToMessages(MessageMgr.nonValidWorldantsDup, display);
+                            getMessageMgr().addToMessages(MessageMgr.nonValidWorldantsDup, Html.esc(display));
 
                             if (Status.HOMONYM.equals(status) || Status.SYNONYM.equals(status)) {
                                 saveTaxon(item, "homonym", false);
@@ -480,7 +480,7 @@ or for Worldants upload
                       if (valueStr.contains("Ivoire")) if (AsciiUtils.isNonAscii(valueStr)) A.log("updateTaxon() 2hasDiacritics:" + valueStr);
 					*/
 
-                            // quote escaping is handled by enquoteLiteral
+                            // quote and backslash escaping is handled by DBUtil.sqlLiteral
                             // if (valueStr.contains("\"") || valueStr.contains("\'")) {
                             //     //A.log("updateTaxon() key:" + key + " value:" + value);
                             //     value = AntFormatter.escapeQuotes(valueStr);
@@ -488,7 +488,7 @@ or for Worldants upload
 
                             if (value.equals("true")) value = "1";
                             if (value.equals("false")) value = "0";
-                            sets.append(translateKeyToColumn(key) + "=" + stmt.enquoteLiteral((String) value) + ",");
+                            sets.append(translateKeyToColumn(key) + "=" + DBUtil.sqlLiteral((String) value) + ",");
                         } else {
                             sets.append(translateKeyToColumn(key) + "=" + value + ",");
                         }
@@ -501,8 +501,8 @@ or for Worldants upload
                 query += " " + sets;
                 query += ", pending=0";
                 if (!query.contains("parent_taxon_name"))
-                    query += ", parent_taxon_name=" + stmt.enquoteLiteral(Taxon.getParentTaxonNameFromName(taxonName));
-                query += " where taxon_name = " + stmt.enquoteLiteral(taxonName);
+                    query += ", parent_taxon_name=" + DBUtil.sqlLiteral(Taxon.getParentTaxonNameFromName(taxonName));
+                query += " where taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
                 if (!query.contains("insert_method")) {
                     s_log.error("updateTaxon() Somewhere in the following stacktrace should have been put an insert_method into item."); // + " query:" + query);
@@ -626,7 +626,7 @@ or for Worldants upload
                       String message;
                       if (isValidSubfamilyForGenus) {
                           message = Taxon.displaySubfamilyGenus(subfamily, genus);
-                          getMessageMgr().addToMessages(MessageMgr.generaAreHomonyms, message);
+                          getMessageMgr().addToMessages(MessageMgr.generaAreHomonyms, Html.esc(message));
                       } else {
                           message = Taxon.displaySubfamilyGenusLinkToGenus(subfamily, genus);
                           getMessageMgr().addToMessages(MessageMgr.invalidSubfamilyForGenus, message);
@@ -815,7 +815,7 @@ or for Worldants upload
                         String dateStr = (String) item.get("datecollectedstart");
                         String formatDate = DateUtil.getConstructDateStr(dateStr);
                         fields.append("datecollectedstartstr,");
-                        values.append("'" + dateStr + "',");
+                        values.append(sqlString(dateStr) + ",");
                         if (validDate("datecollectedstart", formatDate, code)) {
                             fields.append("datecollectedstart,");
                             values.append("'" + formatDate + "',");
@@ -829,7 +829,7 @@ or for Worldants upload
                         String dateStr = (String) item.get("datecollectedend");
                         String formatDate = DateUtil.getConstructDateStr(dateStr);
                         fields.append("datecollectedendstr,");
-                        values.append("'" + dateStr + "',");
+                        values.append(sqlString(dateStr) + ",");
                         if (validDate("datecollectedend", formatDate, code)) {
                             fields.append("datecollectedend,");
                             values.append("'" + formatDate + "',");
@@ -846,7 +846,7 @@ or for Worldants upload
                         String dateStr = (String) item.get("datedetermined");
                         String formatDate = DateUtil.getConstructDateStr(dateStr);
                         fields.append("datedeterminedstr,");
-                        values.append("'" + dateStr + "',");
+                        values.append(sqlString(dateStr) + ",");
                         if (validDate("datedetermined", formatDate, code)) {
                             fields.append("datedetermined,");
                             values.append("'" + formatDate + "',");
@@ -870,7 +870,7 @@ or for Worldants upload
                         break;
                     case "backupFileName":
                         fields.append("backup_file_name,");
-                        values.append("'" + item.get("backupFileName") + "',");
+                        values.append(sqlString((String) item.get("backupFileName")) + ",");
                         break;
                     default:
                         try {
@@ -888,20 +888,10 @@ or for Worldants upload
 
                             fields.append(key + ",");
 
-                            // Perhaps a more stringent check here is appropriate.  For now, if the
-                            // last letter of the string is a \ then it fouls up the SQL quoting.
-                            // This was happening for some of Jack's collectionnotes.
-                            String lastChar;
-                            try {
-                                lastChar = value.substring(value.length() - 1);
-                                if (lastChar.equals("\\")) value += " ";
-                            } catch (Exception e) {
-                                // no action taken
-                            }
-                            value = AntFormatter.escapeSingleQuotes(value);
-
-                            //A.log("saveSpecimen() lastCHar:" + lastChar + " value:" + value); // AntFormatter.escapeQuotes(value));
-                            values.append("'" + value + "',");
+                            // Backslashes are escaped along with quotes (MySQL treats \ as an escape
+                            // character in string literals), so a value such as x\' can no longer end
+                            // the literal early. This also replaces the old trailing-backslash workaround.
+                            values.append(sqlString(value) + ",");
                         } catch (ClassCastException e) {
                             s_log.debug("AntwebUpload.saveSpecimen() key:" + key + " e:" + e);
                         }
@@ -967,7 +957,7 @@ or for Worldants upload
             s_log.error("saveSpecimen() dml:" + dml + " e:" + e);
             String message = "Specimen jdbc exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e; // + " query:" + query;
             A.log("saveSpecimen() " + message);
-            getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
+            getMessageMgr().addToMessages(MessageMgr.databaseErrors, Html.esc(message));
         } catch (SQLIntegrityConstraintViolationException e) {
             // Redundant. We are now checking above before the query is run.
             String message = "Specimen code:" + code;
@@ -979,7 +969,7 @@ or for Worldants upload
             // if it is the specimen table, we just quit?  Mark, Jan 27, 2011.
             // Should not happen.  We delete all specimens of a given access_group during to upload.
             String message = "Specimen sql exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e;
-            getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
+            getMessageMgr().addToMessages(MessageMgr.databaseErrors, Html.esc(message));
             
             // if a different access_group attempts to load a code of another group's specimen...
 
@@ -998,8 +988,17 @@ or for Worldants upload
         }        
     }
     
+	/** A quoted MySQL string literal: backslashes and single quotes escaped. Null becomes null. */
+	static String sqlString(String value) {
+	  return DBUtil.sqlLiteral(value);
+	}
+
+	private static final java.util.regex.Pattern ISO_DATE = java.util.regex.Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
+
 	private boolean validDate(String dateType, String formatDate, String code) {
 	  if (formatDate == null) return false;
+	  // Only a plain yyyy-MM-dd value goes into the SQL date column.
+	  if (!ISO_DATE.matcher(formatDate).matches()) return false;
 
 	  Date date = DateUtil.getDate(formatDate);
 	  if (date != null) {
@@ -1051,24 +1050,24 @@ or for Worldants upload
 
             if (new HomonymDb(getConnection()).isHomonym(taxonName)) {
 //            if (Status.HOMONYM.equals(status)) {
-              String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+              String displayName = Taxon.makeDescriptionLink(taxonName);
               getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);            
             } else {
             
               // if quadrinomial put in a separate list.  Do upload, otherwise don't.
               if (Taxon.isQuadrinomial(taxonName)) {
-                String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+                String displayName = Taxon.makeDescriptionLink(taxonName);
                 getMessageMgr().addToMessages(MessageMgr.unavailableQuadrinomial, displayName);
               } else {
 
                 if (!Taxon.isAnt(taxonName)) {
-					String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+					String displayName = Taxon.makeDescriptionLink(taxonName);
 					//displayName += " (line:" + (String) specimenItem.get("lineNum") + ")";
 					s_log.debug("AntwebUpload.setStatusAndCurrentValidName() displayName:" + displayName);
 					getMessageMgr().addToMessages(MessageMgr.nameNotInFamilyFormicidae, displayName);
                 } else {              
 					// Currently we allow these to be uploaded.  In the future we won't.
-					String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+					String displayName = Taxon.makeDescriptionLink(taxonName);
 					getMessageMgr().addToMessages(MessageMgr.unrecognizedInvalidSpecies, displayName);            
                 }
               }
@@ -1127,12 +1126,12 @@ or for Worldants upload
                     if (currentValidTaxon.getSubspecies() != null) taxonItem.put("subspecies", currentValidTaxon.getSubspecies());
 
                     //String heading = "<b>Recognized invalid species.  Submission replaced with current valid name from AntCat.org <font color=green>(uploaded)</font>:</b>";
-                    String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + originalTaxonName + "'>" + Taxon.displayTaxonName(originalTaxonName) + "</a>";
+                    String displayName = Taxon.makeDescriptionLink(originalTaxonName);
                     if ("".equals(taxonName)) {
                        displayName = "[empty string]";
                       // was: getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);
                     }
-                    String toName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + currentValidTaxonName + "'>" + Taxon.displayTaxonName(currentValidTaxonName) + "</a>";
+                    String toName = Taxon.makeDescriptionLink(currentValidTaxonName);
                     String message = displayName + " -> " + toName;
                     getMessageMgr().addToMessages(MessageMgr.recognizedInvalidSpecies, message);
                   }
@@ -1155,14 +1154,14 @@ or for Worldants upload
        // This is overridden in for specimen in SpecimenUpload.java
        if (Status.UNRECOGNIZED.equals(status.getValue())) {         
          // getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);
-         String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+         String displayName = Taxon.makeDescriptionLink(taxonName);
          getMessageMgr().addToMessages(MessageMgr.taxonNameNotFoundInBolton, displayName);
          //return;  // We do want to upload these, and flag them.
        } else if (Status.SYNONYM.equals(status.getValue())) {
          // This condition could expand to be any status that has a current valid name.
          
          // We are not yet doing this with specimen uploads.  Should we?  No, prolly go to the new Species List Tool model instead.
-         String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+         String displayName = Taxon.makeDescriptionLink(taxonName);
          if ("".equals(taxonName)) {
             displayName = "[empty string]";
             // was: getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);

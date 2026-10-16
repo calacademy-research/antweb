@@ -27,7 +27,7 @@ To Upload A File, go to the <a href="<%= domainApp %>/curate.do" target="new">An
 <h1>Editing the Homepage</h1>
 <hr></hr>
 
-<html:form action="previewHomePage.do" method="POST">
+<html:form action="previewHomePage.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <h3>Headline:</h3>
 <html:text styleClass="input_550" property="mod1headline"/>
 <p>

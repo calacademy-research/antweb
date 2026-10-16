@@ -350,7 +350,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             projectName = rset.getString("project_name");
             
             tableName = "proj_taxon";
-            whereClause = "project_name = " + stmt.enquoteLiteral(projectName);
+            whereClause = "project_name = " + DBUtil.sqlLiteral(projectName);
 
             c += updateTaxonSetTaxonName(tableName, taxonName, currentValidName, whereClause);
           }
@@ -688,62 +688,62 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         //HashMap<String, String> stats = new HashMap<String, String>();
 
         Statement stmt2 = connection.createStatement();
-        String query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank=\"subfamily\"";
+        String query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = " + DBUtil.sqlLiteral(project) + " and taxarank=\"subfamily\"";
         ResultSet resultSet2 = stmt2.executeQuery(query);
         int extinctSubfamily = 0;
         while (resultSet2.next()) {
             extinctSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank=\"genus\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = " + DBUtil.sqlLiteral(project) + " and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int extinctGenera= 0;
         while (resultSet2.next()) {
             extinctGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 1 and proj_taxon.project_name = " + DBUtil.sqlLiteral(project) + " and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int extinctSpecies = 0;
         while (resultSet2.next()) {
             extinctSpecies = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank=\"subfamily\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = " + DBUtil.sqlLiteral(project) + " and taxarank=\"subfamily\"";
         resultSet2 = stmt2.executeQuery(query);
         int extantSubfamily = 0;
         while (resultSet2.next()) {
             extantSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank=\"genus\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = " + DBUtil.sqlLiteral(project) + " and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int extantGenera = 0;
         while (resultSet2.next()) {
             extantGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and taxarank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and taxon.fossil = 0 and proj_taxon.project_name = " + DBUtil.sqlLiteral(project) + " and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int extantSpecies = 0;
         while (resultSet2.next()) {
             extantSpecies = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name  and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and status='valid' and taxarank=\"subfamily\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name  and proj_taxon.project_name = " + DBUtil.sqlLiteral(project) + " and status='valid' and taxarank=\"subfamily\"";
         resultSet2 = stmt2.executeQuery(query);
         int validSubfamily = 0;
         while (resultSet2.next()) {
             validSubfamily = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + "  and status='valid' and taxarank=\"genus\"";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + DBUtil.sqlLiteral(project) + "  and status='valid' and taxarank=\"genus\"";
         resultSet2 = stmt2.executeQuery(query);
         int validGenera = 0;
         while (resultSet2.next()) {
             validGenera = resultSet2.getInt(1);
         }
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + stmt2.enquoteLiteral(project) + " and status='valid' and taxarank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + DBUtil.sqlLiteral(project) + " and status='valid' and taxarank in ('species', 'subspecies')";
         resultSet2 = stmt2.executeQuery(query);
         int validSpecies = 0;
         while (resultSet2.next()) {
             validSpecies = resultSet2.getInt(1);
         }
                 
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + stmt2.enquoteLiteral(project)
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + DBUtil.sqlLiteral(project)
           + " and taxon.status = 'valid' and taxarank in ('species', 'subspecies') and proj_taxon.image_count > 0";
         resultSet2 = stmt2.executeQuery(query);
         int validImagedSpecies = 0;
@@ -751,7 +751,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             validImagedSpecies = resultSet2.getInt(1);
         }
                         
-        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + stmt2.enquoteLiteral(project);
+        query = "select count(*) from taxon, proj_taxon where taxon.taxon_name = proj_taxon.taxon_name and proj_taxon.project_name = " + DBUtil.sqlLiteral(project);
         resultSet2 = stmt2.executeQuery(query);
         int totalTaxa = 0;
         while (resultSet2.next()) {
@@ -796,7 +796,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             
         // Source discernment is insufficient here. Must depend mostly on if specimens exist.          
         String insertDML = "insert into proj_taxon (taxon_name, project_name, source) " 
-            + " (select taxon_name, 'allantwebants', (case when source like 'specimen%' then " + stmt.enquoteLiteral(Source.SPECIMEN) + " when source = 'worldants' then 'worldants' else '' end) "
+            + " (select taxon_name, 'allantwebants', (case when source like 'specimen%' then " + DBUtil.sqlLiteral(Source.SPECIMEN) + " when source = 'worldants' then 'worldants' else '' end) "
             + " from taxon "   
             + " where status in " + StatusSet.getCountables()
             + ")";

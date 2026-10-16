@@ -139,13 +139,13 @@ public class Group implements Comparable {
       
     public String getLink() {
       String link = "";
-      link += "<a href='" + AntwebProps.getDomainApp() + "/group.do?id=" + getId() + "'>" + getName() + "</a>";
+      link += "<a href='" + AntwebProps.getDomainApp() + "/group.do?id=" + getId() + "'>" + Html.esc(getName()) + "</a>";
       //A.log("getLink() link:" + link);
       return link;
     } 
     public String getLinkAbbrev() {
       String link = "";
-      link += "<a href='" + AntwebProps.getDomainApp() + "/group.do?id=" + getId() + "'>" + getAbbrev() + "</a>";
+      link += "<a href='" + AntwebProps.getDomainApp() + "/group.do?id=" + getId() + "'>" + Html.esc(getAbbrev()) + "</a>";
       //A.log("getLink() link:" + link);
       return link;
     } 

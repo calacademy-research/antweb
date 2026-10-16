@@ -70,7 +70,7 @@
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" />
 <jsp:setProperty name="taxon" property="*" />
 
-<html:form action="/chooseComparison">
+<html:form action="/chooseComparison"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <logic:iterate id="child" collection="<%= taxon.getChildren() %>" >
  <bean:define name="child" id="thisChild" type="org.calacademy.antweb.Taxon" />
  <logic:equal value="true" name="child" property="hasImages">

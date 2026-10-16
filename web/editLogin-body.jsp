@@ -38,7 +38,7 @@
 <h2>Antweb User: <%= Html.esc(thisLogin.getDisplayName()) %></h2>
 <br>
 
-<form name="editLoginForm" action="<%= secureDomainApp %>/editLogin.do?id=<%= thisLogin.getId() %>" method="POST">
+<form name="editLoginForm" action="<%= secureDomainApp %>/editLogin.do?id=<%= thisLogin.getId() %>" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <p>
 
 <input type="hidden" name="isSubmit" value="true">

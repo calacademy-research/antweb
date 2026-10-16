@@ -30,7 +30,7 @@
 </html:messages>
 
  
-<html:form method="POST" action="changePassword">
+<html:form method="POST" action="changePassword"><%= org.calacademy.antweb.util.Csrf.field(request) %>
   <p>
   <table>
   <tr><td>Old Password:</td><td><html:password property="oldPassword"/></td></tr>

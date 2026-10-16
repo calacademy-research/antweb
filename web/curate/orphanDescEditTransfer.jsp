@@ -48,7 +48,7 @@ if (!(orphanDescEditTaxon instanceof DummyTaxon)) {
 %>
 <h3><%= taxonHeading %></h3>
 
-<html:form method="POST" action="orphanDescEdits.do" enctype="multipart/form-data">
+<html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "orphanDescEdits.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
     <input type="hidden" name="action" value="transfer" />
     <input type="hidden" name="taxonName" value="<%= ((Taxon) orphanDescEditTaxon).getTaxonName() %>" />
     <div class="admin_action_module">

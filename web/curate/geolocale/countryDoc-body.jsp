@@ -35,7 +35,7 @@
 
 <!-- Data File Upload -->
 <% if (LoginMgr.isAdmin(request)) { %>
-<html:form method="POST" action="upload.do" enctype="multipart/form-data">
+<html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
     <input type="hidden" name="ancFileDirectory" value="none" />
     <input type="hidden" name="updateAdvanced" value="no" />
     <input type="hidden" name="updateFieldGuide" value="none" />

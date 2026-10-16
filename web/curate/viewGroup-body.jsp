@@ -39,7 +39,7 @@
 
     <p><p><b>Name:</b> <%= thisGroup.getName() %>
 
-    <form action="<%= domainApp %>/saveGroup.do" method="POST">
+    <form action="<%= domainApp %>/saveGroup.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
     <p><p><b>Institution ID:</b>
     <input type="text" class="input_200" name="id" value="<%= thisGroup.getId() %>">

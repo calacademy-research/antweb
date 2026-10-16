@@ -41,8 +41,8 @@
 
       <h3>1. Select files to upload:</h3>
       <br>
-      <form action = "<%=AntwebProps.getDomainApp() %>/imageUploader.do" 
-            method = "post" enctype = "multipart/form-data">
+      <form action="<%= org.calacademy.antweb.util.Csrf.action(request, (AntwebProps.getDomainApp()) + "/imageUploader.do") %>" 
+            method = "post" enctype = "multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
         <input type="file" name="file" id="file" multiple/>          
 
         <br>      

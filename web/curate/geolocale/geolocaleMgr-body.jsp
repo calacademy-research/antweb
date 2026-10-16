@@ -42,7 +42,7 @@
 
 <br>
 
-<html:form method="POST" action="geolocaleMgr">
+<html:form method="POST" action="geolocaleMgr"><%= org.calacademy.antweb.util.Csrf.field(request) %>
   <select name="georank">
   <option value="region"<%= ("region".equals(georank) ? "selected" : "") %>>Region</option>
   <option value="subregion"<%= ("subregion".equals(georank) ? "selected" : "") %>>Subregion</option>
@@ -129,7 +129,7 @@ for (Geolocale geolocale : geolocaleArray) {
 %>
 <tr>
 
-<form id="geolocaleMgrForm" action="<%= Html.escAttr(thisTarget) %>#<%= geolocale.getId() %>" method="POST">
+<form id="geolocaleMgrForm" action="<%= Html.escAttr(thisTarget) %>#<%= geolocale.getId() %>" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <td>
 <input type="hidden" name="parent" value="<%= geolocale.getParent() %>">

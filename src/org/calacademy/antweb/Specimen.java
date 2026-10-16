@@ -1002,6 +1002,11 @@ For a locality name without code (this name has special characters):
       return AntwebProps.getDomainApp() + "specimen.do?code=" + code;
     }
 
+    /** Link to a specimen page for upload reports; the code may come from a curator's file, so it is escaped. */
+    public static String makeReportLink(String code) {
+        return "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.url(code) + "'>" + Html.esc(code) + "</a>";
+    }
+
     public static String makeLink(String code) {
         // This makes something like: 
         //        Specimen: <a href="http://www.antweb.org/specimen.do?code=casent0221924

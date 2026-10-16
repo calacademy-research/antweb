@@ -16,7 +16,7 @@
          <div class="clear"></div><%@ include file="/common/descEdit/ckEditorMinConfigDescEditForm.jsp" %>
        <% } else { %>
          <p><small style="float:left; margin-top:14px; margin-left:5px;"> <a href="<%= thisPageTarget %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a></small><div class="clear"></div></p>
-         <html:form method="POST" action="descEditImageUpload.do" enctype="multipart/form-data">
+         <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "descEditImageUpload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
            <input type="hidden" name="homePageDirectory" value="curator" />
            <input type="hidden" name="editField" value="<%= thisDesc %>">
            <input type="hidden" name="isSaveEditField" value="true">

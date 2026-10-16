@@ -14,7 +14,7 @@
 	<div id="page_data">
 		<div id="overview_data">
 
-			<html:form method="POST" action="speciesListTool">
+			<html:form method="POST" action="speciesListTool"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 			<input type="hidden" id="doSearch" name="doSearch" value="searchResults"/>
 

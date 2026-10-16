@@ -139,6 +139,7 @@
   "/saveLogin": "login",
   "/saveMuseum": "login",
   "/saveProject": "login",
+  "/sanitizeDescriptions": "login",
   "/search": "ok",
   "/serverDebug": "login",
   "/serverStatus": "login",

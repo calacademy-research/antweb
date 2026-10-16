@@ -115,8 +115,8 @@
     <div class="admin_action_module">
         <div class="admin_action_item">
             <h2>Upload File</h2>
-            <html:form method="POST" action="specimenListLookup.do" enctype="multipart/form-data"
-                    styleId="specimenLookupForm" onsubmit="return validateSpecimenLookupFile();">
+            <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "specimenListLookup.do") %>' enctype="multipart/form-data"
+                    styleId="specimenLookupForm" onsubmit="return validateSpecimenLookupFile();"><%= org.calacademy.antweb.util.Csrf.field(request) %>
                 <div style="margin-bottom:15px;">
                     <label for="specimenFile" style="display:block; font-weight:bold; margin-bottom:5px;">Choose specimen list file</label>
                     <html:file property="file" styleId="specimenFile" accept=".txt" />

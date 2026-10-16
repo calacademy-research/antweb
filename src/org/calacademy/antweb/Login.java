@@ -291,7 +291,7 @@ public class Login implements Comparable {
      
      public String getLink() {
        String link = "";
-       link += "<a href='" + AntwebProps.getDomainApp() + "/login.do?id=" + getId() + "'>" + getDisplayName() + "</a>";
+       link += "<a href='" + AntwebProps.getDomainApp() + "/login.do?id=" + getId() + "'>" + Html.esc(getDisplayName()) + "</a>";
        //A.log("getLink() link:" + link);
        return link;
      }     

@@ -39,7 +39,7 @@
 
 <p><b>1. Mark</b>: every account below (except yours) must set a new password before it can log in again,
 and all of its current sessions end now. Someone who then logs in with the old password is sent a reset link automatically.</p>
-<form method="POST" action="<%= secureDomainApp %>/passwordResetCampaign.do">
+<form method="POST" action="<%= secureDomainApp %>/passwordResetCampaign.do"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="action" value="mark">
 <label><input type="checkbox" name="confirm" value="yes"> Yes, mark these <%= accounts.size() %> accounts</label>
 <input type="submit" value="Mark accounts">
@@ -48,7 +48,7 @@ and all of its current sessions end now. Someone who then logs in with the old p
 
 <p><b>2. Send</b>: email each account with an email address a reset link (subject "<%= Html.esc(PasswordResetMgr.SUBJECT_CAMPAIGN) %>"),
 about 10 a second, in the background. Accounts without an email address are skipped. The summary goes to admin.log.</p>
-<form method="POST" action="<%= secureDomainApp %>/passwordResetCampaign.do">
+<form method="POST" action="<%= secureDomainApp %>/passwordResetCampaign.do"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="action" value="send">
 <label><input type="checkbox" name="confirm" value="yes"> Yes, email <%= withEmail %> accounts</label>
 <input type="submit" value="Send emails">

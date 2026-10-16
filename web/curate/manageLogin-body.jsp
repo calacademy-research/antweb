@@ -58,7 +58,7 @@
 <h2>Welcome to Antweb.org: <%= thisLogin.getEmail() %></h2>
 <% } %>
 
-<form action="<%= secureDomainApp %>/saveLogin.do" method="POST">
+<form action="<%= secureDomainApp %>/saveLogin.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <h3>Login ID:</h3>
 <input type="text" class="input_200" name="id" value="<%= thisLogin.getId() %>" disabled>
