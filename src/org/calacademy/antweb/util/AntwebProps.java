@@ -432,8 +432,6 @@ public abstract class AntwebProps {
 	public static String report() {
         return "docRoot:" + getDocRoot()
         // + " inputFileHome:" + getInputFileHome()
-          + " googleKey:" + AntwebProps.getGoogleMapKey()
-          + " googleServerKey:" + AntwebProps.getGoogleMapServerKey()
           + " domainApp:" + getDomainApp()
           + " devMode:" + getIsDevMode();
 	}
@@ -444,9 +442,7 @@ public abstract class AntwebProps {
                 + " <br>&nbsp;&nbsp;&nbsp;<b>DataRoot:</b> " + getDataRoot()
 // + " <br>&nbsp;&nbsp;&nbsp;<b>InputFileHome:</b> " + getInputFileHome()
                 + " <br>&nbsp;&nbsp;&nbsp;<b>ImagesDir:</b> " + getImagesDir()
-                + " <br>&nbsp;&nbsp;&nbsp;<b>WebDir:</b> " + getWebDir()
-                + " <br>&nbsp;&nbsp;&nbsp;<b>googleKey:</b> " + getGoogleMapKey()
-                + " <br>&nbsp;&nbsp;&nbsp;<b>googleServerKey:</b> " + getGoogleMapServerKey();
+                + " <br>&nbsp;&nbsp;&nbsp;<b>WebDir:</b> " + getWebDir();
     }
 	
 	public static String getTechAdminContact() {

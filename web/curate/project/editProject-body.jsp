@@ -96,114 +96,6 @@ To Upload A File, go to the <a href="<%= domainApp %>/curate.do" target="new">An
   (Modify in the associated geolocale).
   <br>
 
-<% String googleMapKey = AntwebProps.getGoogleMapKey(); %>
-
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?v=3&key=<%= googleMapKey %>&sensor=false"></script>
-<%
-    String got_coords = thisProject.getCoords();
-    
-  if (HttpUtil.isOnline()) {        
-    if (got_coords == null) { 
-%>
-<script>
-  var geocoder;
-  var map;
-  function makeMap() {
-    geocoder = new google.maps.Geocoder();
-    var address = '<%= thisProject.getTitle() %>';
-    geocoder.geocode( { 'address': address}, function(results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
-        $("#coords").val(results[0].geometry.location);
-        var mapOptions = {
-          zoom: 5,
-          disableDefaultUI: true,
-          mapTypeId: google.maps.MapTypeId.ROADMAP
-        }
-        map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-        map.setCenter(results[0].geometry.location);
-      } else {
-        alert('Geocode was not successful for the following reason (1): ' + status);
-      }
-    });
-  }
-
-  function codeLocation() {
-    var lat = $('#new_lat').val();
-    var lng = $('#new_lng').val();
-    var latlng = new google.maps.LatLng(lat, lng);
-    geocoder.geocode( { 'location': latlng}, function(results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
-        $("#coords").val(results[0].geometry.location);
-        map.setCenter(results[0].geometry.location);
-      } else {
-        alert('Geocode was not successful for the following reason(2): ' + status);
-      }
-    });
-  }
-
-  google.maps.event.addDomListener(window, 'load', makeMap);
-  
-</script>
-
-<% 
-    } else {  // if coords == null  
-%>
-
-<script>
-
-  var geocoder;
-  var map;
-
-  var coords = $("#coords").val();
-  function makeMap() {
-    geocoder = new google.maps.Geocoder();
-    var stripParen = coords.replace(/[\(\)\s]/g, "");
-    var str = stripParen;
-    var substr = str.split(',');
-    var latlng = new google.maps.LatLng(substr[0],substr[1]);
-    geocoder.geocode( { 'location': latlng}, function(results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
-        $("#coords").val(results[0].geometry.location);
-        var mapOptions = {
-          zoom: 5,
-          disableDefaultUI: true,
-          mapTypeId: google.maps.MapTypeId.ROADMAP
-        }
-        map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-        map.setCenter(results[0].geometry.location);
-      } else {
-        alert('Geocode was not successful for the following reason(3): ' + status);
-      }
-    });
-  }
-
-  function codeLocation() {
-    var lat = $('#new_lat').val();
-    var lng = $('#new_lng').val();
-    var latlng = new google.maps.LatLng(lat, lng);
-    geocoder.geocode( { 'location': latlng}, function(results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
-        $("#coords").val(results[0].geometry.location);
-        map.setCenter(results[0].geometry.location);
-      } else {
-        alert('Geocode (' + lat + ', ' + lng + ') was not successful for the following reason(4): ' + status);
-      }
-    });
-  }
-
-  google.maps.event.addDomListener(window, 'load', makeMap);
-
-</script>
-
-<% 
-    } // if coords == null
-  } // if isOnline 
-%>
-
-
-<div id="map-canvas" style="width:262px; height:262px;"></div>
 
 
 <% 
@@ -223,10 +115,7 @@ Will be listed in the Region hierarchy.<br>
 
 <p><h3>Geocoding Coordinates for Homepage 	:</h3>
 <input id="coords" type="text" name="coords" value="<%= thisProject.getCoords() %>"><br />
-These are automatically generated when the map is created by geocoding, or when you change the center latitude and center longtitude and click "Change Coordinates".
-
-<p>If you want to adjust your homepage map, simply tinker with the center latitude and center longitude in the two fields below, and click "Change Coordinates".<br />
-<b>Center Latitude:</b> <input id="new_lat" type="text" size="10"> <b>Center Longitude:</b> <input id="new_lng" type="text" size="10"> <input type="button" value="Change Coordinates" onclick="codeLocation()"></p>
+Enter the center as (latitude, longitude), for example (-18.77, 46.87).
 
 <p><h3>Geographic Extent:</h3>
 <input id="extent" name="extent" type=text class=input_550 value="<%= thisProject.getExtent() %>"><br>
