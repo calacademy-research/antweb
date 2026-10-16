@@ -210,8 +210,9 @@ public abstract class AntwebProps {
         return key;
     }
 
+    // From etc/db.properties when present (DbCredentials), else platform.properties.
     public static String getDbPwd() {
-      return AntwebProps.getProp("dbPwd");
+      return DbCredentials.password(AntwebProps.getProp("dbPwd"));
     }
 
 	public static int rev = 0;

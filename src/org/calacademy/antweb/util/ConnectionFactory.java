@@ -25,8 +25,8 @@ public class ConnectionFactory {
             dataSource = new ComboPooledDataSource();
             dataSource.setDriverClass("com.mysql.cj.jdbc.Driver"); // MySQL driver
             dataSource.setJdbcUrl("jdbc:mysql://mysql:3306/ant");
-            dataSource.setUser("antweb");
-            dataSource.setPassword("f0rm1c6");
+            dataSource.setUser(DbCredentials.user("antweb"));
+            dataSource.setPassword(AntwebProps.getDbPwd());
 
             // Optional C3P0 settings
             dataSource.setMinPoolSize(10);

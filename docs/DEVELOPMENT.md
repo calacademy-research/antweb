@@ -190,7 +190,7 @@ sleep 15
 
 # Create user
 docker exec -it $CID mysql -uroot ant -e \
-  "CREATE USER antweb@'%' IDENTIFIED BY 'f0rm1c6'; \
+  "CREATE USER antweb@'%' IDENTIFIED BY 'CHANGE_ME'; \
    GRANT ALL ON *.* TO antweb@'%' WITH GRANT OPTION"
 
 # Load database
@@ -326,7 +326,7 @@ EOF
 2. Apply migration:
 ```bash
 # Connect to database
-docker-compose exec mysql mysql -uantweb -pf0rm1c6 ant
+docker-compose exec mysql mysql -uantweb -pCHANGE_ME ant
 
 # Run migration
 mysql> SOURCE /path/to/migration.sql;
@@ -361,7 +361,7 @@ curl http://localhost:5000/api/v3/specimens?limit=1
 
 ```bash
 # Connect to MySQL
-docker-compose exec mysql mysql -uantweb -pf0rm1c6 ant
+docker-compose exec mysql mysql -uantweb -pCHANGE_ME ant
 
 # Run queries
 mysql> SELECT COUNT(*) FROM specimen;
@@ -537,7 +537,7 @@ public class MyTableDb extends AntwebDb {
 
 3. **Apply migration and deploy:**
 ```bash
-docker-compose exec mysql mysql -uantweb -pf0rm1c6 ant < db/upgrade/8.106/2026-01-15-new-table.sql
+docker-compose exec mysql mysql -uantweb -pCHANGE_ME ant < db/upgrade/8.106/2026-01-15-new-table.sql
 docker-compose exec antweb ant deploy
 ```
 
