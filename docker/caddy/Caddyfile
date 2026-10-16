@@ -82,6 +82,8 @@ www.antweb.org {
 
         # Login records (who logged in, when): admins read them through /logMgr.do.
         respond /web/log/logins* "Not found" 404
+        # Admin actions log (who did what, by login id): admins read it through /logMgr.do.
+        respond /web/log/admin* "Not found" 404
 
         # Logins: at most 10 attempts a minute per visitor (password guessing).
         # Cloudflare sits in front, so the visitor is CF-Connecting-IP.

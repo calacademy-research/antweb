@@ -85,6 +85,18 @@ public final class PasswordResetCampaignAction extends AntwebAction {
                 result = "Unknown action.";
             }
 
+            // After a confirmed mark or send, redirect to a plain GET of this page, so reloading
+            // the result page cannot run the step again (POST/redirect/GET).
+            if (confirmed && ("mark".equals(action) || "send".equals(action))) {
+                request.getSession().setAttribute("campaignFlash", result);
+                return new ActionForward("/passwordResetCampaign.do", true);
+            }
+            Object flash = request.getSession().getAttribute("campaignFlash");
+            if (flash != null) {
+                request.getSession().removeAttribute("campaignFlash");
+                if (result == null) result = flash.toString();
+            }
+
             List<PasswordResetDb.Account> accounts = db.getCampaignAccounts();
             if ("preview".equals(action)) {
                 PasswordResetMgr.logEvent("campaign preview by " + who + ": " + accounts.size() + " accounts");
