@@ -25,6 +25,14 @@ public final class LogMgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(LogMgrAction.class);
 
+    // Only these files may be read with action=get (loc=web is web/log/, loc=data is the data root's log/).
+    private static final Set<String> WEB_LOGS = Set.of(
+        "searches.txt", "notFound.txt", "taxonSet.log", "adminTask.log", "invalid.log", "logins.txt",
+        "accessLog.txt", "getUrl.txt", "profiler.jsp", "badRequest.log", "taxonNotFound.txt", "isRestart.log",
+        "getConns.log", "compute.log", "admin.log", "geolocaleTaxonFix.log", "hacks.log", "taxonworksNightly.log",
+        "srfExceptions.txt");
+    private static final Set<String> DATA_LOGS = Set.of("cCheck.log", "longRequest.log", "messages.txt");
+
     public ActionForward execute(
         ActionMapping mapping,
         ActionForm form,
@@ -33,7 +41,8 @@ public final class LogMgrAction extends AntwebAction {
         throws IOException, ServletException {
 
 
-        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
+        // Admin only: log files can contain visitor IPs, logins and internal paths.
+        ActionForward c = Check.admin(request, mapping); if (c != null) return c;
 
         // Extract attributes we will need
         Locale locale = getLocale(request);
@@ -106,10 +115,15 @@ public final class LogMgrAction extends AntwebAction {
                 log = AntwebProps.getDocRoot() + AntwebProps.getProp("site.queryStatsLog");
                 break;
             case "get":
+                String requested = fileName + "." + ext;
                 if (loc == null || "".equals(loc) || loc.equals("web")) {
-                    log = AntwebProps.getDocRoot() + "web/log/" + fileName + "." + ext;
-                } else {
-                    log = AntwebProps.getDataRoot() + "log/" + fileName + "." + ext;
+                    if (WEB_LOGS.contains(requested)) log = AntwebProps.getDocRoot() + "web/log/" + requested;
+                } else if (loc.equals("data")) {
+                    if (DATA_LOGS.contains(requested)) log = AntwebProps.getDataRoot() + "log/" + requested;
+                }
+                if (log == null) {
+                    request.setAttribute("message", "Log not available: " + Html.esc(requested));
+                    return mapping.findForward("message");
                 }
                 break;
         }
@@ -119,6 +133,12 @@ public final class LogMgrAction extends AntwebAction {
             request.setAttribute("message", message);
             return mapping.findForward("message");
         }
+
+        if (grep != null && !"".equals(grep) && !grep.matches("[A-Za-z0-9_.:@=/][A-Za-z0-9_.:@=/-]*")) {
+            request.setAttribute("message", "Invalid grep term.");
+            return mapping.findForward("message");
+        }
+        if (lines != null && !"".equals(lines) && !lines.matches("[0-9]{1,6}")) lines = null;
 
         String command = null;
         if (grep != null && !"".equals(grep)) {
@@ -221,6 +241,7 @@ public final class LogMgrAction extends AntwebAction {
     }
           
     private String getUploadLog(String fileName, int lineNum) {
+        if (fileName == null || fileName.contains("/") || fileName.contains("\\") || fileName.contains("..")) return "Invalid file name.";
         String path = AntwebProps.getWebDir() + "upload/";
         return getLogLine(path, fileName, lineNum);
     }

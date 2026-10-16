@@ -174,6 +174,22 @@ class HaltException(Exception):
     pass
 
 
+def apiError(method, error=None, status=500):
+    # Full details (exception text, SQL) go to the server log only; the caller gets a generic JSON error.
+    print("API error in " + method + " on request:" + str(request) + " error:" + repr(error), flush=True)
+    return jsonify(error="The request could not be completed. Please try again later or simplify the query."), status
+
+
+@application.errorhandler(Exception)
+def handleUncaught(error):
+    from werkzeug.exceptions import HTTPException
+    if isinstance(error, HTTPException):
+        return jsonify(error=error.name), error.code
+    import traceback
+    traceback.print_exc()
+    return apiError("uncaught", error)
+
+
 def initCap(x):
     val = x
     try:
@@ -195,15 +211,27 @@ def down(request):
     return 0
 
 
+DEFAULT_LIMIT = 10000
+MAX_LIMIT = 10000
+MAX_LIMIT_NDJSON = 1000000
+
+
 def setGlobals(request):
     print("request:" + str(request))
 
     global limit, offset, log, ndjson, startTime
     startTime = time.time()
-    limit = request.args.get('limit', default='10000', type=int)
-    offset = request.args.get('offset', default='0', type=int)
     log = request.args.get('log', default='*', type=str)
     ndjson = request.args.get('ndjson', default='*', type=str)
+    # limit: default and maximum 10,000 records; ndjson bulk downloads may ask for up to 1,000,000.
+    maxLimit = MAX_LIMIT_NDJSON if ndjson == 'true' else MAX_LIMIT
+    limit = request.args.get('limit', default=DEFAULT_LIMIT, type=int)
+    if limit is None or limit <= 0:
+        limit = DEFAULT_LIMIT
+    limit = min(limit, maxLimit)
+    offset = request.args.get('offset', default=0, type=int)
+    if offset is None or offset < 0:
+        offset = 0
 
 
 def getNdjson(dataList):
@@ -567,13 +595,9 @@ def getSpecimen():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "specimens operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        message = "specimens error request:" + str(request) + " message:" + error.orig.message
-        print(message)  # + error.orig.message, error.params
-        return message
+        return apiError("specimens", error)
+    except Exception as error:
+        return apiError("specimens", error)
 
     if log:
         print('Query complete')
@@ -719,13 +743,9 @@ def getGeoSpecimens():
         try:
             data = query.all()
         except OperationalError as error:
-            message = "geoSpecimens operational error:" + str(error) + " on request:" + str(request)
-            print(message)
-            return message
-        except:
-            message = "geoSpecimens error request:" + str(request)
-            print(message)
-            return message
+            return apiError("geoSpecimens", error)
+        except Exception as error:
+            return apiError("geoSpecimens", error)
 
         dataList = []
         for sp in data:
@@ -753,13 +773,9 @@ def getGeoSpecimens():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "geospecimens operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        message = "geoSpecimens 2 error:" + str(request)
-        print(message)  # + error.orig.message, error.params)
-        return message
+        return apiError("geoSpecimens", error)
+    except Exception as error:
+        return apiError("geoSpecimens", error)
 
     dataList = []
     for sp in data:
@@ -952,13 +968,9 @@ def getTaxa():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "taxa operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        message = "taxa error:" + str(request)
-        print(message)  # + error.orig.message, error.params
-        return
+        return apiError("taxa", error)
+    except Exception as error:
+        return apiError("taxa", error)
 
     # print(query)
 
@@ -1066,13 +1078,9 @@ def getDistinctTaxa():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "distinctTaxa operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        message = "distinctTaxa error:" + str(request)
-        print(message)  # + error.orig.message, error.params
-        return
+        return apiError("distinctTaxa", error)
+    except Exception as error:
+        return apiError("distinctTaxa", error)
 
     if log == 'true':
         print("log query:" + str(query))
@@ -1158,13 +1166,9 @@ def getImages():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "images operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        message = "images error:" + str(request)
-        print(message)  # + error.orig.message, error.params
-        return
+        return apiError("images", error)
+    except Exception as error:
+        return apiError("images", error)
 
     specimenCount = 0
     imageCount = 0
@@ -1438,13 +1442,9 @@ def getMeasurements():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "measurements operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
+        return apiError("measurements", error)
     except Exception as error:
-        message = "measurements error:" + str(error) + " request:" + str(request)
-        print(message)
-        return message
+        return apiError("measurements", error)
 
     dataList = [Measurement.getDict(m, sp) for (m, sp) in data]
 
@@ -1630,13 +1630,9 @@ def getTaxaImages():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "taxaImages operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        message = "taxaImages error:" + str(request) + " args:" + str(sys.exc_info()[0])
-        print(message)
-        return message
+        return apiError("taxaImages", error)
+    except Exception as error:
+        return apiError("taxaImages", error)
 
     # Looks like this might be necessary. Unless we can upgrade Python to 3.8. May 24 2020.
     # will need to be taxaImage.getTaxaDict(data); but the method declaration will need (self,) as will the other methods.
@@ -1744,13 +1740,9 @@ def getGeolocales():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "geolocales operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        message = "geolocales error:" + str(request)
-        print(message)  # # + error.orig.message, error.params
-        return
+        return apiError("geolocales", error)
+    except Exception as error:
+        return apiError("geolocales", error)
 
     # if (isDevMode):
     #  print("query:" + str(query))
@@ -1902,13 +1894,9 @@ def getGeolocaleTaxa():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "geolocaleTaxa operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        message = "geolocaleTaxa error:" + str(request)
-        print(message)  # + error.orig.message, error.params
-        return message
+        return apiError("geolocaleTaxa", error)
+    except Exception as error:
+        return apiError("geolocaleTaxa", error)
 
     if isDevMode:
         print("isDevMode:" + str(isDevMode) + " query:" + str(query))
@@ -2001,12 +1989,9 @@ def getBioregions():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "bioregions operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        print("bioregions error:" + str(request))  # + error.orig.message, error.params
-        return
+        return apiError("bioregions", error)
+    except Exception as error:
+        return apiError("bioregions", error)
 
     if isDevMode:
         print(query)
@@ -2109,12 +2094,9 @@ def getBioregionTaxa():
     try:
         data = query.all()
     except OperationalError as error:
-        message = "bioregionTaxa operational error:" + str(error) + " on request:" + str(request)
-        print(message)
-        return message
-    except:
-        print("bioregionTaxa error:" + str(request))  # + error.orig.message, error.params
-        return
+        return apiError("bioregionTaxa", error)
+    except Exception as error:
+        return apiError("bioregionTaxa", error)
 
     if isDevMode:
         print("isDevMode:" + str(isDevMode) + " query:" + str(query))

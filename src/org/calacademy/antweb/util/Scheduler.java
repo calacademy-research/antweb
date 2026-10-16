@@ -70,7 +70,7 @@ public class Scheduler extends AntwebAction {
 
 		s_log.warn("execute() action:" + action + " num:" + num + " target:" + HttpUtil.getTarget(request));
 
-        int secureCode = AntwebUtil.getSecureCode();
+        String secureCode = AntwebUtil.getSecureCode();
 
         if (AntwebMgr.isServerInitializing()) {
             String message = "Scheduler failed because isInitializing:" + AntwebMgr.isServerInitializing();
@@ -89,12 +89,12 @@ public class Scheduler extends AntwebAction {
     // Called from SessionRequestFilter
     public String doAction() {
       //return doAction("justLog", 0); // Perform all
-      int secureCode = AntwebUtil.getSecureCode();
+      String secureCode = AntwebUtil.getSecureCode();
       String value = doAction("run", 0, secureCode); // Perform all
       return value;
     }
 
-    public String doAction(String action, int num, int secureCode) {
+    public String doAction(String action, int num, String secureCode) {
     
         if (action == null) return "Null action";
     

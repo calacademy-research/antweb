@@ -29,6 +29,8 @@ import org.apache.commons.logging.LogFactory;
  *   secret=...    secret key, used to check the answer with Cloudflare
  * Changes are picked up within a minute, without a restart. With no file
  * (or empty values) the check is off and Create Account works as before.
+ * When the file is present but the answer cannot be verified (Cloudflare
+ * unreachable, timeout, unreadable file), signup is refused (fail closed).
  */
 public final class Turnstile {
 
@@ -41,6 +43,11 @@ public final class Turnstile {
     static final String CONFIG = "/antweb/deploy/etc/turnstile.properties";
     private static Properties s_props = new Properties();
     private static long s_loaded = 0;
+    private static boolean s_fileExists = false;
+    private static boolean s_loadFailed = false;
+
+    /** Outcome of a check: PASSED (or check off), FAILED (bad/missing answer), UNAVAILABLE (could not verify). */
+    public enum Result { PASSED, FAILED, UNAVAILABLE }
 
     private static synchronized Properties props() {
         long now = System.currentTimeMillis();
@@ -48,13 +55,17 @@ public final class Turnstile {
             s_loaded = now;
             Properties p = new Properties();
             File f = new File(CONFIG);
+            boolean failed = false;
             if (f.isFile()) {
                 try (InputStream in = new FileInputStream(f)) {
                     p.load(in);
                 } catch (Exception e) {
+                    failed = true;
                     s_log.error("props() could not read " + CONFIG + " e:" + e);
                 }
             }
+            s_fileExists = f.exists();
+            s_loadFailed = failed;
             s_props = p;
         }
         return s_props;
@@ -74,9 +85,18 @@ public final class Turnstile {
 
     /** True if the check is off, or if Cloudflare confirms the visitor passed it. */
     public static boolean passed(HttpServletRequest request) {
-        if (!isEnabled()) return true;
+        return check(request) == Result.PASSED;
+    }
+
+    public static Result check(HttpServletRequest request) {
+        props();  // refresh settings
+        synchronized (Turnstile.class) {
+            // File present but unreadable (or a directory): treat as on, and fail closed.
+            if (s_fileExists && (s_loadFailed || !new File(CONFIG).isFile())) return Result.UNAVAILABLE;
+        }
+        if (!isEnabled()) return Result.PASSED;
         String token = request.getParameter(RESPONSE_PARAM);
-        if (token == null || token.isEmpty()) return false;
+        if (token == null || token.isEmpty()) return Result.FAILED;
         String body = "secret=" + enc(getSecret()) + "&response=" + enc(token);
         String ip = request.getHeader("CF-Connecting-IP");  // the visitor, as Cloudflare saw them
         if (ip != null && !ip.isEmpty()) body += "&remoteip=" + enc(ip);
@@ -95,13 +115,13 @@ public final class Turnstile {
                 String json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
                 JsonObject result = JsonParser.parseString(json).getAsJsonObject();
                 boolean success = result.has("success") && result.get("success").getAsBoolean();
-                if (!success) s_log.info("passed() refused: " + result.get("error-codes"));
-                return success;
+                if (!success) s_log.info("check() refused: " + result.get("error-codes"));
+                return success ? Result.PASSED : Result.FAILED;
             }
         } catch (Exception e) {
-            // Cloudflare unreachable: let the person through rather than lock everyone out.
-            s_log.error("passed() could not reach Cloudflare e:" + e);
-            return true;
+            // Cloudflare unreachable or timed out: fail closed; the person is asked to try again.
+            s_log.error("check() could not verify with Cloudflare e:" + e);
+            return Result.UNAVAILABLE;
         } finally {
             if (con != null) con.disconnect();
         }
