@@ -60,6 +60,11 @@ public class LoginMgr extends Manager {
           } catch (SQLException e) {
             s_log.error("startPasswordConversion() password reset schema not created e:" + e);
           }
+          try {
+            new RememberTokenDb(conn).ensureSchema();
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() remember_token schema not created e:" + e);
+          }
           int count = new LoginDb(conn).hashLegacyPasswords();
           if (count > 0) populate(conn, true, true);  // drop the cached plain-text values
         } catch (Exception e) {
@@ -146,6 +151,16 @@ public class LoginMgr extends Manager {
             return null;
         }
         return login;
+    }
+
+    /**
+     * Log the login in: new session id (prevents session fixation), then the login in the session.
+     * Used by the login form (LoginAction) and by "Keep me logged in" (RememberMeMgr).
+     */
+    public static void logIn(HttpServletRequest request, Login login) {
+        request.getSession();
+        request.changeSessionId();
+        setAccessLogin(request, login);
     }
 
     /** Log the login in on this session (call after request.changeSessionId()). */

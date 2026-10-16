@@ -5,6 +5,7 @@ curator ("Default Group", can upload specimens and images, not an admin).
 These tests only read pages; they do not upload or change data.
 """
 import os
+from urllib.parse import urlparse
 
 import pytest
 
@@ -131,3 +132,50 @@ def test_specimen_lookup_lists_missing_codes_and_keeps_found_data(curator):
     assert "tab-separated-values" in d.headers.get("Content-Type", ""), d.text[:300]
     rows = d.text.strip().split("\n")
     assert len(rows) == 2 and rows[1].lower().startswith(KNOWN_CODES[0])
+
+
+# "Keep me logged in" (AW_REMEMBER cookie).
+def _remember_set_cookie(response):
+    return [v for v in response.raw.headers.getlist("Set-Cookie") if v.startswith("AW_REMEMBER=")]
+
+
+def _browser_with_remember(value):
+    s = new_session()
+    s.cookies.set("AW_REMEMBER", value, domain=urlparse(BASE_URL).hostname, path="/")
+    return s
+
+
+def test_remember_me():
+    s = new_session()
+    r = s.post(BASE_URL + "/login.do",
+               data={"userName": USER, "password": PASSWORD, "isSubmit": "true", "rememberMe": "on"},
+               timeout=60, allow_redirects=False)
+    headers = [h for h in _remember_set_cookie(r) if not h.startswith("AW_REMEMBER=;")]
+    assert headers, f"login with rememberMe set no AW_REMEMBER cookie: {r.raw.headers.getlist('Set-Cookie')}"
+    h = headers[-1].lower()
+    for flag in ("secure", "httponly", "samesite=lax", "path=/", "max-age="):
+        assert flag in h, f"AW_REMEMBER lacks {flag}: {headers[-1]}"
+    value = headers[-1].split(";", 1)[0].split("=", 1)[1].strip('"')
+
+    # A new browser holding only that cookie is logged in, and gets a new (rotated) cookie.
+    b = _browser_with_remember(value)
+    assert get(b, "/curate.do").category != "login", "AW_REMEMBER alone did not log in"
+    rotated = b.cookies.get("AW_REMEMBER")
+    assert rotated and rotated != value, "AW_REMEMBER was not rotated after use"
+
+    # Logout forgets it: the cookie no longer logs anyone in.
+    b.get(BASE_URL + "/logout.do", timeout=60)
+    assert get(_browser_with_remember(rotated), "/curate.do").category == "login", "AW_REMEMBER still works after logout"
+
+
+def test_login_without_remember_me_sets_no_cookie():
+    s = new_session()
+    r = s.post(BASE_URL + "/login.do", data={"userName": USER, "password": PASSWORD, "isSubmit": "true"},
+               timeout=60, allow_redirects=False)
+    assert not [h for h in _remember_set_cookie(r) if not h.startswith("AW_REMEMBER=;")]
+    s.get(BASE_URL + "/logout.do", timeout=60)
+
+
+def test_forged_remember_cookie_is_refused():
+    b = _browser_with_remember("A" * 16 + ":" + "B" * 43)
+    assert get(b, "/curate.do").category == "login"

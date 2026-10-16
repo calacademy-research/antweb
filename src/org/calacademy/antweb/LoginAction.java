@@ -116,8 +116,7 @@ public final class LoginAction extends AntwebAction {
                     login = login(request, userNameOrEmail, password, messages);
 
                     // If the user is editing their own.
-                    request.changeSessionId();  // new session id at login (prevents session fixation)
-                    LoginMgr.setAccessLogin(request, login);  // Log in the user.
+                    LoginMgr.logIn(request, login);  // Log in the user (new session id).
 
                     request.getSession().setAttribute("thisLogin", login);  // The one being edited.
 
@@ -138,9 +137,15 @@ public final class LoginAction extends AntwebAction {
               s_log.error("execute() login is null for value:" + value);
             }
             if (login != null) {
-                request.changeSessionId();  // new session id at login (prevents session fixation)
+                LoginMgr.logIn(request, login);  // new session id at login (prevents session fixation)
+            } else {
+                LoginMgr.setAccessLogin(request, null);
             }
-            LoginMgr.setAccessLogin(request, login);
+            if (login != null && login.getId() > 0 && (value == null || "Login".equals(value))) {
+                // "Keep me logged in": drop any earlier token of this browser, then make a new one if asked.
+                RememberMeMgr.forget(request, response);
+                if (RememberMeMgr.isRequested(request)) RememberMeMgr.remember(request, response, login);
+            }
             //s_log.warn("Successful login of " + userNameOrEmail + " target:" + target);
 
             if (target != null && !target.equals("")

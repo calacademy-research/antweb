@@ -55,6 +55,8 @@ if (target != null) {
 <input type="password" name="password" value="" style="border: 1px solid #B9B9B9; font-family: inherit; padding: 2px; position: relative; top: -1px; width: 140px;">
 </p>
 
+<p><label><input type="checkbox" name="rememberMe" value="on"> Keep me logged in on this computer (30 days)</label></p>
+
 <p align="center"><input border="0" name="value" type="submit" class="tool_label" style="float:none;" value="Login">
 
 <input border="0" type="submit" name="value" class="tool_label" style="float:none;" value="Create Account">
