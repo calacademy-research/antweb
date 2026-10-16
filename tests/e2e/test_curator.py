@@ -43,6 +43,7 @@ ADMIN_ONLY = [
     "/serverDebug.do",
     "/dbStatus.do",
     "/loginAs.do?id=1",
+    "/sanitizeDescriptions.do",
 ]
 
 

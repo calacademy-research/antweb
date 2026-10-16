@@ -1288,6 +1288,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
                 scope="request">
         <forward name="success" path="/curate/passwordResetCampaign.jsp" />
     </action>
+
+    <!-- Admin: preview / apply sanitizing of page text saved before edits were sanitized. -->
+    <action path="/sanitizeDescriptions"
+                type="org.calacademy.antweb.util.SanitizeDescriptionsAction"
+                scope="request">
+    </action>
     
     <action path="/manageMuseum"
             type="org.calacademy.antweb.curate.ManageMuseumsAction"
