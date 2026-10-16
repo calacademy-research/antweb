@@ -214,8 +214,8 @@ public class LoginMgr extends Manager {
 	    return isDeveloper(accessLogin);
 	}
 	public static boolean isDeveloper(Login accessLogin) {
-        return accessLogin != null
-                // A specific list of Developer admins.
+        return accessLogin != null && accessLogin.isAdmin()
+                // A specific list of Developer admins (only while they are admins).
                 && (
                 accessLogin.getId() == Login.MARK
                         || accessLogin.getId() == Login.TEST_LOGIN
@@ -227,7 +227,7 @@ public class LoginMgr extends Manager {
 	    return LoginMgr.isMark(getAccessLogin(request));
 	}
 	public static boolean isMark(Login accessLogin) {
-        return accessLogin != null && accessLogin.getId() == 22;
+        return accessLogin != null && accessLogin.isAdmin() && accessLogin.getId() == 22;
     }
 
     public static boolean isPeter(HttpServletRequest request) {

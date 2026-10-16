@@ -120,7 +120,8 @@ public class Login implements Comparable {
     
     public boolean isDeveloper() {
         // This should probably be a field in the database.  But this is simpler.
-        return getId() == 22;
+        // Only while the account is still an admin (former developers lose it with admin).
+        return isAdmin() && getId() == 22;
     }
     
     public Boolean isUploadSpecimens() {
