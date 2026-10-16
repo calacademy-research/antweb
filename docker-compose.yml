@@ -89,15 +89,33 @@ services:
       - ./logbak:/usr/local/antweb/log/
       - antweb_genInc:/usr/local/antweb/web/genInc
 
-      - ./build.xml:/antweb/deploy/build.xml
-      - ./bin:/antweb/deploy/bin
-      - ./doc:/antweb/deploy/doc
-      - ./etc:/antweb/deploy/etc
-      - ./META-INF:/antweb/deploy/META-INF
-      - ./src:/antweb/deploy/src
-      - ./test:/antweb/deploy/test
-      - ./web:/antweb/deploy/web
-      - ./WEB-INF:/antweb/deploy/WEB-INF
+      # Code and settings are read-only inside the container: ant deploy only reads
+      # them (it writes to build/ and /usr/local/antweb), so code running in Tomcat
+      # cannot change the checkout on the host.
+      - ./build.xml:/antweb/deploy/build.xml:ro
+      - ./bin:/antweb/deploy/bin:ro
+      - ./doc:/antweb/deploy/doc:ro
+      - ./etc:/antweb/deploy/etc:ro
+      - ./META-INF:/antweb/deploy/META-INF:ro
+      - ./src:/antweb/deploy/src:ro
+      - ./test:/antweb/deploy/test:ro
+      - ./web:/antweb/deploy/web:ro
+      - ./WEB-INF:/antweb/deploy/WEB-INF:ro
+
+    # No process in the container may gain privileges (setuid binaries), and root in
+    # the container keeps only the capabilities cron and Tomcat need.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+      - KILL
+      - AUDIT_WRITE
 
     logging:      # only store the last 50mb of logs. more may be captured in the mounted logs/ dir
       driver: "json-file"
