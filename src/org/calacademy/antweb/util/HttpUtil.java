@@ -261,7 +261,11 @@ public abstract class HttpUtil {
         // Allowed because of locality names: http://localhost/antweb/locality.do?name=Montagne%20d%27Ambre%20975
         //if (queryString.contains("%27")) reasonCode = 1;    // single quote
         if (queryString.contains("%22")) reasonCode = 2;    // double quote
-        if (queryString.contains("script")) reasonCode = 3;
+        // Real script injection only: "script" alone also matches "description.do", which the
+        // header Login link carries as its target (Invalid query string (3) on 2026-10-16).
+        String lowerQuery = queryString.toLowerCase();
+        if (lowerQuery.contains("<script") || lowerQuery.contains("%3cscript")
+            || lowerQuery.contains("javascript:") || lowerQuery.contains("javascript%3a")) reasonCode = 3;
         if (queryString.contains("..%2f")) reasonCode = 4;
         if (queryString.contains("./")) reasonCode = 5;
         if (queryString.contains("../")) reasonCode = 6;
