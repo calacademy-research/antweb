@@ -138,11 +138,12 @@ public final class PasswordResetMgr {
      */
     public static String sendResetLink(Connection connection, int loginId, String displayName, String email,
                                        String ip, String subject, String intro) {
-        return sendResetLink(connection, loginId, displayName, email, ip, subject, intro, VALID_MINUTES);
+        return sendResetLink(connection, loginId, displayName, email, ip, subject, intro, VALID_MINUTES, false);
     }
 
+    /** required: the account must reset (campaign, or login refused), so the email must not say it can be ignored. */
     public static String sendResetLink(Connection connection, int loginId, String displayName, String email,
-                                       String ip, String subject, String intro, int validMinutes) {
+                                       String ip, String subject, String intro, int validMinutes, boolean required) {
         if (email == null || !email.contains("@")) return NO_EMAIL;
         try {
             PasswordResetDb db = new PasswordResetDb(connection);
@@ -153,7 +154,7 @@ public final class PasswordResetMgr {
             String token = newToken();
             db.insertToken(loginId, hashToken(token), validMinutes, ip);
             String link = AntwebProps.getSecureDomainApp() + "/resetPassword.do?token=" + token;
-            boolean sent = Emailer.sendTransactional(email, subject, emailBody(displayName, intro, link, validMinutes));
+            boolean sent = Emailer.sendTransactional(email, subject, emailBody(displayName, intro, link, validMinutes, required));
             logEvent("reset link " + (sent ? "emailed" : "NOT emailed") + " login:" + loginId + " subject:" + subject);
             return sent ? SENT : MAIL_FAILED;
         } catch (SQLException e) {
@@ -169,10 +170,10 @@ public final class PasswordResetMgr {
     }
 
     static String emailBody(String displayName, String intro, String link) {
-        return emailBody(displayName, intro, link, VALID_MINUTES);
+        return emailBody(displayName, intro, link, VALID_MINUTES, false);
     }
 
-    static String emailBody(String displayName, String intro, String link, int validMinutes) {
+    static String emailBody(String displayName, String intro, String link, int validMinutes, boolean required) {
         String login = AntwebProps.getSecureDomainApp() + "/login.do";
         String hello = displayName == null || displayName.trim().isEmpty() ? "Hello," : "Hello " + Html.esc(displayName.trim()) + ",";
         return hello + "<br><br>\n"
@@ -182,7 +183,10 @@ public final class PasswordResetMgr {
             + "The link works only once. Your new password must be at least " + PasswordPolicy.MIN_LENGTH + " characters long.<br><br>\n"
             + "If the link has expired, go to <a href=\"" + Html.escAttr(login) + "\">" + Html.esc(login) + "</a>,"
             + " click \"Forgot your password?\" and enter your email address: a new link arrives within a minute.<br><br>\n"
-            + "If you did not ask for this, you can ignore this email.<br><br>\n"
+            // Only a link someone asked for (forgot password) can be ignored; a required
+            // reset (campaign, or login refused until reset) must not say so.
+            + (!required ? "If you did not ask for this, you can ignore this email.<br><br>\n"
+                : "This is required: your old AntWeb password no longer works, so you need to set a new one before you can log in.<br><br>\n")
             + "AntWeb<br>California Academy of Sciences";
     }
 
@@ -252,7 +256,7 @@ public final class PasswordResetMgr {
                     } else {
                         String r = sendResetLink(c, a.id, a.getDisplayName(), a.email, "campaign:" + adminId, SUBJECT_CAMPAIGN,
                             "As a security precaution, AntWeb is asking all curators and administrators to set a new password.",
-                            CAMPAIGN_VALID_MINUTES);
+                            CAMPAIGN_VALID_MINUTES, true);
                         if (SENT.equals(r)) sent++;
                         else if (RATE_LIMITED.equals(r)) limited++;
                         else failed++;
