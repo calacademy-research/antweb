@@ -333,12 +333,6 @@ public class UtilAction extends AntwebAction {
 				returnLoc = mapping.findForward("adminMessage");
 			  }
 			  
-			  if (action.equals("imageCheck")) {
-			    AntwebFunctions.imageCheck();     
-			    String message = "imageCheck performed.";         
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminMessage");
-			  }
 
 			  if (action.equals("isRestart")) {
 				  String message = "false";
