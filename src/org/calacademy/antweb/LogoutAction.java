@@ -30,6 +30,9 @@ public final class LogoutAction extends AntwebAction {
         String target = ((LoginForm) form).getTarget();
         if (!HttpUtil.isSafeRedirectTarget(target)) target = null;
 
+        // Forget "Keep me logged in" for this browser (token row and cookie).
+        RememberMeMgr.forget(request, response);
+
         // End the session entirely (not just the login attribute). Pages create a fresh one if they need it.
         HttpSession session = request.getSession(false);
         if (session != null) {

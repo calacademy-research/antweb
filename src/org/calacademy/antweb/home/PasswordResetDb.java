@@ -15,6 +15,7 @@ import org.calacademy.antweb.util.PasswordHash;
  *   password_reset          one row per reset link; only the SHA-256 of the token is stored
  *   login.must_reset        1 = the next login must set a new password first
  *   login.session_version   incremented to end every existing session of a login
+ *                           (also deletes the login's "Keep me logged in" tokens, RememberTokenDb)
  *
  * ensureSchema() creates the table and columns when missing (called once at
  * startup from LoginMgr). Same DDL: db/upgrade/8.108/2026-10-16.sql.
@@ -132,6 +133,7 @@ public class PasswordResetDb extends AntwebDb {
             stmt.setInt(2, loginId);
             stmt.executeUpdate();
         }
+        RememberTokenDb.deleteForLoginQuietly(getConnection(), loginId);
         return getSessionVersion(loginId);
     }
 
@@ -146,6 +148,7 @@ public class PasswordResetDb extends AntwebDb {
             stmt.executeUpdate();
         }
         invalidateOutstanding(loginId);
+        RememberTokenDb.deleteForLoginQuietly(getConnection(), loginId);
         return getSessionVersion(loginId);
     }
 
@@ -164,6 +167,7 @@ public class PasswordResetDb extends AntwebDb {
             stmt.setInt(1, loginId);
             stmt.executeUpdate();
         }
+        RememberTokenDb.deleteForLoginQuietly(getConnection(), loginId);
         return getSessionVersion(loginId);
     }
 
@@ -183,6 +187,7 @@ public class PasswordResetDb extends AntwebDb {
             stmt.setInt(1, loginId);
             stmt.executeUpdate();
         }
+        RememberTokenDb.deleteForLoginQuietly(getConnection(), loginId);
     }
 
     /** A login in the reset campaign: administrators and curators. */

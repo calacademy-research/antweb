@@ -70,6 +70,9 @@ public class SessionRequestFilter implements Filter {
 
         try {
 
+            // "Keep me logged in": log in from the AW_REMEMBER cookie if the session has no login.
+            // Only pages (.do) reach this filter; without the cookie this costs nothing.
+            RememberMeMgr.autoLogin(request, response);
 
             try {
 
