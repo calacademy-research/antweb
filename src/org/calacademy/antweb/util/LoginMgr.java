@@ -157,11 +157,16 @@ public class LoginMgr extends Manager {
      * Log the login in: new session id (prevents session fixation), then the login in the session.
      * Used by the login form (LoginAction) and by "Keep me logged in" (RememberMeMgr).
      */
+    public static final int LOGGED_IN_IDLE_SECONDS = 4 * 60 * 60;
+
     public static void logIn(HttpServletRequest request, Login login) {
         request.getSession();
         request.changeSessionId();
         // New CSRF token for the logged-in session (a token seen before login is not reused).
         request.getSession().removeAttribute(Csrf.SESSION_ATTR);
+        // Logged-in sessions last 4 hours idle (anonymous ones keep Tomcat's 30 minutes), so a
+        // curator editing a long page doesn't lose the session (and its form token) mid-edit.
+        request.getSession().setMaxInactiveInterval(LOGGED_IN_IDLE_SECONDS);
         setAccessLogin(request, login);
     }
 
