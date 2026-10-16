@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.Group;
 import org.calacademy.antweb.util.A;
 import org.calacademy.antweb.util.AntwebProps;
+import org.calacademy.antweb.util.Html;
 import org.calacademy.antweb.util.HttpUtil;
 import org.calacademy.antweb.util.LogMgr;
 
@@ -432,17 +433,22 @@ public class MessageMgr {
 
       void writeDetails() {
         if (details.size() > 0) {
-            String fileName = "detail/" + getKey() + getGroup().getId() + ".jsp";
+            // Written as .html (never .jsp: a .jsp under the web root is compiled and run by
+            // Tomcat), with each curator-supplied detail HTML-escaped.
+            String fileName = "detail/" + getKey() + getGroup().getId() + ".html";
             LogMgr.emptyLog(fileName);
+            LogMgr.emptyLog("detail/" + getKey() + getGroup().getId() + ".jsp"); // old-style copy
+            LogMgr.appendLog(fileName, "<html><head><meta charset=\"utf-8\"/></head><body>");
             for (String detail : details) {
-              LogMgr.appendLog(fileName, detail);
-            }        
+              LogMgr.appendLog(fileName, Html.esc(detail) + "<br>");
+            }
+            LogMgr.appendLog(fileName, "</body></html>");
         }
       }
       String getDetailLink() {
         if (getGroup() == null) return "";
         if (details.size() > 0) {
-  	  	  return " (<a href='" + AntwebProps.getDomainApp() + "/web/log/detail/" + getKey() + getGroup().getId() + ".jsp'>details</a>)";
+  	  	  return " (<a href='" + AntwebProps.getDomainApp() + "/web/log/detail/" + getKey() + getGroup().getId() + ".html'>details</a>)";
         }
         return "";
       }

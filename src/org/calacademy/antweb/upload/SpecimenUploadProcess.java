@@ -80,7 +80,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 		if (skipRecord == null) {
 		  if (code == null || code.length() == 0) {
 			s_log.warn("processLine() code is null or empty string line:" + lineNum + " taxon:" + taxonName);
-			getMessageMgr().addToMessages(MessageMgr.codeNotFound, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code);
+			getMessageMgr().addToMessages(MessageMgr.codeNotFound, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + Html.esc(code));
 			skipRecord = "codeIsNull";
 		  }
 		}
@@ -88,7 +88,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 		if (skipRecord == null) {
 		  if (Utility.isBlank(subfamily)) {
 			//s_log.warn("processLine() subfamily is empty string line:" + lineNum + " taxon:" + taxonName);
-			getMessageMgr().addToMessages(MessageMgr.emptyStringSubfamily, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code + " taxon:" + taxonName);
+			getMessageMgr().addToMessages(MessageMgr.emptyStringSubfamily, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + Html.esc(code) + " taxon:" + Html.esc(taxonName));
 			skipRecord = "subfamilyEmptyString";
 		  }
 		}
@@ -96,7 +96,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 		if (skipRecord == null) {
 		  if (Utility.isBlank(genus)) {
 			  s_log.debug("processLine() genus is empty string line:" + lineNum + " displayLineNum:" + LineNumMgr.getDisplayLineNum(lineNum) + " genus:" + genus + " taxon:" + taxonName);
-			  getMessageMgr().addToMessages(MessageMgr.emptyStringGenus, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code + " taxon:" + taxonName);
+			  getMessageMgr().addToMessages(MessageMgr.emptyStringGenus, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + Html.esc(code) + " taxon:" + Html.esc(taxonName));
 			  skipRecord = "genusEmptyString";
 		  }
 		}
@@ -110,7 +110,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 		      species = "(" + genus + ")";
             }
 			//A.log("processLine() species is empty string line:" + lineNum + " taxon:" + taxonName);
-			getMessageMgr().addToMessages(MessageMgr.emptyStringSpecies, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + code + " taxon:" + taxonName);
+			getMessageMgr().addToMessages(MessageMgr.emptyStringSpecies, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + Html.esc(code) + " taxon:" + Html.esc(taxonName));
 			skipRecord = "speciesEmptyString";
 		  }
 		}
@@ -152,7 +152,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 			  // add to the nonLegit subfamily list
 			  //A.log("processLine() invalid subfamily !isValidSubfamily(" + family + ", " + subfamily + ")");
 			  String offender = "taxonName:" + taxonName + " lineNum:" + lineNum;
-			  getMessageMgr().addToMapMessages(MessageMgr.invalidSubfamilyMap, Formatter.initCap(subfamily), offender);
+			  getMessageMgr().addToMapMessages(MessageMgr.invalidSubfamilyMap, Html.esc(Formatter.initCap(subfamily)), Html.esc(offender));
 			  //A.log("processLine() isValidSubfamily failure.  " + offender);
 			  skipRecord = "invalidSubfamily";
 			}

@@ -47,11 +47,11 @@ pages, and managing regional species lists. <a href="<%= domainApp %>/about.do">
     </div>
     <div id="recent_activity">
         <b>Recent Images:</b><br />
-        <%= FileUtil.getContent("web/genInc/recentImages_gen_inc.jsp") %>
+        <%= FileUtil.getContent("web/genInc/recentImages_gen_inc.html") %>
         <span class="right"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30">More &#187;</a></span>
         <div class="clear"></div>
         <b>Recent Edits:</b><br />
-        <%= FileUtil.getContent("web/genInc/recentDescEdits.jsp") %>
+        <%= FileUtil.getContent("web/genInc/recentDescEdits.html") %>
         <div class="clear"></div>
     </div>
     <div class="clear"></div>

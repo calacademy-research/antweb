@@ -54,6 +54,11 @@ public final class OrphanSubfamiliesAction extends AntwebAction {
             String taxonName = theForm.getTaxonName();
             String source = theForm.getSource();
             if (action != null) {       
+              if (action.equals("delete") && !LoginMgr.isAdmin(request)) {
+                // Deleting from a link (GET): administrators only.
+                request.setAttribute("message", "Only an AntWeb administrator may delete orphaned records.");
+                return mapping.findForward("message");
+              }
               if (action.equals("delete")) {
                  if (taxonName != null && !"".equals(taxonName)) {
                    orphansDb.deleteTaxon(taxonName);

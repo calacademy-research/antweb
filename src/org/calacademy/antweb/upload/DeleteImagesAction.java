@@ -1,6 +1,7 @@
 package org.calacademy.antweb.upload;
 
 import org.calacademy.antweb.AntwebAction;
+import org.calacademy.antweb.Login;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -35,6 +36,17 @@ public final class DeleteImagesAction extends AntwebAction {
         // Require a logged-in curator: this action changes data.
         ActionForward denied = LoginMgr.mustBeCurator(request, mapping); if (denied != null) return denied;
 
+        // Deleting changes data: only from the form (POST), never from a link.
+        if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            request.setAttribute("message", "Images can only be deleted with the Delete Selected Images button on the Recent Images page.");
+            return mapping.findForward("message");
+        }
+        // Curators may delete only images owned by their own group; admins may delete any.
+        Login accessLogin = LoginMgr.getAccessLogin(request);
+        boolean isAdmin = LoginMgr.isAdmin(accessLogin);
+        int deletedCount = 0;
+        int refusedCount = 0;
+
         String message = null;
         
         // Extract attributes we will need
@@ -63,11 +75,29 @@ public final class DeleteImagesAction extends AntwebAction {
                 connection = DBUtil.getConnection(dataSource, dbMethodName);
 
                 for (String s : chosen) {
-                    thisResult = results.get(Integer.parseInt(s));
+                    int index = Integer.parseInt(s);
+                    if (index < 0 || index >= results.size()) continue;
+                    thisResult = results.get(index);
 
                     ImageDb imageDb = new ImageDb(connection);
                     int shot = Integer.parseInt(thisResult.getShotNumber());
+                    if (!isAdmin) {
+                        Set<Integer> ownerGroups = imageDb.getImageGroupIds(thisResult.getCode(), thisResult.getShotType(), shot);
+                        boolean ownsIt = !ownerGroups.isEmpty();
+                        for (Integer ownerGroup : ownerGroups) {
+                            if (ownerGroup == null || ownerGroup != accessLogin.getGroupId()) ownsIt = false;
+                        }
+                        if (!ownsIt) {
+                            s_log.warn("execute() refused delete of image code:" + thisResult.getCode() + " shot:" + thisResult.getShotType() + shot
+                                + " by login:" + accessLogin.getId() + " group:" + accessLogin.getGroupId() + " owners:" + ownerGroups);
+                            refusedCount++;
+                            continue;
+                        }
+                    }
                     imageDb.deleteImage(thisResult.getCode(), thisResult.getShotType(), shot);
+                    deletedCount++;
+                    LogMgr.appendLog("admin.log", "deleteImages login:" + accessLogin.getId() + " code:" + thisResult.getCode()
+                        + " shot:" + thisResult.getShotType() + shot, true);
                 }
             } catch (Exception e) {
                 s_log.error("execute() e:" + e);
@@ -80,6 +110,12 @@ public final class DeleteImagesAction extends AntwebAction {
             
             // Set a transactional control token to prevent double posting
             saveToken(request);
+
+            if (refusedCount > 0) {
+                request.setAttribute("message", "Deleted " + deletedCount + " image(s). Not deleted: " + refusedCount
+                    + " image(s) that belong to another group. Ask an AntWeb administrator if they should be removed.");
+                return mapping.findForward("message");
+            }
             
             request.setAttribute("group", group);
             request.setAttribute("daysAgo", daysAgo);

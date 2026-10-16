@@ -65,6 +65,15 @@ public final class OrphanDescEditsAction extends AntwebAction {
                   return null;                
               }
               if (action != null) {       
+                if (("delete".equals(action) || "deleteTaxon".equals(action)) && !LoginMgr.isAdmin(request)) {
+                  // Deleting from a link (GET): administrators only.
+                  request.setAttribute("message", "Only an AntWeb administrator may delete orphaned records.");
+                  return mapping.findForward("message");
+                }
+                if ("transfer".equals(action) && !"POST".equalsIgnoreCase(request.getMethod())) {
+                  request.setAttribute("message", "Please use the Transfer form.");
+                  return mapping.findForward("message");
+                }
                 if (action.equals("delete")) {
                    if (taxonName != null) {
                      deleteTaxonDescEdits(connection, taxonName);

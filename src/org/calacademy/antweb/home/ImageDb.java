@@ -254,6 +254,27 @@ public class ImageDb extends AntwebDb {
         return specimenImage;
     }
 
+    /**
+     * The access groups that own an image (group_image rows). Empty when the image is
+     * not found or has no owner recorded.
+     */
+    public Set<Integer> getImageGroupIds(String code, String shotType, int shotNumber) {
+        Set<Integer> groupIds = new HashSet<>();
+        String query = "select gi.group_id from image i, group_image gi"
+            + " where i.id = gi.image_id and i.image_of_id = ? and i.shot_type = ? and i.shot_number = ?";
+        try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
+            stmt.setString(1, code);
+            stmt.setString(2, shotType);
+            stmt.setInt(3, shotNumber);
+            try (ResultSet rset = stmt.executeQuery()) {
+                while (rset.next()) groupIds.add(rset.getInt("group_id"));
+            }
+        } catch (SQLException e) {
+            s_log.error("getImageGroupIds() code:" + code + " e:" + e);
+        }
+        return groupIds;
+    }
+
     public boolean deleteImage(String code, String shotType, int shotNumber) {
         boolean deleted = false;
         String dml = "";

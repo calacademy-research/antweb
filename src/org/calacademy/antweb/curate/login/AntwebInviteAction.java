@@ -35,7 +35,18 @@ public final class AntwebInviteAction extends AntwebAction {
         Login accessLogin = LoginMgr.getAccessLogin(request);
 
         boolean isInvitee = accessLogin == null;    // administrators are NOT invitees,
-        
+
+        // Old invitation links (antwebInvite.do?email=...) opened the new login to anyone who
+        // knew the email address. Invitations are now one-time links to resetPassword.do
+        // (see SaveLoginAction, PasswordResetMgr.newInviteLink). Only administrators may still
+        // use this page, to look at a pending invitation.
+        if (!LoginMgr.isAdmin(accessLogin)) {
+            request.setAttribute("message", "This invitation link is no longer valid. Please ask the AntWeb administrator"
+                + " to send you a new invitation link, or use \"Forgot your password?\" on the login page.");
+            return mapping.findForward("message");
+        }
+        isInvitee = false;
+
         Login login = null; 
         Connection connection = null;
         try {

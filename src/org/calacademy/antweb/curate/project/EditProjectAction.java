@@ -45,6 +45,11 @@ public final class EditProjectAction extends AntwebAction {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "EditProjectAction.execute()");
 
+            if ("delete".equals(editProjectForm.getAction()) && !LoginMgr.isAdmin(request)) {
+              // Deleting is done from a link (GET): administrators only.
+              request.setAttribute("message", "Only an AntWeb administrator may delete a project.");
+              return mapping.findForward("message");
+            }
             if ("delete".equals(editProjectForm.getAction())) {
               ProjectDb projectDb = new ProjectDb(connection);
               projectDb.deleteSpeciesList(projectName);

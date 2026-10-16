@@ -16,6 +16,20 @@ import org.apache.commons.logging.LogFactory;
 public class DescriptionAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(DescriptionAction.class);
+
+    // The page-text fields a curator may edit (the editField / title column). Anything else
+    // is refused: the value goes into SQL and names what is shown on the page.
+    public static final Set<String> EDIT_FIELDS = Set.of(
+        "author", "authorBio", "authorImage", "biology", "comments", "contents", "distribution",
+        "identification", "images", "notes", "overview", "references", "specimenImage1", "specimenImage2",
+        "specimenImage3", "taxanomicnotes", "taxonomicnotes", "taxonomichistory", "taxonomictreatment",
+        "textauthor", "revdate", "videos");
+
+    // Escape a value for a single-quoted MySQL string literal (backslash first).
+    private static String sqlString(String value) {
+        if (value == null) return null;
+        return value.replace("\\", "\\\\").replace("'", "''");
+    }
       
     protected boolean saveDescriptionEdit(DescriptionForm form, Describable editObject, Login accessLogin, HttpServletRequest request, Connection connection) 
         throws SQLException {            
@@ -29,7 +43,18 @@ public class DescriptionAction extends AntwebAction {
             //A.log("saveDescriptionEdit() editField:" + editField + " is:" + isSaveEditField);          
 
             if (isSaveEditField && editField != null) {
+              if (!EDIT_FIELDS.contains(editField)) {
+                s_log.warn("saveDescriptionEdit() refused editField:" + editField + " login:" + accessLogin.getId());
+                request.setAttribute("message", "Unknown page field: " + Html.esc(editField));
+                return false;
+              }
+              // Saving changes data: only from the edit form (POST).
+              if (!"POST".equalsIgnoreCase(request.getMethod())) {
+                request.setAttribute("message", "Please use the edit form to save page text.");
+                return false;
+              }
               String contents = form.getContents();
+              if (contents == null) contents = "";
               String imageUrl = form.getImageUrl();
               String guiDefaultContent = AntwebProps.getProp("gui.default.content");
                   
@@ -52,6 +77,10 @@ public class DescriptionAction extends AntwebAction {
                 s_log.debug("saveDescriptionEdit() 4 editField:" + editField + " contents:" + contents);
                 //A.log("saveDescriptionEdit() editField:" + editField + " imageUrl:" + imageUrl + " contents:" + contents);
               }
+
+              // The text is shown as HTML on public pages: keep only allowed tags and attributes
+              // (HtmlSanitizer). The videos field may also hold YouTube/Vimeo embeds.
+              contents = HtmlSanitizer.sanitize(contents, "videos".equals(editField));
 
               //s_log.info("saveDescriptionEdit() New contents: " + contents);
               success = saveOrUpdateDescription(editObject, request, connection, editField, contents, accessLogin);
@@ -88,13 +117,14 @@ public class DescriptionAction extends AntwebAction {
         String currentDML = "";  // for debugging.
 
         Statement stmt = null;
+        String savedContents = contents;
         try {
             int rowCount = 0;
 
-            // To avoid MySQLSyntaxErrorException
-            contents = contents.replaceAll("'", "''");
+            // To avoid MySQLSyntaxErrorException (and SQL injection)
+            contents = sqlString(contents);
 
-            String whereClause = " where object_key ='" + describable.getName() + "' and title ='" + title + "'"; // + "' and " + codeClause;
+            String whereClause = " where object_key ='" + sqlString(describable.getName()) + "' and title ='" + sqlString(title) + "'"; // + "' and " + codeClause;
             
             String backupCommand = "insert into object_hist (object_key, title, content, edit_id, created, access_group, access_login) " 
               + " select object_key, title, content, edit_id, created, access_group, access_login " //\'" + accessGroupStr + "\', " + accessGroup.getLogin().getId() 
@@ -128,7 +158,7 @@ public class DescriptionAction extends AntwebAction {
                 // record does not exist.  So no record backed up.  Let's insert instead...
                 //if (code != null) code = "'" + code + "'";
                 String insertString = "insert into object_edit (object_key, title, content, is_manual_entry, access_group, access_login) "
-                  + " values ('" + describable.getName() + "', '" + title + "', '" + contents + "', 1, " + accessGroup.getId() + "," + accessLogin.getId() + ")";
+                  + " values ('" + sqlString(describable.getName()) + "', '" + sqlString(title) + "', '" + contents + "', 1, " + accessGroup.getId() + "," + accessLogin.getId() + ")";
 
                 s_log.debug("saveOrUpdateDescription() insertString is:" + insertString);
                 currentDML = insertString;
@@ -137,7 +167,7 @@ public class DescriptionAction extends AntwebAction {
             }
 
             //A.log("saveOrUpdateDescription() taxon:" + taxon);
-            describable.getDescription().put(title, contents);
+            describable.getDescription().put(title, savedContents);
             
         } catch (SQLException e) {
             s_log.error("saveOrUpdateDescription() Name:" + describable.getName() + " Title:" + title + " e:" + e  + " currentDML:" + currentDML);
@@ -179,20 +209,21 @@ public class DescriptionAction extends AntwebAction {
         String currentDML = "";  // for debugging.
 
         Statement stmt = null;
+        String savedContents = contents;
         try {
             int rowCount = 0;
 
-            // To avoid MySQLSyntaxErrorException
-            contents = contents.replaceAll("'", "''");
+            // To avoid MySQLSyntaxErrorException (and SQL injection)
+            contents = sqlString(contents);
             
             String code = null;
             String codeClause = " code is null";
             if (taxon instanceof Specimen) {
-              code = taxon.getCode();
+              code = sqlString(taxon.getCode());
               codeClause = " code = '" + code + "'";
             }
 
-            String whereClause = " where taxon_name='" + taxonName + "' and title='" + title + "' and " + codeClause;
+            String whereClause = " where taxon_name='" + sqlString(taxonName) + "' and title='" + sqlString(title) + "' and " + codeClause;
             
             String backupCommand = "insert into description_hist (taxon_name, title, code, content, edit_id, created, access_group, access_login) " 
               + " select taxon_name, title, code, content, edit_id, created, access_group, access_login " //\'" + accessGroupStr + "\', " + accessGroup.getLogin().getId() 
@@ -226,7 +257,7 @@ public class DescriptionAction extends AntwebAction {
                 // record does not exist.  So no record backed up.  Let's insert instead...
                 if (code != null) code = "'" + code + "'";
                 String insertString = "insert into description_edit (taxon_name, title, code, content, is_manual_entry, access_group, access_login) "
-                  + " values ('" + taxonName + "', '" + title + "', " + code + ", '" + contents + "', 1, " + accessGroup.getId() + "," + accessLogin.getId() + ")";
+                  + " values ('" + sqlString(taxonName) + "', '" + sqlString(title) + "', " + code + ", '" + contents + "', 1, " + accessGroup.getId() + "," + accessLogin.getId() + ")";
 
                 s_log.debug("saveOrUpdateDescription() insertString is:" + insertString);
                 currentDML = insertString;
@@ -244,7 +275,7 @@ public class DescriptionAction extends AntwebAction {
             }
             
             s_log.debug("saveOrUpdateDescription() taxon:" + taxon);
-            taxon.getDescription().put(title, contents);
+            taxon.getDescription().put(title, savedContents);
             
         } catch (SQLException e) {
             s_log.error("saveOrUpdateDescription() taxonName:" + taxonName + " Title:" + title + " e:" + e  + " currentDML:" + currentDML);

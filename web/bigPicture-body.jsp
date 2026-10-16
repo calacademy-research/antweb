@@ -352,7 +352,9 @@ if (theImage.getNumber() > 1) {
      //A.log("execute() group:" + theImage.getGroup().getId());
      if (LoginMgr.isAdmin(request) || theImage.getGroup().getId() == accessGroup.getId()) { 
      %>
-<br><b>(Admin only) <a href='<%= AntwebProps.getDomainApp() %>/bigPicture.do?action=delete&code=<%= theImage.getCode() %>&shot=<%= theImage.getShot() %>&number=<%= theImage.getNumber() %>'>Delete</a> this image (irreversible!)</b>
+<br><form method="POST" action="<%= AntwebProps.getDomainApp() %>/bigPicture.do" style="display:inline" onsubmit="return confirm('Delete this image? This cannot be undone.');">
+<input type="hidden" name="action" value="delete"><input type="hidden" name="code" value="<%= Html.escAttr(theImage.getCode()) %>"><input type="hidden" name="shot" value="<%= Html.escAttr(theImage.getShot()) %>"><input type="hidden" name="number" value="<%= theImage.getNumber() %>">
+<b><input type="submit" value="Delete"> this image (irreversible!)</b></form>
 
 <%   }
    }           

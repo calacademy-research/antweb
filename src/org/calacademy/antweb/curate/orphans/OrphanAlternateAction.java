@@ -67,6 +67,10 @@ public final class OrphanAlternateAction extends AntwebAction {
                   return null;
                }
             } else {
+              if (action != null && action.equals("moveOrDelete") && !"POST".equalsIgnoreCase(request.getMethod())) {
+                request.setAttribute("message", "Please use the form to move or delete.");
+                return mapping.findForward("message");
+              }
               if (action != null && action.equals("moveOrDelete")) {
 			    String newTaxonName = null;
 			    int inaeIndex = taxonName.indexOf("inae");
@@ -77,9 +81,9 @@ public final class OrphanAlternateAction extends AntwebAction {
 			    if (newTaxonName != null) {
 				  s_log.debug("execute() moving taxonName:" + taxonName + " to :" + newTaxonName);
 				  orphansDb.moveTaxonSupportingDataToAlternate(newTaxonName, taxonName);                   
-				  statusMessage = "<b>" + taxonName + " moved to <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + newTaxonName + "'>" + newTaxonName + "</a></b><br><br>";
+				  statusMessage = "<b>" + Html.esc(taxonName) + " moved to <a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.url(newTaxonName) + "'>" + Html.esc(newTaxonName) + "</a></b><br><br>";
 			    } else {
-			      statusMessage = "New taxonName not found for taxonName:" + taxonName + ". No action taken.";
+			      statusMessage = "New taxonName not found for taxonName:" + Html.esc(taxonName) + ". No action taken.";
 			    }
 			    request.setAttribute("statusMessage", statusMessage);
               }

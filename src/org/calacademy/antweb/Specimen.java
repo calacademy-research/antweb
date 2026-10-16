@@ -1011,10 +1011,10 @@ For a locality name without code (this name has special characters):
         String uri = null;        
         String name = null;
         String header = "Specimen:";
-        uri = "code=" + code; 
+        uri = "code=" + Html.url(code); 
 
-        String link = header + " " + "<a href=\"" + url + uri + "\">" 
-            + code
+        String link = header + " " + "<a href=\"" + url + Html.escAttr(uri) + "\">" 
+            + Html.esc(code)
             + "</a>";
 
         //s_log.info("makeLink() rank:" + rank + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);                    

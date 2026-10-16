@@ -127,6 +127,11 @@ public final class BigPictureAction extends AntwebAction {
                   //s_log.warn("execute() theImage:" + theImage +  " group:" + theImage.getGroup() + " accessGroupId:" + accessGroup.getId() + " action:" + form.getAction());
                   if (theImage.getGroup().getId() == accessGroup.getId() || LoginMgr.isAdmin(request)) {
                       if ("delete".equals(form.getAction())) {
+                          // Deleting changes data: only from the Delete button (POST), never from a link.
+                          if (!"POST".equalsIgnoreCase(request.getMethod())) {
+                              request.setAttribute("message", "Use the Delete button on the image page to delete an image.");
+                              return mapping.findForward("message");
+                          }
                           imageDb = new ImageDb(connection);
                           boolean isDeleted = imageDb.deleteImage(code, shot, number);
                           String message = "image NOT deleted"; //. Report error to " + AntwebUtil.getAdminEmail();

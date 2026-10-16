@@ -49,6 +49,8 @@ public final class PasswordResetMgr {
     public static final int VALID_MINUTES = 24 * 60;
     // Links sent by the admin campaign: people may not read the email for days.
     public static final int CAMPAIGN_VALID_MINUTES = 14 * 24 * 60;
+    // Invitation links for a new login (made by an administrator).
+    public static final int INVITE_VALID_MINUTES = 14 * 24 * 60;
     public static final int MAX_PER_LOGIN_PER_HOUR = 3;
     public static final int MAX_PER_IP_PER_HOUR = 10;
 
@@ -161,6 +163,18 @@ public final class PasswordResetMgr {
             s_log.error("sendResetLink() login:" + loginId + " e:" + e);
             return ERROR;
         }
+    }
+
+    /**
+     * A one-time invitation link for a login that has no password yet: the invitee opens it
+     * and sets a password (resetPassword.do). Valid for 14 days, works once, only the
+     * token's SHA-256 is stored. The link only sets the password; it grants no rights.
+     */
+    public static String newInviteLink(Connection connection, int loginId, int adminId) throws SQLException {
+        String token = newToken();
+        new PasswordResetDb(connection).insertToken(loginId, hashToken(token), INVITE_VALID_MINUTES, "invite:" + adminId);
+        logEvent("invitation link created for login:" + loginId + " by login:" + adminId);
+        return AntwebProps.getSecureDomainApp() + "/resetPassword.do?token=" + token;
     }
 
     static String validFor(int minutes) {

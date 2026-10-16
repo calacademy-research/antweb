@@ -805,7 +805,7 @@ public class SpeciesListUpload extends AntwebUpload {
                                   }
                               }
 							} else {
-							  getMessageMgr().addToMessages(MessageMgr.countryNotFound, tempCountry); 
+							  getMessageMgr().addToMessages(MessageMgr.countryNotFound, Html.esc(tempCountry)); 
 							  //A.log("country not found:" + thisCountry + " tempCountry:" + tempCountry);
 							}
 						  }

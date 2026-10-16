@@ -2917,7 +2917,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         ResultSet rset = null;
         try {
             query = "select taxarank, family, subfamily, tribe, genus, subgenus, speciesgroup, species, subspecies "
-              + " from taxon where taxon_name = '" + taxonName +"'";
+              + " from taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) +"'";
 
             stmt = connection.createStatement();
             rset = stmt.executeQuery(query);
@@ -2983,8 +2983,8 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           name = format.capitalizeFirstLetter(genus) + " " + species + " " + subspecies;        
         }
 
-        String link = header + " " + "<a href=\"" + url + uri + "\">" 
-            + name
+        String link = header + " " + "<a href=\"" + url + Html.escAttr(uri) + "\">" 
+            + Html.esc(name)
             + "</a>";
 
         //s_log.info("makeLink() rank:" + rank + " subfamily:" + subfamily + " genus:" + genus + " species:" + species);                    
