@@ -480,7 +480,7 @@ or for Worldants upload
                       if (valueStr.contains("Ivoire")) if (AsciiUtils.isNonAscii(valueStr)) A.log("updateTaxon() 2hasDiacritics:" + valueStr);
 					*/
 
-                            // quote escaping is handled by enquoteLiteral
+                            // quote and backslash escaping is handled by DBUtil.sqlLiteral
                             // if (valueStr.contains("\"") || valueStr.contains("\'")) {
                             //     //A.log("updateTaxon() key:" + key + " value:" + value);
                             //     value = AntFormatter.escapeQuotes(valueStr);
@@ -488,7 +488,7 @@ or for Worldants upload
 
                             if (value.equals("true")) value = "1";
                             if (value.equals("false")) value = "0";
-                            sets.append(translateKeyToColumn(key) + "=" + stmt.enquoteLiteral((String) value) + ",");
+                            sets.append(translateKeyToColumn(key) + "=" + DBUtil.sqlLiteral((String) value) + ",");
                         } else {
                             sets.append(translateKeyToColumn(key) + "=" + value + ",");
                         }
@@ -501,8 +501,8 @@ or for Worldants upload
                 query += " " + sets;
                 query += ", pending=0";
                 if (!query.contains("parent_taxon_name"))
-                    query += ", parent_taxon_name=" + stmt.enquoteLiteral(Taxon.getParentTaxonNameFromName(taxonName));
-                query += " where taxon_name = " + stmt.enquoteLiteral(taxonName);
+                    query += ", parent_taxon_name=" + DBUtil.sqlLiteral(Taxon.getParentTaxonNameFromName(taxonName));
+                query += " where taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
                 if (!query.contains("insert_method")) {
                     s_log.error("updateTaxon() Somewhere in the following stacktrace should have been put an insert_method into item."); // + " query:" + query);
@@ -815,7 +815,7 @@ or for Worldants upload
                         String dateStr = (String) item.get("datecollectedstart");
                         String formatDate = DateUtil.getConstructDateStr(dateStr);
                         fields.append("datecollectedstartstr,");
-                        values.append("'" + dateStr + "',");
+                        values.append(sqlString(dateStr) + ",");
                         if (validDate("datecollectedstart", formatDate, code)) {
                             fields.append("datecollectedstart,");
                             values.append("'" + formatDate + "',");
@@ -829,7 +829,7 @@ or for Worldants upload
                         String dateStr = (String) item.get("datecollectedend");
                         String formatDate = DateUtil.getConstructDateStr(dateStr);
                         fields.append("datecollectedendstr,");
-                        values.append("'" + dateStr + "',");
+                        values.append(sqlString(dateStr) + ",");
                         if (validDate("datecollectedend", formatDate, code)) {
                             fields.append("datecollectedend,");
                             values.append("'" + formatDate + "',");
@@ -846,7 +846,7 @@ or for Worldants upload
                         String dateStr = (String) item.get("datedetermined");
                         String formatDate = DateUtil.getConstructDateStr(dateStr);
                         fields.append("datedeterminedstr,");
-                        values.append("'" + dateStr + "',");
+                        values.append(sqlString(dateStr) + ",");
                         if (validDate("datedetermined", formatDate, code)) {
                             fields.append("datedetermined,");
                             values.append("'" + formatDate + "',");
@@ -870,7 +870,7 @@ or for Worldants upload
                         break;
                     case "backupFileName":
                         fields.append("backup_file_name,");
-                        values.append("'" + item.get("backupFileName") + "',");
+                        values.append(sqlString((String) item.get("backupFileName")) + ",");
                         break;
                     default:
                         try {
@@ -888,20 +888,10 @@ or for Worldants upload
 
                             fields.append(key + ",");
 
-                            // Perhaps a more stringent check here is appropriate.  For now, if the
-                            // last letter of the string is a \ then it fouls up the SQL quoting.
-                            // This was happening for some of Jack's collectionnotes.
-                            String lastChar;
-                            try {
-                                lastChar = value.substring(value.length() - 1);
-                                if (lastChar.equals("\\")) value += " ";
-                            } catch (Exception e) {
-                                // no action taken
-                            }
-                            value = AntFormatter.escapeSingleQuotes(value);
-
-                            //A.log("saveSpecimen() lastCHar:" + lastChar + " value:" + value); // AntFormatter.escapeQuotes(value));
-                            values.append("'" + value + "',");
+                            // Backslashes are escaped along with quotes (MySQL treats \ as an escape
+                            // character in string literals), so a value such as x\' can no longer end
+                            // the literal early. This also replaces the old trailing-backslash workaround.
+                            values.append(sqlString(value) + ",");
                         } catch (ClassCastException e) {
                             s_log.debug("AntwebUpload.saveSpecimen() key:" + key + " e:" + e);
                         }
@@ -998,8 +988,17 @@ or for Worldants upload
         }        
     }
     
+	/** A quoted MySQL string literal: backslashes and single quotes escaped. Null becomes null. */
+	static String sqlString(String value) {
+	  return DBUtil.sqlLiteral(value);
+	}
+
+	private static final java.util.regex.Pattern ISO_DATE = java.util.regex.Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
+
 	private boolean validDate(String dateType, String formatDate, String code) {
 	  if (formatDate == null) return false;
+	  // Only a plain yyyy-MM-dd value goes into the SQL date column.
+	  if (!ISO_DATE.matcher(formatDate).matches()) return false;
 
 	  Date date = DateUtil.getDate(formatDate);
 	  if (date != null) {
