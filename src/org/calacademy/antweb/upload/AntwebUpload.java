@@ -188,7 +188,7 @@ or for Worldants upload
                         if (!Status.VALID.equals(status) && !Status.UNRECOGNIZED.equals(dummyTaxon.getStatus())) {
                             // log. Nope. Won't update a non-valid taxon from worldants.
                             String display = taxonName + " " + status;
-                            getMessageMgr().addToMessages(MessageMgr.nonValidWorldantsDup, display);
+                            getMessageMgr().addToMessages(MessageMgr.nonValidWorldantsDup, Html.esc(display));
 
                             if (Status.HOMONYM.equals(status) || Status.SYNONYM.equals(status)) {
                                 saveTaxon(item, "homonym", false);
@@ -626,7 +626,7 @@ or for Worldants upload
                       String message;
                       if (isValidSubfamilyForGenus) {
                           message = Taxon.displaySubfamilyGenus(subfamily, genus);
-                          getMessageMgr().addToMessages(MessageMgr.generaAreHomonyms, message);
+                          getMessageMgr().addToMessages(MessageMgr.generaAreHomonyms, Html.esc(message));
                       } else {
                           message = Taxon.displaySubfamilyGenusLinkToGenus(subfamily, genus);
                           getMessageMgr().addToMessages(MessageMgr.invalidSubfamilyForGenus, message);
@@ -967,7 +967,7 @@ or for Worldants upload
             s_log.error("saveSpecimen() dml:" + dml + " e:" + e);
             String message = "Specimen jdbc exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e; // + " query:" + query;
             A.log("saveSpecimen() " + message);
-            getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
+            getMessageMgr().addToMessages(MessageMgr.databaseErrors, Html.esc(message));
         } catch (SQLIntegrityConstraintViolationException e) {
             // Redundant. We are now checking above before the query is run.
             String message = "Specimen code:" + code;
@@ -979,7 +979,7 @@ or for Worldants upload
             // if it is the specimen table, we just quit?  Mark, Jan 27, 2011.
             // Should not happen.  We delete all specimens of a given access_group during to upload.
             String message = "Specimen sql exception.  code:" + code + " line:" + LineNumMgr.getLineNum() + " e:" + e;
-            getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
+            getMessageMgr().addToMessages(MessageMgr.databaseErrors, Html.esc(message));
             
             // if a different access_group attempts to load a code of another group's specimen...
 
@@ -1051,24 +1051,24 @@ or for Worldants upload
 
             if (new HomonymDb(getConnection()).isHomonym(taxonName)) {
 //            if (Status.HOMONYM.equals(status)) {
-              String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+              String displayName = Taxon.makeDescriptionLink(taxonName);
               getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);            
             } else {
             
               // if quadrinomial put in a separate list.  Do upload, otherwise don't.
               if (Taxon.isQuadrinomial(taxonName)) {
-                String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+                String displayName = Taxon.makeDescriptionLink(taxonName);
                 getMessageMgr().addToMessages(MessageMgr.unavailableQuadrinomial, displayName);
               } else {
 
                 if (!Taxon.isAnt(taxonName)) {
-					String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+					String displayName = Taxon.makeDescriptionLink(taxonName);
 					//displayName += " (line:" + (String) specimenItem.get("lineNum") + ")";
 					s_log.debug("AntwebUpload.setStatusAndCurrentValidName() displayName:" + displayName);
 					getMessageMgr().addToMessages(MessageMgr.nameNotInFamilyFormicidae, displayName);
                 } else {              
 					// Currently we allow these to be uploaded.  In the future we won't.
-					String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+					String displayName = Taxon.makeDescriptionLink(taxonName);
 					getMessageMgr().addToMessages(MessageMgr.unrecognizedInvalidSpecies, displayName);            
                 }
               }
@@ -1127,12 +1127,12 @@ or for Worldants upload
                     if (currentValidTaxon.getSubspecies() != null) taxonItem.put("subspecies", currentValidTaxon.getSubspecies());
 
                     //String heading = "<b>Recognized invalid species.  Submission replaced with current valid name from AntCat.org <font color=green>(uploaded)</font>:</b>";
-                    String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + originalTaxonName + "'>" + Taxon.displayTaxonName(originalTaxonName) + "</a>";
+                    String displayName = Taxon.makeDescriptionLink(originalTaxonName);
                     if ("".equals(taxonName)) {
                        displayName = "[empty string]";
                       // was: getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);
                     }
-                    String toName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + currentValidTaxonName + "'>" + Taxon.displayTaxonName(currentValidTaxonName) + "</a>";
+                    String toName = Taxon.makeDescriptionLink(currentValidTaxonName);
                     String message = displayName + " -> " + toName;
                     getMessageMgr().addToMessages(MessageMgr.recognizedInvalidSpecies, message);
                   }
@@ -1155,14 +1155,14 @@ or for Worldants upload
        // This is overridden in for specimen in SpecimenUpload.java
        if (Status.UNRECOGNIZED.equals(status.getValue())) {         
          // getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);
-         String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+         String displayName = Taxon.makeDescriptionLink(taxonName);
          getMessageMgr().addToMessages(MessageMgr.taxonNameNotFoundInBolton, displayName);
          //return;  // We do want to upload these, and flag them.
        } else if (Status.SYNONYM.equals(status.getValue())) {
          // This condition could expand to be any status that has a current valid name.
          
          // We are not yet doing this with specimen uploads.  Should we?  No, prolly go to the new Species List Tool model instead.
-         String displayName = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+         String displayName = Taxon.makeDescriptionLink(taxonName);
          if ("".equals(taxonName)) {
             displayName = "[empty string]";
             // was: getUploadDetails().getPassWorldantsSpeciesCheckSet().add(taxonName);

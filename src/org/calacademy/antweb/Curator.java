@@ -22,7 +22,7 @@ public class Curator extends Login {
     private Upload lastUpload;
     
     public String getLink() {
-      return  "<a href='" + AntwebProps.getDomainApp() + "/curator.do?id=" + getId() + "'>" + getDisplayName() + "</a>";
+      return  "<a href='" + AntwebProps.getDomainApp() + "/curator.do?id=" + getId() + "'>" + Html.esc(getDisplayName()) + "</a>";
     }
     
     public int getSpecimenUploadCount() {
