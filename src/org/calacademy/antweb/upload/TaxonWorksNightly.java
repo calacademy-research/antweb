@@ -63,15 +63,50 @@ public final class TaxonWorksNightly {
 
     private static final java.util.concurrent.atomic.AtomicBoolean s_running = new java.util.concurrent.atomic.AtomicBoolean(false);
 
+    /** Minutes between checks while waiting for TaxonWorks to build a fresh archive. */
+    static final int WAIT_STEP_MINUTES = 3;
+
     public static String run(Connection connection) {
+        return run(connection, 0);
+    }
+
+    /**
+     * TaxonWorks builds a new archive at most once every 24 hours, and only when the
+     * download link is requested; the request that starts a build still receives the
+     * previous archive. So the nightly run (waitMinutes > 0) keeps checking every few
+     * minutes, up to waitMinutes, while the archive is unchanged or still being built,
+     * and uploads the fresh one as soon as it is there. An admin run (waitMinutes 0)
+     * checks once.
+     */
+    public static String run(Connection connection, int waitMinutes) {
         String result;
         // One run at a time: a second request (a browser retry, say) would read the
         // files the first run is still writing.
         if (!s_running.compareAndSet(false, true)) {
             result = "skipped: already running";
         } else {
+            long start = System.currentTimeMillis();
+            int checks = 0;
             try {
-                result = runOnce(connection);
+                while (true) {
+                    checks++;
+                    result = runOnce(connection);
+                    long waited = (System.currentTimeMillis() - start) / 60000;
+                    if (!isWaitingForTaxonWorks(result) || waited + WAIT_STEP_MINUTES > waitMinutes) break;
+                    if (checks == 1) {
+                        LogMgr.appendLog(LOG, DateUtil.getFormatDateTimeStr() + " " + result
+                            + "; waiting for TaxonWorks to build a new archive (checking every "
+                            + WAIT_STEP_MINUTES + " min, up to " + waitMinutes + " min)");
+                    }
+                    Thread.sleep(WAIT_STEP_MINUTES * 60000L);
+                }
+                if (checks > 1) {
+                    result += " (after " + checks + " checks, "
+                        + (System.currentTimeMillis() - start) / 60000 + " min)";
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                result = "FAILED: interrupted while waiting for TaxonWorks";
             } catch (Exception e) {
                 result = "FAILED: " + e;
                 s_log.error("run() " + result, e);
@@ -174,6 +209,12 @@ public final class TaxonWorksNightly {
             UploadAction.setIsInUploadProcess(null);
             connection.setAutoCommit(autoCommit);
         }
+    }
+
+    /** True when the archive is the one already uploaded, or TaxonWorks is still building it (HTTP 422). */
+    static boolean isWaitingForTaxonWorks(String result) {
+        return result != null && (result.startsWith("skipped: archive unchanged")
+            || result.startsWith("skipped: TaxonWorks answered HTTP 422"));
     }
 
     private static boolean isZip(Path file) throws IOException {

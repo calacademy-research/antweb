@@ -221,7 +221,8 @@ public class UtilDataAction extends AntwebAction {
                 message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
                 // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
-                message += " " + doAction("taxonWorksNightly", form, accessLogin, accessGroup, connection, request, mapping);
+                // Waits up to 90 minutes for TaxonWorks to build a fresh archive (see TaxonWorksNightly.run).
+                message += " taxonWorksNightly: " + org.calacademy.antweb.upload.TaxonWorksNightly.run(connection, 90);
                 TaxonMgr.populate(connection, true, false);
             }
 
