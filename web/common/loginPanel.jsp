@@ -82,29 +82,13 @@
 		<img src="<%= domainApp %>/image/redDot.png" width="10" title="<%= AntwebMgr.getServerMessage() %>&nbsp;">
 	 <% } %>
         
-     <% if (!HttpUtil.isOnline()) { %>
-          <a href='http://localhost/login.do'>
-     <% } %>
-     Login
-     <% if (!HttpUtil.isOnline()) { %>
-          </a>
-     <% } %>
+     <%-- One login form for everyone: the full login page (it has "Keep me logged in"),
+          then back to this page. --%>
+     <a href="<%= AntwebProps.getSecureDomainApp() %>/login.do<%= org.calacademy.antweb.util.Html.escAttr(aTarget) %>">Login</a>
         </div>
  <% } %>
 
-        <div id="login_form" style="display:none;">
-            <form name="loginForm" method="post" action="<%= AntwebProps.getSecureDomainApp() %>/login.do">  
-            <input type="hidden" name="target" value="<%= org.calacademy.antweb.util.Html.escAttr(target) %>"> 
-            Username: <input id="login_username" type="text" class="login_input" name="userName"> Password: <input type="password" class="login_input" name="password"> 
-            <input type="submit" class="login_submit" value="Go">
-            <br />
-            <div class="small" style="text-align:right; width:450px;">                
-              <a href="<%= AntwebProps.getSecureDomainApp() %>/login.do">Create Account</a> |               
-              <a href="<%= domainApp %>/forgotPassword.do">Forgot Password?</a> | 
-              <span class="curator_login">Cancel</span>
-            </div>
-            </form>
-        </div> <!-- end of loginForm -->                     
+                     
 
         <%= siteWarning %>
 
