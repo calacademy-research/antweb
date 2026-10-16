@@ -40,7 +40,7 @@ WRITE_ACTIONS = {
 
 # Write actions that refuse anonymous requests with a message page rather than
 # the log-in page.
-REFUSE_WITH_MESSAGE = {"/editLogin"}
+REFUSE_WITH_MESSAGE = {"/editLogin", "/antwebInvite"}  # antwebInvite: old invite links now say "no longer valid"
 
 # Actions whose anonymous result varies between runs (AntWeb shows its
 # "We'll be right back" page on some first requests of a new session).
