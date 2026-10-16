@@ -51,10 +51,8 @@ RUN chown -R tomcat:tomcat /usr/local/tomcat && \
 USER tomcat
 
 
-RUN mv webapps.dist/manager webapps/ && \
-    mv webapps.dist/host-manager webapps/
-COPY --chown=tomcat docker/antweb/tomcat/webapps/manager/ webapps/manager/META-INF/
-COPY --chown=tomcat docker/antweb/tomcat/webapps/host-manager/ webapps/host-manager/META-INF/
+# Tomcat's manager and host-manager apps are not installed (removed 2026-10-15):
+# nothing uses them, and they would let anyone with the password deploy code.
 
 
 WORKDIR /usr/local/tomcat/conf

@@ -9,21 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [9.1.0] - 2026-10-16
+
+AntWeb's software brought up to current, supported versions, and several long-standing issues fixed. Contributors: Sathya (Sathyavrv), Gladrin (Gladrin22), Antony (antony-jr), Brian Fisher (bpescador).
+
 ### Added
-- Semantic versioning system (SemVer 2.0)
-- GitHub Releases integration
-- Version display on website (footer, about page, admin dashboard)
-- API endpoint `/api/v3/version` for programmatic version checking
-- This CHANGELOG file
-- Comprehensive versioning documentation ([docs/VERSIONING.md](docs/VERSIONING.md))
+- Nightly upload of CAS specimens from TaxonWorks (#27, #89).
+- Upload reports show whether an upload was made from the upload page or by the nightly job (#93).
+- Specimen List Lookup for curators (#61); codes not in AntWeb (and codes containing spaces) are listed separately and data is still returned for the rest (#64, #92).
+- Specimen validation tool (#55).
+- Read-only API endpoint for specimen measurements, `/v3.1/measurements` (#65).
+- Bot check on Create Account (#84).
+- End-to-end test suite that runs against staging on every pull request and daily (#76, #82).
 
 ### Changed
-- Migrated from text-based release notes to structured changelog
-- Established formal release management process
+- Platform: Java 21 (#70), Tomcat 11 (#86), Struts1 Reloaded (#81), MySQL 8.4 (#71), API on Python 3.12 and Flask 3 (#67, #74), updated Java libraries (#69, #73, #79).
+- Specimen uploads move records of a synonymized genus to its current valid genus; named species take AntCat's current combination, e.g. *Wasmannia auropunctata* to *Allomerus auropunctatus* (#95, #97).
+- Login and account security improvements; existing passwords keep working (#83, #87).
+- The API reads the database with a read-only login (#88).
+- Curator and admin actions that change data require login (#75).
+
+### Fixed
+- Nightly jobs that rebuild country, region, museum, bioregion, image and type counts run in full again; since May they had stopped after 5 minutes (#62, #90).
+- Species uploaded before AntCat published them get their Taxonomic History and distribution with the next nightly AntCat load (#63, #91).
+- Uploads no longer create genera from a subfamily written in parentheses (#94, #96).
+- Duplicate genus rows that broke subfamily pages (#58); upload records with spaces in taxonomic names are rejected (#59).
+- Specimen upload fixes and clearer messages for long uploads (#32, #36, #37, #50).
+- Recent Images species links (#68); curator pages no longer show login details to visitors (#80).
+
+### Removed
+- Unused upload servlets, dead page mappings and the broken home page editor (#78, #85).
 
 ---
 
-## [9.0.0] - 2026-01-XX
+## [9.0.0] - 2026-01-10
 
 **Release 9.0.0: Establish Release Management**
 
@@ -127,4 +148,4 @@ This file follows the [Keep a Changelog](https://keepachangelog.com/) format wit
 ---
 
 **Maintained by:** California Academy of Sciences  
-**Last Updated:** January 2026
+**Last Updated:** October 2026

@@ -45,21 +45,21 @@
             <div class="left">Subgenera:</div>
 
             <div id="change_subgenera" class="has_options">
-                <span id="which_subgenera"><span style="text-transform:capitalize;"><%= displaySubgenera %></span></span>
+                <span id="which_subgenera"><span style="text-transform:capitalize;"><%= Html.esc(displaySubgenera) %></span></span>
                 <div id="subgenera_choices" class="options">
                     <ul>              
                         <li><span style="text-transform:capitalize;">Sort</span></li>
-                        <li><a href="<%= subgeneraTarget + "&orderBy=subgenera" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;By Subgenera</span></a></li>
-                        <li><a href="<%= subgeneraTarget + "&orderBy=species" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;By Species</span></a></li>
+                        <li><a href="<%= Html.escAttr(subgeneraTarget + "&orderBy=subgenera") %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;By Subgenera</span></a></li>
+                        <li><a href="<%= Html.escAttr(subgeneraTarget + "&orderBy=species") %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;By Species</span></a></li>
                         <li><span style="text-transform:capitalize;">Select</span></li>
-                        <li><a href="<%= subgeneraTarget + "&subgenus=all" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;All</span></a></li>
+                        <li><a href="<%= Html.escAttr(subgeneraTarget + "&subgenus=all") %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;All</span></a></li>
 <%
       if (subgenera != null && (subgenera.size() > 0 || "none".equals(displaySubgenera))) {
           //A.log("subgeneraDisplay.jsp subgenera:" + subgenera + " genus:" + taxon.getGenus());
 %>
-                        <li><a href="<%= subgeneraTarget + "&subgenus=none" %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;Unassigned</span></a></li>
+                        <li><a href="<%= Html.escAttr(subgeneraTarget + "&subgenus=none") %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;Unassigned</span></a></li>
                      <% for (String subgenus : subgenera) { %>
-                            <li><a href="<%= subgeneraTarget + "&subgenus=" + subgenus %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;(<%= subgenus %>)</span></a></li>
+                            <li><a href="<%= Html.escAttr(subgeneraTarget + "&subgenus=" + Html.url(subgenus)) %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;(<%= Html.esc(subgenus) %>)</span></a></li>
                      <% } %>
  <% } %>
 

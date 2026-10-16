@@ -106,7 +106,7 @@ public final class ListAction extends AntwebAction {
                 }
                 case "getTaxonNames": {
                     String taxonName = (String) df.get("taxonName");
-                    String message = "Taxon Names matching:" + taxonName;
+                    String message = "Taxon Names matching:" + Html.esc(taxonName);
                     request.setAttribute("message", message);
                     TaxonDb taxonDb = new TaxonDb(connection);
                     List<String> list = taxonDb.getTaxonNames(taxonName, true);
@@ -191,7 +191,7 @@ public final class ListAction extends AntwebAction {
                             return mapping.findForward("listOfLists");
                         }
                     }
-                    request.setAttribute("message", "action:" + action + " not found. Be sure you are logged in.");
+                    request.setAttribute("message", "action:" + Html.esc(action) + " not found. Be sure you are logged in.");
                     return mapping.findForward("message");
             }
         } catch (SQLException e) {

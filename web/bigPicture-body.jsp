@@ -362,6 +362,6 @@ if (theImage.getNumber() > 1) {
   int year = today.get(java.util.Calendar.YEAR);
 %>
 <input id="for_print" type="text" value="Photo by <%= photographer %> / From www.antweb.org">
-<input id="for_web" type="text" value="Photo by <%= photographer %> / URL: <%= HttpUtil.getFullJspTarget(request)%>">
+<input id="for_web" type="text" value="Photo by <%= photographer %> / URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
 <input id="extra_copyright" type="text" value="Image Copyright &copy; AntWeb 2002 - <%= year %>.  Licensing: Creative Commons Attribution License">
 </div>

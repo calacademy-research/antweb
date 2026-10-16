@@ -52,8 +52,8 @@
 %>
 
 <bean:define id="showNav" value="taxonomic"/>
-<input id="for_print" type="text" value="AntWeb. Available from: <%= HttpUtil.getFullJspTarget(request)%>">
-<input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request)%>">
+<input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
+<input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
 
 <div id="page_contents">
 

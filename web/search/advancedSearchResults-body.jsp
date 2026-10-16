@@ -196,7 +196,7 @@ if (size < 1) { %>
    }
    if (taxonChildren.size() > limit) {
        String allUrl = HttpUtil.getTargetReplaceParam(request, "limit", "limit=10000");
-       String allLink = " See all: <a href='" + allUrl + "'>here</a>";
+       String allLink = " See all: <a href='" + Html.escAttr(allUrl) + "'>here</a>";
        limitNote = "(Only the first " + limit + " of " + taxonChildren.size() + " displayed - " + allLink + ").";
    }        
 

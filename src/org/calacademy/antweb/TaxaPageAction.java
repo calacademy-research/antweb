@@ -117,7 +117,7 @@ public final class TaxaPageAction extends AntwebAction {
 			}        
 
             if (!Rank.isValid(rank)) {
-                String message = "invalid rank:" + rank;
+                String message = "invalid rank:" + Html.esc(rank);
 				s_log.info("execute() " + message); 
 				request.setAttribute("message", message);
 				return mapping.findForward("message");
@@ -132,7 +132,7 @@ public final class TaxaPageAction extends AntwebAction {
 			  && withImages
 			  && overview == null
 			  ) {
-				String message = "Sorry, due to resultset size, this is an unreasonable request.  Rank:" + rank + " overview:" + overview;
+				String message = "Sorry, due to resultset size, this is an unreasonable request.  Rank:" + Html.esc(rank) + " overview:" + Html.esc(overview);
 				s_log.info("Execute() " + message); 
 				request.setAttribute("message", message);
 				return mapping.findForward("message");
@@ -163,7 +163,7 @@ public final class TaxaPageAction extends AntwebAction {
                       } else {
 
                           if (isGetCache) {
-                              String message = "not fetched from cache.  Rank:" + rank + " overview:" + overview + " cacheType:taxaPage";
+                              String message = "not fetched from cache.  Rank:" + Html.esc(rank) + " overview:" + Html.esc(overview) + " cacheType:taxaPage";
                               //if (AntwebProps.isDevOrStageMode())
                               s_log.info("Execute() " + message);
                               request.setAttribute("message", message);

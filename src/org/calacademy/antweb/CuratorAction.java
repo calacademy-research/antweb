@@ -63,7 +63,7 @@ public final class CuratorAction extends AntwebAction {
 			Curator curator = loginDb.getCurator(curatorId);
 
 			if (curator == null) {
-				String message = "  Curator not found for name:" + name + " id:" + id + ".";
+				String message = "  Curator not found for name:" + Html.esc(name) + " id:" + Html.esc(id) + ".";
 				request.setAttribute("message", message);
 				return mapping.findForward("message");
 			}
@@ -80,7 +80,7 @@ public final class CuratorAction extends AntwebAction {
 
             GeolocaleTaxon geolocaleTaxon = (GeolocaleTaxon) new GeolocaleTaxonDb(connection).get(geolocaleId, taxonName); // to get Curator
             if (geolocaleTaxon == null) {
-				String message = "geolocale_taxon is null for taxonName:" + taxonName + " geolocaleId:" + geolocaleId + ".";
+				String message = "geolocale_taxon is null for taxonName:" + Html.esc(taxonName) + " geolocaleId:" + geolocaleId + ".";
                 //A.log("execute() " + message);
 				request.setAttribute("message", message);
 				return mapping.findForward("message");

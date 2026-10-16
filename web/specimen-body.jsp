@@ -47,15 +47,15 @@
 <script type="text/javascript" src="<%= AntwebProps.getDomainApp() %>/ckeditor/ckeditor.js"></script>
 <% } %>
 
-<input id="for_print" type="text" value="AntWeb. Available from: <%= HttpUtil.getFullJspTarget(request)%>">
-<input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request)%>">
+<input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
+<input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
 <div id="page_contents">
 <%@ include file="/common/taxonTitle.jsp" %>
 
         <div class="links">
             <ul>
                 <li>Overview</li>
-                <li><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%=specimen.getName() %>">Images</a></li>
+                <li><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= Html.escAttr(Html.url(specimen.getName())) %>">Images</a></li>
 <%
     //A.log("specimen-body.jsp hasMap:" + taxon.hasMap() + " map:" + map);
     
@@ -66,14 +66,14 @@
         //AntwebUtil.log("specimen-body.jsp params:" + params);
         if (Rank.SPECIMEN.equals(taxon.getRank())) {
           if (specimen.getName() != null) {
-            String link_params = "specimen=" + specimen.getName().toLowerCase();// + params;
+            String link_params = "specimen=" + Html.url(specimen.getName().toLowerCase());// + params;
 %>
-              <li><a href="<%= AntwebProps.getDomainApp() %>/bigMap.do?<%= link_params %>">Map</a></li>
+              <li><a href="<%= AntwebProps.getDomainApp() %>/bigMap.do?<%= Html.escAttr(link_params) %>">Map</a></li>
 <%        } else AntwebUtil.log("specimen-body.jsp specimenName:" + specimen.getName() + " overview:" + overview + " taxon:" + taxon);
         } else { 
           AntwebUtil.log("specimen-body.jsp why would rank not be specimen on this page:" + HttpUtil.getTarget(request));
         %> 
-              <li><a href="<%= AntwebProps.getDomainApp() %>/bigMap.do?<%= object %>=<%= objectName %><%= params %>">Map</a></li>
+              <li><a href="<%= AntwebProps.getDomainApp() %>/bigMap.do?<%= object %>=<%= Html.escAttr(Html.url(objectName)) %><%= params %>">Map</a></li>
 <%      }
     } %>
             </ul>
@@ -82,13 +82,13 @@
         <div class="clear"></div>
 
     <!-- 
-        taxonName: <%= specimen.getTaxonName() %> 
-        details: <%= specimen.getDetails() %>
-        fullName: <%= specimen.getFullName() %>
-        simpleName: <%= specimen.getSimpleName() %>
-        prettyName: <%= specimen.getPrettyName() %>
-        fullName: <%= specimen.getFullName() %>
-        name: <%= specimen.getName() %>
+        taxonName: <%= Html.esc(specimen.getTaxonName()) %> 
+        details: <%= Html.esc(specimen.getDetails()) %>
+        fullName: <%= Html.esc(specimen.getFullName()) %>
+        simpleName: <%= Html.esc(specimen.getSimpleName()) %>
+        prettyName: <%= Html.esc(specimen.getPrettyName()) %>
+        fullName: <%= Html.esc(specimen.getFullName()) %>
+        name: <%= Html.esc(specimen.getName()) %>
     -->
 <%@ include file="/common/taxonomicHierarchy.jsp" %>
 </div>
@@ -106,7 +106,7 @@
 
 <%@ include file="/common/flagInclude.jsp" %>
 
-<h3> Persistent Identifier: </h3><a href="<%= persistentIdentifier %>"><%= persistentIdentifier %></a>
+<h3> Persistent Identifier: </h3><a href="<%= Html.escAttr(persistentIdentifier) %>"><%= Html.esc(persistentIdentifier) %></a>
 
 <% String seeAlso = specimen.getSeeAlso();
    if (seeAlso != null) { %>
@@ -153,7 +153,7 @@
             out.println(event + "<br>");
           }
           if (!"".equals(toolTip)) {
-            %>  <a title="<%= toolTip %>">...</a><br> <%          
+            %>  <a title="<%= Html.escAttr(toolTip) %>">...</a><br> <%          
           }
         }
       }
@@ -181,7 +181,7 @@ if (bioregionNotNative && "Native".equals(speciesDistStatus)) speciesDistStatus 
   if (bioregionNotNative) nativeWarning = " <font color=red>(Warning: Genus not native)</font>";
 %>
 
-<li><%= specimen.getBioregion() %><%= nativeWarning %></li>
+<li><%= Html.esc(specimen.getBioregion()) %><%= nativeWarning %></li>
 </ul>
 
 <%
@@ -212,12 +212,12 @@ if (localityLink != null) { %>
      } else {
        String unrecognizedAdm1Value = "";
        if (specimen.getAdm1() != null) {
-         unrecognizedAdm1Value = "<li>" + specimen.getAdm1() + " <font color=red><a title='unrecognized Adm1'>*</a></font></b></li>";
+         unrecognizedAdm1Value = "<li>" + Html.esc(specimen.getAdm1()) + " <font color=red><a title='unrecognized Adm1'>*</a></font></b></li>";
        }
        out.println("<ul><li><b>Adm1: </b></li>" + unrecognizedAdm1Value + "</ul>");
      }
    }
-   if (Utility.notBlank(specimen.getAdm2())) out.println("<ul><li><b>Adm2: </b></li><li>" + specimen.getAdm2() + "</a></li></ul>");
+   if (Utility.notBlank(specimen.getAdm2())) out.println("<ul><li><b>Adm2: </b></li><li>" + Html.esc(specimen.getAdm2()) + "</a></li></ul>");
 
    if (Utility.displayEmptyOrNotBlank(specimen.getLocLatitude()) 
        && Utility.displayEmptyOrNotBlank(specimen.getLocLongitude()) ) { %>
@@ -304,22 +304,22 @@ if (localityLink != null) { %>
 
 <ul>
 <li><b>Collection code: </b></li>
-<li><a href="<%= AntwebProps.getDomainApp() %>/collection.do?name=<%= formatter.clearNull((String) specimen.getCollectionCode()) %>"><%= formatter.clearNull((String) specimen.getCollectionCode()) %></a> &nbsp;</li>
+<li><a href="<%= AntwebProps.getDomainApp() %>/collection.do?name=<%= Html.escAttr(Html.url(specimen.getCollectionCode())) %>"><%= Html.esc(specimen.getCollectionCode()) %></a> &nbsp;</li>
 
 </ul>
 
 <ul>
 <li><b>Collected by: </b></li>
-<li><%= formatter.clearNull((String)  specimen.getCollectedBy()) %> &nbsp;</li>
+<li><%= Html.esc(specimen.getCollectedBy()) %> &nbsp;</li>
 </ul>
 
 <ul>
 <li><b>Date collected start: </b></li>
-<li><%= formatter.clearNull(specimen.getDateCollectedStart()) %>
+<li><%= Html.esc(specimen.getDateCollectedStart()) %>
   <% // A.log("loggedin:" + AntwebProps.isLoggedIn(request) + " s:" + specimen.getDateCollectedStart() + " s2:" + specimen.getDateCollectedStartStr()); %>
   <% if (LoginMgr.isLoggedIn(request) && specimen.getDateCollectedStart() != null 
        && !specimen.getDateCollectedStart().equals(specimen.getDateCollectedStartStr())) { %>
-       (Input as: <%= formatter.clearNull(specimen.getDateCollectedStartStr()) %>)<% } 
+       (Input as: <%= Html.esc(specimen.getDateCollectedStartStr()) %>)<% } 
    %>
 </li>
 </ul>
@@ -327,10 +327,10 @@ if (localityLink != null) { %>
 <% if (Utility.displayEmptyOrNotBlank(specimen.getDateCollectedEnd())) { %>   
 <ul>
 <li><b>Date collected end: </b></li>
-<li><%= formatter.clearNull(specimen.getDateCollectedEnd()) %>
+<li><%= Html.esc(specimen.getDateCollectedEnd()) %>
   <% if (LoginMgr.isLoggedIn(request) && specimen.getDateCollectedEnd() != null 
        && !specimen.getDateCollectedEnd().equals(specimen.getDateCollectedEndStr())) { %>
-       (Input as: <%= formatter.clearNull(specimen.getDateCollectedEndStr()) %>)<% } 
+       (Input as: <%= Html.esc(specimen.getDateCollectedEndStr()) %>)<% } 
    %>
 </li>
 </ul>
@@ -342,7 +342,7 @@ if (localityLink != null) { %>
 <%
    String museumCodeText = "";
    if (specimen.getMuseumCode() != null) {
-     museumCodeText = "<a href='" + AntwebProps.getDomainApp() + "/museum.do?name=" + specimen.getMuseumCode() + "'>" + specimen.getMuseumCode() + "</a>";
+     museumCodeText = "<a href='" + AntwebProps.getDomainApp() + "/museum.do?name=" + Html.escAttr(Html.url(specimen.getMuseumCode())) + "'>" + Html.esc(specimen.getMuseumCode()) + "</a>";
    }
 %>
    <li><%= museumCodeText %> &nbsp;</li>
@@ -353,13 +353,13 @@ if (localityLink != null) { %>
 <% if (Utility.displayEmptyOrNotBlank(specimen.getHabitat())) { %>   
 <ul>
 <li><b>Habitat: </b></li>
-<li><%= formatter.clearNull((String) specimen.getHabitat()) %>&nbsp;</li>
+<li><%= Html.esc(specimen.getHabitat()) %>&nbsp;</li>
 </ul>
 <% } %>
 
 <ul>
 <li><b>Sampling method: </b></li>
-<li><%= formatter.clearNull((String) specimen.getMethod()) %></li>
+<li><%= Html.esc(specimen.getMethod()) %></li>
 </ul>
 
 <% if (specimen.getIsIntroduced()) { %>
@@ -372,7 +372,7 @@ if (localityLink != null) { %>
 <% if (Utility.displayEmptyOrNotBlank(specimen.getMicrohabitat())) { %>   
 <ul>
 <li><b>Microhabitat: </b></li>
-<li><%= formatter.clearNull(specimen.getMicrohabitat()) %></li>   <!-- (String) desc.get("microhabitat") -->
+<li><%= Html.esc(specimen.getMicrohabitat()) %></li>   <!-- (String) desc.get("microhabitat") -->
 </ul>   <!-- was transecttype -->
 <% } %>
 
@@ -389,7 +389,7 @@ if ((Utility.displayEmptyOrNotBlank(specimen.getCollectionNotes()))) { %>
 
 <ul>
 <li><b>Life stage/sex notes: </b></li>
-<li><%= formatter.clearNull((String) specimen.getLifeStage()) %></li>
+<li><%= Html.esc(specimen.getLifeStage()) %></li>
 </ul>
 
 <%
@@ -398,13 +398,13 @@ if (casteValue == null) casteValue = "undefined";
 %>
 <ul>
 <li><b>Caste: </b></li>
-<li><%= casteValue %></li>
+<li><%= Html.esc(casteValue) %></li>
 </ul>
 
 <% if (specimen.getSubcaste() != null) { %>
  <ul>
 <li><b>Subcaste: </b></li>
-<li><%= formatter.clearNull((String) specimen.getSubcaste()) %></li>
+<li><%= Html.esc(specimen.getSubcaste()) %></li>
 </ul>
 <% } %>
 
@@ -421,16 +421,16 @@ if (casteValue == null) casteValue = "undefined";
 <% if (Utility.displayEmptyOrNotBlank(specimen.getDeterminedBy())) { %>   
 <ul>
 <li><b>Determined by: </b></li>
-<li><%= formatter.clearNull(specimen.getDeterminedBy()) %> </li> <!-- (String) desc.get("determinedby") -->
+<li><%= Html.esc(specimen.getDeterminedBy()) %> </li> <!-- (String) desc.get("determinedby") -->
 </ul>
 <% } %>
   
 <ul>
 <li><b>Date determined: </b></li>
-<li><%= formatter.clearNull(specimen.getDateDetermined()) %>
+<li><%= Html.esc(specimen.getDateDetermined()) %>
   <% if (LoginMgr.isLoggedIn(request) && specimen.getDateDeterminedStr() != null 
        && !specimen.getDateDetermined().equals(specimen.getDateDeterminedStr())) { %>
-       (Input as: <%= formatter.clearNull(specimen.getDateDeterminedStr()) %>)<% } 
+       (Input as: <%= Html.esc(specimen.getDateDeterminedStr()) %>)<% } 
    %>
 </li>
 </ul>
@@ -441,7 +441,7 @@ if (casteValue == null) casteValue = "undefined";
 <ul>
 <li><b>Type status: </b></li>
 <li>
-<bean:write name="specimen" property="typeStatus"/> <% if (antcatTypeUrl != null) {%><a href="<%=antcatTypeUrl%>">(search on AntCat)</a><%}%></li>
+<bean:write name="specimen" property="typeStatus"/> <% if (antcatTypeUrl != null) {%><a href="<%= Html.escAttr(antcatTypeUrl) %>">(search on AntCat)</a><%}%></li>
 </ul>
 <% } %>
 
@@ -456,14 +456,14 @@ if (casteValue == null) casteValue = "undefined";
 <% if (Utility.displayEmptyOrNotBlank(specimen.getMedium())) { %>   
 <ul>
 <li><b>Medium: </b></li>
-<li><%= formatter.clearNull(specimen.getMedium()) %> </li>  <!-- was (String) desc.get("medium")  -->
+<li><%= Html.esc(specimen.getMedium()) %> </li>  <!-- was (String) desc.get("medium")  -->
 </ul>
 <% } %>
 
 <% if (Utility.displayEmptyOrNotBlank(specimen.getDnaExtractionNotes())) { %>   
 <ul>
 <li><b>DNA notes: </b></li>
-<li><%= formatter.clearNull(specimen.getDnaExtractionNotes()) %> </li>  <!-- (String) desc.get("dnaextractionnotes") -->
+<li><%= Html.esc(specimen.getDnaExtractionNotes()) %> </li>  <!-- (String) desc.get("dnaextractionnotes") -->
 </ul>
 <% } %>
   
@@ -478,7 +478,7 @@ if (casteValue == null) casteValue = "undefined";
 <% if (specimen.hasOriginalTaxonName()) { %>
 <ul>
 <li><b>Uploaded As: </b></li>
-<li><a href="<%= AntwebProps.getDomainApp() + "/description.do?taxonName=" + specimen.getOriginalTaxonName() %>"><%= Taxon.displayTaxonName(specimen.getOriginalTaxonName()) %></a> &nbsp;</li>
+<li><a href="<%= AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(Html.url(specimen.getOriginalTaxonName())) %>"><%= Html.esc(Taxon.displayTaxonName(specimen.getOriginalTaxonName())) %></a> &nbsp;</li>
 </ul>
 <% } %>
 
@@ -506,7 +506,7 @@ if (casteValue == null) casteValue = "undefined";
 
 <ul>
 <li><b>Last Modified: </b></li>
-<li><%= formatter.clearNull(specimen.getLastModified()) %> &nbsp;</li>
+<li><%= Html.esc(specimen.getLastModified()) %> &nbsp;</li>
 </ul>
 
 <%
@@ -518,7 +518,7 @@ if (LoginMgr.isAdmin(request) || specimen.isCurator(accessLogin)) { %>
 <ul>
 <li><b>Upload Record: </b></li>
 <% if (specimen.getBackupFileName() != null) { %>
-<li>Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/showLog.do?action=uploadLog&file=<%= specimen.getBackupFileName() %>&line=<%= specimen.getLineNum() %>'><%= specimen.getLineNum() %></a></li>
+<li>Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/showLog.do?action=uploadLog&file=<%= Html.escAttr(Html.url(specimen.getBackupFileName())) %>&line=<%= specimen.getLineNum() %>'><%= specimen.getLineNum() %></a></li>
 <% } %>
 </ul>
 
@@ -548,13 +548,13 @@ if (LoginMgr.isAdmin(request)) {
   String taxonNameUrl = AntwebProps.getDomainApp() + "/description.do?taxonName=" + specimen.getTaxonName();
   //if (AntwebProps.isDevMode()) AntwebUtil.log("TaxonNameUrl:" + taxonNameUrl);
 %>
-<li><a href="<%= taxonNameUrl %>"><%= specimen.getTaxonName() %></a></li>
+<li><a href="<%= Html.escAttr(taxonNameUrl) %>"><%= Html.esc(specimen.getTaxonName()) %></a></li>
 </ul>
 
 <ul>
 <li><b>Upload File: </b></li>
 <% if (specimen.getBackupFileName() != null) { %>
-<li><a href='<%= AntwebProps.getDomainApp() %>/web/upload/<%= specimen.getBackupFileName() %>'><%= specimen.getBackupFileName() %></a></li>
+<li><a href='<%= AntwebProps.getDomainApp() %>/web/upload/<%= Html.escAttr(specimen.getBackupFileName()) %>'><%= Html.esc(specimen.getBackupFileName()) %></a></li>
 <% } %>
 </ul>
 
@@ -565,7 +565,7 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Images dir: </b></li>
-<li><a href='<%= AntwebProps.getDomainApp() %>/images/<%= specimen.getCode() %>'>/images/<%= specimen.getCode() %></a></li>
+<li><a href='<%= AntwebProps.getDomainApp() %>/images/<%= Html.escAttr(specimen.getCode()) %>'>/images/<%= Html.esc(specimen.getCode()) %></a></li>
 </ul>
 
 <ul>
@@ -575,7 +575,7 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Default Pic for: </b></li>
-<li><a href='<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= specimen.getDefaultFor() %>'><%= Taxon.getPrettyTaxonName(specimen.getDefaultFor()) %></a></li>
+<li><a href='<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= Html.escAttr(Html.url(specimen.getDefaultFor())) %>'><%= Html.esc(Taxon.getPrettyTaxonName(specimen.getDefaultFor())) %></a></li>
 
 <ul>
 <li><b>Line Number: </b></li>
@@ -584,8 +584,8 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Description: </b></li>
-<li><a href='<%= AntwebProps.getDomainApp() %>/showLog.do?action=specimenDetails&code=<%= specimen.getCode() %>'>Link</a> -
-<%= specimen.getDetailHash() %> &nbsp;</li>
+<li><a href='<%= AntwebProps.getDomainApp() %>/showLog.do?action=specimenDetails&code=<%= Html.escAttr(Html.url(specimen.getCode())) %>'>Link</a> -
+<%= Html.esc(specimen.getDetailHash()) %> &nbsp;</li>
 </ul>
 
 <ul>
@@ -597,7 +597,7 @@ if (LoginMgr.isAdmin(request)) {
 <% if (specimen.getTheXml() != null) { %>
 <ul>
 <li><b>XML: </b></li>
-<li><%= specimen.getTheXml() %></li>
+<li><%= Html.esc(specimen.getTheXml()) %></li>
 </ul>
 <br><br><p>
 <% } %>
@@ -611,7 +611,7 @@ if (LoginMgr.isAdmin(request)) {
 
     <% if (specimen != null && specimen.getTaxonWorksEditUrl() != null && LoginMgr.isLoggedIn(request)) {
         String TWEditURL = specimen.getTaxonWorksEditUrl(); %>
-    <a href="<%= TWEditURL %>">Edit this specimen in TaxonWorks</a>
+    <a href="<%= Html.escAttr(TWEditURL) %>">Edit this specimen in TaxonWorks</a>
     <br/><br/>
     <%}%>
 
@@ -619,7 +619,7 @@ if (LoginMgr.isAdmin(request)) {
    String amissEmail = AntwebUtil.getAdminEmail();
    if (specimen != null && specimen.getGroup() != null) amissEmail = specimen.getGroup().getAdminEmail();  
 %>
-<a href="mailto: <%= amissEmail %>?subject=Regarding AntWeb page <%= thePage %>">See something amiss? Send us an email.</a>
+<a href="mailto: <%= amissEmail %>?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
 
 </div>
 

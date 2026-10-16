@@ -61,6 +61,11 @@ public final class SpecimenListAction extends AntwebAction {
         }
 
         String taxonName = (String) df.get("taxonName");
+        // taxonName becomes part of a file name: plain taxon names only (no paths).
+        if (taxonName != null && (!taxonName.matches("[A-Za-z0-9 ._()-]{1,200}") || taxonName.contains(".."))) {
+            request.setAttribute("message", "Invalid taxon name.");
+            return mapping.findForward("message");
+        }
         if (taxonName != null) {
 
             String dir = "/web/data/specimenData";
@@ -69,7 +74,7 @@ public final class SpecimenListAction extends AntwebAction {
             String fullPath = AntwebProps.getDocRoot() + dir + fileName;
 
             String url = AntwebProps.getDomainApp() + dir + fileName;
-            String dataLink = "&middot; <a href=\"" + url + "\" target=\"new\">Tab-delimited data</a>";
+            String dataLink = "&middot; <a href=\"" + Html.escAttr(url) + "\" target=\"new\">Tab-delimited data</a>";
             s_log.debug("execute() taxon:" + taxonName + " specimenCount:" + specimenCount + " rightClickSave:" + rightClickSave + " dataLink:" + dataLink);
             request.setAttribute("dataLink", dataLink);
 
@@ -169,7 +174,7 @@ public final class SpecimenListAction extends AntwebAction {
 
                 } else {
                     s_log.warn("execute() Specimen List functionality not supported rank:" + rank + " taxon:" + taxonName);
-                    request.setAttribute("message", "rank:" + rank + " not supported.");
+                    request.setAttribute("message", "rank:" + Html.esc(rank) + " not supported.");
                     return mapping.findForward("message");
                 }
 
@@ -181,7 +186,7 @@ public final class SpecimenListAction extends AntwebAction {
               */
 
             } catch (SQLException e) {
-                String message = e.toString();
+                String message = Html.esc(e.toString());
                 s_log.error("execute() e:" + message);
                 request.setAttribute("message", message);
                 return mapping.findForward("message");

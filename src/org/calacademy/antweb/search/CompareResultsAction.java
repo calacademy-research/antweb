@@ -44,7 +44,7 @@ public final class CompareResultsAction extends ResultsAction {
         String projectName = taxaForm.getProject();
         Project project = ProjectMgr.getProject(projectName);
         if (project == null) {
-	      request.setAttribute("message", "Project not found:" + projectName);
+	      request.setAttribute("message", "Project not found:" + Html.esc(projectName));
 	      return mapping.findForward("message");
 	    }
 
@@ -112,7 +112,7 @@ public final class CompareResultsAction extends ResultsAction {
                     taxaToCompare = getTaxaToCompare(request, chosenResults, chosenList, project, resultRank);
                     //A.log("execute() 2 taxaToCompare:" + taxaToCompare);
                 } else {
-				  String message = "Unsupported Result Rank for Compare Results:" + resultRank;
+				  String message = "Unsupported Result Rank for Compare Results:" + Html.esc(resultRank);
 				  s_log.error("execute() " + message);
 				  request.setAttribute("message", message);
 				  return mapping.findForward("message");

@@ -55,7 +55,7 @@ public final class DbStatusAction extends AntwebAction {
                 if (op.equals("resetDS") || op.equals("resetDS1")) ((PooledDataSource) dataSource1).hardReset();
                 if (op.equals("resetDS") || op.equals("resetDS2")) ((PooledDataSource) dataSource2).hardReset();
                 if (op.equals("resetDS") || op.equals("resetDS3")) ((PooledDataSource) dataSource3).hardReset();
-                String message = "conPool hardReset():" + op;
+                String message = "conPool hardReset():" + Html.esc(op);
                 s_log.warn("execute() message:" + message);
                 request.setAttribute("message", message);
                 return mapping.findForward("message");

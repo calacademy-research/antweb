@@ -49,7 +49,7 @@ public abstract class BadActorMgr {
         if (!isBadActor(ip)) return null;
 
         //Check the map;
-        String message = "User from IP:" + ip
+        String message = "User from IP:" + Html.esc(ip)
                 + " is blocked for having too many illegal requests. If in error contact bfisher@calacademy.org for resolution.";
         request.setAttribute("message", message);
         //s_log.error(message);

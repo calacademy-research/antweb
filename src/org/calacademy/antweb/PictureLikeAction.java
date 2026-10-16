@@ -43,7 +43,7 @@ public final class PictureLikeAction extends AntwebAction {
         if (code == null) code = ((SpecimenImageForm) form).getName();
         code = code.toLowerCase();
         if (code.contains("shot=")) {
-            String message = "Incorrect specimen identifier:" + code;
+            String message = "Incorrect specimen identifier:" + Html.esc(code);
             s_log.error("execute() " + message);
             request.setAttribute("message", message);
             return mapping.findForward("message");

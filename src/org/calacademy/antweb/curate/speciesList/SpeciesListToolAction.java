@@ -136,7 +136,7 @@ To Do
       if (isBlockOnName(mapSpeciesList2Name, connection)) blockName = mapSpeciesList2Name;
       if (isBlockOnName(mapSpeciesList3Name, connection)) blockName = mapSpeciesList3Name;
       if (blockName != null) {
-        message = "Species List Tool failed. Can not Map name:" + blockName;
+        message = "Species List Tool failed. Can not Map name:" + Html.esc(blockName);
         request.setAttribute("message", message);
         return mapping.findForward("message");
       }
@@ -151,7 +151,7 @@ To Do
 
         } catch (SearchException e) {
           s_log.error("setResults() e:" + e);
-          message = "<b><font color=red>Search failed:" + e + "</font></b>";
+          message = "<b><font color=red>Search failed:" + Html.esc(e) + "</font></b>";
         }
          
         if (searchSpeciesList != null && !searchSpeciesList.isEmpty()) {
@@ -192,7 +192,7 @@ To Do
       s_log.error("execute() e:" + e);
       AntwebUtil.logStackTrace(e);
       DBUtil.rollback(connection);
-      message = "Species List Tool failed due to e:" + e;
+      message = "Species List Tool failed due to e:" + Html.esc(e);
       request.setAttribute("message", message);
       return mapping.findForward("message");      
     } finally {

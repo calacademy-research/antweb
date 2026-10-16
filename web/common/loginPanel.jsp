@@ -36,7 +36,7 @@
     int after = nowTimeStamp.compareTo(beginDisplay);
     int before = nowTimeStamp.compareTo(endDisplay);
     boolean display = after == 1 && before == -1;
-    String siteWarning = AntwebUtil.readFile("/data/antweb/web/siteWarning.jsp");
+    String siteWarning = AntwebUtil.readFile("/data/antweb/web/siteWarning.txt");
     if (siteWarning == null) siteWarning = "";
     //A.log("academyHeader now:" + nowTimeStamp + " display:" + display + " after:" + after + " before:" + before);
     //if (siteWarning != null) out.println("<li><br>" + siteWarning + "</li>");    
@@ -94,7 +94,7 @@
 
         <div id="login_form" style="display:none;">
             <form name="loginForm" method="post" action="<%= AntwebProps.getSecureDomainApp() %>/login.do">  
-            <input type="hidden" name="target" value="<%= target %>"> 
+            <input type="hidden" name="target" value="<%= org.calacademy.antweb.util.Html.escAttr(target) %>"> 
             Username: <input id="login_username" type="text" class="login_input" name="userName"> Password: <input type="password" class="login_input" name="password"> 
             <input type="submit" class="login_submit" value="Go">
             <br />

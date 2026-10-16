@@ -40,6 +40,13 @@ public class UtilAction extends AntwebAction {
 
 		ActionForward forward = null;
 
+		// Everything here is an admin tool, except isRestart (polled by the host's
+		// reboot_checker.sh) and postInstantiate (AntWeb's own call after startup).
+		if (!"isRestart".equals(action) && !"postInstantiate".equals(action) && !LoginMgr.isAdmin(request)) {
+			request.setAttribute("message", "Administrators only.");
+			return mapping.findForward("message");
+		}
+
 		String[] longActions = new String[]{"postInstantiate", "reloadAntwebMgr"};
 		if (Arrays.asList(longActions).contains(action)) {
 			forward = doLongAction(mapping, form, request, response);
@@ -132,7 +139,7 @@ public class UtilAction extends AntwebAction {
 
 				if (returnLoc != null) return returnLoc;
 			}
-			request.setAttribute("message", "action not found:" + action);
+			request.setAttribute("message", "action not found:" + Html.esc(action));
 			return mapping.findForward("message");
 
 		} catch (SQLException | IOException e) {
@@ -293,6 +300,10 @@ public class UtilAction extends AntwebAction {
 				returnLoc = mapping.findForward("adminMessage");
 			  }
 
+			  if (action.equals("emailTest") && !LoginMgr.isAdmin(request)) {
+			    request.setAttribute("message", "Administrators only.");
+			    return mapping.findForward("message");
+			  }
 			  if (action.equals("emailTest")) {
 			    String recipients = AntwebUtil.getDevEmail(); // + ", " + AntwebUtil.getAdminEmail();
 			    String subject = "Test Message from Antweb";
@@ -347,7 +358,7 @@ public class UtilAction extends AntwebAction {
 					message = HttpUtil.fetchUrl(fetchUrl);
 					if (message != null && message.contains("Exception")) s_log.warn("execute() latlng:" + message);
 				} catch (Exception e) {
-					message = "e:" + e.toString();
+					message = "e:" + Html.esc(e.toString());
 				}
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("adminMessage");
@@ -355,7 +366,7 @@ public class UtilAction extends AntwebAction {
 
 			  if (returnLoc != null) return returnLoc;
 			}               
-			request.setAttribute("message", "action not found:" + action);
+			request.setAttribute("message", "action not found:" + Html.esc(action));
 			return mapping.findForward("message");
 
         } catch (SQLException e) {

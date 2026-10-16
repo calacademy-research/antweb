@@ -96,14 +96,14 @@ public final class EditGeolocaleAction extends AntwebAction {
 				}
 				if (createGeolocale == null) {
 				  forwardToMessage = true;
-				  message = "Failed to fetch created geolocale:" + name  + " georank:" + georank + " form:" + editGeolocaleForm;
+				  message = "Failed to fetch created geolocale:" + Html.esc(name)  + " georank:" + Html.esc(georank) + " form:" + Html.esc(editGeolocaleForm);
 				} else {
 				  id = createGeolocale.getId();
-				  message = "Created: <a href='" + AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + createGeolocale.getId() + "'>" + name + "</a>"; 
+				  message = "Created: <a href='" + AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + createGeolocale.getId() + "'>" + Html.esc(name) + "</a>"; 
 				}
 			  } else {
 				  forwardToMessage = true;
-				  message = "Failed to create:" + name + ". " + createMessage;
+				  message = "Failed to create:" + Html.esc(name) + ". " + Html.esc(createMessage);
 			  }
 			} else { // if not create
 	   	      s_log.debug("execute() form:" + editGeolocaleForm);
@@ -164,9 +164,9 @@ public final class EditGeolocaleAction extends AntwebAction {
 		  
 		    boolean success = geolocaleDb.deleteGeolocale(id);
 		    if (!success) {
-		 	  message = "Failed to delete:" + name;  
+		 	  message = "Failed to delete:" + Html.esc(name);  
 		    } else {
-		  	  message = "Deleted:" + deleteGeo.getName();
+		  	  message = "Deleted:" + Html.esc(deleteGeo.getName());
 		    }
 		    forwardToMessage = true;
 		  }
@@ -175,7 +175,7 @@ public final class EditGeolocaleAction extends AntwebAction {
 		  if (forwardToMessage) {
 			//AntwebMgr.populate(connection, true);  
 			String georankParam = "";
-			if (georank != null) georankParam = "?georank=" + georank;
+			if (georank != null) georankParam = "?georank=" + Html.escAttr(Html.url(georank));
 			message += "<br><br><< Back to <a href='" + AntwebProps.getDomainApp() + "/geolocaleMgr.do" + georankParam + "'>Geolocale Manager</a>";
 			request.setAttribute("message", message);
 			return mapping.findForward("message");
@@ -199,7 +199,7 @@ public final class EditGeolocaleAction extends AntwebAction {
 		  }
 		
 		  if (geolocale == null) {
-		    message = " id:" + id + " name:" + name + " georank:" + georank + " action:" + action;
+		    message = " id:" + id + " name:" + Html.esc(name) + " georank:" + Html.esc(georank) + " action:" + Html.esc(action);
 		    s_log.warn("execute() Error creating " + message );
 			message = "<br><br>Error." + message;
 			request.setAttribute("message", message);

@@ -148,7 +148,7 @@ public class DescEditImageUploadAction extends AntwebAction {
                     s_log.debug(logMessage);
  
                     String imageUrl = AntwebProps.getDomainApp() + "/" + dirFileName;
-                    messageStr = "Your uploaded file is here: <a href=\"" + imageUrl + "\">" + imageUrl + "</a>";
+                    messageStr = "Your uploaded file is here: <a href=\"" + Html.escAttr(imageUrl) + "\">" + Html.esc(imageUrl) + "</a>";
                     String tag = "";
 
                     if ( fileName.contains("jpg")
@@ -156,7 +156,7 @@ public class DescEditImageUploadAction extends AntwebAction {
                       || fileName.contains("JPG")
                       || fileName.contains("png")
                       || fileName.contains("PNG") ) {
-                       tag = "<pre>&lt;img src=\"" + imageUrl + "\" &gt;</pre>";
+                       tag = "<pre>&lt;img src=\"" + Html.esc(imageUrl) + "\" &gt;</pre>";
                        messageStr += "<br><br>You may embed this image in a web page with this html tag: " + tag;
                     }
                     

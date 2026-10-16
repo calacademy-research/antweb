@@ -87,7 +87,7 @@ public final class OrphanDescEditsAction extends AntwebAction {
                     && (theForm.getSubfamily().equals("") || theForm.getGenus().equals("") || theForm.getSpecies().equals(""))
                     && "".equals(theForm.getSuggestedTaxonName())
                     ) {
-                       String message = "Empty values not allowed - subfamily:" + theForm.getSubfamily() + " genus:" + theForm.getGenus() + " species:" + theForm.getSpecies() + " toTaxonName:" + theForm.getToTaxonName() + " suggestedTaxonName:" + theForm.getSuggestedTaxonName();
+                       String message = "Empty values not allowed - subfamily:" + Html.esc(theForm.getSubfamily()) + " genus:" + Html.esc(theForm.getGenus()) + " species:" + Html.esc(theForm.getSpecies()) + " toTaxonName:" + Html.esc(theForm.getToTaxonName()) + " suggestedTaxonName:" + Html.esc(theForm.getSuggestedTaxonName());
                        request.setAttribute("message", message);
                        return mapping.findForward("message");
                   }

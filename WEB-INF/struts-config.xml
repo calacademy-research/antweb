@@ -542,12 +542,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
       </action>
 
       
-      <action path="/showLine"
+      <!-- /showLine removed 2026-10-15: ran awk on a request-supplied file path.
+    <action path="/showLine"
               type = "org.calacademy.antweb.util.ShowLineAction"
               name="dummyForm" 
               scope="request">
           <forward name ="success" path="/util/showLog.jsp"/>
-      </action>
+      </action> -->
                   
     <action 
             path="/curate"

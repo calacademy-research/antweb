@@ -16,7 +16,7 @@
 		} else {
 			String delim = "&";
 			if (!thisPage.contains("?")) delim = "?";    
-			out.println("<a href='" + thisPage + delim + bioregion.getParams() + "'>" + bioregion.getDisplayName() + "</a>");
+			out.println("<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + bioregion.getParams()) + "'>" + bioregion.getDisplayName() + "</a>");
 		}
 	%>
 	</div>

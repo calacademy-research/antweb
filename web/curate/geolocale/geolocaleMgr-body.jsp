@@ -129,7 +129,7 @@ for (Geolocale geolocale : geolocaleArray) {
 %>
 <tr>
 
-<form id="geolocaleMgrForm" action="<%= thisTarget %>#<%= geolocale.getId() %>" method="POST">
+<form id="geolocaleMgrForm" action="<%= Html.escAttr(thisTarget) %>#<%= geolocale.getId() %>" method="POST">
 
 <td>
 <input type="hidden" name="parent" value="<%= geolocale.getParent() %>">

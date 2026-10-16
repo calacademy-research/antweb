@@ -21,7 +21,7 @@
 
   	  String delim = "&";
 	  if (!thisPage.contains("?")) delim = "?";
-	  view = "<a href='" + thisPage + delim + country.getParams()  + "'>" + country.getName() + "</a>";
+	  view = "<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + country.getParams())  + "'>" + country.getName() + "</a>";
 	  //A.log("countryNav view:" + view);
 
 	}

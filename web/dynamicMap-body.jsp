@@ -68,7 +68,7 @@
       if (map.getCached() != null) linkStr = " <font color=green>" + map.getCached() + "</font>.";
       cacheNote = "<b>*</b>This map was cached" + linkStr;
       if (LoginMgr.isCurator(request)) {
-        cacheNote += " <a href='" + HttpUtil.getTarget(request) + "&refresh=true'>Refresh map</a>.";
+        cacheNote += " <a href='" + Html.escAttr(HttpUtil.getTarget(request) + "&refresh=true") + "'>Refresh map</a>.";
       } else {
         cacheNote += " Log in as curator to refresh.";
       }
@@ -98,20 +98,20 @@
     } else if (adm1Name != null || countryName != null) {
       if (countryName != null) {
         mapType += "Country";
-        title = "Country: " + request.getParameter("countryName"); 
+        title = "Country: " + Html.esc(request.getParameter("countryName")); 
       }
       if (adm1Name != null) {
         mapType += "Adm1";
-        title = "Adm1: " + request.getParameter("adm1Name");
+        title = "Adm1: " + Html.esc(request.getParameter("adm1Name"));
         if (overview != null) title = "Adm1: " + overview.getTitle(); 
       } 
     } else if (request.getParameter("locality") != null) {
         isLocality = true;
-        title = "Locality: " + request.getParameter("locality"); // sloppy. Not pretty title. The overview is Project:Allantwebants.
+        title = "Locality: " + Html.esc(request.getParameter("locality")); // sloppy. Not pretty title. The overview is Project:Allantwebants.
         mapType += "Locality";
     } else if (request.getParameter("collection") != null) {
         isLocality = true;
-        title = "Collection: " + request.getParameter("collection"); 
+        title = "Collection: " + Html.esc(request.getParameter("collection")); 
         mapType += "Collection";
     } else if (request.getParameter("taxonName") != null) {
         String taxonName = request.getParameter("taxonName");
@@ -121,7 +121,7 @@
         isSpecimen = true;
         String specimenCode = request.getParameter("specimen"); 
         taxon = specimen;
-        title = "Map of Specimen: " + specimenCode; 
+        title = "Map of Specimen: " + Html.esc(specimenCode); 
         if (specimen == null) A.log("dynamicMap-body.jsp null specimen:" + specimenCode);
         mapType += "Specimen";
     } else if (isMuseum) {
@@ -134,8 +134,8 @@
 
     if (isLocality) {
 %>
-<input id="for_print" type="text" value="AntWeb. Available from: <%= HttpUtil.getFullJspTarget(request)%>">
-<input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request)%>">
+<input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
+<input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
 <div id="page_contents">
 	<h1><%= title %></h1>
 	<span class="right"><b><a href="#" onclick="history.back(); return false;">Back</a></b></span>
@@ -169,8 +169,8 @@
       if (AntwebProps.isDevOrStageMode()) AntwebUtil.log("dynamicMap-body.jsp from specimen");
 %>
 
-<input id="for_print" type="text" value="AntWeb. Available from: <%= HttpUtil.getFullJspTarget(request)%>">
-<input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request)%>">
+<input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
+<input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
 <div id="page_contents">
 <%@ include file="/common/taxonTitle.jsp" %>
 
@@ -228,8 +228,8 @@
       //A.log("Must be a taxon or Geolocale, or museum?");
 %>
 
-<input id="for_print" type="text" value="AntWeb. Available from: <%= HttpUtil.getFullJspTarget(request)%>">
-<input id="for_web" type="text" value="URL: <%= HttpUtil.getFullJspTarget(request)%>">
+<input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
+<input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
 
 <div id="page_contents">
     <% if (isGeolocale) { %>
@@ -282,7 +282,7 @@
                  if (taxon.getPrettyName() != null) {
                    prettyStr += " the " + taxon.getPrettyName() + " in";
             %>
-            <br>To see a map of <%= prettyStr %> <%= title %>, click: <a href='<%= url %>'>here</a>
+            <br>To see a map of <%= prettyStr %> <%= title %>, click: <a href='<%= Html.escAttr(url) %>'>here</a>
           <%
                  } else {
                    AntwebUtil.log("dynamicMap-body.jsp taxonPrettyName is null for request:" + HttpUtil.getTarget(request));
@@ -304,7 +304,7 @@
     <div class="clear"></div>
 
 <br><br>
-<a href="mailto:antweb@calacademy.org?subject=Regarding AntWeb page <%= the_page %>">See something amiss? Send us an email.</a>
+<a href="mailto:antweb@calacademy.org?subject=Regarding AntWeb page <%= Html.escAttr(the_page) %>">See something amiss? Send us an email.</a>
 </div>
 <%
     }

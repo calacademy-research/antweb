@@ -123,7 +123,7 @@
             <div id="totals_and_tools">
                 <h2>Field Guide <%= fgTitle %></h2>
                 <div id="thumb_toggle">
-                    <a href="<%= request.getHeader("Referer") %>">Back to <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %>
+                    <a href="<%= Html.escAttr(request.getHeader("Referer")) %>">Back to <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %>
                         <%= taxon.getTaxonNameDisplay() %>
                     </a>
                 </div>

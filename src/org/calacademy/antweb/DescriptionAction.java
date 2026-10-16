@@ -77,7 +77,7 @@ public class DescriptionAction extends AntwebAction {
         
 
         if (contents.contains("<div")) {
-          String message = "Error: contains div tag.  Edit source to remove.  describable:" + describable.getName() + " title:" + title;
+          String message = "Error: contains div tag.  Edit source to remove.  describable:" + Html.esc(describable.getName()) + " title:" + Html.esc(title);
           s_log.warn(message);
           request.setAttribute("message", message);          
           return false;
@@ -155,7 +155,7 @@ public class DescriptionAction extends AntwebAction {
         Group accessGroup = accessLogin.getGroup();
             
         if (contents.contains("<div")) {
-          String message = "Error: contains div tag.  Edit source to remove.  taxon:" + taxon.getTaxonName() + " title:" + title;
+          String message = "Error: contains div tag.  Edit source to remove.  taxon:" + Html.esc(taxon.getTaxonName()) + " title:" + Html.esc(title);
           s_log.warn(message);
           request.setAttribute("message", message);          
           return false;

@@ -71,7 +71,7 @@ public final class SearchAction extends DispatchAction {
               if ("&".equals(nextChar)) {
                 searchType = "recentImageSearch";
               } else {
-                String message = "RecentImageSearch with bad nextChar:" + nextChar + " target:" + target;
+                String message = "RecentImageSearch with bad nextChar:" + Html.esc(nextChar) + " target:" + Html.esc(target);
                 return HttpUtil.sendMessage(request, mapping, message);
               }
             }
@@ -90,11 +90,11 @@ public final class SearchAction extends DispatchAction {
              String shortTarget = target;
              shortTarget = target.substring(0);
              s_log.warn("execute() case#:" + caseNumber + " searchType null for target:" + shortTarget + "...");
-             return HttpUtil.sendMessage(request, mapping, "Invalid searchType:" + searchType + " not found. Case#:" + caseNumber + ". Please report behavior to " + AntwebUtil.getAdminEmail());
+             return HttpUtil.sendMessage(request, mapping, "Invalid searchType:" + Html.esc(searchType) + " not found. Case#:" + caseNumber + ". Please report behavior to " + AntwebUtil.getAdminEmail());
           }           
         } catch (SearchException e) {
           s_log.error("execute() se:" + e);
-          return HttpUtil.sendMessage(request, mapping, e.toString());
+          return HttpUtil.sendMessage(request, mapping, Html.esc(e.toString()));
         } catch (NoSuchMethodException e) {
             s_log.error("execute() nsme:" + e);
         } catch (SQLException e) {
@@ -265,7 +265,7 @@ public final class SearchAction extends DispatchAction {
 				title = "Mapping Search Results";
 				map = new MapResultsAction().getMap(results.getResults(), null, null, resultRank, output, title, connection); // nulls are taxonList, chosenList
 			} catch (IndexOutOfBoundsException e2) {
-			  String message = "Case#:" + AntwebUtil.getCaseNumber() + " e:" + e2 + " target:" + HttpUtil.getTarget(request);
+			  String message = "Case#:" + AntwebUtil.getCaseNumber() + " e:" + Html.esc(e2) + " target:" + Html.esc(HttpUtil.getTarget(request));
 			  s_log.warn("execute() message:" + message);
 			  request.setAttribute("message", message);
 			  return mapping.findForward("message");                   

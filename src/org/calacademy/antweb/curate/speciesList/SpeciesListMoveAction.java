@@ -40,7 +40,7 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
         Taxon toTaxon = taxonDb.getTaxon(toTaxonName);
 
         if (fromTaxon == null) {
-          String message = "fromTaxonName:" + fromTaxonName + " not found";
+          String message = "fromTaxonName:" + Html.esc(fromTaxonName) + " not found";
           s_log.warn(message);
           request.setAttribute("message", message);
           return mapping.findForward("message");
@@ -55,7 +55,7 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
           } else {
             message = saveTaxon(connection, loginId, fromTaxonName, toTaxonName, false); 
             message += "<br><br><a href='" + AntwebProps.getDomainApp() 
-              + "/speciesListMove.do?fromTaxonName=" + fromTaxonName + "&toTaxonName=" + toTaxonName 
+              + "/speciesListMove.do?fromTaxonName=" + Html.escAttr(Html.url(fromTaxonName)) + "&amp;toTaxonName=" + Html.escAttr(Html.url(toTaxonName)) 
               + "&action=confirm'>Confirm</a>" 
               + "<br><br>  Back to <a href='" + AntwebProps.getDomainApp() 
               + "/moveToValid.do'>Move To Valid</a> Tool.";

@@ -86,7 +86,7 @@ public final class ArtistAction extends AntwebAction {
                 }
                 Artist test = ArtistMgr.getArtist(name);
                 if (test != null) {
-                  request.setAttribute("message", "artist:" + name + " already exists.");
+                  request.setAttribute("message", "artist:" + Html.esc(name) + " already exists.");
                   return mapping.findForward("message");
                 }
 
@@ -94,7 +94,7 @@ public final class ArtistAction extends AntwebAction {
                 s_log.debug("execute() curator:" + curator + " accessGroup.loginId:" + accessLogin.getId());
                 String retVal = artistDb.createArtist(name, curator);
                 if (retVal.contains("error")) {
-                  request.setAttribute("message", "<font color=red>Artist " + name + " added.</font>");                  
+                  request.setAttribute("message", "<font color=red>Artist " + Html.esc(name) + " added.</font>");                  
                 } else {
                   ArtistMgr.populate(connection, true, false);
                   request.setAttribute("message", "<font color=green>" + retVal + "</font>");
@@ -138,7 +138,7 @@ public final class ArtistAction extends AntwebAction {
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            String message = "e:" + e;
+            String message = "e:" + Html.esc(e);
             request.setAttribute("message", message);
             return mapping.findForward("message");
         } finally {
@@ -157,7 +157,7 @@ public final class ArtistAction extends AntwebAction {
             artist = ArtistMgr.getArtist(artistId);
           }
           if (artist == null) {
-            String message = "  Artist not found " + key + ". Server initializing?";
+            String message = "  Artist not found " + Html.esc(key) + ". Server initializing?";
             request.setAttribute("message", message);
             return mapping.findForward("message");
           }                    

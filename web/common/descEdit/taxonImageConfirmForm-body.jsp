@@ -32,9 +32,9 @@ Your uploaded file is here: <a href="<%= imageUrl %>"><%= imageUrl %></a>
 <html:form method="POST" action="<%= descForm.getTarget() %>" enctype="multipart/form-data">
 <input type="hidden" name="editField" value="images">
 <input type="hidden" name="isSaveEditField" value="true">
-<input type="hidden" name="rank" value="<%= descForm.getRank() %>">
-<input type="hidden" name="name" value="<%= descForm.getName() %>">
-<input type="hidden" name="contents" value="<%= descForm.getContents() %>">
+<input type="hidden" name="rank" value="<%= Html.escAttr(descForm.getRank()) %>">
+<input type="hidden" name="name" value="<%= Html.escAttr(descForm.getName()) %>">
+<input type="hidden" name="contents" value="<%= Html.escAttr(descForm.getContents()) %>">
 <input type="hidden" name="imageUrl" value="<%= imageUrl %>">
 
 <input border="0" type="image" src="<%= AntwebProps.getDomainApp() %>/image/orange_done.gif" width="98" height="36" value="Save">

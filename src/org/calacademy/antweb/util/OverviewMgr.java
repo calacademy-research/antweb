@@ -160,7 +160,7 @@ public class OverviewMgr {
     }
 
     public static ActionForward returnMessage(HttpServletRequest request, ActionMapping mapping, AntwebException e) {
-        String message = e.toString() + " for " + HttpUtil.getRequestReferer(request) + " " + DateUtil.getFormatDateTimeStr();
+        String message = Html.esc(e.toString()) + " for " + Html.esc(HttpUtil.getRequestReferer(request)) + " " + DateUtil.getFormatDateTimeStr();
 
         Logger.iLog("Overview not found see notFound.log", 20);
         LogMgr.appendLog("notFound.log", message);

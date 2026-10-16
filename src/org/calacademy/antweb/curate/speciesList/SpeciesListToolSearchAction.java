@@ -49,7 +49,7 @@ public class SpeciesListToolSearchAction extends AntwebAction { //extends Specie
     } catch (SQLException e) {
       s_log.error("execute() e:" + e);
       AntwebUtil.logStackTrace(e);
-      message = "SpeciesListToolSearch failed due to e:" + e;
+      message = "SpeciesListToolSearch failed due to e:" + Html.esc(e);
       request.setAttribute("message", message);
       return mapping.findForward("message");      
     } finally {

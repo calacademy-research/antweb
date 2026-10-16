@@ -44,7 +44,7 @@
                 //Cannot forward after response has been committed
          %>     <!-- jsp :forward page="notLoggedIn.jsp" / -->  
          
-         Page has expired <a href="<%= domainApp %>/login.do?target=<%= HttpUtil.getTarget(request) %>">Login</a>         
+         Page has expired <a href="<%= domainApp %>/login.do?target=<%= Html.escAttr(Html.url(HttpUtil.getTarget(request))) %>">Login</a>         
          
          <%        
                 // This does not work because some data has already been written to outputStream.

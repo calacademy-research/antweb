@@ -45,12 +45,12 @@ public final class UptimeAction extends AntwebAction {
 
             successDB = isDatabaseUp(request);
             if (!successDB) {
-                message = "Database is down.  " + AntwebUtil.getRequestInfo(request);
+                message = "Database is down.  " + Html.esc(AntwebUtil.getRequestInfo(request));
             }
 
             successDisk = isWebDirAccessible();
             if (!successDisk) {
-                message = "/data/uptime.txt inaccessible.  " + AntwebUtil.getRequestInfo(request);
+                message = "/data/uptime.txt inaccessible.  " + Html.esc(AntwebUtil.getRequestInfo(request));
             }
 
             if (!successDB || !successDisk) {

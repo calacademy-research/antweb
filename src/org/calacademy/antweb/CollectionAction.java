@@ -62,13 +62,13 @@ public final class CollectionAction extends AntwebAction {
 
 			//if (!success) {
 			if (collection == null || 0 == collection.getSpecimenResults().getResults().size()) {
-			  message = "Collection not found - name:" + name + ".";
+			  message = "Collection not found - name:" + Html.esc(name) + ".";
 
 			  String cleanCode = UploadUtil.cleanCode(name);
 			  //A.log("execute() cleanCode:" + cleanCode);
 			  if (!name.equals(cleanCode)) {
                 // Frequently will fail. cleanCode is often a "tc" + a random number. use UploadUtil.genKey()?
-				message = "Unsatisfactory collection code name. Perhaps looking for <a href='" + AntwebProps.getDomainApp() + "/collection.do?name=" + cleanCode + "'>" + cleanCode + "</a>?";
+				message = "Unsatisfactory collection code name. Perhaps looking for <a href='" + AntwebProps.getDomainApp() + "/collection.do?name=" + Html.escAttr(Html.url(cleanCode)) + "'>" + Html.esc(cleanCode) + "</a>?";
 				request.setAttribute("message", message);
 				return mapping.findForward("message");
 			  }
@@ -77,7 +77,7 @@ public final class CollectionAction extends AntwebAction {
                         // An upload is currently in process.  Request that this process be re-attempted shortly.
                 message += "  A curator is currently in the process of an Upload.";
 			  }	else {
-			    message += "  No upload in process.  RequestInfo:" + AntwebUtil.getRequestInfo(request);
+			    message += "  No upload in process.  RequestInfo:" + Html.esc(AntwebUtil.getRequestInfo(request));
                 s_log.debug("execute() " + message);
                 LogMgr.appendLog("badRequest.log", message);
 			  }

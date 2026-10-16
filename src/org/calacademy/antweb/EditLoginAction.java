@@ -51,7 +51,7 @@ public final class EditLoginAction extends AntwebAction {
         //s_log.info("looking up login " + id);
 
         if (!(isAdmin || accessLogin.getId() == id)) {
-            String theMessage = "Insufficient privileges to modify user: " + idStr;
+            String theMessage = "Insufficient privileges to modify user: " + Html.esc(idStr);
             request.setAttribute("message", theMessage);
             return mapping.findForward("message");
         }
@@ -114,7 +114,7 @@ public final class EditLoginAction extends AntwebAction {
           return mapping.findForward("editLogin");
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            request.setAttribute("message", e.toString());
+            request.setAttribute("message", Html.esc(e.toString()));
             return mapping.findForward("message");
         } finally { 		
             DBUtil.close(connection, this, dbMethodName);
@@ -139,7 +139,7 @@ public final class EditLoginAction extends AntwebAction {
         String message = null;
 
         if (email != null && !"".equals(email) && !AntwebUtil.validEmail(email)) {
-            message = "Invalid Email:" + editForm.getEmail();
+            message = "Invalid Email:" + Html.esc(editForm.getEmail());
         }
 
         if (editForm.getName() == null || "".equals(editForm.getName())) {
