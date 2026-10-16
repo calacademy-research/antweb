@@ -13,6 +13,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Version number matches (.version and the site header)
+        run: |
+          v=$(tr -d '[:space:]' < .version)
+          grep -q "antwebRelease = \"$v\"" web/documentation/releaseNum.jsp \
+            || { echo "::error::.version is $v but web/documentation/releaseNum.jsp differs"; exit 1; }
+
       - name: Test Caddy Build
         run: |
           cd docker/caddy

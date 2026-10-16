@@ -63,7 +63,7 @@
         <div id="logo"><a href="<%= AntwebProps.getDomainApp() %>/"><img src="<%= logo %>" width='<%= logoWidth %>' title="[AntWeb]"></a></div>
 
         <div id="version">
-            <a href="<%= domainApp %>/browse.do?name=formicidae&rank=family&project=allantwebants">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v</a><a href="<%= domainApp %>/documentation/releaseNotes.jsp"><%=antwebRelease %></a>
+            <a href="https://github.com/calacademy-research/antweb/releases" title="Release notes (change log)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v<%=antwebRelease %></a>
         </div>
         
  <% if (!HttpUtil.isMobile(request)) { %>             
