@@ -204,7 +204,8 @@ public final class ImageUploaderAction extends AntwebAction {
             docBase += "web/genInc";
             Utility.makeDirTree(docBase);
             
-            File outputFile = new File(docBase + "/recentImages_gen_inc.jsp");
+            // .html, not .jsp: a .jsp under the web root would be compiled and run by Tomcat.
+            File outputFile = new File(docBase + "/recentImages_gen_inc.html");
             FileWriter outFile = new FileWriter(outputFile);
 
             stmt = DBUtil.getStatement(connection, "writeRecentImages()");
@@ -239,29 +240,29 @@ public final class ImageUploaderAction extends AntwebAction {
                     currItems++;
                     lastValue = code;
                     outFile.write("<a class=\"uppercase\" href=\"" + domainApp 
-                        + "/specimenImages.do?code=" + code + "\">" + code + "</a>");
+                        + "/specimenImages.do?code=" + Html.url(code) + "\">" + Html.esc(code) + "</a>");
                     if (theGenus != null &&
                             theSpecies != null &&
                             theGenus.length() > 0 &&
                             theSpecies.length() > 0
                        ) {
 						String url = domainApp + "/images.do?" 
-						  + "genus=" + theGenus 
-						  + "&species=" + theSpecies;
+						  + "genus=" + Html.url(theGenus) 
+						  + "&amp;species=" + Html.url(theSpecies);
 						// Decide the rank per row; it used to stay "subspecies" for every
 						// row after the first subspecies in the list.
 						boolean hasSubspecies = theSubspecies != null && theSubspecies.length() > 0;
 						String theRank = Rank.SPECIES;
 						if (hasSubspecies) {
-						  url += "&subspecies=" + theSubspecies; 
+						  url += "&amp;subspecies=" + Html.url(theSubspecies); 
 						  theRank = Rank.SUBSPECIES;
 						}
-						url += "&rank=" + theRank;
+						url += "&amp;rank=" + theRank;
 
 						String taxonHrefStr =  ":  <a  href='" + url + "'>" 
-							+ format.capitalizeFirstLetter(theGenus) + " " + theSpecies;
+							+ Html.esc(format.capitalizeFirstLetter(theGenus) + " " + theSpecies);
 						if (hasSubspecies) {
-						  taxonHrefStr += " " + theSubspecies;
+						  taxonHrefStr += " " + Html.esc(theSubspecies);
 						}
 						taxonHrefStr += "</a>";
 						outFile.write(taxonHrefStr);

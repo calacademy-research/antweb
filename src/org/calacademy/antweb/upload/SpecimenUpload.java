@@ -242,7 +242,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
             } catch (AntwebException e) {
               s_log.warn("importSpecimens() e:" + e);
-              getUploadDetails().getMessageMgr().addToMessages(MessageMgr.noRecordsProcessed, e.getMessage());
+              getUploadDetails().getMessageMgr().addToMessages(MessageMgr.noRecordsProcessed, Html.esc(e.getMessage()));
               //throw e;
             } catch (TestException e) {
               s_log.warn("TestException thrown");
@@ -396,7 +396,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
         if (getBadRankTaxonList().size() > 0) {
             String badRankErrors = "";
             for (String badRank : getBadRankTaxonList()) {
-              getMessageMgr().addToMessages(MessageMgr.badRankList, badRank);              
+              getMessageMgr().addToMessages(MessageMgr.badRankList, Html.esc(badRank));              
                 //badRankErrors += "<br>&nbsp;&nbsp;&nbsp;" + error;
             }
             s_log.warn("compileMessages() UNREPORTED ? badRankTaxonList:" + badRankErrors);

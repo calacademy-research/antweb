@@ -196,6 +196,27 @@
         <dispatcher>REQUEST</dispatcher>        
     </filter-mapping>
 
+    <!-- Never compile/run a .jsp in the run-time directories (upload reports, logs,
+         curator files, generated includes). Old .jsp reports in /web/log/ are sent
+         as sandboxed, uncompiled HTML. -->
+    <filter>
+        <filter-name>GeneratedJspFilter</filter-name>
+        <filter-class>org.calacademy.antweb.util.GeneratedJspFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>GeneratedJspFilter</filter-name>
+        <url-pattern>/web/log/*</url-pattern>
+        <url-pattern>/web/upload/*</url-pattern>
+        <url-pattern>/web/genInc/*</url-pattern>
+        <url-pattern>/web/curator/*</url-pattern>
+        <url-pattern>/web/workingdir/*</url-pattern>
+        <url-pattern>/web/data/*</url-pattern>
+        <url-pattern>/web/bak/*</url-pattern>
+        <url-pattern>/workingDir/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+    </filter-mapping>
+
   <session-config>
     <tracking-mode>COOKIE</tracking-mode>
   </session-config>

@@ -335,8 +335,8 @@ public class AntwebMgr {
     }
 
     // Dynamically generated content. Useful for home page.
-    //   web/genInc/recentImages_gen_inc.jsp
-    //   web/genInc/recentDescEdits.jsp
+    //   web/genInc/recentImages_gen_inc.html
+    //   web/genInc/recentDescEdits.html
     public static void genRecentContent(Connection connection) throws SQLException, IOException {
         Date startTime = new Date();
         AntwebFunctions.genRecentDescEdits(connection);

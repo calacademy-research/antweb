@@ -137,7 +137,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
                         if (noWhitespaceHeaders.contains(col) && element.contains(" ")) {
                             errorMessage = "whitespace in taxonomic field col:" + col + " element:" + element;
-                            getMessageMgr().addToMessages(MessageMgr.whitespaceInTaxonField, col + ": " + element);
+                            getMessageMgr().addToMessages(MessageMgr.whitespaceInTaxonField, Html.esc(col + ": " + element));
                             return errorMessage;
                         }
 
@@ -180,7 +180,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                            String lowerCode = element.toLowerCase();
                            String newCode = new Formatter().removeSpaces(lowerCode);
                            if (!lowerCode.equals(newCode)) {
-                               getMessageMgr().addToMessages(MessageMgr.specimenIdSpacesRemoved, newCode);
+                               getMessageMgr().addToMessages(MessageMgr.specimenIdSpacesRemoved, Html.esc(newCode));
                            }
                            code = newCode;
                            specimenItem.put(col, newCode);
@@ -221,7 +221,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             } else {                              
 						      //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
 							  //getMessageMgr().addToMessageStrings(heading, (String) specimenItem.get("code")); 
-						      getMessageMgr().addToMessages(MessageMgr.invalidLatLon, (String) specimenItem.get("code")); 
+						      getMessageMgr().addToMessages(MessageMgr.invalidLatLon, Html.esc(specimenItem.get("code"))); 
 						      errorMessage = "invalidLongitude for code:" + code;
 						      break;
                             }
@@ -241,7 +241,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                             } else {                              
 							  //String heading = "<b>Invalid lat/lon <font color=red>(not uploaded):</font></b>";
 							  //getMessageMgr().addToMessageStrings(heading, (String) specimenItem.get("code")); 
-							  getMessageMgr().addToMessages(MessageMgr.invalidLatLon, (String) specimenItem.get("code")); 
+							  getMessageMgr().addToMessages(MessageMgr.invalidLatLon, Html.esc(specimenItem.get("code"))); 
 							  errorMessage =  "invalidLatitude for code:" + code;
 							  break;							  
                             }
@@ -263,7 +263,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         if (!otherColumnFound) {
                             //String heading = "<b>Unrecognized Column <font color=red>(ignored):</font></b>";
                             //getMessageMgr().addToMessageStrings(heading, (String) otherColumns.get(colIndex));
-                            getMessageMgr().addToMessages(MessageMgr.unrecognizedColumn, otherColumns.get(colIndex));
+                            getMessageMgr().addToMessages(MessageMgr.unrecognizedColumn, Html.esc(otherColumns.get(colIndex)));
                         }
                          
                         if (!element.equals("")) {
@@ -290,7 +290,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                     
                     //String heading = "<b>Invalid Column Count <font color=red>(Not uploaded)</font></b>";
                     //getMessageMgr().addToMessageSets(heading, (String) specimenItem.get("code"));
-                    getMessageMgr().addToMessages(MessageMgr.invalidColumn, (String) specimenItem.get("code"));
+                    getMessageMgr().addToMessages(MessageMgr.invalidColumn, Html.esc(specimenItem.get("code")));
                     s_log.error(message);
                     errorMessage = "invalid column for code:" + code;
                     break;
@@ -407,7 +407,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				  // If we don't find it, maybe it is not an ant. Then insert it, no error message.
 				  if (!("(Formicidae)".equals(subfamilyName) || Subfamily.isValidAntSubfamily(subfamilyName))) {
 					if (false && AntwebProps.isDevMode()) {
-					  String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
+					  String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.url(code) + "'>" + Html.esc(code) + "</a>";
 					  getMessageMgr().addToMessages(MessageMgr.nonAntTaxa, displayCode); 
 					  // No error code. Allowed.                 
 					}
@@ -416,7 +416,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				      //A.log("parseLine() isMorphoOrIndet:" + genusName);
 				    } else {
   		 	 	 	  // No valid subfamily found for this genus.
-					  getMessageMgr().addToMessages(MessageMgr.noValidSubfamilyForGenus, genusName);
+					  getMessageMgr().addToMessages(MessageMgr.noValidSubfamilyForGenus, Html.esc(genusName));
 					  //A.log("parseLine() no valid subfamily found for subfamily:" + subfamilyName + " genus:" + genusName + " lineNum:" + LineNumMgr.getDisplayLineNum(lineNum));
 					  errorMessage = "no validSubfamilyForGenus:" + genusName;                  				  
                     }
@@ -440,7 +440,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             {
                 String tempName = speciesName;
                 if (subspeciesName != null && subspeciesName.contains(" ")) tempName += " " + subspeciesName;
-                getMessageMgr().addToMessages(MessageMgr.invalidSpeciesName, tempName);
+                getMessageMgr().addToMessages(MessageMgr.invalidSpeciesName, Html.esc(tempName));
                 errorMessage = "invalid name for species:" + tempName;
                 //A.log("parseLine() errorMessage:" + errorMessage);
             }
@@ -491,7 +491,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				boolean isValidCountry = GeolocaleMgr.isValidCountry(country);   // CountryDb.isValid(getConnection(), element);
 				boolean notBlank = Utility.notBlank(country);
 				if (!isValidCountry && notBlank && !"Port of Entry".equals(country)) {
-				  getMessageMgr().addToMessages(MessageMgr.notValidCountries, country);
+				  getMessageMgr().addToMessages(MessageMgr.notValidCountries, Html.esc(country));
 				}
                 specimenItem.put("country", country);
             }
@@ -538,7 +538,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
                   //A.log("parseLine() addAdm1Link:" + addAdm1Link + " code:" + code);
 				  String adm1LogMessage = "";
-                  adm1LogMessage = "<a href='" + addAdm1Link + "'>" + adm1 + "</a>";
+                  adm1LogMessage = "<a href='" + Html.escAttr(addAdm1Link) + "'>" + Html.esc(adm1) + "</a>";
                   //A.log("parseLine() adm1LogMessage:" + adm1LogMessage);
 
 				  getMessageMgr().addToMessages(MessageMgr.notValidAdm1, adm1LogMessage);  
@@ -642,7 +642,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
               getMessageMgr().flag("noCasteNotes"); 
             }
             if (casteNotes != null &&  caste == null) {
-              getMessageMgr().addToMessages(MessageMgr.unrecognizedCaste, casteNotes); 
+              getMessageMgr().addToMessages(MessageMgr.unrecognizedCaste, Html.esc(casteNotes)); 
             }
             if (caste != null) specimenItem.put("caste", caste);
             if (subcaste != null) specimenItem.put("subcaste", subcaste);
@@ -651,7 +651,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (taxonName == null) {
               if (code != null) {
                 errorMessage = "makeTaxonNameError code:" + code;
-                getMessageMgr().addToMessages(MessageMgr.makeTaxonNameError, code);
+                getMessageMgr().addToMessages(MessageMgr.makeTaxonNameError, Html.esc(code));
 
 /*           // Would be good to load even though bad taxonomic info with a flag. But unintended consequences.
                 if (AntwebProps.isDevMode()) {
@@ -700,7 +700,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
             String withinCountryBoundsMsg = isWithinCountryBounds(specimenItem, coord);
 			if (withinCountryBoundsMsg != null) {
-				String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimenItem.get("code") + "'>" + specimenItem.get("code") + "</a>";
+				String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.url(specimenItem.get("code")) + "'>" + Html.esc(specimenItem.get("code")) + "</a>";
 				getMessageMgr().addToMessages(MessageMgr.latLonNotInCountryBounds, displayCode, withinCountryBoundsMsg);  	
                 specimenItem.put("flag", "red");
 			    specimenItem.put("issue", MessageMgr.latLonNotInCountryBounds);  							
@@ -708,7 +708,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				//if (AntwebProps.isCAS(group) || AntwebProps.isDavis(group)) {
 				  String withinAdm1BoundsMsg = isWithinAdm1Bounds(specimenItem);
 				  if (withinAdm1BoundsMsg != null) {
-					String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimenItem.get("code") + "'>" + specimenItem.get("code") + "</a>";
+					String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.url(specimenItem.get("code")) + "'>" + Html.esc(specimenItem.get("code")) + "</a>";
 					getMessageMgr().addToMessages(MessageMgr.latLonNotInAdm1Bounds, displayCode, withinAdm1BoundsMsg);  				
                     specimenItem.put("flag", "red");
    			        specimenItem.put("issue", MessageMgr.latLonNotInAdm1Bounds);  							
@@ -1202,7 +1202,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
             //String heading = "<b>Incorrect elevation format</b>";   
             //getMessageMgr().addToMessageStrings(heading, "Line:" + lineNum + " elevation:" + element);          
-            getMessageMgr().addToMessages(MessageMgr.incorrectElevationFormat, "Line:" + lineNum + " elevation:" + element);          
+            getMessageMgr().addToMessages(MessageMgr.incorrectElevationFormat, "Line:" + lineNum + " elevation:" + Html.esc(element));          
         }
         return elevation;
     }

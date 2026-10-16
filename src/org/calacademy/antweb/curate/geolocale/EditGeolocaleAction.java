@@ -57,6 +57,15 @@ public final class EditGeolocaleAction extends AntwebAction {
             return mapping.findForward("startFresh");
         }
 
+        // Deleting a geolocale, or removing/fetching its Flickr and Geonames data, is done
+        // from links (GET): administrators only.
+        boolean isAdminRequest = editGeolocaleForm.getIsDelete()
+            || (action != null && !"".equals(action) && !editGeolocaleForm.getIsSubmit());
+        if (isAdminRequest && !LoginMgr.isAdmin(accessLogin)) {
+            request.setAttribute("message", "Only an AntWeb administrator may do this.");
+            return mapping.findForward("message");
+        }
+
 
         Connection connection = null;
         try {

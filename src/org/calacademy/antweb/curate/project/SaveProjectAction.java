@@ -32,6 +32,10 @@ public final class SaveProjectAction extends AntwebAction {
         throws IOException, ServletException {
         // Require a logged-in curator: this action changes data.
         ActionForward denied = LoginMgr.mustBeCurator(request, mapping); if (denied != null) return denied;
+        if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            request.setAttribute("message", "Please use the project form to save.");
+            return mapping.findForward("message");
+        }
 
         // Extract attributes we will need
         HttpSession session = request.getSession();

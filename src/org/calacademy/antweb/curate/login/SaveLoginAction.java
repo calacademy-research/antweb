@@ -95,6 +95,9 @@ public final class SaveLoginAction extends AntwebAction {
             login.setFirstName(form.getFirstName());
             login.setLastName(form.getLastName());
             login.setIsAdmin(form.isAdmin());
+            // An invitation never grants administrator rights; an administrator can add them
+            // later by editing the login.
+            if ("invite".equals(form.getStep())) login.setIsAdmin(false);
             login.setIsUploadSpecimens(form.isUploadSpecimens());
             login.setIsUploadImages(form.isUploadImages());
             login.setUploadAs(form.getUploadAs());
@@ -213,7 +216,12 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
             
             if ("invite".equals(form.getStep())) {
                 s_log.warn("execute() step:" + form.getStep()); 
-                request.setAttribute("inviteLogin", login);                
+                request.setAttribute("inviteLogin", login);
+                // One-time link (14 days) to set a password; only for a login that has none yet.
+                Login saved = loginDb.getLogin(login.getId());
+                if (isAdminUser && saved != null && (saved.getPassword() == null || saved.getPassword().isEmpty())) {
+                    request.setAttribute("inviteLink", PasswordResetMgr.newInviteLink(connection, login.getId(), accessLogin.getId()));
+                }
                 return mapping.findForward("invite");
             }
 

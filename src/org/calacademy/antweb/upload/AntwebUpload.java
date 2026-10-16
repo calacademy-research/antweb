@@ -152,7 +152,7 @@ or for Worldants upload
 
         if (Formatter.hasSpecialCharacter(taxonName)) {
             s_log.warn("saveTaxon() special character found in:" + taxonName);
-            getMessageMgr().addToMessages(MessageMgr.specialCharacterFound, taxonName);
+            getMessageMgr().addToMessages(MessageMgr.specialCharacterFound, Html.esc(taxonName));
             return 0;
         }
 
@@ -577,7 +577,7 @@ or for Worldants upload
                     // done
                   } else {              
                     // add to the nonLegit subfamily list
-                    getMessageMgr().addToMessages(MessageMgr.invalidSubfamily, subfamily);
+                    getMessageMgr().addToMessages(MessageMgr.invalidSubfamily, Html.esc(subfamily));
                     s_log.debug("saveTaxonAndProjTaxon() isValidSubfamily failure.  taxonName:" + taxonName);
                     return 0;
                   }  
@@ -679,7 +679,7 @@ or for Worldants upload
                 AntwebUtil.logStackTrace(e);
             }
             s_log.error("saveTaxonAndProjTaxon() project:" + project + " e:" + e);
-            String message = "project:" + project + " e:" + e;
+            String message = Html.esc("project:" + project + " e:" + e);
 	  	    getMessageMgr().addToMessages(MessageMgr.databaseErrors, message);
         }
         return c;
@@ -820,7 +820,7 @@ or for Worldants upload
                             fields.append("datecollectedstart,");
                             values.append("'" + formatDate + "',");
                         } else {
-                            getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedStart, dateStr);
+                            getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedStart, Html.esc(dateStr));
                             //LogMgr.appendLog("dateCollected.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
                         }
                         break;
@@ -834,7 +834,7 @@ or for Worldants upload
                             fields.append("datecollectedend,");
                             values.append("'" + formatDate + "',");
                         } else {
-                            getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedEnd, dateStr);
+                            getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedEnd, Html.esc(dateStr));
                             A.log("dateCollected - code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
                             // handle this: code:utep:ento:11767 dateStr:7/94 formatDate:null
                             // Format into: 2024-02-10
@@ -851,7 +851,7 @@ or for Worldants upload
                             fields.append("datedetermined,");
                             values.append("'" + formatDate + "',");
                         } else {
-                            getMessageMgr().addToMessages(MessageMgr.invalidDateDetermined, dateStr);
+                            getMessageMgr().addToMessages(MessageMgr.invalidDateDetermined, Html.esc(dateStr));
                             LogMgr.appendLog("dateDetermined.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
                         }
                         break;
@@ -1004,7 +1004,7 @@ or for Worldants upload
 	  Date date = DateUtil.getDate(formatDate);
 	  if (date != null) {
 		if (date.after(new Date())) {
-			String message = "code:" + code + " dateDetermined:" + formatDate;
+			String message = Html.esc("code:" + code + " dateDetermined:" + formatDate);
 			getMessageMgr().addToMessages(MessageMgr.futureDateDetermined, message);
 			return false;
 		}

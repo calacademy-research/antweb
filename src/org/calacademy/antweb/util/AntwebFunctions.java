@@ -29,7 +29,8 @@ public abstract class AntwebFunctions {
 
         FileUtil.makeDir(genIncDir);
 
-        File outputFile = new File(genIncDir + "recentDescEdits.jsp");
+        // .html, not .jsp: a .jsp under the web root would be compiled and run by Tomcat.
+        File outputFile = new File(genIncDir + "recentDescEdits.html");
         FileWriter outFile = new FileWriter(outputFile);
 
         Statement stmt = null;

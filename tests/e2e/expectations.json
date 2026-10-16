@@ -11,7 +11,7 @@
   "/advancedsearch": "ok",
   "/antShare": "ok",
   "/antWikiData": "login",
-  "/antwebInvite": "login",
+  "/antwebInvite": "message",
   "/api": "ok",
   "/apiDev": "ok",
   "/apiV3": "ok",

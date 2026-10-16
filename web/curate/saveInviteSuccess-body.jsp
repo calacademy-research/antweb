@@ -14,14 +14,21 @@
         //Group accessGroup = GroupMgr.getAccessGroup(request);
         
         Login inviteLogin = (Login) request.getAttribute("inviteLogin");
-        String inviteLink = domainApp + "/antwebInvite.do?email=" + inviteLogin.getEmail();
+        String inviteLink = (String) request.getAttribute("inviteLink");
 %>
 
 <div class=left>
 <h1>Success!</h1>
 <hr></hr>
-You have created the new login.  Email to <b><%= inviteLogin.getEmail() %></b> this link: 
-<br><br>&nbsp;&nbsp;&nbsp;<a href="<%= inviteLink %>"><%= inviteLink %></a>
+<% if (inviteLink != null) { %>
+You have created the new login <b><%= Html.esc(inviteLogin.getName()) %></b>. Email to <b><%= Html.esc(inviteLogin.getEmail()) %></b> this link
+and the username:
+<br><br>&nbsp;&nbsp;&nbsp;<a href="<%= Html.escAttr(inviteLink) %>"><%= Html.esc(inviteLink) %></a>
+<br><br>The link lets them set a password. It works once and for 14 days; press Invite again on the login to make a new one.
+This link is shown only now: copy it before leaving the page.
+<% } else { %>
+This login already has a password, so no invitation link was made. Use Change Password, or ask them to use "Forgot your password?".
+<% } %>
 
 <% if (LoginMgr.isAdmin(request)) { %>
 <p><a href="<%= domainApp %>/viewLogins.do">Return to Your Login Admin Screen</a>.
