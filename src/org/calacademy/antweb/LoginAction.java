@@ -92,9 +92,11 @@ public final class LoginAction extends AntwebAction {
             } else {
              */
 
-                if (!Turnstile.passed(request)) {
-                    // Bot check (Cloudflare Turnstile) missing or failed: no account.
-                    messages.add("message", new ActionMessage("error.login.botCheck"));
+                Turnstile.Result botCheck = Turnstile.check(request);
+                if (botCheck != Turnstile.Result.PASSED) {
+                    // Bot check (Cloudflare Turnstile) missing, failed or could not be verified: no account.
+                    String key = botCheck == Turnstile.Result.UNAVAILABLE ? "error.login.botCheckUnavailable" : "error.login.botCheck";
+                    messages.add("message", new ActionMessage(key));
                     saveMessages(request, messages);
                     return mapping.findForward("failure");
                 }

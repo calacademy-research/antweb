@@ -18,6 +18,17 @@ import org.calacademy.antweb.home.*;
 public class QueryAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(QueryAction.class);
+
+    private static final Set<String> ADMIN_ACTIONS = Set.of(
+        "checkIntegrity", "curiousQueries", "curateAntcat", "devQueries", "descEdit", "countryEndemic", "events");
+
+    // True for named queries that expose curator logins/emails or modify data.
+    private static boolean isSensitiveQuery(String name) {
+        NamedQuery namedQuery = Queries.getNamedQuery(name);
+        if (namedQuery == null || namedQuery.getQuery() == null) return false;
+        String q = namedQuery.getQuery().toLowerCase();
+        return q.contains("email") || q.matches("(?s).*\\blogin\\b.*") || q.contains("delete from");
+    }
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
@@ -53,6 +64,13 @@ public class QueryAction extends AntwebAction {
             } else {
             
                 if (action == null) action = "query";
+
+                // Maintenance batteries, raw-field queries and the events list (curator logins) are admin tools.
+                // Named queries stay public for the species-list/image pages, except ones that read logins/emails or delete.
+                if (ADMIN_ACTIONS.contains(action)
+                    || (("curiousQuery".equals(action) || "query".equals(action)) && name != null && isSensitiveQuery(name))) {
+                    ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+                }
                         
                 if (action.equals("checkIntegrity")) {
                   String message = QueryManager.checkIntegrity(connection);

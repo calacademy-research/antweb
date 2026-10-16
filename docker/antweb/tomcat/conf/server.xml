@@ -154,6 +154,10 @@
                prefix="localhost_access_log" suffix=".txt"
                pattern="%h %l %u %t &quot;%r&quot; %s %b" />
 
+        <!-- Error pages without the Tomcat version or stack traces (2026-10 security audit). -->
+        <Valve className="org.apache.catalina.valves.ErrorReportValve"
+               showReport="false" showServerInfo="false" />
+
         <!-- AntWeb is the root web application. -->
         <Context path="" docBase="/data/antweb"/>
 

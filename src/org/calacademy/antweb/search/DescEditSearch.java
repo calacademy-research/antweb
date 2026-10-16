@@ -55,12 +55,12 @@ public class DescEditSearch extends GenericSearch implements Serializable {
             theQuery += " and image.upload_date > '" + Utility.getCurrentDateAndTimeString(cal.getTime()) + "'";
                 
         } else if (fromDate != null && toDate != null) {
-            theQuery += " and image.upload_date >= '" + fromDate + "' and image.upload_date <= '" +
-                toDate + "' ";
+            theQuery += " and image.upload_date >= '" + DBUtil.escapeQuotes(fromDate) + "' and image.upload_date <= '" +
+                DBUtil.escapeQuotes(toDate) + "' ";
         }
 
         if (groupName != null && groupName.length() > 0) {
-            theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + groupName + "'";
+            theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + DBUtil.escapeQuotes(groupName) + "'";
         }
             
         theQuery += " group by specimen.taxon_name, specimen.subfamily, specimen.genus, " 

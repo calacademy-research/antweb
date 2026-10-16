@@ -9,6 +9,8 @@ import org.calacademy.antweb.util.GroupMgr;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class GroupDb extends AntwebDb {
     
@@ -207,6 +209,15 @@ public class GroupDb extends AntwebDb {
         if ("subfamilies".equals(orderBy)) orderBy = "subfamilies desc";
         if ("genera".equals(orderBy)) orderBy = "genera desc";
         if ("species".equals(orderBy)) orderBy = "species desc";
+
+        // ORDER BY cannot be a bound parameter. Only allow the mapped values above (and name); anything else gets no ordering.
+        List<String> allowedOrderBys = Arrays.asList("name", "first_specimen_upload", "created desc", "upload_count desc"
+          , "specimens desc", "ungeoreferenced desc", "flagged desc", "collections desc", "localities desc"
+          , "subfamilies desc", "genera desc", "species desc");
+        if (orderBy != null && !allowedOrderBys.contains(orderBy)) {
+            s_log.debug("getUploadGroups() ignoring orderBy:" + orderBy);
+            orderBy = null;
+        }
 
         String orderClause = "";
         if (!Utility.isBlank(orderBy)) orderClause = " order by " + orderBy;

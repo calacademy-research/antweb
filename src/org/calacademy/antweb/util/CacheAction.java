@@ -32,6 +32,12 @@ public final class CacheAction extends AntwebAction {
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
  
+        // Long-request details (URLs and timings of other visitors' requests): admins only.
+        if (!LoginMgr.isAdmin(request)) {
+          request.setAttribute("message", "Administrators only.");
+          return mapping.findForward("message");
+        }
+
         DynaActionForm df = (DynaActionForm) form;        
         String action = (String) df.get("action");
         String url = (String) df.get("url");

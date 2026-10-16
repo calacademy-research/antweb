@@ -190,12 +190,12 @@ public class UtilDataAction extends AntwebAction {
         String text = form.getText();	
         String taxonName = form.getTaxonName();
         String prop = form.getProp();
-        int secureCode = form.getSecureCode();
+        String secureCode = form.getSecureCode();
 
         boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
         boolean isSecure = AntwebUtil.isSecureCode(secureCode) || isAdmin;
         
-        s_log.info("doAction() " + action + " request:" + request + " isSecure:" + isSecure + " secureCode:" + secureCode + " isAdmin:" + isAdmin);
+        s_log.info("doAction() " + action + " request:" + request + " isSecure:" + isSecure + " isAdmin:" + isAdmin);
 
         if (isSecure) {
             if ("allSets".equals(action)) {

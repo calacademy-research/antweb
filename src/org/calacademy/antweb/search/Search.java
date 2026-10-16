@@ -49,7 +49,7 @@ public class Search extends GenericSearch implements Serializable {
             theQuery += getSearchString("taxon.subfamily", searchType, name)
                 + " or " + getSearchString("taxon.genus", searchType, name)
                 + " or " + getSearchString("taxon.species", searchType, name)
-                + " or sp.code = '" + name + "' " + ") ";
+                + " or sp.code = '" + DBUtil.escapeQuotes(name) + "' " + ") ";
         }
         theQuery += " group by taxon.taxon_name, taxon.subfamily, taxon.genus, taxon.species, sp.type, sp.code, taxon.valid, sp.toc, sp.country, sp.adm1, sp.localityname, sp.caste, sp.medium, sp.specimennotes ";
 

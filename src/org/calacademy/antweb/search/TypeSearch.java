@@ -75,7 +75,7 @@ public class TypeSearch implements Serializable {
                " from proj_taxon, taxon left outer join specimen as sp on  " +
                "((taxon.taxon_name = sp.taxon_name) or ((taxon.subfamily=sp.subfamily) and (taxon.genus=sp.genus)))" +
                " left outer join image on sp.code = image.image_of_id where  " +
-               " proj_taxon.project_name = '" + project + "' and " +
+               " proj_taxon.project_name = '" + DBUtil.escapeQuotes(project) + "' and " +
                " proj_taxon.taxon_name = taxon.taxon_name and taxon.status = 'valid' and (";
 
           if (genus != null && species !=null) {
@@ -153,7 +153,7 @@ public class TypeSearch implements Serializable {
              " from proj_taxon, taxon, specimen as sp, image " +
              " where sp.code = image.image_of_id and " +
              " ((taxon.taxon_name = sp.taxon_name) or (taxon.subfamily=sp.subfamily and taxon.genus = sp.genus)) and " +
-             " proj_taxon.project_name = '" + project + "' and taxon.status = 'valid' and " +
+             " proj_taxon.project_name = '" + DBUtil.escapeQuotes(project) + "' and taxon.status = 'valid' and " +
              " proj_taxon.taxon_name = sp.taxon_name and (";
 
           if (genus != null && species !=null) {
@@ -279,7 +279,7 @@ public class TypeSearch implements Serializable {
     sb.append(operator);
     sb.append(" '");
     sb.append(leftPercent);
-    sb.append(value);
+    sb.append(DBUtil.escapeQuotes(value));
     sb.append(rightPercent);
     sb.append("'");
 

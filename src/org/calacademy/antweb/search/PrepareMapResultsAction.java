@@ -137,21 +137,21 @@ Request objects:
 
         //if (util.notBlank(theItem.getCode())) {
         if (resultRank != null && resultRank.equals("specimen")) {
-            theQuery = "select decimal_latitude, decimal_longitude from specimen where code = '" + theItem.getCode() + "'";
+            theQuery = "select decimal_latitude, decimal_longitude from specimen where code = '" + DBUtil.escapeQuotes(theItem.getCode()) + "'";
         } else if (resultRank != null && resultRank.equals("locality")) {
             AntwebUtil.log("hasGeoRefInfo() resultRank=locality needs to be handled! item:" + theItem);
         } else {
             ArrayList terms = new ArrayList();
             theQuery = "select decimal_latitude, decimal_longitude from specimen ";
             if (Utility.notBlank(theItem.getSubfamily())) {
-                terms.add("subfamily='" + theItem.getSubfamily() + "'");
+                terms.add("subfamily='" + DBUtil.escapeQuotes(theItem.getSubfamily()) + "'");
             }
             if (Utility.notBlank(theItem.getGenus())) {
-                terms.add("genus='" + theItem.getGenus() + "'");
+                terms.add("genus='" + DBUtil.escapeQuotes(theItem.getGenus()) + "'");
             }
             //if ((Utility.notBlank(theItem.getSpecies())) && (theItem.getRank().equals("species"))) {
             if (Utility.notBlank(theItem.getSpecies())) {
-                terms.add("species='" + theItem.getSpecies() + "'");
+                terms.add("species='" + DBUtil.escapeQuotes(theItem.getSpecies()) + "'");
             }
             if (terms.size() > 0) {
                 theQuery += " where " + Utility.andify(terms);

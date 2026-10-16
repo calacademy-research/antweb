@@ -118,16 +118,17 @@ public final class EndemicAction extends AntwebAction {
         ArrayList<String> endemics = new ArrayList<>();
 
         String query = "select bt.taxon_name from bioregion_taxon bt, taxon where bt.taxon_name = taxon.taxon_name "
-                + " and bt.bioregion_name = '" + bioregionName + "'"
+                + " and bt.bioregion_name = ?"
                 + new StatusSet().getAndCriteria()
                 + " and bt.is_endemic = 1 order by genus, species, subspecies";
 
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = DBUtil.getStatement(connection, "getBioregionEndemics()");
+            stmt = DBUtil.getPreparedStatement(connection, "getBioregionEndemics()", query);
+            stmt.setString(1, bioregionName);
 
-            rset = stmt.executeQuery(query);
+            rset = stmt.executeQuery();
             String taxonName = null;
             while (rset.next()) {
                 taxonName = rset.getString("taxon_name");

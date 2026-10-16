@@ -42,7 +42,7 @@
         <table class="arguments">
             <tr>
                 <td><b>Limit</b></td>
-                <td>Limit the number of specimen returned on large requests (limit=100). Default is 10,000.</td>
+                <td>Limit the number of specimen returned on large requests (limit=100). Default and maximum is 10,000 (up to 1,000,000 with ndjson=true); use offset to page through more.</td>
             </tr>
             <tr>
                 <td><b>Offset</b></td>
