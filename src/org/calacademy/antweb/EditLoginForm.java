@@ -23,6 +23,7 @@ public class EditLoginForm extends ActionForm {
     private String lastName;
     private String password;
     private String retypePassword;
+    private String currentPassword;
     
     public String isSubmit;
     public String getIsSubmit() {
@@ -85,6 +86,14 @@ public class EditLoginForm extends ActionForm {
     public void setRetypePassword(String retypePassword) {
         this.retypePassword = retypePassword;
     }    
+
+    // Needed to change the password of your own login.
+    public String getCurrentPassword() {
+        return currentPassword;
+    }
+    public void setCurrentPassword(String currentPassword) {
+        this.currentPassword = currentPassword;
+    }
     
     
     /* This get/set method supports specifying action during form submission */    
@@ -98,6 +107,10 @@ public class EditLoginForm extends ActionForm {
     
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         isSubmit = null;
+        // The form lives in the session: never carry passwords over to the next request.
+        password = null;
+        retypePassword = null;
+        currentPassword = null;
     }
     
     public ActionErrors validate(ActionMapping mapping, HttpServletRequest request) {

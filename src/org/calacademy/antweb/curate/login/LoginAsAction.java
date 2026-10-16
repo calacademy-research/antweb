@@ -69,7 +69,8 @@ public final class LoginAsAction extends AntwebAction {
 
             // Start a fresh session for the target login (drops the admin's session state).
             request.getSession().invalidate();
-            request.getSession(true).setAttribute("accessLogin", target);
+            request.getSession(true);
+            LoginMgr.setAccessLogin(request, target);
         } catch (SQLException e) {
             s_log.error("execute() id:" + id + " e:" + e);
             request.setAttribute("message", "Could not log in as id " + id);

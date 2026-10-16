@@ -47,13 +47,19 @@ public class LoginMgr extends Manager {
 
     private static boolean s_passwordConversionStarted = false;
 
-    // Once per application start, in the background: replace any plain-text
-    // passwords left in the login table with hashes (see PasswordHash).
+    // Once per application start, in the background: create the password reset
+    // table and login columns if missing (PasswordResetDb), then replace any
+    // plain-text passwords left in the login table with hashes (see PasswordHash).
     private static synchronized void startPasswordConversion() {
       if (s_passwordConversionStarted) return;
       s_passwordConversionStarted = true;
       Thread t = new Thread(() -> {
         try (Connection conn = DBUtilSimple.getDataSource().getConnection()) {
+          try {
+            new PasswordResetDb(conn).ensureSchema();
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() password reset schema not created e:" + e);
+          }
           int count = new LoginDb(conn).hashLegacyPasswords();
           if (count > 0) populate(conn, true, true);  // drop the cached plain-text values
         } catch (Exception e) {
@@ -128,7 +134,25 @@ public class LoginMgr extends Manager {
     public static Login getAccessLogin(HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		if (session == null) return null;
-        return (Login) session.getAttribute("accessLogin");
+        Login login = (Login) session.getAttribute("accessLogin");
+        // Sessions ended by a password reset or by an administrator (login.session_version).
+        if (login != null && login.getId() > 0 && !PasswordResetMgr.isSessionCurrent(session, login.getId())) {
+            s_log.info("getAccessLogin() session ended for login:" + login.getId());
+            try {
+                session.invalidate();
+            } catch (IllegalStateException e) {
+                // already invalidated
+            }
+            return null;
+        }
+        return login;
+    }
+
+    /** Log the login in on this session (call after request.changeSessionId()). */
+    public static void setAccessLogin(HttpServletRequest request, Login login) {
+        HttpSession session = request.getSession();
+        session.setAttribute("accessLogin", login);
+        if (login != null) PasswordResetMgr.stampSession(session, login.getId());
     }
 
     public static void removeAccessLogin(HttpServletRequest request) {
@@ -190,8 +214,8 @@ public class LoginMgr extends Manager {
 	    return isDeveloper(accessLogin);
 	}
 	public static boolean isDeveloper(Login accessLogin) {
-        return accessLogin != null
-                // A specific list of Developer admins.
+        return accessLogin != null && accessLogin.isAdmin()
+                // A specific list of Developer admins (only while they are admins).
                 && (
                 accessLogin.getId() == Login.MARK
                         || accessLogin.getId() == Login.TEST_LOGIN
@@ -203,7 +227,7 @@ public class LoginMgr extends Manager {
 	    return LoginMgr.isMark(getAccessLogin(request));
 	}
 	public static boolean isMark(Login accessLogin) {
-        return accessLogin != null && accessLogin.getId() == 22;
+        return accessLogin != null && accessLogin.isAdmin() && accessLogin.getId() == 22;
     }
 
     public static boolean isPeter(HttpServletRequest request) {

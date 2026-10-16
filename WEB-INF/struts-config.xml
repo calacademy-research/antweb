@@ -1270,10 +1270,23 @@ We would like to remove getChildImages.  Not needed now in the new UI
     </action -->
 
     <action path="/forgotPassword"
-                type="org.calacademy.antweb.LogoutAction"
-                scope="request"
-                name="blankForm">
+                type="org.calacademy.antweb.ForgotPasswordAction"
+                scope="request">
         <forward name="success" path="/forgot_password.jsp" />
+    </action>
+
+    <!-- The page a password reset email links to (?token=...). -->
+    <action path="/resetPassword"
+                type="org.calacademy.antweb.ResetPasswordAction"
+                scope="request">
+        <forward name="success" path="/resetPassword.jsp" />
+    </action>
+
+    <!-- Admin only: ask all curators and administrators to set a new password. -->
+    <action path="/passwordResetCampaign"
+                type="org.calacademy.antweb.curate.login.PasswordResetCampaignAction"
+                scope="request">
+        <forward name="success" path="/curate/passwordResetCampaign.jsp" />
     </action>
     
     <action path="/manageMuseum"

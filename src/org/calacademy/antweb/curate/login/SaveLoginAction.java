@@ -79,6 +79,7 @@ public final class SaveLoginAction extends AntwebAction {
             }
 
             login = loginDb.getLogin(id);
+            String storedPassword = login == null ? null : login.getPassword();
 
             if (login == null) {
                 isNew = true;
@@ -140,6 +141,21 @@ public final class SaveLoginAction extends AntwebAction {
 
 s_log.debug("execute() groupName:" + groupName + " loginGroupId:" + login.getGroupId() + " groups:" + groups);
 
+            // Will a new password be stored? (LoginDb.updateLogin() stores one only for your own
+            // login; administrators set other logins' passwords with the Change Password button.)
+            boolean isSelf = accessLogin != null && accessLogin.getId() == id;
+            boolean storesPassword = newPassword != null && !newPassword.isEmpty()
+                && (isNew || accessLogin == null || isSelf || "Change Password".equals(form.getChangePassword()));
+            if (storesPassword) {
+                String problem = checkNewPassword(request, form, storedPassword, isSelf);
+                if (problem != null) {
+                    ActionErrors errors = new ActionErrors();
+                    errors.add("error", new ActionMessage(problem, false));
+                    saveErrors(request, errors);
+                    return mapping.findForward("failure");
+                }
+            }
+
             //login.setGroups(new ArrayList(Arrays.asList(groups)));
             if (isNew) {
                 s_log.info("execute() new Login via invite creation.");
@@ -175,6 +191,7 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
                   }    
 		
                   loginDb.changePassword(login, form.getPassword());
+                  endSessions(connection, request, login, isSelf, accessLogin);
                   return mapping.findForward("success");
           
                 } else {
@@ -183,6 +200,8 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
                 }
               }
             }
+
+            if (storesPassword && !isNew) endSessions(connection, request, login, isSelf, accessLogin);
 
             // create directory for curator login if it does not exist
             //String accessName = login.getName(); 
@@ -218,6 +237,25 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
 		return mapping.findForward("success");
 	}
 
+
+    // A new password: only from a POST, with your current password when it is your own login,
+    // and following PasswordPolicy. Returns null if fine, else the reason.
+    private String checkNewPassword(HttpServletRequest request, SaveLoginForm form, String storedPassword, boolean isSelf) {
+        if (!HttpUtil.isPost(request)) return "Please use the form to change a password.";
+        if (isSelf && !PasswordHash.matches(storedPassword, form.getCurrentPassword())) {
+            return "To change your password, please enter your current password.";
+        }
+        return PasswordPolicy.check(form.getPassword(), form.getRetypePassword(), form.getName(), form.getEmail());
+    }
+
+    // After a password change: cancel reset links, clear must_reset and end the login's sessions
+    // (except this one, when it is your own login).
+    private void endSessions(Connection connection, HttpServletRequest request, Login login, boolean isSelf, Login accessLogin) throws SQLException {
+        int version = new PasswordResetDb(connection).afterPasswordChange(login.getId());
+        PasswordResetMgr.noteVersion(login.getId(), version);
+        if (isSelf) request.getSession().setAttribute(PasswordResetMgr.SESSION_VERSION_ATTR, version);
+        PasswordResetMgr.logEvent("password changed for login:" + login.getId() + " by login:" + (accessLogin == null ? "invitee" : accessLogin.getId()));
+    }
 
     // Password may be blank (keep the current one); if given, both fields must match.
     private ActionErrors passPwdMatch(SaveLoginForm form) {
