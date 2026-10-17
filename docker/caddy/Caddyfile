@@ -84,8 +84,9 @@ www.antweb.org {
         respond /web/log/logins* "Not found" 404
         # Admin actions log (who did what, by login id): admins read it through /logMgr.do.
         respond /web/log/admin* "Not found" 404
-        # Server-busy reports (running SQL, request URLs): not public; the report is now a data log.
+        # Server-busy reports (running SQL, request URLs) and page messages: not public; both are now data logs.
         respond /web/log/serverBusy* "Not found" 404
+        respond /web/log/messages* "Not found" 404
         # Test JSPs under /data/ (e.g. the old encoding test page) are never public.
         respond /data/*.jsp "Not found" 404
         # Directory listings of all logs, all curator folders and the taxon-set backups.
