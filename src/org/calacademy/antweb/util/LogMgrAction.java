@@ -41,8 +41,13 @@ public final class LogMgrAction extends AntwebAction {
         throws IOException, ServletException {
 
 
-        // Admin only: log files can contain visitor IPs, logins and internal paths.
-        ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+        // Log files can contain visitor IPs, logins and internal paths: admin only.
+        // The specimen page links curators to one line of an upload file, a specimen's
+        // stored details and one Worldants line; those are curator data and open to curators.
+        String requestedAction = (String) ((DynaActionForm) form).get("action");
+        boolean curatorView = requestedAction != null && Set.of("uploadLog", "uploadLine", "specimenDetails", "worldants").contains(requestedAction);
+        ActionForward c = curatorView ? Check.curator(request, mapping) : Check.admin(request, mapping);
+        if (c != null) return c;
 
         // Extract attributes we will need
         Locale locale = getLocale(request);
@@ -184,6 +189,7 @@ public final class LogMgrAction extends AntwebAction {
             DBUtil.close(connection, this, dbMethodName);
         }
 
+        if (specimen == null) return "Specimen not found: " + Html.esc(code);
         String specimenDetail = parseXMLIntoHtmlMessage(specimen, specimenDetailXml);
         return specimenDetail;
     }
@@ -191,9 +197,9 @@ public final class LogMgrAction extends AntwebAction {
     private String parseXMLIntoHtmlMessage(Specimen specimen, String theXML) {
         Hashtable detailHash = Specimen.getDetailHash(specimen.getCode(), theXML);
 
-        String message = "<H2>Specimen Description for <a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimen.getCode() + "'>" + specimen.getCode() + "</a></h2><br>";
+        String message = "<H2>Specimen Description for <a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.escAttr(Html.url(specimen.getCode())) + "'>" + Html.esc(specimen.getCode()) + "</a></h2><br>";
 
-        message += "<br><br>" + specimen.getDetailHash() + "</br></br>";
+        message += "<br><br>" + Html.esc(specimen.getDetailHash()) + "<br><br>";
 
         message += "<table border=1>";
 
@@ -207,7 +213,7 @@ public final class LogMgrAction extends AntwebAction {
             String value = (String) detailHash.get(key);
 
             try {
-                message += "<tr><td>" + key + "</td><td>" + value + "</td></tr>";
+                message += "<tr><td>" + Html.esc(key) + "</td><td>" + Html.esc(value) + "</td></tr>";
                 ++i;
             } catch (ArrayIndexOutOfBoundsException e) {
                 s_log.debug("parseXMLIntoHtmlMessage.getUploadLog() i:" + i + " key:" + key + " e:" + e);
@@ -254,7 +260,7 @@ public final class LogMgrAction extends AntwebAction {
         return getLogLine(path, fileName, lineNum);
     }
     private String getLogLine(String path, String fileName, int lineNum) {
-	    String message = "Line:<b>" + lineNum + "</b> of file:<b>" + fileName + "</b><br><br>";
+	    String message = "Line:<b>" + lineNum + "</b> of file:<b>" + Html.esc(fileName) + "</b><br><br>";
         String filePathName = path + fileName;
 		BufferedReader br = null;
 		String strLine = "";
@@ -281,12 +287,12 @@ public final class LogMgrAction extends AntwebAction {
 				}
 			} 
 			if (i < lineNum) {
-			  message += "<br><br>Line:" + lineNum + " not found in " + filePathName;     		    
+			  message += "<br><br>Line:" + lineNum + " not found in " + Html.esc(fileName);     		    
 			}
 		} catch (FileNotFoundException e) {
-			message += "<br><br>Unable to find the file:" + filePathName;
+			message += "<br><br>Unable to find the file:" + Html.esc(fileName);
 		} catch (IOException e) {
-			message += "<br><br>Unable to read the file:" + filePathName;
+			message += "<br><br>Unable to read the file:" + Html.esc(fileName);
 		}
 
 		if (gotIt) {
@@ -299,10 +305,10 @@ public final class LogMgrAction extends AntwebAction {
 			for (String col : headerCols) {
 			  try {
 			    if ("SpecimenCode".equals(col)) {
-			    String codeUrl = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + lineCols[i] + "'>" + lineCols[i] + "</a>";
-  				  message += "<tr><td>" + col + "</td><td>" + codeUrl + "</td></tr>";			    
+			    String codeUrl = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.escAttr(Html.url(lineCols[i])) + "'>" + Html.esc(lineCols[i]) + "</a>";
+  				  message += "<tr><td>" + Html.esc(col) + "</td><td>" + codeUrl + "</td></tr>";			    
 			    } else {
-  				  message += "<tr><td>" + col + "</td><td>" + lineCols[i] + "</td></tr>";
+  				  message += "<tr><td>" + Html.esc(col) + "</td><td>" + Html.esc(lineCols[i]) + "</td></tr>";
 				}
 				++i;
 			  } catch (ArrayIndexOutOfBoundsException e) {
@@ -312,8 +318,8 @@ public final class LogMgrAction extends AntwebAction {
 			message += "</table>";
 
 			message += "<br><br><b>raw text:</b>";
-			message += "<br><pre>" + header + "</pre>";
-			message += "<br><pre>" + theLine + "</pre>";
+			message += "<br><pre>" + Html.esc(header) + "</pre>";
+			message += "<br><pre>" + Html.esc(theLine) + "</pre>";
 		}            
 		return message;  
     }

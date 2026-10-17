@@ -210,7 +210,7 @@ To do:
     
     if (desc.containsKey("taxonomichistory")) { %>
       <br><h2>Taxonomic History (provided by Barry Bolton, <%= year %>)</h2>
-                  <% String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); %>
+                  <% String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); words = words == null ? null : words.replaceAll("(?i)\\s*<a[^>]*hol\\.osu\\.edu[^>]*>[^<]*</a>", ""); /* HOL is offline; AntCat stopped sending the link (#1573), older imports still have it. */ %>
                     <%= new Formatter().removeTag((String) words, "o:p") %>
  <% }
  
@@ -320,17 +320,15 @@ To do:
 <%    } // taxonomic treatment
     }
 
-    if (desc.containsKey("plaziData")) { %>
-        <p><h3>Taxonomic Treatment (provided by <a href="http://plazi.cs.umb.edu/GgServer/search?resultFormat=html&taxonomicName.isNomenclature=taxonomicName.isNomenclature&taxonomicName.exactMatch=taxonomicName.exactMatch&taxonomicName.LSID=urn:lsid:biosci.ohio-state.edu:osuc_concepts:<%= taxon.getHolId() %>" target="new">Plazi</a>)</h3>
-        <div id="plazi">
-        
-        <% 
-      String taxonomicTreatment = (String) desc.get("plaziData");
-            //String taxonomicTreatment = new Formatter().convertFromUTF8((String) desc.get("taxonomictreatment"));
-            //if (AntwebProps.isDevOrStageMode()) AntwebUtil.log("taxonPage-body.jsp utf8 taxonomicTreatment:" + taxonomicTreatment); %>
-        <%= taxonomicTreatment %>
-        </div>
-<%  } // plaziData
+    // The Plazi table copied around 2012 linked to plazi.cs.umb.edu, which is offline. Link to a live
+    // TreatmentBank search instead (Brian, 10-17); the old plaziData stays in the database, unused.
+    if (Rank.SPECIES.equals(taxon.getRank()) || Rank.SUBSPECIES.equals(taxon.getRank()) || Rank.GENUS.equals(taxon.getRank())) {
+      String plaziName = taxon.getPrettyName();
+      if (plaziName != null && !plaziName.isEmpty()) { %>
+        <p><h3>Taxonomic Treatments</h3>
+        <div id="plazi"><a href="https://tb.plazi.org/GgServer/search?taxonomicName.isNomenclature=true&amp;taxonomicName.exactMatch=true&amp;taxonomicName.taxonomicName=<%= Html.escAttr(Html.url(plaziName)) %>" target="new">Treatments of <i><%= Html.esc(plaziName) %></i> at Plazi TreatmentBank</a></div>
+<%    }
+    } // Plazi
 
   } // desc != null
 
@@ -488,9 +486,10 @@ To do:
 <b>Default Specimen:</b>
 </div>
 <div id=data_items2>
-Worker: <%= taxon.getDefaultSpecimen(Caste.WORKER) %>
-Male: <%= taxon.getDefaultSpecimen(Caste.MALE) %>
-Queen: <%= taxon.getDefaultSpecimen(Caste.QUEEN) %>
+<%-- Linked; "none" when a caste has no default. (The separate "Default Images" block repeated this.) --%>
+Worker: <%= taxon.getDefaultSpecimenLink(Caste.WORKER) != null ? taxon.getDefaultSpecimenLink(Caste.WORKER) : "none" %>
+&nbsp; Male: <%= taxon.getDefaultSpecimenLink(Caste.MALE) != null ? taxon.getDefaultSpecimenLink(Caste.MALE) : "none" %>
+&nbsp; Queen: <%= taxon.getDefaultSpecimenLink(Caste.QUEEN) != null ? taxon.getDefaultSpecimenLink(Caste.QUEEN) : "none" %>
 </div>
 
 <%
@@ -550,7 +549,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Line Number:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getLineNumLink() %>
+<%= taxon.getLineNumLink() %><% if (Status.isWorldantsStatus(taxon.getStatus())) { %> (shows this taxon's row in the Worldants (AntCat) file)<% } %>
 </div>
 
 <div class="clear"></div>
@@ -598,23 +597,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Antcat ID:</b>
 </div>
 <div id=data_items2>
-<a href='http://antcat.org/catalog/<%= taxon.getAntcatId() %>'><%= taxon.getAntcatId() %></a>
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
-<b>HOL ID:</b>
-</div>
-<div id=data_items2>
-<a href="http://hol.osu.edu/index.html?id=<%= taxon.getHolId() %>"><%= taxon.getHolId() %></a>
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
-<b>Plazi Treatment:</b>
-</div>
-<div id=data_items2>
-<a href="http://plazi.cs.umb.edu/GgServer/search?resultFormat=html&taxonomicName.isNomenclature=taxonomicName.isNomenclature&taxonomicName.exactMatch=taxonomicName.exactMatch&taxonomicName.LSID=urn:lsid:biosci.ohio-state.edu:osuc_concepts:<%= taxon.getHolId() %>"><%= taxon.getHolId() %></a>
+<a href='https://www.antcat.org/catalog/<%= taxon.getAntcatId() %>'><%= taxon.getAntcatId() %></a>
 </div>
 
 <div class="clear"></div>
@@ -746,17 +729,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <font color="<%= taxon.getChartColor() %>"><%= taxon.getChartColor() %></font>
 </div>
 
-<% if (taxon.isSpeciesOrSubspecies()) { %>
-<div class="clear"></div>
-<div id=data_title2>
-<b>Default Images:</b>
-</div>
-<div id=data_items2>
-Male: <%= taxon.getDefaultSpecimenLink(Caste.MALE) %>
-<br>Worker: <%= taxon.getDefaultSpecimenLink(Caste.WORKER) %>
-<br>Queen: <%= taxon.getDefaultSpecimenLink(Caste.QUEEN) %>
-</div>
-<% } else if (Rank.GENUS.equals(taxon.getRank())) { %>
+<% if (Rank.GENUS.equals(taxon.getRank())) { %>
 <div class="clear"></div>
 <div id=data_title2>
 Default Images:

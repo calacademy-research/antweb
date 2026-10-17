@@ -137,7 +137,7 @@
    <% if (desc.containsKey("taxonomichistory")) { %>
         <br><h2>Taxonomic History (provided by Barry Bolton, <%= year %>)</h2>
                     <% new Formatter();
-                        String words = Formatter.removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); %>
+                        String words = Formatter.removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); words = words == null ? null : words.replaceAll("(?i)\\s*<a[^>]*hol\\.osu\\.edu[^>]*>[^<]*</a>", ""); /* HOL is offline; AntCat stopped sending the link (#1573), older imports still have it. */ %>
                     <%= new Formatter().removeTag((String) words, "o:p") %>
    <% } %>
 
@@ -164,23 +164,7 @@
 <%    }
     }
 
-    if (desc.containsKey("plaziData")) { 
-    %>
-
-        <p><h3>Taxonomic Treatment (provided by <a href="http://plazi.cs.umb.edu/GgServer/search?resultFormat=html&taxonomicName.isNomenclature=taxonomicName.isNomenclature&taxonomicName.exactMatch=taxonomicName.exactMatch&taxonomicName.LSID=urn:lsid:biosci.ohio-state.edu:osuc_concepts:<%= homonym.getHolId() %>" target="new">Plazi</a>)</h3>
-        <div id="plazi">
-        
-        <% 
-            String taxonomicTreatment = (String) desc.get("plaziData");
-            //String taxonomicTreatment = new Formatter().convertFromUTF8((String) desc.get("taxonomictreatment"));
-            //if (AntwebProps.isDevOrStageMode()) AntwebUtil.log("taxonPage-body.jsp utf8 taxonomicTreatment:" + taxonomicTreatment); %>
-        <%= taxonomicTreatment %>
-                    <!-- %= new Formatter().convertFromUTF8((String) desc.get("taxonomictreatment")) % -->
-                    <!-- % String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomictreatment"),""), "br"); % -->
-                    <!-- %= new Formatter().removeTag((String) words, "o:p") % -->
-        </div>
-<% 
-    }
+    // Stored Plazi table removed: its links pointed at plazi.cs.umb.edu, which is offline.
   }
 
   if (LoginMgr.isAdmin(request)) { %>
@@ -401,23 +385,7 @@ Fossil:
 Antcat ID:
 </div>
 <div id=data_items2>
-<b><a href="http://antcat.org/catalog/<%= taxon.getAntcatId() %>"><%= taxon.getAntcatId() %></a></b>
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
-HOL ID:
-</div>
-<div id=data_items2>
-<b><a href="http://hol.osu.edu/index.html?id=<%= taxon.getHolId() %>"><%= taxon.getHolId() %></a></b>
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
-Plazi Treatment:
-</div>
-<div id=data_items2>
-<b><a href="http://plazi.cs.umb.edu/GgServer/search?resultFormat=html&taxonomicName.isNomenclature=taxonomicName.isNomenclature&taxonomicName.exactMatch=taxonomicName.exactMatch&taxonomicName.LSID=urn:lsid:biosci.ohio-state.edu:osuc_concepts:<%= taxon.getHolId() %>"><%= taxon.getHolId() %></a></b>
+<b><a href="https://www.antcat.org/catalog/<%= taxon.getAntcatId() %>"><%= taxon.getAntcatId() %></a></b>
 </div>
 
 <div class="clear"></div>

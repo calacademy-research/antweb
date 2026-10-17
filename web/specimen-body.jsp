@@ -437,6 +437,14 @@ if (casteValue == null) casteValue = "undefined";
    %>
 </li>
 </ul>
+
+<% java.util.List<String> previousDeterminations = specimen.getPreviousDeterminationList();
+   if (!previousDeterminations.isEmpty()) { %>
+<ul class="previous_determinations">
+<li><b>Previous determination: </b></li>
+<li><% for (int pdIndex = 0; pdIndex < previousDeterminations.size(); pdIndex++) { %><%= pdIndex > 0 ? "<br>" : "" %><%= Html.esc(previousDeterminations.get(pdIndex)) %><% } %></li>
+</ul>
+<% } %>
   
 <% if (Utility.displayEmptyOrNotBlank(specimen.getTypeStatus())) {
     String antcatTypeUrl = specimen.getTypeStatusAntcatSearchURL();
@@ -521,7 +529,7 @@ if (LoginMgr.isAdmin(request) || specimen.isCurator(accessLogin)) { %>
 <ul>
 <li><b>Upload Record: </b></li>
 <% if (specimen.getBackupFileName() != null) { %>
-<li>Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/showLog.do?action=uploadLog&file=<%= Html.escAttr(Html.url(specimen.getBackupFileName())) %>&line=<%= specimen.getLineNum() %>'><%= specimen.getLineNum() %></a></li>
+<li>Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=uploadLog&file=<%= Html.escAttr(Html.url(specimen.getBackupFileName())) %>&line=<%= specimen.getLineNum() %>' title='This specimen&#39;s row as it was uploaded'><%= specimen.getLineNum() %></a> (shows this specimen's data as uploaded)</li>
 <% } %>
 </ul>
 
@@ -554,21 +562,18 @@ if (LoginMgr.isAdmin(request)) {
 <li><a href="<%= Html.escAttr(taxonNameUrl) %>"><%= Html.esc(specimen.getTaxonName()) %></a></li>
 </ul>
 
+<%-- Upload File (the whole upload file) and Upload Search (a search over the whole upload, ~265,000
+     specimens for the TaxonWorks upload) removed 10-17 (Brian): this specimen's own line is under
+     Curator Information (Upload File Line) and the whole upload under Upload Report. --%>
 <ul>
-<li><b>Upload File: </b></li>
-<% if (specimen.getBackupFileName() != null) { %>
-<li><a href='<%= AntwebProps.getDomainApp() %>/web/upload/<%= Html.escAttr(specimen.getBackupFileName()) %>'><%= Html.esc(specimen.getBackupFileName()) %></a></li>
-<% } %>
-</ul>
-
-<ul>
-<li><b>Upload Search: </b></li>
-<li><a href="<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&uploadId=<%= specimen.getUploadId() %>">Upload ID: <%= specimen.getUploadId() %></a></li> <!-- AntwebMgr.getSpecimenUploadId() -->
+<li><b>Upload ID: </b></li>
+<li><%= specimen.getUploadId() %></li>
 </ul>
 
 <ul>
 <li><b>Images dir: </b></li>
-<li><a href='<%= AntwebProps.getDomainApp() %>/images/<%= Html.escAttr(specimen.getCode()) %>'>/images/<%= Html.esc(specimen.getCode()) %></a></li>
+<%-- Plain text: folder listings are turned off, so a link to the folder leads nowhere. --%>
+<li>/images/<%= Html.esc(specimen.getCode()) %></li>
 </ul>
 
 <ul>
@@ -578,7 +583,12 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Default Pic for: </b></li>
+<% if (specimen.getDefaultFor() != null && !specimen.getDefaultFor().isEmpty()) { %>
 <li><a href='<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= Html.escAttr(Html.url(specimen.getDefaultFor())) %>'><%= Html.esc(Taxon.getPrettyTaxonName(specimen.getDefaultFor())) %></a></li>
+<% } else { %>
+<li>&nbsp;</li>
+<% } %>
+</ul>
 
 <ul>
 <li><b>Line Number: </b></li>
@@ -587,7 +597,7 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Description: </b></li>
-<li><a href='<%= AntwebProps.getDomainApp() %>/showLog.do?action=specimenDetails&code=<%= Html.escAttr(Html.url(specimen.getCode())) %>'>Link</a> -
+<li><a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=specimenDetails&code=<%= Html.escAttr(Html.url(specimen.getCode())) %>'>Link</a> -
 <%= Html.esc(specimen.getDetailHash()) %> &nbsp;</li>
 </ul>
 

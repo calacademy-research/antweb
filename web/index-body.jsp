@@ -99,8 +99,8 @@ window.api = root.data("scrollable");
 
 <div id="promo_container">
     <div class="promo">
-        <b><a href=https://www.calacademy.org/scientists/ant-course>Enroll in Ant Course</a></b><br />
-        Ant Course is a 10-day workshop designed for systematists, ecologists, behaviorists, conservation biologists, whose research require a greater understanding of ant taxonomy and field research techniques. Emphasis is on the evolution, classification and identification of ant genera.  <a href=https://www.calacademy.org/scientists/ant-course>Read More &#187;</a>
+        <b><a href="https://www.antcourse.org/">Ant Course</a></b><br />
+        Ant Course is a 10-day workshop designed for systematists, ecologists, behaviorists, conservation biologists, whose research require a greater understanding of ant taxonomy and field research techniques. Emphasis is on the evolution, classification and identification of ant genera.  <a href="https://www.antcourse.org/">Read More &#187;</a>
 
     </div>
     <div class="promo middle">

@@ -203,14 +203,14 @@
    "h3:Taxon Page Images:",
    "h3:Overview:",
    "h3:Distribution:",
-   "h3:Taxonomic Treatment (provided by Plazi)"
+   "h3:Taxonomic Treatments"
   ],
   "images": 17,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 31,
+  "table_rows": 2,
   "taxon_links": 10,
-  "text_length": 39245,
+  "text_length": 33698,
   "title": "Genus: Camponotus - AntWeb"
  },
  "/description.do?genus=nesomyrmex&species=clavipilis&rank=species": {
@@ -246,13 +246,12 @@
    "h3:Distribution:",
    "h3:Identification:",
    "h3:Notes:",
-   "h3:References:",
-   "h3:Taxonomic Treatment (provided by Plazi)"
+   "h3:References:"
   ],
   "images": 15,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 5,
+  "table_rows": 2,
   "taxon_links": 8,
   "text_length": 26007,
   "title": "Subfamily: Formicinae - AntWeb"

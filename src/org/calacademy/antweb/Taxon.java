@@ -1819,7 +1819,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     public String getDefaultSpecimenLink(String caste) {
         String specimen = getDefaultSpecimen(caste);
         if (specimen == null) return null;
-        String link = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + specimen + "'>" + specimen + "</a>";
+        String link = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.escAttr(Html.url(specimen)) + "'>" + Html.esc(specimen) + "</a>";
         return link;
     }
     public String getDefaultSpecimen(String caste) {
@@ -2179,7 +2179,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     public String getLineNumLink() {
-        if (Status.isWorldantsStatus(getStatus())) return "<a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=worldants&line=" + getLineNum() + "'>" + getLineNum() + "</a>";
+        if (Status.isWorldantsStatus(getStatus())) return "<a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=worldants&line=" + getLineNum() + "'>" + getLineNum() + "</a>";
         return "" + getLineNum();
     }
 

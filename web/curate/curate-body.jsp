@@ -188,6 +188,11 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                        check your <a href="<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>">Upload Report</a>.
                 </div>
 
+                <div class="upload_optional_columns" style="margin: 0 0 10px 0;">
+                    Optional column <b>previousDeterminations</b>: earlier determinations, newest first, separated by &quot; | &quot;.
+                    Example: <code>Nylanderia: US_CA01 by Ward on 2025-12-10 | Nylanderia: US_CA01 by Fisher on 2000-11-10</code>
+                </div>
+
             <%
             if (LoginMgr.isAdmin(accessLogin)) { %>
 

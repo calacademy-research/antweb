@@ -76,11 +76,10 @@
 			<ul>
 				<li><a href="<%= domainApp %>/about.do">About</a></li>
 				<li><a href="<%= domainApp %>/documentation.do">Participate</a></li>
-				<li><a href="<%= domainApp %>/antShare.do" target="new">AntShare</a></li>
 				<li><a href="<%= domainApp %>/press.do">Press</a></li>
 				<li><a href="<%= domainApp %>/favs.do">Favorites</a><img src='<%= AntwebProps.getDomainApp() %>/image/yellow-star-md.png' width=10/></li>
 				<li><a href="<%= domainApp %>/contact.do">Contact</a></li>
-				<li><a href="http://www.antcat.org/" target="new">AntCat</a></li>
+				<li><a href="https://www.antcat.org/" target="new">AntCat</a></li>
 				<li><a href="<%= domainApp %>/api.do" target="new">API</a></li>
 				<li><a href="https://www.facebook.com/Antweb.org" target="new"><img src="<%= AntwebProps.getDomainApp() %>/image/fb.png" title="Follow AntWeb on Facebook"></a>&nbsp;&nbsp;&nbsp;</li>
 			</ul>
