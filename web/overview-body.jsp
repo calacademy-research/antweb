@@ -280,6 +280,11 @@ Images:
     String objectName = overview.getName();  // Used?
 
     if (LoginMgr.isCurator(request)) {
+      // Settings of a project assigned to this curator (administrators get the link under Admin Info).
+      if (overview instanceof Project && !LoginMgr.isAdmin(accessLogin)
+          && SpeciesListAccess.canEdit(accessLogin, overview.getName())) { %>
+        <br><br><a href="<%= AntwebProps.getDomainApp() %>/editProject.do?projectName=<%= Html.escAttr(Html.url(overview.getName())) %>">Edit project settings</a>
+   <% }
       if (overview instanceof Museum) { %>
         <br><br><h2>Curator Info</h2>
         Museum counts are computed daily and may not reflect most recent specimen uploads.

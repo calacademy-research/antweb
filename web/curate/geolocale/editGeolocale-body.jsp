@@ -57,6 +57,18 @@
   <% } %>
 </div>
 
+<%-- Page text (Contents, Author, Author Bio, page images) is edited on the public page itself with the
+     page-text editor (TinyMCE, DescriptionAction.saveDescriptionEdit, stored in object_edit). This form
+     holds only settings; Admin Notes below is a plain internal note, never shown on the site. --%>
+<% String geoPage = geolocale.getAltThisPageTarget(); %>
+<div class="pageTextLinks" style="border:1px solid #ccc;padding:8px;margin:8px 0">
+<b>Page text</b> is edited on the <%= Html.esc(geolocale.getName()) %> page:
+<a href="<%= Html.escAttr(geoPage + "&editField=contents") %>#contents">Contents</a>
+| <a href="<%= Html.escAttr(geoPage + "&editField=author") %>#author">Author</a>
+| <a href="<%= Html.escAttr(geoPage + "&editField=authorBio") %>#authorBio">Author Bio</a>
+| <a href="<%= Html.escAttr(geoPage) %>">Page images</a>
+</div>
+
 
 <% 
    //A.log("XXX:" + geolocale + " tag:" + geolocale.getTag());
@@ -378,10 +390,11 @@ Look up bounding box: <a href='https://www.mapdevelopers.com/geocode_bounding_bo
 <br><br>
 
 <H3>Admin Notes:</H3>
+(Plain text, for administrators only; not shown on the site.)<br>
 <% String adminNotes = geolocale.getAdminNotes();
    if (adminNotes == null || "null".equals(adminNotes)) adminNotes = "";
 %>
-<textarea rows="4" cols="50" name="adminNotes" id="editor1" class="biotextarea550"><%= adminNotes %></textarea>
+<textarea rows="4" cols="50" name="adminNotes" class="biotextarea550"><%= Html.esc(adminNotes) %></textarea>
 <br>
 
 <h3>&nbsp;<h3>
