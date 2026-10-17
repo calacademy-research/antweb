@@ -94,7 +94,7 @@
 <% if (isMuseum) { %>
   <% String museumName = overview.getName();
      mapType = "museum";
-     out.println("<h2>" + overview.getTitle() + "</h2>");
+     out.println("<h2>" + org.calacademy.antweb.util.Html.esc(overview.getTitle()) + "</h2>");
    }
 
   Geolocale geolocale = null;
@@ -454,7 +454,7 @@ if (overview instanceof Geolocale) {
 }
 
 %>
-<input id="for_print" type="text" value="<%= author %>, (<%= year %>). AntWeb: Ants of <%= title %>. Available from: <%= citeTarget %>">
+<input id="for_print" type="text" value="<%= org.calacademy.antweb.util.Html.esc(author) %>, (<%= year %>). AntWeb: Ants of <%= org.calacademy.antweb.util.Html.esc(title) %>. Available from: <%= org.calacademy.antweb.util.Html.esc(citeTarget) %>">
 <input id="for_web" type="text" value="URL: <%= citeTarget %>">
 <% // } %>
 

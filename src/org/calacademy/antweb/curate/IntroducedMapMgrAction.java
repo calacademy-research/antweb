@@ -46,10 +46,16 @@ public final class IntroducedMapMgrAction extends AntwebAction {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "IntroducedMapMgrAction.execute()");
 
-			if (HttpUtil.isPost(request)) {
+			// (The old "refresh" of this table is disabled; see below.)
+			if (HttpUtil.isPost(request) && !bioregionMapMgrForm.isRefresh()) {
 			  s_log.debug("execute POST values:" + bioregionMapMgrForm);
 			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
-              taxonPropDb.updateIntroducedMap(bioregionMapMgrForm.getTaxonName(), bioregionMapMgrForm.getValues());
+			  String taxonName = bioregionMapMgrForm.getTaxonName();
+			  if (!taxonPropDb.isTaxon(taxonName)) {
+                request.setAttribute("message", "Nothing was changed: unknown species " + Html.esc(taxonName) + ".");
+                return mapping.findForward("message");
+			  }
+              taxonPropDb.updateIntroducedMap(taxonName, bioregionMapMgrForm.getValues());
               reloadTaxonPropMgr = true;
 			}
 

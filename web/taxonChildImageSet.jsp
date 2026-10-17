@@ -123,19 +123,21 @@ Examples of species with images that don't have h1 images:
             String caste = specChild.getCaste();
             String subcaste = specChild.getSubcaste();
             if (LoginMgr.isCurator(request) && isSpecimen) { 
-			  String pickerUrl = AntwebProps.getDomainApp() + "/defaultSpecimen.do?taxonName=" + thisChild.getTaxonName() 
-				+ "&caste=" + caste + "&specimenCode=" + thisChild.getCode();
+			  // Pick and Unpick change data: small POST forms with the form token.
+			  String pickerUrl = AntwebProps.getDomainApp() + "/defaultSpecimen.do?taxonName=" + org.calacademy.antweb.util.Html.url(thisChild.getTaxonName())
+				+ "&caste=" + org.calacademy.antweb.util.Html.url(caste) + "&specimenCode=" + org.calacademy.antweb.util.Html.url(thisChild.getCode());
+              String pickerTarget = HttpUtil.getTarget(request);
 
               if (isDefault) {
                   pickerUrl += "&command=unpost";
-				  if (thisChild.getRank().equals("specimen") && HttpUtil.getTarget(request).contains("images.do")) { %>
-					<a href="<%= pickerUrl %>" target=new>Unpick</a>
+				  if (thisChild.getRank().equals("specimen") && pickerTarget != null && pickerTarget.contains("images.do")) { %>
+					<%= org.calacademy.antweb.util.Csrf.postButton(request, pickerUrl, "Unpick") %>
                <% }
               } else {
   	  	 	      // if not already the selected default                
                   pickerUrl += "&command=post";
-				  if (thisChild.getRank().equals("specimen") && HttpUtil.getTarget(request).contains("images.do")) { %>
-					<a href="<%= pickerUrl %>" target=new>Pick</a>
+				  if (thisChild.getRank().equals("specimen") && pickerTarget != null && pickerTarget.contains("images.do")) { %>
+					<%= org.calacademy.antweb.util.Csrf.postButton(request, pickerUrl, "Pick") %>
 			   <% }
               }
             } %>

@@ -101,3 +101,26 @@ def get(session: requests.Session, url: str) -> Outcome:
 
 # Categories that always mean something is broken, whatever the action.
 BROKEN = {"server_error", "error_page", "stack_trace"}
+
+
+# The site allows 10 POSTs to /login.do per minute per visitor (Caddy rate_limit). The suite logs in
+# from many modules, so every test login goes through here: at most 7 per rolling minute, and a refused
+# (429) login waits and retries.
+import time as _time
+_LOGIN_TIMES: list = []
+
+
+def post_login(session, user, password, timeout=60):
+    for attempt in range(4):
+        now = _time.time()
+        while _LOGIN_TIMES and now - _LOGIN_TIMES[0] > 60:
+            _LOGIN_TIMES.pop(0)
+        if len(_LOGIN_TIMES) >= 7:
+            _time.sleep(61 - (now - _LOGIN_TIMES[0]))
+        _LOGIN_TIMES.append(_time.time())
+        r = session.post(BASE_URL + "/login.do", data={"userName": user, "password": password, "isSubmit": "true"},
+                         timeout=timeout, allow_redirects=True)
+        if r.status_code != 429:
+            return r
+        _time.sleep(30)
+    return r

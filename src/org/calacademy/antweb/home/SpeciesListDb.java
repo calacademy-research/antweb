@@ -376,6 +376,21 @@ public class SpeciesListDb extends AntwebDb {
     return refListSubfamilies;
   }
 
+    /** True if a taxon of this name exists. */
+    private boolean isTaxon(String taxonName) throws SQLException {
+      if (taxonName == null || taxonName.isEmpty() || taxonName.length() > 128) return false;
+      PreparedStatement stmt = null;
+      ResultSet rset = null;
+      try {
+        stmt = DBUtil.getPreparedStatement(getConnection(), "SpeciesListDb.isTaxon()", "select 1 from taxon where taxon_name = ? limit 1");
+        stmt.setString(1, taxonName);
+        rset = stmt.executeQuery();
+        return rset.next();
+      } finally {
+        DBUtil.close(stmt, rset, "SpeciesListDb.isTaxon()");
+      }
+    }
+
     // When we delete a proj_taxon record and it is the last project taxon, we would like to
     // delete the taxon (it should be a morpho species).
     public String saveTaxonSet(String[] taxa, String[] chosen
@@ -384,6 +399,18 @@ public class SpeciesListDb extends AntwebDb {
 
         String message = "";
         if (chosen == null) chosen = new String[0];
+
+        // Only names of existing taxa are saved (the form sends taxon names; anything else is dropped).
+        ArrayList<String> knownChosen = new ArrayList<>();
+        for (String name : chosen) {
+          if (isTaxon(name)) {
+            knownChosen.add(name);
+          } else {
+            s_log.warn("saveTaxonSet() unknown taxon dropped:" + name);
+            message += "<br>Unknown taxon <font color=red>not saved</font>:<b>" + Html.esc(name) + "</b>";
+          }
+        }
+        chosen = knownChosen.toArray(new String[0]);
 
         //A.log("SpeciesListDb.saveTaxonSet() speciesListName:" + speciesListName + " chosen:" + chosen + " oldChosen:" + oldChosenList);
 
@@ -452,7 +479,7 @@ public class SpeciesListDb extends AntwebDb {
                 LogMgr.appendLog("speciesListTool.txt", "saveProjectTaxa - " + DateUtil.getFormatDateTimeStr() + " curatorId:" + login.getId()
                         + " added taxonName:" + taxonName + " from speciesListName:" + prettySpeciesListName);
 
-                message += "<br>Taxon Project Mapping <font color=green>added</font>:<b>" + Taxon.getPrettyTaxonName(taxonName) + "</b> to " + prettySpeciesListName;
+                message += "<br>Taxon Project Mapping <font color=green>added</font>:<b>" + Html.esc(Taxon.getPrettyTaxonName(taxonName)) + "</b> to " + Html.esc(prettySpeciesListName);
             }
         }
 
@@ -498,7 +525,7 @@ public class SpeciesListDb extends AntwebDb {
 			}  
 
 			//A.log("saveProjectTaxa() hasSpecies:" + hasSpecies + " hasGenera:" + hasGenera);
-			message += "<br>Taxon Project Mapping <font color=red>removed</font>:<b>" + Taxon.getPrettyTaxonName(taxonName) + "</b> from " + prettySpeciesListName;
+			message += "<br>Taxon Project Mapping <font color=red>removed</font>:<b>" + Html.esc(Taxon.getPrettyTaxonName(taxonName)) + "</b> from " + Html.esc(prettySpeciesListName);
 		  }
 		  ++i;
 		}

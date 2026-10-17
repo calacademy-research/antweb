@@ -125,10 +125,24 @@ public class DBStatus {
             testAgain  = testAgain + 1;
         }
 
-        String message = getServerBusyReport();
-        request.setAttribute("message", message);
+        if (isServerBusy) request.setAttribute("message", busyMessage(request));
 
         return isServerBusy;
+    }
+
+    /** What a visitor sees when the server is busy. */
+    public static final String PUBLIC_BUSY_MSG = "The server is busy. Please try again in a minute.";
+
+    /**
+     * The busy page text: the full report (running SQL, request URLs) only for administrators,
+     * a fixed message for everyone else.
+     */
+    public static String busyMessage(HttpServletRequest request) {
+        if (request != null && LoginMgr.isAdmin(request)) {
+            String report = getServerBusyReport();
+            return report == null ? PUBLIC_BUSY_MSG : report;
+        }
+        return PUBLIC_BUSY_MSG;
     }
 
 

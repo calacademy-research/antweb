@@ -15,7 +15,7 @@
     if (isMuseum) locale = "the " + ((Museum) overview).getCode() + " museum";
     if (isGeolocale) locale = overview.toString();
     if (isBioregion) locale = "the " + overview.toString() + " bioregion";
-    if (isProject) locale = "the " + overview.getTitle() + " project";
+    if (isProject) locale = "the " + org.calacademy.antweb.util.Html.esc(overview.getTitle()) + " project";
     String asterixTitle = "Counts include " + nextPluralRank + " of all statuses contained within " + locale + "."; 
     String asterixNote = "Counts include " + nextPluralRank + " of all statuses";
     if (displayGlobal){

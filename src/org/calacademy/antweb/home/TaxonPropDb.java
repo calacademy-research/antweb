@@ -7,6 +7,7 @@ import org.calacademy.antweb.geolocale.Bioregion;
 import org.calacademy.antweb.util.DBUtil;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -57,7 +58,7 @@ public class TaxonPropDb extends AntwebDb {
     public String getBioregionMap(String taxonName) {
         Statement stmt = null;
         ResultSet rset = null;
-        String theQuery = "select value from taxon_prop where taxon_name = '" + taxonName + "' and prop = 'bioregionMap'";
+        String theQuery = "select value from taxon_prop where taxon_name = " + DBUtil.sqlLiteral(taxonName) + " and prop = 'bioregionMap'";
         try {            
             stmt = DBUtil.getStatement(getConnection(), "getBioregionMap()");
             rset = stmt.executeQuery(theQuery);
@@ -76,7 +77,7 @@ public class TaxonPropDb extends AntwebDb {
     public String getDefaultFor(String code) {
         Statement stmt = null;
         ResultSet rset = null;
-        String theQuery = "select taxon_name from taxon_prop where value = '" + code + "'";
+        String theQuery = "select taxon_name from taxon_prop where value = " + DBUtil.sqlLiteral(code);
         try {            
             stmt = DBUtil.getStatement(getConnection(), "getDefaultFor()");
             rset = stmt.executeQuery(theQuery);
@@ -93,28 +94,58 @@ public class TaxonPropDb extends AntwebDb {
     }    
 
     public void updateBioregionMap(String taxonName, String bioregionMap) {
-	  Statement stmt = null;
+      updateMapProp("bioregionMap", taxonName, bioregionMap);
+    }
+
+    /** Update (or insert) one taxon_prop map value. prop is a fixed name; taxonName and value are bound. */
+    private void updateMapProp(String prop, String taxonName, String value) {
+	  PreparedStatement stmt = null;
 	  String dml = null;
+	  String name = "updateMapProp(" + prop + ")";
 	  try {
-		stmt = DBUtil.getStatement(getConnection(), "updateBioregionMap()");
-		dml = "update taxon_prop set value = '" + bioregionMap + "' where taxon_name = '" + taxonName + "' and prop = 'bioregionMap'";
-		int i = stmt.executeUpdate(dml);
+		dml = "update taxon_prop set value = ? where taxon_name = ? and prop = ?";
+		stmt = DBUtil.getPreparedStatement(getConnection(), name, dml);
+		stmt.setString(1, value);
+		stmt.setString(2, taxonName);
+		stmt.setString(3, prop);
+		int i = stmt.executeUpdate();
+		stmt.close();
+		stmt = null;
 
         if (i == 0) {
-            //A.log("updateBioregionMap i == 0");
-			dml = "insert into taxon_prop (taxon_name, prop, value) values ('" + taxonName + "', 'bioregionMap', '" + bioregionMap + "')";
-			i = stmt.executeUpdate(dml);
+			dml = "insert into taxon_prop (taxon_name, prop, value) values (?, ?, ?)";
+			stmt = DBUtil.getPreparedStatement(getConnection(), name, dml);
+			stmt.setString(1, taxonName);
+			stmt.setString(2, prop);
+			stmt.setString(3, value);
+			stmt.executeUpdate();
         } else {
-          s_log.debug("updateBioregionMap i:" + i);
+          s_log.debug(name + " i:" + i);
         }
-
-		//A.log("updateRev() dml:" + dml);
 	  } catch (SQLException e) {
-		s_log.warn("updateBioregionMap() e:" + e);
+		s_log.warn(name + " e:" + e);
 	  } finally {
-		DBUtil.close(stmt, "updateBioregionMap()");
+		DBUtil.close(stmt, name);
 	  }
-    }    
+    }
+
+    /** True if the taxon exists (any rank). */
+    public boolean isTaxon(String taxonName) {
+      if (taxonName == null || taxonName.isEmpty()) return false;
+      PreparedStatement stmt = null;
+      ResultSet rset = null;
+      try {
+        stmt = DBUtil.getPreparedStatement(getConnection(), "isTaxon()", "select 1 from taxon where taxon_name = ? limit 1");
+        stmt.setString(1, taxonName);
+        rset = stmt.executeQuery();
+        return rset.next();
+      } catch (SQLException e) {
+        s_log.warn("isTaxon() e:" + e);
+        return false;
+      } finally {
+        DBUtil.close(stmt, rset, "this", "isTaxon()");
+      }
+    }
 
     public void refreshBioregionMap() {      
         // Delete the existing records from taxon_prop that are for bioregionMap
@@ -197,11 +228,9 @@ public class TaxonPropDb extends AntwebDb {
     }  
 
     public String getIntroducedMap(String taxonName) {
-        taxonName = DBUtil.escapeQuotes(taxonName);
-
         Statement stmt = null;
         ResultSet rset = null;
-        String theQuery = "select value from taxon_prop where taxon_name = '" + taxonName + "' and prop = 'introducedMap'";
+        String theQuery = "select value from taxon_prop where taxon_name = " + DBUtil.sqlLiteral(taxonName) + " and prop = 'introducedMap'";
         try {            
             stmt = DBUtil.getStatement(getConnection(), "getIntroducedMap()");
             rset = stmt.executeQuery(theQuery);
@@ -265,25 +294,7 @@ public class TaxonPropDb extends AntwebDb {
 
     // introducedMap is of the same format as bioregionMap.
     public void updateIntroducedMap(String taxonName, String introducedMap) {
-	  Statement stmt = null;
-	  String dml = null;
-	  try {
-		stmt = DBUtil.getStatement(getConnection(), "updateIntroducedMap()");
-		dml = "update taxon_prop set value = '" + introducedMap + "' where taxon_name = '" + taxonName + "' and prop = 'introducedMap'";
-		int i = stmt.executeUpdate(dml);
-
-        if (i == 0) {
-            //A.log("updateIntroducedMap i == 0");
-			dml = "insert into taxon_prop (taxon_name, prop, value) values ('" + taxonName + "', 'introducedMap', '" + introducedMap + "')";
-			i = stmt.executeUpdate(dml);
-        }
-
-		//A.log("updateRev() dml:" + dml);
-	  } catch (SQLException e) {
-		s_log.warn("updateIntroducedMap() e:" + e);
-	  } finally {
-		DBUtil.close(stmt, "updateIntroducedMap()");
-	  }
+      updateMapProp("introducedMap", taxonName, introducedMap);
     }    
     
 // ----------------------------
@@ -316,7 +327,7 @@ public class TaxonPropDb extends AntwebDb {
 	  String dml = null;
 	  try {
 		stmt = DBUtil.getStatement(getConnection(), "deleteTaxonProp()");
-        dml = "delete from taxon_prop where taxon_name = '" + taxonName + "' and prop = '" + prop + "'";
+        dml = "delete from taxon_prop where taxon_name = " + DBUtil.sqlLiteral(taxonName) + " and prop = " + DBUtil.sqlLiteral(prop);
 		int i = stmt.executeUpdate(dml);
 
 		returnVal = "deleted:" + i;

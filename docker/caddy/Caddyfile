@@ -127,16 +127,7 @@ www.antweb.org {
 
         error "Not found" 404
 
-        @not_upload {
-            not path /upload.do
-        }
-        rate_limit @not_upload {
-            zone requests {
-                key {http.request.remote.host}
-                window 1m
-                events 10
-                burst 20
-            }
-        }
+        # No general per-visitor request limit here: Cloudflare's rate limiting rules do that
+        # (Caddy sees Cloudflare's edge addresses, not visitors). Only the log-in limit above.
     }
 }

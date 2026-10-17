@@ -46,7 +46,7 @@ public class BioregionTaxonDb extends TaxonSetDb {
             bioregionName = rset.getString("bioregion_name");
             
             tableName = "bioregion_taxon";
-            whereClause = "bioregion_name = '" + bioregionName + "'";
+            whereClause = "bioregion_name = " + DBUtil.sqlQuote(bioregionName);
 
             c += updateTaxonSetTaxonName(tableName, taxonName, currentValidName, whereClause);            
           }       
@@ -72,7 +72,7 @@ public class BioregionTaxonDb extends TaxonSetDb {
             + " left join image i on s.code = i.image_of_id " 
             + " where s.taxon_name = t.taxon_name"
             + " and t.fossil = 0" 
-            + " and s.bioregion = '" + bioregion.getName() + "'" 
+            + " and s.bioregion = " + DBUtil.sqlQuote(bioregion.getName()) 
             + " and s.status in " + StatusSet.getCountables()
             + " and " + SpecimenDb.getFlagCriteria()
             + " group by taxon_name";
@@ -125,7 +125,7 @@ See BioregionDb.java:77 where this call is commented out.
         String query = "select gt.taxon_name, gt.source " 
           + " from geolocale_taxon gt, geolocale g, taxon t " 
           + " where gt.taxon_name = t.taxon_name and gt.geolocale_id = g.id " 
-          + " and g.bioregion = '" + bioregion.getName() + "'" 
+          + " and g.bioregion = " + DBUtil.sqlQuote(bioregion.getName()) 
           + " and g.georank = 'country'"
           + " and (g.alt_bioregion is null or g.alt_bioregion = 'none')"          
           + " and t.taxarank in ('species', 'subspecies')"
@@ -181,8 +181,8 @@ See BioregionDb.java:77 where this call is commented out.
         try {  
             query = "select subfamily_count, genus_count, species_count, specimen_count, image_count, created, source " 
               + " from bioregion_taxon"
-              + " where bioregion_name = '" + bioregionName + "'"
-              + "   and taxon_name = '" + taxonName + "'";
+              + " where bioregion_name = " + DBUtil.sqlQuote(bioregionName)
+              + "   and taxon_name = " + DBUtil.sqlQuote(taxonName);
 
             //A.log("init query:" + query);    //  && getTaxonName().contains("anceps")
         
@@ -220,8 +220,8 @@ See BioregionDb.java:77 where this call is commented out.
             //A.iLog("insertSpecies integrity checked");
             return;
           }
-          String dml = "insert into bioregion_taxon (bioregion_name, taxon_name, specimen_count, image_count, insert_method, source) values ('" 
-            + bioregion.getName() + "', '" + taxonName + "', " + specimenCount + ", " + imageCount + ",'insertBioregionSpecies', '" + source + "')";
+          String dml = "insert into bioregion_taxon (bioregion_name, taxon_name, specimen_count, image_count, insert_method, source) values (" 
+            + DBUtil.sqlQuote(bioregion.getName()) + ", " + DBUtil.sqlQuote(taxonName) + ", " + specimenCount + ", " + imageCount + ",'insertBioregionSpecies', " + DBUtil.sqlQuote(source) + ")";
             
           stmt = DBUtil.getStatement(getConnection(), "insertSpecies()");
 
@@ -241,7 +241,7 @@ See BioregionDb.java:77 where this call is commented out.
     public void deleteSource(String source) {
       Statement stmt = null;
       try {
-          String dml = "delete from bioregion_taxon where source = '" + source + "'";
+          String dml = "delete from bioregion_taxon where source = " + DBUtil.sqlQuote(source);
             
           stmt = DBUtil.getStatement(getConnection(), "deleteSource()");
 
@@ -267,7 +267,7 @@ See BioregionDb.java:77 where this call is commented out.
             stmt = DBUtil.getStatement(getConnection(), "insertTaxon()");
 
             dml = "insert into bioregion_taxon(bioregion_name, taxon_name, insert_method, source"
-              + " ) values ('" + bioregionName + "', '" + taxonName + "','" + insertMethod + "', '" + source + "')";
+              + " ) values (" + DBUtil.sqlQuote(bioregionName) + ", " + DBUtil.sqlQuote(taxonName) + "," + DBUtil.sqlQuote(insertMethod) + ", " + DBUtil.sqlQuote(source) + ")";
             //A.log("insertTaxon() dml:" + dml);
             stmt.executeUpdate(dml);
         } catch (SQLIntegrityConstraintViolationException e) {
@@ -287,7 +287,7 @@ See BioregionDb.java:77 where this call is commented out.
     
     public void populateHigherTaxa(String bioregionName) {
         String bioregionNameClause = "";
-        if (bioregionName != null) bioregionNameClause = " and bioregion_name = '" + bioregionName + "'";
+        if (bioregionName != null) bioregionNameClause = " and bioregion_name = " + DBUtil.sqlQuote(bioregionName);
         String query = "";
 
         ResultSet rset = null;
@@ -369,7 +369,7 @@ See BioregionDb.java:77 where this call is commented out.
       try {
         stmt = DBUtil.getStatement(getConnection(), "insertBioregionTaxon()");
         dml = "insert into bioregion_taxon (bioregion_name, taxon_name) "
-            + " values ('" + bioregion.getName() + "', '" + taxonName + "')";
+            + " values (" + DBUtil.sqlQuote(bioregion.getName()) + ", " + DBUtil.sqlQuote(taxonName) + ")";
         stmt.executeUpdate(dml); 
       } catch (SQLIntegrityConstraintViolationException e) {
         // do nothing.  Return false;  
@@ -399,12 +399,12 @@ See BioregionDb.java:77 where this call is commented out.
         String query = null;
         try {
             Bioregion bioregion = null;
-            taxonName = AntFormatter.escapeQuotes(taxonName);        
+            // taxonName is quoted where it is used (no escaping here, it would be doubled).
             query =
                 " select b.name, b.title" 
               + " from bioregion b, bioregion_taxon bt" //, bioregion b" 
               + " where b.name = bt.bioregion_name"
-              + " and bt.taxon_name = '" + taxonName + "'"
+              + " and bt.taxon_name = " + DBUtil.sqlQuote(taxonName)
               + " order by bt.bioregion_name";
 
             //A.log("Taxon.setGeolocales() query:" + query);
@@ -468,7 +468,7 @@ See BioregionDb.java:77 where this call is commented out.
 
         ArrayList<String> statistics = new ArrayList<>();
 
-        String query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"subfamily\"";
+        String query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName) + " and taxarank=\"subfamily\"";
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -482,56 +482,56 @@ See BioregionDb.java:77 where this call is commented out.
         while (rset.next()) {
             extinctSubfamily = rset.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"genus\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName) + " and taxarank=\"genus\"";
         rset = stmt.executeQuery(query);
         int extinctGenera= 0;
         while (rset.next()) {
             extinctGenera = rset.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 1 and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName) + " and taxarank in ('species', 'subspecies')";
         rset = stmt.executeQuery(query);
         int extinctSpecies = 0;
         while (rset.next()) {
             extinctSpecies = rset.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"subfamily\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName) + " and taxarank=\"subfamily\"";
         rset = stmt.executeQuery(query);
         int extantSubfamily = 0;
         while (rset.next()) {
             extantSubfamily = rset.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank=\"genus\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName) + " and taxarank=\"genus\"";
         rset = stmt.executeQuery(query);
         int extantGenera = 0;
         while (rset.next()) {
             extantGenera = rset.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = '" + bioregionName + "' and taxarank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and taxon.fossil = 0 and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName) + " and taxarank in ('species', 'subspecies')";
         rset = stmt.executeQuery(query);
         int extantSpecies = 0;
         while (rset.next()) {
             extantSpecies = rset.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name  and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and taxarank=\"subfamily\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name  and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName) + " and status='valid' and taxarank=\"subfamily\"";
         rset = stmt.executeQuery(query);
         int validSubfamily = 0;
         while (rset.next()) {
             validSubfamily = rset.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and taxarank=\"genus\"";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName) + " and status='valid' and taxarank=\"genus\"";
         rset = stmt.executeQuery(query);
         int validGenera = 0;
         while (rset.next()) {
             validGenera = rset.getInt(1);
         }
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "' and status='valid' and taxarank in ('species', 'subspecies')";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName) + " and status='valid' and taxarank in ('species', 'subspecies')";
         rset = stmt.executeQuery(query);
         int validSpecies = 0;
         while (rset.next()) {
             validSpecies = rset.getInt(1);
         }
 // 10
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "'"
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName)
           + " and taxon.status = 'valid' and taxarank in ('species', 'subspecies') and bioregion_taxon.image_count > 0";
         rset = stmt.executeQuery(query);
         int validImagedSpecies = 0;
@@ -539,7 +539,7 @@ See BioregionDb.java:77 where this call is commented out.
             validImagedSpecies = rset.getInt(1);
         }
         
-        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = '" + bioregionName + "'";
+        query = "select count(*) from taxon, bioregion_taxon where taxon.taxon_name = bioregion_taxon.taxon_name and bioregion_taxon.bioregion_name = " + DBUtil.sqlQuote(bioregionName);
         rset = stmt.executeQuery(query);
         int totalTaxa = 0;
         while (rset.next()) {

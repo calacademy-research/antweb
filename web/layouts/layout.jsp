@@ -18,7 +18,10 @@
 <!--[if lt IE 9]><html lang="en" class="ie"><![endif]-->
 <!--[if gte IE 9]><!--><html lang="en"><!--<![endif]-->
 <head>
-<title><tiles:getAsString name="title" /></title>
+<%-- The title is plain text: escaped here, so names typed by curators (project titles, ...) can not add markup. --%>
+<tiles:importAttribute name="title" ignore="true" />
+<% Object layoutTitle = pageContext.getAttribute("title"); %>
+<title><%= org.calacademy.antweb.util.Html.esc(layoutTitle == null ? "" : layoutTitle.toString().trim()) %></title>
 <html:base/>
 <meta charset="utf-8"/>
 <tiles:getAsString name="meta" ignore="true" /> 
@@ -43,10 +46,10 @@
 %>
 <meta property="og:image" content="<%= AntwebProps.getImgDomainApp() %><%= ogImage %>" />
  <!-- was: /image/new_antweb_logo.png" was: http://www.antweb.org -->
-<meta property="og:title" content="<%= ogTitle %>" />
+<meta property="og:title" content="<%= Html.escAttr(ogTitle) %>" />
 
 <% if (ogDesc != null) { %>
-<meta property="og:description" content="<%= ogDesc %>" />
+<meta property="og:description" content="<%= Html.escAttr(ogDesc) %>" />
 <% } %>
 <%
   //  if (AntwebProps.isDevMode()) {

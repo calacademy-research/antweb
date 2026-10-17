@@ -40,7 +40,7 @@ public final class ImageUploaderAction extends AntwebAction {
         ActionForward c = Check.curator(request, mapping); if (c != null) return c;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
 
-        if (UploadAction.isInUploadProcess()) {
+        if (UploadAction.isInUploadProcess() && request.getContentType() != null && request.getContentType().contains("multipart/form-data")) {
             String message = "Server is currently in an Upload Process. Please try again in a little while.";
             if (LoginMgr.isAdmin(request)) message += " " + UploadAction.getIsInUploadProcess();
             request.setAttribute("message", message);
@@ -51,12 +51,19 @@ public final class ImageUploaderAction extends AntwebAction {
      
         Login accessLogin = LoginMgr.getAccessLogin(request);
         Group accessGroup = GroupMgr.getAccessGroup(request);
+
+        // The page itself checks this (imageUploader.jsp); a POST must too.
+        if (accessGroup == null || !(Boolean.TRUE.equals(accessLogin.isUploadImages()) || accessLogin.isAdmin())) {
+            request.setAttribute("message", "This login may not upload images.");
+            return mapping.findForward("message");
+        }
     
         HttpSession session = request.getSession();
         
         HttpUtil.setUtf8(request, response);
 
         String message = "";
+        boolean entered = false;
                 
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("BrowseAction.execute()");
@@ -84,8 +91,12 @@ public final class ImageUploaderAction extends AntwebAction {
             
                 ImageUpload imageUpload = null;
 
-                UploadAction.setIsInUploadProcess(accessLogin.getName() + ":" + accessGroup.getName());
-                //A.log(accessLogin.getName() + ":" + accessGroup.getName());
+                // Sets the site-wide upload flag, shared with the batch uploader (ImageUploadGate).
+                if (!ImageUploadGate.enter(accessLogin.getName() + ":" + accessGroup.getName())) {
+                    request.setAttribute("message", "Server is currently in an Upload Process. Please try again in a little while.");
+                    return mapping.findForward("message");
+                }
+                entered = true;
 
                 ImageUploaded.tempDir.toFile().mkdirs();
                 // /usr/local/antweb/temp/images/
@@ -156,10 +167,20 @@ public final class ImageUploaderAction extends AntwebAction {
 
                 for (ImageUploaded imageUploaded : imageUpload.getImages()) {
                     imageUploaded.setImageUpload(imageUpload);
-                    imageUploadDb.saveImageUploaded(imageUploaded);
+                    ImageUploadGate.DB_LOCK.lock();
+                    try {
+                      imageUploadDb.saveImageUploaded(imageUploaded);
+                    } finally {
+                      ImageUploadGate.DB_LOCK.unlock();
+                    }
                     if (imageUploaded.getIsContinueUpload()) {                    
                       String imagesMessage = imageUploaded.genImages(); // Create derivatives. persist.
-                      imageDb.putImage(imageUploaded); // Create image.
+                      ImageUploadGate.DB_LOCK.lock();
+                      try {
+                        imageDb.putImage(imageUploaded); // Create image.
+                      } finally {
+                        ImageUploadGate.DB_LOCK.unlock();
+                      }
                     }
                 }
                 
@@ -186,7 +207,7 @@ public final class ImageUploaderAction extends AntwebAction {
           return mapping.findForward("message");
         } finally {
           DBUtil.close(connection, this, dbMethodName);
-          UploadAction.setIsInUploadProcess(null);          
+          if (entered) ImageUploadGate.exit();
         }    
 	}	
 

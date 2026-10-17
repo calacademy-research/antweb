@@ -211,7 +211,8 @@ A.log("imagerUploadReport-body.jsp fileName:" + imageUploaded.getFileName() + " 
    %>
     <ul>
         <li><b><%= i %>: </b></li>
-        <li><a href='<%= AntwebProps.getDomainApp() %>/images/<%= imgDir %>/'><%= imgDir %></a></li>        
+        <%-- Link to the specimen page. The old link opened the specimen's images folder, and folder listings are off. --%>
+        <li><a href='<%= AntwebProps.getDomainApp() %>/specimen.do?code=<%= Html.escAttr(Html.url(imgDir)) %>'><%= Html.esc(imgDir) %></a></li>
     </ul>
 <% } %>
         </li>

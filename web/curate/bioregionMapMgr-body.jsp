@@ -161,6 +161,6 @@
 </table>
 
 <% if (LoginMgr.isDeveloper(request)) { %>
-     <br><br>Dev only: <a href= "<%= AntwebProps.getDomainApp() %>/bioregionMapMgr.do?isRefresh=true">Refresh</a> Bioregion Distribution Tool. (Careful! Will refresh whole table from specimen data). 
+     <br><br>Dev only: <%= org.calacademy.antweb.util.Csrf.postButton(request, AntwebProps.getDomainApp() + "/bioregionMapMgr.do?isRefresh=true", "Refresh", "Refresh the whole bioregion map table from specimen data?") %> Bioregion Distribution Tool. (Careful! Will refresh whole table from specimen data). 
 <% } %>
 </div>

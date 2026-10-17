@@ -182,7 +182,9 @@ def test_taxon_history_and_restore(curator):
         # A row that is not a version of this field, and a bad id: refused.
         for bad in ("999999999", "x"):
             r = post_restore(curator, old, restoreFrom=bad)
-            assert "not in the history" in r.text and "was restored to the version" not in r.text, bad
+            # A non-numeric id is refused before the save ("not a restore of page text"), an unknown one by the save.
+            assert ("not in the history" in r.text or "not a restore of page text" in r.text) \
+                and "was restored to the version" not in r.text, bad
         assert stored_hash(curator, url, field) == before
 
         # Restore: the stored text is version one again; version two is now in the history.

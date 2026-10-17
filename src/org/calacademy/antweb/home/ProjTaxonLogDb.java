@@ -337,7 +337,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
             stmt = DBUtil.getStatement(getConnection(), "insertDispute()");
 
             dml = "insert into proj_taxon_dispute (project_name, taxon_name, source, rev, curator_id) " 
-              + " values ('" + projTaxon.getProjectName() + "', '" + projTaxon.getTaxonName() + "', '" + projTaxon.getSource() + "', " + projTaxon.getRev() + ", " + projTaxon.getCuratorId() + " )";  
+              + " values (" + DBUtil.sqlQuote(projTaxon.getProjectName()) + ", " + DBUtil.sqlQuote(projTaxon.getTaxonName()) + ", " + DBUtil.sqlQuote(projTaxon.getSource()) + ", " + projTaxon.getRev() + ", " + projTaxon.getCuratorId() + " )";  
             stmt.execute(dml);
 
             //A.log("insertDispute() projTaxon:" + projTaxon);
@@ -357,7 +357,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
 
             dml = "delete from proj_taxon_dispute "
               + " where project_name = '" + DBUtil.escapeQuotes(projectName) + "'"
-              + "   and taxon_name = '" + taxonName + "'";
+              + "   and taxon_name = " + DBUtil.sqlQuote(taxonName);
 
             stmt.execute(dml);
 
@@ -379,8 +379,8 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
 
             stmt = DBUtil.getStatement(getConnection(), "getDispute()");
             query = "select project_name, taxon_name, source, rev from proj_taxon_dispute " 
-               + " where project_name = \"" + projectName + "\""
-               + " and taxon_name = \"" + taxonName + "\"";
+               + " where project_name = " + DBUtil.sqlQuote(projectName)
+               + " and taxon_name = " + DBUtil.sqlQuote(taxonName);
 
             rset = stmt.executeQuery(query);
             while (rset.next()) {
@@ -411,7 +411,7 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
         Statement stmt = null;
         ResultSet rset = null;
         String projectClause = ""; if (projectName != null) projectClause = " and project_name = '" + DBUtil.escapeQuotes(projectName) + "'";
-        String taxonClause = ""; if (taxonName != null) taxonClause = " and taxon_name = '" + taxonName + "'";
+        String taxonClause = ""; if (taxonName != null) taxonClause = " and taxon_name = " + DBUtil.sqlQuote(taxonName);
         try {
 
             stmt = DBUtil.getStatement(getConnection(), "getDisputes()");

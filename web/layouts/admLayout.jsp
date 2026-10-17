@@ -21,7 +21,10 @@
 <html:html lang="true">
 <head>
 <meta charset="utf-8"/>
-<title><tiles:getAsString name="title" /></title>
+<%-- The title is plain text: escaped here, so names typed by curators (project titles, ...) can not add markup. --%>
+<tiles:importAttribute name="title" ignore="true" />
+<% Object layoutTitle = pageContext.getAttribute("title"); %>
+<title><%= org.calacademy.antweb.util.Html.esc(layoutTitle == null ? "" : layoutTitle.toString().trim()) %></title>
 <!-- tiles:getAsString name="meta" / --> 
 <html:base/>
 <link rel="shortcut icon" href="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/image/favicon.ico") %>" >

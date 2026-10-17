@@ -25,7 +25,7 @@ These are the project's settings. The page text is edited on the project page (s
 </div>
 
 <div class=admin_left>
-<h1>Editing <%= thisProject.getTitle() %> Project</h1>
+<h1>Editing <%= org.calacademy.antweb.util.Html.esc(thisProject.getTitle()) %> Project</h1>
 
 <html:messages id="message" message="true">
 <font color="red"><b>
@@ -45,7 +45,7 @@ These are the project's settings. The page text is edited on the project page (s
 <p>
 
 <h3>Title:</h3>
-<input name="title" type=text class=input_550 value="<%= thisProject.getTitle() %>">
+<input name="title" type=text class=input_550 value="<%= org.calacademy.antweb.util.Html.esc(thisProject.getTitle()) %>">
 <p>
 
 <%-- Page text (Contents, Author, Author Bio, page images) is edited on the project page itself,

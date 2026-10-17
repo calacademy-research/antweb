@@ -38,7 +38,7 @@ public class DummyTaxonDb extends AntwebDb {
         DummyTaxon taxon = null;
         String query = "select family, subfamily, tribe, genus, subgenus, species, subspecies, status, "
                 + " source, insert_method, line_num, access_group, current_valid_name, parent_taxon_name, fossil "
-                + " from " + table + " where taxon_name = '" + taxonName + "'";
+                + " from " + table + " where taxon_name = " + DBUtil.sqlQuote(taxonName);
         Statement stmt = null;
         ResultSet rset = null;
         try {
