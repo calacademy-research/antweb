@@ -116,6 +116,17 @@ public final class DescEditSafety {
         return PLACEHOLDER.equals(t);
     }
 
+    /**
+     * True if two texts are the same apart from line endings (CRLF, CR or LF). Browsers send a text
+     * box's line breaks as CRLF, so stored text with LF line breaks that was opened and saved
+     * unchanged comes back with CRLF.
+     */
+    public static boolean sameText(String a, String b) {
+        if (a == null || b == null) return a == b;
+        if (a.equals(b)) return true;
+        return a.replace("\r\n", "\n").replace('\r', '\n').equals(b.replace("\r\n", "\n").replace('\r', '\n'));
+    }
+
     /** Curators and administrators may edit page text. */
     public static boolean canEdit(Login login) {
         return LoginMgr.isCurator(login) || LoginMgr.isAdmin(login);

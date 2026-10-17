@@ -1,6 +1,11 @@
 /*
  * editSafety.js: keeps a curator's page text safe while they edit a taxon, specimen or
- * overview page field with CKEditor 3. Server side: DescEditSafety.java, DescriptionAction.java.
+ * overview page field. Server side: DescEditSafety.java, DescriptionAction.java.
+ *
+ * Editor: TinyMCE 8 (opts.editor 'tinymce', started here with AntwebEditor.replace from
+ * web/common/editors/antwebEditor.js and the settings in opts.tinymce), or CKEditor 3 when the
+ * server switch says so (util/PageEditor.java; CKEDITOR.replace runs in the JSP). If neither
+ * loads, the curator edits the HTML source in the plain box and Save works as usual.
  *
  * - Sets the form's editorReady field to 1 only once the editor shows the stored text (if the
  *   field has text and the editor shows nothing, Save stays refused).
@@ -12,6 +17,7 @@
  *   asks the curator to log in in a new tab; if logged in, puts the session's current form token
  *   into the form, then submits.
  * - "Clear this field" asks for confirmation, then submits clearField=1.
+ * - Unchanged text is sent exactly as it was loaded (an editor may rewrite HTML it did not change).
  * - Warns near the daily restart (about 8 AM Pacific).
  * Plain ES5, no libraries. Every storage access is in try/catch (private windows, blocked storage).
  */
@@ -22,6 +28,7 @@
     var KEEPALIVE_MS = 5 * 60 * 1000;
     var CHECK_TIMEOUT_MS = 15000;
     var READY_TIMEOUT_MS = 30000;
+    var CHANGE_DELAY_MS = 500;
 
     function storageGet(key) {
         if (!key) return null;
@@ -91,7 +98,11 @@
         this.textarea = document.getElementById(textareaId);
         this.form = this.textarea ? this.textarea.form : null;
         this.opts = opts || {};
-        this.instance = null;      // CKEditor instance, or null for the plain text box
+        this.instance = null;      // editor instance, or null for the plain text box
+        this.kind = null;          // 'tinymce', 'ckeditor', or null for the plain text box
+        // The text the page was opened with (stored text, or the curator's text after a refused save).
+        this.original = this.textarea ? this.textarea.value : '';
+        this.changeTimer = null;
         this.ready = false;
         this.baseline = null;      // text when the editor became ready
         this.lastText = null;
@@ -100,21 +111,46 @@
         this.clearing = false;
         this.restartWarned = false;
         this.notReadyShown = false;
-        this.bar = document.getElementById('descEditSafetyBar');
+        this.barEl = null;
     }
+
+    // Looked up when first needed, so it does not matter where the script sits in the page.
+    Object.defineProperty(Guard.prototype, 'bar', {
+        get: function () {
+            if (!this.barEl) this.barEl = document.getElementById('descEditSafetyBar');
+            return this.barEl;
+        }
+    });
 
     Guard.prototype.field = function (name) {
         return this.form ? this.form.elements[name] : null;
     };
 
     Guard.prototype.getText = function () {
-        if (this.instance) return this.instance.getData();
+        if (this.kind === 'tinymce') return this.instance.getContent();
+        if (this.kind === 'ckeditor') return this.instance.getData();
         return this.textarea ? this.textarea.value : '';
     };
 
     Guard.prototype.setText = function (text) {
-        if (this.instance) this.instance.setData(text);
-        else if (this.textarea) this.textarea.value = text;
+        if (this.kind === 'tinymce') {
+            this.instance.setContent(text);
+            this.instance.undoManager.add();
+        } else if (this.kind === 'ckeditor') {
+            this.instance.setData(text);
+        } else if (this.textarea) {
+            this.textarea.value = text;
+        }
+    };
+
+    // The editor reported a change: check for it shortly (typing fires many events).
+    Guard.prototype.changed = function () {
+        var self = this;
+        if (this.changeTimer) return;
+        this.changeTimer = window.setTimeout(function () {
+            self.changeTimer = null;
+            self.poll();
+        }, CHANGE_DELAY_MS);
     };
 
     // Show a message (plain text) with optional buttons in the bar above the editor.
@@ -146,8 +182,21 @@
         });
     };
 
+    Guard.prototype.notReady = function (message) {
+        this.ready = false;
+        this.notReadyShown = true;
+        var r = this.field('editorReady');
+        if (r) r.value = '0';
+        this.say(message, null, true);
+    };
+
     Guard.prototype.markReady = function () {
         if (this.ready) return;
+        if (this.kind === 'tinymce' && window.AntwebEditor && window.AntwebEditor.isReadOnly(this.instance)) {
+            this.notReady('The editor opened read only (see the browser console), so it cannot be used. Reload the page;'
+                + ' if this happens again, tell the AntWeb administrator. (Saving is blocked.)');
+            return;
+        }
         var text = this.getText();
         if (this.opts.hadText && !this.opts.refused && isBlank(text)) {
             this.notReadyShown = true;
@@ -277,7 +326,10 @@
     Guard.prototype.submitNow = function () {
         this.submitting = true;
         this.saveDraft();
-        if (this.instance && this.instance.updateElement) this.instance.updateElement();
+        // Put the text into the form's box. Unchanged text goes back exactly as it was loaded, so
+        // opening and saving never rewrites a field (the server then stores nothing new).
+        var text = this.getText();
+        if (this.textarea) this.textarea.value = (this.ready && text === this.baseline) ? this.original : text;
         var c = this.field('clearField');
         if (c) c.value = this.clearing ? '1' : '0';
         // The native submit() does not fire the submit event again.
@@ -356,18 +408,58 @@
             return msg;
         });
 
-        if (window.CKEDITOR) {
-            window.CKEDITOR.on('instanceReady', function (ev) {
-                if (!ev.editor || ev.editor.name !== self.textarea.id) return;
-                self.instance = ev.editor;
-                self.markReady();
-            });
+        var readyTimeout = function () {
             window.setTimeout(function () {
                 if (!self.ready && !self.notReadyShown) {
                     self.say('The editor did not finish loading. Reload the page before typing.'
                         + ' (Saving is blocked until the editor shows the stored text.)', null, true);
                 }
             }, READY_TIMEOUT_MS);
+        };
+
+        var tiny = this.opts.editor === 'tinymce' && window.tinymce && window.AntwebEditor;
+        if (tiny) {
+            var settings = {};
+            var given = this.opts.tinymce || {};
+            for (var k in given) if (Object.prototype.hasOwnProperty.call(given, k)) settings[k] = given[k];
+            settings.cleanPaste = true;
+            settings.onInit = function (ed) {
+                self.instance = ed;
+                self.kind = 'tinymce';
+                ed.on('SwitchMode', function () {
+                    if (window.AntwebEditor.isReadOnly(ed)) {
+                        self.notReady('The editor switched to read only (see the browser console). Your text is kept in this'
+                            + ' browser. Reload the page. (Saving is blocked.)');
+                    }
+                });
+                self.markReady();
+            };
+            settings.onChange = function () { self.changed(); };
+            var started = null;
+            try {
+                started = window.AntwebEditor.replace(this.textarea, settings);
+            } catch (e) {
+                started = null;
+            }
+            if (started && typeof started.then === 'function') {
+                started.then(function (list) {
+                    if ((!list || !list.length) && !self.ready) {
+                        self.notReady('The editor did not start (see the browser console). Reload the page before typing.'
+                            + ' (Saving is blocked until the editor shows the stored text.)');
+                    }
+                });
+            }
+            readyTimeout();
+        } else if (this.opts.editor !== 'tinymce' && window.CKEDITOR && typeof window.CKEDITOR.on === 'function'
+                && typeof window.CKEDITOR.replace === 'function') {
+            // (Only when CKEditor's core really loaded: web/ckeditor/ckeditor.js alone is just its loader.)
+            window.CKEDITOR.on('instanceReady', function (ev) {
+                if (!ev.editor || ev.editor.name !== self.textarea.id) return;
+                self.instance = ev.editor;
+                self.kind = 'ckeditor';
+                self.markReady();
+            });
+            readyTimeout();
         } else {
             // The rich-text editor did not load: the plain box holds exactly the stored HTML.
             var ready = function () {
@@ -384,6 +476,13 @@
 
     window.AntwebEditSafety = {
         watch: function (textareaId, opts) {
+            if (!document.getElementById(textareaId) && document.readyState === 'loading') {
+                // The script came before the editor box: start once the page is parsed.
+                document.addEventListener('DOMContentLoaded', function () {
+                    new Guard(textareaId, opts).start();
+                });
+                return null;
+            }
             var guard = new Guard(textareaId, opts);
             guard.start();
             return guard;

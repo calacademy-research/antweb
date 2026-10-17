@@ -17,7 +17,7 @@
         if (canEditDesc) { %>     
        <% // They are an admin.  So display editable if this is the editField %>
        <% if (thisDesc.equals(editField)) { %>
-         Click "Source" to edit html code.  Contact <%= AntwebUtil.getAdminEmail() %> with any issues.<br>       
+         Click "Source" (in the new editor: the &lt;&gt; Source code button) to edit html code.  Contact <%= AntwebUtil.getAdminEmail() %> with any issues.<br>       
          <div class="clear"></div><%@ include file="/common/descEdit/ckEditorMinConfigTaxonForm.jsp" %>         
        <% } else { 
               String browserParams = taxon.getBrowserParams();

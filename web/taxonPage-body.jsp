@@ -45,7 +45,7 @@
   boolean canEditDesc = DescEditSafety.canEdit(accessLogin);
   
   if (canEditDesc && !"none".equals(editField)) { %>
-<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
+<%@ include file="/common/descEdit/editorScripts.jsp" %>
 <%
   } %>
 

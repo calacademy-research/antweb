@@ -14,7 +14,7 @@
         if (canEditDesc) { %>     
        <% // They are an admin.  So display editable if this is the editField %>
        <% if (thisDesc.equals(editField)) { %>
-         Click "Source" and enter an html embed code.  Contact <%= AntwebUtil.getAdminEmail() %> with any technical issues.<br>
+         Click "Source" (in the new editor: the &lt;&gt; Source code button) and enter an html embed code.  Contact <%= AntwebUtil.getAdminEmail() %> with any technical issues.<br>
          After "Save" you will need to refresh the page to see the video.
          <div class="clear"></div><%@ include file="/common/descEdit/ckEditorMinConfigTaxonForm.jsp" %>         
        <% } else { 

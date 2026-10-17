@@ -303,3 +303,46 @@ def test_wrong_csrf_token_keeps_text(curator):
     assert r.status_code == 403
     m = re.search(r'<textarea id="keptText"[^>]*>(.*?)</textarea>', r.text, re.S)
     assert m and html.unescape(m.group(1)) == text
+
+
+# ---------- editor choice (TinyMCE 8, CKEditor 3 fallback; util/PageEditor.java) ----------
+
+@needs_curator
+def test_edit_form_uses_tinymce_with_versioned_scripts(curator):
+    """Default editor is TinyMCE 8 with the shared setup; every script carries ?v= (util/Asset)."""
+    form, page = open_editor(curator, TEST_TAXON_URL, TEST_TAXON_FIELD)
+    assert re.search(r'/common/editors/tinymce/[0-9.]+/tinymce\.min\.js\?v=[0-9a-f]{8}"', page), "tinymce.min.js not loaded (or not versioned)"
+    assert re.search(r'/common/editors/antwebEditor\.js\?v=[0-9a-f]{8}"', page), "antwebEditor.js not loaded (or not versioned)"
+    assert re.search(r'/common/descEdit/editSafety\.js\?v=[0-9a-f]{8}"', page)
+    assert "editor: 'tinymce'" in page
+    assert "cacheSuffix: '?v=" in page
+    assert "/ckeditor/ckeditor.js" not in page
+    assert "TinyMCE" in page and "github.com/tinymce/tinymce" in page, "licence/source notice missing"
+
+
+@needs_curator
+def test_served_setup_sets_gpl_license_key(curator):
+    """TinyMCE 8 opens read only without license_key 'gpl' (see antwebEditor.js)."""
+    form, page = open_editor(curator, TEST_TAXON_URL, TEST_TAXON_FIELD)
+    m = re.search(r'src="([^"]*/common/editors/antwebEditor\.js\?v=[0-9a-f]{8})"', page)
+    assert m
+    url = html.unescape(m.group(1))
+    js = curator.get(url if url.startswith("http") else BASE_URL + url, timeout=TIMEOUT)
+    assert js.status_code == 200
+    assert "var LICENSE_KEY = 'gpl';" in js.text and "c.license_key = LICENSE_KEY;" in js.text
+    lic = re.search(r'href="([^"]*/common/editors/tinymce/[0-9.]+/LICENSE\.md)"', page)
+    assert lic, "no link to TinyMCE's LICENSE.md"
+    url = html.unescape(lic.group(1))
+    assert curator.get(url if url.startswith("http") else BASE_URL + url, timeout=TIMEOUT).status_code == 200
+
+
+@needs_curator
+def test_edit_form_ckeditor_fallback_switch(curator):
+    """pageEditor=ckeditor on the address gives the old editor (the same switch as etc/editor.properties)."""
+    r = curator.get(BASE_URL + TEST_TAXON_URL + "&editField=" + TEST_TAXON_FIELD + "&pageEditor=ckeditor", timeout=TIMEOUT)
+    assert r.status_code == 200
+    assert "/ckeditor/ckeditor.js" in r.text
+    assert "tinymce.min.js" not in r.text
+    assert "editor: 'ckeditor'" in r.text
+    form = EditForm(r.text)
+    assert form.fields.get("pageEditor") == "ckeditor", "the save form does not keep the chosen editor"

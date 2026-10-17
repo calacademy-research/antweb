@@ -41,7 +41,7 @@
     if (editField == null) editField = "none";
 
     if (accessLogin != null) { %>
-<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
+<%@ include file="/common/descEdit/editorScripts.jsp" %>
  <% } %>
 
 <input type="hidden" id="coords_for_geo" name="coords_for_geo" value="<%= project.getCoords() %>">

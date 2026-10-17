@@ -30,7 +30,9 @@
      data-field="<%= Html.escAttr(v.field == null ? "" : v.field) %>"
      data-valid-elements="<%= Html.escAttr(v.validElements) %>"
      data-hugerte-base="<%= Html.escAttr(editors + "/hugerte/1.0.14") %>"
-     data-tinymce-base="<%= Html.escAttr(editors + "/tinymce/8.10.0") %>">
+     data-hugerte-suffix="?v=<%= Html.escAttr(Asset.v(application, "/common/editors/hugerte/1.0.14/hugerte.min.js")) %>"
+     data-tinymce-base="<%= Html.escAttr(ctx + PageEditor.TINYMCE_BASE) %>"
+     data-tinymce-suffix="<%= Html.escAttr(PageEditor.tinyMceCacheSuffix(application)) %>">
 
 <header class="et-head">
   <h1>Editor trial: HugeRTE and TinyMCE 8</h1>
@@ -131,7 +133,7 @@
   <div class="et-grid">
 <%  String[][] eds = {
         {"hugerte", "HugeRTE 1.0.14", "MIT licence"},
-        {"tinymce", "TinyMCE 8.10.0", "GPL 2+ licence, self-hosted"}};
+        {"tinymce", "TinyMCE " + PageEditor.TINYMCE_VERSION, "GPL 2+ licence, self-hosted"}};
     for (String[] e : eds) { %>
     <div class="et-panel" id="panel-<%= e[0] %>">
       <h3><%= e[1] %> <span class="et-lic"><%= e[2] %></span></h3>
@@ -169,8 +171,9 @@
 </section>
 </div>
 
-<script src="<%= editors %>/hugerte/1.0.14/hugerte.min.js"></script>
-<script src="<%= editors %>/tinymce/8.10.0/tinymce.min.js"></script>
+<script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/common/editors/hugerte/1.0.14/hugerte.min.js") %>"></script>
+<script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, PageEditor.TINYMCE_JS) %>"></script>
+<script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, PageEditor.SETUP_JS) %>"></script>
 <script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/common/editors/editorTrial.js") %>"></script>
 </body>
 </html>

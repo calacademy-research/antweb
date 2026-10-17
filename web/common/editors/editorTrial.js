@@ -16,6 +16,10 @@
     bases: {
       hugerte: root.getAttribute('data-hugerte-base'),
       tinymce: root.getAttribute('data-tinymce-base')
+    },
+    cacheSuffix: {
+      hugerte: root.getAttribute('data-hugerte-suffix'),
+      tinymce: root.getAttribute('data-tinymce-suffix')
     }
   };
   var stored = document.getElementById('et-stored').value;
@@ -35,142 +39,28 @@
     s.className = 'et-status' + (cls ? ' ' + cls : '');
   }
 
-  // ---- Paste clean-up (Word, Google Docs) ------------------------------------------------
-
-  function unwrap(node) {
-    var parent = node.parentNode;
-    if (!parent) return;
-    while (node.firstChild) parent.insertBefore(node.firstChild, node);
-    parent.removeChild(node);
-  }
-
-  // Inline styles Word and Google Docs use for bold, italic, underline, super- and subscript,
-  // turned into tags; their "normal" values (and Word's mso- styles) are dropped.
-  var STYLE_TAGS = [
-    [/^font-weight:\s*(bold|bolder|[6-9]00)$/i, 'b'],
-    [/^font-style:\s*italic$/i, 'i'],
-    [/^text-decoration(-line)?:\s*underline$/i, 'u'],
-    [/^vertical-align:\s*super$/i, 'sup'],
-    [/^vertical-align:\s*sub$/i, 'sub']
-  ];
-  var NOISE = /^(mso-|font-weight:\s*(normal|400)$|font-style:\s*normal$|vertical-align:\s*baseline$|text-decoration(-line)?:\s*none$)/i;
-
-  function cleanPasted(node) {
-    // Comments (<!--StartFragment--> and Word's conditional comments).
-    var walker = document.createTreeWalker(node, NodeFilter.SHOW_COMMENT), comments = [];
-    while (walker.nextNode()) comments.push(walker.currentNode);
-    comments.forEach(function (c) { c.parentNode.removeChild(c); });
-
-    var all = node.querySelectorAll('*');
-    for (var i = 0; i < all.length; i++) {
-      var e = all[i];
-      var cls = e.getAttribute('class');
-      if (cls != null) {
-        var keep = cls.split(/\s+/).filter(function (c) { return c && !/^mso/i.test(c); });
-        if (keep.length) e.setAttribute('class', keep.join(' ')); else e.removeAttribute('class');
-      }
-      e.removeAttribute('lang');
-      e.removeAttribute('dir');
-      var st = e.getAttribute('style');
-      if (st == null) continue;
-      var decl = st.split(';').map(function (d) { return d.trim(); }).filter(function (d) { return d; });
-      // Google Docs wraps the whole paste in <b style="font-weight:normal">: unwrap it below.
-      var normalB = e.nodeName === 'B' && decl.some(function (d) { return /^font-weight:\s*(normal|400)$/i.test(d); });
-      var wrap = [];
-      if (e.nodeName === 'SPAN') {
-        decl = decl.filter(function (d) {
-          for (var t = 0; t < STYLE_TAGS.length; t++) {
-            if (STYLE_TAGS[t][0].test(d)) { wrap.push(STYLE_TAGS[t][1]); return false; }
-          }
-          return true;
-        });
-      }
-      decl = decl.filter(function (d) { return !NOISE.test(d); });
-      if (decl.length) e.setAttribute('style', decl.join('; ')); else e.removeAttribute('style');
-      if (normalB) e.setAttribute('data-et-unwrap', '1');
-      if (wrap.length) {
-        var inner = e;
-        wrap.forEach(function (tag) {
-          var w = document.createElement(tag);
-          while (inner.firstChild) w.appendChild(inner.firstChild);
-          inner.appendChild(w);
-          inner = w;
-        });
-      }
-    }
-    var marked = node.querySelectorAll('[data-et-unwrap]');
-    for (var j = 0; j < marked.length; j++) unwrap(marked[j]);
-    // Spans left with no attributes do nothing.
-    var spans = node.querySelectorAll('span');
-    for (var k = 0; k < spans.length; k++) {
-      if (!spans[k].attributes.length) unwrap(spans[k]);
-    }
-    // Empty paragraphs (left by the removed comments).
-    var ps = node.querySelectorAll('p');
-    for (var m = 0; m < ps.length; m++) {
-      if (!ps[m].attributes.length && !ps[m].textContent.trim() && !ps[m].querySelector('img,br,iframe')) {
-        ps[m].parentNode.removeChild(ps[m]);
-      }
-    }
-  }
-
   // ---- Editor setup (the same for both, apart from the licence key) ----------------------
 
+  // The settings come from antwebEditor.js, the same file the curator edit forms use
+  // (license_key 'gpl' and promotion are added for TinyMCE only).
   function config(key) {
-    var c = {
+    return window.AntwebEditor.config(key, {
       selector: '#ed-' + key,
-      base_url: cfg.bases[key],
-      suffix: '.min',
-      plugins: 'advlist autolink charmap code fullscreen image link lists table visualblocks wordcount',
-      menubar: 'edit view insert format table',
-      toolbar: 'undo redo | blocks | bold italic underline strikethrough | subscript superscript | '
-        + 'bullist numlist outdent indent | link image table charmap | removeformat | code visualblocks fullscreen',
-      toolbar_mode: 'sliding',
-      block_formats: 'Paragraph=p; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6; Preformatted=pre',
-      // Keep exactly what the server's sanitizer keeps (HtmlSanitizer.editorValidElements).
-      valid_elements: cfg.validElements,
-      entity_encoding: 'raw',
-      // Keep <font>, <strike> and align attributes as stored (the default turns them into styles).
-      inline_styles: false,
-      convert_urls: false,
-      relative_urls: false,
-      remove_script_host: false,
-      paste_data_images: false,
-      // Chrome and Safari drop all pasted styles by default; keep the ones that carry meaning.
-      paste_webkit_styles: 'font-weight font-style text-decoration text-decoration-line vertical-align color',
-      table_use_colgroups: false,
-      table_default_attributes: { border: '1' },
-      table_default_styles: { 'border-collapse': 'collapse' },
-      image_dimensions: true,
-      link_default_protocol: 'https',
-      contextmenu: 'link image table',
-      browser_spellcheck: true,
-      branding: false,
-      height: 460,
-      min_height: 260,
-      content_style: 'body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.45; }'
-        + ' img { max-width: 100%; height: auto; }',
-      paste_postprocess: function (editor, args) {
-        if ($('et-cleanpaste').checked) cleanPasted(args.node);
-      },
-      setup: function (ed) {
-        ed.on('init', function () {
-          editors[key] = ed;
-          status(key, 'Loaded.');
-          check(key, true);
-        });
+      baseUrl: cfg.bases[key],
+      cacheSuffix: cfg.cacheSuffix[key],
+      validElements: cfg.validElements,
+      cleanPaste: function () { return $('et-cleanpaste').checked; },
+      onInit: function (ed) {
+        editors[key] = ed;
+        status(key, 'Loaded.');
+        check(key, true);
       }
-    };
-    if (key === 'tinymce') {
-      c.license_key = 'gpl';
-      c.promotion = false;
-    }
-    return c;
+    });
   }
 
   function start(key) {
     var lib = window[key];
-    if (!lib || typeof lib.init !== 'function') {
+    if (!lib || typeof lib.init !== 'function' || !window.AntwebEditor) {
       status(key, 'The editor files did not load.', 'et-error');
       return;
     }

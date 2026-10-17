@@ -118,8 +118,9 @@ public class DescriptionAction extends AntwebAction {
           String current = DescEditDb.readFieldForEdit(connection, describable, title, true);
           String currentHash = DescEditSafety.hash(current);
 
-          // Nothing would change (for example the same form sent twice): no write, no conflict.
-          if (!blank && sanitized.equals(current)) {
+          // Nothing would change (for example the same form sent twice, or the editor opened and saved
+          // without changes; browsers send a text box's line breaks as CRLF): no write, no conflict.
+          if (!blank && DescEditSafety.sameText(sanitized, current)) {
             connection.rollback();
             return DescEditSafety.Result.saved(title, "Your changes to " + pretty + " were saved (the stored text already matched).");
           }

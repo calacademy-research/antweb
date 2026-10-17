@@ -46,7 +46,7 @@
 %>
 
 <% if (canEditDesc && !"none".equals(editField)) { %>
-<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
+<%@ include file="/common/descEdit/editorScripts.jsp" %>
 <% } %>
 
 <input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
