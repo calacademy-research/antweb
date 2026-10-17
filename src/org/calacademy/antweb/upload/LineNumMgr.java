@@ -89,7 +89,7 @@ public class LineNumMgr {
 			uploadDb.addUploadLine(uploadFile.getBackupFileName(), lineNum, displayLineNum, theLine, UploadHelper.getGroup());
 
 			//A.log("extraCarriageReturnCheck() lineNum:" + lineNum + " displayLineNum:" + getModifier(lineNum));
-			String lineLink = "<a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=uploadLine&amp;file=" + Html.escAttr(Html.url(uploadFile.getBackupFileName())) + "&amp;line=" + lineNum + "'>" + displayLineNum + "</a>";
+			String lineLink = "<a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=uploadLine&amp;file=" + Html.escAttr(Html.url(uploadFile.getBackupFileName())) + "&amp;line=" + lineNum + "'>" + displayLineNum + "</a>";
 			String message = "On (approx) line:" + lineLink + " there were only " + componentCount;
 			messageMgr.addToMessages(MessageMgr.extraCarriageReturn, message);          
 		  }          

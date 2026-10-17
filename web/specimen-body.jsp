@@ -521,7 +521,7 @@ if (LoginMgr.isAdmin(request) || specimen.isCurator(accessLogin)) { %>
 <ul>
 <li><b>Upload Record: </b></li>
 <% if (specimen.getBackupFileName() != null) { %>
-<li>Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/showLog.do?action=uploadLog&file=<%= Html.escAttr(Html.url(specimen.getBackupFileName())) %>&line=<%= specimen.getLineNum() %>'><%= specimen.getLineNum() %></a></li>
+<li>Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=uploadLog&file=<%= Html.escAttr(Html.url(specimen.getBackupFileName())) %>&line=<%= specimen.getLineNum() %>'><%= specimen.getLineNum() %></a></li>
 <% } %>
 </ul>
 
@@ -568,7 +568,8 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Images dir: </b></li>
-<li><a href='<%= AntwebProps.getDomainApp() %>/images/<%= Html.escAttr(specimen.getCode()) %>'>/images/<%= Html.esc(specimen.getCode()) %></a></li>
+<%-- Plain text: folder listings are turned off, so a link to the folder leads nowhere. --%>
+<li>/images/<%= Html.esc(specimen.getCode()) %></li>
 </ul>
 
 <ul>
@@ -578,7 +579,12 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Default Pic for: </b></li>
+<% if (specimen.getDefaultFor() != null && !specimen.getDefaultFor().isEmpty()) { %>
 <li><a href='<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= Html.escAttr(Html.url(specimen.getDefaultFor())) %>'><%= Html.esc(Taxon.getPrettyTaxonName(specimen.getDefaultFor())) %></a></li>
+<% } else { %>
+<li>&nbsp;</li>
+<% } %>
+</ul>
 
 <ul>
 <li><b>Line Number: </b></li>
@@ -587,7 +593,7 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Description: </b></li>
-<li><a href='<%= AntwebProps.getDomainApp() %>/showLog.do?action=specimenDetails&code=<%= Html.escAttr(Html.url(specimen.getCode())) %>'>Link</a> -
+<li><a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=specimenDetails&code=<%= Html.escAttr(Html.url(specimen.getCode())) %>'>Link</a> -
 <%= Html.esc(specimen.getDetailHash()) %> &nbsp;</li>
 </ul>
 

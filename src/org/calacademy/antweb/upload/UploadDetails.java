@@ -123,7 +123,7 @@ public class UploadDetails extends OperationDetails {
         
         logString +=
             "<head><title>" + getLogFileName() + "</title>" 
-            + "<link rel='shortcut icon' href='<%= domainApp %>/image/favicon.ico' />"
+            + "<link rel='shortcut icon' href='" + AntwebProps.getDomainApp() + "/image/favicon.ico' />"
             + "<meta charset=\"utf-8\"/></head><body>"
             + "<h2>Upload Report" + hasErrorString + "</h2>"
             + "<a href = \"" + AntwebProps.getDomainApp() + "\">Home</a> | <a href = \"" 

@@ -282,7 +282,7 @@ public class UtilAction extends AntwebAction {
 
 			  if (action.equals("logQueryStats")) {
 				DBUtil.logQueryStats();
-				String message = "Query stats logged to queryStats.log. <a href='" + AntwebProps.getDomainApp() + "/showLog.do?action=queryStatsLog'>Query Stats Log</a>";
+				String message = "Query stats logged to queryStats.log. <a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=queryStatsLog'>Query Stats Log</a>";
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("adminMessage");
 			  }
