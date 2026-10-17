@@ -36,7 +36,7 @@ from urllib.parse import urlparse
 
 import pytest
 
-from antweb import BASE_URL, IS_PRODUCTION, TIMEOUT, new_session
+from antweb import post_login, BASE_URL, IS_PRODUCTION, TIMEOUT, new_session
 
 ALLOWED_HOSTS = {"staging.antweb.org", "localhost", "127.0.0.1"}
 HOST = urlparse(BASE_URL).hostname or ""
@@ -81,8 +81,7 @@ def deployed():
 
 def _login():
     s = new_session()
-    s.post(BASE_URL + "/login.do", data={"userName": USER, "password": PASSWORD, "isSubmit": "true"},
-           timeout=TIMEOUT, allow_redirects=True)
+    post_login(s, USER, PASSWORD)
     info = s.get(BASE_URL + "/editSession.do", timeout=TIMEOUT).json()
     assert info.get("loggedIn"), "test login failed"
     return s, info["csrf"], info["loginId"]

@@ -29,7 +29,7 @@ from urllib.parse import urlparse
 
 import pytest
 
-from antweb import BASE_URL, IS_PRODUCTION, TIMEOUT, new_session
+from antweb import post_login, BASE_URL, IS_PRODUCTION, TIMEOUT, new_session
 
 ALLOWED_HOSTS = {"staging.antweb.org", "localhost", "127.0.0.1"}
 HOST = urlparse(BASE_URL).hostname or ""
@@ -129,8 +129,7 @@ def sha256(text):
 
 def login():
     s = new_session()
-    s.post(BASE_URL + "/login.do", data={"userName": USER, "password": PASSWORD, "isSubmit": "true"},
-           timeout=TIMEOUT, allow_redirects=True)
+    post_login(s, USER, PASSWORD)
     return s
 
 
