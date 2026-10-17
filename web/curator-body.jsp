@@ -22,7 +22,7 @@
 
 <div class="in_admin">
 <br><br>
-<h2><a href="<%= AntwebProps.getDomainApp() %>/curators.do">Curator:</a> <%= curator.getDisplayName() %></h2>
+<h2><a href="<%= AntwebProps.getDomainApp() %>/curators.do">Curator:</a> <%= Html.esc(curator.getDisplayName()) %></h2>
 </div>
 
 <br><br>
@@ -54,7 +54,7 @@
     <div id="overview_data" class="plain">
         <ul>
         <li><b>Email:</b></li>
-        <li><%= curator.getEmail() %></li>
+        <li><%= Html.esc(curator.getEmail()) %></li>
         </ul>
     </div>
 

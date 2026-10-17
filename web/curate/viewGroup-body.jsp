@@ -71,7 +71,7 @@
                selected = "";
              }
          %>
-          <option value='<%= curator.getId() %>' <%= selected %>><%= curator.getDisplayName() %></option>
+          <option value='<%= curator.getId() %>' <%= selected %>><%= Html.esc(curator.getDisplayName()) %></option>
         <% } %>	
       </select>
 
@@ -93,7 +93,7 @@
          String name = curator.getFullName();
          if (Utility.isBlank(name)) name = curator.getEmail();
       %>
-      <br>&nbsp;&nbsp;&nbsp;<a href='<%= AntwebProps.getDomainApp() %>/viewLogin.do?id=<%= curator.getId() %>'><%= name %></a>
+      <br>&nbsp;&nbsp;&nbsp;<a href='<%= AntwebProps.getDomainApp() %>/viewLogin.do?id=<%= curator.getId() %>'><%= Html.esc(name) %></a>
     <% } 
      }
     %>
