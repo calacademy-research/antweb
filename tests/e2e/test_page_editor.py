@@ -330,8 +330,8 @@ def test_served_setup_sets_gpl_license_key(curator):
     js = curator.get(url if url.startswith("http") else BASE_URL + url, timeout=TIMEOUT)
     assert js.status_code == 200
     assert "var LICENSE_KEY = 'gpl';" in js.text and "c.license_key = LICENSE_KEY;" in js.text
-    lic = re.search(r'href="([^"]*/common/editors/tinymce/[0-9.]+/LICENSE\.md)"', page)
-    assert lic, "no link to TinyMCE's LICENSE.md"
+    lic = re.search(r'href="([^"]*/common/editors/tinymce/[0-9.]+/LICENSE\.txt)"', page)
+    assert lic, "no link to TinyMCE's licence (LICENSE.txt; the site does not serve .md)"
     url = html.unescape(lic.group(1))
     assert curator.get(url if url.startswith("http") else BASE_URL + url, timeout=TIMEOUT).status_code == 200
 

@@ -285,6 +285,9 @@
           ed.on('input change undo redo SetContent ExecCommand paste', function () { opts.onChange(ed); });
         }
         ed.on('init', function () {
+          // Never wider than the screen, even on the fixed-width page layout (phones).
+          var box = ed.getContainer && ed.getContainer();
+          if (box) box.style.maxWidth = 'calc(100vw - 16px)';
           if (opts.onInit) opts.onInit(ed);
         });
       }

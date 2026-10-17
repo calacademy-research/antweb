@@ -94,7 +94,7 @@
 <p class="descEditEditorNotice" style="font-size:smaller;color:#555;margin:6px 0">
 <% if (deTiny) { %>
 Editor: TinyMCE <%= org.calacademy.antweb.util.PageEditor.TINYMCE_VERSION %>, free software under the GNU GPL version 2 or later
-(<a href="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.PageEditor.TINYMCE_BASE %>/LICENSE.md" target="_blank" rel="noopener">licence</a>,
+(<a href="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.PageEditor.TINYMCE_BASE %>/LICENSE.txt" target="_blank" rel="noopener">licence</a>,
 <a href="<%= org.calacademy.antweb.util.PageEditor.TINYMCE_SOURCE_URL %>" target="_blank" rel="noopener">source code</a>).
 Problem with the editor? <a class="descEditSwitch" href="<%= Html.escAttr(deSwitch) %>">Use the old editor for this field</a>.
 <% } else { %>
