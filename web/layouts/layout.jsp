@@ -24,11 +24,9 @@
 <tiles:getAsString name="meta" ignore="true" /> 
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
 
-<% if (HttpUtil.isMobile(request)) { %>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/> <!--  minimum-scale=1.0, maximum-scale=1.0,  -->
-<% } else { %>
-  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, initial-scale=1"/> <!--   -->
-<% } %>
+<%-- One layout for every device: phones get the same pages, made to fit by /common/responsive.css.
+     Pinch zoom stays allowed (no maximum-scale). --%>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 
 <meta name="apple-mobile-web-app-capable" content="yes" />
 
@@ -70,17 +68,9 @@
 <link rel="apple-touch-icon" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/image/apple-touch-icon.png") %>">
 <link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/base.css") %>"/>
 
-<% 
-   
-   // This doesn't actually get called by mobile requests. See layoutMobile.css
-   //String tTarget = HttpUtil.getTarget(request);
-   //if (tTarget != null && (tTarget.contains("testMobile.do") || tTarget.contains("mobile.do"))) AntwebUtil.log("layout.jsp mobile:" + HttpUtil.isMobile(request));
-
-   if (HttpUtil.isMobile(request)) { %>
-    <link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/antwebMobile.css") %>"/>
-<% } else { %>
-    <link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/antweb.css") %>"/>
-<% } %>
+<%-- Phones used to get antwebMobile.css (an old fixed-width copy of antweb.css) by user agent;
+     now every device gets antweb.css, and responsive.css (below, loaded last) adapts it to small screens. --%>
+<link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/antweb.css") %>"/>
 
 <% if ((theTarget.contains("getSearchList.do")) || (theTarget.contains("getSpecimenList.do"))) { %>
 <link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/clear_style.css") %>"/>
@@ -88,6 +78,9 @@
 <% if (theTarget.contains("description.do")) { %>
 <link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/plazi.css") %>"/>
 <% } %>
+<%-- Small screens (phones, narrow windows). Loaded after the other stylesheets so its media queries win;
+     no effect at desktop widths. responsive.js adds the phone menu button behaviour and wraps wide tables. --%>
+<link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/responsive.css") %>"/>
 
 <%
  if (HttpUtil.isOnline()) { %>
@@ -102,6 +95,7 @@
 <script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/antweb.jquery.js") %>"></script>
 <script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/purl.js") %>"></script>
 <script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/jquery.jqURL.js") %>"></script>
+<script defer src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/responsive.js") %>"></script>
 <% if ((request.getRequestURI().contains("taxonPage.jsp")) 
     || (request.getRequestURI().contains("dynamicMap.jsp")) 
     || (request.getRequestURI().contains("specimen.jsp")))  { %>
@@ -188,7 +182,7 @@ if ($.cookie('thumbs')) {
 %>
 
 <!-- layout.jsp A dubious piece of javascript code. This logic should be in a jsp not as javascript. It is for the sort
-     function on the browse.do specimen page and advanced search results. Also see layoutMobile.jsp -->
+     function on the browse.do specimen page and advanced search results. -->
 
 $(function() {
     var full_query = '<%= Html.js(sortByExtras) %>';

@@ -1,0 +1,525 @@
+/*
+  responsive.css: makes the normal AntWeb pages fit small screens.
+
+  Loaded last by web/layouts/layout.jsp (after antweb.css and the page stylesheets), so
+  these rules win where they overlap. Everything is inside media queries, except the
+  phone menu button, which is hidden by default; at desktop widths (over 1000 px) this
+  file changes nothing.
+
+  Tier 1, up to 1000 px (tablets, narrow windows): the fixed 976/1000 px page boxes
+          become fluid, so there is no sideways scrolling.
+  Tier 2, up to 760 px (phones): single column, header collapses behind a menu button
+          (responsive.js toggles body.aw-nav-open), full-width search boxes, image grids
+          two across, wide tables scroll inside their own box (responsive.js wraps them
+          in div.aw-table-scroll).
+
+  Many antweb.css rules carry // comments, which are not valid CSS and make browsers
+  drop the next declaration; a few rules below use !important to win against inline
+  styles set by scripts or JSPs (noted where used).
+*/
+
+/* Phone menu button: not shown on larger screens. */
+.aw-menu-toggle {
+    display: none;
+}
+
+/* ---------------------------------------------------------------- tier 1: up to 1000 px */
+@media (max-width: 1000px) {
+    .header,
+    .container,
+    #page_context,
+    #about,
+    #citation_overlay,
+    #download_data_overlay,
+    #browse_hint {
+        width: auto;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .header {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    .container.home {
+        width: auto;
+        padding: 0;
+        /* antweb.jquery.js sets the home background inline at 1000 px wide */
+        background-size: cover !important;
+        background-position: 50% 0 !important;
+    }
+    #citation_info_overlay {
+        width: auto;
+        max-width: 900px;
+    }
+    .big_picture,
+    .big_picture img,
+    .taxon_page_img {
+        max-width: 100%;
+    }
+    img, video, iframe, embed, object {
+        max-width: 100%;
+    }
+    img[width][height] {           /* keep the shape when max-width shrinks it (not for height-only icons) */
+        height: auto;
+    }
+    .scrollable,
+    .items div.things {
+        max-width: 100%;
+    }
+    .documentTable {               /* Plazi treatment tables (plazi.css) */
+        width: auto;
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+/* ---------------------------------------------------------------- tier 2: phones, up to 760 px */
+@media (max-width: 760px) {
+
+    html, body {
+        font-size: 14px;
+        /* antweb.css sets overflow-x:scroll on html and body, which turns body into its own
+           sideways-scrolling box; back to normal so the page itself must fit the screen */
+        overflow-x: visible;
+    }
+    h1 { font-size: 19px; }
+    h2 { font-size: 16px; }
+
+    /* -- header (academyHeader.jsp) ------------------------------------------------ */
+    #masthead {
+        height: auto;
+        min-height: 45px;
+    }
+    #masthead .header {
+        position: relative;
+        min-height: 45px;
+    }
+    #logo img {
+        max-width: 150px;
+    }
+    #version {
+        margin-top: 22px;
+        font-size: 11px;
+    }
+    .aw-menu-toggle {
+        display: block;
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        width: 44px;
+        height: 36px;
+        padding: 8px 10px;
+        box-sizing: border-box;
+        background: transparent;
+        border: 1px solid #777;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .aw-menu-toggle .aw-menu-bar {
+        display: block;
+        height: 2px;
+        margin: 0 0 6px;
+        background: #fff;
+    }
+    .aw-menu-toggle .aw-menu-bar:last-child {
+        margin-bottom: 0;
+    }
+    body.aw-nav-open .aw-menu-toggle {
+        background: #333;
+    }
+
+    #site_links,
+    #login,
+    #browseby {
+        display: none;
+    }
+    body.aw-nav-open #site_links,
+    body.aw-nav-open #login,
+    body.aw-nav-open #browseby {
+        display: block;
+    }
+    #site_links {
+        float: none;
+        clear: both;
+        padding: 4px 0 0;
+    }
+    #site_links ul {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    #site_links ul li,
+    #site_links ul li:last-child {
+        float: none;
+        margin-top: 0;
+        padding: 0 16px 0 0;
+        border: 0;
+    }
+    #site_links ul li a {
+        display: inline-block;
+        padding: 9px 0;
+    }
+    #login {
+        position: static;
+        float: none;
+        clear: both;
+        padding: 6px 0 12px;
+    }
+    #login_form {                  /* old inline login box, if a page still shows it */
+        position: static;
+        width: auto;
+        height: auto;
+    }
+
+    /* -- grey menu and search bar (menuBar.jsp, searchBar.jsp) ---------------------- */
+    #navigation {
+        height: auto;
+        padding-bottom: 8px;
+    }
+    #browseby {
+        float: none;
+        padding-top: 4px;
+    }
+    #browseby ul {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    #browseby ul li {
+        float: none;
+    }
+    #browseby ul li a.browse_options {
+        display: inline-block;
+        padding: 8px 18px 8px 0;
+    }
+    .searchBoxes1 {
+        float: none;
+        clear: both;
+        text-align: left;
+    }
+    .searchBoxes2 {
+        float: none;
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+    }
+    .searchBoxes2 .search {
+        float: none;
+        width: 100%;
+        padding-top: 6px;
+        text-align: left;
+    }
+    .searchBoxes2 > .search:first-child {      /* the magnifier link to Advanced Search */
+        order: 3;
+        padding-top: 4px;
+    }
+    /* the search box sits in a one-row table; lay the row out as a flex line instead */
+    .searchBoxes2 .search table,
+    .searchBoxes2 .search tbody {
+        display: block;
+        width: 100%;
+    }
+    .searchBoxes2 .search tr {
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+    .searchBoxes2 .search td {
+        padding: 0;
+    }
+    .searchBoxes2 .search td:first-child {
+        display: flex;
+        align-items: center;
+        flex: 1 1 0;
+        min-width: 0;
+    }
+    .searchBoxes2 .search td:first-child font {
+        flex: none;
+        width: 58px;
+        white-space: nowrap;
+    }
+    .searchBoxes2 .search input[type="text"] {
+        flex: 1 1 0;
+        min-width: 0;
+        width: 100%;
+        font-size: 16px;           /* 16 px or more: iOS does not zoom into the box on focus */
+        padding: 5px 6px;
+        box-sizing: border-box;
+    }
+    .searchBoxes2 .search td:last-child {
+        flex: none;
+        padding-left: 6px;
+    }
+    .searchBoxes2 #search_submit {
+        font-size: 15px;
+        padding: 5px 12px;
+        top: 0;
+    }
+    .ac_results {
+        max-width: calc(100vw - 20px);
+    }
+    .ac_results li {
+        font-size: 15px;
+        padding: 7px 6px;
+    }
+
+    /* drop-down menus under Global, Georegions, ... */
+    #global, #georegions, #bioregions, #projects, #museums {
+        margin-left: 0 !important; /* antweb.css offsets them under each desktop menu item */
+    }
+    .region_list li,
+    .bioregion_list li {
+        width: auto;
+    }
+    .region_items li {
+        width: 50%;
+        box-sizing: border-box;
+        padding-right: 6px;
+    }
+    .subnav ul li {
+        line-height: 2.1;          /* bigger tap targets */
+    }
+
+    /* -- page heading, classification, tools ----------------------------------------- */
+    #page_contents h1 {
+        float: none;
+        padding-right: 0;
+    }
+    #page_contents .links {
+        float: none;
+        padding-top: 4px;
+    }
+    #page_contents .links ul li {
+        margin-bottom: 4px;
+    }
+    #antcat_view,
+    #default_specimen_view {
+        float: none;
+        text-align: left;
+    }
+    #classification ul li {
+        padding-left: 0;
+        padding-right: 10px;
+    }
+    #totals_and_tools h2 {
+        float: none;
+        padding-right: 0;
+    }
+    .tool_label {
+        margin-bottom: 6px;
+    }
+    #totals_and_tools_container::after {  /* the floated tool buttons wrap to two lines here */
+        content: "";
+        display: block;
+        clear: both;
+    }
+    #download_overlay {
+        width: auto;
+    }
+    #citation_info_overlay {
+        border-width: 4px;
+        padding: 10px;
+    }
+    #citation_info_overlay p {
+        overflow-wrap: anywhere;
+    }
+    #browse_hint_text {
+        width: auto;
+    }
+
+    /* -- two-column blocks stack ---------------------------------------------------- */
+    #overview_data {
+        float: none;
+        width: auto;
+        padding-right: 0;
+    }
+    #page_data > .left {
+        float: none;
+    }
+    .small_map,
+    .small_map.first {
+        float: none;
+        margin: 6px 0;
+        max-width: 100%;
+    }
+    .small_map > div[id] {
+        max-width: 100%;
+    }
+    #data_left2, #data_left3, #data_right, #data_right2 {
+        float: none;
+        width: auto;
+        margin-left: 0;
+    }
+    /* specimen page label / value rows: value wraps beside its label */
+    #overview_data.plain ul li:first-child {
+        width: 135px;
+    }
+    #overview_data.plain ul li + li {
+        float: none;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+    }
+    #overview_data {
+        overflow-wrap: break-word;
+    }
+
+    /* -- image grids (images.do and similar): two across ----------------------------- */
+    #page_data .slide.medium {
+        width: calc(50% - 6px);
+        height: auto;
+        aspect-ratio: 1 / 1;
+        margin: 3px;
+        box-sizing: border-box;
+    }
+    #page_data .slide.medium .hover.medium,
+    #page_data .slide.medium .top_gradient.medium {
+        width: 100%;
+        height: 100%;
+    }
+    #page_data .slide.medium .lower_data.medium,
+    #page_data .slide.medium .lower_gradient.medium {
+        width: 100%;
+    }
+    #page_data .slide.medium .name {
+        float: none;
+        width: auto;
+        font-size: 13px;
+        padding-right: 30px;
+    }
+    #page_data .slide.medium .data_left {
+        float: none;
+        width: auto;
+        font-size: 11px;
+        line-height: 20px;
+    }
+    #page_data .slide.medium.ratio .adjust img {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    .ratio_overlay,
+    .ratio_overlay.first,
+    .ratio_overlay.last {
+        position: absolute;
+        left: 0;
+        top: 0;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .ratio_adjust img {
+        max-width: 100% !important;
+    }
+    .slideshow_nav {
+        margin-left: 0;
+    }
+    /* the one picture beside a species or specimen record stays full size */
+    #page_data > .left .slide.medium {
+        width: 233px;
+        height: 233px;
+        max-width: 100%;
+        aspect-ratio: auto;
+        margin: 6px 0;
+    }
+
+    /* -- wide tables: scroll inside their own box (responsive.js adds the wrapper) --- */
+    .aw-table-scroll {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #photo_metadata {
+        width: auto;
+    }
+
+    /* -- home page (index-body.jsp) ------------------------------------------------- */
+    #home_upper {
+        padding: 10px;
+    }
+    #stats,
+    #mission,
+    #recent_activity {
+        float: none;
+        width: auto;
+        margin-top: 12px;
+        padding-right: 0;
+    }
+    #mission {
+        font-size: 16px;
+    }
+    #background_attr {
+        float: none;
+        text-align: left;
+    }
+    #slideshow {
+        height: auto;
+        margin-top: 12px;
+    }
+    #slideshow a.browse {          /* arrows: the strip is swiped instead */
+        display: none;
+    }
+    .scrollable {
+        float: none;
+        width: 100%;
+        height: auto;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .scrollable .items {
+        position: static;
+        width: auto;
+        display: flex;
+        left: auto !important;     /* jQuery Tools scrollable sets left inline */
+    }
+    .scrollable .items > .cloned { /* copies made for circular scrolling */
+        display: none;
+    }
+    .items div.things {
+        float: none;
+        width: auto;
+        max-width: none;
+        flex: none;
+        display: flex;
+    }
+    .items div.things .slide.small {
+        flex: none;
+    }
+    #contributor_container,
+    #promo_container {
+        padding: 12px 10px;
+    }
+    #contributors,
+    #get_involved {
+        float: none;
+        width: auto;
+        padding: 0;
+    }
+    #get_involved {
+        margin-top: 12px;
+    }
+    .promo,
+    .promo.middle {
+        float: none;
+        width: auto;
+        margin: 0 0 14px;
+    }
+
+    /* -- footer (copyright.jsp) ----------------------------------------------------- */
+    #footer {                      /* inside #contents, which already has side padding */
+        font-size: 13px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+    #footer.home {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    #calacademy {
+        height: auto;
+        min-height: 27px;
+        line-height: 1.4;
+        padding-top: 4px;
+    }
+}

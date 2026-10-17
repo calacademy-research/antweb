@@ -33,11 +33,9 @@
             </ul>
         </div>
 
-        <% if (!HttpUtil.isMobile(request)) { %>
-            <div class="searchBoxes1">
-            <%@ include file="/common/searchBar.jsp" %>
-            </div>
-        <% }  %>
+        <div class="searchBoxes1">
+        <%@ include file="/common/searchBar.jsp" %>
+        </div>
 
         <div class="clear"></div>
     </div>

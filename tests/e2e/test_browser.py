@@ -8,7 +8,10 @@ browsers kept an old autocomplete.js) passed them. These tests open pages in Chr
   b. fail on any uncaught JavaScript error on key pages;
   c. check every local script and stylesheet on those pages loads (200) and carries the
      ?v=<hash> cache-busting token (util/Asset.java), so old copies can't linger;
-  d. open the home and a species page at phone width (390x844) and fail on JS errors.
+  d. open the main page types at phone width (390x844, iPhone user agent) and check that they fit the
+     screen (no sideways page scroll), that the header search box works and the menu button opens
+     the menu (responsive.css / responsive.js), with no JS errors; at 1280 px the menu button stays
+     hidden and nothing scrolls sideways.
 
 Read-only: pages are opened and the search boxes typed into, nothing is submitted.
 Skipped when Playwright is not installed (pip install -r requirements.txt;
@@ -46,7 +49,7 @@ KEY_PAGES = {
     "login": "/login.do",
     "country": "/country.do?name=Madagascar",
 }
-PHONE_PAGES = {k: KEY_PAGES[k] for k in ("home", "species")}
+PHONE_PAGES = {k: KEY_PAGES[k] for k in ("home", "genus", "species", "specimen", "images")}
 
 # Uncaught errors known and accepted (substring of the message). Keep empty; add only with an issue link.
 KNOWN_PAGE_ERRORS: list[str] = []
@@ -231,3 +234,88 @@ def test_phone_width_no_js_errors(phone, name):
     v = visit(phone, PHONE_PAGES[name])
     assert v.status is not None and v.status < 500, f"{v.url}: HTTP {v.status}"
     assert not _unexpected(v.errors), f"{v.url} at 390x844: uncaught JS errors: {v.errors}"
+
+
+# Page wider than the screen? antweb.css sets overflow-x on html and body, which can make body its own
+# sideways-scrolling box, so both are measured.
+OVERFLOW_JS = """() => { const d = document.documentElement, b = document.body;
+    const w = Math.max(d.scrollWidth, b ? b.scrollWidth : 0);
+    const wide = [...document.querySelectorAll('body *')].filter(e => e.getBoundingClientRect().right > d.clientWidth + 1)
+        .slice(0, 5).map(e => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (typeof e.className === 'string' && e.className ? '.' + e.className.trim().split(/\\s+/).join('.') : ''));
+    return {scrollWidth: w, clientWidth: d.clientWidth, wide}; }"""
+
+
+def _open_settled(ctx, path):
+    page = ctx.new_page()
+    page.errors = []
+    page.on("pageerror", lambda err: page.errors.append(str(err)))
+    page.goto(BASE_URL + path, wait_until="load")
+    page.wait_for_timeout(SETTLE_MS)
+    return page
+
+
+def _assert_fits(page, path, where):
+    o = page.evaluate(OVERFLOW_JS)
+    assert o["scrollWidth"] <= o["clientWidth"] + 1, \
+        f"{path} {where}: page scrolls sideways ({o['scrollWidth']} px content in {o['clientWidth']} px); wide: {o['wide']}"
+
+
+@pytest.mark.parametrize("name", list(PHONE_PAGES))
+def test_phone_page_fits_screen(phone, name):
+    page = _open_settled(phone, PHONE_PAGES[name])
+    try:
+        _assert_fits(page, PHONE_PAGES[name], "at 390 px")
+        assert not _unexpected(page.errors), page.errors
+    finally:
+        page.close()
+
+
+@pytest.mark.parametrize("name", list(PHONE_PAGES))
+def test_phone_header_search_and_menu(phone, name):
+    path = PHONE_PAGES[name]
+    page = _open_settled(phone, path)
+    try:
+        box = page.locator("#taxonName").first
+        assert box.is_visible(), f"{path}: header Taxa box not visible at 390 px"
+        bb = box.bounding_box()
+        assert bb and bb["x"] >= 0 and bb["x"] + bb["width"] <= 391 and bb["width"] >= 150, \
+            f"{path}: Taxa box not usable at 390 px: {bb}"
+        box.click()
+        box.press_sequentially("campon", delay=80)
+        suggestion = page.locator(".ac_results li", has_text="Camponotus").first
+        try:
+            suggestion.wait_for(state="visible", timeout=SUGGEST_TIMEOUT_MS)
+        except sync_api.TimeoutError:
+            pytest.fail(f"{path}: no 'Camponotus' suggestion at 390 px; JS errors: {page.errors}")
+        _assert_fits(page, path, "with the suggestion list open")
+        page.keyboard.press("Escape")
+
+        toggle = page.locator("#aw_menu_toggle")
+        assert toggle.is_visible(), f"{path}: no menu button at 390 px"
+        assert not page.locator("#site_links").is_visible(), f"{path}: site links should start folded away"
+        toggle.click()
+        page.locator("#site_links").wait_for(state="visible", timeout=5000)
+        assert page.locator("#browseby").is_visible(), f"{path}: Browse menu not shown after the menu button"
+        assert toggle.get_attribute("aria-expanded") == "true"
+        _assert_fits(page, path, "with the menu open")
+        toggle.click()
+        page.locator("#site_links").wait_for(state="hidden", timeout=5000)
+        assert not _unexpected(page.errors), page.errors
+    finally:
+        page.close()
+
+
+@pytest.mark.parametrize("name", list(PHONE_PAGES))
+def test_desktop_layout_unchanged(desktop, name):
+    """At 1280 px the responsive rules must not apply: no menu button, full header, no sideways scroll."""
+    path = PHONE_PAGES[name]
+    page = _open_settled(desktop, path)
+    try:
+        assert not page.locator("#aw_menu_toggle").is_visible(), f"{path}: phone menu button shown at 1280 px"
+        assert page.locator("#site_links").is_visible(), f"{path}: site links hidden at 1280 px"
+        assert page.locator("#browseby").is_visible(), f"{path}: Browse menu hidden at 1280 px"
+        header = page.locator("#masthead .header").bounding_box()
+        assert header and abs(header["width"] - 1000) <= 1, f"{path}: header is no longer 1000 px wide: {header}"
+        _assert_fits(page, path, "at 1280 px")
+    finally:
+        page.close()
