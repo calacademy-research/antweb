@@ -51,14 +51,13 @@ public final class SearchAction extends DispatchAction {
 
           String target = HttpUtil.getTarget(request);
 
-          // recentImageSearch, descEditSearch, bayAreaSearch, advancedSearch
+          // recentImageSearch, descEditSearch, advancedSearch
           String searchMethod = HttpUtil.getParamValue("searchMethod", request);
           //A.log("execute() searchMethod:" + searchMethod);
           String searchType = null;
           if (searchMethod != null) {
 	        if (searchMethod.equals("advancedSearch")) searchType = "advancedSearch";
             if (searchMethod.equals("descEditSearch")) searchType = "descEditSearch";
-            if (searchMethod.equals("bayAreaSearch")) searchType = "bayAreaSearch";
             if (searchMethod.equals("recentImageSearch")) {
               int searchTypeIndex = target.indexOf("recentImageSearch");
               int ampersandIndex = target.indexOf("&", searchTypeIndex);
@@ -308,23 +307,6 @@ public final class SearchAction extends DispatchAction {
       } finally {
         SearchAction.undoSetTempSpecimenSearchLimit();        
       }
-    }
-
-    // This attempts to get values from the form and invoke the advanced search process
-    public ActionForward bayAreaSearch(ActionMapping mapping, ActionForm form,
-        HttpServletRequest request, HttpServletResponse response)
-          throws IOException, ServletException, SearchException, SQLException {
-
-        HttpSession session = request.getSession();
-		Date startTime = new Date(); // for HttpUtil.finish(request, startTime);
-
-        BayAreaSearchForm bayForm = (BayAreaSearchForm) form;
-
-        SearchParameters searchParameters = new SearchParameters(bayForm);
-        
-        String resultRank = ResultRank.SPECIES;
-        String output = Output.LIST;
-        return doAdvancedSearch(searchParameters, resultRank, output, request, mapping);
     }
 
     public ActionForward descEditSearch(ActionMapping mapping, ActionForm form,

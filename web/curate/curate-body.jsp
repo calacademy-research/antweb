@@ -80,16 +80,12 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
           <div class="clear"></div>
         </div>
         
-<% if (accessLogin.isAdmin()) { %>
         <div class="admin_action_item">
           <div class="action_hint">
-            <% String curatorDir = "/web/curator/" + (accessLogin.getId());
-               String fullCuratorDir = domainApp + curatorDir; %>
-            &nbsp;&nbsp;&nbsp;(Admin only) View files in your curator dir: <a href="<%= fullCuratorDir %>/"><%= curatorDir %></a>.
+            &nbsp;&nbsp;&nbsp;View <a href="<%= domainApp %>/curatorFiles.do">the files in your curator folder</a>.
           </div>
           <div class="clear"></div>
         </div>
-<% } %>
     </div>
 
 

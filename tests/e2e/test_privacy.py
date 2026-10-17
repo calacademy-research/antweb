@@ -1,7 +1,7 @@
 """Files that must not be readable by the public."""
 import pytest
 
-from antweb import BASE_URL, new_session
+from antweb import BASE_URL, IS_PRODUCTION, new_session
 
 
 @pytest.mark.parametrize("path", ["/web/log/logins.txt", "/web/log/serverBusy.html", "/data/index.jsp",
@@ -11,8 +11,30 @@ def test_private_file_not_public(path):
     assert r.status_code in (403, 404), f"{path} is public (HTTP {r.status_code})"
 
 
+# Folders are never listed, at any depth (Tomcat listings are off; Caddy also refuses them).
+@pytest.mark.parametrize("path", ["/web/log/upload/", "/web/log/upload/specimen/", "/web/curator/1/",
+                                  "/web/curator/23/", "/web/bak/", "/images/", "/images/casent0106322/"])
+def test_no_directory_listing(path):
+    r = new_session().get(BASE_URL + path, timeout=60)
+    assert "Directory Listing For" not in r.text, f"{path} lists its files"
+    assert r.status_code in (403, 404), f"{path} answered HTTP {r.status_code}"
+
+
+# Developer and test pages that were open to anyone; removed.
+@pytest.mark.parametrize("path", ["/memory.jsp", "/util/test.jsp", "/util/jspFetch.jsp", "/util/dummyPage.jsp",
+                                  "/util/toUpload.jsp", "/common/testMessage.jsp", "/common/mobile.jsp",
+                                  "/util/userAgents.jsp", "/techDoc.jsp", "/test.do", "/mobile.do",
+                                  "/testMessage.do", "/testMobile.do", "/userAgents.do"])
+def test_removed_test_page_gone(path):
+    if IS_PRODUCTION and path in ("/test.do", "/mobile.do"):
+        pytest.skip("used to update counts; checked on staging")
+    r = new_session().get(BASE_URL + path, timeout=60)
+    assert r.status_code in (400, 404), f"{path} answered HTTP {r.status_code}"
+    assert "freeMemory" not in r.text and "Test.jsp" not in r.text
+
+
 # Removed servlets that must stay gone.
-@pytest.mark.parametrize("path", ["/fileUploader", "/fileUploader/x"])
+@pytest.mark.parametrize("path", ["/fileUploader", "/fileUploader/x", "/queryFile", "/apiV3/x", "/antweb_test/x"])
 def test_removed_servlet_gone(path):
     r = new_session().post(BASE_URL + path, timeout=60)
     assert r.status_code == 404, f"{path} answered HTTP {r.status_code}"

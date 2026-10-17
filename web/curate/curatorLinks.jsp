@@ -36,7 +36,6 @@
       <li><a href="<%= domainApp %>/statistics.do">Antweb Statistics</a>
       <li><a href="<%= domainApp %>/serverStatus.do">Server Status</a>
       <li><a href="<%= domainApp %>/sessionProps.do">Session Properties</a>
-      <li><a href="<%= domainApp %>/userAgents.do">User Agents</a>
       <li><a href="<%= domainApp %>/dbStatus.do">Database Status</a>
       <!-- li><a href="< %= domainApp % >/util.do?action=unlockImageUpload">Unlock</a> Image Upload -->
       <li><a href="<%= AntwebProps.getSecureDomainApp() %>/list.do?action=usrAdm">User Login List</a>
@@ -114,7 +113,6 @@
 		<li><a href="<%= domainApp %>/web/log/profiler.jsp">Profiler log</a>
       </ul>
 	  <li><a href="<%= domainApp %>/util.do?action=testMessage"> Test </a>Message
-	  <li><a href="<%= domainApp %>/test.do"> Test </a>
 	  <li><a href="<%= domainApp %>/util.do?action=unboldMessage"> Test </a>Unbold Message
 	  <li><a href="<%= domainApp %>/util.do?action=bareMessage"> Bare </a>Message
 	  <li><a href="<%= domainApp %>/adm1.do?%20(Terr.%20Amazonas)"> Session Request Error </a>Message

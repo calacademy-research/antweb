@@ -31,8 +31,7 @@ header {
     path *.log
     path *.js
 
-    # directories
-    # We proxy file requests to images/ to s3. If it's a folder, then we let tomcat handle it so it can show the directory listing
+    # directories (file requests under images/ are redirected to the image bucket above)
     path /images/*
 
     path /web/curator/*
@@ -46,17 +45,8 @@ header {
     path_regexp image_file ^/images/(.+\..+)$
 }
 
-@image_root_dir {
-    path_regexp image_dir ^/images/?$
-}
-
-
 # Directive in route block are evaluated in order
 route {
-    respond @image_root_dir "Access Denied" 403 {
-        close
-    }
-
     respond @bots "Access Denied" 403 {
         close
     }
@@ -88,8 +78,9 @@ route {
     respond /web/log/messages* "Not found" 404
     # Test JSPs under /data/ (e.g. the old encoding test page) are never public.
     respond /data/*.jsp "Not found" 404
-    # Directory listings of all logs, all curator folders and the taxon-set backups.
-    @dir_listings path /web/log/ /web/curator/ /web/bak/taxonSets/
+    # Folder URLs (ending in /) under these trees are never served. Tomcat does not list
+    # folders either; curators see their own folder through /curatorFiles.do.
+    @dir_listings path_regexp ^/(images|web/log|web/curator|web/bak)(/.*)?/$
     respond @dir_listings "Not found" 404
 
 

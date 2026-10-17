@@ -278,10 +278,10 @@ public class UtilDataAction extends AntwebAction {
                 s_log.info("Done cleanupSpeciesListProxyRecords. Starting verifyProjTaxon...");
 
                 message += " " + doAction("verifyProjTaxon", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done verifyProjTaxon. Starting checkAntwiki...");
+                s_log.info("Done verifyProjTaxon.");
 
-                message += " " + doAction("checkAntwiki", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done checkAntwiki.");
+                // The AntWiki list check (checkAntwikiForUpdates) is not part of the nightly run;
+                // an administrator can run it from utilData.do.
 
                 AntwebMgr.populate(connection, true);
             }

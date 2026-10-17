@@ -89,8 +89,9 @@ www.antweb.org {
         respond /web/log/messages* "Not found" 404
         # Test JSPs under /data/ (e.g. the old encoding test page) are never public.
         respond /data/*.jsp "Not found" 404
-        # Directory listings of all logs, all curator folders and the taxon-set backups.
-        @dir_listings path /web/log/ /web/curator/ /web/bak/taxonSets/
+        # Folder URLs (ending in /) under these trees are never served. Tomcat does not list
+        # folders either; curators see their own folder through /curatorFiles.do.
+        @dir_listings path_regexp ^/(images|web/log|web/curator|web/bak)(/.*)?/$
         respond @dir_listings "Not found" 404
 
         # Logins: at most 10 attempts a minute per visitor (password guessing).

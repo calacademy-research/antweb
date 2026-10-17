@@ -257,7 +257,7 @@ A.log("imagerUploadReport-body.jsp fileName:" + imageUploaded.getFileName() + " 
     <div id="overview_data" class="plain">
         <ul>
         <li><font color=red>Duplicate</font> <b>Images Dir</b></li>
-        <li><a href='<%= AntwebProps.getDomainApp() %>/images/backup/' title='Temporary home of copies of images that were pre-existing before recently uploaded images.'>here</a></li>
+        <li>Copies of images that existed before this upload are kept in images/backup/. Each <font color=red>Duplicate</font> link above opens the copy.</li>
         </ul>
     </div>
 

@@ -20,16 +20,24 @@ PROBE_WRITES = os.environ.get("ANTWEB_PROBE_WRITE_ACTIONS") == "1" and not IS_PR
 # Actions broken when the baseline was recorded. They must not get worse, and
 # the list should shrink; remove an entry once it is fixed.
 KNOWN_BROKEN = {
-    "/chooseComparison": "error page without parameters",
     "/viewGroup": "error page without parameters",
 }
 
 
 def test_removed_actions_stay_removed():
     """Mappings removed on purpose (dead classes, retired home page editor, the simple content editor
-    and the old project template save, replaced by the page-text editor on the project page)."""
-    for path in ("/ancPageMgr", "/jspFetch", "/saveHomePage", "/previewHomePage", "/editHomePage",
-                 "/saveProject", "/simpleContentEditorRead", "/simpleContentEditorWrite"):
+    and the old project template save, replaced by the page-text editor on the project page;
+    developer test pages, disabled or broken pages, typo aliases and duplicates)."""
+    paths = ["/ancPageMgr", "/jspFetch", "/saveHomePage", "/previewHomePage", "/editHomePage",
+             "/saveProject", "/simpleContentEditorRead", "/simpleContentEditorWrite",
+             "/showLine", "/taxonomicPageGen",
+             "/testMessage", "/testMobile", "/userAgents", "/display", "/chooseComparison",
+             "/googleEarth", "/curateB", "/viewGroupsBak", "/bayAreaSearch", "/apiDev",
+             "/participate", "/techDoc", "/pictureLikex", "/pictureLikey"]
+    if not IS_PRODUCTION:
+        # These two used to update counts; only call them where this change may not be live yet.
+        paths += ["/test", "/mobile"]
+    for path in paths:
         outcome = get(new_session(), f"{path}.do")
         assert outcome.category not in BROKEN and outcome.status in (400, 404), f"{path}: {outcome}"
     # Any unknown path: a 404 page, not a blank 200.

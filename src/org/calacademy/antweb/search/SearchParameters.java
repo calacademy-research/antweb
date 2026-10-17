@@ -127,46 +127,6 @@ public final class SearchParameters extends AdvancedSearchForm {
         taxonName = sForm.getTaxonName();
     }
 
-    // equals was added here to get working with AdvancedSearch
-    public SearchParameters (BayAreaSearchForm sForm) {
-        adm1 = "California";
-
-        adm2s = sForm.getAdm2s();
-        name = ""; family = ""; subfamily = ""; genus = ""; species = ""; subspecies = ""; searchType = ""; familySearchType = ""; subfamilySearchType = "";
-          genusSearchType = ""; speciesSearchType = ""; subspeciesSearchType = ""; localityNameSearchType = ""; localityCodeSearchType = "";
-          collectedBySearchType = ""; museumCodeSearchType = ""; adm2 = ""; adm2SearchType = "equals"; collectionCodeSearchType = "";
-          specimenCodeSearchType = ""; methodSearchType = ""; microhabitatSearchType = ""; habitatSearchType = "";
-          locatedAtSearchType = ""; locatedAt = ""; types = ""; imagesOnly = ""; redFlagOption = ""; bioregion = "";
-          typeDesignation = ""; localityName = ""; localityCode = ""; collectionCode = "";
-          specimenCode = ""; habitat = ""; method = ""; microhabitat = ""; project = ""; geolocaleId = 0; ownedBy = ""; collectedBy = ""; museumCode = ""; 
-          caste = ""; casteSearchType = "";  
-          subcaste = ""; subcasteSearchType = "";  
-          lifeStage = ""; lifeStageSearchType = "";  
-          medium = ""; mediumSearchType = "";
-          specimenNotes = ""; specimenNotesSearchType = "";
-          dnaExtractionNotes = ""; dnaExtractionNotesSearchType = "";
-          elevation = ""; elevationSearchType = ""; dateCollected = ""; dateCollectedSearchType = ""; validNames = ""; statusSet = "";
-        
-        taxonName = "";
-        created = ""; createdSearchType = "";
-        
-        int i = 0;
-
-        for (String anAdm2 : adm2s) {
-          if (i > 0) adm2 += " ";
-          if (anAdm2.contains(" ")) anAdm2 = "\"" + anAdm2 + "\"";  // This will put quotes around something like "San Francisco"
-          adm2 += anAdm2;        
-          ++i;
-        }
-        //A.log("SearchParameters(bayAreaSearchForm) adm2:" + adm2 + " adm2s:" + adm2s[0]);
-    }
-
-    /*
-    public void oldSearchParameters (BayAreaSearchForm sForm) {
-        adm2s = sForm.getAdm2s();
-    }
-    */
-
     public SearchParameters (RecentImagesForm sForm) {
         daysAgo = sForm.getDaysAgo();
         numToShow = sForm.getNumToShow();

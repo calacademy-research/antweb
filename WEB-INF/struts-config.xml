@@ -51,14 +51,8 @@
     <form-bean      name="specimenForm"
                     type="org.calacademy.antweb.SpecimenForm"/>
 
-    <form-bean      name="chooseComparisonForm"
-                    type="org.calacademy.antweb.ChooseComparisonForm"/>
-
     <form-bean      name="deleteImagesForm"
                     type="org.calacademy.antweb.upload.DeleteImagesForm"/>
-
-    <form-bean      name="bayAreaSearchForm"
-                    type="org.calacademy.antweb.search.BayAreaSearchForm"/>
 
     <form-bean      name="taxaFromSearchForm"
                     type="org.calacademy.antweb.search.TaxaFromSearchForm"/>
@@ -281,10 +275,6 @@
       forward="/web/homepage/documentation.jsp"/>
 
     <action
-      path="/participate"
-      forward="/participation.jsp"/>
-      
-    <action
       path="/rules"
       forward="/documentation/rules.jsp"/>
 
@@ -301,14 +291,7 @@
       forward="/contact.jsp"/>
 
     <action
-      path="/techDoc" 
-      forward="/techDoc.jsp"/>
-
-    <action
       path="/api" 
-      forward="/apiV3.1.do"/>
-    <action
-      path="/apiDev" 
       forward="/apiV3.1.do"/>
 
     <action
@@ -348,12 +331,6 @@
     <action
       path="/casteDisplayPage" 
       forward="/common/casteDisplayPage.jsp"/>       
-    <action
-      path="/testMessage" 
-      forward="/common/testMessage.jsp"/>       
-    <action
-      path="/testMobile" 
-      forward="/common/mobile.jsp"/>       
 
     <action path="/worldants" forward="/worldants.jsp"/>
     <action path="/geneva" forward="/geneva.jsp"/>
@@ -376,16 +353,6 @@ if we set getChildImages here, then we do know to add the field guide, but the i
       <forward name="success" path="/util/pageTracker.jsp"/>
     </action>
 
-    <action  path="/mobile"
-             type="org.calacademy.antweb.TestAction">
-      <forward name="mobile" path="/common/mobile.jsp"/>
-    </action>
-            
-    <action  path="/test"
-             type="org.calacademy.antweb.TestAction">
-      <forward name="success" path="/common/testMessage.jsp"/>
-    </action>
-
     <action  path="/browse"
              type="org.calacademy.antweb.BrowseAction"
              name="browseForm"
@@ -404,14 +371,6 @@ if we set getChildImages here, then we do know to add the field guide, but the i
                scope="session">
       <forward name="success" path="/comparison.jsp"/>
       <forward name="oneView" path="/oneView.jsp"/>
-    </action>
-    
-     <action   path="/chooseComparison"
-               type="org.calacademy.antweb.ChooseComparisonAction"
-               name="chooseComparisonForm"
-               input="/index.jsp"
-               scope="session">
-      <forward name="success" path="/displayImageCollection.jsp"/>
     </action>
     
 <!-- Only use getComparison now.    
@@ -473,18 +432,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="success" path="/imagePage.jsp"/>
     </action>    
 
-<!-- This is a test.  To see if we can fetch, cache and return description results -->
-    <action path="/display"
-            type="org.calacademy.antweb.DisplayAction"
-            parameter="getChildImages"
-            name="browseForm">
-      <forward name="success" path="/taxonPage.jsp"/>
-    </action>    
-    <!-- /taxonomicPageGen removed 2026-10-15: unused proof of concept that wrote files under the web root.
-    <action path="/taxonomicPageGen"
-            type="org.calacademy.antweb.util.TaxonomicPageGenAction"
-            name="browseForm">
-    </action> -->    
     
  <!-- And also imagePickImageGetter which is down below in search -->
 
@@ -538,13 +485,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       </action>
 
       
-      <!-- /showLine removed 2026-10-15: ran awk on a request-supplied file path.
-    <action path="/showLine"
-              type = "org.calacademy.antweb.util.ShowLineAction"
-              name="dummyForm" 
-              scope="request">
-          <forward name ="success" path="/util/showLog.jsp"/>
-      </action> -->
                   
     <action 
             path="/curate"
@@ -553,11 +493,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="curate" path="/curate/curate.jsp" />
     </action>
 
+    <!-- The curator's own folder, web/curator/<id>/ (Tomcat does not list folders). -->
     <action
-            path="/curateB"
-            type="org.calacademy.antweb.curate.CurateActionB"
+            path="/curatorFiles"
+            type="org.calacademy.antweb.curate.CuratorFilesAction"
             scope="request">
-      <forward name="curateB" path="/curate/curateB.jsp" />
+      <forward name="success" path="/curate/curatorFiles.jsp" />
     </action>
 
     <action
@@ -714,14 +655,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
               scope="request">
       </action> 
       
-      <!-- deprecated. Replaced by listSpecimenUploads -->
-      <action path="/listUploads"
-              type = "org.calacademy.antweb.util.ListUploadsAction"
-              name="dummyForm"
-              scope="request">
-          <forward name ="success" path="/util/listUploads.jsp"/>
-      </action>    
-
     <action
       path="/listUploads" 
       forward="/listSpecimenUploads.do"/>  
@@ -812,13 +745,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
        <forward name="success" path="/recentSearchResults.do?numToShow=100&amp;searchMethod=recentImageSearch" />
      </action>
                                                          
-        <action path="/editCredit"
-            type="org.calacademy.antweb.EditCreditAction"
-            scope="request"
-            name="editCreditForm">
-      <forward name="success" path="/edit_credit.jsp" />
-    </action>
-        
     <action path="/specimenImages"
             type="org.calacademy.antweb.SpecimenAction"
             name="specimenForm"
@@ -901,17 +827,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action
       path="/advancedSearchResults"
       forward="/search/advancedSearchResults.jsp"/>    
-
-    <!-- This utilizes the advanced search feature and returns advanced search results. -->
-    <action path="/bayAreaSearch"
-            type="org.calacademy.antweb.search.SearchAction"
-            name="bayAreaSearchForm"
-            input="/search/bayArea.jsp"
-            parameter="searchMethod">
-      <forward name="advancedTaxon" path="/search/advancedSearchResultsByTaxon.jsp"/>
-      <forward name="success" path="/search/advancedSearchResults.jsp"/>
-      <forward name="oldBayAreaSearch" path="/search/bayAreaSearchResults.jsp"/>
-    </action >
 
     <action path="/recentSearchResults"
             type="org.calacademy.antweb.search.SearchAction"
@@ -1035,23 +950,8 @@ We would like to remove getChildImages.  Not needed now in the new UI
 
  
 
-    <action 
-      path="/googleEarth"
-      forward="/common/deprecate.jsp"
-    />                    
-    <!-- action
-      path="/viewGoogleEarth"
-      forward="/viewGoogleEarth.jsp"
-    / -->    
-    <!-- To inactivate, replace:   forward="/viewGoogleEarth.jsp"   with:   forward="/common/tempDown.jsp"  -->
- 
     <!--==========Begin User Management Action Mappings==========-->
 
-    <!-- action path="/googleEarth"
-            type="org.calacademy.antweb.GoogleEarthAction"
-            scope="request"
-            name="dummyForm">
-    </action -->
                                                                                                                                
     <action path="/editCredit"
             type="org.calacademy.antweb.EditCreditAction"
@@ -1163,13 +1063,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="failure" path="/curate/antwebAdmin.jsp" />
     </action>
     
-    <action path="/viewGroupsBak"
-            type="org.calacademy.antweb.curate.group.ManageGroupsAction"
-            scope="request"
-            name="blankForm">
-      <forward name="success" path="/curate/viewGroups.jsp" />
-      <forward name="failure" path="/curate/antwebAdmin.jsp" />
-    </action>
                                                                                                         
     <action path="/saveGroup"
             type="org.calacademy.antweb.curate.group.SaveGroupAction"
@@ -1586,14 +1479,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
     </action>
 
 
-    <action
-      path="/pictureLikey" 
-      forward="/bigPicture.do"/> 
-       
-    <action
-      path="/pictureLikex" 
-      forward="/bigPicture.do"/>    
-
     <action path="/pictureLike"
             type="org.calacademy.antweb.PictureLikeAction"
             name="specimenImageForm"
@@ -1640,12 +1525,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
 
 
 
-    <!-- new -->
-    <action
-      path="/imageUploader" 
-      forward="/imageUploader/imageUploader.jsp"
-      />    
-
     <action path="/imageUploader"
             type="org.calacademy.antweb.imageUploader.ImageUploaderAction"
             scope="request"
@@ -1687,12 +1566,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <action path="/sessionProps" 
          forward="/util/sessionProps.jsp"/>         
 
-
-      <action path="/userAgents"
-              type = "org.calacademy.antweb.util.UserAgentTracker"
-              name="dummyForm">
-          <forward name ="userAgents" path="/util/userAgents.jsp"/>
-      </action>
 
       <action path="/dbStatus"
               type = "org.calacademy.antweb.util.DbStatusAction"
