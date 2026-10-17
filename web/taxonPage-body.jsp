@@ -321,7 +321,7 @@ To do:
     }
 
     if (desc.containsKey("plaziData")) { %>
-        <p><h3>Taxonomic Treatment (provided by <a href="http://plazi.cs.umb.edu/GgServer/search?resultFormat=html&taxonomicName.isNomenclature=taxonomicName.isNomenclature&taxonomicName.exactMatch=taxonomicName.exactMatch&taxonomicName.LSID=urn:lsid:biosci.ohio-state.edu:osuc_concepts:<%= taxon.getHolId() %>" target="new">Plazi</a>)</h3>
+        <p><h3>Taxonomic Treatment (provided by <a href="https://plazi.org/" target="new">Plazi</a>)</h3>
         <div id="plazi">
         
         <% 
@@ -598,23 +598,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Antcat ID:</b>
 </div>
 <div id=data_items2>
-<a href='http://antcat.org/catalog/<%= taxon.getAntcatId() %>'><%= taxon.getAntcatId() %></a>
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
-<b>HOL ID:</b>
-</div>
-<div id=data_items2>
-<a href="http://hol.osu.edu/index.html?id=<%= taxon.getHolId() %>"><%= taxon.getHolId() %></a>
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
-<b>Plazi Treatment:</b>
-</div>
-<div id=data_items2>
-<a href="http://plazi.cs.umb.edu/GgServer/search?resultFormat=html&taxonomicName.isNomenclature=taxonomicName.isNomenclature&taxonomicName.exactMatch=taxonomicName.exactMatch&taxonomicName.LSID=urn:lsid:biosci.ohio-state.edu:osuc_concepts:<%= taxon.getHolId() %>"><%= taxon.getHolId() %></a>
+<a href='https://www.antcat.org/catalog/<%= taxon.getAntcatId() %>'><%= taxon.getAntcatId() %></a>
 </div>
 
 <div class="clear"></div>

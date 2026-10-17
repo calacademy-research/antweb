@@ -1,4 +1,4 @@
-"""Links in the newest specimen upload report and the newest Worldants upload report work.
+"""Links in upload reports and in the curator and admin parts of specimen and taxon pages work.
 
 Why: the image upload report's "Uploaded Specimen Set" linked to image folders after folder
 listings were turned off (10-17). The other upload reports are checked the same way, so a
@@ -48,11 +48,21 @@ def _links(html, page_url):
     return found
 
 
-def _check_all(session, report_url):
+def _check_all(session, report_url, after=None):
     r = session.get(report_url, timeout=TIMEOUT)
     assert r.status_code == 200, (report_url, r.status_code)
-    links = _links(r.text, report_url)
+    html = r.text
+    if after:
+        if after not in html:
+            pytest.skip(f'"{after}" is not on {report_url} for the test login')
+        html = html.split(after, 1)[1]
+    links = _links(html, report_url)
     assert links, f"no links found in {report_url}"
+    _check_links(session, report_url, links)
+    return r.text
+
+
+def _check_links(session, report_url, links):
 
     def check(url):
         try:
@@ -66,6 +76,8 @@ def _check_all(session, report_url):
             return f"{urlparse(url).path}: not in the AntWeb database"
         if re.search(r"<title>[^<]*(Not Found|Index of)", body, re.I):
             return f"{urlparse(url).path}: not found page"
+        if re.search(r"Log not available|Unable to find the file|Specimen not found", body):
+            return f"{urlparse(url).path}: log or record not found"
         return None
 
     with ThreadPoolExecutor(max_workers=4) as pool:
@@ -87,3 +99,28 @@ def test_worldants_upload_report_links(session):
     if not logs:
         pytest.skip("no Worldants upload reports listed")
     _check_all(session, BASE_URL + logs[0])
+
+
+SPECIMEN = os.environ.get("ANTWEB_LINK_TEST_SPECIMEN", "casent0922067")
+TAXON = os.environ.get("ANTWEB_LINK_TEST_TAXON", "myrmicinaepheidole megacephala")
+DEAD = ("hol.osu.edu", "plazi.cs.umb.edu", "/showLog.do")
+
+
+def test_specimen_page_curator_links(session):
+    """Curator and admin links on a specimen page (upload line, upload report, upload file,
+    description). They pointed at showLog.do, renamed logMgr.do in 2023, and the images
+    folder, whose listing is off."""
+    url = BASE_URL + "/specimen.do?code=" + SPECIMEN
+    html = _check_all(session, url, after="Curator Information")
+    for dead in DEAD:
+        assert dead not in html, f"{dead} still linked on {url}"
+    assert not re.search(r"href=['\"][^'\"]*/images/[^/'\"]+/?['\"]", html), "images folder still linked"
+
+
+def test_taxon_page_has_no_dead_sites(session):
+    """HOL (hol.osu.edu) has been gone for years; its ID and the Plazi search built on it are
+    no longer shown. The taxon page's links are checked like a report's."""
+    url = BASE_URL + "/description.do?taxonName=" + TAXON.replace(" ", "%20")
+    html = _check_all(session, url)
+    for dead in DEAD:
+        assert dead not in html, f"{dead} still linked on {url}"

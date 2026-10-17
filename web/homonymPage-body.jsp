@@ -167,7 +167,7 @@
     if (desc.containsKey("plaziData")) { 
     %>
 
-        <p><h3>Taxonomic Treatment (provided by <a href="http://plazi.cs.umb.edu/GgServer/search?resultFormat=html&taxonomicName.isNomenclature=taxonomicName.isNomenclature&taxonomicName.exactMatch=taxonomicName.exactMatch&taxonomicName.LSID=urn:lsid:biosci.ohio-state.edu:osuc_concepts:<%= homonym.getHolId() %>" target="new">Plazi</a>)</h3>
+        <p><h3>Taxonomic Treatment (provided by <a href="https://plazi.org/" target="new">Plazi</a>)</h3>
         <div id="plazi">
         
         <% 
@@ -401,23 +401,7 @@ Fossil:
 Antcat ID:
 </div>
 <div id=data_items2>
-<b><a href="http://antcat.org/catalog/<%= taxon.getAntcatId() %>"><%= taxon.getAntcatId() %></a></b>
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
-HOL ID:
-</div>
-<div id=data_items2>
-<b><a href="http://hol.osu.edu/index.html?id=<%= taxon.getHolId() %>"><%= taxon.getHolId() %></a></b>
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
-Plazi Treatment:
-</div>
-<div id=data_items2>
-<b><a href="http://plazi.cs.umb.edu/GgServer/search?resultFormat=html&taxonomicName.isNomenclature=taxonomicName.isNomenclature&taxonomicName.exactMatch=taxonomicName.exactMatch&taxonomicName.LSID=urn:lsid:biosci.ohio-state.edu:osuc_concepts:<%= taxon.getHolId() %>"><%= taxon.getHolId() %></a></b>
+<b><a href="https://www.antcat.org/catalog/<%= taxon.getAntcatId() %>"><%= taxon.getAntcatId() %></a></b>
 </div>
 
 <div class="clear"></div>
