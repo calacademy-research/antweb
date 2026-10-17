@@ -85,8 +85,16 @@ fi
 echo "Rebuilding the API image if api/ changed..."
 compose up -d --build api < /dev/null
 
+# Tomcat runs as the user tomcat (docker/antweb/startup.sh), so build and deploy
+# as tomcat too: first give tomcat anything a root run left behind, then run ant
+# as tomcat. An older image without antweb-fix-perms still deploys as root.
 echo "Running ant deploy..."
-compose exec -T antweb ant deploy < /dev/null
+if compose exec -T antweb test -x /usr/local/bin/antweb-fix-perms < /dev/null; then
+  compose exec -T antweb /usr/local/bin/antweb-fix-perms < /dev/null
+  compose exec -T -u tomcat antweb ant deploy < /dev/null
+else
+  compose exec -T antweb ant deploy < /dev/null
+fi
 
 echo "Restarting antweb container..."
 compose restart antweb

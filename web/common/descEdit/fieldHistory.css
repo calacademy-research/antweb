@@ -1,0 +1,29 @@
+/* fieldHistory.css: the page-text History page (fieldHistory-body.jsp). Loaded with ?v= (util/Asset). */
+.fh { max-width: 60em; }
+.fh-help, .fh-page { margin: 0 0 10px; line-height: 1.45; }
+.fh-note { border: 1px solid #b07000; background: #fff8e6; padding: 6px 8px; }
+.fh-version { border: 1px solid #c8c8c8; border-radius: 4px; padding: 8px 10px; margin: 10px 0; background: #fff; overflow-wrap: anywhere; }
+.fh-current { border-color: #2e7d32; background: #f6fbf6; }
+.fh-cleared { background: #f6f6f6; color: #444; }
+.fh-meta { margin-bottom: 4px; }
+.fh-label { display: inline-block; font-weight: bold; margin-right: 6px; padding: 0 6px; border-radius: 3px; background: #eee; }
+.fh-current .fh-label { background: #dff0df; }
+.fh-cleared .fh-label { background: #ffe0e0; }
+.fh-same { color: #2e7d32; }
+.fh-empty, .fh-small { color: #555; margin: 4px 0; }
+.fh-changes { line-height: 1.5; padding: 6px 8px; background: #fafafa; border: 1px solid #e4e4e4; max-height: 28em; overflow: auto; }
+del.fh-del { background: #fde3e3; color: #8a1010; text-decoration: line-through; }
+ins.fh-ins { background: #dcf3dc; color: #0b5b0b; text-decoration: underline; }
+del.fh-del + ins.fh-ins { margin-left: 3px; }
+.fh-preview, .fh-source { margin: 6px 0; }
+.fh-preview summary, .fh-source summary { cursor: pointer; color: #1a5fa8; }
+.fh-render { border: 1px dashed #ccc; padding: 6px 8px; margin-top: 4px; max-height: 32em; overflow: auto; }
+.fh-render img { max-width: 100%; height: auto; }
+.fh-pre { white-space: pre-wrap; font-size: 12px; background: #fafafa; border: 1px solid #e4e4e4; padding: 6px; max-height: 28em; overflow: auto; }
+.fh-copy { width: 100%; box-sizing: border-box; font-family: monospace; font-size: 12px; margin-top: 4px; }
+.fh-restore { margin: 8px 0 0; }
+.fh-restore-btn { padding: 6px 14px; font-size: 14px; cursor: pointer; }
+@media (max-width: 600px) {
+  .fh-version { padding: 6px; }
+  .fh-restore-btn { width: 100%; padding: 10px; }
+}

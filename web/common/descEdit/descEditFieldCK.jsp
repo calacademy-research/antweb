@@ -19,7 +19,7 @@
          <%= (desc.get(thisDesc) != null) ? desc.get(thisDesc) : "" %>   
          <% } else { 
          %>
-         <small style="float:left; margin-top: 1px; margin-left:5px;"> <a href="<%= thisPageTarget %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a></small><div class="clear"></div>
+         <small style="float:left; margin-top: 1px; margin-left:5px;"> <a href="<%= thisPageTarget %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a> <%= org.calacademy.antweb.DescHistory.link(request, thisDesc, thisPageTarget) %></small><div class="clear"></div>
          <%= (desc.get(thisDesc) != null) ? desc.get(thisDesc) : "" %>       
          <% }
           }
