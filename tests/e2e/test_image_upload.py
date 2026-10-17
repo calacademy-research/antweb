@@ -232,6 +232,35 @@ def test_other_logins_upload_refused(curator):
     assert r.status_code == 403 and "another login" in r.json()["error"], r.text[:200]
 
 
+@needs_curator
+def test_report_specimen_links_open_specimen_pages(curator):
+    """The report's "Uploaded Specimen Set" links open specimen pages, not image folders.
+
+    They used to point at /images/<code>/, a folder listing, which is turned off (Brian's
+    50-image test, 10-17). Read-only: uses the newest report listed on listImageUploads.do.
+    """
+    s = curator[0]
+    page = s.get(BASE_URL + "/listImageUploads.do", timeout=TIMEOUT).text
+    ids = re.findall(r"imageUploadReport\.do\?id=(\d+)", page)
+    if not ids:
+        pytest.skip("no upload reports listed on listImageUploads.do")
+    report = None
+    for upload_id in sorted({int(i) for i in ids}, reverse=True)[:10]:
+        text = s.get(BASE_URL + f"/imageUploadReport.do?id={upload_id}", timeout=TIMEOUT).text
+        if "Uploaded Specimen Set" in text:
+            report = text
+            break
+    if not report:
+        pytest.skip("none of the newest upload reports has a specimen set")
+    set_part = report.split("Uploaded Specimen Set", 1)[1]
+    assert not re.search(r"href=['\"][^'\"]*/images/[^/'\"]+/['\"]", set_part), \
+        "a specimen-set link still points at an images folder"
+    codes = re.findall(r"specimen\.do\?code=([A-Za-z0-9_.-]+)", set_part)
+    assert codes, "no specimen links in the Uploaded Specimen Set"
+    r = s.get(BASE_URL + "/specimen.do?code=" + codes[0], timeout=TIMEOUT)
+    assert r.status_code == 200 and "is not in the AntWeb database" not in r.text, (codes[0], r.status_code)
+
+
 # ---------- real upload (opt-in, writes to staging) ----------
 
 @needs_curator
