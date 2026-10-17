@@ -443,8 +443,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
                 String prettyName = Formatter.initCap(subfamily) + " " + Formatter.initCap(genus);
                 String taxonName = subfamily + genus;
-                String genusLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + prettyName + "</a>";        
-                //String specimenLink = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";        
+                String genusLink = Taxon.makeDescriptionLink(taxonName, prettyName);        
+                //String specimenLink = Specimen.makeReportLink(code);        
 
                 getMessageMgr().addToMessages(MessageMgr.groupMorphoGenera, genusLink); //, specimenLink);  
             }            

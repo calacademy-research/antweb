@@ -466,6 +466,16 @@ Or, if there are stmts and/or rsets...
 	  return AntFormatter.escapeQuotes(theString);
 	}
 
+	/**
+	 * A quoted MySQL string literal with backslashes and single quotes escaped. Null becomes null.
+	 * Use instead of Statement.enquoteLiteral(), which does not escape backslashes (MySQL treats
+	 * a backslash as an escape character, so x\' would end the literal early).
+	 */
+	public static String sqlLiteral(String value) {
+	  if (value == null) return "null";
+	  return "'" + value.replace("\\", "\\\\").replace("'", "''") + "'";
+	}
+
 
     /**
      * Create a prepared statement to query the database

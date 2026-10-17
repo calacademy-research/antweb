@@ -11,7 +11,7 @@
   <%@ include file="/curate/teamMemberImage.jsp" %>
 <% } %>
 
-<form action="<%= domainApp %>/teamMember.do" method="POST">
+<form action="<%= domainApp %>/teamMember.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <input type="hidden" name="id" value="<%= accessLogin.getId() %>">
 

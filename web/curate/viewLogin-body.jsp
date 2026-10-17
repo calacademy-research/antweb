@@ -59,7 +59,7 @@ A.log("viewLogin-body.jsp uploadAs:" + thisLogin.getUploadAs());
 <h2>Welcome to Antweb.org: <%= thisLogin.getEmail() %></h2>
 <% } %>
 
-<form action="<%= secureDomainApp %>/saveLogin.do" method="POST">
+<form action="<%= secureDomainApp %>/saveLogin.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <br><br>
 <h3>Login ID:</h3>

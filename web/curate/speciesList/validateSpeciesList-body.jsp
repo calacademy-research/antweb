@@ -63,7 +63,7 @@
         <div class="admin_action_item">
             <h2>Upload File for Validation</h2>
             
-            <html:form method="POST" action="validateSpeciesList.do" enctype="multipart/form-data">
+            <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "validateSpeciesList.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
                 <input type="hidden" name="action" value="" />
                 
                 <div class="action_browse" style="margin-bottom: 15px;">
@@ -99,12 +99,12 @@
             </table>
 
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <html:form method="POST" action="validateSpeciesList.do">
+                <html:form method="POST" action="validateSpeciesList.do"><%= org.calacademy.antweb.util.Csrf.field(request) %>
                     <input type="hidden" name="action" value="download" />
                     <input type="hidden" name="showUnmatched" value="<%= validateSpeciesListForm.isShowUnmatched() %>" />
                     <input type="submit" value="Download Diagnostic TSV Report" style="padding: 5px 15px;" />
                 </html:form>
-                <html:form method="POST" action="validateSpeciesList.do">
+                <html:form method="POST" action="validateSpeciesList.do"><%= org.calacademy.antweb.util.Csrf.field(request) %>
                     <input type="hidden" name="action" value="downloadCorrected" />
                     <input type="hidden" name="showUnmatched" value="<%= validateSpeciesListForm.isShowUnmatched() %>" />
                     <input type="submit" value="Download Valid Subset" style="padding: 5px 15px; font-weight: bold; color: green;" />

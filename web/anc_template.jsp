@@ -46,11 +46,11 @@
                 || (requestURL.contains("curators"))	            
                  ) {
            %>
-           <form method="POST" action="<%= domainApp %>/ancPageEdit.do?id=[% id %]" />
+           <form method="POST" action="<%= domainApp %>/ancPageEdit.do?id=[% id %]" /><%= org.calacademy.antweb.util.Csrf.field(request) %>
                 <input type="submit" value="Edit Page">
             </form>
              <% if (!(session.getAttribute("ancFile") == null)) { %>
-            <form method="POST" action="<%= domainApp %>/ancPageSave.do"> 
+            <form method="POST" action="<%= domainApp %>/ancPageSave.do"><%= org.calacademy.antweb.util.Csrf.field(request) %> 
                 <input type="submit" value="Save Page">
             </form>
              <% } %>

@@ -306,7 +306,7 @@ if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Na
     </form>
 </th>
 </tr>
-<html:form method="POST" action="speciesListTool" enctype="multipart/form-data">
+<html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "speciesListTool") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
     <input type="hidden" name="mapSpeciesList1Name" value="<%= mapSpeciesList1Name %>"/>
     <input type="hidden" name="mapSpeciesList2Name" value="<%= mapSpeciesList2Name %>"/>
     <input type="hidden" name="mapSpeciesList3Name" value="<%= mapSpeciesList3Name %>"/>

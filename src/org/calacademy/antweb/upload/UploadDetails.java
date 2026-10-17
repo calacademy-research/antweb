@@ -172,7 +172,7 @@ public class UploadDetails extends OperationDetails {
         if ("specimenUpload".equals(getOperation())) {
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Parsed:</b> " + getBuildLineTotal();
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Processed:</b> " + getProcessLineTotal();
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Museums:</b> <a href='' title='" + getMuseumMap().toString() + "'>" + getMuseumMap().size() + "</a>";
+            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Museums:</b> <a href='' title='" + Html.escAttr(getMuseumMap().toString()) + "'>" + getMuseumMap().size() + "</a>";
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Specimens:</b> " + countInsertedSpecimens;
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Red Flagged Specimens:</b> " + getMessageMgr().getRedFlagCount();
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Advanced Search:</b><a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?"

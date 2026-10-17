@@ -35,7 +35,7 @@ public abstract class HttpUtil {
     public static String forLog(String url) {
         if (url == null) return null;
         // Also password reset tokens (resetPassword.do?token=...) and any *password= value.
-        return url.replaceAll("(?i)((?:secureCode|token|[a-z]*password)=)[^&\\s]*", "$1***");
+        return url.replaceAll("(?i)((?:secureCode|token|_csrf|[a-z]*password)=)[^&\\s]*", "$1***");
     }
 
     private final static String USER_AGENT = "Mozilla/5.0";

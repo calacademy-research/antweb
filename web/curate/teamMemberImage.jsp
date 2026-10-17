@@ -6,8 +6,8 @@
 	<form 
 	   name="imgUploadForm" 
 	   method="post" 
-	   action="<%=domainApp%>/teamMemberImgUpload.do?id=<%= teamMemberImg.getId() %>" 
-	   enctype="multipart/form-data">
+	   action="<%= org.calacademy.antweb.util.Csrf.action(request, (domainApp) + "/teamMemberImgUpload.do?id=" + (teamMemberImg.getId())) %>" 
+	   enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
          <input type="hidden" name="id" value="<%= teamMemberImg.getId() %>">	   
          <!-- Your name: <input type="text" name="myName" size="25"> <br>  -->

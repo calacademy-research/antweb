@@ -32,7 +32,7 @@
     
 
     <br><br>
-    <form action="<%= domainApp %>/newGroup.do" method="POST">
+    <form action="<%= domainApp %>/newGroup.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
     <b>Add New Group: <input type=submit class=submit value="Add &#187;"><b>
     </form>
     

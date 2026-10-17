@@ -48,8 +48,8 @@ fi
 # ant deploy) and replace the container. The old container keeps serving during
 # the build. Uses the same compose project and files the running container was
 # started with, so prod and staging each keep their own settings.
-if ! git diff --quiet "$PREV" HEAD -- docker/antweb; then
-  echo "docker/antweb changed since $PREV; rebuilding the antweb image..."
+if ! git diff --quiet "$PREV" HEAD -- docker/antweb docker-compose.yml docker-compose.stage.yml; then
+  echo "docker/antweb or a compose file changed since $PREV; rebuilding and recreating the antweb container..."
   files=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}')
   project=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project"}}')
   dc="docker compose -p $project $(echo "$files" | tr ',' '\n' | sed 's/^/-f /')"

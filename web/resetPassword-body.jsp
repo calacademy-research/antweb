@@ -32,7 +32,7 @@
 <li>not be a very common password.</li>
 </ul>
 
-<form name="resetPasswordForm" method="POST" action="<%= secureDomainApp %>/resetPassword.do">
+<form name="resetPasswordForm" method="POST" action="<%= secureDomainApp %>/resetPassword.do"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="token" value="<%= Html.escAttr(resetToken) %>">
 <p>New password:<br>
 <input type="password" name="password" value="" autocomplete="new-password" style="border: 1px solid #B9B9B9; font-family: inherit; padding: 2px; width: 260px;">

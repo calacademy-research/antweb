@@ -456,6 +456,14 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       return Taxon.getPrettyTaxonName(taxonName);
     }
 
+    /** Link to a taxon page for upload reports. Values may come from a curator's file, so they are escaped. */
+    public static String makeDescriptionLink(String taxonName) {
+      return makeDescriptionLink(taxonName, displayTaxonName(taxonName));
+    }
+    public static String makeDescriptionLink(String taxonName, String display) {
+      return "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.url(taxonName) + "'>" + Html.esc(display) + "</a>";
+    }
+
     // Not to be confused with Specimen.getTaxonPrettyName() or getPrettyTaxonName() above.
     public static String getPrettyTaxonName(String taxonName) {
       // This is preferred over displayTaxonName(taxonName)
@@ -590,7 +598,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     }
    
     public static String displaySubfamilyGenusLinkToGenus(String subfamily, String genus) {
-      String displaySubfamilyGenus = Formatter.initCap(subfamily)  + " <a href='" + AntwebProps.getDomainApp() + "/genus=" + genus + "'>" + Formatter.initCap(genus) + "</a>";
+      String displaySubfamilyGenus = Html.esc(Formatter.initCap(subfamily))  + " <a href='" + AntwebProps.getDomainApp() + "/genus=" + Html.url(genus) + "'>" + Html.esc(Formatter.initCap(genus)) + "</a>";
       //A.log("taxonName:" + taxonName + " prettyTaxonName:" + prettyTaxonName);
       return displaySubfamilyGenus;        
     }
@@ -610,7 +618,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         subfamily = subfamilyGenus.substring(0, 15);
         genus = subfamilyGenus.substring(15);
       }
-      displaySubfamilyGenus = Formatter.initCap(subfamily) + " <a href='" + AntwebProps.getDomainApp() + "/genus=" + genus + "'>" + Formatter.initCap(genus) + "</a>";
+      displaySubfamilyGenus = Html.esc(Formatter.initCap(subfamily)) + " <a href='" + AntwebProps.getDomainApp() + "/genus=" + Html.url(genus) + "'>" + Html.esc(Formatter.initCap(genus)) + "</a>";
       //A.log("taxonName:" + taxonName + " prettyTaxonName:" + prettyTaxonName);
       return displaySubfamilyGenus;    
     }    

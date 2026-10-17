@@ -23,7 +23,7 @@
 } else { 
 //Insecure
 %>
-<form name="theForm" method="POST" action="<%= AntwebProps.getDomainApp() %>/imageUpload/upload.php">
+<form name="theForm" method="POST" action="<%= AntwebProps.getDomainApp() %>/imageUpload/upload.php"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="group" value="<%= accessGroup.getId() %>">
 </form>
 <% } %>

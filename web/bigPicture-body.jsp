@@ -352,7 +352,7 @@ if (theImage.getNumber() > 1) {
      //A.log("execute() group:" + theImage.getGroup().getId());
      if (LoginMgr.isAdmin(request) || theImage.getGroup().getId() == accessGroup.getId()) { 
      %>
-<br><form method="POST" action="<%= AntwebProps.getDomainApp() %>/bigPicture.do" style="display:inline" onsubmit="return confirm('Delete this image? This cannot be undone.');">
+<br><form method="POST" action="<%= AntwebProps.getDomainApp() %>/bigPicture.do" style="display:inline" onsubmit="return confirm('Delete this image? This cannot be undone.');"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="action" value="delete"><input type="hidden" name="code" value="<%= Html.escAttr(theImage.getCode()) %>"><input type="hidden" name="shot" value="<%= Html.escAttr(theImage.getShot()) %>"><input type="hidden" name="number" value="<%= theImage.getNumber() %>">
 <b><input type="submit" value="Delete"> this image (irreversible!)</b></form>
 

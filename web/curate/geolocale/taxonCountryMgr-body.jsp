@@ -24,7 +24,7 @@
 <h1>Geo Locale Manager: <%= org.calacademy.antweb.Formatter.initCap(georank) %></h1>
 </div>
 
-<html:form method="POST" action="geolocaleMgr">
+<html:form method="POST" action="geolocaleMgr"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 View:
   <select name="georank">
   <option value="region"<%= ("region".equals(georank) ? "selected" : "") %>>Region</option>
@@ -87,7 +87,7 @@ for (Geolocale geolocale : geolocaleArray) { %>
 </table>
 <br><br>
 
-<html:form method="POST" action="geolocaleMgr">
+<html:form method="POST" action="geolocaleMgr"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" class="input_200" name="georank" value="<%= georank %>">
 Create <%= georank %> with name:<input type="text" class="input_20" name="name" value="">
 <input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit">

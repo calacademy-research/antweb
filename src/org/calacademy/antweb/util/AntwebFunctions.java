@@ -77,21 +77,6 @@ public abstract class AntwebFunctions {
     }
 
     
-    public static void imageCheck() {
-      String imgDir = AntwebProps.getDocRoot() + "images/";
-      String pyLoc = "/Users/mark/dev/calacademy/antweb/src/py/";
-      String pyInstall = "";
-      if (!AntwebProps.isDevMode()) {
-        pyLoc = AntwebProps.getAntwebDir() + "/src/py/";
-        //pyInstall = "/usr/local/bin/";
-      }
-      String logDir = AntwebProps.getDocRoot() + "web/log/imageCheck/";
-      String logFile = logDir + DateUtil.getFormatDateStr() + ".log";
-      String command = pyInstall + "python3.6 " + pyLoc + "imageCheck.py > " + logFile;
-      s_log.error("imageCheck() location needs to be corrected. Not:" + command);
-      s_log.warn("imageCheck() command:" + command);
-      new AntwebSystem().launchProcess(command, true);
-    }
 
 
 /*
