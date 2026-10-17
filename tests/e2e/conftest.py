@@ -24,7 +24,11 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         # The full failure text (the assert line and its "E" lines), since the table shows one line only.
         for rep in failed:
             msg = str(getattr(rep, "longrepr", ""))
-            tail = [l for l in msg.splitlines() if l.strip()][-40:]
+            all_lines = [l for l in msg.splitlines() if l.strip()]
+            # The failing source line (">") and the first "E" lines say what failed; page HTML follows.
+            src = [l for l in all_lines if l.startswith(">")][-3:]
+            errs = [l for l in all_lines if l.startswith("E ")][:15]
+            tail = src + errs if (src or errs) else all_lines[-40:]
             lines += ["", "<details><summary>" + rep.nodeid.split("::", 1)[-1][:120] + "</summary>", "", "```",
                       *[l.replace("```", "~~~")[:300] for l in tail], "```", "</details>"]
     with open(path, "a") as f:
