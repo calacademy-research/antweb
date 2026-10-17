@@ -1,2 +1,4 @@
 pytest>=8.3,<9
 requests>=2.32,<3
+# Browser tests (test_browser.py); after installing: python -m playwright install --with-deps chromium
+playwright==1.56.0

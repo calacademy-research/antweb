@@ -61,13 +61,13 @@
   layout.jsp antweb.css antweb-defs.jsp
   -->
 <% if (false) { %>
-  <link rel="stylesheet" href="<%= AntwebProps.getDomainApp() %>/common/hamburgers-master/dist/hamburgers.css">
+  <link rel="stylesheet" href="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/common/hamburgers-master/dist/hamburgers.css") %>">
 <% } %>
 
 
 <link rel="image_src" type="image/png" href="<%= domainApp %>/image/new_antweb_logo.png" />
 <link rel="shortcut icon" href="<%= domainApp %>/image/favicon.ico" />
-<link rel="stylesheet" href="<%= domainApp %>/common/base.css"/>
+<link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/base.css") %>"/>
 
 <% 
    
@@ -76,16 +76,16 @@
    //if (tTarget != null && (tTarget.contains("testMobile.do") || tTarget.contains("mobile.do"))) AntwebUtil.log("layout.jsp mobile:" + HttpUtil.isMobile(request));
 
    if (HttpUtil.isMobile(request)) { %>
-    <link rel="stylesheet" href="<%= domainApp %>/common/antwebMobile.css?v1.0"/>
+    <link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/antwebMobile.css") %>"/>
 <% } else { %>
-    <link rel="stylesheet" href="<%= domainApp %>/common/antweb.css?v1.0"/>
+    <link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/antweb.css") %>"/>
 <% } %>
 
 <% if ((theTarget.contains("getSearchList.do")) || (theTarget.contains("getSpecimenList.do"))) { %>
-<link rel="stylesheet" href="<%= domainApp %>/common/clear_style.css"/>
+<link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/clear_style.css") %>"/>
 <% } %>
 <% if (theTarget.contains("description.do")) { %>
-<link rel="stylesheet" href="<%= domainApp %>/common/plazi.css"/>
+<link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/plazi.css") %>"/>
 <% } %>
 
 <%
@@ -94,18 +94,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-migrate/3.5.2/jquery-migrate.min.js" integrity="sha512-BzvgYEoHXuphX+g7B/laemJGYFdrq4fTKEo+B3PurSxstMZtwu28FHkPKXu6dSBCzbUWqz/rMv755nUwhjQypw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <% } %>
 
-<script type="text/javascript" src="<%= domainApp %>/common/jquery.tools.min.js"></script>
-<script type="text/javascript" src="<%= domainApp %>/common/jshashtable-2.1.js"></script>
-<script type="text/javascript" src="<%= domainApp %>/common/jquery.numberformatter-1.2.3.jsmin.js"></script>
-<script type="text/javascript" src="<%= domainApp %>/common/jquery.cookie.js"></script>
-<script type="text/javascript" src="<%= domainApp %>/common/antweb.jquery.js"></script>
-<script type="text/javascript" src="<%= domainApp %>/common/purl.js"></script>
-<script type="text/javascript" src="<%= domainApp %>/common/jquery.jqURL.js"></script>
+<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/jquery.tools.min.js") %>"></script>
+<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/jshashtable-2.1.js") %>"></script>
+<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/jquery.numberformatter-1.2.3.jsmin.js") %>"></script>
+<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/jquery.cookie.js") %>"></script>
+<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/antweb.jquery.js") %>"></script>
+<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/purl.js") %>"></script>
+<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/jquery.jqURL.js") %>"></script>
 <% if ((request.getRequestURI().contains("taxonPage.jsp")) 
     || (request.getRequestURI().contains("dynamicMap.jsp")) 
     || (request.getRequestURI().contains("specimen.jsp")))  { %>
 <% } else { %>
-<script type="text/javascript" src="<%= domainApp %>/common/specimen_list.js"></script>
+<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/specimen_list.js") %>"></script>
 <% } 
 
    String requestUri = HttpUtil.getRequestURI(request);

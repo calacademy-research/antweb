@@ -27,8 +27,8 @@
 <link rel="shortcut icon" href="<%= AntwebProps.getDomainApp() %>/image/favicon.ico" >
 </head>
 
-<link href="<%= domainApp %>/common/antweb_style.css" rel="stylesheet" type="text/css">
-<link href="<%= domainApp %>/common/admin_style.css" rel="stylesheet" type="text/css">
+<link href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/antweb_style.css") %>" rel="stylesheet" type="text/css">
+<link href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/admin_style.css") %>" rel="stylesheet" type="text/css">
 
 <script type="text/javascript">
 function swapClass(section) {
@@ -68,7 +68,7 @@ function get_img_name(the_name,to_where) {
 }
 </script>
 
-<script type="text/javascript" src="<%= domainApp %>/ckeditor/ckeditor.js"></script>
+<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
 
 <!-- end adminLayout head -->
 </head>

@@ -14,8 +14,8 @@
 <html>
 <head>
 <title>Image Uploader Guts</title>
-<link href="common/antweb_style.css" rel="stylesheet" type="text/css">
-<link href="common/admin_style.css" rel="stylesheet" type="text/css">
+<link href="common/antweb_style.css?v=<%= org.calacademy.antweb.util.Asset.v(application, "/common/antweb_style.css") %>" rel="stylesheet" type="text/css">
+<link href="common/admin_style.css?v=<%= org.calacademy.antweb.util.Asset.v(application, "/common/admin_style.css") %>" rel="stylesheet" type="text/css">
 </head>
 <body style="background-color:#fff;" onLoad="document.theForm.submit();">
 <% if (AntwebProps.isDevMode()) { 

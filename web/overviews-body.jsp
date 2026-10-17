@@ -88,7 +88,7 @@ else heading = heading + "s";
 <br><br><br>
 
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.4/d3.min.js"></script>
-<script src="<%= AntwebProps.getDomainApp() %>/chart/d3pie.min.js"></script>
+<script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/chart/d3pie.min.js") %>"></script>
 
 <%
   if (true) {

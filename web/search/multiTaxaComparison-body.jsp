@@ -12,7 +12,7 @@
 
 <!-- MultiTaxaComparison-body.jsp -->
 
-<script src="<%= AntwebProps.getDomainApp() %>/openAndFocus.js" type="text/javascript"></script>
+<script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/openAndFocus.js") %>" type="text/javascript"></script>
 <script type="text/javascript">
 
 function submitAndFocus(theForm) {
