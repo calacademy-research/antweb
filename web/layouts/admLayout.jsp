@@ -69,7 +69,6 @@ function get_img_name(the_name,to_where) {
 }
 </script>
 
-<script type="text/javascript" src="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
 
 <!-- end adminLayout head -->
 </head>

@@ -242,7 +242,7 @@ if (geolocale.getWoeId() != null && !("null".equals(geolocale.getWoeId()))) {
 
 <!-- a href="< %= domainApp % >/editGeolocale.do?parent=< %= parentName % >&isCreate=true&georank=< %= georank % >name=">Create</a> Adm1. -->
 
-<html:form method="GET" action="editGeolocale">
+<html:form method="POST" action="editGeolocale"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" class="input_200" name="georank" value="<%= georank %>">
 <input type="hidden" name="parent" value="<%= parentName %>">
 <input type="hidden" name="isCreate" value="true">

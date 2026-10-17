@@ -18,9 +18,7 @@
     <div class="msg_type">NOTE</div>
     <div class="msg_pipe"></div>
     <div class="msg_copy">
-You may use HTML in your page copy.
-<b>Images must be already on the AntWeb server.</b> <br />
-To Upload A File, go to the <a href="<%= domainApp %>/curate.do" target="new">Antweb Curator Tools</a>
+These are the project's settings. The page text is edited on the project page (see Page text below).
 
     </div>
     <div class="clear"></div>
@@ -50,36 +48,19 @@ To Upload A File, go to the <a href="<%= domainApp %>/curate.do" target="new">An
 <input name="title" type=text class=input_550 value="<%= thisProject.getTitle() %>">
 <p>
 
-<h3>Author:</h3>
-<input name="author" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getAuthor()) %>"> 
-<p>
-<h3>Page Copy:</h3>
-<textarea name="contents" class=biotextarea550>
-<%= Formatter.formDisplay(thisProject.getContents()) %>
-</textarea>
-
-<p><h3>Images:</h3>
-<b>Image One:</b><br>
-<input name="specimenImage1" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getSpecimenImage1()) %>"><br>
-<b>Image One Links to:</b><br>
-<input name="specimenImage1Link" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getSpecimenImage1Link()) %>"><br>
-
-<p><b>Image Two:</b><br>
-<input name="specimenImage2" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getSpecimenImage2()) %>"><br>
-<b>Image Two Links to:</b><br>
-<input name="specimenImage2Link" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getSpecimenImage2Link()) %>"><br>
-
-<p><b>Image Three:</b><br>
-<input name="specimenImage3" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getSpecimenImage3()) %>"><br>
-<b>Image Three Links to:</b><br>
-<input name="specimenImage3Link" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getSpecimenImage3Link()) %>"><br>
-
-<p><h3>Author Image:</h3>
-<input name="authorImage" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getAuthorImage()) %>"><br>
-
-<p><h3>Author Bio:</h3>
-<input name="authorBio" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getAuthorBio()) %>"><br>
-</textarea>
+<%-- Page text (Contents, Author, Author Bio, page images) is edited on the project page itself,
+     with the page-text editor (TinyMCE, DescriptionAction.saveDescriptionEdit, stored in object_edit).
+     The old "Page Copy", author and image boxes here were never loaded or saved (ProjectDb.update
+     ignores them), so they were removed in favour of these links. --%>
+<% String projectPage = thisProject.getThisPageTarget(); %>
+<div class="pageTextLinks" style="border:1px solid #ccc;padding:8px;margin:8px 0">
+<h3>Page text</h3>
+The text and images shown on the project page are edited on the page itself:
+<a href="<%= Html.escAttr(projectPage + "&editField=contents") %>#contents">Contents</a>
+| <a href="<%= Html.escAttr(projectPage + "&editField=author") %>#author">Author</a>
+| <a href="<%= Html.escAttr(projectPage + "&editField=authorBio") %>#authorBio">Author Bio</a>
+| <a href="<%= Html.escAttr(projectPage) %>">Page images</a> (use the [Edit] links next to each image).
+</div>
 
 <p><h3>Map (Image):</h3>
 <input name="map" type=text class=input_550 value="<%= thisProject.getMap() %>"><br> <!-- Formatter.formDisplay(thisProject.getMap()) -->
@@ -129,9 +110,6 @@ if (locValue == null || "null".equals(locValue)) locValue = "";
 <input name="locality" type=text class=input_550 value="<%= locValue %>"><br>
 For examples: biogeographicregion='Afrotropical' (or Australasia, Indomalaya, Malagasy, Nearctic, Neotropical, Oceania, Palearctic)	 &nbsp;&nbsp;&nbsp; or &nbsp;&nbsp;&nbsp; country='Peru' &nbsp;&nbsp;&nbsp; or &nbsp;&nbsp;&nbsp; adm1='California'
 
-<p><h3>Map Image:</h3>
-<input name="map" type=text class=input_550 value="<%= thisProject.getMap() %>"><br>
-<br><br>
 
 
 
@@ -186,7 +164,6 @@ For examples: biogeographicregion='Afrotropical' (or Australasia, Indomalaya, Ma
     </div>
 </div>
 
-</form>
 
 </div>
 <div class=admiin_right>

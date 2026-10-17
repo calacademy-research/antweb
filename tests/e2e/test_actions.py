@@ -26,8 +26,10 @@ KNOWN_BROKEN = {
 
 
 def test_removed_actions_stay_removed():
-    """Mappings removed on purpose (dead classes, retired home page editor)."""
-    for path in ("/ancPageMgr", "/jspFetch", "/saveHomePage", "/previewHomePage", "/editHomePage"):
+    """Mappings removed on purpose (dead classes, retired home page editor, the simple content editor
+    and the old project template save, replaced by the page-text editor on the project page)."""
+    for path in ("/ancPageMgr", "/jspFetch", "/saveHomePage", "/previewHomePage", "/editHomePage",
+                 "/saveProject", "/simpleContentEditorRead", "/simpleContentEditorWrite"):
         outcome = get(new_session(), f"{path}.do")
         assert outcome.category not in BROKEN and outcome.status in (400, 404), f"{path}: {outcome}"
     # Any unknown path: a 404 page, not a blank 200.

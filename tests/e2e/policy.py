@@ -30,8 +30,8 @@ NEVER = {
 WRITE_ACTIONS = {
     "/saveGroup", "/manageMuseum", "/viewMuseum", "/saveMuseum",
     "/worldAuthoritySave", "/newBioRegion", "/editCredit",
-    "/teamMemberImgUpload", "/saveProject", "/deleteImages", "/saveLogin",
-    "/editLogin", "/antwebInvite", "/simpleContentEditorWrite",
+    "/teamMemberImgUpload", "/deleteImages", "/saveLogin",
+    "/editLogin", "/antwebInvite",
     "/editGeolocale", "/speciesListMove", "/speciesListToolAdd",
     "/descEditImageUpload",
     "/editProject", "/bioregionMapMgr", "/introducedMapMgr",
