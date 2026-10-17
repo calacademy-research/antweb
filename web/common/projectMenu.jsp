@@ -12,7 +12,7 @@
 
             // This one would perform much faster and be better against bots.
             //titleHTML = "<a href='" + AntwebProps.getDomainApp() + "/project.do?name=" + subglobalProject.getProjectName() + "'>" + globalProject.getName() + "</a>"; 
-            titleHTML = "<a href='" + subglobalProject.getThisPageTarget() + "'>" + subglobalProject.getTitle() + "</a>"; 
+            titleHTML = "<a href='" + org.calacademy.antweb.util.Html.esc(subglobalProject.getThisPageTarget()) + "'>" + org.calacademy.antweb.util.Html.esc(subglobalProject.getTitle()) + "</a>"; 
 %>
     <li><%= titleHTML %></li>
 <%

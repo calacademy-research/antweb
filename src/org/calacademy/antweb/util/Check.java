@@ -134,12 +134,13 @@ public class Check {
         if (connection == null) s_log.error("busy() connection null");
         try {
             if (DBStatus.isServerBusy(connection)) {
-                String message = DBStatus.getServerBusyReport();
-                request.setAttribute("message", message);
+                // The report (SQL, URLs) only for administrators.
+                request.setAttribute("message", DBStatus.busyMessage(request));
                 return mapping.findForward("message");
             }
         } catch (SQLException e) {
-            request.setAttribute("message", Html.esc(e.toString()));
+            s_log.warn("busy() e:" + e);
+            request.setAttribute("message", LoginMgr.isAdmin(request) ? Html.esc(e.toString()) : DBStatus.PUBLIC_BUSY_MSG);
             return mapping.findForward("message");
         }
         return null;

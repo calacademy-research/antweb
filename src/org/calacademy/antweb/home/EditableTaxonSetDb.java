@@ -38,7 +38,7 @@ public abstract class EditableTaxonSetDb extends TaxonSetDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "hasTaxonSetSpecies()");
             query = "select 'x' as x " + fromWhereClause
-               + " and taxon_name like '" + genus + " %'";  // contains a space at the end (so is a species); 
+               + " and taxon_name like " + DBUtil.sqlQuote(genus + " %");  // contains a space at the end (so is a species); 
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 String x = (String) rset.getObject("x");
@@ -63,8 +63,8 @@ public abstract class EditableTaxonSetDb extends TaxonSetDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "hasTaxonSetGenera()");
             query = "select 'x' as x " + fromWhereClause
-               + " and taxon_name like '" + subfamily + "%'"
-               + " and taxon_name != '" + subfamily + "'"
+               + " and taxon_name like " + DBUtil.sqlQuote(subfamily + "%")
+               + " and taxon_name != " + DBUtil.sqlQuote(subfamily)
                + " and taxon_name not like '% %'";
             rset = stmt.executeQuery(query);
             while (rset.next()) {

@@ -457,7 +457,11 @@ To indicate that adm1 should be used, for instance, United States, Brazil, China
             <div class="clear"></div>
 
 			<br>Fast:<input type="checkbox" name="isFast" <%= (form.getIsFast() == true)?"checked":"" %>> If fast, will not reload GeolocaleMgr. To manually reload, click  <a href='<%= AntwebProps.getDomainApp() %>/util.do?action=reloadAntwebMgr'>GeolocaleMgr</a><br><br>
+<% if (LoginMgr.isAdmin(request)) { %>
 			<input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit">
+<% } else { %>
+			<p><b>Only an AntWeb administrator can save these settings.</b> The page text has its own [Edit] links on the page.</p>
+<% } %>
             
             <div class="align_left">
             <br><br>< Back To <a href="<%= AntwebProps.getDomainApp() %>/geolocaleMgr.do?georank=<%= georank %>#<%= geolocale.getId() %>">Geo Locale Manager</a>

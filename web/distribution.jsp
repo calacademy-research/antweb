@@ -51,7 +51,7 @@
       String bioregionHtml = "";
       int i = 0;
       for (Bioregion aBioregion : bioregions) {
-        String bioregion = aBioregion.getTitle();
+        String bioregion = org.calacademy.antweb.util.Html.esc(aBioregion.getTitle());
         ++i;
         if (i <= 1) {
           bioregionHtml = "<br>&nbsp;&nbsp;&nbsp;&nbsp;";

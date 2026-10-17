@@ -4,9 +4,9 @@
 
 <form action="<%= domainApp %>/defaultSpecimen.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
-Select as the default specimen for taxon<b>: <%= Taxon.getPrettyTaxonName(defaultSpecimenTaxon) %></b>
+Select as the default specimen for taxon<b>: <%= org.calacademy.antweb.util.Html.esc(Taxon.getPrettyTaxonName(defaultSpecimenTaxon)) %></b>
 
-<input type="hidden" name="taxonName" value="<%= defaultSpecimenTaxon %>" >
+<input type="hidden" name="taxonName" value="<%= org.calacademy.antweb.util.Html.escAttr(defaultSpecimenTaxon) %>" ><input type="hidden" name="command" value="post">
 <input type="hidden" name="specimenCode" value="<%= specimen.getCode() %>" >
 <input border="0" type="image" src="<%= domainApp %>/image/selectButton.png" height="24" name="done" value="">
 

@@ -69,7 +69,7 @@ else heading = heading + "s";
       out.println(
           "<tr>"
           + "<td><a href=\"" + overview.getThisPageTarget() + "\">" + overview.getKeyStr() + "</a></td>");
-       if (!titleIsName) out.println("<td>" + overview.getTitle() + "</td>");
+       if (!titleIsName) out.println("<td>" + org.calacademy.antweb.util.Html.esc(overview.getTitle()) + "</td>");
        out.println("<td>" + overview.getValidSpeciesCount() + "</td>");
        out.println("<td>" + overview.getSpecimenCount() + "</td>"
         + "<td>" + overview.getImageCount() + "</td>"

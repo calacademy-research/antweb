@@ -99,7 +99,7 @@ public abstract class TaxonSetDb extends AntwebDb {
     public boolean exists(String tableName, String taxonName, String whereClause) throws SQLException {
         Statement stmt = null;
         ResultSet rset = null;
-        String query = "select * from " + tableName + " where taxon_name = '" + taxonName + "' and " + whereClause;
+        String query = "select * from " + tableName + " where taxon_name = " + DBUtil.sqlQuote(taxonName) + " and " + whereClause;
         try {
             stmt = DBUtil.getStatement(getConnection(), "exists()");
             rset = stmt.executeQuery(query);
@@ -135,7 +135,7 @@ public abstract class TaxonSetDb extends AntwebDb {
     protected int updateTaxonSetTaxonName(String tableName, String taxonName, String currentValidName, String whereClause) throws SQLException {
       int c = 0;
       Statement stmt = null;
-	  String dml = "update " + tableName + " set taxon_name = '" + currentValidName + "' where taxon_name = '" + taxonName + "' and " + whereClause;
+	  String dml = "update " + tableName + " set taxon_name = " + DBUtil.sqlQuote(currentValidName) + " where taxon_name = " + DBUtil.sqlQuote(taxonName) + " and " + whereClause;
       try {
           stmt = DBUtil.getStatement(getConnection(), "TaxonSetDb.updateTaxonSetTaxonName()");
           c = stmt.executeUpdate(dml);
@@ -157,7 +157,7 @@ public abstract class TaxonSetDb extends AntwebDb {
       int x = 0;
       Statement stmt = null;
       try {
-          String dml = "delete from " + tableName + " where taxon_name = '" + taxonName + "' and " + whereClause;
+          String dml = "delete from " + tableName + " where taxon_name = " + DBUtil.sqlQuote(taxonName) + " and " + whereClause;
           stmt = DBUtil.getStatement(getConnection(), "TaxonSetDb.deleteTaxonSetTaxonName()");
           x = stmt.executeUpdate(dml);
       } catch (SQLException e) {

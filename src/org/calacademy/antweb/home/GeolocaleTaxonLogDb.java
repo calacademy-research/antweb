@@ -600,7 +600,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             stmt = DBUtil.getStatement(getConnection(), "insertDispute()");
 
             dml = "insert into geolocale_taxon_dispute (geolocale_id, taxon_name, source, rev, curator_id) " 
-              + " values (" + geolocaleTaxon.getGeolocaleId() + ", '" + geolocaleTaxon.getTaxonName() + "', '" + geolocaleTaxon.getSource() + "', " + geolocaleTaxon.getRev() + ", " + geolocaleTaxon.getCuratorId() + " )";  
+              + " values (" + geolocaleTaxon.getGeolocaleId() + ", " + DBUtil.sqlQuote(geolocaleTaxon.getTaxonName()) + ", " + DBUtil.sqlQuote(geolocaleTaxon.getSource()) + ", " + geolocaleTaxon.getRev() + ", " + geolocaleTaxon.getCuratorId() + " )";  
             stmt.execute(dml);
 
             //A.log("insertDispute() geolocaleTaxon:" + geolocaleTaxon);
