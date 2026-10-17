@@ -35,14 +35,16 @@
   
   //String thisPageTarget = java.net.URLEncoder.encode("description.do?" + taxon.getBrowserParams());  
   String thisPageTarget = "description.do?" + taxon.getBrowserParams();
-  String editField = request.getParameter("editField");
-  if (editField == null) editField = "none";
+  // The field open in the editor, or "none" (DescEditSafety: after a refused save, the same field again).
+  String editField = DescEditSafety.activeEditField(request);
 
   // This will be used in the included taxonEditField.jsp.
   Login accessLogin= LoginMgr.getAccessLogin(request);
   //Group accessGroup = GroupMgr.getAccessGroup(request);
+  // Only curators and administrators see [Edit] links and the editor.
+  boolean canEditDesc = DescEditSafety.canEdit(accessLogin);
   
-  if (accessLogin != null) { %>
+  if (canEditDesc && !"none".equals(editField)) { %>
 <script type="text/javascript" src="<%= AntwebProps.getDomainApp() %>/ckeditor/ckeditor.js"></script>
 <%
   } %>
@@ -72,6 +74,7 @@
     <input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
     <input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
     <div id="page_contents">
+    <%@ include file="/common/descEdit/descEditNotice.jsp" %>
     <%@ include file="/common/taxonTitle.jsp" %>
     <!-- taxonPage-body.jsp -->
         <div class="links">

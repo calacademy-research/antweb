@@ -31,12 +31,20 @@ public class DescriptionForm extends ActionForm {
     private String m_editField;
     private String m_contents;
     private String m_imageUrl = "";
+    // Editor safety (DescEditSafety): fingerprint of the stored text when the editor opened,
+    // "1" once the editor showed that text, "1" for the "Clear this field" button.
+    private String m_loadedHash;
+    private String m_editorReady;
+    private String m_clearField;
     
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         m_isSaveEditField = false;
         m_editField = null;
         m_contents = null;
         m_imageUrl = null;    
+        m_loadedHash = null;
+        m_editorReady = null;
+        m_clearField = null;
     }
     
     public ActionErrors validate(ActionMapping mapping,
@@ -99,4 +107,25 @@ public class DescriptionForm extends ActionForm {
     public void setImageUrl(String imageUrl) {
       m_imageUrl = imageUrl;
     }    
+
+    public String getLoadedHash() {
+      return m_loadedHash;
+    }
+    public void setLoadedHash(String loadedHash) {
+      m_loadedHash = loadedHash;
+    }
+
+    public String getEditorReady() {
+      return m_editorReady;
+    }
+    public void setEditorReady(String editorReady) {
+      m_editorReady = editorReady;
+    }
+
+    public String getClearField() {
+      return m_clearField;
+    }
+    public void setClearField(String clearField) {
+      m_clearField = clearField;
+    }
 }

@@ -5,7 +5,7 @@
      thisDesc.equals(editField): Curator may edit one field at a time.  If it is this one, use editor.     
   */
   
-     if ((accessLogin != null) || (desc.containsKey(thisDesc ))) { 
+     if (canEditDesc || (desc.containsKey(thisDesc ))) { 
        // Then we will do somesomething at least, if only a header with an empty box. 
        // desc, thisDesc and utility are defined in the including jsp (taxonPage-body.jsp) 
        
@@ -13,8 +13,8 @@
        %>
 
      <p><a name="<%= thisDesc %>"></a><h3 style="float:left;"><%= descHeader %>:</h3>
-     <% if (accessLogin != null) { 
-          // They are an admin.  So display editable if this is the editField 
+     <% if (canEditDesc) { 
+          // A curator or admin (DescEditSafety.canEdit).  So display editable if this is the editField 
           if ((thisDesc.equals(editField)) && (!thisDesc.equals("notes") || ( hasExtraPrivs) )) { %>
          <div class="clear"></div>
          <%= descNotes %>

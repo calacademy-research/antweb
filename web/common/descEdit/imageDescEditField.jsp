@@ -2,14 +2,14 @@
   if (true) {
       boolean turnedOn =  true; //AntwebProps.isDevOrStageMode();
       
-      if ((accessLogin != null) || (desc.containsKey(thisDesc ))) { %>   
+      if (canEditDesc || (desc.containsKey(thisDesc ))) { %>   
 
-     <% if (accessLogin != null) { %>
+     <% if (canEditDesc) { %>
           <p><a name="<%= thisDesc %>"></a><h3 style="float:left;"><%= descHeader %>:</h3>
      <% } %>
 <%      String contents = (String) desc.get(thisDesc);
 
-        if (turnedOn && accessLogin != null) { %>
+        if (turnedOn && canEditDesc) { %>
        <% // They are an admin.  So display editable if this is the editField %>
        <% if (thisDesc.equals(editField)) { %>
          Click "Source" to edit html code.  Contact <%= AntwebUtil.getAdminEmail() %> with any issues.<br>
