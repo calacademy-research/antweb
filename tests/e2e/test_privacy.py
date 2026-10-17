@@ -46,7 +46,8 @@ def test_specimen_short_link_does_not_echo_input():
     and is never echoed back (it used to print the URL unescaped on an error)."""
     r = new_session().get(BASE_URL + "/specimen/%3Cscript%3Eaw5%3C%2Fscript%3E", timeout=60, allow_redirects=False)
     assert "<script>aw5" not in r.text
-    assert r.status_code == 404, f"HTTP {r.status_code}"
+    # 400 (refused before it reaches the app) or 404; never a page that shows it.
+    assert r.status_code in (400, 404), f"HTTP {r.status_code}"
     r = new_session().get(BASE_URL + "/specimen/casent0106322", timeout=60, allow_redirects=False)
     assert r.status_code in (301, 302) and "/specimen.do?name=casent0106322" in r.headers.get("Location", ""), r.status_code
 
