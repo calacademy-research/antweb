@@ -4,9 +4,13 @@ ENV TZ="America/Los_Angeles" \
     CATALINA_OPTS="-Xms1024M -Xmx16384M -server -XX:+UseParallelGC" \
     JAVA_OPTS='-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
 
-RUN adduser --disabled-password --gecos '' antweb && \
-    adduser --disabled-password --shell /bin/false --home /usr/local/tomcat --disabled-password --gecos ''  tomcat && \
-    adduser tomcat antweb   # add tomcat user to antweb group
+# Fixed ids so the host can grant them access (doc/tomcat-nonroot-runbook.md):
+# antweb group 2000 (host: secrets chgrp, rclone --gid), tomcat user 2001
+# (rclone --uid). Tomcat runs as tomcat with primary group antweb.
+RUN groupadd -g 2000 antweb && \
+    useradd -u 2000 -g antweb -m -s /bin/bash antweb && \
+    groupadd -g 2001 tomcat && \
+    useradd -u 2001 -g antweb -G tomcat -d /usr/local/tomcat -M -s /usr/sbin/nologin tomcat
 
 
 RUN mkdir -p /mnt/antweb && \
@@ -22,17 +26,21 @@ ant \
 ant-optional \
 cron \
 imagemagick \
+util-linux \
 default-mysql-client \
 php \
 python3 \
 unzip \
 zip \
-&& rm -rf /var/lib/apt/lists/*
+&& rm -rf /var/lib/apt/lists/* \
+&& setpriv --version
 
 RUN ln -fs /usr/share/zoneinfo/"${TZ}" /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata
 
-COPY --chown=tomcat docker/antweb/startup.sh /startup.sh
+# Root-owned: these run as root, so tomcat must not be able to change them.
+COPY --chmod=0755 docker/antweb/startup.sh /startup.sh
+COPY --chmod=0755 docker/antweb/fix-perms.sh /usr/local/bin/antweb-fix-perms
 COPY --chmod=0644 docker/antweb/crontab.txt /etc/cron.d/antwebcrontab
 
 
@@ -41,7 +49,7 @@ COPY --chown=tomcat docker/antweb/tomcat/conf/ /usr/local/tomcat/conf/
 WORKDIR /usr/local/tomcat
 
 
-RUN chown -R tomcat:tomcat /usr/local/tomcat && \
+RUN chown -R tomcat:antweb /usr/local/tomcat && \
     chmod -R g+r conf && \
     chmod g+x conf && \
     mkdir /opt/tomcat && \
@@ -134,6 +142,12 @@ WORKDIR /antweb/deploy
 
 USER root
 
-RUN ant deploy && ant clean
+# Build as root, then hand the deployed app (and /antweb/deploy, where later
+# `ant deploy` runs create build/) to tomcat, which runs Tomcat (startup.sh).
+# Nothing in the app needs to be world-writable.
+RUN ant deploy && ant clean && \
+    chown tomcat:antweb /antweb/deploy && \
+    chown -R tomcat:antweb /usr/local/antweb && \
+    chmod -R o-w /usr/local/antweb
 
 ENTRYPOINT ["/startup.sh"]
