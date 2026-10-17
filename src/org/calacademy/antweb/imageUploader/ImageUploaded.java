@@ -60,6 +60,16 @@ public class ImageUploaded {
   }
 
   public void setFileItem(FileItem<?> fileItem) throws Exception {
+      setFileItem(fileItem, true);
+  }
+
+  /**
+   * Write the uploaded file to images/<code>/. If a file of that name exists it is first copied
+   * to images/backup/ (and the upload is marked as a re-upload), unless backupExisting is false:
+   * the batch uploader makes the backup itself (backupExisting()) before it records the file,
+   * and never again on a retry, so the backup keeps the image that was there before the batch.
+   */
+  public void setFileItem(FileItem<?> fileItem, boolean backupExisting) throws Exception {
 
       if (!getIsContinueUpload()) return;
 
@@ -82,7 +92,7 @@ public class ImageUploaded {
       //s_log.warn("execute() fullName:" + fullName);
 
       try {
-        if (file.exists()) {
+        if (backupExisting && file.exists()) {
           // move the file to the backupdir.
           FileUtil.makeDir(backupDir);
           Utility.copyFile(fullName, backupDir + name);
@@ -92,6 +102,50 @@ public class ImageUploaded {
         s_log.debug(" setFileItem() e:" + e + " backupDir:" + backupDir);
       }
       fileItem.write(file.toPath());
+  }
+
+  /** Copy an existing images/<code>/<fileName> to images/backup/ (marks a re-upload). */
+  public void backupExisting() throws IOException {
+      if (!getIsContinueUpload()) return;
+      String name = baseName(getFileName());
+      String fullName = imagesDir + getCode() + "/" + name;
+      try {
+        if (new File(fullName).exists()) {
+          FileUtil.makeDir(backupDir);
+          Utility.copyFile(fullName, backupDir + name);
+          setIsReUploaded(true);
+        }
+      } catch (FileNotFoundException e) {
+        s_log.debug("backupExisting() e:" + e + " backupDir:" + backupDir);
+      }
+  }
+
+  // Characters allowed in an uploaded file name (after any folder part is removed).
+  private static final java.util.regex.Pattern NAME_CHARS = java.util.regex.Pattern.compile("[A-Za-z0-9_.\\-]+");
+
+  /** The file's own name: browsers may send a full path ("C:\\x\\y.jpg"). */
+  public static String baseName(String fileName) {
+      if (fileName == null) return null;
+      String n = fileName.replace('\\', '/');
+      int slash = n.lastIndexOf('/');
+      return slash >= 0 ? n.substring(slash + 1) : n;
+  }
+
+  /**
+   * Checks every upload makes before anything is saved: allowed characters and length, then the
+   * naming rules of init() (CODE_SHOT_NUMBER.ext, upper case, shot D/P/H/L/V/F) and the file
+   * type (jpg, tif, png). Returns null if the name is good, otherwise the reason.
+   */
+  public static String checkName(String fileName) {
+      String name = baseName(fileName);
+      if (name == null || name.isEmpty()) return "No file name";
+      if (name.length() > 100) return "File name longer than 100 characters";
+      if (!NAME_CHARS.matcher(name).matches()) return "File name may only contain letters, digits, _ . and -";
+      ImageUploaded iu = new ImageUploaded();
+      String message = iu.init(name);
+      if (!"success".equals(message)) return message;
+      if (iu.getErrorMessage() != null) return iu.getErrorMessage();
+      return null;
   }
 
   public static String getTestString(String fileName) {

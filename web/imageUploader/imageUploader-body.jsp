@@ -39,11 +39,49 @@
 
 <br>
 
+<%
+   // dryRun=1: every file is checked and sent, nothing is saved (used by the staging tests).
+   boolean iuDryRun = "1".equals(request.getParameter("dryRun"));
+%>
+<style>
+  #iuStatus { margin: 12px 0; max-width: 60em; }
+  #iuStatus .iu-banner { padding: 8px 10px; margin: 8px 0; border: 1px solid #c9a227; background: #fff8e1; }
+  #iuStatus .iu-banner.iu-test { border-color: #3a7bd5; background: #eef4fd; }
+  #iuStatus .iu-totals { font-weight: bold; margin: 6px 0; }
+  #iuStatus .iu-buttons button { margin: 4px 8px 4px 0; }
+  #iuList { list-style: none; padding: 0; margin: 6px 0; max-height: 28em; overflow-y: auto; border: 1px solid #ddd; }
+  #iuList li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 3px 6px; border-bottom: 1px solid #eee; font-size: 0.9em; }
+  #iuList .iu-name { flex: 1 1 18em; overflow-wrap: anywhere; }
+  #iuList .iu-size { flex: 0 0 5.5em; text-align: right; color: #555; }
+  #iuList progress { flex: 0 0 8em; height: 0.9em; }
+  #iuList .iu-state { flex: 1 1 14em; }
+  #iuList li.iu-done .iu-state { color: #1b6e1b; }
+  #iuList li.iu-failed .iu-state, #iuList li.iu-rejected .iu-state { color: #b00020; }
+  #iuList li.iu-wait .iu-state { color: #8a6d00; }
+</style>
+
+      <div class="action_hint" id="iuHowItWorks" style="max-width:60em; margin-bottom:10px;">
+        <strong>Uploading many images:</strong> you can select any number of images (25, 100 or more) in one go.
+        The page checks all file names first, then sends the images one at a time and shows each one's progress;
+        each image is saved and its sizes made as soon as it arrives, so keep this page open until the list says
+        <em>Upload finished</em>. If a file fails because of the network or a busy server, the page tries it again
+        by itself (up to 4 tries, waiting longer each time); files that still fail can be sent again with
+        <em>Retry failed files</em>. Each image must be smaller than 95 MB. If your login or the site's security check
+        runs out during a long upload, the page pauses and tells you what to do; nothing already sent is lost.
+        Everything you send in one go appears as one upload in your
+        <a href="<%= AntwebProps.getDomainApp() %>/listImageUploads.do?curatorId=<%= accessLogin.getId() %>">Image Upload Reports</a>.
+      </div>
+
       <h3>1. Select files to upload:</h3>
       <br>
-      <form action="<%= org.calacademy.antweb.util.Csrf.action(request, (AntwebProps.getDomainApp()) + "/imageUploader.do") %>" 
-            method = "post" enctype = "multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-        <input type="file" name="file" id="file" multiple/>          
+      <form id="imageUploadForm" action="<%= org.calacademy.antweb.util.Csrf.action(request, (AntwebProps.getDomainApp()) + "/imageUploader.do") %>" 
+            method = "post" enctype = "multipart/form-data"
+            data-batch-url="<%= Html.escAttr(AntwebProps.getDomainApp() + "/imageUploadBatch.do") %>"
+            data-session-url="<%= Html.escAttr(AntwebProps.getDomainApp() + "/editSession.do") %>"
+            data-csrf="<%= Html.escAttr(org.calacademy.antweb.util.Csrf.token(request)) %>"
+            data-max-bytes="<%= org.calacademy.antweb.imageUploader.ImageUploadBatchAction.MAX_FILE_BYTES %>"
+            data-dry-run="<%= iuDryRun ? "1" : "0" %>"><%= org.calacademy.antweb.util.Csrf.field(request) %>
+        <input type="file" name="file" id="file" multiple accept=".jpg,.jpeg,.tif,.tiff,.png,image/jpeg,image/tiff,image/png"/>          
 
         <br>      
 
@@ -71,11 +109,27 @@
         
         <br><br><br>
 
-        <h3>3. <input type = "submit" value = "Upload Files" /></h3>
+        <h3>3. <input type = "submit" id="iuSubmit" value = "Upload Files" /></h3>
 
 
     </form>
     </div>
+
+    <div id="iuStatus" aria-live="polite" hidden>
+      <% if (iuDryRun) { %><div class="iu-banner iu-test">Test mode (dryRun=1): files are checked and sent, but nothing is saved.</div><% } %>
+      <div id="iuBanner" class="iu-banner" hidden></div>
+      <div id="iuTotals" class="iu-totals"></div>
+      <div class="iu-buttons">
+        <button type="button" id="iuPause" hidden>Pause</button>
+        <button type="button" id="iuResume" hidden>Resume</button>
+        <button type="button" id="iuRetry" hidden>Retry failed files</button>
+        <button type="button" id="iuFinish" hidden>Finish without the failed files</button>
+        <button type="button" id="iuCopyFailed" hidden>Copy list of failed files</button>
+      </div>
+      <ul id="iuList"></ul>
+    </div>
+    <noscript><p class="action_hint">JavaScript is off: all selected files are sent in one request, which works only for a few images (under 100 MB in total).</p></noscript>
+    <script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/imageUploader/imageUploader.js") %>"></script>
 
     <br>
     <br>
@@ -148,7 +202,7 @@ Additional images (for keys, plates, publications or information) are always wel
 
     <br>
     <div id="note" class="action_hint">
-       <strong>Note:</strong> This new Flash-free, pure Java implementation is faster and more reliable than the old image upload feature. For any issues or feature requests please contact <%= AntwebUtil.getAdminEmail() %>.
+       <strong>Note:</strong> For any issues or feature requests please contact <%= AntwebUtil.getAdminEmail() %>.
     </div> 
 
 </div>

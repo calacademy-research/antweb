@@ -15,6 +15,7 @@ NEVER = {
     "/adminAlert": "admin alert controls",
     "/upload": "specimen and image upload",
     "/imageUploader": "image upload",
+    "/imageUploadBatch": "image upload, one file per request (tested in test_image_upload.py)",
     "/pageTracker": "records page views",
     "/pictureLike": "records a like",
     "/logout": "would end the test's own session",

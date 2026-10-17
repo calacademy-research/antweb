@@ -1540,6 +1540,11 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="report" path="/imageUploader/imageUploadReport.jsp"/>
     </action>
 
+    <!-- Image Uploader, one file per request (start, add, finish; JSON). See ImageUploadBatchAction. -->
+    <action path="/imageUploadBatch"
+            type="org.calacademy.antweb.imageUploader.ImageUploadBatchAction">
+    </action>
+
     <action path="/imageUploadReport"
             type="org.calacademy.antweb.imageUploader.ImageUploadReport"
             name="dummyForm"
