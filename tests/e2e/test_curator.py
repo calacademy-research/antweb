@@ -30,6 +30,7 @@ CURATOR_PAGES = [
     "/validateSpeciesList.do",
     "/specimenListLookup.do",
     "/curators.do",
+    "/editorTrial.do",
 ]
 
 # Admin-only pages: an ordinary curator must be refused (authorization, not just login).
@@ -230,3 +231,16 @@ def test_curate_page_forms_carry_csrf_token(curator):
         assert 'name="_csrf"' in body, f"form without _csrf field: {attrs[:120]}"
         if "multipart" in attrs.lower():
             assert "_csrf=" in attrs, f"upload form without _csrf in its action: {attrs[:120]}"
+
+
+# Editor trial page (read only): the sanitize endpoint answers with JSON and needs the token.
+def test_editor_trial_sanitize(curator):
+    html = curator.get(BASE_URL + "/editorTrial.do", timeout=60).text
+    m = re.search(r'data-csrf="([^"]+)"', html)
+    assert m, "no data-csrf on /editorTrial.do"
+    data = {"op": "sanitize", "field": "overview", "html": '<p onclick="x()">a<script>b</script></p>'}
+    r = curator.post(BASE_URL + "/editorTrial.do", data=data, headers={"X-CSRF-Token": m.group(1)},
+                     timeout=60, allow_redirects=False)
+    assert r.status_code == 200 and r.json().get("sanitized") == "<p>a</p>", f"{r.status_code} {r.text[:200]}"
+    r = curator.post(BASE_URL + "/editorTrial.do", data=data, timeout=60, allow_redirects=False)
+    assert r.status_code == 403, f"sanitize POST without a token answered HTTP {r.status_code}"

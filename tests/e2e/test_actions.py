@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from antweb import BROKEN, IS_PRODUCTION, get, new_session, struts_actions
+from antweb import BASE_URL, BROKEN, IS_PRODUCTION, TIMEOUT, classify, get, new_session, struts_actions
 from policy import FLAKY, NEVER, REFUSE_WITH_MESSAGE, WRITE_ACTIONS
 
 import os
@@ -33,6 +33,15 @@ def test_removed_actions_stay_removed():
     # Any unknown path: a 404 page, not a blank 200.
     outcome = get(new_session(), "/noSuchAction.do")
     assert outcome.status in (400, 404), f"/noSuchAction.do: {outcome}"
+
+
+def test_editor_trial_requires_login():
+    """The editor trial page and its sanitize request are for curators only."""
+    assert get(new_session(), "/editorTrial.do").category == "login"
+    r = new_session().post(BASE_URL + "/editorTrial.do", data={"op": "sanitize", "html": "<b>x</b>"},
+                           timeout=TIMEOUT, allow_redirects=True)
+    assert "application/json" not in r.headers.get("Content-Type", ""), "anonymous sanitize request answered with JSON"
+    assert classify(r).category == "login", f"anonymous sanitize request: {classify(r)}"
 
 
 def test_every_action_has_a_decision():

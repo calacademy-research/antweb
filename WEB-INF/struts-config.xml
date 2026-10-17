@@ -1294,6 +1294,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
                 type="org.calacademy.antweb.util.SanitizeDescriptionsAction"
                 scope="request">
     </action>
+
+    <!-- Curators and admins: HugeRTE and TinyMCE 8 side by side on stored page text (read only). -->
+    <action path="/editorTrial"
+                type="org.calacademy.antweb.curate.EditorTrialAction"
+                scope="request">
+        <forward name="success" path="/curate/editorTrial.jsp" />
+    </action>
     
     <action path="/manageMuseum"
             type="org.calacademy.antweb.curate.ManageMuseumsAction"

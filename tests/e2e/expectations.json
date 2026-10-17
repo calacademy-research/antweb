@@ -62,6 +62,7 @@
   "/editGeolocale": "login",
   "/editLogin": "message",
   "/editProject": "login",
+  "/editorTrial": "login",
   "/endemic": "ok",
   "/favs": "ok",
   "/fieldGuide": "login",
