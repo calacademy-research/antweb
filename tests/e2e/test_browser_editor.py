@@ -220,12 +220,12 @@ def test_tinymce_edit_form_at_phone_width(playwright, browser, curator_session):
     try:
         page = _open(ctx)
         box = page.locator(".tox-tinymce").bounding_box()
-        # AntWeb pages have no mobile viewport yet, so a phone shows them zoomed out on a ~980 px
-        # wide layout. The editor must fit that layout (no sideways scrolling inside the page).
-        # When the pages become responsive (to-do: AntWeb on phones), tighten this to 390 px.
+        # Pages are responsive (responsive.css): the layout is the 390 px screen, and the editor
+        # must fit inside it with no sideways scrolling.
         layout = page.evaluate("document.documentElement.clientWidth")
+        assert layout <= 390, f"page laid out {layout} px wide on a 390 px phone (viewport/responsive CSS missing?)"
         assert box and box["x"] >= 0 and box["x"] + box["width"] <= layout + 1, \
-            f"editor wider than the page layout ({layout} px): {box}"
+            f"editor wider than the 390 px screen: {box}"
         assert page.locator(".tox-toolbar, .tox-toolbar__primary, .tox-toolbar-overlord").count() > 0, "no editor toolbar at phone width"
         assert not page.errors, page.errors
     finally:
