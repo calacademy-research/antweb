@@ -21,7 +21,7 @@ public class SpecimenFetch extends HttpServlet {
   static final java.util.regex.Pattern CODE = java.util.regex.Pattern.compile("[A-Za-z0-9._:-]{1,80}");
 
   /** The redirect target for a /specimen/<code> short link, or null if the code is not valid. */
-  static String target(String contextPath, String pathInfo) {
+  public static String target(String contextPath, String pathInfo) {
     if (pathInfo == null || pathInfo.length() < 2) return null;
     String specimenCode = pathInfo.substring(1).trim();
     if (!CODE.matcher(specimenCode).matches()) return null;

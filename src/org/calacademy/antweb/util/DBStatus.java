@@ -357,7 +357,7 @@ public class DBStatus {
     }
 
     /** Escape text for HTML but keep its own <br> line breaks. */
-    static String escBr(String text) {
+    public static String escBr(String text) {
         if (text == null) return "null";
         return Html.esc(text).replace("&lt;br&gt;", "<br>");
     }

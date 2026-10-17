@@ -31,6 +31,13 @@ public final class LoginNames {
         return name == null || PERSON_NAME.matcher(name).matches();
     }
 
+    // name@host.tld, no spaces, quotes or angle brackets.
+    private static final Pattern EMAIL = Pattern.compile("[^\\s@<>\"'&]+@[^\\s@<>\"'&]+\\.[^\\s@<>\"'&]+");
+
+    public static boolean isValidEmail(String email) {
+        return email != null && email.length() >= 6 && email.length() <= 200 && EMAIL.matcher(email).matches();
+    }
+
     private static boolean changed(String newValue, String oldValue) {
         if (newValue == null) return false;
         return !newValue.equals(oldValue);
@@ -47,7 +54,7 @@ public final class LoginNames {
         if (changed(firstName, stored == null ? null : stored.getFirstName()) && !isValidPersonName(firstName)) return PERSON_NAME_RULE;
         if (changed(lastName, stored == null ? null : stored.getLastName()) && !isValidPersonName(lastName)) return PERSON_NAME_RULE;
         if (changed(email, stored == null ? null : stored.getEmail()) && email != null && !email.isEmpty()
-            && !AntwebUtil.validEmail(email)) return "Must enter a valid email.";
+            && !isValidEmail(email)) return "Must enter a valid email.";
         return null;
     }
 }

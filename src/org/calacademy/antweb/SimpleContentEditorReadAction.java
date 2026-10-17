@@ -25,9 +25,15 @@ public final class SimpleContentEditorReadAction extends AntwebAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
+        // Administrators only, and only a plain file name in the docroot (no paths).
+        ActionForward c = org.calacademy.antweb.util.Check.admin(request, mapping); if (c != null) return c;
+
         String docRoot = Utility.getDocRoot();
         
         String fileName = ((SimpleContentEditorForm) form).getFileName();
+        if (fileName == null || !fileName.matches("[A-Za-z0-9_.-]{1,100}") || fileName.contains("..")) {
+            return org.calacademy.antweb.util.HttpUtil.sendMessage(request, mapping, "Invalid file name.");
+        }
         String contents = "";
 
         try {
