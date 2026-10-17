@@ -26,11 +26,9 @@
 		Utility util = new Utility();
 		String domainApp = util.getDomainApp();
 
-        //A.log("siteNav.jsp isMobile:" + HttpUtil.isMobile(request));
-      
-        if (HttpUtil.isMobile(request)) { %>
-           <%@ include file="mobileSearchBar.jsp" %>
-     <% } %>
+        // Phones get the same header and search bar as desktop (responsive.css); the separate
+        // mobileSearchBar.jsp served by user agent was removed.
+      %>
 
 	  <%@ include file="menuBar.jsp" %>
 

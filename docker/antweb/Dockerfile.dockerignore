@@ -25,3 +25,13 @@ README.md
 
 # Ignore sql dumps
 *.sql.gz
+
+# Server-only secrets in etc/ (not in git) must not be copied into the image;
+# the container reads them from the read-only ./etc mount at run time.
+etc/db.properties
+etc/mail.properties
+etc/editor.properties
+etc/turnstile.properties
+etc/taxonworks.properties
+etc/flickr.properties
+etc/api-db.properties

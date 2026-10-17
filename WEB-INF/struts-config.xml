@@ -840,6 +840,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
             type="org.calacademy.antweb.EditSessionAction">
     </action>
 
+    <!-- History of one page-text field, with Restore (curators; read only, the Restore posts to the page's save). -->
+    <action path="/fieldHistory"
+            type="org.calacademy.antweb.FieldHistoryAction">
+      <forward name="success" path="/fieldHistory.jsp"/>
+    </action>
+
     <action  path="/typeStatus"
              type="org.calacademy.antweb.upload.TypeStatusMgr">
       <forward name="success" path="/message-body.jsp"/>

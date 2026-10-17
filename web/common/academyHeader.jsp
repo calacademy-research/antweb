@@ -66,7 +66,12 @@
             <a href="https://github.com/calacademy-research/antweb/releases" title="Release notes (change log)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v<%=antwebRelease %></a>
         </div>
         
- <% if (!HttpUtil.isMobile(request)) { %>             
+        <%-- Phone menu button: hidden at desktop widths (responsive.css); responsive.js toggles body.aw-nav-open,
+             which shows the site links, login and the Browse menu on small screens. --%>
+        <button type="button" id="aw_menu_toggle" class="aw-menu-toggle" aria-controls="site_links browseby" aria-expanded="false" aria-label="Menu" title="Menu">
+            <span class="aw-menu-bar"></span><span class="aw-menu-bar"></span><span class="aw-menu-bar"></span>
+        </button>
+
         <div id="site_links">
 			<ul>
 				<li><a href="<%= domainApp %>/about.do">About</a></li>
@@ -84,7 +89,6 @@
         <div id="login">    
             <%@ include file="/common/loginPanel.jsp" %>    
         </div> <!-- login -->
-<% } %>
 
     </div> <!-- header -->
 

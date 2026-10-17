@@ -36,7 +36,9 @@ public class DescriptionForm extends ActionForm {
     private String m_loadedHash;
     private String m_editorReady;
     private String m_clearField;
-    
+    // "Restore this version" on the History page (fieldHistory.do): the history row's hist_id.
+    private String m_restoreFrom;
+
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         m_isSaveEditField = false;
         m_editField = null;
@@ -45,6 +47,7 @@ public class DescriptionForm extends ActionForm {
         m_loadedHash = null;
         m_editorReady = null;
         m_clearField = null;
+        m_restoreFrom = null;
     }
     
     public ActionErrors validate(ActionMapping mapping,
@@ -127,5 +130,12 @@ public class DescriptionForm extends ActionForm {
     }
     public void setClearField(String clearField) {
       m_clearField = clearField;
+    }
+
+    public String getRestoreFrom() {
+      return m_restoreFrom;
+    }
+    public void setRestoreFrom(String restoreFrom) {
+      m_restoreFrom = restoreFrom;
     }
 }

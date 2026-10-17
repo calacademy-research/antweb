@@ -65,6 +65,7 @@ public final class DescEditSafety {
         public boolean offerClear;      // refused because the box was empty
         public boolean reshowInEditor;  // the curator can edit: show the text in the editor again
         public boolean loggedOut;       // the session had ended
+        public boolean restore;         // a "Restore this version" from the History page (keeps any browser draft)
 
         private Result(String field, boolean saved, String message, String submitted) {
             this.field = field;
@@ -130,6 +131,22 @@ public final class DescEditSafety {
     /** Curators and administrators may edit page text. */
     public static boolean canEdit(Login login) {
         return LoginMgr.isCurator(login) || LoginMgr.isAdmin(login);
+    }
+
+    /**
+     * May this login edit (and restore) this field? Curators and administrators, except the taxon
+     * page "notes" field, which only administrators and Jack edit (as on the page, taxonPage-body.jsp).
+     * kind is the page key kind: "taxon", "specimen" or "object".
+     */
+    public static boolean canEditField(Login login, String kind, String field) {
+        if (!canEdit(login)) return false;
+        if ("taxon".equals(kind) && "notes".equals(field)) return LoginMgr.isAdmin(login) || LoginMgr.isJack(login);
+        return true;
+    }
+
+    public static boolean canEditField(Login login, Describable describable, String field) {
+        String key = describable == null ? "" : pageKey(describable);
+        return canEditField(login, key.substring(0, Math.max(0, key.indexOf(':'))), field);
     }
 
     public static Result result(HttpServletRequest request) {

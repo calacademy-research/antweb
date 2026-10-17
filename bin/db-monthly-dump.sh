@@ -20,13 +20,14 @@ MYSQL_PWD=$(sed -n 's/^password=//p' "$dbconf")
 export MYSQL_PWD
 #backupdir="/data/antweb/web/db"
 #backupdir="/mnt/backup/db"
-backupdir="/data/antweb/backup/db/monthly"
-
-tempfile=/tmp/"$date".sql.gz
+# The backup mount itself, not /data/antweb/backup: /data/antweb is owned by
+# tomcat, and this runs as root.
+backupdir="/mnt/backup/db/monthly"
 
 datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
+  tempfile=$(mktemp /tmp/monthly-dump.XXXXXX) || exit 1
   mysqldump --skip-lock-tables -u$dbuser -h mysql --databases "$dbname" --routines --single-transaction --quick --no-tablespaces --default-character-set=utf8mb4 | gzip -c -9 > "$tempfile"
   mv "$tempfile" "$datedBackupFile"
 fi

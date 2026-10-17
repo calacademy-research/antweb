@@ -60,8 +60,26 @@ public class DescriptionAction extends AntwebAction {
         String imageUrl = form.getImageUrl();
         boolean isImage = imageUrl != null && !imageUrl.isEmpty();
         String pretty = DescEditSafety.prettyField(editField);
+        String restoreFrom = form.getRestoreFrom();
+        boolean isRestore = !isImage && restoreFrom != null && !restoreFrom.isEmpty();
 
         // Only curators and admins may save page text (not the anonymous "Browse" login or self-registered accounts).
+        if (!DescEditSafety.canEdit(accessLogin) && isRestore) {
+          DescEditSafety.Result r;
+          if (accessLogin == null) {
+            r = DescEditSafety.Result.refused(editField, "You are not logged in any more, so nothing was restored in " + pretty + "."
+              + " (AntWeb restarts every morning around 8 AM Pacific, and logins end after 4 hours without use.)"
+              + " Log in (the link opens a new tab), then open the History of this field again.", null);
+            r.loggedOut = true;
+          } else {
+            r = DescEditSafety.Result.refused(editField, "Your account cannot edit page text, so nothing was restored.", null);
+          }
+          r.restore = true;
+          s_log.warn("saveDescriptionEdit() restore refused, not a curator. field:" + editField
+            + " login:" + (accessLogin == null ? "-" : accessLogin.getId()));
+          request.setAttribute(DescEditSafety.RESULT_ATTR, r);
+          return true;
+        }
         if (!DescEditSafety.canEdit(accessLogin)) {
           DescEditSafety.Result r;
           if (accessLogin == null) {
@@ -80,25 +98,89 @@ public class DescriptionAction extends AntwebAction {
           return true;
         }
 
+        // The same per-field rule as the page: taxon page "notes" only for administrators and Jack.
+        if (!DescEditSafety.canEditField(accessLogin, editObject, editField)) {
+          s_log.warn("saveDescriptionEdit() refused, field not editable by login:" + accessLogin.getId() + " field:" + editField);
+          DescEditSafety.Result r = DescEditSafety.Result.refused(editField, "Your account cannot edit " + pretty
+            + " on this page, so nothing was saved." + (isRestore || isImage ? "" : " Your text is shown below."), isRestore || isImage ? null : contents);
+          r.restore = isRestore;
+          request.setAttribute(DescEditSafety.RESULT_ATTR, r);
+          return true;
+        }
+
         DescEditSafety.Result result;
         if (isImage) {
           result = saveImage(editObject, request, connection, editField, imageUrl, accessLogin);
+        } else if (isRestore) {
+          result = restoreVersion(form, editObject, request, connection, editField, restoreFrom, accessLogin);
+          result.restore = true;
         } else {
-          result = saveText(form, editObject, request, connection, editField, contents, accessLogin);
+          result = saveText(form, editObject, request, connection, editField, contents, accessLogin
+            , "1".equals(form.getClearField()), null);
         }
-        if (!result.saved) result.reshowInEditor = !isImage;
+        if (!result.saved) result.reshowInEditor = !isImage && !isRestore;
         request.setAttribute(DescEditSafety.RESULT_ATTR, result);
         return true;
     }
 
+    /*
+     * "Restore this version" from the History page (fieldHistory.do): the history row restoreFrom
+     * of this page's field is saved through saveText, exactly like a curator's save (sanitizer,
+     * conflict check against the fingerprint the History page showed, history copy of the text it
+     * replaces, is_manual_entry=1 with the restoring curator as author). The text is read here from
+     * the history table; the browser sends only the row's id. A row of another page or field is refused.
+     */
+    private DescEditSafety.Result restoreVersion(DescriptionForm form, Describable describable, HttpServletRequest request
+      , Connection connection, String title, String restoreFrom, Login accessLogin) throws SQLException {
+        String pretty = DescEditSafety.prettyField(title);
+        int histId;
+        try {
+          histId = Integer.parseInt(restoreFrom.trim());
+        } catch (NumberFormatException e) {
+          histId = 0;
+        }
+        DescHistory.Version version;
+        try {
+          version = histId > 0 ? DescHistory.readVersion(connection, describable, title, histId) : null;
+        } catch (SQLException e) {
+          s_log.error("restoreVersion() name:" + describable.getName() + " field:" + title + " histId:" + histId + " e:" + e);
+          return DescEditSafety.Result.refused(title, "Nothing was restored: the database did not answer (AntWeb may be busy or restarting)."
+            + " Please try again in a minute.", null);
+        }
+        if (version == null) {
+          s_log.warn("restoreVersion() refused, no such version. name:" + describable.getName() + " field:" + title + " restoreFrom:" + restoreFrom);
+          return DescEditSafety.Result.refused(title, "Nothing was restored: that version is not in the history of " + pretty
+            + " on this page. Open the History of this field again.", null);
+        }
+        if (version.isClear()) {
+          return DescEditSafety.Result.refused(title, "Nothing was restored: that history entry records " + pretty
+            + " being cleared, so it has no text. Choose an older version.", null);
+        }
+        String label = "the version of " + version.date() + " (" + version.who + ")";
+        DescEditSafety.Result r = saveText(form, describable, request, connection, title, version.content, accessLogin, false, label);
+        if (r.saved) s_log.info("restoreVersion() name:" + describable.getName() + " field:" + title + " histId:" + histId + " login:" + accessLogin.getId() + " " + r.message);
+        return r;
+    }
+
+    /*
+     * Save text through the safety rules. restoreLabel is null for a curator's save, else the
+     * version being restored ("the version of <date> (<who>)"): same rules, restore wording, and
+     * the text is not shown again on a refusal (it is on the History page).
+     */
     private DescEditSafety.Result saveText(DescriptionForm form, Describable describable, HttpServletRequest request
-      , Connection connection, String title, String contents, Login accessLogin) throws SQLException {
+      , Connection connection, String title, String contents, Login accessLogin, boolean clear, String restoreLabel) throws SQLException {
         String pretty = DescEditSafety.prettyField(title);
         String loadedHash = form.getLoadedHash();
-        boolean clear = "1".equals(form.getClearField());
+        boolean restore = restoreLabel != null;
+        if (restore) clear = false;
+        String kept = restore ? "" : KEPT;
+        String submitted = restore ? null : contents;
+        String notDone = restore ? "Nothing was restored: " : "Nothing was saved: ";
 
         if (!"1".equals(form.getEditorReady()) || loadedHash == null || loadedHash.isEmpty()) {
           s_log.warn("saveText() refused, editor not ready. field:" + title + " login:" + accessLogin.getId());
+          if (restore) return DescEditSafety.Result.refused(title, notDone + "the History page was opened before an AntWeb update."
+            + " Open the History of " + pretty + " again, then choose Restore.", null);
           return DescEditSafety.Result.refused(title, "Nothing was saved: the editor had not finished loading the stored text of "
             + pretty + " (or this page was opened before an AntWeb update). Check the text below, then press Save again." + KEPT, contents);
         }
@@ -106,6 +188,9 @@ public class DescriptionAction extends AntwebAction {
         String sanitized = clear ? "" : HtmlSanitizer.sanitize(contents, "videos".equals(title));
         if (!clear && sanitized.contains("<div")) {
           s_log.warn("saveText() refused, div. name:" + describable.getName() + " field:" + title);
+          if (restore) return DescEditSafety.Result.refused(title, notDone + restoreLabel + " contains <div> blocks, which AntWeb no longer saves."
+            + " Open " + pretty + " with [Edit], copy in the text of that version from the History page (its HTML source),"
+            + " remove the <div ...> and </div> tags (keep the text between them), then Save.", null);
           return DescEditSafety.Result.refused(title, "Nothing was saved: the text contains a <div> block (from pasted web text)."
             + " Click Source, remove the <div ...> and </div> tags (keep the text between them), then Save." + KEPT, contents);
         }
@@ -113,15 +198,18 @@ public class DescriptionAction extends AntwebAction {
 
         boolean autoCommit = connection.getAutoCommit();
         String outcome;
+        boolean replaced = false;
         try {
           connection.setAutoCommit(false);
           String current = DescEditDb.readFieldForEdit(connection, describable, title, true);
+          replaced = current != null;
           String currentHash = DescEditSafety.hash(current);
 
           // Nothing would change (for example the same form sent twice, or the editor opened and saved
           // without changes; browsers send a text box's line breaks as CRLF): no write, no conflict.
           if (!blank && DescEditSafety.sameText(sanitized, current)) {
             connection.rollback();
+            if (restore) return DescEditSafety.Result.saved(title, pretty + " already has the text of " + restoreLabel + "; nothing changed.");
             return DescEditSafety.Result.saved(title, "Your changes to " + pretty + " were saved (the stored text already matched).");
           }
           if (clear && current == null) {
@@ -131,7 +219,13 @@ public class DescriptionAction extends AntwebAction {
 
           if (!currentHash.equals(loadedHash)) {
             connection.rollback();
-            s_log.warn("saveText() refused, conflict. name:" + describable.getName() + " field:" + title + " login:" + accessLogin.getId());
+            s_log.warn("saveText() refused, conflict. name:" + describable.getName() + " field:" + title + " login:" + accessLogin.getId() + (restore ? " (restore)" : ""));
+            if (restore) {
+              DescEditSafety.Result r = DescEditSafety.Result.refused(title, notDone + pretty + " was changed after you opened its History,"
+                + " so it was not replaced. Open the History of " + pretty + " again to see the newest text, then choose Restore again.", null);
+              r.conflict = true;
+              return r;
+            }
             DescEditSafety.Result r = DescEditSafety.Result.refused(title, "Nothing was saved: someone else saved " + pretty
               + " after you opened the editor. Their text (now stored) is shown below; your text is in the editor."
               + " Combine them in the editor if needed, then Save (that replaces the stored text)."
@@ -140,6 +234,10 @@ public class DescriptionAction extends AntwebAction {
             return r;
           }
 
+          if (blank && restore) {
+            connection.rollback();
+            return DescEditSafety.Result.refused(title, notDone + restoreLabel + " has no text left after AntWeb's safety cleaning.", null);
+          }
           if (blank && current == null) {
             connection.rollback();
             return DescEditSafety.Result.saved(title, "Nothing to save: the box was empty and " + pretty + " has no text.");
@@ -158,8 +256,8 @@ public class DescriptionAction extends AntwebAction {
         } catch (SQLException e) {
           try { connection.rollback(); } catch (SQLException e2) { /* ignore */ }
           s_log.error("saveText() name:" + describable.getName() + " field:" + title + " login:" + accessLogin.getId() + " e:" + e);
-          return DescEditSafety.Result.refused(title, "Nothing was saved: the database did not answer (AntWeb may be busy or restarting)."
-            + " Please try Save again in a minute." + KEPT, contents);
+          return DescEditSafety.Result.refused(title, notDone + "the database did not answer (AntWeb may be busy or restarting)."
+            + (restore ? " Please try again in a minute." : " Please try Save again in a minute.") + kept, submitted);
         } finally {
           try { connection.setAutoCommit(autoCommit); } catch (SQLException e) { /* ignore */ }
         }
@@ -169,6 +267,8 @@ public class DescriptionAction extends AntwebAction {
           s_log.info("saveText() cleared name:" + describable.getName() + " field:" + title + " login:" + accessLogin.getId());
           return DescEditSafety.Result.saved(title, pretty + " was cleared. The old text is kept in the page history.");
         }
+        if (restore) return DescEditSafety.Result.saved(title, pretty + " was restored to " + restoreLabel + "."
+          + (replaced ? " The text it replaced is kept in the History." : ""));
         return DescEditSafety.Result.saved(title, "Your changes to " + pretty + " were saved.");
     }
 
