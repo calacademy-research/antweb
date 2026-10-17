@@ -33,6 +33,10 @@ public final class AdminAlertAction extends AntwebAction {
 
             DynaActionForm df = (DynaActionForm) form;
             String action = (String) df.get("action"); 
+            if ("removeAll".equals(action) || "remove".equals(action) || "refresh".equals(action)) {
+                ActionForward confirm = PostOnly.confirm(request, mapping, "Admin alerts: " + action);
+                if (confirm != null) return confirm;
+            }
 
             if ("removeAll".equals(action)) {
                 AdminAlertMgr.removeAll(connection);

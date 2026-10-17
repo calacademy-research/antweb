@@ -33,6 +33,8 @@ public class TeamMemberAction extends AntwebAction {
           if (form.getId() != null) {
             // Saving a team member requires an administrator.
             ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
+            ActionForward confirm = org.calacademy.antweb.util.PostOnly.confirm(request, mapping, "Save team member " + form.getId());
+            if (confirm != null) return confirm;
             // A submit!
             s_log.warn("execute() id:" + form.getId());
             TeamMember teamMember = new TeamMember();

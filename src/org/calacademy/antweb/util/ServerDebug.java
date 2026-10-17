@@ -77,6 +77,8 @@ public final class ServerDebug extends AntwebAction {
 					return mapping.findForward("message");
 				}
 				if ("setDebug".equals(action)) {
+					ActionForward confirm = PostOnly.confirm(request, mapping, "Set server debug: " + param);
+					if (confirm != null) return confirm;
 					message = "serverDebug set:" + Html.esc(param);
 					ServerDb.setServerDebug(param, connection);
                     setDebug(param);

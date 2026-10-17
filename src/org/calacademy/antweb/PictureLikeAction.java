@@ -39,6 +39,9 @@ public final class PictureLikeAction extends AntwebAction {
             return mapping.findForward("message");
         }
         
+        ActionForward confirm = PostOnly.confirm(request, mapping, "Add this image to your favorites.");
+        if (confirm != null) return confirm;
+
         String code = ((SpecimenImageForm) form).getCode();
         if (code == null) code = ((SpecimenImageForm) form).getName();
         code = code.toLowerCase();

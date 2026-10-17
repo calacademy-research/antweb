@@ -33,6 +33,8 @@ public final class NewBioRegionAction extends AntwebAction {
         throws IOException, ServletException {
         // Require a logged-in administrator: this action changes data.
         ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
+        ActionForward confirm = PostOnly.confirm(request, mapping, "Create a bioregion project.");
+        if (confirm != null) return confirm;
 
         // Extract attributes we will need
         HttpSession session = request.getSession();

@@ -29,9 +29,14 @@ public final class UptimeAction extends AntwebAction {
         ActionForward returnVal = null;
         String message = null;
 
-        String queryString = HttpUtil.getQueryString(request);
-        if (queryString.contains("fail=1") || queryString.contains("fail=true")) isFailOnPurpose = true;
-        if (queryString.contains("fail=0") || queryString.contains("fail=false")) isFailOnPurpose = false;
+        // The fail= test switch changes the answer for every caller: administrators only, by POST.
+        String fail = request.getParameter("fail");
+        if (fail != null && LoginMgr.isAdmin(request)) {
+            ActionForward confirm = PostOnly.confirm(request, mapping, "Set uptime fail-on-purpose: " + fail);
+            if (confirm != null) return confirm;
+            if ("1".equals(fail) || "true".equals(fail)) isFailOnPurpose = true;
+            if ("0".equals(fail) || "false".equals(fail)) isFailOnPurpose = false;
+        }
 
         if (isFailOnPurpose()) {
             message = "fail on purpuse";

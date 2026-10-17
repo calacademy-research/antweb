@@ -43,6 +43,8 @@ public final class LoginAsAction extends AntwebAction {
         // Require a logged-in administrator.
         ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
         Login admin = LoginMgr.getAccessLogin(request);
+        ActionForward confirm = org.calacademy.antweb.util.PostOnly.confirm(request, mapping, "Log in as login id " + request.getParameter("id"));
+        if (confirm != null) return confirm;
 
         int id;
         try {
