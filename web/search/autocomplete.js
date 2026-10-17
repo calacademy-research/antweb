@@ -136,8 +136,8 @@ jQuery.autocomplete = function(input, options) {
 
 		if (active < 0) {
 			active = 0;
-		} else if (active >= lis.size()) {
-			active = lis.size() - 1;
+		} else if (active >= lis.length) {
+			active = lis.length - 1;
 		}
 
 		lis.removeClass("ac_over");
@@ -175,7 +175,7 @@ jQuery.autocomplete = function(input, options) {
 			li.extra = [];
 			li.selectValue = "";
 		}
-		var v = $.trim(li.selectValue ? li.selectValue : li.innerHTML);
+		var v = String(li.selectValue ? li.selectValue : li.innerHTML).trim();
 		input.lastSelected = v;
 		prev = v;
 		$results.html("");
@@ -256,10 +256,6 @@ jQuery.autocomplete = function(input, options) {
 			// if the field no longer has focus or if there are no matches, do not display the drop down
 			if( !hasFocus || data.length == 0 ) return hideResultsNow();
 
-			if ($.browser.msie) {
-				// we put a styled iframe behind the calendar so HTML SELECT elements don't show through
-				$results.append(document.createElement('iframe'));
-			}
 			results.appendChild(dataToDom(data));
 			// autofill in the complete box w/the first match as long as the user hasn't entered in more data
 			if( options.autoFill && ($input.val().toLowerCase() == q.toLowerCase()) ) autoFill(data[0][0]);
@@ -274,7 +270,7 @@ jQuery.autocomplete = function(input, options) {
 		var parsed = [];
 		var rows = data.split(options.lineSeparator);
 		for (var i=0; i < rows.length; i++) {
-			var row = $.trim(rows[i]);
+			var row = String(rows[i]).trim();
 			if (row) {
 				parsed[parsed.length] = row.split(options.cellSeparator);
 			}

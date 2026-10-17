@@ -97,7 +97,7 @@ $("#accordion a").click(function() {
 
 
 
-  var msie6 = $.browser == 'msie' && $.browser.version < 7;
+  var msie6 = false; // $.browser was removed from jQuery; IE6 is long gone
   if (!msie6) {
    if ($('#page_context').length>0) {
     var top = $('#page_context').offset().top - parseFloat($('#page_context').css('margin-top').replace(/auto/, 0));
