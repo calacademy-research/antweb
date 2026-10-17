@@ -17,6 +17,7 @@ public abstract class AntwebProps {
 
   private static final Log s_log = LogFactory.getLog(AntwebProps.class);
     
+    // Old placeholder text of empty editors. No longer put into the editor; a save of it is treated as empty (DescEditSafety.isPlaceholder).
     public static String guiDefaultContent = "Add your content here";    
     
     private static final boolean s_loadedResources = false;

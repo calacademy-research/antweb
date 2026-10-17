@@ -5,14 +5,13 @@
      thisDesc.equals(editField): Curator may edit one field at a time.  If it is this one, use editor.     
   */ %>   
   <%     
-      // Will be isCurator
-      if (LoginMgr.isAdmin(accessLogin) || (desc.containsKey(thisDesc ))) { %> 
+      if (canEditDesc || (desc.containsKey(thisDesc ))) { %> 
 
         <% // Then we will do somesomething at least, if only a header with an empty box. %>
         <% // desc, thisDesc and utility are defined in the including jsp (taxonPage-body.jsp) %>
         <a name="<%= thisDesc %>"></a><h3 style="float:left;"><%= descHeader %>:</h3>
 <%      String contents = (String) desc.get(thisDesc);     
-        if (accessLogin != null) { %>     
+        if (canEditDesc) { %>     
        <% // They are an admin.  So display editable if this is the editField %>
        <% if (thisDesc.equals(editField)) { %>
          Click "Source" and enter an html embed code.  Contact <%= AntwebUtil.getAdminEmail() %> with any technical issues.<br>
@@ -23,7 +22,7 @@
               //if (AntwebProps.isDevMode()) AntwebUtil.log("taxonImageEditField.jsp taxonName:" + taxon.getTaxonName() + " browserParams:" + browserParams);       
        %>
          <p><small style="float:left; margin-top:14px; margin-left:5px;"> <a href="description.do?<%= Utility.stripParams(browserParams, "editField") %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a></small><div class="clear"></div></p>
-         <% if (HttpUtil.isPost(request)) { %>
+         <% if (DescEditSafety.result(request) != null && DescEditSafety.result(request).saved && thisDesc.equals(DescEditSafety.result(request).field)) { %>
            <b><font color=green>Your Content has been saved.  </font><a href='<%= AntwebProps.getDomainApp() + "/description.do?" + browserParams %>'>Click here to proceed.</a> <font color=green></font></b>
          <% } else { %>
            <!-- Here we show the video -->

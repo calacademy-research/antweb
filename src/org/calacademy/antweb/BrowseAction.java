@@ -366,6 +366,7 @@ public class BrowseAction extends DescriptionAction {
 		  //A.log("execute() saveDescriptionEdit accessGroup:" + accessGroup + " taxon:" + taxon); 
 		  boolean success = saveDescriptionEdit(browseForm, taxon, accessLogin, request, connection);   
 		  if (!success) return mapping.findForward("message");
+		  prepareDescriptionEdit(taxon, accessLogin, request, connection);
 
 		  if (accessLogin != null) getDescEditHistory(taxon, connection, request);
 

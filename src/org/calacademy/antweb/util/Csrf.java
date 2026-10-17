@@ -207,6 +207,29 @@ public final class Csrf {
         return null;
     }
 
+    /** True for a page-text editor save (urlencoded, so its fields can be read here). */
+    public static boolean isEditorSave(HttpServletRequest request) {
+        return !isMultipart(request) && "true".equals(request.getParameter("isSaveEditField"));
+    }
+
+    /**
+     * The 403 answer for a page-text editor save: the curator's text is shown again so it is
+     * never lost (it is also kept as a draft in their browser by editSafety.js).
+     */
+    public static void denyEditorSave(HttpServletResponse response, String text) throws java.io.IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("text/html; charset=UTF-8");
+        response.setHeader("Cache-Control", "no-store");
+        response.getWriter().write("<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Not saved: request refused</title></head>"
+            + "<body style=\"font-family:sans-serif;margin:2em;max-width:60em\"><h2>Your text was not saved</h2>"
+            + "<p>This form could not be checked as coming from AntWeb (403). This can happen if the page was open"
+            + " for a long time or you logged in again in another tab.</p>"
+            + "<p><b>Your text is below</b>, and it is also kept as a draft in this browser: go back, reload the page,"
+            + " open the field with [Edit] and choose Restore, then Save. Or copy the text from this box.</p>"
+            + "<textarea id=\"keptText\" readonly style=\"width:100%;height:20em\">" + Html.esc(text) + "</textarea>"
+            + "</body></html>");
+    }
+
     /** The 403 answer. */
     public static void deny(HttpServletResponse response) throws java.io.IOException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);

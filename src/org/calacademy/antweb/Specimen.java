@@ -727,14 +727,14 @@ update specimen set other = '
           s_log.warn("setDescription() not is manual entry?");
         }
 
-        Hashtable<String, String> description = new Hashtable<>();
+        Hashtable<String, String> description = new org.calacademy.antweb.home.DescriptionTable();
         String taxonName = null;
         String theQuery = "";
         Statement stmt = null;
         ResultSet rset = null;
         try {
             taxonName = AntFormatter.escapeQuotes(getTaxonName());
-            theQuery = "select title, content from description_edit where code = '" + code + "'";
+            theQuery = "select title, content from description_edit where code = '" + AntFormatter.escapeQuotes(code) + "'";
             
             if (isManualEntry) {
               theQuery += " and is_manual_entry = 1";
@@ -764,7 +764,8 @@ update specimen set other = '
             
         } catch (SQLException e) {
             s_log.error("setDescription() for taxonName:" + taxonName + " exception:" + e + " theQuery:" + theQuery);
-            // project:" + project + " 
+            // Not empty fields: the page says the text could not be loaded (see DescriptionTable).
+            description = org.calacademy.antweb.home.DescriptionTable.failed();
         } finally {
             DBUtil.close(stmt, rset, this, "setDescription()");
         }

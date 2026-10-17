@@ -34,7 +34,7 @@ public class DescEditDb extends AntwebDb{
 		// We have aimed this method against description_edit instead of description.
 		// To do: Remove taxon_name from query and replace with id.  Include into this class.
 
-        Hashtable<String, String> description = new Hashtable<>();
+        Hashtable<String, String> description = new DescriptionTable();
 
         String taxonName = null;
         Formatter formatter = new Formatter();
@@ -99,11 +99,51 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
             
         } catch (SQLException e) {
             s_log.error("getDescEdits() for taxonName:" + taxonName + " exception:" + e + " theQuery:" + theQuery);
-            // project:" + project + " 
+            // Never pass a failed read off as empty fields: the page says the text could not be
+            // loaded and offers no editor (an empty editor could be saved over the stored text).
+            description = DescriptionTable.failed();
         } finally {
             DBUtil.close(stmt, rset, this, "getDescEdits()");
         }
         return description;
+    }
+
+    /**
+     * The stored text of one page field, exactly as in the database (no dequote, no https
+     * rewrite), for the editor and for the save checks. Null if the field has no text.
+     * Taxon pages: description_edit by taxon_name (code is null). Specimen pages: description_edit
+     * by code (as the specimen page shows it). Overview pages: object_edit by object_key.
+     * forUpdate locks the row until the transaction ends. Throws on a database error: the caller
+     * must not treat a failed read as an empty field.
+     */
+    public static String readFieldForEdit(Connection connection, Describable describable, String title, boolean forUpdate)
+        throws SQLException {
+        String sql;
+        String key;
+        if (describable instanceof Specimen) {
+            sql = "select content from description_edit where code = ? and title = ? order by created desc, edit_id desc limit 1";
+            key = ((Specimen) describable).getCode();
+        } else if (describable instanceof Taxon) {
+            sql = "select content from description_edit where taxon_name = ? and title = ? and code is null limit 1";
+            key = ((Taxon) describable).getTaxonName();
+        } else {
+            sql = "select content from object_edit where object_key = ? and title = ? limit 1";
+            key = describable.getName();
+        }
+        if (forUpdate) sql += " for update";
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = connection.prepareStatement(sql);
+            stmt.setString(1, key);
+            stmt.setString(2, title);
+            rset = stmt.executeQuery();
+            if (rset.next()) return rset.getString("content");
+            return null;
+        } finally {
+            if (rset != null) try { rset.close(); } catch (SQLException e) { /* ignore */ }
+            if (stmt != null) try { stmt.close(); } catch (SQLException e) { /* ignore */ }
+        }
     }
 
     private static String httpSecurify(String value) {
@@ -217,7 +257,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
     public Hashtable<String, String> getDescription(String objectName) {
 
         Formatter formatter = new Formatter();
-        Hashtable<String, String> description = new Hashtable<>();
+        Hashtable<String, String> description = new DescriptionTable();
         String theQuery = "";
         Statement stmt = null;
         ResultSet rset = null;
@@ -244,6 +284,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
             
         } catch (SQLException e) {
             s_log.error("getDescription() for object:" + objectName + " exception:" + e + " theQuery:" + theQuery);
+            description = DescriptionTable.failed();  // see getDescEdits()
         } finally {
             DBUtil.close(stmt, rset, this, "DescEditDb.getDescription()");
         }

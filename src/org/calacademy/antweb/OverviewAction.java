@@ -88,6 +88,7 @@ public final class OverviewAction extends DescriptionAction {
                 , request, connection);   
               if (!success) return mapping.findForward("message");
             }
+            prepareDescriptionEdit(project, accessLogin, request, connection);
   
             OverviewMgr.setOverview(request, project);  
             request.setAttribute("overview", project);
@@ -133,6 +134,7 @@ public final class OverviewAction extends DescriptionAction {
                  , request, connection);   
                 if (!success) return mapping.findForward("message");
               }
+              prepareDescriptionEdit(museum, accessLogin, request, connection);
   
               OverviewMgr.setOverview(request, museum); 
               museum.setMap(new ObjectMapDb(connection).getMuseumMap(museum.getCode()));
@@ -174,6 +176,7 @@ public final class OverviewAction extends DescriptionAction {
                  , request, connection);   
                 if (!success) return mapping.findForward("message");
               }
+              prepareDescriptionEdit(bioregion, accessLogin, request, connection);
 
               OverviewMgr.setOverview(request, bioregion);
               request.setAttribute("overview", bioregion);
@@ -276,6 +279,7 @@ public final class OverviewAction extends DescriptionAction {
                  , request, connection);   
                 if (!success) return mapping.findForward("message");
               }                
+              prepareDescriptionEdit(geolocale, accessLogin, request, connection);
               OverviewMgr.setOverview(request, geolocale);
               request.setAttribute("overview", geolocale);
               return mapping.findForward("region");
@@ -310,6 +314,7 @@ public final class OverviewAction extends DescriptionAction {
                  , request, connection);   
                 if (!success) return mapping.findForward("message");
               }
+              prepareDescriptionEdit(geolocale, accessLogin, request, connection);
               OverviewMgr.setOverview(request, geolocale);
               request.setAttribute("overview", geolocale);
               return mapping.findForward("subregion");
@@ -353,6 +358,7 @@ public final class OverviewAction extends DescriptionAction {
                 , request, connection);   
               if (!success) return mapping.findForward("message");
             }
+            prepareDescriptionEdit(geolocale, accessLogin, request, connection);
 
             geolocale = GeolocaleMgr.getGeolocale(geolocale.getId());
             OverviewMgr.setOverview(request, geolocale);
@@ -440,6 +446,7 @@ public final class OverviewAction extends DescriptionAction {
                 , request, connection);   
               if (!success) return mapping.findForward("message");
             }
+            prepareDescriptionEdit(geolocale, accessLogin, request, connection);
 
             geolocale = GeolocaleMgr.getGeolocale(geolocale.getId());
             OverviewMgr.setOverview(request, geolocale);            

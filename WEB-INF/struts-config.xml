@@ -839,6 +839,11 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="success" path="/specimen.jsp"/>
     </action>
 
+    <!-- Page-text editor: "still logged in?" and a fresh form token (JSON). See EditSessionAction. -->
+    <action path="/editSession"
+            type="org.calacademy.antweb.EditSessionAction">
+    </action>
+
     <action  path="/typeStatus"
              type="org.calacademy.antweb.upload.TypeStatusMgr">
       <forward name="success" path="/message-body.jsp"/>
