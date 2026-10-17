@@ -157,13 +157,22 @@ public final class SanitizeDescriptionsAction extends AntwebAction {
                     msg.append("<p>Nothing to change.</p>");
                 } else {
                     String backup = "description_sanitize_backup_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-                    int updated = applyChanges(connection, backup, changes);
+                    ApplyResult r = applyChanges(connection, backup, changes);
+                    int updated = r.updated;
                     msg.append("<p><b>Done.</b> ").append(updated).append(" of ").append(changes.size())
-                       .append(" rows sanitized (a row edited since the scan is left alone). The previous text of each is in table <b>")
+                       .append(" rows sanitized. The previous text of each is in table <b>")
                        .append(Html.esc(backup)).append("</b>.</p>");
+                    if (!r.skipped.isEmpty()) {
+                        msg.append("<p>Left alone: ").append(r.changed).append(" changed since the scan, ")
+                           .append(r.missing).append(" not found by key, ").append(r.unreadable)
+                           .append(" with characters that do not read back exactly.</p><ul>");
+                        int shown = 0;
+                        for (String sk : r.skipped) { if (shown++ >= 50) { msg.append("<li>...</li>"); break; } msg.append("<li>").append(Html.esc(sk)).append("</li>"); }
+                        msg.append("</ul>");
+                    }
                     String line = DateUtil.getFormatDateTimeStr() + " sanitizeDescriptions by " + who + ": " + updated
                         + " rows (found description_edit " + cDesc + ", description_homonym " + cHom + ", object_edit " + cObj
-                        + "), backup table " + backup;
+                        + "), skipped changed " + r.changed + " missing " + r.missing + " unreadable " + r.unreadable + ", backup table " + backup;
                     LogMgr.appendLog("admin.log", line);
                     s_log.warn("execute() " + line);
                 }
@@ -263,10 +272,42 @@ public final class SanitizeDescriptionsAction extends AntwebAction {
         return count;
     }
 
-    /** Back up, then update, every changed row in one transaction. Returns the number of rows updated. */
-    private int applyChanges(Connection connection, String backup, List<Change> changes) throws SQLException {
-        // "created = created" in the updates keeps the curator's edit date (the column is
-        // ON UPDATE CURRENT_TIMESTAMP in older schemas).
+    /** Why rows were or were not changed by applyChanges. */
+    static final class ApplyResult {
+        int updated, missing, changed, unreadable;
+        final List<String> skipped = new ArrayList<>();
+    }
+
+    static String sha256(String s) {
+        try {
+            byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : d) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** "where" clause and parameters that find the row of a Change by its key only. */
+    private static String keyWhere(Change c) {
+        if ("description_edit".equals(c.table)) return "taxon_name = ? and title = ? and code <=> ?";
+        if ("description_homonym".equals(c.table)) return "taxon_name = ? and author_date <=> ? and title = ?";
+        return "object_key = ? and title = ?";
+    }
+
+    private static int setKey(PreparedStatement ps, int i, Change c) throws SQLException {
+        if ("description_edit".equals(c.table)) { ps.setString(i++, c.taxonName); ps.setString(i++, c.title); ps.setString(i++, c.code); }
+        else if ("description_homonym".equals(c.table)) { ps.setString(i++, c.taxonName); ps.setString(i++, c.authorDate); ps.setString(i++, c.title); }
+        else { ps.setString(i++, c.objectKey); ps.setString(i++, c.title); }
+        return i;
+    }
+
+    // MySQL's own hash of the stored text, so the comparison never depends on sending the text back.
+    private static final String HASH = "sha2(convert(content using utf8mb4), 256)";
+
+    /** Back up, then update, every changed row in one transaction. */
+    private ApplyResult applyChanges(Connection connection, String backup, List<Change> changes) throws SQLException {
         // The backup table is created outside the transaction (DDL commits implicitly in MySQL).
         try (Statement stmt = connection.createStatement()) {
             stmt.executeUpdate("create table " + backup + " ("
@@ -284,19 +325,34 @@ public final class SanitizeDescriptionsAction extends AntwebAction {
                 + ") default charset=utf8mb4");
         }
 
+        ApplyResult r = new ApplyResult();
         boolean autoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);
-        int updated = 0;
         try (PreparedStatement ins = connection.prepareStatement("insert into " + backup
                  + " (src_table, taxon_name, code, author_date, object_key, title, reasons, content, sanitized_content)"
-                 + " values (?,?,?,?,?,?,?,?,?)");
-             PreparedStatement updDesc = connection.prepareStatement(
-                 "update description_edit set content = ?, created = created where taxon_name = ? and title = ? and code <=> ? and content = ?");
-             PreparedStatement updHom = connection.prepareStatement(
-                 "update description_homonym set content = ? where taxon_name = ? and author_date <=> ? and title = ? and content = ?");
-             PreparedStatement updObj = connection.prepareStatement(
-                 "update object_edit set content = ?, created = created where object_key = ? and title = ? and content = ?")) {
+                 + " values (?,?,?,?,?,?,?,?,?)")) {
             for (Change c : changes) {
+                // 1. Re-read the row by its key (locked until commit).
+                String storedHash = null; String stored = null; int found = 0;
+                try (PreparedStatement sel = connection.prepareStatement(
+                        "select content, " + HASH + " h from " + c.table + " where " + keyWhere(c) + " for update")) {
+                    setKey(sel, 1, c);
+                    try (ResultSet rs = sel.executeQuery()) {
+                        while (rs.next()) {
+                            found++;
+                            String h = rs.getString("h"); String txt = rs.getString("content");
+                            if (stored == null || c.before.equals(txt)) { stored = txt; storedHash = h; }
+                        }
+                    }
+                }
+                if (found == 0) { r.missing++; r.skipped.add(c.id() + ": row not found by its key"); continue; }
+                if (!c.before.equals(stored)) { r.changed++; r.skipped.add(c.id() + ": text changed since the scan"); continue; }
+                // 2. If the text did not come back from MySQL exactly (characters the connection
+                //    cannot carry), writing it back would damage them: leave the row alone.
+                if (storedHash == null || !storedHash.equals(sha256(stored))) {
+                    r.unreadable++; r.skipped.add(c.id() + ": contains characters that do not read back exactly"); continue;
+                }
+
                 ins.setString(1, c.table);
                 ins.setString(2, c.taxonName);
                 ins.setString(3, c.code);
@@ -308,19 +364,17 @@ public final class SanitizeDescriptionsAction extends AntwebAction {
                 ins.setString(9, c.after);
                 ins.executeUpdate();
 
-                // "and content = ?": a row edited since the scan is left alone.
-                if ("description_edit".equals(c.table)) {
-                    updDesc.setString(1, c.after); updDesc.setString(2, c.taxonName); updDesc.setString(3, c.title);
-                    updDesc.setString(4, c.code); updDesc.setString(5, c.before);
-                    updated += updDesc.executeUpdate();
-                } else if ("description_homonym".equals(c.table)) {
-                    updHom.setString(1, c.after); updHom.setString(2, c.taxonName); updHom.setString(3, c.authorDate);
-                    updHom.setString(4, c.title); updHom.setString(5, c.before);
-                    updated += updHom.executeUpdate();
-                } else {
-                    updObj.setString(1, c.after); updObj.setString(2, c.objectKey); updObj.setString(3, c.title);
-                    updObj.setString(4, c.before);
-                    updated += updObj.executeUpdate();
+                // 3. Update by key and stored hash. "created = created" keeps the curator's edit date
+                //    (ON UPDATE CURRENT_TIMESTAMP in older schemas); description_homonym has no created column.
+                String keep = "description_homonym".equals(c.table) ? "" : ", created = created";
+                try (PreparedStatement upd = connection.prepareStatement(
+                        "update " + c.table + " set content = ?" + keep + " where " + keyWhere(c) + " and " + HASH + " = ?")) {
+                    upd.setString(1, c.after);
+                    int i = setKey(upd, 2, c);
+                    upd.setString(i, storedHash);
+                    int n = upd.executeUpdate();
+                    if (n > 0) r.updated += n;
+                    else { r.changed++; r.skipped.add(c.id() + ": update matched no row"); }
                 }
             }
             connection.commit();
@@ -330,6 +384,6 @@ public final class SanitizeDescriptionsAction extends AntwebAction {
         } finally {
             connection.setAutoCommit(autoCommit);
         }
-        return updated;
+        return r;
     }
 }
