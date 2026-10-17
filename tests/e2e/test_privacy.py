@@ -4,7 +4,8 @@ import pytest
 from antweb import BASE_URL, new_session
 
 
-@pytest.mark.parametrize("path", ["/web/log/logins.txt"])
+@pytest.mark.parametrize("path", ["/web/log/logins.txt", "/web/log/serverBusy.html", "/data/index.jsp",
+                                  "/web/log/", "/web/curator/", "/web/bak/taxonSets/"])
 def test_private_file_not_public(path):
     r = new_session().get(BASE_URL + path, timeout=60)
     assert r.status_code in (403, 404), f"{path} is public (HTTP {r.status_code})"
@@ -38,3 +39,19 @@ def test_data_jobs_need_admin():
     from antweb import get
     outcome = get(new_session(), "/utilData.do?action=taxonWorksNightly&param=allow")
     assert outcome.category == "login", outcome
+
+
+def test_specimen_short_link_does_not_echo_input():
+    """/specimen/<code> redirects to the specimen page; anything that is not a code is a 404
+    and is never echoed back (it used to print the URL unescaped on an error)."""
+    r = new_session().get(BASE_URL + "/specimen/%3Cscript%3Eaw5%3C%2Fscript%3E", timeout=60, allow_redirects=False)
+    assert "<script>aw5" not in r.text
+    assert r.status_code == 404, f"HTTP {r.status_code}"
+    r = new_session().get(BASE_URL + "/specimen/casent0106322", timeout=60, allow_redirects=False)
+    assert r.status_code in (301, 302) and "/specimen.do?name=casent0106322" in r.headers.get("Location", ""), r.status_code
+
+
+def test_query_not_found_message_is_escaped():
+    """query.do echoes an unknown query name; it must be escaped."""
+    r = new_session().get(BASE_URL + "/query.do?name=%3Cb%3Eaw5x%3C%2Fb%3E&param=%3Ci%3Ey%3C%2Fi%3E", timeout=60)
+    assert "<b>aw5x</b>" not in r.text and "<i>y</i>" not in r.text
