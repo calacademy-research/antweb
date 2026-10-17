@@ -162,6 +162,9 @@ public final class EditLoginAction extends AntwebAction {
             message = "Name must be valid";
         }
 
+        String nameProblem = LoginNames.problem(editForm.getName(), editForm.getFirstName(), editForm.getLastName(), email, login);
+        if (nameProblem != null) message = Html.esc(nameProblem);
+
         // Both password fields blank: keep the current password.
         if (password == null) password = "";
         if (retypePassword == null) retypePassword = "";

@@ -32,6 +32,8 @@ public final class WorldAuthorityAction extends AntwebAction {
 		throws IOException, ServletException {
         // Require a logged-in administrator: this action changes data.
         ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
+        ActionForward confirm = org.calacademy.antweb.util.PostOnly.confirm(request, mapping, "Save or roll back the world authority files.");
+        if (confirm != null) return confirm;
 
 		// Extract attributes we will need
 		HttpSession session = request.getSession();
@@ -41,6 +43,9 @@ public final class WorldAuthorityAction extends AntwebAction {
 		String success = "success";
 		String mode = ((WorldAuthorityForm) form).getMode();
 		String fileName = ((WorldAuthorityForm) form).getFileName();
+		if (fileName != null && (fileName.contains("/") || fileName.contains("\\") || fileName.contains(".."))) {
+			return org.calacademy.antweb.util.HttpUtil.sendMessage(request, mapping, "Invalid file name.");
+		}
 		fileName = docPath + "/" + fileName;
 		if (mode.equals("rollback")) {
 			boolean rolledBack = Utility.rollbackFile(fileName);

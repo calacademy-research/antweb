@@ -188,10 +188,11 @@ public class DBStatus {
 
                 lastLog = new Date();
                 String logMessage = "<br><br>" + new Date() + " reportServerBusy forced:" + force
-                        + "<br><br>" + QueryProfiler.report() + "<br><br> Memory:" + AntwebUtil.getMemoryStats() + "<br><br> oldConns:" + DBUtil.getOldConnectionList();
+                        + "<br><br>" + escBr(QueryProfiler.report()) + "<br><br> Memory:" + Html.esc(AntwebUtil.getMemoryStats()) + "<br><br> oldConns:" + escBr(DBUtil.getOldConnectionList());
                 s_log.warn(logMessage);
                 logMessage += "<br><br> processes:" + getMysqlProcessListHtml(processlist);
-                LogMgr.appendLog("serverBusy.html", logMessage);
+                // Not in web/log: the report holds running SQL and request URLs.
+                LogMgr.appendDataLog("serverBusy.html", logMessage);
                 serverBusyReport = logMessage;
             }
 
@@ -222,7 +223,7 @@ public class DBStatus {
             lastLog = new Date();
             String logMessage = "<br><br>" + new Date() + " reportServerBusy forced:" + force
                     + "<br><br>shortPool:" + getSimpleCpDiagnosticsAttr (cpds1) + ". <br><br>mediumPool:" + getSimpleCpDiagnosticsAttr(cpds2) + ". <br><br>longPools:" + getSimpleCpDiagnosticsAttr(cpds3) + " "
-                    + "<br><br>" + QueryProfiler.report() + "<br><br> Memory:" + AntwebUtil.getMemoryStats() + "<br><br> oldConns:" + DBUtil.getOldConnectionList();
+                    + "<br><br>" + escBr(QueryProfiler.report()) + "<br><br> Memory:" + Html.esc(AntwebUtil.getMemoryStats()) + "<br><br> oldConns:" + escBr(DBUtil.getOldConnectionList());
             s_log.warn(logMessage);
 
             connection = DBUtil.getConnection(cpds1, dbMethodName);
@@ -230,7 +231,8 @@ public class DBStatus {
 
             // Report cpds2 and 3?
 
-            LogMgr.appendLog("serverBusy.html", logMessage);
+            // Not in web/log: the report holds running SQL and request URLs.
+            LogMgr.appendDataLog("serverBusy.html", logMessage);
             serverBusyReport = logMessage;
           }
 
@@ -341,7 +343,7 @@ public class DBStatus {
         String returnVal = "";
         ArrayList<String> list = getMysqlProcessList(connection);
         for (String record : list) {
-            returnVal += record + "<br>";
+            returnVal += Html.esc(record) + "<br>";
         }
         return returnVal;
     }
@@ -349,9 +351,15 @@ public class DBStatus {
     public static String getMysqlProcessListHtml(ArrayList<String> list) {
         String returnVal = "";
         for (String record : list) {
-            returnVal += record + "<br>";
+            returnVal += Html.esc(record) + "<br>";
         }
         return returnVal;
+    }
+
+    /** Escape text for HTML but keep its own <br> line breaks. */
+    public static String escBr(String text) {
+        if (text == null) return "null";
+        return Html.esc(text).replace("&lt;br&gt;", "<br>");
     }
 
     public static String getMysqlProcessListStr(Connection connection)

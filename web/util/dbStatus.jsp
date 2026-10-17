@@ -70,8 +70,6 @@ String oldConnString = DBUtil.getOldConnectionList();
 </pre>
 
 <h3>Assorted Links</h3>
-     <br><a href= "<%= domainApp %>/dbStatus.do?name=holdOpenConnection">holdOpen</a> database connection for testing.
-     <br><a href= "<%= domainApp %>/dbStatus.do?name=closeOpenConnection">close Open</a> database connection for testing.
 <br>
 
 <hr>

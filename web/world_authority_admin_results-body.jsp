@@ -20,7 +20,7 @@
 		out.println(problems);  		    
 %>
 
-<a href="worldAuthoritySave.do?mode=save">Save Anyway</a>  <a href="worldAuthoritySave.do?mode=rollback&fileName=<%= fileName %>">Cancel</a>
+<%= org.calacademy.antweb.util.Csrf.postButton(request, "worldAuthoritySave.do?mode=save", "Save Anyway") %>  <%= org.calacademy.antweb.util.Csrf.postButton(request, "worldAuthoritySave.do?mode=rollback&fileName=" + org.calacademy.antweb.util.Html.url(fileName), "Cancel") %>
 
 <%
 	}

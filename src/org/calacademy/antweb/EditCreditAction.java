@@ -27,10 +27,15 @@ public class EditCreditAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EditCreditAction.class);
 
+    // Tables whose single text column has the same name as the table.
+    static final java.util.Set<String> CREDIT_TABLES = java.util.Set.of("copyright", "license");
+
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response) {
         // Require a logged-in administrator: this action changes data.
         ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
+        // Changes only by POST, so the CSRF filter checks the form token.
+        if (!HttpUtil.isPost(request)) return HttpUtil.sendMessage(request, mapping, "Credits can only be changed with the form (POST).");
 
 		Connection connection = null;
 		String query;
@@ -54,6 +59,10 @@ public class EditCreditAction extends AntwebAction {
 				}
 				if (changeType == null)
 					return null;
+				// changeField names a table and a column: only the credit tables are allowed.
+				if (!CREDIT_TABLES.contains(changeField)) {
+					return HttpUtil.sendMessage(request, mapping, "Unknown credit field.");
+				}
 
 				if (changeType.equals("add")) {
 					addNewCredit(connection, changeField, newValue);
@@ -87,8 +96,10 @@ public class EditCreditAction extends AntwebAction {
 			&& connection != null) {
 
             Statement stmt = null;
+            PreparedStatement pstmt = null;
             ResultSet rset = null;
 			try {
+				if (!CREDIT_TABLES.contains(changeField)) return;
 				// get the max index
 				String query = "select max(id) from " + changeField;
 				stmt = connection.createStatement();
@@ -100,16 +111,16 @@ public class EditCreditAction extends AntwebAction {
 				stmt.close();
 
 				maxId++;
-				query =
-					"insert into " + changeField
-						+ " (id," + changeField + ") " 
-						+ " values (" + maxId + ", '" + newValue + "')";
-				stmt = DBUtil.getStatement(connection, "addNewCredit()");
-				stmt.execute(query);
+				query = "insert into " + changeField + " (id," + changeField + ") values (?, ?)";
+				pstmt = DBUtil.getPreparedStatement(connection, "addNewCredit()", query);
+				pstmt.setInt(1, maxId);
+				pstmt.setString(2, newValue);
+				pstmt.execute();
 			} catch (SQLException e) {
 				s_log.error("addNewCredit() e:" + e);
 				AntwebUtil.logStackTrace(e);
 			} finally {
+                DBUtil.close(pstmt, "addNewCredit()");
                 DBUtil.close(stmt, rset, this, "addNewCredit()");			
 			}
 		}
@@ -121,12 +132,14 @@ public class EditCreditAction extends AntwebAction {
 			&& connection != null && selectedValue > 0) {
 
             String theQuery = "";
-            Statement stmt = null;
+            PreparedStatement stmt = null;
 			try {
-				// get the max index
-				theQuery = "update  " + changeField + " set " + changeField + " ='" + newValue + "' where id = " + selectedValue;
-				stmt = DBUtil.getStatement(connection, "editCredit()"); 
-				stmt.execute(theQuery);
+				if (!CREDIT_TABLES.contains(changeField)) return;
+				theQuery = "update " + changeField + " set " + changeField + " = ? where id = ?";
+				stmt = DBUtil.getPreparedStatement(connection, "editCredit()", theQuery);
+				stmt.setString(1, newValue);
+				stmt.setInt(2, selectedValue);
+				stmt.execute();
 			} catch (SQLException e) {
 				s_log.error("editCredit() e:" + e + " theQuery:" + theQuery);
 				AntwebUtil.logStackTrace(e);
@@ -275,6 +288,7 @@ public class EditCreditAction extends AntwebAction {
         Statement stmt = null;
         ResultSet rset = null;
 		try {
+			if (!CREDIT_TABLES.contains(column)) return;
 			File outputFile = new File(docBase + "/" + column + "_gen_inc.jsp");
 			FileWriter outFile = new FileWriter(outputFile);
 
@@ -296,7 +310,7 @@ public class EditCreditAction extends AntwebAction {
 				theValue = rset.getString(2);
 				if (theValue != null && !theValue.equals("")) {
 					outFile.write("<html:option value=\"" + theId + "\"");
-					outFile.write(">" + theValue + "</html:option>\n");
+					outFile.write(">" + Html.esc(theValue) + "</html:option>\n");
 				}
 			}
 			outFile.write("</html:select>\n");

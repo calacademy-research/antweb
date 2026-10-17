@@ -46,8 +46,17 @@ public final class EditProjectAction extends AntwebAction {
             connection = DBUtil.getConnection(dataSource, "EditProjectAction.execute()");
 
             if ("delete".equals(editProjectForm.getAction()) && !LoginMgr.isAdmin(request)) {
-              // Deleting is done from a link (GET): administrators only.
               request.setAttribute("message", "Only an AntWeb administrator may delete a project.");
+              return mapping.findForward("message");
+            }
+            if ("delete".equals(editProjectForm.getAction()) && !HttpUtil.isPost(request)) {
+              // Deleting changes data: POST only, so the CSRF filter checks the form token.
+              request.setAttribute("message", "Use the Delete button on the project edit page.");
+              return mapping.findForward("message");
+            }
+            // A curator may edit only a project assigned to them; administrators any project.
+            if (!SpeciesListAccess.canEdit(LoginMgr.getAccessLogin(request), projectName)) {
+              request.setAttribute("message", SpeciesListAccess.NOT_ASSIGNED);
               return mapping.findForward("message");
             }
             if ("delete".equals(editProjectForm.getAction())) {

@@ -81,10 +81,17 @@ public class UtilDataAction extends AntwebAction {
         // Data jobs change or recompute data: administrators only, or the scheduler
         // (which passes the one-time secureCode). "param=allow" alone is not enough.
         boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
-        if (!isAdmin && !AntwebUtil.isSecureCode(theForm.getSecureCode())) {
+        boolean isScheduler = AntwebUtil.isSecureCode(theForm.getSecureCode());
+        if (!isAdmin && !isScheduler) {
             s_log.warn("execute() refused action:" + action + " for " + loginName + " target:" + HttpUtil.getTarget(request));
             ActionForward denied = LoginMgr.mustBeAdmin(request, mapping);
             if (denied != null) return denied;
+        }
+        // From a browser, a job runs only by POST (CSRF-checked); a GET link shows a Run button.
+        // The Scheduler's own GET calls carry the secureCode and go straight through.
+        if (!isScheduler) {
+            ActionForward confirm = PostOnly.confirm(request, mapping, "Run data job: " + action);
+            if (confirm != null) return confirm;
         }
 
         // Being called from a getUrl() by Schedule.do, Scheduler.java.

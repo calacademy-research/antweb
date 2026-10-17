@@ -71,6 +71,23 @@ public final class Csrf {
     }
 
     /**
+     * A small inline POST form that looks like a link, for actions that change data (they refuse
+     * GET, so a cross-site link can not trigger them). url is the action with its query string;
+     * labelHtml is trusted markup (text or an img tag). confirm, if not null, asks first.
+     */
+    public static String postButton(HttpServletRequest request, String url, String labelHtml, String confirm) {
+        String onsubmit = confirm == null ? "" : " onsubmit=\"return confirm('" + Html.js(confirm) + "')\"";
+        return "<form method=\"post\" action=\"" + Html.escAttr(url) + "\" style=\"display:inline;margin:0\"" + onsubmit + ">"
+            + field(request)
+            + "<button type=\"submit\" style=\"background:none;border:none;padding:0;margin:0;color:#0645ad;"
+            + "font:inherit;cursor:pointer;text-decoration:underline\">" + labelHtml + "</button></form>";
+    }
+
+    public static String postButton(HttpServletRequest request, String url, String labelHtml) {
+        return postButton(request, url, labelHtml, null);
+    }
+
+    /**
      * The url with the token added as a query parameter (any old _csrf parameter removed).
      * Use for the action of multipart (file upload) forms.
      */

@@ -205,7 +205,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
                     &nbsp;&nbsp;Upload as:
                     <select name="uploadAs">
-                        <option value="<%= accessLogin.getId() %>" selected><%= accessLogin.getName() %>
+                        <option value="<%= accessLogin.getId() %>" selected><%= Html.esc(accessLogin.getName()) %>
                 <%
                 String uploadAs = accessLogin.getUploadAs();
                 if (uploadAs != null && !"".equals(uploadAs)) {
@@ -217,7 +217,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                         curatorId = Integer.parseInt((curatorIdStr.trim()));
                         curator = LoginMgr.getCurator(curatorId);
                         if (curator != null) { %>
-                            <option value="<%= curator.getId() %>"><%= curator.getName() %>
+                            <option value="<%= curator.getId() %>"><%= Html.esc(curator.getName()) %>
                      <% } else {
                          //A.log("curate-body.jsp curator:null for " + curatorList + " curatorIDStr:" + curatorIdStr + " curatorId:" + curatorId + " curator:" + curator);
                         }

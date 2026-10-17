@@ -65,8 +65,14 @@ public final class ArtistAction extends AntwebAction {
         }
         A.log("ArtistAction.execute() name:" + name + " artistId:" + artistId + " isEdit:" + isEdit + " allowEdit:" + allowEdit);
 
+        // Changes only by POST, so the CSRF filter checks the form token.
+        if ((isCreate || isEdit || isRemove) && !HttpUtil.isPost(request)) {
+            request.setAttribute("message", "Use the form on the artist page to make changes.");
+            return mapping.findForward("message");
+        }
+
         if ((name == null || "".equals(name)) && isCreate) {
-			request.setAttribute("message", "Enter an Artist Name in the URL bar...");
+			request.setAttribute("message", "Enter an Artist Name.");
 			return mapping.findForward("message");
         }
 
@@ -94,7 +100,7 @@ public final class ArtistAction extends AntwebAction {
                 s_log.debug("execute() curator:" + curator + " accessGroup.loginId:" + accessLogin.getId());
                 String retVal = artistDb.createArtist(name, curator);
                 if (retVal.contains("error")) {
-                  request.setAttribute("message", "<font color=red>Artist " + Html.esc(name) + " added.</font>");                  
+                  request.setAttribute("message", "<font color=red>Artist " + Html.esc(name) + " not added.</font>");                  
                 } else {
                   ArtistMgr.populate(connection, true, false);
                   request.setAttribute("message", "<font color=green>" + retVal + "</font>");
@@ -106,6 +112,14 @@ public final class ArtistAction extends AntwebAction {
                 Artist artist = ArtistMgr.getArtist(artistId);
                 if (artist == null) {
                   request.setAttribute("message", "Artist with id:" + artistId + " does not exist.");
+                  return mapping.findForward("message");
+                }
+                if (!accessLogin.isAdmin() && artist.getCuratorId() != accessLogin.getId()) {
+                  request.setAttribute("message", "Only the artist's curator or an administrator may rename an artist.");
+                  return mapping.findForward("message");
+                }
+                if (Utility.isBlank(name)) {
+                  request.setAttribute("message", "Enter an Artist Name.");
                   return mapping.findForward("message");
                 }
                 artist.setName(name);

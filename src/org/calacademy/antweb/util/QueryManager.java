@@ -132,7 +132,7 @@ public abstract class QueryManager {
           battery = getBattery("projectTaxonCounts");
           
         } else {
-          return "Query battery:" + name + " not found";
+          return "Query battery:" + Html.esc(name) + " not found";
         }
 
         for (NamedQuery query : battery) {
@@ -175,8 +175,7 @@ public abstract class QueryManager {
         String result = "";
         String message = "";
         if (namedQuery == null) {
-            namedQuery.setResult("Query not found:" + queryName + " with param:" + param);
-            return namedQuery;
+            return null;  // was a NullPointerException; callers treat null as not found
         }
         runNamedQuery(namedQuery, connection);
 
@@ -243,7 +242,7 @@ public abstract class QueryManager {
         NamedQuery namedQuery = QueriesWithParams.getNamedQueryWithParam(queryName, param);
         String result = "";
         String message = "";
-        if (namedQuery == null) return "Query not found:" + queryName + " with param:" + param;
+        if (namedQuery == null) return "Query not found:" + Html.esc(queryName) + " with param:" + Html.esc(param);
         result = runNamedQueryHtml(namedQuery, connection);
         if (result != null) message += result;
         return message;
@@ -272,17 +271,17 @@ public abstract class QueryManager {
             String permalink = AntwebProps.getDomainApp() + "/query.do?name=" + namedQuery.getName() ;
             String title = namedQuery.getName();
             if (namedQuery.getParam() != null) {
-                permalink += "&param=" + namedQuery.getParam();
+                permalink += "&param=" + Html.url(namedQuery.getParam());
                 title += ": " + namedQuery.getParam();
             }
 
-		    message.append("<hr><br><b>Name: </b><a href='" + permalink + "'>" + title + "</a>\n");
+		    message.append("<hr><br><b>Name: </b><a href='" + Html.escAttr(permalink) + "'>" + Html.esc(title) + "</a>\n");
             if (namedQuery.getDesc() != null)
                 message.append("<br><br><b>Description:</b>" + namedQuery.getDesc() + "\r");
 
             //A.log("namedQuery:" + namedQuery.getDesc());
 
-            message.append("<br><br><b>Query:</b> " + namedQuery.getQuery() + "\n");
+            message.append("<br><br><b>Query:</b> " + Html.esc(namedQuery.getQuery()) + "\n");
 		    message.append("<br><br><table>");
 		    if (namedQuery.getHeaderHtml() != null)
 			  message.append("<tr>" + namedQuery.getHeaderHtml() + "</tr>\n");
@@ -344,28 +343,28 @@ public abstract class QueryManager {
             stmt = DBUtil.getStatement(connection, "getQueryResults()");
             rset = stmt.executeQuery(theQuery);
             int i = 0;
-            message = "<br><br><b>Query:</b> " + theQuery + " <br><b>returns:</b><br><pre>";          
+            message = "<br><br><b>Query:</b> " + Html.esc(theQuery) + " <br><b>returns:</b><br><pre>";          
             while (rset.next()) {
               ++i;
               message += "\r\r";
               int columnCount = rset.getMetaData().getColumnCount();
               String val1 = rset.getString(1);
-              message += val1;
+              message += Html.esc(val1);
               String val2, val3, val4, val5, val6 = "";
               if (columnCount > 1) {
-                 message += ", " + rset.getString(2);
+                 message += ", " + Html.esc(rset.getString(2));
               }
               if (columnCount > 2) {
-                message += ", " + rset.getString(3);
+                message += ", " + Html.esc(rset.getString(3));
               }
               if (columnCount > 3) {
-                message += ", " + rset.getString(4);
+                message += ", " + Html.esc(rset.getString(4));
               }
               if (columnCount > 4) {
-                message += ", " + rset.getString(5);
+                message += ", " + Html.esc(rset.getString(5));
               }
               if (columnCount > 5) {
-                message += ", " + rset.getString(6);       
+                message += ", " + Html.esc(rset.getString(6));       
               }
             }
             message += "</pre>";

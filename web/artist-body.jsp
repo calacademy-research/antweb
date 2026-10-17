@@ -33,7 +33,7 @@
 
 
 <br><br>
-    <h1><a href="<%= AntwebProps.getDomainApp() %>/artists.do">Artist:</a> <%= artist.getName() %></h1>
+    <h1><a href="<%= AntwebProps.getDomainApp() %>/artists.do">Artist:</a> <%= Html.esc(artist.getName()) %></h1>
 </div>
 
 <div class="page_divider"></div>
@@ -41,7 +41,7 @@
 <div id="page_data">
     <div id="overview_data" class="plain">
 
-      <html:form method="put" action="artist">
+      <html:form method="POST" action="artist"><%= Csrf.field(request) %>
       <input type="hidden" name="isEdit" value="true">
       <input type="hidden" name="id" value="<%= artist.getId() %>">
 
@@ -53,7 +53,7 @@
 
         <ul>
 		<li><b>Name:</b></li>
-        <li><input type="text" class="input_200" name="name" value="<%= artist.getName() %>"></li>
+        <li><input type="text" class="input_200" name="name" value="<%= Html.escAttr(artist.getName()) %>"></li>
 		</ul>
 
 		<ul>
@@ -102,7 +102,7 @@
 <% if (isOwner || LoginMgr.isAdmin(request)) { %>
 <br>
 <font color=green>(For owning curator and administrators only)</font>
-<html:form method="GET" action="artist">
+<html:form method="POST" action="artist"><%= Csrf.field(request) %>
 <input type="hidden" name="isRemove" value="true">
 <input type="hidden" name="id" value="<%= artist.getId() %>">
 Delete this artist (If artist has attributed images, must reassign to an other artist) <br>ID: <input border="1" type="text" style="border:1px solid" name="moveTo" value="">

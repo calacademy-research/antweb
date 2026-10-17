@@ -70,11 +70,11 @@ if ((operationLock != null) && (operationLock.isLocked()) && (!operationLock.isE
 %>
 <br>&nbsp;&nbsp;&nbsp;Is Image Upload locked: <%= imageUploadLock %>
 
-<br><br><b>Upload services</b> - To take On/Off line:<a href="<%= domainApp %>/serverStatus.do?action=toggleDownTime">Toggle Down Time</a>
+<br><br><b>Upload services</b> - To take On/Off line: <%= org.calacademy.antweb.util.Csrf.postButton(request, domainApp + "/serverStatus.do?action=toggleDownTime", "Toggle Down Time") %>
 <%
 boolean otherOption = !UptimeAction.isFailOnPurpose();
 %>
-<br><b>Uptime Fail On Purpose:</b> <%= UptimeAction.isFailOnPurpose() %>  <a href='<%= AntwebProps.getDomainApp() %>/uptime.do?fail=<%= otherOption %>'>[toggle fail]</a>
+<br><b>Uptime Fail On Purpose:</b> <%= UptimeAction.isFailOnPurpose() %>  <%= org.calacademy.antweb.util.Csrf.postButton(request, AntwebProps.getDomainApp() + "/uptime.do?fail=" + otherOption, "[toggle fail]") %>
 <br><%= ServerDb.getDownTimeMessage() %>
 
 <br><br><b>Current Time:</b> <%= (new Date()).toString() %>

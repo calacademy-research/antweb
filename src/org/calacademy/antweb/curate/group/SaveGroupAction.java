@@ -32,6 +32,8 @@ public final class SaveGroupAction extends AntwebAction {
         throws IOException, ServletException {
         // Require a logged-in administrator: this action changes data.
         ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
+        ActionForward confirm = PostOnly.confirm(request, mapping, "Save or delete group " + request.getParameter("id"));
+        if (confirm != null) return confirm;
 
         HttpSession session = request.getSession();
 

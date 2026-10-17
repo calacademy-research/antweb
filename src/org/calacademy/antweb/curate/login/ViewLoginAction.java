@@ -40,18 +40,33 @@ public final class ViewLoginAction extends AntwebAction {
         
         HttpSession session = request.getSession();
 
+        int id;
+        try {
+            id = Integer.parseInt(((SaveLoginForm) form).getId());
+        } catch (NumberFormatException e) {
+            request.setAttribute("message", "viewLogin.do needs id=<login id>");
+            return mapping.findForward("message");
+        }
+        // Only your own account, or any account for an administrator. Checked before anything
+        // is loaded, so another user's login is never put in the session.
+        if (!accessLogin.isAdmin() && accessLogin.getId() != id) {
+            s_log.warn("execute() denied: login:" + accessLogin.getId() + " tried to view id:" + id);
+            request.setAttribute("message", "You are not allowed to view that account.");
+            return mapping.findForward("message");
+        }
+
         Login login = null;
         Connection connection = null;
         try {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "ViewLoginAction()");
-          
-            String idStr = ((SaveLoginForm) form).getId();
-            int id = Integer.parseInt(idStr);
-            //s_log.info("looking up login " + id);
 
             LoginDb loginDb = new LoginDb(connection);
             login = loginDb.getDeepLogin(id);
+            if (login == null) {
+                request.setAttribute("message", "Login not found.");
+                return mapping.findForward("message");
+            }
             session.setAttribute("thisLogin", login);
 
             // This fetches the full list for select box population

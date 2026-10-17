@@ -31,7 +31,7 @@ public final class LogMgrAction extends AntwebAction {
         "accessLog.txt", "getUrl.txt", "profiler.jsp", "badRequest.log", "taxonNotFound.txt", "isRestart.log",
         "getConns.log", "compute.log", "admin.log", "geolocaleTaxonFix.log", "hacks.log", "taxonworksNightly.log",
         "srfExceptions.txt");
-    private static final Set<String> DATA_LOGS = Set.of("cCheck.log", "longRequest.log", "messages.txt");
+    private static final Set<String> DATA_LOGS = Set.of("cCheck.log", "longRequest.log", "messages.txt", "serverBusy.html");
 
     public ActionForward execute(
         ActionMapping mapping,

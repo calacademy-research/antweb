@@ -162,6 +162,17 @@ To Do
       }
       
       if ("save".equals(action)) {
+        // Saving changes data: POST only (the form posts), and only to lists assigned to this curator.
+        if (!HttpUtil.isPost(request)) {
+          request.setAttribute("message", "Use the Save Changes button to save.");
+          return mapping.findForward("message");
+        }
+        for (String listName : new String[] {mapSpeciesList1Name, mapSpeciesList2Name, mapSpeciesList3Name}) {
+          if (!SpeciesListAccess.isNone(listName) && !SpeciesListAccess.canEdit(accessLogin, listName)) {
+            request.setAttribute("message", SpeciesListAccess.NOT_ASSIGNED + " (" + Html.esc(listName) + ")");
+            return mapping.findForward("message");
+          }
+        }
         //s_log.warn("execute() chosen:" + toolForm.getChosen1()[0] + " refSpeciesListType:" + refSpeciesListType + " refSpeciesListName:" + refSpeciesListName);
         //LogMgr.appendLog("speciesListTool.txt", "save - " + AntwebUtil.getFormatDateTimeStr() + " curatorId:" + accessGroup.getLogin().getId() 
         //  + " mapSpeciesList1Name:" + mapSpeciesList1Name + " mapSpeciesList2Name:" + mapSpeciesList2Name + " mapSpeciesList3Name:" + mapSpeciesList3Name );

@@ -65,7 +65,7 @@ public class QueryFileServlet extends HttpServlet {
                 }
             }
 
-            message = namedQuery.getResult();
+            message = namedQuery == null ? "Query not found." : namedQuery.getResult();
 
             // if you want to use a relative path to context root:
             //String relativePath = getServletContext().getRealPath("");

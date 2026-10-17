@@ -67,8 +67,9 @@
       }
     }
 
+    // Not messages that hold a form (their CSRF token must not go into a log).
     if (message != null && (
-    !message.contains("Scheduler run:")
+    !message.contains("Scheduler run:") && !message.contains(Csrf.PARAM)
     )) {
       LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
     }

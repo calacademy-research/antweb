@@ -39,9 +39,9 @@
 for (ProjTaxon dispute : disputeArray) { 
 %>
 <tr>
-<td><%= dispute.getProjectName() %></td>
-<td><%= dispute.getTaxonName() %></td>
-<td><a href="<%= domainApp %>/disputeMgr.do?action=remove&projectName=<%= dispute.getProjectName() %>&taxonName=<%= dispute.getTaxonName() %>"><img src='<%= AntwebProps.getDomainApp() %>/image/redX.png' width=10></a></td>
+<td><%= Html.esc(dispute.getProjectName()) %></td>
+<td><%= Html.esc(dispute.getTaxonName()) %></td>
+<td><%= Csrf.postButton(request, domainApp + "/disputeMgr.do?action=remove&projectName=" + Html.url(dispute.getProjectName()) + "&taxonName=" + Html.url(dispute.getTaxonName()), "<img src='" + AntwebProps.getDomainApp() + "/image/redX.png' width=10 alt='remove'>") %></td>
 </tr>
 <% } %>
 </table>
