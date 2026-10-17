@@ -190,38 +190,117 @@ public class ImageUploadDb extends AntwebDb {
 	}
 	
     public void saveImageUploaded(ImageUploaded imageUploaded) throws SQLException {
-    
-        Statement stmt = null;
-        String dml = null;
-    	try {
-            stmt = DBUtil.getStatement(getConnection(), "saveImageUploaded()");
-  
-            int reUploaded = 0;
-            if (imageUploaded.getIsReUploaded()) reUploaded = 1;
+        // A prepared statement: the file name comes from the curator's computer.
+        String dml = "insert into image_uploaded (filename, code, shot, number, ext"
+              + " , image_upload_id, reuploaded, specimen_data_exists, error_message)"
+              + " values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        PreparedStatement ps = null;
+        try {
+            ps = DBUtil.getPreparedStatement(getConnection(), "saveImageUploaded()", dml);
+            if (ps == null) throw new SQLException("saveImageUploaded() no statement");
+            ps.setString(1, imageUploaded.getFileName());
+            ps.setString(2, imageUploaded.getCode());
+            ps.setString(3, imageUploaded.getShot());
+            ps.setInt(4, imageUploaded.getNumber());
+            ps.setString(5, imageUploaded.getExt());
+            ps.setInt(6, imageUploaded.getImageUpload().getId());
+            ps.setInt(7, imageUploaded.getIsReUploaded() ? 1 : 0);
+            ps.setInt(8, imageUploaded.getIsSpecimenDataExists() ? 1 : 0);
+            ps.setString(9, imageUploaded.getErrorMessage());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            s_log.error("saveImageUploaded() fileName:" + imageUploaded.getFileName() + " e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(ps, "saveImageUploaded()");
+        }
+    }
 
-            int specimenDataExists = 0;
-            if (imageUploaded.getIsSpecimenDataExists()) specimenDataExists = 1;
-            
-            String errorMessage = "null";
-            if (imageUploaded.getErrorMessage() != null) errorMessage = "'" + imageUploaded.getErrorMessage() + "'";
+    /** error_message of a file the batch uploader is still working on (see ImageUploadBatchAction). */
+    public static final String PROCESSING = "processing";
 
-            dml = "insert into image_uploaded (filename, code, shot, number, ext"
-                  + " , image_upload_id, reuploaded, specimen_data_exists, error_message) " 
-              + " values ("
-              + "'" + imageUploaded.getFileName() + "', '" + imageUploaded.getCode() + "', '" + imageUploaded.getShot() + "'"
-              + ", " + imageUploaded.getNumber() + ", '" + imageUploaded.getExt() + "'"
-              + ", " + imageUploaded.getImageUpload().getId() + ", " + reUploaded 
-              + ", " + specimenDataExists + ", " + errorMessage + ")";
-            
-    	    stmt.executeUpdate(dml);
+    /**
+     * State of a file in an upload: "done" (recorded without an error), PROCESSING (an earlier
+     * try was cut off part way), or null (not in this upload yet).
+     */
+    public String getUploadedState(int imageUploadId, String fileName) throws SQLException {
+        String query = "select error_message from image_uploaded where image_upload_id = ? and filename = ?";
+        PreparedStatement ps = null;
+        ResultSet rset = null;
+        String state = null;
+        try {
+            ps = DBUtil.getPreparedStatement(getConnection(), "getUploadedState()", query);
+            if (ps == null) throw new SQLException("getUploadedState() no statement");
+            ps.setInt(1, imageUploadId);
+            ps.setString(2, fileName);
+            rset = ps.executeQuery();
+            while (rset.next()) {
+                String error = rset.getString("error_message");
+                if (error == null) return "done";
+                if (PROCESSING.equals(error)) state = PROCESSING;
+            }
+        } finally {
+            DBUtil.close(ps, rset, "this", "getUploadedState()");
+        }
+        return state;
+    }
 
-            //A.log("saveImageUploaded() dml:" + dml);
-		} catch (SQLException e) {
-			s_log.error("saveImageUploaded() dml" + dml + " e:" + e);
-			throw e;
-		} finally { 		
-			DBUtil.close(stmt, "saveImageUploaded()");
-		}
-	}
+    /** Record a file as being processed (error_message PROCESSING until markUploadedDone()). */
+    public void saveImageUploadedProcessing(ImageUploaded imageUploaded) throws SQLException {
+        String error = imageUploaded.getErrorMessage();
+        imageUploaded.setErrorMessage(PROCESSING);
+        try {
+            saveImageUploaded(imageUploaded);
+        } finally {
+            imageUploaded.setErrorMessage(error);
+        }
+    }
+
+    /** The file is saved and its image row made. */
+    public void markUploadedDone(int imageUploadId, String fileName, boolean reUploaded) throws SQLException {
+        String dml = "update image_uploaded set error_message = null, reuploaded = greatest(coalesce(reuploaded, 0), ?)"
+            + " where image_upload_id = ? and filename = ? and error_message = ?";
+        PreparedStatement ps = null;
+        try {
+            ps = DBUtil.getPreparedStatement(getConnection(), "markUploadedDone()", dml);
+            if (ps == null) throw new SQLException("markUploadedDone() no statement");
+            ps.setInt(1, reUploaded ? 1 : 0);
+            ps.setInt(2, imageUploadId);
+            ps.setString(3, fileName);
+            ps.setString(4, PROCESSING);
+            ps.executeUpdate();
+        } finally {
+            DBUtil.close(ps, "markUploadedDone()");
+        }
+    }
+
+    /** Set image_count to the number of files recorded for this upload; returns it. */
+    public int updateImageCount(int imageUploadId) throws SQLException {
+        int count = 0;
+        PreparedStatement ps = null;
+        ResultSet rset = null;
+        try {
+            ps = DBUtil.getPreparedStatement(getConnection(), "updateImageCount()",
+                "select count(*) c from image_uploaded where image_upload_id = ?");
+            if (ps == null) throw new SQLException("updateImageCount() no statement");
+            ps.setInt(1, imageUploadId);
+            rset = ps.executeQuery();
+            if (rset.next()) count = rset.getInt("c");
+        } finally {
+            DBUtil.close(ps, rset, "this", "updateImageCount()");
+        }
+        ps = null;
+        try {
+            ps = DBUtil.getPreparedStatement(getConnection(), "updateImageCount()",
+                "update image_upload set image_count = ? where id = ?");
+            if (ps == null) throw new SQLException("updateImageCount() no statement");
+            ps.setInt(1, count);
+            ps.setInt(2, imageUploadId);
+            ps.executeUpdate();
+        } finally {
+            DBUtil.close(ps, "updateImageCount()");
+        }
+        return count;
+    }
 }    
 
