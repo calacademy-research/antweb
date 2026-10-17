@@ -1,4 +1,7 @@
 #27 3 * * * root sh /antweb/deploy/bin/reboot.sh # Restart at 3:27 am every day.
-0 21 * * * root /antweb/deploy/bin/admin.sh > /data/antweb/web/log/adminTask.log
+# The jobs run as root. Their logs are in web/log, which tomcat owns, so they are
+# written through tee running as tomcat: root never opens a file there (tomcat
+# could have replaced it with a symlink to, say, a database dump).
+0 21 * * * root /antweb/deploy/bin/admin.sh | setpriv --reuid=tomcat --regid=antweb --init-groups tee /data/antweb/web/log/adminTask.log > /dev/null
 0 23 1 * * root /antweb/deploy/bin/db-monthly-dump.sh
-50 3 * * 4 root /antweb/deploy/bin/taxonSetBackup.sh >> /data/antweb/web/log/taxonSetBackup.log
+50 3 * * 4 root /antweb/deploy/bin/taxonSetBackup.sh | setpriv --reuid=tomcat --regid=antweb --init-groups tee -a /data/antweb/web/log/taxonSetBackup.log > /dev/null
