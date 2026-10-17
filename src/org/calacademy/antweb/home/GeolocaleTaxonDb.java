@@ -58,7 +58,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             query = "select geolocale_id, taxon_name, source, rev, is_introduced "
                + " from geolocale_taxon " 
                + " where geolocale_id = " + geolocaleId
-               + " and taxon_name = '" + taxonName + "'";
+               + " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
             rset = stmt.executeQuery(query);
             while (rset.next()) {
@@ -302,7 +302,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
         delete = "delete from geolocale_taxon " 
           + " where geolocale_id = " + geolocaleId 
-          + "   and taxon_name = '" + taxonName + "'";
+          + "   and taxon_name = " + DBUtil.sqlLiteral(taxonName);
         //A.log("removeFromTaxonSet() 1 delete:" + delete);
         c = stmt1.executeUpdate(delete);
 
@@ -310,7 +310,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
         // and has no specimens!? then delete the taxon outright, and the allantweb
         // projTaxon record.
         String query = "select count(geolocale_id) from geolocale_taxon " 
-          + " where taxon_name = '" + taxonName + "'";
+          + " where taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
         //A.log("delete() 2 query:" + query);
 
@@ -321,7 +321,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
             Statement stmt2 = getConnection().createStatement();
             query = "select count(code) from specimen "
-              + " where taxon_name = '" + taxonName + "'";
+              + " where taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
             //A.log("delete() 3 query:" + query);
 
@@ -370,7 +370,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             stmt = DBUtil.getStatement(getConnection(), "hasItem()");
             query = "select 'x' as x from geolocale_taxon"
                + " where geolocale_id = " + id
-               + " and taxon_name = '" + taxonName + "'";
+               + " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
             ResultSet rset = stmt.executeQuery(query);
             while (rset.next()) {
                 String x = (String) rset.getObject("x");
@@ -467,7 +467,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             stmt = DBUtil.getStatement(getConnection(), "updateItem()");
 
             dml = "update geolocale_taxon set source = '" + source + "' where geolocale_id = " + id
-              + " and taxon_name = '" + taxonName + "'";
+              + " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
 //if (!AntwebProps.isDevMode()) // For testing
             count = stmt.executeUpdate(dml);
@@ -491,7 +491,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             stmt = DBUtil.getStatement(getConnection(), "deleteItem()");
 
             dml = "delete from geolocale_taxon where geolocale_id = " + id
-              + " and taxon_name = '" + taxonName + "'";
+              + " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
             count = stmt.executeUpdate(dml);
         } finally {
             DBUtil.close(stmt, "deleteItem()");
@@ -526,7 +526,7 @@ int s_notFound = 0;
         ResultSet rset = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "reportOnTaxonSet()");
-            query = "select source from geolocale_taxon where geolocale_id = " + geolocaleId + " and taxon_name = '" + taxonName + "'";
+            query = "select source from geolocale_taxon where geolocale_id = " + geolocaleId + " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
             rset = stmt.executeQuery(query);
             boolean found = false;
@@ -1247,7 +1247,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             query =
                 " select g.id, g.name, g.parent, g.bioregion, g.georank, g.region, g.subregion" 
               + " from geolocale_taxon gt, geolocale g" 
-              + " where gt.taxon_name= '" + taxonName + "'"
+              + " where gt.taxon_name= " + DBUtil.sqlLiteral(taxonName)
               + "   and g.id = gt.geolocale_id"
               //+ "   and g.is_use_children = 0"
               + "   and g.bioregion not in ('NULL', 'none')"
@@ -1489,7 +1489,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             stmt = DBUtil.getStatement(getConnection(), "fixGeolocaleTaxonCount()");
             dml = "update geolocale_taxon set species_count = " + taxonSetCount
               + " where geolocale_id = " + geolocale.getId()
-              + " and taxon_name = '" + taxonName + "'";
+              + " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
             stmt.executeUpdate(dml);
         } catch (SQLException e) {
             s_log.error("fixGeolocaleTaxonCount() e:" + e + " dml:" + dml);

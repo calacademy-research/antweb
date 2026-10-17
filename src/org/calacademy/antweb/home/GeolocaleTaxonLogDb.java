@@ -341,7 +341,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             query = " select gt.source " 
               + " from geolocale_taxon gt"
               + " and gt.geolocale_id = " + geolocaleId
-              + " and gt.taxon_name = '" + taxonName + "'";
+              + " and gt.taxon_name = " + DBUtil.sqlLiteral(taxonName);
                             
             //A.log("getCuration() query:" + query);
             rset = stmt.executeQuery(query);
@@ -381,7 +381,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
               + " from geolocale_taxon_log gtl, geolocale_taxon_log_detail gtld" 
               + " where gtl.log_id = gtld.log_id"
               + " and gtld.geolocale_id = " + geolocaleId
-              + " and gtld.taxon_name = '" + taxonName + "'"
+              + " and gtld.taxon_name = " + DBUtil.sqlLiteral(taxonName)
               + " order by created"; // get the first instance
 
             //A.log("getCuration() query:" + query);
@@ -623,7 +623,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
 
             dml = "delete from geolocale_taxon_dispute "
               + " where geolocale_id = " + geolocaleId
-              + "   and taxon_name = '" + taxonName + "'";
+              + "   and taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
             stmt.execute(dml);
 
@@ -668,7 +668,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             stmt = DBUtil.getStatement(getConnection(), "getDispute()");
             query = "select geolocale_id, taxon_name, source, rev, curator_id, created from geolocale_taxon_dispute " 
                + " where geolocale_id = " + geolocaleId
-               + " and taxon_name = '" + taxonName + "'";
+               + " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
             rset = stmt.executeQuery(query);
             while (rset.next()) {
@@ -704,7 +704,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
         Statement stmt = null;
         ResultSet rset = null;
         String geolocaleIdClause = ""; if (geolocaleId > 0) geolocaleIdClause = " and geolocale_id = " + geolocaleId;
-        String taxonClause = ""; if (taxonName != null) taxonClause = " and taxon_name = '" + taxonName + "'";
+        String taxonClause = ""; if (taxonName != null) taxonClause = " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
         try {
 
             stmt = DBUtil.getStatement(getConnection(), "getDisputes()");
