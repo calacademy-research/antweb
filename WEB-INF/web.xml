@@ -34,6 +34,8 @@
     <url-pattern>*.do</url-pattern>
   </servlet-mapping>
 
+<!-- Static files. Folders are never listed: a folder URL without a welcome file is a 404.
+     Curators see their own folder through /curatorFiles.do. -->
 <servlet>
   <servlet-name>DirectoryListing</servlet-name>
   <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
@@ -43,14 +45,13 @@
   </init-param>
   <init-param>
     <param-name>listings</param-name>
-    <param-value>true</param-value>
+    <param-value>false</param-value>
   </init-param>
 </servlet>
 
 <servlet-mapping>
   <servlet-name>DirectoryListing</servlet-name>
   <url-pattern>/</url-pattern>
-    <!-- expose all dir listing / is not recommended, lock down to specific dir -->
 </servlet-mapping>
 
 <!--  http://www.antweb.org/specimen/casent1  will return
@@ -62,39 +63,6 @@
   <servlet-mapping>
     <servlet-name>SpecimenFetch</servlet-name>
     <url-pattern>/specimen/*</url-pattern>
-  </servlet-mapping>
-  
-  <servlet>
-    <servlet-name>ApiFetch</servlet-name>
-    <servlet-class>org.calacademy.antweb.util.ApiFetch</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>ApiFetch</servlet-name>
-    <url-pattern>/apiV3/*</url-pattern>
-  </servlet-mapping>
-	
-  <servlet>
-	<description>This servlet sends file to client</description>
-	<display-name>QueryFileServlet</display-name>
-	<servlet-name>QueryFileServlet</servlet-name>
-	<servlet-class>org.calacademy.antweb.util.QueryFileServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-	<servlet-name>QueryFileServlet</servlet-name>
-	<url-pattern>/queryFile</url-pattern>
-  </servlet-mapping>  
-	
-
-  <!-- if antweb_test is not running on server, redirect all requests to corresponding antweb page instead of creating error  -->
-  <!-- if antweb_test is in use, comment out this block -->
-  <servlet>
-	<servlet-name>redirectTest</servlet-name>
-	<display-name>RedirectTest</display-name>
-	<servlet-class>org.calacademy.antweb.util.RedirectTestAction</servlet-class>
-  </servlet>
-  <servlet-mapping>
-	<servlet-name>redirectTest</servlet-name>
-	<url-pattern>/antweb_test/*</url-pattern>
   </servlet-mapping>
 
 
@@ -135,27 +103,6 @@
   <taglib-location>/WEB-INF/struts-tiles.tld</taglib-location>
 </taglib>
 
-  <login-config>
-    <auth-method>BASIC</auth-method>
-    <realm-name>antweb login</realm-name>
-  </login-config>
-
-  <security-role>
-    <role-name>antweb</role-name>
-  </security-role>
-
-  <!-- mime types -->
-  <mime-mapping>
-    <extension>kmz</extension>
-    <mime-type>application/vnd.google-earth.kmz</mime-type>
-  </mime-mapping>
-
-<!--
-  <mime-mapping>
-    <extension>ico</extension>
-    <mime-type>image/x-icon</mime-type>
-  </mime-mapping>
--->
 
     <!-- cache static files --> 
 

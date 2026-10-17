@@ -136,21 +136,6 @@ Has Taxon Page Image embedded:
 <li><a href="<%= AntwebProps.getDomainApp() %>/description.do?genus=camponotus&name=manni%20umbratilis&rank=species">umbratilis</a>
 </ul>
 
-GoogleEarth links
-
-<ul>Home Page
-<li><a href="<%= AntwebProps.getDomainApp() %>/viewGoogleEarth.jsp?title=&where=Arizona&kml_url=<%= AntwebProps.getDomainApp() %>/googleEarth?project=arizonaants">Arizona</a>
-</ul>
-
-<ul>SubFamily
-<li><a href="<%= AntwebProps.getDomainApp() %>/viewGoogleEarth.jsp?title=Ponerinae&where=Bolton%20World%20Catalog&kml_url=<%= AntwebProps.getDomainApp() %>/googleEarth?google=subfamily=ponerinae---project=worldants">Ponerinae</a> (was hanging).
-</ul>
-
-<ul> Species
-<li><a href="<%= AntwebProps.getDomainApp() %>/viewGoogleEarth.jsp?title=Tetramorium tosii&where=Bolton World Catalog&kml_url=<%= AntwebProps.getDomainApp() %>/googleEarth?google=subfamily=myrmicinae---genus=tetramorium---species=tosii---project=worldants">Tetramorium tosii</a>
-<li><a href="<%= AntwebProps.getDomainApp() %>/viewGoogleEarth.jsp?title=Thaumatomyrmex&where=Bolton World Catalog&kml_url=<%= AntwebProps.getDomainApp() %>/googleEarth?google=subfamily=ponerinae---genus=thaumatomyrmex---project=worldants">Thaumatomyrmex</a>
-</ul>
-
 <ul>Cataulacus
 <li><a href="<%= AntwebProps.getDomainApp() %>/description.do?name=cataulacus&rank=genus&project=madagascarants">1</a>
 <li><a href="<%= AntwebProps.getDomainApp() %>/description.do?rank=genus&name=cataulacus&subfamily=myrmicinae&project=">2</a>

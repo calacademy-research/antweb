@@ -31,6 +31,7 @@ CURATOR_PAGES = [
     "/specimenListLookup.do",
     "/curators.do",
     "/editorTrial.do",
+    "/curatorFiles.do",
 ]
 
 # Admin-only pages: an ordinary curator must be refused (authorization, not just login).
@@ -88,6 +89,14 @@ def test_other_account_refused_for_curator(curator):
     """viewLogin.do: a non-admin may open only their own account (login 1 is an administrator)."""
     outcome = get(curator, "/viewLogin.do?id=1")
     assert outcome.category in ("message", "denied", "login"), f"/viewLogin.do?id=1: {outcome}"
+
+
+def test_curator_files_page(curator):
+    """The curator's own folder is shown by curatorFiles.do (Tomcat does not list folders)."""
+    r = curator.get(BASE_URL + "/curatorFiles.do", timeout=60)
+    assert r.status_code == 200 and "Your Curator Files" in r.text
+    assert "/web/curator/" in r.text
+    assert "curatorFiles.do" in curator.get(BASE_URL + "/curate.do", timeout=60).text
 
 
 def test_password_not_in_pages(curator):

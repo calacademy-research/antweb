@@ -133,7 +133,7 @@ function changeView(newView, linkParams, showRank) {
 
 <div id="page_data">
 
-<html:form action="/chooseComparison"><%= org.calacademy.antweb.util.Csrf.field(request) %>
+<form onsubmit="return false;">
 
 <%
    java.util.ArrayList theChildren = showTaxon.getChildren();
@@ -219,7 +219,7 @@ function changeView(newView, linkParams, showRank) {
 
   <% } %>
 <div class="clear"></div>
-</html:form>
+</form>
 
 <div class="clear"></div>
 <div class="page_spacer"></div>

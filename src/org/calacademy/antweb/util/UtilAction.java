@@ -224,12 +224,6 @@ public class UtilAction extends AntwebAction {
 				   request.setAttribute("message", message);
 				   return mapping.findForward("bareMessage");
 			  }
-			  if ("testMobile".equals(action)) {
-				   String message = "Test Mobile";
-				   s_log.warn("execute() " + message);
-				   request.setAttribute("message", message);
-				   return mapping.findForward("testMobile");
-			  }
 			  
 			  if (action.equals("checkIntegrity")) {
 				String message = QueryManager.checkIntegrity(connection);

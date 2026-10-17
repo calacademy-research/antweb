@@ -381,14 +381,6 @@ public abstract class AntwebProps {
     } 
         
         
-	public static String getGoogleEarthURI() {
-	    if (true) return "googleEarth.do";
-
-	    String googleEarthURI = AntwebProps.getProp("googleEarthURI");
-        if (googleEarthURI == null || googleEarthURI.equals("")) googleEarthURI = "googleEarth/";
-        return googleEarthURI;
-	}
-		
 	public static Boolean isLocal() {
 		String localStr = AntwebProps.getProp("isLocal");
         return localStr != null && localStr.equals("true");

@@ -715,13 +715,6 @@ public abstract class HttpUtil {
         return paramsStr;
     }
 
-    public static boolean isMobileTest(HttpServletRequest request) {
-        if (LoginMgr.isDeveloper(request)) return true; // for testing
-
-        if (HttpUtil.getTarget(request).contains("testMobile.do")) return true; // for testing
-        return HttpUtil.getTarget(request).contains("mobile.do"); // for testing
-    }
-
     public static boolean isMobile(HttpServletRequest request) {
         if (request == null) AntwebUtil.log("isMobile() request is null");
         //if (AntwebProps.isDevMode()) return true; // for testing
@@ -736,9 +729,6 @@ public abstract class HttpUtil {
             String userAgent = request.getHeader("User-Agent");
 
             //A.log("isMobile() target:" + target + " userAgent:" + userAgent);
-
-            if (target.contains("mobile.do")) returnVal = true; // for testing
-            // for testing on https://www.antweb.org/mobile.do
 
             //A.log("isMobile() userAgent:" + userAgent + " deviceWidth:" + device-width);
             if (userAgent != null && userAgent.contains("Mobile")) {

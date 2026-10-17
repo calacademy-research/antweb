@@ -271,7 +271,6 @@
     <div id="totals_and_tools_container">
         <div id="totals_and_tools">
             <!-- %@ include file="/common/pageToolsMap.jsp" % -->
-            <!-- %@ include file="/common/kml_download.jsp" % -->
           <% if (true) { 
                boolean isGeolocaleFocus = "true".equals(request.getParameter("geolocaleFocus"));
                String url = HttpUtil.getTarget(request);

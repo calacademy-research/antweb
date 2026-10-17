@@ -63,7 +63,7 @@ function changeView(newView) {
             
 		</div>
 		<div class="clear"></div>	
-        <html:form action="/chooseComparison"><%= org.calacademy.antweb.util.Csrf.field(request) %>
+        <form onsubmit="return false;">
 		<div class="tools" id="compare_tools">
 			<p>
 			View:&nbsp;&nbsp; <input type="radio" name="view" value="head" onClick="changeView('Head');" <%= shot.equals("Head")?"checked":"" %>> Head
@@ -73,7 +73,7 @@ function changeView(newView) {
 			&nbsp;&nbsp; <input type="radio" name="view" value="label" onClick="changeView('Label');"  <%= shot.equals("Label")?"checked":"" %>> Label 
 			</p>
 		</div>
-		</html:form>
+		</form>
 	</div>
 </div>
 <!-- /div -->
