@@ -193,7 +193,7 @@ For examples: biogeographicregion='Afrotropical' (or Australasia, Indomalaya, Ma
 
 
 <% if (LoginMgr.isAdmin(request)) { %>  
-<a href="<%= domainApp %>/editProject.do?action=delete&projectName=<%= thisProject.getName() %>">Delete</a>
+<%= Csrf.postButton(request, domainApp + "/editProject.do?action=delete&projectName=" + Html.url(thisProject.getName()), "Delete", "Delete this project?") %>
 <% } %>
 
 </div> 

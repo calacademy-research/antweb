@@ -47,6 +47,12 @@ public final class SaveProjectAction extends AntwebAction {
         String query;
         Project thisProject = editProjectForm.getProject();
 
+        // A curator may save only a project assigned to them; administrators any project.
+        if (thisProject == null || !SpeciesListAccess.canEdit(LoginMgr.getAccessLogin(request), thisProject.getName())) {
+            request.setAttribute("message", SpeciesListAccess.NOT_ASSIGNED);
+            return mapping.findForward("message");
+        }
+
         if (AntwebProps.isDevMode()) AntwebUtil.log("SaveProjectAction.java geolocaleId:" + editProjectForm.getGeolocaleId());
 
         Connection connection = null;

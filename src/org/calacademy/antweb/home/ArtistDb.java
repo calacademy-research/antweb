@@ -11,6 +11,7 @@ import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.DBUtil;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -31,14 +32,14 @@ public class ArtistDb extends AntwebDb {
     }
 
 
-    public Artist getArtist(String criteria) throws SQLException {
-        Statement stmt = null;
+    public Artist getArtistByName(String name) throws SQLException {
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
-			String query = "select id, name, created, active, curator_id from artist where " + criteria;
-            stmt = DBUtil.getStatement(getConnection(), "getArtist()");
- 
-			rset = stmt.executeQuery(query);
+			String query = "select id, name, created, active, curator_id from artist where name = ?";
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getArtistByName()", query);
+            stmt.setString(1, name);
+			rset = stmt.executeQuery();
 
             //A.log("getArtist() query:" + query);
 
@@ -135,32 +136,29 @@ public class ArtistDb extends AntwebDb {
     
     public String createArtist(String name, Curator curator) throws SQLException {
     
-        Artist artist = getArtist("name = '" + name + "'");
+        Artist artist = getArtistByName(name);
         if (artist != null) {
           return "Artist already exists with name:" + Html.esc(name);
         }
         
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         String dml = null;
     	try {
 
             int artistId = getMaxArtistId() + 1;
     	
-            stmt = DBUtil.getStatement(getConnection(), "createArtist()");            
-            dml = "insert into artist (id, name, active, curator_id)" 
-              + " values (" + artistId
-                  + ", '" + name + "'"
-                  + ", 1"
-                  + ", " + curator.getId()
-                  + ")";
-
-    	    stmt.executeUpdate(dml);
+            dml = "insert into artist (id, name, active, curator_id) values (?, ?, 1, ?)";
+            stmt = DBUtil.getPreparedStatement(getConnection(), "createArtist()", dml);
+            stmt.setInt(1, artistId);
+            stmt.setString(2, name);
+            stmt.setInt(3, curator.getId());
+    	    stmt.executeUpdate();
     	    s_log.debug("insertImage() 1 dml:" + dml);
     	    artist = new Artist(artistId, name);
             return "Created artist:" + artist.getLink() + ".";
 		} catch (SQLException e) {
 			s_log.error("createArtist() dml" + dml + " e:" + e);
-            return "error:" + e;
+            return "error:" + Html.esc(e);
 		} finally { 		
 			DBUtil.close(stmt, "createArtist()");
 		}
@@ -187,17 +185,18 @@ public class ArtistDb extends AntwebDb {
 
     public String saveArtist(Artist artist, Login accessLogin) throws SQLException {
         String returnVal = "";
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         String dml = null;
     	try {
-            stmt = DBUtil.getStatement(getConnection(), "saveArtist()");
-
-            dml = "update artist set name = '" + artist.getName() + "' where id = " + artist.getId();
-    	    int i = stmt.executeUpdate(dml); 
+            dml = "update artist set name = ? where id = ?";
+            stmt = DBUtil.getPreparedStatement(getConnection(), "saveArtist()", dml);
+            stmt.setString(1, artist.getName());
+            stmt.setInt(2, artist.getId());
+    	    int i = stmt.executeUpdate(); 
             s_log.debug("saveArtist() dml:" + dml + " i:" + i + " returnVal:" + returnVal);
 		} catch (SQLException e) {
 			s_log.error("saveArtist() dml" + dml + " e:" + e);
-			return "e:" + e;
+			return "e:" + Html.esc(e);
 		} finally { 		
 			DBUtil.close(stmt, "saveArtist()");
 		}    
