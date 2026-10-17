@@ -209,6 +209,8 @@ def test_edit_session_logged_in(curator):
     data = curator.get(BASE_URL + "/editSession.do", timeout=TIMEOUT).json()
     assert data["loggedIn"] is True and data["canEdit"] is True
     assert re.fullmatch(r"[A-Za-z0-9_-]{43}", data["csrf"])
+    # The ~8 AM restart warning is shown only if AntWeb has not restarted yet this morning.
+    assert isinstance(data.get("upMinutes"), int) and data["upMinutes"] >= 0
     page = curator.get(BASE_URL + "/curate.do", timeout=TIMEOUT).text
     assert f'name="_csrf" value="{data["csrf"]}"' in page, "editSession.do token differs from the session's form token"
 

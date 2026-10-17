@@ -56,6 +56,11 @@
     }
 
     // Same rule as DescEditSafety.isBlank on the server.
+    function plainText(html) {
+        return String(html || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;|&#xa0;|\u00a0/gi, ' ')
+            .replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+    }
+
     function isBlank(html) {
         if (!html) return true;
         if (/<\s*(img|iframe|table|hr)\b/i.test(html)) return false;
@@ -222,6 +227,9 @@
         if (this.opts.refused) return;
         var d = storageGet(this.opts.draftKey);
         if (!d || typeof d.text !== 'string' || isBlank(d.text) || d.text === this.baseline) return;
+        // Nothing to restore if the editor already shows the same words (for example the same draft
+        // from another tab, or text that was saved since).
+        if (plainText(d.text) === plainText(this.getText()) || plainText(d.text) === plainText(this.baseline)) return;
         var when = '';
         try { when = ' from ' + new Date(d.savedAt).toLocaleString(); } catch (e) { /* ignore */ }
         var msg = 'This browser has unsaved text for this field' + when + '.';
@@ -269,7 +277,8 @@
                 var data = null;
                 try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
                 if (xhr.status !== 200 || !data || typeof data.loggedIn !== 'boolean') finish({ok: false});
-                else finish({ok: true, loggedIn: data.loggedIn, canEdit: !!data.canEdit, csrf: data.csrf});
+                else finish({ok: true, loggedIn: data.loggedIn, canEdit: !!data.canEdit, csrf: data.csrf,
+                    upMinutes: typeof data.upMinutes === 'number' ? data.upMinutes : null});
             };
             xhr.onerror = function () { finish({ok: false}); };
             xhr.ontimeout = function () { finish({ok: false}); };
@@ -313,14 +322,23 @@
     };
 
     Guard.prototype.restartWarning = function () {
-        if (this.restartWarned || !this.dirty) return;
+        if (this.restartWarned || this.restartChecking || !this.dirty) return;
         var m = pacificMinutes();
-        // The nightly jobs end with an automatic restart around 8 AM Pacific.
-        if (m >= 7 * 60 + 15 && m <= 8 * 60 + 45) {
-            this.restartWarned = true;
-            this.say('AntWeb restarts automatically around 8 AM Pacific time. Please save soon. If a save fails,'
+        // The nightly jobs end with an automatic restart around 8 AM Pacific. Warn only in that window,
+        // and only if AntWeb has not already restarted since 7 AM today.
+        if (m < 7 * 60 + 15 || m > 8 * 60 + 30) return;
+        var self = this;
+        this.restartChecking = true;
+        this.checkSession(function (res) {
+            self.restartChecking = false;
+            if (res.ok && res.upMinutes !== null && res.upMinutes < m - 7 * 60) {
+                self.restartWarned = true;   // already restarted this morning
+                return;
+            }
+            self.restartWarned = true;
+            self.say('AntWeb restarts automatically around 8 AM Pacific time. Please save soon. If a save fails,'
                 + ' your text is kept in this browser and offered again when you reopen this field.', null, false);
-        }
+        });
     };
 
     Guard.prototype.submitNow = function () {

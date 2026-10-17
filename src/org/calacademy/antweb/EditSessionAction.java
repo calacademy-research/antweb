@@ -30,6 +30,11 @@ public final class EditSessionAction extends AntwebAction {
         StringBuilder json = new StringBuilder();
         json.append("{\"loggedIn\":").append(loggedIn)
             .append(",\"canEdit\":").append(canEdit);
+        // Minutes since AntWeb last started: the editor warns about the ~8 AM restart only if it has not happened yet today.
+        java.util.Date started = org.calacademy.antweb.util.AntwebMgr.getStartTime();
+        if (started != null) {
+            json.append(",\"upMinutes\":").append((System.currentTimeMillis() - started.getTime()) / 60000L);
+        }
         if (loggedIn) {
             json.append(",\"loginId\":").append(accessLogin.getId())
                 .append(",\"csrf\":\"").append(Csrf.token(request)).append('"');
